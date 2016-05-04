@@ -1,0 +1,10 @@
+﻿<h2>{@i18n $key="backgroundMaps"/}</h2>
+<div class="tc-ctl-bms-tree">
+    <form>
+        <ul class="tc-ctl-bms-branch">
+            {#baseLayers}
+            {>tc-ctl-bms-node:./}
+            {/baseLayers}
+        </ul>
+    </form>
+</div>

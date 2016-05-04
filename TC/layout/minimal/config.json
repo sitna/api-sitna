@@ -1,0 +1,14 @@
+﻿{
+    "controls": {
+        "navBar": false,
+        "basemapSelector": false,
+        "TOC": false,
+        "legend": false,
+        "coordinates": true,
+        "search": false,
+        "measure": false,
+        "overviewMap": false,
+        "popup": true,
+		"attribution": false
+    }
+}

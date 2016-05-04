@@ -1,0 +1,28 @@
+﻿<h2>{@i18n $key="offlineMaps"/}</h2>
+<div class="tc-ctl-cbuild-content">
+    <div class="tc-ctl-cbuild-draw tc-hidden"></div>
+    <ul class="tc-ctl-cbuild-list">
+        {#storedMaps}
+        <li data-extent="{extent}">
+            <a href="{url}">{name}</a>
+            <button class="tc-ctl-cbuild-btn-view" title="{@i18n $key="viewMapExtent"/}">{@i18n $key="viewMapExtent"/}</button>
+            <button class="tc-ctl-cbuild-btn-del" title="{@i18n $key="deleteMap"/}">{@i18n $key="deleteMap"/}</button>
+        </li>
+        {/storedMaps}
+    </ul>
+    <div class="tc-ctl-cbuild-new">
+        <button class="tc-button tc-ctl-cbuild-btn-new" disabled title="{@i18n $key="newOfflineMap"/}">{@i18n $key="newOfflineMap"/}...</button>
+    </div>
+    <div class="tc-ctl-cbuild-draw tc-hidden">
+        <div class="tc-ctl-cbuild-tile-cmd">
+            <button class="tc-button tc-ctl-cbuild-btn-cancel" title="{@i18n $key="cancel"/}">{@i18n $key="cancel"/}</button>
+        </div>
+    </div>
+    <div class="tc-ctl-cbuild-progress tc-hidden">
+        <p>{@i18n $key="cb.DownloadingMap|s"/}: <span class="tc-ctl-cbuild-progress-count"></span></p>
+        <div class="tc-ctl-cbuild-progress-bar">
+            <div class="tc-ctl-cbuild-progress-ratio" style="width:0"></div>
+        </div>
+        
+    </div>
+</div>

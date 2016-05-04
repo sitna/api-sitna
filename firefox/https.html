@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>API SITNA - Conexiones seguras en Firefox</title>
+		<link rel="stylesheet" href="../doc/assets/css/main.css">
+		<style type="text/css">
+		em {
+			font-weight: bold;
+			font-style: normal;
+		}
+		#targetContainer {
+			width: 100%;
+		}
+		a.target {
+			text-align: center;
+			font-weight: bold;
+			margin-top: 1em;
+			margin-bottom: 1em;
+			margin-left: auto;
+			margin-right: auto;
+			display: block;
+			width: 50%;
+			border: 1px solid #ccc;
+			background-color: #eee;
+			padding: 0.5em;
+		}
+		a.target:hover {
+			background-color: #fff;
+		}
+		</style>
+		<script>
+            window.onload = function () {
+
+                var getParameterByName = function (name) {
+                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp('[\\?&]' + name + '=([^&#]*)', 'i'),
+                    results = regex.exec(location.search);
+                return results == null ? null : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+
+			var linkSITNA = document.getElementById('linkSITNA');
+			var linkIDENA = document.getElementById('linkIDENA');
+			var linkBk = document.getElementById('linkBk');
+			var fullText = document.getElementsByClassName('sitnaAndIdena');
+			var partialText = document.getElementsByClassName('onlyIdena');
+
+			var referrer = document.referrer || getParameterByName('ref');
+			var partial = getParameterByName('sitna');
+			var hiddenText;
+			var visibleText;
+			if (partial == '1') {
+			    hiddenText = fullText;
+			    visibleText = partialText;
+			}
+			else {
+			    hiddenText = partialText;
+			    visibleText = fullText;
+			}
+			for (var i = 0; i < hiddenText.length; i++) {
+			    hiddenText[i].setAttribute('style', 'display:none');
+			}
+			for (var i = 0; i < visibleText.length; i++) {
+			    visibleText[i].setAttribute('style', '');
+			}
+			linkSITNA.setAttribute('href', linkSITNA.getAttribute('href') + '?' + encodeURIComponent(referrer));
+			linkIDENA.setAttribute('href', linkIDENA.getAttribute('href') + '?' + encodeURIComponent(referrer));
+			linkBk.setAttribute('href', referrer);
+		};
+		</script>
+	</head>
+	<body>
+		<div id="doc">
+			<header class="main-header">
+				<div class="content">
+					<div class="project-title">
+						
+							<img class="logo" src="http://sitna.navarra.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
+						
+						
+							<h1 class="project-name">API SITNA</h1>
+						
+						
+							<p class="description">API de mapas del SITNA</p>
+						
+					</div>
+					<ul class="jump-links">
+						<li><a href="#index" class="index-jump-link">&iacute;ndice</a></li>
+						<li><a href="#top" class="top-jump-link">inicio</a></li>
+					</ul>
+				</div>
+			</header>
+			<div id="bd" class="main-body">
+				<div class="content">
+                    <h1>Conexiones seguras en Firefox</h1>
+                    <p>Para garantizar la seguridad, las conexiones de Internet mediante el protocolo HTTPS exigen un certificado que acredite que el servidor web es quien dice ser.</p>
+                    <p>
+                        Por desgracia, Firefox no reconoce actualmente como dignos de confianza los certificados emitidos por la Fábrica Nacional de Moneda y Timbre, certificados que acreditan varios sitios web
+                        de organismos oficiales de España, como el SITNA o IDENA.
+                        Por esta razón actualmente ni la API de SITNA ni los mapas de IDENA se cargan por defecto en conexiones seguras.
+                    </p>
+                    <p>
+                        Aunque la incidencia está <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=435736" target="_blank">en trámite</a>, no hay prevista resolución a corto plazo.
+                        No obstante, <em>puede hacer que <span class="sitnaAndIdena">la API SITNA y </span>los mapas de IDENA funcionen en Firefox con conexiones seguras</em> siguiendo estos sencillos pasos:
+                    </p>
+                    <ol>
+                        <li>
+                            Pulse <span class="sitnaAndIdena">uno de los enlaces</span><span class="onlyIdena">el enlace</span> bajo estas líneas. Se abrirá una ventana nueva con el mensaje de aviso <code>Esta conexión no está verificada</code>.
+                            Una ventana
+                        </li>
+                        <li>Pulse en la sección <code>Entiendo los riesgos</code>. Se desplegará un texto de advertencia y se mostrará el botón <code>Añadir excepción...</code>.</li>
+                        <li>Pulse el botón <code>Añadir excepción...</code>. Se mostrará un cuadro de diálogo de confirmación.</li>
+                        <li>Asegúrese de que la casilla <code>Guardar esta excepción de manera permanente</code> está marcada y pulse en el botón <code>Confirmar excepción de seguridad</code>.</li>
+                    </ol>
+                    <p>¡Eso es todo! Después de seguir esos pasos puede <a id="linkBk" href="#">volver a la página original</a> y se cargará correctamente.</p>
+                    <div id=#targetContainer">
+                        <a id="linkSITNA" class="target sitnaAndIdena" href="https://sitna.tracasa.es/api/firefox/https-ok.html" target="_blank">Dar acceso seguro a la API SITNA</a>
+                        <a id="linkIDENA" class="target" href="https://idena.tracasa.es/firefox-https-ok.html" target="_blank">Dar acceso seguro a los mapas de IDENA</a>
+                    </div>
+			</div>
+		</div>
+	</body>
+</html>

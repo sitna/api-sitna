@@ -1,0 +1,7 @@
+﻿{#results}
+<li data-layername="{Name}" {?alreadyAdded} data-tooltip="{@i18n $key="layerAlreadyAdded"/}" class="tc-checked" {:else} data-tooltip="{@i18n $key="clickToAddToMap"/}" {/alreadyAdded}>
+    <h5 class="tc-selectable">{Title}</h5>
+    <button class="tc-ctl-lcat-search-btn-info" />
+    <p>{Abstract}</p>
+</li>
+{/results}

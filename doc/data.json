@@ -1,0 +1,1458 @@
+{
+    "project": {
+        "name": "API SITNA",
+        "description": "API de mapas del Gobierno de Navarra",
+        "version": "1.1.2",
+        "url": "http://idena.navarra.es/",
+        "logo": "http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png"
+    },
+    "files": {
+        "jsnlog\\jsnlog.js": {
+            "name": "jsnlog\\jsnlog.js",
+            "modules": {},
+            "classes": {},
+            "fors": {},
+            "namespaces": {}
+        },
+        "sitna.js": {
+            "name": "sitna.js",
+            "modules": {},
+            "classes": {
+                "SITNA.Map": 1,
+                "SITNA.Consts": 1,
+                "SITNA.consts.LayerType": 1,
+                "SITNA.consts.Layer": 1,
+                "SITNA.consts.MimeType": 1,
+                "SITNA.Cfg": 1,
+                "SITNA.cfg.LayerOptions": 1,
+                "SITNA.cfg.MapControlOptions": 1,
+                "SITNA.cfg.ControlOptions": 1,
+                "SITNA.cfg.OverviewMapOptions": 1,
+                "SITNA.cfg.CoordinatesOptions": 1,
+                "SITNA.cfg.ClickOptions": 1,
+                "SITNA.cfg.StreetViewOptions": 1,
+                "SITNA.cfg.StyleOptions": 1,
+                "SITNA.cfg.MarkerStyleOptions": 1,
+                "SITNA.cfg.LineStyleOptions": 1,
+                "SITNA.cfg.PolygonStyleOptions": 1,
+                "SITNA.cfg.MarkerOptions": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        }
+    },
+    "modules": {},
+    "classes": {
+        "SITNA.Map": {
+            "name": "SITNA.Map",
+            "shortname": "SITNA.Map",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 19,
+            "description": "<p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería\nestar dentro de una función de callback pasada como parámetro al método {{#crossLink \"SITNA.Map/loaded:method\"}}{{/crossLink}}.</p>\n<p>Puede consultar también online el <a href=\"../../examples/Map.1.html\">ejemplo 1</a>, el <a href=\"../../examples/Map.2.html\">ejemplo 2</a> y el <a href=\"../../examples/Map.3.html\">ejemplo 3</a>.</p>",
+            "is_constructor": 1,
+            "async": 1,
+            "params": [
+                {
+                    "name": "div",
+                    "description": "Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.",
+                    "type": "HTMLElement|string"
+                },
+                {
+                    "name": "options",
+                    "description": "Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global {{#crossLink \"SITNA.Cfg\"}}{{/crossLink}}.",
+                    "type": "Object",
+                    "optional": true,
+                    "props": [
+                        {
+                            "name": "crs",
+                            "description": "Código EPSG del sistema de referencia espacial del mapa.",
+                            "type": "String",
+                            "optional": true,
+                            "optdefault": "\"EPSG:25830\""
+                        },
+                        {
+                            "name": "initialExtent",
+                            "description": "Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima. \nEsta opción es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver SITNA.Cfg.{{#crossLink \"SITNA.Cfg/crs:property\"}}{{/crossLink}}).\nPara más información consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/initialExtent:property\"}}{{/crossLink}}.",
+                            "type": "Array",
+                            "optional": true
+                        },
+                        {
+                            "name": "maxExtent",
+                            "description": "Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima. Para más información consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/maxExtent:property\"}}{{/crossLink}}.",
+                            "type": "Array",
+                            "optional": true
+                        },
+                        {
+                            "name": "layout",
+                            "description": "URL de una carpeta de maquetación. Consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/layout:property\"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones.",
+                            "type": "String",
+                            "optional": true
+                        },
+                        {
+                            "name": "baseLayers",
+                            "description": "Lista de identificadores de capa o instancias de la clase {{#crossLink \"SITNA.cfg.LayerOptions\"}}{{/crossLink}} para incluir dichas capas como mapas de fondo.",
+                            "type": "Array",
+                            "optional": true
+                        },
+                        {
+                            "name": "workLayers",
+                            "description": "Lista de identificadores de capa o instancias de la clase {{#crossLink \"SITNA.cfg.LayerOptions\"}}{{/crossLink}} para incluir dichas capas como contenido del mapa.",
+                            "type": "Array",
+                            "optional": true
+                        },
+                        {
+                            "name": "defaultBaseLayer",
+                            "description": "Identificador o índice en <code>baseLayers</code> de la capa base por defecto.",
+                            "type": "String|number",
+                            "optional": true
+                        },
+                        {
+                            "name": "controls",
+                            "description": "Opciones de controles de mapa.",
+                            "type": "SITNA.cfg.MapControlOptions",
+                            "optional": true
+                        },
+                        {
+                            "name": "styles",
+                            "description": "Opciones de estilo de entidades geográficas.",
+                            "type": "SITNA.cfg.StyleOptions",
+                            "optional": true
+                        },
+                        {
+                            "name": "mouseWheelZoom",
+                            "description": "La rueda del ratón se puede utilizar para hacer zoom en el mapa.",
+                            "type": "Boolean",
+                            "optional": true
+                        },
+                        {
+                            "name": "proxy",
+                            "description": "URL del proxy utilizado para peticiones a dominios remotos (ver SITNA.Cfg.{{#crossLink \"SITNA.Cfg/proxy:property\"}}{{/crossLink}}).",
+                            "type": "String",
+                            "optional": true
+                        }
+                    ]
+                }
+            ],
+            "example": [
+                "\n    <div id=\"mapa\"/>\n    <script>\n        // Crear un mapa con las opciones por defecto.\n        var map = new SITNA.Map(\"mapa\");\n    </script>",
+                "\n    <div id=\"mapa\"/>\n    <script>\n        // Crear un mapa en el sistema de referencia WGS 84 con el  de mapa de fondo.\n        var map = new SITNA.Map(\"mapa\", {\n            crs: \"EPSG:4326\",\n            initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.\n                -2.84820556640625,\n                41.78912492257675,\n                -0.32135009765625,\n                43.55789822064767\n            ],\n            maxExtent: [\n                -2.84820556640625,\n                41.78912492257675,\n                -0.32135009765625,\n                43.55789822064767\n            ],\n            baseLayers: [\n\t\t\t\tSITNA.Consts.layer.IDENA_DYNBASEMAP\n            ],\n            defaultBaseLayer: SITNA.Consts.layer.IDENA_DYNBASEMAP,\n            // Establecemos el mapa de situación con una capa compatible con WGS 84\n            controls: {\n                overviewMap: {\n                    layer: SITNA.Consts.layer.IDENA_DYNBASEMAP\n                }\n            }\n        });\n    </script>",
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear un mapa que tenga como contenido las capas de toponimia y mallas cartográficas del WMS de IDENA.\n        var map = new SITNA.Map(\"mapa\", {\n            workLayers: [\n                {\n                    id: \"topo_mallas\",\n                    title: \"Toponimia y mallas cartográficas\",\n                    type: SITNA.Consts.layerType.WMS,\n                    url: \"http://idena.navarra.es/ogc/wms\",\n                    layerNames: \"IDENA:toponimia,IDENA:mallas\"\n                }\n            ]\n        });\n    </script>"
+            ]
+        },
+        "SITNA.Consts": {
+            "name": "SITNA.Consts",
+            "shortname": "SITNA.Consts",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 393,
+            "description": "Colección de constantes utilizadas por la API. Se recomienda utilizar las propiedades de esta clase estática para referirse a valores conocidos.\nNo deberían modificarse las propiedades de esta clase.",
+            "static": 1
+        },
+        "SITNA.consts.LayerType": {
+            "name": "SITNA.consts.LayerType",
+            "shortname": "SITNA.consts.LayerType",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 419,
+            "description": "Colección de identificadores de tipo de capa.\nNo se deberían modificar las propiedades de esta clase.",
+            "static": 1
+        },
+        "SITNA.consts.Layer": {
+            "name": "SITNA.consts.Layer",
+            "shortname": "SITNA.consts.Layer",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 456,
+            "description": "Colección de identificadores de capas útiles de IDENA.\nNo se deberían modificar las propiedades de esta clase.",
+            "static": 1
+        },
+        "SITNA.consts.MimeType": {
+            "name": "SITNA.consts.MimeType",
+            "shortname": "SITNA.consts.MimeType",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 517,
+            "description": "Colección de tipos MIME de utilidad.\nNo se deberían modificar las propiedades de esta clase.",
+            "static": 1
+        },
+        "SITNA.Cfg": {
+            "name": "SITNA.Cfg",
+            "shortname": "SITNA.Cfg",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 536,
+            "description": "<p>Configuración general de la API. Cualquier llamada a un método o un constructor de la API sin parámetro de opciones toma las opciones de esta clase. \nHay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase\n(consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/layout:property\"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p><p>La clase es estática.</p>",
+            "static": 1
+        },
+        "SITNA.cfg.LayerOptions": {
+            "name": "SITNA.cfg.LayerOptions",
+            "shortname": "SITNA.cfg.LayerOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 714,
+            "description": "Opciones de capa.\nEsta clase no tiene constructor.",
+            "static": 1
+        },
+        "SITNA.cfg.MapControlOptions": {
+            "name": "SITNA.cfg.MapControlOptions",
+            "shortname": "SITNA.cfg.MapControlOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 784,
+            "description": "<p>Opciones de controles de mapa, define qué controles se incluyen en un mapa y qué opciones se pasan a cada control.\nLas propiedades de esta clase son de tipo boolean, en cuyo caso define la existencia o no del control asociado, o una instancia de la clase {{#crossLink \"SITNA.cfg.ControlOptions\"}}{{/crossLink}}.\nHay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase\n(consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/layout:property\"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p>\n<p>Esta clase no tiene constructor.</p>",
+            "static": 1
+        },
+        "SITNA.cfg.ControlOptions": {
+            "name": "SITNA.cfg.ControlOptions",
+            "shortname": "SITNA.cfg.ControlOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 916,
+            "description": "Opciones de control.\nEsta clase no tiene constructor.",
+            "static": 1
+        },
+        "SITNA.cfg.OverviewMapOptions": {
+            "name": "SITNA.cfg.OverviewMapOptions",
+            "shortname": "SITNA.cfg.OverviewMapOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 928,
+            "description": "Opciones de control de mapa de situación.\nEsta clase no tiene constructor.",
+            "extends": "SITNA.cfg.ControlOptions",
+            "static": 1
+        },
+        "SITNA.cfg.CoordinatesOptions": {
+            "name": "SITNA.cfg.CoordinatesOptions",
+            "shortname": "SITNA.cfg.CoordinatesOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 941,
+            "description": "<p>Opciones de control de coordenadas.\nEsta clase no tiene constructor.</p>\n<p>Puede consultar el ejemplo <a href=\"../../examples/cfg.CoordinatesOptions.html\">online</a>.</p>",
+            "extends": "SITNA.cfg.ControlOptions",
+            "static": 1
+        },
+        "SITNA.cfg.ClickOptions": {
+            "name": "SITNA.cfg.ClickOptions",
+            "shortname": "SITNA.cfg.ClickOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 965,
+            "description": "Opciones de control de clic.\nEsta clase no tiene constructor.\n<p>Estas opciones se utilizan si se desea tener un control en el mapa que reaccione a los clic del ratón o los toques en el mapa.</p>\n<p>Puede consultar el ejemplo <a href=\"../../examples/cfg.ClickOptions.html\">online</a>.</p>",
+            "extends": "SITNA.cfg.ControlOptions",
+            "static": 1
+        },
+        "SITNA.cfg.StreetViewOptions": {
+            "name": "SITNA.cfg.StreetViewOptions",
+            "shortname": "SITNA.cfg.StreetViewOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 1001,
+            "description": "Opciones de control de Google StreetView.\nEsta clase no tiene constructor.\n<p>Para incrustar StreetView en el visor se utiliza la versión 3 de la API de Google Maps. Esta se carga automáticamente al instanciar el control.</p>\n<p>Puede consultar el ejemplo <a href=\"../../examples/cfg.StreetViewOptions.html\">online</a>.</p>",
+            "extends": "SITNA.cfg.ControlOptions",
+            "static": 1
+        },
+        "SITNA.cfg.StyleOptions": {
+            "name": "SITNA.cfg.StyleOptions",
+            "shortname": "SITNA.cfg.StyleOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 1108,
+            "description": "Opciones de estilo de entidades geográficas.\nEsta clase no tiene constructor.",
+            "static": 1
+        },
+        "SITNA.cfg.MarkerStyleOptions": {
+            "name": "SITNA.cfg.MarkerStyleOptions",
+            "shortname": "SITNA.cfg.MarkerStyleOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 1130,
+            "description": "<p>Opciones de estilo de marcador (punto de mapa con icono).\nHay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase\n(consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/layout:property\"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>",
+            "static": 1
+        },
+        "SITNA.cfg.LineStyleOptions": {
+            "name": "SITNA.cfg.LineStyleOptions",
+            "shortname": "SITNA.cfg.LineStyleOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 1162,
+            "description": "<p>Opciones de estilo de línea. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase\n(consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/layout:property\"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>",
+            "static": 1
+        },
+        "SITNA.cfg.PolygonStyleOptions": {
+            "name": "SITNA.cfg.PolygonStyleOptions",
+            "shortname": "SITNA.cfg.PolygonStyleOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 1181,
+            "description": "<p>Opciones de estilo de polígono. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase\n(consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/layout:property\"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>",
+            "extends": "SITNA.cfg.LineStyleOptions",
+            "static": 1
+        },
+        "SITNA.cfg.MarkerOptions": {
+            "name": "SITNA.cfg.MarkerOptions",
+            "shortname": "SITNA.cfg.MarkerOptions",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "file": "sitna.js",
+            "line": 1201,
+            "description": "<p>Opciones de marcador. El icono se obtiene de las propiedades {{#crossLink \"SITNA.cfg.MarkerOptions/url:property\"}}{{/crossLink}}, \n{{#crossLink \"SITNA.cfg.MarkerOptions/cssClass:property\"}}{{/crossLink}} y {{#crossLink \"SITNA.cfg.MarkerOptions/group:property\"}}{{/crossLink}}, por ese orden de preferencia.</p>\n<p>Esta clase no tiene constructor.</p>",
+            "extends": "SITNA.cfg.MarkerStyleOptions",
+            "static": 1
+        }
+    },
+    "classitems": [
+        {
+            "file": "jsnlog\\jsnlog.js",
+            "line": 96,
+            "description": "Copies the value of a property from one object to the other.\nThis is used to copy property values as part of setOption for loggers and appenders.\n\nBecause loggers inherit property values from their parents, it is important never to\ncreate a property on a logger if the intent is to inherit from the parent.\n\nCopying rules:\n1) if the from property is undefined (for example, not mentioned in a JSON object), the\nto property is not affected at all.\n2) if the from property is null, the to property is deleted (so the logger will inherit from\nits parent).\n3) Otherwise, the from property is copied to the to property.",
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "jsnlog\\jsnlog.js",
+            "line": 121,
+            "description": "Returns true if a log should go ahead.\nDoes not check level.",
+            "params": [
+                {
+                    "name": "filters\nFilters",
+                    "description": "that determine whether a log can go ahead."
+                }
+            ],
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "jsnlog\\jsnlog.js",
+            "line": 168,
+            "description": "Returns true if a log should go ahead, based on the message.",
+            "params": [
+                {
+                    "name": "filters\nFilters",
+                    "description": "that determine whether a log can go ahead."
+                },
+                {
+                    "name": "message\nMessage",
+                    "description": "to be logged."
+                }
+            ],
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "jsnlog\\jsnlog.js",
+            "line": 407,
+            "description": "Called by a logger to log a log item.\nIf in response to this call one or more log items need to be processed\n(eg., sent to the server), this method calls this.sendLogItems\nwith an array with all items to be processed.\n\nNote that the name and parameters of this function must match those of the log function of\na Winston transport object, so that users can use these transports as appenders.\nThat is why there are many parameters that are not actually used by this function.\n\nlevel - string with the level (\"trace\", \"debug\", etc.) Only used by Winston transports.\nmsg - human readable message. Undefined if the log item is an object. Only used by Winston transports.\nmeta - log object. Always defined, because at least it contains the logger name. Only used by Winston transports.\ncallback - function that is called when the log item has been logged. Only used by Winston transports.\nlevelNbr - level as a number. Not used by Winston transports.\nmessage - log item. If the user logged an object, this is the JSON string.  Not used by Winston transports.\nloggerName: name of the logger.  Not used by Winston transports.",
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "sitna.js",
+            "line": 98,
+            "description": "<p>Añade una capa al mapa. Si se le pasa una instancia de la clase {{#crossLink \"SITNA.cfg.LayerOptions\"}}{{/crossLink}} como parámetro <code>layer</code> y tiene definida \nla propiedad SITNA.cfg.LayerOptions.{{#crossLink \"SITNA.cfg.LayerOptions/url:property\"}}{{/crossLink}}, establece por defecto el tipo de capa a \n{{#crossLink \"SITNA.consts.LayerType/KML:property\"}}{{/crossLink}} si la URL acaba en \".kml\".\nEl tipo de la capa no puede ser {{#crossLink \"SITNA.consts.LayerType/WFS:property\"}}{{/crossLink}}.</p>\n<p>Puede consultar también online el <a href=\"../../examples/Map.addLayer.1.html\">ejemplo 1</a> y el <a href=\"../../examples/Map.addLayer.2.html\">ejemplo 2</a>.</p>",
+            "itemtype": "method",
+            "name": "addLayer",
+            "async": 1,
+            "params": [
+                {
+                    "name": "layer",
+                    "description": "Identificador de capa u objeto de opciones de capa.",
+                    "type": "string|SITNA.cfg.LayerOptions"
+                },
+                {
+                    "name": "callback",
+                    "description": "Función a la que se llama tras ser añadida la capa.",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "example": [
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear un mapa con las opciones por defecto.\n        var map = new SITNA.Map(\"mapa\");\n        // Cuando esté todo cargado proceder a trabajar con el mapa.\n        map.loaded(function () {\n            // Añadir al mapa la capa de cartografía topográfica de IDENA\n            map.addLayer(SITNA.Consts.layer.IDENA_CARTO);\n        });\n    </script>",
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear un mapa con las opciones por defecto.\n        var map = new SITNA.Map(\"mapa\");\n\n        // Cuando esté todo cargado proceder a trabajar con el mapa.\n        map.loaded(function () {\n            // Añadir al mapa un documento KML\n            map.addLayer({\n                id: \"capa_kml\",\n                title: \"Museos en Navarra\",\n                type: SITNA.Consts.layerType.KML,\n                url: \"data/MUSEOSNAVARRA.kml\"\n            });\n        });\n    </script>"
+            ],
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "sitna.js",
+            "line": 142,
+            "description": "<p>Hace visible una capa como mapa de fondo. Esta capa debe existir previamente en la lista de mapas de fondo del mapa.</p>\n<p>Puede consultar también online el <a href=\"../../examples/Map.setBaseLayer.1.html\">ejemplo 1</a> y el <a href=\"../../examples/Map.setBaseLayer.2.html\">ejemplo 2</a>.</p>",
+            "itemtype": "method",
+            "name": "setBaseLayer",
+            "async": 1,
+            "params": [
+                {
+                    "name": "layer",
+                    "description": "Identificador de capa u objeto de opciones de capa.",
+                    "type": "string|SITNA.cfg.LayerOptions"
+                },
+                {
+                    "name": "callback",
+                    "description": "Función al que se llama tras ser establecida la capa como mapa de fondo.",
+                    "type": "Function",
+                    "optional": true
+                }
+            ],
+            "example": [
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear mapa con opciones por defecto. Esto incluye la capa del catastro de Navarra entre los mapas de fondo.\n        var map = new SITNA.Map(\"mapa\");\n        // Cuando esté todo cargado establecer como mapa de fondo visible el catastro de Navarra.\n        map.loaded(function () {\n            map.setBaseLayer(SITNA.Consts.layer.IDENA_CADASTER);\n        });\n    </script>",
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear mapa con opciones por defecto.\n        var map = new SITNA.Map(\"mapa\");\n        // Cuando el mapa esté cargado, añadir la ortofoto de 1956/1957 como mapa de fondo y establecerla como mapa de fondo visible.\n        map.loaded(function () {\n            map.addLayer({\n                id: \"orto_56_57\",\n                title: \"Ortofoto de 1956/1957\",\n                url: \"http://idena.navarra.es/ogc/wms\",\n                layerNames: \"ortofoto_10000_1957\",\n                isBase: true\n            }, function () {\n                map.setBaseLayer(\"orto_56_57\");\n            });\n        });\n    </script>"
+            ],
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "sitna.js",
+            "line": 182,
+            "description": "Añade un marcador (un punto asociado a un icono) al mapa.\n<p>Puede consultar también online el <a href=\"../../examples/Map.addMarker.1.html\">ejemplo 1</a>, el <a href=\"../../examples/Map.addMarker.2.html\">ejemplo 2</a>,\nel <a href=\"../../examples/Map.addMarker.3.html\">ejemplo 3</a> y el <a href=\"../../examples/Map.addMarker.4.html\">ejemplo 4</a>.</p>",
+            "itemtype": "method",
+            "name": "addMarker",
+            "async": 1,
+            "params": [
+                {
+                    "name": "coords",
+                    "description": "Coordenadas x e y del punto en las unidades del sistema de referencia del mapa.",
+                    "type": "Array"
+                },
+                {
+                    "name": "options",
+                    "description": "Objeto de opciones de marcador.",
+                    "type": "Object",
+                    "optional": true,
+                    "props": [
+                        {
+                            "name": "group",
+                            "description": "<p>Nombre de grupo en el que incluir el marcador. Estos grupos se muestran en la tabla de contenidos y en la leyenda.</p>\n<p>Todos los marcadores pertenecientes al mismo grupo tienen el mismo icono. Los iconos se asignan automáticamente, rotando por la lista disponible en\nSITNA.cfg.MarkerStyleOptions.{{#crossLink \"SITNA.cfg.MarkerStyleOptions/classes:property\"}}{{/crossLink}}.</p>",
+                            "type": "String",
+                            "optional": true
+                        },
+                        {
+                            "name": "cssClass",
+                            "description": "Nombre de clase CSS. El marcador adoptará como icono el valor del atributo <code>background-image</code> de dicha clase.",
+                            "type": "String",
+                            "optional": true
+                        },
+                        {
+                            "name": "url",
+                            "description": "URL de archivo de imagen que será el icono del marcador.",
+                            "type": "String",
+                            "optional": true
+                        },
+                        {
+                            "name": "width",
+                            "description": "Anchura en píxeles del icono del marcador.",
+                            "type": "Number",
+                            "optional": true
+                        },
+                        {
+                            "name": "height",
+                            "description": "Altura en píxeles del icono del marcador.",
+                            "type": "Number",
+                            "optional": true
+                        },
+                        {
+                            "name": "anchor",
+                            "description": "Coordenadas proporcionales (entre 0 y 1) del punto de anclaje del icono al punto del mapa. La coordenada [0, 0] es la esquina superior izquierda del icono.",
+                            "type": "Array",
+                            "optional": true
+                        },
+                        {
+                            "name": "data",
+                            "description": "Objeto de datos en pares clave/valor para mostrar cuando se pulsa sobre el marcador. Si un valor es una URL, se mostrará como un enlace.",
+                            "type": "Object",
+                            "optional": true
+                        },
+                        {
+                            "name": "showPopup",
+                            "description": "Al añadirse el marcador al mapa se muestra con el bocadillo de información asociada visible por defecto.",
+                            "type": "Boolean",
+                            "optional": true
+                        },
+                        {
+                            "name": "layer",
+                            "description": "Identificador de capa de tipo SITNA.consts.LayerType.{{#crossLink \"SITNA.consts.LayerType/VECTOR:property\"}}{{/crossLink}} en la que se añadirá el marcador. Si no se especifica se creará una capa específica para marcadores.",
+                            "type": "String",
+                            "optional": true
+                        }
+                    ]
+                }
+            ],
+            "example": [
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear mapa.\n        var map = new SITNA.Map(\"mapa\");\n\n        // Cuando esté todo cargado proceder a trabajar con el mapa.\n        map.loaded(function () {\n            // Añadir un marcador.\n            map.addMarker([610749, 4741648]);\n\t\t\t// Centrar el mapa en el marcador.\n\t\t\tmap.zoomToMarkers();\n        });\n    </script>",
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear mapa.\n        var map = new SITNA.Map(\"mapa\");\n\n        // Cuando esté todo cargado proceder a trabajar con el mapa.\n        map.loaded(function () {\n            // Añadir marcadores al grupo \"Marcadores colgantes\" cuyo icono se ancle al punto en el centro hacia abajo. Establecer un icono adecuado.\n            var markerOptions = {\n                group: \"Marcadores colgantes\",\n                url: \"data/colgante.png\",\n                anchor: [0.5, 0]\n            };\n            map.addMarker([610887, 4741244], markerOptions);\n            map.addMarker([615364, 4657556], markerOptions);\n\t\t\t// Centrar el mapa en los marcadores.\n\t\t\tmap.zoomToMarkers();\n        });\n    </script>",
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear un mapa con una capa vectorial, centrado en la Ciudadela de Pamplona.\n        var map = new SITNA.Map(\"mapa\", {\n            initialExtent: [\n                609627,\n                4740225,\n                611191,\n                4741395\n            ],\n            workLayers: [{\n                id: \"markers\",\n                title: \"Marcadores geográficos\",\n                type: SITNA.Consts.layerType.VECTOR\n            }]\n        });\n        // Cuando esté todo cargado proceder a trabajar con el mapa.\n        map.loaded(function () {\n            // Añadir un marcador en la capa \"markers\", asignarle un grupo para que salga en tabla de contenidos y leyenda.\n            map.addMarker([610431, 4740837], {\n                layer: \"markers\",\n                group: \"Ciudadela\"\n            });\n        });\n    </script>",
+                "\n    <style type=\"text/css\">\n        .kiosko {\n            background-image: url(\"data/icono-kiosko.png\");\n        }\n    </style>\n    <div id=\"mapa\"></div>\n    <script>\n        // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, lo cambiamos por SITNA.Consts.layer.IDENA_DYNBASEMAP.\n        SITNA.Cfg.baseLayers[0] = SITNA.Consts.layer.IDENA_DYNBASEMAP;\n        SITNA.Cfg.defaultBaseLayer = SITNA.Consts.layer.IDENA_DYNBASEMAP;\n        // Añadir información emergente al mapa.\n        SITNA.Cfg.controls.popup = true;\n\n        // Crear un mapa en el sistema de referencia WGS 84.\n        var map = new SITNA.Map(\"mapa\", {\n            crs: \"EPSG:4326\",\n            initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.\n                -2.84820556640625,\n                41.78912492257675,\n                -0.32135009765625,\n                43.55789822064767\n            ],\n            maxExtent: [\n                -2.84820556640625,\n                41.78912492257675,\n                -0.32135009765625,\n                43.55789822064767\n            ],\n            // Establecemos el mapa de situación con una capa compatible con WGS 84\n            controls: {\n                overviewMap: {\n                    layer: SITNA.Consts.layer.IDENA_DYNBASEMAP\n                }\n            }\n        });\n        // Cuando esté todo cargado proceder a trabajar con el mapa.\n        map.loaded(function () {\n            // Añadir un marcador con un icono de 40x40 píxeles definido por la clase CSS kiosko. Asignarle unos datos asociados que se muestren por defecto.\n            map.addMarker([-1.605691, 42.060453], { // Coordenadas en grados decimales porque el mapa está en WGS 84.\n                cssClass: \"kiosko\",\n                width: 40,\n                height: 40,\n                data: {\n                    \"Nombre\": \"Plaza de la Constitución, Tudela\",\n                    \"Sitio web\": \"http://www.tudela.es/\"\n                },\n                showPopup: true\n            });\n\t\t\t// Centrar el mapa en el marcador.\n\t\t\tmap.zoomToMarkers();\n        });\n    </script>"
+            ],
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "sitna.js",
+            "line": 319,
+            "description": "Centra y escala el mapa a la extensión que ocupan todos sus marcadores.\n<p>Puede consultar también el ejemplo <a href=\"../../examples/Map.zoomToMarkers.html\">online</a>.</p>",
+            "itemtype": "method",
+            "name": "zoomToMarkers",
+            "params": [
+                {
+                    "name": "options",
+                    "description": "Objeto de opciones de zoom.",
+                    "type": "Object",
+                    "optional": true,
+                    "props": [
+                        {
+                            "name": "pointBoundsRadius",
+                            "description": "Radio en metros del área alrededor del marcador que se respetará al hacer zoom.",
+                            "type": "Number",
+                            "optional": true,
+                            "optdefault": "30"
+                        },
+                        {
+                            "name": "extentMargin",
+                            "description": "Tamaño del margen que se aplicará a la extensión total de todas los marcadores. \nEl valor es la relación de crecimiento en ancho y alto entre la extensión resultante y la original. Por ejemplo, 0,2 indica un crecimiento del 20% de la extensión, 10% por cada lado.",
+                            "type": "Number",
+                            "optional": true,
+                            "optdefault": "0.2"
+                        }
+                    ]
+                }
+            ],
+            "async": 1,
+            "example": [
+                "\n    <div class=\"controls\">\n        <div><button id=\"addMarkerBtn\">Añadir marcador aleatorio</button></div>\n        <div><input type=\"number\" step=\"1\" id=\"pbrVal\" value=\"30\" /> <label for=\"pbrVal\">pointBoundsRadius</label></div>\n        <div><input type=\"number\" step=\"0.1\" id=\"emVal\" value=\"0.2\" /> <label for=\"emVal\">extentMargin</label></div>\n        <div><button id=\"zoomBtn\">Hacer zoom a los marcadores</button></div>\n    </div>\n    <div id=\"mapa\"></div>\n    <script>\n        // Crear mapa.\n        var map = new SITNA.Map(\"mapa\");\n\n        // Añadir un marcador en un punto aleatorio\n        var addRandomMarker = function () {\n            var xmin = SITNA.Cfg.initialExtent[0];\n            var ymin = SITNA.Cfg.initialExtent[1];\n            var width = SITNA.Cfg.initialExtent[2] - SITNA.Cfg.initialExtent[0];\n            var height = SITNA.Cfg.initialExtent[3] - SITNA.Cfg.initialExtent[1];\n            map.addMarker([xmin + Math.random() * width, ymin + Math.random() * height]);\n        };\n\n        // Hacer zoom a los marcadores con las opciones elegidas\n        var zoomToMarkers = function () {\n            map.zoomToMarkers({\n                pointBoundsRadius: parseInt(document.getElementById(\"pbrVal\").value),\n                extentMargin: parseFloat(document.getElementById(\"emVal\").value)\n            });\n        };\n\n        document.getElementById(\"addMarkerBtn\").addEventListener(\"click\", addRandomMarker);\n        document.getElementById(\"zoomBtn\").addEventListener(\"click\", zoomToMarkers);\n    </script>"
+            ],
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "sitna.js",
+            "line": 365,
+            "description": "Añade una función de callback que se ejecutará cuando el mapa, sus controles y todas sus capas se hayan cargado.",
+            "itemtype": "method",
+            "name": "loaded",
+            "async": 1,
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Función a la que se llama tras la carga del mapa.",
+                    "type": "Function"
+                }
+            ],
+            "example": [
+                "\n     // Notificar cuando se haya cargado el mapa.\n     map.loaded(function () { \n         console.log(\"Código del mapa y de sus controles cargado, cargando datos...\");\n     });"
+            ],
+            "class": "SITNA.Map"
+        },
+        {
+            "file": "sitna.js",
+            "line": 400,
+            "description": "Identificadores de capas útiles de IDENA.",
+            "itemtype": "property",
+            "name": "layer",
+            "type": "SITNA.consts.Layer",
+            "final": 1,
+            "class": "SITNA.Consts"
+        },
+        {
+            "file": "sitna.js",
+            "line": 406,
+            "description": "Identificadores de tipo de capa.",
+            "itemtype": "property",
+            "name": "layerType",
+            "type": "SITNA.consts.LayerType",
+            "final": 1,
+            "class": "SITNA.Consts"
+        },
+        {
+            "file": "sitna.js",
+            "line": 412,
+            "description": "Tipos MIME de utilidad.",
+            "itemtype": "property",
+            "name": "mimeType",
+            "type": "SITNA.consts.MimeType",
+            "final": 1,
+            "class": "SITNA.Consts"
+        },
+        {
+            "file": "sitna.js",
+            "line": 425,
+            "description": "Identificador de capa de tipo WMS.",
+            "itemtype": "property",
+            "name": "WMS",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.LayerType"
+        },
+        {
+            "file": "sitna.js",
+            "line": 431,
+            "description": "Identificador de capa de tipo WMTS.",
+            "itemtype": "property",
+            "name": "WMTS",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.LayerType"
+        },
+        {
+            "file": "sitna.js",
+            "line": 437,
+            "description": "Identificador de capa de tipo WFS.",
+            "itemtype": "property",
+            "name": "WFS",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.LayerType"
+        },
+        {
+            "file": "sitna.js",
+            "line": 443,
+            "description": "Identificador de capa de tipo KML.",
+            "itemtype": "property",
+            "name": "KML",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.LayerType"
+        },
+        {
+            "file": "sitna.js",
+            "line": 449,
+            "description": "Identificador de capa de tipo vectorial. Este tipo de capa es la que se utiliza para dibujar marcadores.",
+            "itemtype": "property",
+            "name": "VECTOR",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.LayerType"
+        },
+        {
+            "file": "sitna.js",
+            "line": 462,
+            "description": "Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.",
+            "itemtype": "property",
+            "name": "IDENA_ORTHOPHOTO",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 468,
+            "description": "Identificador de la capa de mapa base del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.",
+            "itemtype": "property",
+            "name": "IDENA_BASEMAP",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 474,
+            "description": "Identificador de la capa de catastro del WMS de IDENA.",
+            "itemtype": "property",
+            "name": "IDENA_CADASTER",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 480,
+            "description": "Identificador de la capa de cartografía topográfica del WMS de IDENA.",
+            "itemtype": "property",
+            "name": "IDENA_CARTO",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 486,
+            "description": "Identificador de la capa de la combinación de ortofoto 2014 y mapa base del WMS de IDENA.",
+            "itemtype": "property",
+            "name": "IDENA_BASEMAP_ORTHOPHOTO",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 492,
+            "description": "Identificador de la capa de relieve en blanco y negro del WMS de IDENA.",
+            "itemtype": "property",
+            "name": "IDENA_BW_RELIEF",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 498,
+            "description": "Identificador de la capa de mapa base del WMS de IDENA.",
+            "itemtype": "property",
+            "name": "IDENA_DYNBASEMAP",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 504,
+            "description": "Identificador de la capa de ortofoto 2012 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.",
+            "itemtype": "property",
+            "name": "IDENA_ORTHOPHOTO2012",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 510,
+            "description": "Identificador de una capa en blanco.",
+            "itemtype": "property",
+            "name": "BLANK",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.Layer"
+        },
+        {
+            "file": "sitna.js",
+            "line": 523,
+            "description": "Tipo MIME de imagen PNG.",
+            "itemtype": "property",
+            "name": "PNG",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.MimeType"
+        },
+        {
+            "file": "sitna.js",
+            "line": 529,
+            "description": "Tipo MIME de imagen JPEG.",
+            "itemtype": "property",
+            "name": "JPEG",
+            "type": "string",
+            "final": 1,
+            "class": "SITNA.consts.MimeType"
+        },
+        {
+            "file": "sitna.js",
+            "line": 544,
+            "description": "<p>URL del proxy utilizado para peticiones a dominios remotos.</p>\n<p>Debido a restricciones de seguridad implementadas en Javascript, a través de <code>XMLHttpRequest</code> no es posible obtener información de dominios distintos al de la página web.</p>\n<p>Hay dos maneras de solventar esta restricción. La primera es que el servidor remoto permita el acceso entre dominios estableciendo la cabecera <code>Access-Control-Allow-Origin</code> a \nla respuesta HTTP. Dado que esta solución la implementan terceras personas (los administradores del dominio remoto), no siempre es aplicable.</p>\n<p>La segunda solución es desplegar en el dominio propio un proxy. Un proxy es un servicio que recibe peticiones HTTP y las redirige a otra URL.</p>\n<p>Si la propiedad <code>proxy</code> está establecida, todas las peticiones a dominios remotos las mandará al proxy para que este las redirija. De esta manera no infringimos las reglas de\nseguridad de Javascript, dado que el proxy está alojado en el dominio propio.</p>",
+            "itemtype": "property",
+            "name": "proxy",
+            "type": "string",
+            "default": "\"\"",
+            "example": [
+                "\n     SITNA.Cfg.proxy = \"\"; // Las peticiones a http://www.otrodominio.com se hacen directamente\n\n     SITNA.Cfg.proxy = \"/cgi-bin/proxy.cgi?url=\"; // Las peticiones a http://www.otrodominio.com se convierten en peticiones a /cgi-bin/proxy.cgi?url=http://www.otrodominio.com"
+            ],
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 560,
+            "description": "<p>Código EPSG del sistema de referencia espacial del mapa.</p>\n<p>Puede consultar el ejemplo <a href=\"../../examples/Cfg.crs.html\">online</a>.</p>",
+            "itemtype": "property",
+            "name": "crs",
+            "type": "string",
+            "default": "\"EPSG:25830\"",
+            "example": [
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, lo cambiamos por SITNA.Consts.layer.IDENA_DYNBASEMAP.\n        SITNA.Cfg.baseLayers[0] = SITNA.Consts.layer.IDENA_DYNBASEMAP;\n        SITNA.Cfg.defaultBaseLayer = SITNA.Consts.layer.IDENA_DYNBASEMAP;\n\n        // WGS 84\n        SITNA.Cfg.crs = \"EPSG:4326\";\n        // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.\n        SITNA.Cfg.initialExtent = [-2.848205, 41.789124, -0.321350, 43.557898];\n        SITNA.Cfg.maxExtent = [-2.848205, 41.789124, -0.321350, 43.557898];\n\n        var map = new SITNA.Map(\"mapa\", {\n            // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, establecer la capa SITNA.Consts.layer.IDENA_DYNBASEMAP en el control de mapa de situación.\n            controls: {\n                overviewMap: {\n                    layer: SITNA.Consts.layer.IDENA_DYNBASEMAP\n                }\n            }\n        });\n    </script>"
+            ],
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 589,
+            "description": "Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima. Estos valores deben estar en las unidades definidas por \nel sistema de referencia espacial del mapa. Por defecto la extensión es la de Navarra.",
+            "itemtype": "property",
+            "name": "initialExtent",
+            "type": "array",
+            "default": "[541084.221, 4640788.225, 685574.4632, 4796618.764]",
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 596,
+            "description": "Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima, de forma que el centro del mapa nunca saldrá fuera de estos límites. Estos valores deben estar en las unidades definidas por \nel sistema de referencia espacial del mapa. Por defecto la extensión es la de Navarra y sus alrededores.",
+            "itemtype": "property",
+            "name": "maxExtent",
+            "type": "array",
+            "default": "[480408, 4599748, 742552, 4861892]",
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 603,
+            "description": "<p>La rueda de scroll del ratón se puede utilizar para hacer zoom en el mapa.</p>",
+            "itemtype": "property",
+            "name": "mouseWheelZoom",
+            "type": "boolean",
+            "default": "true",
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 609,
+            "description": "<p>Tolerancia en pixels a las consultas de información de capa.</p>\n<p>En ciertas capas, por ejemplo las que representan geometrías de puntos, puede ser difícil pulsar precisamente en el punto donde está la entidad geográfica que interesa.\nLa propiedad <code>pixelTolerance</code> define un área de un número de pixels hacia cada lado del punto de pulsación, de forma que toda entidad geográfica que se interseque con ese área se incluye en el resultado de la consulta.</p>\n<p>Por ejemplo, si el valor establecido es 10, toda entidad geográfica que esté dentro de un cuadrado de 21 pixels de lado (10 pixels por cuadrante más el pixel central) centrado en el punto de pulsación \nse mostrará en el resultado.</p>\n<p><em>A tener en cuenta:</em> Esta propiedad establece el valor de los llamados \"parámetros de vendedor\" que los servidores de mapas admiten para modificar el comportamiento de las peticiones\n<code>getFeatureInfo</code> del standard WMS. Pero este comportamiento puede ser modificado también por otras circunstancias, como los estilos aplicados a las capas en el servidor. \nComo estas circunstancias están fuera del ámbito de alcance de esta API, es posible que los resultados obtenidos desde algún servicio WMS sean inesperados en lo referente a <code>pixelTolerance</code>.</p>",
+            "itemtype": "property",
+            "name": "pixelTolerance",
+            "type": "number",
+            "default": "10",
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 622,
+            "description": "<p>Lista de objetos de definición de capa (instancias de la clase {{#crossLink \"SITNA.cfg.LayerOptions\"}}{{/crossLink}}) para incluir dichas capas como mapas de fondo.</p>\n<p>Puede consultar el ejemplo <a href=\"../../examples/Cfg.baseLayers.html\">online</a>.</p>",
+            "itemtype": "property",
+            "name": "baseLayers",
+            "type": "array",
+            "default": "La lista incluye las siguientes capas de IDENA: Ortofoto 2014 (capa por defecto), Mapa base, Catastro, Cartografía topográfica.",
+            "example": [
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Establecer un proxy porque se hacen peticiones a otro dominio.\n        SITNA.Cfg.proxy = \"proxy.ashx?\";\n\n        // Añadir PNOA y establecerla como mapa de fondo por defecto.\n        SITNA.Cfg.baseLayers.push({\n            id: \"PNOA\",\n            url: \"http://www.ign.es/wms-inspire/pnoa-ma\",\n            layerNames: \"OI.OrthoimageCoverage\",\n            isBase: true\n        });\n        SITNA.Cfg.defaultBaseLayer = \"PNOA\";\n\n        var map = new SITNA.Map(\"mapa\");\n    </script>"
+            ],
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 646,
+            "description": "Identificador de la capa base por defecto o índice de la capa base por defecto en la lista de capas base del mapa (Consultar SITNA.Cfg.{{#crossLink \"SITNA.Cfg/baseLayers:property\"}}{{/crossLink}}).",
+            "itemtype": "property",
+            "name": "defaultBaseLayer",
+            "type": "string|number",
+            "default": "SITNA.consts.Layer.IDENA_ORTHOPHOTO",
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 652,
+            "description": "<p>Lista de objetos de definición de capa (instancias de la clase {{#crossLink \"SITNA.cfg.LayerOptions\"}}{{/crossLink}}) para incluir dichas capas como contenido del mapa.</p>\n<p>Puede consultar el ejemplo <a href=\"../../examples/Cfg.workLayers.html\">online</a>.</p>",
+            "itemtype": "property",
+            "name": "workLayers",
+            "type": "array",
+            "default": "[]",
+            "example": [
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Establecer un proxy porque se hacen peticiones a otro dominio.\n        SITNA.Cfg.proxy = \"proxy.ashx?\";\n\n        SITNA.Cfg.workLayers = [{\n            id: \"csantiago\",\n            title: \"Camino de Santiago\",\n            url: \"http://www.ign.es/wms-inspire/camino-santiago\",\n            layerNames: \"PS.ProtectedSite,GN.GeographicalNames,AU.AdministrativeUnit\"\n        }];\n        var map = new SITNA.Map(\"mapa\");\n    </script>"
+            ],
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 673,
+            "description": "Opciones de controles de mapa.",
+            "itemtype": "property",
+            "name": "controls",
+            "type": "SITNA.cfg.MapControlOptions",
+            "default": "Se incluyen controles de indicador de espera de carga, atribución, indicador de coordenadas.",
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 679,
+            "description": "<p>URL de la carpeta de maquetación. Para prescindir de maquetación, establecer esta propiedad a <code>null</code>.</p>\n<p>La API busca en la carpeta de maquetación los siguientes archivos:</p>\n<ul>\n     <li><code>markup.html</code>, con código HTML que se inyectará en el elemento del DOM del mapa.</li>\n     <li><code>config.json</code>, con un objeto JSON que sobreescribirá propiedades de {{#crossLink \"SITNA.Cfg\"}}{{/crossLink}}.</li>\n     <li><code>style.css</code>, para personalizar el estilo del visor y sus controles.</li>\n     <li><code>script.js</code>, para añadir lógica nueva. Este es el lugar idóneo para la lógica de la nueva interfaz definida por el marcado inyectado con <code>markup.html</code>.</li>\n     <li><code>ie8.css</code>, para adaptar el estilo a Internet Explorer 8, dado que este navegador tiene soporte CSS3 deficiente.</li>\n </ul>\n<p>Todos estos archivos son opcionales.</p><p>La maquetación por defecto añade los siguientes controles al conjunto por defecto: <code>navBar</code>, <code>basemapSelector</code>, \n<code>TOC</code>, <code>legend</code>, <code>scaleBar</code>, <code>search</code>, <code>measure</code>, <code>overviewMap</code> y <code>popup</code>. Puede <a href=\"../../tc/layout/responsive/responsive.zip\">descargar la maquetación por defecto</a>.</p>\n<p>Puede consultar el ejemplo <a href=\"../../examples/Cfg.layout.html\">online</a>. \nSus archivos de maquetación son <a href=\"../../examples/layout/example/markup.html\">markup.html</a>, <a href=\"../../examples/layout/example/config.json\">config.json</a> y \n<a href=\"../../examples/layout/example/style.css\">style.css</a>.</p>",
+            "itemtype": "property",
+            "name": "layout",
+            "type": "string",
+            "default": "\"//sitna.tracasa.es/api/tc/layout/responsive\"",
+            "example": [
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Establecer un proxy porque se hacen peticiones a otro dominio.\n        SITNA.Cfg.proxy = \"proxy.ashx?\";\n\n        SITNA.Cfg.layout = \"layout/example\";\n        var map = new SITNA.Map(\"mapa\");\n    </script>"
+            ],
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 708,
+            "description": "Opciones de estilo de entidades geográficas.",
+            "itemtype": "property",
+            "name": "styles",
+            "type": "SITNA.cfg.StyleOptions",
+            "class": "SITNA.Cfg"
+        },
+        {
+            "file": "sitna.js",
+            "line": 720,
+            "description": "Identificador único de capa.",
+            "itemtype": "property",
+            "name": "id",
+            "type": "string",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 725,
+            "description": "Título de capa. Este valor se mostrará en la tabla de contenidos y la leyenda.",
+            "itemtype": "property",
+            "name": "title",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 730,
+            "description": "Tipo de capa. Si no se especifica se considera que la capa es WMS. La lista de valores posibles está definida en {{#crossLink \"SITNA.consts.LayerType\"}}{{/crossLink}}.",
+            "itemtype": "property",
+            "name": "type",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 735,
+            "description": "URL del servicio OGC o del archivo KML que define la capa. Propiedad obligatoria en capas de tipo WMS, WMTS, WFS y KML.",
+            "itemtype": "property",
+            "name": "url",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 740,
+            "description": "Lista separada por comas de los nombres de capa del servicio OGC.",
+            "itemtype": "property",
+            "name": "layerNames",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 745,
+            "description": "Nombre de grupo de matrices del servicio WMTS. Propiedad obligatoria para capas de tipo WMTS.",
+            "itemtype": "property",
+            "name": "matrixSet",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 750,
+            "description": "Tipo MIME del formato de archivo de imagen a obtener del servicio. Si esta propiedad no está definida, se comprobará si la capa es un mapa de fondo \n(consultar propiedad {{#crossLink \"SITNA.cfg.LayerOptions/isBase:property\"}}{{/crossLink}}). En caso afirmativo, el formato elegido será <code>\"image/jpeg\"</code>, \nde lo contrario el formato será <code>\"image/png\"</code>.",
+            "itemtype": "property",
+            "name": "format",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 757,
+            "description": "La capa se muestra por defecto si forma parte de los mapas de fondo.",
+            "itemtype": "property",
+            "name": "isDefault",
+            "type": "boolean|undefined",
+            "deprecated": true,
+            "deprecationMessage": "En lugar de esta propiedad es recomendable usar SITNA.Cfg.defaultBaseLayer.",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 763,
+            "description": "La capa es un mapa de fondo.",
+            "itemtype": "property",
+            "name": "isBase",
+            "type": "boolean|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 768,
+            "description": "Aplicable a capas de tipo WMS y KML. La capa no muestra la jerarquía de grupos de capas en la tabla de contenidos ni en la leyenda.",
+            "itemtype": "property",
+            "name": "hideTree",
+            "type": "boolean|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 773,
+            "description": "La capa no aparece en la tabla de contenidos ni en la leyenda. De este modo se puede añadir una superposición de capas de trabajo que el usuario la perciba como parte del mapa de fondo.",
+            "itemtype": "property",
+            "name": "stealth",
+            "type": "boolean|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 778,
+            "description": "URL de una imagen en miniatura a mostrar en el selector de mapas de fondo.",
+            "itemtype": "property",
+            "name": "thumbnail",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.LayerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 793,
+            "description": "Los mapas tienen un indicador de espera de carga.",
+            "itemtype": "property",
+            "name": "loadingIndicator",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "true",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 799,
+            "description": "Los mapas tienen una barra de navegación con control de zoom.",
+            "itemtype": "property",
+            "name": "navBar",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 805,
+            "description": "Los mapas tienen una barra de escala.",
+            "itemtype": "property",
+            "name": "scaleBar",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 811,
+            "description": "Los mapas tienen un indicador numérico de escala.",
+            "itemtype": "property",
+            "name": "scale",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 817,
+            "description": "Los mapas tienen un selector numérico de escala.",
+            "itemtype": "property",
+            "name": "scaleSelector",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 823,
+            "description": "Los mapas tienen un mapa de situación.",
+            "itemtype": "property",
+            "name": "overviewMap",
+            "type": "boolean|SITNA.cfg.OverviewMapOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 829,
+            "description": "Los mapas tienen un selector de mapas de fondo.",
+            "itemtype": "property",
+            "name": "basemapSelector",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 835,
+            "description": "Los mapas tienen atribución. La atribución es un texto superpuesto al mapa que actúa como reconocimiento de la procedencia de los datos que se muestran.",
+            "itemtype": "property",
+            "name": "attribution",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "true",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 841,
+            "description": "Los mapas tienen una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.",
+            "itemtype": "property",
+            "name": "TOC",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 847,
+            "description": "Los mapas tienen un indicador de coordenadas y de sistema de referencia espacial.",
+            "itemtype": "property",
+            "name": "coordinates",
+            "type": "boolean|SITNA.cfg.CoordinatesOptions|undefined",
+            "default": "true",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 853,
+            "description": "Los mapas tienen leyenda.",
+            "itemtype": "property",
+            "name": "legend",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 859,
+            "description": "Los mapas muestran los datos asociados a los marcadores cuando se pulsa sobre ellos.",
+            "itemtype": "property",
+            "name": "popup",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 865,
+            "description": "Los mapas tienen un buscador de entidades geográficas y localizador de coordenadas.",
+            "itemtype": "property",
+            "name": "search",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 871,
+            "description": "Los mapas tienen un medidor de longitudes, áreas y perímetros.",
+            "itemtype": "property",
+            "name": "measure",
+            "type": "boolean|SITNA.cfg.ControlOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 877,
+            "description": "<p>Los mapas tienen un control que gestiona los clics del usuario en ellos.</p>",
+            "itemtype": "property",
+            "name": "click",
+            "type": "boolean|SITNA.cfg.ClickOptions|undefined",
+            "default": "false",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 883,
+            "description": "<p>Los mapas pueden abrir una ventana de Google StreetView.</p>",
+            "itemtype": "property",
+            "name": "streetView",
+            "type": "boolean|SITNA.cfg.StreetViewOptions|undefined",
+            "default": "true",
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 889,
+            "description": "Los mapas responden a los clics con un información de las capas cargadas de tipo WMS. Se usa para ello la petición <code>getFeatureInfo</code> del standard WMS.\nPuede consultar el ejemplo <a href=\"../../examples/cfg.MapControlOptions.featureInfo.html\">online</a>.",
+            "itemtype": "property",
+            "name": "featureInfo",
+            "type": "boolean|SITNA.cfg.ClickOptions|undefined",
+            "default": "true",
+            "example": [
+                "\n    <div id=\"mapa\"></div>\n    <script>\n        // Activamos el proxy para poder acceder a servicios de otro dominio.\n        SITNA.Cfg.proxy = \"proxy.ashx?\";\n        // Añadimos el control featureInfo.\n        SITNA.Cfg.controls.featureInfo = true;\n        // Añadimos una capa WMS sobre la que hacer las consultas.\n        SITNA.Cfg.workLayers = [\n            {\n                id: \"ocupacionSuelo\",\n                title: \"Ocupación del suelo\",\n                type: SITNA.Consts.layerType.WMS,\n                url: \"http://www.ign.es/wms-inspire/ocupacion-suelo\",\n                layerNames: [\"LC.LandCoverSurfaces\"]\n            }\n        ];\n        var map = new SITNA.Map(\"mapa\");\n    </script>"
+            ],
+            "class": "SITNA.cfg.MapControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 922,
+            "description": "Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.",
+            "itemtype": "property",
+            "name": "div",
+            "type": "HTMLElement|string|undefined",
+            "class": "SITNA.cfg.ControlOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 935,
+            "description": "Identificador de capa para usar como mapa de fondo u objeto de opciones de capa.",
+            "itemtype": "property",
+            "name": "layer",
+            "type": "string|SITNA.cfg.LayerOptions",
+            "class": "SITNA.cfg.OverviewMapOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 949,
+            "description": "Determina si se muestran coordenadas geográficas (en EPSG:4326) además de las del mapa, que por defecto son UTM (EPSG:25830).",
+            "itemtype": "property",
+            "name": "showGeo",
+            "type": "boolean|undefined",
+            "example": [
+                "\n    <div id=\"mapa\"/>\n    <script>\n       // Hacemos que el control que muestra las coordenadas en pantalla\n       // muestre también las coordenadas geográficas\n       SITNA.Cfg.controls.coordinates = {\n           showGeo: true\n       };\n       var map = new SITNA.Map('map');\n    </script>"
+            ],
+            "class": "SITNA.cfg.CoordinatesOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 974,
+            "description": "El control asociado está activo, es decir, responde a los clics hechos en el mapa desde que se carga.",
+            "itemtype": "property",
+            "name": "active",
+            "type": "boolean|undefined",
+            "class": "SITNA.cfg.ClickOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 979,
+            "description": "Función de callback que gestiona la respuesta al clic. Es válida cualquier función que acepta un parámetro de coordenada, que es un array de dos números.",
+            "itemtype": "property",
+            "name": "callback",
+            "type": "function|undefined",
+            "default": "Una función que escribe en consola las coordenadas pulsadas",
+            "example": [
+                "\n    <div id=\"mapa\"/>\n    <script>\n       // Creamos un mapa con el control de gestión de clics, con una función de callback personalizada\n       var map = new SITNA.Map(\"mapa\", {\n           controls: {\n               click: {\n                   active: true,\n                   callback: function (coord) {\n                       alert(\"Has pulsado en la posición \" + coord[0] + \", \" + coord[1]);\n                   }\n               }\n           }\n       });\n    </script>"
+            ],
+            "class": "SITNA.cfg.ClickOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1010,
+            "description": "Elemento del DOM en el que mostrar la vista de StreetView o valor de atributo id de dicho elemento.",
+            "itemtype": "property",
+            "name": "viewDiv",
+            "type": "HTMLElement|string|undefined",
+            "example": [
+                "\n    <div id=\"mapa\"/>\n    <div id=\"sv\"/>\n    <script>\n        // Creamos un mapa con el control de StreetView.\n        // La vista de StreetView se debe dibujar en el elemento con identificador \"sv\".\n        var map = new SITNA.Map(\"mapa\", {\n            controls: {\n                streetView: {\n                    viewDiv: \"sv\"\n                }\n            }\n        });\n    </script>"
+            ],
+            "class": "SITNA.cfg.StreetViewOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1114,
+            "description": "Opciones de estilo de marcador (punto de mapa con icono).",
+            "itemtype": "property",
+            "name": "marker",
+            "type": "SITNA.cfg.MarkerStyleOptions|undefined",
+            "class": "SITNA.cfg.StyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1119,
+            "description": "Opciones de estilo de línea.",
+            "itemtype": "property",
+            "name": "line",
+            "type": "SITNA.cfg.LineStyleOptions|undefined",
+            "class": "SITNA.cfg.StyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1124,
+            "description": "Opciones de estilo de polígono.",
+            "itemtype": "property",
+            "name": "polygon",
+            "type": "SITNA.cfg.PolygonStyleOptions|undefined",
+            "class": "SITNA.cfg.StyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1137,
+            "description": "Lista de nombres de clase CSS a utilizar para los iconos de los marcadores. La API extraerá la URL de las imágenes del atributo <code>background-image</code> asociado a la clase.",
+            "itemtype": "property",
+            "name": "classes",
+            "type": "Array",
+            "default": "[\"tc-marker1\", \"tc-marker2\", \"tc-marker3\", \"tc-marker4\", \"tc-marker5\"]",
+            "class": "SITNA.cfg.MarkerStyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1143,
+            "description": "Posicionamiento relativo del icono respecto al punto del mapa, representado por un array de dos números entre 0 y 1, siendo [0, 0] la esquina superior izquierda del icono.",
+            "itemtype": "property",
+            "name": "anchor",
+            "type": "Array",
+            "default": "[.5, 1]",
+            "class": "SITNA.cfg.MarkerStyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1149,
+            "description": "Anchura en píxeles del icono.",
+            "itemtype": "property",
+            "name": "width",
+            "type": "number",
+            "default": "32",
+            "class": "SITNA.cfg.MarkerStyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1155,
+            "description": "Altura en píxeles del icono.",
+            "itemtype": "property",
+            "name": "height",
+            "type": "number",
+            "default": "32",
+            "class": "SITNA.cfg.MarkerStyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1168,
+            "description": "Color de trazo de la línea, representado en formato hex triplet (<code>\"#RRGGBB\"</code>).",
+            "itemtype": "property",
+            "name": "strokeColor",
+            "type": "string",
+            "default": "\"#f00\"",
+            "class": "SITNA.cfg.LineStyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1174,
+            "description": "Anchura de trazo en píxeles de la línea.",
+            "itemtype": "property",
+            "name": "width",
+            "type": "number",
+            "default": "2",
+            "class": "SITNA.cfg.LineStyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1188,
+            "description": "Color de relleno, representado en formato hex triplet (<code>\"#RRGGBB\"</code>).",
+            "itemtype": "property",
+            "name": "fillColor",
+            "type": "string",
+            "default": "\"#000\"",
+            "class": "SITNA.cfg.PolygonStyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1194,
+            "description": "Opacidad de relleno, valor de 0 a 1.",
+            "itemtype": "property",
+            "name": "fillOpacity",
+            "type": "number",
+            "default": ".3",
+            "class": "SITNA.cfg.PolygonStyleOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1209,
+            "description": "Nombre de grupo en el que incluir el marcador. Estos grupos se muestran en la tabla de contenidos y en la leyenda.\nTodos los marcadores pertenecientes al mismo grupo tienen el mismo icono. Los iconos se asignan automáticamente, rotando por la lista disponible en\nSITNA.cfg.MarkerStyleOptions.{{#crossLink \"SITNA.cfg.MarkerStyleOptions/classes:property\"}}{{/crossLink}}.",
+            "itemtype": "property",
+            "name": "group",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.MarkerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1216,
+            "description": "Nombre de clase CSS. El marcador adoptará como icono el valor del atributo <code>background-image</code> de dicha clase.",
+            "itemtype": "property",
+            "name": "cssClass",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.MarkerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1221,
+            "description": "URL de archivo de imagen que se utilizará para el icono.",
+            "itemtype": "property",
+            "name": "url",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.MarkerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1226,
+            "description": "Identificador de la capa vectorial a la que añadir el marcador.",
+            "itemtype": "property",
+            "name": "layer",
+            "type": "string|undefined",
+            "class": "SITNA.cfg.MarkerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1231,
+            "description": "Objeto de datos en pares clave/valor para mostrar cuando se pulsa sobre el marcador.",
+            "itemtype": "property",
+            "name": "data",
+            "type": "object|undefined",
+            "class": "SITNA.cfg.MarkerOptions"
+        },
+        {
+            "file": "sitna.js",
+            "line": 1236,
+            "description": "Al añadirse el marcador al mapa se muestra con el bocadillo de información asociada visible por defecto.",
+            "itemtype": "property",
+            "name": "showPopup",
+            "type": "boolean|undefined",
+            "class": "SITNA.cfg.MarkerOptions"
+        }
+    ],
+    "warnings": [
+        {
+            "message": "Missing item type\nCopies the value of a property from one object to the other.\nThis is used to copy property values as part of setOption for loggers and appenders.\n\nBecause loggers inherit property values from their parents, it is important never to\ncreate a property on a logger if the intent is to inherit from the parent.\n\nCopying rules:\n1) if the from property is undefined (for example, not mentioned in a JSON object), the\nto property is not affected at all.\n2) if the from property is null, the to property is deleted (so the logger will inherit from\nits parent).\n3) Otherwise, the from property is copied to the to property.",
+            "line": " jsnlog\\jsnlog.js:96"
+        },
+        {
+            "message": "Missing item type\nReturns true if a log should go ahead.\nDoes not check level.",
+            "line": " jsnlog\\jsnlog.js:121"
+        },
+        {
+            "message": "Missing item type\nReturns true if a log should go ahead, based on the message.",
+            "line": " jsnlog\\jsnlog.js:168"
+        },
+        {
+            "message": "Missing item type\nCalled by a logger to log a log item.\nIf in response to this call one or more log items need to be processed\n(eg., sent to the server), this method calls this.sendLogItems\nwith an array with all items to be processed.\n\nNote that the name and parameters of this function must match those of the log function of\na Winston transport object, so that users can use these transports as appenders.\nThat is why there are many parameters that are not actually used by this function.\n\nlevel - string with the level (\"trace\", \"debug\", etc.) Only used by Winston transports.\nmsg - human readable message. Undefined if the log item is an object. Only used by Winston transports.\nmeta - log object. Always defined, because at least it contains the logger name. Only used by Winston transports.\ncallback - function that is called when the log item has been logged. Only used by Winston transports.\nlevelNbr - level as a number. Not used by Winston transports.\nmessage - log item. If the user logged an object, this is the JSON string.  Not used by Winston transports.\nloggerName: name of the logger.  Not used by Winston transports.",
+            "line": " jsnlog\\jsnlog.js:407"
+        }
+    ]
+}

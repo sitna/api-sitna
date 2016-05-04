@@ -1,0 +1,8 @@
+﻿<li {?children}class="tc-ctl-lcat-node tc-collapsed"{:else}class="tc-ctl-lcat-node tc-ctl-lcat-leaf"{/children} data-tc-layer-name="{name}" data-tc-layer-uid="{uid}">
+    <span>{title}</span>
+    <ul class="tc-ctl-lcat-branch tc-collapsed">
+        {#children}
+            {>tc-ctl-lcat-node:./}
+        {/children}
+    </ul>
+</li>

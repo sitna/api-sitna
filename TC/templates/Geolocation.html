@@ -1,0 +1,87 @@
+﻿<h2>{@i18n $key="geo"/}</h2>
+<div class="tc-ctl-geolocation-content">
+    <div class="tc-ctl-geolocation-gps">
+        <button class="tc-button tc-icon-button" title="{@i18n $key="geo.gps"/}"> </button>
+    </div>
+    <div class="tc-ctl-geolocation-showCoords tc-hidden">
+        <!--se inserta en el div del mapa-->
+        <div class="tc-ctl-geolocation-icon-cross" style="display: none;"></div>
+        <button class="tc-button tc-icon-button" title="{@i18n $key="geo.coords"/}"></button>
+    </div>
+    <div class="tc-ctl-geolocation-pause">
+        <button class="tc-button tc-icon-button" title="Pausar el tracking"> </button>
+    </div>
+    <div class="tc-ctl-geolocation-track">
+        <div class="tc-ctl-geolocation-track-snap-info"></div>
+        <div class="tc-ctl-geolocation-info-track" style="display:none;"></div>
+        <!-- img se insertan en el div del mapa-->
+        <img id="tc-ctl-geolocation-track-marker" src="data:image/png;base64,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" style="display: none;" />
+        <img id="tc-ctl-geolocation-track-elevation-marker" src="data:image/png;base64,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" style="display: none;" />
+        <div class="tc-ctl-geolocation-track-mng">
+            <h4>{@i18n $key="geo.tracks"/}</h4>
+            <div class="tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt">
+                <!--<label class="tc-ctl-geolocation-track-available-label" for="tc-ctl-geolocation-track-available-srch">Tracks disponibles:</label>-->
+                <input id="tc-ctl-geolocation-track-available-srch" type="search" list="tc-ctl-geolocation-track-available-lst" class="tc-ctl-geolocation-track-available-srch tc-textbox" placeholder="{@i18n $key="geo.filter.plhr"/}" maxlength="200" />
+
+                <ol id="tc-ctl-geolocation-track-available-lst" class="tc-ctl-geolocation-track-available-lst">
+                    <li class="tc-ctl-geolocation-track-available-empty">{@i18n $key="geo.noTracks"/}</li>
+                    <li class="tc-ctl-geolocation-track-not" hidden>{@i18n $key="geo.noFilteredTracks"/}</li>
+                </ol>
+            </div>
+            <h4>{@i18n $key="geo.track"/}</h4>
+            <div class="tc-alert alert-warning tc-hidden">
+                <p id="panel-msg">
+                    {@i18n $key="geo.trk.panel.1"/}                    
+                    <ul>
+                        <li>{@i18n $key="geo.trk.panel.2"/}</li>
+                        <li>{@i18n $key="geo.trk.panel.3"/}</li>
+                        <li>{@i18n $key="geo.trk.panel.4"/}</li>
+                    </ul>
+                </p>
+            </div>
+            <div class="tc-ctl-geolocation-track-ui">
+                <div class="tc-ctl-geolocation-track-panel-block">
+                    <i class="tc-ctl-geolocation-track-panel tc-ctl-geolocation-track-panel-opened"></i>
+                    <span class="tc-ctl-geolocation-track-panel-span" title="{@i18n $key="geo.trk.panel.help.1"/}">{@i18n $key="geo.trk.panel.help.2"/}</span>
+                    <i class="tc-ctl-geolocation-track-panel-help icon-question-sign" title="{@i18n $key="geo.trk.panel.help.3"/}"></i>
+                    <a href="#" id="panelOpened" title="{@i18n $key="geo.trk.panel.help.4"/}"></a>
+                </div>
+                <button class="tc-button tc-icon-button" title="{@i18n $key="geo.track"/}"> </button>
+            </div>
+            <div class="tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt">
+                <input type="text" class="tc-ctl-geolocation-track-title tc-textbox" disabled placeholder="{@i18n $key="geo.trk.name.plhr"/}" maxlength="200" />
+                <button class="tc-button tc-icon-button tc-ctl-geolocation-track-save" disabled title="{@i18n $key="geo.trk.name.save"/}"></button>
+                <input type="text" class="tc-ctl-geolocation-track-waypoint tc-textbox" disabled placeholder="{@i18n $key="geo.trk.wyp.plhr"/}" maxlength="200" />
+                <button class="tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt" disabled title="{@i18n $key="geo.trk.wyp.save"/}"></button>
+            </div>
+            <h4>{@i18n $key="geo.trk.import.lbl"/}</h4>
+            <div class="tc-ctl-geolocation-track-cnt">
+                <input type="file" class="tc-ctl-geolocation-track-import tc-button" accept=".gpx,.kml" disabled />
+            </div>
+        </div>
+    </div>
+</div>
+<div id="track-chart">
+    <span title="{@i18n $key="geo.trk.chart.exp"/}"></span>
+    <div class="track-chart-for-collapse">	
+        <h5>{@i18n $key="geo.trk.chart.chpe"/}</h5>
+        <span id="spentTime"></span>
+        <div id="chart"></div>
+        <p hidden>{@i18n $key="geo.trk.chart.chpe.empty"/}</p>
+    </div>    
+</div>
+<div id="continue-track" class="tc-modal">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{@i18n $key="geo.track"/}</h3>
+            <div class="tc-ctl-popup-close tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <button id="tc-ctl-geolocation-track-continue" class="tc-button"> {@i18n $key="geo.trk.dialog.cnt"/} </button>
+            <button id="tc-ctl-geolocation-track-new" class="tc-button"> {@i18n $key="geo.trk.dialog.new"/} </button>            
+            <button class="tc-button tc-modal-close"> {@i18n $key="geo.trk.dialog.cancel"/} </button>
+        </div>
+    </div>
+</div>
+

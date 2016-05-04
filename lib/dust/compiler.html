@@ -1,0 +1,19 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="dust-full.js"></script>
+    <script src="dust-helpers.js"></script>
+    <script>
+        var compile = function () {
+            document.getElementById("result").innerText = dust.compile(document.getElementById('template').value, "________");
+        };
+        dust.compile()
+    </script>
+</head>
+<body>
+    <textarea id="template"></textarea>
+    <button id="compile" onclick="compile()">Compilar</button>
+    <div id="result"></div>
+</body>
+</html>

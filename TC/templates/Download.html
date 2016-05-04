@@ -1,0 +1,65 @@
+﻿<h2>
+    {@i18n $key="download"/}
+</h2>
+<div>
+    <div class="tc-ctl-download-div">
+        <div class="tc-ctl-download">
+            <div class="tc-group tc-ctl-download-cnt">
+                    <label>{@i18n $key="format"/}:</label>
+                    <select id="download-format" class="tc-combo">
+                        <option value="GML3">GML</option>
+                        <option value="application/json">GeoJSON</option>
+                        <option value="application/vnd.google-earth.kml+xml">KML (Google Earth)</option>
+                        <option value="shape-zip">Shape (ESRI)</option>
+                    </select>
+                </div>
+            </div>
+        <form class="tc-ctl-download-form" method="post" enctype="text/plain" target="_blank">
+            <!--
+                HACK: El servicio WFS espera que en el payload del POST llegue la consulta WFS (en este caso GetFeature). El problema es que debe llegar solo la consulta,
+                no en formato clave=valor. Por tanto, lo único que se me ha ocurrido es buscar el primer signo ‘=’ de la consulta, y poner lo que hay a la izquerda en el name
+                del input Y lo de la derecha en el value (se inserta desde al archivo Download.js)
+            -->
+            <input type="hidden" name="<wfs:GetFeature xmlns:xsi" class="tc-ctl-download-query" />
+        </form>
+        <div class="tc-group tc-ctl-download-cnt">
+            <i class="tc-ctl-download-help icon-question-sign" data-toggle="tooltip" data-placement="top" title="{@i18n $key="showDownloadHelp"/}"></i>
+            <span class="tc-ctl-download-btn tc-button tc-icon-button" title="{@i18n $key="downloadLayersFromCurrentExtent"/}"></span>
+    </div>
+    <div class="tc-alert alert-warning tc-hidden">
+        <p id="zoom-msg"><strong>{@i18n $key="tooManyFeatures"/}: </strong>{@i18n $key="tooManyFeatures.instructions"/}</p>
+        <p id="layers-msg"><strong>{@i18n $key="noLayersLoaded"/}: </strong>{@i18n $key="noLayersLoaded.instructions"/}</p>
+        <p id="url-msg"><strong>{@i18n $key="tooManySelectedLayers"/}: </strong>{@i18n $key="tooManySelectedLayers.instructions"/}</p>
+        <p id="noFeatures-msg"><strong>{@i18n $key="noData"/}: </strong>{@i18n $key="noData.instructions"/}</p>
+    </div>
+
+    <div id="download-help" class="tc-modal">
+        <div class="tc-modal-background tc-modal-close"></div>
+        <div class="tc-modal-window">
+            <div class="tc-modal-header">
+                <h3>{@i18n $key="downloadData"/}</h3>
+                <div class="tc-ctl-popup-close tc-modal-close"></div>
+            </div>
+            <div class="tc-modal-body">
+                <p>{@i18n $key="dl.instructions.1|s"/}</p>
+                <ul>
+                    <li>{@i18n $key="dl.instructions.2|s"/}</li>
+                    <li>{@i18n $key="dl.instructions.3|s"/}</li>
+                        <li>
+                            {@i18n $key="dl.instructions.4|s"/}
+                        <ul>
+                            <li>{@i18n $key="dl.instructions.5|s"/}</li>
+                            <li>{@i18n $key="dl.instructions.6|s"/}</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="tc-modal-footer">
+                <button type="button" class="tc-button tc-modal-close">{@i18n $key="close"/}</button>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+</div>

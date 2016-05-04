@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>SITNA.Map - API SITNA</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                
+                    <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
+                
+                
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.2</span>
+                
+                
+                    <p class="description">API de mapas del Gobierno de Navarra</p>
+                
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">&iacute;ndice</a></li>
+                <li><a href="#top" class="top-jump-link">inicio</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Clases</a></li>
+            <li style="display:none"><a href="#api-modules">M&oacute;dulos</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Escriba para filtrar la API">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a class="type" href="../classes/SITNA.Cfg.html">SITNA.Cfg</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LayerOptions.html">SITNA.cfg.LayerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LineStyleOptions.html">SITNA.cfg.LineStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MapControlOptions.html">SITNA.cfg.MapControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerOptions.html">SITNA.cfg.MarkerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerStyleOptions.html">SITNA.cfg.MarkerStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StyleOptions.html">SITNA.cfg.StyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Consts.html">SITNA.Consts</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.Layer.html">SITNA.consts.Layer</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.LayerType.html">SITNA.consts.LayerType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.MimeType.html">SITNA.consts.MimeType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Map.html">SITNA.Map</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1>Clase SITNA.Map</h1>
+<div class="box meta">
+    
+
+    
+
+    
+        <div class="foundat" style="display:none">
+            Se define en: <a href="../files/sitna.js.html#l19"><code>sitna.js:19</code></a>
+        </div>
+    
+
+    
+
+    
+</div>
+
+
+
+<div class="box intro">
+    <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
+estar dentro de una función de callback pasada como parámetro al método <a href="../classes/SITNA.Map.html#method_loaded" class="crosslink">loaded</a>.</p>
+<p>Puede consultar también online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
+</div>
+
+<!-- Class member index -->
+
+<a name="index" class="anchor-link"></a>
+<div class="index">
+<h2>&Iacute;ndice</h2>
+
+    <div id="api-options" style="display:none">
+        Mostrar:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited">
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <div class="index-section methods">
+        <h3>M&eacute;todos</h3>
+
+        <ul class="index-list methods">
+
+            
+                <li class="index-item method constructor">
+                    <a href="#method_SITNA.Map">SITNA.Map</a>
+
+                    <span class="flag constructor">constructor</span>
+
+                    
+                    
+                </li>
+            
+
+            
+                <li class="index-item method">
+                    <a href="#method_addLayer">addLayer</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_addMarker">addMarker</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_loaded">loaded</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_setBaseLayer">setBaseLayer</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_zoomToMarkers">zoomToMarkers</a>
+
+                    
+                    
+                </li>
+            
+        </ul>
+    </div>
+
+
+
+</div>
+
+
+<div class="class-detail">
+
+
+
+
+
+
+    <div class="constructor">
+        <h2>Constructor</h2>
+        <a name="method_SITNA.Map" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>SITNA.Map</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>div</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[options]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l19"><code>sitna.js:19</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">div</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/Document_Object_Model_(DOM)/HTMLElement" class="crosslink external" target="_blank">HTMLElement</a> | <a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[options]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global <a href="../classes/SITNA.Cfg.html" class="crosslink">SITNA.Cfg</a>.</p>
+
+                        </div>
+
+                        
+                            <ul class="params-list">
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[crs=&quot;EPSG:25830&quot;]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Código EPSG del sistema de referencia espacial del mapa.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[initialExtent]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima. 
+Esta opción es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_crs" class="crosslink">crs</a>).
+Para más información consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_initialExtent" class="crosslink">initialExtent</a>.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[maxExtent]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima. Para más información consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_maxExtent" class="crosslink">maxExtent</a>.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[layout]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>URL de una carpeta de maquetación. Consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_layout" class="crosslink">layout</a> para ver instrucciones de uso de maquetaciones.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[baseLayers]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Lista de identificadores de capa o instancias de la clase <a href="../classes/SITNA.cfg.LayerOptions.html" class="crosslink">SITNA.cfg.LayerOptions</a> para incluir dichas capas como mapas de fondo.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[workLayers]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Lista de identificadores de capa o instancias de la clase <a href="../classes/SITNA.cfg.LayerOptions.html" class="crosslink">SITNA.cfg.LayerOptions</a> para incluir dichas capas como contenido del mapa.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[defaultBaseLayer]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | <a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Identificador o índice en <code>baseLayers</code> de la capa base por defecto.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[controls]</code>
+                                        <span class="type"><a href="../classes/SITNA.cfg.MapControlOptions.html" class="crosslink">SITNA.cfg.MapControlOptions</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Opciones de controles de mapa.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[styles]</code>
+                                        <span class="type"><a href="../classes/SITNA.cfg.StyleOptions.html" class="crosslink">SITNA.cfg.StyleOptions</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Opciones de estilo de entidades geográficas.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[mouseWheelZoom]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>La rueda del ratón se puede utilizar para hacer zoom en el mapa.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[proxy]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>URL del proxy utilizado para peticiones a dominios remotos (ver SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_proxy" class="crosslink">proxy</a>).</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                            </ul>
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;/&gt;
+&lt;script&gt;
+    // Crear un mapa con las opciones por defecto.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+&lt;/script&gt;</code></pre>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;/&gt;
+&lt;script&gt;
+    // Crear un mapa en el sistema de referencia WGS 84 con el  de mapa de fondo.
+    var map = new SITNA.Map(&quot;mapa&quot;, {
+        crs: &quot;EPSG:4326&quot;,
+        initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.
+            -2.84820556640625,
+            41.78912492257675,
+            -0.32135009765625,
+            43.55789822064767
+        ],
+        maxExtent: [
+            -2.84820556640625,
+            41.78912492257675,
+            -0.32135009765625,
+            43.55789822064767
+        ],
+        baseLayers: [
+            SITNA.Consts.layer.IDENA_DYNBASEMAP
+        ],
+        defaultBaseLayer: SITNA.Consts.layer.IDENA_DYNBASEMAP,
+        // Establecemos el mapa de situación con una capa compatible con WGS 84
+        controls: {
+            overviewMap: {
+                layer: SITNA.Consts.layer.IDENA_DYNBASEMAP
+            }
+        }
+    });
+&lt;/script&gt;</code></pre>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear un mapa que tenga como contenido las capas de toponimia y mallas cartográficas del WMS de IDENA.
+    var map = new SITNA.Map(&quot;mapa&quot;, {
+        workLayers: [
+            {
+                id: &quot;topo_mallas&quot;,
+                title: &quot;Toponimia y mallas cartográficas&quot;,
+                type: SITNA.Consts.layerType.WMS,
+                url: &quot;http://idena.navarra.es/ogc/wms&quot;,
+                layerNames: &quot;IDENA:toponimia,IDENA:mallas&quot;
+            }
+        ]
+    });
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+    </div>
+
+
+
+    <div class="methods-detail">
+        <h2>M&eacute;todos</h2>
+
+        
+            <a name="method_addLayer" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>addLayer</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>layer</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l98"><code>sitna.js:98</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Añade una capa al mapa. Si se le pasa una instancia de la clase <a href="../classes/SITNA.cfg.LayerOptions.html" class="crosslink">SITNA.cfg.LayerOptions</a> como parámetro <code>layer</code> y tiene definida 
+la propiedad SITNA.cfg.LayerOptions.<a href="../classes/SITNA.cfg.LayerOptions.html#property_url" class="crosslink">url</a>, establece por defecto el tipo de capa a 
+<a href="../classes/SITNA.consts.LayerType.html#property_KML" class="crosslink">KML</a> si la URL acaba en ".kml".
+El tipo de la capa no puede ser <a href="../classes/SITNA.consts.LayerType.html#property_WFS" class="crosslink">WFS</a>.</p>
+<p>Puede consultar también online el <a href="../../examples/Map.addLayer.1.html">ejemplo 1</a> y el <a href="../../examples/Map.addLayer.2.html">ejemplo 2</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">layer</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | <a href="../classes/SITNA.cfg.LayerOptions.html" class="crosslink">SITNA.cfg.LayerOptions</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Identificador de capa u objeto de opciones de capa.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras ser añadida la capa.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear un mapa con las opciones por defecto.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir al mapa la capa de cartografía topográfica de IDENA
+        map.addLayer(SITNA.Consts.layer.IDENA_CARTO);
+    });
+&lt;/script&gt;</code></pre>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear un mapa con las opciones por defecto.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir al mapa un documento KML
+        map.addLayer({
+            id: &quot;capa_kml&quot;,
+            title: &quot;Museos en Navarra&quot;,
+            type: SITNA.Consts.layerType.KML,
+            url: &quot;data/MUSEOSNAVARRA.kml&quot;
+        });
+    });
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_addMarker" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>addMarker</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>coords</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[options]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l182"><code>sitna.js:182</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Añade un marcador (un punto asociado a un icono) al mapa.</p>
+<p>Puede consultar también online el <a href="../../examples/Map.addMarker.1.html">ejemplo 1</a>, el <a href="../../examples/Map.addMarker.2.html">ejemplo 2</a>,
+el <a href="../../examples/Map.addMarker.3.html">ejemplo 3</a> y el <a href="../../examples/Map.addMarker.4.html">ejemplo 4</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">coords</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Coordenadas x e y del punto en las unidades del sistema de referencia del mapa.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[options]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Objeto de opciones de marcador.</p>
+
+                        </div>
+
+                        
+                            <ul class="params-list">
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[group]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Nombre de grupo en el que incluir el marcador. Estos grupos se muestran en la tabla de contenidos y en la leyenda.</p>
+<p>Todos los marcadores pertenecientes al mismo grupo tienen el mismo icono. Los iconos se asignan automáticamente, rotando por la lista disponible en
+SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.html#property_classes" class="crosslink">classes</a>.</p>
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[cssClass]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Nombre de clase CSS. El marcador adoptará como icono el valor del atributo <code>background-image</code> de dicha clase.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[url]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>URL de archivo de imagen que será el icono del marcador.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[width]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Anchura en píxeles del icono del marcador.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[height]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Altura en píxeles del icono del marcador.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[anchor]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Coordenadas proporcionales (entre 0 y 1) del punto de anclaje del icono al punto del mapa. La coordenada [0, 0] es la esquina superior izquierda del icono.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[data]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Objeto de datos en pares clave/valor para mostrar cuando se pulsa sobre el marcador. Si un valor es una URL, se mostrará como un enlace.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[showPopup]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Al añadirse el marcador al mapa se muestra con el bocadillo de información asociada visible por defecto.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[layer]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Identificador de capa de tipo SITNA.consts.LayerType.<a href="../classes/SITNA.consts.LayerType.html#property_VECTOR" class="crosslink">VECTOR</a> en la que se añadirá el marcador. Si no se especifica se creará una capa específica para marcadores.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                            </ul>
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador.
+        map.addMarker([610749, 4741648]);
+        // Centrar el mapa en el marcador.
+        map.zoomToMarkers();
+    });
+&lt;/script&gt;</code></pre>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir marcadores al grupo &quot;Marcadores colgantes&quot; cuyo icono se ancle al punto en el centro hacia abajo. Establecer un icono adecuado.
+        var markerOptions = {
+            group: &quot;Marcadores colgantes&quot;,
+            url: &quot;data/colgante.png&quot;,
+            anchor: [0.5, 0]
+        };
+        map.addMarker([610887, 4741244], markerOptions);
+        map.addMarker([615364, 4657556], markerOptions);
+        // Centrar el mapa en los marcadores.
+        map.zoomToMarkers();
+    });
+&lt;/script&gt;</code></pre>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear un mapa con una capa vectorial, centrado en la Ciudadela de Pamplona.
+    var map = new SITNA.Map(&quot;mapa&quot;, {
+        initialExtent: [
+            609627,
+            4740225,
+            611191,
+            4741395
+        ],
+        workLayers: [{
+            id: &quot;markers&quot;,
+            title: &quot;Marcadores geográficos&quot;,
+            type: SITNA.Consts.layerType.VECTOR
+        }]
+    });
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador en la capa &quot;markers&quot;, asignarle un grupo para que salga en tabla de contenidos y leyenda.
+        map.addMarker([610431, 4740837], {
+            layer: &quot;markers&quot;,
+            group: &quot;Ciudadela&quot;
+        });
+    });
+&lt;/script&gt;</code></pre>
+<pre class="code prettyprint"><code>&lt;style type=&quot;text/css&quot;&gt;
+    .kiosko {
+        background-image: url(&quot;data/icono-kiosko.png&quot;);
+    }
+&lt;/style&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, lo cambiamos por SITNA.Consts.layer.IDENA_DYNBASEMAP.
+    SITNA.Cfg.baseLayers[0] = SITNA.Consts.layer.IDENA_DYNBASEMAP;
+    SITNA.Cfg.defaultBaseLayer = SITNA.Consts.layer.IDENA_DYNBASEMAP;
+    // Añadir información emergente al mapa.
+    SITNA.Cfg.controls.popup = true;
+
+    // Crear un mapa en el sistema de referencia WGS 84.
+    var map = new SITNA.Map(&quot;mapa&quot;, {
+        crs: &quot;EPSG:4326&quot;,
+        initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.
+            -2.84820556640625,
+            41.78912492257675,
+            -0.32135009765625,
+            43.55789822064767
+        ],
+        maxExtent: [
+            -2.84820556640625,
+            41.78912492257675,
+            -0.32135009765625,
+            43.55789822064767
+        ],
+        // Establecemos el mapa de situación con una capa compatible con WGS 84
+        controls: {
+            overviewMap: {
+                layer: SITNA.Consts.layer.IDENA_DYNBASEMAP
+            }
+        }
+    });
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un icono de 40x40 píxeles definido por la clase CSS kiosko. Asignarle unos datos asociados que se muestren por defecto.
+        map.addMarker([-1.605691, 42.060453], { // Coordenadas en grados decimales porque el mapa está en WGS 84.
+            cssClass: &quot;kiosko&quot;,
+            width: 40,
+            height: 40,
+            data: {
+                &quot;Nombre&quot;: &quot;Plaza de la Constitución, Tudela&quot;,
+                &quot;Sitio web&quot;: &quot;http://www.tudela.es/&quot;
+            },
+            showPopup: true
+        });
+        // Centrar el mapa en el marcador.
+        map.zoomToMarkers();
+    });
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_loaded" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>loaded</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>callback</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l365"><code>sitna.js:365</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Añade una función de callback que se ejecutará cuando el mapa, sus controles y todas sus capas se hayan cargado.</p>
+
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">callback</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras la carga del mapa.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code> // Notificar cuando se haya cargado el mapa.
+ map.loaded(function () { 
+     console.log(&quot;Código del mapa y de sus controles cargado, cargando datos...&quot;);
+ });</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_setBaseLayer" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>setBaseLayer</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>layer</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l142"><code>sitna.js:142</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Hace visible una capa como mapa de fondo. Esta capa debe existir previamente en la lista de mapas de fondo del mapa.</p>
+<p>Puede consultar también online el <a href="../../examples/Map.setBaseLayer.1.html">ejemplo 1</a> y el <a href="../../examples/Map.setBaseLayer.2.html">ejemplo 2</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">layer</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | <a href="../classes/SITNA.cfg.LayerOptions.html" class="crosslink">SITNA.cfg.LayerOptions</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Identificador de capa u objeto de opciones de capa.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función al que se llama tras ser establecida la capa como mapa de fondo.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear mapa con opciones por defecto. Esto incluye la capa del catastro de Navarra entre los mapas de fondo.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+    // Cuando esté todo cargado establecer como mapa de fondo visible el catastro de Navarra.
+    map.loaded(function () {
+        map.setBaseLayer(SITNA.Consts.layer.IDENA_CADASTER);
+    });
+&lt;/script&gt;</code></pre>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear mapa con opciones por defecto.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+    // Cuando el mapa esté cargado, añadir la ortofoto de 1956/1957 como mapa de fondo y establecerla como mapa de fondo visible.
+    map.loaded(function () {
+        map.addLayer({
+            id: &quot;orto_56_57&quot;,
+            title: &quot;Ortofoto de 1956/1957&quot;,
+            url: &quot;http://idena.navarra.es/ogc/wms&quot;,
+            layerNames: &quot;ortofoto_10000_1957&quot;,
+            isBase: true
+        }, function () {
+            map.setBaseLayer(&quot;orto_56_57&quot;);
+        });
+    });
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_zoomToMarkers" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>zoomToMarkers</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code class="optional">[options]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l319"><code>sitna.js:319</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Centra y escala el mapa a la extensión que ocupan todos sus marcadores.</p>
+<p>Puede consultar también el ejemplo <a href="../../examples/Map.zoomToMarkers.html">online</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[options]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Objeto de opciones de zoom.</p>
+
+                        </div>
+
+                        
+                            <ul class="params-list">
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[pointBoundsRadius=30]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Radio en metros del área alrededor del marcador que se respetará al hacer zoom.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
+                                        <code class="param-name optional">[extentMargin=0.2]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Tamaño del margen que se aplicará a la extensión total de todas los marcadores. 
+El valor es la relación de crecimiento en ancho y alto entre la extensión resultante y la original. Por ejemplo, 0,2 indica un crecimiento del 20% de la extensión, 10% por cada lado.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                            </ul>
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div class=&quot;controls&quot;&gt;
+    &lt;div&gt;&lt;button id=&quot;addMarkerBtn&quot;&gt;Añadir marcador aleatorio&lt;/button&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;input type=&quot;number&quot; step=&quot;1&quot; id=&quot;pbrVal&quot; value=&quot;30&quot; /&gt; &lt;label for=&quot;pbrVal&quot;&gt;pointBoundsRadius&lt;/label&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;input type=&quot;number&quot; step=&quot;0.1&quot; id=&quot;emVal&quot; value=&quot;0.2&quot; /&gt; &lt;label for=&quot;emVal&quot;&gt;extentMargin&lt;/label&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;button id=&quot;zoomBtn&quot;&gt;Hacer zoom a los marcadores&lt;/button&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Añadir un marcador en un punto aleatorio
+    var addRandomMarker = function () {
+        var xmin = SITNA.Cfg.initialExtent[0];
+        var ymin = SITNA.Cfg.initialExtent[1];
+        var width = SITNA.Cfg.initialExtent[2] - SITNA.Cfg.initialExtent[0];
+        var height = SITNA.Cfg.initialExtent[3] - SITNA.Cfg.initialExtent[1];
+        map.addMarker([xmin + Math.random() * width, ymin + Math.random() * height]);
+    };
+
+    // Hacer zoom a los marcadores con las opciones elegidas
+    var zoomToMarkers = function () {
+        map.zoomToMarkers({
+            pointBoundsRadius: parseInt(document.getElementById(&quot;pbrVal&quot;).value),
+            extentMargin: parseFloat(document.getElementById(&quot;emVal&quot;).value)
+        });
+    };
+
+    document.getElementById(&quot;addMarkerBtn&quot;).addEventListener(&quot;click&quot;, addRandomMarker);
+    document.getElementById(&quot;zoomBtn&quot;).addEventListener(&quot;click&quot;, zoomToMarkers);
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+
+        <div class="no-visible-items-message">
+            <p>No hay m&eacute;todos que cumplan la configuraci&oacute;n actual de filtro. Puede cambiar la configuraci&oacute;n de filtro en la secci&oacute;n "&Iacute;ndice" de esta p&aacute;gina. <a href="#index" class="index-jump-link">&iacute;ndice</a></p>
+        </div>
+
+    </div>
+
+
+
+
+</div>
+
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>
