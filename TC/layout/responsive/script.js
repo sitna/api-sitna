@@ -42,7 +42,14 @@
     });
 
     if (map) {
+
         map.loaded(function () {
+            // Ocultamos lo innecesario si estamos en modo offline
+            var cb = map.getControlsByClass('TC.control.CacheBuilder')[0];
+            if (cb && cb.mapIsOffline) {
+                $('#legend-panel,#ovmap-panel,#links,.language-links').addClass(TC.Consts.classes.DISABLED);
+            }
+
             ovmap = map.getControlsByClass('TC.control.OverviewMap')[0];
             if (ovmap) {
                 ovmap.loaded(function () {

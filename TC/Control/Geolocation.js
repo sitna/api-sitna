@@ -27,11 +27,16 @@ TC.control.Geolocation = function () {
             GPSPOSITIONERROR: 'positionerror.tc.geolocation',
             STATEUPDATED: 'stateupdated.tc.geolocation',
             GPSADD: 'gpsadd.tc.geolocation',
-            TRACKSNAPPING: 'tracksnapping.tc.geolocation'
+            TRACKSNAPPING: 'tracksnapping.tc.geolocation',
+            DRAWTRACK: 'drawtrack.tc.geolocation',
+            CLEARTRACK: 'cleartrack.tc.geolocation'
         },
         MimeMap: {
             KML: 'application/vnd.google-earth.kml+xml',
             GPX: 'application/gpx+xml'
+        },
+        Tabs:{
+            GPS: "gps"
         }
     };
 
@@ -55,9 +60,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = TC.apiLocation + "TC/templates/GeolocationTrackSnappingNode.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "geo" }).w("</h2><div class=\"tc-ctl-geolocation-content\"><div class=\"tc-ctl-geolocation-gps\"><button class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("\"> </button></div><div class=\"tc-ctl-geolocation-showCoords tc-hidden\"><!--se inserta en el div del mapa--><div class=\"tc-ctl-geolocation-icon-cross\" style=\"display: none;\"></div><button class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.coords" }).w("\"></button></div><div class=\"tc-ctl-geolocation-pause\"><button class=\"tc-button tc-icon-button\" title=\"Pausar el tracking\"> </button></div><div class=\"tc-ctl-geolocation-track\"><div class=\"tc-ctl-geolocation-track-snap-info\"></div><div class=\"tc-ctl-geolocation-info-track\" style=\"display:none;\"></div><!-- img se insertan en el div del mapa--><img id=\"tc-ctl-geolocation-track-marker\" src=\"data:image/png;base64,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\" style=\"display: none;\" /><img id=\"tc-ctl-geolocation-track-elevation-marker\" src=\"data:image/png;base64,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\" style=\"display: none;\" /><div class=\"tc-ctl-geolocation-track-mng\"><h4>").h("i18n", ctx, {}, { "$key": "geo.tracks" }).w("</h4><div class=\"tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt\"><!--<label class=\"tc-ctl-geolocation-track-available-label\" for=\"tc-ctl-geolocation-track-available-srch\">Tracks disponibles:</label>--><input id=\"tc-ctl-geolocation-track-available-srch\" type=\"search\" list=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.filter.plhr" }).w("\" maxlength=\"200\" /><ol id=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-lst\"><li class=\"tc-ctl-geolocation-track-available-empty\">").h("i18n", ctx, {}, { "$key": "geo.noTracks" }).w("</li><li class=\"tc-ctl-geolocation-track-not\" hidden>").h("i18n", ctx, {}, { "$key": "geo.noFilteredTracks" }).w("</li></ol></div><h4>").h("i18n", ctx, {}, { "$key": "geo.track" }).w("</h4><div class=\"tc-alert alert-warning tc-hidden\"><p id=\"panel-msg\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.1" }).w(" <ul><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.2" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.4" }).w("</li></ul></p></div><div class=\"tc-ctl-geolocation-track-ui\"><div class=\"tc-ctl-geolocation-track-panel-block\"><i class=\"tc-ctl-geolocation-track-panel tc-ctl-geolocation-track-panel-opened\"></i><span class=\"tc-ctl-geolocation-track-panel-span\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.1" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.2" }).w("</span><i class=\"tc-ctl-geolocation-track-panel-help icon-question-sign\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.3" }).w("\"></i><a href=\"#\" id=\"panelOpened\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.4" }).w("\"></a></div><button class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track" }).w("\"> </button></div><div class=\"tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt\"><input type=\"text\" class=\"tc-ctl-geolocation-track-title tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.save" }).w("\"></button><input type=\"text\" class=\"tc-ctl-geolocation-track-waypoint tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.save" }).w("\"></button></div><h4>").h("i18n", ctx, {}, { "$key": "geo.trk.import.lbl" }).w("</h4><div class=\"tc-ctl-geolocation-track-cnt\"><input type=\"file\" class=\"tc-ctl-geolocation-track-import tc-button\" accept=\".gpx,.kml\" disabled /></div></div></div></div><div id=\"track-chart\"><div class=\"track-chart-collapse\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.chart.exp" }).w("\"><span></span></div><div class=\"track-chart-chart\"><h5>").h("i18n", ctx, {}, { "$key": "geo.trk.chart.chpe" }).w("</h5><div id=\"chart\"></div><p hidden>").h("i18n", ctx, {}, { "$key": "geo.trk.chart.chpe.empty" }).w("</p></div></div><div id=\"continue-track\" class=\"tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.track" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><button id=\"tc-ctl-geolocation-track-continue\" class=\"tc-button\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cnt" }).w(" </button><button id=\"tc-ctl-geolocation-track-new\" class=\"tc-button\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.new" }).w(" </button> <button class=\"tc-button tc-modal-close\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cancel" }).w(" </button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-track-node'] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<li data-id=\"").f(ctx.get(["id"], false), ctx, "h").w("\"><a href=\"#\" id=\"draw\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.draw" }).w("\"></a><a href=\"#\" id=\"simulate\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.simulate" }).w("\"></a><span title=\"").f(ctx.get(["name"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</span><input type=\"text\" hidden value=\"").f(ctx.get(["name"], false), ctx, "h").w("\" /><a href=\"#\" id=\"edit\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.edit" }).w("\"></a><a href=\"#\" hidden id=\"save\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.save" }).w("\"></a><a href=\"#\" hidden id=\"cancel\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.cancel" }).w("\"></a><a href=\"#\" id=\"delete\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.delete" }).w("\"></a><a href=\"#\" id=\"exportGPX\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportGPX" }).w("\"></a><a href=\"#\" id=\"exportKML\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportKML" }).w("\"></a></li>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = function () { function body_0(chk, ctx) { return chk.w("<p>").h("i18n", ctx, {}, { "$key": "geo.trk.snapping" }).w("</p><ul>").x(ctx.getPath(false, ["data", "n"]), ctx, { "block": body_1 }, {}).w(" <li> X - data.x + </li><li> Y - data.y + </li>").x(ctx.getPath(false, ["data", "z"]), ctx, { "block": body_2 }, {}).w(" ").x(ctx.getPath(false, ["data", "t"]), ctx, { "block": body_3 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li> ").h("i18n", ctx, {}, { "$key": "geo.trk.snapping.name" }).w(" - ").f(ctx.getPath(false, ["data", "n"]), ctx, "h").w(" </li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li> Z - ").f(ctx.getPath(false, ["data", "z"]), ctx, "h").w(" </li>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li> T - data.t + </li>"); } body_3.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "geo" }).w("</h2><div class=\"tc-ctl-geolocation-content\"> <div class=\"tc-ctl-geolocation-track\"><div class=\"tc-ctl-geolocation-track-snap-info\"></div><div class=\"tc-ctl-geolocation-info-track\" style=\"display:none;\"></div><!-- img se insertan en el div del mapa--><img id=\"tc-ctl-geolocation-track-marker\" src=\"data:image/png;base64,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\" style=\"display: none;\" /><img id=\"tc-ctl-geolocation-track-elevation-marker\" src=\"data:image/png;base64,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\" style=\"display: none;\" /><div class=\"tc-ctl-geolocation-track-mng\"><div class=\"tc-ctl-geolocation-select\"><form><label class=\"tc-ctl-geolocation-btn-gps\" title=\"").h("i18n", ctx, {}, { "$key": " geo.gps" }).w("\"><input type=\"radio\" name=\"mode\" value=\"gps\" checked=\"checked\" /><span>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</span></label><label class=\"tc-ctl-geolocation-btn-tracks\" title=\"").h("i18n", ctx, {}, { "$key": "geo.tracks.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"track-available\" /><span>").h("i18n", ctx, {}, { "$key": "geo.tracks" }).w("</span></label><label class=\"tc-ctl-geolocation-btn-track\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"tracks\" /><span>").h("i18n", ctx, {}, { "$key": "geo.track" }).w("</span></label></form></div><div class=\"tc-ctl-geolocation-track-panel-block tc-hidden\"><input id=\"tc-ctl-geolocation-track-panel-opened\" type=\"checkbox\" checked/><label for=\"tc-ctl-geolocation-track-panel-opened\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.1" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.2" }).w("</label><i class=\"tc-ctl-geolocation-track-panel-help icon-question-sign\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.3" }).w("\"></i></div><div class=\"tc-ctl-geolocation-gps tc-ctl-geolocation-panel\"> <div class=\"tc-ctl-geolocation-locate\"><button class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("\"> </button></div><div class=\"tc-ctl-geolocation-showCoords tc-hidden\"><!--se inserta en el div del mapa--><div class=\"tc-ctl-geolocation-icon-cross\" style=\"display: none;\"></div><button class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.coords" }).w("\"></button></div></div><div class=\"tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden\"><i class=\"tc-ctl-geolocation-track-search-icon\"></i><input id=\"tc-ctl-geolocation-track-available-srch\" type=\"search\" list=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.filter.plhr" }).w("\" maxlength=\"200\" /> <ol id=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-lst\"><li class=\"tc-ctl-geolocation-track-available-empty\">").h("i18n", ctx, {}, { "$key": "geo.noTracks" }).w("</li><li class=\"tc-ctl-geolocation-track-not\" hidden>").h("i18n", ctx, {}, { "$key": "geo.noFilteredTracks" }).w("</li></ol><div class=\"tc-ctl-geolocation-track-cnt\"><input name=\"uploaded-file\" id=\"uploaded-file\" type=\"file\" class=\"tc-ctl-geolocation-track-import tc-button\" accept=\".gpx,.kml\" disabled /><label class=\"tc-button tc-icon-button\" for=\"uploaded-file\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.import.upload" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.import.lbl" }).w("</label></div></div><div class=\"tc-ctl-geolocation-tracks tc-ctl-geolocation-panel tc-hidden\"> <div class=\"tc-alert alert-warning tc-hidden\"><p id=\"panel-msg\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.1" }).w(" <ul><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.2" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.4" }).w("</li></ul></p></div> <div class=\"tc-ctl-geolocation-track-ui\"> <button class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track" }).w("\"> </button></div><div class=\"tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt\"><input type=\"text\" class=\"tc-ctl-geolocation-track-title tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.save" }).w("\"></button><input type=\"text\" class=\"tc-ctl-geolocation-track-waypoint tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.save" }).w("\"></button></div></div></div></div></div><div id=\"continue-track\" class=\"tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.track" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><button id=\"tc-ctl-geolocation-track-continue\" class=\"tc-button\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cnt" }).w(" </button><button id=\"tc-ctl-geolocation-track-new\" class=\"tc-button\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.new" }).w(" </button> <button class=\"tc-button tc-modal-close\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cancel" }).w(" </button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-track-node'] = function () { dust.register(ctlProto.CLASS + '-track-node', body_0); function body_0(chk, ctx) { return chk.w("<li data-id=\"").f(ctx.get(["id"], false), ctx, "h").w("\"><span title=\"").f(ctx.get(["name"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</span><input class=\"tc-textbox\" type=\"text\" hidden value=\"").f(ctx.get(["name"], false), ctx, "h").w("\" /><button id=\"draw\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.draw" }).w("\"></button><button id=\"simulate\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.simulate" }).w("\"></button><button hidden id=\"stop\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.stop" }).w("\"></button><button id=\"edit\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.edit" }).w("\"></button><button hidden id=\"pause\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.pause" }).w("\"></button> <button hidden id=\"save\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.save" }).w("\"></button><button hidden id=\"cancel\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.cancel" }).w("\"></button><button id=\"delete\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.delete" }).w("\"></button><button id=\"exportGPX\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportGPX" }).w("\"></button><button id=\"exportKML\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportKML" }).w("\"></button><select class=\"tc-combo\" hidden id=\"velocity\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.velocity" }).w("\"><option value=\"0.5\">x2</option><option value=\"0.25\">x4</option><option value=\"0.125\">x8</option> </select></li>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = function () { dust.register(ctlProto.CLASS + '-track-snapping-node', body_0); function body_0(chk, ctx) { return chk.w("<p>").h("i18n", ctx, {}, { "$key": "geo.trk.snapping" }).w("</p><ul>").x(ctx.get(["n"], false), ctx, { "block": body_1 }, {}).w("<li> X - ").f(ctx.get(["x"], false), ctx, "h").w(" </li><li> Y - ").f(ctx.get(["y"], false), ctx, "h").w(" </li>").x(ctx.get(["z"], false), ctx, { "block": body_2 }, {}).x(ctx.get(["m"], false), ctx, { "block": body_3 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li> ").h("i18n", ctx, {}, { "$key": "geo.trk.snapping.name" }).w(" - ").f(ctx.get(["n"], false), ctx, "h").w(" </li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li> Z - ").f(ctx.get(["z"], false), ctx, "h").w(" </li>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li> M - ").f(ctx.get(["m"], false), ctx, "h").w(" </li>"); } body_3.__dustBody = !0; return body_0 };
     }
 
     ctlProto.register = function (map) {
@@ -92,34 +97,31 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         var self = this;
 
         TC.Control.prototype.renderData.call(self, data, function () {
+
+            var $options = self._$div.find('.' + self.CLASS + '-panel');
+            self._$div.find('span').on(TC.Consts.event.CLICK, function (e) {
+                var $cb = $(this).closest('label').find('input[type=radio][name=mode]');
+
+                var newFormat = $cb.val();
+                $options.removeClass(TC.Consts.classes.HIDDEN);
+                $options.not('.tc-ctl-geolocation-' + newFormat).addClass(TC.Consts.classes.HIDDEN);
+
+                //Ocutamos el checkbox de "Mantener panel abierto" en la pestaña GPS
+                if (newFormat === self.Const.Tabs.GPS) {
+                    self._$div.find('.' + self.CLASS + '-track-panel-block').toggleClass(TC.Consts.classes.HIDDEN, true);
+                } else {
+                    self._$div.find('.' + self.CLASS + '-track-panel-block').toggleClass(TC.Consts.classes.HIDDEN, false);
+                }
+            });
+
             self.showCoords = {};
 
             self.$toolsPanel = $('.tools-panel');
             self.showCoords.$button = self._$div.find('.tc-ctl-geolocation-showCoords button');
             self.showCoords.$textCoords = self._$div.find('.tc-ctl-geolocation-showCoords-txt');
 
-            // GLS; después de la demo borrar
-            self.pause = {};
-            self.pause.$button = self._$div.find('.tc-ctl-geolocation-pause button');
-            self.pause.paused;
-            self.pause.$button.on('click', function () {
-                console.log('pausa pero tracking no activado');
-                if (self.track.$button.hasClass(self.Const.Classes.ACTIVE)) {
-                    if (self.pause.paused == undefined || !self.pause.paused) {
-                        $(this).addClass('clicked');
-                        self.pause.paused = true;
-                        console.log('pausado tracking');
-                    }
-                    else {
-                        $(this).removeClass('clicked');
-                        self.pause.paused = false;
-                        console.log('reanudado tracking');
-                    }
-                }
-            });
-
             self.gps = {};
-            self.gps.$button = self._$div.find('.tc-ctl-geolocation-gps button');
+            self.gps.$button = self._$div.find('.tc-ctl-geolocation-locate button');
 
             self.track = {};
             self.track.$button = self._$div.find('.tc-ctl-geolocation-track-ui button');
@@ -134,10 +136,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.track.$trackSearch = self._$div.find('.tc-ctl-geolocation-track-available-srch');
             self.track.$trackList = self._$div.find('.tc-ctl-geolocation-track-available-lst');
 
-            self.track.$trackToolPanelOpened = self._$div.find('.tc-ctl-geolocation-track-panel-opened');
-            self.track.$trackToolPanelOpened.click(function () {
-                $(this).toggleClass(self.Const.Classes.CLOSED);
-            });
+            self.track.$trackToolPanelOpened = self._$div.find('#tc-ctl-geolocation-track-panel-opened');
 
             self._$div.find('.tc-ctl-geolocation-track-panel-help').click(function () {
                 _showAlerMsg.call(self);
@@ -160,12 +159,13 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 self._$div.find('.tc-ctl-geolocation-showCoords').removeClass('tc-hidden');
 
                 if (Modernizr.mq('screen and (max-height: 50em) and (max-width: 50em)'))
-                    self.track.$trackToolPanelOpened.addClass(self.Const.Classes.CLOSED);
+                    self.track.$trackToolPanelOpened.prop('checked', false);;
             }
 
             if (window.File && window.FileReader && window.FileList && window.Blob) {
                 self.track.$trackImportFile.removeAttr('disabled');
-                self.track.$trackImportFile.on('change', $.proxy(self.import, self));
+                self.track.fnImport = self.import.bind(self);
+                self.track.$trackImportFile.on('change', self.track.fnImport);
             } else {
                 console.log('no es posible la importación');
             }
@@ -209,9 +209,11 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 //tc-ctl-geolocation-track-available-empty
                 self.track.$trackList.find('li').hide();
 
-                if (searchTerm.length == 0)
+                if (searchTerm.length == 0) {
                     self.track.$trackList.find('li:not([class]),li.' + self.Const.Classes.SELECTEDTRACK).show();
-                else {
+                    self._$div.find('.' + self.CLASS + '-track-search-icon').show();
+                } else {
+                    self._$div.find('.' + self.CLASS + '-track-search-icon').hide();
                     var r = new RegExp(searchTerm, 'i');
                     self.track.$trackList.find('li:not([class]),li.' + self.Const.Classes.SELECTEDTRACK).each(function () {
                         if ($(this).text().match(r))
@@ -225,7 +227,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             };
             self.track.$trackSearch.on("keyup search", function () {
                 _filter($(this).val().toLowerCase().trim());
-            });
+            });            
 
             // IE10 polyfill
             try {
@@ -258,8 +260,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             // en lista
             self.uiSimulate = function (simulate, $self) {
-                var editControls = ['a#simulate', 'a#edit', 'a#delete', 'a#exportGPX', 'a#exportKML'];
-                var simulateControls = ['a#stop', 'a#pause', 'select#velocity'];
+                var editControls = ['#simulate', '#edit', '#delete', '#exportGPX', '#exportKML'];
+                var simulateControls = ['#stop', '#pause', '#velocity'];
                 var cnt = $self.is('li') ? $self : $self.parent();
 
                 if (simulate) {
@@ -279,26 +281,57 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         $(cnt).find(editControls[i]).first().removeAttr('hidden');
                 }
             };
-            $(document).on("click", "a#simulate", function () {
-                self.uiSimulate(false, self.getSelectedTrack());
-                $(this).parent().parent().find('li').removeClass(self.Const.Classes.SELECTEDTRACK);
-
-                $(this).parent().addClass(self.Const.Classes.SELECTEDTRACK);
-                self.uiSimulate(true, $(this));
-
-                self.simulate_paused = false;
-                self.simulateTrack($(this).parent());
+            $(document).on("click", "#simulate", function () {
+                var wait = self.getLoadingIndicator().addWait();
+                $.when(_loadTrack(self, this)).then(function () { //Para evitar el bloqueo de la interfaz en móviles
+                    self.getLoadingIndicator().removeWait(wait)
+                });
             });
-            $(document).on("click", "a#draw", function () {
-                if ($(this).parent().hasClass(self.Const.Classes.SELECTEDTRACK)) {
-                    $(this).attr('title', self.getLocaleString("tr.lst.draw"));
-                    self.uiSimulate(false, $(this));
-                    self.clear();
-                }
-                else {
-                    self.drawTrack($(this).parent());
-                }
+            $(document).on("click", "#draw", function () {
+                var wait = self.getLoadingIndicator().addWait();
+                $.when(_drawTrack(self, this)).then(function () {
+                    self.getLoadingIndicator().removeWait(wait)
+                });
+
             });
+
+            var _drawTrack = function (self, btnDraw) {
+                var deferred = $.Deferred();
+
+                setTimeout(function () {
+                    if ($(btnDraw).parent().hasClass(self.Const.Classes.SELECTEDTRACK)) {
+                        $(btnDraw).attr('title', self.getLocaleString("tr.lst.draw"));
+                        self.uiSimulate(false, $(btnDraw));
+                        self.clear();
+                    }
+                    else {
+                        self.drawTrack($(btnDraw).parent());
+                    }
+                    deferred.resolve();
+                }, 0);
+
+                return deferred.promise();
+            };
+
+            var _loadTrack = function (self, btnSimulate) {
+                var deferred = $.Deferred();
+
+                setTimeout(function () {
+                    self.uiSimulate(false, self.getSelectedTrack());
+                    $(btnSimulate).parent().parent().find('li').removeClass(self.Const.Classes.SELECTEDTRACK);
+
+
+                    $(this).parent().addClass(self.Const.Classes.SELECTEDTRACK);
+                    self.uiSimulate(true, $(btnSimulate));
+
+                    self.simulate_paused = false;
+                    self.simulateTrack($(btnSimulate).parent());
+
+                    deferred.resolve();
+                }, 0);
+
+                return deferred.promise();
+            };
 
             var _edit = function (edit, $self) {
                 if (edit) {
@@ -307,31 +340,37 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                     $self.parent().find('input').first().val($self.parent().find('span').first().text()).focus();
 
-                    $self.parent().find('a#simulate').first().attr('hidden', 'hidden');
-                    $self.parent().find('a#edit').first().attr('hidden', 'hidden');
-                    $self.parent().find('a#delete').first().attr('hidden', 'hidden');
+                    $self.parent().find('#simulate').first().attr('hidden', 'hidden');
+                    $self.parent().find('#edit').first().attr('hidden', 'hidden');
+                    $self.parent().find('#delete').first().attr('hidden', 'hidden');
+                    $self.parent().find('#draw').first().attr('hidden', 'hidden');
+                    $self.parent().find('#exportGPX').first().attr('hidden', 'hidden');
+                    $self.parent().find('#exportKML').first().attr('hidden', 'hidden');
 
-                    $self.parent().find('a#save').first().removeAttr('hidden');
-                    $self.parent().find('a#cancel').first().removeAttr('hidden');
+                    $self.parent().find('#save').first().removeAttr('hidden');
+                    $self.parent().find('#cancel').first().removeAttr('hidden');
                 } else {
                     $self.parent().find('input').first().attr('hidden', 'hidden');
                     $self.parent().find('span').first().removeAttr('hidden');
 
-                    $self.parent().find('a#simulate').first().removeAttr('hidden');
-                    $self.parent().find('a#edit').first().removeAttr('hidden');
-                    $self.parent().find('a#delete').first().removeAttr('hidden');
+                    $self.parent().find('#simulate').first().removeAttr('hidden');
+                    $self.parent().find('#edit').first().removeAttr('hidden');
+                    $self.parent().find('#delete').first().removeAttr('hidden');
+                    $self.parent().find('#draw').first().removeAttr('hidden');
+                    $self.parent().find('#exportGPX').first().removeAttr('hidden');
+                    $self.parent().find('#exportKML').first().removeAttr('hidden');
 
-                    $self.parent().find('a#save').first().attr('hidden', 'hidden');
-                    $self.parent().find('a#cancel').first().attr('hidden', 'hidden');
+                    $self.parent().find('#save').first().attr('hidden', 'hidden');
+                    $self.parent().find('#cancel').first().attr('hidden', 'hidden');
                 }
             };
-            $(document).on("click", "a#edit", function () {
+            $(document).on("click", "#edit", function () {
                 _edit(true, $(this));
             });
-            $(document).on("click", "a#delete", function () {
+            $(document).on("click", "#delete", function () {
                 self.removeTrack($(this).parent());
             });
-            $(document).on("click", "a#save", function () {
+            $(document).on("click", "#save", function () {
                 var newName = $(this).parent().find('input').first().val();
                 if (newName.trim().length == 0) {
                     TC.alert(self.getLocaleString("geo.trk.edit.alert"));
@@ -341,11 +380,11 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     _edit(false, $(this));
                 }
             });
-            $(document).on("click", "a#cancel", function () {
+            $(document).on("click", "#cancel", function () {
                 _edit(false, $(this));
             });
 
-            $(document).on("click", "a#exportGPX,a#exportKML", function () {
+            $(document).on("click", "#exportGPX,#exportKML", function () {
                 var that = this;
                 var id = $(this).attr('id');
                 var mimeType = id.replace('export', '');
@@ -357,11 +396,11 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             });
 
 
-            $(document).on("click", "a#stop", function () {
+            $(document).on("click", "#stop", function () {
                 self.uiSimulate(false, $(this));
                 self.clear();
             });
-            $(document).on("click", "a#pause", function () {
+            $(document).on("click", "#pause", function () {
                 self.simulate_paused = !$(this).hasClass('play');
                 $(this).attr('title', self.getLocaleString(self.simulate_paused ? "tr.lst.play" : "tr.lst.pause"));
                 $(this).toggleClass('play');
@@ -418,22 +457,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
     var _showAlerMsg = function () {
         var self = this;
-
-        var alert = self._$div.find(".alert-warning");
-        _hideErrorMessages.call(self);
-        alert.find("#panel-msg").css("display", "block");
-
-        alert.removeClass(TC.Consts.classes.HIDDEN);
-        alert.fadeTo(5000, 500).fadeOut(500, function () {
-            alert.addClass(TC.Consts.classes.HIDDEN);
-        });
-    };
-
-    var _hideErrorMessages = function () {
-        var self = this;
-
-        var alert = self._$div.find(".alert-warning");
-        alert.find("#panel-msg").css("display", "none");
+        self.map.toast(self._$div.find(".alert-warning").html(), { duration: 10000 });
     };
 
     var _elevationChartCollapse = function () {
@@ -608,8 +632,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                             self.gps.accuracyCircle = circle;
                             self.gps.geoPosition = point;
 
-                            self.map.zoomToFeatures(self.layer.features, { animate: false });
-                            setTimeout(function () { self.wrap.pulsate(circle); }, 100);
+                            if (!self.wrap.pulsated) {
+                                self.map.zoomToFeatures(self.layer.features, { animate: false });
+                                self.wrap.pulsate(circle);
+                            }
                         });
                     }
                     else TC.alert(self.getLocaleString("geo.error.out"));
@@ -627,7 +653,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             } else {
                 self.onGeolocateError();
-            }           
+            }
         });
     };
 
@@ -636,8 +662,6 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         // eliminamos el flag que nos indica cuándo animar
         delete self.wrap.pulsated;
-
-        self.wrap.deactivateCurrentPosition();
 
         if (navigator.geolocation && self.currentPosition) {
             navigator.geolocation.clearWatch(self.currentPosition);
@@ -660,35 +684,38 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     var duringTrackingToolsPanel = function () {
         var self = this;
 
-        if (self.track.$trackToolPanelOpened.hasClass(self.Const.Classes.CLOSED))
+        if (!self.track.$trackToolPanelOpened.prop('checked'))
             self.$toolsPanel.addClass('right-collapsed');
     };
+
     var _tracking = function () {
         var self = this;
 
         self.track.$button.toggleClass(self.Const.Classes.ACTIVE);
         duringTrackingToolsPanel.call(self);
 
-        //$('.tc-ctl-geolocation-track-mng').show();
-        $(self.track.htmlMarker).show();
+        //$('.tc-ctl-geolocation-track-mng').show();        
 
         self.$events.on(self.Const.Event.POSITIONCHANGE, function (d) {
 
             self.currentPoint = d.pd;
 
-            var html = [
-                'Posición: ' + d.pd.position[0] + ', ' + d.pd.position[1],
-                'Exactitud: ' + (d.pd.accuracy || ''),
-                //'Orientación: ' + (d.pd.heading ? d.pd.heading + '&deg;' : ''),
-                'Velocidad: ' + (d.pd.speed ? d.pd.speed + ' km/h' : '')
-                /*, 'Delta: ' + d.pd.delta + 'ms'*/
-            ].join('<br />');
+            if (self.options.simulatedTrack) { } else {
 
-            self.track.$info.html(html);
+                var html = [
+                    'Posición: ' + d.pd.position[0] + ', ' + d.pd.position[1],
+                    'Exactitud: ' + (d.pd.accuracy || ''),
+                    //'Orientación: ' + (d.pd.heading ? d.pd.heading + '&deg;' : ''),
+                    'Velocidad: ' + (d.pd.speed ? d.pd.speed + ' km/h' : '')
+                    /*, 'Delta: ' + d.pd.delta + 'ms'*/
+                ].join('<br />');
 
-            if (!self.track.$infoOnMap) {
-                self.track.$infoOnMap = self.track.$info.appendTo(self.map._$div);
-                self.track.$infoOnMap.show();
+                self.track.$info.html(html);
+
+                if (!self.track.$infoOnMap) {
+                    self.track.$infoOnMap = self.track.$info.appendTo(self.map._$div);
+                    self.track.$infoOnMap.show();
+                }
             }
 
             self.track.$trackName.removeAttr('disabled');
@@ -707,6 +734,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         self.clear();
 
         self.wrap.setTracking(true);
+        $(self.track.htmlMarker).show();
     };
 
     ctlProto.activateTracking = function () {
@@ -750,13 +778,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             self.clear();
 
-            self.pause.paused = undefined;
-
             return true;
         };
 
         if (self.wrap.hasCoordinates()) {
-            TC.alert(self.getLocaleString("geo.trk.deactivate.alert"));
+            self.map.toast(self.getLocaleString("geo.trk.deactivate.alert"), { duration: 10000 });
+            //TC.alert(self.getLocaleString("geo.trk.deactivate.alert"));
             return _deactivateTracking();
         } else return _deactivateTracking();
     };
@@ -774,18 +801,28 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             if (ext.toUpperCase() == 'GPX' || ext.toUpperCase() == 'KML') {
 
                 var reader = new FileReader();
-                reader.onload = function () {
-                    def.resolve({
-                        type: ext,
-                        base64data: reader.result
-                    });
-                };
+
                 reader.onerror = function () {
                     TC.alert(self.getLocaleString("geo.trk.upload.alert"));
                     def.reject();
                 };
 
-                reader.readAsDataURL(files[0]);
+                reader.onload = TC.Util.detectIE() ? function () {
+                    def.resolve({
+                        type: ext,
+                        text: reader.result
+                    });
+                } : function () {
+                    def.resolve({
+                        type: ext,
+                        base64data: reader.result
+                    });
+                };
+
+                if (TC.Util.detectIE())
+                    reader.readAsText(files[0]);
+                else
+                    reader.readAsDataURL(files[0]);
 
             } else {
                 TC.alert(self.getLocaleString("geo.trk.upload.error"));
@@ -805,7 +842,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         localforage.getItem(self.Const.LocalStorageKey.TRACKING)
             .then(function (strTracks) {
-                self.availableTracks = {};
+                self.availableTracks = {
+                };
 
                 if (strTracks && strTracks.length > 0)
                     self.availableTracks = JSON.parse(strTracks);
@@ -850,7 +888,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.bindTracks = function () {
         var self = this;
 
-        self.track.$trackList.find('li:not([class^="tc-ctl-geolocation-track-available-empty"])').remove();
+        self.track.$trackList.find('li:not([class^="tc-ctl-geolocation-track-available-empty"])').hide();
         self.track.$trackList.find('li[class^="tc-ctl-geolocation-track-available-empty"]').hide();
 
         self.getAvailableTracks().then(function (tracks) {
@@ -861,7 +899,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             }
             else {
                 for (var t in tracks) {
-                    self.getRenderedHtml(self.CLASS + '-track-node', { id: t, name: tracks[t].name ? tracks[t].name.trim() : '' }, function (html) {
+                    self.getRenderedHtml(self.CLASS + '-track-node', {
+                        id: t, name: tracks[t].name ? tracks[t].name.trim() : ''
+                    }, function (html) {
                         self.track.$trackList.append(html);
                     });
                 }
@@ -878,11 +918,11 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         duringTrackingToolsPanel.call(self);
 
-        $(self.track.htmlMarker).show();
-
         self.drawTrack(li);
 
         self.wrap.simulateTrack();
+
+        $(self.track.htmlMarker).show();
 
         self.$events.on(self.Const.Event.POSITIONCHANGE, function (d) {
 
@@ -953,9 +993,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.elevationTrack = function (li) {
         var self = this;
 
-        var time = {};
+        var time = {
+        };
         var km = 0;
-        var coordinates = [];
+        self.chart = {
+            coordinates: []
+        };
 
         duringTrackingToolsPanel.call(self);
 
@@ -999,7 +1042,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                             case 'linestring':
                                 time = getTime(geom);
                                 km = getDistance(geom);
-                                coordinates = coordinates.concat(geom.getCoordinates());
+                                self.chart.coordinates = self.chart.coordinates.concat(geom.getCoordinates());
                                 break;
                             case 'multilinestring':
                                 var _time;
@@ -1010,7 +1053,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                                     if (ls[i].getLayout() == ol.geom.GeometryLayout.XYZM)
                                         _time = _time + (ls[i].getLastCoordinate()[3] - ls[i].getFirstCoordinate()[3]);
 
-                                    coordinates = coordinates.concat(ls[i].getCoordinates());
+                                    self.chart.coordinates = self.chart.coordinates.concat(ls[i].getCoordinates());
                                 }
 
                                 if (_time)
@@ -1022,8 +1065,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         }
 
                         /* x */
-                        for (var i = 0; i < coordinates.length; i++) {
-                            x.push(km * i / coordinates.length);
+                        for (var i = 0; i < self.chart.coordinates.length; i++) {
+                            x.push(km * i / self.chart.coordinates.length);
                         }
 
 
@@ -1063,50 +1106,28 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         getChartData(li).then(function (data) {
             if (data != null) {
+                if (data.time) data.time = ("00000" + data.time.h).slice(-2) + ':' + ("00000" + data.time.m).slice(-2) + ':' + ("00000" + data.time.s).slice(-2);
 
-                if (data.time) {
-                    self.track.$chartViewChart.find('span#spentTime').removeAttr('hidden');
-                    self.track.$chartViewChart.find('span#spentTime').text(("00000" + data.time.h).slice(-2) + ':' + ("00000" + data.time.m).slice(-2) + ':' + ("00000" + data.time.s).slice(-2));
-                }
-                else self.track.$chartViewChart.find('span#spentTime').attr('hidden', 'hidden');
-
-                var generateChart = function () {
-
-                    TC.loadJS(!window.c3, [TC.Consts.url.D3C3], function () {
-                        c3.chart.internal.fn.getAreaBaseValue = function () {
-                            return data.miny; // lowest elevation
-                        };
-
-                        self.track.elevationChart = c3.generate({
-                            bindto: '#chart',
-                            size: { height: (Modernizr.mq('(min-width: 50em)') ? 100 : 70), width: (Modernizr.mq('(min-width: 50em)') ? 345 : 227) },
-                            onmouseout: function () {
-                                $(self.track.htmlElevationMarker).hide();
-                            },
-                            data: { x: 'x', columns: [['x'].concat(data.x), ['Elevación'].concat(data.ele)], types: { 'Elevación': 'area-spline' }, colors: { "Elevación": '#C52737' } },
-                            legend: { show: false },
-                            tooltip: {
-                                contents: function (d) {
-                                    return self.wrap.getTooltip(coordinates, d);
-                                }
-                            },
-                            axis: { x: { tick: { count: 5, format: function (d) { return Math.round(d) + ' km'; } } }, y: { max: data.maxy, min: data.miny, tick: { count: 2, format: function (d) { return Math.round(d) + ' m'; } } } }
-                        });
-                    });
-                };
-                generateChart();
-
-                _elevationChartCollapse.call(self);
-                self.track.$chartViewChart.find('p').attr('hidden', 'hidden');
+                data = $.extend({}, data, {
+                    size: {
+                        height: (Modernizr.mq('(min-width: 50em)') ? 100 : (Modernizr.mq('(min-width: 50em)') ? 100 : 70)), width: (Modernizr.mq('(min-width: 50em)') ? 445 : (Modernizr.mq('(min-width: 40em)') ? 310 : 215))
+                    },
+                    data: {
+                        x: 'x',
+                        columns: [['x'].concat(data.x), ['Elevación'].concat(data.ele)],
+                        types: { 'Elevación': 'area-spline' }, colors: { "Elevación": '#C52737' }
+                    },
+                    axis: {
+                        x: { tick: { count: 5, format: function (d) { return Math.round(d) + ' km'; } } },
+                        y: { max: data.maxy, min: data.miny, tick: { count: 2, format: function (d) { return Math.round(d) + ' m'; } } }
+                    }
+                });
             }
             else {
-                self.track.$chartViewChart.find('p').removeAttr('hidden');
+                data = { msg: self.getLocaleString("geo.trk.chart.chpe.empty") };
             }
 
-            self.track.$trackChartPanel.show();
-
-            if (!self.track.$trackChartPanelOnMap)
-                self.track.$trackChartPanelOnMap = self.track.$trackChartPanel.appendTo(self.map._$div);
+            self.map.$events.trigger($.Event(self.Const.Event.DRAWTRACK), { data: data });
         });
     };
 
@@ -1128,6 +1149,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         // eliminamos la selección en la lista de tracks
         self.track.$trackList.find('li').removeClass(self.Const.Classes.SELECTEDTRACK);
 
+        self.map.$events.trigger($.Event(self.Const.Event.CLEARTRACK), {});
     };
 
     ctlProto.saveTrack = function () {
@@ -1141,7 +1163,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             var trackName = self.import.fileName || self.track.$trackName.val().trim();
 
             var tracks = self.availableTracks;
-            if (!tracks) tracks = {};
+            if (!tracks) tracks = {
+            };
 
             var uid = TC.getUID();
             while (tracks[uid])
@@ -1171,7 +1194,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             try {
                 self.setStoredTracks(tracks).then(function () {
-                    TC.alert(self.saveMessage || self.getLocaleString("geo.trk.save.alert"));
+                    self.map.toast(self.saveMessage || self.getLocaleString("geo.trk.save.alert"), { duration: 10000 });
+                    //TC.alert(self.saveMessage || self.getLocaleString("geo.trk.save.alert"));
                     if (self.saveMessage)
                         delete self.saveMessage;
 
@@ -1275,7 +1299,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         li.addClass(self.Const.Classes.SELECTEDTRACK);
 
-        $(li).find('a#draw').attr('title', self.getLocaleString("tr.lst.clear"));
+        $(li).find('#draw').attr('title', self.getLocaleString("tr.lst.clear"));
     };
 
     ctlProto.getSelectedTrack = function () {
@@ -1321,26 +1345,48 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         return self.wrap.export(type, li);
     };
 
+    ctlProto.getTooltip = function (d) {
+        var self = this;
+
+        return self.wrap.getTooltip(d);
+    };
+
+    ctlProto.removeTooltip = function () {
+        var self = this;
+
+        $(self.track.htmlElevationMarker).hide();
+    }
+    
     ctlProto.import = function (evt) {
         var self = this;
 
-        var wait;
-        wait = self.getLoadingIndicator().addWait();
+        if (!self._cleaning) {
+
+            self.clear();
+
+            var wait;
+            wait = self.getLoadingIndicator().addWait();
 
 
-        $.when(self.upload(evt)).then(function (data) {
-            if (data) {
-                var base64encodedData = 'data:' + self.Const.MimeMap[data.type.toUpperCase()] +
-                                        ';base64,' + encodeURI(data.base64data.split(',').pop());
+            $.when(self.upload(evt)).then(function (data) {
+                if (data) {
 
-                self.wrap.import(wait, base64encodedData, data.type);
-                self.track.$trackImportFile.replaceWith(self.track.$trackImportFile.val('').clone(true));
-            }
+                    self.wrap.import(wait, (data.text ?
+                        { text: data.text } : {
+                            base64: data.base64data  //'data:' + self.Const.MimeMap[data.type.toUpperCase()] + ';base64,' + encodeURI(data.base64data.split(',').pop())
+                        }), data.type);
 
-        }, function (error) {
-            TC.alert(self.getLocaleString("geo.trk.upload.error2"));
-            self.getLoadingIndicator().removeWait(wait);
-        });
+
+                    self._cleaning = true;
+                    self.track.$trackImportFile.replaceWith(self.track.$trackImportFile.val('').clone(true));
+                    delete self._cleaning;
+                }
+
+            }, function (error) {
+                TC.alert(self.getLocaleString("geo.trk.upload.error2"));
+                self.getLoadingIndicator().removeWait(wait);
+            });
+        }
     };
 
     ctlProto.getLoadingIndicator = function () {

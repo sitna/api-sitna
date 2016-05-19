@@ -112,7 +112,10 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                     self.styleLegendImage($(img), layer);
                 });
                 $info.toggleClass(TC.Consts.classes.HIDDEN);
-                $li.find('.' + self.CLASS + '-dd').toggleClass(TC.Consts.classes.HIDDEN);
+
+                if ($li.find('input[type="checkbox"]').is(':checked')) {
+                    $li.find('.' + self.CLASS + '-dd').toggleClass(TC.Consts.classes.HIDDEN, !$info.hasClass(TC.Consts.classes.HIDDEN));
+                }
                 $a.toggleClass(TC.Consts.classes.CHECKED);
             });
 
@@ -158,7 +161,10 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
         if ($li) {
             var visible = layer.getVisibility();
             $li.find('.' + self.CLASS + '-del').toggleClass(TC.Consts.classes.HIDDEN, visible);
-            $li.find('.' + self.CLASS + '-dd').toggleClass(TC.Consts.classes.HIDDEN, !visible);
+
+            if ($li.find('.' + self.CLASS + '-info').hasClass(TC.Consts.classes.HIDDEN)) {
+                $li.find('.' + self.CLASS + '-dd').toggleClass(TC.Consts.classes.HIDDEN, !visible);
+            }
         }
     };
 

@@ -10,10 +10,10 @@ audio, canvas, video {
     *zoom: 1;
 }
 
-audio:not([controls]) {
-    display: none;
-    height: 0;
-}
+    audio:not([controls]) {
+        display: none;
+        height: 0;
+    }
 
 [hidden] {
     display: none;
@@ -550,43 +550,43 @@ html, body {
     background-color: #fff;
 }
 
-.tc-map.tc-loading {
-    background-color: #666;
-    animation: pulsation 2s infinite;
-    -moz-animation: pulsation 2s infinite; /* Firefox */
-    -webkit-animation: pulsation 2s infinite; /* Safari and Chrome */
-    -o-animation: pulsation 2s infinite; /* Opera */
-}
+    .tc-map.tc-loading {
+        background-color: #666;
+        animation: pulsation 2s infinite;
+        -moz-animation: pulsation 2s infinite; /* Firefox */
+        -webkit-animation: pulsation 2s infinite; /* Safari and Chrome */
+        -o-animation: pulsation 2s infinite; /* Opera */
+    }
 
-.tc-map.tc-loading * {
-    visibility: hidden;
-}
+        .tc-map.tc-loading * {
+            visibility: hidden;
+        }
 
-.tc-map.tc-collapsed {
-    position: absolute;
-    left: auto;
-    top: auto;
-    right: 0;
-    bottom: 15px;
-    width: 25vh;
-    height: 25vh;
-    z-index: 10012;
-    border-top: 0.2em solid #fff;
-    border-left: 0.2em solid #fff;
-    border-top-left-radius: 0.3em;
-}
+    .tc-map.tc-collapsed {
+        position: absolute;
+        left: auto;
+        top: auto;
+        right: 0;
+        bottom: 15px;
+        width: 25vh;
+        height: 25vh;
+        z-index: 10012;
+        border-top: 0.2em solid #fff;
+        border-left: 0.2em solid #fff;
+        border-top-left-radius: 0.3em;
+    }
 
-.tc-map.tc-collapsed .tc-ctl-nav, .tc-map.tc-collapsed .tc-ctl-nav-bar, .tc-map.tc-collapsed .tc-ctl-sb, .tc-map.tc-collapsed .tc-ctl-scl, .tc-map.tc-collapsed .tc-ctl-ss, .tc-map.tc-collapsed .tc-ctl-attrib, .tc-map.tc-collapsed .tc-ctl-sv-btn {
-    display: none;
-}
+        .tc-map.tc-collapsed .tc-ctl-nav, .tc-map.tc-collapsed .tc-ctl-nav-bar, .tc-map.tc-collapsed .tc-ctl-sb, .tc-map.tc-collapsed .tc-ctl-scl, .tc-map.tc-collapsed .tc-ctl-ss, .tc-map.tc-collapsed .tc-ctl-attrib, .tc-map.tc-collapsed .tc-ctl-sv-btn {
+            display: none;
+        }
 
-.tc-map.tc-ctl-sv-active {
-    cursor: move;
-}
+    .tc-map.tc-ctl-sv-active {
+        cursor: move;
+    }
 
-.tc-map .ol-viewport {
-    background-color: #fff;
-}
+    .tc-map .ol-viewport {
+        background-color: #fff;
+    }
 
 .tc-ctl {
     padding: 0.5em;
@@ -671,12 +671,13 @@ html, body {
 .tc-ctl-popup-content, .olPopupContent {
     max-width: 60vw;
     max-height: 60vh;
-	-webkit-overflow-scrolling: touch; /* scroll inercial */
+    -webkit-overflow-scrolling: touch; /* scroll inercial */
     -webkit-transition: all .3s ease;
     -moz-transition: all .3s ease;
     -ie-transition: all .3s ease;
     -o-transition: all .3s ease;
     transition: all .3s ease;
+    padding: 0.2em;
 }
 
 .ol-overlaycontainer-stopevent .tc-ctl-popup {
@@ -872,14 +873,14 @@ html, body {
     color: #fff;
 }
 
-.tc-ctl-btn.tc-disabled {
-    background-color: #ccc;
-    cursor: default;
-}
+    .tc-ctl-btn.tc-disabled {
+        background-color: #ccc;
+        cursor: default;
+    }
 
-.tc-ctl-btn.tc-active {
-    background-color: #c00;
-}
+    .tc-ctl-btn.tc-active {
+        background-color: #c00;
+    }
 
 .ol-control button {
     border: 0;
@@ -1031,6 +1032,11 @@ div.tc-ctl-coords-xy {
     margin: 0;
 }
 
+.tc-ctl.tc-disabled h2 {
+    color: #ccc;
+    text-decoration: line-through;
+}
+
 ul.tc-ctl-bms-branch, ul.tc-ctl-cbuild-bl-list {
     list-style-type: none;
     margin: 0;
@@ -1065,7 +1071,26 @@ ul.tc-ctl-bms-branch, ul.tc-ctl-cbuild-bl-list {
     height: 9em;
 }
 
-    .tc-ctl-bms-node label span, .tc-ctl-cbuild-bl-node label span {
+.tc-ctl-cbuild-off-panel {
+    position: absolute;
+    z-index: 10008;
+    bottom: 1em;
+    right: 1em;
+    background-color: #ccc;
+    opacity: 0.5;
+    border-radius: 0.3em;
+    padding: 0.3em;
+    font-size: 0.8em;
+    font-weight: bold;
+    max-width: 6em;
+}
+
+    .tc-ctl-cbuild-off-panel span, .tc-ctl-cbuild-off-panel a {
+        display: inline-block;
+        text-align: center;
+    }
+
+.tc-ctl-bms-node label span, .tc-ctl-cbuild-bl-node label span {
     position: absolute;
     display: block;
     margin: 0;
@@ -1117,9 +1142,9 @@ ul.tc-ctl-bms-branch input[type=radio], ul.tc-ctl-cbuild-bl-list input[type=chec
 }
 
     ul.tc-ctl-bms-branch input[type=radio]:checked + div, ul.tc-ctl-cbuild-bl-list input[type=checkbox]:checked + div {
-    background-color: #c00;
-    border: 1px solid #c00;
-}
+        background-color: #c00;
+        border: 1px solid #c00;
+    }
 
 ul.tc-ctl-toc-branch {
     list-style-type: none;
@@ -1361,11 +1386,11 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info {
 }
 
     li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:hover {
-        color: #c00;
+        color: #600;
     }
 
     li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info.tc-checked {
-        color: #600;
+        color: #c00;
     }
 
     li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
@@ -1410,7 +1435,7 @@ ul.tc-ctl-lcat-branch.tc-collapsed {
 
 .tc-ctl-lcat-info-close {
     font-family: 'FontAwesome';
-    color: #c00;
+    color: #000;
     display: block;
     float: right;
     width: 1em;
@@ -1421,7 +1446,7 @@ ul.tc-ctl-lcat-branch.tc-collapsed {
 }
 
     .tc-ctl-lcat-info-close:hover {
-        color: #c00;
+        color: #000;
     }
 
     .tc-ctl-lcat-info-close:after {
@@ -1433,13 +1458,13 @@ ul.tc-ctl-lcat-branch.tc-collapsed {
     font-size: 1.1em;
 }
 
-    .tc-ctl-lcat-info h3:before {
-        font-family: 'FontAwesome';
-        font-weight: normal;
-        color: #600;
-        content: '\f05a';
-        margin-right: 0.3em;
-    }
+.tc-ctl-lcat-info h3:before {
+    font-family: 'FontAwesome';
+    font-weight: normal;
+    color: #600;
+    content: '\f05a';
+    margin-right: 0.3em;
+}
 
 .tc-ctl-lcat-info h4 {
     font-size: 1em;
@@ -1581,7 +1606,7 @@ div.tc-ctl-lcat-legend {
     margin-left: 0.4em;
 }
 
-.tc-ctl-ltoc li.tc-ctl-ltoc-elm,.tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-drag.tc-dragend {
+.tc-ctl-ltoc li.tc-ctl-ltoc-elm, .tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-drag.tc-dragend {
     position: relative;
     background-color: #fff;
     border: 1px solid #999;
@@ -1618,7 +1643,8 @@ div.tc-ctl-lcat-legend {
 }
 
 .tc-ctl-ltoc .tc-ctl-ltoc-type {
-    width: 5%;
+    width: 14px;
+    margin-right: 3px;
     display: inline-block;
     color: #600;
     vertical-align: top;
@@ -1637,21 +1663,21 @@ div.tc-ctl-lcat-legend {
     position: relative;
 }
 
-.tc-ctl-ltoc h2 button, .tc-ctl-lcat h2 button {
-    position: absolute;
-    top: -0.1em;
-    right: 0;
-    border: none;
-    background: none;
-    color: #666;
-    font-size: 1.4em;
-}
-
-    .tc-ctl-ltoc h2 button.tc-ctl-lcat-btn-del-all:after, .tc-ctl-ltoc .tc-ctl-ltoc-del-all:after {
-        content: '\f1f8';
-        color: #777;
-        font-family: 'FontAwesome';
+    .tc-ctl-ltoc h2 button, .tc-ctl-lcat h2 button {
+        position: absolute;
+        top: -0.1em;
+        right: 0;
+        border: none;
+        background: none;
+        color: #666;
+        font-size: 1.4em;
     }
+
+        .tc-ctl-ltoc h2 button.tc-ctl-lcat-btn-del-all:after, .tc-ctl-ltoc .tc-ctl-ltoc-del-all:after {
+            content: '\f1f8';
+            color: #777;
+            font-family: 'FontAwesome';
+        }
 
 .tc-ctl-ltoc .tc-ctl-ltoc-dd, .tc-ctl-ltoc .tc-ctl-ltoc-del {
     position: absolute;
@@ -1726,9 +1752,9 @@ div.tc-ctl-lcat-legend {
     margin-bottom: 2px;
 }
 
-.tc-ctl-ltoc .tc-ctl-ltoc-abstract h4 {
-    display: none;
-}
+    .tc-ctl-ltoc .tc-ctl-ltoc-abstract h4 {
+        display: none;
+    }
 
 .tc-ctl-ltoc .tc-ctl-ltoc-legend h4, .tc-ctl-ltoc .tc-ctl-ltoc-metadata h4 {
     font-size: 1em;
@@ -1950,42 +1976,42 @@ div.tc-ctl-lcat-legend {
         text-decoration: none;
     }
 
-.tc-ctl-meas-select, .tc-ctl-share-select {
+.tc-ctl-meas-select, .tc-ctl-share-select, .tc-ctl-geolocation-select {
     padding-top: 0.5em;
+    margin-bottom: 0.5em;
 }
 
-    .tc-ctl-meas-select label, .tc-ctl-share-select label {
-    position: relative;
-    display: inline-block;
-    width: 4em;
-    height: 2em;
-    margin: 0.2em;
-}
+    .tc-ctl-meas-select label, .tc-ctl-share-select label, .tc-ctl-geolocation-select label {
+        position: relative;
+        display: inline-block;
+        height: 2em;
+        margin: 0.2em 0;
+    }
 
-    .tc-ctl-meas-select input[type=radio], .tc-ctl-share-select input[type=radio] {
-    display: none;
-}
+    .tc-ctl-meas-select input[type=radio], .tc-ctl-share-select input[type=radio], .tc-ctl-geolocation-select input[type=radio] {
+        display: none;
+    }
 
-        .tc-ctl-meas-select input[type=radio] ~ span, .tc-ctl-share-select input[type=radio] ~ span {
-    position: absolute;
-    display: block;
-    width: 100%;
-    height: 100%;
-    line-height: 2em;
-    text-align: center;
-    border-radius: 0.3em;
-    border: 1px solid #666;
-    background-color: #fff;
-    color: #666;
-    cursor: pointer;
-}
+        .tc-ctl-meas-select input[type=radio] ~ span, .tc-ctl-share-select input[type=radio] ~ span, .tc-ctl-geolocation-select input[type=radio] ~ span {
+            position: absolute;
+            display: block;
+            width: 100%;
+            height: 100%;
+            line-height: 2em;
+            text-align: center;
+            border-radius: 0.3em;
+            border: 1px solid #666;
+            background-color: #fff;
+            color: #666;
+            cursor: pointer;
+        }
 
-.tc-ctl-share-select input[type=radio]:checked ~ span {
-    border-color: #666;
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-color: #fff;
-}
+        .tc-ctl-share-select input[type=radio]:checked ~ span, .tc-ctl-geolocation-select input[type=radio]:checked ~ span {
+            border-color: #666;
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+            border-bottom-color: #fff;
+        }
 
 label.tc-ctl-share-btn-url span:before {
     text-indent: -40%;
@@ -2010,31 +2036,39 @@ label.tc-ctl-share-btn-iframe span:before {
     border-bottom-right-radius: 0.3em;
 }
 
-label.tc-ctl-meas-btn-len, label.tc-ctl-share-btn-url {
+.tc-ctl-geolocation-btn-gps, .tc-ctl-geolocation-btn-track {
+    width: 25%;
+}
+
+.tc-ctl-geolocation-btn-tracks {
+    width: 49%;
+}
+
+label.tc-ctl-meas-btn-len, label.tc-ctl-share-btn-url, label.tc-ctl-geolocation-btn-tracks {
     margin-right: 0;
 }
 
-label.tc-ctl-meas-btn-area, label.tc-ctl-share-btn-iframe {
+label.tc-ctl-meas-btn-area, label.tc-ctl-share-btn-iframe, label.tc-ctl-geolocation-btn-track {
     margin-left: 0;
 }
 
-label.tc-ctl-meas-btn-len input[type=radio] ~ span, label.tc-ctl-share-btn-url input[type=radio] ~ span {
+label.tc-ctl-meas-btn-len input[type=radio] ~ span, label.tc-ctl-share-btn-url input[type=radio] ~ span, label.tc-ctl-geolocation-btn-tracks input[type=radio] ~ span, label.tc-ctl-geolocation-btn-gps input[type=radio] ~ span {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
 }
 
-label.tc-ctl-meas-btn-area input[type=radio] ~ span, label.tc-ctl-share-btn-iframe input[type=radio] ~ span {
+label.tc-ctl-meas-btn-area input[type=radio] ~ span, label.tc-ctl-share-btn-iframe input[type=radio] ~ span, label.tc-ctl-geolocation-btn-track input[type=radio] ~ span, label.tc-ctl-geolocation-btn-tracks input[type=radio] ~ span {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
 
-.tc-ctl-meas-select input[type=radio]:checked ~ span, .tc-ctl-share-select input[type=radio]:checked ~ span {
+.tc-ctl-meas-select input[type=radio]:checked ~ span, .tc-ctl-share-select input[type=radio]:checked ~ span, .tc-ctl-geolocation-select input[type=radio]:checked ~ span {
     border-color: #c00;
     color: #c00;
     z-index: 10007;
 }
 
-.tc-ctl-share-select input[type=radio]:checked ~ span {
+.tc-ctl-share-select input[type=radio]:checked ~ span, .tc-ctl-geolocation-select input[type=radio]:checked ~ span {
     border-bottom-color: #fff;
 }
 
@@ -2771,18 +2805,18 @@ div.tc-ctl-printMap-cnt {
 
     div.tc-ctl-printMap-cnt label {
         width: 25%;
-}
+    }
 
     div.tc-ctl-printMap-cnt input[type="text"], div.tc-ctl-printMap-cnt select.tc-combo {
         width: 75%;
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
-}
-
-    div.tc-ctl-printMap-txt label {
-        line-height: 2em;
     }
+
+div.tc-ctl-printMap-txt label {
+    line-height: 2em;
+}
 
 div.tc-ctl-printMap span.tc-ctl-printMap-btn {
     float: right;
@@ -2811,7 +2845,7 @@ div.tc-ctl-download-cnt {
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
-}
+    }
 /*div.tc-ctl-download-help { height:0;}*/
 .tc-ctl-download-help {
     color: #AAA;
@@ -2845,7 +2879,7 @@ div.tc-ctl-download .tc-alert {
         margin: 0;
     }
 
-.tc-ctl-download-div i.icon-question-sign {
+.tc-ctl-download-div i.icon-question-sign, i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
     font-size: 17px;
 }
 
@@ -3028,26 +3062,26 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     list-style: none;
 }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list:empty {
-    border: 0;
-    margin: 0.3em;
-}
+    .tc-ctl-cbuild .tc-ctl-cbuild-list:empty {
+        border: 0;
+        margin: 0.3em;
+    }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list li {
-    position: relative;
-    float: left;
-    width: 97%;
-    padding: 0.5em 0.5em;
-    border-bottom: 0.1em solid rgba(0,0,0,0.1);
-    overflow: hidden;
-    line-height: 2em;
-}
+    .tc-ctl-cbuild .tc-ctl-cbuild-list li {
+        position: relative;
+        float: left;
+        width: 97%;
+        padding: 0.5em 0.5em;
+        border-bottom: 0.1em solid rgba(0,0,0,0.1);
+        overflow: hidden;
+        line-height: 2em;
+    }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-active {
-    border-top: 0.1em solid rgba(0,0,0,0.1);
-    border-bottom: 0.1em solid rgba(0,0,0,0.1);
-    background: repeating-linear-gradient( -45deg, rgba(224, 224, 224, 0.3), rgba(255, 217, 217, 0.7) 1px, #fff 0px, #fff 5px );
-}
+        .tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-active {
+            border-top: 0.1em solid rgba(0,0,0,0.1);
+            border-bottom: 0.1em solid rgba(0,0,0,0.1);
+            background: repeating-linear-gradient( -45deg, rgba(224, 224, 224, 0.3), rgba(255, 217, 217, 0.7) 1px, #fff 0px, #fff 5px );
+        }
 
         .tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-disabled {
             animation: pulsation 2s infinite;
@@ -3056,49 +3090,49 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
             -o-animation: pulsation 2s infinite; /* Opera */
         }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list li button {
-    position: absolute;
-    width: 2em;
-    height: 2em;
-    background-color: transparent;
-    color: transparent;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: clip;
-    font-size: 1em;
-    border: 0;
-    padding: 0;
-}
+        .tc-ctl-cbuild .tc-ctl-cbuild-list li button {
+            position: absolute;
+            width: 2em;
+            height: 2em;
+            background-color: transparent;
+            color: transparent;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: clip;
+            font-size: 1em;
+            border: 0;
+            padding: 0;
+        }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list li button:before {
-    display: block;
-    position: relative;
+            .tc-ctl-cbuild .tc-ctl-cbuild-list li button:before {
+                display: block;
+                position: relative;
                 color: #666;
-    font-family: 'FontAwesome';
-    width: 2em;
-    height: 2em;
-    line-height: 2em;
-}
+                font-family: 'FontAwesome';
+                width: 2em;
+                height: 2em;
+                line-height: 2em;
+            }
 
             .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-active:before {
                 color: #c00;
             }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-view {
-    right: 3em;
-}
+            .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-view {
+                right: 3em;
+            }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-view:before {
-    content: '\f06e';
-}
+                .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-view:before {
+                    content: '\f06e';
+                }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-del {
-    right: 1em;
-}
+            .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-del {
+                right: 1em;
+            }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-del:before {
-    content: '\f1f8';
-}
+                .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-del:before {
+                    content: '\f1f8';
+                }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-new, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel {
     position: relative;
@@ -3119,14 +3153,13 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
 }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel:before {
-    position: absolute;
-    font-family: 'FontAwesome';
-    color: #fff;
-    width: 4em;
-    height: 2em;
-    line-height: 2em;
-    margin-top: -0.4em;
-}
+        font-family: 'FontAwesome';
+        color: #fff;
+        width: 4em;
+        height: 2em;
+        line-height: 2em;
+        display: block;
+    }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before {
     content: '\f067';
@@ -3137,7 +3170,7 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
 }
 
 .tc-ctl-cbuild-dialog .tc-modal-body {
-	max-height: 50vh;
+    max-height: 50vh;
     overflow: auto;
 }
 
@@ -3174,19 +3207,19 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     border-radius: 0.3em;
 }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-progress-bar .tc-ctl-cbuild-progress-ratio {
-    height: 100%;
-    background-color: #c00;
-    border-radius: 0.3em;
-}
+    .tc-ctl-cbuild .tc-ctl-cbuild-progress-bar .tc-ctl-cbuild-progress-ratio {
+        height: 100%;
+        background-color: #c00;
+        border-radius: 0.3em;
+    }
 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-res-panel {
     position: relative;
 }
 
-.tc-ctl-cbuild-dialog .tc-ctl-cbuild-res-panel h4 {
-    margin-bottom: 0.5em;
-}
+    .tc-ctl-cbuild-dialog .tc-ctl-cbuild-res-panel h4 {
+        margin-bottom: 0.5em;
+    }
 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-res {
     position: absolute;
@@ -3199,86 +3232,6 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-rng-maxres {
     padding: 0;
 }
-
-.tc-ctl-geolocation-circlePulsate {
-    visibility: visible;
-    display: block;
-    width: 600px;
-    height: 600px;
-    box-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
-    border: 1px solid #ff0000;
-    border-radius: 600px;
-    -webkit-animation: pulsate 0.5s 1.1 ease-out;
-    -moz-animation: pulsate 0.5s 1.1 ease-out;
-    -ms-animation: pulsate 0.5s 1.1 ease-out;
-    -o-animation: pulsate 0.5s 1.1 ease-out;
-    animation: pulsate 0.5s 1.1 ease-out;
-}
-
-@keyframes pulsate {
-    0% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-
-    25% {
-        transform: scale(1.1) rotate(0.1deg);
-        -moz-transform: scale(1.1) rotate(0.1deg);
-        -webkit-transform: scale(1.1) rotate(0.1deg);
-    }
-
-    50% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-
-    75% {
-        transform: scale(1.1) rotate(0.1deg);
-        -moz-transform: scale(1.1) rotate(0.1deg);
-        -webkit-transform: scale(1.1) rotate(0.1deg);
-    }
-
-    100% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-}
-
-@-webkit-keyframes pulsate {
-    0% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-
-    25% {
-        transform: scale(1.1) rotate(0.1deg);
-        -moz-transform: scale(1.1) rotate(0.1deg);
-        -webkit-transform: scale(1.1) rotate(0.1deg);
-    }
-
-    50% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-
-    75% {
-        transform: scale(1.1) rotate(0.1deg);
-        -moz-transform: scale(1.1) rotate(0.1deg);
-        -webkit-transform: scale(1.1) rotate(0.1deg);
-    }
-
-    100% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-}
-
 
 img#tc-ctl-geolocation-track-marker {
     height: 20px;
@@ -3313,81 +3266,50 @@ img#tc-ctl-geolocation-track-elevation-marker {
     background-image: url(img/track-marker-icon-end.png);
 }
 
-/*.tc-ctl-geolocation-icon-cross:before {
-                font-family: FontAwesome;
-                content: "\f192";
-            }*/
-
-.tc-ctl-geolocation-showCoords button {
+.tc-ctl-geolocation-showCoords, .tc-ctl-geolocation-locate {
     float: right;
-    margin-right: 0.5em;
 }
 
-/* GLS; después de la demo borrar*/
-.tc-ctl-geolocation-pause button {
-    background-color: #aaaaaa;
-    border-color: #aaaaaa;
-}
-
-    .tc-ctl-geolocation-pause button.clicked {
-        background-color: #666666;
-        border-color: #666666;
+    .tc-ctl-geolocation-showCoords button {
+        margin-left: 0.3em;
     }
-    /* GLS; después de la demo borrar*/
-    .tc-ctl-geolocation-pause button:before {
+
+.tc-ctl-geolocation-locate {
+    margin-left: 0.5em;
+}
+
+    .tc-ctl-geolocation-locate button:before {
         font-family: FontAwesome;
-        content: "\f04c";
+        content: "\f124";
     }
 
-
-.tc-ctl-geolocation-showCoords button {
+.tc-ctl-geolocation-showCoords button:before {
+    font-family: FontAwesome;
+    content: "\f047";
 }
-
-    .tc-ctl-geolocation-showCoords button:before {
-        font-family: FontAwesome;
-        content: "\f047";
-    }
-
-.tc-ctl-geolocation-gps {
-    margin-top: 1em;
-}
-
-    .tc-ctl-geolocation-gps button {
-        float: right;
-        padding-right: 1.56em;
-    }
-
-        .tc-ctl-geolocation-gps button:before {
-            font-family: FontAwesome;
-            content: "\f124";
-        }
 
 .tc-ctl-geolocation-track {
     overflow: auto;
     max-height: 28em;
+    clear: both;
 }
 
 .tc-ctl-geolocation-track-cnt {
     box-sizing: border-box;
-    margin: 0;    
+    margin: 6px 0 0 0;
 }
 
 .tc-ctl-geolocation-track-ui {
+    text-align: right;
 }
 
     .tc-ctl-geolocation-track-ui button {
-        float: right;        
         background-image: url(img/geo-track.png);
         background-repeat: no-repeat;
-        display: block;
         background-position: -0.2em 0em;
         width: 3.91em;
         height: 1.955em;
     }
-
-.tc-ctl-geolocation-track-current {
-    margin-top: 3em;
-}
 
 .tc-ctl-geolocation-info-track {
     position: absolute;
@@ -3427,10 +3349,32 @@ label.tc-ctl-geolocation-track-available-label {
 }
 
     .tc-ctl-geolocation-track-mng input[type="file"] {
-        width: 100%;
+        width: 0.1px;
+        height: 0.1px;
+        opacity: 0;
+        overflow: hidden;
+        position: absolute;
+        z-index: -1;
     }
 
-.tc-ctl-geolocation-track-available-lst {    
+        .tc-ctl-geolocation-track-mng input[type="file"] + label {
+            color: white;
+            display: inline-block;
+            cursor: pointer; /* "hand" cursor */
+            border: 1px solid #C00;
+            border-radius: 0.3em;
+            background-color: #C00;
+            float: right;
+        }
+
+            .tc-ctl-geolocation-track-mng input[type="file"] + label:before {
+                font-family: FontAwesome;
+                content: "\f093";
+                padding-right: 1em;
+            }
+
+
+.tc-ctl-geolocation-track-available-lst {
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 8em;
@@ -3439,115 +3383,136 @@ label.tc-ctl-geolocation-track-available-label {
     border: 1px solid #CCC;
     padding: 0;
     list-style: none;
-    margin-top: 0.3em;
+    margin-top: 0.5em;
     box-sizing: border-box;
 }
 
-    .tc-ctl-geolocation-track-available-lst > li {
+    .tc-ctl-geolocation-track-available-lst > li > span {
+        width: 49%;
         float: left;
-        width: 99%;
-        padding: 0.5em 0.5em;
-        border-bottom: 0.1em solid rgba(0,0,0,0.1);
+        -ms-text-overflow: ellipsis;
+        -o-text-overflow: ellipsis;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         overflow: hidden;
-        line-height: 2em;
     }
 
-        .tc-ctl-geolocation-track-available-lst > li > span {
-            padding-right: 0.5em;
-            padding-left: 0.5em;
-            width: 45%;            
-            float: left;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
+    .tc-ctl-geolocation-track-available-lst > li > button {
+        padding-right: 0.5em;
+        text-decoration: none;
+        height: 2em;
+        background-color: transparent;
+        color: transparent;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: clip;
+        font-size: 1em;
+        border: 0;
+        padding: 0;
+        width: 1.4em;
+        margin-right: 4px;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > button:before {
+            display: block;
+            position: relative;
+            color: #666;
+            font-family: 'FontAwesome';
+            height: 2em;
+            line-height: 2em;
+            padding: 0 0.3em;
         }
 
-        .tc-ctl-geolocation-track-available-lst > li > input {
-            margin-right: 1em;
-            margin-top: 0.2em;
-            padding-left: 0.5em;
-            width: 42%;
-            float: left;
+        .tc-ctl-geolocation-track-available-lst > li > button:disabled:before {
+            color: #ccc;
         }
 
-        .tc-ctl-geolocation-track-available-lst > li > a {
-            padding-right: 0.5em;
-            text-decoration: none;
-            float: left;
+        .tc-ctl-geolocation-track-available-lst > li > button#simulate:before {
+            font-family: FontAwesome;
+            content: "\f008";
         }
 
-            .tc-ctl-geolocation-track-available-lst > li > a#simulate:before {
+        .tc-ctl-geolocation-track-available-lst > li > button#elevation:before {
+            font-family: FontAwesome;
+            content: "\f1fe";
+        }
+
+        .tc-ctl-geolocation-track-available-lst > li > button#delete {
+            margin-left: -8px;
+        }
+
+            .tc-ctl-geolocation-track-available-lst > li > button#delete:before {
                 font-family: FontAwesome;
-                content: "\f008";
+                content: "\f1f8";
             }
 
-            .tc-ctl-geolocation-track-available-lst > li > a#draw:before {
-                font-family: FontAwesome;
-                content: "\f03e"; /*f002  lupa */
-            }
+        .tc-ctl-geolocation-track-available-lst > li > button#edit:before {
+            font-family: FontAwesome;
+            content: "\f040";
+        }
 
-            .tc-ctl-geolocation-track-available-lst > li > a#elevation:before {
-                font-family: FontAwesome;
-                content: "\f1fe";
-            }
+        .tc-ctl-geolocation-track-available-lst > li > button#save:before {
+            font-family: FontAwesome;
+            content: "\f0c7";
+        }
 
-            .tc-ctl-geolocation-track-available-lst > li > a#delete:before {
-                font-family: FontAwesome;
-                content: "\f014";
-            }
+        .tc-ctl-geolocation-track-available-lst > li > button#cancel:before {
+            font-family: FontAwesome;
+            content: "\f00d";
+        }
 
-            .tc-ctl-geolocation-track-available-lst > li > a#edit:before {
-                font-family: FontAwesome;
-                content: "\f040";
-            }
+        .tc-ctl-geolocation-track-available-lst > li > button#exportGPX:before {
+            font-family: Arial;
+            font-size: 85%;
+            font-weight: bold;
+            content: "GPX";
+        }
 
-            .tc-ctl-geolocation-track-available-lst > li > a#save:before {
-                font-family: FontAwesome;
-                content: "\f0c7";
-            }
+        .tc-ctl-geolocation-track-available-lst > li > button#exportKML, .tc-ctl-geolocation-track-available-lst > li > button#exportGPX {
+            padding-top: 0.25em;
+            width: 2em;
+        }
 
-            .tc-ctl-geolocation-track-available-lst > li > a#cancel:before {
-                font-family: FontAwesome;
-                content: "\f00d";
-            }
-
-            .tc-ctl-geolocation-track-available-lst > li > a#exportGPX:before {
+            .tc-ctl-geolocation-track-available-lst > li > button#exportKML:before {
                 font-family: Arial;
                 font-size: 85%;
                 font-weight: bold;
-                content: "GPX";
+                content: "KML";
             }
 
-            .tc-ctl-geolocation-track-available-lst > li > a#exportKML {
-                padding-right: 0.2em;
-            }
 
-                .tc-ctl-geolocation-track-available-lst > li > a#exportKML:before {
-                    font-family: Arial;
-                    font-size: 85%;
-                    font-weight: bold;
-                    content: "KML";
-                }
-
-
-.tc-ctl-geolocation-track-available-srch {
+input#tc-ctl-geolocation-track-available-srch {
     width: 100%;
+    height: 27px;
 }
+
+.tc-ctl-geolocation-track-search-icon {
+    position: relative;
+    top: 35px;
+    right: 21px;
+    color: #ccc;
+    font-style: normal;
+    width: 1em;
+    float: right;
+}
+
+    .tc-ctl-geolocation-track-search-icon:before {
+        font-family: FontAwesome;
+        content: "\f002";
+    }
 
 label.tc-ctl-geolocation-track-waypoint-lbl {
     /*width: 100%;*/
 }
 
-.tc-ctl-geolocation-track-title {
+.tc-ctl-geolocation-track-title, .tc-ctl-geolocation-track-waypoint {
     width: 81.6%;
-    margin-right: 0.6em;
+    margin-right: 2.4%;
     margin-bottom: 0.5em;
 }
 
-.tc-ctl-geolocation-track-waypoint {
-    width: 81.6%;
-    margin-right: 0.6em;
-    margin-bottom: 0.5em;
+.tc-ctl-geolocation-track-current .tc-icon-button {
+    width: 16%;
 }
 
 .tc-ctl-geolocation-track-add-wpt:before {
@@ -3563,6 +3528,7 @@ label.tc-ctl-geolocation-track-waypoint-lbl {
     color: #595959;
     margin: 1em 0;
     margin-bottom: 0.1em;
+    clear: right;
 }
 
 div#continue-track > div > div > button.tc-button {
@@ -3570,19 +3536,35 @@ div#continue-track > div > div > button.tc-button {
 }
 
 i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
-    font-size: inherit;
-    color: #7e3434;
     cursor: pointer;
     vertical-align: top;
+    color: #AAA;
+    margin-left: 4px;
 }
+
+.tc-ctl-geolocation-track-panel-block input[type=checkbox] {
+    display: none;
+}
+    /* to hide the checkbox itself */
+    .tc-ctl-geolocation-track-panel-block input[type=checkbox] + label:before {
+        font-family: FontAwesome;
+        font-size: 15px;
+        display: inline-block;
+        content: "\f096";
+        width: 18px;
+    }
+
+    .tc-ctl-geolocation-track-panel-block input[type=checkbox]:checked + label:before {
+        content: "\f046";
+    }
 
 .tc-ctl-geolocation-track-panel-block {
     float: left;
-    margin-top: 0.5em;
+    margin: 0 0 1em 0;
 }
 
 .tc-ctl-geolocation-track-panel-span {
-    padding: 0em 0.5em;
+    padding: 0 0.5em;
 }
 
 .tc-ctl-geolocation-track-panel {
@@ -3606,17 +3588,16 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
 }
 
 .tc-ctl-geolocation-track-available-lst > li.selectedTrack {
-    border-top: 0.1em solid rgba(0,0,0,0.1);
-    border-bottom: 0.1em solid rgba(0,0,0,0.1);
     background: repeating-linear-gradient( -45deg, rgba(224, 224, 224, 0.3), rgba(255, 217, 217, 0.7) 1px, #fff 0px, #fff 5px );
     /*background: repeating-linear-gradient( -45deg, #F0EFEF, #F0EFEF 1px, #fff 1px, #fff 10px );*/
 }
 
-    .tc-ctl-geolocation-track-available-lst > li.selectedTrack > a#draw:before {
+    .tc-ctl-geolocation-track-available-lst > li.selectedTrack > #draw:before {
         font-family: FontAwesome;
-        content: "\f070";
+        content: "\f052";
     }
 
+/*
 #track-chart {
     min-width: 1em;
     padding-right: 1em;
@@ -3646,194 +3627,8 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
         .track-chart-collapse > span:before {
             font-family: FontAwesome;
             content: "\f0d7";
-}
-
-.tc-ctl-geolocation-circlePulsate {
-    visibility: visible;
-    display: block;
-    width: 600px;
-    height: 600px;
-    box-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
-    border: 1px solid #ff0000;
-    border-radius: 600px;
-    -webkit-animation: pulsate 0.5s 1.1 ease-out;
-    -moz-animation: pulsate 0.5s 1.1 ease-out;
-    -ms-animation: pulsate 0.5s 1.1 ease-out;
-    -o-animation: pulsate 0.5s 1.1 ease-out;
-    animation: pulsate 0.5s 1.1 ease-out;
-}
-
-@keyframes pulsate {
-    0% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-
-    25% {
-        transform: scale(1.1) rotate(0.1deg);
-        -moz-transform: scale(1.1) rotate(0.1deg);
-        -webkit-transform: scale(1.1) rotate(0.1deg);
-    }
-
-    50% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-
-    75% {
-        transform: scale(1.1) rotate(0.1deg);
-        -moz-transform: scale(1.1) rotate(0.1deg);
-        -webkit-transform: scale(1.1) rotate(0.1deg);
-    }
-
-    100% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-}
-
-@-webkit-keyframes pulsate {
-    0% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-
-    25% {
-        transform: scale(1.1) rotate(0.1deg);
-        -moz-transform: scale(1.1) rotate(0.1deg);
-        -webkit-transform: scale(1.1) rotate(0.1deg);
-    }
-
-    50% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-
-    75% {
-        transform: scale(1.1) rotate(0.1deg);
-        -moz-transform: scale(1.1) rotate(0.1deg);
-        -webkit-transform: scale(1.1) rotate(0.1deg);
-    }
-
-    100% {
-        transform: scale(1) rotate(0.1deg);
-        -moz-transform: scale(1) rotate(0.1deg);
-        -webkit-transform: scale(1) rotate(0.1deg);
-    }
-}
-
-
-img#tc-ctl-geolocation-track-marker {
-    height: 20px;
-    width: 20px;
-    visibility: visible;
-}
-
-img#tc-ctl-geolocation-track-elevation-marker {
-    height: 20px;
-    width: 20px;
-    visibility: visible;
-}
-
-.tc-ctl-geolocation-content {
-}
-
-.tc-ctl-geolocation-icon-cross {
-    left: 50%;
-    top: 50%;
-    height: 15px;
-    width: 15px;
-    position: absolute;
-    background-image: url(img/crosshair.png);
-}
-
-.tc-ctl-geolocation-track-marker-icon {
-    background-image: url(img/track-marker-icon.png);
-}
-
-.tc-ctl-geolocation-track-marker-icon-end {
-    background-image: url(img/track-marker-icon-end.png);
-}
-
-/*.tc-ctl-geolocation-icon-cross:before {
-                font-family: FontAwesome;
-                content: "\f192";
-            }*/
-
-.tc-ctl-geolocation-showCoords button {
-    float: right;
-    margin-right: 0.5em;
-}
-
-/* GLS; después de la demo borrar*/
-.tc-ctl-geolocation-pause button {
-    background-color: #aaaaaa;
-    border-color: #aaaaaa;
-}
-
-    .tc-ctl-geolocation-pause button.clicked {
-        background-color: #666666;
-        border-color: #666666;
-    }
-    /* GLS; después de la demo borrar*/
-    .tc-ctl-geolocation-pause button:before {
-        font-family: FontAwesome;
-        content: "\f04c";
-    }
-
-
-.tc-ctl-geolocation-showCoords button {
-}
-
-    .tc-ctl-geolocation-showCoords button:before {
-        font-family: FontAwesome;
-        content: "\f047";
-    }
-
-.tc-ctl-geolocation-gps {
-    margin-top: 1em;
-}
-
-    .tc-ctl-geolocation-gps button {
-        float: right;
-        padding-right: 1.56em;
-    }
-
-        .tc-ctl-geolocation-gps button:before {
-            font-family: FontAwesome;
-            content: "\f124";
         }
-
-.tc-ctl-geolocation-track {
-}
-
-.tc-ctl-geolocation-track-cnt {
-    box-sizing: border-box;
-    margin: 0;
-}
-
-.tc-ctl-geolocation-track-ui {
-}
-
-    .tc-ctl-geolocation-track-ui button {
-        float: right;
-        background-image: url(img/geo-track.png);
-        background-repeat: no-repeat;
-        display: block;
-        background-position: -0.2em 0em;
-        width: 3.91em;
-        height: 1.955em;
-    }
-
-.tc-ctl-geolocation-track-current {
-    margin-top: 3em;
-}
-
+        */
 .tc-ctl-geolocation-track-snap-info {
     display: none;
     visibility: visible;
@@ -3869,264 +3664,86 @@ img#tc-ctl-geolocation-track-elevation-marker {
                 border-bottom: none;
             }
 
-.tc-ctl-geolocation-info-track {
-    visibility: visible;
-    position: absolute;
-    top: 0.7em;
-    left: 50%;
-    background-color: #fff;
-    opacity: 0.8;
-    color: #000;
-    padding: 1.5em;
-    border: 0.1em solid #636363;
-    border-radius: 0.7em;
-    font-family: arial;
-    font-size: 75%;
+
+.tc-ctl-geolocation-track-available-lst > li {
+    padding: 0.5em 0 0.5em 0.5em;
+    border-bottom: 0.1em solid rgba(0,0,0,0.1);
+    overflow: hidden;
+    line-height: 2em;
+    box-sizing: content-box;
 }
 
-button.tc-ctl-geolocation-active {
-    border-color: #630101;
-    background-color: #630101;
-}
+    .tc-ctl-geolocation-track-available-lst > li > input {
+        margin-right: 1em;
+        padding-left: 0.5em;
+        width: 51.5%;
+        float: left;
+    }
 
-.tc-ctl-geolocation-track-save, .tc-ctl-geolocation-track-add-wpt {
-    /*width: 20%;
-    padding-bottom: 0.4em;*/
-}
+    .tc-ctl-geolocation-track-available-lst > li > #simulate:before {
+        font-family: FontAwesome;
+        content: "\f008";
+    }
 
-    .tc-ctl-geolocation-track-save:before {
+    .tc-ctl-geolocation-track-available-lst > li > #stop {
+        padding-left: 0.15em;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > #stop:before {
+            font-family: FontAwesome;
+            content: "\f04d";
+        }
+
+    .tc-ctl-geolocation-track-available-lst > li > #pause:before {
+        padding-left: 0.25em;
+        font-family: FontAwesome;
+        content: "\f04c";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > #pause {
+        width: 18px;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > #pause.play:before {
+            font-family: FontAwesome;
+            content: "\f04b";
+        }
+
+    .tc-ctl-geolocation-track-available-lst > li > select#velocity {
+        float: right;
+        margin-right: 1em;
+        width: 20%;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > #draw:before {
+        font-family: FontAwesome;
+        content: "\f03e"; /*f002  lupa */
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > #elevation:before {
+        font-family: FontAwesome;
+        content: "\f1fe";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > #edit:before {
+        font-family: FontAwesome;
+        content: "\f040";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > #save:before {
         font-family: FontAwesome;
         content: "\f0c7";
     }
 
-label.tc-ctl-geolocation-track-available-label {
-    width: 100%;
-}
-
-.tc-ctl-geolocation-track-mng input {
-    box-sizing: border-box;
-}
-
-    .tc-ctl-geolocation-track-mng input[type="file"] {
-        width: 100%;
-    }
-
-.tc-ctl-geolocation-track-available-lst {
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: 8em;
-    height: auto;
-    border-radius: 0.3em;
-    border: 1px solid #CCC;
-    padding: 0;
-    list-style: none;
-    margin-top: 0.3em;
-    box-sizing: border-box;
-}
-
-    .tc-ctl-geolocation-track-available-lst > li {
-        float: left;
-        width: 99%;
-        padding: 0.5em 0em 0.5em 0.5em;
-        border-bottom: 0.1em solid rgba(0,0,0,0.1);
-        overflow: hidden;
-        line-height: 2em;
-        box-sizing: content-box;
-    }
-
-        .tc-ctl-geolocation-track-available-lst > li > span {
-            padding-right: 0.5em;
-            padding-left: 0.5em;
-            width: 45%;
-            float: left;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > input {
-            margin-right: 1em;
-            margin-top: 0.2em;
-            padding-left: 0.5em;
-            width: 51.5%;
-            float: left;
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a {
-            padding-right: 0.5em;
-            text-decoration: none;
-            float: left;
-        }
-
-            .tc-ctl-geolocation-track-available-lst > li > a#simulate:before {
-                font-family: FontAwesome;
-                content: "\f008";
-            }
-
-            .tc-ctl-geolocation-track-available-lst > li > a#stop {
-                padding-left: 0.15em;
-            }
-
-                .tc-ctl-geolocation-track-available-lst > li > a#stop:before {
-                    font-family: FontAwesome;
-                    content: "\f04d";
-                }
-
-            .tc-ctl-geolocation-track-available-lst > li > a#pause:before {
-                padding-left: 0.25em;
-                font-family: FontAwesome;
-                content: "\f04c";
-            }
-
-            .tc-ctl-geolocation-track-available-lst > li > a#pause.play:before {
-                font-family: FontAwesome;
-                content: "\f04b";
-            }
-
-        .tc-ctl-geolocation-track-available-lst > li > select#velocity {
-            float: right;
-            margin-right: 1em;
-            margin-top: 0.25em;
-            width: 25%;
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a#draw:before {
-            font-family: FontAwesome;
-            content: "\f03e"; /*f002  lupa */
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a#elevation:before {
-            font-family: FontAwesome;
-            content: "\f1fe";
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a#delete:before {
-            font-family: FontAwesome;
-            content: "\f014";
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a#edit:before {
-            font-family: FontAwesome;
-            content: "\f040";
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a#save:before {
-            font-family: FontAwesome;
-            content: "\f0c7";
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a#cancel:before {
-            font-family: FontAwesome;
-            content: "\f00d";
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a#exportGPX:before {
-            font-family: Arial;
-            font-size: 85%;
-            font-weight: bold;
-            content: "GPX";
-        }
-
-        .tc-ctl-geolocation-track-available-lst > li > a#exportKML {
-            padding-right: 0.2em;
-        }
-
-            .tc-ctl-geolocation-track-available-lst > li > a#exportKML:before {
-                font-family: Arial;
-                font-size: 85%;
-                font-weight: bold;
-                content: "KML";
-            }
-
-
-.tc-ctl-geolocation-track-available-srch {
-    width: 100%;
-}
-
-label.tc-ctl-geolocation-track-waypoint-lbl {
-    /*width: 100%;*/
-}
-
-.tc-ctl-geolocation-track-title {
-    width: 81.6%;
-    margin-right: 0.6em;
-    margin-bottom: 0.5em;
-}
-
-.tc-ctl-geolocation-track-waypoint {
-    width: 81.6%;
-    margin-right: 0.6em;
-    margin-bottom: 0.5em;
-}
-
-.tc-ctl-geolocation-track-add-wpt:before {
-    font-family: FontAwesome;
-    content: "\f067";
-}
-
-.tc-ctl-geolocation-track-import > input[type="file"] {
-    width: 100%;
-}
-
-.tc-ctl-geolocation-track-mng > h4 {
-    color: #595959;
-    margin: 1em 0;
-    margin-bottom: 0.1em;
-}
-
-div#continue-track > div > div > button.tc-button {
-    margin: 0.3em;
-}
-
-i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
-    font-size: inherit;
-    color: #7e3434;
-    cursor: pointer;
-    vertical-align: top;
-}
-
-.tc-ctl-geolocation-track-panel-block {
-    float: left;
-    margin-top: 0.5em;
-}
-
-.tc-ctl-geolocation-track-panel-span {
-    padding: 0em 0.5em;
-}
-
-.tc-ctl-geolocation-track-panel {
-    color: #AA0000;
-    font-style: normal;
-    font-size: 1.58em;
-    font-weight: bold;
-    vertical-align: middle;
-    margin-left: 0.1em;
-    cursor: pointer;
-}
-
-.tc-ctl-geolocation-track-panel-opened:after {
-    font-family: FontAwesome;
-    content: "\f205";
-}
-
-.tc-ctl-geolocation-track-panel-opened.closed:after {
-    font-family: FontAwesome;
-    content: "\f204";
-}
-
-.tc-ctl-geolocation-track-available-lst > li.selectedTrack {
-    border-top: 0.1em solid rgba(0,0,0,0.1);
-    border-bottom: 0.1em solid rgba(0,0,0,0.1);
-    background: repeating-linear-gradient( -45deg, rgba(224, 224, 224, 0.3), rgba(255, 217, 217, 0.7) 1px, #fff 0px, #fff 5px );
-    /*background: repeating-linear-gradient( -45deg, #F0EFEF, #F0EFEF 1px, #fff 1px, #fff 10px );*/
-}
-
-    .tc-ctl-geolocation-track-available-lst > li.selectedTrack > a#draw:before {
+    .tc-ctl-geolocation-track-available-lst > li > #cancel:before {
         font-family: FontAwesome;
-        content: "\f070";
+        content: "\f00d";
     }
 
-#track-chart {
+/*#track-chart {
     width: 17%;
     height: 17%;
     min-width: 21em;
@@ -4183,13 +3800,13 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
     text-align: right;
     font-weight: bold;
     color: rgba(0,0,0,0.85);
-}
-
+}*/
+/*
 #track-chart div#chart {
     bottom: 0.5em;
     width: 100%;
-    position: static !important; /* estamos obligados a indicar el important, puesto que c3 añade estilos en línea al div del gráfico */
-}
+    position: static !important; /* estamos obligados a indicar el important, puesto que c3 añade estilos en línea al div del gráfico
+}*/
 
 #track-chart p {
     width: 337px;
@@ -4203,6 +3820,7 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
     border: 1px solid #CCC;
     border-radius: 5px;
     box-shadow: 0 5px 15px rgba(0,0,0,.5);
+    font-size: 1.4em;
 }
 
     .track-elevation-tooltip > span {
@@ -4339,20 +3957,20 @@ body .tc-map .tc-modal .tc-modal-background {
     border-bottom: 1px solid #EEE;
 }
 
-.tc-modal .tc-modal-header h3 {
-    padding: 0;
-    margin: 0;
-    font-size: 16px;
-    color: #666;
-    font-weight: normal;
-}
+    .tc-modal .tc-modal-header h3 {
+        padding: 0;
+        margin: 0;
+        font-size: 16px;
+        color: #666;
+        font-weight: normal;
+    }
 
-.tc-modal .tc-modal-header .tc-ctl-popup-close {
-    top: 14px;
-    right: 20px;
-    cursor: pointer;
-    color: #999;
-}
+    .tc-modal .tc-modal-header .tc-ctl-popup-close {
+        top: 14px;
+        right: 20px;
+        cursor: pointer;
+        color: #999;
+    }
 
 
 .tc-modal .tc-modal-body {
@@ -4409,46 +4027,50 @@ body .tc-map .tc-modal .tc-modal-background {
     -o-animation: toast 0.3s; /* Opera */
 }
 
-.tc-toast.tc-msg-info,.tc-toast.tc-msg-warning,.tc-toast.tc-msg-error {
-    padding-left: 1.5em;
-}
+    .tc-toast ul {
+        text-align: left;
+    }
 
-.tc-toast.tc-msg-info:before,.tc-toast.tc-msg-warning:before,.tc-toast.tc-msg-error:before {
-    position: absolute;
-    font-family: 'FontAwesome';
-    font-size: 1em;
-    margin-left: -1.2em;
-}
+    .tc-toast.tc-msg-info, .tc-toast.tc-msg-warning, .tc-toast.tc-msg-error {
+        padding-left: 1.5em;
+    }
 
-.tc-toast.tc-msg-info:before,.tc-toast.tc-msg-error:before {
-    background-image: -ms-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
-    background-image: -moz-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
-    background-image: -o-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
-    background-image: -webkit-gradient(radial, center center, 0, center center, 125, color-stop(70, #FFFFFF), color-stop(70, #010103));
-    background-image: -webkit-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
-    background-image: radial-gradient(ellipse closest-side at center, #FFFFFF 70%, #010103 70%);
-}
+        .tc-toast.tc-msg-info:before, .tc-toast.tc-msg-warning:before, .tc-toast.tc-msg-error:before {
+            position: absolute;
+            font-family: 'FontAwesome';
+            font-size: 1em;
+            margin-left: -1.2em;
+        }
 
-.tc-toast.tc-msg-info:before {
-    content: '\f05a';
-    color: #00f;
-}
+        .tc-toast.tc-msg-info:before, .tc-toast.tc-msg-error:before {
+            background-image: -ms-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
+            background-image: -moz-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
+            background-image: -o-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
+            background-image: -webkit-gradient(radial, center center, 0, center center, 125, color-stop(70, #FFFFFF), color-stop(70, #010103));
+            background-image: -webkit-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
+            background-image: radial-gradient(ellipse closest-side at center, #FFFFFF 70%, #010103 70%);
+        }
 
-.tc-toast.tc-msg-warning:before {
-    content: '\f071';
-    color: #ff0;
-}
+        .tc-toast.tc-msg-info:before {
+            content: '\f05a';
+            color: #00f;
+        }
 
-.tc-toast.tc-msg-error:before {
-    content: '\f057';
-    color: #f00;
-}
+        .tc-toast.tc-msg-warning:before {
+            content: '\f071';
+            color: #ff0;
+        }
 
-.tc-toast.tc-hidden {
-    -moz-animation: fadeout 0.3s; /* Firefox */
-    -webkit-animation: fadeout 0.3s; /* Safari and Chrome */
-    -o-animation: fadeout 0.3s; /* Opera */
-}
+        .tc-toast.tc-msg-error:before {
+            content: '\f057';
+            color: #f00;
+        }
+
+    .tc-toast.tc-hidden {
+        -moz-animation: fadeout 0.3s; /* Firefox */
+        -webkit-animation: fadeout 0.3s; /* Safari and Chrome */
+        -o-animation: fadeout 0.3s; /* Opera */
+    }
 
 @media print {
     .tc-modal {
@@ -4487,7 +4109,6 @@ body .tc-map .tc-modal .tc-modal-background {
 
     .tc-ctl-lcat-info-close {
         font-family: 'FontAwesome';
-        color: #c00;
         display: block;
         float: right;
         width: 1em;

@@ -263,11 +263,11 @@ TC.inherit(TC.control.Share, TC.Control);
         });
 
         //Cuando se añada o borre una capa, comprobamos de nuevo si la URL cumple los requisitos de longitud para habilitar el control
-        map.on(TC.Consts.event.MAPLOAD, function () {
-            map.on(TC.Consts.event.LAYERREMOVE + ' ' + TC.Consts.event.LAYERADD, function (e) {
-                self.generateLink();
-            });
-        });
+        //map.on(TC.Consts.event.MAPLOAD, function () {
+        //    map.on(TC.Consts.event.LAYERREMOVE + ' ' + TC.Consts.event.LAYERADD, function (e) {
+        //        self.generateLink();
+        //    });
+        //});
     };
 
     ctlProto.enable = function (url) {

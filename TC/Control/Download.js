@@ -76,14 +76,17 @@ TC.inherit(TC.control.Download, TC.Control);
          * Función recursiva para recorrer el árbol de capas existentes dentro de un nodo.
          */
         var _traverse = function (o, func) {
-            for (var i in o.children) {
-                if (o.children && o.children.length > 0) {
-                    //bajar un nivel en el árbol
-                    _traverse(o.children[i], func);
-                } else {
-                    func.apply(this, [o]);
+            if (o instanceof Array) {
+                for (var i = 0; i < o.length; i++)
+                    _traverse(o[i], func);                
                 }
+            else {
+                if (o.hasOwnProperty('children') && o.children.length > 0)
+                    _traverse(o.children, func);
             }
+
+            if (o.hasOwnProperty('children') && o.children.length == 0)
+                func.apply(this, [o]);
         };
 
         /**
@@ -178,36 +181,20 @@ TC.inherit(TC.control.Download, TC.Control);
 
         var _showAlerMsg = function (error) {
             var alert = self._$div.find(".alert-warning");
+            var errorMsg;
 
             if (error.zoom) {
-                _hideErrorMessages();
-                alert.find("#zoom-msg").css("display", "block");
+                errorMsg = alert.find("#zoom-msg").html();
             } else if (error.layers) {
-                _hideErrorMessages();
-                alert.find("#layers-msg").css("display", "block");
+                errorMsg = alert.find("#layers-msg").html();
             } else if (error.url) {
-                _hideErrorMessages();
-                alert.find("#url-msg").css("display", "block");
+                errorMsg = alert.find("#url-msg").html();
             } else if (error.noFeatures) {
-                _hideErrorMessages();
-                alert.find("#noFeatures-msg").css("display", "block");
+                errorMsg = alert.find("#noFeatures-msg").html();
             }
 
-
-            alert.removeClass(TC.Consts.classes.HIDDEN);
-            alert.fadeTo(4000, 500).slideUp(500, function () {
-                alert.addClass(TC.Consts.classes.HIDDEN);
-            });
+            self.map.toast(errorMsg, {type:TC.Consts.msgType.WARNING});            
         };
-
-        var _hideErrorMessages = function () {
-            var alert = self._$div.find(".alert-warning");
-            alert.find("#layers-msg").css("display", "none");
-            alert.find("#zoom-msg").css("display", "none");
-            alert.find("#url-msg").css("display", "none");
-            alert.find("#noFeatures-msg").css("display", "none");
-        };
-
 
         var _showHelp = function (evt) {
             evt.stopPropagation();

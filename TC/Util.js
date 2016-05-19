@@ -4,7 +4,77 @@
     var iconUrlCache = {};
     var markerGroupClassCache = {};
 
+    var path1 = ["Capability", "Request", "GetMap", "DCPType", "0", "HTTP", "Get", "OnlineResource"];
+    var path2 = ["OperationsMetadata", "GetTile", "DCP", "HTTP", "Get", "0", "href"];
+    var getOnPath = function (obj, p, i) {
+        if (i < p.length - 1) {
+            if (obj.hasOwnProperty(p[i]))
+                return getOnPath(obj[p[i]], p, ++i);
+            else return null;
+        } else {
+            return obj[p[i]];
+        }
+    };
+
     TC.Util = TC.Util || {
+
+        regex: {
+            PROTOCOL: /(^https?:)/i
+        },
+
+        isOnCapabilities: function (url) {
+            var withProtocol = arguments.length == 2 ? arguments[1] : true;
+            var testUrl = !withProtocol ? url.replace(TC.Util.regex.PROTOCOL, "") : url;
+
+            if (withProtocol) {
+                if (TC.capabilities[testUrl])
+                    return url;
+            } else {
+                for (var c in TC.capabilities) {
+                    if (c.replace(TC.Util.regex.PROTOCOL, "") == testUrl)
+                        return c;
+                }
+            }
+
+            for (c in TC.capabilities) {
+                var u = getOnPath(TC.capabilities[c], path1, 0) || getOnPath(TC.capabilities[c], path2, 0);
+
+                if (u && withProtocol && url == u) return u;
+                else if (u && url.replace(TC.Util.regex.PROTOCOL, "") == u.replace(TC.Util.regex.PROTOCOL, "")) return u;
+            }
+
+            return url;
+        },
+
+        reqGetMapOnCapabilities: function (url) {
+            var withProtocol = arguments.length == 2 ? arguments[1] : true;
+            var testUrl = !withProtocol ? url.replace(TC.Util.regex.PROTOCOL, "") : url;
+
+            var _get = function (caps) {
+                var u = getOnPath(caps, path1, 0) || getOnPath(caps, path2, 0);
+                if (u)
+                    return !withProtocol ? u.split('?')[0].replace(TC.Util.regex.PROTOCOL, "") : u.split('?')[0];
+
+                return null;
+            };
+            if (TC.capabilities[url]) {
+                return _get(TC.capabilities[url]);
+            }
+
+            return null;
+        },
+
+        getFNFromString: function (fnName) {
+            var scope = window;
+            var scopeSplit = fnName.split('.');
+            for (i = 0; i < scopeSplit.length - 1; i++) {
+                scope = scope[scopeSplit[i]];
+
+                if (scope == undefined) return;
+            }
+
+            return scope[scopeSplit[scopeSplit.length - 1]];
+        },
 
         isURI: function (text) {
             return /^(http|https|ftp|mailto)\:\/\//i.test(text);

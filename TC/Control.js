@@ -7,6 +7,7 @@ TC.Control = function () {
 
     self.map = null;
     self.isActive = false;
+    self.isDisabled = false;
     self._firstRender = $.Deferred();
 
     var len = arguments.length;
@@ -62,6 +63,8 @@ TC.Control.prototype.renderData = function (data, callback) {
         var e = $.Event(TC.Consts.event.BEFORECONTROLRENDER, { dataObject: data });
         self.$events.trigger(e);
     }
+    self._$div.toggleClass(TC.Consts.classes.DISABLED, self.isDisabled);
+
     TC.loadJSInOrder(
         !window.dust,
         TC.url.templating,
@@ -264,6 +267,22 @@ TC.Control.prototype.deactivate = function (stopChain)
         }
         self.map.$events.trigger($.Event(TC.Consts.event.CONTROLDEACTIVATE, { control: self }));
         self.$events.trigger($.Event(TC.Consts.event.CONTROLDEACTIVATE, { control: self }));
+    }
+};
+
+TC.Control.prototype.enable = function () {
+    var self = this;
+    self.isDisabled = false;
+    if (self._$div) {
+        self._$div.removeClass(TC.Consts.classes.DISABLED);
+    }
+};
+
+TC.Control.prototype.disable = function () {
+    var self = this;
+    self.isDisabled = true;
+    if (self._$div) {
+        self._$div.addClass(TC.Consts.classes.DISABLED);
     }
 };
 
