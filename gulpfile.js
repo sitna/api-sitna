@@ -6,7 +6,9 @@
   concat = require('gulp-concat'),
   convertEncoding = require('gulp-convert-encoding'),
   uglify = require('gulp-uglify'),
-  dust = require('gulp-dust');
+  cleanCSS = require('gulp-clean-css'),
+  dust = require('gulp-dust'),
+  zip = require('gulp-zip');
 
 //////// Gestión de errores ////////
 //var plumber = require('gulp-plumber');
@@ -110,24 +112,41 @@ var sitnaBuild = {
             .pipe(gulp.dest(this.fullTargetPath + 'doc/'));
     },
 
+    cssTask: function () {
+        return gulp.src([
+                'TC/**/*.css'
+        ])
+            .pipe(cleanCSS())
+            .pipe(gulp.dest(this.fullTargetPath + 'TC/'));
+    },
+
     resourcesTask: function () {
         return gulp.src([
                 '**/*',
                 '!App_Start/**/*',
                 '!batch/**/*',
                 '!build/**/*',
-                '!examples/**/*',
+                '!examples/**/*.html',
                 '!kml/**/*',
                 '!node_modules/**/*',
                 '!obj/**/*',
                 '!Properties/**/*',
                 '!pruebas/**/*',
                 '!TC/**/*.js',
+                '!TC/**/*.css',
                 '!test/**/*',
                 '!**/*.cs',
                 '!*'
         ])
             .pipe(gulp.dest(this.fullTargetPath));
+    },
+
+    zipTask: function () {
+        return gulp.src([
+                'TC/layout/responsive/**/*'
+        ])
+            .pipe(zip('responsive.zip'))
+            .pipe(gulp.dest(this.fullTargetPath + 'TC/layout/responsive/'));
     },
 
     compiledTask: function (depSrc1, depSrc2, depSrc3) {
@@ -185,6 +204,8 @@ var sitnaBuild = {
         ];
 
         sitnaBuild.resourcesTask();
+        sitnaBuild.zipTask();
+        sitnaBuild.cssTask();
         sitnaBuild.examplesTask();
         sitnaBuild.roadmapTask();
 

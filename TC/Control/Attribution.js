@@ -38,7 +38,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
             if (layer) {
                 var attr = $("<div/>").html($.trim(layer.wrap.getAttribution(TC.capabilities[layer.url]))).text();
                 if (attr) {
-                    if (/^IDENA /.test(attr)) {
+                    if (/IDENA/.test(attr)) {
                         self.mainDataAttribution = '<a href="http://idena.navarra.es/" target="_blank">IDENA</a>';
                     }
                     else {

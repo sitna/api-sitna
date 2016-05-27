@@ -74,7 +74,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
 
             TC.Control.prototype.register.call(self, map);
 
-            map.loaded(function () {
+            var loadLayers = function () {
                 if ($.isArray(self.options.layers)) {
                     for (var i = 0; i < self.options.layers.length; i++) {
                         var layer = self.options.layers[i];
@@ -89,6 +89,23 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                         }
                     }
                     self.render();
+                }
+            };
+
+            var layerUpdateHandler = function layerUpdateHandler(e) {
+                if (e.layer === map.baseLayer) {
+                    loadLayers();
+                    map.off(TC.Consts.event.LAYERUPDATE, layerUpdateHandler);
+                }
+            };
+
+            map.loaded(function () {
+                if (map.baseLayer.wrap.isReady && map.baseLayer.wrap.isReady()) {
+                    loadLayers();
+                }
+                else {
+                    // Esperamos a que se cargue el mapa base para poblar el árbol
+                    map.on(TC.Consts.event.LAYERUPDATE, layerUpdateHandler);
                 }
             });
 
@@ -113,12 +130,12 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                 var $result = $();
                 var $rn = $rootNode || $findRootNode(layer);
                 if ($rn.length) {
-                                for (var i = 0; i < layer.names.length; i++) {
+                    for (var i = 0; i < layer.names.length; i++) {
                         var $liLayer = $rn.find('li[data-tc-layer-name="' + layer.names[i] + '"]');
-                                    $result = $result.add($liLayer);
-                                    $result = $result.add($liLayer.find('li'));
-                                }
-                            }
+                        $result = $result.add($liLayer);
+                        $result = $result.add($liLayer.find('li'));
+                    }
+                }
                 return $result;
             };
 
@@ -147,13 +164,13 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                     var evt = document.createEvent("HTMLEvents");
                     evt.initEvent("keyup", false, true);
                     if (self.$text) {
-                    self.$text[0].dispatchEvent(evt);
-                }
+                        self.$text[0].dispatchEvent(evt);
+                    }
                 }
                 else {
                     if (self.$text) {
-                    self.$text[0].fireEvent("keyup");
-            }
+                        self.$text[0].fireEvent("keyup");
+                    }
                 }
             }
 
@@ -169,7 +186,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                     var $layerNode = $findRootNode(layer);
                     var updateControl = function () {
                         $findNodes(layer, $layerNode).removeClass(TC.Consts.classes.LOADING).addClass(TC.Consts.classes.CHECKED).find('span').attr(TOOLTIP_DATA_ATTR, layerAddedText);
-                _refreshResultList();
+                        _refreshResultList();
                     };
                     if ($layerNode.length) {
                         updateControl();
@@ -238,18 +255,18 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                     }
                     if (layer && layerName) {
                         var redrawTime = 1;
-                        
+
                         if (/iPad/i.test(navigator.userAgent))
-                            redrawTime = 10;                        
+                            redrawTime = 10;
                         else if (TC.Util.detectFirefox())
                             redrawTime = 250;
 
                         if (!layer.title) {
                             layer.title = layer.getTree().title;
                         }
-                                
+
                         $li.addClass(TC.Consts.classes.LOADING).find('span').attr(TOOLTIP_DATA_ATTR, '');
-                        
+
                         var reDraw = function ($element) {
                             var deferred = new $.Deferred();
                             setTimeout(function () {
@@ -259,7 +276,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                                 deferred.resolve();
                             }, redrawTime);
                             return deferred.promise();
-                        };                       
+                        };
 
                         reDraw($li).then(function () {
                             map.addLayer({
@@ -271,7 +288,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                             });
 
                             e.stopPropagation();
-                        });                                             
+                        });
                     }
                 }
             });
@@ -608,13 +625,27 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
     ctlProto.addLayer = function (layer) {
         var result = $.Deferred();
         var self = this;
+        var fromLayerCatalog = [];
 
-        self.layers.push(layer);
-        layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
-        self.render(function () {
-            result.resolve();
-        });
-        //ver linea 55 y por ahí
+        if (self.options.layers && self.options.layers.length) {
+            fromLayerCatalog = $.grep(self.options.layers, function (l) {
+                var getMap = TC.Util.reqGetMapOnCapabilities(l.url);
+                return getMap && getMap.replace(TC.Util.regex.PROTOCOL) == layer.url.replace(TC.Util.regex.PROTOCOL);
+            });
+        }
+
+        if (fromLayerCatalog.length == 0)
+            fromLayerCatalog = $.grep(self.layers, function (l) {
+                return l.url.replace(TC.Util.regex.PROTOCOL) == layer.url.replace(TC.Util.regex.PROTOCOL);
+            });
+
+        if (fromLayerCatalog.length == 0) {
+            self.layers.push(layer);
+            layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
+            self.render(function () {
+                result.resolve(); //ver linea 55 y por ahí
+            });
+        } else { result.resolve(); }
 
         return result;
     };

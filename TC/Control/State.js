@@ -11,7 +11,6 @@ TC.control.State = function (options) {
     self.map = null;
 
     self.CUSTOMEVENT = '.tc';
-    self.HASH = '#';
     self.options = $.extend({}, arguments.length > 1 ? arguments[1] : arguments[0]);
 };
 
@@ -29,40 +28,48 @@ TC.inherit(TC.control.State, TC.Control);
         self.map = map;
 
         // eventos a los que estamos suscritos para obtener el estado
-        var events = [TC.Consts.event.LAYERCATALOGADD, TC.Consts.event.LAYERADD, TC.Consts.event.LAYERORDER, TC.Consts.event.LAYERREMOVE, TC.Consts.event.ZOOM, TC.Consts.event.BASELAYERCHANGE];
+        var events = [TC.Consts.event.LAYERCATALOGADD, TC.Consts.event.LAYERADD, TC.Consts.event.LAYERORDER, TC.Consts.event.LAYERREMOVE, TC.Consts.event.LAYEROPACITY, TC.Consts.event.LAYERVISIBILITY, TC.Consts.event.ZOOM, TC.Consts.event.BASELAYERCHANGE];
         self.events = events.join(' ');
 
         // gestión siguiente - anterior
         self.map.on(TC.Consts.event.MAPLOAD, function () {
 
-            // si existe un hash aplicamos
-            $.when(self.checkLocation()).then(function () {
+            //setTimeout(function () {
 
-                // registramos el estado inicial                
-                self.replaceCurrent = true;
-                self.addToHistory();
+            map.loaded(function () {
+                $.when(self.checkLocation()).then(function () {
 
-                // nos suscribimos a los eventos para registrar el estado en cada uno de ellos
-                map.on(self.events, $.proxy(self.addToHistory, self));                
+                    // registramos el estado inicial                
+                    self.replaceCurrent = true;
+                    self.addToHistory();
 
-                // gestión siguiente - anterior
-                window.addEventListener('popstate', function (e) {
-                    if (e && e.state != null) {
+                    // nos suscribimos a los eventos para registrar el estado en cada uno de ellos
+                    map.on(self.events, $.proxy(self.addToHistory, self));
 
-                        self.registerState = false;
+                    // gestión siguiente - anterior
+                    window.addEventListener('popstate', function (e) {
+                        if (e && e.state != null) {
 
-                        // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
-                        map.off(self.events, $.proxy(self.addToHistory, self));
+                            self.registerState = false;
 
-                        // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
-                        $.when(self.loadIntoMap(e.state)).then(function () {
-                            map.on(self.events, $.proxy(self.addToHistory, self));
-                        });
-                    }
+                            // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
+                            map.off(self.events, $.proxy(self.addToHistory, self));
 
+                            // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
+                            $.when(self.loadIntoMap(e.state)).then(function () {
+                                map.on(self.events, $.proxy(self.addToHistory, self));
+                            });
+                        }
+
+                    });
                 });
-
             });
+
+                
+
+           // }, 2000);
+            // si existe un hash aplicamos
+            
         });
     };
 
@@ -72,9 +79,9 @@ TC.inherit(TC.control.State, TC.Control);
 
         var state = self.getMapState();
 
-            if (self.replaceCurrent) {
+        if (self.replaceCurrent) {
             window.history.replaceState(state, null, null);
-                delete self.replaceCurrent;
+            delete self.replaceCurrent;
 
             return;
         } else {
@@ -82,7 +89,7 @@ TC.inherit(TC.control.State, TC.Control);
             if (self.registerState != undefined && !self.registerState) {
                 self.registerState = true;
                 return;
-                    }
+            }
 
             var saveState = function () {
                 window.history.pushState(state, null, window.location.href.split('#').shift() + '#' + self.utf8ToBase64(state));
@@ -95,15 +102,14 @@ TC.inherit(TC.control.State, TC.Control);
                     case (e.type == TC.Consts.event.LAYERORDER.replace(self.CUSTOMEVENT, '')):
                         saveState();
                         break;
-                    case (e.type == TC.Consts.event.LAYERREMOVE.replace(self.CUSTOMEVENT, '')):
-                    case (e.type == TC.Consts.event.LAYERADD.replace(self.CUSTOMEVENT, '')):
-                        // unicamente modifico el hash si la capa añadida es WMS
+                    case (e.type.toLowerCase().indexOf("LAYER".toLowerCase()) > -1):
+                        // unicamente modifico el hash si la capa es WMS
                         if (e.layer.type == TC.Consts.layerType.WMS)
                             saveState();
                         break;
                 }
             }
-            }
+        }
     };
 
     // gestión siguiente - anterior
@@ -130,13 +136,11 @@ TC.inherit(TC.control.State, TC.Control);
             layer = map.workLayers[i];
             if (layer.type == "WMS") {
                 if (layer.layerNames && layer.layerNames.length) {
-                    entry = { n: layer.layerNames[0], o: layer.wrap.getLayer().getOpacity(), v: layer.getVisibility(), h: layer.options.hideTitle };
-
-                    //Si la URL de la capa es distinta a la del servicio principal (IDENA), la guardamos
-                    if (layer.url.indexOf(self.options.serviceUrl) < 0) {
-                        entry.u = layer.url;
-                    }
-
+                    entry = {
+                        u: TC.Util.isOnCapabilities(layer.url.indexOf(window.location.protocol) < 0 ? layer.url.replace(TC.Util.regex.PROTOCOL, window.location.protocol) : layer.url),
+                        n: layer.layerNames[0], o: layer.wrap.getLayer().getOpacity(), v: layer.getVisibility(), h: layer.options.hideTitle
+                    };
+                    
                     state.capas.push(entry);
                 }
             }
@@ -193,13 +197,13 @@ TC.inherit(TC.control.State, TC.Control);
             }
             catch (error) {
                 obj = JSON.parse(stringOrJson);
-            }    
+            }
         } else {
             obj = stringOrJson;
         }
 
         if (obj) {
-            var map = self.map;            
+            var map = self.map;
 
             //capa base
             if (obj.base != map.getBaseLayer().id) map.setBaseLayer(obj.base);
@@ -218,7 +222,7 @@ TC.inherit(TC.control.State, TC.Control);
                 // añado como promesa cada una de las capas que se añaden
                 promises.push(self.map.addLayer({
                     id: TC.getUID(),
-                    url: (capa.u === undefined) ? self.options.serviceUrl : capa.u, //Si la capa no es de IDENA, añadimos su URL
+                    url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
                     hideTitle: capa.h,
                     layerNames: [capa.n],
                     renderOptions: {
@@ -231,9 +235,7 @@ TC.inherit(TC.control.State, TC.Control);
                     layer.setOpacity(op);
                     layer.setVisibility(visibility);
 
-                    if (capa.u !== undefined) { //Si es una capa externa, añadimos el servicio al catálogo de capas disponibles
-                        map.$events.trigger($.Event(TC.Consts.event.LAYERCATALOGADD, { layer: layer }));
-                    }
+                    map.$events.trigger($.Event(TC.Consts.event.LAYERCATALOGADD, { layer: layer }));
                 }));
             });
 
@@ -271,7 +273,7 @@ TC.inherit(TC.control.State, TC.Control);
             catch (error) {
                 obj = JSON.parse(this.base64ToUtf8(hash));
             }
-            
+
             if (obj) {
                 $.when(self.loadIntoMap(obj)).then(function () {
                     resolved();

@@ -395,6 +395,8 @@
 
         self.one(TC.Consts.event.MAPREADY, function () {
             setHeightFix(self._$div);
+        });
+        self.one(TC.Consts.event.MAPLOAD, function () {
             self._$div.removeClass(TC.Consts.classes.LOADING);
         });
 
@@ -596,7 +598,7 @@
         var oldError = TC.error;
         TC.error = function (text) {
             oldError(text);
-            self.toast(text, { type: TC.Consts.msgType.ERROR });
+            self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
         };
     };
 

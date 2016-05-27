@@ -2675,6 +2675,10 @@
             $(viewport).add(self.parent.div)
                 .on(MOUSEMOVE + '.coords', function (e) {
 
+                    //// si el movimiento se produce dentro del div del control de coordenadas no hacemos nada.
+                    //if (e.currentTarget == self.parent.div)
+                    //    return;
+
                     var position = goog.style.getRelativePosition(e, viewport);
                     var coords = olMap.getCoordinateFromPixel([position.x, position.y]);
                     if (self.parent.isGeo) {
@@ -2687,6 +2691,8 @@
 
                 })
                 .on(MOUSEOUT, function (e) {
+                    //if (e.currentTarget == self.parent.div && e.toElement == self.parent.div && $(e.toElement).parent() == self.parent.div)
+                    //    return;
 
                     self.parent.clear.apply(self.parent, arguments);
                 });
@@ -2705,7 +2711,10 @@
         };
 
         self._cleanCoordsTrigger = function (e) {
-            self.parent.cleanCoordsPointer(e);
+            if (e.toElement && $(e.toElement).attr('class') && $(e.toElement).attr('class').indexOf(self.map.getControlsByClass(TC.control.Popup)[0].CLASS) > -1)
+                self.parent.coordsToClick({ coordinate: [(self.map.getExtent()[0] + self.map.getExtent()[2]) / 2, (self.map.getExtent()[1] + self.map.getExtent()[3]) / 2] });
+            else
+                self.parent.cleanCoordsPointer(e);
         };
 
         self._postcomposeTrigger = function (e) {
@@ -2730,8 +2739,9 @@
         return self.trackData && self.trackData.trackFeature && self.trackData.trackFeature.getGeometry().getCoordinates().length >= 1;
     };
 
-    TC.wrap.control.Geolocation.prototype.getTooltip = function (coordinates, d) {
+    TC.wrap.control.Geolocation.prototype.getTooltip = function (d) {
         var self = this;
+
 
         $(self.parent.track.htmlElevationMarker).show();
 
@@ -2744,7 +2754,7 @@
             });
 
         self.olMap.addOverlay(self.parent.elevationMarker);
-        self.parent.elevationMarker.setPosition(coordinates[d[0].index]);
+        self.parent.elevationMarker.setPosition(self.parent.chart.coordinates[d[0].index]);
 
         return '<div class="track-elevation-tooltip"><span>' + d[0].value + 'm </span><br><span>' + (d[0].x).toFixed(2) + 'km </span><div/>';
     };
@@ -2818,7 +2828,7 @@
                 image: new ol.style.Icon({
                     anchor: [0.5, 1],
                     src: TC.Util.getPointIconUrl({
-                        cssClass: 'tc-ctl-geolocation-track-marker-icon'
+                        cssClass: 'tc-ctl-geolocation-track-marker-icon-end'
                     })
                 })
             }));
@@ -2829,7 +2839,7 @@
                 image: new ol.style.Icon(({
                     anchor: [0.5, 1],
                     src: TC.Util.getPointIconUrl({
-                        cssClass: 'tc-ctl-geolocation-track-marker-icon-end'
+                        cssClass: 'tc-ctl-geolocation-track-marker-icon'
                     })
                 }))
             }));
@@ -2851,7 +2861,7 @@
                 var lx = Math.round(last[0]);
                 var ly = Math.round(last[1]);
 
-                if (x != lx && y != ly)
+                if (x != lx || y != ly)
                     self.trackData.trackFeature.getGeometry().appendCoordinate([x, y, heading, m]);
             }
         }
@@ -2865,39 +2875,75 @@
         var self = this;
 
         if (self.trackData && self.trackData.trackFeature) {
-            var position_ = [geoposition.coords.longitude, geoposition.coords.latitude];
-            var projectedPosition = TC.Util.reproject(position_, 'EPSG:4326', self.parent.map.crs);
+            if (geoposition) {
+                var position_ = [geoposition.coords && geoposition.coords.longitude || geoposition[0], geoposition.coords && geoposition.coords.latitude || geoposition[1]];
+                var projectedPosition = TC.Util.reproject(position_, 'EPSG:4326', self.parent.map.crs);
 
-            self.olMap.getView().setCenter(projectedPosition);
-            //self.map.wrap.map.getView().setZoom(12);
-            self.marker.setPosition(projectedPosition);
+                self.olMap.getView().setCenter(projectedPosition);
+                //self.map.wrap.map.getView().setZoom(12);
+                self.marker.setPosition(projectedPosition);
 
-            var accuracy = geoposition.coords.accuracy;
-            var heading = geoposition.coords.heading || 0;
-            var speed = geoposition.coords.speed || 0;
-            var altitude = geoposition.coords.altitude || 0;
-            var altitudeAccuracy = geoposition.coords.altitudeAccuracy || 0;
+                var accuracy = geoposition.coords && geoposition.coords.accuracy || 0;
+                var heading = geoposition.coords && geoposition.coords.heading || geoposition[2] || 0;
+                var speed = geoposition.coords && geoposition.coords.speed || 0;
+                var altitude = geoposition.coords && geoposition.coords.altitude || 0;
+                var altitudeAccuracy = geoposition.coords && geoposition.coords.altitudeAccuracy || 0;
 
-            // GLS: lo quito ya que hemos actualizado la función que gestiona la fechas para la exportación a GPX - espera la fecha en segundos (/ 1000)
-            self.addPosition(projectedPosition, heading, new Date().getTime() /*geoposition.timestamp*/, speed, accuracy, altitudeAccuracy, altitude);
+                // GLS: lo quito ya que hemos actualizado la función que gestiona la fechas para la exportación a GPX - espera la fecha en segundos (/ 1000)
+                self.addPosition(projectedPosition, heading, new Date().getTime() /*geoposition.timestamp*/, speed, accuracy, altitudeAccuracy, altitude);
 
-            var coords = self.trackData.trackFeature.getGeometry().getCoordinates();
-            var len = coords.length;
-            if (len >= 2) {
-                self.parent.deltaMean = (coords[len - 1][3] - coords[0][3]) / (len - 1);
-            }
-
-            self.parent.$events.trigger($.Event(self.parent.Const.Event.POSITIONCHANGE, {
-                pd: {
-                    "position": [projectedPosition[0].toFixed(2), projectedPosition[1].toFixed(2)],
-                    "accuracy": accuracy,
-                    "heading": Math.round(TC.Util.radToDeg(heading)),
-                    "speed": (speed * 3.6).toFixed(1)
+                var coords = self.trackData.trackFeature.getGeometry().getCoordinates();
+                var len = coords.length;
+                if (len >= 2) {
+                    self.parent.deltaMean = (coords[len - 1][3] - coords[0][3]) / (len - 1);
                 }
-            }));
+
+                self.parent.$events.trigger($.Event(self.parent.Const.Event.POSITIONCHANGE, {
+                    pd: {
+                        "position": [projectedPosition[0].toFixed(2), projectedPosition[1].toFixed(2)],
+                        "accuracy": accuracy,
+                        "heading": Math.round(TC.Util.radToDeg(heading)),
+                        "speed": (speed * 3.6).toFixed(1)
+                    }
+                }));
+            }
         }
     };
 
+
+    var lastPosition;
+    var savedi;
+    TC.wrap.control.Geolocation.prototype._setPosition = function (i) {
+        var self = this;
+
+        if (i == undefined) {
+            i = savedi;
+            self.parent.simulatedTrackPaused = false;
+        }
+                
+        if (!self.parent.simulatedTrackPaused) {
+            var position = self.parent.options.simulatedTrack[self.parent.options.simulatedTrack.length - 1];
+            if (i < self.parent.options.simulatedTrack.length) {
+                savedi = i;
+
+                TC.Util.storage.setSessionLocalValue('simulacionI', savedi);
+
+                position = lastPosition = self.parent.options.simulatedTrack[i];
+
+                if (i + 1 < self.parent.options.simulatedTrack.length) {
+                    var next = self.parent.options.simulatedTrack[i + 1];
+                    setTimeout(function () {
+                        self._setPosition(++i);
+                    }, position.length == 4 ? (next[3] - position[3]) / 1000 : (1000 + (((Math.random() * 5) + 1) * 100)));
+
+                    self.positionChangehandler(position);
+                }
+            }
+        }
+        else {
+            self.positionChangehandler(lastPosition);            
+        }
+    };
     TC.wrap.control.Geolocation.prototype.setTracking = function (tracking) {
         var self = this;
 
@@ -2915,7 +2961,7 @@
                         sessionwaypoint.push(_sessionTracking[i]);
                     else if (type == 'linestring') {
                         self.trackData.trackFeature = _sessionTracking[i];
-                        //self.trackData.trackFeature.setProperties({ 'tracking': true });
+                        self.trackData.trackFeature.setProperties({ 'tracking': true });
                     }
                 }
 
@@ -2924,7 +2970,9 @@
                 // y lo referencio a self.trackData.trackFeature
             }
             else {
-                self.hackPos = 0;
+
+                // pausar
+                // self.hackPos = 0;
 
                 self.trackData.trackFeature = new ol.Feature({
                     geometry: new ol.geom.LineString([], ('XYZM')),
@@ -2951,6 +2999,7 @@
 
             self.olMap.addOverlay(self.marker);
 
+
             if (self.marker.getMap() == undefined)
                 self.marker.setMap(self.olMap);
 
@@ -2959,240 +3008,31 @@
             else
                 self.olMap.getView().setZoom(8);
 
-            function setGeolocation() {
-                self.geolocation = window.navigator.geolocation.watchPosition(
-                    $.proxy(self.positionChangehandler, self),
-                    $.proxy(self.parent.onGeolocateError, self.parent),
-                        { maximumAge: 250, enableHighAccuracy: true }
-                );
+            if (self.parent.options.simulatedTrack && self.parent.options.simulatedTrack.length > 0) {
+                var i = self.parent.sessionTracking ? (savedi || TC.Util.storage.getSessionLocalValue('simulacionI')) : 0;
+                i = parseInt(i);
+                self.parent.simulatedTrackPaused = false;
 
-                window.setTimeout(function () {
-                    window.navigator.geolocation.clearWatch(self.geolocation);
-                }, 5000);
-            };
+                self._setPosition(i);
+            }
+            else {
 
-            //setGeolocation();
-
-            if (!self.hackPos)
-                self.hackPos = 0;
-
-            var getHackPositions = function () {
-                return [[-1.03481995, 42.95127938, 1412.4882],
-                                [-1.03658820, 42.95190819, 1428.1757],
-                                [-1.03835645, 42.95118953, 1447.0234],
-                                [-1.04111929, 42.95136915, 1449.8085],
-                                [-1.04233492, 42.95307596, 1455.2500],
-                                [-1.04465578, 42.95487262, 1461.3906],
-                                [-1.04863425, 42.95424381, 1491.0742],
-                                [-1.05172868, 42.95289633, 1490.0078],
-                                [-1.05482311, 42.95253700, 1514.4492],
-                                [-1.05791755, 42.95118953, 1510.8437],
-                                [-1.06090142, 42.95307596, 1499.7109],
-                                [-1.06510100, 42.95226752, 1485.0156],
-                                [-1.06642719, 42.95289633, 1489.3593],
-                                [-1.06963209, 42.95280648, 1468.5429],
-                                [-1.07383168, 42.95487262, 1455.5859],
-                                [-1.07692603, 42.95460314, 1450.9375],
-                                [-1.07869427, 42.95693876, 1447.6562],
-                                [-1.08278330, 42.95711838, 1430.3906],
-                                [-1.08731447, 42.95604038, 1437.6210],
-                                [-1.09074041, 42.95613024, 1439.1601],
-                                [-1.09737125, 42.95622009, 1467.5937],
-                                [-1.09913949, 42.95711838, 1459.0156],
-                                [-1.10212345, 42.95702861, 1437.5820],
-                                [-1.10271873, 42.95857247, 1409.4301],
-                                [-1.10196143, 42.95911327, 1385.8776],
-                                [-1.11011853, 42.96344856, 1324.3535],
-                                [-1.11007612, 42.96639673, 1282.0554],
-                                [-1.11102218, 42.96848139, 1246.9672],
-                                [-1.11010235, 42.97158513, 1207.5532],
-                                [-1.10723021, 42.97597087, 1168.6198],
-                                [-1.11045699, 42.97394212, 1156.1225],
-                                [-1.11346224, 42.97441964, 1143.1447],
-                                [-1.11406020, 42.97346066, 1134.4931],
-                                [-1.11582116, 42.97307996, 1125.8410],
-                                [-1.11509738, 42.97169577, 1119.5927],
-                                [-1.11789492, 42.97216373, 1100.3664],
-                                [-1.11734792, 42.97275868, 1092.1950],
-                                [-1.11801076, 42.97390004, 1085.9465],
-                                [-1.11669774, 42.97533025, 1074.8913],
-                                [-1.11962126, 42.97388755, 1056.6262],
-                                [-1.11833875, 42.97601220, 1035.9577],
-                                [-1.11897460, 42.97730125, 1029.2285],
-                                [-1.12458544, 42.97913672, 1008.5603],
-                                [-1.12712432, 42.97828554, 996.06323],
-                                [-1.12817491, 42.98009435, 994.14062],
-                                [-1.13297757, 42.98074487, 976.35620],
-                                [-1.13464733, 42.98259576, 958.09130],
-                                [-1.13600369, 42.98234707, 948.95849],
-                                [-1.14072983, 42.98392329, 916.75439],
-                                [-1.14004301, 42.98470733, 904.73779],
-                                [-1.14141236, 42.98474622, 893.68286],
-                                [-1.14122989, 42.98565767, 884.55029],
-                                [-1.14262657, 42.98545072, 875.89819],
-                                [-1.14239095, 42.98465771, 867.24658],
-                                [-1.14498155, 42.98490774, 870.13037],
-                                [-1.14579359, 42.98547436, 853.53906],
-                                [-1.14606742, 42.98619076, 867.24658],
-                                [-1.14908348, 42.98651430, 871.09179],
-                                [-1.15154592, 42.98502970, 857.02734],
-                                [-1.15304712, 42.98450198, 881.18579],
-                                [-1.15559119, 42.98490297, 862.92065],
-                                [-1.15740210, 42.98428195, 834.08105],
-                                [-1.15758994, 42.98520396, 834.08105],
-                                [-1.15887723, 42.98520086, 837.44555],
-                                [-1.15753621, 42.98634147, 852.34594],
-                                [-1.15948257, 42.98742667, 817.21484],
-                                [-1.15975465, 42.98823117, 840.81005],
-                                [-1.15936649, 42.98921881, 818.01171],
-                                [-1.15843559, 42.98994300, 840.32958],
-                                [-1.15573704, 42.99051834, 840.81005],
-                                [-1.15294125, 42.98889543, 858.59448],
-                                [-1.15182520, 42.99041775, 860.99804],
-                                [-1.15183057, 42.99122661, 858.11401],
-                                [-1.15052098, 42.99093014, 848.89062],
-                                [-1.14957609, 42.99132090, 849.51953],
-                                [-1.14933393, 42.99172751, 858.59448],
-                                [-1.14862265, 42.99293333, 849.94287],
-                                [-1.14935078, 42.99382860, 845.61694],
-                                [-1.14849851, 42.99390781, 831.10156],
-                                [-1.14891299, 42.99433898, 829.68750],
-                                [-1.14829961, 42.99460854, 828.29687],
-                                [-1.14796810, 42.99664316, 843.69409],
-                                [-1.14737131, 42.99755947, 832.87890],
-                                [-1.14758681, 42.99851618, 846.09765],
-                                [-1.14699002, 42.99838140, 833.04296],
-                                [-1.14660873, 42.99866437, 850.42358],
-                                [-1.14650923, 42.99951329, 841.58593],
-                                [-1.14667922, 43.00027563, 848.50073],
-                                [-1.14555093, 43.00125212, 843.21337],
-                                [-1.14557842, 43.00325548, 846.57836],
-                                [-1.14397295, 43.00437748, 827.28906],
-                                [-1.14223237, 43.00662777, 817.17968],
-                                [-1.13933382, 43.00942908, 862.92065],
-                                [-1.13379112, 43.00806174, 870.61108],
-                                [-1.13110992, 43.00881654, 869.64990],
-                                [-1.12914771, 43.00793794, 864.42187],
-                                [-1.12682685, 43.00819401, 870.89843],
-                                [-1.12490396, 43.00784365, 885.03100],
-                                [-1.12522708, 43.00755791, 898.48925],
-                                [-1.11829591, 43.00310477, 1024.9028],
-                                [-1.11280702, 43.00307803, 1071.5266],
-                                [-1.11036974, 43.00386182, 1085.4658],
-                                [-1.10873728, 43.00213800, 1067.2006],
-                                [-1.10874608, 43.00356024, 1046.5324],
-                                [-1.10728888, 43.00368036, 1022.9802],
-                                [-1.10463408, 43.00008988, 954.24584],
-                                [-1.10322517, 42.99938153, 932.13549],
-                                [-1.10241833, 43.00019885, 922.52221],
-                                [-1.10174660, 42.99973550, 898.48925],
-                                [-1.10393193, 42.99502462, 881.66625],
-                                [-1.10227206, 42.99306702, 891.27929],
-                                [-1.10482544, 42.99122342, 872.05297],
-                                [-1.10664767, 42.98904991, 867.24658],
-                                [-1.10623897, 42.98856628, 866.28515],
-                                [-1.10683249, 42.98880072, 867.72705],
-                                [-1.10551066, 42.98846963, 870.13037],
-                                [-1.10290104, 42.99049822, 910.50585],
-                                [-1.10086281, 42.98985290, 901.85400],
-                                [-1.09812998, 42.98751485, 911.94799],
-                                [-1.09800986, 42.98606403, 923.48364],
-                                [-1.09675970, 42.98626209, 923.96411],
-                                [-1.09679281, 42.98488394, 953.28442],
-                                [-1.09779135, 42.98400174, 981.16284],
-                                [-1.09603878, 42.98321418, 1006.6376],
-                                [-1.09615931, 42.98176025, 1046.5324],
-                                [-1.09496128, 42.98019695, 1094.1176],
-                                [-1.09073261, 42.97909129, 1135.9350],
-                                [-1.08798502, 42.97746377, 1165.7360],
-                                [-1.08430302, 42.97778950, 1167.6584],
-                                [-1.08167236, 42.97923169, 1129.6862],
-                                [-1.07955006, 42.97732011, 1114.3051],
-                                [-1.07745492, 42.97913010, 1106.6147],
-                                [-1.07706164, 42.98056684, 1092.6757],
-                                [-1.07654364, 42.97799971, 1060.9521],
-                                [-1.07700943, 42.97555413, 1018.6540],
-                                [-1.07616269, 42.97481903, 1004.7150],
-                                [-1.07572481, 42.97206164, 1010.4829],
-                                [-1.07116288, 42.97180415, 985.96923],
-                                [-1.06859626, 42.97242080, 996.06323],
-                                [-1.06342462, 42.97152536, 1002.3115],
-                                [-1.05926955, 42.97332965, 1007.5991],
-                                [-1.05688783, 42.97329529, 1015.7702],
-                                [-1.05108210, 42.97053328, 1024.9028],
-                                [-1.04871002, 42.97104885, 1033.0737],
-                                [-1.04717312, 42.97279153, 1032.1125],
-                                [-1.04740966, 42.97094198, 1043.1677],
-                                [-1.04565817, 42.97053865, 1045.5710],
-                                [-1.04248462, 42.97157331, 1042.6872],
-                                [-1.03900613, 42.96819674, 1061.9135],
-                                [-1.03500360, 42.96719393, 1071.0461],
-                                [-1.03341456, 42.96595970, 1069.1235],
-                                [-1.03147692, 42.96610412, 1074.8913],
-                                [-1.02343515, 42.96390026, 1102.2888],
-                                [-1.02033787, 42.96637510, 1116.2280],
-                                [-1.02078387, 42.96465346, 1134.4931],
-                                [-1.01715870, 42.96485379, 1162.3710],
-                                [-1.01233256, 42.96349542, 1193.1333],
-                                [-1.01666551, 42.96194518, 1227.2602],
-                                [-1.01419217, 42.96001617, 1250.8125],
-                                [-1.01477136, 42.95819646, 1269.5583],
-                                [-1.01765315, 42.95760914, 1289.2651],
-                                [-1.02084271, 42.95815581, 1310.4143],
-                                [-1.01785951, 42.95657976, 1332.5246],
-                                [-1.01498275, 42.95620123, 1347.9057],
-                                [-1.02199707, 42.95649209, 1377.2260],
-                                [-1.02398810, 42.95479249, 1396.4523],
-                                [-1.02841710, 42.95340738, 1421.0742],
-                                [-1.03141464, 42.95182655, 1417.6010],
-                                [-1.03465684, 42.95135918, 1420.9660]];
-            };
-            var hackPositions = getHackPositions();
-
-            var _pos = {
-                coords: {
-                }
-            };
-            _pos.coords.longitude = hackPositions[self.hackPos][0];
-            _pos.coords.latitude = hackPositions[self.hackPos][1];
-            _pos.coords.heading = hackPositions[self.hackPos][2];
-            _pos.coords.accuracy = 50;
-
-            self.hackPos++;
-
-            self.positionChangehandler(_pos);
-
-            // obtengo nueva posición
-            //self.geoInterval = window.setInterval(function () {                    
-            //    setGeolocation();
-            //}, 900);
-
-            self.geoInterval = window.setInterval(function () {
-                if (!self.parent.pause.paused && self.hackPos < hackPositions.length) {
-                    var _pos = {
-                        coords: {
-                        }
-                    };
-                    _pos.coords.longitude = hackPositions[self.hackPos][0];
-                    _pos.coords.latitude = hackPositions[self.hackPos][1];
-                    _pos.coords.heading = hackPositions[self.hackPos][2];
-                    _pos.coords.accuracy = 50;
-
-                    self.hackPos++;
-
-                    self.positionChangehandler(_pos);
-                }
-            }, 2000);
+                navigator.geolocation.getCurrentPosition(function (data) {
+                    self.positionChangehandler.call(self, data);
+                    self.currentPosition = navigator.geolocation.watchPosition(
+                            self.positionChangehandler.bind(self),
+                            self.parent.onGeolocateError.bind(self.parent), { enableHighAccuracy: true, timeout: 60000 });
+                }, self.parent.onGeolocateError.bind(self.parent));
+            }
 
         } else {
-
-            self.currenTracking = false;
-
-            clearInterval(self.geoInterval);
-            window.navigator.geolocation.clearWatch(self.geolocation);
+            self.parent.simulatedTrackPaused = true;
+            window.navigator.geolocation.clearWatch(self.currentPosition);
 
             delete self.trackData;
+
             self.olMap.removeOverlay(self.marker);
+            delete self.marker;
         }
     };
 
@@ -3408,14 +3248,25 @@
         return done;
     };
 
-    TC.wrap.control.Geolocation.prototype.import = function (wait, base64encodedData, type) {
+    TC.wrap.control.Geolocation.prototype.import = function (wait, data, type) {
         var self = this;
+        var vectorSource;
 
-        var vectorSource = new ol.source.Vector({
+        var sourceOptions = {
             projection: ol.proj.get(self.parent.map.crs), //proj4(self.parent.map.crs),
-            url: base64encodedData,
             format: type.toUpperCase() == 'GPX' ? new ol.format.GPX() : new ol.format.KML()
-        });
+        };
+
+        if (data && data.text) {
+            sourceOptions.loader = function () {
+                var fs = sourceOptions.format.readFeatures(data.text, { featureProjection: sourceOptions.projection });
+                vectorSource.addFeatures(fs);
+            };
+        } else {
+            sourceOptions.url = data.base64;
+        }
+
+        vectorSource = new ol.source.Vector(sourceOptions);
 
         var listenerKey = vectorSource.on('change', function (e) {
             if (vectorSource.getState() == 'ready') {
@@ -3453,24 +3304,28 @@
                     for (var i = 0; i < toRemove.length; i++)
                         vectorSource.removeFeature(toRemove[i]);
 
+                if (vectorSource.getFeatures().length > 0) {
+                    // guardamos el track importado                    
+                    self.parent.saveMessage = self.parent.getLocaleString("geo.trk.upload.ok");
+                    self.parent.saveTrack().then(function () {
+                        if (self.parent.import.uid) {
+                            var li = self.parent.track.$trackList.find('li[data-id="' + self.parent.import.uid + '"]');
+                            if (li) {
+                                self.parent.drawTrack(li);
+                            }
 
-                // guardamos el track importado                    
-                self.parent.saveMessage = self.parent.getLocaleString("geo.trk.upload.ok");
-                self.parent.saveTrack().then(function () {
-                    if (self.parent.import.uid) {
-                        var li = self.parent.track.$trackList.find('li[data-id="' + self.parent.import.uid + '"]');
-                        if (li) {
-                            self.parent.drawTrack(li);
+                            delete self.parent.import.uid;
                         }
 
-                        delete self.parent.import.uid;
-                    }
+                        delete self.parent.import.fileName;
 
-                    delete self.parent.import.fileName;
-
-                    self.parent.map.setExtent(src.getSource().getExtent());
+                        self.parent.map.setExtent(src.getSource().getExtent());
+                        self.parent.getLoadingIndicator().removeWait(wait);
+                    });
+                } else {
                     self.parent.getLoadingIndicator().removeWait(wait);
-                });
+                    TC.alert(self.parent.getLocaleString("geo.trk.upload.error3"));
+                }
             }
         });
 
@@ -3560,35 +3415,6 @@
         }
     };
 
-    TC.wrap.control.Geolocation.prototype.setTrackingSimulated = function (tracking) {
-        var self = this;
-
-        if (tracking) {
-
-            if (!self.marker)
-                self.marker = new ol.Overlay({
-                    element: self.parent.track.htmlMarker,
-                    positioning: ol.OverlayPositioning.CENTER_CENTER,
-                    offset: [0, -11],
-                    stopEvent: false
-                });
-
-            self.olMap.addOverlay(self.marker);
-            self.marker.setPosition(ol.OverlayPositioning.CENTER_CENTER);
-
-        } else {
-
-            delete self.trackData;
-            self.olMap.removeOverlay(self.marker);
-
-            if (self.deviceOrientation) {
-                self.deviceOrientation.setTracking(false);
-                self.deviceOrientation.un('change:heading', self.headingChangehandler);
-                self.deviceOrientation.un(['change:beta', 'change:gamma'], self.orientationChangehandler);
-            }
-        }
-    };
-
     TC.wrap.control.Geolocation.prototype.headingChangehandler = function (evt) {
         var self = this;
         if (!self.parent.track.$infoOnMap)
@@ -3629,50 +3455,64 @@
         }));
     };
 
-    TC.wrap.control.Geolocation.prototype.deactivateCurrentPosition = function () {
-        var self = this;
-
-        if (self.overlay) {
-            var map = self.overlay.getMap();
-            if (map) {
-                $('div.tc-ctl-geolocation-circlePulsate').remove();
-                map.removeOverlay(self.overlay);
-                delete self.overlay;
-            }
-        }
-    };    
-
     TC.wrap.control.Geolocation.prototype.pulsate = function (circle) {
         var self = this;
 
-        var point = circle.wrap.feature.getGeometry().getCenter();
+        self.pulsated = true;
 
-        var size = circle.wrap.feature.getGeometry().getRadius() / self.olMap.getView().getResolution() * 2;
+        var radius = circle.wrap.feature.getGeometry().getRadius();
+        var start = new Date().getTime();
 
-        if (!self.overlay) {
-            var elem = document.createElement('div');
-            elem.setAttribute('class', 'tc-ctl-geolocation-circlePulsate');
+        var duration = 500;
+        var listenerKey;
 
-            self.overlay = new ol.Overlay({
-                element: elem,
-                position: point,
-                positioning: 'center-center'
-            });
+        var getRadius = function (elapsed) {
+            switch (true) {
+                case elapsed <= 50:
+                    return radius;
+                case elapsed > 50 && elapsed <= 100:
+                    return radius * 1.02;
+                case elapsed > 100 && elapsed <= 150:
+                    return radius * 1.05;
+                case elapsed > 150 && elapsed <= 200:
+                    return radius * 1.02;
+                case elapsed > 200 && elapsed <= 300:
+                    return radius;
+                case elapsed > 300 && elapsed <= 350:
+                    return radius * 1.02;
+                case elapsed > 350 && elapsed <= 400:
+                    return radius * 1.05;
+                case elapsed > 400 && elapsed <= 450:
+                    return radius * 1.02;
+                case elapsed > 450 && elapsed <= 500:
+                    return radius * 1;
+                default:
+                    return radius;
+            }
+        };
+        listenerKey = self.olMap.on(ol.render.EventType.POSTCOMPOSE, function (event) {
+            var vectorContext = event.vectorContext;
+            var frameState = event.frameState;
 
-            self.olMap.addOverlay(self.overlay);
-        }
+            var elapsed = frameState.time - start;
 
-        $('div.tc-ctl-geolocation-circlePulsate').height(size + 'px');
-        $('div.tc-ctl-geolocation-circlePulsate').width(size + 'px');
+            var f = circle.wrap.feature.getGeometry().clone();
+            var r = getRadius(elapsed);
+            f.setRadius(r);
 
-        if (self.overlay.getMap() == undefined)
-            self.overlay.setMap(self.olMap);
+            vectorContext.setFillStrokeStyle(
+                new ol.style.Fill({ color: 'rgba(0, 0, 0, 0.1)' }),
+                new ol.style.Stroke({ color: 'rgba(255, 0, 0, .8)', width: 1 })
+            );
+            vectorContext.drawCircleGeometry(f);
 
-        self.overlay.setPosition(point);
+            if (elapsed > duration) {
+                ol.Observable.unByKey(listenerKey);
+                return;
+            }
 
-        setTimeout(function () {
-            self.olMap.removeOverlay(self.overlay);
-        }, 1100);
+            frameState.animate = true;
+        });
     };
 
     TC.wrap.control.Geolocation.prototype.coordsActivate = function () {
@@ -4551,19 +4391,19 @@
                                     postParam += "</wfs:GetFeature>";
                                     var dfrr = $.Deferred();
                                     jQuery.ajax(
-            {
-                url: _url,
-                data: postParam,
-                cache: false,
-                contentType: "application/xml",
-                type: "POST",
-            }).then(function () {
-                if (arguments[1] == "success") {
-                    dfrr.resolve(arguments);
-                }
-                else
-                    dfrr.reject(arguments);
-            });
+                                    {
+                                        url: _url,
+                                        data: postParam,
+                                        cache: false,
+                                        contentType: "application/xml",
+                                        type: "POST",
+                                    }).then(function () {
+                                        if (arguments[1] == "success") {
+                                            dfrr.resolve(arguments);
+                                        }
+                                        else
+                                            dfrr.reject(arguments);
+                                    });
                                     return dfrr;
                                 }
 

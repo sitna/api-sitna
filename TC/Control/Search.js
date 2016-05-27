@@ -32,7 +32,7 @@ TC.control.Search = function () {
 
     self.availableSearchTypes[TC.Consts.searchType.CADASTRAL] = {
         suggestionRoot: null,
-        url: '//idena.tracasa.es/ogc/wfs',
+        url: '//idena.navarra.es/ogc/wfs',
         version: '1.1.0',
         outputFormat: TC.Consts.format.JSON,
         featurePrefix: 'IDENA',
@@ -64,7 +64,7 @@ TC.control.Search = function () {
     self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY] = {
         root: null,
         limit: false,
-        url: '//idena.tracasa.es/ogc/wfs',
+        url: '//idena.navarra.es/ogc/wfs',
         version: '1.1.0',
         outputFormat: TC.Consts.format.JSON,
         featurePrefix: 'IDENA',
@@ -82,7 +82,7 @@ TC.control.Search = function () {
     self.availableSearchTypes[TC.Consts.searchType.LOCALITY] = {
         root: null,
         limit: false,
-        url: '//idena.tracasa.es/ogc/wfs',
+        url: '//idena.navarra.es/ogc/wfs',
         version: '1.1.0',
         outputFormat: TC.Consts.format.JSON,
         featurePrefix: 'IDENA',
@@ -112,7 +112,7 @@ TC.control.Search = function () {
     self.availableSearchTypes[TC.Consts.searchType.STREET] = {
         root: null,
         limit: null,
-        url: '//idena.tracasa.es/ogc/wfs',
+        url: '//idena.navarra.es/ogc/wfs',
         version: '1.1.0',
         outputFormat: TC.Consts.format.JSON,
         featurePrefix: 'IDENA',
@@ -154,7 +154,7 @@ TC.control.Search = function () {
     self.availableSearchTypes[TC.Consts.searchType.NUMBER] = {
         root: null,
         limit: null,
-        url: '//idena.tracasa.es/ogc/wfs',
+        url: '//idena.navarra.es/ogc/wfs',
         version: '1.1.0',
         outputFormat: TC.Consts.format.JSON,
         featurePrefix: 'IDENA',

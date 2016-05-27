@@ -100,11 +100,13 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
 
     ctlProto.enable = function () {
         var self = this;
+        TC.Control.prototype.enable.call(self);
         self.wrap.enable();
     };
 
     ctlProto.disable = function () {
         var self = this;
+        TC.Control.prototype.disable.call(self);
         self.wrap.disable();
     };
 

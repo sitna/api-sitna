@@ -754,11 +754,12 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
 
 .tc-ctl-meas-len, .tc-ctl-meas-area {
     /* la regla position:fixed no tiene efecto, ya que el div padre se ocuta mediante la regla transform: translateX */
+    /* lo anterior no pasa en IE, así que hay que comentar -ms-transform y transform */
     -webkit-transform: translateX(-100%); /* Safari and Chrome */
     -moz-transform: translateX(-100%); /* Firefox */
-    -ms-transform: translateX(-100%); /* IE 9 */
+    /*-ms-transform: translateX(-100%); */ /* IE 9 */
     -o-transform: translateX(-100%); /* Opera */
-    transform: translateX(-100%);
+    /*transform: translateX(-100%);*/ /* */
     position: fixed;
     background-color: #fff;
     padding-top: 0.5em;
@@ -870,6 +871,10 @@ label.tc-ctl-meas-btn-area span:before {
     padding-top: 0;
     display: block;
     height: 0;
+}
+
+.tc-ctl-geolocation .tc-hidden {
+    display: none;
 }
 
 .tc-ctl-meas-txt {
@@ -1023,9 +1028,46 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     width: calc(100% - 0.2em);
 }
 
+.tc-ctl-cbuild-off-panel a.tc-ctl-cbuild-link-exit {
+    display: none;
+    text-decoration: none;
+    margin-top: 0.2em;
+    width: 100%;
+    color: #000;
+}
+
+    .tc-ctl-cbuild-off-panel a.tc-ctl-cbuild-link-exit span {
+        display: none;
+    }
+
+.tc-ctl-cbuild-off-panel.tc-conn-mobile a.tc-ctl-cbuild-link-exit, .tc-ctl-cbuild-off-panel.tc-conn-wifi a.tc-ctl-cbuild-link-exit {
+    display: inline-block;
+}
+
+.tc-ctl-cbuild-off-panel a.tc-ctl-cbuild-link-exit:before {
+    display: none;
+    font-family: 'FontAwesome';
+    letter-spacing: 0.2em;
+    font-size: 1.5em;
+}
+
+.tc-ctl-cbuild-off-panel.tc-conn-wifi a.tc-ctl-cbuild-link-exit:before {
+    display: inline-block;
+    content: '\f0a0\f178\f1eb';
+}
+
+.tc-ctl-cbuild-off-panel.tc-conn-mobile a.tc-ctl-cbuild-link-exit:before {
+    display: inline-block;
+    content: '\f0a0\f178\f012';
+}
+
 .tc-ctl-sv-view .tc-ctl-sv-btn-close:after {
     font-family: 'FontAwesome';
     content: '\f00d';
+}
+
+.tc-ctl-sv.tc-disabled .tc-ctl-sv-btn {
+    display: none;
 }
 
 .tc-ctl-sv-btn {
@@ -1190,6 +1232,10 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
         cursor: pointer;
     }
 
+    .tools-panel .tc-ctl.tc-disabled {
+        display: none;
+    }
+
     .tools-panel h3 {
         margin: 0;
         color: #666;
@@ -1212,6 +1258,10 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     border-left: 1px solid #ccc;
     z-index: 10006;
 }
+
+    .legend-panel.tc-disabled, .ovmap-panel.tc-disabled {
+        display: none;
+    }
 
 .tc-ctl-legend-tree {
     max-height: 15em;
@@ -1264,7 +1314,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     content: '\f0c9';
 }
 
-#tools-tab:after,#ovmap-tab:after {
+#tools-tab:after, #ovmap-tab:after {
     content: '\f061';
 }
 
@@ -1309,18 +1359,18 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     section#tools-panel:not(.right-collapsed).slide-panel > h1#tools-tab {
     }
 
-    section#tools-panel:not(.right-collapsed).slide-panel > h1#tools-tab::before {
-        content: attr(title);
-        font-family: Arial;
-        right: 0;
-        top: 0;
-        position: absolute;
-        text-indent: 0;
-        line-height: 3em;
-        padding: 0 1em;
-        width: calc(100% - 3.7em);
-        text-align: center;
-    }
+        section#tools-panel:not(.right-collapsed).slide-panel > h1#tools-tab::before {
+            content: attr(title);
+            font-family: Arial;
+            right: 0;
+            top: 0;
+            position: absolute;
+            text-indent: 0;
+            line-height: 3em;
+            padding: 0 1em;
+            width: calc(100% - 3.7em);
+            text-align: center;
+        }
 
     section#legend-panel:not(.left-collapsed).slide-panel > h1#legend-tab {
         border-top-right-radius: 0em;
@@ -1443,7 +1493,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     }*/
 
     .tc-ctl-meas-select input[type=radio]:checked ~ span {
-        border-color: #666;
+        /*border-color: #666;*/
         border-bottom-right-radius: 0;
         border-bottom-left-radius: 0;
         border-bottom-color: #fff;
@@ -1577,9 +1627,9 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
         z-index: 10006;
     }
 
-    #legend-tab:after, #tools-tab:after, #ovmap-tab:after, .left-collapsed #legend-tab:after, .right-collapsed #tools-tab:after, .right-collapsed #ovmap-tab:after {
-        content: none;
-    }
+        #legend-tab:after, #tools-tab:after, #ovmap-tab:after, .left-collapsed #legend-tab:after, .right-collapsed #tools-tab:after, .right-collapsed #ovmap-tab:after {
+            content: none;
+        }
 
     .tc-ctl-legend-tree {
         height: auto;
@@ -1660,17 +1710,17 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
         color: #666;
     }
 
-    ul.tc-ctl-finfo-layers > li.tc-checked h4:before {
-        content: '\f0d7';
-    }
+        ul.tc-ctl-finfo-layers > li.tc-checked h4:before {
+            content: '\f0d7';
+        }
 
     ul.tc-ctl-finfo-services > li.tc-checked:only-child ul.tc-ctl-finfo-layers > li.tc-checked:only-child h4 {
         cursor: inherit;
     }
 
-    ul.tc-ctl-finfo-services > li.tc-checked:only-child ul.tc-ctl-finfo-layers > li.tc-checked:only-child h4:before {
-        content: '';
-    }
+        ul.tc-ctl-finfo-services > li.tc-checked:only-child ul.tc-ctl-finfo-layers > li.tc-checked:only-child h4:before {
+            content: '';
+        }
 
     .tc-ctl-finfo .tc-ctl-finfo-layers li.tc-checked .tc-ctl-finfo-layer-n {
         visibility: hidden;
@@ -1964,30 +2014,29 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
         }*/
 
 @media screen and (max-width: 50em) and (max-height: 50em) {
-    .tc-ctl-geolocation-track-title {
+    /*.tc-ctl-geolocation-track-title {
         width: 83.6%;
     }
 
     .tc-ctl-geolocation-track-waypoint {
         width: 83.6%;
-    }
+    }*/
 
     .tc-ctl-geolocation-track-available-lst > li > a {
         padding-right: 1em;
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > span {
+    /*.tc-ctl-geolocation-track-available-lst > li > span {
         width: 44%;
     }
 
     .tc-ctl-geolocation-track-available-lst > li > input {
         width: 44%;
-    }
+    }*/
 
     #track-chart {
         z-index: 10007;
-        right: 3em;
-        background-color: rgba(255,255,255, 0.9);
+        right: 3em;        
     }
 
     .track-chart-chart > p {

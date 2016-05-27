@@ -939,95 +939,95 @@ if (!TC.Consts) {
                     id: TC.Consts.layer.IDENA_BASEMAP,
                     title: 'Mapa base',
                     type: TC.Consts.layerType.WMTS,
-                    url: '//idena.tracasa.es/ogc/wmts/',
+                    url: '//idena.navarra.es/ogc/wmts/',
                     matrixSet: 'epsg25830extended',
                     layerNames: 'mapabase',
                     encoding: TC.Consts.WMTSEncoding.RESTFUL,
                     format: 'image/png',
                     isDefault: true,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'tc/css/img/thumb-basemap.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png'
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO,
                     title: 'Ortofoto 2014',
                     type: TC.Consts.layerType.WMTS,
-                    url: '//idena.tracasa.es/ogc/wmts/',
+                    url: '//idena.navarra.es/ogc/wmts/',
                     matrixSet: 'epsg25830',
                     layerNames: 'ortofoto2014',
                     encoding: TC.Consts.WMTSEncoding.RESTFUL,
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'tc/css/img/thumb-orthophoto.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg'
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO2012,
                     title: 'Ortofoto 2012',
                     type: TC.Consts.layerType.WMTS,
-                    url: '//idena.tracasa.es/ogc/wmts/',
+                    url: '//idena.navarra.es/ogc/wmts/',
                     matrixSet: 'epsg25830',
                     layerNames: 'ortofoto2012',
                     encoding: TC.Consts.WMTSEncoding.RESTFUL,
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'tc/css/img/thumb-ortho2012.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg'
                 },
                 {
                     id: TC.Consts.layer.IDENA_CADASTER,
                     title: 'Catastro',
                     type: TC.Consts.layerType.WMS,
-                    url: '//idena.tracasa.es/ogc/wms',
+                    url: '//idena.navarra.es/ogc/wms',
                     layerNames: 'catastro,regionesFronterizas',
                     format: 'image/png',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'tc/css/img/thumb-cadaster.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-cadaster.png'
                 },
                 {
                     id: TC.Consts.layer.IDENA_CARTO,
                     title: 'Cartografía topográfica',
                     type: TC.Consts.layerType.WMS,
-                    url: '//idena.tracasa.es/ogc/wms',
+                    url: '//idena.navarra.es/ogc/wms',
                     layerNames: 'IDENA:cartografia_topografica',
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'tc/css/img/thumb-carto.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto.png'
                 },
                 {
                     id: TC.Consts.layer.IDENA_BW_RELIEF,
                     title: 'Relieve',
                     type: TC.Consts.layerType.WMS,
-                    url: '//idena.tracasa.es/ogc/wms',
+                    url: '//idena.navarra.es/ogc/wms',
                     layerNames: 'IDENA:mapa_relieve_bn',
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'tc/css/img/thumb-relief_bw.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_bw.jpg'
                 },
                 {
                     id: TC.Consts.layer.IDENA_BASEMAP_ORTHOPHOTO,
                     title: 'Mapa base/ortofoto 2014',
                     type: TC.Consts.layerType.WMS,
-                    url: '//idena.tracasa.es/ogc/wms',
+                    url: '//idena.navarra.es/ogc/wms',
                     layerNames: 'mapaBase_orto',
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'tc/css/img/thumb-base_ortho.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-base_ortho.jpg'
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNBASEMAP,
                     title: 'Mapa base',
                     type: TC.Consts.layerType.WMS,
-                    url: '//idena.tracasa.es/ogc/wms',
+                    url: '//idena.navarra.es/ogc/wms',
                     layerNames: 'mapaBase,regionesFronterizas',
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'tc/css/img/thumb-basemap.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png'
                 },
                 {
                     id: TC.Consts.layer.BLANK,
@@ -1061,7 +1061,7 @@ if (!TC.Consts) {
                 legend: false,
                 popup: false,
                 search: {
-                    url: '//idena.tracasa.es/ogc/wfs',
+                    url: '//idena.navarra.es/ogc/wfs',
                     allowedSearchTypes: {
                         coordinates: {},
                         municipality: {}

@@ -6,6 +6,10 @@ if (!TC.control.MapContents) {
 
 (function () {
 
+    TC.Consts.classes.CONNECTION_OFFLINE = TC.Consts.classes.CONNECTION_OFFLINE || 'tc-conn-offline';
+    TC.Consts.classes.CONNECTION_WIFI = TC.Consts.classes.CONNECTION_WIFI || 'tc-conn-wifi';
+    TC.Consts.classes.CONNECTION_MOBILE = TC.Consts.classes.CONNECTION_MOBILE || 'tc-conn-mobile';
+
     var appCache = window.applicationCache;
 
     if (!TC._appCacheBuilders) {
@@ -35,6 +39,8 @@ if (!TC.control.MapContents) {
                         break;
                     case 'error':
                         ctl.$events.trigger($.Event(TC.Consts.event.MAPCACHEERROR, { name: mapName, extent: extent, url: url, reason: e.reason, status: e.status }));
+                    case 'noupdate':
+                        break;
                     default:
                         break;
                 }
@@ -43,13 +49,13 @@ if (!TC.control.MapContents) {
     }
 
     var sendAppCacheEvent = function (e) {
-        if (window.parent && parent.TC && parent.TC._appCacheUpdater) {
+        if (window.parent !== window && parent.TC && parent.TC._appCacheUpdater) {
             parent.TC._appCacheUpdater(e, location.href);
         }
     };
 
     // Fired after the first cache of the manifest.
-    appCache.addEventListener('cached', sendAppCacheEvent, false);
+    appCache.oncached = sendAppCacheEvent;
 
     //// Checking for an update. Always the first event fired in the sequence.
     //appCache.addEventListener('checking', handleCacheEvent, false);
@@ -60,17 +66,17 @@ if (!TC.control.MapContents) {
 
     // The manifest returns 404 or 410, the download failed,
     // or the manifest changed while the download was in progress.
-    appCache.addEventListener('error', sendAppCacheEvent, false);
+    appCache.onerror = sendAppCacheEvent;
 
     //// Fired after the first download of the manifest.
     //appCache.addEventListener('noupdate', handleCacheEvent, false);
 
     //// Fired if the manifest file returns a 404 or 410.
     //// This results in the application cache being deleted.
-    appCache.addEventListener('obsolete', sendAppCacheEvent, false);
+    appCache.onobsolete = sendAppCacheEvent;
 
     //// Fired for each resource listed in the manifest as it is being fetched.
-    appCache.addEventListener('progress', sendAppCacheEvent, false);
+    appCache.onprogress = sendAppCacheEvent;
 
     //// Fired when the manifest resources have been newly redownloaded.
     //appCache.addEventListener('updateready', handleCacheEvent, false);
@@ -106,6 +112,8 @@ if (!TC.control.MapContents) {
             self._$dialogDiv.appendTo('body');
         }
 
+        self.mapIsOffline = location.pathname.indexOf('/' + self.CACHE_REQUEST_PATH) === location.pathname.length - self.CACHE_REQUEST_PATH.length - 1;
+
         TC.Control.apply(self, arguments);
         self.wrap = new TC.wrap.control.CacheBuilder(self);
 
@@ -118,131 +126,67 @@ if (!TC.control.MapContents) {
 
         self._loadedCount = 0;
 
-        self.$events.on(TC.Consts.event.CONTROLRENDER, function () {
-
-            self._$dialogDiv.find('.' + self.CLASS + '-btn-ok').on(TC.Consts.event.CLICK, function () {
-                var options = {
-                    mapName: self._$dialogDiv.find('.' + self.CLASS + '-txt-name').val()
+        // Actualización del enlace al modo online
+        // Parche para detectar cambios en el hash. Lo usamos para actualizar los enlaces a los idiomas
+        var pushState = history.pushState;
+        history.pushState = function (state) {
+            var result;
+            //if (typeof history.onpushstate == "function") {
+            //    history.onpushstate({ state: state });
+            //}
+            result = pushState.apply(history, arguments);
+            if (self._$offlinePanelDiv) {
+                var newPath = location.pathname.replace('/' + self.CACHE_REQUEST_PATH, '/');
+                var params = TC.Util.getQueryStringParams();
+                delete params[self.TILE_SCHEMA_PARAM_NAME];
+                delete params[self.MAP_NAME_PARAM_NAME];
+                delete params[self.MAP_EXTENT_PARAM_NAME];
+                var newParams = $.param(params);
+                if (newParams.length) {
+                    newParams = '?' + newParams;
                 }
-                if (self.findStoredMap(options.mapName)) {
-                    TC.alert(self.getLocaleString('cb.mapNameAlreadyExists.error', options));
+                var href = newPath + newParams + location.hash;
+                self._$offlinePanelDiv.find('.' + self.CLASS + '-link-exit').attr('href', href);
+            }
+            return result;
+        }
+
+        // Detección de estado de conexión
+        var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+        var onlineHandler = function () {
+            if (self._$offlinePanelDiv) {
+                var $panel = self._$offlinePanelDiv.find('.' + self.CLASS + '-off-panel');
+                $panel
+                    .removeClass(TC.Consts.classes.CONNECTION_OFFLINE)
+                    .removeClass(TC.Consts.classes.CONNECTION_MOBILE)
+                    .removeClass(TC.Consts.classes.CONNECTION_WIFI);
+
+                var type = connection.type;
+                switch (type) {
+                    case 1:
+                    case 2:
+                    case undefined:
+                        $panel.addClass(TC.Consts.classes.CONNECTION_WIFI);
+                        break;
+                    default:
+                        $panel.addClass(TC.Consts.classes.CONNECTION_MOBILE);
+                        break;
                 }
-                else {
-                    var startRequest = function () {
-                    self._$div.find('.' + self.CLASS + '-name').html(options.mapName);
-                    setDownloadingState(self);
-                    self.requestCache(options);
-                    };
-                    // Usamos Quota Management API si existe
-                    var storageInfo = navigator.temporaryStorage || navigator.webkitTemporaryStorage || {};
-                    if (storageInfo.queryUsageAndQuota) {
-                        storageInfo.queryUsageAndQuota(
-                            function (usedBytes, grantedBytes) {
-                                var availableMB = (grantedBytes - usedBytes) / 1048576;
-                                if (self.estimatedMapSize < availableMB) {
-                                    startRequest();
-                                }
-                                else {
-                                    TC.confirm(self.getLocaleString('cb.mapCreation.warning', {
-                                        mapName: options.mapName,
-                                        mapSize: formatSize(self, self.estimatedMapSize),
-                                        availableStorage: formatSize(self, Math.round(availableMB))
-                                    }), startRequest);
-                                }
-                            },
-                            function (e) {
-                                TC.error(e);
-                            }
-                        );
-                    }
-                    else {
-                        startRequest();
-                    }
-                }
-            });
-            self._$dialogDiv.find('.' + self.CLASS + '-txt-name').on('input', function () {
-                checkValidity(self);
-            });
-            self._$div.find('.' + self.CLASS + '-btn-new').on(TC.Consts.event.CLICK, function () {
-                setEditState(self);
-            });
-            self._$div.find('.' + self.CLASS + '-btn-cancel').on(TC.Consts.event.CLICK, function () {
-                setReadyState(self);
-            });
-
-            self._$div.find('.' + self.CLASS + '-list')
-                .on(TC.Consts.event.CLICK, '.' + self.CLASS + '-btn-del', function (e) {
-                    $btn = $(e.target);
-                    var mapName = $btn.parent().find('a').html();
-                    if (mapName) {
-                        if (confirm(self.getLocaleString('cb.delete.confirm', { mapName: mapName }))) {
-                            $btn.prop('disabled', true);
-                            $btn.parents('li').first().addClass(TC.Consts.classes.DISABLED);
-                            self.deleteMap(mapName);
-                        }
-                    }
-                }).on(TC.Consts.event.CLICK, '.' + self.CLASS + '-btn-view', function (e) {
-                    $btn = $(e.target);
-                    var showExtent = !$btn.hasClass(TC.Consts.classes.ACTIVE);
-                    self._$div.find('.' + self.CLASS + '-btn-view').removeClass(TC.Consts.classes.ACTIVE);
-                    var mapName = $btn.parent().find('a').html();
-                    if (mapName) {
-                        var map = self.findStoredMap(mapName);
-                        if (map) {
-                            var extent = getExtentFromString(map.extent);
-                            self.layer.clearFeatures();
-                            if (showExtent) {
-                            self.layer.addPolygon([[[extent[0], extent[1]], [extent[0], extent[3]], [extent[2], extent[3]], [extent[2], extent[1]]]]);
-                                $btn.addClass(TC.Consts.classes.ACTIVE);
-                        }
-                    }
-                    }
-                });
-
-            self._$dialogDiv.find('.' + self.CLASS + '-bl-list')
-                .on('change', 'input[type=checkbox]', function (e) {
-                    self.baseLayers.length = 0;
-                    self._$dialogDiv.find('.' + self.CLASS + '-bl-list input[type=checkbox]').each(function (idx, elm) {
-                        var $cb = $(elm);
-                        if ($cb.prop('checked')) {
-                            var layerId = $cb.val();
-                            for (var i = 0, len = self.map.baseLayers.length; i < len; i++) {
-                                var layer = self.map.baseLayers[i];
-                                if (layer.id === layerId && layer.type === TC.Consts.layerType.WMTS) {
-                                    self.baseLayers[self.baseLayers.length] = layer;
-                                    break;
-                                }
-                            }
-                        }
-                    });
-                    self.updateRequestSchemas();
-                    updateResolutions(self);
-                    updateThumbnails(self);
-                    checkValidity(self);
-                    showEstimatedMapSize(self);
-                });
-
-            self._$dialogDiv.find('.' + self.CLASS + '-rng-maxres')
-                .on('input change', function (e) {
-                    updateResolutions(self, {
-                        rangeValue: $(e.target).val()
-                    });
-                    updateThumbnails(self);
-                    showEstimatedMapSize(self);
-                });
-
-            var params = TC.Util.getQueryStringParams();
-            $getListElementByMapName(self, params[self.MAP_NAME_PARAM_NAME]).addClass(TC.Consts.classes.ACTIVE);
-
-            // Control para evitar que se cancele una descarga de cache al salir de la página
-            window.addEventListener('beforeunload', function (e) {
-                if (self.isDownloading) {
-                    var msg = self.getLocaleString('cb.mapDownloading.warning');
-                    e.returnValue = msg;
-                    return msg;
-                }
-            }, true);
-        })
+            }
+        };
+        if (connection.addEventListener) {
+            connection.addEventListener('typechange', onlineHandler);
+        }
+        window.addEventListener('online', onlineHandler);
+        window.addEventListener('offline', function () {
+            if (self._$offlinePanelDiv) {
+                self._$offlinePanelDiv
+                    .find('.' + self.CLASS + '-off-panel')
+                    .addClass(TC.Consts.classes.CONNECTION_OFFLINE)
+                    .removeClass(TC.Consts.classes.CONNECTION_MOBILE)
+                    .removeClass(TC.Consts.classes.CONNECTION_WIFI);
+            }
+        });
     };
 
     TC.inherit(TC.control.CacheBuilder, TC.Control);
@@ -263,6 +207,24 @@ if (!TC.control.MapContents) {
         EDIT: 'editing',
         DOWNLOADING: 'downloading'
     };
+    ctlProto.offlineControls = [
+        'attribution',
+        'basemapSelector',
+        'cacheBuilder',
+        'click',
+        'coordinates',
+        'draw',
+        'geolocation',
+        'loadingIndicator',
+        'measure',
+        'navBar',
+        'popup',
+        'print',
+        'scale',
+        'scaleBar',
+        'scaleSelector',
+        'state'
+    ];
 
     TC.Consts.event.MAPCACHEDOWNLOAD = TC.Consts.event.MAPCACHEDOWNLOAD || 'mapcachedownload.tc';
     TC.Consts.event.MAPCACHEDELETE = TC.Consts.event.MAPCACHEDELETE || 'mapcachedelete.tc';
@@ -274,11 +236,13 @@ if (!TC.control.MapContents) {
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/CacheBuilder.html";
         ctlProto.template[ctlProto.CLASS + '-bl-node'] = TC.apiLocation + "TC/templates/CacheBuilderBaseLayerNode.html";
         ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/CacheBuilderDialog.html";
+        ctlProto.template[ctlProto.CLASS + '-off-panel'] = TC.apiLocation + "TC/templates/CacheBuilderOfflinePanel.html";
     }
     else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "offlineMaps" }).w("</h2><div class=\"tc-ctl-cbuild-content\"><div class=\"tc-ctl-cbuild-draw tc-hidden\"></div><ul class=\"tc-ctl-cbuild-list\">").s(ctx.get(["storedMaps"], false), ctx, { "block": body_1 }, {}).w("</ul><div class=\"tc-ctl-cbuild-new\"><button class=\"tc-button tc-ctl-cbuild-btn-new\" disabled title=\"").h("i18n", ctx, {}, { "$key": "newOfflineMap" }).w("\">").h("i18n", ctx, {}, { "$key": "newOfflineMap" }).w("...</button></div><div class=\"tc-ctl-cbuild-draw tc-hidden\"><div class=\"tc-ctl-cbuild-tile-cmd\"><button class=\"tc-button tc-ctl-cbuild-btn-cancel\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div><div class=\"tc-ctl-cbuild-progress tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "cb.DownloadingMap|s" }).w(": <span class=\"tc-ctl-cbuild-progress-count\"></span></p><div class=\"tc-ctl-cbuild-progress-bar\"><div class=\"tc-ctl-cbuild-progress-ratio\" style=\"width:0\"></div></div></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li data-extent=\"").f(ctx.get(["extent"], false), ctx, "h").w("\"><a href=\"").f(ctx.get(["url"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</a><button class=\"tc-ctl-cbuild-btn-view\" title=\"").h("i18n", ctx, {}, { "$key": "viewMapExtent" }).w("\">").h("i18n", ctx, {}, { "$key": "viewMapExtent" }).w("</button><button class=\"tc-ctl-cbuild-btn-del\" title=\"").h("i18n", ctx, {}, { "$key": "deleteMap" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteMap" }).w("</button></li>"); } body_1.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-bl-node'] = function () { dust.register(ctlProto.CLASS + '-bl-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-cbuild-bl-node\" data-tc-layer-uid=\"").f(ctx.get(["id"], false), ctx, "h").w("\"><label style=\"background-size: 100% 100%; background-image: url(").f(ctx.get(["thumbnail"], false), ctx, "h").w(")\"><input type=\"checkbox\" name=\"cbbl\" value=\"").f(ctx.get(["id"], false), ctx, "h").w("\"><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label></li>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-modal tc-ctl-cbuild-dialog\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "newOfflineMap" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><input type=\"text\" class=\"tc-ctl-cbuild-txt-name\" placeholder=\"").h("i18n", ctx, {}, { "$key": "nameRequired" }).w("\" required /><div class=\"tc-ctl-cbuild-bl-panel\"><h4>").h("i18n", ctx, {}, { "$key": "availableOfflineMaps" }).w("</h4><p>").h("i18n", ctx, {}, { "$key": "selectAtLeastOne" }).w(":</p><ul class=\"tc-ctl-cbuild-bl-list\"></ul></div><div class=\"tc-ctl-cbuild-res-panel\"><h4>").h("i18n", ctx, {}, { "$key": "maxRes" }).w("</h4><div class=\"tc-ctl-cbuild-res\"></div><input type=\"range\" class=\"tc-ctl-cbuild-rng-maxres\" disabled value=\"0\" title=\"").h("i18n", ctx, {}, { "$key": "maxRes" }).w("\"></div><div class=\"tc-ctl-cbuild-tile-count\"></div></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button><button class=\"tc-button tc-modal-close tc-ctl-cbuild-btn-ok\" disabled>").h("i18n", ctx, {}, { "$key": "ok" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-off-panel'] = function () { dust.register(ctlProto.CLASS + '-off-panel', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-cbuild-off-panel tc-conn-wifi\"><span>").h("i18n", ctx, {}, { "$key": "offlineMap" }).w("</span> <a href=\"\" class=\"tc-ctl-cbuild-link-exit\" title=\"").h("i18n", ctx, {}, { "$key": "returnToOnlineMaps" }).w("\"><span>").h("i18n", ctx, {}, { "$key": "returnToOnlineMaps" }).w("</span></a></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
     var getExtentFromString = function (str) {
@@ -297,7 +261,9 @@ if (!TC.control.MapContents) {
         ctl._$dialogDiv.find('.' + ctl.CLASS + '-tile-count').html('');
         ctl.extent = null;
         self._loadedCount = 0;
-        ctl.boxDraw.cancel();
+        if (ctl.boxDraw) {
+            ctl.boxDraw.cancel();
+        }
     };
 
     var setEditState = function (ctl) {
@@ -465,9 +431,8 @@ if (!TC.control.MapContents) {
     }
 
     var removeMap = function (ctl, name) {
-        document.cookie = ctl.COOKIE_KEY_PREFIX + 'delete=;expires=' + new Date().toGMTString();
         if (window.localStorage) {
-            localStorage.removeItem(encodeURIComponent(ctl.LOCAL_STORAGE_KEY_PREFIX + name));
+            localStorage.removeItem(ctl.LOCAL_STORAGE_KEY_PREFIX + name);
             $getListElementByMapName(ctl, name).remove();
         }
         var map = ctl.findStoredMap(name);
@@ -492,16 +457,178 @@ if (!TC.control.MapContents) {
                 this.selectionStart = 0;
                 this.selectionEnd = this.value.length;
                 this.focus();
+
             });
+        }).then(function () {
             self.renderData(renderObject, callback);
         });
-        
+
+        self._$dialogDiv.find('.' + self.CLASS + '-btn-ok').on(TC.Consts.event.CLICK, function () {
+            var options = {
+                mapName: self._$dialogDiv.find('.' + self.CLASS + '-txt-name').val()
+            }
+            if (self.findStoredMap(options.mapName)) {
+                TC.alert(self.getLocaleString('cb.mapNameAlreadyExists.error', options));
+            }
+            else {
+                var startRequest = function () {
+                    self._$div.find('.' + self.CLASS + '-name').html(options.mapName);
+                    self.map.toast(self.getLocaleString('downloadingMap', { mapName: options.mapName }));
+                    setDownloadingState(self);
+                    self.requestCache(options);
+                };
+                // Usamos Quota Management API si existe
+                var storageInfo = navigator.temporaryStorage || navigator.webkitTemporaryStorage || {};
+                if (storageInfo.queryUsageAndQuota) {
+                    storageInfo.queryUsageAndQuota(
+                        function (usedBytes, grantedBytes) {
+                            var availableMB = (grantedBytes - usedBytes) / 1048576;
+                            if (self.estimatedMapSize < availableMB) {
+                                startRequest();
+                            }
+                            else {
+                                TC.confirm(self.getLocaleString('cb.mapCreation.warning', {
+                                    mapName: options.mapName,
+                                    mapSize: formatSize(self, self.estimatedMapSize),
+                                    availableStorage: formatSize(self, Math.round(availableMB))
+                                }), startRequest);
+                            }
+                        },
+                        function (e) {
+                            TC.error(e);
+                        }
+                    );
+                }
+                else {
+                    startRequest();
+                }
+            }
+        });
+        self._$dialogDiv.find('.' + self.CLASS + '-txt-name').on('input', function () {
+            checkValidity(self);
+        });
+        self._$div.find('.' + self.CLASS + '-btn-new').on(TC.Consts.event.CLICK, function () {
+            setEditState(self);
+        });
+        self._$div.find('.' + self.CLASS + '-btn-cancel').on(TC.Consts.event.CLICK, function () {
+            setReadyState(self);
+        });
+
+        self._$div.find('.' + self.CLASS + '-list')
+            .on(TC.Consts.event.CLICK, '.' + self.CLASS + '-btn-del', function (e) {
+                $btn = $(e.target);
+                var mapName = $btn.parent().find('a').html();
+                if (mapName) {
+                    if (confirm(self.getLocaleString('cb.delete.confirm', { mapName: mapName }))) {
+                        $btn.prop('disabled', true);
+                        $btn.parents('li').first().addClass(TC.Consts.classes.DISABLED);
+                        self.deleteMap(mapName);
+                    }
+                }
+            }).on(TC.Consts.event.CLICK, '.' + self.CLASS + '-btn-view', function (e) {
+                $btn = $(e.target);
+                var showExtent = !$btn.hasClass(TC.Consts.classes.ACTIVE);
+                self._$div.find('.' + self.CLASS + '-btn-view').removeClass(TC.Consts.classes.ACTIVE);
+                var mapName = $btn.parent().find('a').html();
+                if (mapName) {
+                    var map = self.findStoredMap(mapName);
+                    if (map) {
+                        var extent = getExtentFromString(map.extent);
+                        self.layer.clearFeatures();
+                        if (showExtent) {
+                            self.layer.addPolygon(
+                                [
+                                    [
+                                        [extent[0], extent[1]],
+                                        [extent[0], extent[3]],
+                                        [extent[2], extent[3]],
+                                        [extent[2], extent[1]]
+                                    ]
+                                ]
+                            ).then(function () {
+                                self.layer.map.zoomToFeatures(self.layer.features);
+                            });
+                            $btn.addClass(TC.Consts.classes.ACTIVE);
+                            $btn.attr('title', self.getLocaleString('removeMapExtent'));
+                        }
+                    }
+                }
+            });
+
+        self._$dialogDiv.find('.' + self.CLASS + '-bl-list')
+            .on('change', 'input[type=checkbox]', function (e) {
+                self.baseLayers.length = 0;
+                self._$dialogDiv.find('.' + self.CLASS + '-bl-list input[type=checkbox]').each(function (idx, elm) {
+                    var $cb = $(elm);
+                    if ($cb.prop('checked')) {
+                        var layerId = $cb.val();
+                        for (var i = 0, len = self.map.baseLayers.length; i < len; i++) {
+                            var layer = self.map.baseLayers[i];
+                            if (layer.id === layerId && layer.type === TC.Consts.layerType.WMTS) {
+                                self.baseLayers[self.baseLayers.length] = layer;
+                                break;
+                            }
+                        }
+                    }
+                });
+                self.updateRequestSchemas();
+                updateResolutions(self);
+                updateThumbnails(self);
+                checkValidity(self);
+                showEstimatedMapSize(self);
+            });
+
+        self._$dialogDiv.find('.' + self.CLASS + '-rng-maxres')
+            .on('input change', function (e) {
+                updateResolutions(self, {
+                    rangeValue: $(e.target).val()
+                });
+                updateThumbnails(self);
+                showEstimatedMapSize(self);
+            });
+
+        var params = TC.Util.getQueryStringParams();
+        $getListElementByMapName(self, params[self.MAP_NAME_PARAM_NAME]).addClass(TC.Consts.classes.ACTIVE);
+
+        // Control para evitar que se cancele una descarga de cache al salir de la página
+        window.addEventListener('beforeunload', function (e) {
+            if (self.isDownloading) {
+                var msg = self.getLocaleString('cb.mapDownloading.warning');
+                e.returnValue = msg;
+                return msg;
+            }
+        }, true);
     };
 
     ctlProto.register = function (map) {
         var self = this;
 
         TC.Control.prototype.register.call(self, map);
+
+        if (self.mapIsOffline) {
+            // Si no está especificado, el panel de aviso offline se cuelga del div del mapa
+            self._$offlinePanelDiv = $(TC.Util.getDiv(self.options.offlinePanelDiv));
+            if (!self.options.offlinePanelDiv) {
+                self._$offlinePanelDiv.appendTo(map._$div);
+            }
+            self.getRenderedHtml(self.CLASS + '-off-panel', null, function (html) {
+                self._$offlinePanelDiv.html(html);
+                if (!navigator.onLine) {
+                    self._$offlinePanelDiv.find('.' + self.CLASS + '-off-panel')
+                        .addClass(TC.Consts.classes.CONNECTION_OFFLINE)
+                        .removeClass(TC.Consts.classes.CONNECTION_MOBILE)
+                        .removeClass(TC.Consts.classes.CONNECTION_OFFLINE);
+                }
+                self._$offlinePanelDiv.find('.' + self.CLASS + '-link-exit').on(TC.Consts.event.CLICK, function (e) {
+                    TC.confirm(self.getLocaleString('offlineMapExit.confirm'),
+                        null,
+                        function () {
+                            e.preventDefault();
+                        });
+                });
+            });
+        }
+
 
         self.layer = null;
         map.addLayer({
@@ -569,34 +696,47 @@ if (!TC.control.MapContents) {
             return result;
         };
 
-        self.$events.on(TC.Consts.event.CONTROLRENDER, function () {
-            var $blList = self._$dialogDiv.find('.' + self.CLASS + '-bl-list');
-            map
-                .on(TC.Consts.event.LAYERADD, function (e) {
-                    addRenderedListNode($blList, e.layer);
-                })
-                .on(TC.Consts.event.LAYERREMOVE, function (e) {
-                    if (e.layer.type === TC.Consts.layerType.WMTS) {
-                        $blList.find('li[data-tc-layer-uid="' + e.layer.id + '"]').remove();
-                    }
-                });
-            map.loaded(function () {
-                self._$div.find('.' + self.CLASS + '-btn-new').prop('disabled', false);
-                for (var i = 0, len = map.baseLayers.length; i < len; i++) {
-                    addRenderedListNode($blList, map.baseLayers[i]);
+        var $blList = self._$dialogDiv.find('.' + self.CLASS + '-bl-list');
+        map
+            .on(TC.Consts.event.LAYERADD, function (e) {
+                addRenderedListNode($blList, e.layer);
+            })
+            .on(TC.Consts.event.LAYERREMOVE, function (e) {
+                if (e.layer.type === TC.Consts.layerType.WMTS) {
+                    $blList.find('li[data-tc-layer-uid="' + e.layer.id + '"]').remove();
                 }
             });
+        map.loaded(function () {
+            self._$div.find('.' + self.CLASS + '-btn-new').prop('disabled', false);
+            for (var i = 0, len = map.baseLayers.length; i < len; i++) {
+                addRenderedListNode($blList, map.baseLayers[i]);
+            }
         });
 
+
+        var params = TC.Util.getQueryStringParams();
+        var schemaString = params[self.TILE_SCHEMA_PARAM_NAME];
+        var extentString = params[self.MAP_EXTENT_PARAM_NAME];
 
         map.loaded(function () {
             map.putLayerOnTop(self.layer);
 
-            var params = TC.Util.getQueryStringParams();
-            var schemaString = params[self.TILE_SCHEMA_PARAM_NAME];
-            var extentString = params[self.MAP_EXTENT_PARAM_NAME];
-            if (extentString && schemaString) {
-                // Estamos en modo offline
+            if (self.mapIsOffline) {
+                // Deshabilitamos los controles que no son usables en modo offline
+                var offCtls = [];
+                for (var i = 0, len = self.offlineControls.length; i < len; i++) {
+                    var offCtl = self.offlineControls[i];
+                    offCtl = offCtl.substr(0, 1).toUpperCase() + offCtl.substr(1);
+                    offCtls = offCtls.concat(map.getControlsByClass('TC.control.' + offCtl));
+                }
+
+                for (var i = 0, len = map.controls.length; i < len; i++) {
+                    var ctl = map.controls[i];
+                    if (offCtls.indexOf(ctl) < 0) {
+                        ctl.disable();
+                    }
+                }
+
                 var schemas = JSON.parse(window.atob(decodeURIComponent(schemaString)));
                 var excludedLayers = [];
                 // Obtenemos la primera capa del esquema de la cache y de paso vemos qué capas no van a estar disponibles
@@ -632,14 +772,25 @@ if (!TC.control.MapContents) {
         self.$events
             .on(TC.Consts.event.MAPCACHEDOWNLOAD, function (e) {
                 self.isDownloading = false;
-                addMap(self, e.name, e.extent, e.url);
-                closeCachedPage(self, e.mapName);
+                var $li = $getListElementByMapName(self, e.name);
+                if ($li.length) {
+                    // Se ha descargado un mapa cuando se quería borrar. Pasa cuando la cache ya estaba borrada pero la entrada en localStorage no.
+                    $li.removeClass(TC.Consts.classes.DISABLED);
+                    $li.find('.' + self.CLASS + '-btn-del').prop('disabled', false);
+                    TC.alert(self.getLocaleString('cb.delete.error', { mapName: e.name }));
+                }
+                else {
+                    addMap(self, e.name, e.extent, e.url);
+                    map.toast(self.getLocaleString('mapDownloaded', { mapName: e.name }));
+                }
+                closeCachedPage(self, e.name);
                 setReadyState(self);
             })
             .on(TC.Consts.event.MAPCACHEDELETE, function (e) {
                 self.isDownloading = false;
                 removeMap(self, e.name);
                 closeCachedPage(self, e.name);
+                map.toast(self.getLocaleString('mapDeleted', { mapName: e.name }));
                 setReadyState(self);
             })
             .on(TC.Consts.event.MAPCACHEPROGRESS, function (e) {
@@ -680,8 +831,7 @@ if (!TC.control.MapContents) {
                         break;
                 }
                 if (handleError) {
-                TC.alert(msg);
-                TC.error(msg);
+                    TC.error(msg);
                 }
             });
     };

@@ -2010,6 +2010,10 @@
         self.layer.mergeNewParams(params);
     };
 
+    TC.wrap.layer.Raster.prototype.getResolutions = function () {
+        return [];
+    };
+
     TC.wrap.Geometry = {
         getNearest: function (point, candidates) {
             var pline = new OpenLayers.Geometry.LineString($.map(candidates, function (coord) {

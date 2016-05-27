@@ -216,7 +216,9 @@ TC.inherit(TC.control.Draw, TC.Control);
             self._$newBtn.removeClass(TC.Consts.classes.ACTIVE);
         }
         TC.Control.prototype.deactivate.call(self, !self._cancelClick);
-        self.wrap.deactivate();
+        if (self.wrap) {
+            self.wrap.deactivate();
+        }
         self.resetValues();
         self.$events.trigger($.Event(TC.Consts.event.DRAWCANCEL, { ctrl: self }));
         self._cancelClick = false;

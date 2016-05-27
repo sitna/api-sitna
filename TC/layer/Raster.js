@@ -33,8 +33,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var params = {};
         if (layer.type === TC.Consts.layerType.WMTS) {
             if (layer.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
-                var suffix = '/1.0.0/wmtscapabilities.xml';
-                url = (serviceUrl.indexOf(suffix) < serviceUrl.length - suffix.length) ? serviceUrl + suffix : serviceUrl;
+                var suffix = '/1.0.0/WMTSCapabilities.xml';
+                if (serviceUrl.indexOf(suffix) < serviceUrl.length - suffix.length) {
+                    if (serviceUrl[serviceUrl.length - 1] === '/') {
+                        suffix = suffix.substr(1);
+                    }
+                    url = serviceUrl + suffix;
+                }
+                else {
+                    url = serviceUrl;
+                }
             }
             else {
                 url = serviceUrl;
@@ -322,12 +330,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var _parseCapabilities = function (data, textStatus, jqXHR) {
             var capabilities;
             if (data.documentElement) {
-                var format = (_layer.type === TC.Consts.layerType.WMTS) ? new _layer.wrap.WmtsParser() : new _layer.wrap.WmsParser();
 
                 if ($(data).find("ServiceException").length > 0) {
                     capabilities = { error: $(data).find("ServiceException").text() };
                 }
                 else {
+                    var format = (_layer.type === TC.Consts.layerType.WMTS) ? new _layer.wrap.WmtsParser() : new _layer.wrap.WmsParser();
                     capabilities = format.read(data);
 
                     //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
