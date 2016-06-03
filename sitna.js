@@ -24,7 +24,6 @@ SITNA.syncLoadJS = function (url) {
             script = scripts[scripts.length - 1];
         }
         var src = script.getAttribute('src');
-        console.log(src)
         SITNA.syncLoadJS(src.substr(0, src.lastIndexOf('/') + 1) + 'tcmap.js');
     }
 })();
