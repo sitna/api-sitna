@@ -567,16 +567,20 @@
             }
         },
 
-        showModal: function (contentNode, width, height, callback) {
+        showModal: function (contentNode, options) {
             var $modal = $(contentNode);
+            var options = options || {};
 
-            $modal.removeAttr("hidden").on("click", ".tc-modal-close", TC.Util.closeModal);
-            $modal.fadeIn(250, callback);
+            $modal.removeAttr("hidden").on("click", ".tc-modal-close", function () { return TC.Util.closeModal(options.closeCallback); });
+            $modal.fadeIn(250, options.openCallback);
         },
 
 
-        closeModal: function () {
+        closeModal: function (callback) {
             $(".tc-modal").hide().find(".tc-modal-window").removeAttr("style").off();
+
+            if (callback)
+                callback();
         },
 
         closeAlert: function (btn) {
