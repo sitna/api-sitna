@@ -72,71 +72,73 @@ TC.inherit(TC.control.Measure, TC.Control);
         var self = this;
         TC.Control.prototype.register.call(self, map);
 
-        map.loaded(function () {
-            self.layerPromise = map.addLayer({
-                id: TC.getUID(),
-                title: 'Medición',
-                stealth: true,
-                type: TC.Consts.layerType.VECTOR,
-                styles: {
-                    point: $.extend({}, map.options.styles.point, { fillOpacity: 0 }),
-                    line: map.options.styles.line,
-                    polygon: map.options.styles.polygon
-                }
-            });
-
-            $.when(self.layerPromise).then(function (layer) {
-                self.layer = layer;
-                self.layer.map.putLayerOnTop(self.layer);
-
-                TC.loadJS(
-                !TC.control.Draw,
-                TC.apiLocation + 'TC/control/Draw.js',
-                function () {
-                    self.drawLines = new TC.control.Draw({
-                        "div": self._$div.find('.tc-ctl-meas-lines'),
-                        "mode": "polyline",
-                        "measure": true,
-                        "layer": self.layer
-                    });
-                    self.drawPolygons = new TC.control.Draw({
-                        "div": self._$div.find('.tc-ctl-meas-polygon'),
-                        "mode": "polygon",
-                        "measure": true,
-                        "layer": self.layer
-                    });
-
-                    $.when(map.addControl(self.drawLines), map.addControl(self.drawPolygons)).then(function () {
-                        var drawMeasures = function (e) {
-                            var precision = e.units === 'm' ? 0 : 3;
-                            if (e.area) {
-                                self._$area.html(e.area.toFixed(precision).replace('.', ',') + ' ' + e.units + '&sup2;');
-                            }
-                            if (e.perimeter) {
-                                self._$peri.html(e.perimeter.toFixed(precision).replace('.', ',') + ' ' + e.units);
-                            }
-                            if (e.length) {
-                                self._$len.html(e.length.toFixed(precision).replace('.', ',') + ' ' + e.units);
-                            }
-                        }
-                        self.drawLines.$events.on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
-                            drawMeasures(e);
-                        }).on(TC.Consts.event.DRAWCANCEL, function () {
-                            self.cancel();
-                        });
-                        self.drawPolygons.$events.on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
-                            drawMeasures(e);
-                        }).on(TC.Consts.event.DRAWCANCEL, function () {
-                            self.cancel();
-                        });
-                    });
-
-                    self.setMode(self.options.mode);
+        self.renderPromise().then(function () {
+            map.loaded(function () {
+                self.layerPromise = map.addLayer({
+                    id: TC.getUID(),
+                    title: 'Medición',
+                    stealth: true,
+                    type: TC.Consts.layerType.VECTOR,
+                    styles: {
+                        point: $.extend({}, map.options.styles.point, { fillOpacity: 0 }),
+                        line: map.options.styles.line,
+                        polygon: map.options.styles.polygon
+                    }
                 });
 
+                $.when(self.layerPromise).then(function (layer) {
+                    self.layer = layer;
+                    self.layer.map.putLayerOnTop(self.layer);
+
+                    TC.loadJS(
+                    !TC.control.Draw,
+                    TC.apiLocation + 'TC/control/Draw.js',
+                    function () {
+                        self.drawLines = new TC.control.Draw({
+                            "div": self._$div.find('.tc-ctl-meas-lines'),
+                            "mode": "polyline",
+                            "measure": true,
+                            "layer": self.layer
+                        });
+                        self.drawPolygons = new TC.control.Draw({
+                            "div": self._$div.find('.tc-ctl-meas-polygon'),
+                            "mode": "polygon",
+                            "measure": true,
+                            "layer": self.layer
+                        });
+
+                        $.when(map.addControl(self.drawLines), map.addControl(self.drawPolygons)).then(function () {
+                            var drawMeasures = function (e) {
+                                var precision = e.units === 'm' ? 0 : 3;
+                                if (e.area) {
+                                    self._$area.html(e.area.toFixed(precision).replace('.', ',') + ' ' + e.units + '&sup2;');
+                                }
+                                if (e.perimeter) {
+                                    self._$peri.html(e.perimeter.toFixed(precision).replace('.', ',') + ' ' + e.units);
+                                }
+                                if (e.length) {
+                                    self._$len.html(e.length.toFixed(precision).replace('.', ',') + ' ' + e.units);
+                                }
+                            }
+                            self.drawLines.$events.on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
+                                drawMeasures(e);
+                            }).on(TC.Consts.event.DRAWCANCEL, function () {
+                                self.cancel();
+                            });
+                            self.drawPolygons.$events.on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
+                                drawMeasures(e);
+                            }).on(TC.Consts.event.DRAWCANCEL, function () {
+                                self.cancel();
+                            });
+                        });
+
+                        self.setMode(self.options.mode);
+                    });
+
+                });
             });
         });
-    }
+    };
 
     ctlProto.activate = function () {
         var self = this;
