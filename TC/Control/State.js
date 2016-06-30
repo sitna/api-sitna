@@ -12,6 +12,7 @@ TC.control.State = function (options) {
 
     self.CUSTOMEVENT = '.tc';
     self.options = $.extend({}, arguments.length > 1 ? arguments[1] : arguments[0]);
+    self.MIN_TIMEOUT_VALUE = 4;
 };
 
 TC.inherit(TC.control.State, TC.Control);
@@ -48,28 +49,32 @@ TC.inherit(TC.control.State, TC.Control);
 
                     // gestión siguiente - anterior
                     window.addEventListener('popstate', function (e) {
-                        if (e && e.state != null) {
+                        var wait;
+                        wait = self.loadingCtrl.addWait();
+                        setTimeout(function () {
+                            if (e && e.state != null) {
 
-                            self.registerState = false;
+                                self.registerState = false;
 
-                            // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
-                            map.off(self.events, $.proxy(self.addToHistory, self));
+                                // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
+                                map.off(self.events, $.proxy(self.addToHistory, self));
 
-                            // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
-                            $.when(self.loadIntoMap(e.state)).then(function () {
-                                map.on(self.events, $.proxy(self.addToHistory, self));
-                            });
-                        }
-
+                                // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
+                                $.when(self.loadIntoMap(e.state)).then(function () {
+                                    map.on(self.events, $.proxy(self.addToHistory, self));
+                                    self.loadingCtrl.removeWait(wait);
+                                });
+                            }
+                        }, self.MIN_TIMEOUT_VALUE);
                     });
                 });
             });
 
-                
 
-           // }, 2000);
+
+            // }, 2000);
             // si existe un hash aplicamos
-            
+
         });
     };
 
@@ -140,7 +145,7 @@ TC.inherit(TC.control.State, TC.Control);
                         u: TC.Util.isOnCapabilities(layer.url.indexOf(window.location.protocol) < 0 ? layer.url.replace(TC.Util.regex.PROTOCOL, window.location.protocol) : layer.url),
                         n: layer.layerNames[0], o: layer.wrap.getLayer().getOpacity(), v: layer.getVisibility(), h: layer.options.hideTitle
                     };
-                    
+
                     state.capas.push(entry);
                 }
             }
@@ -251,35 +256,44 @@ TC.inherit(TC.control.State, TC.Control);
         var self = this;
         var done = new $.Deferred();
 
-        if (!self.loadingCtrl)
+        if (!self.loadingCtrl) {
             self.loadingCtrl = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
 
-        if (!self.hasWait)
-            self.hasWait = self.loadingCtrl.addWait();
+            TC.loadJS(
+                !self.loadingCtrl,
+                TC.apiLocation + 'TC/control/LoadingIndicator.js',
+                function () {
+                    self.loadingCtrl = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
 
-        var resolved = function () {
-            self.loadingCtrl.removeWait(self.hasWait);
-            delete self.hasWait;
-            done.resolve();
-        };
+                    if (!self.hasWait)
+                        self.hasWait = self.loadingCtrl.addWait();
 
-        if (hash && hash.length > 1) {
-            hash = hash.substr(1);
+                    var resolved = function () {
+                        self.loadingCtrl.removeWait(self.hasWait);
+                        delete self.hasWait;
+                        done.resolve();
+                    };
 
-            var obj;
-            try {
-                obj = jsonpack.unpack(this.base64ToUtf8(hash));
-            }
-            catch (error) {
-                obj = JSON.parse(this.base64ToUtf8(hash));
-            }
+                    if (hash && hash.length > 1) {
+                        hash = hash.substr(1);
 
-            if (obj) {
-                $.when(self.loadIntoMap(obj)).then(function () {
-                    resolved();
-                });
-            } else resolved();
-        } else resolved();
+                        var obj;
+                        try {
+                            obj = jsonpack.unpack(self.base64ToUtf8(hash));
+                        }
+                        catch (error) {
+                            obj = JSON.parse(self.base64ToUtf8(hash));
+                        }
+
+                        if (obj) {
+                            $.when(self.loadIntoMap(obj)).then(function () {
+                                resolved();
+                            });
+                        } else resolved();
+                    } else resolved();
+                }
+            );
+        }
 
         return done;
     };
