@@ -51,11 +51,11 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
         ctlProto.template[ctlProto.CLASS + '-results'] = TC.apiLocation + "TC/templates/LayerCatalogResults.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "availableLayers" }).h("if", ctx, { "block": body_1 }, { "cond": body_2 }).w("</h2><div class=\"tc-ctl-lcat-search tc-hidden tc-collapsed\"><div class=\"tc-group\"><input type=\"search\" class=\"tc-ctl-lcat-input tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "textToLookForInLayers" }).w("\" /></div><ul class=\"tc-hidden\"></ul></div><div class=\"tc-ctl-lcat-tree\">").x(ctx.get(["layerTrees"], false), ctx, { "else": body_3, "block": body_4 }, {}).w("</div><div class=\"tc-ctl-lcat-info tc-hidden\">").p("tc-ctl-lcat-info", ctx, ctx.rebase(ctx.getPath(true, [])), {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<button class=\"tc-ctl-lcat-btn-search\" title=\"").h("i18n", ctx, {}, { "$key": "searchLayersByText" }).w("\"></button>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("('").f(ctx.get(["enableSearch"], false), ctx, "h").w("' && '").f(ctx.get(["layerTrees"], false), ctx, "h").w("')"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<div class=\"tc-ctl tc-ctl-lcat-loading\"><span>").h("i18n", ctx, {}, { "$key": "loadingLayerTree" }).w("...</span></div>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<ul class=\"tc-ctl-lcat-branch\">").s(ctx.get(["layerTrees"], false), ctx, { "block": body_5 }, {}).w("</ul>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.p("tc-ctl-lcat-branch", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_5.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "availableLayers" }).x(ctx.get(["enableSearch"], false), ctx, { "block": body_1 }, {}).w("</h2><div class=\"tc-ctl-lcat-search tc-hidden tc-collapsed\"><div class=\"tc-group\"><input type=\"search\" class=\"tc-ctl-lcat-input tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "textToSearchInLayers" }).w("\" /></div><ul></ul></div><div class=\"tc-ctl-lcat-tree\">").x(ctx.get(["layerTrees"], false), ctx, { "else": body_3, "block": body_4 }, {}).w("</div><div class=\"tc-ctl-lcat-info tc-hidden\">").p("tc-ctl-lcat-info", ctx, ctx.rebase(ctx.getPath(true, [])), {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.x(ctx.get(["layerTrees"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<button class=\"tc-ctl-lcat-btn-search\" title=\"").h("i18n", ctx, {}, { "$key": "searchlayersbytext" }).w("\"></button>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<div class=\"tc-ctl tc-ctl-lcat-loading\"><span>").h("i18n", ctx, {}, { "$key": "loadingLayerTree" }).w("...</span></div>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<ul class=\"tc-ctl-lcat-branch\">").s(ctx.get(["layerTrees"], false), ctx, { "block": body_5 }, {}).w("</ul>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.p("tc-ctl-lcat-branch", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_5.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-branch'] = function () { dust.register(ctlProto.CLASS + '-branch', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-lcat-branch tc-collapsed\">").s(ctx.get(["children"], false), ctx, { "block": body_3 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-ctl-lcat-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-collapsed\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.p("tc-ctl-lcat-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_3.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["isVisible"], false), ctx, { "block": body_1 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span data-tooltip=\"").x(ctx.get(["name"], false), ctx, { "block": body_4 }, {}).w("\">").f(ctx.get(["title"], false), ctx, "h").w("</span>").x(ctx.get(["name"], false), ctx, { "block": body_5 }, {}).w("<ul class=\"tc-ctl-lcat-branch tc-collapsed\">").s(ctx.get(["children"], false), ctx, { "block": body_6 }, {}).w("</ul></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-ctl-lcat-leaf\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-collapsed\""); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "clickToAddToMap" }); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<a class=\"tc-ctl-lcat-btn-info\"/>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.p("tc-ctl-lcat-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_6.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-info'] = function () { dust.register(ctlProto.CLASS + '-info', body_0); function body_0(chk, ctx) { return chk.w("<a class=\"tc-ctl-lcat-info-close\"></a><h2>").h("i18n", ctx, {}, { "$key": "layerInfo" }).w("</h2><h3 class=\"tc-ctl-lcat-title\">").f(ctx.get(["title"], false), ctx, "h").w("</h3>").x(ctx.get(["abstract"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-lcat-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div>").f(ctx.get(["abstract"], false), ctx, "h").w("</div></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<div class=\"tc-ctl-lcat-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_3 }, {}).w("</ul></div>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_3.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-results'] = function () { dust.register(ctlProto.CLASS + '-results', body_0); function body_0(chk, ctx) { return chk.s(ctx.get(["results"], false), ctx, { "block": body_1 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li data-layername=\"").f(ctx.get(["Name"], false), ctx, "h").w("\" ").x(ctx.get(["alreadyAdded"], false), ctx, { "else": body_2, "block": body_3 }, {}).w("><h5 class=\"tc-selectable\">").f(ctx.get(["Title"], false), ctx, "h").w("</h5><button class=\"tc-ctl-lcat-search-btn-info\" /><p>").f(ctx.get(["Abstract"], false), ctx, "h").w("</p></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" data-tooltip=\"").h("i18n", ctx, {}, { "$key": "clickToAddToMap" }).w("\" "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" data-tooltip=\"").h("i18n", ctx, {}, { "$key": "layerAlreadyAdded" }).w("\" class=\"tc-checked\" "); } body_3.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-results'] = function () { dust.register(ctlProto.CLASS + '-results', body_0); function body_0(chk, ctx) { return chk.s(ctx.get(["results"], false), ctx, { "else": body_1, "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li class=\"tc-ctl-lcat-no-results\"><h5>").h("i18n", ctx, {}, { "$key": "geo.noFilteredTracks" }).w("</h5></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li data-tc-layer-name=\"").f(ctx.get(["Name"], false), ctx, "h").w("\" ").x(ctx.get(["alreadyAdded"], false), ctx, { "else": body_3, "block": body_4 }, {}).w("><h5 class=\"tc-selectable\">").f(ctx.get(["Title"], false), ctx, "h").w("</h5><button class=\"tc-ctl-lcat-search-btn-info\" /><p>").f(ctx.get(["Abstract"], false), ctx, "h").w("</p></li>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" data-tooltip=\"").h("i18n", ctx, {}, { "$key": "clickToAddToMap" }).w("\" "); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" data-tooltip=\"").h("i18n", ctx, {}, { "$key": "layerAlreadyAdded" }).w("\" class=\"tc-checked\" "); } body_4.__dustBody = !0; return body_0 };
     }
 
 
@@ -66,6 +66,8 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
             LAYERNAME: 'tcLayerName',
             LAYERINFO: 'tcLayerInfo'
         };
+
+        var SEARCH_MIN_LENGTH = 3;
 
         var TOOLTIP_DATA_ATTR = 'data-tooltip';
 
@@ -149,16 +151,16 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                             var lyr = $li.data(_dataKeys.LAYER);
                             if (lyr && lyr.type === layer.type && lyr.options.url === url) {
                                 for (var i = 0; i < layer.names.length; i++) {
-                                    if ($li.is('li[data-layername="' + layer.names[i] + '"]'))
+                                    if ($li.is('li[data-tc-layer-name="' + layer.names[i] + '"]'))
                                         $result = $result.add($li);
-                                    //$result = $result.add($liLayer.find('li'));
                                 }
                             }
                         });
                     }
                 }
                 return $result;
-            }
+            };
+
             var _refreshResultList = function () {
                 if ("createEvent" in document) {
                     var evt = document.createEvent("HTMLEvents");
@@ -172,7 +174,25 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                         self.$text[0].fireEvent("keyup");
                     }
                 }
-            }
+            };
+
+            /**
+             * Marca todas las capas del TOC como añadidas excepto la que se está borrando que se recibe como parámetro.
+             */
+            var _markWorkLayersAsAdded = function (layerRemoved) {
+                var listTocCtrl = self.map.getControlsByClass(TC.control.ListTOC)[0];
+                if (listTocCtrl) {
+                    var layers = listTocCtrl.layers;
+
+                    for (var i = 0; i < layers.length; i++) {
+                        var layer = layers[i];
+
+                        if (layer !== layerRemoved) {
+                            $findNodes(layer).addClass(TC.Consts.classes.CHECKED).find('span').attr(TOOLTIP_DATA_ATTR, layerAddedText);
+                        }
+                    }
+                }
+            };
 
             var layerAddedText = self.getLocaleString('layerAlreadyAdded');
             var clickToAddText = self.getLocaleString('clickToAddToMap');
@@ -224,6 +244,9 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                 $findResultNodes(e.layer).removeClass(TC.Consts.classes.CHECKED).attr(TOOLTIP_DATA_ATTR, clickToAddText);
                 //refresh del searchList            
                 _refreshResultList();
+                //Marcamos como añadidas aquellas capas que estén en el control de capas cargadas. Esto previene que si borramos una capa padre, todas
+                //sus hijas aparezcan como no añadidas, a pesar que que alguna de ellas haya sido añadida previamente de manera individual
+                _markWorkLayersAsAdded(e.layer);
             }).on(TC.Consts.event.LAYERCATALOGADD, function (e) {
                 var layers = $.grep(self.layers, function (item) {
                     return item.url === e.layer.url;
@@ -354,10 +377,13 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                                     }
                                     $a.data(_dataKeys.LAYERINFO, info);
                                     $a.on(TC.Consts.event.CLICK, function () {
-                                        self.showLayerInfo(layer, name);
-
                                         if (!$(this).hasClass(TC.Consts.classes.CHECKED)) {
+                                            self.showLayerInfo(layer, name);
                                             $(this).addClass(TC.Consts.classes.CHECKED);
+
+                                        } else {
+                                            $(this).removeClass(TC.Consts.classes.CHECKED);
+                                            self.hideLayerInfo();
                                         }
                                     });
                                 }
@@ -425,11 +451,10 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
 
                                    //con texto vacío, limpiar  y ocultar la lista de resultados
                                    text = text.trim();
-                                   if (text.length == 0) {
+                                   if (text.length < SEARCH_MIN_LENGTH) {
                                        self.$list.html("");
-                                       self._$div.find("." + self.CLASS + "-search ul").addClass(TC.Consts.classes.HIDDEN);
                                    }
-                                   else if (text.length >= 3) {
+                                   else if (text.length >= SEARCH_MIN_LENGTH) {
                                        if (TC._search.retryTimeout)
                                            clearTimeout(TC._search.retryTimeout);
                                        TC._search.retryTimeout = setTimeout(function () {
@@ -447,7 +472,6 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                                buildHTML: function (data) {
                                    //si hay resultados, mostramos la lista
                                    if (data.results.length > 0) {
-                                       self._$div.find("ul." + TC.Consts.classes.HIDDEN).removeClass(TC.Consts.classes.HIDDEN);
                                        var workLayers = self.map.getLayerTree().workLayers;
                                        for (var j = 0; j < data.results.length; j++) {
                                            delete data.results[j].alreadyAdded;
@@ -511,8 +535,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                             var li = $(this).parents("li:first");
                             if (li.hasClass(TC.Consts.classes.ACTIVE)) {
                                 li.removeClass(TC.Consts.classes.ACTIVE);
-                            }
-                            else {
+                            } else {
                                 $(this).parents("ul:first").find("li." + TC.Consts.classes.ACTIVE).removeClass(TC.Consts.classes.ACTIVE);
                                 li.addClass(TC.Consts.classes.ACTIVE);
                             }
@@ -521,22 +544,22 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                         //click en un resultado - añadir capa
                         self._$div.on("click", ".tc-ctl-lcat-search li", function (evt) {
                             evt.stopPropagation();
-
-                            var title = $("h5", this).text();
+                            var $li = $(this);
+                            var layerName = $li.data(_dataKeys.LAYERNAME).toString();
 
                             //si la capa ya ha sido anteriormente, no la añadimos y mostramos un mensaje
                             if ($(this).hasClass(TC.Consts.classes.CHECKED)) {
                                 return;
                             } else {
                                 var url = self.layers[0].options.url;
-                                var name = this.dataset.layername;
-                                var $li = $(this);
+                                var title = self.layers[0].title;                                
+
                                 self.map.addLayer({
                                     id: TC.getUID(),
                                     url: url,
                                     title: title,
                                     hideTitle: true,
-                                    layerNames: [name]
+                                    layerNames: [layerName]
                                 }, function (layer) {
                                     $li.data(_dataKeys.LAYER, layer);
                                 });
