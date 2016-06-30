@@ -696,11 +696,14 @@
 
         var pms = {
             projection: view.getProjection(),
-            extent: mapWrap.parent.options.initialExtent,
             center: view.getCenter(),
             resolution: prevRes,
             enableRotation: false
         };
+
+        if (mapWrap.parent.options.maxExtent) {
+            pms.extent = mapWrap.parent.options.initialExtent;
+        }
 
         var res = layer.getResolutions();
         var maxRes;
@@ -805,16 +808,19 @@
 
         var interactions = ol.interaction.defaults();
 
+        var viewOptions = {
+            projection: projection,
+            zoom: 2,
+            center: center,
+            enableRotation: false
+        };
+        if (self.parent.options.maxExtent) {
+            viewOptions.extent = self.parent.options.maxExtent;
+        }
         self.map = new ol.Map({
             target: self.parent.div,
             renderer: 'canvas',
-            view: new ol.View({
-                projection: projection,
-                extent: self.parent.options.maxExtent,
-                zoom: 2,
-                center: center,
-                enableRotation: false
-            }),
+            view: new ol.View(viewOptions),
             controls: [],
             interactions: interactions
         });
@@ -871,7 +877,6 @@
             var prevZoom = self.map.getView().getZoom();
 
             var pms = viewOptions || getResolutionOptions(self, layer);
-
 
             var view = new ol.View(pms);
             self.map.setView(view);
@@ -1143,6 +1148,7 @@
     };
 
     TC.wrap.Map.prototype.addPopup = function (popupCtl) {
+        var deferred = $.Deferred();
         var self = this;
         var draggable = popupCtl.options.draggable === undefined || popupCtl.options.draggable;
         TC.loadJS(
@@ -1242,8 +1248,10 @@
 							});
                     }
                 });
+                deferred.resolve();
             }
         );
+        deferred.promise();
     };
 
     TC.wrap.Map.prototype.hidePopup = function (popupCtl) {
@@ -1878,7 +1886,6 @@
         return result;
     };
 
-    var styleFunction;
     // Transformación de opciones de estilo en un estilo nativo OL3.
     var createNativeStyle = function (options, olFeat) {
         var nativeStyleOptions = {};
@@ -1890,12 +1897,18 @@
             }
             else {
                 // Si la API SITNA no ha completado su feature, creamos un mock-up para que no fallen las funciones de estilo
+
+
+
                 feature = {
+                    id: TC.wrap.Feature.prototype.getId.call({ feature: olFeat }), // GLS añado el id de la feature para poder filtrar por la capa a la cual pertenece                    
                     features: olFeat.get('features'),
                     getData: function () {
                         return TC.wrap.Feature.prototype.getData.call({ feature: olFeat });
                     }
                 };
+
+
             }
         }
         var isCluster = feature && $.isArray(feature.features) && feature.features.length > 1 && options.cluster;
@@ -1920,6 +1933,41 @@
             });
         }
 
+        var createNativeTextStyle = function (styleObj) {
+            var textOptions = {
+                text: '' + getStyleValue(styleObj.label, feature),
+            };
+            if (styleObj.fontSize) {
+                textOptions.font = getStyleValue(styleObj.fontSize, feature) + 'pt sans-serif';
+            }
+            if (styleObj.angle) {
+                textOptions.rotation = -Math.PI * getStyleValue(styleObj.angle, feature) / 180;
+            }
+            if (styleObj.fontColor) {
+                textOptions.fill = new ol.style.Fill({
+                    color: getRGBA(getStyleValue(styleObj.fontColor, feature), 1)
+                });
+            }
+            if (styleObj.labelOutlineColor) {
+                textOptions.stroke = new ol.style.Stroke({
+                    color: getRGBA(getStyleValue(styleObj.labelOutlineColor, feature), 1),
+                    width: getStyleValue(styleObj.labelOutlineWidth, feature)
+                });
+            }
+            if (styleObj.labelOffset) {
+                if (styleObj.width && styleObj.height) {
+                    textOptions.offsetX = styleObj.width * styleObj.labelOffset[0];
+                    textOptions.offsetY = styleObj.height * styleObj.labelOffset[1];
+                }
+                else if (styleObj.radius) {
+                    var diameter = styleObj.radius * 2;
+                    textOptions.offsetX = diameter * styleObj.labelOffset[0];
+                    textOptions.offsetY = diameter * styleObj.labelOffset[1];
+                }
+            }
+            return new ol.style.Text(textOptions);
+        };
+
         if (styles.point) {
             var pointOptions = styles.point;
             var circleOptions = {
@@ -1937,92 +1985,58 @@
                     width: getStyleValue(pointOptions.strokeWidth, feature)
                 });
             }
-            nativeStyleOptions.image = new ol.style.Circle(circleOptions);
+
+            if (!isNaN(circleOptions.radius))
+                nativeStyleOptions.image = new ol.style.Circle(circleOptions);
+
             if (pointOptions.label) {
-                var textOptions = {
-                    text: '' + getStyleValue(pointOptions.label, feature),
-                };
-                if (pointOptions.fontSize) {
-                    textOptions.font = pointOptions.fontSize + 'pt sans-serif';
-                }
-                if (pointOptions.angle) {
-                    textOptions.rotation = -Math.PI * getStyleValue(pointOptions.angle, feature) / 180;
-                }
-                if (pointOptions.fontColor) {
-                    textOptions.fill = new ol.style.Fill({
-                        color: getRGBA(getStyleValue(pointOptions.fontColor, feature), 1)
-                    });
-                }
-                if (pointOptions.labelOutlineColor) {
-                    textOptions.stroke = new ol.style.Stroke({
-                        color: getRGBA(getStyleValue(pointOptions.labelOutlineColor, feature), 1),
-                        width: getStyleValue(pointOptions.labelOutlineWidth, feature)
-                    });
-                }
-                nativeStyleOptions.text = new ol.style.Text(textOptions);
+                nativeStyleOptions.text = createNativeTextStyle(pointOptions);
             }
-            return [new ol.style.Style(nativeStyleOptions)];
         }
+        if (styles.marker) {
+            var markerOptions = styles.marker;
+            if (markerOptions.url) {
+                nativeStyleOptions.image = new ol.style.Icon({
+                    anchor: markerOptions.anchor,
+                    src: markerOptions.url
+                });
+            }
+            if (markerOptions.label) {
+                nativeStyleOptions.text = createNativeTextStyle(markerOptions);
+            }
+        }
+        return [new ol.style.Style(nativeStyleOptions)];
     };
 
-    TC.wrap.layer.Vector.prototype.createVectorLayer = function () {
+    TC.wrap.layer.Vector.prototype.reloadSource = function () {
         var self = this;
-        var result = null;
+        var done = new $.Deferred();
 
-        self.$events = $(self);
+        var layerOptions = self.createVectorSource(self.parent, self.createStyles(self.parent));
 
-        var dynamicStyle = false;
-        var options = self.parent.options;
+        if (self.parent.type === TC.Consts.layerType.WFS) {
+            var listenerKey = layerOptions.source.on('change', function (e) {
+                if (layerOptions.source.getState() == 'ready') {
+                    ol.Observable.unByKey(listenerKey);
 
-        if ($.isFunction(options)) {
-            dynamicStyle = true;
-            styleFunction = function (olFeat) {
-                var opts = options;
-                if (olFeat && olFeat._wrap) {
-                    opts = olFeat._wrap.parent.layer.options;
+                    done.resolve();
                 }
-                return createNativeStyle(opts(olFeat));
-            }
-        }
-        else {
-            options = $.extend({}, options);
-            options.crs = options.crs || TC.Cfg.crs;
-            options.styles = options.styles || TC.Cfg.styles;
-            var isDynamicStyle = function isDynamicStyle(obj) {
-                for (var key in obj) {
-                    var prop = obj[key];
-                    switch (typeof prop) {
-                        case 'string':
-                            if (/^\$\{(.+)\}$/.test(prop)) {
-                                return true;
-                            }
-                            break;
-                        case 'object':
-                            if (isDynamicStyle(prop)) {
-                                return true;
-                            }
-                            break;
-                        case 'function':
-                            return true;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                return false;
-            };
-
-            dynamicStyle = !!(options.cluster && options.cluster.styles) || isDynamicStyle(options.styles);
-            styleFunction = function (olFeat) {
-                var opts = options;
-                if (olFeat && olFeat._wrap) {
-                    opts = olFeat._wrap.parent.layer.options;
-                }
-                return createNativeStyle(opts, olFeat);
-            };
+            });
         }
 
-        var style = dynamicStyle ? styleFunction : styleFunction();
+        self.layer.setSource(layerOptions.source);
+
+        if (layerOptions.style)
+            self.layer.setStyle(layerOptions.style);
+
+        if (self.parent.type != TC.Consts.layerType.WFS)
+            done.resolve();
+
+        return done;
+    };
+
+    TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeStyle) {
+        var self = this;
 
         var source;
         var vectorOptions;
@@ -2085,13 +2099,16 @@
                         var version = options.version || '1.1.0';
                         var url = serviceUrl;
                         var featureType = $.isArray(options.featureType) ? options.featureType : [options.featureType];
-                        if (!options.properties || !options.properties.length) {
+                        if (!options.properties || (options.properties instanceof Array && !options.properties.length) || !(Object.keys(options.properties).length)) {
                             url = url + '?service=WFS&' +
                             'version=' + version + '&request=GetFeature&typename=' + featureType.join(',') + '&' +
                             'outputFormat=' + mimeType + '&srsname=' + crs;
                             if (extent[0] !== -Infinity && extent[1] !== -Infinity && extent[2] !== Infinity && extent[3] !== Infinity) {
                                 url = url + '&bbox=' + extent.join(',') + ',' + crs;
                             }
+
+                            if (options.maxFeatures)
+                                url = url + "maxFeatures=" + options.maxFeatures;
                         }
                         else {
                             ajaxOptions.type = 'POST';
@@ -2132,6 +2149,10 @@
                             gml[gml.length] = version;
                             gml[gml.length] = '" outputFormat="';
                             gml[gml.length] = options.outputFormat;
+                            if (options.maxFeatures) {
+                                gml[gml.length] = '" maxFeatures="';
+                                gml[gml.length] = options.maxFeatures;
+                            }
                             gml[gml.length] = '" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/';
                             gml[gml.length] = version;
                             gml[gml.length] = '/wfs.xsd">';
@@ -2142,18 +2163,31 @@
                                 gml[gml.length] = crs;
                                 gml[gml.length] = '">';
                                 gml[gml.length] = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">';
-                                if (options.properties.length > 1) {
+                                if (options.properties.length > 1 || Object.keys(options.properties).length > 1) {
                                     gml[gml.length] = '<ogc:And>';
                                 }
-                                for (var j = 0; j < options.properties.length; j++) {
-                                    var prop = options.properties[j];
-                                    gml[gml.length] = '<ogc:PropertyIsEqualTo matchCase="true"><ogc:PropertyName>';
-                                    gml[gml.length] = prop.name;
-                                    gml[gml.length] = '</ogc:PropertyName><ogc:Literal>';
-                                    gml[gml.length] = prop.value;
-                                    gml[gml.length] = '</ogc:Literal></ogc:PropertyIsEqualTo>';
+
+                                if (options.properties instanceof Array) {
+                                    for (var j = 0; j < options.properties.length; j++) {
+                                        var prop = options.properties[j];
+                                        gml[gml.length] = '<ogc:PropertyIsEqualTo matchCase="true"><ogc:PropertyName>';
+                                        gml[gml.length] = prop.name;
+                                        gml[gml.length] = '</ogc:PropertyName><ogc:Literal>';
+                                        gml[gml.length] = prop.value;
+                                        gml[gml.length] = '</ogc:Literal></ogc:PropertyIsEqualTo>';
+                                    }
+                                } else if (options.properties instanceof Object) {
+                                    for (var j = 0; j < options.properties[featureType[i]].length; j++) {
+                                        var prop = options.properties[featureType[i]][j];
+                                        gml[gml.length] = '<ogc:PropertyIsEqualTo matchCase="true"><ogc:PropertyName>';
+                                        gml[gml.length] = prop.name;
+                                        gml[gml.length] = '</ogc:PropertyName><ogc:Literal>';
+                                        gml[gml.length] = prop.value;
+                                        gml[gml.length] = '</ogc:Literal></ogc:PropertyIsEqualTo>';
+                                    }
                                 }
-                                if (options.properties.length > 1) {
+
+                                if (options.properties.length > 1 || Object.keys(options.properties).length > 1) {
                                     gml[gml.length] = '</ogc:And>';
                                 }
                                 gml[gml.length] = '</ogc:Filter></wfs:Query>';
@@ -2354,14 +2388,76 @@
             self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self.parent }));
         });
         */
-
         var layerOptions = {
             source: source
         };
+
         if (!isKml) {
-            layerOptions.style = style;
+            layerOptions.style = nativeStyle || options.styles;
         }
 
+        return layerOptions;
+    };
+
+    TC.wrap.layer.Vector.prototype.createStyles = function (options) {
+        var self = this;
+
+        var dynamicStyle = false;
+
+        if ($.isFunction(options)) {
+            dynamicStyle = true;
+            self.styleFunction = function (olFeat) {
+                return createNativeStyle(options(olFeat));
+            }
+        }
+        else {
+            options = $.extend({}, options);
+            options.crs = options.crs || TC.Cfg.crs;
+            options.styles = options.styles || TC.Cfg.styles;
+            var isDynamicStyle = function isDynamicStyle(obj) {
+                for (var key in obj) {
+                    var prop = obj[key];
+                    switch (typeof prop) {
+                        case 'string':
+                            if (/^\$\{(.+)\}$/.test(prop)) {
+                                return true;
+                            }
+                            break;
+                        case 'object':
+                            if (isDynamicStyle(prop)) {
+                                return true;
+                            }
+                            break;
+                        case 'function':
+                            return true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                return false;
+            };
+
+            dynamicStyle = !!(options.cluster && options.cluster.styles) || isDynamicStyle(options.styles);
+            self.styleFunction = function (olFeat) {
+                return createNativeStyle(self.parent.options, olFeat);
+            };
+        }
+
+        var nativeStyle = dynamicStyle ? self.styleFunction : self.styleFunction();
+
+        return nativeStyle;
+    };
+
+    TC.wrap.layer.Vector.prototype.createVectorLayer = function () {
+        var self = this;
+        var result = null;
+
+        self.$events = $(self);
+
+        var options = self.parent.options;
+
+        var layerOptions = self.createVectorSource(options, self.createStyles(options));
         result = new ol.layer.Vector(layerOptions);
         result._wrap = self;
 
@@ -2665,7 +2761,21 @@
     TC.wrap.control.Coordinates.prototype.register = function (map) {
         var self = this;
         var result = new $.Deferred();
+        self.map = map;
+
+        self._cleanCoordsTrigger = function (e) {
+            if (e.toElement && $(e.toElement).attr('class') && $(e.toElement).attr('class').indexOf(self.map.getControlsByClass(TC.control.Popup)[0].CLASS) > -1)
+                self.parent.coordsToClick({ coordinate: [(self.map.getExtent()[0] + self.map.getExtent()[2]) / 2, (self.map.getExtent()[1] + self.map.getExtent()[3]) / 2] });
+            else
+                self.parent.cleanCoordsPointer(e);
+        };
+
+        self._coordsTrigger = function (e) {
+            self.parent.coordsToClick(e);
+        };
+
         $.when(map.wrap.getMap()).then(function (olMap) {
+            self.olMap = olMap;
             var projection = olMap.getView().getProjection();
             self.parent.crs = projection.getCode();
             self.parent.units = projection.getUnits();
@@ -2683,8 +2793,7 @@
                     var coords = olMap.getCoordinateFromPixel([position.x, position.y]);
                     if (self.parent.isGeo) {
                         self.parent.latLon = coords.reverse();
-                    }
-                    else {
+                    } else {
                         self.parent.xy = coords;
                     }
                     self.parent.update.apply(self.parent, arguments);
@@ -2700,32 +2809,24 @@
             result.resolve();
         });
         return result;
+
+
+
     };
 
     TC.wrap.control.Geolocation.prototype.register = function (map) {
         var self = this;
         self.map = map;
 
-        self._coordsTrigger = function (e) {
-            self.parent.coordsToClick(e);
-        };
-
-        self._cleanCoordsTrigger = function (e) {
-            if (e.toElement && $(e.toElement).attr('class') && $(e.toElement).attr('class').indexOf(self.map.getControlsByClass(TC.control.Popup)[0].CLASS) > -1)
-                self.parent.coordsToClick({ coordinate: [(self.map.getExtent()[0] + self.map.getExtent()[2]) / 2, (self.map.getExtent()[1] + self.map.getExtent()[3]) / 2] });
-            else
-                self.parent.cleanCoordsPointer(e);
-        };
-
-        self._postcomposeTrigger = function (e) {
-            self.duringTrackSnap(e);
-        };
-
         self._snapTrigger = function (e) {
             if (e.dragging)
                 return;
 
             self.initSnap(self.olMap.getEventCoordinate(e.originalEvent));
+        };
+
+        self._postcomposeTrigger = function (e) {
+            self.duringTrackSnap(e);
         };
 
         $.when(map.wrap.getMap()).then(function (olMap) {
@@ -2767,7 +2868,7 @@
         });
         waypoint.setProperties(properties);
 
-        self.parent.layer.wrap.layer.getSource().addFeature(waypoint);
+        self.parent.layerTracking.wrap.layer.getSource().addFeature(waypoint);
     };
 
     var trackingStyleFN = function (feature, resolution) {
@@ -2879,8 +2980,11 @@
                 var position_ = [geoposition.coords && geoposition.coords.longitude || geoposition[0], geoposition.coords && geoposition.coords.latitude || geoposition[1]];
                 var projectedPosition = TC.Util.reproject(position_, 'EPSG:4326', self.parent.map.crs);
 
-                self.olMap.getView().setCenter(projectedPosition);
+                //self.olMap.getView().setCenter(projectedPosition);
                 //self.map.wrap.map.getView().setZoom(12);
+                if (self.marker.getMap() == undefined)
+                    self.marker.setMap(self.olMap);
+
                 self.marker.setPosition(projectedPosition);
 
                 var accuracy = geoposition.coords && geoposition.coords.accuracy || 0;
@@ -2920,7 +3024,7 @@
             i = savedi;
             self.parent.simulatedTrackPaused = false;
         }
-                
+
         if (!self.parent.simulatedTrackPaused) {
             var position = self.parent.options.simulatedTrack[self.parent.options.simulatedTrack.length - 1];
             if (i < self.parent.options.simulatedTrack.length) {
@@ -2941,7 +3045,7 @@
             }
         }
         else {
-            self.positionChangehandler(lastPosition);            
+            self.positionChangehandler(lastPosition);
         }
     };
     TC.wrap.control.Geolocation.prototype.setTracking = function (tracking) {
@@ -2980,19 +3084,19 @@
                 });
             }
 
-            self.parent.layer.wrap.layer.setSource(new ol.source.Vector({
+            self.parent.layerTracking.wrap.layer.setSource(new ol.source.Vector({
                 features: [self.trackData.trackFeature]
             }));
 
             if (sessionwaypoint.length > 0) {
-                self.parent.layer.wrap.addFeatures(sessionwaypoint);
+                self.parent.layerTracking.wrap.addFeatures(sessionwaypoint);
             }
 
-            self.parent.layer.wrap.layer.setStyle(trackingStyleFN);
+            self.parent.layerTracking.wrap.layer.setStyle(trackingStyleFN);
 
             if (!self.marker)
                 self.marker = new ol.Overlay({
-                    element: self.parent.track.htmlMarker,
+                    element: self.parent.track.htmlTrackingMarker,
                     positioning: ol.OverlayPositioning.CENTER_CENTER,
                     stopEvent: false
                 });
@@ -3004,7 +3108,7 @@
                 self.marker.setMap(self.olMap);
 
             if (self.trackData.trackFeature.getGeometry().getCoordinates().length > 1)
-                self.parent.map.setExtent(self.parent.layer.wrap.layer.getSource().getExtent());
+                self.parent.map.setExtent(self.parent.layerTracking.wrap.layer.getSource().getExtent());
             else
                 self.olMap.getView().setZoom(8);
 
@@ -3039,7 +3143,7 @@
     TC.wrap.control.Geolocation.prototype.getLineStringTrack = function () {
         var self = this;
 
-        var vectorLayerSrc = self.parent.layer.wrap.layer.getSource();
+        var vectorLayerSrc = self.parent.layerTrack.wrap.layer.getSource();
         return vectorLayerSrc.forEachFeature(function (f) {
             if (f.getGeometry().getType().toLowerCase().indexOf('linestring') > -1)
                 return f;
@@ -3048,11 +3152,11 @@
         return null;
     };
 
-    TC.wrap.control.Geolocation.prototype.clear = function () {
+    TC.wrap.control.Geolocation.prototype.clear = function (layer) {
         var self = this;
 
-        if (self.parent.layer && self.parent.layer.wrap.layer) {
-            self.parent.layer.wrap.layer.getSource().clear();
+        if (layer && layer.wrap.layer) {
+            layer.wrap.layer.getSource().clear();
         }
 
         $.when(self.parent.map.wrap.getMap()).then(function (olMap) {
@@ -3094,7 +3198,7 @@
     TC.wrap.control.Geolocation.prototype.initSnap = function (coordinate) {
         var self = this;
 
-        var vectorSource = self.parent.layer.wrap.layer.getSource();
+        var vectorSource = self.parent.layerTrack.wrap.layer.getSource();
         var closestFeature = vectorSource.getClosestFeatureToCoordinate(coordinate);
 
         if (closestFeature !== null) {
@@ -3154,30 +3258,29 @@
     TC.wrap.control.Geolocation.prototype.drawTrackingData = function (geoJSON) {
         var self = this;
 
-        var src = self.parent.layer.wrap.layer;
+        var src = self.parent.layerTrack.wrap.layer;
         if (src) {
             src.setSource(new ol.source.Vector({
                 features: (new ol.format.GeoJSON()).readFeatures(geoJSON)
             }));
 
             src.setStyle(trackingStyleFN);
-
-            self.parent.map.setExtent(src.getSource().getExtent());
+            self.olMap.getView().fit(src.getSource().getExtent(), self.olMap.getSize());
 
             self.olMap.on([ol.MapBrowserEvent.EventType.POINTERMOVE, ol.MapBrowserEvent.EventType.SINGLECLICK], self._snapTrigger);
             self.olMap.on(ol.render.EventType.POSTCOMPOSE, self._postcomposeTrigger);
         }
     };
 
-    TC.wrap.control.Geolocation.prototype.toGeoJSON = function () {
+    TC.wrap.control.Geolocation.prototype.formattedToStorage = function (layer, setTrackingProperty) {
         var self = this;
 
         var parser = new TC.wrap.parser.JSON();
         parser = parser.parser;
 
-        var features = self.parent.layer.wrap.layer.getSource().getFeatures();
+        var features = layer.wrap.layer.getSource().getFeatures();
 
-        if (arguments && arguments[0]) {
+        if (setTrackingProperty) {
             for (var i = 0; i < features.length; i++) {
                 if (features[i].get('tracking'))
                     features[i].set('tracking', false);
@@ -3307,19 +3410,11 @@
                 if (vectorSource.getFeatures().length > 0) {
                     // guardamos el track importado                    
                     self.parent.saveMessage = self.parent.getLocaleString("geo.trk.upload.ok");
-                    self.parent.saveTrack().then(function () {
-                        if (self.parent.import.uid) {
-                            var li = self.parent.track.$trackList.find('li[data-id="' + self.parent.import.uid + '"]');
-                            if (li) {
-                                self.parent.drawTrack(li);
-                            }
-
-                            delete self.parent.import.uid;
-                        }
-
+                    self.parent.saveTrack().then(function (index) {
+                        self.parent.$events.trigger(self.parent.Const.Event.IMPORTEDTRACK, index);
                         delete self.parent.import.fileName;
 
-                        self.parent.map.setExtent(src.getSource().getExtent());
+                        self.olMap.getView().fit(src.getSource().getExtent(), self.olMap.getSize());
                         self.parent.getLoadingIndicator().removeWait(wait);
                     });
                 } else {
@@ -3329,7 +3424,7 @@
             }
         });
 
-        var src = self.parent.layer.wrap.layer;
+        var src = self.parent.layerTrack.wrap.layer;
         src.setStyle(trackingStyleFN);
         src.setSource(vectorSource);
     };
@@ -3339,7 +3434,7 @@
 
         var position = self.glCtl.getPosition();
 
-        self.olMap.getView().setCenter(position);
+        //self.olMap.getView().setCenter(position);
         self.marker.setMap(self.olMap);
         self.marker.setPosition(position);
     };
@@ -3349,8 +3444,10 @@
 
         window.clearInterval(self.simulationInterval);
 
-        if (self.marker)
-            self.olMap.removeOverlay(self.marker);
+        if (self.simulateMarker)
+            self.olMap.removeOverlay(self.simulateMarker);
+
+        $(self.parent.track.htmlMarker).hide();
     };
 
     TC.wrap.control.Geolocation.prototype.simulateTrack = function () {
@@ -3364,20 +3461,20 @@
 
         if (coordinates && coordinates.length > 0) {
 
-            if (!self.marker)
-                self.marker = new ol.Overlay({
+            if (!self.simulateMarker)
+                self.simulateMarker = new ol.Overlay({
                     element: self.parent.track.htmlMarker,
                     positioning: ol.OverlayPositioning.CENTER_CENTER,
                     offset: [0, -11],
                     stopEvent: false
                 });
 
-            self.olMap.addOverlay(self.marker);
+            self.olMap.addOverlay(self.simulateMarker);
 
 
             var first = coordinates.shift();
-            if (self.marker) // es posible que el usuario haya parado la simulación borrando el overlay
-                self.marker.setPosition(first);
+            if (self.simulateMarker) // es posible que el usuario haya parado la simulación borrando el overlay
+                self.simulateMarker.setPosition(first);
 
             var prevDate;
             if (first.length == 4) // Si la longitud es 4 tenemos xyzt
@@ -3396,8 +3493,8 @@
                         return;
                     }
 
-                    if (self.marker) // es posible que el usuario haya parado la simulación borrando el overlay
-                        self.marker.setPosition(position);
+                    if (self.simulateMarker) // es posible que el usuario haya parado la simulación borrando el overlay
+                        self.simulateMarker.setPosition(position);
 
                     var newDate;
                     if (first.length == 4) // Si la longitud es 4 tenemos xyzt
@@ -3515,7 +3612,7 @@
         });
     };
 
-    TC.wrap.control.Geolocation.prototype.coordsActivate = function () {
+    TC.wrap.control.Coordinates.prototype.coordsActivate = function () {
         var self = this;
 
         self.olMap.on(ol.MapBrowserEvent.EventType.SINGLECLICK, self._coordsTrigger);
@@ -3524,7 +3621,7 @@
         $(viewport).on(MOUSEOUT, self._cleanCoordsTrigger);
     };
 
-    TC.wrap.control.Geolocation.prototype.coordsDeactivate = function () {
+    TC.wrap.control.Coordinates.prototype.coordsDeactivate = function () {
         var self = this;
 
         self.olMap.un(ol.MapBrowserEvent.EventType.SINGLECLICK, self._coordsTrigger);
@@ -3638,6 +3735,7 @@
                             var extent = map.getExtent();
                             var halfWidth = (extent[2] - extent[0]) / 2;
                             var halfHeight = (extent[3] - extent[1]) / 2;
+
                             if (newCenter[0] + halfWidth > map.options.maxExtent[2]) {
                                 newCenter[0] = map.options.maxExtent[2] - halfWidth;
                             }
@@ -3661,8 +3759,13 @@
                             var $drag = $(this);
                             var bottom = parseInt($drag.css('bottom'));
                             var left = parseInt($drag.css('left'));
-                            $drag.css('bottom', Math.min(Math.max(boxBottom - dd.deltaY, dd.limit.bottom), dd.limit.top) + 'px');
-                            $drag.css('left', Math.min(Math.max(boxLeft + dd.deltaX, dd.limit.left), dd.limit.right) + 'px');
+                            if (dd.limit.top) {
+                                $drag.css('bottom', Math.min(Math.max(boxBottom - dd.deltaY, dd.limit.bottom), dd.limit.top) + 'px');
+                                $drag.css('left', Math.min(Math.max(boxLeft + dd.deltaX, dd.limit.left), dd.limit.right) + 'px');
+                            } else {
+                                $drag.css('bottom', (boxBottom - dd.deltaY) + 'px');
+                                $drag.css('left', (boxLeft + dd.deltaX) + 'px');
+                            }
                         });
                 });
 
@@ -4080,8 +4183,9 @@
                         });
                     }
                 },
-            function (a, b, c) {
-                //alert("MAAAAL");
+            function (a, b, c) { // error
+                map.$events.trigger(TC.Consts.event.NOFEATUREINFO);
+                map.toast(self.parent.getLocaleString('featureInfo.error'), { type: TC.Consts.msgType.ERROR });
             });
             }
             else {
@@ -4811,29 +4915,13 @@
             self.feature = new ol.Feature({
                 geometry: new ol.geom.Point(coords)
             });
-            var circleOptions = {
-                radius: options.radius || (options.height + options.width) / 4
-            };
-            if (options.fillColor) {
-                circleOptions.fill = new ol.style.Fill({
-                    color: getRGBA(options.fillColor, options.fillOpacity)
-                });
-            }
-            if (options.strokeColor) {
-                circleOptions.stroke = new ol.style.Stroke({
-                    color: options.strokeColor,
-                    width: options.strokeWidth
-                });
-            }
-            self.feature.setStyle([new ol.style.Style({
-                image: new ol.style.Circle(circleOptions)
-            })]);
         }
         else if (self.isNative(coords)) {
             self.feature = coords;
             self.parent.geometry = coords.getGeometry().getCoordinates();
         }
         self.feature._wrap = self;
+        self.feature.setStyle(createNativeStyle({ styles: { point: options } }, self.feature));
     };
 
     TC.wrap.Feature.prototype.createMarker = function (coords, options) {
@@ -4841,23 +4929,18 @@
 
         var iconUrl = TC.Util.getPointIconUrl(options);
         if (iconUrl) {
+            options.url = iconUrl;
             if ($.isArray(coords)) {
                 self.feature = new ol.Feature({
                     geometry: new ol.geom.Point(coords)
                 });
-                var styleOptions = {
-                    image: new ol.style.Icon({
-                        anchor: options.anchor,
-                        src: iconUrl
-                    })
-                };
-                self.feature.setStyle([new ol.style.Style(styleOptions)]);
             }
             else if (self.isNative(coords)) {
                 self.feature = coords;
                 self.parent.geometry = coords.getGeometry().getCoordinates();
             }
             self.feature._wrap = self;
+            self.feature.setStyle(createNativeStyle({ styles: { marker: options } }, self.feature));
         }
         else {
             self.createPoint(coords, options);
@@ -4871,22 +4954,15 @@
             self.feature = new ol.Feature({
                 geometry: new ol.geom.LineString(coords)
             });
-            if (options) {
-                self.feature.setStyle(
-                        new ol.style.Style({
-                            stroke: new ol.style.Stroke({
-                                color: options.strokeColor,
-                                width: options.strokeWidth
-                            })
-                        })
-                    );
-            }
         }
         else if (self.isNative(coords)) {
             self.feature = coords;
             self.parent.geometry = coords.getGeometry().getCoordinates();
         }
         self.feature._wrap = self;
+        if (options) {
+            self.feature.setStyle(createNativeStyle({ styles: { line: options } }, self.feature));
+        }
     };
 
     TC.wrap.Feature.prototype.createPolygon = function (coords, options) {
@@ -4909,19 +4985,6 @@
                 self.feature = new ol.Feature({
                     geometry: new ol.geom.Polygon(coords)
                 });
-                if (options) {
-                    self.feature.setStyle(
-                        new ol.style.Style({
-                            stroke: new ol.style.Stroke({
-                                color: options.strokeColor,
-                                width: options.strokeWidth
-                            }),
-                            fill: new ol.style.Fill({
-                                color: getRGBA(options.fillColor, options.fillOpacity)
-                            })
-                        })
-                    );
-                }
             }
         }
         else if (self.isNative(coords)) {
@@ -4929,6 +4992,9 @@
             self.parent.geometry = coords.getGeometry().getCoordinates();
         }
         self.feature._wrap = self;
+        if (options) {
+            self.feature.setStyle(createNativeStyle({ styles: { polygon: options, line: options } }, self.feature));
+        }
     };
 
     TC.wrap.Feature.prototype.createCircle = function (coords, options) {
@@ -4941,19 +5007,6 @@
             self.feature = new ol.Feature({
                 geometry: new ol.geom.Circle(coords[0], coords[1])
             });
-            if (options) {
-                self.feature.setStyle(
-                    new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: options.strokeColor,
-                            width: options.strokeWidth
-                        }),
-                        fill: new ol.style.Fill({
-                            color: getRGBA(options.fillColor, options.fillOpacity)
-                        })
-                    })
-                );
-            }
         }
         else if (self.isNative(coords)) {
             self.feature = coords;
@@ -4961,6 +5014,19 @@
             self.parent.geometry = [nativeGeometry.getCenter(), nativeGeometry.getRadius()];
         }
         self.feature._wrap = self;
+        if (options) {
+            self.feature.setStyle(
+                new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: options.strokeColor,
+                        width: options.strokeWidth
+                    }),
+                    fill: new ol.style.Fill({
+                        color: getRGBA(options.fillColor, options.fillOpacity)
+                    })
+                })
+            );
+        }
     };
 
     TC.wrap.Feature.createFeature = function (olFeat) {
@@ -5095,7 +5161,9 @@
                         width: getStyleValue(options.strokeWidth, feature)
                     });
                 }
-                imageOptions = new ol.style.Circle(circleOptions);
+
+                if (!isNaN(circleOptions.radius))
+                    imageOptions = new ol.style.Circle(circleOptions);
             }
             olFeat.setStyle(new ol.style.Style({
                 image: imageOptions
@@ -5227,7 +5295,7 @@
                         var layer = map.workLayers[i];
                         if (!layer.isRaster()) {
                             if ($.inArray(f, layer.features) >= 0) {
-                                style = styleFunction(feature);
+                                style = layer.wrap.styleFunction(feature);
                                 break;
                             }
                         }
