@@ -1,16 +1,18 @@
 ﻿<h2>
     {@i18n $key="availableLayers"/}
-    {@if cond="('{enableSearch}' && '{layerTrees}')"}
-        <button class="tc-ctl-lcat-btn-search" title="{@i18n $key="searchLayersByText"/}"></button>
-    {/if}
+    {?enableSearch}
+        {?layerTrees}
+            <button class="tc-ctl-lcat-btn-search" title="{@i18n $key="searchlayersbytext" /}"></button>
+        {/layerTrees}
+    {/enableSearch}
 </h2>
 
 
 <div class="tc-ctl-lcat-search tc-hidden tc-collapsed">
     <div class="tc-group">
-        <input type="search" class="tc-ctl-lcat-input tc-textbox" placeholder="{@i18n $key="textToLookForInLayers"/}" />
+        <input type="search" class="tc-ctl-lcat-input tc-textbox" placeholder="{@i18n $key="textToSearchInLayers"/}" />
     </div>
-    <ul class="tc-hidden"></ul>
+    <ul></ul>
 
 </div>
 
