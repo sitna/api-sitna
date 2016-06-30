@@ -32,24 +32,26 @@ TC.inherit(TC.control.Popup, TC.Control);
     ctlProto.register = function (map) {
         var self = this;
         TC.Control.prototype.register.call(self, map);
-        map.wrap.addPopup(self);
 
-        map.on(TC.Consts.event.LAYERVISIBILITY, function (e) {
-            if (self.currentFeature && self.currentFeature.layer === e.layer && !e.layer.getVisibility()) {
-                self.hide();
-            }
-        });
+        $.when(map.wrap.addPopup(self)).then(function () {
 
-        map.on(TC.Consts.event.UPDATE, function () {
-            if (!self.currentFeature || self.currentFeature._visibilityState === TC.Consts.visibility.NOT_VISIBLE) {
-                self.hide();
-            }
-        });
+            map.on(TC.Consts.event.LAYERVISIBILITY, function (e) {
+                if (self.currentFeature && self.currentFeature.layer === e.layer && !e.layer.getVisibility()) {
+                    self.hide();
+                }
+            });
 
-        map.on(TC.Consts.event.FEATUREREMOVE, function (e) {
-            if (self.currentFeature === e.feature) {
-                self.hide();
-            }
+            map.on(TC.Consts.event.UPDATE, function () {
+                if (!self.currentFeature || self.currentFeature._visibilityState === TC.Consts.visibility.NOT_VISIBLE) {
+                    self.hide();
+                }
+            });
+
+            map.on(TC.Consts.event.FEATUREREMOVE, function (e) {
+                if (self.currentFeature === e.feature) {
+                    self.hide();
+                }
+            });
         });
     };
 
@@ -69,7 +71,9 @@ TC.inherit(TC.control.Popup, TC.Control);
     ctlProto.setDragged = function (dragged) {
         var self = this;
         self.dragged = dragged;
-        self.$popupDiv.toggleClass(TC.Consts.classes.DRAGGED, dragged);
+        if (self.$popupDiv) {
+            self.$popupDiv.toggleClass(TC.Consts.classes.DRAGGED, dragged);
+        }
         self.wrap.setDragged(dragged);
     };
 

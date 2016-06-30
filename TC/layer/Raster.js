@@ -67,14 +67,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             return result;
         };
 
+        // Lanzamos la primera petición sin proxificar. Si falla (CORS, HTTP desde HTTPS...) pedimos proxificando.
         getRequest(url).then(success, function (jqXHR, textStatus, errorThrown) {
-            if (!jqXHR.getAllResponseHeaders()) {
-                // Si no hay cabeceras asumimos que es un error debido a CORS, repetimos la petición proxificando
-                getRequest(url, true).then(success, error);
-            }
-            else {
-                error(jqXHR, textStatus, errorThrown);
-            }
+            getRequest(url, true).then(success, error);
         });
     };
 

@@ -8,6 +8,12 @@ TC.control.LoadingIndicator = function () {
     var self = this;
 
     TC.Control.apply(self, arguments);
+
+    window.addEventListener('error', function () {
+        self.reset();
+        // Tell browser to run its own error handler as well
+        return false;
+    }, false);
 };
 
 TC.inherit(TC.control.LoadingIndicator, TC.Control);
@@ -78,10 +84,15 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
                     self.removeWait(TC.Consts.event.FEATUREINFO);
                 });
         if (!TC.isDebug) {
-            // Para evitar que se quede el indicador indefinidamente activo cuando hay un error en la página
-            //window.onerror = function () {
-            //    self.reset();
-            //};
+            //Para evitar que se quede el indicador indefinidamente activo cuando hay un error en la página
+            window.addEventListener('error', function (msg, url, line, col, error) {
+                self.reset();
+                return false;
+            });
+
+            $(document).ajaxError(function (event, request, settings) {
+                self.reset();
+            });
         }
     };
 

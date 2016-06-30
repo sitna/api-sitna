@@ -81,10 +81,10 @@ TC.inherit(TC.control.Share, TC.Control);
 
             //Si la URL sobrepasa el tamaño máximo deshabilitamos el control
             if (url.length > TC.Consts.URL_MAX_LENGTH) {
-                self.disable();
+                self.disableButtons();
                 return;
             } else {
-                self.enable(url);
+                self.enableButtons(url);
                 return url;
             }
 
@@ -198,7 +198,7 @@ TC.inherit(TC.control.Share, TC.Control);
                             url = self.shortenUrl(url)
                         }
                         new QRCode(qrContainer, url);
-                        TC.Util.showModal("#qr-code-dialog", 300, 400);
+                        TC.Util.showModal("#qr-code-dialog");
                     });
             }
         });
@@ -270,8 +270,10 @@ TC.inherit(TC.control.Share, TC.Control);
         //});
     };
 
-    ctlProto.enable = function (url) {
+    ctlProto.enableButtons = function (url) {
         var self = this;
+
+        TC.Control.prototype.enable.call(self);
 
         var $alert = self._$div.find('.' + self.CLASS + '-alert');
         var $copyBtn = self._$div.find('.tc-button');
@@ -288,8 +290,10 @@ TC.inherit(TC.control.Share, TC.Control);
         $input.filter('.tc-iframe').val(self.generateIframe(url));
     };
 
-    ctlProto.disable = function () {
+    ctlProto.disableButtons = function () {
         var self = this;
+
+        TC.Control.prototype.disable.call(self);
 
         var $alert = self._$div.find('.' + self.CLASS + '-alert');
         var $copyBtn = self._$div.find('.tc-button');

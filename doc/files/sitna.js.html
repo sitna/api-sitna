@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.2</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.3</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -101,6 +101,7 @@
 <div class="file">
     <pre class="code prettyprint linenums">
 ﻿var SITNA = window.SITNA || {};
+var TC = window.TC || {};
 
 SITNA.syncLoadJS = function (url) {
     var req = new XMLHttpRequest();
@@ -114,9 +115,22 @@ SITNA.syncLoadJS = function (url) {
     head.appendChild(script);
 };
 
-if (!window.TC || !window.TC.Cfg) {
-    SITNA.syncLoadJS(&#x27;http://localhost:53098/tcmap.js&#x27;);
-}
+(function () {
+    if (!window.TC || !window.TC.Cfg) {
+        var src;
+        var script;
+        if (document.currentScript) {
+            script = document.currentScript;
+        }
+        else {
+            var scripts = document.getElementsByTagName(&#x27;script&#x27;);
+            script = scripts[scripts.length - 1];
+        }
+        var src = script.getAttribute(&#x27;src&#x27;);
+        TC.apiLocation = src.substr(0, src.lastIndexOf(&#x27;/&#x27;) + 1);
+        SITNA.syncLoadJS(TC.apiLocation + &#x27;tcmap.js&#x27;);
+    }
+})();
 
 /**
  * &lt;p&gt;Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
@@ -193,6 +207,13 @@ if (!window.TC || !window.TC.Cfg) {
  *         });
  *     &lt;/script&gt;
  */
+
+/**
+ * Búsqueda actual de consulta de entidad geográfica aplicado al mapa.
+ * property search
+ * type SITNA.Search|null
+ */
+
 SITNA.Map = function (div, options) {
     var map = this;
     var tcMap = new TC.Map(div, options);
@@ -482,6 +503,10 @@ SITNA.Map = function (div, options) {
 
     // Si existe el control featureInfo lo activamos.
     tcMap.loaded(function () {
+
+        tcSearch = new TC.control.Search();
+        tcSearch.register(tcMap);
+
         if (!tcMap.activeControl) {
             var fi = tcMap.getControlsByClass(&#x27;TC.control.FeatureInfo&#x27;)[0];
             if (fi) {
@@ -489,6 +514,731 @@ SITNA.Map = function (div, options) {
             }
         }
     });
+
+    /**
+    * &lt;p&gt;Obtiene los valores (id y label) de las entidades geográficas disponibles en la capa de IDENA que corresponda según el parámetro searchType. 
+    * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.getQueryableData.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+    *
+    * method getQueryableData
+    * async
+    * param {string|SITNA.consts.MapSearchType} searchType Fuente de datos del cual obtendremos los valores disponibles para buscar posteriormente.
+    * param {function} [callback] Función a la que se llama tras obtener los datos.    
+    * example
+    *     &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+    *     &lt;script&gt;
+    *         // Crear un mapa con las opciones por defecto.
+    *         var map = new SITNA.Map(&quot;mapa&quot;);
+    *     
+    *         // Cuando esté todo cargado proceder a trabajar con el mapa.
+    *         map.loaded(function () {    
+    *             // Retorna un array de objetos (id, label) con todos los municipios de Navarra
+    *             map.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, function (data) {
+    *                 $.each(data, function (key, value) {
+    *                     $(&#x27;#municipality&#x27;)    // Completamos el combo &#x27;#municipality&#x27; con los datos recibidos
+    *                       .append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+    *                       .attr(&quot;value&quot;, value.id)
+    *                       .text(value.label));
+    *                 });
+    *             });
+    *
+    *             // Retorna un array de objetos (id, label) con todas las mancomunidades de residuos de Navarra
+    *             map.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, function (data) {
+    *                 $.each(data, function (key, value) {
+    *                     $(&#x27;#commonwealth&#x27;)    // Completamos el combo &#x27;#community&#x27; con los datos recibidos
+    *                       .append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+    *                       .attr(&quot;value&quot;, value.id)
+    *                       .text(value.label));
+    *                 });
+    *             });
+    *         });
+    *     &lt;/script&gt;
+    */
+    map.getQueryableData = function (searchType, callback) {
+        var queryable = tcSearch.availableSearchTypes[searchType];
+
+        if (queryable.queryableData) {
+            if (callback)
+                callback(queryable.queryableData);
+        } else {
+            var params = {
+                request: &#x27;GetFeature&#x27;,
+                service: &#x27;WFS&#x27;,
+                typename: queryable.featurePrefix + &#x27;:&#x27; + queryable.featureType,
+                version: queryable.version,
+                propertyname: (!(queryable.dataIdProperty instanceof Array) ? [queryable.dataIdProperty] : queryable.dataIdProperty)
+                                .concat((!(queryable.outputProperties instanceof Array) ? [queryable.outputProperties] : queryable.outputProperties)).join(&#x27;,&#x27;),
+                outputformat: TC.Consts.format.JSON
+            };
+
+            var url = queryable.url + &#x27;?&#x27; + $.param(params);
+            $.ajax({
+                url: url
+            }).done(function (data) {
+                queryable.queryableData = [];
+
+                if (data.features) {
+                    var features = data.features;
+
+                    for (var i = 0; i &lt; features.length; i++) {
+                        var f = features[i];
+                        var data = {};
+
+                        data.id = [];
+                        if (!(queryable.dataIdProperty instanceof Array))
+                            queryable.dataIdProperty = [queryable.dataIdProperty];
+
+                        for (var ip = 0; ip &lt; queryable.dataIdProperty.length; ip++) {
+                            if (f.properties.hasOwnProperty(queryable.dataIdProperty[ip])) {
+                                data.id.push(f.properties[queryable.dataIdProperty[ip]]);
+                            }
+                        }
+
+                        data.id = queryable.idPropertiesIdentifier ? data.id.join(queryable.idPropertiesIdentifier) : data.id.join(&#x27;&#x27;);
+
+                        data.label = [];
+                        if (!(queryable.outputProperties instanceof Array))
+                            queryable.outputProperties = [queryable.outputProperties];
+
+                        for (var lbl = 0; lbl &lt; queryable.outputProperties.length; lbl++) {
+                            if (f.properties.hasOwnProperty(queryable.outputProperties[lbl])) {
+                                data.label.push(f.properties[queryable.outputProperties[lbl]]);
+                            }
+                        }
+
+                        var add = (data.label instanceof Array &amp;&amp; data.label.join(&#x27;&#x27;).trim().length &gt; 0) || (!(data.label instanceof Array) &amp;&amp; data.label.trim().length &gt; 0);
+                        data.label = queryable.outputFormatLabel ? queryable.outputFormatLabel.tcFormat(data.label) : data.label.join(&#x27;-&#x27;);
+
+                        if (add)
+                            queryable.queryableData.push(data);
+                    }
+                }
+
+                queryable.queryableData = queryable.queryableData.sort(function (a, b) {
+                    if (queryable.idPropertiesIdentifier ? a.id.indexOf(queryable.idPropertiesIdentifier) == -1 : false) {
+                        if (tcSearch.removePunctuation(a.label) &lt; tcSearch.removePunctuation(b.label))
+                            return -1;
+                        else if (tcSearch.removePunctuation(a.label) &gt; tcSearch.removePunctuation(b.label))
+                            return 1;
+                        else
+                            return 0;
+                    } else {
+                        if (tcSearch.removePunctuation(a.label.split(&#x27; &#x27;)[0]) &lt; tcSearch.removePunctuation(b.label.split(&#x27; &#x27;)[0]))
+                            return -1;
+                        else if (tcSearch.removePunctuation(a.label.split(&#x27; &#x27;)[0]) &gt; tcSearch.removePunctuation(b.label.split(&#x27; &#x27;)[0]))
+                            return 1;
+                        else
+                            return 0;
+                    }
+                });
+                queryable.queryableData = queryable.queryableData.filter(function (value, index, arr) {
+                    if (index &lt; 1)
+                        return true;
+                    else
+                        return value.id !== arr[index - 1].id &amp;&amp; value.label !== arr[index - 1].label;
+                });
+
+                if (callback)
+                    callback(queryable.queryableData);
+            });
+        }
+    };
+    /**
+    * &lt;p&gt;Obtiene los valores (id y label) de los municipios disponibles en la capa de IDENA. 
+    * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.getMunicipalities.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+    *
+    * @method getMunicipalities
+    * @async    
+    * @param {function} [callback] Función a la que se llama tras obtener los datos.    
+    * @example
+    *     &lt;div class=&quot;instructions divSelect&quot;&gt;
+    *        &lt;div&gt;
+    *            Municipios
+    *            &lt;select id=&quot;municipality&quot; onchange=&quot;applyFilter()&quot;&gt;
+    *                &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+    *            &lt;/select&gt;
+    *        &lt;/div&gt;
+    *     &lt;/div&gt;
+    *     &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+    *     &lt;script&gt;
+    *        // Crear mapa.
+    *        var map = new SITNA.Map(&quot;mapa&quot;);
+    *        map.loaded(function () {
+    *            // completamos el desplegable
+    *            map.getMunicipalities(function (data) {
+    *                $.each(data, function (key, value) {
+    *                    $(&#x27;#municipality&#x27;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+    *                         .attr(&quot;value&quot;, value.id)
+    *                         .text(value.label));
+    *                    });
+    *                });
+    *            });
+    *        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    *        function applyFilter() {
+    *            var id = $(&#x27;#municipality&#x27;).find(&#x27;option:selected&#x27;).val();
+    *            if (id == -1)
+    *                map.removeSearch();
+    *            else {
+    *                map.searchMunicipality(id, function (idQuery) {
+    *                    if (idQuery == null)
+    *                        alert(&#x27;No se han encontrado resultados&#x27;);
+    *                });
+    *            }
+    *        };
+    *   &lt;/script&gt;
+    */
+    map.getMunicipalities = function (callback) {
+        map.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, callback);
+    };
+    /**
+    * &lt;p&gt;Obtiene los valores (id y label) de los cascos urbanos disponibles en la capa de IDENA. 
+    * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.getUrbanAreas.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+    *
+    * @method getUrbanAreas
+    * @async    
+    * @param {function} [callback] Función a la que se llama tras obtener los datos.    
+    * @example
+    *     &lt;div class=&quot;instructions divSelect&quot;&gt;
+    *        &lt;div&gt;
+    *            Cascos urbanos
+    *            &lt;select id=&quot;urban&quot; onchange=&quot;applyFilter()&quot;&gt;
+    *                &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+    *            &lt;/select&gt;
+    *        &lt;/div&gt;
+    *     &lt;/div&gt;
+    *     &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+    *     &lt;script&gt;
+    *        // Crear mapa.
+    *        var map = new SITNA.Map(&quot;mapa&quot;);
+    *        map.loaded(function () {
+    *            // completamos el desplegable
+    *            map.getUrbanAreas(function (data) {
+    *                $.each(data, function (key, value) {
+    *                    $(&#x27;#urban&#x27;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+    *                         .attr(&quot;value&quot;, value.id)
+    *                         .text(value.label));
+    *                    });
+    *                });
+    *            });
+    *        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    *        function applyFilter() {
+    *            var id = $(&#x27;#urban&#x27;).find(&#x27;option:selected&#x27;).val();
+    *            if (id == -1)
+    *                map.removeSearch();
+    *            else {
+    *                map.searchUrbanArea(id, function (idQuery) {
+    *                    if (idQuery == null)
+    *                        alert(&#x27;No se han encontrado resultados&#x27;);
+    *                });
+    *            }
+    *        };
+    *   &lt;/script&gt;
+    */
+    map.getUrbanAreas = function (callback) {
+        map.getQueryableData(SITNA.Consts.mapSearchType.URBAN, callback);
+    };
+    /**
+    * &lt;p&gt;Obtiene los valores (id y label) de las mancomunidades de residuos disponibles en la capa de IDENA. 
+    * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.getCommonwealths.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+    *
+    * @method getCommonwealths
+    * @async    
+    * @param {function} [callback] Función a la que se llama tras obtener los datos.    
+    * @example
+    *     &lt;div class=&quot;instructions divSelect&quot;&gt;
+   *        &lt;div&gt;
+   *            Mancomunidades de residuos
+   *            &lt;select id=&quot;commonwealths&quot; onchange=&quot;applyFilter()&quot;&gt;
+   *                &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+   *            &lt;/select&gt;
+   *        &lt;/div&gt;
+   *     &lt;/div&gt;
+   *     &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+   *     &lt;script&gt;
+   *        // Crear mapa.
+   *        var map = new SITNA.Map(&quot;mapa&quot;);
+   *        map.loaded(function () {
+   *            // completamos el desplegable
+   *            map.getCommonwealths(function (data) {
+   *                $.each(data, function (key, value) {
+   *                    $(&#x27;#commonwealths&#x27;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+   *                        .attr(&quot;value&quot;, value.id)
+   *                        .text(value.label));
+   *                    });
+   *                });
+   *            });
+   *        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+   *        function applyFilter() {
+   *            var id = $(&#x27;#commonwealths&#x27;).find(&#x27;option:selected&#x27;).val();
+   *            if (id == -1)
+   *                map.removeSearch();
+   *            else {
+   *                map.searchCommonwealth(id, function (idQuery) {
+   *                    if (idQuery == null)
+   *                        alert(&#x27;No se han encontrado resultados&#x27;);
+   *                });
+   *            }
+   *        };
+   *   &lt;/script&gt;
+    */
+    map.getCommonwealths = function (callback) {
+        map.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, callback);
+    };
+    /**
+      * &lt;p&gt;Obtiene los valores (id y label) de los concejos disponibles en la capa de IDENA. 
+      * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.getCouncils.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+      *
+      * @method getCouncils
+      * @async    
+      * @param {function} [callback] Función a la que se llama tras obtener los datos.    
+      * @example
+      *     &lt;div class=&quot;instructions divSelect&quot;&gt;
+      *        &lt;div&gt;
+      *            Concejos
+      *            &lt;select id=&quot;council&quot; onchange=&quot;applyFilter()&quot;&gt;
+      *                &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+      *            &lt;/select&gt;
+      *        &lt;/div&gt;
+      *     &lt;/div&gt;
+      *     &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+      *     &lt;script&gt;
+      *        // Crear mapa.
+      *        var map = new SITNA.Map(&quot;mapa&quot;);
+      *        map.loaded(function () {
+      *            // completamos el desplegable
+      *            map.getCouncils(function (data) {
+      *                $.each(data, function (key, value) {
+      *                    $(&#x27;#council&#x27;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+      *                        .attr(&quot;value&quot;, value.id)
+      *                        .text(value.label));
+      *                    });
+      *                });
+      *            });
+      *        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+      *        function applyFilter() {
+      *            var id = $(&#x27;#council&#x27;).find(&#x27;option:selected&#x27;).val();
+      *            if (id == -1)
+      *                map.removeSearch();
+      *            else {
+      *                map.searchCouncil(id, function (idQuery) {
+      *                    if (idQuery == null)
+      *                        alert(&#x27;No se han encontrado resultados&#x27;);
+      *                });
+      *            }
+      *        };
+      *   &lt;/script&gt;
+      */
+    map.getCouncils = function (callback) {
+        map.getQueryableData(SITNA.Consts.mapSearchType.COUNCIL, callback);
+    };
+    /**
+        * &lt;p&gt;Busca la mancomunidad de residuos y pinta en el mapa la entidad geográfica encontrada que corresponda al identificador indicado.
+        * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.searchCommonwealth.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+        *
+        * @method searchCommonwealth
+        * @async
+        * @param {string} id Identificador de la entidad geográfica a pintar.
+        * @param {function} [callback] Función a la que se llama tras aplicar el filtro.    
+        * @example
+        *           &lt;div class=&quot;instructions searchCommonwealth&quot;&gt;        
+        *              &lt;div&gt;&lt;button id=&quot;searchPamplonaBtn&quot;&gt;Buscar Mancomunidad de la Comarca de Pamplona&lt;/button&gt;&lt;/div&gt;        
+        *           &lt;/div&gt;
+        *           &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+        *           &lt;script&gt;
+        *               // Crear mapa.
+        *               var map = new SITNA.Map(&quot;mapa&quot;);
+        *               map.loaded(function () {
+        *                   document.getElementById(&quot;searchPamplonaBtn&quot;).addEventListener(&quot;click&quot;, search);
+        *               });
+        *
+        *               var search = function () {
+        *                   map.removeSearch();
+        *                   map.searchCommonwealth(&quot;8&quot;, function (idQuery) {
+        *                       if (idQuery == null) {
+        *                           alert(&quot;No se ha encontrado la mancomunidad con código 8.&quot;);
+        *                       }
+        *                   });
+        *               };
+        *           &lt;/script&gt;
+        */
+
+    map.searchCommonwealth = function (id, callback) {
+        map.searchTyped(SITNA.Consts.mapSearchType.COMMONWEALTH, id, callback);
+    };
+    /**
+        * &lt;p&gt;Busca el concejo que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
+        * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.searchCouncil.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+        *
+        * @method searchCouncil
+        * @async        
+        * @param {string} id Identificador de la entidad geográfica a pintar.
+        * @param {function} [callback] Función a la que se llama tras aplicar el filtro.    
+        * @example
+        *            &lt;div class=&quot;instructions search&quot;&gt;        
+        *               &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar concejo Esquíroz (Galar)&lt;/button&gt;&lt;/div&gt;        
+        *            &lt;/div&gt;
+        *            &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+        *            &lt;script&gt;
+        *               // Crear mapa.
+        *               var map = new SITNA.Map(&quot;mapa&quot;);
+        *               map.loaded(function () {
+        *                   document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);
+        *               });
+        *
+        *               var search = function () {
+        *                   map.removeSearch();
+        *                   map.searchCouncil(&quot;109#5&quot;, function (idQuery) {
+        *                       if (idQuery == null) {
+        *                               alert(&quot;No se ha encontrado el concejo con código 109#5.&quot;);
+        *                       }
+        *                   });
+        *               };        
+        *            &lt;/script&gt;        
+        **/
+    map.searchCouncil = function (id, callback) {
+        map.searchTyped(SITNA.Consts.mapSearchType.COUNCIL, id, callback);
+    };
+    /**
+        * &lt;p&gt;Busca el casco urbano que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
+        * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.searchUrbanArea.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+        *
+        * @method searchUrbanArea
+        * @async        
+        * @param {string} id Identificador de la entidad geográfica a pintar.
+        * @param {function} [callback] Función a la que se llama tras aplicar el filtro.    
+        * @example
+        *           &lt;div class=&quot;instructions search&quot;&gt;
+        *           &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar casco urbano de Arbizu&lt;/button&gt;&lt;/div&gt;
+        *           &lt;/div&gt;
+        *           &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+        *           &lt;script&gt;
+        *               // Crear mapa.
+        *               var map = new SITNA.Map(&quot;mapa&quot;);
+        *               map.loaded(function () {
+        *                   document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);
+        *               });
+        *               var search = function () {
+        *                   map.removeSearch();
+        *                   map.searchUrbanArea(&quot;27&quot;, function (idQuery) {
+        *                       if (idQuery == null) {
+        *                           alert(&quot;No se ha encontrado el casco urbano con código 27.&quot;);
+        *                       }
+        *                   });
+        *               };
+        *           &lt;/script&gt;
+        **/
+    map.searchUrbanArea = function (id, callback) {
+        map.searchTyped(SITNA.Consts.mapSearchType.URBAN, id, callback);
+    };
+    /**
+        * &lt;p&gt;Busca el municipio que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
+        * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.searchMunicipality.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+        *
+        * @method searchMunicipality
+        * @async        
+        * @param {string} id Identificador de la entidad geográfica a pintar.
+        * @param {function} [callback] Función a la que se llama tras aplicar el filtro.    
+        * @example
+        *            &lt;div class=&quot;instructions search&quot;&gt;
+        *               &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar Arbizu&lt;/button&gt;&lt;/div&gt;
+        *            &lt;/div&gt;
+        *            &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+        *            &lt;script&gt;
+        *               // Crear mapa.
+        *               var map = new SITNA.Map(&quot;mapa&quot;);
+        *               map.loaded(function () {
+        *                   document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);
+        *               });
+        *
+        *               var search = function () {
+        *                    map.removeSearch();
+        *                    map.searchCouncil(&quot;27&quot;, function (idQuery) {
+        *                       if (idQuery == null) {
+        *                           alert(&quot;No se ha encontrado el municipio con código 27.&quot;);
+        *                       }
+        *                    });
+        *               };
+        *            &lt;/script&gt;
+        **/
+    map.searchMunicipality = function (id, callback) {
+        map.searchTyped(SITNA.Consts.mapSearchType.MUNICIPALITY, id, callback);
+    };
+    // Busca en la configuración que corresponda según el parámetro searchType el identificador pasado como parámetro
+    map.searchTyped = function (searchType, id, callback) {
+        var idQuery = TC.getUID();
+        var query = tcSearch.availableSearchTypes[searchType];
+
+        if (id instanceof Array &amp;&amp; query.goToIdFormat)
+            id = query.goToIdFormat.tcFormat(id);
+
+        tcSearch._search.data = tcSearch._search.data || [];
+        tcSearch._search.data.push({
+            dataLayer: query.featureType,
+            dataRole: searchType,
+            id: id,
+            label: &quot;&quot;,
+            text: &quot;&quot;
+        });
+
+        map.removeSearch();
+
+        if (tcSearch.availableSearchTypes[searchType] &amp;&amp; !(tcSearch.allowedSearchTypes[searchType])) {
+            tcSearch.allowedSearchTypes = {
+            };
+            tcSearch.allowedSearchTypes[searchType] = {
+            };
+
+            if (!tcSearch.availableSearchTypes[searchType].hasOwnProperty(&#x27;goTo&#x27;)) {
+                tcSearch.allowedSearchTypes[searchType] = {
+                    goTo: function () {
+                        var styles = function (queryStyles, geomType, property) {
+                            return queryStyles[geomType][property];
+                        };
+                        var getProperties = function (id) {
+                            var filter = [];
+                            if (query.idPropertiesIdentifier) id = id.split(query.idPropertiesIdentifier);
+                            if (!(id instanceof Array)) id = [id];
+                            for (var i = 0; i &lt; query.dataIdProperty.length; i++) {
+                                filter.push({
+                                    name: query.dataIdProperty[i], value: id[i], type: TC.Consts.comparison.EQUAL_TO
+                                });
+                            }
+                            return filter;
+                        };
+                        var layerOptions = {
+                            id: idQuery,
+                            type: SITNA.Consts.layerType.WFS,
+                            url: query.url,
+                            version: query.version,
+                            geometryName: &#x27;the_geom&#x27;,
+                            featurePrefix: query.featurePrefix,
+                            featureType: query.featureType,
+                            properties: getProperties(id),
+                            outputFormat: TC.Consts.format.JSON,
+                            styles: {
+                                polygon: {
+                                    fillColor: styles.bind(self, query.styles[query.featureType], &#x27;polygon&#x27;, &#x27;fillColor&#x27;),
+                                    fillOpacity: styles.bind(self, query.styles[query.featureType], &#x27;polygon&#x27;, &#x27;fillOpacity&#x27;),
+                                },
+                                line: {
+                                    strokeColor: styles.bind(self, query.styles[query.featureType], &#x27;line&#x27;, &#x27;strokeColor&#x27;),
+                                    strokeOpacity: styles.bind(self, query.styles[query.featureType], &#x27;line&#x27;, &#x27;strokeOpacity&#x27;),
+                                    strokeWidth: styles.bind(self, query.styles[query.featureType], &#x27;line&#x27;, &#x27;strokeWidth&#x27;)
+                                }
+                            }
+                        };
+
+                        tcMap.addLayer(layerOptions).then(function (layer) {
+                            map.search = {
+                                layer: layer, type: searchType
+                            };
+                            delete tcSearch.allowedSearchTypes[searchType];
+                        });
+                    }
+                };
+            }
+        }
+
+        tcMap.one(TC.Consts.event.SEARCHQUERYEMPTY, function (e) {
+            tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
+                type: TC.Consts.msgType.INFO, duration: 5000
+            });
+
+            if (callback)
+                callback(null);
+        });
+
+        tcMap.one(TC.Consts.event.FEATURESADD, function (e) {
+            if (e.layer &amp;&amp; e.layer.features &amp;&amp; e.layer.features.length &gt; 0)
+                tcMap.zoomToFeatures(e.layer.features);
+
+            map.search = {
+                layer: e.layer, type: searchType
+            };
+
+            if (callback)
+                callback(e.layer.id !== idQuery ? e.layer.id : idQuery);
+        });
+
+        tcSearch.goToResult(id);
+    };
+    /**
+            * &lt;p&gt;Busca y pinta en el mapa la entidad geográfica encontrada correspondiente al identificador establecido.
+            * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.searchFeature.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+            *
+            * @method searchFeature
+            * @async
+            * @param {string} layer Capa de IDENA en la cual buscar.
+            * @param {string} field Campo de la capa de IDENA en el cual buscar.
+            * @param {string} id Identificador de la entidad geográfica por el cual filtrar.
+            * @param {function} [callback] Función a la que se llama tras aplicar el filtro.    
+            * @example
+                  *     &lt;div class=&quot;instructions query&quot;&gt;
+                  *          &lt;div&gt;&lt;label&gt;Capa&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;capa&quot; placeholder=&quot;Nombre capa de IDENA&quot; /&gt; &lt;/div&gt;
+                  *          &lt;div&gt;&lt;label&gt;Campo&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;campo&quot; placeholder=&quot;Nombre campo&quot; /&gt; &lt;/div&gt;
+                  *          &lt;div&gt;&lt;label&gt;Valor&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;valor&quot; placeholder=&quot;Valor a encontrar&quot; /&gt; &lt;/div&gt;
+                  *          &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar&lt;/button&gt;&lt;/div&gt;
+                  *          &lt;div&gt;&lt;button id=&quot;removeBtn&quot;&gt;Eliminar filtro&lt;/button&gt;&lt;/div&gt;
+                  *      &lt;/div&gt;
+                  *      &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+                  *      &lt;script&gt;
+                  *          // Crear mapa.
+                  *            var map = new SITNA.Map(&quot;mapa&quot;);
+                  *          
+                  *            map.loaded(function () {
+                  *                document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);
+                  *                document.getElementById(&quot;removeBtn&quot;).addEventListener(&quot;click&quot;, remove);
+                  *            });
+                  *            
+                  *            var search = function () {
+                  *                var capa = document.getElementById(&quot;capa&quot;).value;
+                  *                capa = capa.trim();
+                  *          
+                  *                var campo = document.getElementById(&quot;campo&quot;).value;
+                  *                campo = campo.trim();
+                  *          
+                  *                var valor = document.getElementById(&quot;valor&quot;).value;
+                  *                valor = valor.trim();
+                  *          
+                  *                map.searchFeature(capa, campo, valor, function (idQuery) {
+                  *                    if (idQuery == null) {
+                  *                        alert(&quot;No se han encontrado resultados en la capa: &quot; + capa + &quot; en el campo: &quot; + campo + &quot; el valor: &quot; + valor + &quot;.&quot;);
+                  *                    }
+                  *                });
+                  *            };
+                  *          
+                  *            // Limpiar el mapa 
+                  *            var remove = function () {
+                  *                map.removeSearch();
+                  *            };
+                  *      &lt;/script&gt;
+      */
+    map.searchFeature = function (layer, field, id, callback) {
+        var idQuery = TC.getUID();
+        var prefix = tcSearch.featurePrefix;
+
+        map.removeSearch();
+
+        layer = (layer || &#x27;&#x27;).trim(); field = (field || &#x27;&#x27;).trim(); id = (id || &#x27;&#x27;).trim();
+        if (layer.length == 0 || field.length == 0 || id.length == 0) {
+            tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
+                type: TC.Consts.msgType.INFO, duration: 5000
+            });
+
+            if (callback)
+                callback(null);
+        } else {
+
+            if (layer.indexOf(&#x27;:&#x27;) &gt; -1) {
+                prefix = layer.split(&#x27;:&#x27;)[0];
+                layer = layer.split(&#x27;:&#x27;)[1];
+            }
+
+            var layerOptions = {
+                id: idQuery,
+                type: SITNA.Consts.layerType.WFS,
+                url: tcSearch.url,
+                version: tcSearch.version,
+                geometryName: &#x27;the_geom&#x27;,
+                featurePrefix: prefix,
+                featureType: layer,
+                maxFeatures: 1,
+                properties: [{
+                    name: field, value: id, type: TC.Consts.comparison.EQUAL_TO
+                }],
+                outputFormat: TC.Consts.format.JSON
+            };
+
+            tcMap.one(TC.Consts.event.FEATURESADD, function (e) {
+                if (e.layer &amp;&amp; e.layer.features &amp;&amp; e.layer.features.length &gt; 0)
+                    tcMap.zoomToFeatures(e.layer.features);
+            });
+
+            tcMap.one(TC.Consts.event.LAYERUPDATE, function (e) {
+                if (e.layer &amp;&amp; e.layer.features &amp;&amp; e.layer.features.length == 0)
+                    tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
+                        type: TC.Consts.msgType.INFO, duration: 5000
+                    });
+
+                if (callback)
+                    callback(e.layer &amp;&amp; e.layer.features &amp;&amp; e.layer.features.length == 0 ? null : idQuery);
+            });
+
+
+            tcMap.addLayer(layerOptions).then(function (layer) {
+                map.search = {
+                    layer: layer, type: SITNA.Consts.mapSearchType.GENERIC
+                };
+            });
+        }
+    };
+    /**
+      * &lt;p&gt;Elimina del mapa la entidad geográfica encontrada. 
+      * &lt;p&gt;Puede consultar también online el &lt;a href=&quot;../../examples/Map.removeSearch.html&quot;&gt;ejemplo 1&lt;/a&gt;.&lt;/p&gt;
+      *
+      * @method removeSearch
+      * @async      
+      * @param {function} [callback] Función a la que se llama tras eliminar la entidad geográfica.    
+      * @example
+      *     &lt;div class=&quot;instructions query&quot;&gt;
+      *          &lt;div&gt;&lt;label&gt;Capa&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;capa&quot; placeholder=&quot;Nombre capa de IDENA&quot; /&gt; &lt;/div&gt;
+      *          &lt;div&gt;&lt;label&gt;Campo&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;campo&quot; placeholder=&quot;Nombre campo&quot; /&gt; &lt;/div&gt;
+      *          &lt;div&gt;&lt;label&gt;Valor&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;valor&quot; placeholder=&quot;Valor a encontrar&quot; /&gt; &lt;/div&gt;
+      *          &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar&lt;/button&gt;&lt;/div&gt;
+      *          &lt;div&gt;&lt;button id=&quot;removeBtn&quot;&gt;Eliminar filtro&lt;/button&gt;&lt;/div&gt;
+      *      &lt;/div&gt;
+      *      &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+      *      &lt;script&gt;
+      *          // Crear mapa.
+      *          var map = new SITNA.Map(&quot;mapa&quot;);
+      *
+      *          map.loaded(function () {
+      *              document.getElementById(&quot;addFilterBtn&quot;).addEventListener(&quot;click&quot;, addFilter);
+      *              document.getElementById(&quot;removeFilterBtn&quot;).addEventListener(&quot;click&quot;, removeFilter);
+      *          });
+      *
+      *          // Establecer como filtro del mapa el municipio Valle de Egüés
+      *          var addFilter = function () {
+      *              var capa = document.getElementById(&quot;capa&quot;).value;
+      *              capa = capa.trim();
+      *
+      *             var campo = document.getElementById(&quot;campo&quot;).value;
+      *              campo = campo.trim();
+      *
+      *              var valor = document.getElementById(&quot;valor&quot;).value;
+      *              valor = valor.trim();
+      *     
+      *              map.setQuery(capa, campo, valor, function (idQuery) {
+      *                  if (idQuery == null) {
+      *                      alert(&quot;No se han encontrado resultados en la capa: &quot; + capa + &quot; en el campo: &quot; + campo + &quot; el valor: &quot; + valor + &quot;.&quot;);
+      *                  }
+      *              });
+      *          };
+      *         
+      *          // Limpiar el mapa del filtro
+      *          var remove = function () {
+      *              map.removeSearch();
+      *          };
+      *      &lt;/script&gt;
+      */
+    map.removeSearch = function (callback) {
+        if (map.search) {
+            if (!tcSearch.availableSearchTypes[map.search.type] || !tcSearch.availableSearchTypes[map.search.type].hasOwnProperty(&#x27;goTo&#x27;)) {
+                tcMap.removeLayer(map.search.layer).then(function () {
+                    map.search = null;
+                });
+            } else {
+                for (var i = 0; i &lt; map.search.layer.features.length; i++) {
+                    map.search.layer.removeFeature(map.search.layer.features[i]);
+                }
+                map.search = null;
+            }
+        }
+
+        if (callback)
+            callback();
+    };
+
+    map.search = null;
 };
 
 
@@ -510,6 +1260,12 @@ SITNA.Consts = TC.Consts;
  * @property layerType
  * @type SITNA.consts.LayerType
  * @final
+ */
+/**
+ * Identificadores de tipo de consulta al mapa.
+ * property mapSearchType
+ * type SITNA.consts.MapSearchType
+ * final
  */
 /**
  * Tipos MIME de utilidad.
@@ -631,6 +1387,43 @@ SITNA.Consts = TC.Consts;
 /**
  * Tipo MIME de imagen JPEG.
  * @property JPEG
+ * @type string
+ * @final
+ */
+
+/*
+ * Colección de tipos de filtros.
+ * No se deberían modificar las propiedades de este objeto.
+ * @class SITNA.consts.MapSearchType
+ * @static
+ */
+/*
+ * Identificador de filtro de consulta de tipo municipio.
+ * @property MUNICIPALITY
+ * @type string
+ * @final
+ */
+/*
+ * Identificador de filtro de consulta de tipo concejo.
+ * @property COUNCIL
+ * @type string
+ * @final
+ */
+/*
+ * Identificador de filtro de consulta de tipo casco urbano.
+ * @property URBAN
+ * @type string
+ * @final
+ */
+/*
+ * Identificador de filtro de consulta de tipo mancomunidad.
+ * @property COMMONWEALTH
+ * @type string
+ * @final
+ */
+/*
+ * Identificador de filtro de consulta de tipo genérico.
+ * @property GENERIC
  * @type string
  * @final
  */
@@ -806,7 +1599,7 @@ SITNA.Cfg = TC.Cfg;
  *         var map = new SITNA.Map(&quot;mapa&quot;);
  *     &lt;/script&gt;
  */
-SITNA.Cfg.layout = TC.apiLocation + &#x27;tc/layout/responsive&#x27;;
+SITNA.Cfg.layout = TC.apiLocation + &#x27;TC/layout/responsive&#x27;;
 /**
  * Opciones de estilo de entidades geográficas.
  * @property styles
@@ -1340,6 +2133,24 @@ SITNA.Cfg.layout = TC.apiLocation + &#x27;tc/layout/responsive&#x27;;
  * @property showPopup
  * @type boolean|undefined
  */
+
+/**
+ * &lt;p&gt;Búsqueda realizada de entidades geográficas en el mapa. Define el tipo de consulta y a qué capa afecta.&lt;/p&gt;
+ * &lt;p&gt;Esta clase no tiene constructor.&lt;/p&gt;
+ * class SITNA.Search
+ * static
+ */
+/**
+ * Tipo de consulta que se está realizando al mapa.
+ * property type
+ * type SITNA.consts.MapSearchType
+ */
+/**
+ * Capa del mapa sobre la que se hace la consulta.
+ * property layer
+ * type SITNA.consts.Layer
+ */
+
     </pre>
 </div>
 

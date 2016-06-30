@@ -273,7 +273,7 @@
                     if (e.layer.isBase && e.layer === self.baseLayer) {
                         var currentExtent = self.getExtent();
                         //if (!currentExtent) {
-                            self.setExtent(self.options.initialExtent);
+                        self.setExtent(self.options.initialExtent);
                         //}
                         self.off(TC.Consts.event.LAYERADD, _handleLayerAdd);
                     }
@@ -295,8 +295,7 @@
                 [
                     TC.url.proj4js
                 ],
-                function ()
-                {
+                function () {
                     TC.loadJSInOrder(
                          !(TC.isLegacy ? window[TC.Consts.OLNS_LEGACY] : window[TC.Consts.OLNS]),
                          [
@@ -399,6 +398,20 @@
         self.one(TC.Consts.event.MAPLOAD, function () {
             self._$div.removeClass(TC.Consts.classes.LOADING);
         });
+
+       /**
+        * Mostramos un mensjae de error genérico.
+        */
+        var attachGenericErrorHandler = function () {
+            if (!TC.isDebug) {
+                window.addEventListener('error', function (e) {
+                    self.toast(TC.Util.getLocaleString(self.options.locale, "genericError"), { type: TC.Consts.msgType.ERROR });
+
+                    // Tell browser to run its own error handler as well   
+                    return false;
+                });
+            }
+        }();
 
         /*
         *  _triggerLayersBeforeUpdateEvent: Triggers map beforeupdate event (jQuery.Event) when any layer starts loading
@@ -1020,18 +1033,17 @@
      * @method getLayerTree
      * @return {TC.LayerTree}
      */
-    TC.Map.prototype.getLayerTree = function ()
-    {
+    TC.Map.prototype.getLayerTree = function () {
 
-        
+
         var _traverse = function (o, func) {
             for (var i in o.children) {
                 if (o.children && o.children.length > 0) {
-                //bajar un nivel en el árbol
+                    //bajar un nivel en el árbol
                     _traverse(o.children[i], func);
-                } 
+                }
 
-                func.apply(this, [o]);                
+                func.apply(this, [o]);
             }
         };
 
@@ -1044,9 +1056,8 @@
         }
         for (var i = 0; i < self.workLayers.length; i++) {
             var tree = self.workLayers[i].getTree();
-           
-            if (tree)
-            {
+
+            if (tree) {
                 result.workLayers.unshift(tree);
             }
         }
@@ -1323,7 +1334,7 @@
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                options.layer.addPoint(coord, options);
+                layer.addPoint(coord, options);
             }
         }
         else {
@@ -1412,13 +1423,11 @@
 
 
 
-    TC.Map.prototype.getBaseLayer = function ()
-    {
+    TC.Map.prototype.getBaseLayer = function () {
         return this.baseLayer || this.baseLayers[0];
     };
 
-    TC.Map.prototype.getResolutions = function ()
-    {
+    TC.Map.prototype.getResolutions = function () {
         return this.getBaseLayer().getResolutions();
     };
 

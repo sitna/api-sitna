@@ -28,7 +28,7 @@
 //////////////////////////////
 
 var sitnaBuild = {
-    version: '1.1.2',
+    version: '1.1.3',
     targetPath: 'build/',
     tcmapTargetName: 'tcmap',
     sitnaTargetName: 'sitna',
@@ -116,7 +116,7 @@ var sitnaBuild = {
         return gulp.src([
                 'TC/**/*.css'
         ])
-            .pipe(cleanCSS())
+            //.pipe(cleanCSS())
             .pipe(gulp.dest(this.fullTargetPath + 'TC/'));
     },
 

@@ -150,7 +150,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                     var feature;
                     if (coords instanceof FeatureConstructor) {
                         feature = coords;
-                    feature.layer = layer;
+                        feature.layer = layer;
                     }
                     else {
                         opts.layer = layer;
@@ -332,7 +332,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
             else if (TC.feature.Circle && feature instanceof TC.feature.Circle) {
                 result = layer.addCircle(feature);
             }
-}
+        }
         return result;
     };
 
@@ -431,4 +431,8 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         return this.wrap.sendTransaction(inserts, updates, deletes);
     };
 
+    layerProto.refresh = function () {
+        var self = this;
+        return this.wrap.reloadSource();
+    };
 })();

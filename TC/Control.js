@@ -18,7 +18,7 @@ TC.Control = function () {
     self._$div.addClass(TC.Control.prototype.CLASS).addClass(self.CLASS);
     self.template = self.options.template || self.template;
 
-    self.render();
+    //self.render();
 };
 
 //TC.inherit(TC.Control, TC.Object);
@@ -224,6 +224,7 @@ TC.Control.prototype.getRenderedHtml = function (templateId, data, callback) {
 TC.Control.prototype.register = function (map) {
     var self = this;
     self.map = map;
+    self.render();
     if (self.options.active) {
         self.activate();
     }

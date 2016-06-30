@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.2</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.3</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -104,7 +104,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l19"><code>sitna.js:19</code></a>
+            Se define en: <a href="../files/sitna.js.html#l33"><code>sitna.js:33</code></a>
         </div>
     
 
@@ -190,7 +190,77 @@ estar dentro de una función de callback pasada como parámetro al método <a hr
                 </li>
             
                 <li class="index-item method">
+                    <a href="#method_getCommonwealths">getCommonwealths</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_getCouncils">getCouncils</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_getMunicipalities">getMunicipalities</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_getUrbanAreas">getUrbanAreas</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
                     <a href="#method_loaded">loaded</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_removeSearch">removeSearch</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_searchCommonwealth">searchCommonwealth</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_searchCouncil">searchCouncil</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_searchFeature">searchFeature</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_searchMunicipality">searchMunicipality</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_searchUrbanArea">searchUrbanArea</a>
 
                     
                     
@@ -280,7 +350,7 @@ estar dentro de una función de callback pasada como parámetro al método <a hr
             
         
         
-        <a href="../files/sitna.js.html#l19"><code>sitna.js:19</code></a>
+        <a href="../files/sitna.js.html#l33"><code>sitna.js:33</code></a>
         
         </p>
 
@@ -634,7 +704,7 @@ Para más información consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#pr
             
         
         
-        <a href="../files/sitna.js.html#l98"><code>sitna.js:98</code></a>
+        <a href="../files/sitna.js.html#l119"><code>sitna.js:119</code></a>
         
         </p>
 
@@ -791,7 +861,7 @@ El tipo de la capa no puede ser <a href="../classes/SITNA.consts.LayerType.html#
             
         
         
-        <a href="../files/sitna.js.html#l182"><code>sitna.js:182</code></a>
+        <a href="../files/sitna.js.html#l203"><code>sitna.js:203</code></a>
         
         </p>
 
@@ -1116,6 +1186,570 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 </div>
 
         
+            <a name="method_getCommonwealths" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>getCommonwealths</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l637"><code>sitna.js:637</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Obtiene los valores (id y label) de las mancomunidades de residuos disponibles en la capa de IDENA. 
+<p>Puede consultar también online el <a href="../../examples/Map.getCommonwealths.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras obtener los datos.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div class=&quot;instructions divSelect&quot;&gt;
+   &lt;div&gt;
+       Mancomunidades de residuos
+       &lt;select id=&quot;commonwealths&quot; onchange=&quot;applyFilter()&quot;&gt;
+           &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+       &lt;/select&gt;
+   &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+   // Crear mapa.
+   var map = new SITNA.Map(&quot;mapa&quot;);
+   map.loaded(function () {
+       // completamos el desplegable
+       map.getCommonwealths(function (data) {
+           $.each(data, function (key, value) {
+               $(&#39;#commonwealths&#39;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+                   .attr(&quot;value&quot;, value.id)
+                   .text(value.label));
+               });
+           });
+       });
+   // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+   function applyFilter() {
+       var id = $(&#39;#commonwealths&#39;).find(&#39;option:selected&#39;).val();
+       if (id == -1)
+           map.removeSearch();
+       else {
+           map.searchCommonwealth(id, function (idQuery) {
+               if (idQuery == null)
+                   alert(&#39;No se han encontrado resultados&#39;);
+           });
+       }
+   };</code></pre>
+<p>  </script></p>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_getCouncils" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>getCouncils</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l684"><code>sitna.js:684</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Obtiene los valores (id y label) de los concejos disponibles en la capa de IDENA. 
+<p>Puede consultar también online el <a href="../../examples/Map.getCouncils.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras obtener los datos.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div class=&quot;instructions divSelect&quot;&gt;
+   &lt;div&gt;
+       Concejos
+       &lt;select id=&quot;council&quot; onchange=&quot;applyFilter()&quot;&gt;
+           &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+       &lt;/select&gt;
+   &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+   // Crear mapa.
+   var map = new SITNA.Map(&quot;mapa&quot;);
+   map.loaded(function () {
+       // completamos el desplegable
+       map.getCouncils(function (data) {
+           $.each(data, function (key, value) {
+               $(&#39;#council&#39;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+                   .attr(&quot;value&quot;, value.id)
+                   .text(value.label));
+               });
+           });
+       });
+   // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+   function applyFilter() {
+       var id = $(&#39;#council&#39;).find(&#39;option:selected&#39;).val();
+       if (id == -1)
+           map.removeSearch();
+       else {
+           map.searchCouncil(id, function (idQuery) {
+               if (idQuery == null)
+                   alert(&#39;No se han encontrado resultados&#39;);
+           });
+       }
+   };</code></pre>
+<p>  </script></p>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_getMunicipalities" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>getMunicipalities</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l543"><code>sitna.js:543</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Obtiene los valores (id y label) de los municipios disponibles en la capa de IDENA. 
+<p>Puede consultar también online el <a href="../../examples/Map.getMunicipalities.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras obtener los datos.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div class=&quot;instructions divSelect&quot;&gt;
+   &lt;div&gt;
+       Municipios
+       &lt;select id=&quot;municipality&quot; onchange=&quot;applyFilter()&quot;&gt;
+           &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+       &lt;/select&gt;
+   &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+   // Crear mapa.
+   var map = new SITNA.Map(&quot;mapa&quot;);
+   map.loaded(function () {
+       // completamos el desplegable
+       map.getMunicipalities(function (data) {
+           $.each(data, function (key, value) {
+               $(&#39;#municipality&#39;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+                    .attr(&quot;value&quot;, value.id)
+                    .text(value.label));
+               });
+           });
+       });
+   // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+   function applyFilter() {
+       var id = $(&#39;#municipality&#39;).find(&#39;option:selected&#39;).val();
+       if (id == -1)
+           map.removeSearch();
+       else {
+           map.searchMunicipality(id, function (idQuery) {
+               if (idQuery == null)
+                   alert(&#39;No se han encontrado resultados&#39;);
+           });
+       }
+   };</code></pre>
+<p>  </script></p>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_getUrbanAreas" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>getUrbanAreas</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l590"><code>sitna.js:590</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Obtiene los valores (id y label) de los cascos urbanos disponibles en la capa de IDENA. 
+<p>Puede consultar también online el <a href="../../examples/Map.getUrbanAreas.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras obtener los datos.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div class=&quot;instructions divSelect&quot;&gt;
+   &lt;div&gt;
+       Cascos urbanos
+       &lt;select id=&quot;urban&quot; onchange=&quot;applyFilter()&quot;&gt;
+           &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+       &lt;/select&gt;
+   &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+   // Crear mapa.
+   var map = new SITNA.Map(&quot;mapa&quot;);
+   map.loaded(function () {
+       // completamos el desplegable
+       map.getUrbanAreas(function (data) {
+           $.each(data, function (key, value) {
+               $(&#39;#urban&#39;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
+                    .attr(&quot;value&quot;, value.id)
+                    .text(value.label));
+               });
+           });
+       });
+   // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+   function applyFilter() {
+       var id = $(&#39;#urban&#39;).find(&#39;option:selected&#39;).val();
+       if (id == -1)
+           map.removeSearch();
+       else {
+           map.searchUrbanArea(id, function (idQuery) {
+               if (idQuery == null)
+                   alert(&#39;No se han encontrado resultados&#39;);
+           });
+       }
+   };</code></pre>
+<p>  </script></p>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
             <a name="method_loaded" class="anchor-link"></a>
 <div class="method item">
     <h3 class="name"><code>loaded</code>
@@ -1163,7 +1797,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l365"><code>sitna.js:365</code></a>
+        <a href="../files/sitna.js.html#l386"><code>sitna.js:386</code></a>
         
         </p>
 
@@ -1225,6 +1859,954 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 </div>
 
         
+            <a name="method_removeSearch" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>removeSearch</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1072"><code>sitna.js:1072</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Elimina del mapa la entidad geográfica encontrada. 
+<p>Puede consultar también online el <a href="../../examples/Map.removeSearch.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras eliminar la entidad geográfica.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div class=&quot;instructions query&quot;&gt;
+     &lt;div&gt;&lt;label&gt;Capa&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;capa&quot; placeholder=&quot;Nombre capa de IDENA&quot; /&gt; &lt;/div&gt;
+     &lt;div&gt;&lt;label&gt;Campo&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;campo&quot; placeholder=&quot;Nombre campo&quot; /&gt; &lt;/div&gt;
+     &lt;div&gt;&lt;label&gt;Valor&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;valor&quot; placeholder=&quot;Valor a encontrar&quot; /&gt; &lt;/div&gt;
+     &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar&lt;/button&gt;&lt;/div&gt;
+     &lt;div&gt;&lt;button id=&quot;removeBtn&quot;&gt;Eliminar filtro&lt;/button&gt;&lt;/div&gt;
+ &lt;/div&gt;
+ &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+ &lt;script&gt;
+     // Crear mapa.
+     var map = new SITNA.Map(&quot;mapa&quot;);
+
+     map.loaded(function () {
+         document.getElementById(&quot;addFilterBtn&quot;).addEventListener(&quot;click&quot;, addFilter);
+         document.getElementById(&quot;removeFilterBtn&quot;).addEventListener(&quot;click&quot;, removeFilter);
+     });
+
+     // Establecer como filtro del mapa el municipio Valle de Egüés
+     var addFilter = function () {
+         var capa = document.getElementById(&quot;capa&quot;).value;
+         capa = capa.trim();
+
+        var campo = document.getElementById(&quot;campo&quot;).value;
+         campo = campo.trim();
+
+         var valor = document.getElementById(&quot;valor&quot;).value;
+         valor = valor.trim();
+
+         map.setQuery(capa, campo, valor, function (idQuery) {
+             if (idQuery == null) {
+                 alert(&quot;No se han encontrado resultados en la capa: &quot; + capa + &quot; en el campo: &quot; + campo + &quot; el valor: &quot; + valor + &quot;.&quot;);
+             }
+         });
+     };
+
+     // Limpiar el mapa del filtro
+     var remove = function () {
+         map.removeSearch();
+     };
+ &lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_searchCommonwealth" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>searchCommonwealth</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>id</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l731"><code>sitna.js:731</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Busca la mancomunidad de residuos y pinta en el mapa la entidad geográfica encontrada que corresponda al identificador indicado.
+<p>Puede consultar también online el <a href="../../examples/Map.searchCommonwealth.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">id</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Identificador de la entidad geográfica a pintar.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras aplicar el filtro.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>      &lt;div class=&quot;instructions searchCommonwealth&quot;&gt;        
+         &lt;div&gt;&lt;button id=&quot;searchPamplonaBtn&quot;&gt;Buscar Mancomunidad de la Comarca de Pamplona&lt;/button&gt;&lt;/div&gt;        
+      &lt;/div&gt;
+      &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+      &lt;script&gt;
+          // Crear mapa.
+          var map = new SITNA.Map(&quot;mapa&quot;);
+          map.loaded(function () {
+              document.getElementById(&quot;searchPamplonaBtn&quot;).addEventListener(&quot;click&quot;, search);
+          });
+
+          var search = function () {
+              map.removeSearch();
+              map.searchCommonwealth(&quot;8&quot;, function (idQuery) {
+                  if (idQuery == null) {
+                      alert(&quot;No se ha encontrado la mancomunidad con código 8.&quot;);
+                  }
+              });
+          };
+      &lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_searchCouncil" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>searchCouncil</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>id</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l765"><code>sitna.js:765</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Busca el concejo que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
+<p>Puede consultar también online el <a href="../../examples/Map.searchCouncil.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">id</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Identificador de la entidad geográfica a pintar.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras aplicar el filtro.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>       &lt;div class=&quot;instructions search&quot;&gt;        
+          &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar concejo Esquíroz (Galar)&lt;/button&gt;&lt;/div&gt;        
+       &lt;/div&gt;
+       &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+       &lt;script&gt;
+          // Crear mapa.
+          var map = new SITNA.Map(&quot;mapa&quot;);
+          map.loaded(function () {
+              document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);
+          });
+
+          var search = function () {
+              map.removeSearch();
+              map.searchCouncil(&quot;109#5&quot;, function (idQuery) {
+                  if (idQuery == null) {
+                          alert(&quot;No se ha encontrado el concejo con código 109#5.&quot;);
+                  }
+              });
+          };        
+       &lt;/script&gt;        </code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_searchFeature" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>searchFeature</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>layer</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code>field</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code>id</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l962"><code>sitna.js:962</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Busca y pinta en el mapa la entidad geográfica encontrada correspondiente al identificador establecido.
+<p>Puede consultar también online el <a href="../../examples/Map.searchFeature.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">layer</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Capa de IDENA en la cual buscar.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name">field</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Campo de la capa de IDENA en el cual buscar.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name">id</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Identificador de la entidad geográfica por el cual filtrar.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras aplicar el filtro.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div class=&quot;instructions query&quot;&gt;
+     &lt;div&gt;&lt;label&gt;Capa&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;capa&quot; placeholder=&quot;Nombre capa de IDENA&quot; /&gt; &lt;/div&gt;
+     &lt;div&gt;&lt;label&gt;Campo&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;campo&quot; placeholder=&quot;Nombre campo&quot; /&gt; &lt;/div&gt;
+     &lt;div&gt;&lt;label&gt;Valor&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;valor&quot; placeholder=&quot;Valor a encontrar&quot; /&gt; &lt;/div&gt;
+     &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar&lt;/button&gt;&lt;/div&gt;
+     &lt;div&gt;&lt;button id=&quot;removeBtn&quot;&gt;Eliminar filtro&lt;/button&gt;&lt;/div&gt;
+ &lt;/div&gt;
+ &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+ &lt;script&gt;
+     // Crear mapa.
+       var map = new SITNA.Map(&quot;mapa&quot;);
+
+       map.loaded(function () {
+           document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);
+           document.getElementById(&quot;removeBtn&quot;).addEventListener(&quot;click&quot;, remove);
+       });
+
+       var search = function () {
+           var capa = document.getElementById(&quot;capa&quot;).value;
+           capa = capa.trim();
+
+           var campo = document.getElementById(&quot;campo&quot;).value;
+           campo = campo.trim();
+
+           var valor = document.getElementById(&quot;valor&quot;).value;
+           valor = valor.trim();
+
+           map.searchFeature(capa, campo, valor, function (idQuery) {
+               if (idQuery == null) {
+                   alert(&quot;No se han encontrado resultados en la capa: &quot; + capa + &quot; en el campo: &quot; + campo + &quot; el valor: &quot; + valor + &quot;.&quot;);
+               }
+           });
+       };
+
+       // Limpiar el mapa 
+       var remove = function () {
+           map.removeSearch();
+       };
+ &lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_searchMunicipality" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>searchMunicipality</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>id</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l830"><code>sitna.js:830</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Busca el municipio que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
+<p>Puede consultar también online el <a href="../../examples/Map.searchMunicipality.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">id</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Identificador de la entidad geográfica a pintar.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras aplicar el filtro.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>       &lt;div class=&quot;instructions search&quot;&gt;
+          &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar Arbizu&lt;/button&gt;&lt;/div&gt;
+       &lt;/div&gt;
+       &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+       &lt;script&gt;
+          // Crear mapa.
+          var map = new SITNA.Map(&quot;mapa&quot;);
+          map.loaded(function () {
+              document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);
+          });
+
+          var search = function () {
+               map.removeSearch();
+               map.searchCouncil(&quot;27&quot;, function (idQuery) {
+                  if (idQuery == null) {
+                      alert(&quot;No se ha encontrado el municipio con código 27.&quot;);
+                  }
+               });
+          };
+       &lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
+            <a name="method_searchUrbanArea" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>searchUrbanArea</code>
+
+    
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+            
+                <li class="arg">
+                    
+                        <code>id</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code class="optional">[callback]</code>
+                    
+                </li>
+            
+            </ul><span class="paren">)</span>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <span class="flag async">async</span>
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l798"><code>sitna.js:798</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Busca el casco urbano que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
+<p>Puede consultar también online el <a href="../../examples/Map.searchUrbanArea.html">ejemplo 1</a>.</p>
+        </div>
+
+        
+            <div class="params">
+                <h4>Par&aacute;metros:</h4>
+
+                <ul class="params-list">
+                
+                    <li class="param">
+                        
+                            <code class="param-name">id</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Identificador de la entidad geográfica a pintar.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                    <li class="param">
+                        
+                            <code class="param-name optional">[callback]</code>
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function" class="crosslink external" target="_blank">Function</a></span>
+                            <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                        
+
+                        
+
+                        <div class="param-description">
+                            <p>Función a la que se llama tras aplicar el filtro.</p>
+
+                        </div>
+
+                        
+                    </li>
+                
+                </ul>
+            </div>
+        
+
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>      &lt;div class=&quot;instructions search&quot;&gt;
+      &lt;div&gt;&lt;button id=&quot;searchBtn&quot;&gt;Buscar casco urbano de Arbizu&lt;/button&gt;&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+      &lt;script&gt;
+          // Crear mapa.
+          var map = new SITNA.Map(&quot;mapa&quot;);
+          map.loaded(function () {
+              document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);
+          });
+          var search = function () {
+              map.removeSearch();
+              map.searchUrbanArea(&quot;27&quot;, function (idQuery) {
+                  if (idQuery == null) {
+                      alert(&quot;No se ha encontrado el casco urbano con código 27.&quot;);
+                  }
+              });
+          };
+      &lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
             <a name="method_setBaseLayer" class="anchor-link"></a>
 <div class="method item">
     <h3 class="name"><code>setBaseLayer</code>
@@ -1278,7 +2860,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l142"><code>sitna.js:142</code></a>
+        <a href="../files/sitna.js.html#l163"><code>sitna.js:163</code></a>
         
         </p>
 
@@ -1426,7 +3008,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l319"><code>sitna.js:319</code></a>
+        <a href="../files/sitna.js.html#l340"><code>sitna.js:340</code></a>
         
         </p>
 

@@ -91,12 +91,6 @@
     ctlProto.register = function (map) {
         var self = this;
 
-        TC.loadJS(
-            !window.google || !google.maps,
-            TC.proxify(TC.Consts.url.GOOGLEMAPS),
-            function() {}
-        );
-
         if (!self._$viewDiv) {
             self.viewDiv = TC.Util.getDiv(self.options.viewDiv);
             self._$viewDiv = $(self.viewDiv)
@@ -284,88 +278,96 @@
             }
         };
 
-        setMarker();
+        TC.loadJS(
+            !window.google || !google.maps,
+                TC.Consts.url.GOOGLEMAPS,
+                function () {
 
-        var $view = self._$viewDiv;
-        var lonLat = TC.Util.reproject(coords, self.map.crs, geogCrs);
-        var svDone = $view.hasClass(TC.Consts.classes.VISIBLE);
-        var transitionEnd = 'transitionend.tc';
-        $view.off(transitionEnd).on(transitionEnd, function (e) {
-            if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
-                if (!svDone) {
-                    svDone = true;
-                    google.maps.event.trigger(self._sv, 'resize');
-                    $mapDiv.addClass(TC.Consts.classes.COLLAPSED).trigger('resize');
-                }
-            }
-        });
 
-        var svOptions = {
-            position: new google.maps.LatLng(lonLat[1], lonLat[0]),
-            pov: {
-                heading: 0,
-                pitch: 0
-            },
-            zoom: 1,
-            zoomControlOptions: {
-                position: google.maps.ControlPosition.LEFT_TOP
-            },
-            panControlOptions: {
-                position: google.maps.ControlPosition.LEFT_TOP
-            }
-        };
+                    setMarker();
 
-        if (!self._sv) {
-            self._sv = new google.maps.StreetViewPanorama($view[0], svOptions);
-            google.maps.event.addListener(self._sv, 'position_changed', function () {
-                setMarker(self._sv, $view.hasClass(TC.Consts.classes.VISIBLE));
-            });
-            google.maps.event.addListener(self._sv, 'pov_changed', function () {
-                setMarker(self._sv);
-            });
-            google.maps.event.addListener(self._sv, 'status_changed', function () {
-                var svStatus = self._sv.getStatus();
-                if (li) {
-                    li.removeWait(waitId);
-                }
-                if (svStatus === google.maps.StreetViewStatus.OK) {
-                    if (!$view.hasClass(TC.Consts.classes.VISIBLE)) {
-                        self._sv.setVisible(true);
-                        setMarker(self._sv, true);
-
-                        //apagar lo que sea que esté encendido (probablemente featInfo)
-                        //al cerrar con el aspa, volverá a detonarse StreetView.deactivate()
-                        //que, a su vez, restaurará el control anterior (FeatureInfo)
-                        if (self.map.activeControl) {
-                            self._previousActiveControl = self.map.activeControl;
-                            self.map.activeControl.deactivate(true);
+                    var $view = self._$viewDiv;
+                    var lonLat = TC.Util.reproject(coords, self.map.crs, geogCrs);
+                    var svDone = $view.hasClass(TC.Consts.classes.VISIBLE);
+                    var transitionEnd = 'transitionend.tc';
+                    $view.off(transitionEnd).on(transitionEnd, function (e) {
+                        if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
+                            if (!svDone) {
+                                svDone = true;
+                                google.maps.event.trigger(self._sv, 'resize');
+                                $mapDiv.addClass(TC.Consts.classes.COLLAPSED).trigger('resize');
+                            }
                         }
+                    });
 
-                        $view.css('left', point[0] + 'px').css('top', point[1] + 'px');
-                        setTimeout(function () {
-                            $view.css('left', '').css('top', '');
-                            // triggers transitionend
-                            $view.removeClass(TC.Consts.classes.HIDDEN).addClass(TC.Consts.classes.VISIBLE);
-                        }, 200);
-                    }
-                }
-                else {
-                    TC.alert(svStatus === google.maps.StreetViewStatus.ZERO_RESULTS ? self.getLocaleString('noStreetView') : self.getLocaleString('streetViewUnknownError'));
-                    if (startLonLat) {
-                        self.callback(startLonLat, startPixel);
-                        startLonLat = null;
-                        startPixel = null;
+                    var svOptions = {
+                        position: new google.maps.LatLng(lonLat[1], lonLat[0]),
+                        pov: {
+                            heading: 0,
+                            pitch: 0
+                        },
+                        zoom: 1,
+                        zoomControlOptions: {
+                            position: google.maps.ControlPosition.LEFT_TOP
+                        },
+                        panControlOptions: {
+                            position: google.maps.ControlPosition.LEFT_TOP
+                        }
+                    };
+
+                    if (!self._sv) {
+                        self._sv = new google.maps.StreetViewPanorama($view[0], svOptions);
+                        google.maps.event.addListener(self._sv, 'position_changed', function () {
+                            setMarker(self._sv, $view.hasClass(TC.Consts.classes.VISIBLE));
+                        });
+                        google.maps.event.addListener(self._sv, 'pov_changed', function () {
+                            setMarker(self._sv);
+                        });
+                        google.maps.event.addListener(self._sv, 'status_changed', function () {
+                            var svStatus = self._sv.getStatus();
+                            if (li) {
+                                li.removeWait(waitId);
+                            }
+                            if (svStatus === google.maps.StreetViewStatus.OK) {
+                                if (!$view.hasClass(TC.Consts.classes.VISIBLE)) {
+                                    self._sv.setVisible(true);
+                                    setMarker(self._sv, true);
+
+                                    //apagar lo que sea que esté encendido (probablemente featInfo)
+                                    //al cerrar con el aspa, volverá a detonarse StreetView.deactivate()
+                                    //que, a su vez, restaurará el control anterior (FeatureInfo)
+                                    if (self.map.activeControl) {
+                                        self._previousActiveControl = self.map.activeControl;
+                                        self.map.activeControl.deactivate(true);
+                                    }
+
+                                    $view.css('left', point[0] + 'px').css('top', point[1] + 'px');
+                                    setTimeout(function () {
+                                        $view.css('left', '').css('top', '');
+                                        // triggers transitionend
+                                        $view.removeClass(TC.Consts.classes.HIDDEN).addClass(TC.Consts.classes.VISIBLE);
+                                    }, 200);
+                                }
+                            }
+                            else {
+                                TC.alert(svStatus === google.maps.StreetViewStatus.ZERO_RESULTS ? self.getLocaleString('noStreetView') : self.getLocaleString('streetViewUnknownError'));
+                                if (startLonLat) {
+                                    self.callback(startLonLat, startPixel);
+                                    startLonLat = null;
+                                    startPixel = null;
+                                }
+                                else {
+                                    self.layer.wrap.setDraggable(false);
+                                    reset(self);
+                                }
+                            }
+                        });
                     }
                     else {
-                        self.layer.wrap.setDraggable(false);
-                        reset(self);
+                        self._sv.setOptions(svOptions);
                     }
+                    setMarker(self._sv);
                 }
-            });
-        }
-        else {
-            self._sv.setOptions(svOptions);
-        }
-        setMarker(self._sv);
+        );
     };
 })();

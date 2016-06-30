@@ -239,9 +239,9 @@ button, input {
     input[type="search"] {
         -webkit-border: 0px;
         -webkit-appearance: none;
-        -moz-box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        box-sizing: content-box;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
     }
     /*input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}*/
 
@@ -766,7 +766,9 @@ html, body {
     }
 
 .ol-overviewmap-box {
-    border: 2px outset #f00;
+    border-width: 2px;
+    border-style: solid outset outset solid;
+    border-color: #f00;
     cursor: move;
 }
 
@@ -1085,10 +1087,10 @@ ul.tc-ctl-bms-branch, ul.tc-ctl-cbuild-bl-list {
     max-width: 6em;
 }
 
-    .tc-ctl-cbuild-off-panel span, .tc-ctl-cbuild-off-panel a {
-        display: inline-block;
-        text-align: center;
-    }
+.tc-ctl-cbuild-off-panel span, .tc-ctl-cbuild-off-panel a {
+    display: inline-block;
+    text-align: center;
+}
 
 .tc-ctl-bms-node label span, .tc-ctl-cbuild-bl-node label span {
     position: absolute;
@@ -1338,6 +1340,8 @@ li.tc-ctl-lcat-node {
                 color: #c00;
             }
 
+
+
                 li.tc-ctl-lcat-node > span.tc-selectable:hover:after, div.tc-ctl-lcat-search > ul > li:hover:after {
                     padding: 0;
                     top: -1.8em;
@@ -1353,6 +1357,11 @@ li.tc-ctl-lcat-node {
                     width: 12em;
                     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
                 }
+
+div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
+    content: none;
+    cursor: default;
+}
 
 div.tc-ctl-lcat-search > ul > li:hover:after {
     top: -1.4em;
@@ -1675,7 +1684,6 @@ div.tc-ctl-lcat-legend {
 
         .tc-ctl-ltoc h2 button.tc-ctl-lcat-btn-del-all:after, .tc-ctl-ltoc .tc-ctl-ltoc-del-all:after {
             content: '\f1f8';
-            color: #777;
             font-family: 'FontAwesome';
         }
 
@@ -1684,13 +1692,12 @@ div.tc-ctl-lcat-legend {
     width: 10%;
     height: 1em;
     top: 50%;
-    margin-top: -0.5em;
+    margin-top: -0.3em;
     right: 0;
-    color: #999;
+    color: #666;
     border-radius: 0.3em;
     text-align: center;
     vertical-align: middle;
-    font-size: 1.6em;
 }
 
 .tc-ctl-ltoc .tc-ctl-ltoc-dd {
@@ -1941,7 +1948,6 @@ div.tc-ctl-lcat-legend {
 .tc-ctl-search-btn {
     display: inline-block;
     background-color: #c00;
-    border: 1px solid #c00;
     margin-left: 0;
     border-top-right-radius: 0.3em;
     border-bottom-right-radius: 0.3em;
@@ -1975,6 +1981,26 @@ div.tc-ctl-lcat-legend {
         color: #333;
         text-decoration: none;
     }
+
+    .tc-ctl-search-list a b {
+        color: #971414;
+    }
+
+    .tc-ctl-search-list > li > span.header {
+        font-weight: bold;
+        font-size: 90%;
+    }
+
+    .tc-ctl-search-list > li > span.header-color {
+        float: right;
+        padding: 0em 1em;
+    }
+
+        .tc-ctl-search-list > li > span.header-color:after {
+            font-family: 'FontAwesome';
+            content: '\f0c8';
+        }
+
 
 .tc-ctl-meas-select, .tc-ctl-share-select, .tc-ctl-geolocation-select {
     padding-top: 0.5em;
@@ -2569,6 +2595,10 @@ a:hover.olButton {
     background: url(img/pegman.png) no-repeat transparent center;
 }
 
+#map > .tc-ctl-draw {
+    display: none;
+}
+
 .tc-ctl-sv-view {
     position: absolute;
     width: 100%;
@@ -2645,6 +2675,16 @@ a:hover.olButton {
         box-sizing: border-box;
     }
 
+    .tc-ctl-xwms-cnt > button {
+        height: 2em;
+    }
+
+        .tc-ctl-xwms-cnt > button:before {
+            font-family: 'FontAwesome';
+            content: '\f067';
+            margin-right: 0.5em;
+        }
+
 .tc-ctl-xwms select {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
@@ -2709,8 +2749,11 @@ div.tc-ctl-share-url-box {
     background-color: #eee;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    width: 73%;
+    width: 74%;
     height: 2em;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 .tc-ctl-share .tc-ctl-share-url-box .tc-button {
@@ -2721,9 +2764,6 @@ div.tc-ctl-share-url-box {
     font-size: 1em;
     border-left: 0;
     padding: 0;
-    -moz-box-sizing: content-box;
-    -webkit-box-sizing: content-box;
-    box-sizing: content-box;
 }
 
 .tc-ctl-share div.ga-share-icons {
@@ -2738,12 +2778,13 @@ div.tc-ctl-share-url-box {
 .tc-ctl-share .ga-share-icon {
     display: inline-block;
     padding: 0 6px;
-    color: #777;
+    color: #666;
     font-size: 21px;
     font-family: FontAwesome;
     font-weight: 400;
     text-decoration: inherit;
     -webkit-font-smoothing: antialiased;
+    outline: none;
 }
 
     .tc-ctl-share .ga-share-icon i::before {
@@ -2751,7 +2792,6 @@ div.tc-ctl-share-url-box {
     }
 
 .tc-ctl-share .ga-share-icons a:visited, .ga-share-icons a:focus {
-    color: #777;
     text-decoration: none;
 }
 
@@ -2818,13 +2858,15 @@ div.tc-ctl-printMap-txt label {
     line-height: 2em;
 }
 
-div.tc-ctl-printMap span.tc-ctl-printMap-btn {
+div.tc-ctl-printMap .tc-ctl-printMap-btn {
     float: right;
+    height: 2em;
 }
 
-    div.tc-ctl-printMap span.tc-ctl-printMap-btn:before {
+    div.tc-ctl-printMap .tc-ctl-printMap-btn:before {
         font-family: 'FontAwesome';
         content: '\f02f';
+        margin-right: 0.5em;
     }
 
 div.tc-ctl-download h2 {
@@ -2846,13 +2888,13 @@ div.tc-ctl-download-cnt {
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
     }
-/*div.tc-ctl-download-help { height:0;}*/
+
 .tc-ctl-download-help {
     color: #AAA;
     cursor: help;
     float: right;
     position: absolute;
-    right: 20%;
+    right: 7.5em;
     line-height: 1.55em;
 }
 
@@ -2860,13 +2902,15 @@ div.tc-ctl-download-cnt {
     display: none;
 }
 
-div.tc-ctl-download span.tc-ctl-download-btn {
+div.tc-ctl-download .tc-ctl-download-btn {
     float: right;
+    height: 2em;
 }
 
-    div.tc-ctl-download span.tc-ctl-download-btn:before {
+    div.tc-ctl-download .tc-ctl-download-btn:before {
         font-family: 'FontAwesome';
         content: "\f019";
+        margin-right: 0.5em;
     }
 
 div.tc-ctl-download .tc-alert {
@@ -2880,7 +2924,10 @@ div.tc-ctl-download .tc-alert {
     }
 
 .tc-ctl-download-div i.icon-question-sign, i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
-    font-size: 17px;
+    font-family: FontAwesome;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1.2em;
 }
 
 .tc-ctl-download-select {
@@ -2969,6 +3016,11 @@ div.tc-ctl-download #download-help li li {
     background-color: #EEE;
 }
 
+.tc-ctl-lcat-search li.tc-ctl-lcat-no-results:hover {
+    cursor: default;
+    background-color: inherit;
+}
+
 .tc-ctl-lcat-search li h5 {
     margin: 0;
     display: inline;
@@ -2981,6 +3033,10 @@ div.tc-ctl-download #download-help li li {
     .tc-ctl-lcat-search li h5:hover {
         color: #c00;
     }
+
+.tc-ctl-lcat-search li.tc-ctl-lcat-no-results h5:hover {
+    color: #333;
+}
 
 .tc-ctl-lcat-search ul button {
     border: none;
@@ -3071,16 +3127,20 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         position: relative;
         float: left;
         width: 97%;
-        padding: 0.5em 0.5em;
+        padding: 0.2em 0.5em;
         border-bottom: 0.1em solid rgba(0,0,0,0.1);
         overflow: hidden;
         line-height: 2em;
+        -moz-user-select: all;
+        -ms-user-select: element;
+        -webkit-user-select: text;
+        user-select: all;
     }
 
         .tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-active {
             border-top: 0.1em solid rgba(0,0,0,0.1);
             border-bottom: 0.1em solid rgba(0,0,0,0.1);
-            background: repeating-linear-gradient( -45deg, rgba(224, 224, 224, 0.3), rgba(255, 217, 217, 0.7) 1px, #fff 0px, #fff 5px );
+            background: rgba(102, 0, 0, 0.1);
         }
 
         .tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-disabled {
@@ -3118,54 +3178,72 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
                 color: #c00;
             }
 
-            .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-view {
+            .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-edit {
+                right: 5em;
+            }
+
+                .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-edit:before {
+                    content: '\f040';
+                }
+
+            .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-view {
                 right: 3em;
             }
 
-                .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-view:before {
+                .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-view:before {
                     content: '\f06e';
                 }
 
-            .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-del {
+            .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-delete {
                 right: 1em;
             }
 
-                .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-ctl-cbuild-btn-del:before {
+                .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-delete:before {
                     content: '\f1f8';
                 }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-btn-new, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel {
+.tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-save {
+    position: relative;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-save:before {
+    font-family: FontAwesome;
+    content: "\f0c7";
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-cancel:before {
+    font-family: FontAwesome;
+    content: "\f00d";
+}
+
+
+.tc-ctl-cbuild .tc-ctl-cbuild-btn-new, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl {
     position: relative;
     float: right;
     margin-bottom: 1em;
-    color: transparent;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: clip;
-    width: 4em;
     height: 2em;
-    padding: 0 0;
 }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel {
+.tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw {
     background-color: #630101;
     border-color: #630101;
 }
 
-    .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel:before {
+    .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
         font-family: 'FontAwesome';
         color: #fff;
-        width: 4em;
         height: 2em;
-        line-height: 2em;
-        display: block;
+        margin-right: 0.5em;
     }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before {
     content: '\f067';
 }
 
-.tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel:before {
+.tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
     content: '\f00d';
 }
 
@@ -3204,6 +3282,7 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     height: 0.6em;
     border: 0.1em solid #999;
     padding: 0.1em;
+    margin-bottom: 0.5em;
     border-radius: 0.3em;
 }
 
@@ -3233,23 +3312,11 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     padding: 0;
 }
 
-img#tc-ctl-geolocation-track-marker {
-    height: 20px;
-    width: 20px;
-    visibility: visible;
-}
-
-img#tc-ctl-geolocation-track-elevation-marker {
-    height: 20px;
-    width: 20px;
-    visibility: visible;
-}
-
 .tc-ctl-geolocation-content {
     /*padding: 0.8em 0.5em 0 0.5em;*/
 }
 
-.tc-ctl-geolocation-icon-cross {
+.tc-ctl-coords-icon-cross {
     left: 50%;
     top: 50%;
     height: 15px;
@@ -3266,30 +3333,66 @@ img#tc-ctl-geolocation-track-elevation-marker {
     background-image: url(img/track-marker-icon-end.png);
 }
 
-.tc-ctl-geolocation-showCoords, .tc-ctl-geolocation-locate {
+.tc-ctl-coords-showCoords, .tc-ctl-geolocation-locate {
     float: right;
 }
 
-    .tc-ctl-geolocation-showCoords button {
-        margin-left: 0.3em;
+.tc-ctl-coords-showCoords {
+    position: absolute;
+    left: 0.7em;
+    top: 27.2em;
+    width: 2em;
+    height: 2em;
+    margin-top: 0.3em;
+    z-index: 10002;
+}
+
+    .tc-ctl-coords-showCoords button {
+        border-radius: 0.2em;
+        border: 1px solid #000;
+        background-color: #000;
+        width: 100%;
+        height: 100%;
+        padding: 0;
     }
+
+        .tc-ctl-coords-showCoords button.tc-ctl-coords-active {
+            border-color: #630101;
+            background-color: #630101;
+        }
 
 .tc-ctl-geolocation-locate {
     margin-left: 0.5em;
 }
 
-    .tc-ctl-geolocation-locate button:before {
-        font-family: FontAwesome;
-        content: "\f124";
+    .tc-ctl-geolocation-locate label {
+        vertical-align: bottom;
+        line-height: 2em;
+        margin-right: 0.3em;
     }
 
-.tc-ctl-geolocation-showCoords button:before {
+    .tc-ctl-geolocation-locate button {
+        height: 2em;
+        width: 13em;
+    }
+
+    .tc-ctl-geolocation-locate .tc-ctl-geolocation-locate-hide {
+        background-color: #630101;
+        border-color: #630101;
+    }
+
+        .tc-ctl-geolocation-locate button:before {
+            font-family: FontAwesome;
+            content: "\f041";
+            margin-right: 0.5em;
+        }
+
+.tc-ctl-coords-showCoords button:before {
     font-family: FontAwesome;
-    content: "\f047";
+    content: "\f05b";
 }
 
 .tc-ctl-geolocation-track {
-    overflow: auto;
     max-height: 28em;
     clear: both;
 }
@@ -3299,6 +3402,14 @@ img#tc-ctl-geolocation-track-elevation-marker {
     margin: 6px 0 0 0;
 }
 
+.tc-ctl-geolocation-track-available {
+    margin-top: -15px;
+}
+
+.tc-ctl-geolocation.tc-collapsed i.tc-ctl-geolocation-track-search-icon,.tc-ctl-cbuild.tc-collapsed i.tc-ctl-cbuild-map-search-icon {
+    display: none;
+}
+
 .tc-ctl-geolocation-track-ui {
     text-align: right;
 }
@@ -3306,10 +3417,16 @@ img#tc-ctl-geolocation-track-elevation-marker {
     .tc-ctl-geolocation-track-ui button {
         background-image: url(img/geo-track.png);
         background-repeat: no-repeat;
-        background-position: -0.2em 0em;
-        width: 3.91em;
-        height: 1.955em;
+        background-position: 1.2em 0.2em;
+        height: 2em;
+        padding-left: 2.5em;
+        width: 9em;
     }
+
+        .tc-ctl-geolocation-track-ui button.tc-ctl-geolocation-track-ui-deactivate {
+            background-color: #630101;
+            border-color: #630101;
+        }
 
 .tc-ctl-geolocation-info-track {
     position: absolute;
@@ -3349,12 +3466,7 @@ label.tc-ctl-geolocation-track-available-label {
 }
 
     .tc-ctl-geolocation-track-mng input[type="file"] {
-        width: 0.1px;
-        height: 0.1px;
-        opacity: 0;
-        overflow: hidden;
-        position: absolute;
-        z-index: -1;
+        display: none;
     }
 
         .tc-ctl-geolocation-track-mng input[type="file"] + label {
@@ -3365,6 +3477,10 @@ label.tc-ctl-geolocation-track-available-label {
             border-radius: 0.3em;
             background-color: #C00;
             float: right;
+            height: 2em;
+            padding: 0 18px;
+            box-sizing: border-box;
+            line-height: 2em;
         }
 
             .tc-ctl-geolocation-track-mng input[type="file"] + label:before {
@@ -3395,22 +3511,19 @@ label.tc-ctl-geolocation-track-available-label {
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        height: 2em;
+        -moz-user-select: all;
+        -ms-user-select: element;
+        -webkit-user-select: text;
+        user-select: all;
     }
 
     .tc-ctl-geolocation-track-available-lst > li > button {
-        padding-right: 0.5em;
-        text-decoration: none;
-        height: 2em;
         background-color: transparent;
-        color: transparent;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: clip;
-        font-size: 1em;
         border: 0;
         padding: 0;
-        width: 1.4em;
-        margin-right: 4px;
+        margin-right: 2px;
+        outline: none;
     }
 
         .tc-ctl-geolocation-track-available-lst > li > button:before {
@@ -3418,8 +3531,6 @@ label.tc-ctl-geolocation-track-available-label {
             position: relative;
             color: #666;
             font-family: 'FontAwesome';
-            height: 2em;
-            line-height: 2em;
             padding: 0 0.3em;
         }
 
@@ -3427,7 +3538,7 @@ label.tc-ctl-geolocation-track-available-label {
             color: #ccc;
         }
 
-        .tc-ctl-geolocation-track-available-lst > li > button#simulate:before {
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-simulate:before {
             font-family: FontAwesome;
             content: "\f008";
         }
@@ -3437,43 +3548,43 @@ label.tc-ctl-geolocation-track-available-label {
             content: "\f1fe";
         }
 
-        .tc-ctl-geolocation-track-available-lst > li > button#delete {
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete {
             margin-left: -8px;
         }
 
-            .tc-ctl-geolocation-track-available-lst > li > button#delete:before {
+            .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete:before {
                 font-family: FontAwesome;
                 content: "\f1f8";
             }
 
-        .tc-ctl-geolocation-track-available-lst > li > button#edit:before {
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-edit:before {
             font-family: FontAwesome;
             content: "\f040";
         }
 
-        .tc-ctl-geolocation-track-available-lst > li > button#save:before {
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-save:before {
             font-family: FontAwesome;
             content: "\f0c7";
         }
 
-        .tc-ctl-geolocation-track-available-lst > li > button#cancel:before {
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-cancel:before {
             font-family: FontAwesome;
             content: "\f00d";
         }
 
-        .tc-ctl-geolocation-track-available-lst > li > button#exportGPX:before {
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx:before {
             font-family: Arial;
             font-size: 85%;
             font-weight: bold;
             content: "GPX";
         }
 
-        .tc-ctl-geolocation-track-available-lst > li > button#exportKML, .tc-ctl-geolocation-track-available-lst > li > button#exportGPX {
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml, .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx {
             padding-top: 0.25em;
             width: 2em;
         }
 
-            .tc-ctl-geolocation-track-available-lst > li > button#exportKML:before {
+            .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml:before {
                 font-family: Arial;
                 font-size: 85%;
                 font-weight: bold;
@@ -3481,29 +3592,26 @@ label.tc-ctl-geolocation-track-available-label {
             }
 
 
-input#tc-ctl-geolocation-track-available-srch {
+input#tc-ctl-geolocation-track-available-srch,.tc-ctl-cbuild-map-available-srch {
     width: 100%;
-    height: 27px;
+    height: 2em;
 }
 
-.tc-ctl-geolocation-track-search-icon {
+.tc-ctl-geolocation-track-search-icon,.tc-ctl-cbuild-map-search-icon {
     position: relative;
-    top: 35px;
+    margin-top: 4px;
     right: 21px;
     color: #ccc;
     font-style: normal;
     width: 1em;
     float: right;
+    top: 20px;
 }
 
-    .tc-ctl-geolocation-track-search-icon:before {
+    .tc-ctl-geolocation-track-search-icon:before,.tc-ctl-cbuild-map-search-icon:before {
         font-family: FontAwesome;
         content: "\f002";
     }
-
-label.tc-ctl-geolocation-track-waypoint-lbl {
-    /*width: 100%;*/
-}
 
 .tc-ctl-geolocation-track-title, .tc-ctl-geolocation-track-waypoint {
     width: 81.6%;
@@ -3517,7 +3625,7 @@ label.tc-ctl-geolocation-track-waypoint-lbl {
 
 .tc-ctl-geolocation-track-add-wpt:before {
     font-family: FontAwesome;
-    content: "\f067";
+    content: "\f08d";
 }
 
 .tc-ctl-geolocation-track-import > input[type="file"] {
@@ -3559,8 +3667,7 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
     }
 
 .tc-ctl-geolocation-track-panel-block {
-    float: left;
-    margin: 0 0 1em 0;
+    margin: 1em 0 0 0;
 }
 
 .tc-ctl-geolocation-track-panel-span {
@@ -3588,14 +3695,35 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
 }
 
 .tc-ctl-geolocation-track-available-lst > li.selectedTrack {
-    background: repeating-linear-gradient( -45deg, rgba(224, 224, 224, 0.3), rgba(255, 217, 217, 0.7) 1px, #fff 0px, #fff 5px );
+    /*background: repeating-linear-gradient( -45deg, rgba(224, 224, 224, 0.3), rgba(255, 217, 217, 0.7) 1px, #fff 0px, #fff 5px );*/
     /*background: repeating-linear-gradient( -45deg, #F0EFEF, #F0EFEF 1px, #fff 1px, #fff 10px );*/
+    background: rgba(102, 0, 0, 0.1);
 }
 
-    .tc-ctl-geolocation-track-available-lst > li.selectedTrack > #draw:before {
-        font-family: FontAwesome;
-        content: "\f052";
+    .tc-ctl-geolocation-track-available-lst > li.selectedTrack > .tc-btn-draw:before {
+        color: #c00;
     }
+
+.tc-ctl-geolocation-trackMarker {
+    background-position: center;
+    background-size: 70%;
+    background-repeat: no-repeat;
+    height: 2em;
+    width: 2em;
+    visibility: visible;
+}
+
+.tc-ctl-geolocation-trackMarker.track {
+    background-image: url('img/geo-trackArrow.png');
+}
+
+.tc-ctl-geolocation-trackMarker.elevation {
+    background-image: url('img/geo-elevationArrow.png');
+}
+
+.tc-ctl-geolocation-trackMarker.tracking {
+    background-image: url('img/geo-elevationArrow.png');
+}
 
 /*
 #track-chart {
@@ -3666,7 +3794,7 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
 
 
 .tc-ctl-geolocation-track-available-lst > li {
-    padding: 0.5em 0 0.5em 0.5em;
+    padding: 0.2em 0 0.2em 0.5em;
     border-bottom: 0.1em solid rgba(0,0,0,0.1);
     overflow: hidden;
     line-height: 2em;
@@ -3680,45 +3808,43 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
         float: left;
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > #simulate:before {
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-simulate:before {
         font-family: FontAwesome;
         content: "\f008";
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > #stop {
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop {
         padding-left: 0.15em;
     }
 
-        .tc-ctl-geolocation-track-available-lst > li > #stop:before {
+        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop:before {
             font-family: FontAwesome;
             content: "\f04d";
         }
 
-    .tc-ctl-geolocation-track-available-lst > li > #pause:before {
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause:before {
         padding-left: 0.25em;
         font-family: FontAwesome;
         content: "\f04c";
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > #pause {
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause {
         width: 18px;
     }
 
-        .tc-ctl-geolocation-track-available-lst > li > #pause.play:before {
+        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause.play:before {
             font-family: FontAwesome;
             content: "\f04b";
         }
 
-    .tc-ctl-geolocation-track-available-lst > li > select#velocity {
-        float: right;
-        margin-right: 1em;
+    .tc-ctl-geolocation-track-available-lst > li > select.tc-sel-speed {
         width: 20%;
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > #draw:before {
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-draw:before {
         font-family: FontAwesome;
         content: "\f03e"; /*f002  lupa */
     }
@@ -3728,17 +3854,17 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
         content: "\f1fe";
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > #edit:before {
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-edit:before {
         font-family: FontAwesome;
         content: "\f040";
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > #save:before {
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-save:before {
         font-family: FontAwesome;
         content: "\f0c7";
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > #cancel:before {
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-cancel:before {
         font-family: FontAwesome;
         content: "\f00d";
     }
@@ -3842,14 +3968,12 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
     }
 
 .tc-textbox, .tc-combo {
-    height: 25px;
+    height: 2em;
     border-radius: 0.3em;
     border: 1px solid #CCC;
     padding: 0;
     padding-left: 0.2em;
     color: #444;
-    box-sizing: content-box;
-    font-size: 12px;
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
 }
 
@@ -3969,7 +4093,6 @@ body .tc-map .tc-modal .tc-modal-background {
         top: 14px;
         right: 20px;
         cursor: pointer;
-        color: #999;
     }
 
 
@@ -4014,7 +4137,7 @@ body .tc-map .tc-modal .tc-modal-background {
     color: #fff;
     text-align: center;
     border-radius: 0.3em;
-    padding: 0.3em;
+    padding: 0.4em 1.5em;
     margin-left: -0.15em;
     margin-top: 0.3em;
     cursor: pointer;
@@ -4031,15 +4154,12 @@ body .tc-map .tc-modal .tc-modal-background {
         text-align: left;
     }
 
-    .tc-toast.tc-msg-info, .tc-toast.tc-msg-warning, .tc-toast.tc-msg-error {
-        padding-left: 1.5em;
-    }
-
         .tc-toast.tc-msg-info:before, .tc-toast.tc-msg-warning:before, .tc-toast.tc-msg-error:before {
             position: absolute;
             font-family: 'FontAwesome';
             font-size: 1em;
-            margin-left: -1.2em;
+        left: 0.6em;
+        top: 0.5em;
         }
 
         .tc-toast.tc-msg-info:before, .tc-toast.tc-msg-error:before {
@@ -4072,6 +4192,14 @@ body .tc-map .tc-modal .tc-modal-background {
         -o-animation: fadeout 0.3s; /* Opera */
     }
 
+span.tc-beta {
+    text-transform: uppercase;
+    font-size: 0.7em;
+    color: red;
+    font-weight: normal;
+    font-style: italic;
+}
+
 @media print {
     .tc-modal {
         display: none !important;
@@ -4090,11 +4218,10 @@ body .tc-map .tc-modal .tc-modal-background {
         top: 50%;
         margin-top: -0.5em;
         right: 0;
-        color: #999;
+        color: #666;
         border-radius: 0.3em;
         text-align: center;
         vertical-align: middle;
-        font-size: 1.2em;
     }
 
     .tc-ctl-lcat h2 button, .tc-ctl-ltoc h2 button {
@@ -4104,7 +4231,8 @@ body .tc-map .tc-modal .tc-modal-background {
         border: none;
         background: none;
         color: #666;
-        font-size: 1em;
+        font-size: 14px;
+        outline: none;
     }
 
     .tc-ctl-lcat-info-close {
@@ -4122,4 +4250,20 @@ body .tc-map .tc-modal .tc-modal-background {
         margin: 0em;
         font-size: 1em;
     }
+
+    .tc-ctl-download-div i.icon-question-sign, i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
+        font-size: 17px;
+    }
+
+    i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
+        line-height: 1em;
+    }
+
+    .tc-ctl-download-div i.icon-question-sign {
+        line-height: 1.55em;
+    }
+}
+
+.tc-ctl-cbuild {
+    clear: both;
 }

@@ -1,7 +1,9 @@
 ﻿{#results}
-<li data-layername="{Name}" {?alreadyAdded} data-tooltip="{@i18n $key="layerAlreadyAdded"/}" class="tc-checked" {:else} data-tooltip="{@i18n $key="clickToAddToMap"/}" {/alreadyAdded}>
+<li data-tc-layer-name="{Name}" {?alreadyAdded} data-tooltip="{@i18n $key="layerAlreadyAdded"/}" class="tc-checked" {:else} data-tooltip="{@i18n $key="clickToAddToMap"/}" {/alreadyAdded}>
     <h5 class="tc-selectable">{Title}</h5>
     <button class="tc-ctl-lcat-search-btn-info" />
     <p>{Abstract}</p>
 </li>
+{:else}
+<li class="tc-ctl-lcat-no-results"><h5>{@i18n $key="noMatches"/}</h5></li>
 {/results}
