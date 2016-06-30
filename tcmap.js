@@ -610,7 +610,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.1.2';
+TC.version = '1.1.3';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -815,9 +815,19 @@ if (!TC.Consts) {
         CADASTRAL: 'cadastral',
         COORDINATES: 'coordinates',
         MUNICIPALITY: 'municipality',
+        COUNCIL: 'council',
         LOCALITY: 'locality',
         STREET: 'street',
-        NUMBER: 'number'
+        NUMBER: 'number',
+        URBAN: 'urban',
+        COMMONWEALTH: 'commonwealth'
+    };
+    TC.Consts.mapSearchType = {
+    	MUNICIPALITY: TC.Consts.searchType.MUNICIPALITY,
+    	COUNCIL: TC.Consts.searchType.COUNCIL,
+    	URBAN: TC.Consts.searchType.URBAN,
+    	COMMONWEALTH: TC.Consts.searchType.COMMONWEALTH,
+    	GENERIC: 'generic'
     };
     TC.Consts.comparison = {
         EQUAL_TO: '=='
