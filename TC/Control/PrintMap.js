@@ -32,14 +32,6 @@ TC.inherit(TC.control.PrintMap, TC.Control);
         TC.Control.prototype.register.call(self, map);
 
         var _print = function () {
-            var stateControl = self.map.getControlsByClass("TC.control.State");
-
-            if (stateControl && stateControl.length > 0) {
-                stateControl = stateControl[0];
-            } else {
-                TC.alert(self.getLocaleString('noMapStateControl'));
-            }
-
             var printParameters = '?';
 
             //Si ya hay parámetros en la URL, cambiamos el primer carácter por & para que estos se añadan a la URL
@@ -58,7 +50,14 @@ TC.inherit(TC.control.PrintMap, TC.Control);
             } else {
                 url = window.location.href + printParameters;
             }
-            window.open(url, "print");
+
+            if (self.printWindow && self.printWindow !== undefined)
+                self.printWindow.close();
+
+            self.printWindow = window.open(url, "print");
+            self.printWindow.onbeforeunload = function () {                
+                delete this.printWindow;
+            }.bind(this);
         };
 
         self._$div.on('click', '.tc-ctl-printMap-btn', _print);

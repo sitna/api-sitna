@@ -6,8 +6,16 @@ if (!TC.Control) {
 
 TC.control.Share = function (options) {
     var self = this;
+    self._classSelector = '.' + self.CLASS;
 
     TC.Control.apply(self, arguments);
+
+    var opts = options || {};
+    self._$dialogDiv = $(TC.Util.getDiv(opts.dialogDiv));
+    if (!opts.dialogDiv) {
+        self._$dialogDiv.appendTo('body');
+    }
+
     self.render();
 };
 
@@ -27,26 +35,34 @@ TC.inherit(TC.control.Share, TC.Control);
 
     ctlProto.render = function (callback) {
         var self = this;
-        TC.Control.prototype.render.call(self, function () {
-            //Si el navegador no soporta copiar al portapapeles, ocultamos el botón de copiar
-            if (TC.Util.detectChrome() || TC.Util.detectIE() >= 10 || TC.Util.detectFirefox() >= 41) {
-                self._$div.find("button").removeClass("hide");
-                var input = self._$div.find("input[type=text]");
-                input.removeAttr("data-original-title");
-            }
+        self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+            self._$dialogDiv.html(html);
+        }).then(function () {
+            TC.Control.prototype.render.call(self, function () {
+                //Si el navegador no soporta copiar al portapapeles, ocultamos el botón de copiar
+                if (TC.Util.detectChrome() || TC.Util.detectIE() >= 10 || TC.Util.detectFirefox() >= 41) {
+                    self._$div.find("button").removeClass("hide");
+                    var input = self._$div.find("input[type=text]");
+                    input.removeAttr("data-original-title");
+                }
 
-            var $options = self._$div.find('.' + self.CLASS + '-url-box');
-            self._$div.find('span').on(TC.Consts.event.CLICK, function (e) {
-                var $cb = $(this).closest('label').find('input[type=radio][name=format]');
+                // Si el SO no es móvil, ocultamos el botón de compartir a WhatsApp
+                if (!TC.Util.detectMobile()) {
+                    self._$div.find(".share-whatsapp").addClass(TC.Consts.classes.HIDDEN);
+                }
 
-                var newFormat = $cb.val();
-                $options.removeClass(TC.Consts.classes.HIDDEN);
-                $options.not('.tc-' + newFormat).addClass(TC.Consts.classes.HIDDEN);
+                var $options = self._$div.find('.' + self.CLASS + '-url-box');
+                self._$div.find('span').on(TC.Consts.event.CLICK, function (e) {
+                    var $cb = $(this).closest('label').find('input[type=radio][name=format]');
+
+                    var newFormat = $cb.val();
+                    $options.removeClass(TC.Consts.classes.HIDDEN);
+                    $options.not('.tc-' + newFormat).addClass(TC.Consts.classes.HIDDEN);
+                });
+                if ($.isFunction(callback)) {
+                    callback();
+                }
             });
-
-            if ($.isFunction(callback)) {
-                callback();
-            }
         });
     };
 
@@ -66,30 +82,45 @@ TC.inherit(TC.control.Share, TC.Control);
      */
     ctlProto.generateLink = function () {
         var self = this;
-        var stateControl = self.map.getControlsByClass("TC.control.State")[0];
 
-        if (stateControl) {
-            var hashState = stateControl.getMapStateBase64UrlEncoded();
+        var currentUrl = window.location.href;
+        var hashPosition = currentUrl.indexOf('#');
+        if (hashPosition > 0) {
+            currentUrl = currentUrl.substring(0, hashPosition);
+        }
 
-            var currentUrl = window.location.href;
-            var hashPosition = currentUrl.indexOf('#');
-            if (hashPosition > 0) {
-                currentUrl = currentUrl.substring(0, hashPosition);
+        if (self.extraParams) {
+            // Hacemos merge de parámetros de URL
+            var params = TC.Util.getQueryStringParams(currentUrl);
+            $.extend(params, self.extraParams);
+            var qsPosition = currentUrl.indexOf('?');
+            if (qsPosition >= 0) {
+                currentUrl = currentUrl.substring(0, qsPosition);
             }
+            currentUrl = currentUrl.concat('?', $.param(params));
+        }
 
-            var url = currentUrl.concat("#", hashState);
-
-            //Si la URL sobrepasa el tamaño máximo deshabilitamos el control
-            if (url.length > TC.Consts.URL_MAX_LENGTH) {
-                self.disableButtons();
-                return;
+        // eliminamos el parámetro del idioma, si no lo arrastramos al compartir
+        if (TC.Util.getParameterByName('lang').length > 0) {
+            if (currentUrl.indexOf('&') > -1) { // tenemos más parámetros en la url
+                currentUrl = currentUrl.replace("lang" + "=" + TC.Util.getParameterByName('lang') + '&', '');
             } else {
-                self.enableButtons(url);
-                return url;
+                currentUrl = currentUrl.replace('?' + "lang" + "=" + TC.Util.getParameterByName('lang'), '');
             }
+        }
 
+        var hashState = self.map.getMapState();
+
+
+        var url = currentUrl.concat("#", hashState);
+
+        //Si la URL sobrepasa el tamaño máximo deshabilitamos el control
+        if (url.length > TC.Consts.URL_MAX_LENGTH) {
+            self.disableButtons();
+            return;
         } else {
-            TC.alert(self.getLocaleString('noMapStateControl'));
+            self.enableButtons(url);
+            return url;
         }
     };
 
@@ -101,22 +132,7 @@ TC.inherit(TC.control.Share, TC.Control);
         }
     }
 
-    /**
-     * Acorta una URL utilizando el servicio de Bit.ly. No funciona para URLs locales.
-     */
-    ctlProto.shortenUrl = function (url) {
-        var shortUrl;
 
-        $.ajax({
-            url: "https://api-ssl.bitly.com/v3/shorten",
-            data: { access_token: "6c466047309f44bd8173d83e81491648b243ee3d", longUrl: url },
-            async: false
-        }).done(function (response) {
-            shortUrl = response.data.url;
-        });
-
-        return shortUrl;
-    };
 
     ctlProto.register = function (map) {
         var self = this;
@@ -187,18 +203,19 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                var qrContainer = self._$div.find(".qrcode")[0];
-                $(qrContainer).empty();
                 TC.loadJS(
                     typeof QRCode === 'undefined',
-                    [TC.apiLocation + 'qrcode/qrcode.min.js'],
+                    [TC.apiLocation + 'lib/qrcode/qrcode.min.js'],
                     function () {
 
                         if (url.length > self.QR_MAX_LENGTH) {
-                            url = self.shortenUrl(url)
+                            url = TC.Util.shortenUrl(url);
                         }
-                        new QRCode(qrContainer, url);
-                        TC.Util.showModal("#qr-code-dialog");
+
+                        TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-qr-dialog'));
+                        var $qrContainer = self._$dialogDiv.find(".qrcode");
+                        $qrContainer.empty();
+                        new QRCode($qrContainer[0], url);
                     });
             }
         });
@@ -220,7 +237,7 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                var shortUrl = self.shortenUrl(url); // desde localhost no funciona la reducción de url
+                var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducción de url
 
                 if (shortUrl !== undefined) {
                     window.open("https://twitter.com/intent/tweet?text=Visor%20IDENA&amp;url=" + encodeURIComponent(shortUrl));
@@ -231,14 +248,34 @@ TC.inherit(TC.control.Share, TC.Control);
             }
         });
 
+        //Compartir en Whatsapp
+        if (TC.Util.detectMobile()) {
+            self._$div.on("click", "a.share-whatsapp", function (evt) {
+                evt.preventDefault();
+                var url = self.generateLink();
+
+                if (url) {
+                    var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducción de url
+
+                    var waText = 'whatsapp://send?text=';
+                    if (shortUrl !== undefined) {
+                        location.href = waText + encodeURIComponent(shortUrl);
+                    } else {
+                        location.href = waText + encodeURIComponent(url);
+                    }
+                    return false;
+                }
+            });
+        }
+
         //Guardar en marcadores
         self._$div.on("click", "a.share-star", function (evt) {
             evt.preventDefault();
-            
+
             var bookmarkURL = self.generateLink();
             var bookmarkTitle = document.title;
 
-            if (!TC.Util.detectMouse()) {
+            if (TC.Util.detectMobile()) {
                 // Mobile browsers
                 alert(ctlProto.MOBILEFAV);
             } else if (window.sidebar && window.sidebar.addPanel) {
@@ -313,10 +350,13 @@ TC.inherit(TC.control.Share, TC.Control);
 
     if (TC.isDebug) {
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Share.html";
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/ShareDialog.html";
     } else {
         ctlProto.template[ctlProto.CLASS] = function () {
-            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "share" }).w("</h2><div><div class=\"ga-share-icons\"><a class=\"ga-share-icon share-email\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "sendMapByEmail" }).w("\"href=\"#\"><i class=\"icon-envelope-alt\"></i></a><a class=\"ga-share-icon qr-generator\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "createQrCode" }).w("\"href=\"#\"><i class=\"icon-qrcode\"></i></a><a class=\"ga-share-icon share-fb\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "shareMapToFacebook" }).w("\"href=\"#\"><i class=\"icon-facebook\"></i></a><a class=\"ga-share-icon share-twitter\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "shareMapToTwitter" }).w("\"href=\"#\"><i class=\"icon-twitter\"></i></a><a class=\"ga-share-icon share-star\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "addToBookmarks" }).w("\"href=\"#\"><i class=\"icon-star\"></i></a></div><div class=\"tc-ctl-share-select\"><form><label class=\"tc-ctl-share-btn-url\"><input type=\"radio\" checked=\"checked\" name=\"format\" value=\"url\" /><span>").h("i18n", ctx, {}, { "$key": "shareLink" }).w("</span></label><label class=\"tc-ctl-share-btn-iframe\"><input type=\"radio\" name=\"format\" value=\"iframe\" /><span>").h("i18n", ctx, {}, { "$key": "embedMap" }).w("</span></label></form></div><div class=\"tc-ctl-share-url-box tc-group tc-url\"><input type=\"text\" class=\"tc-textbox tc-url\" readonly data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "shareLink.tip.1" }).w("\" /><button class=\"tc-button hide\" title=\"").h("i18n", ctx, {}, { "$key": "shareLink.tip.2" }).w("\">").h("i18n", ctx, {}, { "$key": "copy" }).w("</button></div><div class=\"tc-ctl-share-url-box tc-group tc-iframe tc-hidden\"><input type=\"text\" class=\"tc-textbox tc-iframe\" readonly data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "embedMap.tip.1" }).w("\" /><button class=\"tc-button hide\" title=\"").h("i18n", ctx, {}, { "$key": "embedMap.tip.2" }).w("\">").h("i18n", ctx, {}, { "$key": "copy" }).w("</button></div><div class=\"tc-ctl-share-alert tc-alert alert-warning tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "tooManyLayersLoaded|s" }).w("</p> </div><div id=\"qr-code-dialog\" class=\"tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "qrCode" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><div class=\"qrcode\"></div></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div></div>"); } body_0.__dustBody = !0; return body_0
+            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "share" }).w("</h2><div><div class=\"ga-share-icons\"><a class=\"ga-share-icon share-email\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "sendMapByEmail" }).w("\"href=\"#\"><i class=\"icon-envelope-alt\"></i></a><a class=\"ga-share-icon qr-generator\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "createQrCode" }).w("\"href=\"#\"><i class=\"icon-qrcode\"></i></a><a class=\"ga-share-icon share-fb\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "shareMapToFacebook" }).w("\"href=\"#\"><i class=\"icon-facebook\"></i></a><a class=\"ga-share-icon share-twitter\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "shareMapToTwitter" }).w("\"href=\"#\"><i class=\"icon-twitter\"></i></a><a class=\"ga-share-icon share-whatsapp\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "shareMapToWhatsapp" }).w("\"href=\"#\"><i class=\"icon-whatsapp\"></i></a><a class=\"ga-share-icon share-star\" target=\"_blank\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "addToBookmarks" }).w("\"href=\"#\"><i class=\"icon-star\"></i></a></div><div class=\"tc-ctl-share-select\"><form><label class=\"tc-ctl-share-btn-url\"><input type=\"radio\" checked=\"checked\" name=\"format\" value=\"url\" /><span>").h("i18n", ctx, {}, { "$key": "shareLink" }).w("</span></label><label class=\"tc-ctl-share-btn-iframe\"><input type=\"radio\" name=\"format\" value=\"iframe\" /><span>").h("i18n", ctx, {}, { "$key": "embedMap" }).w("</span></label></form></div><div class=\"tc-ctl-share-url-box tc-group tc-url\"><input type=\"text\" class=\"tc-textbox tc-url\" readonly data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "shareLink.tip.1" }).w("\" /><button class=\"tc-button hide\" title=\"").h("i18n", ctx, {}, { "$key": "shareLink.tip.2" }).w("\">").h("i18n", ctx, {}, { "$key": "copy" }).w("</button></div><div class=\"tc-ctl-share-url-box tc-group tc-iframe tc-hidden\"><input type=\"text\" class=\"tc-textbox tc-iframe\" readonly data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "embedMap.tip.1" }).w("\" /><button class=\"tc-button hide\" title=\"").h("i18n", ctx, {}, { "$key": "embedMap.tip.2" }).w("\">").h("i18n", ctx, {}, { "$key": "copy" }).w("</button></div><div class=\"tc-ctl-share-alert tc-alert alert-warning tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "tooManyLayersLoaded|s" }).w("</p> </div></div>"); } body_0.__dustBody = !0; return body_0
+        };
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () {
+            dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-share-qr-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "qrCode" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><div class=\"qrcode\"></div></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0
         };
     }
-
 })();
