@@ -642,7 +642,7 @@ if (!TC.Consts) {
     TC.Consts.METER_PRECISION = 0;
     TC.Consts.DEGREE_PRECISION = 5;
     TC.Consts.url = {
-        SPLIT_REGEX: /([^:]*:)\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
+        SPLIT_REGEX: /([^:]*:)?\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
         MODERNIZR: 'lib/modernizr.js',
         JQUERY_LEGACY: TC.apiLocation + 'lib/jquery/jquery.1.10.2.js',
         JQUERY: '//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.js',
@@ -658,8 +658,11 @@ if (!TC.Consts) {
         SPATIALREFERENCE: 'http://spatialreference.org/',
         LOCALFORAGE: TC.apiLocation + 'lib/localForage/localforage.min.js',
         D3C3: TC.apiLocation + 'lib/d3c3/d3c3.min.js',
+        CESIUM: TC.apiLocation + 'lib/cesium/debug/Cesium.js',
         JSNLOG: 'lib/jsnlog/jsnlog.min.js',
-        ERROR_LOGGER: TC.apiLocation + 'errors/logger.ashx'
+        ERROR_LOGGER: TC.apiLocation + 'errors/logger.ashx',
+        PDFMAKE: TC.apiLocation + 'lib/pdfmake/pdfmake-fonts.min.js',
+        JSONPACK: 'lib/jsonpack/jsonpack.min.js',
     };
     TC.Consts.classes = {
         MAP: 'tc-map',
@@ -673,6 +676,7 @@ if (!TC.Consts) {
         ACTIVE: 'tc-active',
         LASTCHILD: 'tc-lastchild',
         TRANSPARENT: 'tc-transparent',
+        DROP: 'tc-drop',
         LOADING: 'tc-loading',
         IPAD_IOS7_FIX: 'tc-ipad-ios7-fix',
         INFO: 'tc-msg-info',
@@ -711,6 +715,7 @@ if (!TC.Consts) {
         BEFOREFEATURESADD: 'beforefeaturesadd.tc',
         FEATURESADD: 'featuresadd.tc',
         FEATUREREMOVE: 'featureremove.tc',
+        FEATURESIMPORT: 'featuresimport.tc',
         BEFORETILELOAD: 'beforetileload.tc',
         TILELOAD: 'tileload.tc',
         CONTROLACTIVATE: 'controlactivate.tc',
@@ -727,8 +732,10 @@ if (!TC.Consts) {
         FEATUREINFO: 'featureinfo.tc',
         NOFEATUREINFO: 'nofeatureinfo.tc',
         FEATUREINFOERROR: 'featureinfoerror.tc',
-        LAYERCATALOGADD: 'layercatalogadd.tc',
-        CLICK: 'click.tc'
+        CLICK: 'click.tc',
+        STARTLOADING: 'startloading.tc',
+        STOPLOADING: 'stoploading.tc',
+        EXTERNALSERVICEADDED: 'externalserviceadded.tc'
     };
     TC.Consts.layer = {
         IDENA_ORTHOPHOTO: 'ortofoto',
@@ -800,10 +807,12 @@ if (!TC.Consts) {
         VECTOR: 'vector',
         KML: 'KML',
         GPX: 'GPX',
+        GEOJSON: 'GeoJSON',
         GROUP: 'group'
     };
     TC.Consts.geom = {
         POINT: 'point',
+        MULTIPOINT: 'multipoint',
         POLYLINE: 'polyline',
         POLYGON: 'polygon',
         MULTIPOLYLINE: 'multipolyline',
@@ -840,14 +849,21 @@ if (!TC.Consts) {
         PNG: 'image/png',
         JPEG: 'image/jpeg',
         JSON: 'application/json',
+        KML: 'application/vnd.google-earth.kml+xml',
         GML: 'application/gml+xml',
         XML: 'application/xml'
     };
     TC.Consts.format = {
         JSON: 'JSON',
+        KML: 'KML',
+        GML: 'GML',
         GML2: 'GML2',
-        GML3: 'GML2'
-    };
+        GML3: 'GML2',
+        GEOJSON: 'GeoJSON',
+        TOPOJSON: 'TopoJSON',
+        GPX: 'GPX',
+        WKT: 'WKT'
+};
     /**
      * Colección de identificadores de estados de visibilidad.
      * No se deberían modificar las propiedades de esta clase.
@@ -963,7 +979,7 @@ if (!TC.Consts) {
                     title: 'Ortofoto 2014',
                     type: TC.Consts.layerType.WMTS,
                     url: '//idena.navarra.es/ogc/wmts/',
-                    matrixSet: 'epsg25830',
+                    matrixSet: 'epsg25830reduced',
                     layerNames: 'ortofoto2014',
                     encoding: TC.Consts.WMTSEncoding.RESTFUL,
                     format: 'image/jpeg',
@@ -1185,55 +1201,31 @@ if (!TC.Consts) {
         TC.proxify = function (url) {
             url = $.trim(url);
             var result = url;
-            if (TC.Cfg.proxy)
-            {
+            if (TC.Cfg.proxy) {
                 var prevent = false;
-                if (TC.Cfg.proxyExceptions)
-                {
-                    for (var i = 0; i < TC.Cfg.proxyExceptions.length; i++)
-                    {
-                        if (url.indexOf(TC.Cfg.proxyExceptions[i]) > -1)
-                        {
+                if (TC.Cfg.proxyExceptions) {
+                    for (var i = 0; i < TC.Cfg.proxyExceptions.length; i++) {
+                        if (url.indexOf(TC.Cfg.proxyExceptions[i]) > -1) {
                             prevent = true;
                             break;
                         }
                     }
                 }
 
-                if (!prevent)
-                {
-                    var sameOrigin = url.indexOf("http") !== 0 && url.indexOf("//") !== 0;
-                    var urlParts = !sameOrigin && url.match(TC.Consts.url.SPLIT_REGEX);
-                    if (urlParts)
-                    {
-                        var location = window.location;
-                        sameOrigin =
-                            urlParts[1] == location.protocol &&
-                            urlParts[3] == location.hostname;
-                        var uPort = urlParts[4], lPort = location.port;
-                        if (uPort != 80 && uPort !== "" || lPort != "80" && lPort !== "")
-                        {
-                            sameOrigin = sameOrigin && uPort == lPort;
-                        }
-                    }
-                    if (!sameOrigin)
-                    {
-                        if (typeof TC.Cfg.proxy == "function")
-                        {
-                            result = TC.Cfg.proxy(url);
-                        } else
-                        {
-                            result = TC.Cfg.proxy;
-                            if (url.substr(0, 4) != "http") result += window.location.protocol;
-                            result += encodeURIComponent(url);
-                        }
+                if (!prevent && !TC.Util.isSameOrigin(url)) {
+                    if (typeof TC.Cfg.proxy == "function") {
+                        result = TC.Cfg.proxy(url);
+                    } else {
+                        result = TC.Cfg.proxy;
+                        if (url.substr(0, 4) != "http") result += window.location.protocol;
+                        result += encodeURIComponent(url);
                     }
                 }
             }
             return result;
         };
 
-        var getHead = function() {
+        var getHead = function () {
             var result;
             var d = document;
             var ah = d.getElementsByTagName("head");
@@ -1313,52 +1305,42 @@ if (!TC.Consts) {
         TC.downloadedJSs = [];
         //este tiene como claves las urls, y como valor la cola asyncJS que lo gestiona
         TC.requestedJSs = {};
-        TC.loadJSInOrder = function (condition, url, callback)
-        {
+        TC.loadJSInOrder = function (condition, url, callback) {
             TC.loadJS(condition, url, callback, true);
         }
-        TC.loadJS = function (condition, url, callback, inOrder)
-        {
+        TC.loadJS = function (condition, url, callback, inOrder) {
             if (arguments.length < 4) inOrder = false;
             var urls = $.isArray(url) ? url : [url];
             //si tiene canvas, es que es un navegador nuevo
-            if (Modernizr.canvas)
-            {
-                if(condition)
-                {
+            if (Modernizr.canvas) {
+                if (condition) {
                     //de las que quiere, ver cuáles ya están descargadas, y cuáles están en proceso
                     var newTasks = [];
                     var pendingTasks = [];
                     var curl;
-                    for(var i=0; i<urls.length; i++)
-                    {
+                    for (var i = 0; i < urls.length; i++) {
                         curl = urls[i];
-                        if(!TC.downloadedJSs[curl])
-                        {
-                            if(TC.requestedJSs[curl]) pendingTasks.push(curl);
+                        if (!TC.downloadedJSs[curl]) {
+                            if (TC.requestedJSs[curl]) pendingTasks.push(curl);
                             else newTasks.push(curl);
                         }
                     }
 
                     
                     //si ya está todo, no hay que hacer nada
-                    if(newTasks.length==0 && pendingTasks.length==0)
-                    {
+                    if (newTasks.length == 0 && pendingTasks.length == 0) {
                         callback();
                     }
                     //si son todas nuevas (ninguna descargada ni en proceso), caso normal con una nueva cola
-                    else if(newTasks.length>0 && pendingTasks.length==0)
-                    {
+                    else if (newTasks.length > 0 && pendingTasks.length == 0) {
                         var q = asyncJS();
-                        for(var i=0; i<newTasks.length; i++)        //para cada una, registro quién se está ocupando
+                        for (var i = 0; i < newTasks.length; i++)        //para cada una, registro quién se está ocupando
                         {
                             TC.requestedJSs[newTasks[i]] = q;
                         }
 
-                        if (inOrder)
-                        {
-                            for(var i=0; i<newTasks.length; i++) 
-                            {
+                        if (inOrder) {
+                            for (var i = 0; i < newTasks.length; i++) {
                                 if (i == 0) q.add(newTasks[i]);
                                 else q.then(newTasks[i]);
                             }
@@ -1367,10 +1349,8 @@ if (!TC.Consts) {
                             q.add(newTasks);
 
 
-                        q.whenDone(function ()
-                        {
-                            for(var i=0; i<newTasks.length; i++)
-                            {
+                        q.whenDone(function () {
+                            for (var i = 0; i < newTasks.length; i++) {
                                 TC.downloadedJSs.push(newTasks[i]);
                                 delete TC.requestedJSs[newTasks[i]];
                             }
@@ -1380,18 +1360,15 @@ if (!TC.Consts) {
                     //si están todas en proceso
                     //tengo que esperar a que terminen todas las colas que están pendientes
                     //y entonces lanzar el callback
-                    else if(newTasks.length==0 && pendingTasks.length>0)
-                    {
+                    else if (newTasks.length == 0 && pendingTasks.length > 0) {
                         var curTask;
                         var n = pendingTasks.length;
                         var done = 0;
-                        for(var i=0; i<pendingTasks.length; i++)
-                        {
+                        for (var i = 0; i < pendingTasks.length; i++) {
                             var curTask = pendingTasks[i];
                             var q = TC.requestedJSs[curTask];
                             //no hace falta borrar de las referencias, ni añadir a descargadas, porque ya se ocupará el handler anterior
-                            q.whenDone(function (a, b, c)
-                            {
+                            q.whenDone(function (a, b, c) {
                                 done++;
                                 if (done >= n)      //si es la última
                                 {
@@ -1401,15 +1378,13 @@ if (!TC.Consts) {
                             });
                         }
                     }
-                    else
-                    {
+                    else {
                         //horror
                         //caso mezclado: unas están en proceso, y otras no
                         console.error("Mezcla de tareas en proceso y nuevas!!");
                     }
                 }
-                else
-                {
+                else {
                     callback();
                 }
             }
@@ -1711,7 +1686,8 @@ if (!TC.Consts) {
                 PolygonFeatureInfo: function () { TC.wrap.Control.apply(this, arguments); },
                 Geolocation: function () { TC.wrap.Control.apply(this, arguments); },
                 Draw: function () { TC.wrap.Control.apply(this, arguments); },
-                CacheBuilder: function () { TC.wrap.Control.apply(this, arguments); }
+                CacheBuilder: function () { TC.wrap.Control.apply(this, arguments); },
+                Edit: function () { TC.wrap.Control.apply(this, arguments); }
             },
             Feature: function () { }
         };
@@ -1729,6 +1705,7 @@ if (!TC.Consts) {
         TC.inherit(TC.wrap.control.Geolocation, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Draw, TC.wrap.Control);
         TC.inherit(TC.wrap.control.CacheBuilder, TC.wrap.Control);
+        TC.inherit(TC.wrap.control.Edit, TC.wrap.Control);
 
         TC.loadCSS(TC.apiLocation + 'TC/css/tcmap.css');
 
@@ -1881,8 +1858,11 @@ $(function () {
         TC.syncLoadJS(TC.apiLocation + TC.Consts.url.JSNLOG);
     }
     JL.defaultAjaxUrl = TC.Consts.url.ERROR_LOGGER;
+
     window.addEventListener('error', (function () {
         var errorCount = 0;
+
+        var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
 
         return function (e) {
             var errorMsg = e.message;
@@ -1903,9 +1883,18 @@ $(function () {
                     "lineNumber": lineNumber,
                     "column": column,
                     "appUrl": location.href,
+                    "prevState": mapObj.getPreviousMapState(),
                     "userAgent": navigator.userAgent
                 }, errorObj);
                 errorCount++;
+
+               if (!TC.isDebug) {
+                    var DEFAULT_CONTACT_EMAIL = "webmaster@itracasa.es";
+                    $.when(TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale))
+                        .done(function () {
+                            TC.error(TC.Util.getLocaleString(mapObj.options.locale, "genericError") + (mapObj.options.contactEmail || DEFAULT_CONTACT_EMAIL), { type: TC.Consts.msgType.ERROR });
+                        });
+                }
             }
             // Tell browser to run its own error handler as well   
             return false;
