@@ -20,7 +20,6 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
 
     TC.Consts.classes.DRAG = TC.Consts.classes.DRAG || 'tc-drag';
     TC.Consts.classes.DRAGEND = TC.Consts.classes.DRAGEND || 'tc-dragend';
-    TC.Consts.classes.DROP = TC.Consts.classes.DROP || 'tc-drop';
 
     ctlProto.template = {};
     if (TC.isDebug) {
@@ -64,6 +63,9 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
         var self = this;
 
         TC.control.TOC.prototype.register.call(self, map);
+
+        // Este control no tiene que aceptar servicios externos directamente
+        map.$events.off(TC.Consts.event.EXTERNALSERVICEADDED);
 
         self._$div // GLS: como se trata de un override, desactivamos el click al que está suscrito por herencia y aplicamos el del override
             .off(TC.Consts.event.CLICK, 'input[type=checkbox]')
@@ -350,8 +352,9 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                                                     deltaY = dropLiTop - dragLiTop;
                                                     $drag.css('transform', 'translateY(' + deltaY + 'px)');
                                                     var transitionEnd = 'transitionend.tc';
-                                                    $drag.off(transitionEnd).on(transitionEnd, function (e) {
+                                                    $drag.on(transitionEnd, function (e) {
                                                         if (e.originalEvent.propertyName === 'transform') {
+                                                            $drag.off(transitionEnd);
                                                             moveLayer($drag, $drop, function () {
                                                                 $drag
                                                                     .removeClass(TC.Consts.classes.DRAGEND)
