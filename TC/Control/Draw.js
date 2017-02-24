@@ -3,6 +3,9 @@
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
 }
+if (!TC.Feature || !TC.feature.Point) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point.js');
+}
 if (!TC.Feature || !TC.feature.Polyline) {
     TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polyline.js');
 }
@@ -10,100 +13,113 @@ if (!TC.Feature || !TC.feature.Polygon) {
     TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polygon.js');
 }
 
+TC.Consts.event.DRAWSTART = 'drawstart.tc';
 TC.Consts.event.DRAWEND = 'drawend.tc';
 TC.Consts.event.DRAWCANCEL = 'drawcancel.tc';
-
-TC.control.Draw = function () {
-    var self = this;
-
-    TC.Control.apply(self, arguments);
-    this.renderPromise().then(function () {
-        self.history = [];
-        self.historyIndex = 0;
-        self.reset = true;
-        self.callBack = null;
-        self.measure = false;
-        self._cancelClick = false;
-
-        self.mode = self.options.mode || TC.Consts.geom.POLYLINE;
-
-        if (self.options.measure)
-            self.measure = self.options.measure
-        if ($.isFunction(self.options.callback))
-            self.callBack = self.options.callback;
-
-
-        self.wrap = new TC.wrap.control.Draw(self);
-
-        self._$newBtn = self._$div.find('.tc-ctl-draw-btn-new').on(TC.Consts.event.CLICK, function () {
-            self.new();
-        });
-
-        self._$cancelBtn = self._$div.find('.tc-ctl-draw-btn-cancel').on(TC.Consts.event.CLICK, function () {
-            self.cancel();
-        });
-
-        self._$endBtn = self._$div.find('.tc-ctl-draw-btn-end').on(TC.Consts.event.CLICK, function () {
-            if (!$(this).hasClass(TC.Consts.classes.DISABLED)) {
-                self.end();
-            }
-        });
-
-        self._$undoBtn = self._$div.find('.tc-ctl-draw-btn-undo').on(TC.Consts.event.CLICK, function () {
-            if (!$(this).hasClass(TC.Consts.classes.DISABLED)) {
-                self.undo();
-            }
-        });
-
-        self._$redoBtn = self._$div.find('.tc-ctl-draw-btn-redo').on(TC.Consts.event.CLICK, function () {
-            if (!$(this).hasClass(TC.Consts.classes.DISABLED)) {
-                self.redo();
-            }
-        });
-
-        self.$events.on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
-
-        }).on(TC.Consts.event.MEASURE, function (e) {
-            self.historyIndex = 0;
-            self.history.length = self.historyIndex;
-            self._$undoBtn.addClass(TC.Consts.classes.DISABLED);
-            self._$redoBtn.addClass(TC.Consts.classes.DISABLED);
-        });
-        self.$events.on(TC.Consts.event.POINT, function (e) {
-            if (self.layer.features && self.layer.features.length > 0) {
-                self.layer.clearFeatures();
-                self.resetValues();
-            }
-            self.history.length = self.historyIndex;
-            self.history[self.historyIndex++] = e.point;
-            self._$undoBtn.toggleClass(TC.Consts.classes.DISABLED, self.historyIndex <= 0);
-            self._$redoBtn.addClass(TC.Consts.classes.DISABLED);
-            self._$endBtn.removeClass(TC.Consts.classes.DISABLED);
-        });
-        self.$events.on(TC.Consts.event.DRAWEND, function (e) {
-            self.historyIndex = 0;
-            self.history.length = self.historyIndex;
-            self._$undoBtn.addClass(TC.Consts.classes.DISABLED);
-            self._$redoBtn.addClass(TC.Consts.classes.DISABLED);
-            if (self.callBack)
-                self.callBack(e.geometry);
-        });
-
-    });
-};
-
-TC.inherit(TC.control.Draw, TC.Control);
+TC.Consts.event.MEASURE = 'measure.tc';
+TC.Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
 
 (function () {
+
+    TC.control.Draw = function () {
+        var self = this;
+
+        TC.Control.apply(self, arguments);
+
+        self._classSelector = '.' + self.CLASS;
+
+        self._pointClass = self.CLASS + '-point';
+        self._lineClass = self.CLASS + '-line';
+        self._polygonClass = self.CLASS + '-polygon';
+
+        self.history = [];
+        self.historyIndex = 0;
+        this.renderPromise().then(function () {
+            self.reset = true;
+            self.callBack = null;
+            self.measure = false;
+            self._cancelClick = false;
+
+            self.mode = self.options.mode || TC.Consts.geom.POLYLINE;
+
+            if (self.options.measure)
+                self.measure = self.options.measure
+            if ($.isFunction(self.options.callback))
+                self.callBack = self.options.callback;
+
+
+            self.wrap = new TC.wrap.control.Draw(self);
+
+            self._$newBtn = self._$div.find(self._classSelector + '-btn-new').on(TC.Consts.event.CLICK, function () {
+                self.new();
+            });
+
+            self._$cancelBtn = self._$div.find(self._classSelector + '-btn-cancel').on(TC.Consts.event.CLICK, function () {
+                self.cancel();
+            });
+
+            self._$endBtn = self._$div.find(self._classSelector + '-btn-end').on(TC.Consts.event.CLICK, function () {
+                self.end();
+            });
+
+            self._$undoBtn = self._$div.find(self._classSelector + '-btn-undo').on(TC.Consts.event.CLICK, function () {
+                self.undo();
+            });
+
+            self._$redoBtn = self._$div.find(self._classSelector + '-btn-redo').on(TC.Consts.event.CLICK, function () {
+                self.redo();
+            });
+
+            self.$events.on(TC.Consts.event.MEASURE, function (e) {
+                self.resetValues();
+            });
+            self.$events.on(TC.Consts.event.POINT, function (e) {
+                if (self.layer && self.layer.features && self.layer.features.length > 0) {
+                    self.layer.clearFeatures();
+                    self.resetValues();
+                }                
+
+                self.history.length = self.historyIndex;
+                self.history[self.historyIndex++] = e.point;                
+
+                setDrawState(self);
+            });
+            self.$events.on(TC.Consts.event.DRAWEND, function (e) {
+                setFeatureAddReadyState(self);
+                if (self.callBack) {
+                    self.callBack(e.geometry);
+                }
+            });
+
+        });
+    };
+
+    TC.inherit(TC.control.Draw, TC.Control);
+
     var ctlProto = TC.control.Draw.prototype;
 
     ctlProto.CLASS = 'tc-ctl-draw';
+
+    var setDrawState = function (ctl) {
+        ctl._$endBtn.prop('disabled',
+            ctl.historyIndex === 0 ||
+            (ctl.mode === TC.Consts.geom.POLYGON && ctl.historyIndex < 3) ||
+            (ctl.mode === TC.Consts.geom.POLYLINE && ctl.historyIndex < 2));
+        ctl._$redoBtn.prop('disabled', ctl.history.length === ctl.historyIndex);
+        ctl._$undoBtn.prop('disabled', ctl.historyIndex === 0);
+    };
+
+    var setFeatureAddReadyState = function (ctl) {
+        ctl.resetValues();
+        ctl._$endBtn.prop('disabled', true);
+        ctl._$cancelBtn.prop('disabled', false);
+    };
 
     if (TC.isDebug) {
         ctlProto.template = TC.apiLocation + "TC/templates/Draw.html";
     }
     else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w(" <a class=\"tc-ctl-btn tc-ctl-draw-btn-new\" title=\"").f(ctx.get(["tooltip"], false), ctx, "h").w("\">").h("i18n", ctx, {}, { "$key": "new" }).w("</a><a class=\"tc-ctl-btn tc-ctl-draw-btn-undo tc-disabled\" title=\"").h("i18n", ctx, {}, { "$key": "undo" }).w("\">").h("i18n", ctx, {}, { "$key": "undo" }).w("</a><a class=\"tc-ctl-btn tc-ctl-draw-btn-redo tc-disabled\" title=\"").h("i18n", ctx, {}, { "$key": "redo" }).w("\">").h("i18n", ctx, {}, { "$key": "redo" }).w("</a><a class=\"tc-ctl-btn tc-ctl-draw-btn-end\" title=\"").h("i18n", ctx, {}, { "$key": "end" }).w("\">").h("i18n", ctx, {}, { "$key": "end" }).w("</a><a class=\"tc-ctl-btn tc-ctl-draw-btn-cancel\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</a> "); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w(" <button class=\"tc-ctl-btn tc-ctl-draw-btn-new\" title=\"").f(ctx.get(["tooltip"], false), ctx, "h").w("\">").h("i18n", ctx, {}, { "$key": "new" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-undo\" disabled title=\"").h("i18n", ctx, {}, { "$key": "undo" }).w("\">").h("i18n", ctx, {}, { "$key": "undo" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-redo\" disabled title=\"").h("i18n", ctx, {}, { "$key": "redo" }).w("\">").h("i18n", ctx, {}, { "$key": "redo" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-end\" title=\"").h("i18n", ctx, {}, { "$key": "end" }).w("\">").h("i18n", ctx, {}, { "$key": "end" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-cancel\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button> "); } body_0.__dustBody = !0; return body_0 };
     }
 
     ctlProto.render = function (callback) {
@@ -111,10 +127,19 @@ TC.inherit(TC.control.Draw, TC.Control);
         var strToolTip;
         switch (self.options.mode) {
             case TC.Consts.geom.POLYLINE:
+            case TC.Consts.geom.MULTIPOLYLINE:
                 strToolTip = self.getLocaleString('drawLine');
+                self._$div.addClass(self._lineClass);
                 break;
             case TC.Consts.geom.POLYGON:
+            case TC.Consts.geom.MULTIPOLYGON:
                 strToolTip = self.getLocaleString('drawPolygon');
+                self._$div.addClass(self._polygonClass);
+                break;
+            case TC.Consts.geom.POINT:
+            case TC.Consts.geom.MULTIPOINT:
+                strToolTip = self.getLocaleString('draw');
+                self._$div.addClass(self._pointClass);
                 break;
             default:
                 strToolTip = self.getLocaleString('draw');
@@ -132,52 +157,51 @@ TC.inherit(TC.control.Draw, TC.Control);
         TC.Control.prototype.register.call(self, map);
         map.loaded(function () {
             if (self.options.layer) {
-                if (typeof (self.options.layer) === "string") {
-
-                }
-                else
-                    self.layer = self.options.layer;
+                self.setLayer(self.options.layer);
             }
             else {
-                var map = self.map;
-                map.loaded(function () {
-                    self.layerPromise = map.addLayer({
-                        id: TC.getUID(),
-                        title: 'DrawControl',
-                        stealth: true,
-                        type: TC.Consts.layerType.VECTOR,
-                        styles: {
-                            point: $.extend({}, map.options.styles.point, { fillOpacity: 0 }),
-                            line: map.options.styles.line,
-                            polygon: map.options.styles.polygon
-                        }
-                    });
+                // Si self.options.layer === false se instancia el control sin capa asociada
+                if (typeof self.options.layer !== 'boolean') {
+                    map.loaded(function () {
+                        self.layerPromise = map.addLayer({
+                            id: TC.getUID(),
+                            title: 'DrawControl',
+                            stealth: true,
+                            type: TC.Consts.layerType.VECTOR,
+                            styles: {
+                                point: $.extend({}, map.options.styles.point, { fillOpacity: 0 }),
+                                line: map.options.styles.line,
+                                polygon: map.options.styles.polygon
+                            }
+                        });
 
-                    $.when(self.layerPromise).then(function (layer) {
-                        self.layer = layer;
-                        self.layer.map.putLayerOnTop(self.layer);
+                        $.when(self.layerPromise).then(function (layer) {
+                            self.layer = layer;
+                            map.putLayerOnTop(self.layer);
+                        });
                     });
-                });
+                }
             }
         });
     };
 
     ctlProto.new = function () {
         var self = this;
-        self.layer.clearFeatures();
+        if (self.layer) {
+            self.layer.clearFeatures();
+        }
         self.setMode(self.mode, true);
     };
 
     ctlProto.undo = function () {
         var self = this;
-        var result = this.wrap.undo();
+        var result = self.wrap.undo();
         if (result) {
             self.historyIndex--;
-            self._$redoBtn.removeClass(TC.Consts.classes.DISABLED);
+            setDrawState(self);
 
             if (self.historyIndex <= 0) {
                 self.resetValues();
-
             }
         }
 
@@ -189,9 +213,8 @@ TC.inherit(TC.control.Draw, TC.Control);
         var result = this.wrap.redo();
         if (result) {
             self.historyIndex++;
-            self._$undoBtn.removeClass(TC.Consts.classes.DISABLED);
+            setDrawState(self);
         }
-        self._$redoBtn.toggleClass(TC.Consts.classes.DISABLED, self.historyIndex >= self.history.length);
         return result;
     };
 
@@ -200,6 +223,7 @@ TC.inherit(TC.control.Draw, TC.Control);
         self._cancelClick = true;
         this.setMode(null, false);
         self.resetValues();
+        setFeatureAddReadyState(self);
         self.$events.trigger($.Event(TC.Consts.event.DRAWCANCEL, { ctrl: self }));
     };
 
@@ -208,6 +232,24 @@ TC.inherit(TC.control.Draw, TC.Control);
         self._$newBtn.addClass(TC.Consts.classes.ACTIVE);
         TC.Control.prototype.activate.call(self);
         self.wrap.activate(self.mode);
+        self._$div
+            .removeClass(self._pointClass)
+            .removeClass(self._lineClass)
+            .removeClass(self._polygonClass);
+        switch (self.mode) {
+            case TC.Consts.geom.POINT:
+                self._$div.addClass(self._pointClass);
+                break;
+            case TC.Consts.geom.POLYLINE:
+                self._$div.addClass(self._lineClass);
+                break;
+            case TC.Consts.geom.POLYGON:
+                self._$div.addClass(self._polygonClass);
+                break;
+            default:
+                break;
+        }
+
     };
 
     ctlProto.deactivate = function () {
@@ -220,7 +262,7 @@ TC.inherit(TC.control.Draw, TC.Control);
             self.wrap.deactivate();
         }
         self.resetValues();
-        self.$events.trigger($.Event(TC.Consts.event.DRAWCANCEL, { ctrl: self }));
+        //self.$events.trigger($.Event(TC.Consts.event.DRAWCANCEL, { ctrl: self }));
         self._cancelClick = false;
     };
 
@@ -241,7 +283,9 @@ TC.inherit(TC.control.Draw, TC.Control);
             self.mode = mode;
 
         if (activate && mode) {
-            self.layer.map.putLayerOnTop(self.layer);
+            if (self.layer) {
+                self.layer.map.putLayerOnTop(self.layer);
+            }
             self.activate();
         }
         else {
@@ -256,13 +300,30 @@ TC.inherit(TC.control.Draw, TC.Control);
 
     ctlProto.getLayer = function () {
         var self = this;
+        // Se ha instanciado un control sin capa asociada
+        if (self.options && typeof self.options.layer === 'boolean' && !self.options.layer) {
+            return null;
+        }
         return self.layer ? self.layer : self.layerPromise;
+    };
+
+    ctlProto.setLayer = function (layer) {
+        var self = this;
+        if (self.map) {
+            if (typeof (layer) === "string") {
+                self.layer = self.map.getLayer(layer);
+            }
+            else {
+                self.layer = layer;
+            }
+        }
     };
 
     ctlProto.resetValues = function () {
         var self = this;
-        self._$undoBtn.addClass(TC.Consts.classes.DISABLED);
-        self._$redoBtn.addClass(TC.Consts.classes.DISABLED);
+        self.history.length = 0;
+        self.historyIndex = 0;
+        setDrawState(self);
     };
 
 })();
