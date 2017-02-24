@@ -4,8 +4,6 @@ if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
 }
 
-TC.Consts.event.MEASURE = 'measure.tc';
-TC.Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
 TC.Consts.event.POINT = 'point.tc';
 
 TC.control.Measure = function () {
@@ -96,13 +94,13 @@ TC.inherit(TC.control.Measure, TC.Control);
                     function () {
                         self.drawLines = new TC.control.Draw({
                             "div": self._$div.find('.tc-ctl-meas-lines'),
-                            "mode": "polyline",
+                            "mode": TC.Consts.geom.POLYLINE,
                             "measure": true,
                             "layer": self.layer
                         });
                         self.drawPolygons = new TC.control.Draw({
                             "div": self._$div.find('.tc-ctl-meas-polygon'),
-                            "mode": "polygon",
+                            "mode": TC.Consts.geom.POLYGON,
                             "measure": true,
                             "layer": self.layer
                         });
@@ -112,12 +110,18 @@ TC.inherit(TC.control.Measure, TC.Control);
                                 var precision = e.units === 'm' ? 0 : 3;
                                 if (e.area) {
                                     self._$area.html(e.area.toFixed(precision).replace('.', ',') + ' ' + e.units + '&sup2;');
+                                } else if (e.area === 0) {
+                                    self.resetValues();
                                 }
                                 if (e.perimeter) {
                                     self._$peri.html(e.perimeter.toFixed(precision).replace('.', ',') + ' ' + e.units);
+                                } else if (e.perimeter === 0) {
+                                    self.resetValues();
                                 }
                                 if (e.length) {
                                     self._$len.html(e.length.toFixed(precision).replace('.', ',') + ' ' + e.units);
+                                } else if (e.length === 0) {
+                                    self.resetValues();
                                 }
                             }
                             self.drawLines.$events.on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
