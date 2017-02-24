@@ -40,6 +40,8 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
         }
         ctlProto.waits[e.layer.id] = ctlProto.waits[e.layer.id] + 1;
         self.show();
+
+        self.map.$events.trigger($.Event(TC.Consts.event.STARTLOADING));
     };
 
     ctlProto.stopWait = function (e) {
@@ -56,7 +58,16 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
             count++;
         }
         if (!count) {
-            self.hide();
+            if (self.map) {
+                if (self.map.isLoaded) {
+                    self.hide();
+                }
+            }
+            else {
+                self.hide();
+            }
+
+            self.map.$events.trigger($.Event(TC.Consts.event.STOPLOADING));
         }
     };
 
@@ -64,6 +75,7 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
         var self = this;
         ctlProto.waits = {};
         self.hide();
+        self.map.$events.trigger($.Event(TC.Consts.event.STOPLOADING));
     };
 
     ctlProto.register = function (map) {
