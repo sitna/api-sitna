@@ -29,10 +29,10 @@ TC.control.Print = function (options)
 
         var renderPage = function (e)
         {
+            var page = open(null, self.CLASS);
             var content = $target.html();
             dust.render(self.CLASS + '-page', { title: self.title, content: content, cssUrl: self.cssUrl }, function (err, out)
             {
-                var page = open(null, self.CLASS);
                 page.document.write(out);
                 page.document.close();
                 page.focus();
