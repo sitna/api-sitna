@@ -40,7 +40,7 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         var inScale = self.CLASS + '-node-inscale';
         var outOfScale = self.CLASS + '-node-outofscale';
 
-        self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').each(function (idx, elm) {
+        self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').not('.' + self.CLASS + '-empty').each(function (idx, elm) {
             var $li = $(elm);
             var layer = $li.data(_dataKeys.layer);
             var layersInScale = false;
@@ -95,6 +95,8 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
                             break;
                     }
                 });
+
+                self.updateLayerVisibility(layer);
             }
         });
         self.updateScale();
