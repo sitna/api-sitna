@@ -37,8 +37,18 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
 
     ctlProto.register = function (map) {
         var self = this;
-
         TC.control.MapContents.prototype.register.call(self, map);
+
+        self.$events.on(TC.Consts.event.CONTROLRENDER, function () {
+            var controlOptions = self.options.controls || [];
+
+            if (controlOptions.length > 0) {
+                var ctl = controlOptions[0];
+                var newDiv = $('<div/>');
+                self._$div.append(newDiv);
+                map.addControl(ctl.name, $.extend({ 'div': newDiv }, ctl.options));
+            }
+        });
 
         self._$div.on(TC.Consts.event.CLICK, 'input[type=checkbox]', function (e) {
             var $cb = $(e.target);
@@ -50,12 +60,20 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
 
             e.stopPropagation();
 
-        }).on(TC.Consts.event.CLICK, 'li', function (e) {
+        }).on('mouseup.tc', 'li', function (e) {
             var $li = $(e.target);
             if (!$li.hasClass(self.CLASS + '-leaf')) {
                 $li.toggleClass(TC.Consts.classes.COLLAPSED);
                 $li.find('ul').first().toggleClass(TC.Consts.classes.COLLAPSED);
                 e.stopPropagation();
+            }
+        });
+
+        map.on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
+            if (e && e.layer) {
+                e.layer.map = map;
+                map.addLayer(e.layer);
+                self.updateLayerTree(e.layer);
             }
         });
     };
