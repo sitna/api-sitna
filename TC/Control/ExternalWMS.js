@@ -45,7 +45,11 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
 
         self._$div.on("change", "select", function (evt) {
             if (this.value != "") {
-                self._$div.find("input").val(this.value);
+                var url = this.value;
+                if (url.indexOf('//') === 0) {
+                    url = location.protocol + url;
+                }
+                self._$div.find("input").val(url);
                 $(this).val("");
             }
         });
@@ -84,15 +88,6 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                     var $addButton = self._$div.find("button");
                     $addButton.attr("disabled", "true");
 
-                    //Si la URL no tiene protocolo, le asignamos HTTP
-                    if (!/^((https?|ftp))/i.test(url)) {
-                        if (url.indexOf("//") == 0) {
-                            url = "http:" + url;
-                        } else {
-                            url = "http://" + url;
-                        }
-                    }
-
                     var obj = {
                         "id": "xwms" + (++self.count),
                         //"title": "Servicio externo",
@@ -118,18 +113,11 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                                 return;
                             }
 
-                            var catalog = self.map.getControlsByClass("TC.control.LayerCatalog");
-                            if (catalog.length == 0)
-                                console.error("No hay lista de capas a la que añadir");
-                            else {
-                                catalog = catalog[0];
-                                catalog.addLayer(layer);
-                                $(catalog.div).removeClass("tc-collapsed");
-                                self._$div.find("input").val("");
-                                var optionSelected = self._$div.find("select option[value='" + url + "']");
-                                self.markServicesAsSelected(optionSelected);
-                                self._addedUrls.push(url);
-                            }
+                            self.map.$events.trigger($.Event(TC.Consts.event.EXTERNALSERVICEADDED, { layer: layer }));
+                            self._$div.find("input").val("");
+                            var optionSelected = self._$div.find("select option[value='" + url + "']");
+                            self.markServicesAsSelected(optionSelected);
+                            self._addedUrls.push(url);
                             loadingCtrl.hide();
                             $addButton.removeAttr("disabled");
                         }
@@ -144,10 +132,12 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
 
         });
 
-        map.on(TC.Consts.event.LAYERCATALOGADD, function (e) {
+        map.on(TC.Consts.event.LAYERADD, function (e) {
             var url = e.layer.url;
-            var optionSelected = self._$div.find("select option[value='" + url + "']");
-            self.markServicesAsSelected(optionSelected);
+            var $optionSelected = self._$div.find("select option").filter(function (idx, elm) {
+                return TC.Util.addProtocol(elm.value) === TC.Util.addProtocol(url);
+            });
+            self.markServicesAsSelected($optionSelected);
             self._addedUrls.push(url);
         });
     };
@@ -158,7 +148,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
     }
     else {
         ctlProto.template[ctlProto.CLASS] = function () {
-            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "addMaps" }).w("</h2><div><div class=\"tc-group tc-ctl-xwms-cnt\"> <select id=\"add-wms-select\" class=\"tc-combo\"><option value=\"\">URL</option>").s(ctx.get(["suggestions"], false), ctx, { "block": body_1 }, {}).w("</select><input type=\"text\" class=\"tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "writeAddressOrSelect" }).w("\" /></div><div class=\"tc-group tc-group tc-ctl-xwms-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-button tc-icon-button\" name=\"agregar\">").h("i18n", ctx, {}, { "$key": "addService" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<optgroup label=\"").f(ctx.get(["group"], false), ctx, "h").w("\">").s(ctx.get(["items"], false), ctx, { "block": body_2 }, {}).w("</optgroup>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<option value=\"").f(ctx.get(["url"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</option>"); } body_2.__dustBody = !0; return body_0;
+            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["title"], false), ctx, { "block": body_1 }, {}).w("<div><div class=\"tc-group tc-ctl-xwms-cnt\"> <select id=\"add-wms-select\" class=\"tc-combo\" title=\"WMS (Web Map Service)\"><option value=\"\">WMS</option>").s(ctx.get(["suggestions"], false), ctx, { "block": body_2 }, {}).w("</select><input type=\"text\" class=\"tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "writeAddressOrSelect" }).w("\" /></div><div class=\"tc-group tc-group tc-ctl-xwms-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "addService.title" }).w("\" name=\"agregar\">").h("i18n", ctx, {}, { "$key": "addService" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "addMaps" }).w("</h2>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<optgroup label=\"").f(ctx.get(["group"], false), ctx, "h").w("\">").s(ctx.get(["items"], false), ctx, { "block": body_3 }, {}).w("</optgroup>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<option value=\"").f(ctx.get(["url"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</option>"); } body_3.__dustBody = !0; return body_0;
         };
     }
 
