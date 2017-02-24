@@ -15,6 +15,6 @@ body.tc-ctl-print-page th,body.tc-ctl-print-page td {
     border: 1px solid #ccc;
 }
 
-body.tc-ctl-print-page .tc-ctl-print-btn,body.tc-ctl-print-page .tc-ctl-btn,body.tc-ctl-print-page .tc-ctl-finfo-counter {
+body.tc-ctl-print-page .tc-ctl-print-btn,body.tc-ctl-print-page .tc-ctl-btn,body.tc-ctl-print-page .tc-ctl-finfo-counter,body.tc-ctl-print-page .tc-ctl-finfo-tools {
     display: none;
 }
