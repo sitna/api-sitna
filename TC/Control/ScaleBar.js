@@ -29,4 +29,10 @@ TC.inherit(TC.control.ScaleBar, TC.Control);
         map.wrap.getMap().addControl(self.wrap.ctl);
     };
 
+    ctlProto.getText = function () {
+        var self = this;
+
+        return self.wrap.getText();
+    };
+
 })();
