@@ -43,12 +43,7 @@
 
     if (map) {
 
-        map.loaded(function () {
-            // Ocultamos lo innecesario si estamos en modo offline
-            var cb = map.getControlsByClass('TC.control.CacheBuilder')[0];
-            if (cb && cb.mapIsOffline) {
-                $('#legend-panel,#ovmap-panel,#links,.language-links').addClass(TC.Consts.classes.DISABLED);
-            }
+        map.loaded(function () {            
 
             ovmap = map.getControlsByClass('TC.control.OverviewMap')[0];
             if (ovmap) {
@@ -62,6 +57,20 @@
                     mfi.detach();
                     $(".tc-ctl-ltoc h2").after(mfi);
                 }
+        });
+
+        TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
+        TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
+
+        map.$events.on(TC.Consts.event.TOOLSOPEN, function (e) {
+            var $toolsPanel = $('.tools-panel');
+            $toolsPanel.removeClass('right-collapsed');
+        });
+
+        map.$events.on(TC.Consts.event.TOOLSCLOSE, function (e) {
+            var $toolsPanel = $('.tools-panel');
+            if (!$toolsPanel.hasClass('right-collapsed'))
+                $toolsPanel.addClass('right-collapsed');
         });
 
         // En pantalla estrecha colapsar panel de herramientas al activar una
