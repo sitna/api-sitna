@@ -36,8 +36,8 @@ TC.inherit(TC.control.BasemapSelector, TC.control.MapContents);
             self.update();
         });
 
-        self._$div.on(TC.Consts.event.CLICK, 'label', function (e) {
-            var $radio = $(e.target).closest('label').find('input[type=radio]');
+        self._$div.on('change', 'input[type=radio]', function (e) {
+            var $radio = $(e.target);
             if (!Modernizr.canvas) {
                 // IE8 support
                 self._$div.find('label > span').removeClass(TC.Consts.classes.CHECKED);
