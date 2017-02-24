@@ -1552,6 +1552,11 @@
         return [coord.lon, coord.lat];
     };
 
+    TC.wrap.Map.prototype.getPixelFromCoordinate = function (coord) {
+        var xy = this.map.getPixelFromLonLat({ lon: coord[0], lat: coord[1] });
+        return [xy.x, xy.y];
+    };
+
     TC.wrap.Map.prototype.getViewport = function () {
         var result = new $.Deferred();
         $.when(this.getMap()).then(function (olMap) {
@@ -1593,6 +1598,19 @@
             });
         }
     };
+
+    TC.wrap.Map.prototype.exportFeatures = function (features, options) {
+        TC.error('TC.wrap.Map.prototype.exportFeatures no implementado en OpenLayers 2');
+    };
+
+    TC.wrap.Map.prototype.enableDragAndDrop = function (options) {
+        TC.error('TC.wrap.Map.prototype.enableDragAndDrop no implementado en OpenLayers 2');
+    };
+
+    TC.wrap.Map.prototype.loadFiles = function (options) {
+        TC.error('TC.wrap.Map.prototype.loadFiles no implementado en OpenLayers 2');
+    };
+
     /*
      *  getVisibility: gets the OpenLayers layer visibility
      *  Result: boolean
@@ -1628,11 +1646,13 @@
     TC.wrap.Layer.prototype.addCommonEvents = function (layer) {
         var self = this;
         layer.events.register('loadstart', self.parent.map, function () {
+            self.parent.state = TC.Layer.state.LOADING;
             if (self.parent.map) {
                 self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self.parent }));
             }
         });
         layer.events.register('loadend', self.parent.map, function () {
+            self.parent.state = TC.Layer.state.IDLE;
             if (self.parent.map) {
                 self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self.parent }));
             }
@@ -1798,9 +1818,25 @@
         return result;
     };
 
-    TC.wrap.layer.Raster.prototype.getRootLayerNode = function () {
+    TC.wrap.layer.Raster.prototype.getServiceTitle = function () {
+        var result = null;
         var capabilities = this.parent.capabilities;
-        return capabilities.capability.nestedLayers[0];
+        if (capabilities.capability && capabilities.service) {
+            result = capabilities.service.title;
+        }
+        else if (capabilities.serviceIdentification) {
+            result = capabilities.serviceIdentification.title;
+        }
+        return result;
+    };
+
+    TC.wrap.layer.Raster.prototype.getRootLayerNode = function () {
+        var self = this;
+        var result;
+        if (self.getServiceType() === TC.Consts.layerType.WMS) {
+            result = self.parent.capabilities.capability.nestedLayers[0];
+        }
+        return result;
     };
 
     TC.wrap.layer.Raster.prototype.getName = function (node, ignorePrefix) {
@@ -1812,6 +1848,10 @@
             }
         }
         return result;
+    };
+
+    TC.wrap.layer.Raster.prototype.getIdentifier = function (node) {
+        return node.identifier;
     };
 
     TC.wrap.layer.Raster.prototype.getLayerNodes = function (node) {
@@ -1852,7 +1892,14 @@
     
     TC.wrap.layer.Raster.prototype.getAllLayerNodes = function () {
         var capabilities = this.parent.capabilities;
-        return capabilities.capability.layers;
+        switch (self.getServiceType()) {
+            case TC.Consts.layerType.WMS:
+                return capabilities.capability.layers;
+            case TC.Consts.layerType.WMTS:
+                return capabilities.contents.layers;
+            default:
+                return [];
+        }
     };
 
     TC.wrap.layer.Raster.prototype.getLegend = function (node) {
@@ -2012,6 +2059,10 @@
 
     TC.wrap.layer.Raster.prototype.getResolutions = function () {
         return [];
+    };
+
+    TC.wrap.layer.Raster.prototype.setWMTSUrl = function () {
+        
     };
 
     TC.wrap.Geometry = {
@@ -2414,6 +2465,15 @@
         return result;
     };
 
+    TC.wrap.layer.Vector.prototype.getGetFeatureUrl = function () {
+        return null;
+    };
+
+    TC.wrap.layer.Vector.prototype.import = function (options) {
+        TC.error('TC.wrap.layer.Vector.prototype.import no está soportada con OpenLayers 2');
+    };
+
+
     TC.wrap.layer.Vector.prototype.addFeatures = function (features) {
         $.when(this.getLayer()).then(function (olLayer) {
             olLayer.addFeatures(features);
@@ -2435,6 +2495,24 @@
         }
         else {
             return [];
+        }
+    };
+
+    TC.wrap.layer.Vector.prototype.getFeatureById = function (id) {
+        var olLayer = this.getLayer();
+        if (olLayer instanceof OpenLayers.Layer) {
+            if (olLayer.strategies) {
+                for (var i = 0; i < olLayer.strategies.length; i++) {
+                    var s = olLayer.strategies[i];
+                    if (s instanceof OpenLayers.Strategy.Filter) {
+                        s.setFilter(s.filter);
+                    }
+                }
+            }
+            return olLayer.getFeatureById(id);
+        }
+        else {
+            return null;
         }
     };
 
@@ -2473,6 +2551,26 @@
                 delete self._redrawTimeout;
             }, 100);
         }
+    };
+
+    TC.wrap.layer.Vector.prototype.getRGBA = function (color, opacity) {
+        var result = [0, 0, 0, 1];
+
+        if (typeof color === 'string') {
+            var componentLength = color.length === 4 ? 1 : 2;
+            result[0] = parseInt(color.substr(1, componentLength), 16);
+            result[1] = parseInt(color.substr(1 + componentLength, componentLength), 16);
+            result[2] = parseInt(color.substr(1 + 2 * componentLength, componentLength), 16);
+            if (componentLength === 1) {
+                result[0] = result[0] * 17;
+                result[1] = result[1] * 17;
+                result[2] = result[2] * 17;
+            }
+            if (opacity !== undefined) {
+                result[3] = opacity;
+            }
+        }
+        return result;
     };
 
     TC.wrap.layer.Vector.prototype.findFeature = function (values) {
@@ -3231,7 +3329,7 @@
             );
         }
         else {
-            if (olFeat.geometry instanceof OpenLayers.Geometry.LineString || olFeat.geometry instanceof OpenLayers.Geometry.MultiLineString) {
+            if (olFeat.geometry instanceof OpenLayers.Geometry.LineString) {
                 TC.loadJS(
                     !TC.feature || (TC.feature && !TC.feature.Polyline),
                     [TC.apiLocation + 'TC/feature/Polyline.js'],
@@ -3241,7 +3339,17 @@
                 );
             }
             else {
-                if (olFeat.geometry instanceof OpenLayers.Geometry.Polygon || olFeat.geometry instanceof OpenLayers.Geometry.MultiPolygon) {
+                if (olFeat.geometry instanceof OpenLayers.Geometry.MultiLineString) {
+                    TC.loadJS(
+                        !TC.feature || (TC.feature && !TC.feature.MultiPolyline),
+                        [TC.apiLocation + 'TC/feature/MultiPolyline.js'],
+                        function () {
+                            result.resolve(new TC.feature.MultiPolyline(olFeat, options));
+                        }
+                    );
+                }
+                else {
+                    if (olFeat.geometry instanceof OpenLayers.Geometry.Polygon) {
                     TC.loadJS(
                         !TC.feature || (TC.feature && !TC.feature.Polygon),
                         [TC.apiLocation + 'TC/feature/Polygon.js'],
@@ -3251,7 +3359,17 @@
                     );
                 }
                 else {
+                        if (olFeat.geometry instanceof OpenLayers.Geometry.MultiPolygon) {
                     TC.loadJS(
+                                !TC.feature || (TC.feature && !TC.feature.MultiPolygon),
+                                [TC.apiLocation + 'TC/feature/MultiPolygon.js'],
+                                function () {
+                                    result.resolve(new TC.feature.MultiPolygon(olFeat, options));
+                                }
+                            );
+                        }
+                        else {
+                            TC.loadJS(
                         !TC.Feature,
                         [TC.apiLocation + 'TC/Feature.js'],
                         function () {
@@ -3259,6 +3377,8 @@
                         }
                     );
                 }
+            }
+        }
             }
         }
         return result;
@@ -3329,6 +3449,13 @@
         return result;
     };
 
+    TC.wrap.Feature.prototype.setId = function (id) {
+        var self = this;
+        if (self.feature) {
+            self.feature.fid = id;
+        };
+    };
+
     TC.wrap.Feature.prototype.setStyle = function (options) {
         var self = this;
 
@@ -3384,6 +3511,16 @@
         }
     };
 
+    TC.wrap.Feature.prototype.getInnerPoint = function (options) {
+        var feature = this.feature;
+        var point = feature.geometry.getCentroid(true);
+        if (!result.intersects(feature.geometry)) {
+            var closest = feature.geometry.distanceTo(result, { details: true });
+            point = new OpenLayers.Geometry.Point(closest.x0, closest.y0);
+        }
+        return [point.x, point.y];
+    };
+
     TC.wrap.Feature.prototype.showPopup = function (popupCtl) {
         var self = this;
         var feature = self.feature;
@@ -3394,11 +3531,7 @@
         }
         var PopupClass = Modernizr.canvas ? OpenLayers.Popup.Anchored : OpenLayers.Popup.FramedCloud;
         if (!self._innerCentroid) {
-            self._innerCentroid = feature.geometry.getCentroid(true);
-            if (!self._innerCentroid.intersects(feature.geometry)) {
-                var closest = feature.geometry.distanceTo(self._innerCentroid, { details: true });
-                self._innerCentroid = new OpenLayers.Geometry.Point(closest.x0, closest.y0);
-            }
+            self._innerCentroid = self.getInnerPoint();
         }
 
         popupCtl.currentFeature = self.parent;
@@ -3423,7 +3556,7 @@
                     }
 
                     var popup = new PopupClass(null,
-                                    new OpenLayers.LonLat(self._innerCentroid.x, self._innerCentroid.y),
+                                    new OpenLayers.LonLat(self._innerCentroid[0], self._innerCentroid[1]),
                                     null,
                                     html,
                                     anchor,
@@ -3608,7 +3741,7 @@
         return {};
     }
 
-    TC.wrap.control.CacheBuilder.prototype.getUrlPattern = function (layer) {
+    TC.wrap.control.CacheBuilder.prototype.getGetTilePattern = function (layer) {
         return "";
     }
 })();
