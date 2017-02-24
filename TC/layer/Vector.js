@@ -32,24 +32,24 @@ if (!TC.Layer) {
  * @param {TC.Cfg.layer} [options] Objeto de opciones de configuración de la capa.
  */
 TC.layer.Vector = function () {
-    var _layer = this;
-    TC.Layer.apply(_layer, arguments);
+    var self = this;
+    TC.Layer.apply(self, arguments);
 
-    _layer.type = _layer.options.type || TC.Consts.layerType.VECTOR;
+    self.type = self.options.type || TC.Consts.layerType.VECTOR;
     /**
      * Lista de entidades geográficas que hay en la capa.
      * @property features
      * @type array
      * @default []
      */
-    _layer.features = [];
+    self.features = [];
     /**
      * Lista de entidades geográficas seleccionadas en la capa.
      * @property selectedFeatures
      * @type array
      * @default []
      */
-    _layer.selectedFeatures = [];
+    self.selectedFeatures = [];
 
     var _isKml = function (url) {
         var idx = url.indexOf('?');
@@ -69,8 +69,8 @@ TC.layer.Vector = function () {
      * @property url
      * @type string
      */
-    if (_layer.url && (_isKml(_layer.url) || _layer.type === TC.Consts.layerType.KML)) {
-        _layer.type = TC.Consts.layerType.KML;
+    if (self.url && (_isKml(self.url) || self.type === TC.Consts.layerType.KML)) {
+        self.type = TC.Consts.layerType.KML;
 
         var getFileName = function (url) {
             var result = url;
@@ -86,13 +86,13 @@ TC.layer.Vector = function () {
             }
             return result;
         };
-        _layer.title = _layer.options.title || getFileName(_layer.url);
+        self.title = self.options.title || getFileName(self.url);
     }
 
-    _layer.wrap = new TC.wrap.layer.Vector(_layer);
+    self.wrap = new TC.wrap.layer.Vector(self);
 
-    var ollyr = _layer.wrap.createVectorLayer();
-    _layer.wrap.setLayer(ollyr);
+    var ollyr = self.wrap.createVectorLayer();
+    self.wrap.setLayer(ollyr);
 };
 
 TC.inherit(TC.layer.Vector, TC.Layer);
@@ -104,23 +104,23 @@ TC.inherit(TC.layer.Vector, TC.Layer);
      *  getTree: returns service layer tree { name, title, children }
      */
     layerProto.getTree = function () {
-        var _layer = this;
+        var self = this;
         var result = null;
-        if (!_layer.options.stealth) {
+        if (!self.options.stealth) {
             result = {};
             result.children = [];
-            for (var i = 0; i < _layer.features.length; i++) {
-                var path = _layer.features[i].getPath();
+            for (var i = 0; i < self.features.length; i++) {
+                var path = self.features[i].getPath();
                 if (path.length) {
                     var node = TC.Util.addArrayToTree(path, result);
                     if (node) {
-                        node.legend = _layer.features[i].getLegend();
+                        node.legend = self.features[i].getLegend();
                     }
                 }
             }
-            result.name = _layer.name || result.name;
-            result.title = _layer.title || result.title;
-            result.uid = _layer.id;
+            result.name = self.name || result.name;
+            result.title = self.title || result.title;
+            result.uid = self.id;
         }
         return result;
     };
@@ -165,7 +165,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                         feature.showPopup();
                     }
                     // Este evento mata el rendimiento
-                    //_layer.map.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { layer: _layer, feature: marker }));
+                    //self.map.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { layer: self, feature: marker }));
                 }
                 if (nativeFeatures.length) {
                     layer.wrap.addFeatures(nativeFeatures);
@@ -249,6 +249,15 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         return addFeaturesInternal(this, coordsArray, 'Polyline', TC.Consts.geom.POLYLINE, options);
     };
 
+    layerProto.addMultiPolyline = function (coords, options) {
+        return addFeatureInternal(this, this.addMultiPolylines, coords, options);
+    };
+
+
+    layerProto.addMultiPolylines = function (coordsArray, options) {
+        return addFeaturesInternal(this, coordsArray, 'MultiPolyline', TC.Consts.geom.POLYLINE, options);
+    };
+
     /**
      * Añade un polígono a la capa.
      * @method addPolygon
@@ -329,6 +338,9 @@ TC.inherit(TC.layer.Vector, TC.Layer);
             else if (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon) {
                 result = layer.addMultiPolygon(feature);
             }
+            else if (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline) {
+                result = layer.addMultiPolyline(feature);
+            }
             else if (TC.feature.Circle && feature instanceof TC.feature.Circle) {
                 result = layer.addCircle(feature);
             }
@@ -345,41 +357,105 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         this.wrap.removeFeature(feature);
     };
 
+    layerProto.getFeatureById = function (id) {
+        var result = null;
+        var olFeat = this.wrap.getFeatureById(id);
+        if (olFeat) {
+            result = olFeat._wrap.parent;
+        }
+        return result;
+    };
+
     /**
      * Borra todas las entidades geográficas de la capa.
      * @method clearFeatures
      */
     layerProto.clearFeatures = function () {
-        var _layer = this;
-        if (_layer.features && _layer.wrap) {
-            _layer.features.length = 0;
-            _layer.wrap.clearFeatures();
+        var self = this;
+        if (self.features && self.wrap) {
+            self.features.length = 0;
+            self.wrap.clearFeatures();
         }
     };
 
+    layerProto.describeFeatureType = function (callback, error) {
+        var self = this;
+        var deferred = $.Deferred();
+        $.ajax({
+            url: self.wrap.getDescribeFeatureTypeUrl(),
+            type: 'GET',
+            dataType: 'xml'
+        }).then(function (data) {
+            var ns = 'http://www.w3.org/2001/XMLSchema';
+            var complexType = data.getElementsByTagNameNS(ns, 'complexType')[0];
+            if (complexType) {
+                var elements = complexType.getElementsByTagNameNS(ns, 'element');
+                var result = new Array(elements.length);
+                for (var i = 0, len = elements.length; i < len; i++) {
+                    var element = elements[i];
+                    result[i] = {
+                        name: element.getAttribute('name'),
+                        type: element.getAttribute('type'),
+                        nillable: element.getAttribute('nillable') === 'true' ? true : false,
+                        minOccurs: parseInt(element.getAttribute('minOccurs')),
+                        maxOccurs: parseInt(element.getAttribute('maxOccurs'))
+                    }
+                }
+                deferred.resolve(result);
+            }
+            else {
+                var exception = data.getElementsByTagName('Exception')[0];
+                if (exception) {
+                    deferred.reject(exception.getElementsByTagName('ExceptionText')[0].innerHTML);
+                }
+            }
+        },
+        function (jqXHR, textStatus, errorThrown) {
+            deferred.reject(errorThrown);
+        });
+        deferred.then(
+            function (data) {
+                if ($.isFunction(callback)) {
+                    callback(data);
+                }
+            },
+            function (errorText) {
+                if ($.isFunction(error)) {
+                    error(errorText);
+                }
+            }
+        );
+        return deferred.promise();
+    };
+
+    layerProto.import = function (options) {
+        this.wrap.import(options);
+    };
+
     layerProto.setNodeVisibility = function (id, visible) {
-        var _layer = this;
+        var self = this;
 
-        _layer.map.$events.trigger($.Event(TC.Consts.event.BEFOREUPDATE));
-        _layer.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: _layer }));
+        self.state = TC.Layer.state.LOADING;
+        self.map.$events.trigger($.Event(TC.Consts.event.BEFOREUPDATE));
+        self.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self }));
 
-        if (!_layer.tree) {
-            _layer.tree = _layer.getTree();
+        if (!self.tree) {
+            self.tree = self.getTree();
         }
 
-        var node = _layer.findNode(id, _layer.tree);
-        if (node === _layer.tree) {
-            _layer.setVisibility(visible);
+        var node = self.findNode(id, self.tree);
+        if (node === self.tree) {
+            self.setVisibility(visible);
         }
         else {
-            var cache = _layer._cache.visibilityStates;
+            var cache = self._cache.visibilityStates;
             cache[id] = visible ? TC.Consts.visibility.VISIBLE : TC.Consts.visibility.NOT_VISIBLE;
 
             var found = false;
             var i;
             var f;
-            for (i = 0; i < _layer.features.length; i++) {
-                f = _layer.features[i];
+            for (i = 0; i < self.features.length; i++) {
+                f = self.features[i];
                 if (f.id == id) {
                     found = true;
                     f.setVisibility(visible);
@@ -387,8 +463,8 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 }
             }
             if (!found) {
-                for (i = 0; i < _layer.features.length; i++) {
-                    f = _layer.features[i];
+                for (i = 0; i < self.features.length; i++) {
+                    f = self.features[i];
                     if (f._path === undefined) {
                         f._path = '/' + f.getPath().join('/');
                     }
@@ -398,23 +474,24 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 }
             }
         }
-        _layer.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: _layer }));
-        _layer.map.$events.trigger($.Event(TC.Consts.event.UPDATE));
+        self.state = TC.Layer.state.IDLE;
+        self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self }));
+        self.map.$events.trigger($.Event(TC.Consts.event.UPDATE));
     };
 
     layerProto.getNodeVisibility = function (id) {
-        var _layer = this;
-        var result = TC.Layer.prototype.getNodeVisibility.call(_layer, id);
-        if (!_layer.tree) {
-            _layer.tree = _layer.getTree();
+        var self = this;
+        var result = TC.Layer.prototype.getNodeVisibility.call(self, id);
+        if (!self.tree) {
+            self.tree = self.getTree();
         }
 
-        var node = _layer.findNode(id, _layer.tree);
-        if (node === _layer.tree) {
-            result = _layer.getVisibility() ? TC.Consts.visibility.VISIBLE : TC.Consts.visibility.NOT_VISIBLE;
+        var node = self.findNode(id, self.tree);
+        if (node === self.tree) {
+            result = self.getVisibility() ? TC.Consts.visibility.VISIBLE : TC.Consts.visibility.NOT_VISIBLE;
         }
         else {
-            var cache = _layer._cache.visibilityStates;
+            var cache = self._cache.visibilityStates;
             var r = cache[id];
             if (r !== undefined) {
                 result = r;
