@@ -7,16 +7,67 @@ if (!TC.Layer) {
 TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7';
 
 (function () {
+    var capabilitiesPromises = {};
+
+    var isWebWorkerEnabled = window.hasOwnProperty('Worker');
+    var wwDeferred = $.Deferred();
+    if (isWebWorkerEnabled) {
+        // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
+        var wwLocation = TC.apiLocation + 'TC/workers/tc-caps-web-worker.js';
+        if (TC.Util.isSameOrigin(TC.apiLocation)) {
+            wwDeferred.resolve(wwLocation);
+        }
+        else {
+            $.ajax({
+                url: wwLocation,
+                type: 'GET',
+                dataType: 'text'
+            }).then(
+                function (data) {
+                    var blob = new Blob([data], { type: "text/javascript" });
+                    var url = window.URL.createObjectURL(blob);
+                    wwDeferred.resolve(url);
+                },
+                function (e) {
+                    wwDeferred.reject();
+                }
+            );
+        }
+    }
+
     /*
-     *  _getCapabilities: Obtiene el capabilities de la capa layer, y llama a los callback correspondientes
+     *  getCapabilities: Obtiene el capabilities de la capa layer, y llama a los callback correspondientes
      */
-    var _getCapabilities = function (layer, success, error) {
+    var getCapabilities = function (layer, success, error) {
         var serviceUrl = layer.url;
-        if (TC.capabilities[serviceUrl]) {
-            layer.capabilities = TC.capabilities[serviceUrl];
-            layer.url = layer.getGetMapUrl();
-            layer._capabilitiesPromise.resolve(/*this.normalizeCapabilities(TC.capabilities[serviceUrl])*/TC.capabilities[serviceUrl]);
+
+        var processingCapabilities = false;
+        var capabilitiesFromUrl = capabilitiesPromises[serviceUrl];
+        if (capabilitiesFromUrl) {
+            layer._capabilitiesPromise = capabilitiesFromUrl;
+            processingCapabilities = true;
+        }
+        else {
+            layer._capabilitiesPromise = capabilitiesFromUrl = capabilitiesPromises[serviceUrl] = $.Deferred();
+        }
+        capabilitiesFromUrl.then(function (capabilities) {
+            if (capabilities.error) {
+                capabilitiesError(layer, capabilities.error);
+
+                return;
+            }
+            // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
+            // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
+            layer.capabilities = layer.capabilities || capabilities;
+            var actualUrl = layer.getGetMapUrl();
+            TC.capabilities[layer.options.url] = TC.capabilities[layer.options.url] || capabilities;
+            TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
+
             _createLayer(layer);
+        });
+
+        if (processingCapabilities) {
+            // Ya se está procesando el capabilities en otra capa, no es necesario seguir
             return;
         }
 
@@ -24,7 +75,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + serviceUrl)
                 .then(function (value) {
                     if (value) {
-                        success(value);
+                        capabilitiesPromises[layer.url].resolve(value);
                     }
                 });
         });
@@ -62,15 +113,132 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var getRequest = function (url, retry) {
             var result = TC._capabilitiesRequests[url] = (!retry && TC._capabilitiesRequests[url]) || $.ajax({
                 url: retry ? TC.proxify(url) : url,
-                type: 'GET'
+                type: 'GET',
+                dataType: isWebWorkerEnabled ? 'text' : 'xml'
             });
             return result;
         };
 
+        var successCallback = function (data) {
+            success(layer, data);
+        };
         // Lanzamos la primera petición sin proxificar. Si falla (CORS, HTTP desde HTTPS...) pedimos proxificando.
-        getRequest(url).then(success, function (jqXHR, textStatus, errorThrown) {
-            getRequest(url, true).then(success, error);
+        getRequest(url).then(successCallback, function () {
+            getRequest(url, true).then(successCallback, function (jqXHR, textStatus, errorThrown) {
+                error(layer, textStatus + '][' + errorThrown);
+            });
         });
+    };
+
+    var capabilitiesError = function (layer, reason) {
+        var msg = 'No se pudo obtener el documento de capacidades de servicio ' + layer.url + ': [' + reason + ']';
+        layer._capabilitiesPromise.reject(msg);
+        TC.error(msg);
+        if (layer.map) {
+            layer.map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: layer, reason: 'couldNotGetCapabilities' }));
+        }
+        layer.wrap.setLayer(null);
+    };
+
+    var storeCapabilities = function (layer, capabilities) {
+        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+            // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
+            // Así evitamos que la operación, que es bastante pesada, ocupe tiempo de carga 
+            // (con el efecto secundario de que LoadingIndicator esté un tiempo largo apagado durante la carga)
+            var capKey = layer.CAPABILITIES_STORE_KEY_PREFIX + layer.options.url;
+            var setItem = function () {
+                localforage.setItem(capKey, capabilities);
+            };
+            if (layer.map) {
+                layer.map.loaded(setItem);
+            }
+            else {
+                setItem();
+            }
+        });
+    };
+
+    var parseCapabilities = function (layer, data) {
+        var capabilities;
+
+        if (data.documentElement) {
+
+            if ($(data).find("ServiceException").length > 0) {
+                capabilities = { error: $(data).find("ServiceException").text() };
+            }
+            else {
+                var format = (layer.type === TC.Consts.layerType.WMTS) ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
+                capabilities = format.read(data);
+
+                //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
+                if (layer.type === TC.Consts.layerType.WMTS) {
+                    if (capabilities.Contents && capabilities.Contents.Layer) {
+                        $("Layer", data).each(function (ix, curXmlLy) {
+                            var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
+                            var id = nd.firstChild.data;
+                            var xmlLy = $(curXmlLy);
+
+                            var capLy = capabilities.Contents.Layer.filter(function (ly) {
+                                return ly.Identifier == id;
+                            });
+
+                            if (capLy.length) {
+                                capLy = capLy[0];
+                                for (var i = 0; i < capLy.TileMatrixSetLink.length; i++) {
+                                    var capLink = capLy.TileMatrixSetLink[i];
+                                    matrixId = capLink.TileMatrixSet;
+
+                                    xmlLink = xmlLy.find("TileMatrixSetLink").each(function (ix, curLink) {
+                                        return $(curLink).find("TileMatrixSet:first").text() == matrixId;
+                                    });
+
+                                    if (xmlLink.length) {
+                                        xmlLink = xmlLink[0];
+                                        capLink.TileMatrixSetLimits = [];
+                                        $(xmlLink).find("TileMatrixLimits").each(function (ix, curLim) {
+                                            var lim = $(curLim);
+                                            capLink.TileMatrixSetLimits.push({
+                                                TileMatrix: lim.find("TileMatrix").text(),
+                                                MinTileRow: parseInt(lim.find("MinTileRow").text()),
+                                                MinTileCol: parseInt(lim.find("MinTileCol").text()),
+                                                MaxTileRow: parseInt(lim.find("MaxTileRow").text()),
+                                                MaxTileCol: parseInt(lim.find("MaxTileCol").text())
+                                            });
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            capabilitiesPromises[layer.url].resolve(capabilities);
+            storeCapabilities(layer, capabilities);
+        }
+        else {
+            if (isWebWorkerEnabled && typeof data === 'string') {
+                wwDeferred.then(function (wwUrl) {
+                    var worker = new Worker(wwUrl);
+                    worker.onmessage = function (e) {
+                        if (e.data.state === 'success') {
+                            capabilities = e.data.capabilities;
+                        }
+                        else {
+                            capabilities = {
+                                error: 'Web worker error'
+                            }
+                        }
+                        capabilitiesPromises[layer.url].resolve(capabilities);
+                        worker.terminate();
+                        storeCapabilities(layer, capabilities);
+                    };
+                    worker.postMessage({
+                        type: layer.type,
+                        text: data
+                    });
+                })
+            }
+        }
     };
 
     /*
@@ -234,16 +402,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      * @param {TC.cfg.LayerOptions} [options] Objeto de opciones de configuración de la capa.
      */
     TC.layer.Raster = function () {
-        var _layer = this;
+        var self = this;
 
         //esta promise se resolverá cuando el capabilities esté descargado y parseado
         //se utiliza para saber cuándo está listo el capabilities en los casos en los que se instancia el layer pero no se añade al mapa
         //porque la forma habitual de detectar esto es por los eventos del mapa (que en esos casos no saltarán)
-        this._capabilitiesPromise = $.Deferred();
+        this._capabilitiesPromise = null;
 
-        TC.Layer.apply(_layer, arguments);
+        TC.Layer.apply(self, arguments);
 
-        _layer.wrap = new TC.wrap.layer.Raster(_layer);
+        self.wrap = new TC.wrap.layer.Raster(self);
 
         /**
          * Indica si la capa tiene transparencia.
@@ -251,16 +419,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
          * @type boolean
          * @default true
          */
-        _layer.transparent = (_layer.options.transparent === false) ? false : true;
+        self.transparent = (self.options.transparent === false) ? false : true;
 
         /**
          * URL del servicio al que pertenenece la capa.
          * @property url
          * @type string
          */
-        _layer.url = _layer.options.url;
+        self.url = self.options.url;
 
-        _layer.params = _layer.options.params;
+        self.params = self.options.params;
         /**
          * Lista de nombres de capa.
          * @property names
@@ -273,31 +441,31 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
          * @type array
          * @default []
          */
-        if (typeof _layer.options.layerNames === 'string') {
-            _layer.names = _layer.availableNames = _layer.options.layerNames.split(',');
+        if (typeof self.options.layerNames === 'string') {
+            self.names = self.availableNames = self.options.layerNames.split(',');
         }
         else {
-            _layer.names = [];
-            _layer.availableNames = [];
-            if ($.isArray(_layer.options.layerNames)) {
-                for (var i = 0; i < _layer.options.layerNames.length; i++) {
-                    var name = _layer.options.layerNames[i];
+            self.names = [];
+            self.availableNames = [];
+            if ($.isArray(self.options.layerNames)) {
+                for (var i = 0; i < self.options.layerNames.length; i++) {
+                    var name = self.options.layerNames[i];
                     if (typeof name === 'string') {
-                        _layer.names.push(name);
-                        _layer.availableNames.push(name);
+                        self.names.push(name);
+                        self.availableNames.push(name);
 
                     }
                     else if (name.hasOwnProperty('name')) {
-                        _layer.availableNames.push(name.name);
+                        self.availableNames.push(name.name);
                         if (name.isVisible === undefined || name.isVisible) {
-                            _layer.names.push(name.name);
+                            self.names.push(name.name);
                         }
                     }
                 }
             } else {
                 // Si no se encuentran nombres de capas, se buscan en el parámetro sld_body. Este parámetro es utilizado
                 // cuando queremos instanciar una capa pasándole un SLD en la petición
-                var sldBody = _layer.options.params ? _layer.options.params.sld_body : null;
+                var sldBody = self.options.params ? self.options.params.sld_body : null;
 
                 if (sldBody) {
                     var sldBodyToXml = $.parseXML(sldBody);
@@ -307,120 +475,31 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
                         if (names && names.length > 0) {
                             var name = $(names[0]).text();
-                            _layer.names.push(name);
-                            _layer.availableNames.push(name);
-            }
-        }
+                            self.names.push(name);
+                            self.availableNames.push(name);
+                        }
+                    }
                 }
             }
         }
 
-        _layer._capabilitiesNodes = {};
+        self.ignorePrefixes = self.options.ignorePrefixes === undefined ? true : self.options.ignorePrefixes;
+
+        self._capabilitiesNodes = {};
 
         /**
          * Árbol del documento de capabilities del servicio.
          * @property capabilities
          * @type object
          */
-        var _parseCapabilities = function (data, textStatus, jqXHR) {
-            var capabilities;
-            if (data.documentElement) {
 
-                if ($(data).find("ServiceException").length > 0) {
-                    capabilities = { error: $(data).find("ServiceException").text() };
-                }
-                else {
-                    var format = (_layer.type === TC.Consts.layerType.WMTS) ? new _layer.wrap.WmtsParser() : new _layer.wrap.WmsParser();
-                    capabilities = format.read(data);
+        getCapabilities(self, parseCapabilities, capabilitiesError);
 
-                    //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
-                    if (_layer.type === TC.Consts.layerType.WMTS) {
-                        if (capabilities.Contents && capabilities.Contents.Layer) {
-                            $("Layer", data).each(function (ix, curXmlLy) {
-                                var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
-                                var id = nd.firstChild.data;
-                                var xmlLy = $(curXmlLy);
+        self._disgregatedLayerNames = null;
 
-                                var capLy = capabilities.Contents.Layer.filter(function (ly) {
-                                    return ly.Identifier == id;
-                                });
-
-                                if (capLy.length) {
-                                    capLy = capLy[0];
-                                    for (var i = 0; i < capLy.TileMatrixSetLink.length; i++) {
-                                        var capLink = capLy.TileMatrixSetLink[i];
-                                        matrixId = capLink.TileMatrixSet;
-
-                                        xmlLink = xmlLy.find("TileMatrixSetLink").each(function (ix, curLink) {
-                                            return $(curLink).find("TileMatrixSet:first").text() == matrixId;
-                                        });
-
-                                        if (xmlLink.length) {
-                                            xmlLink = xmlLink[0];
-                                            capLink.TileMatrixSetLimits = [];
-                                            $(xmlLink).find("TileMatrixLimits").each(function (ix, curLim) {
-                                                var lim = $(curLim);
-                                                capLink.TileMatrixSetLimits.push({
-                                                    TileMatrix: lim.find("TileMatrix").text(),
-                                                    MinTileRow: parseInt(lim.find("MinTileRow").text()),
-                                                    MinTileCol: parseInt(lim.find("MinTileCol").text()),
-                                                    MaxTileRow: parseInt(lim.find("MaxTileRow").text()),
-                                                    MaxTileCol: parseInt(lim.find("MaxTileCol").text())
-                                                });
-                                            });
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-            else {
-                capabilities = data;
-            }
-
-
-            if (capabilities.error) {
-                _capabilitiesError(capabilities.error);
-
-                return;
-            }
-            // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
-            // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
-            _layer.capabilities = _layer.capabilities || capabilities;
-            var actualUrl = _layer.getGetMapUrl();
-            TC.capabilities[_layer.options.url] = TC.capabilities[_layer.options.url] || capabilities;
-            TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
-            _layer.url = actualUrl;
-
-            _layer._capabilitiesPromise.resolve(/*this.normalizeCapabilities(capabilities)*/capabilities);
-
-            _createLayer(_layer);
-
-            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                localforage.setItem(_layer.CAPABILITIES_STORE_KEY_PREFIX + _layer.options.url, capabilities);
-            });
-
-        };
-
-        var _handleCapabilitiesError = function (jqXHR, textStatus, errorThrown) {
-            _capabilitiesError(textStatus + '][' + errorThrown);
-        };
-
-        var _capabilitiesError = function (reason) {
-            var msg = 'No se pudo obtener el documento de capacidades de servicio: [' + reason + ']';
-            _layer._capabilitiesPromise.reject(msg);
-            TC.error(msg);
-            if (_layer.map) {
-                _layer.map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: _layer }));
-            }
-            _layer.wrap.setLayer(null);
-        };
-
-        _getCapabilities(_layer, _parseCapabilities, _handleCapabilitiesError);
-
-        _layer._disgregatedLayerNames = null;
+        if (TC.Consts.layerType.WMTS == self.type) {
+            self.wrap.setWMTSUrl();
+        }
 
     };
 
@@ -545,7 +624,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     var _disgregateLayerName = function _disgregateLayerName(layer, name, layerNode, ancestorVisible) {
         var result = [];
         var nodeName = layer.wrap.getName(layerNode);
-        var nodeVisible = layer.compareNames(name, nodeName, true);
+        var nodeVisible = layer.compareNames(name, nodeName);
         var hasEmptyChildren = false;
         var children = layer.wrap.getLayerNodes(layerNode);
         for (var i = 0; i < children.length; i++) {
@@ -801,28 +880,40 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         ///Devuelve la lista de nombres de capa WMS hoja correspondientes a las capas visibles.
         ///</summary>
         ///<returns type="array" elementType="string"></returns>
-        var layer = this;
-        var olLayer = layer.wrap.getLayer();
-        if (layer.wrap.isNative(olLayer) && layer.type === TC.Consts.layerType.WMS) {
-            if (!layer._disgregatedLayerNames) {
-                var layerNames = layer.wrap.getParams().LAYERS;
+        var self = this;
+        var olLayer = self.wrap.getLayer();
+        if (self.wrap.isNative(olLayer) && self.type === TC.Consts.layerType.WMS) {
+            if (!self._disgregatedLayerNames) {
+                var layerNames = self.wrap.getParams().LAYERS;
                 layerNames = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-                layer._disgregatedLayerNames = _disgregateLayerNames(layer, layerNames);
+                self._disgregatedLayerNames = _disgregateLayerNames(self, layerNames);
             }
         }
         else {
-            layer._disgregatedLayerNames = layer.names;
+            self._disgregatedLayerNames = self.names;
         }
-        return layer._disgregatedLayerNames.slice();
+        return self._disgregatedLayerNames.slice();
+    };
+
+    TC.layer.Raster.prototype.isValidFromNames = function () {
+        var self = this;
+        var result = true;
+        for (var i = 0, len = self.names.length; i < len; i++) {
+            if (!self.getLayerNodeByName(self.names[i])) {
+                result = false;
+                break;
+            }
+        }
+        return result;
     };
 
     TC.layer.Raster.prototype.isCompatible = function (crs) {
-        var _layer = this;
+        var self = this;
         var result = false;
-        switch (_layer.type) {
+        switch (self.type) {
             case TC.Consts.layerType.WMTS:
             case TC.Consts.layerType.WMS:
-                result = _layer.wrap.isCompatible(crs);
+                result = self.wrap.isCompatible(crs);
                 break;
             default:
                 break;
@@ -834,22 +925,22 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  isVisibleByScale: return wether the WMS layer is visible at current scale
      *  Parameter: WMS layer name or UID
      */
-    TC.layer.Raster.prototype.isVisibleByScale = function (nameOrUid) {
-        var _layer = this;
+    TC.layer.Raster.prototype.isVisibleByScale = function (nameOrUid, looseComparison) {
+        var self = this;
         var result;
         var _getOgcScale = function () {
-            return _layer.map.wrap.getResolution() / 0.00028; // OGC assumes 0.28 mm / pixel
+            return self.map.wrap.getResolution() / 0.00028; // OGC assumes 0.28 mm / pixel
         };
         var currentScale;
         var i;
-        switch (_layer.type) {
+        switch (self.type) {
             case TC.Consts.layerType.WMTS:
                 result = false;
-                var tileMatrix = _layer.wrap.getTileMatrix(_layer.options.matrixSet);
+                var tileMatrix = self.wrap.getTileMatrix(self.options.matrixSet);
                 if (tileMatrix) {
                     currentScale = _getOgcScale();
                     for (i = 0; i < tileMatrix.length; i++) {
-                        var scaleDenominators = _layer.wrap.getScaleDenominators(tileMatrix[i]);
+                        var scaleDenominators = self.wrap.getScaleDenominators(tileMatrix[i]);
                         if (scaleDenominators[0] === currentScale) {
                             result = true;
                             break;
@@ -859,24 +950,24 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 break;
             case TC.Consts.layerType.WMS:
                 result = true;
-                var layers = _layer.wrap.getAllLayerNodes();
+                var layers = self.wrap.getAllLayerNodes();
                 if (layers.length > 0) {
                     currentScale = _getOgcScale();
                     var node;
                     if (typeof nameOrUid === 'number') {
-                        node = _layer._capabilitiesNodes[nameOrUid];
+                        node = self._capabilitiesNodes[nameOrUid];
                     }
                     else {
                         for (i = 0; i < layers.length; i++) {
                             var layer = layers[i];
-                            if (_layer.wrap.getName(layer) == nameOrUid) {
+                            if (self.compareNames(self.wrap.getName(layer), nameOrUid, looseComparison)) {
                                 node = layer;
                                 break;
                             }
                         }
                     }
                     if (node) {
-                        var scaleDenominators = _layer.wrap.getScaleDenominators(node);
+                        var scaleDenominators = self.wrap.getScaleDenominators(node);
                         result = !(parseFloat(scaleDenominators[1]) > currentScale || parseFloat(scaleDenominators[0]) < currentScale);
                     }
                 }
@@ -893,28 +984,28 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  Parameter: WMS layer name
      */
     TC.layer.Raster.prototype.isVisibleByName = function (name, looseComparison) {
-        var _layer = this;
+        var self = this;
         var result = false;
-        switch (_layer.type) {
+        switch (self.type) {
             case TC.Consts.layerType.WMTS:
-                if (_layer.wrap.getWMTSLayer()) {
+                if (self.wrap.getWMTSLayer()) {
                     result = true;
                     break;
                 }
                 break;
             case TC.Consts.layerType.WMS:
                 var _getLayerPath = function _getLayerPath(name) {
-                    return __getLayerPath(name, _layer.wrap.getRootLayerNode());
+                    return __getLayerPath(name, self.wrap.getRootLayerNode());
                 };
 
                 var __getLayerPath = function __getLayerPath(name, capabilitiesNode) {
                     var result = null;
-                    var n = _layer.wrap.getName(capabilitiesNode);
-                    if (_layer.compareNames(n, name, looseComparison)) {
+                    var n = self.wrap.getName(capabilitiesNode);
+                    if (self.compareNames(n, name, looseComparison)) {
                         result = [n];
                     }
                     else {
-                        var layerNodes = _layer.wrap.getLayerNodes(capabilitiesNode);
+                        var layerNodes = self.wrap.getLayerNodes(capabilitiesNode);
                         for (var i = 0; i < layerNodes.length; i++) {
                             var item = layerNodes[i];
                             var r = __getLayerPath(name, item);
@@ -931,7 +1022,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 var path = _getLayerPath(name);
                 if (path) {
                     for (var i = 0; i < path.length; i++) {
-                        if (_isNameInArray(_layer, path[i], _layer.names, true)) {
+                        if (_isNameInArray(self, path[i], self.names)) {
                             result = true;
                             break;
                         }
@@ -946,11 +1037,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     TC.layer.Raster.prototype.getTree = function () {
-        var _layer = this;
-        var result = _layer.tree;
+        var self = this;
+        var result = self.tree;
 
         var addChild = function (node, child) {
-            if (_layer.options.inverseTree) {
+            if (self.options.inverseTree) {
                 // Versión rápida de unshift
                 TC.Util.fastUnshift(node.children, child);
             }
@@ -963,34 +1054,34 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             var rootNode;
             var getTreeNode = function getTreeNode(capabilitiesNode, forceAddition, isRootNode) {
                 var uid;
-                for (var key in _layer._capabilitiesNodes) {
-                    if (_layer._capabilitiesNodes[key] === capabilitiesNode) {
+                for (var key in self._capabilitiesNodes) {
+                    if (self._capabilitiesNodes[key] === capabilitiesNode) {
                         uid = key;
                         break;
                     }
                 }
                 if (!uid) {
                     uid = TC.getUID();
-                    _layer._capabilitiesNodes[uid] = capabilitiesNode;
+                    self._capabilitiesNodes[uid] = capabilitiesNode;
                 }
-                var r = { name: _layer.wrap.getName(capabilitiesNode), title: capabilitiesNode.title || capabilitiesNode.Title, uid: uid, children: [] };
+                var r = { name: self.wrap.getName(capabilitiesNode), title: capabilitiesNode.title || capabilitiesNode.Title, uid: uid, children: [] };
                 if (isRootNode) {
                     rootNode = r;
                 }
 
-                if (_isNameInArray(_layer, r.name, _layer.availableNames, true)) {
+                if (_isNameInArray(self, r.name, self.availableNames)) {
                     forceAddition = true;
                 }
 
-                if (!_layer.options.isBase) {
+                if (!self.options.isBase) {
                     if (r === rootNode) {
-                        r.isVisible = _layer.getVisibility();
+                        r.isVisible = self.getVisibility();
                     }
                     else {
-                        r.isVisible = _layer.isVisibleByName(r.name, true);
+                        r.isVisible = self.isVisibleByName(r.name);
                     }
                     var i;
-                    var layerNodes = _layer.wrap.getLayerNodes(capabilitiesNode);
+                    var layerNodes = self.wrap.getLayerNodes(capabilitiesNode);
                     for (i = 0; i < layerNodes.length; i++) {
                         var treeNode = getTreeNode(layerNodes[i], forceAddition);
                         if (treeNode) {
@@ -998,7 +1089,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         }
                     }
 
-                    var legend = _layer.wrap.getLegend(capabilitiesNode);
+                    var legend = self.wrap.getLegend(capabilitiesNode);
                     if (legend.src) {
                         r.legend = legend;
                     }
@@ -1011,74 +1102,75 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
                 }
                 else {
-                    r.name = _layer.names.join(',');
-                    r.title = _layer.title || r.title;
-                    r.isBase = _layer.isDefault;
-                    if (_layer.options.thumbnail) {
-                        r.legend = { src: _layer.options.thumbnail };
+                    r.name = self.names.join(',');
+                    r.title = self.title || r.title;
+                    r.isBase = self.isDefault;
+                    if (self.options.thumbnail) {
+                        r.legend = { src: self.options.thumbnail };
                     }
                 }
                 return r;
             };
 
-            switch (_layer.type) {
+            switch (self.type) {
                 case TC.Consts.layerType.WMTS:
-                    result = getTreeNode(_layer.wrap.getWMTSLayer());
+                    result = getTreeNode(self.wrap.getWMTSLayer(), !self.options.hideTree, true);
                     break;
                 case TC.Consts.layerType.WMS:
-                    if (_layer.capabilities) {
-                        result = getTreeNode(_layer.wrap.getRootLayerNode(), !_layer.options.hideTree, true);
+                    if (self.capabilities) {
+                        result = getTreeNode(self.wrap.getRootLayerNode(), !self.options.hideTree, true);
 
-                        var cache = _layer._cache.visibilityStates;
+                        var cache = self._cache.visibilityStates;
 
                         var _setNodeState = function _setNodeState(node) {
                             var _result = TC.Consts.visibility.NOT_VISIBLE;
-
-                            if (cache[node.uid] !== undefined) {
-                                _result = cache[node.uid];
-                            }
-                            else {
-                                if (node.children) {
-                                    var hasVisible = false;
-                                    var hasNotVisible = false;
-                                    for (var i = 0, len = node.children.length; i < len; i++) {
-                                        var r = _setNodeState(node.children[i]);
-                                        switch (r) {
-                                            case TC.Consts.visibility.VISIBLE:
-                                                hasVisible = true;
-                                                break;
-                                            case TC.Consts.visibility.NOT_VISIBLE:
-                                                hasNotVisible = true;
-                                                break;
-                                            case TC.Consts.visibility.HAS_VISIBLE:
-                                                hasVisible = true;
-                                                hasNotVisible = true;
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        if (hasVisible) {
-                                            if (hasNotVisible) {
-                                                _result = TC.Consts.visibility.HAS_VISIBLE;
+                            if (node) {
+                                if (cache[node.uid] !== undefined) {
+                                    _result = cache[node.uid];
+                                }
+                                else {
+                                    if (node.children) {
+                                        var hasVisible = false;
+                                        var hasNotVisible = false;
+                                        for (var i = 0, len = node.children.length; i < len; i++) {
+                                            var r = _setNodeState(node.children[i]);
+                                            switch (r) {
+                                                case TC.Consts.visibility.VISIBLE:
+                                                    hasVisible = true;
+                                                    break;
+                                                case TC.Consts.visibility.NOT_VISIBLE:
+                                                    hasNotVisible = true;
+                                                    break;
+                                                case TC.Consts.visibility.HAS_VISIBLE:
+                                                    hasVisible = true;
+                                                    hasNotVisible = true;
+                                                    break;
+                                                default:
+                                                    break;
                                             }
-                                            else {
-                                                _result = TC.Consts.visibility.VISIBLE;
+                                            if (hasVisible) {
+                                                if (hasNotVisible) {
+                                                    _result = TC.Consts.visibility.HAS_VISIBLE;
+                                                }
+                                                else {
+                                                    _result = TC.Consts.visibility.VISIBLE;
+                                                }
                                             }
                                         }
                                     }
+                                    if (node.isVisible) {
+                                        _result = TC.Consts.visibility.VISIBLE;
+                                    }
+                                    cache[node.uid] = _result;
                                 }
-                                if (node.isVisible) {
-                                    _result = TC.Consts.visibility.VISIBLE;
-                                }
-                                cache[node.uid] = _result;
+                                node.visibilityState = _result;
                             }
-                            node.visibilityState = _result;
                             return _result;
                         };
                         _setNodeState(result);
 
-                        if (_layer.options.hideTree) {
-                            _sortTree(_layer, result);
+                        if (self.options.hideTree) {
+                            _sortTree(self, result);
                         }
                     }
                     break;
@@ -1086,18 +1178,18 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     break;
             }
             if (!result) {
-                result = { name: _layer.name, title: _layer.title };
+                result = { name: self.name, title: self.title };
             }
-            result.title = _layer.title || result.title;
-            _layer.tree = result;
+            result.title = self.title || result.title;
+            self.tree = result;
         }
         return result;
     };
 
     TC.layer.Raster.prototype.setNodeVisibility = function (id, visible) {
-        var _layer = this;
-        if (!_layer.tree) {
-            _layer.tree = _layer.getTree();
+        var self = this;
+        if (!self.tree) {
+            self.tree = self.getTree();
         }
 
         var _getNames = function _getNames(node) {
@@ -1113,58 +1205,53 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             return result;
         };
 
-        var node = _layer.findNode(id, _layer.tree);
-        if (node === _layer.tree) {
-            if (visible && _layer.names.length === 0) {
+        var node = self.findNode(id, self.tree);
+        if (node === self.tree) {
+            if (visible && self.names.length === 0) {
                 // Prevent pink error tile
-                _layer.addLayerNames(_layer.availableNames).then(function () {
-                    _layer.setVisibility(true);
+                self.addLayerNames(self.availableNames).then(function () {
+                    self.setVisibility(true);
                 });
             }
             else {
-                _layer.setVisibility(visible);
+                self.setVisibility(visible);
             }
         }
         else {
             var names = _getNames(node);
             if (visible) {
-                _layer.addLayerNames(names);
+                self.addLayerNames(names);
             }
             else {
-                _layer.removeLayerNames(names);
+                self.removeLayerNames(names);
             }
         }
     };
 
     TC.layer.Raster.prototype.getNodeVisibility = function (id) {
-        var _layer = this;
-        if (!_layer.tree) {
-            _layer.tree = _layer.getTree();
+        var self = this;
+        if (!self.tree) {
+            self.tree = self.getTree();
         }
-        return _layer._cache.visibilityStates[id];
+        return self._cache.visibilityStates[id];
     };
 
     TC.layer.Raster.prototype.getNodePath = function (layerName, ignorePrefix) {
         var self = this;
         var result = [];
-        var ln = layerName && ignorePrefix ? layerName.substr(layerName.indexOf(':') + 1) : layerName;
         if (self.type === TC.Consts.layerType.WMS && self.capabilities) {
-            if (!layerName) {
-                layerName = self.names[0];
-            }
+            layerName = layerName || self.names[0];
+
             var _getPath = function _getPath(node) {
                 var res = [];
                 var nodeName = self.wrap.getName(node);
-                if (nodeName && ignorePrefix) {
-                    nodeName = nodeName.substr(nodeName.indexOf(':') + 1);
-                }
-                if (nodeName === layerName) {
+                if (self.compareNames(nodeName, layerName, ignorePrefix)) {
                     res.push(node);
                 }
                 else {
                     var children = self.wrap.getLayerNodes(node);
                     for (var i = 0; i < children.length; i++) {
-                        var r = _getPath(children[i], ln);
+                        var r = _getPath(children[i]);
                         if (r.length) {
                             res = r;
                             TC.Util.fastUnshift(res, node);
@@ -1188,9 +1275,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     TC.layer.Raster.prototype.getLayerNodeByName = function (name) {
         var result = null;
         var self = this;
+        var getName = self.wrap.getServiceType() === TC.Consts.layerType.WMTS ? self.wrap.getIdentifier : self.wrap.getName
         var nodes = self.wrap.getAllLayerNodes();
         for (var i = 0, len = nodes.length; i < len; i++) {
-            if (self.wrap.getName(nodes[i]) === name) {
+            if (self.compareNames(getName(nodes[i]), name)) {
                 result = nodes[i];
                 break;
             }
@@ -1200,7 +1288,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     TC.layer.Raster.prototype.compareNames = function (n1, n2, looseComparison) {
         var result = n1 === n2;
-        if (looseComparison && n1 && n2) {
+        var self = this;
+        var lc = looseComparison !== undefined ? looseComparison : self.ignorePrefixes
+        if (!result && lc && n1 && n2) {
             // Revisamos si tienen prefijo. Si lo tiene solo una de las dos lo obviamos para la comparación
             var idx1 = n1.indexOf(':');
             var idx2 = n2.indexOf(':');
@@ -1226,8 +1316,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     //case insensitive
     TC.layer.Raster.prototype.searchSubLayers = function (text) {
         if (text && text.length && text.length >= 3) {
-            var _layer = this;
-            var layers = _layer.wrap.getAllLayerNodes();
+            var self = this;
+            var layers = self.wrap.getAllLayerNodes();
             var filter = text.trim().toLowerCase();
 
             var matches = layers.map(function (ly, ix) {
@@ -1235,7 +1325,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
                 ly.tcPosition = ix;
 
-                _layer.wrap.normalizeLayerNode(ly);
+                self.wrap.normalizeLayerNode(ly);
 
                 var title = ly.Title.toLowerCase().trim();
                 var titleIx = title.indexOf(filter);
