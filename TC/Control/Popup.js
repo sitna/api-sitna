@@ -41,6 +41,12 @@ TC.inherit(TC.control.Popup, TC.Control);
                 }
             });
 
+            map.on(TC.Consts.event.LAYERREMOVE, function (e) {
+                if (self.currentFeature && self.currentFeature.layer === e.layer) {
+                    self.hide();
+                }
+            });
+
             map.on(TC.Consts.event.UPDATE, function () {
                 if (!self.currentFeature || self.currentFeature._visibilityState === TC.Consts.visibility.NOT_VISIBLE) {
                     self.hide();
@@ -55,8 +61,16 @@ TC.inherit(TC.control.Popup, TC.Control);
         });
     };
 
-    ctlProto.fitToView = function () {
-        this.wrap.fitToView();
+    ctlProto.fitToView = function (delayed) {
+        var self = this;
+        if (delayed) {
+            setTimeout(function () {
+                self.wrap.fitToView();
+            }, 1000);
+        }
+        else {
+            self.wrap.fitToView();
+        }
     };
 
     ctlProto.hide = function () {
@@ -88,7 +102,7 @@ TC.inherit(TC.control.Popup, TC.Control);
     ctlProto.isVisible = function () {
         var self = this;
 
-        return self.$popupDiv.hasClass(TC.Consts.classes.VISIBLE);
+        return self.$popupDiv && self.$popupDiv.hasClass(TC.Consts.classes.VISIBLE);
     };
 
 })();
