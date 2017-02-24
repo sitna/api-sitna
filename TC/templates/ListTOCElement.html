@@ -1,6 +1,6 @@
 ﻿<li class="tc-ctl-ltoc-elm">
-    <div class="tc-ctl-ltoc-lyr">{title}</div>
-    <div class="tc-ctl-ltoc-type"></div><div class="tc-ctl-ltoc-path">{#path}{.}{@sep} &bull; {/sep}{/path}</div>
+    <div class="tc-ctl-ltoc-lyr">{#path}{title}{/path}</div>
+    <div class="tc-ctl-ltoc-type"></div><div class="tc-ctl-ltoc-path">{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}</div>
     <div>
         <div class="tc-ctl-ltoc-btn-info" title="{@i18n $key="infoFromThisLayer"/}"></div>
         <input type="range" value="{opacity}" title="{@i18n $key="transparencyOfThisLayer"/}" />

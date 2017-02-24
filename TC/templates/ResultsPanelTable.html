@@ -1,0 +1,16 @@
+﻿<table class="table" style="display:none;">
+    <thead>
+        {#columns}
+            <th>{.}</th>
+        {/columns}
+    </thead>
+    <tbody>
+        {#results}
+            <tr>
+                {@iterate on=.}
+                    <td>{value}</td>
+                {/iterate}
+            </tr>
+        {/results}
+    </tbody>
+</table>

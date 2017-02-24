@@ -46,6 +46,11 @@
                                 {/attributes}
                             </tbody>
                         </table>
+                        {?geometry}
+                            <div class="tc-ctl-finfo-tools">
+                                <button class="tc-ctl-finfo-tools-btn" title="{@i18n $key="download"/}/{@i18n $key="share"/}">{@i18n $key="download"/}/{@i18n $key="share"/}</button>
+                            </div>
+                        {/geometry}
                         {/error}
                         {/rawContent}
                     </li>

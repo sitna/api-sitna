@@ -1,14 +1,16 @@
-﻿<p>{@i18n $key="geo.trk.snapping"/}</p>
-<ul>
+﻿<ul>
     {?n}
-    <li> {@i18n $key="geo.trk.snapping.name"/} - {n} </li>
+    <li> 
+    <span>{@i18n $key="geo.trk.snapping.name"/}:</span> {n} </li>
     {/n}
-    <li> X -  {x} </li>
-    <li> Y -  {y} </li>
+    <li> <span>X:</span>  {x} </li>
+    <li> <span>Y:</span>  {y} </li>
     {?z}
-    <li> Z - {z} </li>
+        {@ne key=z value=0}
+            <li> <span>Z:</span> {z} </li>
+        {/ne}        
     {/z}
     {?m}
-    <li> M -  {m} </li>
+    <li> {m} </li>
     {/m}
 </ul>

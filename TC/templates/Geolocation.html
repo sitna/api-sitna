@@ -1,12 +1,35 @@
-﻿<h2>{@i18n $key="geo"/} <span class="tc-beta">beta</span></h2>
+﻿<h2>{@i18n $key="geo"/} <span class="tc-beta">{@i18n $key="beta"/}</span></h2>
 <div class="tc-ctl-geolocation-content">    
     <div class="tc-ctl-geolocation-track">
         <div class="tc-ctl-geolocation-track-snap-info"></div>
-        <div class="tc-ctl-geolocation-info-track" style="display:none;"></div>
-        <!-- img se insertan en el div del mapa-->
-        <div id="tc-ctl-geolocation-track-marker" class="tc-ctl-geolocation-trackMarker track" style="display: none;" />
-        <div id="tc-ctl-geolocation-track-elevation-marker" class="tc-ctl-geolocation-trackMarker elevation" style="display: none;" />       
-        <div id="tc-ctl-geolocation-tracking-marker" class="tc-ctl-geolocation-trackMarker tracking" style="display: none;" />
+        <div class="tc-ctl-geolocation-info-tracking tc-hidden">
+            <div class="tc-ctl-p-results">
+                <div class="prpanel-group prsidebar-body ">
+                    <div class="prpanel prpanel-default">
+                        <div class="prpanel-heading">
+                            <h4 class="prpanel-title">
+                                <label>{@i18n $key="geo.mylocation"/}</label>                
+                                <span id="trackingInfoClose" class="prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close" title="{@i18n $key="close"/}">
+                                    <i class="fa fa-times"></i>
+                                </span>
+                                <span id="trackingInfoMin" class="prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min" title="{@i18n $key="hide"/}">
+                                    <i class="fa fa-chevron-left"></i>
+                                </span>                
+                            </h4>
+                        </div>
+                        <div id="results" class="prpanel-collapse">
+                            <div class="prpanel-body list-group">                                
+                            </div>            
+                        </div>
+                    </div>
+                </div>
+                <div id="trackingInfoMax" class="prcollapsed prcollapsed-max prcollapsed-pull-left" style="display: none;" title="{@i18n $key="geo.trk.panel.3"/}">
+                    <i class="fa fa-list-alt"></i>
+                </div>
+                </div>
+        </div>
+        <!-- img se insertan en el div del mapa-->        
+        <div id="tc-ctl-geolocation-track-elevation-marker" class="tc-ctl-geolocation-trackMarker elevation" style="display: none;" />               
         <div class="tc-ctl-geolocation-track-panel-block">
             <input id="tc-ctl-geolocation-track-panel-opened" type="checkbox" checked/>
             <label for="tc-ctl-geolocation-track-panel-opened" title="{@i18n $key="geo.trk.panel.help.1"/}">{@i18n $key="geo.trk.panel.help.2"/}</label>
@@ -14,19 +37,11 @@
         </div>
         <div class="tc-ctl-geolocation-track-mng">
             <div class="tc-ctl-geolocation-select">
-                <form>
-                    <label class="tc-ctl-geolocation-btn-gps" title="{@i18n $key=" geo.gps" /}"><input type="radio" name="mode" value="gps" checked="checked" /><span>{@i18n $key="geo.gps"/}</span></label>
-                    <label class="tc-ctl-geolocation-btn-tracks" title="{@i18n $key="geo.tracks.title"/}"><input type="radio" name="mode" value="track-available" /><span>{@i18n $key="geo.tracks"/}</span></label>
-                    <label class="tc-ctl-geolocation-btn-track" title="{@i18n $key="geo.track.title"/}"><input type="radio" name="mode" value="tracks" /><span>{@i18n $key="geo.track"/}</span></label>
+                <form>                    
+                    <label class="tc-ctl-geolocation-btn-track" title="{@i18n $key="geo.track.title"/}"><input type="radio" name="mode" value="tracks" /><span>{@i18n $key="geo.gps"/}</span></label>
+                    <label class="tc-ctl-geolocation-btn-tracks" title="{@i18n $key="geo.tracks.title"/}"><input type="radio" name="mode" value="track-available" /><span>{@i18n $key="geo.tracks"/}</span></label>                    
                 </form>
-            </div>            
-            <div class="tc-ctl-geolocation-gps tc-ctl-geolocation-panel">                
-                <div class="tc-ctl-geolocation-locate">
-                    <button class="tc-button tc-icon-button tc-ctl-geolocation-locate-show" title="{@i18n $key="geo.mylocation.show.title" /}">{@i18n $key="geo.mylocation.show"/}</button>
-                    <button class="tc-button tc-icon-button tc-ctl-geolocation-locate-hide tc-hidden" title="{@i18n $key="geo.mylocation.hide.title" /}">{@i18n $key="geo.mylocation.hide"/}</button>
-                </div>
-                                
-            </div>
+            </div>                        
             <div class="tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden">
                 <i class="tc-ctl-geolocation-track-search-icon"></i>
                 <input id="tc-ctl-geolocation-track-available-srch" type="search" list="tc-ctl-geolocation-track-available-lst" class="tc-ctl-geolocation-track-available-srch tc-textbox" placeholder="{@i18n $key="geo.filter.plhr"/}" maxlength="200" />                
@@ -51,7 +66,11 @@
                         </ul>
                     </p>
                 </div>            
-                <div class="tc-ctl-geolocation-track-ui">                    
+                <div class="tc-ctl-geolocation-track-ui">   
+                    <div class="tc-ctl-geolocation-track-render">
+                        <input id="tc-ctl-geolocation-track-render" type="checkbox" hidden checked />
+                        <label for="tc-ctl-geolocation-track-render" class="tc-ctl-geolocation-track-render" title="{@i18n $key="geo.trk.render"/}">{@i18n $key="geo.trk.render"/}</label>
+                    </div>
                     <button class="tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate" title="{@i18n $key="geo.track.activate.title"/}">{@i18n $key="geo.track.activate"/}</button>
                     <button class="tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden" title="{@i18n $key="geo.track.deactivate.title" /}">{@i18n $key="geo.track.deactivate"/}</button>
                 </div>
@@ -65,18 +84,8 @@
         </div>
     </div>
 </div>
-<div id="continue-track" class="tc-modal">
-    <div class="tc-modal-background tc-modal-close"></div>
-    <div class="tc-modal-window">
-        <div class="tc-modal-header">
-            <h3>{@i18n $key="geo.track"/}</h3>
-            <div class="tc-ctl-popup-close tc-modal-close"></div>
-        </div>
-        <div class="tc-modal-body">
-            <button id="tc-ctl-geolocation-track-continue" class="tc-button"> {@i18n $key="geo.trk.dialog.cnt"/} </button>
-            <button id="tc-ctl-geolocation-track-new" class="tc-button"> {@i18n $key="geo.trk.dialog.new"/} </button>            
-            <button class="tc-button tc-modal-close"> {@i18n $key="geo.trk.dialog.cancel"/} </button>
-        </div>
-    </div>
+<!--se inserta en el div del mapa-->
+<div class="tc-ctl-geolocation-track-center tc-hidden">        
+    <button class="tc-ctl-btn tc-button tc-icon-button" title="{@i18n $key="geo.trk.center" /}"></button>
 </div>
 

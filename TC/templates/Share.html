@@ -17,6 +17,10 @@
            href="#">
             <i class="icon-twitter"></i>
         </a>
+        <a class="ga-share-icon share-whatsapp" target="_blank" data-toggle="tooltip" data-placement="top" title="{@i18n $key="shareMapToWhatsapp"/}"
+           href="#">
+            <i class="icon-whatsapp"></i>
+        </a>
         <a class="ga-share-icon share-star" target="_blank" data-toggle="tooltip" data-placement="top" title="{@i18n $key="addToBookmarks"/}"
            href="#">
             <i class="icon-star"></i>
@@ -38,20 +42,5 @@
     </div>
     <div class="tc-ctl-share-alert tc-alert alert-warning tc-hidden">
         <p>{@i18n $key="tooManyLayersLoaded|s"/}</p>        
-    </div>
-    <div id="qr-code-dialog" class="tc-modal">
-        <div class="tc-modal-background tc-modal-close"></div>
-        <div class="tc-modal-window">
-            <div class="tc-modal-header">
-                <h3>{@i18n $key="qrCode"/}</h3>
-                <div class="tc-ctl-popup-close tc-modal-close"></div>
-            </div>
-            <div class="tc-modal-body">
-                <div class="qrcode"></div>
-            </div>
-            <div class="tc-modal-footer">
-                <button type="button" class="tc-button tc-modal-close">{@i18n $key="close"/}</button>
-            </div>
-        </div>
     </div>
 </div>

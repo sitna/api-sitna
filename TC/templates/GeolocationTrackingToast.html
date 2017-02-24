@@ -1,0 +1,17 @@
+﻿<ul>
+    <li>
+        <span>X:</span> {x}<br />
+        <span>Y:</span> {y}<br />
+        {?z}
+        <span>Z:</span> {z} m<br />
+        {/z}
+    </li>
+    <li>
+        {?accuracy}
+        <span>{@i18n $key="geo.trk.accuracy"/}:</span> {accuracy} m<br />
+        {/accuracy}
+        {?speed}
+        <span>{@i18n $key="geo.trk.speed"/}:</span> {speed}  km/h<br />
+        {/speed}
+    </li>
+</ul>
