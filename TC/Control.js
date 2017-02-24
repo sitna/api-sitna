@@ -261,7 +261,11 @@ TC.Control.prototype.deactivate = function (stopChain)
             //salvo que sea yo mismo, claro
             var nextControl = self.map.getDefaultControl();
             if (nextControl == self) nextControl = null;
-            else if (!nextControl) nextControl = self.map.previousActiveControl;
+            else if(self.map.previousActiveControl == self) // GLS: Validamos antes de activar que el control activo anterior sea distinto al control actual
+                nextControl = null;
+            else if (!nextControl) { 
+                nextControl = self.map.previousActiveControl;
+            }
 
             if (nextControl)
                 nextControl.activate();
