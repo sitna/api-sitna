@@ -108,7 +108,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l1794"><code>sitna.js:1794</code></a>
+            Se define en: <a href="../files/sitna.js.html#l1823"><code>sitna.js:1823</code></a>
         </div>
     
 
@@ -170,6 +170,12 @@ Esta clase no tiene constructor.</p>
                 </li>
             
                 <li class="index-item property">
+                    <a href="#property_googleMapsKey">googleMapsKey</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
                     <a href="#property_viewDiv">viewDiv</a>
 
                     
@@ -218,7 +224,7 @@ Esta clase no tiene constructor.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1715"><code>sitna.js:1715</code></a>
+        <a href="../files/sitna.js.html#l1744"><code>sitna.js:1744</code></a>
         
         </p>
 
@@ -230,6 +236,58 @@ Esta clase no tiene constructor.</p>
     <div class="extended-detail">
         <div class="description">
             <p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_googleMapsKey" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>googleMapsKey</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1853"><code>sitna.js:1853</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p><p>El control de StreetView hace uso de la API de Google Maps para funcionar. Esta propiedad establece la clave de uso asociada al sitio
+donde está alojada la aplicación que usa la API SITNA. No es necesaria para hacer funcionar el control pero es recomendable obtener una para garantizar el servicio por parte de Google.</p></p>
+<p><p>Puede obtener más información en el <a href="https://developers.google.com/maps/documentation/javascript/get-api-key">sitio para desarrolladores de Google</a>.</p>
 
         </div>
 
@@ -268,7 +326,7 @@ Esta clase no tiene constructor.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1803"><code>sitna.js:1803</code></a>
+        <a href="../files/sitna.js.html#l1832"><code>sitna.js:1832</code></a>
         
         </p>
 
@@ -295,10 +353,12 @@ Esta clase no tiene constructor.</p>
 &lt;script&gt;
     // Creamos un mapa con el control de StreetView.
     // La vista de StreetView se debe dibujar en el elemento con identificador &quot;sv&quot;.
+    // Se utilizará la clave de Google Maps para IDENA.
     var map = new SITNA.Map(&quot;mapa&quot;, {
         controls: {
             streetView: {
-                viewDiv: &quot;sv&quot;
+                viewDiv: &quot;sv&quot;,
+                googleMapsKey: &quot;AIzaSyBLRczjnHme5fWj9d6rZDJ2jq2-ApMhxi8&quot;
             }
         }
     });
