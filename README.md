@@ -1,8 +1,9 @@
 # API SITNA
-JavaScript API for georeferenced data viewing in web applications
+API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
+JavaScript API for georeferenced data viewing in web applications.
 
-## Documentation
+## Documentación/Documentation
 http://sitna.navarra.es/api/doc/
 
-## About
+## Sobre/About
 http://sitna.navarra.es/geoportal/recursos/api.aspx
