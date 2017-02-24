@@ -5,6 +5,13 @@ if (!TC.control.Click) {
 }
 
 TC.control.FeatureInfoCommons = function () {
+    var self = this;
+    TC.control.Click.apply(self, arguments);
+
+    self._$dialogDiv = $(TC.Util.getDiv(self.options.dialogDiv));
+    if (!self.options.dialogDiv) {
+        self._$dialogDiv.appendTo('body');
+    }
 };
 
 (function () {
@@ -44,7 +51,7 @@ TC.control.FeatureInfoCommons = function () {
                 $featureLi = $(this);
             }
             $layerLi = $layerLi || $featureLi.parents('li').first();
-            $serviceLi = $serviceLi || $layerLi.parents('li').first()
+            $serviceLi = $serviceLi || $layerLi.parents('li').first();
 
             downplayFeatures(ctl);
             $featureLi.addClass(TC.Consts.classes.CHECKED);
@@ -91,6 +98,23 @@ TC.control.FeatureInfoCommons = function () {
 
     ctlProto.CLASS = 'tc-ctl-abstract-finfo';
 
+    ctlProto.render = function (callback) {
+        var self = this;
+        self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+            self._$dialogDiv
+                .html(html)
+                .on(TC.Consts.event.CLICK, 'button[data-format]', function (e) {
+                    TC.Util.closeModal();
+                    var feature = self.layer.features[self.layer.features.length - 1];
+                    self.map.exportFeatures([feature], {
+                        fileName: feature.id,
+                        format: $(e.target).data('format')
+                    });
+                });
+
+        });
+    };
+
     ctlProto.markerStyle = {
         cssClass: TC.Consts.classes.POINT,
         anchor: [0.5, 0.5],
@@ -103,15 +127,6 @@ TC.control.FeatureInfoCommons = function () {
         var map = self.map;
         var transitionEnd = 'transitionend.tc';
         if (e.control === self.popup) {
-            var fitToView = function () {
-                self.popup._ftvTimeout = setTimeout(function () {
-                    self.popup.fitToView();
-                }, 500);
-                self.popup.$popupDiv.off(transitionEnd).on(transitionEnd, function (ev) {
-                    clearTimeout(self.popup._ftvTimeout);
-                    self.popup.fitToView();
-                });
-            };
 
             var $popupDiv = self.popup.$popupDiv;
 
@@ -120,13 +135,28 @@ TC.control.FeatureInfoCommons = function () {
             var hasHandlers = $popupDiv.data(handlerKey);
             if (!hasHandlers) {
                 var selector;
-                // Evento para resaltar una feature.
-                var events = 'click mouseover'; // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
+                // Evento para resaltar una feature
+                var events = 'click'; // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
                 $popupDiv.on(events, liSelector, function (e) {
                     highlightFeature.call(this, self);
                 });
 
-                // Evento para ir a la siguiente feature.
+                events = 'mouseover';
+                var mouseoverTimeout;
+                $popupDiv.on(events, liSelector, function (e) {
+                    var that = this;
+                    clearTimeout(mouseoverTimeout);
+                    mouseoverTimeout = setTimeout(function () { // El timeout es para evitar el parpadeo al pasar el ratón por encima del acordeón
+                        highlightFeature.call(that, self);
+                    }, 50);
+                });
+
+                events = 'mouseout';
+                $popupDiv.on(events, liSelector, function (e) {
+                    clearTimeout(mouseoverTimeout);
+                });
+
+                // Evento para ir a la siguiente feature
                 events = TC.Consts.event.CLICK;
                 selector = '.' + self.CLASS + '-btn-next';
                 $popupDiv.on(events, selector, function (e) {
@@ -134,14 +164,14 @@ TC.control.FeatureInfoCommons = function () {
                     return false;
                 });
 
-                // Evento para ir a la feature anterior.
+                // Evento para ir a la feature anterior
                 selector = '.' + self.CLASS + '-btn-prev';
                 $popupDiv.on(events, selector, function (e) {
                     highlightFeature.call(getNextLi(self, -1), self, -1);
                     return false;
                 });
 
-                // Evento para desplegar/replegar features de capa.
+                // Evento para desplegar/replegar features de capa
                 selector = 'ul.' + self.CLASS + '-layers h4';
                 $popupDiv.on(events, selector, function (e) {
                     var $li = $(e.target).parent();
@@ -153,9 +183,20 @@ TC.control.FeatureInfoCommons = function () {
                     }
                     else {
                         highlightFeature.call($li.find(liSelector).first()[0], self);
-                        fitToView();
+                        self.popup.fitToView(true);
                     }
                 });
+
+                // Evento para activar botones de herramientas
+                selector = '.' + self.CLASS + '-tools-btn';
+                $popupDiv.on(events, selector, function (e) {
+                    TC.Util.showModal(self._$dialogDiv.find('.' + self.CLASS + '-dialog'), {
+                        openCallback: function () {
+                            self.onShowModal();
+                        }
+                    });
+                });
+
                 $popupDiv.data(handlerKey, true);
             }
 
@@ -167,28 +208,37 @@ TC.control.FeatureInfoCommons = function () {
                     highlightFeature.call($popupDiv.find(liSelector).first()[0], self);
                 }
             }
-            fitToView();
             //ajustar el ancho para que no sobre a la derecha
             self.fitSize();
 
             $popupDiv.find('table').on("click", function (e) {
                 if ($(this).parent().hasClass(TC.Consts.classes.DISABLED))
                     return;
-                // Proceso para desactivar highlightFeature mientras hacemos zoom
-                var zoomHandler = function zoomHandler() {
-                    self._zooming = false;
-                    map.off(TC.Consts.event.ZOOM, zoomHandler);
+                if (self.layer.features[1]) { // 0: punto de pulsación, 1: feature de interés
+                    // Proceso para desactivar highlightFeature mientras hacemos zoom
+                    var zoomHandler = function zoomHandler() {
+                        self._zooming = false;
+                        map.off(TC.Consts.event.ZOOM, zoomHandler);
+                    }
+                    map.on(TC.Consts.event.ZOOM, zoomHandler);
+                    self.zooming = true;
+                    ///////
+                    map.zoomToFeatures([self.layer.features[1]], { animate: true });
                 }
-                map.on(TC.Consts.event.ZOOM, zoomHandler);
-                self.zooming = true;
-                ///////
-                map.zoomToFeatures([self.layer.features[1]], { animate: true });
                 e.stopPropagation();
             });
             $popupDiv.find('table a').on("click", function (e) {
                 e.stopPropagation();
             });
         }
+    };
+
+    ctlProto.onShowModal = function () {
+
+    };
+
+    ctlProto.highlightFeature = function (feature) {
+        highlightFeature.call(feature, this);
     };
 
     ctlProto.fitSize = function () {
