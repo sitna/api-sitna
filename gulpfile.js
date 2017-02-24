@@ -35,13 +35,16 @@ var sitnaBuild = {
     preSrc: [
         'lib/Modernizr.js',
         'lib/dust/dust-full-helpers.min.js',
-        'lib/dust/dustjs-i18n.min.js'
+        'lib/dust/dustjs-i18n.min.js',
+        'lib/localForage/localforage.min.js',
+        'lib/jsnlog/jsnlog.min.js'
     ],
     midSrc: [
-        'lib/jquery/jquery.xdomainrequest.min.js',
-        'lib/jquery/autocomplete.js',
-        'lib/jquery/jquery.event.drag.js',
-        'lib/jquery/jquery.event.drop.js',
+        'lib/jQuery/jquery.xdomainrequest.min.js',
+        'lib/jQuery/autocomplete.js',
+        'lib/jQuery/jquery.event.drag.js',
+        'lib/jQuery/jquery.event.drop.js',
+        'lib/jQuery/jquery-watch.min.js',
         'lib/qrcode/qrcode.min.js',
         'TC/Map.js',
         'TC/Util.js',
@@ -53,9 +56,11 @@ var sitnaBuild = {
         'TC/feature/**/*.js',
         'TC/control/MapContents.js',
         'TC/control/TOC.js',
+        'TC/control/ListTOC.js',
         'TC/control/Click.js',
         'TC/control/FeatureInfoCommons.js',
         'TC/control/Scale.js',
+        'TC/control/SWCacheClient.js',
         'TC/ol/**/*.js',
         'TC/control/**/*.js',
         'TC/layer/**/*.js',
@@ -136,7 +141,10 @@ var sitnaBuild = {
                 '!TC/**/*.css',
                 '!test/**/*',
                 '!**/*.cs',
-                '!*'
+                '!*',
+                '!bin/*.pdb', //exclude symbol files
+                '!bin/*.dll.config',
+                '!bin/*.xml'
         ])
             .pipe(gulp.dest(this.fullTargetPath));
     },
@@ -192,7 +200,8 @@ var sitnaBuild = {
             'lib/jquery/jquery.1.10.2.js'
         ];
         var ol2Src2 = [
-            '!TC/ol/ol3.js'
+            '!TC/ol/ol3.js',
+            '!TC/workers/**/*'
         ];
         var ol3Src1 = [
             'lib/ol/build/ol-debug.js',
@@ -200,7 +209,8 @@ var sitnaBuild = {
             'lib/jquery/jquery.2.1.3.js'
         ];
         var ol3Src2 = [
-            '!TC/ol/ol2.js'
+            '!TC/ol/ol2.js',
+            '!TC/workers/**/*'
         ];
 
         sitnaBuild.resourcesTask();
