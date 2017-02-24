@@ -5,10 +5,9 @@ if (!TC.Feature) {
 }
 
 /*
- * Polyline
- * Parameters: coords, array of 2 element arrays of numbers; options, object
+ * MultiPolygon
+ * Parameters: coords, array of array of array of 2 element arrays of numbers; options, object
  */
-
 TC.feature.MultiPolygon = function (coords, options) {
     var self = this;
     TC.Feature.apply(self, arguments);
@@ -17,12 +16,13 @@ TC.feature.MultiPolygon = function (coords, options) {
     if (self.wrap.isNative(coords)) {
         coords._wrap = self.wrap;
         self.wrap.feature = coords;
-        self.geometry = self.wrap.getCoords(coords.geometry);
     }
     else {
         opts = self.options = $.extend(true, self.options, TC.Cfg.styles.polygon, options);
-        self.wrap.createPolygon(coords[0], opts);
+        self.wrap.createMultiPolygon(coords, opts);
     }
 };
 
 TC.inherit(TC.feature.MultiPolygon, TC.Feature);
+
+TC.feature.MultiPolygon.prototype.STYLETYPE = TC.Consts.geom.POLYGON;

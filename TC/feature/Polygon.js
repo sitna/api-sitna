@@ -5,8 +5,8 @@ if (!TC.Feature) {
 }
 
 /*
- * Polyline
- * Parameters: coords, array of 2 element arrays of numbers; options, object
+ * Polygon
+ * Parameters: coords, array of array of 2 element arrays of numbers; options, object
  */
 TC.feature.Polygon = function (coords, options) {
     var self = this;
@@ -25,3 +25,5 @@ TC.feature.Polygon = function (coords, options) {
 };
 
 TC.inherit(TC.feature.Polygon, TC.Feature);
+
+TC.feature.Polygon.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
