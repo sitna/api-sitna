@@ -57,6 +57,12 @@ TC.Feature.prototype.setVisibility = function (visible) {
     }
 };
 
+TC.Feature.prototype.setId = function (id) {
+    var self = this;
+    self.id = id;
+    self.wrap.setId(id);
+};
+
 TC.Feature.prototype.getBounds = function () {
     return this.wrap.getBounds();
 };
@@ -87,6 +93,11 @@ TC.Feature.prototype.getData = function () {
     return result;
 };
 
+TC.Feature.prototype.setData = function (data) {
+    var self = this;
+    self.data = $.extend(self.data, data);
+    self.wrap.setData(data);
+};
 
 TC.Feature.prototype.getInfo = function () {
     var result = null;
@@ -107,14 +118,14 @@ TC.Feature.prototype.getInfo = function () {
                     html[html.length] = '<tr><th>';
                     html[html.length] = key;
                     html[html.length] = '</th><td>';
-                    var isUri = TC.Util.isURI(value);
-                    if (isUri) {
+                    var isUrl = TC.Util.isURL(value);
+                    if (isUrl) {
                         html[html.length] = '<a href="';
                         html[html.length] = value;
                         html[html.length] = '" target="_blank">';
                     }
                     html[html.length] = value;
-                    if (isUri) {
+                    if (isUrl) {
                         html[html.length] = '</a>';
                     }
                     html[html.length] = '</td></tr>';
@@ -136,31 +147,29 @@ TC.Feature.prototype.getInfo = function () {
 TC.Feature.prototype.showPopup = function (control) {
     var self = this;
     if (self.showsPopup && self.layer && self.layer.map) {
-        var popup = control;
-        if (!popup) {
-            var controls = self.layer.map.controls;
-            if (!TC.control || !TC.control.Popup) {
-                TC.syncLoadJS(TC.apiLocation + 'TC/control/Popup.js');
-            }
-            for (var i = 0; i < controls.length; i++) {
-                if (controls[i] instanceof TC.control.Popup) {
-                    popup = controls[i];
-                    break;
-                }
-            }
-            popup = popup || self.layer.map.addControl(new TC.control.Popup());
+        var ctlDeferred;
+        var popup = control || self.popup || self.layer.map.getControlsByClass('TC.control.Popup')[0];
+        if (popup) {
+            ctlDeferred = $.Deferred();
+            ctlDeferred.resolve(popup);
         }
-        $.when(popup).then(function (ctl) {
+        else {
+            TC.loadJS(!TC.control || !TC.control.Popup, [TC.apiLocation + 'TC/control/Popup.js'], function () {
+                ctlDeferred = self.layer.map.addControl(new TC.control.Popup());
+            });
+        }
+        ctlDeferred.then(function (ctl) {
             ctl.currentFeature = self;
             var popups = self.layer.map.getControlsByClass(TC.control.Popup);
             for (var i = 0, len = popups.length; i < len; i++) {
                 var p = popups[i];
-                if (p !== popup) {
+                if (p !== ctl) {
                     p.hide();
                 }
             }
             self.wrap.showPopup(ctl);
             self.layer.map.$events.trigger($.Event(TC.Consts.event.POPUP, { control: ctl }));
+            ctl.fitToView(true);
         });
     }
 };
