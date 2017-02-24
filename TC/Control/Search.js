@@ -8,6 +8,8 @@ TC.control.Search = function () {
     var self = this;
     TC.Control.apply(self, arguments);
 
+    TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
+
     self.url = '//idena.navarra.es/ogc/wfs';
     self.version = '1.1.0';
     self.featurePrefix = 'IDENA';
@@ -63,40 +65,31 @@ TC.control.Search = function () {
         },
         styles: {
             CATAST_Pol_ParcelaUrba: {
-            polygon: {
+                polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0.1
-                },
-                line: {
+                    fillOpacity: 0.1,
                     strokeColor: '#136278',
-                strokeWidth: 2,
+                    strokeWidth: 2,
                     strokeOpacity: 1
-                },
-                point: {}
+                }
             },
             CATAST_Pol_ParcelaRusti: {
                 polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0.1
-                },
-                line: {
+                    fillOpacity: 0.1,
                     strokeColor: '#0c8b3d',
                     strokeWidth: 2,
                     strokeOpacity: 1
-                },
-                point: {}
+                }
             },
             CATAST_Pol_ParcelaMixta: {
                 polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0.1
-                },
-                line: {
+                    fillOpacity: 0.1,
                     strokeColor: '#e5475f',
                     strokeWidth: 2,
                     strokeOpacity: 1
                 },
-                point: {}
             }
         },
         parser: self.getCadastralRef,
@@ -141,9 +134,7 @@ TC.control.Search = function () {
             CATAST_Pol_Municipio: {
                 polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0.1
-                },
-                line: {
+                    fillOpacity: 0.1,
                     strokeColor: '#fe06a5',
                     strokeWidth: 2,
                     strokeOpacity: 1
@@ -193,9 +184,7 @@ TC.control.Search = function () {
             CATAST_Pol_Municipio: {
                 polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0
-                },
-                line: {
+                    fillOpacity: 0,
                     strokeColor: '#ffffff',
                     strokeWidth: 5,
                     strokeOpacity: 1
@@ -204,9 +193,7 @@ TC.control.Search = function () {
             ESTADI_Pol_EntidadPob: {
                 polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0.1
-                },
-                line: {
+                    fillOpacity: 0.1,
                     strokeColor: '#feba1e',
                     strokeWidth: 2,
                     strokeOpacity: 1
@@ -247,9 +234,7 @@ TC.control.Search = function () {
             CATAST_Pol_Concejo: {
                 polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0.1
-                },
-                line: {
+                    fillOpacity: 0.1,
                     strokeColor: '#49006a',
                     strokeWidth: 2,
                     strokeOpacity: 1
@@ -284,25 +269,25 @@ TC.control.Search = function () {
         outputFormatLabel: '{1}, {0}',
         styles: {
             CATAST_Lin_CalleEje: {
-            line: {
-                strokeColor: "#CB0000",
-                strokeOpacity: 1,
-                strokeWidth: 2,
-                strokeLinecap: "round",
-                strokeDashstyle: "solid"
-            }
-        },
+                line: {
+                    strokeColor: "#CB0000",
+                    strokeOpacity: 1,
+                    strokeWidth: 2,
+                    strokeLinecap: "round",
+                    strokeDashstyle: "solid"
+                }
+            },
             CATAST_Txt_Calle: {
-            point: {
+                point: {
                     label: "VIA",
                     angle: "CADANGLE",
-                fontColor: "#000000",
+                    fontColor: "#000000",
                     fontSize: 7,
-                fontWeight: "bold",
+                    fontWeight: "bold",
                     labelOutlineColor: "#ffffff",
-                labelOutlineWidth: 2
+                    labelOutlineWidth: 2
+                }
             }
-        }
         },
         parser: self.getAddress,
         goTo: self.goToAddress
@@ -334,17 +319,17 @@ TC.control.Search = function () {
         outputFormatLabel: '{1} {2}, {0}',
         styles: {
             CATAST_Txt_Portal: {
-            point: {
-                radius: 0,
+                point: {
+                    radius: 0,
                     label: "PORTAL",
                     angle: "CADANGLE",
-                fontColor: "#CB0000",
-                fontSize: 14,
-                fontWeight: "bold",
-                labelOutlineColor: "#FFFFFF",
-                labelOutlineWidth: 4
+                    fontColor: "#CB0000",
+                    fontSize: 14,
+                    fontWeight: "bold",
+                    labelOutlineColor: "#FFFFFF",
+                    labelOutlineWidth: 4
+                }
             }
-        }
         },
         parser: self.getAddress,
         goTo: self.goToAddress
@@ -378,9 +363,7 @@ TC.control.Search = function () {
             ESTADI_Pol_EntidadPob: {
                 polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0.1
-                },
-                line: {
+                    fillOpacity: 0.1,
                     strokeColor: '#feba1e',
                     strokeWidth: 2,
                     strokeOpacity: 1
@@ -412,9 +395,7 @@ TC.control.Search = function () {
             POLUCI_Pol_MancoRSUg: {
                 polygon: {
                     fillColor: '#000000',
-                    fillOpacity: 0.1
-                },
-                line: {
+                    fillOpacity: 0.1,
                     strokeColor: '#fc4e2a',
                     strokeWidth: 2,
                     strokeOpacity: 1
@@ -484,6 +465,12 @@ TC.control.Search = function () {
             parser: self.getAddress,
             goTo: self.goToAddress
         }
+    };
+
+    self.NORMAL_PATTERNS = {
+        ROMAN_NUMBER: /M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}){1,}?\S?\./g,
+        ABSOLUTE_NOT_DOT: /[`~!@#$%^&*_|+\=?;:'"\{\}\[\]\\]/g,
+        ABSOLUTE: /[`~!@#$%^&*_|+\=?;:'.\{\}\[\]\\]/g
     };
 };
 
@@ -556,6 +543,9 @@ TC.inherit(TC.control.Search, TC.Control);
                     polygon: {
                         fillColor: styleFN.bind(self, 'polygon', 'fillColor', false),
                         fillOpacity: styleFN.bind(self, 'polygon', 'fillOpacity', false),
+                        strokeColor: styleFN.bind(self, 'polygon', 'strokeColor', false),
+                        strokeOpacity: styleFN.bind(self, 'polygon', 'strokeOpacity', false),
+                        strokeWidth: styleFN.bind(self, 'polygon', 'strokeWidth', false)
                     },
                     line: {
                         strokeColor: styleFN.bind(self, 'line', 'strokeColor', false),
@@ -582,8 +572,6 @@ TC.inherit(TC.control.Search, TC.Control);
 
             $.when(self.layerPromise).then(function (layer) {
                 self.layer = layer;
-
-                self.wrap.addEvents();
             });
         });
 
@@ -632,10 +620,10 @@ TC.inherit(TC.control.Search, TC.Control);
                         l.map.zoomToFeatures(l.features);
                     }
                     else if (self.$list.find('li > a:not(.tc-ctl-search-li-loading,.tc-ctl-search-li-empty)').length === 1) {
-                    _research();
-                }
-                else self.$text.trigger('keyup.autocomplete');
-            });
+                        _research();
+                    }
+                    else self.$text.trigger('keyup.autocomplete');
+                });
             });
 
             // GLS: añadimos la funcionalidad al mensaje de "No hay resultados", al hacer click repliega el mensaje.
@@ -765,7 +753,27 @@ TC.inherit(TC.control.Search, TC.Control);
 
                                 var highlighted = elm.label;
                                 var strReg = [];
-                                var querys = this.ctx.lastPattern.split(',');
+
+                                // eliminamos caracteres extraños del patrón ya analizado
+                                var normalizedLastPattern = this.ctx.lastPattern;
+                                if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(normalizedLastPattern))
+                                    normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
+                                else
+                                    normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
+
+                                var querys = normalizedLastPattern.trim().split(',');
+
+                                // si estamos tratando con coordenadas el separador es el espacio, no la coma
+                                if ((elm.label.indexOf(this.ctx.LAT_LABEL) > -1 && elm.label.indexOf(this.ctx.LON_LABEL) > -1) ||
+                                    (elm.label.indexOf(this.ctx.UTMX_LABEL) > -1 && elm.label.indexOf(this.ctx.UTMY_LABEL) > -1)) {
+                                    querys = this.ctx.lastPattern.split(' ');
+
+                                    for (var t = 0; t < querys.length; t++) {
+                                        if (querys[t].trim().slice(-1) == ',')
+                                            querys[t] = querys[t].slice(0, -1);
+                                    }
+                                }
+
                                 for (var q = 0; q < querys.length; q++) {
                                     strReg.push('(' + querys[q].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
                                     var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
@@ -806,11 +814,12 @@ TC.inherit(TC.control.Search, TC.Control);
                                     self.$text.focus();
                                 } else {
                                     // Scenario 3: We're in the list but not on the last element, simply move down
-                                    nextIndex = self.$list
-                                    .find('li')
+                                    self.$list
+                                    .find('li:not([header])')
                                     .find('a:focus')
-                                    .parent('li').index() + 1;
-                                    self.$list.find('li:eq(' + nextIndex + ') a').focus();
+                                    .parent('li:not([header])')
+                                        .nextAll('li:not([header]):first')
+                                        .find('a').focus();
                                 }
                                 e.preventDefault(); // Stop page from scrolling
                                 e.stopPropagation();
@@ -822,11 +831,12 @@ TC.inherit(TC.control.Search, TC.Control);
                                     self.$list.find('li:not([header]):last a').focus();
                                 } else {
                                     // Scenario 3: We're in the list but not on the first element, simply move up
-                                    nextIndex = self.$list
-                                    .find('li')
+                                    self.$list
+                                    .find('li:not([header])')
                                     .find('a:focus')
-                                    .parent('li').index() - 1;
-                                    self.$list.find('li:eq(' + nextIndex + ') a').focus();
+                                    .parent('li:not([header])')
+                                        .prevAll('li:not([header]):first')
+                                        .find('a').focus();
                                 }
                                 e.preventDefault(); // Stop page from scrolling
                                 e.stopPropagation();
@@ -870,7 +880,7 @@ TC.inherit(TC.control.Search, TC.Control);
             for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
                 if (l.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
                     delete l[self.WFS_TYPE_ATTRS[i]];
-        }
+            }
         });
     };
 
@@ -937,26 +947,35 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
         var deferred = new $.Deferred();
 
-        var match = pattern.match(new RegExp('^' + $.trim(self.UTMX_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.]\\d+)?)\\s*\,\\s*' + $.trim(self.UTMY_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.]\\d+)?)$'));
+        var match = pattern.match(new RegExp('^' + $.trim(self.UTMX_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + $.trim(self.UTMY_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
         if (match) {
-            pattern = match[1] + ', ' + match[2];
+            pattern = match[1] + ' ' + match[2];
         }
 
-        match = pattern.match(new RegExp('^' + $.trim(self.LAT_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,3}([.]\\d+)?),\\s*' + $.trim(self.LON_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,2}([.]\\d+)?)$'));
+        match = pattern.match(new RegExp('^' + $.trim(self.LAT_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LON_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
         if (match) {
-            pattern = match[1] + ', ' + match[3];
+            pattern = match[1] + ' ' + match[3];
         }
 
-        if (/\d/.test(pattern) && (new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.]\\d+)?)\\s*\\,\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.]\\d+)?)$').test(pattern) || /^([-+]?\d{1,3}([.,]\d+)?),\s*([-+]?\d{1,2}([.,]\d+)?)$/.test(pattern))) {
-            match = /^([-+]?\d{1,3}([.,]\d+)?),\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(pattern);
+        if (/\d/.test(pattern) && (new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').test(pattern) || /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.test(pattern))) {
+            match = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(pattern);
             if (match && (match[1].indexOf(',') > -1 || match[3].indexOf(',') > -1)) {
                 match[1] = match[1].replace(',', '.');
                 match[3] = match[3].replace(',', '.');
 
-                pattern = match[1] + ', ' + match[3];
+                pattern = match[1] + ' ' + match[3];
             }
 
-            if (!match || match && match[1] <= 180 && match[3] <= 90) {
+            if (!match || match && ((match[1].indexOf(',') > -1 ? match[1].replace(',', '.') : match[1]) <= 180) && ((match[3].indexOf(',') > -1 ? match[3].replace(',', '.') : match[3]) <= 90)) {
+
+                match = new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').exec(pattern);
+                if (match && (match[1].indexOf(',') > -1 || match[2].indexOf(',') > -1)) {
+                    match[1] = match[1].replace(',', '.');
+                    match[2] = match[2].replace(',', '.');
+
+                    pattern = match[1] + ' ' + match[2];
+                }
+
                 // parse coordinates
                 pattern = pattern.replace(self.UTMX_LABEL, '').replace(self.UTMY_LABEL, '').replace(self.LON_LABEL, '').replace(self.LAT_LABEL, '');
                 var coords = TC.Util.parseCoords(pattern);
@@ -991,7 +1010,7 @@ TC.inherit(TC.control.Search, TC.Control);
             }
         } else {
             deferred.resolve([]);
-                }
+        }
 
         return deferred.promise();
     };
@@ -1006,12 +1025,12 @@ TC.inherit(TC.control.Search, TC.Control);
         }
 
         var _pattern = pattern;
-        if (!(/(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)/.test(pattern)) && self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].suggestionRoot)
+        if (!(/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(pattern)) && self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].suggestionRoot)
             _pattern = self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].suggestionRoot + ', ' + pattern;
 
-        if (/(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)/.test(_pattern) && !(new RegExp('^([0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([0-9]{' + self.UTMY_LEN + '})$').test(pattern))) {
+        if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !(new RegExp('^([0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([0-9]{' + self.UTMY_LEN + '})$').test(pattern))) {
             $.when(self.getMunicipalities()).then(function (list) {
-                var match = /(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)/.exec(_pattern);
+                var match = /^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.exec(_pattern);
                 if (match) {
                     var matcher = new RegExp($.trim(match[1]).replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "i");
                     var results = $.grep(list, function (value) {
@@ -1100,10 +1119,7 @@ TC.inherit(TC.control.Search, TC.Control);
         };
 
         var normalizedCriteria = function (value) {
-            var _value = '';
-            var patternRomanNumber = /M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}){1,}?\S?\./g;
-            var patternAbsoluteNotDot = /[`~!@#$%^&*_|+\=?;:'"\{\}\[\]\\]/g;
-            var patternAbsolute = /[`~!@#$%^&*_|+\=?;:'.\{\}\[\]\\]/g;
+            var _value = '';            
 
             value = self.removePunctuation(value);
 
@@ -1164,10 +1180,10 @@ TC.inherit(TC.control.Search, TC.Control);
             //}
 
             // elimino los caracteres especiales
-            if (patternRomanNumber.test(value))
-                value = value.replace(patternAbsoluteNotDot, '');
+            if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(value))
+                value = value.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
             else
-                value = value.replace(patternAbsolute, '');
+                value = value.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
             return value.toLowerCase();
         };
 
@@ -1261,7 +1277,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         if (limit) {
                             if (result[i].t) {
                                 result[i].t = root;
-                        }
+                            }
                         }
                         else result.push($.extend({}, result[i], { t: root }));
                     }
@@ -1498,7 +1514,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 var ch = 0;
                 while (ch < check.length && !check[ch].call(self, text, result)) {
                     ch++;
-            }
+                }
             }
 
             if (result.length > 0 && root) {
@@ -1546,75 +1562,75 @@ TC.inherit(TC.control.Search, TC.Control);
             return self.availableSearchTypes[dataRole].queryProperties[e + 'Property'];
         };
         var getPropertyValue = function (role, propertyName) {
-                            return self.availableSearchTypes[role][propertyName];
-                        };
-                                    var getIsLikeNode = function (name, value) {
-                                        var toEscape = /([\-\"\.\º\(\)\/])/g;
-                                        if (toEscape.test(value)) {
-                                            value = value.replace(toEscape, "\\$1");
-                                        }
+            return self.availableSearchTypes[role][propertyName];
+        };
+        var getIsLikeNode = function (name, value) {
+            var toEscape = /([\-\"\.\º\(\)\/])/g;
+            if (toEscape.test(value)) {
+                value = value.replace(toEscape, "\\$1");
+            }
 
-                                        if (value.toString().indexOf(self._LIKE_PATTERN) > -1)
-                                            return '<Or><PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
-                                                        '<PropertyName>' + name + '</PropertyName>' +
+            if (value.toString().indexOf(self._LIKE_PATTERN) > -1)
+                return '<Or><PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
+                            '<PropertyName>' + name + '</PropertyName>' +
                             '<Literal>' + value.toLowerCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                                                   '</PropertyIsLike>' +
-                                                   '<PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
-                                                        '<PropertyName>' + name + '</PropertyName>' +
+                       '</PropertyIsLike>' +
+                       '<PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
+                            '<PropertyName>' + name + '</PropertyName>' +
                             '<Literal>' + value.toUpperCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                                                   '</PropertyIsLike></Or>';
-                                        else
-                                            return '<PropertyIsEqualTo>' +
-                                                        '<PropertyName>' + name + '</PropertyName>' +
+                       '</PropertyIsLike></Or>';
+            else
+                return '<PropertyIsEqualTo>' +
+                            '<PropertyName>' + name + '</PropertyName>' +
                             '<Literal>' + value.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                                                   '</PropertyIsEqualTo>';
-                                    };
+                       '</PropertyIsEqualTo>';
+        };
         var getFilterNode = function (propertyName, propertyValue) {
-                                    var r;
-                                    if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
-                                        var f = [];
-                                        for (var key in propertyName) {
-                                            if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
-                                                r = '<Or>';
-                                                for (var i = 0; i < propertyName[key].length; i++) {
-                                                    r += getIsLikeNode($.trim(propertyName[key][i]), propertyValue);
-                                                }
+            var r;
+            if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
+                var f = [];
+                for (var key in propertyName) {
+                    if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
+                        r = '<Or>';
+                        for (var i = 0; i < propertyName[key].length; i++) {
+                            r += getIsLikeNode($.trim(propertyName[key][i]), propertyValue);
+                        }
 
-                                                r += '</Or>';
-                                                f.push('(<Filter xmlns="http://www.opengis.net/ogc">' + r + '</Filter>)');
-                                            } else {
-                                                var propName = propertyName[key];
-                                                if ((propertyName[key] instanceof Array) && propertyName[key].length == 1)
-                                                    propName = propertyName[key][0];
+                        r += '</Or>';
+                        f.push('(<Filter xmlns="http://www.opengis.net/ogc">' + r + '</Filter>)');
+                    } else {
+                        var propName = propertyName[key];
+                        if ((propertyName[key] instanceof Array) && propertyName[key].length == 1)
+                            propName = propertyName[key][0];
 
-                                                f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
-                                                            '<Or>' + getIsLikeNode($.trim(propName), propertyValue) + '</Or>' +
-                                                        '</Filter>)');
-                                            }
-                                        }
+                        f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
+                                    '<Or>' + getIsLikeNode($.trim(propName), propertyValue) + '</Or>' +
+                                '</Filter>)');
+                    }
+                }
 
-                                        return f.join('');
+                return f.join('');
 
-                                    } else if (propertyName instanceof Array && propertyName.length > 1) {
-                                        r = '<ogc:Or>';
-                                        for (var i = 0; i < propertyName.length; i++) {
-                                            r += getIsLikeNode($.trim(propertyName[i]), propertyValue);
-                                        }
+            } else if (propertyName instanceof Array && propertyName.length > 1) {
+                r = '<ogc:Or>';
+                for (var i = 0; i < propertyName.length; i++) {
+                    r += getIsLikeNode($.trim(propertyName[i]), propertyValue);
+                }
 
-                                        return r += '</ogc:Or>';
-                                    } else
-                                        return getIsLikeNode((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
-                                };
+                return r += '</ogc:Or>';
+            } else
+                return getIsLikeNode((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
+        };
         var getFilter = function (data, dataRole) {
 
-                                var r = {};
-                                r.multiL = false;
-                                r.f = '';
+            var r = {};
+            r.multiL = false;
+            r.f = '';
 
-                                var _f;
-                                switch (dataRole) {
-                                    case self.NUMBER:
-                                        _f = [];
+            var _f;
+            switch (dataRole) {
+                case self.NUMBER:
+                    _f = [];
                     if (!(self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
                         var match = /(\<|\>|\<\>)/gi.exec(data.t);
                         if (match)
@@ -1631,10 +1647,10 @@ TC.inherit(TC.control.Search, TC.Control);
                         _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
                     }
                     _f.push(getFilterNode(getPropertyName(dataRole, 'p'), data.p + '*'));
-                                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
-                                        break;
-                                    case self.STREET:
-                                        _f = [];
+                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                    break;
+                case self.STREET:
+                    _f = [];
 
                     if (!(self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
                         var match = /(\<|\>|\<\>)/gi.exec(data.t);
@@ -1650,108 +1666,108 @@ TC.inherit(TC.control.Search, TC.Control);
                         _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
                         _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
                     }
-                                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
-                                        break;
+                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                    break;
                 case self.COUNCIL:
                     r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
                     break;
                 case self.URBAN:
                     r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
                     break;
-                                    case self.LOCALITY:
+                case self.LOCALITY:
                     r.f = getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN);
-                                        r.multiL = true;
-                                        break;
-                                    case self.MUNICIPALITY: {
+                    r.multiL = true;
+                    break;
+                case self.MUNICIPALITY: {
                     r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                                        break;
-                                    }
-                                }
+                    break;
+                }
+            }
 
-                                return r;
-                            };
+            return r;
+        };
         var getParams = function (data, dataRole, properties, dataIdProperties) {
 
             var filters = getFilter(data, dataRole);
 
-                            var params = {
-                                REQUEST: 'GetFeature',
-                                SERVICE: 'WFS',
-                                MAXFEATURES: 20,
-                                VERSION: self.availableSearchTypes[dataRole].version,
-                                OUTPUTFORMAT: self.availableSearchTypes[dataRole].outputFormat
-                            };
+            var params = {
+                REQUEST: 'GetFeature',
+                SERVICE: 'WFS',
+                MAXFEATURES: 20,
+                VERSION: self.availableSearchTypes[dataRole].version,
+                OUTPUTFORMAT: self.availableSearchTypes[dataRole].outputFormat
+            };
 
             var featureTypes = getPropertyValue(dataRole, 'featureType');
-                            if (!(featureTypes instanceof Array))
-                                params.TYPENAME = self.availableSearchTypes[dataRole].featurePrefix ? self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes) : $.trim(featureTypes);
-                            else {
-                                var ft = [];
-                                for (var i = 0; i < featureTypes.length; i++) {
-                                    ft.push(self.availableSearchTypes[dataRole].featurePrefix ?
-                                                self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes[i]) :
-                                                $.trim(featureTypes[i]));
-                                }
+            if (!(featureTypes instanceof Array))
+                params.TYPENAME = self.availableSearchTypes[dataRole].featurePrefix ? self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes) : $.trim(featureTypes);
+            else {
+                var ft = [];
+                for (var i = 0; i < featureTypes.length; i++) {
+                    ft.push(self.availableSearchTypes[dataRole].featurePrefix ?
+                                self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes[i]) :
+                                $.trim(featureTypes[i]));
+                }
 
-                                params.TYPENAME = ft.join(',');
+                params.TYPENAME = ft.join(',');
+            }
+
+            var _getProperties = function (properties) {
+                if ((properties || '') !== '') {
+                    if (!(properties instanceof Array)) {
+                        var p = [];
+                        if (properties instanceof Object) {
+                            for (var key in properties) {
+                                var prop = properties[key][0];
+                                if (properties[key].length > 1)
+                                    prop = properties[key].join(',');
+
+                                p.push(prop);
                             }
+                        }
+                        return p;
+                    }
+                    else
+                        return properties.join(',');
+                }
+            };
+            var _properties = _getProperties(properties);
+            var _ids = _getProperties(dataIdProperties);
 
-                            var _getProperties = function (properties) {
-                                if ((properties || '') !== '') {
-                                    if (!(properties instanceof Array)) {
-                                        var p = [];
-                                        if (properties instanceof Object) {
-                                            for (var key in properties) {
-                                                var prop = properties[key][0];
-                                                if (properties[key].length > 1)
-                                                    prop = properties[key].join(',');
+            if (_properties instanceof Array && _ids instanceof Array) {
+                params.PROPERTYNAME = '';
+                for (var i = 0; i < _properties.length; i++) {
+                    params.PROPERTYNAME += '(' + _properties[i] + ',' + _ids[i] + ')';
+                }
+            } else
+                params.PROPERTYNAME = _properties + ',' + _ids;
 
-                                                p.push(prop);
-                                            }
-                                        }
-                                        return p;
-                                    }
-                                    else
-                                        return properties.join(',');
-                                }
-                            };
-                            var _properties = _getProperties(properties);
-                            var _ids = _getProperties(dataIdProperties);
+            params.FILTER = filters.f;
 
-                            if (_properties instanceof Array && _ids instanceof Array) {
-                                params.PROPERTYNAME = '';
-                                for (var i = 0; i < _properties.length; i++) {
-                                    params.PROPERTYNAME += '(' + _properties[i] + ',' + _ids[i] + ')';
-                                }
-                            } else
-                                params.PROPERTYNAME = _properties + ',' + _ids;
-
-                            params.FILTER = filters.f;
-
-                            return $.param(params);
-                        };
+            return $.param(params);
+        };
         var formatItems = function (features, dataRole, properties, dataIdProperties) {
-                                for (var i = 0; i < features.length; i++) {
-                                    var attributes = [], ids = [];
-                                    var valueToAdd = '';
-                                    var prop = properties;
-                                    var dataIdProp = dataIdProperties;
+            for (var i = 0; i < features.length; i++) {
+                var attributes = [], ids = [];
+                var valueToAdd = '';
+                var prop = properties;
+                var dataIdProp = dataIdProperties;
                 var strFormat = getPropertyValue(dataRole, 'outputFormatLabel');
-                                    var dataLayer = features[i].id.split('.').slice(0, 1).shift();
+                var dataLayer = features[i].id.split('.').slice(0, 1).shift();
 
-                                    if (!(properties instanceof Array)) {
-                                        prop = properties[dataLayer];
-                                        dataIdProp = dataIdProperties[dataLayer];
-                                        strFormat = strFormat[dataLayer];
-                                    }
+                if (!(properties instanceof Array)) {
+                    prop = properties[dataLayer];
+                    dataIdProp = dataIdProperties[dataLayer];
+                    strFormat = strFormat[dataLayer];
+                }
 
-                                    for (var j = 0; j < prop.length; j++) {
-                                        attributes.push(features[i].data[prop[j]]);
-                                    }
+                for (var j = 0; j < prop.length; j++) {
+                    attributes.push(features[i].data[prop[j]]);
+                }
 
-                                    for (var j = 0; j < dataIdProp.length; j++) {
-                                        ids.push(features[i].data[dataIdProp[j]]);
-                                    }
+                for (var j = 0; j < dataIdProp.length; j++) {
+                    ids.push(features[i].data[dataIdProp[j]]);
+                }
 
 
                 var getUnique = function (inputArray) {
@@ -1759,11 +1775,11 @@ TC.inherit(TC.control.Search, TC.Control);
                     for (var i = 0; i < inputArray.length; i++) {
                         if ((jQuery.inArray(inputArray[i], outputArray)) == -1) {
                             outputArray.push(inputArray[i]);
-                                                        }
-                                                    }
+                        }
+                    }
 
                     return outputArray;
-                                        };
+                };
                 if (attributes instanceof Array && strFormat && getUnique(attributes).length > 1) { valueToAdd = strFormat.tcFormat(attributes); }
                 else if (attributes instanceof Array && getUnique(attributes).length == 1) { valueToAdd = attributes[0]; }
 
@@ -1777,16 +1793,16 @@ TC.inherit(TC.control.Search, TC.Control);
                     return false;
                 };
                 if (!(intoResults(dataRole, text))) {
-                                        results.push({
-                                            text: text,
+                    results.push({
+                        text: text,
                         label: text,
-                                            id: ids.join('#'),
-                                            dataRole: dataRole,
-                                            dataLayer: dataLayer
-                                        });
-                                    }
-                                }
-                            };
+                        id: ids.join('#'),
+                        dataRole: dataRole,
+                        dataLayer: dataLayer
+                    });
+                }
+            }
+        };
 
         pattern = normalizedCriteria(pattern);
         $.when(getObjectsTo(pattern, self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root || '', self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].limit || false))
@@ -1820,11 +1836,11 @@ TC.inherit(TC.control.Search, TC.Control);
                     }).done(function (data) {
                         var features = parseFeatures(data, dataRole);
                         formatItems(features, dataRole, properties, dataIdProperties);
-                        }).fail(function (data) {
-                            if (data.statusText !== 'abort')
-                                alert('error');
-                        });
-                    }
+                    }).fail(function (data) {
+                        if (data.statusText !== 'abort')
+                            alert('error');
+                    });
+                }
 
                 $.map(searchObjects, function (data, i) {
                     var dataRoles = getDataRoles(data);
@@ -1953,17 +1969,13 @@ TC.inherit(TC.control.Search, TC.Control);
             self.loading = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
 
         var wait;
-        wait = self.loading.addWait();
-
-        if (!self.$toolsPanel)
-            self.$toolsPanel = $('.tools-panel');
+        wait = self.loading.addWait();        
 
         // en pantallas pequeñas, colapsamos el panel de herramientas
         if (Modernizr.mq('(max-width: 30em)')) {
             self.$text.blur();
-            self.$toolsPanel.addClass('right-collapsed');
+            self.map.$events.trigger($.Event(TC.Consts.event.TOOLSCLOSE), {});
         }
-
 
         self.cleanMap();
 
@@ -1994,8 +2006,8 @@ TC.inherit(TC.control.Search, TC.Control);
                         if (dr) {
                             goTo = self.availableSearchTypes[dr].goTo.call(self, id, dr);
                             if (goTo !== null) {
-                            keepOnLooping = false;
-                        }
+                                keepOnLooping = false;
+                            }
                         }
                         break;
                     default:
@@ -2037,61 +2049,63 @@ TC.inherit(TC.control.Search, TC.Control);
 
                 layer.type = goTo.params.type;
 
-
                 layer.refresh().then(function () {
-
                     self.map.one(TC.Consts.event.LAYERUPDATE, function (e) {
+                        if (e.layer == layer) {
+                            // Salta cuando se pinta una feature que no es de tipo API porque la gestión de estilos salta antes (no es controlable)
+                            self.map.one(TC.Consts.event.FEATURESADD, function (e) {
+                                if (e.layer == layer) {
+                                    if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
+                                        self.$list.hide('fast');
+                                        e.layer.map.setExtent(e.layer.wrap.layer.getSource().getExtent());
+                                    }
+                                    else if (e.layer.features && e.layer.features.length > 0) {
+                                        self.$list.hide('fast');
+                                        setQueryableFeatures.call(self, e.layer.features);
+                                        self.layer.map.zoomToFeatures(e.layer.features);
+                                    } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
+                                        self.$list.html(goTo.emptyResultHTML);
+                                        self.$text.trigger("targetUpdated.autocomplete");
 
-                        // Salta cuando se pinta una feature que no es de tipo API porque la gestión de estilos salta antes (no es controlable)
-                        self.map.one(TC.Consts.event.FEATURESADD, function (e) {
-                            if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
-                                self.$list.hide('fast');
-                                e.layer.map.setExtent(e.layer.wrap.layer.getSource().getExtent());
+                                        self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
+                                    }
+
+                                    self.loading.removeWait(wait);
+                                }
+                            });
+
+                            if (goTo.params.type != TC.Consts.layerType.WFS) {
+                                self.map.one(TC.Consts.event.FEATURESADD, function (e) {
+                                    if (e.layer.features && e.layer.features.length == 0) {
+                                        self.$list.html(goTo.emptyResultHTML);
+                                        self.$text.trigger("targetUpdated.autocomplete");
+
+                                        self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
+                                    }
+                                });
                             }
-                            else if (e.layer.features && e.layer.features.length > 0) {
+
+                            if (e.layer.features && e.layer.features.length > 0) {
                                 self.$list.hide('fast');
                                 setQueryableFeatures.call(self, e.layer.features);
-                                self.layer.map.zoomToFeatures(e.layer.features);
+                                self.layer.map.zoomToFeatures(self.layer.features);
+
+                                self.loading.removeWait(wait);
                             } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
                                 self.$list.html(goTo.emptyResultHTML);
                                 self.$text.trigger("targetUpdated.autocomplete");
 
                                 self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
-                        }
 
-                        self.loading.removeWait(wait);
-                        });
-
-                        if (goTo.params.type != TC.Consts.layerType.WFS) {
-                    self.map.one(TC.Consts.event.FEATURESADD, function (e) {
-                                if (e.layer.features && e.layer.features.length == 0) {
-                                    self.$list.html(goTo.emptyResultHTML);
-                                    self.$text.trigger("targetUpdated.autocomplete");
-
-                                    self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
-                                }
-                            });
-                        }
-
-                        if (e.layer.features && e.layer.features.length > 0) {
-                        self.$list.hide('fast');
-                            setQueryableFeatures.call(self, e.layer.features);
-                            self.layer.map.zoomToFeatures(self.layer.features);
-
-                            self.loading.removeWait(wait);
-                        } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
-                            self.$list.html(goTo.emptyResultHTML);
-                            self.$text.trigger("targetUpdated.autocomplete");
-
-                            self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
-
-                            self.loading.removeWait(wait);
+                                self.loading.removeWait(wait);
+                            }
                         }
                     });
 
-                    self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: layer, id: id }));
+                    if (layer.features.length == 0) // GLS: Si la capa no contiene features, en el método refresh no se lanzará el evento LAYERUPDATE, por tanto, debo lanzarlo yo misma
+                        self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: layer, id: id }));
                 });
-                });
+            });
         } else if (!customSearchType) { self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY)); }
     };
 
@@ -2101,40 +2115,40 @@ TC.inherit(TC.control.Search, TC.Control);
         if (e && e.layer == self.layer) {
             var id = e.id;
 
-                var point = self.getPoint(id);
-                var delta;
-                var title;
-                var deferred;
+            var point = self.getPoint(id);
+            var delta;
+            var title;
+            var deferred;
+
+            if (point && self.insideLimit(point)) {
+                title = self.getLabel(id);
+                deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
+                delta = self.map.options.pointBoundsRadius;
+                self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+            } else {
+                var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
+                id = self.LAT + match[2] + self.LON + match[1];
+                point = self.getPoint(id);
 
                 if (point && self.insideLimit(point)) {
                     title = self.getLabel(id);
                     deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
                     delta = self.map.options.pointBoundsRadius;
                     self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
-                } else {
-                    var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
-                    id = self.LAT + match[2] + self.LON + match[1];
-                    point = self.getPoint(id);
 
-                    if (point && self.insideLimit(point)) {
-                        title = self.getLabel(id);
-                        deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
-                        delta = self.map.options.pointBoundsRadius;
-                        self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
-
-                        self.$text.val(title);
-                    }
+                    self.$text.val(title);
                 }
+            }
 
-                $.when(deferred).then(function (feat) {
-                    self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: [feat] }));
-                });
+            $.when(deferred).then(function (feat) {
+                self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: [feat] }));
+            });
         }
-            };
+    };
     ctlProto.goToCoordinates = function (id) {
         var self = this;
         var goTo = {};
-        if (/^X(\d+(?:\.\d+)?)Y(\d+(?:\.\d+)?)$/.test(id) || /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.test(id)) {
+        if (/^X(\d+(?:[\.\,]\d+)?)Y(\d+(?:[\.\,]\d+)?)$/.test(id) || /^Lat((?:[+-]?)\d+(?:[.,]\d+)?)Lon((?:[+-]?)\d+(?:[.,]\d+)?)$/.test(id)) {
 
             goTo.params = {
                 type: TC.Consts.layerType.VECTOR,
@@ -2232,12 +2246,12 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
             }
             else {
-            if (source instanceof Object && source.hasOwnProperty(dataLayer))
-                source = source[dataLayer];
+                if (source instanceof Object && source.hasOwnProperty(dataLayer))
+                    source = source[dataLayer];
 
-            for (var i = 0; i < source.length; i++) {
-                props.push({ name: source[i], value: _id[i], type: TC.Consts.comparison.EQUAL_TO });
-            }
+                for (var i = 0; i < source.length; i++) {
+                    props.push({ name: source[i], value: _id[i], type: TC.Consts.comparison.EQUAL_TO });
+                }
             }
 
             return props;
@@ -2285,7 +2299,7 @@ TC.inherit(TC.control.Search, TC.Control);
             }
         }
         else {
-            match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(pattern);
+            match = /^Lat((?:[+-]?)\d+(?:[.,]\d+)?)Lon((?:[+-]?)\d+(?:[.,]\d+)?)$/.exec(pattern);
             if (match && match.length === 3) {
                 point = [parseFloat(match[2]), parseFloat(match[1])];
                 if (!isMapGeo) {
@@ -2293,7 +2307,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
             }
 
-            match = /^Lon((?:[+-]?)\d+(?:\.\d+)?)Lat((?:[+-]?)\d+(?:\.\d+)?)$/.exec(pattern);
+            match = /^Lon((?:[+-]?)\d+(?:[.,]\d+)?)Lat((?:[+-]?)\d+(?:[.,]\d+)?)$/.exec(pattern);
             if (match && match.length === 3) {
                 point = [parseFloat(match[2]), parseFloat(match[1])];
                 if (!isMapGeo) {
@@ -2309,7 +2323,7 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
         var getIntersectsBounds = function (extent, point) {
             if (extent instanceof Array)
-            return point[0] >= extent[0] && point[0] <= extent[2] && point[1] >= extent[1] && point[1] <= extent[3];
+                return point[0] >= extent[0] && point[0] <= extent[2] && point[1] >= extent[1] && point[1] <= extent[3];
             else return true;
         };
 
@@ -2328,10 +2342,34 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.getLabel = function (id) {
         var self = this;
         var result = id;
+        var locale = TC.Util.getMapLocale(self.map);        
+
         if (id.match(new RegExp('^(?:' + self.LAT + '[-\\d])|(?:' + self.UTMX + '[\\d])'))) {
-            result = result.replace(self.LAT, self.LAT_LABEL).replace(self.LON, ', ' + self.LON_LABEL).replace(self.UTMX, self.UTMX_LABEL).replace(self.UTMY, ', ' + self.UTMY_LABEL);
+            result = result.replace(self.LAT, self.LAT_LABEL).replace(self.LON, ' ' + self.LON_LABEL).replace(self.UTMX, self.UTMX_LABEL).replace(self.UTMY, ' ' + self.UTMY_LABEL);
+            var match = result.match(new RegExp('^' + $.trim(self.LAT_LABEL) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LON_LABEL) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
+            if (match) {
+                result = result.replace(match[1], parseFloat(match[1]).toLocaleString(locale));
+                result = result.replace(match[3], parseFloat(match[3]).toLocaleString(locale));
+            }
+
+            var localeDecimalSeparator = 1.1.toLocaleString(locale).substring(1, 2);
+            var match = result.match(new RegExp('^' + $.trim(self.UTMX_LABEL) + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + $.trim(self.UTMY_LABEL) + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
+            if (match) {
+                if (!Number.isInteger(parseFloat(match[1])))
+                    result = result.replace(match[1], match[1].replace('.', localeDecimalSeparator));
+                if (!Number.isInteger(parseFloat(match[2])))
+                    result = result.replace(match[2], match[2].replace('.', localeDecimalSeparator));                
+            }
+
         } else if (id.match(new RegExp('^(?:' + self.LON + '[-\\d])'))) {
-            result = result.replace(self.LON, self.LON_LABEL).replace(self.LAT, ', ' + self.LAT_LABEL);
+            result = result.replace(self.LON, self.LON_LABEL).replace(self.LAT, ' ' + self.LAT_LABEL);
+            
+            var match = result.match(new RegExp('^' + $.trim(self.LON_LABEL) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LAT_LABEL) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
+            if (match) {
+                result = result.replace(match[1], parseFloat(match[1]).toLocaleString(locale));
+                result = result.replace(match[3], parseFloat(match[3]).toLocaleString(locale));
+            }
+
         } else if (id.match(new RegExp('^(?:(\\' + self.MUN + '{1})(.*)' + '(\\' + self.POL + '{1})' + '(\\d{1,2})' + '(\\' + self.PAR + '{1})' + '(\\d{1,4}))'))) {
             var match = id.match(new RegExp('^(?:(\\' + self.MUN + '{1})(.*)' + '(\\' + self.POL + '{1})' + '(\\d{1,2})' + '(\\' + self.PAR + '{1})' + '(\\d{1,4}))'));
             result = self.MUN_LABEL + match[2] + ', ' + self.POL_LABEL + match[4] + ', ' + self.PAR_LABEL + match[6];
@@ -2416,10 +2454,10 @@ if (!Array.prototype.hasOwnProperty('findByProperty')) {
         enumerable: false,
         writable: true,
         value: function (propertyName, value) {
-        for (var i = 0; i < this.length; i++) {
-            if (this[i][propertyName] == value)
-                return this[i];
-        }
+            for (var i = 0; i < this.length; i++) {
+                if (this[i][propertyName] == value)
+                    return this[i];
+            }
         }
     });
 }
