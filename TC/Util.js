@@ -1,6 +1,28 @@
 ﻿var TC = TC || {};
 
 (function () {
+    // Polyfill para IE
+    Number.isInteger = Number.isInteger || function (value) {
+        return typeof value === "number" &&
+        isFinite(value) &&
+        Math.floor(value) === value;
+    };
+
+    // GLS: Parche: Chrome no formatea correctamente los números en euskera, establece como separador de decimales el (.)
+    var toLocaleString = Number.prototype.toLocaleString;
+    Number.prototype.toLocaleString = function (locale, options) {
+        if (locale == "eu-ES" && !TC.Util.detectIE()) {
+            var sNum = toLocaleString.apply(this, arguments);
+            sNum = sNum.replace(/\,/g, '.')
+            if (!(Math.floor(this) == this && Number.isInteger(Math.floor(this))))
+                sNum = sNum.replace(/.([^.]*)$/, ",$1");
+
+            return sNum;
+        }
+        else
+            return toLocaleString.apply(this, arguments);
+    }
+
     var iconUrlCache = {};
     var markerGroupClassCache = {};
 
@@ -17,6 +39,10 @@
     };
 
     TC.Util = TC.Util || {
+
+        getMapLocale: function (map) {
+            return map.options && map.options.locale && map.options.locale.replace('_', '-') || "es-ES";
+        },
 
         regex: {
             PROTOCOL: /(^https?:)/i
@@ -76,8 +102,33 @@
             return scope[scopeSplit[scopeSplit.length - 1]];
         },
 
-        isURI: function (text) {
+        isURL: function (text) {
             return /^(http|https|ftp|mailto)\:\/\//i.test(text);
+        },
+
+        isSameOrigin: function (uri) {
+            var result = uri.indexOf("http") !== 0 && uri.indexOf("//") !== 0;
+            var urlParts = !result && uri.match(TC.Consts.url.SPLIT_REGEX);
+            if (urlParts) {
+                var location = window.location;
+                var uProtocol = urlParts[1];
+                result =
+                    (uProtocol == location.protocol || uProtocol == undefined) &&
+                    urlParts[3] == location.hostname;
+                var uPort = urlParts[4], lPort = location.port;
+                if (uPort != 80 && uPort !== "" || lPort != "80" && lPort !== "") {
+                    result = result && uPort == lPort;
+                }
+            }
+            return result;
+        },
+
+        addProtocol: function (uri) {
+            var result = uri;
+            if (uri && uri.indexOf('//') === 0) {
+                result = location.protocol + uri;
+            }
+            return result;
         },
 
         /* 
@@ -310,7 +361,7 @@
                 return number * Math.PI / 180;
             };
             if ($.isArray(extent) && extent.length >= 4) {
-                var dLat = toRad(extent[3] - extent[1]);
+                var dLat = this.degToRad(extent[3] - extent[1]);
                 var sindlat2 = Math.sin(dLat / 2);
                 var a = sindlat2 * sindlat2;
                 var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -320,10 +371,10 @@
         },
 
         radToDeg: function (rad) { // convert radians to degrees
-            return rad * 360 / (Math.PI * 2);
+            return rad * 180 / Math.PI;
         },
         degToRad: function (deg) { // convert degrees to radians
-            return deg * Math.PI * 2 / 360;
+            return deg * Math.PI / 180;
         },
         mod: function (n) { // modulo for negative values
             return ((n % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
@@ -497,6 +548,9 @@
         detectChrome: function () {
             return window.chrome;
         },
+        detectSafari: function () {
+            return !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/);
+        },
         detectMouse: function () {
             if (Modernizr.mq('(pointer:coarse)') && Modernizr.mq('(pointer:fine)'))
                 return true;
@@ -533,6 +587,21 @@
                 return false;
             if (!Modernizr.touch)
                 return true;
+        },
+        detectAndroid: function () {
+            return navigator.userAgent.match(/Android/i);
+        },
+        detectBlackBerry: function () {
+            return navigator.userAgent.match(/BlackBerry/i);
+        },
+        detectIOS: function () {
+            return navigator.userAgent.match(/iPhone|iPad|iPod/i);
+        },
+        detectMobileWindows: function () {
+            return navigator.userAgent.match(/IEMobile/i);
+        },
+        detectMobile: function () {
+            return (TC.Util.detectAndroid() || TC.Util.detectIOS() || TC.Util.detectMobileWindows() || TC.Util.detectBlackBerry());
         },
         getElementByNodeName: function (parentNode, nodeName) {
             var colonIndex = nodeName.indexOf(":");
@@ -571,10 +640,19 @@
             var $modal = $(contentNode);
             var options = options || {};
 
-            $modal.removeAttr("hidden").on("click", ".tc-modal-close", function () { return TC.Util.closeModal(options.closeCallback); });
-            $modal.fadeIn(250, options.openCallback);
+            $modal
+                .off('click')
+                .removeAttr("hidden");
+            $modal.fadeIn(250, function () {
+                $modal.on('click', ".tc-modal-close", function (e) {
+                    e.stopPropagation();
+                    return TC.Util.closeModal(options.closeCallback);
+                });
+                if ($.isFunction(options.openCallback)) {
+                    options.openCallback();
+                }
+            });
         },
-
 
         closeModal: function (callback) {
             $(".tc-modal").hide().find(".tc-modal-window").removeAttr("style").off();
@@ -586,5 +664,213 @@
         closeAlert: function (btn) {
             $(btn).parents(".tc-alert").hide();
         },
+
+        getParameterByName: function (name) {
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)", "i"),
+                results = regex.exec(location.search);
+            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        },
+
+        downloadFile: function (filename, type, data) {
+            var blob = new Blob([data], { type: type });
+            if (navigator.msSaveBlob) { // IE 10+
+                navigator.msSaveBlob(blob, filename);
+            } else {
+                var link = document.createElement("a");
+                if (link.download !== undefined) { // feature detection
+                    // Browsers that support HTML5 download attribute
+                    var url = URL.createObjectURL(blob);
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", filename);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+        },
+
+        /**
+         * Acorta una URL utilizando el servicio de Bit.ly. No funciona para URLs locales.
+         */
+        shortenUrl: function (url) {
+            var shortUrl;
+
+            $.ajax({
+                url: "https://api-ssl.bitly.com/v3/shorten",
+                data: { access_token: "6c466047309f44bd8173d83e81491648b243ee3d", longUrl: url },
+                async: false
+            }).done(function (response) {
+                shortUrl = response.data.url;
+            });
+
+            return shortUrl;
+        },
+
+        /**
+         * Convierte a Base64.
+         */
+        utf8ToBase64: function (str) {
+            return window.btoa(unescape(encodeURIComponent(str)));
+        },
+
+        /**
+         * Decodifica un string en Base64.
+         */
+        base64ToUtf8: function (str) {
+            var result;
+            try {
+                result = decodeURIComponent(escape(window.atob(str)));
+            }
+            catch (error) {
+                result = null;
+            }
+            return result;
+        },
+
+        // Generic helper function that can be used for the three operations:        
+        operation: function (list1, list2, comparerFn, operationIsUnion) {
+            var result = [];
+
+            for (var i = 0; i < list1.length; i++) {
+                var item1 = list1[i],
+                    found = false;
+                for (var j = 0; j < list2.length; j++) {
+                    if (comparerFn(item1, list2[j])) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found === operationIsUnion) {
+                    result.push(item1);
+                }
+            }
+            return result;
+        },
+
+        // Following functions are to be used:
+        inBoth: function (list1, list2, comparerFn) {
+            return this.operation(list1, list2, comparerFn, true);
+        },
+
+        inFirstOnly: function (list1, list2, comparerFn) {
+            return this.operation(list1, list2, comparerFn, false);
+        },
+
+        inSecondOnly: function (list1, list2, comparerFn) {
+            return this.inFirstOnly(list2, list1, comparerFn);
+        },
+
+        toDataUrl: function (canvas, backgroundColour) {
+            var defaultOptions = { type: 'image/png', encoderOptions: 0.92 };
+
+            var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : defaultOptions,
+                type = _ref.type,
+                encoderOptions = _ref.encoderOptions;
+
+            var context = canvas.getContext('2d');
+
+            if (!context) {
+                return '';
+            }
+
+            var width = canvas.width;
+            var height = canvas.height;
+
+            var data = context.getImageData(0, 0, width, height);
+            var compositeOperation = context.globalCompositeOperation;
+
+            if (backgroundColour) {
+
+                context.globalCompositeOperation = 'destination-over';
+                context.fillStyle = backgroundColour;
+                context.fillRect(0, 0, width, height);
+            }
+
+            var imageData = canvas.toDataURL(type, encoderOptions);
+
+            if (backgroundColour) {
+                context.clearRect(0, 0, width, height);
+                context.putImageData(data, 0, 0);
+                context.globalCompositeOperation = compositeOperation;
+            }
+
+            return imageData;
+        },
+
+        imgToDataUrl: function (src, outputFormat) {
+            var deferred = $.Deferred();
+
+            var img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function () {
+                var canvas = document.createElement('CANVAS');
+                var ctx = canvas.getContext('2d');
+                var dataURL;
+                canvas.height = this.height;
+                canvas.width = this.width;
+                ctx.drawImage(this, 0, 0);
+                dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                    type: outputFormat || 'image/jpeg',
+                    encoderOptions: 1.0
+                });
+                deferred.resolve(dataURL, canvas);
+            };
+            src = src.replace(/^https?\:/i, "");
+            img.src = src;
+            if (img.complete || img.complete === undefined) {
+                img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+                img.src = src;
+            }
+
+            return deferred.promise();
+        },
+
+        addToCanvas: function (canvas, img, position) {
+            var cloneCanvas = function (oldCanvas) {
+
+                //create a new canvas
+                var newCanvas = document.createElement('canvas');
+                var context = newCanvas.getContext('2d');
+
+                //set dimensions
+                newCanvas.width = oldCanvas.width;
+                newCanvas.height = oldCanvas.height;
+
+                //apply the old canvas to the new one
+                context.drawImage(oldCanvas, 0, 0);
+
+                //return the new canvas
+                return newCanvas;
+            };
+
+            var newCanvas = cloneCanvas(canvas);
+            var deferred = $.Deferred();
+            var context = newCanvas.getContext('2d');
+
+            var newImage = new Image();
+            newImage.src = img;
+            newImage.onload = function () {
+                context.drawImage(newImage, position.x || 0, position.y || 0);
+                deferred.resolve(newCanvas);
+            }
+
+            return deferred.promise();
+        },
+
+        calculateAspectRatioFit: function (srcWidth, srcHeight, maxWidth, maxHeight) {
+            var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
+
+            return { width: srcWidth * ratio, height: srcHeight * ratio };
+        },
+
+        getFormattedDate: function (date) {
+            function pad(s) { return (s < 10) ? '0' + s : s; }
+
+            var d = new Date(date);
+            return [d.getFullYear(), pad(d.getMonth() + 1), pad(d.getDate())].join('');
+
+        }
     };
 })();
