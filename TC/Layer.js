@@ -164,6 +164,11 @@ TC.Layer = function (options) {
     _layer.wrap = null;
 };
 
+TC.Layer.state = {
+    IDLE: 'idle',
+    LOADING: 'loading'
+};
+
 /**
  * Establece la visibilidad de la capa en el mapa.
  * @method setVisibility
@@ -184,6 +189,23 @@ TC.Layer.prototype.getVisibility = function () {
     if (layer.map) {
         if (!layer.isBase || layer.map.getBaseLayer() === layer) {
             result = layer.wrap.getVisibility();
+        }
+    }
+    return result;
+};
+
+
+/**
+ * Obtiene la opacidad actual de la capa en el mapa.
+ * @method getOpacity
+ * @return {number}.
+ */
+TC.Layer.prototype.getOpacity = function () {
+    var layer = this;
+    var result = false;
+    if (layer.map) {
+        if (!layer.isBase || layer.map.getBaseLayer() === layer) {
+            result = layer.wrap.getLayer().getOpacity();
         }
     }
     return result;
@@ -215,6 +237,14 @@ TC.Layer.prototype.isCompatible = function (crs) {
     return true;
 };
 
+/**
+ * Determina si la capa tiene nombres válidos.
+ * @method isValidFromNames
+ * @return {boolean}
+ */
+TC.Layer.prototype.isValidFromNames = function () {
+    return true;
+};
 
 /**
  * Determina si la capa es de tipo raster.
