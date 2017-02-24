@@ -12,9 +12,8 @@ TC.control.LayerCatalog = function () {
 
     TC.Control.apply(self, arguments);
 
-    if (!TC.Consts.classes.LOADING) {
-        TC.Consts.classes.LOADING = 'tc-loading';
-    }
+    self._readyDeferred = $.Deferred();
+
     if (!TC.Consts.classes.SELECTABLE) {
         TC.Consts.classes.SELECTABLE = 'tc-selectable';
     }
@@ -25,7 +24,7 @@ TC.control.LayerCatalog = function () {
         TC.Consts.classes.ACTIVE = 'tc-active';
     }
 
-    self._$div.on(TC.Consts.event.CLICK, 'li', function (e) {
+    self._$div.on('mouseup.tc', 'li', function (e) {
         var $li = $(e.target);
         if (!$li.hasClass(self.CLASS + '-leaf')) {
             $li.toggleClass(TC.Consts.classes.COLLAPSED);
@@ -76,7 +75,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
 
             TC.Control.prototype.register.call(self, map);
 
-            var loadLayers = function () {
+            var load = function () {
                 if ($.isArray(self.options.layers)) {
                     for (var i = 0; i < self.options.layers.length; i++) {
                         var layer = self.options.layers[i];
@@ -87,27 +86,31 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                             if ($.isPlainObject(layer)) {
                                 layer = new TC.layer.Raster(layer);
                             }
-                            self.layers[i] = layer;
+                            self.layers.push(layer);
                         }
                     }
-                    self.render();
+                    self.render(function () {
+                        self._readyDeferred.resolve();
+                    });
+                }
+                else {
+                    self._readyDeferred.resolve();
                 }
             };
 
-            var layerUpdateHandler = function layerUpdateHandler(e) {
+            var waitLoad = function (e) {
                 if (e.layer === map.baseLayer) {
-                    loadLayers();
-                    map.off(TC.Consts.event.LAYERUPDATE, layerUpdateHandler);
+                    load();
+                    map.off(TC.Consts.event.LAYERUPDATE, waitLoad);
                 }
             };
 
             map.loaded(function () {
-                if (map.baseLayer.wrap.isReady && map.baseLayer.wrap.isReady()) {
-                    loadLayers();
+                if (!map.baseLayer.state || map.baseLayer.state === TC.Layer.state.IDLE) {
+                    load();
                 }
                 else {
-                    // Esperamos a que se cargue el mapa base para poblar el árbol
-                    map.on(TC.Consts.event.LAYERUPDATE, layerUpdateHandler);
+                    map.on(TC.Consts.event.LAYERUPDATE, waitLoad);
                 }
             });
 
@@ -203,65 +206,60 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
             }).on(TC.Consts.event.LAYERADD + ' ' + TC.Consts.event.UPDATEPARAMS, function (e) {
                 var layer = e.layer;
                 if (!layer.isBase && layer.type === TC.Consts.layerType.WMS) {
-                    var $layerNode = $findRootNode(layer);
-                    var updateControl = function () {
-                        $findNodes(layer, $layerNode).removeClass(TC.Consts.classes.LOADING).addClass(TC.Consts.classes.CHECKED).find('span').attr(TOOLTIP_DATA_ATTR, layerAddedText);
-                        _refreshResultList();
-                    };
-                    if ($layerNode.length) {
-                        updateControl();
-                    }
-                    else {
-                        // la capa no está renderizada, pero podría estar en proceso, comprobamos que no está en la lista de capas del control
-                        var layerAlreadyAdded = false;
-                        for (var i = 0, len = self.layers.length; i < len; i++) {
-                            var lyr = self.layers[i];
-                            if (lyr.type === layer.type && lyr.options.url === layer.options.url) {
-                                layerAlreadyAdded = true;
-                                break;
+                    self._readyDeferred.then(function () { // Esperamos a que cargue primero las capas de la configuración
+                        var $layerNode = $findRootNode(layer);
+                        var updateControl = function () {
+                            $findNodes(layer, $layerNode).removeClass(TC.Consts.classes.LOADING).addClass(TC.Consts.classes.CHECKED).find('span').attr(TOOLTIP_DATA_ATTR, layerAddedText);
+                            _refreshResultList();
+                        };
+                        if ($layerNode.length) {
+                            updateControl();
+                        }
+                        else {
+                            // la capa no está renderizada, pero podría estar en proceso, comprobamos que no está en la lista de capas del control
+                            var layerAlreadyAdded = false;
+                            for (var i = 0, len = self.layers.length; i < len; i++) {
+                                var lyr = self.layers[i];
+                                if (lyr.type === layer.type && lyr.options.url === layer.options.url) {
+                                    layerAlreadyAdded = true;
+                                    break;
+                                }
+                            }
+                            if (!layerAlreadyAdded) {
+                                self.addLayer(new TC.layer.Raster({
+                                    url: layer.options.url,
+                                    type: layer.type,
+                                    layerNames: [],
+                                    title: layer.title || layer.wrap.getServiceTitle(),
+                                    hideTitle: true,
+                                    hideTree: false
+                                })).then(function () {
+                                    $layerNode = $findRootNode(layer);
+                                    updateControl();
+                                });
                             }
                         }
-                        if (!layerAlreadyAdded) {
-                            self.addLayer(new TC.layer.Raster({
-                                url: layer.options.url,
-                                type: layer.type,
-                                layerNames: [],
-                                hideTitle: true,
-                                hideTree: false
-                            })).then(function () {
-                                $layerNode = $findRootNode(layer);
-                                updateControl();
-                            });
-                        }
-                    }
+                    });
                 }
             }).on(TC.Consts.event.LAYERERROR, function (e) {
-                if (!e.layer.isCompatible(e.currentTarget.crs))
-                    TC.alert(self.getLocaleString('layerSrsNotCompatible'));
+                if (e.reason) {
+                    TC.alert(self.getLocaleString(e.reason, { url: e.layer.url }));
+                }
                 $findNodes(e.layer).removeClass(TC.Consts.classes.LOADING);
             }).on(TC.Consts.event.LAYERREMOVE, function (e) {
                 $findNodes(e.layer).removeClass(TC.Consts.classes.CHECKED).find('span').attr(TOOLTIP_DATA_ATTR, clickToAddText);
                 $findResultNodes(e.layer).removeClass(TC.Consts.classes.CHECKED).attr(TOOLTIP_DATA_ATTR, clickToAddText);
-                //refresh del searchList            
-                _refreshResultList();
+
                 //Marcamos como añadidas aquellas capas que estén en el control de capas cargadas. Esto previene que si borramos una capa padre, todas
                 //sus hijas aparezcan como no añadidas, a pesar que que alguna de ellas haya sido añadida previamente de manera individual
                 _markWorkLayersAsAdded(e.layer);
-            }).on(TC.Consts.event.LAYERCATALOGADD, function (e) {
-                var layers = $.grep(self.layers, function (item) {
-                    return item.url === e.layer.url;
-                });
 
-                if (!layers.length > 0) {
-                    var obj = {
-                        "id": e.layer.id,
-                        "type": e.layer.type,
-                        "url": e.layer.url,
-                        "hideTree": false
-                    };
-
-                    var layer = new TC.layer.Raster(obj);
-                    self.addLayer(layer);
+                //refresh del searchList            
+                _refreshResultList();
+            }).on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
+                if (e && e.layer) {
+                    self.addLayer(e.layer);
+                    self._$div.removeClass("tc-collapsed");
                 }
             });
 
@@ -271,7 +269,8 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                 if (!$li.hasClass(TC.Consts.classes.LOADING) && !$li.hasClass(TC.Consts.classes.CHECKED)) {
                     e.preventDefault;
 
-                    var layerName = $li.data(_dataKeys.LAYERNAME).toString();
+                    var layerName = $li.data(_dataKeys.LAYERNAME);
+                    layerName = (layerName !== undefined) ? layerName.toString() : '';
                     var layer = self._$roots.has($li).data(_dataKeys.LAYER);
                     if (!layer) {
                         layer = $li.data(_dataKeys.LAYER);
@@ -394,7 +393,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                                 if (self.map) {
                                     for (var j = 0, len = self.map.workLayers.length; j < len; j++) {
                                         var wl = self.map.workLayers[j];
-                                        if (wl.type === TC.Consts.layerType.WMS && wl.names.length === 1 && wl.names[0] === name) {
+                                        if (wl.type === TC.Consts.layerType.WMS && wl.url === layer.url && wl.names.length === 1 && wl.names[0] === name) {
                                             $span.parent().addClass(TC.Consts.classes.CHECKED);
                                             $span.attr(TOOLTIP_DATA_ATTR, addedLayerText);
                                         }
@@ -424,7 +423,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                             var newValue = self.$text.val();
 
                             if (newValue === '') {
-                                self.$list.addClass(TC.Consts.classes.HIDDEN);
+                                self.$list.empty();
                             }
                         }, 1);
                     });
@@ -545,14 +544,15 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                         self._$div.on("click", ".tc-ctl-lcat-search li", function (evt) {
                             evt.stopPropagation();
                             var $li = $(this);
-                            var layerName = $li.data(_dataKeys.LAYERNAME).toString();
+                            var layerName = $li.data(_dataKeys.LAYERNAME);
+                            layerName = (layerName !== undefined) ? layerName.toString() : '';
 
                             //si la capa ya ha sido anteriormente, no la añadimos y mostramos un mensaje
                             if ($(this).hasClass(TC.Consts.classes.CHECKED)) {
                                 return;
                             } else {
                                 var url = self.layers[0].options.url;
-                                var title = self.layers[0].title;                                
+                                var title = self.layers[0].title;
 
                                 self.map.addLayer({
                                     id: TC.getUID(),
@@ -664,9 +664,12 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
 
         if (fromLayerCatalog.length == 0) {
             self.layers.push(layer);
-            layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
-            self.render(function () {
-                result.resolve(); //ver linea 55 y por ahí
+            layer.getCapabilitiesPromise().then(function () {
+                layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
+                layer.title = layer.title || layer.wrap.getServiceTitle();
+                self.render(function () {
+                    result.resolve(); //ver linea 55 y por ahí
+                });
             });
         } else { result.resolve(); }
 
