@@ -115,6 +115,8 @@ SITNA.syncLoadJS = function (url) {
 SITNA.Map = function (div, options) {
     var map = this;
     var tcMap = new TC.Map(div, options);
+    var tcSearch;
+    var tcSearchLayer;
 
     /**
      * <p>Añade una capa al mapa. Si se le pasa una instancia de la clase {{#crossLink "SITNA.cfg.LayerOptions"}}{{/crossLink}} como parámetro <code>layer</code> y tiene definida 
@@ -405,6 +407,10 @@ SITNA.Map = function (div, options) {
         tcSearch = new TC.control.Search();
         tcSearch.register(tcMap);
 
+        tcSearch.getLayer().then(function (layer) {
+            tcSearchLayer = layer;
+        });
+
         if (!tcMap.activeControl) {
             var fi = tcMap.getControlsByClass('TC.control.FeatureInfo')[0];
             if (fi) {
@@ -588,49 +594,49 @@ SITNA.Map = function (div, options) {
         map.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, callback);
     };
     /**
-    * <p>Obtiene los valores (id y label) de los cascos urbanos disponibles en la capa de IDENA. 
-    * <p>Puede consultar también online el <a href="../../examples/Map.getUrbanAreas.html">ejemplo 1</a>.</p>
-    *
-    * @method getUrbanAreas
-    * @async    
-    * @param {function} [callback] Función a la que se llama tras obtener los datos.    
-    * @example
-    *     <div class="instructions divSelect">
-    *        <div>
-    *            Cascos urbanos
-    *            <select id="urban" onchange="applyFilter()">
-    *                <option value="-1">Seleccione...</option>
-    *            </select>
-    *        </div>
-    *     </div>
-    *     <div id="mapa"></div>
-    *     <script>
-    *        // Crear mapa.
-    *        var map = new SITNA.Map("mapa");
-    *        map.loaded(function () {
-    *            // completamos el desplegable
-    *            map.getUrbanAreas(function (data) {
-    *                $.each(data, function (key, value) {
-    *                    $('#urban').append($("<option></option>")
-    *                         .attr("value", value.id)
-    *                         .text(value.label));
-    *                    });
-    *                });
-    *            });
-    *        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-    *        function applyFilter() {
-    *            var id = $('#urban').find('option:selected').val();
-    *            if (id == -1)
-    *                map.removeSearch();
-    *            else {
-    *                map.searchUrbanArea(id, function (idQuery) {
-    *                    if (idQuery == null)
-    *                        alert('No se han encontrado resultados');
-    *                });
-    *            }
-    *        };
-    *   </script>
-    */
+        * <p>Obtiene los valores (id y label) de los cascos urbanos disponibles en la capa de IDENA. 
+        * <p>Puede consultar también online el <a href="../../examples/Map.getUrbanAreas.html">ejemplo 1</a>.</p>
+        *
+        * @method getUrbanAreas
+        * @async    
+        * @param {function} [callback] Función a la que se llama tras obtener los datos.    
+        * @example
+        *     <div class="instructions divSelect">
+        *        <div>
+        *            Cascos urbanos
+        *            <select id="urban" onchange="applyFilter()">
+        *                <option value="-1">Seleccione...</option>
+        *            </select>
+        *        </div>
+        *     </div>
+        *     <div id="mapa"></div>
+        *     <script>
+        *        // Crear mapa.
+        *        var map = new SITNA.Map("mapa");
+        *        map.loaded(function () {
+        *            // completamos el desplegable
+        *            map.getUrbanAreas(function (data) {
+        *                $.each(data, function (key, value) {
+        *                    $('#urban').append($("<option></option>")
+        *                         .attr("value", value.id)
+        *                         .text(value.label));
+        *                    });
+        *                });
+        *            });
+        *        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+        *        function applyFilter() {
+        *            var id = $('#urban').find('option:selected').val();
+        *            if (id == -1)
+        *                map.removeSearch();
+        *            else {
+        *                map.searchUrbanArea(id, function (idQuery) {
+        *                    if (idQuery == null)
+        *                        alert('No se han encontrado resultados');
+        *                });
+        *            }
+        *        };
+        *   </script>
+        */
     map.getUrbanAreas = function (callback) {
         map.getQueryableData(SITNA.Consts.mapSearchType.URBAN, callback);
     };
@@ -880,10 +886,8 @@ SITNA.Map = function (div, options) {
         map.removeSearch();
 
         if (tcSearch.availableSearchTypes[searchType] && !(tcSearch.allowedSearchTypes[searchType])) {
-            tcSearch.allowedSearchTypes = {
-            };
-            tcSearch.allowedSearchTypes[searchType] = {
-            };
+            tcSearch.allowedSearchTypes = { };
+            tcSearch.allowedSearchTypes[searchType] = { };
 
             if (!tcSearch.availableSearchTypes[searchType].hasOwnProperty('goTo')) {
                 tcSearch.allowedSearchTypes[searchType] = {
@@ -907,6 +911,7 @@ SITNA.Map = function (div, options) {
                             type: SITNA.Consts.layerType.WFS,
                             url: query.url,
                             version: query.version,
+                            stealth: true,
                             geometryName: 'the_geom',
                             featurePrefix: query.featurePrefix,
                             featureType: query.featureType,
@@ -925,11 +930,25 @@ SITNA.Map = function (div, options) {
                             }
                         };
 
+                        var tcSrchTypedLayer;
                         tcMap.addLayer(layerOptions).then(function (layer) {
+                            tcSrchTypedLayer = layer;
+
                             map.search = {
                                 layer: layer, type: searchType
                             };
                             delete tcSearch.allowedSearchTypes[searchType];
+                        });
+
+                        tcMap.one(TC.Consts.event.FEATURESADD, function (e) {
+                            if (e.layer == tcSrchTypedLayer && e.layer.features && e.layer.features.length > 0) {
+                                for (var i = 0; i < e.layer.features.length; i++) {
+                                    if (e.layer.features[i].showsPopup != tcSearch.queryableFeatures)
+                                        e.layer.features[i].showsPopup = tcSearch.queryableFeatures;
+                                }
+
+                                tcMap.zoomToFeatures(e.layer.features);
+                            }
                         });
                     }
                 };
@@ -946,7 +965,7 @@ SITNA.Map = function (div, options) {
         });
 
         tcMap.one(TC.Consts.event.FEATURESADD, function (e) {
-            if (e.layer && e.layer.features && e.layer.features.length > 0)
+            if (e.layer == tcSearchLayer && e.layer.features && e.layer.features.length > 0)
                 tcMap.zoomToFeatures(e.layer.features);
 
             map.search = {
@@ -1036,6 +1055,7 @@ SITNA.Map = function (div, options) {
                 type: SITNA.Consts.layerType.WFS,
                 url: tcSearch.url,
                 version: tcSearch.version,
+                stealth: true,
                 geometryName: 'the_geom',
                 featurePrefix: prefix,
                 featureType: layer,
@@ -1046,26 +1066,35 @@ SITNA.Map = function (div, options) {
                 outputFormat: TC.Consts.format.JSON
             };
 
-            tcMap.one(TC.Consts.event.FEATURESADD, function (e) {
-                if (e.layer && e.layer.features && e.layer.features.length > 0)
-                    tcMap.zoomToFeatures(e.layer.features);
+            var tcSrchGenericLayer;
+            tcMap.addLayer(layerOptions).then(function (layer) {
+                tcSrchGenericLayer = layer;
+
+                map.search = {
+                    layer: layer, type: SITNA.Consts.mapSearchType.GENERIC
+                };
             });
 
-            tcMap.one(TC.Consts.event.LAYERUPDATE, function (e) {
-                if (e.layer && e.layer.features && e.layer.features.length == 0)
+            tcMap.on(TC.Consts.event.FEATURESADD, function (e) {
+                if (e.layer == tcSrchGenericLayer && e.layer.features && e.layer.features.length > 0) {
+
+                    for (var i = 0; i < e.layer.features.length; i++) {
+                        if (e.layer.features[i].showsPopup != tcSearch.queryableFeatures)
+                            e.layer.features[i].showsPopup = tcSearch.queryableFeatures;
+                    }
+
+                    tcMap.zoomToFeatures(e.layer.features);
+                }
+            });
+
+            tcMap.on(TC.Consts.event.LAYERUPDATE, function (e) {
+                if (e.layer == tcSrchGenericLayer && e.layer.features && e.layer.features.length == 0)
                     tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
                         type: TC.Consts.msgType.INFO, duration: 5000
                     });
 
                 if (callback)
-                    callback(e.layer && e.layer.features && e.layer.features.length == 0 ? null : idQuery);
-            });
-
-
-            tcMap.addLayer(layerOptions).then(function (layer) {
-                map.search = {
-                    layer: layer, type: SITNA.Consts.mapSearchType.GENERIC
-                };
+                    callback(e.layer == tcSrchGenericLayer && e.layer.features && e.layer.features.length == 0 ? null : idQuery);
             });
         }
     };
@@ -1810,14 +1839,23 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  *     <script>
  *         // Creamos un mapa con el control de StreetView.
  *         // La vista de StreetView se debe dibujar en el elemento con identificador "sv".
+ *         // Se utilizará la clave de Google Maps para IDENA.
  *         var map = new SITNA.Map("mapa", {
  *             controls: {
  *                 streetView: {
- *                     viewDiv: "sv"
+ *                     viewDiv: "sv",
+ *                     googleMapsKey: "AIzaSyBLRczjnHme5fWj9d6rZDJ2jq2-ApMhxi8"
  *                 }
  *             }
  *         });
  *     </script>
+ */
+/**
+ * <p>El control de StreetView hace uso de la API de Google Maps para funcionar. Esta propiedad establece la clave de uso asociada al sitio
+ * donde está alojada la aplicación que usa la API SITNA. No es necesaria para hacer funcionar el control pero es recomendable obtener una para garantizar el servicio por parte de Google.</p>
+ * <p>Puede obtener más información en el <a href="https://developers.google.com/maps/documentation/javascript/get-api-key">sitio para desarrolladores de Google</a>.
+ * @property googleMapsKey
+ * @type string|undefined
  */
 
 ///**
