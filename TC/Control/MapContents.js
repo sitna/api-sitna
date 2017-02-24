@@ -76,8 +76,11 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     clearTimeout(self._updateLayerTreeTimeout);
                 }
                 self._updateLayerTreeTimeout = setTimeout(function () {
-                    self.updateLayerTree(e.layer);
-                    delete self._updateLayerTreeTimeout;
+                    if (self.map.workLayers.indexOf(e.layer) > -1) {
+                    // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
+                        self.updateLayerTree(e.layer);
+                        delete self._updateLayerTreeTimeout;
+                    }
                 }, 100);
             }).on(TC.Consts.event.LAYERREMOVE, function (e) {
                 self.removeLayer(e.layer);
@@ -103,6 +106,17 @@ TC.inherit(TC.control.MapContents, TC.Control);
         return /[&?]REQUEST=getLegendGraphic/i.test(url);
     };
 
+    var setImgSrc = function ($img, src) {
+        var ERROR = 'error.tc';
+        if (TC.Cfg.proxy) {
+            $img.off(ERROR).on(ERROR, function () {
+                $img.attr('src', TC.proxify(src));
+            });
+        }
+        var startIdx = src.indexOf('//');
+        $img.attr('src', startIdx < 0 ? src : src.substr(startIdx));
+    };
+
     /**
      * Carga y le da estilo a la imagen de la leyenda.
      * @param {string} requestMethod Si queremos pedir la imagen de la leyenda por POST, podemos especificarlo utilizando el parámetro requestMethod.
@@ -113,7 +127,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
             if (layer && layer.options.method && layer.options.method === "POST") {
                 layer.getLegendGraphicImage()
                 .done(function (src) {
-                    $img.attr('src', src);
+                    setImgSrc($img, src);
                 })
                 .fail(function (err) { TC.error(err); });
             } else {
@@ -144,7 +158,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                         ';fontAntiAliasing:true';
                     $img.data(_dataKeys.img, imgSrc);
                 }
-                $img.attr('src', imgSrc);
+                setImgSrc($img, imgSrc);
             }
         }
     };
