@@ -243,6 +243,11 @@
         self._remainingLayers = 0;
 
         var init = function () {
+            if (self.options.stateful) {
+                _setupStateControl();
+                self.state = self.checkLocation();
+            }
+
             if (self.options.layout) {
                 self.$events.trigger($.Event(TC.Consts.event.LAYOUTLOAD, { map: self }));
             }
@@ -271,10 +276,9 @@
             else {
                 var _handleLayerAdd = function _handleLayerAdd(e) {
                     if (e.layer.isBase && e.layer === self.baseLayer) {
-                        var currentExtent = self.getExtent();
-                        //if (!currentExtent) {
-                        self.setExtent(self.options.initialExtent);
-                        //}
+                        if (typeof self.state !== "undefined") {
+                            self.setExtent(self.state.ext);
+                        }
                         self.off(TC.Consts.event.LAYERADD, _handleLayerAdd);
                     }
                 };
@@ -344,13 +348,64 @@
                                     }
                                 };
                                 for (i = 0; i < self.options.workLayers.length; i++) {
+                                    var layerDeleted = false;
+
                                     lyrCfg = $.extend({}, self.options.workLayers[i], { map: self });
-                                    $.when(self.addLayer(lyrCfg)).then(setVisibility);
+
+                                    if (self.state) {
+                                        if (lyrCfg.type !== TC.Consts.layerType.VECTOR) {
+
+                                            for (var i = 0; i < self.state.layers.length; i++) {
+                                                var _layer = self.state.layers[i];
+                                                if (_layer.u === lyrCfg.url && lyrCfg.layerNames.indexOf(_layer.n) >= 0) {
+                                                    lyrCfg.hideTitle = _layer.hideTitle;
+                                                    lyrCfg.renderOptions = {
+                                                        opacity: _layer.o,
+                                                        hide: !_layer.v
+                                                    };
+                                                    _layer.Added = true;
+                                                    break;
+                                                }
+                                                layerDeleted = true;
+                                            }
+                                        }
+                                    }
+
+                                    if (!layerDeleted) {
+                                        $.when(self.addLayer(lyrCfg)).then(setVisibility);
+                                    }
                                 }
 
+                                if (self.state && self.state.layers) {
+                                    self.state.layers.forEach(function (capa) {
+
+                                        if (!capa.Added) {
+                                            var op = capa.o;
+                                            var visibility = capa.v;
+
+                                            // añado como promesa cada una de las capas que se añaden
+                                            self.addLayer({
+                                                id: TC.getUID(),
+                                                url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
+                                                hideTitle: capa.h,
+                                                layerNames: [capa.n],
+                                                renderOptions: {
+                                                    opacity: capa.o,
+                                                    hide: !capa.v
+                                                }
+                                            }).then(function (layer) {
+                                                var rootNode = layer.wrap.getRootLayerNode();
+                                                layer.title = rootNode.Title || rootNode.title;
+                                                layer.setOpacity(op);
+                                                layer.setVisibility(visibility);
+                                            });
+                                        }
+                                    });
+                                }
                                 self.isReady = true;
                                 self.$events.trigger($.Event(TC.Consts.event.MAPREADY));
                             });
+
                         }
                     );
                 }
@@ -389,7 +444,6 @@
                     }
                 }
             });
-
         };
 
         self.one(TC.Consts.event.MAPREADY, function () {
@@ -399,19 +453,291 @@
             self._$div.removeClass(TC.Consts.classes.LOADING);
         });
 
-       /**
-        * Mostramos un mensjae de error genérico.
-        */
-        var attachGenericErrorHandler = function () {
-            if (!TC.isDebug) {
-                window.addEventListener('error', function (e) {
-                    self.toast(TC.Util.getLocaleString(self.options.locale, "genericError"), { type: TC.Consts.msgType.ERROR });
+        var _setupStateControl = function () {
+            var MIN_TIMEOUT_VALUE = 4;
 
-                    // Tell browser to run its own error handler as well   
-                    return false;
+            if (!window.jsonpack) {
+                TC.syncLoadJS(TC.apiLocation + TC.Consts.url.JSONPACK);
+            }
+
+            // eventos a los que estamos suscritos para obtener el estado
+            var events = [
+                TC.Consts.event.LAYERADD,
+                TC.Consts.event.LAYERORDER,
+                TC.Consts.event.LAYERREMOVE,
+                //TC.Consts.event.LAYEROPACITY, // Este evento lo vamos a tratar por separado, para evitar exceso de actualizaciones de estado.
+                TC.Consts.event.LAYERVISIBILITY,
+                TC.Consts.event.ZOOM,
+                TC.Consts.event.BASELAYERCHANGE].join(' ');
+
+            // gestión siguiente - anterior
+            self.on(TC.Consts.event.MAPLOAD, function () {
+
+                self.loaded(function () {
+
+                    // registramos el estado inicial                
+                    self.replaceCurrent = true;
+                    _addToHistory();
+
+                    // nos suscribimos a los eventos para registrar el estado en cada uno de ellos
+                    self.on(events, $.proxy(_addToHistory, self));
+
+                    // a la gestión del evento de opacidad le metemos un retardo, para evitar que haya un exceso de actualizaciones de estado.
+                    var layerOpacityHandlerTimeout;
+                    self.on(TC.Consts.event.LAYEROPACITY, function (e) {
+                        clearTimeout(layerOpacityHandlerTimeout);
+                        layerOpacityHandlerTimeout = setTimeout(function () {
+                            _addToHistory(e);
+                        }, 500);
+                    });
+
+                    // gestión siguiente - anterior
+                    window.addEventListener('popstate', function (e) {
+                        var wait;
+                        wait = self.loadingCtrl && self.loadingCtrl.addWait();
+                        setTimeout(function () {
+                            if (e && e.state != null) {
+
+                                self.registerState = false;
+
+                                // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
+                                self.off(events, $.proxy(_addToHistory, self));
+
+                                // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
+                                $.when(_loadIntoMap(e.state)).then(function () {
+                                    self.on(events, $.proxy(_addToHistory, self));
+                                    self.loadingCtrl && self.loadingCtrl.removeWait(wait);
+                                });
+                            }
+                        }, MIN_TIMEOUT_VALUE);
+                    });
+                });
+            });
+        };
+
+        var currentState = null;
+        var previousState = null;
+
+        var _addToHistory = function (e) {
+            var CUSTOMEVENT = '.tc';
+
+            var state = _getMapState();
+
+            if (self.replaceCurrent) {
+                window.history.replaceState(state, null, null);
+                delete self.replaceCurrent;
+
+                return;
+            } else {
+
+                if (self.registerState != undefined && !self.registerState) {
+                    self.registerState = true;
+                    return;
+                }
+
+                var saveState = function () {
+                    previousState = currentState;
+                    currentState = TC.Util.utf8ToBase64(state);
+                    window.history.pushState(state, null, window.location.href.split('#').shift() + '#' + currentState);
+                };
+
+                if (e) {
+                    switch (true) {
+                        case (e.type == TC.Consts.event.BASELAYERCHANGE.replace(CUSTOMEVENT, '')):
+                        case (e.type == TC.Consts.event.ZOOM.replace(CUSTOMEVENT, '')):
+                        case (e.type == TC.Consts.event.LAYERORDER.replace(CUSTOMEVENT, '')):
+                            saveState();
+                            break;
+                        case (e.type.toLowerCase().indexOf("LAYER".toLowerCase()) > -1):
+                            // unicamente modifico el hash si la capa es WMS
+                            if (e.layer.type == TC.Consts.layerType.WMS)
+                                saveState();
+                            break;
+                    }
+                }
+            }
+        };
+
+        var _getMapState = function () {
+            var state = {};
+
+            var ext = self.getExtent();
+            for (var i = 0; i < ext.length; i++) {
+                if (Math.abs(ext[i]) > 180)
+                    ext[i] = Math.floor(ext[i] * 1000) / 1000;
+            }
+            state.ext = ext;
+
+            //determinar capa base
+            state.base = self.getBaseLayer().id;
+
+            //capas cargadas
+            state.layers = [];
+
+            var layer, entry;
+            for (var i = 0; i < self.workLayers.length; i++) {
+                layer = self.workLayers[i];
+                if (layer.type == "WMS" && !layer.options.stateless) {
+                    if (layer.layerNames && layer.layerNames.length) {
+                        entry = {
+                            u: TC.Util.isOnCapabilities(layer.url),
+                            n: layer.layerNames[0],
+                            o: layer.wrap.getLayer().getOpacity(),
+                            v: layer.getVisibility(),
+                            h: layer.options.hideTitle
+                        };
+
+                        state.layers.push(entry);
+                    }
+                }
+            }
+
+            return jsonpack.pack(state);
+        };
+
+        var _clearMap = function () {
+
+            var layersToRemove = [];
+            self.workLayers.forEach(function (layer) {
+                if (layer.type != "vector") {
+                    layersToRemove.push(layer);
+                }
+            });
+
+            for (var i = 0; i < layersToRemove.length; i++) {
+                self.removeLayer(layersToRemove[i]);
+            }
+        };
+
+        var _loadIntoMap = function (stringOrJson) {
+
+            var done = new $.Deferred(); // GLS lo añado para poder gestionar el final de la actualización de estado y volver a suscribirme a los eventos del mapa
+            var promises = [];
+
+            if (!self.loadingctrl) {
+                self.loadingCtrl = self.getControlsByClass("TC.control.LoadingIndicator")[0];
+            }
+
+            if (!self.hasWait) {
+                self.hasWait = self.loadingCtrl && self.loadingCtrl.addWait();
+            }
+
+            var resolved = function () {
+                self.loadingCtrl && self.loadingCtrl.removeWait(self.hasWait);
+                delete self.hasWait;
+                done.resolve();
+            };
+
+            var obj;
+            if (typeof (stringOrJson) == "string") {
+                try {
+                    obj = jsonpack.unpack(stringOrJson);
+                }
+                catch (error) {
+                    obj = JSON.parse(stringOrJson);
+                }
+            } else {
+                obj = stringOrJson;
+            }
+
+            if (obj) {
+
+                //capa base
+                if (obj.base != self.getBaseLayer().id) self.setBaseLayer(obj.base);
+
+                //extent
+                if (obj.ext) promises.push(self.setExtent(obj.ext));
+
+                //capas cargadas        
+                //borrar primero
+                _clearMap();
+
+                obj.layers = obj.layers || obj.capas || [];
+
+                if (obj.layers.length > 0) {
+                    for (var i = 0; i < obj.layers.length; i++) {
+                        var capa = obj.layers[i];
+                        var op = capa.o;
+                        var visibility = capa.v;
+
+                        var layerInConfig = false;
+                        for (j = 0; j < self.options.workLayers.length; j++) {
+                            var lyrCfg = $.extend({}, self.options.workLayers[j], { map: self });
+
+                            if (lyrCfg.type !== TC.Consts.layerType.VECTOR) {
+
+                                if (capa.u === lyrCfg.url && lyrCfg.layerNames.indexOf(capa.n)) {
+                                    layerInConfig = true;
+                                    lyrCfg.renderOptions.opacity = capa.o;
+                                    lyrCfg.renderOptions.hide = !capa.v;
+                                    promises.push(self.addLayer(lyrCfg).then(setVisibility));
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!layerInConfig) {
+                            promises.push(self.addLayer({
+                                id: TC.getUID(),
+                                url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
+                                hideTitle: capa.h,
+                                layerNames: [capa.n],
+                                renderOptions: {
+                                    opacity: capa.o,
+                                    hide: !capa.v
+                                }
+                            }).then(function (layer) {
+                                var rootNode = layer.wrap.getRootLayerNode();
+                                layer.title = rootNode.Title || rootNode.title;
+                                layer.setOpacity(op);
+                                layer.setVisibility(visibility);
+                            }));
+                        }
+                    }
+                }
+
+                $.when.apply($, promises).done(function () {
+                    resolved();
                 });
             }
-        }();
+
+            return done;
+        };
+
+        mapProto.getMapState = function () {
+            var state = _getMapState();
+            return TC.Util.utf8ToBase64(state);
+        };
+
+        mapProto.getPreviousMapState = function () {
+            return previousState;
+        };
+
+        mapProto.checkLocation = function () {
+            var hash = window.location.hash;
+
+            if (hash && hash.length > 1) {
+                hash = hash.substr(1);
+
+                var obj;
+                try {
+                    obj = jsonpack.unpack(TC.Util.base64ToUtf8(hash));
+                }
+                catch (error) {
+                    try {
+                        obj = JSON.parse(TC.Util.base64ToUtf8(hash));
+                    } catch (error) {                        
+                        self.toast(TC.Util.getLocaleString(self.options.locale, "mapStateNotValid"), { type: TC.Consts.msgType.ERROR });
+                    }
+                }
+
+                if (obj) {
+                    return obj;
+                }
+            }
+
+            return;
+        };
 
         /*
         *  _triggerLayersBeforeUpdateEvent: Triggers map beforeupdate event (jQuery.Event) when any layer starts loading
@@ -433,8 +759,94 @@
             }
         };
 
+        var buildLayout = function (layout) {
+            var defered = $.Deferred();
+
+            if (typeof (layout) === 'string') {
+                var layoutName = layout;
+
+                var tryGetFile = function (url, resource) {
+                    var defer = $.Deferred();
+
+                    //Comprobamos si existe el fichero enviando una petición HEAD
+                    $.ajax({
+                        type: 'HEAD',
+                        url: url,
+                        complete: function (message, text) {
+                            defer.resolve({ resource: resource, found: message.status !== 404, url: url });
+                        }
+                    });
+
+                    return defer.promise();
+                };
+
+                var getFileFromAvailableLocation = function (key, fileName) {
+                    var defered = $.Deferred();
+
+                    // 1. Buscamos en un layout local
+                    // 2. Buscamos en un layout en el API con el mismo nombre
+                    // 3. Buscamos en el layout responsive del API
+                    var urlsToQuery = [
+                        layoutUrl + layoutName + '/' + fileName,
+                        apiLayoutUrl + layoutName + '/' + fileName,
+                        apiLayoutUrl + 'responsive' + '/' + fileName
+                    ];
+
+                    var i = 0;
+                    (function iterate(pos) {
+                        tryGetFile(urlsToQuery[pos], key).done(function (result) {
+                            if (result.found) {
+                                defered.resolve(addFileToLayout(layout, result));
+                            } else {
+                                iterate(++pos);
+                            }
+                        });
+                    })(i);
+
+
+                    return defered.promise();
+                };
+
+                var addFileToLayout = function (layout, data) {
+                    if (!(data.resource in layout)) {
+                        var aux = $.extend(true, {}, layout);
+
+                        var resourceUrl = (data.found ? data.url : apiLayoutUrl + layoutName + '/' + layoutFiles[data.resource]);
+                        layout[data.resource] = resourceUrl;
+                    }
+
+                    return layout;
+                };
+
+                //buscamos el parámetro layout en la url del navegador
+                var apiLayoutUrl = TC.apiLocation + 'TC/layout/';
+                var layoutUrl = 'layout/';
+                var defaultLayout = 'idena';
+                var layout = {};
+                //var layoutName = idena.layout ? idena.layout : defaultLayout;
+
+                var layoutFiles = { script: 'script.js', style: 'style.css', markup: 'markup.html', config: 'config.json', i18n: 'resources' };
+                var layoutFilesLength = Object.keys(layoutFiles).length;
+
+                for (var key in layoutFiles) {
+                    getFileFromAvailableLocation(key, layoutFiles[key]).done(function (layout) {
+                        //Cuando hayamos rellenado el objeto layout, finalizamos
+                        if (Object.keys(layout).length === layoutFilesLength) {
+                            defered.resolve(layout);
+                        }
+                    });
+                }
+            } else {
+                defered.resolve(layout);
+            }
+
+            return defered.promise();
+        };
+
+
+        TC.i18n = TC.i18n || {};
         // i18n: carga de recursos si no está cargados previamente
-        var loadResources = function (condition, path, locale) {
+        TC.i18n.loadResources = TC.i18n.loadResources || function (condition, path, locale) {
             var result;
             if (condition) {
                 result = $.ajax({
@@ -444,7 +856,9 @@
                     success: function (data) {
                         TC.i18n[locale] = TC.i18n[locale] || {};
                         $.extend(TC.i18n[locale], data);
-                        dust.i18n.add(locale, TC.i18n[locale]);
+                        if (typeof (dust) !== 'undefined') {
+                            dust.i18n.add(locale, TC.i18n[locale]);
+                        }
                     }
                 })
             }
@@ -452,7 +866,7 @@
                 dust.i18n.add(locale, TC.i18n[locale]);
             }
             return result;
-        }
+        };
 
         var i18nDeferreds = [];
         var locale = self.options.locale;
@@ -464,8 +878,8 @@
             function () {
                 if (locale) {
                     dust.i18n.setLanguages([locale]);
-                    TC.i18n = TC.i18n || {};
-                    i18nDeferreds.push(loadResources(!TC.i18n[locale], TC.apiLocation + 'TC/resources/', locale));
+
+                    i18nDeferreds.push(TC.i18n.loadResources(!TC.i18n[locale], TC.apiLocation + 'TC/resources/', locale));
                 }
                 templatingDeferred.resolve();
             }
@@ -474,122 +888,123 @@
         $.when.apply(this, i18nDeferreds).always(function () {
 
             if (self.options.layout) {
-                var layout = self.options.layout;
-                self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
+                buildLayout(self.options.layout).done(function (layout) {
+                    self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
 
-                var layoutURLs;
-                if (typeof layout === 'string') {
-                    layoutURLs = { href: $.trim(layout) };
-                }
-                else if (
-                    layout.hasOwnProperty('config') ||
-                    layout.hasOwnProperty('markup') ||
-                    layout.hasOwnProperty('style') ||
-                    layout.hasOwnProperty('ie8Style') ||
-                    layout.hasOwnProperty('script') ||
-                    layout.hasOwnProperty('href') ||
-                    layout.hasOwnProperty('i18n')
-                ) {
-                    layoutURLs = $.extend({}, layout);
-                }
-                if (layoutURLs.href) {
-                    layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
-                }
-                layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
-                layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
-                layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
-                layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
-                layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
-                layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
-                if (layoutURLs.i18n) {
-                    layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
-                }
-
-                self.layout = layoutURLs;
-
-                var layoutDeferreds = [];
-
-                var i18LayoutDeferred = $.Deferred();
-                layoutDeferreds.push(i18LayoutDeferred);
-
-                if (layoutURLs.config) {
-                    layoutDeferreds.push($.ajax({
-                        url: layoutURLs.config,
-                        type: 'GET',
-                        dataType: 'json',
-                        //async: Modernizr.canvas, // !IE8,
-                        success: function (data) {
-                            i18LayoutDeferred.resolve(data.i18n);
-                            self.options = mergeOptions(data, options);
-                        },
-                        error: function (e, name, description) {
-                            TC.error(name + ": " + description);
-                            i18LayoutDeferred.resolve(false);
-                        }
-                    }));
-                }
-                else {
-                    i18LayoutDeferred.resolve(false);
-                }
-
-                if (layoutURLs.markup) {
-                    var markupDeferred;
-                    if (locale) {
-                        markupDeferred = $.Deferred();
-                        layoutDeferreds.push(markupDeferred);
+                    var layoutURLs;
+                    if (typeof layout === 'string') {
+                        layoutURLs = { href: $.trim(layout) };
                     }
-                    layoutDeferreds.push($.ajax({
-                        url: layoutURLs.markup,
-                        type: 'GET',
-                        dataType: 'html',
-                        //async: Modernizr.canvas, // !IE8
-                        success: function (data) {
-                            // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
-                            i18LayoutDeferred.then(function (i18n) {
-                                if (i18n && locale) {
-                                    loadResources(true, layoutURLs.i18n, locale).always(function () {
-                                        var templateId = 'tc-markup';
-                                        dust.loadSource(dust.compile(data, templateId));
-                                        dust.render(templateId, null, function (err, out) {
-                                            if (err) {
-                                                TC.error(err);
-                                                markupDeferred.reject();
-                                            }
-                                            else {
-                                                self._$div.append(out);
-                                                markupDeferred.resolve();
-                                            }
-                                        });
-                                    });
-                                }
-                                else {
-                                    self._$div.append(data);
-                                    if (locale) {
-                                        markupDeferred.resolve();
-                                    }
-                                }
-                            });
-                        },
-                        error: function () {
-                            markupDeferred.reject();
-                        }
-                    }));
-                }
+                    else if (
+                        layout.hasOwnProperty('config') ||
+                        layout.hasOwnProperty('markup') ||
+                        layout.hasOwnProperty('style') ||
+                        layout.hasOwnProperty('ie8Style') ||
+                        layout.hasOwnProperty('script') ||
+                        layout.hasOwnProperty('href') ||
+                        layout.hasOwnProperty('i18n')
+                    ) {
+                        layoutURLs = $.extend({}, layout);
+                    }
+                    if (layoutURLs.href) {
+                        layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
+                    }
+                    layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
+                    layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
+                    layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
+                    layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
+                    layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
+                    layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
+                    if (layoutURLs.i18n) {
+                        layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
+                    }
 
-                $.when.apply(this, layoutDeferreds).always(function () {
-                    TC.loadJS(
-                        layoutURLs.script,
-                        layoutURLs.script,
-                        function () {
-                            setHeightFix(self._$div);
-                            if (layoutURLs.style) {
-                                TC.loadCSS(layoutURLs.style);
+                    self.layout = layoutURLs;
+
+                    var layoutDeferreds = [];
+
+                    var i18LayoutDeferred = $.Deferred();
+                    layoutDeferreds.push(i18LayoutDeferred);
+
+                    if (layoutURLs.config) {
+                        layoutDeferreds.push($.ajax({
+                            url: layoutURLs.config,
+                            type: 'GET',
+                            dataType: 'json',
+                            //async: Modernizr.canvas, // !IE8,
+                            success: function (data) {
+                                i18LayoutDeferred.resolve(data.i18n);
+                                self.options = mergeOptions(data, options);
+                            },
+                            error: function (e, name, description) {
+                                TC.error(name + ": " + description);
+                                i18LayoutDeferred.resolve(false);
                             }
-                            if (!Modernizr.canvas && layoutURLs.ie8Style) {
-                                TC.loadCSS(layoutURLs.ie8Style);
+                        }));
+                    }
+                    else {
+                        i18LayoutDeferred.resolve(false);
+                    }
+
+                    if (layoutURLs.markup) {
+                        var markupDeferred;
+                        if (locale) {
+                            markupDeferred = $.Deferred();
+                            layoutDeferreds.push(markupDeferred);
+                        }
+                        layoutDeferreds.push($.ajax({
+                            url: layoutURLs.markup,
+                            type: 'GET',
+                            dataType: 'html',
+                            //async: Modernizr.canvas, // !IE8
+                            success: function (data) {
+                                // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
+                                i18LayoutDeferred.then(function (i18n) {
+                                    if (i18n && locale) {
+                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
+                                            var templateId = 'tc-markup';
+                                            dust.loadSource(dust.compile(data, templateId));
+                                            dust.render(templateId, null, function (err, out) {
+                                                if (err) {
+                                                    TC.error(err);
+                                                    markupDeferred.reject();
+                                                }
+                                                else {
+                                                    self._$div.append(out);
+                                                    markupDeferred.resolve();
+                                                }
+                                            });
+                                        });
+                                    }
+                                    else {
+                                        self._$div.append(data);
+                                        if (locale) {
+                                            markupDeferred.resolve();
+                                        }
+                                    }
+                                });
+                            },
+                            error: function () {
+                                markupDeferred.reject();
                             }
-                            init();
-                        });
+                        }));
+                    }
+
+                    $.when.apply(this, layoutDeferreds).always(function () {
+                        TC.loadJS(
+                            layoutURLs.script,
+                            layoutURLs.script,
+                            function () {
+                                setHeightFix(self._$div);
+                                if (layoutURLs.style) {
+                                    TC.loadCSS(layoutURLs.style);
+                                }
+                                if (!Modernizr.canvas && layoutURLs.ie8Style) {
+                                    TC.loadCSS(layoutURLs.ie8Style);
+                                }
+                                init();
+                            });
+                    });
                 });
             }
             else {
@@ -665,6 +1080,8 @@
         return result;
     };
 
+    var mapProto = TC.Map.prototype;
+
     /**
      * Añade una capa al mapa.
      * @method addLayer
@@ -673,7 +1090,7 @@
      * @param {function} [callback] Función de callback.
      * @return {jQuery.Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
      */
-    TC.Map.prototype.addLayer = function (layer, callback) {
+    mapProto.addLayer = function (layer, callback) {
         var self = this;
 
         var rasterLayer = isRaster(layer);
@@ -780,39 +1197,51 @@
                                 idx = self.wrap.getLayerCount();
                             }
 
-                            if (l && l.isCompatible(self.crs)) {
-                                self.layers[self.layers.length] = l;
-                                if (l.isBase) {
-                                    if (typeof self.options.defaultBaseLayer === 'string') {
-                                        l.isDefault = self.options.defaultBaseLayer === l.id;
+                            if (l) {
+                                if (l.isCompatible(self.crs)) {
+                                    self.layers[self.layers.length] = l;
+                                    if (l.isBase) {
+                                        if (self.state) {
+                                            l.isDefault = self.state.base === l.id;
+                                        }
+                                        else if (typeof self.options.defaultBaseLayer === 'string') {
+                                            l.isDefault = self.options.defaultBaseLayer === l.id;
+                                        }
+                                        else if (typeof self.options.defaultBaseLayer === 'number') {
+                                            l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                        }
+                                        if (l.isDefault) {
+                                            self.wrap.setBaseLayer(l.wrap.getLayer());
+                                            self.baseLayer = l;
+                                        }
+                                        self.baseLayers[self.baseLayers.length] = l;
+                                        // If no base layer set, set the first one
+                                        if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
+                                            self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
+                                        }
                                     }
-                                    else if (typeof self.options.defaultBaseLayer === 'number') {
-                                        l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                    else {
+                                        self.wrap.insertLayer(l.wrap.getLayer(), idx);
+                                        self.workLayers[self.workLayers.length] = l;
                                     }
-                                    if (l.isDefault) {
-                                        self.wrap.setBaseLayer(l.wrap.getLayer());
-                                        self.baseLayer = l;
+                                    self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
+                                    if ($.isFunction(c)) {
+                                        c(l);
                                     }
-                                    self.baseLayers[self.baseLayers.length] = l;
-                                    // If no base layer set, set the first one
-                                    if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
-                                        self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
-                                    }
+
                                 }
                                 else {
-                                    self.wrap.insertLayer(l.wrap.getLayer(), idx);
-                                    self.workLayers[self.workLayers.length] = l;
-                                }
-
-                                self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
-                                if ($.isFunction(c)) {
-                                    c(l);
-                                }
-                            }
-                            else {
-                                if (l) {
-                                    TC.error('Layer "' + l.title + '" ("' + l.name + '"): CRS not compatible with map or wrong layer name');
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l }));
+                                    var errorMessage = 'Layer "' + l.title + '" ("' + l.names + '"): ';
+                                    var reason;
+                                    if (l.isValidFromNames()) {
+                                        reason = 'layerSrsNotCompatible'
+                                    }
+                                    else {
+                                        reason = 'layerNameNotValid';
+                                    }
+                                    errorMessage += TC.Util.getLocaleString(self.options.locale, reason);
+                                    TC.error(errorMessage);
+                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));
                                 }
                             }
                             self._remainingLayers = self._remainingLayers - 1;
@@ -832,7 +1261,7 @@
     };
 
 
-    TC.Map.prototype.removeLayer = function (layer) {
+    mapProto.removeLayer = function (layer) {
         var self = this;
         var result = new $.Deferred();
 
@@ -873,7 +1302,7 @@
     };
 
 
-    TC.Map.prototype.insertLayer = function (layer, idx, callback) {
+    mapProto.insertLayer = function (layer, idx, callback) {
         var self = this;
         var beforeIdx = -1;
         for (var i = 0; i < self.layers.length; i++) {
@@ -898,6 +1327,7 @@
                 olIdx = self.wrap.getLayerCount();
             }
             if (olIdx >= 0) {
+                layer.map = self;
                 self.wrap.insertLayer(olLayer, olIdx);
                 if (beforeIdx > -1) {
                     self.layers.splice(beforeIdx, 1);
@@ -914,22 +1344,22 @@
         });
     };
 
-    TC.Map.prototype.setLayerIndex = function (layer, idx) {
+    mapProto.setLayerIndex = function (layer, idx) {
         this.wrap.setLayerIndex(layer.wrap.getLayer(), idx);
     };
 
-    TC.Map.prototype.putLayerOnTop = function (layer) {
+    mapProto.putLayerOnTop = function (layer) {
         var self = this;
         var n = self.wrap.getLayerCount();
         self.setLayerIndex(layer, n - 1);
     };
 
     /*
- *  setBaseLayer: Set a layer as base layer, must be in layers collection
- *  Parameters: TC.Layer or string, callback which accepts layer as parameter
- *  Returns: TC.Layer promise
- */
-    TC.Map.prototype.setBaseLayer = function (layer, callback) {
+    *  setBaseLayer: Set a layer as base layer, must be in layers collection
+    *  Parameters: TC.Layer or string, callback which accepts layer as parameter
+    *  Returns: TC.Layer promise
+    */
+    mapProto.setBaseLayer = function (layer, callback) {
         var self = this;
         var result = null;
         var found = false;
@@ -964,7 +1394,7 @@
             result = layer;
             $.when(self.wrap.getMap(), layer).then(function (olMap, lyr) {
                 $.when(lyr.wrap.getLayer()).then(function (olLayer) {
-                    self.wrap.setBaseLayer(olLayer).then(function () {;
+                    self.wrap.setBaseLayer(olLayer).then(function () {
                         self.baseLayer = lyr;
                         self.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: lyr }));
                         if ($.isFunction(callback)) {
@@ -978,19 +1408,19 @@
     };
 
     //TC.inherit(TC.Map, TC.Object);
-    TC.Map.prototype.on = function (events, callback) {
+    mapProto.on = function (events, callback) {
         var obj = this;
         obj.$events.on(events, callback);
         return obj;
     };
 
-    TC.Map.prototype.one = function (events, callback) {
+    mapProto.one = function (events, callback) {
         var obj = this;
         obj.$events.one(events, callback);
         return obj;
     };
 
-    TC.Map.prototype.off = function (events, callback) {
+    mapProto.off = function (events, callback) {
         var obj = this;
         obj.$events.off(events, callback);
         return obj;
@@ -1002,12 +1432,16 @@
      * @async
      * @param {function} [callback] Función a ejecutar.
      */
-    TC.Map.prototype.ready = function (callback) {
+    mapProto.ready = function (callback) {
         var self = this;
-        if (self.isReady && $.isFunction(callback)) {
-            callback();
+        if ($.isFunction(callback)) {
+            if (self.isReady) {
+                callback();
+            }
+            else {
+                self.one(TC.Consts.event.MAPREADY, callback);
+            }
         }
-        self.on(TC.Consts.event.MAPREADY, callback);
     };
 
     /**
@@ -1016,13 +1450,15 @@
      * @async
      * @param {function} [callback] Función a ejecutar.
      */
-    TC.Map.prototype.loaded = function (callback) {
+    mapProto.loaded = function (callback) {
         var self = this;
         if ($.isFunction(callback)) {
             if (self.isLoaded) {
                 callback();
             }
-            self.on(TC.Consts.event.MAPLOAD, callback);
+            else {
+                self.one(TC.Consts.event.MAPLOAD, callback);
+            }
         }
     };
 
@@ -1033,7 +1469,7 @@
      * @method getLayerTree
      * @return {TC.LayerTree}
      */
-    TC.Map.prototype.getLayerTree = function () {
+    mapProto.getLayerTree = function () {
 
 
         var _traverse = function (o, func) {
@@ -1072,7 +1508,7 @@
      * @param {object} [options] Objeto de opciones de configuración del control. Consultar el parámetro de opciones del constructor del control.
      * @return {jQuery.Promise} Promesa de objeto {{#crossLink "TC.Control"}}{{/crossLink}}
      */
-    TC.Map.prototype.addControl = function (control, options) {
+    mapProto.addControl = function (control, options) {
         var self = this;
         var controlDeferred = new $.Deferred();
 
@@ -1109,7 +1545,7 @@
      * @param {function|string} classObj Nombre de la clase o función constructora de la clase.
      * @return {array}
      */
-    TC.Map.prototype.getControlsByClass = function (classObj) {
+    mapProto.getControlsByClass = function (classObj) {
         var self = this;
         var result = [];
         var obj = classObj;
@@ -1135,7 +1571,7 @@
         return result;
     };
 
-    TC.Map.prototype.getDefaultControl = function () {
+    mapProto.getDefaultControl = function () {
         var candidate = this.getControlsByClass("TC.control.FeatureInfo");
         if (candidate && candidate.length)
             return candidate[0];
@@ -1148,7 +1584,7 @@
      * @method getLoadingIndicator
      * @return {TC.control.LoadingIndicator}
      */
-    TC.Map.prototype.getLoadingIndicator = function () {
+    mapProto.getLoadingIndicator = function () {
         var result = null;
         var ctls = this.getControlsByClass('TC.control.LoadingIndicator');
         if (ctls.length) {
@@ -1165,7 +1601,7 @@
      * @param {boolean} [options.animate=true] Establece si se realiza una animación al cambiar la extensión.
      * La unidad de las coordenadas es la correspondiente al CRS del mapa.
      */
-    TC.Map.prototype.setExtent = function (extent, options) {
+    mapProto.setExtent = function (extent, options) {
         return this.wrap.setExtent(extent, options);
     };
 
@@ -1175,7 +1611,7 @@
      * @return {array} Array de cuatro números que representan las coordenadas x mínima, y mínima, x máxima e y máxima respectivamente.
      * La unidad de las coordenadas es la correspondiente al CRS del mapa.
      */
-    TC.Map.prototype.getExtent = function () {
+    mapProto.getExtent = function () {
         return this.wrap.getExtent();
     };
 
@@ -1183,9 +1619,27 @@
      * Establece el centro del mapa.
      * @method setCenter
      * @param {array} coord Array de dos números que representan la coordenada del punto en las unidades correspondientes al CRS del mapa.
+     * @param {object} [options] Objeto de opciones.
+     * @param {boolean} [options.animate=true] Establece si se realiza una animación al centrar.
      */
-    TC.Map.prototype.setCenter = function (coord) {
-        this.wrap.setCenter(coord);
+    mapProto.setCenter = function (coord, options) {
+        this.wrap.setCenter(coord, options);
+    };
+
+    mapProto.getCenter = function () {
+        return this.wrap.getCenter();
+    };
+
+    mapProto.setRotation = function (rotation) {
+        this.wrap.setRotation(rotation);
+    };
+
+    mapProto.getRotation = function () {
+        return this.wrap.getRotation();
+    };
+
+    mapProto.getViewHTML = function () {
+        return this.wrap.getViewport();
     };
 
     /**
@@ -1194,8 +1648,18 @@
      * @param {array} xy Coordenada en píxeles de la posición en el área de visualización.
      * @return {array} Array de dos números que representa las coordenada del punto en las unidades correspondientes al CRS del mapa.
      */
-    TC.Map.prototype.getCoordinateFromPixel = function (xy) {
+    mapProto.getCoordinateFromPixel = function (xy) {
         return this.wrap.getCoordinateFromPixel(xy);
+    };
+
+    /**
+     * Obtiene una posición en el área de visualización a partir de una coordenada.
+     * @method getCoordinateFromPixel
+     * @param {array} coord Coordenada en el mapa.
+     * @return {array} Array de dos números que representa las posición del punto en píxeles.
+     */
+    mapProto.getPixelFromCoordinate = function (coord) {
+        return this.wrap.getPixelFromCoordinate(coord);
     };
 
     /**
@@ -1208,7 +1672,7 @@
      * @param {boolean} [options.animate=false] Realizar animación al hacer el zoom. 
      * El valor es la relación resultante de la diferencia de dimensiones entre la extensión ampliada y la original relativa a la original.
      */
-    TC.Map.prototype.zoomToFeatures = function (features, options) {
+    mapProto.zoomToFeatures = function (features, options) {
         var self = this;
         if (features.length > 0) {
             var bounds = [Infinity, Infinity, -Infinity, -Infinity];
@@ -1259,7 +1723,7 @@
      * El método espera a todos los marcadores pendientes de incluir, dado que el método {{#crossLink "TC.Map/addMarker:method"}}{{/crossLink}} es asíncrono.
      * @method zoomToMarkers
      */
-    TC.Map.prototype.zoomToMarkers = function (options) {
+    mapProto.zoomToMarkers = function (options) {
         var self = this;
         $.when.apply(this, self._markerDeferreds).then(function () {
             var markers = [];
@@ -1289,7 +1753,7 @@
      * @param {string|TC.Layer} layer Identificador de la capa u objeto de capa.
      * @return {TC.Layer}
      */
-    TC.Map.prototype.getLayer = function (layer) {
+    mapProto.getLayer = function (layer) {
         var self = this;
         var result = null;
         if (typeof layer === 'string') {
@@ -1309,7 +1773,9 @@
     var _getVectors = function (map) {
         var result;
         if (!map.vectors) {
-            result = map.addLayer({ id: TC.getUID(), title: TC.i18n[map.options.locale]['vectors'], type: TC.Consts.layerType.VECTOR });
+            result = map.addLayer({
+                id: TC.getUID(), title: TC.i18n[map.options.locale]['vectors'], type: TC.Consts.layerType.VECTOR
+            });
             map.vectors = result;
             $.when(result).then(function (vectors) {
                 map.vectors = vectors;
@@ -1329,7 +1795,7 @@
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
      * @param {TC.cfg.PointStyleOptions} [options] Opciones del punto.
      */
-    TC.Map.prototype.addPoint = function (coord, options) {
+    mapProto.addPoint = function (coord, options) {
         var self = this;
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
@@ -1352,7 +1818,7 @@
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
      * @param {TC.cfg.MarkerStyleOptions} [options] Opciones del marcador.
      */
-    TC.Map.prototype.addMarker = function (coord, options) {
+    mapProto.addMarker = function (coord, options) {
         var self = this;
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
@@ -1381,7 +1847,7 @@
      * @param {array} coords Array de arrays de dos números representando las coordenadas de los vértices en las unidades del CRS del mapa.
      * @param {object} [options] Opciones de la polilínea.
      */
-    TC.Map.prototype.addPolyline = function (coords, options) {
+    mapProto.addPolyline = function (coords, options) {
         var self = this;
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
@@ -1405,7 +1871,7 @@
      * El primer anillo es el exterior y el resto son islas. No es necesario cerrar los anillos (poner el mismo vértice al principio y al final).
      * @param {object} [options] Opciones del polígono.
      */
-    TC.Map.prototype.addPolygon = function (coords, options) {
+    mapProto.addPolygon = function (coords, options) {
         var self = this;
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
@@ -1423,13 +1889,34 @@
 
 
 
-    TC.Map.prototype.getBaseLayer = function () {
+    mapProto.getBaseLayer = function () {
         return this.baseLayer || this.baseLayers[0];
     };
 
-    TC.Map.prototype.getResolutions = function () {
+    mapProto.getResolutions = function () {
         return this.getBaseLayer().getResolutions();
     };
+
+    mapProto.getResolution = function () {
+        return this.wrap.getResolution();
+    };
+
+    mapProto.setResolution = function (resolution) {
+        this.wrap.setResolution(resolution);
+    };
+
+    mapProto.exportFeatures = function (features, options) {
+        var self = this;
+        var opts = options || {};
+        var loadingCtl = self.getLoadingIndicator();
+        var waitId = loadingCtl && loadingCtl.addWait();
+        var text = self.wrap.exportFeatures(features, opts);
+        var mimeType = TC.Consts.mimeType[opts.format];
+        var format = opts.format || "";
+        TC.Util.downloadFile((opts.fileName || TC.getUID()) + '.' + format.toLowerCase(), mimeType, text);
+        loadingCtl && loadingCtl.removeWait(waitId);
+    };
+
 
     var toastContainerClass = 'tc-toast-container';
     var toastClass = 'tc-toast';
@@ -1450,9 +1937,10 @@
         }, 1000);
     };
 
-    TC.Map.prototype.toast = function (text, options) {
+    mapProto.toast = function (text, options) {
         var self = this;
-        var opts = options || {};
+        var opts = options || {
+        };
         var duration = opts.duration || TC.Cfg.toastDuration;
         var toastInfo = toasts[text];
         if (toastInfo) {
