@@ -1,0 +1,15 @@
+<h2>
+    {@i18n $key="loadedLayers"/}
+    <span class="tc-ctl-ltoc-n"></span>
+    <button class="tc-ctl-ltoc-del-all tc-hidden" title="{@i18n $key="removeAllLayersFromMap"/}"></button>
+</h2>
+<div class="tc-ctl-ltoc-empty">{@i18n $key="noData"/}</div>
+<div class="tc-ctl-ltoc-content">
+    <form>
+        <ul>
+            {#workLayers}
+            {>tc-ctl-ltoc-elm:./}
+            {/workLayers}
+        </ul>
+    </form>
+</div>

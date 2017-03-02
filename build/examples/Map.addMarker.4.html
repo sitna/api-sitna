@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+    <title>SITNA - Ejemplo de SITNA.Map.addMarker</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        .kiosko {
+            background-image: url("data/icono-kiosko.png");
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.Map.html#method_addMarker">SITNA.Map.addMarker</a>.</p>
+        <p>Añadir marcador con datos asociados e icono definido por clase CSS.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+	
+    <div id="mapa"></div>
+    <script>
+        // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, lo cambiamos por SITNA.Consts.layer.IDENA_DYNBASEMAP.
+        SITNA.Cfg.baseLayers[0] = SITNA.Consts.layer.IDENA_DYNBASEMAP;
+        SITNA.Cfg.defaultBaseLayer = SITNA.Consts.layer.IDENA_DYNBASEMAP;
+        // Añadir información emergente al mapa.
+        SITNA.Cfg.controls.popup = true;
+
+        // Crear un mapa en el sistema de referencia WGS 84.
+        var map = new SITNA.Map("mapa", {
+            crs: "EPSG:4326",
+            initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.
+                -2.84820556640625,
+                41.78912492257675,
+                -0.32135009765625,
+                43.55789822064767
+            ],
+            maxExtent: [
+                -2.84820556640625,
+                41.78912492257675,
+                -0.32135009765625,
+                43.55789822064767
+            ],
+            // Establecemos el mapa de situación con una capa compatible con WGS 84
+            controls: {
+                overviewMap: {
+                    layer: SITNA.Consts.layer.IDENA_DYNBASEMAP
+                }
+            }
+        });
+        // Cuando esté todo cargado proceder a trabajar con el mapa.
+        map.loaded(function () {
+            // Añadir un marcador con un icono de 40x40 píxeles definido por la clase CSS kiosko. Asignarle unos datos asociados que se muestren por defecto.
+            map.addMarker([-1.605691, 42.060453], { // Coordenadas en grados decimales porque el mapa está en WGS 84.
+                cssClass: "kiosko",
+                width: 40,
+                height: 40,
+                data: {
+                    "Nombre": "Plaza de la Constitución, Tudela",
+                    "Sitio web": "http://www.tudela.es/"
+                },
+                showPopup: true
+            });
+			// Centrar el mapa en el marcador.
+			map.zoomToMarkers();
+        });
+    </script>
+	
+</body>
+</html>

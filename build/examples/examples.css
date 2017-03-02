@@ -1,0 +1,40 @@
+.instructions,.controls {
+    position: fixed;
+    z-index: 10000;
+    border: 1px solid #ccc;
+    background-color: white;
+    left: 60px;
+    padding: 0.3em;
+    font-size: 0.8em;
+    border-radius: 0.3em;
+    -webkit-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
+    -moz-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
+}
+.instructions {
+    top: 60px;
+    cursor: pointer;
+}
+
+.instructions p {
+    margin: 0.2em 0 0.2em 0;
+}
+.instructions a {
+    color:#c00;
+}
+.instructions a:visited {
+    color:#700;
+}
+.instructions a:hover { 
+    color:#f00;
+    text-decoration:none;
+}
+.controls {
+    top: 120px;
+}
+.controls div {
+    margin: 0.2em;
+}
+.controls input[type=number] {
+    width: 4em;
+}

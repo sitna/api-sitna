@@ -1,0 +1,27 @@
+<div class="tc-ctl-cbuild-dialog tc-modal">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{@i18n $key="newOfflineMap"/}</h3>
+            <div class="tc-ctl-popup-close tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <input type="text" class="tc-ctl-cbuild-txt-name" placeholder="{@i18n $key="nameRequired"/}" required />
+            <div class="tc-ctl-cbuild-bl-panel">
+                <h4>{@i18n $key="availableOfflineMaps"/}</h4>
+                <p class="tc-ctl-cbuild-bl-panel-txt">{@i18n $key="selectAtLeastOne"/}</p>
+                <ul class="tc-ctl-cbuild-bl-list"></ul>
+            </div>
+            <div class="tc-ctl-cbuild-res-panel">
+                <h4>{@i18n $key="maxRes"/}</h4>
+                <div class="tc-ctl-cbuild-res"></div>
+                <input type="range" class="tc-ctl-cbuild-rng-maxres" disabled value="0" title="{@i18n $key="maxRes"/}">
+            </div>
+            <div class="tc-ctl-cbuild-tile-count"></div>
+        </div>
+        <div class="tc-modal-footer">
+            <button class="tc-button tc-modal-close tc-ctl-cbuild-btn-ok" disabled>{@i18n $key="ok"/}</button>
+            <button type="button" class="tc-button tc-modal-close tc-ctl-cbuild-btn-cancel">{@i18n $key="cancel"/}</button>
+        </div>
+    </div>
+</div>

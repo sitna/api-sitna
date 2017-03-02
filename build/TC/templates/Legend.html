@@ -1,0 +1,10 @@
+<h2>{@i18n $key="legend"/}</h2>
+<div class="tc-ctl-legend-tree">
+    <ul class="tc-ctl-legend-branch">
+        {#workLayers}
+        {>tc-ctl-legend-node:./}
+        {:else}
+        <li class="tc-ctl-legend-empty">{@i18n $key="noData"/}</li>
+        {/workLayers}
+    </ul>
+</div>

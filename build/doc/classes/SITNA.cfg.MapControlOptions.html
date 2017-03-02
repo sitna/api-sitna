@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>SITNA.cfg.MapControlOptions - API SITNA</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                
+                    <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
+                
+                
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.3</span>
+                
+                
+                    <p class="description">API de mapas del Gobierno de Navarra</p>
+                
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">&iacute;ndice</a></li>
+                <li><a href="#top" class="top-jump-link">inicio</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Clases</a></li>
+            <li style="display:none"><a href="#api-modules">M&oacute;dulos</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Escriba para filtrar la API">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a class="type" href="../classes/SITNA.Cfg.html">SITNA.Cfg</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LayerOptions.html">SITNA.cfg.LayerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LineStyleOptions.html">SITNA.cfg.LineStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MapControlOptions.html">SITNA.cfg.MapControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerOptions.html">SITNA.cfg.MarkerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerStyleOptions.html">SITNA.cfg.MarkerStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StyleOptions.html">SITNA.cfg.StyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Consts.html">SITNA.Consts</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.Layer.html">SITNA.consts.Layer</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.LayerType.html">SITNA.consts.LayerType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.MimeType.html">SITNA.consts.MimeType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Map.html">SITNA.Map</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1>Clase SITNA.cfg.MapControlOptions</h1>
+<div class="box meta">
+    
+
+    
+
+    
+        <div class="foundat" style="display:none">
+            Se define en: <a href="../files/sitna.js.html#l1606"><code>sitna.js:1606</code></a>
+        </div>
+    
+
+    
+
+    
+</div>
+
+
+
+<div class="box intro">
+    <p>Opciones de controles de mapa, define qué controles se incluyen en un mapa y qué opciones se pasan a cada control.
+Las propiedades de esta clase son de tipo boolean, en cuyo caso define la existencia o no del control asociado, o una instancia de la clase <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a>.
+Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase
+(consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_layout" class="crosslink">layout</a> para ver instrucciones de uso de maquetaciones).</p>
+<p>Esta clase no tiene constructor.</p>
+</div>
+
+<!-- Class member index -->
+
+<a name="index" class="anchor-link"></a>
+<div class="index">
+<h2>&Iacute;ndice</h2>
+
+    <div id="api-options" style="display:none">
+        Mostrar:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited">
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+
+
+    <div class="index-section properties">
+        <h3>Propiedades</h3>
+
+        <ul class="index-list properties">
+            
+                <li class="index-item property">
+                    <a href="#property_attribution">attribution</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_basemapSelector">basemapSelector</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_click">click</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_coordinates">coordinates</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_featureInfo">featureInfo</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_legend">legend</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_loadingIndicator">loadingIndicator</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_measure">measure</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_navBar">navBar</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_overviewMap">overviewMap</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_popup">popup</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_scale">scale</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_scaleBar">scaleBar</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_scaleSelector">scaleSelector</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_search">search</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_streetView">streetView</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_TOC">TOC</a>
+
+                    
+                </li>
+            
+        </ul>
+    </div>
+
+
+
+
+
+
+
+
+</div>
+
+
+<div class="class-detail">
+
+
+    <div class="properties-detail">
+        <h2>Properties</h2>
+
+        
+            <a name="property_attribution" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>attribution</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1657"><code>sitna.js:1657</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen atribución. La atribución es un texto superpuesto al mapa que actúa como reconocimiento de la procedencia de los datos que se muestran.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_basemapSelector" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>basemapSelector</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1651"><code>sitna.js:1651</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un selector de mapas de fondo.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_click" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>click</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ClickOptions.html" class="crosslink">SITNA.cfg.ClickOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1699"><code>sitna.js:1699</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un control que gestiona los clics del usuario en ellos.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_coordinates" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>coordinates</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.CoordinatesOptions.html" class="crosslink">SITNA.cfg.CoordinatesOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1669"><code>sitna.js:1669</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un indicador de coordenadas y de sistema de referencia espacial.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_featureInfo" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>featureInfo</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ClickOptions.html" class="crosslink">SITNA.cfg.ClickOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1711"><code>sitna.js:1711</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas responden a los clics con un información de las capas cargadas de tipo WMS. Se usa para ello la petición <code>getFeatureInfo</code> del standard WMS.
+Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.featureInfo.html">online</a>.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Activamos el proxy para poder acceder a servicios de otro dominio.
+    SITNA.Cfg.proxy = &quot;proxy.ashx?&quot;;
+    // Añadimos el control featureInfo.
+    SITNA.Cfg.controls.featureInfo = true;
+    // Añadimos una capa WMS sobre la que hacer las consultas.
+    SITNA.Cfg.workLayers = [
+        {
+            id: &quot;ocupacionSuelo&quot;,
+            title: &quot;Ocupación del suelo&quot;,
+            type: SITNA.Consts.layerType.WMS,
+            url: &quot;http://www.ign.es/wms-inspire/ocupacion-suelo&quot;,
+            layerNames: [&quot;LC.LandCoverSurfaces&quot;]
+        }
+    ];
+    var map = new SITNA.Map(&quot;mapa&quot;);
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_legend" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>legend</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1675"><code>sitna.js:1675</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen leyenda.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_loadingIndicator" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>loadingIndicator</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1615"><code>sitna.js:1615</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un indicador de espera de carga.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_measure" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>measure</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1693"><code>sitna.js:1693</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un medidor de longitudes, áreas y perímetros.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_navBar" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>navBar</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1621"><code>sitna.js:1621</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen una barra de navegación con control de zoom.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_overviewMap" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>overviewMap</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.OverviewMapOptions.html" class="crosslink">SITNA.cfg.OverviewMapOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1645"><code>sitna.js:1645</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un mapa de situación.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_popup" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>popup</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1681"><code>sitna.js:1681</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas muestran los datos asociados a los marcadores cuando se pulsa sobre ellos.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_scale" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>scale</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1633"><code>sitna.js:1633</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un indicador numérico de escala.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_scaleBar" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>scaleBar</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1627"><code>sitna.js:1627</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen una barra de escala.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_scaleSelector" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>scaleSelector</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1639"><code>sitna.js:1639</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un selector numérico de escala.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_search" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>search</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1687"><code>sitna.js:1687</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen un buscador de entidades geográficas y localizador de coordenadas.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_streetView" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>streetView</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.StreetViewOptions.html" class="crosslink">SITNA.cfg.StreetViewOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1705"><code>sitna.js:1705</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas pueden abrir una ventana de Google StreetView.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_TOC" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>TOC</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1663"><code>sitna.js:1663</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Los mapas tienen una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">false</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+
+        <div class="no-visible-items-message">
+            <p>No hay propiedades que cumplan la configuraci&oacute;n actual de filtro. Puede cambiar la configuraci&oacute;n de filtro en la secci&oacute;n "&Iacute;ndice" de esta p&aacute;gina. <a href="#index" class="index-jump-link">&iacute;ndice</a></p>
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+</div>
+
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

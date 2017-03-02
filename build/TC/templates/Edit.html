@@ -1,0 +1,31 @@
+<h2>{@i18n $key="featureEdit"/} <span class="tc-beta">{@i18n $key="beta"/}</span></h2>
+<div class="tc-ctl-edit-layer">
+    <select class="tc-combo tc-ctl-edit-layer-sel">
+        <option value="">{@i18n $key="selectLayerToEdit"/}</option>
+        {#layers}
+        <option value="{id}">{title}</option>
+        {/layers}
+    </select>
+    <input type="checkbox" id="tc-ctl-edit-view-changes-cb"{?showChanges} checked{/showChanges} /><label class="tc-ctl-edit-view-changes" for="tc-ctl-edit-view-changes-cb">{@i18n $key="highlightUnsyncedChanges"/}</label>
+</div>
+<div class="tc-ctl-edit-mode">
+    <form>
+        <label class="tc-ctl-edit-btn-select" title="{@i18n $key="select"/}"><input type="radio" name="mode" value="select" /><span>{@i18n $key="select"/}</span></label>
+        <label class="tc-ctl-edit-btn-point" title="{@i18n $key="newPoint"/}"><input type="radio" name="mode" value="addpoint" /><span>{@i18n $key="newPoint"/}</span></label>
+        <label class="tc-ctl-edit-btn-line" title="{@i18n $key="newLine"/}"><input type="radio" name="mode" value="addline" /><span>{@i18n $key="newLine"/}</span></label>
+        <label class="tc-ctl-edit-btn-polygon" title="{@i18n $key="newPolygon"/}"><input type="radio" name="mode" value="addpolygon" /><span>{@i18n $key="newPolygon"/}</span></label>
+    </form>
+</div>
+<div class="tc-ctl-edit-select tc-hidden">
+    <button class="tc-ctl-btn tc-ctl-edit-btn-delete" disabled title="{@i18n $key="delete"/}">{@i18n $key="delete"/}</button>
+    <button class="tc-ctl-btn tc-ctl-edit-btn-join" disabled title="{@i18n $key="joinGeometries.tooltip"/}">{@i18n $key="joinGeometries"/}</button>
+    <button class="tc-ctl-btn tc-ctl-edit-btn-split" disabled title="{@i18n $key="splitGeometry"/}">{@i18n $key="splitGeometry"/}</button>
+    <button class="tc-ctl-btn tc-ctl-edit-btn-cancel" disabled title="{@i18n $key="cancel"/}">{@i18n $key="cancel"/}</button>
+</div>
+<div class="tc-ctl-edit-point tc-hidden"></div>
+<div class="tc-ctl-edit-line tc-hidden"></div>
+<div class="tc-ctl-edit-polygon tc-hidden"></div>
+<div class="tc-ctl-edit-save">
+    <button class="tc-button tc-icon-button tc-ctl-edit-btn-save" disabled title="{@i18n $key="syncChanges"/}">{@i18n $key="syncChanges"/}</button>
+    <button class="tc-button tc-icon-button tc-ctl-edit-btn-discard" disabled title="{@i18n $key="discardChanges"/}">{@i18n $key="discardChanges"/}</button>
+</div>

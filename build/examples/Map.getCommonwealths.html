@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.getCommonwealths</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        .divSelect {
+            top: 115px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.Map.html#method_getCommonwealths">SITNA.Map.getCommonwealths</a>.</p>
+        <p>Opciones del método.</p>
+    </div>
+    <script src="//pmpwvinet18.tcsa.local/apisitna/js/lib/build/PRE/"></script>
+    <!--<script src="../"></script>-->
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div class="instructions divSelect">
+        <div>
+            Mancomunidades de residuos
+            <select id="commonwealths" onchange="applyFilter()">
+                <option value="-1">Seleccione...</option>
+            </select>
+
+        </div>
+    </div>
+    <div id="mapa"></div>
+    <script>
+        // Crear mapa.
+        var map = new SITNA.Map("mapa");
+
+        map.loaded(function () {
+            // completamos el desplegable
+            map.getCommonwealths(function (data) {
+                $.each(data, function (key, value) {
+                    $('#commonwealths').append($("<option></option>")
+                                   .attr("value", value.id)
+                                   .text(value.label));
+                });
+            });
+        });
+
+        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+        function applyFilter() {
+            var id = $('#commonwealths').find('option:selected').val();
+            if (id == -1)
+                map.removeSearch();
+            else {
+                map.searchCommonwealth(id, function (idQuery) {
+                    if (idQuery == null)
+                        alert('No se han encontrado resultados');
+                });
+            }
+        };
+    </script>
+
+</body>
+</html>

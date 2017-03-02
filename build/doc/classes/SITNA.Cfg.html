@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>SITNA.Cfg - API SITNA</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                
+                    <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
+                
+                
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.3</span>
+                
+                
+                    <p class="description">API de mapas del Gobierno de Navarra</p>
+                
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">&iacute;ndice</a></li>
+                <li><a href="#top" class="top-jump-link">inicio</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Clases</a></li>
+            <li style="display:none"><a href="#api-modules">M&oacute;dulos</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Escriba para filtrar la API">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a class="type" href="../classes/SITNA.Cfg.html">SITNA.Cfg</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LayerOptions.html">SITNA.cfg.LayerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LineStyleOptions.html">SITNA.cfg.LineStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MapControlOptions.html">SITNA.cfg.MapControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerOptions.html">SITNA.cfg.MarkerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerStyleOptions.html">SITNA.cfg.MarkerStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StyleOptions.html">SITNA.cfg.StyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Consts.html">SITNA.Consts</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.Layer.html">SITNA.consts.Layer</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.LayerType.html">SITNA.consts.LayerType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.MimeType.html">SITNA.consts.MimeType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Map.html">SITNA.Map</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1>Clase SITNA.Cfg</h1>
+<div class="box meta">
+    
+
+    
+
+    
+        <div class="foundat" style="display:none">
+            Se define en: <a href="../files/sitna.js.html#l1358"><code>sitna.js:1358</code></a>
+        </div>
+    
+
+    
+
+    
+</div>
+
+
+
+<div class="box intro">
+    <p>Configuración general de la API. Cualquier llamada a un método o un constructor de la API sin parámetro de opciones toma las opciones de esta clase. 
+Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase
+(consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_layout" class="crosslink">layout</a> para ver instrucciones de uso de maquetaciones).</p><p>La clase es estática.</p>
+</div>
+
+<!-- Class member index -->
+
+<a name="index" class="anchor-link"></a>
+<div class="index">
+<h2>&Iacute;ndice</h2>
+
+    <div id="api-options" style="display:none">
+        Mostrar:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited">
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+
+
+    <div class="index-section properties">
+        <h3>Propiedades</h3>
+
+        <ul class="index-list properties">
+            
+                <li class="index-item property">
+                    <a href="#property_baseLayers">baseLayers</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_controls">controls</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_crs">crs</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_defaultBaseLayer">defaultBaseLayer</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_initialExtent">initialExtent</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_layout">layout</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_maxExtent">maxExtent</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_mouseWheelZoom">mouseWheelZoom</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_pixelTolerance">pixelTolerance</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_proxy">proxy</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_styles">styles</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_workLayers">workLayers</a>
+
+                    
+                </li>
+            
+        </ul>
+    </div>
+
+
+
+
+
+
+
+
+</div>
+
+
+<div class="class-detail">
+
+
+    <div class="properties-detail">
+        <h2>Properties</h2>
+
+        
+            <a name="property_baseLayers" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>baseLayers</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1444"><code>sitna.js:1444</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Lista de objetos de definición de capa (instancias de la clase <a href="../classes/SITNA.cfg.LayerOptions.html" class="crosslink">SITNA.cfg.LayerOptions</a>) para incluir dichas capas como mapas de fondo.</p>
+<p>Puede consultar el ejemplo <a href="../../examples/Cfg.baseLayers.html">online</a>.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">La lista incluye las siguientes capas de IDENA: Ortofoto 2014 (capa por defecto), Mapa base, Catastro, Cartografía topográfica.</span></p>
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Establecer un proxy porque se hacen peticiones a otro dominio.
+    SITNA.Cfg.proxy = &quot;proxy.ashx?&quot;;
+
+    // Añadir PNOA y establecerla como mapa de fondo por defecto.
+    SITNA.Cfg.baseLayers.push({
+        id: &quot;PNOA&quot;,
+        url: &quot;http://www.ign.es/wms-inspire/pnoa-ma&quot;,
+        layerNames: &quot;OI.OrthoimageCoverage&quot;,
+        isBase: true
+    });
+    SITNA.Cfg.defaultBaseLayer = &quot;PNOA&quot;;
+
+    var map = new SITNA.Map(&quot;mapa&quot;);
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_controls" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>controls</code>
+    <span class="type"><a href="../classes/SITNA.cfg.MapControlOptions.html" class="crosslink">SITNA.cfg.MapControlOptions</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1495"><code>sitna.js:1495</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Opciones de controles de mapa.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">Se incluyen controles de indicador de espera de carga, atribución, indicador de coordenadas.</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_crs" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>crs</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1382"><code>sitna.js:1382</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Código EPSG del sistema de referencia espacial del mapa.</p>
+<p>Puede consultar el ejemplo <a href="../../examples/Cfg.crs.html">online</a>.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">&quot;EPSG:25830&quot;</span></p>
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, lo cambiamos por SITNA.Consts.layer.IDENA_DYNBASEMAP.
+    SITNA.Cfg.baseLayers[0] = SITNA.Consts.layer.IDENA_DYNBASEMAP;
+    SITNA.Cfg.defaultBaseLayer = SITNA.Consts.layer.IDENA_DYNBASEMAP;
+
+    // WGS 84
+    SITNA.Cfg.crs = &quot;EPSG:4326&quot;;
+    // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.
+    SITNA.Cfg.initialExtent = [-2.848205, 41.789124, -0.321350, 43.557898];
+    SITNA.Cfg.maxExtent = [-2.848205, 41.789124, -0.321350, 43.557898];
+
+    var map = new SITNA.Map(&quot;mapa&quot;, {
+        // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, establecer la capa SITNA.Consts.layer.IDENA_DYNBASEMAP en el control de mapa de situación.
+        controls: {
+            overviewMap: {
+                layer: SITNA.Consts.layer.IDENA_DYNBASEMAP
+            }
+        }
+    });
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_defaultBaseLayer" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>defaultBaseLayer</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | <a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1468"><code>sitna.js:1468</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa base por defecto o índice de la capa base por defecto en la lista de capas base del mapa (Consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_baseLayers" class="crosslink">baseLayers</a>).</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">SITNA.consts.Layer.IDENA_ORTHOPHOTO</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_initialExtent" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>initialExtent</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1411"><code>sitna.js:1411</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima. Estos valores deben estar en las unidades definidas por 
+el sistema de referencia espacial del mapa. Por defecto la extensión es la de Navarra.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">[541084.221, 4640788.225, 685574.4632, 4796618.764]</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_layout" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>layout</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1501"><code>sitna.js:1501</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>URL de la carpeta de maquetación. Para prescindir de maquetación, establecer esta propiedad a <code>null</code>.</p>
+<p>La API busca en la carpeta de maquetación los siguientes archivos:</p>
+<ul>
+     <li><code>markup.html</code>, con código HTML que se inyectará en el elemento del DOM del mapa.</li>
+     <li><code>config.json</code>, con un objeto JSON que sobreescribirá propiedades de <a href="../classes/SITNA.Cfg.html" class="crosslink">SITNA.Cfg</a>.</li>
+     <li><code>style.css</code>, para personalizar el estilo del visor y sus controles.</li>
+     <li><code>script.js</code>, para añadir lógica nueva. Este es el lugar idóneo para la lógica de la nueva interfaz definida por el marcado inyectado con <code>markup.html</code>.</li>
+     <li><code>ie8.css</code>, para adaptar el estilo a Internet Explorer 8, dado que este navegador tiene soporte CSS3 deficiente.</li>
+ </ul>
+<p>Todos estos archivos son opcionales.</p><p>La maquetación por defecto añade los siguientes controles al conjunto por defecto: <code>navBar</code>, <code>basemapSelector</code>, 
+<code>TOC</code>, <code>legend</code>, <code>scaleBar</code>, <code>search</code>, <code>measure</code>, <code>overviewMap</code> y <code>popup</code>. Puede <a href="../../tc/layout/responsive/responsive.zip">descargar la maquetación por defecto</a>.</p>
+<p>Puede consultar el ejemplo <a href="../../examples/Cfg.layout.html">online</a>. 
+Sus archivos de maquetación son <a href="../../examples/layout/example/markup.html">markup.html</a>, <a href="../../examples/layout/example/config.json">config.json</a> y 
+<a href="../../examples/layout/example/style.css">style.css</a>.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">&quot;//sitna.tracasa.es/api/tc/layout/responsive&quot;</span></p>
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Establecer un proxy porque se hacen peticiones a otro dominio.
+    SITNA.Cfg.proxy = &quot;proxy.ashx?&quot;;
+
+    SITNA.Cfg.layout = &quot;layout/example&quot;;
+    var map = new SITNA.Map(&quot;mapa&quot;);
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_maxExtent" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>maxExtent</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1418"><code>sitna.js:1418</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima, de forma que el centro del mapa nunca saldrá fuera de estos límites. Estos valores deben estar en las unidades definidas por 
+el sistema de referencia espacial del mapa. Por defecto la extensión es la de Navarra y sus alrededores.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">[480408, 4599748, 742552, 4861892]</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_mouseWheelZoom" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>mouseWheelZoom</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1425"><code>sitna.js:1425</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>La rueda de scroll del ratón se puede utilizar para hacer zoom en el mapa.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_pixelTolerance" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>pixelTolerance</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1431"><code>sitna.js:1431</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Tolerancia en pixels a las consultas de información de capa.</p>
+<p>En ciertas capas, por ejemplo las que representan geometrías de puntos, puede ser difícil pulsar precisamente en el punto donde está la entidad geográfica que interesa.
+La propiedad <code>pixelTolerance</code> define un área de un número de pixels hacia cada lado del punto de pulsación, de forma que toda entidad geográfica que se interseque con ese área se incluye en el resultado de la consulta.</p>
+<p>Por ejemplo, si el valor establecido es 10, toda entidad geográfica que esté dentro de un cuadrado de 21 pixels de lado (10 pixels por cuadrante más el pixel central) centrado en el punto de pulsación 
+se mostrará en el resultado.</p>
+<p><em>A tener en cuenta:</em> Esta propiedad establece el valor de los llamados &quot;parámetros de vendedor&quot; que los servidores de mapas admiten para modificar el comportamiento de las peticiones
+<code>getFeatureInfo</code> del standard WMS. Pero este comportamiento puede ser modificado también por otras circunstancias, como los estilos aplicados a las capas en el servidor. 
+Como estas circunstancias están fuera del ámbito de alcance de esta API, es posible que los resultados obtenidos desde algún servicio WMS sean inesperados en lo referente a <code>pixelTolerance</code>.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">10</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_proxy" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>proxy</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1366"><code>sitna.js:1366</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>URL del proxy utilizado para peticiones a dominios remotos.</p>
+<p>Debido a restricciones de seguridad implementadas en Javascript, a través de <code>XMLHttpRequest</code> no es posible obtener información de dominios distintos al de la página web.</p>
+<p>Hay dos maneras de solventar esta restricción. La primera es que el servidor remoto permita el acceso entre dominios estableciendo la cabecera <code>Access-Control-Allow-Origin</code> a 
+la respuesta HTTP. Dado que esta solución la implementan terceras personas (los administradores del dominio remoto), no siempre es aplicable.</p>
+<p>La segunda solución es desplegar en el dominio propio un proxy. Un proxy es un servicio que recibe peticiones HTTP y las redirige a otra URL.</p>
+<p>Si la propiedad <code>proxy</code> está establecida, todas las peticiones a dominios remotos las mandará al proxy para que este las redirija. De esta manera no infringimos las reglas de
+seguridad de Javascript, dado que el proxy está alojado en el dominio propio.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">&quot;&quot;</span></p>
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code> SITNA.Cfg.proxy = &quot;&quot;; // Las peticiones a http://www.otrodominio.com se hacen directamente
+
+ SITNA.Cfg.proxy = &quot;/cgi-bin/proxy.cgi?url=&quot;; // Las peticiones a http://www.otrodominio.com se convierten en peticiones a /cgi-bin/proxy.cgi?url=http://www.otrodominio.com</code></pre>
+
+                </div>
+            </div>
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_styles" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>styles</code>
+    <span class="type"><a href="../classes/SITNA.cfg.StyleOptions.html" class="crosslink">SITNA.cfg.StyleOptions</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1530"><code>sitna.js:1530</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Opciones de estilo de entidades geográficas.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_workLayers" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>workLayers</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1474"><code>sitna.js:1474</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Lista de objetos de definición de capa (instancias de la clase <a href="../classes/SITNA.cfg.LayerOptions.html" class="crosslink">SITNA.cfg.LayerOptions</a>) para incluir dichas capas como contenido del mapa.</p>
+<p>Puede consultar el ejemplo <a href="../../examples/Cfg.workLayers.html">online</a>.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">[]</span></p>
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Establecer un proxy porque se hacen peticiones a otro dominio.
+    SITNA.Cfg.proxy = &quot;proxy.ashx?&quot;;
+
+    SITNA.Cfg.workLayers = [{
+        id: &quot;csantiago&quot;,
+        title: &quot;Camino de Santiago&quot;,
+        url: &quot;http://www.ign.es/wms-inspire/camino-santiago&quot;,
+        layerNames: &quot;PS.ProtectedSite,GN.GeographicalNames,AU.AdministrativeUnit&quot;
+    }];
+    var map = new SITNA.Map(&quot;mapa&quot;);
+&lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+
+        
+    </div>
+</div>
+
+        
+
+        <div class="no-visible-items-message">
+            <p>No hay propiedades que cumplan la configuraci&oacute;n actual de filtro. Puede cambiar la configuraci&oacute;n de filtro en la secci&oacute;n "&Iacute;ndice" de esta p&aacute;gina. <a href="#index" class="index-jump-link">&iacute;ndice</a></p>
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+</div>
+
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<h2>{@i18n $key="print"/}</h2>
+<div>
+    <div class="tc-ctl-printMap-div">
+        <div class="tc-group tc-ctl-printMap-cnt">
+                <label>{@i18n $key="title"/}:</label>
+            <input type="text" class="tc-ctl-printMap-title tc-textbox" maxlength="30" placeholder="{@i18n $key="mapTitle"/}" />
+            </div>
+        <div class="tc-group tc-ctl-printMap-cnt">
+                <label>{@i18n $key="layout"/}:</label>
+                <select id="print-design" class="tc-combo">
+                    <option value="landscape">{@i18n $key="landscape"/}</option>
+                    <option value="portrait">{@i18n $key="portrait"/}</option>
+                </select>
+            </div>
+        <div class="tc-group tc-ctl-printMap-cnt">
+                <label>{@i18n $key="size"/}:</label>
+                <select id="print-size" class="tc-combo">
+                    <option value="a4">A4</option>
+                    <option value="a3">A3</option>
+                </select>
+            </div>
+        <div class="tc-group tc-ctl-printMap-cnt">
+            <button class="tc-ctl-printMap-btn tc-button tc-icon-button" title="{@i18n $key="printMap"/}">{@i18n $key="print"/}</button>
+        </div>
+    </div>
+</div>

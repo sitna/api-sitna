@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.setQueryType</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        .municipality {
+            top: 115px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.Map.html#method_setQueryType">SITNA.Map.setQueryType</a>.</p>
+        <p>Opciones del método.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div class="instructions municipality">
+        <div><button id="municipalityBtn">Filtrar por municipio: Valle de Egüés <> Eguesibar</button></div>
+        <div><button id="urbanBtn">Filtrar por casco urbano: Sarriguren</button></div>
+    </div>
+    <div id="mapa"></div>
+    <script>
+        // Crear mapa.
+        var map = new SITNA.Map("mapa");
+
+        map.loaded(function () {
+            document.getElementById("municipalityBtn").addEventListener("click", addMunicipalityFilter);
+            document.getElementById("urbanBtn").addEventListener("click", addUrbanFilter);
+        });
+
+        // Establecer como filtro del mapa el municipio Valle de Egüés
+        var addMunicipalityFilter = function () {
+            map.removeSearch();
+
+            map.setQueryType(SITNA.Consts.mapSearchType.MUNICIPALITY, "86", function (idQuery) {
+                if (idQuery == null) {
+                    alert("No se ha encontrado el municipio con código 86.");
+                }
+            });
+        };
+
+        // Establecer como filtro del mapa el casco urbano de Sarriguren
+        var addUrbanFilter = function () {
+            map.removeSearch();
+
+            map.searchTyped(SITNA.Consts.mapSearchType.URBAN, "86#16", function (idQuery) {
+                if (idQuery == null) {
+                    alert("No se ha encontrado el casco urbano con código 86#16 de Sarriguren.");
+                }
+            });
+        };
+
+        
+    </script>
+
+</body>
+</html>
