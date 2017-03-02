@@ -87,10 +87,7 @@ var sitnaBuild = {
             .pipe(replace("Ñ", "\\u00d1"))
             .pipe(replace("ñ", "\\u00f1"))
             .pipe(replace("ü", "\\u00fc"))
-            .pipe(replace("Ü", "\\u00dc"))
-            .pipe(replace(/TC\.version = '.*';/g, "TC.version = '" + this.version + (sitnaBuild.target === 'PRO' ? '' : 'b') + "';"))
-            .pipe(replace(/TC\.apiLocation = '.*';/g, "TC.apiLocation = '" + this.apiLocation + "';"))
-            .pipe(replace(/SITNA\.syncLoadJS\('.*tcmap.js'\);/, "SITNA.syncLoadJS('" + this.apiLocation + "tcmap.js');"));
+            .pipe(replace("Ü", "\\u00dc"));
         if (this.isLegacy !== undefined) {
             s = s.pipe(replace(/TC\.isLegacy = .*;/g, "TC.isLegacy = " + this.isLegacy + ";"));
         }
@@ -105,7 +102,6 @@ var sitnaBuild = {
         return gulp.src([
                 'examples/**/*.html'
         ])
-            .pipe(replace("<script src=\"//sitna.tracasa.es/api/\"></script>", '<script src="' + this.apiLocation + '"></script>'))
             .pipe(convertEncoding({ to: 'ISO-8859-1' }))
             .pipe(gulp.dest(this.fullTargetPath + 'examples/'));
     },
@@ -235,44 +231,7 @@ var sitnaBuild = {
 };
 
 gulp.task('default', function () {
-
-    //sitnaBuild.target = 'PRE';
-    //sitnaBuild.apiLocation = '//pmpwvinet18.tcsa.local/apisitna/js/lib/build/PRE/';
-    //sitnaBuild.fullTargetPath = sitnaBuild.targetPath + sitnaBuild.target + '/';
-    //sitnaBuild.fullTask();
-
-    //sitnaBuild.target = 'PRO';
-    //sitnaBuild.apiLocation = '//sitna.tracasa.es/api/';
-    //sitnaBuild.fullTargetPath = sitnaBuild.targetPath + sitnaBuild.target + '/';
-    //sitnaBuild.fullTask();
-
-    sitnaBuild.target = 'DEV';
-    sitnaBuild.apiLocation = '//sitna.tracasa.es/api/dev/';
-    sitnaBuild.fullTargetPath = sitnaBuild.targetPath + sitnaBuild.target + '/';
-    sitnaBuild.fullTask();
-});
-
-gulp.task('PRE', function () {
-
-    sitnaBuild.target = 'PRE';
-    sitnaBuild.apiLocation = '//pmpwvinet18.tcsa.local/apisitna/js/lib/build/PRE/';
-    sitnaBuild.fullTargetPath = sitnaBuild.targetPath + sitnaBuild.target + '/';
-    sitnaBuild.fullTask();
-});
-
-gulp.task('DEV', function () {
-
-    sitnaBuild.target = 'DEV';
-    sitnaBuild.apiLocation = '//sitna.tracasa.es/api/dev/';
-    sitnaBuild.fullTargetPath = sitnaBuild.targetPath + sitnaBuild.target + '/';
-    sitnaBuild.fullTask();
-});
-
-gulp.task('PRO', function () {
-
-    sitnaBuild.target = 'PRO';
-    sitnaBuild.apiLocation = '//sitna.tracasa.es/api/';
-    sitnaBuild.fullTargetPath = sitnaBuild.targetPath + sitnaBuild.target + '/';
+    sitnaBuild.fullTargetPath = sitnaBuild.targetPath + '/';
     sitnaBuild.fullTask();
 });
 
