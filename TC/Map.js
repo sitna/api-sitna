@@ -372,8 +372,8 @@
                                     }
 
                                     if (!layerDeleted) {
-                                        $.when(self.addLayer(lyrCfg)).then(setVisibility);
-                                    }
+                                    $.when(self.addLayer(lyrCfg)).then(setVisibility);
+                                }
                                 }
 
                                 if (self.state && self.state.layers) {
@@ -497,15 +497,16 @@
                         wait = self.loadingCtrl && self.loadingCtrl.addWait();
                         setTimeout(function () {
                             if (e && e.state != null) {
-
-                                self.registerState = false;
+                                //self.registerState = false;
 
                                 // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
                                 self.off(events, $.proxy(_addToHistory, self));
 
-                                // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
+                                // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                                 
                                 $.when(_loadIntoMap(e.state)).then(function () {
-                                    self.on(events, $.proxy(_addToHistory, self));
+                                    setTimeout(function () {
+                                        self.on(events, $.proxy(_addToHistory, self));
+                                    }, 200);
                                     self.loadingCtrl && self.loadingCtrl.removeWait(wait);
                                 });
                             }
@@ -521,8 +522,7 @@
         var _addToHistory = function (e) {
             var CUSTOMEVENT = '.tc';
 
-            var state = _getMapState();
-
+            var state = _getMapState();            
             if (self.replaceCurrent) {
                 window.history.replaceState(state, null, null);
                 delete self.replaceCurrent;
@@ -530,10 +530,11 @@
                 return;
             } else {
 
-                if (self.registerState != undefined && !self.registerState) {
+                /*if (self.registerState != undefined && !self.registerState) {
                     self.registerState = true;
                     return;
-                }
+                }*/
+                self.lastEventType = e.type;
 
                 var saveState = function () {
                     previousState = currentState;
@@ -645,7 +646,7 @@
                 //capa base
                 if (obj.base != self.getBaseLayer().id) self.setBaseLayer(obj.base);
 
-                //extent
+                //extent                
                 if (obj.ext) promises.push(self.setExtent(obj.ext));
 
                 //capas cargadas        
@@ -689,7 +690,10 @@
                             }).then(function (layer) {
                                 var rootNode = layer.wrap.getRootLayerNode();
                                 layer.title = rootNode.Title || rootNode.title;
-                                layer.setOpacity(op);
+                                /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
+                                esto es porque en el loadstate al establecer la opacidad dedido a un timeout pasados X segundos se lanzaba 
+                                este evento y producía un push en el state innecesario*/
+                                layer.setOpacity(op,true);
                                 layer.setVisibility(visibility);
                             }));
                         }
@@ -724,11 +728,7 @@
                     obj = jsonpack.unpack(TC.Util.base64ToUtf8(hash));
                 }
                 catch (error) {
-                    try {
-                        obj = JSON.parse(TC.Util.base64ToUtf8(hash));
-                    } catch (error) {                        
-                        self.toast(TC.Util.getLocaleString(self.options.locale, "mapStateNotValid"), { type: TC.Consts.msgType.ERROR });
-                    }
+                    obj = JSON.parse(TC.Util.base64ToUtf8(hash));
                 }
 
                 if (obj) {
@@ -857,8 +857,8 @@
                         TC.i18n[locale] = TC.i18n[locale] || {};
                         $.extend(TC.i18n[locale], data);
                         if (typeof (dust) !== 'undefined') {
-                            dust.i18n.add(locale, TC.i18n[locale]);
-                        }
+                        dust.i18n.add(locale, TC.i18n[locale]);
+                    }
                     }
                 })
             }
@@ -889,122 +889,122 @@
 
             if (self.options.layout) {
                 buildLayout(self.options.layout).done(function (layout) {
-                    self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
+                self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
 
-                    var layoutURLs;
-                    if (typeof layout === 'string') {
-                        layoutURLs = { href: $.trim(layout) };
-                    }
-                    else if (
-                        layout.hasOwnProperty('config') ||
-                        layout.hasOwnProperty('markup') ||
-                        layout.hasOwnProperty('style') ||
-                        layout.hasOwnProperty('ie8Style') ||
-                        layout.hasOwnProperty('script') ||
-                        layout.hasOwnProperty('href') ||
-                        layout.hasOwnProperty('i18n')
-                    ) {
-                        layoutURLs = $.extend({}, layout);
-                    }
-                    if (layoutURLs.href) {
-                        layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
-                    }
-                    layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
-                    layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
-                    layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
-                    layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
-                    layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
-                    layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
-                    if (layoutURLs.i18n) {
-                        layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
-                    }
+                var layoutURLs;
+                if (typeof layout === 'string') {
+                    layoutURLs = { href: $.trim(layout) };
+                }
+                else if (
+                    layout.hasOwnProperty('config') ||
+                    layout.hasOwnProperty('markup') ||
+                    layout.hasOwnProperty('style') ||
+                    layout.hasOwnProperty('ie8Style') ||
+                    layout.hasOwnProperty('script') ||
+                    layout.hasOwnProperty('href') ||
+                    layout.hasOwnProperty('i18n')
+                ) {
+                    layoutURLs = $.extend({}, layout);
+                }
+                if (layoutURLs.href) {
+                    layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
+                }
+                layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
+                layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
+                layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
+                layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
+                layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
+                layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
+                if (layoutURLs.i18n) {
+                    layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
+                }
 
-                    self.layout = layoutURLs;
+                self.layout = layoutURLs;
 
-                    var layoutDeferreds = [];
+                var layoutDeferreds = [];
 
-                    var i18LayoutDeferred = $.Deferred();
-                    layoutDeferreds.push(i18LayoutDeferred);
+                var i18LayoutDeferred = $.Deferred();
+                layoutDeferreds.push(i18LayoutDeferred);
 
-                    if (layoutURLs.config) {
-                        layoutDeferreds.push($.ajax({
-                            url: layoutURLs.config,
-                            type: 'GET',
-                            dataType: 'json',
-                            //async: Modernizr.canvas, // !IE8,
-                            success: function (data) {
-                                i18LayoutDeferred.resolve(data.i18n);
-                                self.options = mergeOptions(data, options);
-                            },
-                            error: function (e, name, description) {
-                                TC.error(name + ": " + description);
-                                i18LayoutDeferred.resolve(false);
-                            }
-                        }));
-                    }
-                    else {
-                        i18LayoutDeferred.resolve(false);
-                    }
-
-                    if (layoutURLs.markup) {
-                        var markupDeferred;
-                        if (locale) {
-                            markupDeferred = $.Deferred();
-                            layoutDeferreds.push(markupDeferred);
+                if (layoutURLs.config) {
+                    layoutDeferreds.push($.ajax({
+                        url: layoutURLs.config,
+                        type: 'GET',
+                        dataType: 'json',
+                        //async: Modernizr.canvas, // !IE8,
+                        success: function (data) {
+                            i18LayoutDeferred.resolve(data.i18n);
+                            self.options = mergeOptions(data, options);
+                        },
+                        error: function (e, name, description) {
+                            TC.error(name + ": " + description);
+                            i18LayoutDeferred.resolve(false);
                         }
-                        layoutDeferreds.push($.ajax({
-                            url: layoutURLs.markup,
-                            type: 'GET',
-                            dataType: 'html',
-                            //async: Modernizr.canvas, // !IE8
-                            success: function (data) {
-                                // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
-                                i18LayoutDeferred.then(function (i18n) {
-                                    if (i18n && locale) {
-                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
-                                            var templateId = 'tc-markup';
-                                            dust.loadSource(dust.compile(data, templateId));
-                                            dust.render(templateId, null, function (err, out) {
-                                                if (err) {
-                                                    TC.error(err);
-                                                    markupDeferred.reject();
-                                                }
-                                                else {
-                                                    self._$div.append(out);
-                                                    markupDeferred.resolve();
-                                                }
-                                            });
-                                        });
-                                    }
-                                    else {
-                                        self._$div.append(data);
-                                        if (locale) {
-                                            markupDeferred.resolve();
-                                        }
-                                    }
-                                });
-                            },
-                            error: function () {
-                                markupDeferred.reject();
-                            }
-                        }));
-                    }
+                    }));
+                }
+                else {
+                    i18LayoutDeferred.resolve(false);
+                }
 
-                    $.when.apply(this, layoutDeferreds).always(function () {
-                        TC.loadJS(
-                            layoutURLs.script,
-                            layoutURLs.script,
-                            function () {
-                                setHeightFix(self._$div);
-                                if (layoutURLs.style) {
-                                    TC.loadCSS(layoutURLs.style);
+                if (layoutURLs.markup) {
+                    var markupDeferred;
+                    if (locale) {
+                        markupDeferred = $.Deferred();
+                        layoutDeferreds.push(markupDeferred);
+                    }
+                    layoutDeferreds.push($.ajax({
+                        url: layoutURLs.markup,
+                        type: 'GET',
+                        dataType: 'html',
+                        //async: Modernizr.canvas, // !IE8
+                        success: function (data) {
+                            // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
+                            i18LayoutDeferred.then(function (i18n) {
+                                if (i18n && locale) {
+                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
+                                        var templateId = 'tc-markup';
+                                        dust.loadSource(dust.compile(data, templateId));
+                                        dust.render(templateId, null, function (err, out) {
+                                            if (err) {
+                                                TC.error(err);
+                                                markupDeferred.reject();
+                                            }
+                                            else {
+                                                self._$div.append(out);
+                                                markupDeferred.resolve();
+                                            }
+                                        });
+                                    });
                                 }
-                                if (!Modernizr.canvas && layoutURLs.ie8Style) {
-                                    TC.loadCSS(layoutURLs.ie8Style);
+                                else {
+                                    self._$div.append(data);
+                                    if (locale) {
+                                        markupDeferred.resolve();
+                                    }
                                 }
-                                init();
                             });
-                    });
+                        },
+                        error: function () {
+                            markupDeferred.reject();
+                        }
+                    }));
+                }
+
+                $.when.apply(this, layoutDeferreds).always(function () {
+                    TC.loadJS(
+                        layoutURLs.script,
+                        layoutURLs.script,
+                        function () {
+                            setHeightFix(self._$div);
+                            if (layoutURLs.style) {
+                                TC.loadCSS(layoutURLs.style);
+                            }
+                            if (!Modernizr.canvas && layoutURLs.ie8Style) {
+                                TC.loadCSS(layoutURLs.ie8Style);
+                            }
+                            init();
+                        });
+                });
                 });
             }
             else {
@@ -1023,10 +1023,42 @@
         });
 
         // Redefinimos TC.error para añadir un aviso en el mapa
-        var oldError = TC.error;
+        /*var oldError = TC.error;
         TC.error = function (text) {
             oldError(text);
             self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+        };*/
+        var oldError = TC.error;
+        TC.error = function (text, options) {
+            if (!options) {
+                oldError(text);
+                self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+            }
+            else {
+                var fnc = function (text, mode) {
+                    switch (mode) {
+                        case TC.Consts.msgErrorMode.TOAST:                            
+                            if (!self.toast) { console.warn("No existe el objeto Toast"); return; }
+                            self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+                            break;
+                        case TC.Consts.msgErrorMode.EMAIL:
+                            JL("onerrorLogger").fatalException(text, null);
+                            break;
+                        case TC.Consts.msgErrorMode.CONSOLE:
+                        default:
+                            console.error(text)
+                            break;
+                    }
+                }
+                if (!$.isArray(options)) {
+                    fnc(text, options)
+                }
+                else {
+                    for (var i = 0; i < options.length; i++)
+                        fnc(text, options[i])
+                }
+            }
+
         };
     };
 
@@ -1199,35 +1231,35 @@
 
                             if (l) {
                                 if (l.isCompatible(self.crs)) {
-                                    self.layers[self.layers.length] = l;
-                                    if (l.isBase) {
+                                self.layers[self.layers.length] = l;
+                                if (l.isBase) {
                                         if (self.state) {
                                             l.isDefault = self.state.base === l.id;
                                         }
                                         else if (typeof self.options.defaultBaseLayer === 'string') {
-                                            l.isDefault = self.options.defaultBaseLayer === l.id;
-                                        }
-                                        else if (typeof self.options.defaultBaseLayer === 'number') {
-                                            l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
-                                        }
-                                        if (l.isDefault) {
-                                            self.wrap.setBaseLayer(l.wrap.getLayer());
-                                            self.baseLayer = l;
-                                        }
-                                        self.baseLayers[self.baseLayers.length] = l;
-                                        // If no base layer set, set the first one
-                                        if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
-                                            self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
-                                        }
+                                        l.isDefault = self.options.defaultBaseLayer === l.id;
                                     }
-                                    else {
-                                        self.wrap.insertLayer(l.wrap.getLayer(), idx);
-                                        self.workLayers[self.workLayers.length] = l;
+                                    else if (typeof self.options.defaultBaseLayer === 'number') {
+                                        l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
                                     }
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
-                                    if ($.isFunction(c)) {
-                                        c(l);
+                                    if (l.isDefault) {
+                                        self.wrap.setBaseLayer(l.wrap.getLayer());
+                                        self.baseLayer = l;
                                     }
+                                    self.baseLayers[self.baseLayers.length] = l;
+                                    // If no base layer set, set the first one
+                                    if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
+                                        self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
+                                    }
+                                }
+                                else {
+                                    self.wrap.insertLayer(l.wrap.getLayer(), idx);
+                                    self.workLayers[self.workLayers.length] = l;
+                                }
+                                self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
+                                if ($.isFunction(c)) {
+                                    c(l);
+                                }
 
                                 }
                                 else {
@@ -1235,13 +1267,12 @@
                                     var reason;
                                     if (l.isValidFromNames()) {
                                         reason = 'layerSrsNotCompatible'
-                                    }
-                                    else {
+                                    }else {
                                         reason = 'layerNameNotValid';
                                     }
                                     errorMessage += TC.Util.getLocaleString(self.options.locale, reason);
                                     TC.error(errorMessage);
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));
+                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));                                
                                 }
                             }
                             self._remainingLayers = self._remainingLayers - 1;
@@ -1355,10 +1386,10 @@
     };
 
     /*
-    *  setBaseLayer: Set a layer as base layer, must be in layers collection
-    *  Parameters: TC.Layer or string, callback which accepts layer as parameter
-    *  Returns: TC.Layer promise
-    */
+ *  setBaseLayer: Set a layer as base layer, must be in layers collection
+ *  Parameters: TC.Layer or string, callback which accepts layer as parameter
+ *  Returns: TC.Layer promise
+ */
     mapProto.setBaseLayer = function (layer, callback) {
         var self = this;
         var result = null;
@@ -1436,8 +1467,8 @@
         var self = this;
         if ($.isFunction(callback)) {
             if (self.isReady) {
-                callback();
-            }
+            callback();
+        }
             else {
                 self.one(TC.Consts.event.MAPREADY, callback);
             }
@@ -1471,15 +1502,15 @@
      */
     mapProto.getLayerTree = function () {
 
-
+        
         var _traverse = function (o, func) {
             for (var i in o.children) {
                 if (o.children && o.children.length > 0) {
-                    //bajar un nivel en el árbol
+                //bajar un nivel en el árbol
                     _traverse(o.children[i], func);
-                }
+                } 
 
-                func.apply(this, [o]);
+                func.apply(this, [o]);                
             }
         };
 
@@ -1492,7 +1523,7 @@
         }
         for (var i = 0; i < self.workLayers.length; i++) {
             var tree = self.workLayers[i].getTree();
-
+           
             if (tree) {
                 result.workLayers.unshift(tree);
             }
@@ -2005,6 +2036,25 @@
 
     var isRaster = function (layer) {
         return typeof layer === 'string' || (layer.type !== TC.Consts.layerType.VECTOR && layer.type !== TC.Consts.layerType.KML && layer.type !== TC.Consts.layerType.WFS);
+    };
+
+    mapProto.exportImage = function () {
+        var self = this;
+        var result = null;
+        var errorMsg = 'El mapa actual no es compatible con la exportación de imágenes';
+        var canvas = self.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
+        if (canvas && self.options.crossOrigin) {
+            try {
+                result = canvas.toDataURL();
+            }
+            catch (e) {
+                TC.error(errorMsg + ': ' + e.message);
+            }
+        }
+        else {
+            TC.error(errorMsg);
+        }
+        return result;
     };
 })();
 
