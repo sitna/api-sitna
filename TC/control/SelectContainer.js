@@ -45,6 +45,10 @@ TC.inherit(TC.control.SelectContainer, TC.Control);
             self.title = self.getLocaleString(self.options.title || 'moreControls');
             self._$div.find('h2').first().html(self.title);
 
+            // GLS: añado la etiqueta Novedad
+            var beta = " " + self.getLocaleString("beta");
+            $('<span class="tc-beta">' + beta + '</span>').appendTo(self._$div.find('h2'));
+
             var bufferDeferreds = new Array(self.controlOptions.length);
             for (var i = 0, len = self.controlOptions.length; i < len; i++) {
                 var ctl = self.controlOptions[i];
