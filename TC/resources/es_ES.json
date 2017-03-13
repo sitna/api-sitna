@@ -247,7 +247,7 @@
     "tr.lst.exportGPX": "Exportar a GPX",
     "tr.lst.exportKML": "Exportar a KML",
     "geo.error.savelocalstorage": "No es posible guardar en navegación privada.",
-    "geo.error.trackinglocalstorage": "Tracking no disponible en navegación privada.",
+    "geo.error.trackinglocalstorage": "Hay un problema con su navegador que impide el correcto funcionamiento del tracking, por favor, revise la configuración de su navegador como puede ser la navegación privada/anónima.",
     "geo.error.out": "Se encuentra actualmente fuera de los límites del mapa de IDENA",
     "geo.error.permission_denied": "Geolocalización no permitida, habilite la geolocalización en el dispositivo.",
     "geo.error.position_unavailable": "La posición del dispositivo no se pudo determinar.",
@@ -326,6 +326,8 @@
     "deleteFeature.confirm": "¿Desea eliminar esta entidad del mapa?",
     "moreControls": "Más controles",
     "openFile": "Abrir archivo",
-    "fileImport.instructions": "Puede añadir el contenido de archivos KML, GML, GPX, GeoJSON o WKT desde aquí o arrastrándolos al área del mapa.",
+    "fileImport.instructions": "Puede añadir el contenido de archivos KML, GML, GPX, GeoJSON, TopoJSON o WKT desde aquí o arrastrándolos al área del mapa.",
+    "fileImport.error.reasonUnknown": "El archivo \"{fileName}\" no se ha podido cargar. Compruebe que tiene un formato de los soportados (KML, GPX, GML, GeoJSON, TopoJSON, WKT) y que no está dañado.",
+    "fileImport.error.reasonKmz":  "El archivo \"{fileName}\" no se ha podido cargar porque esta aplicación no soporta el formato KMZ. Convierta el archivo a KML para cargarlo.",
     "mapStateNotValid": "Imposible establecer estado de aplicación"
 }

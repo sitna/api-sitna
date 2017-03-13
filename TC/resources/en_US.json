@@ -246,7 +246,7 @@
     "tr.lst.exportGPX": "Export to GPX",
     "tr.lst.exportKML": "Export to KML",
     "geo.error.savelocalstorage": "Sorry, but it is not possible to save in private mode",
-    "geo.error.trackinglocalstorage": "Sorry, tracking is not available in private mode",
+    "geo.error.trackinglocalstorage": "Sorry, there is an issue regarding your browser that is blocking the device tracking feature. Please, check your browser configuration such as private/anonymous browsing.",
     "geo.error.out": "You are currently outside the IDENA map boundaries ",
     "geo.error.permission_denied": "Geolocation not allowed. Please, enable geolocation on your device and try again",
     "geo.error.position_unavailable": "Sorry, but your device current location could not be determined.",
@@ -325,6 +325,8 @@
     "deleteFeature.confirm": "Do you wish to delete this feature from map?",
     "moreControls": "More controls",
     "openFile": "Open file",
-    "fileImport.instructions": "You can add the content from KML, GML, GPX, GeoJSON or WKT files from here or by dropping them onto the map area.",
+    "fileImport.instructions": "You can add the content from KML, GML, GPX, GeoJSON, TopoJSON or WKT files from here or by dropping them onto the map area.",
+    "fileImport.error.reasonUnknown": "Could not load file \"{fileName}\". Check that it has one of the supported formats (KML, GPX, GML, GeoJSON, TopoJSON, WKT) and it is not damaged.",
+    "fileImport.error.reasonKmz":  "Could not load file \"{fileName}\" because this application does not support KMZ format. Convert the file to KML before loading it.",
     "mapStateNotValid": "Impossible to set the application state"
 }
