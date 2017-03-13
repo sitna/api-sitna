@@ -35,9 +35,12 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         layerUid: 'tcLayerUid'
     };
 
+    var CLICKEVENT = 'click.tc';
+
     ctlProto.register = function (map) {
         var self = this;
         TC.control.MapContents.prototype.register.call(self, map);
+        self._addBrowserEventHandlers();
 
         self.$events.on(TC.Consts.event.CONTROLRENDER, function () {
             var controlOptions = self.options.controls || [];
@@ -50,25 +53,6 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
             }
         });
 
-        self._$div.on(TC.Consts.event.CLICK, 'input[type=checkbox]', function (e) {
-            var $cb = $(e.target);
-            var layer = $cb.closest('ul.' + self.CLASS + '-wl').children('li').has($cb).data(_dataKeys.layer);
-            var uid = $cb.parents('li').first().data(_dataKeys.layerUid);
-
-            var checked = $cb.prop('checked');
-            layer.setNodeVisibility(uid, checked);
-
-            e.stopPropagation();
-
-        }).on('mouseup.tc', 'li', function (e) {
-            var $li = $(e.target);
-            if (!$li.hasClass(self.CLASS + '-leaf')) {
-                $li.toggleClass(TC.Consts.classes.COLLAPSED);
-                $li.find('ul').first().toggleClass(TC.Consts.classes.COLLAPSED);
-                e.stopPropagation();
-            }
-        });
-
         map.on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
             if (e && e.layer) {
                 e.layer.map = map;
@@ -76,6 +60,29 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
                 self.updateLayerTree(e.layer);
             }
         });
+    };
+
+    ctlProto._addBrowserEventHandlers = function () {
+        var self = this;
+        self._$div
+            .on(CLICKEVENT, 'input[type=checkbox]', function (e) { // No usamos TC.Consts.event.CLICK porque en iPad los eventos touchstart no van bien en los checkbox
+                var $cb = $(e.target);
+                var layer = $cb.closest('ul.' + self.CLASS + '-wl').children('li').has($cb).data(_dataKeys.layer);
+                var uid = $cb.parents('li').first().data(_dataKeys.layerUid);
+
+                var checked = $cb.prop('checked');
+                layer.setNodeVisibility(uid, checked);
+
+                e.stopPropagation();
+            })
+            .on(TC.Consts.event.MOUSEUP, 'li', function (e) {
+                var $li = $(e.target);
+                if (!$li.hasClass(self.CLASS + '-leaf')) {
+                    $li.toggleClass(TC.Consts.classes.COLLAPSED);
+                    $li.find('ul').first().toggleClass(TC.Consts.classes.COLLAPSED);
+                    e.stopPropagation();
+                }
+            });
     };
 
     ctlProto.update = function () {
