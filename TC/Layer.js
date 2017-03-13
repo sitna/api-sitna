@@ -216,12 +216,13 @@ TC.Layer.prototype.getOpacity = function () {
  * equivalente que llamar a TC.Layer.{{#crossLink "TC.Layer/setVisibility:method"}}{{/crossLink}} con el valor del parámetro <code>false</code>.
  * @method setOpacity
  * @param {number} opacity Valor entre <code>0</code> (capa transparente) y <code>1</code> (capa opaca).
+ * @param {boolean} mute Indica si al establecer opacidad no se lanza evento LAYEROPACITY.
  */
-TC.Layer.prototype.setOpacity = function (opacity) {
+TC.Layer.prototype.setOpacity = function (opacity, mute) {
     var layer = this;
     $.when(this.wrap.getLayer()).then(function (olLayer) {
         olLayer.setOpacity(opacity);
-        if (layer.map) {
+        if (layer.map && !mute) {
             layer.map.$events.trigger($.Event(TC.Consts.event.LAYEROPACITY, { layer: layer, opacity: opacity }));
         }
     });
