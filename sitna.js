@@ -50,6 +50,9 @@ SITNA.syncLoadJS = function (url) {
  * @param {string|number} [options.defaultBaseLayer] Identificador o índice en <code>baseLayers</code> de la capa base por defecto. 
  * @param {SITNA.cfg.MapControlOptions} [options.controls] Opciones de controles de mapa.
  * @param {SITNA.cfg.StyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
+ * @param {string} [options.crossOrigin] Valor del atributo <code>crossorigin</code> de las imágenes del mapa para <a href="https://developer.mozilla.org/es/docs/Web/HTML/Imagen_con_CORS_habilitado">habilitar CORS</a>.
+ * Es necesario establecer esta opción para poder utilizar el método SITNA.Map.{{#crossLink "SITNA.Map/exportImage:method"}}{{/crossLink}}. 
+ * Los valores soportados son <code>anonymous</code> y <code>use-credentials</code>.
  * @param {boolean} [options.mouseWheelZoom] La rueda del ratón se puede utilizar para hacer zoom en el mapa.
  * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver SITNA.Cfg.{{#crossLink "SITNA.Cfg/proxy:property"}}{{/crossLink}}).
  * @example
@@ -1163,6 +1166,39 @@ SITNA.Map = function (div, options) {
 
         if (callback)
             callback();
+    };
+
+    /**
+      * <p>Exporta el mapa a una imagen PNG. Para poder utilizar este método hay que establecer la opción <code>crossOrigin</code> al instanciar
+      * SITNA.{{#crossLink "SITNA.Map"}}{{/crossLink}}.</p>
+      * <p>Puede consultar también el ejemplo <a href="../../examples/Map.exportImage.html">online</a>.</p>
+      *
+      * @method exportImage
+      * @return {String} Imagen en un <a href="https://developer.mozilla.org/es/docs/Web/HTTP/Basics_of_HTTP/Datos_URIs">data URI</a>.
+      * @example
+      *     <div id="controls" class="controls">
+      *          <button id="imageBtn">Exportar imagen</button>
+      *     </div>
+      *      <div id="mapa"></div>
+      *      <script>
+      *          // Crear un mapa con la opción de imágenes CORS habilitada.
+      *          var map = new SITNA.Map("mapa", { crossOrigin: "anonymous" });
+      *
+      *          var exportImage = function () {
+      *              var dataUrl = map.exportImage();
+      *              var image = document.createElement("img");
+      *              image.setAttribute("src", dataUrl);
+      *              image.style.width = '25vw';
+      *              var div = document.createElement("div");
+      *              div.appendChild(image);
+      *              document.getElementById("controls").appendChild(div);
+      *          };
+      *         
+      *          document.getElementById("imageBtn").addEventListener("click", exportImage);
+      *      </script>
+      */
+    map.exportImage = function () {
+        return tcMap.exportImage();
     };
 
     map.search = null;
