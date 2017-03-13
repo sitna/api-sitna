@@ -25,27 +25,14 @@ TC.inherit(TC.feature.Circle, TC.Feature);
 (function () {
     var featProto = TC.feature.Circle.prototype;
 
+    featProto.STYLETYPE = TC.Consts.geom.POLYGON;
+
     featProto.getCoords = function () {
         return this.wrap.getGeometry();
     };
 
     featProto.setCoords = function (coords) {
         return this.wrap.setGeometry(coords);
-    };
-
-    featProto.getInfo = function () {
-        var self = this;
-        var result = TC.Feature.prototype.getInfo.apply(self, arguments);
-        if (!result) {
-            result = self.title;
-            if (self.group) {
-                result += ' ' + self.group;
-            }
-        }
-        if (!result) {
-            result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
-        }
-        return result;
     };
 
 })();

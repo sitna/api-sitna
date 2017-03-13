@@ -80,19 +80,4 @@ TC.inherit(TC.feature.Point, TC.Feature);
         return this.wrap.setGeometry(coords);
     };
 
-    featProto.getInfo = function () {
-        var self = this;
-        var result = TC.Feature.prototype.getInfo.apply(self, arguments);
-        if (!result) {
-            result = self.title;
-            if (self.group) {
-                result += ' ' + self.group;
-            }
-        }
-        if (!result) {
-            result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
-        }
-        return result;
-    };
-
 })();
