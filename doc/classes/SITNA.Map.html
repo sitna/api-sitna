@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.3</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.2.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -184,6 +184,13 @@ estar dentro de una función de callback pasada como parámetro al método <a hr
             
                 <li class="index-item method">
                     <a href="#method_addMarker">addMarker</a>
+
+                    
+                    
+                </li>
+            
+                <li class="index-item method">
+                    <a href="#method_exportImage">exportImage</a>
 
                     
                     
@@ -544,6 +551,23 @@ Para más información consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#pr
                                 
                                 <li class="param">
                                     
+                                        <code class="param-name optional">[crossOrigin]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Valor del atributo <code>crossorigin</code> de las imágenes del mapa para <a href="https://developer.mozilla.org/es/docs/Web/HTML/Imagen_con_CORS_habilitado">habilitar CORS</a>.
+Es necesario establecer esta opción para poder utilizar el método SITNA.Map.<a href="../classes/SITNA.Map.html#method_exportImage" class="crosslink">exportImage</a>. 
+Los valores soportados son <code>anonymous</code> y <code>use-credentials</code>.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
                                         <code class="param-name optional">[mouseWheelZoom]</code>
                                         <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
                                         <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
@@ -704,7 +728,7 @@ Para más información consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#pr
             
         
         
-        <a href="../files/sitna.js.html#l121"><code>sitna.js:121</code></a>
+        <a href="../files/sitna.js.html#l124"><code>sitna.js:124</code></a>
         
         </p>
 
@@ -861,7 +885,7 @@ El tipo de la capa no puede ser <a href="../classes/SITNA.consts.LayerType.html#
             
         
         
-        <a href="../files/sitna.js.html#l205"><code>sitna.js:205</code></a>
+        <a href="../files/sitna.js.html#l208"><code>sitna.js:208</code></a>
         
         </p>
 
@@ -1186,6 +1210,114 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 </div>
 
         
+            <a name="method_exportImage" class="anchor-link"></a>
+<div class="method item">
+    <h3 class="name"><code>exportImage</code>
+
+    
+        <span class="paren">()</span>
+    
+
+    
+        <span class="returns-inline">
+            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+        </span>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1171"><code>sitna.js:1171</code></a>
+        
+        </p>
+
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+
+        <div class="description">
+            <p>Exporta el mapa a una imagen PNG. Para poder utilizar este método hay que establecer la opción <code>crossOrigin</code> al instanciar
+SITNA.<a href="../classes/SITNA.Map.html" class="crosslink">SITNA.Map</a>.</p>
+<p>Puede consultar también el ejemplo <a href="../../examples/Map.exportImage.html">online</a>.</p>
+        </div>
+
+        
+
+        
+            <div class="returns">
+                <h4>Returns:</h4>
+
+                <div class="returns-description">
+                    
+                        
+                            <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>:
+                        
+                        <p>Imagen en un <a href="https://developer.mozilla.org/es/docs/Web/HTTP/Basics_of_HTTP/Datos_URIs">data URI</a>.</p>
+
+                    
+                </div>
+            </div>
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;controls&quot; class=&quot;controls&quot;&gt;
+     &lt;button id=&quot;imageBtn&quot;&gt;Exportar imagen&lt;/button&gt;
+&lt;/div&gt;
+ &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+ &lt;script&gt;
+     // Crear un mapa con la opción de imágenes CORS habilitada.
+     var map = new SITNA.Map(&quot;mapa&quot;, { crossOrigin: &quot;anonymous&quot; });
+
+     var exportImage = function () {
+         var dataUrl = map.exportImage();
+         var image = document.createElement(&quot;img&quot;);
+         image.setAttribute(&quot;src&quot;, dataUrl);
+         image.style.width = &#39;25vw&#39;;
+         var div = document.createElement(&quot;div&quot;);
+         div.appendChild(image);
+         document.getElementById(&quot;controls&quot;).appendChild(div);
+     };
+
+     document.getElementById(&quot;imageBtn&quot;).addEventListener(&quot;click&quot;, exportImage);
+ &lt;/script&gt;</code></pre>
+
+                </div>
+            </div>
+        
+    </div>
+</div>
+
+        
             <a name="method_getCommonwealths" class="anchor-link"></a>
 <div class="method item">
     <h3 class="name"><code>getCommonwealths</code>
@@ -1233,7 +1365,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l643"><code>sitna.js:643</code></a>
+        <a href="../files/sitna.js.html#l646"><code>sitna.js:646</code></a>
         
         </p>
 
@@ -1374,7 +1506,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l690"><code>sitna.js:690</code></a>
+        <a href="../files/sitna.js.html#l693"><code>sitna.js:693</code></a>
         
         </p>
 
@@ -1515,7 +1647,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l549"><code>sitna.js:549</code></a>
+        <a href="../files/sitna.js.html#l552"><code>sitna.js:552</code></a>
         
         </p>
 
@@ -1656,7 +1788,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l596"><code>sitna.js:596</code></a>
+        <a href="../files/sitna.js.html#l599"><code>sitna.js:599</code></a>
         
         </p>
 
@@ -1797,7 +1929,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l388"><code>sitna.js:388</code></a>
+        <a href="../files/sitna.js.html#l391"><code>sitna.js:391</code></a>
         
         </p>
 
@@ -1906,7 +2038,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l1101"><code>sitna.js:1101</code></a>
+        <a href="../files/sitna.js.html#l1104"><code>sitna.js:1104</code></a>
         
         </p>
 
@@ -2058,7 +2190,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l737"><code>sitna.js:737</code></a>
+        <a href="../files/sitna.js.html#l740"><code>sitna.js:740</code></a>
         
         </p>
 
@@ -2206,7 +2338,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l771"><code>sitna.js:771</code></a>
+        <a href="../files/sitna.js.html#l774"><code>sitna.js:774</code></a>
         
         </p>
 
@@ -2366,7 +2498,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l981"><code>sitna.js:981</code></a>
+        <a href="../files/sitna.js.html#l984"><code>sitna.js:984</code></a>
         
         </p>
 
@@ -2565,7 +2697,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l836"><code>sitna.js:836</code></a>
+        <a href="../files/sitna.js.html#l839"><code>sitna.js:839</code></a>
         
         </p>
 
@@ -2713,7 +2845,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l804"><code>sitna.js:804</code></a>
+        <a href="../files/sitna.js.html#l807"><code>sitna.js:807</code></a>
         
         </p>
 
@@ -2860,7 +2992,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l165"><code>sitna.js:165</code></a>
+        <a href="../files/sitna.js.html#l168"><code>sitna.js:168</code></a>
         
         </p>
 
@@ -3008,7 +3140,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l342"><code>sitna.js:342</code></a>
+        <a href="../files/sitna.js.html#l345"><code>sitna.js:345</code></a>
         
         </p>
 
