@@ -131,6 +131,7 @@ if (!TC.control.FeatureInfoCommons) {
             draggable: self.options.draggable
         })).then(function (popup) {
             self.popup = popup;
+            popup.caller = self;
             map.on(TC.Consts.event.POPUP, function (e) {
                 self.onShowPopUp(e)
 
