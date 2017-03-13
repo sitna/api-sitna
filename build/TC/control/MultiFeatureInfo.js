@@ -57,6 +57,7 @@ if (!TC.Control) {
             draggable: self.options.draggable
         })).then(function (popup) {
             self.popup = popup;
+            popup.caller = self;
         });
     };
 

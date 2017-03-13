@@ -106,7 +106,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
         return /[&?]REQUEST=getLegendGraphic/i.test(url);
     };
 
-    var setImgSrc = function ($img, src) {
+    var setImgSrc = function ($img, src, SSLSupported) {
         var ERROR = 'error.tc';
         if (TC.Cfg.proxy) {
             $img.off(ERROR).on(ERROR, function () {
@@ -114,7 +114,19 @@ TC.inherit(TC.control.MapContents, TC.Control);
             });
         }
         var startIdx = src.indexOf('//');
-        $img.attr('src', startIdx < 0 ? src : src.substr(startIdx));
+        if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(src)) {
+            var srcSSL = "";
+            if (SSLSupported == true)
+                srcSSL = src.replace(/^(f|ht)tp?:\/\//i, "https://");
+            else if (TC.isUsingServiceWorker())
+                srcSSL = TC.proxify(src)
+            else
+                srcSSL = src;
+            $img.attr('src', srcSSL);
+        }
+        else {
+            $img.attr('src', startIdx < 0 ? src : src.substr(startIdx));
+        }
     };
 
     /**
@@ -158,7 +170,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                         ';fontAntiAliasing:true';
                     $img.data(_dataKeys.img, imgSrc);
                 }
-                setImgSrc($img, imgSrc);
+                setImgSrc($img, imgSrc, layer.usesSSL);
             }
         }
     };

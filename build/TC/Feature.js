@@ -106,7 +106,9 @@ TC.Feature.prototype.getInfo = function () {
     if (typeof data === 'object') {
         var template = self.wrap.getTemplate();
         if (template) {
-            result = template.replace(/\$\[(\w+)\]/g, function (match, p1) {
+            // GLS: Contemplo en la expresi\u00f3n regular la opci\u00f3n de que el nombre del campo se componga de $[aaa/abc/loQueMeInteresa] 
+            // (la expresi\u00f3n no est\u00e1 limitada a 2 niveles), hasta ahora se manejaba $[loQueMeInteresa]
+            result = template.replace(/\$\[?(?:\w+\/)*(\w+)\]/g, function (match, p1) {
                 return data[p1];
             });
         }
@@ -114,7 +116,7 @@ TC.Feature.prototype.getInfo = function () {
             var html = [];
             for (var key in data) {
                 var value = data[key];
-                if (typeof value === 'string' || typeof value === 'number') {
+                if (typeof value === 'string' || typeof value === 'number' || typeof value === 'undefined') {
                     html[html.length] = '<tr><th>';
                     html[html.length] = key;
                     html[html.length] = '</th><td>';
@@ -124,7 +126,7 @@ TC.Feature.prototype.getInfo = function () {
                         html[html.length] = value;
                         html[html.length] = '" target="_blank">';
                     }
-                    html[html.length] = value;
+                    html[html.length] = value !== void (0) ? value : '&mdash;';
                     if (isUrl) {
                         html[html.length] = '</a>';
                     }
@@ -141,6 +143,15 @@ TC.Feature.prototype.getInfo = function () {
     else if (typeof data === 'string') {
         result = data;
     }
+    if (!result) {
+        result = self.title;
+        if (self.group) {
+            result += ' ' + self.group;
+        }
+    }
+    if (!result) {
+        result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
+    }
     return result;
 };
 
@@ -148,7 +159,18 @@ TC.Feature.prototype.showPopup = function (control) {
     var self = this;
     if (self.showsPopup && self.layer && self.layer.map) {
         var ctlDeferred;
-        var popup = control || self.popup || self.layer.map.getControlsByClass('TC.control.Popup')[0];
+        var popup = control || self.popup;
+        if (!popup) {
+            // Buscamos un popup existente que no est\u00e9 asociado a un control.
+            var popups = self.layer.map.getControlsByClass('TC.control.Popup');
+            for (var i = 0, len = popups.length; i < len; i++) {
+                var p = popups[i];
+                if (!p.caller) {
+                    popup = p;
+                    break;
+                }
+            }
+        }
         if (popup) {
             ctlDeferred = $.Deferred();
             ctlDeferred.resolve(popup);

@@ -106,6 +106,13 @@ var TC = TC || {};
             return /^(http|https|ftp|mailto)\:\/\//i.test(text);
         },
 
+        isSecureURL: function (url) {
+            //sino empieza por http ni por https la consideramos segura
+            if (!/^(f|ht)tps?:\/\//i.test(url))
+                return true;
+            return (/^(f|ht)tps:\/\//i.test(url));
+        },
+
         isSameOrigin: function (uri) {
             var result = uri.indexOf("http") !== 0 && uri.indexOf("//") !== 0;
             var urlParts = !result && uri.match(TC.Consts.url.SPLIT_REGEX);

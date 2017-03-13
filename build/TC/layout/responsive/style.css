@@ -627,7 +627,8 @@ li.tc-ctl-toc-node {
 }
 
 .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
-    font-size: 1.25em;
+    font-size: 1.5em;
+    line-height: 1.75em;
     font-family: 'FontAwesome';
     content: '\f141';
 }
@@ -736,6 +737,8 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     padding: 0;
 }
 
+
+
     .tc-ctl-search h2 {
         display: none;
     }
@@ -743,13 +746,6 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
 .tc-ctl-search-content {
     margin: auto;
     padding: 1em 0 1em 0.2em;
-}
-
-.tools-panel .tc-ctl-search-content .tc-ctl.tc-collapsed > div {
-    margin: auto;
-    padding: 1em 0 1em 0.2em;
-    max-height: none;
-    opacity: 1;
 }
 
 .tc-ctl-search-txt {
@@ -1991,8 +1987,17 @@ label.tc-ctl-edit-btn-polygon span {
         height: 2em;
     }
 
-    .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
-        font-size: 1em;
+    /* Necesario para IE porque acumula estilos con tcmap.css */
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
+        font-size: initial;
+    }
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
+        font-size: 0.67em;
+    }
+
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
+        font-size: 1.5em;
+        line-height: 1.5em;
     }
 }
 
@@ -2218,4 +2223,11 @@ label.tc-ctl-edit-btn-polygon span {
 input[type=range][disabled] {
     background-color: transparent;
     border-color: transparent;
+}
+
+.tools-panel .tc-ctl-search.tc-collapsed > div {
+    margin: auto;
+    padding: 1em 0 1em 0.2em;
+    max-height: none;
+    opacity: 1;
 }

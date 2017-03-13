@@ -1817,27 +1817,32 @@ div.tc-ctl-lcat-legend {
     margin-left: 0.4em;
 }
 
-.tc-ctl-ltoc li.tc-ctl-ltoc-elm, .tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-drag.tc-dragend {
+.tc-ctl-ltoc li.tc-ctl-ltoc-elm {
     position: relative;
     background-color: #fff;
     border: 1px solid #999;
     border-radius: 0.3em;
     padding: 0.3em;
     margin-top: -1px;
-    -webkit-transition: all .3s ease;
-    -moz-transition: all .3s ease;
-    -ie-transition: all .3s ease;
-    -o-transition: all .3s ease;
-    transition: all .3s ease;
+    box-sizing: border-box;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ie-transition: none;
+    -o-transition: none;
+    transition: none;
 }
 
-    .tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-ctl-ltoc-elm-notvisible {
-        color: #ccc;
-    }
+.tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-dragend {
+    -webkit-transition: all .1s linear;
+    -moz-transition: all .1s linear;
+    -ie-transition: all .1s linear;
+    -o-transition: all .1s linear;
+    transition: all .1s linear;
+}
 
-    .tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-drag {
-        transition: none;
-    }
+.tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-ctl-ltoc-elm-notvisible {
+    color: #ccc;
+}
 
 .tc-ctl-ltoc .tc-ctl-ltoc-lyr {
     width: 90%;
@@ -1916,10 +1921,6 @@ div.tc-ctl-lcat-legend {
 
 .tc-ctl-ltoc .tc-ctl-ltoc-del:after {
     content: '\2297';
-}
-
-.tc-ctl-ltoc .tc-ctl-ltoc-elm.tc-drop {
-    background-color: #eee;
 }
 
 .tc-ctl-ltoc input[type=checkbox] {
@@ -4858,7 +4859,7 @@ body .tc-map .tc-modal .tc-modal-background {
 
 
 .tc-modal .tc-modal-body {
-    padding: 10px 20px;
+    padding: 10px 20px 20px 20px;
     font-size: 14px;
     color: #333;
 }

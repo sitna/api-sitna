@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.1.3</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.2.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -152,6 +152,9 @@ SITNA.syncLoadJS = function (url) {
  * @param {string|number} [options.defaultBaseLayer] Identificador o índice en &lt;code&gt;baseLayers&lt;/code&gt; de la capa base por defecto. 
  * @param {SITNA.cfg.MapControlOptions} [options.controls] Opciones de controles de mapa.
  * @param {SITNA.cfg.StyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
+ * @param {string} [options.crossOrigin] Valor del atributo &lt;code&gt;crossorigin&lt;/code&gt; de las imágenes del mapa para &lt;a href=&quot;https://developer.mozilla.org/es/docs/Web/HTML/Imagen_con_CORS_habilitado&quot;&gt;habilitar CORS&lt;/a&gt;.
+ * Es necesario establecer esta opción para poder utilizar el método SITNA.Map.{{#crossLink &quot;SITNA.Map/exportImage:method&quot;}}{{/crossLink}}. 
+ * Los valores soportados son &lt;code&gt;anonymous&lt;/code&gt; y &lt;code&gt;use-credentials&lt;/code&gt;.
  * @param {boolean} [options.mouseWheelZoom] La rueda del ratón se puede utilizar para hacer zoom en el mapa.
  * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver SITNA.Cfg.{{#crossLink &quot;SITNA.Cfg/proxy:property&quot;}}{{/crossLink}}).
  * @example
@@ -1265,6 +1268,39 @@ SITNA.Map = function (div, options) {
 
         if (callback)
             callback();
+    };
+
+    /**
+      * &lt;p&gt;Exporta el mapa a una imagen PNG. Para poder utilizar este método hay que establecer la opción &lt;code&gt;crossOrigin&lt;/code&gt; al instanciar
+      * SITNA.{{#crossLink &quot;SITNA.Map&quot;}}{{/crossLink}}.&lt;/p&gt;
+      * &lt;p&gt;Puede consultar también el ejemplo &lt;a href=&quot;../../examples/Map.exportImage.html&quot;&gt;online&lt;/a&gt;.&lt;/p&gt;
+      *
+      * @method exportImage
+      * @return {String} Imagen en un &lt;a href=&quot;https://developer.mozilla.org/es/docs/Web/HTTP/Basics_of_HTTP/Datos_URIs&quot;&gt;data URI&lt;/a&gt;.
+      * @example
+      *     &lt;div id=&quot;controls&quot; class=&quot;controls&quot;&gt;
+      *          &lt;button id=&quot;imageBtn&quot;&gt;Exportar imagen&lt;/button&gt;
+      *     &lt;/div&gt;
+      *      &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+      *      &lt;script&gt;
+      *          // Crear un mapa con la opción de imágenes CORS habilitada.
+      *          var map = new SITNA.Map(&quot;mapa&quot;, { crossOrigin: &quot;anonymous&quot; });
+      *
+      *          var exportImage = function () {
+      *              var dataUrl = map.exportImage();
+      *              var image = document.createElement(&quot;img&quot;);
+      *              image.setAttribute(&quot;src&quot;, dataUrl);
+      *              image.style.width = &#x27;25vw&#x27;;
+      *              var div = document.createElement(&quot;div&quot;);
+      *              div.appendChild(image);
+      *              document.getElementById(&quot;controls&quot;).appendChild(div);
+      *          };
+      *         
+      *          document.getElementById(&quot;imageBtn&quot;).addEventListener(&quot;click&quot;, exportImage);
+      *      &lt;/script&gt;
+      */
+    map.exportImage = function () {
+        return tcMap.exportImage();
     };
 
     map.search = null;

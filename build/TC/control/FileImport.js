@@ -48,35 +48,78 @@ TC.inherit(TC.control.FileImport, TC.Control);
             map.wrap.enableDragAndDrop(self.options);
         }
 
-        map.on(TC.Consts.event.FEATURESIMPORT, function (e) {
-            // Ignoramos los GPX (se supone que los gestionar\u00e1 Geolocation)
-            var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
-            if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
-                return;
-            }
-            map.addLayer({
-                id: TC.getUID(),
-                title: e.fileName,
-                type: TC.Consts.layerType.VECTOR
-            }).then(function (layer) {
-                for (var i = 0, len = e.features.length; i < len; i++) {
-                    layer.addFeature(e.features[i]);
+        map
+            .on(TC.Consts.event.FEATURESIMPORT, function (e) {
+                // Ignoramos los GPX (se supone que los gestionar\u00e1 Geolocation)
+                var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
+                if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
+                    return;
                 }
-                setTimeout(function () {
-                    map.zoomToFeatures(layer.features);
-                }, 100);
+                map.addLayer({
+                    id: TC.getUID(),
+                    title: e.fileName,
+                    type: TC.Consts.layerType.VECTOR
+                }).then(function (layer) {
+                    var geogCrs = 'EPSG:4326';
+                    var projectGeom = function (feature) {
+                        var geom = feature.geometry;
+                        if (geom) {
+                            var match = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(geom.join(' '));
+                            if (match && match.length >= 3 &&
+                                    Math.abs(match[1]) <= 180 &&
+                                    Math.abs(match[3]) <= 90) {
+
+                                feature.setCoords(TC.Util.reproject(geom, geogCrs, self.map.crs));
+                            }
+                        }
+
+                        return feature;
+                    };
+
+                    for (var i = 0, len = e.features.length; i < len; i++) {
+                        var projectedFeature = projectGeom(e.features[i]);
+                        layer.addFeature(projectedFeature);
+                    }
+                    setTimeout(function () {
+                        map.zoomToFeatures(layer.features);
+                    }, 100);
+                });
+            })
+            .on(TC.Consts.event.FEATURESIMPORTERROR, function (e) {
+                var dictKey;
+                var fileName = e.file.name;
+                if (fileName.toLowerCase().substr(fileName.length - 4) === '.kmz') {
+                    dictKey = 'fileImport.error.reasonKmz';
+                }
+                else {
+                    dictKey = 'fileImport.error.reasonUnknown';
+                }
+
+                TC.error(self.getLocaleString(dictKey, { fileName: fileName }), TC.Consts.msgErrorMode.TOAST);
+
+                var reader = new FileReader();
+                reader.onload = function (event) {
+                    TC.error("Error en la subida de un archivo: \n\n\t Nombre del archivo: " + fileName + " \n\t Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL);
+                };
+                reader.readAsText(e.file);                
             });
-        });
     };
 
     ctlProto.render = function () {
         var self = this;
-        self.renderData({ formats: self.formats }, function() {
-            self._$div.find('input[type=file]').on('change', function (e) {
-                if (self.map) {
-                    self.map.wrap.loadFiles(e.target.files);
-                }
-            });
+        self.renderData({ formats: self.formats }, function () {            
+            self._$div.find('input[type=file]')
+                // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
+                .on(TC.Consts.event.CLICK, function (e) {
+                    $(this).wrap('<form>').closest('form').get(0).reset();
+                    $(this).unwrap();
+                })
+                .on('change', function (e) {
+                    if (self.map) {
+                        console.log('salta el change');
+                        self.map.wrap.loadFiles(e.target.files);
+                    }
+                });
         });
     };
 

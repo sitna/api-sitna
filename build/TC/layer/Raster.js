@@ -63,6 +63,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             TC.capabilities[layer.options.url] = TC.capabilities[layer.options.url] || capabilities;
             TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
 
+            if (capabilities.usesProxy) {
+                layer.usesProxy = true;
+            }
+            if (capabilities.usesSSL) {
+                layer.usesSSL = true;
+            }
             _createLayer(layer);
         });
 
@@ -119,15 +125,111 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             return result;
         };
 
+        var reallyCORSError = function (url) {
+            var defer = $.Deferred();
+            $.ajax({
+                type: "GET",
+                url: url,
+                dataType: "jsonp",
+                success: function (data) {
+                    //successful authentication here
+                    defer.resolve(false);
+                },
+                error: function (XHR, textStatus, errorThrown) {
+                    if (XHR.status && XHR.status === 200)
+                        defer.resolve(true);
+                    else
+                        defer.resolve(false);
+                }
+            });
+            return defer;
+        };
+
         var successCallback = function (data) {
             success(layer, data);
         };
+        //Declaro un funci\u00f3n que devuelve false si todav\u00eda no se cargado el SW y una vez cargado devuelve el valor del atributo
+        //serviceWorkerEnabled del control SWCacheClient
+        TC.isUsingServiceWorker = null;
+        if (!TC.isUsingServiceWorker) {
+            var map = layer.map || $("#map").data("map");
+            var control = map ? map.getControlsByClass(TC.control.SWCacheClient) : null;
+            if (control && control.length > 0) {
+                //busco es control de tipo SWCacheClient y me guardo la promesa te indica cuando se ha leido el SW
+                TC.isUsingServiceWorker = function () {
+                    if (control[0].getServiceWorker().state() !== "pending")
+                        return control[0].serviceWorkerEnabled;
+                    else
+                        return false;
+                }
+            }
+            else
+                TC.isUsingServiceWorker = function () { return false; }
+        }
         // Lanzamos la primera petici\u00f3n sin proxificar. Si falla (CORS, HTTP desde HTTPS...) pedimos proxificando.
-        getRequest(url).then(successCallback, function () {
-            getRequest(url, true).then(successCallback, function (jqXHR, textStatus, errorThrown) {
-                error(layer, textStatus + '][' + errorThrown);
+        if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(url)) {
+            var urlSecure = url.replace(/^(f|ht)tp?:\/\//i, "https://");
+            getRequest(urlSecure).then(successCallback, function (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status) {
+                    getRequest(url, true).then(function (data) {
+                        layer.usesProxy = true;
+                        layer.usesSSL = true;
+                        successCallback(data);
+                    }, function (jqXHR, textStatus, errorThrown) {
+                        error(layer, textStatus + '][' + errorThrown);
+                    });
+                }
+                else {
+                    if (TC.isUsingServiceWorker && TC.isUsingServiceWorker()) {
+                        getRequest(url, true).then(function (data) {
+                            layer.usesProxy = true;
+                            layer.usesSSL = false;
+                            successCallback(data);
+                        }, function (jqXHR, textStatus, errorThrown) {
+                            error(layer, textStatus + '][' + errorThrown);
+                        });
+                    }
+                    else {
+                        reallyCORSError(urlSecure).then(function (corsError) {
+                            if (!corsError) {
+                                getRequest(url, true).then(function (data) {
+                                    layer.usesProxy = true;
+                                    layer.usesSSL = false;
+                                    successCallback(data);
+                                }, function (jqXHR, textStatus, errorThrown) {
+                                    error(layer, textStatus + '][' + errorThrown);
+                                });
+                            }
+                            else {
+                                getRequest(url, true).then(function (data) {
+                                    layer.usesProxy = true;
+                                    layer.usesSSL = true;
+                                    successCallback(data);
+                                }, function (jqXHR, textStatus, errorThrown) {
+                                    error(layer, textStatus + '][' + errorThrown);
+                                });
+                            }
+                        });
+                    }
+                }
             });
-        });
+        }
+        else {
+            layer.usesSSL = true;
+            getRequest(url).then(successCallback, function (jqXHR, textStatus, errorThrown) {
+                if (!jqXHR.status) {
+                    layer.usesProxy = true;
+                    getRequest(url, true).then(function (data) {
+                        successCallback(data);
+                    }, function (jqXHR, textStatus, errorThrown) {
+                        error(layer, textStatus + '][' + errorThrown);
+                    });
+                }
+                else {
+                    error(layer, textStatus + '][' + errorThrown);
+                }
+            });
+        }
     };
 
     var capabilitiesError = function (layer, reason) {
@@ -212,6 +314,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
                 }
             }
+            if (layer.usesProxy) {
+                capabilities.usesProxy = true;
+            }
             capabilitiesPromises[layer.url].resolve(capabilities);
             storeCapabilities(layer, capabilities);
         }
@@ -228,6 +333,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                 error: 'Web worker error'
                             }
                         }
+                        if (layer.usesProxy) {
+                            capabilities.usesProxy = true;
+                        }
+                        if (layer.usesSSL) {
+                            capabilities.usesSSL = true;
+                        }
                         capabilitiesPromises[layer.url].resolve(capabilities);
                         worker.terminate();
                         storeCapabilities(layer, capabilities);
@@ -237,6 +348,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         text: data
                     });
                 })
+            }
+            else {
+                capabilities = data;
+                if (layer.usesProxy) {
+                    capabilities.usesProxy = true;
+                }
+                capabilitiesPromises[layer.url].resolve(capabilities);
             }
         }
     };

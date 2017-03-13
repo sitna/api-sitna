@@ -21,6 +21,8 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
     TC.Consts.classes.DRAG = TC.Consts.classes.DRAG || 'tc-drag';
     TC.Consts.classes.DRAGEND = TC.Consts.classes.DRAGEND || 'tc-dragend';
 
+    TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
+
     ctlProto.template = {};
     if (TC.isDebug) {
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ListTOC.html";
@@ -65,61 +67,7 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
         TC.control.TOC.prototype.register.call(self, map);
 
         // Este control no tiene que aceptar servicios externos directamente
-        map.$events.off(TC.Consts.event.EXTERNALSERVICEADDED);
-
-        self._$div // GLS: como se trata de un override, desactivamos el click al que est\u00e1 suscrito por herencia y aplicamos el del override
-            .off(TC.Consts.event.CLICK, 'input[type=checkbox]')
-            .on(self.CLICKEVENT, 'input[type=checkbox]', function (e) {
-                // al estar en ipad el evento pasa a ser touchstart en la constante: TC.Consts.event.CLICK, los checkbox no funcionan bien con este evento
-                var $cb = $(e.target);
-
-                var $li = $cb.parents('li.' + self.CLASS + '-elm').first();
-                var layer = $li.data(_dataKeys.layer);
-                var checked = $cb.prop('checked');
-
-                layer.setVisibility(checked);
-
-                e.stopPropagation();
-            })
-            .on('change input', 'input[type=range]', function (e) {
-                var $range = $(e.target);
-
-                var layer = $range.parents('li').first().data(_dataKeys.layer);
-                layer.setOpacity($range.val() / 100);
-            })
-            .on(self.CLICKEVENT, '.' + self.CLASS + '-del', function (e) {
-                var $li = $(e.target).parents('li').first();
-                var layer = $li.data(_dataKeys.layer);
-                map.removeLayer(layer);
-            })
-            .on(self.CLICKEVENT, '.' + self.CLASS + '-del-all', function (e) {
-                TC.confirm(self.getLocaleString('layersRemove.confirm'), function () {
-                    var $lis = self._$div.find('li.' + self.CLASS + '-elm');
-                    var layers = new Array($lis.length);
-                    $lis.each(function (idx, elm) {
-                        layers[idx] = $(elm).data(_dataKeys.layer);
-                    });
-                    for (var i = 0, len = layers.length; i < len; i++) {
-                        map.removeLayer(layers[i]);
-                    }
-                });
-            })
-            .on(self.CLICKEVENT, '.' + self.CLASS + '-btn-info', function (e) {
-                var $a = $(e.target);
-                var $li = $a.parents('li').first();
-                var $info = $li.find('.' + self.CLASS + '-info');
-                // Cargamos la imagen de la leyenda
-                $info.find('.' + self.CLASS + '-legend img').each(function (idx, img) {
-                    var layer = $li.data(_dataKeys.layer);
-                    self.styleLegendImage($(img), layer);
-                });
-                $info.toggleClass(TC.Consts.classes.HIDDEN);
-
-                if ($li.find('input[type="checkbox"]').is(':checked')) {
-                    $li.find('.' + self.CLASS + '-dd').toggleClass(TC.Consts.classes.HIDDEN, !$info.hasClass(TC.Consts.classes.HIDDEN));
-                }
-                $a.toggleClass(TC.Consts.classes.CHECKED);
-            });
+        map.off(TC.Consts.event.EXTERNALSERVICEADDED);
 
         map
             .on(TC.Consts.event.LAYEROPACITY, function (e) {
@@ -154,6 +102,92 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                         }
                     }
                 }
+            })            
+            .on(TC.Consts.event.FEATURESIMPORT, function (e) {
+                var fileName = e.fileName;
+                if (e.features && e.features.length > 0) { // GLS: Escuchamos al evento FEATURESIMPORT para poder desplegar el control de capas cargadas
+                    // Ignoramos los GPX (se supone que los gestionar\u00e1 Geolocation)
+                    var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
+                    if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
+                        return;
+                    }
+
+                    map.one(TC.Consts.event.LAYERADD, function (e) {
+                        if (e && e.layer && e.layer.title == fileName) {
+                            // Desplegamos el control capas cargadas
+                            if (self.map && self.map.layout && self.map.layout.accordion) {
+                                if (self._$div.hasClass(TC.Consts.classes.COLLAPSED)) {
+                                    for (var i = 0; i < self.map.controls.length; i++) {
+                                        if (self.map.controls[i] !== self) {
+                                            self.map.controls[i]._$div.addClass(TC.Consts.classes.COLLAPSED);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // abrimos el panel de herramientas
+                            self.map.$events.trigger($.Event(TC.Consts.event.TOOLSOPEN), {});
+
+                            self._$div.removeClass(TC.Consts.classes.COLLAPSED);
+                        }
+                    });
+                }
+            });
+    };
+
+    ctlProto._addBrowserEventHandlers = function () {
+        var self = this;
+        self._$div
+            .on(self.CLICKEVENT, 'input[type=checkbox]', function (e) {
+                // al estar en ipad el evento pasa a ser touchstart en la constante: TC.Consts.event.CLICK, los checkbox no funcionan bien con este evento
+                var $cb = $(e.target);
+
+                var $li = $cb.parents('li.' + self.CLASS + '-elm').first();
+                var layer = $li.data(_dataKeys.layer);
+                var checked = $cb.prop('checked');
+
+                layer.setVisibility(checked);
+
+                e.stopPropagation();
+            })
+            .on('change input', 'input[type=range]', function (e) {
+                var $range = $(e.target);
+
+                var layer = $range.parents('li').first().data(_dataKeys.layer);
+                layer.setOpacity($range.val() / 100);
+            })
+            .on(self.CLICKEVENT, '.' + self.CLASS + '-del', function (e) {
+                var $li = $(e.target).parents('li').first();
+                var layer = $li.data(_dataKeys.layer);
+                self.map.removeLayer(layer);
+            })
+            .on(self.CLICKEVENT, '.' + self.CLASS + '-del-all', function (e) {
+                TC.confirm(self.getLocaleString('layersRemove.confirm'), function () {
+                    var $lis = self._$div.find('li.' + self.CLASS + '-elm');
+                    var layers = new Array($lis.length);
+                    $lis.each(function (idx, elm) {
+                        layers[idx] = $(elm).data(_dataKeys.layer);
+                    });
+                    for (var i = 0, len = layers.length; i < len; i++) {
+                        self.map.removeLayer(layers[i]);
+                    }
+                });
+            })
+            .on(self.CLICKEVENT, '.' + self.CLASS + '-btn-info', function (e) {
+                var $a = $(e.target);
+                var $li = $a.parents('li').first();
+                var $info = $li.find('.' + self.CLASS + '-info');
+                // Cargamos la imagen de la leyenda
+                $info.find('.' + self.CLASS + '-legend img').each(function (idx, img) {
+                    var layer = $li.data(_dataKeys.layer);
+                    self.styleLegendImage($(img), layer);
+                });
+                $info.toggleClass(TC.Consts.classes.HIDDEN);
+
+                if ($li.find('input[type="checkbox"]').is(':checked')) {
+                    $li.find('.' + self.CLASS + '-dd').toggleClass(TC.Consts.classes.HIDDEN, !$info.hasClass(TC.Consts.classes.HIDDEN));
+                }
+                $a.toggleClass(TC.Consts.classes.CHECKED);
             });
     };
 
@@ -227,11 +261,9 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                     TC.url.templating,
                     function () {
                         TC.loadJS(
-                            !$.fn.drag || !$.fn.drop,
-                            [TC.apiLocation + 'lib/jQuery/jquery.event.drag.js', TC.apiLocation + 'lib/jQuery/jquery.event.drop.js'],
+                            !$.fn.drag,
+                            [TC.apiLocation + 'lib/jQuery/jquery.event.drag.js'],
                             function () {
-                                $.drop({ mode: 'middle' });
-
                                 var layerTitle = layer.title ? layer.title : layer.capabilities.Service.Title;
                                 var layerData = {
                                     title: layer.options.hideTitle ? '' : layerTitle,
@@ -324,64 +356,116 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                                         $li
                                             .drag("start", function (e, dd) {
                                                 var $drag = $(this);
+                                                var $lis = $ul.children('li');
+                                                $lis.not($drag).addClass(TC.Consts.classes.DRAGEND);
+                                                var dragIdx = $lis.index($drag);
                                                 $drag.css('zIndex', 100).addClass(TC.Consts.classes.DRAG);
+                                                var $lastLi = $lis.last();
                                                 var positionLi = $drag.position();
-                                                var positionUl = $ul.position();
-                                                dd.limit = { top: -positionLi.top + positionUl.top, bottom: $ul.height() + positionUl.top - positionLi.top - $drag.height() };
+                                                dd.limit = {
+                                                    top: $lis.first().position().top - positionLi.top,
+                                                    bottom: $lastLi.height() + $lastLi.position().top - positionLi.top - $drag.height() - 1
+                                                };
+                                                dd.dropTargetIndex = -1;
                                             })
                                             .drag("end", function (e, dd) {
                                                 var $drag = $(this);
-                                                if (!dd.drop.length) {
-                                                    $drag
-                                                        .css({
-                                                            transform: '',
-                                                            zIndex: ''
-                                                        })
-                                                        .removeClass(TC.Consts.classes.DRAG);
+                                                $drag
+                                                    .removeClass(TC.Consts.classes.DRAG)
+                                                    .addClass(TC.Consts.classes.DRAGEND);
+                                                // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
+                                                var dragDeltaY = $drag.css('transform');
+                                                dragDeltaY = parseInt(dragDeltaY.substr(dragDeltaY.lastIndexOf(',') + 1));
+                                                var dragLiTop = this.getBoundingClientRect().top - dragDeltaY;
+                                                var dropElm;
+                                                var $drop;
+                                                if (dd.dropTargetIndex >= 0) {
+                                                    dropElm = $ul.children('li').get(dd.dropTargetIndex);
+                                                    $drop = $(dropElm);
+                                                    // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
+                                                    var dropDeltaY = $drop.css('transform');
+                                                    dropDeltaY = parseInt(dropDeltaY.substr(dropDeltaY.lastIndexOf(',') + 1));
+                                                    var dropLiTop = dropElm.getBoundingClientRect().top - dropDeltaY;
                                                 }
-                                                else {
-                                                    $drag.addClass(TC.Consts.classes.DRAGEND);
-                                                    for (var i = 0; i < dd.drop.length; i++) {
-                                                        $(dd.drop[i]).removeClass(TC.Consts.classes.DROP);
-                                                    }
-                                                    var $drop = $(dd.drop[0]);
-                                                    var deltaY = $drag.css('transform');
-                                                    deltaY = parseInt(deltaY.substr(deltaY.lastIndexOf(',') + 1));
-                                                    var dragLiTop = $drag.position().top - deltaY;
-                                                    var dropLiTop = $drop.position().top;
-                                                    deltaY = dropLiTop - dragLiTop;
-                                                    $drag.css('transform', 'translateY(' + deltaY + 'px)');
-                                                    var transitionEnd = 'transitionend.tc';
-                                                    $drag.on(transitionEnd, function (e) {
-                                                        if (e.originalEvent.propertyName === 'transform') {
-                                                            $drag.off(transitionEnd);
+                                                $drag.css('transform', $drop ? 'translateY(' + (dropLiTop - dragLiTop) + 'px)' : '');
+                                                var transitionEnd = 'transitionend.tc';
+                                                $drag.on(transitionEnd, function transitionEndHandler(e) {
+                                                    if (e.originalEvent.propertyName === 'transform') {
+                                                        $drag
+                                                            .off(transitionEnd, transitionEndHandler)
+                                                            .removeClass(TC.Consts.classes.DRAGEND)
+                                                            .css('zIndex', '');
+                                                        if ($drop) {
                                                             moveLayer($drag, $drop, function () {
-                                                                $drag
-                                                                    .removeClass(TC.Consts.classes.DRAGEND)
-                                                                    .removeClass(TC.Consts.classes.DRAG)
-                                                                    .css('zIndex', '')
-                                                                    .css('transform', '');
+                                                                $ul.children('li')
+                                                                    .css('transform', '')
+                                                                    .removeClass(TC.Consts.classes.DRAGEND);
                                                             });
                                                         }
-                                                    });
-                                                }
+                                                    }
+                                                });
                                             })
                                             .drag(function (e, dd) {
-                                                $(this).css('transform', 'translateY(' + Math.min(Math.max(dd.limit.top, Math.round(dd.deltaY)), dd.limit.bottom) + 'px)');
+                                                var $drag = $(this);
+                                                var deltaY = Math.min(Math.max(dd.limit.top, Math.round(dd.deltaY)), dd.limit.bottom);
+                                                var clientRect = this.getBoundingClientRect();
+                                                var dragHeight = clientRect.height - 1;
+                                                var yMiddle = (clientRect.top + clientRect.bottom) / 2;
+                                                var yThresholds = [];
+                                                var dragIdx;
+                                                var $lis = $ul.children('li');
+                                                $lis.each(function (idx, elm) {
+                                                    var cr = elm.getBoundingClientRect();
+                                                    yThresholds[idx] = { elm: elm, top: cr.top, bottom: cr.bottom };
+                                                    if (elm === dd.drag) {
+                                                        dragIdx = idx;
+                                                    }
+                                                });
+                                                var tValue;
+                                                var dropTargetIdx = -1;
+                                                for (var i = 0, len = yThresholds.length; i < len; i++) {
+                                                    var th = yThresholds[i];
+                                                    if (i < dragIdx) {
+                                                        if (yMiddle < th.bottom) {
+                                                            if (yMiddle > th.top && dd.deltaY > dd.prevDeltaY) {
+                                                                tValue = '';
+                                                            }
+                                                            else {
+                                                                tValue = 'translateY(' + dragHeight + 'px)';
+                                                                if (dropTargetIdx < 0) {
+                                                                    dropTargetIdx = i;
+                                                                }
+                                                            }
+                                                        }
+                                                        else {
+                                                            tValue = '';
+                                                        }
+                                                        $(th.elm).css('transform', tValue);
+                                                    }
+                                                    else if (i > dragIdx) {
+                                                        if (yMiddle > th.top) {
+                                                            if (yMiddle < th.bottom && dd.deltaY < dd.prevDeltaY) {
+                                                                tValue = '';
+                                                            }
+                                                            else {
+                                                                tValue = 'translateY(-' + dragHeight + 'px)';
+                                                                dropTargetIdx = i;
+                                                            }
+                                                        }
+                                                        else {
+                                                            tValue = '';
+                                                        }
+                                                        $(th.elm).css('transform', tValue);
+                                                    }
+                                                }
+                                                dd.dropTargetIndex = dropTargetIdx;
+                                                $drag.css('transform', 'translateY(' + deltaY + 'px)');
+                                                dd.prevDeltaY = dd.deltaY;
                                             },
                                                 {
                                                     handle: '.' + self.CLASS + '-dd'
                                                 }
-                                            )
-                                            .drop("init", function (e, dd) {
-                                                return !(this == dd.drag);
-                                            })
-                                            .drop("start", function () {
-                                                $(this).addClass(TC.Consts.classes.DROP);
-                                            })
-                                            .drop("end", function () {
-                                                $(this).removeClass(TC.Consts.classes.DROP);
-                                            });
+                                            );
 
                                         $ul.prepend($li);
                                         self.updateScale();

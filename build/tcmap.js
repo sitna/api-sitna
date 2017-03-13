@@ -610,7 +610,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.1.3';
+TC.version = '1.2.0';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -688,6 +688,11 @@ if (!TC.Consts) {
         WARNING: 'warning',
         ERROR: 'error'
     };
+    TC.Consts.msgErrorMode = {
+        TOAST: 'toast',
+        CONSOLE: 'console',
+        EMAIL: 'email'
+    };
     TC.Consts.event = {
         /**
          * Se lanza cuando el mapa ha cargado todas sus capas iniciales y todos sus controles
@@ -716,6 +721,7 @@ if (!TC.Consts) {
         FEATURESADD: 'featuresadd.tc',
         FEATUREREMOVE: 'featureremove.tc',
         FEATURESIMPORT: 'featuresimport.tc',
+        FEATURESIMPORTERROR: 'featuresimporterror.tc',
         BEFORETILELOAD: 'beforetileload.tc',
         TILELOAD: 'tileload.tc',
         CONTROLACTIVATE: 'controlactivate.tc',
@@ -733,6 +739,7 @@ if (!TC.Consts) {
         NOFEATUREINFO: 'nofeatureinfo.tc',
         FEATUREINFOERROR: 'featureinfoerror.tc',
         CLICK: 'click.tc',
+        MOUSEUP: 'mouseup.tc',
         STARTLOADING: 'startloading.tc',
         STOPLOADING: 'stoploading.tc',
         EXTERNALSERVICEADDED: 'externalserviceadded.tc'

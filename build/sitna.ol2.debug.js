@@ -67003,8 +67003,8 @@ var TC = TC || {};
                                     }
 
                                     if (!layerDeleted) {
-                                        $.when(self.addLayer(lyrCfg)).then(setVisibility);
-                                    }
+                                    $.when(self.addLayer(lyrCfg)).then(setVisibility);
+                                }
                                 }
 
                                 if (self.state && self.state.layers) {
@@ -67128,15 +67128,16 @@ var TC = TC || {};
                         wait = self.loadingCtrl && self.loadingCtrl.addWait();
                         setTimeout(function () {
                             if (e && e.state != null) {
-
-                                self.registerState = false;
+                                //self.registerState = false;
 
                                 // eliminamos la suscripci\u00f3n para no registrar el cambio de estado que vamos a provocar
                                 self.off(events, $.proxy(_addToHistory, self));
 
-                                // gestionamos la actualizaci\u00f3n para volver a suscribirnos a los eventos del mapa                        
+                                // gestionamos la actualizaci\u00f3n para volver a suscribirnos a los eventos del mapa                                 
                                 $.when(_loadIntoMap(e.state)).then(function () {
-                                    self.on(events, $.proxy(_addToHistory, self));
+                                    setTimeout(function () {
+                                        self.on(events, $.proxy(_addToHistory, self));
+                                    }, 200);
                                     self.loadingCtrl && self.loadingCtrl.removeWait(wait);
                                 });
                             }
@@ -67152,8 +67153,7 @@ var TC = TC || {};
         var _addToHistory = function (e) {
             var CUSTOMEVENT = '.tc';
 
-            var state = _getMapState();
-
+            var state = _getMapState();            
             if (self.replaceCurrent) {
                 window.history.replaceState(state, null, null);
                 delete self.replaceCurrent;
@@ -67161,10 +67161,11 @@ var TC = TC || {};
                 return;
             } else {
 
-                if (self.registerState != undefined && !self.registerState) {
+                /*if (self.registerState != undefined && !self.registerState) {
                     self.registerState = true;
                     return;
-                }
+                }*/
+                self.lastEventType = e.type;
 
                 var saveState = function () {
                     previousState = currentState;
@@ -67276,7 +67277,7 @@ var TC = TC || {};
                 //capa base
                 if (obj.base != self.getBaseLayer().id) self.setBaseLayer(obj.base);
 
-                //extent
+                //extent                
                 if (obj.ext) promises.push(self.setExtent(obj.ext));
 
                 //capas cargadas        
@@ -67320,7 +67321,10 @@ var TC = TC || {};
                             }).then(function (layer) {
                                 var rootNode = layer.wrap.getRootLayerNode();
                                 layer.title = rootNode.Title || rootNode.title;
-                                layer.setOpacity(op);
+                                /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
+                                esto es porque en el loadstate al establecer la opacidad dedido a un timeout pasados X segundos se lanzaba 
+                                este evento y produc\u00eda un push en el state innecesario*/
+                                layer.setOpacity(op,true);
                                 layer.setVisibility(visibility);
                             }));
                         }
@@ -67355,11 +67359,7 @@ var TC = TC || {};
                     obj = jsonpack.unpack(TC.Util.base64ToUtf8(hash));
                 }
                 catch (error) {
-                    try {
-                        obj = JSON.parse(TC.Util.base64ToUtf8(hash));
-                    } catch (error) {                        
-                        self.toast(TC.Util.getLocaleString(self.options.locale, "mapStateNotValid"), { type: TC.Consts.msgType.ERROR });
-                    }
+                    obj = JSON.parse(TC.Util.base64ToUtf8(hash));
                 }
 
                 if (obj) {
@@ -67488,8 +67488,8 @@ var TC = TC || {};
                         TC.i18n[locale] = TC.i18n[locale] || {};
                         $.extend(TC.i18n[locale], data);
                         if (typeof (dust) !== 'undefined') {
-                            dust.i18n.add(locale, TC.i18n[locale]);
-                        }
+                        dust.i18n.add(locale, TC.i18n[locale]);
+                    }
                     }
                 })
             }
@@ -67520,122 +67520,122 @@ var TC = TC || {};
 
             if (self.options.layout) {
                 buildLayout(self.options.layout).done(function (layout) {
-                    self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
+                self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
 
-                    var layoutURLs;
-                    if (typeof layout === 'string') {
-                        layoutURLs = { href: $.trim(layout) };
-                    }
-                    else if (
-                        layout.hasOwnProperty('config') ||
-                        layout.hasOwnProperty('markup') ||
-                        layout.hasOwnProperty('style') ||
-                        layout.hasOwnProperty('ie8Style') ||
-                        layout.hasOwnProperty('script') ||
-                        layout.hasOwnProperty('href') ||
-                        layout.hasOwnProperty('i18n')
-                    ) {
-                        layoutURLs = $.extend({}, layout);
-                    }
-                    if (layoutURLs.href) {
-                        layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
-                    }
-                    layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
-                    layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
-                    layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
-                    layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
-                    layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
-                    layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
-                    if (layoutURLs.i18n) {
-                        layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
-                    }
+                var layoutURLs;
+                if (typeof layout === 'string') {
+                    layoutURLs = { href: $.trim(layout) };
+                }
+                else if (
+                    layout.hasOwnProperty('config') ||
+                    layout.hasOwnProperty('markup') ||
+                    layout.hasOwnProperty('style') ||
+                    layout.hasOwnProperty('ie8Style') ||
+                    layout.hasOwnProperty('script') ||
+                    layout.hasOwnProperty('href') ||
+                    layout.hasOwnProperty('i18n')
+                ) {
+                    layoutURLs = $.extend({}, layout);
+                }
+                if (layoutURLs.href) {
+                    layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
+                }
+                layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
+                layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
+                layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
+                layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
+                layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
+                layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
+                if (layoutURLs.i18n) {
+                    layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
+                }
 
-                    self.layout = layoutURLs;
+                self.layout = layoutURLs;
 
-                    var layoutDeferreds = [];
+                var layoutDeferreds = [];
 
-                    var i18LayoutDeferred = $.Deferred();
-                    layoutDeferreds.push(i18LayoutDeferred);
+                var i18LayoutDeferred = $.Deferred();
+                layoutDeferreds.push(i18LayoutDeferred);
 
-                    if (layoutURLs.config) {
-                        layoutDeferreds.push($.ajax({
-                            url: layoutURLs.config,
-                            type: 'GET',
-                            dataType: 'json',
-                            //async: Modernizr.canvas, // !IE8,
-                            success: function (data) {
-                                i18LayoutDeferred.resolve(data.i18n);
-                                self.options = mergeOptions(data, options);
-                            },
-                            error: function (e, name, description) {
-                                TC.error(name + ": " + description);
-                                i18LayoutDeferred.resolve(false);
-                            }
-                        }));
-                    }
-                    else {
-                        i18LayoutDeferred.resolve(false);
-                    }
-
-                    if (layoutURLs.markup) {
-                        var markupDeferred;
-                        if (locale) {
-                            markupDeferred = $.Deferred();
-                            layoutDeferreds.push(markupDeferred);
+                if (layoutURLs.config) {
+                    layoutDeferreds.push($.ajax({
+                        url: layoutURLs.config,
+                        type: 'GET',
+                        dataType: 'json',
+                        //async: Modernizr.canvas, // !IE8,
+                        success: function (data) {
+                            i18LayoutDeferred.resolve(data.i18n);
+                            self.options = mergeOptions(data, options);
+                        },
+                        error: function (e, name, description) {
+                            TC.error(name + ": " + description);
+                            i18LayoutDeferred.resolve(false);
                         }
-                        layoutDeferreds.push($.ajax({
-                            url: layoutURLs.markup,
-                            type: 'GET',
-                            dataType: 'html',
-                            //async: Modernizr.canvas, // !IE8
-                            success: function (data) {
-                                // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
-                                i18LayoutDeferred.then(function (i18n) {
-                                    if (i18n && locale) {
-                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
-                                            var templateId = 'tc-markup';
-                                            dust.loadSource(dust.compile(data, templateId));
-                                            dust.render(templateId, null, function (err, out) {
-                                                if (err) {
-                                                    TC.error(err);
-                                                    markupDeferred.reject();
-                                                }
-                                                else {
-                                                    self._$div.append(out);
-                                                    markupDeferred.resolve();
-                                                }
-                                            });
-                                        });
-                                    }
-                                    else {
-                                        self._$div.append(data);
-                                        if (locale) {
-                                            markupDeferred.resolve();
-                                        }
-                                    }
-                                });
-                            },
-                            error: function () {
-                                markupDeferred.reject();
-                            }
-                        }));
-                    }
+                    }));
+                }
+                else {
+                    i18LayoutDeferred.resolve(false);
+                }
 
-                    $.when.apply(this, layoutDeferreds).always(function () {
-                        TC.loadJS(
-                            layoutURLs.script,
-                            layoutURLs.script,
-                            function () {
-                                setHeightFix(self._$div);
-                                if (layoutURLs.style) {
-                                    TC.loadCSS(layoutURLs.style);
+                if (layoutURLs.markup) {
+                    var markupDeferred;
+                    if (locale) {
+                        markupDeferred = $.Deferred();
+                        layoutDeferreds.push(markupDeferred);
+                    }
+                    layoutDeferreds.push($.ajax({
+                        url: layoutURLs.markup,
+                        type: 'GET',
+                        dataType: 'html',
+                        //async: Modernizr.canvas, // !IE8
+                        success: function (data) {
+                            // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
+                            i18LayoutDeferred.then(function (i18n) {
+                                if (i18n && locale) {
+                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
+                                        var templateId = 'tc-markup';
+                                        dust.loadSource(dust.compile(data, templateId));
+                                        dust.render(templateId, null, function (err, out) {
+                                            if (err) {
+                                                TC.error(err);
+                                                markupDeferred.reject();
+                                            }
+                                            else {
+                                                self._$div.append(out);
+                                                markupDeferred.resolve();
+                                            }
+                                        });
+                                    });
                                 }
-                                if (!Modernizr.canvas && layoutURLs.ie8Style) {
-                                    TC.loadCSS(layoutURLs.ie8Style);
+                                else {
+                                    self._$div.append(data);
+                                    if (locale) {
+                                        markupDeferred.resolve();
+                                    }
                                 }
-                                init();
                             });
-                    });
+                        },
+                        error: function () {
+                            markupDeferred.reject();
+                        }
+                    }));
+                }
+
+                $.when.apply(this, layoutDeferreds).always(function () {
+                    TC.loadJS(
+                        layoutURLs.script,
+                        layoutURLs.script,
+                        function () {
+                            setHeightFix(self._$div);
+                            if (layoutURLs.style) {
+                                TC.loadCSS(layoutURLs.style);
+                            }
+                            if (!Modernizr.canvas && layoutURLs.ie8Style) {
+                                TC.loadCSS(layoutURLs.ie8Style);
+                            }
+                            init();
+                        });
+                });
                 });
             }
             else {
@@ -67654,10 +67654,42 @@ var TC = TC || {};
         });
 
         // Redefinimos TC.error para a\u00f1adir un aviso en el mapa
-        var oldError = TC.error;
+        /*var oldError = TC.error;
         TC.error = function (text) {
             oldError(text);
             self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+        };*/
+        var oldError = TC.error;
+        TC.error = function (text, options) {
+            if (!options) {
+                oldError(text);
+                self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+            }
+            else {
+                var fnc = function (text, mode) {
+                    switch (mode) {
+                        case TC.Consts.msgErrorMode.TOAST:                            
+                            if (!self.toast) { console.warn("No existe el objeto Toast"); return; }
+                            self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+                            break;
+                        case TC.Consts.msgErrorMode.EMAIL:
+                            JL("onerrorLogger").fatalException(text, null);
+                            break;
+                        case TC.Consts.msgErrorMode.CONSOLE:
+                        default:
+                            console.error(text)
+                            break;
+                    }
+                }
+                if (!$.isArray(options)) {
+                    fnc(text, options)
+                }
+                else {
+                    for (var i = 0; i < options.length; i++)
+                        fnc(text, options[i])
+                }
+            }
+
         };
     };
 
@@ -67830,35 +67862,35 @@ var TC = TC || {};
 
                             if (l) {
                                 if (l.isCompatible(self.crs)) {
-                                    self.layers[self.layers.length] = l;
-                                    if (l.isBase) {
+                                self.layers[self.layers.length] = l;
+                                if (l.isBase) {
                                         if (self.state) {
                                             l.isDefault = self.state.base === l.id;
                                         }
                                         else if (typeof self.options.defaultBaseLayer === 'string') {
-                                            l.isDefault = self.options.defaultBaseLayer === l.id;
-                                        }
-                                        else if (typeof self.options.defaultBaseLayer === 'number') {
-                                            l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
-                                        }
-                                        if (l.isDefault) {
-                                            self.wrap.setBaseLayer(l.wrap.getLayer());
-                                            self.baseLayer = l;
-                                        }
-                                        self.baseLayers[self.baseLayers.length] = l;
-                                        // If no base layer set, set the first one
-                                        if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
-                                            self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
-                                        }
+                                        l.isDefault = self.options.defaultBaseLayer === l.id;
                                     }
-                                    else {
-                                        self.wrap.insertLayer(l.wrap.getLayer(), idx);
-                                        self.workLayers[self.workLayers.length] = l;
+                                    else if (typeof self.options.defaultBaseLayer === 'number') {
+                                        l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
                                     }
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
-                                    if ($.isFunction(c)) {
-                                        c(l);
+                                    if (l.isDefault) {
+                                        self.wrap.setBaseLayer(l.wrap.getLayer());
+                                        self.baseLayer = l;
                                     }
+                                    self.baseLayers[self.baseLayers.length] = l;
+                                    // If no base layer set, set the first one
+                                    if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
+                                        self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
+                                    }
+                                }
+                                else {
+                                    self.wrap.insertLayer(l.wrap.getLayer(), idx);
+                                    self.workLayers[self.workLayers.length] = l;
+                                }
+                                self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
+                                if ($.isFunction(c)) {
+                                    c(l);
+                                }
 
                                 }
                                 else {
@@ -67866,13 +67898,12 @@ var TC = TC || {};
                                     var reason;
                                     if (l.isValidFromNames()) {
                                         reason = 'layerSrsNotCompatible'
-                                    }
-                                    else {
+                                    }else {
                                         reason = 'layerNameNotValid';
                                     }
                                     errorMessage += TC.Util.getLocaleString(self.options.locale, reason);
                                     TC.error(errorMessage);
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));
+                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));                                
                                 }
                             }
                             self._remainingLayers = self._remainingLayers - 1;
@@ -67986,10 +68017,10 @@ var TC = TC || {};
     };
 
     /*
-    *  setBaseLayer: Set a layer as base layer, must be in layers collection
-    *  Parameters: TC.Layer or string, callback which accepts layer as parameter
-    *  Returns: TC.Layer promise
-    */
+ *  setBaseLayer: Set a layer as base layer, must be in layers collection
+ *  Parameters: TC.Layer or string, callback which accepts layer as parameter
+ *  Returns: TC.Layer promise
+ */
     mapProto.setBaseLayer = function (layer, callback) {
         var self = this;
         var result = null;
@@ -68067,8 +68098,8 @@ var TC = TC || {};
         var self = this;
         if ($.isFunction(callback)) {
             if (self.isReady) {
-                callback();
-            }
+            callback();
+        }
             else {
                 self.one(TC.Consts.event.MAPREADY, callback);
             }
@@ -68102,15 +68133,15 @@ var TC = TC || {};
      */
     mapProto.getLayerTree = function () {
 
-
+        
         var _traverse = function (o, func) {
             for (var i in o.children) {
                 if (o.children && o.children.length > 0) {
-                    //bajar un nivel en el \u00e1rbol
+                //bajar un nivel en el \u00e1rbol
                     _traverse(o.children[i], func);
-                }
+                } 
 
-                func.apply(this, [o]);
+                func.apply(this, [o]);                
             }
         };
 
@@ -68123,7 +68154,7 @@ var TC = TC || {};
         }
         for (var i = 0; i < self.workLayers.length; i++) {
             var tree = self.workLayers[i].getTree();
-
+           
             if (tree) {
                 result.workLayers.unshift(tree);
             }
@@ -68637,6 +68668,25 @@ var TC = TC || {};
     var isRaster = function (layer) {
         return typeof layer === 'string' || (layer.type !== TC.Consts.layerType.VECTOR && layer.type !== TC.Consts.layerType.KML && layer.type !== TC.Consts.layerType.WFS);
     };
+
+    mapProto.exportImage = function () {
+        var self = this;
+        var result = null;
+        var errorMsg = 'El mapa actual no es compatible con la exportaci\u00f3n de im\u00e1genes';
+        var canvas = self.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
+        if (canvas && self.options.crossOrigin) {
+            try {
+                result = canvas.toDataURL();
+            }
+            catch (e) {
+                TC.error(errorMsg + ': ' + e.message);
+            }
+        }
+        else {
+            TC.error(errorMsg);
+        }
+        return result;
+    };
 })();
 
 /**
@@ -68762,6 +68812,13 @@ var TC = TC || {};
 
         isURL: function (text) {
             return /^(http|https|ftp|mailto)\:\/\//i.test(text);
+        },
+
+        isSecureURL: function (url) {
+            //sino empieza por http ni por https la consideramos segura
+            if (!/^(f|ht)tps?:\/\//i.test(url))
+                return true;
+            return (/^(f|ht)tps:\/\//i.test(url));
         },
 
         isSameOrigin: function (uri) {
@@ -70145,7 +70202,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.1.3';
+TC.version = '1.2.0';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -70223,6 +70280,11 @@ if (!TC.Consts) {
         WARNING: 'warning',
         ERROR: 'error'
     };
+    TC.Consts.msgErrorMode = {
+        TOAST: 'toast',
+        CONSOLE: 'console',
+        EMAIL: 'email'
+    };
     TC.Consts.event = {
         /**
          * Se lanza cuando el mapa ha cargado todas sus capas iniciales y todos sus controles
@@ -70251,6 +70313,7 @@ if (!TC.Consts) {
         FEATURESADD: 'featuresadd.tc',
         FEATUREREMOVE: 'featureremove.tc',
         FEATURESIMPORT: 'featuresimport.tc',
+        FEATURESIMPORTERROR: 'featuresimporterror.tc',
         BEFORETILELOAD: 'beforetileload.tc',
         TILELOAD: 'tileload.tc',
         CONTROLACTIVATE: 'controlactivate.tc',
@@ -70268,6 +70331,7 @@ if (!TC.Consts) {
         NOFEATUREINFO: 'nofeatureinfo.tc',
         FEATUREINFOERROR: 'featureinfoerror.tc',
         CLICK: 'click.tc',
+        MOUSEUP: 'mouseup.tc',
         STARTLOADING: 'startloading.tc',
         STOPLOADING: 'stoploading.tc',
         EXTERNALSERVICEADDED: 'externalserviceadded.tc'
@@ -71654,12 +71718,13 @@ TC.Layer.prototype.getOpacity = function () {
  * equivalente que llamar a TC.Layer.{{#crossLink "TC.Layer/setVisibility:method"}}{{/crossLink}} con el valor del par\u00e1metro <code>false</code>.
  * @method setOpacity
  * @param {number} opacity Valor entre <code>0</code> (capa transparente) y <code>1</code> (capa opaca).
+ * @param {boolean} mute Indica si al establecer opacidad no se lanza evento LAYEROPACITY.
  */
-TC.Layer.prototype.setOpacity = function (opacity) {
+TC.Layer.prototype.setOpacity = function (opacity, mute) {
     var layer = this;
     $.when(this.wrap.getLayer()).then(function (olLayer) {
         olLayer.setOpacity(opacity);
-        if (layer.map) {
+        if (layer.map && !mute) {
             layer.map.$events.trigger($.Event(TC.Consts.event.LAYEROPACITY, { layer: layer, opacity: opacity }));
         }
     });
@@ -72213,7 +72278,9 @@ TC.Feature.prototype.getInfo = function () {
     if (typeof data === 'object') {
         var template = self.wrap.getTemplate();
         if (template) {
-            result = template.replace(/\$\[(\w+)\]/g, function (match, p1) {
+            // GLS: Contemplo en la expresi\u00f3n regular la opci\u00f3n de que el nombre del campo se componga de $[aaa/abc/loQueMeInteresa] 
+            // (la expresi\u00f3n no est\u00e1 limitada a 2 niveles), hasta ahora se manejaba $[loQueMeInteresa]
+            result = template.replace(/\$\[?(?:\w+\/)*(\w+)\]/g, function (match, p1) {
                 return data[p1];
             });
         }
@@ -72221,7 +72288,7 @@ TC.Feature.prototype.getInfo = function () {
             var html = [];
             for (var key in data) {
                 var value = data[key];
-                if (typeof value === 'string' || typeof value === 'number') {
+                if (typeof value === 'string' || typeof value === 'number' || typeof value === 'undefined') {
                     html[html.length] = '<tr><th>';
                     html[html.length] = key;
                     html[html.length] = '</th><td>';
@@ -72231,7 +72298,7 @@ TC.Feature.prototype.getInfo = function () {
                         html[html.length] = value;
                         html[html.length] = '" target="_blank">';
                     }
-                    html[html.length] = value;
+                    html[html.length] = value !== void (0) ? value : '&mdash;';
                     if (isUrl) {
                         html[html.length] = '</a>';
                     }
@@ -72248,6 +72315,15 @@ TC.Feature.prototype.getInfo = function () {
     else if (typeof data === 'string') {
         result = data;
     }
+    if (!result) {
+        result = self.title;
+        if (self.group) {
+            result += ' ' + self.group;
+        }
+    }
+    if (!result) {
+        result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
+    }
     return result;
 };
 
@@ -72255,7 +72331,18 @@ TC.Feature.prototype.showPopup = function (control) {
     var self = this;
     if (self.showsPopup && self.layer && self.layer.map) {
         var ctlDeferred;
-        var popup = control || self.popup || self.layer.map.getControlsByClass('TC.control.Popup')[0];
+        var popup = control || self.popup;
+        if (!popup) {
+            // Buscamos un popup existente que no est\u00e9 asociado a un control.
+            var popups = self.layer.map.getControlsByClass('TC.control.Popup');
+            for (var i = 0, len = popups.length; i < len; i++) {
+                var p = popups[i];
+                if (!p.caller) {
+                    popup = p;
+                    break;
+                }
+            }
+        }
         if (popup) {
             ctlDeferred = $.Deferred();
             ctlDeferred.resolve(popup);
@@ -72390,21 +72477,6 @@ TC.inherit(TC.feature.Point, TC.Feature);
         return this.wrap.setGeometry(coords);
     };
 
-    featProto.getInfo = function () {
-        var self = this;
-        var result = TC.Feature.prototype.getInfo.apply(self, arguments);
-        if (!result) {
-            result = self.title;
-            if (self.group) {
-                result += ' ' + self.group;
-            }
-        }
-        if (!result) {
-            result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
-        }
-        return result;
-    };
-
 })();
 TC.feature = TC.feature || {};
 
@@ -72433,27 +72505,14 @@ TC.inherit(TC.feature.Circle, TC.Feature);
 (function () {
     var featProto = TC.feature.Circle.prototype;
 
+    featProto.STYLETYPE = TC.Consts.geom.POLYGON;
+
     featProto.getCoords = function () {
         return this.wrap.getGeometry();
     };
 
     featProto.setCoords = function (coords) {
         return this.wrap.setGeometry(coords);
-    };
-
-    featProto.getInfo = function () {
-        var self = this;
-        var result = TC.Feature.prototype.getInfo.apply(self, arguments);
-        if (!result) {
-            result = self.title;
-            if (self.group) {
-                result += ' ' + self.group;
-            }
-        }
-        if (!result) {
-            result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
-        }
-        return result;
     };
 
 })();
@@ -72763,7 +72822,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
         return /[&?]REQUEST=getLegendGraphic/i.test(url);
     };
 
-    var setImgSrc = function ($img, src) {
+    var setImgSrc = function ($img, src, SSLSupported) {
         var ERROR = 'error.tc';
         if (TC.Cfg.proxy) {
             $img.off(ERROR).on(ERROR, function () {
@@ -72771,7 +72830,19 @@ TC.inherit(TC.control.MapContents, TC.Control);
             });
         }
         var startIdx = src.indexOf('//');
-        $img.attr('src', startIdx < 0 ? src : src.substr(startIdx));
+        if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(src)) {
+            var srcSSL = "";
+            if (SSLSupported == true)
+                srcSSL = src.replace(/^(f|ht)tp?:\/\//i, "https://");
+            else if (TC.isUsingServiceWorker())
+                srcSSL = TC.proxify(src)
+            else
+                srcSSL = src;
+            $img.attr('src', srcSSL);
+        }
+        else {
+            $img.attr('src', startIdx < 0 ? src : src.substr(startIdx));
+        }
     };
 
     /**
@@ -72815,7 +72886,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                         ';fontAntiAliasing:true';
                     $img.data(_dataKeys.img, imgSrc);
                 }
-                setImgSrc($img, imgSrc);
+                setImgSrc($img, imgSrc, layer.usesSSL);
             }
         }
     };
@@ -72858,9 +72929,12 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         layerUid: 'tcLayerUid'
     };
 
+    var CLICKEVENT = 'click.tc';
+
     ctlProto.register = function (map) {
         var self = this;
         TC.control.MapContents.prototype.register.call(self, map);
+        self._addBrowserEventHandlers();
 
         self.$events.on(TC.Consts.event.CONTROLRENDER, function () {
             var controlOptions = self.options.controls || [];
@@ -72873,25 +72947,6 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
             }
         });
 
-        self._$div.on(TC.Consts.event.CLICK, 'input[type=checkbox]', function (e) {
-            var $cb = $(e.target);
-            var layer = $cb.closest('ul.' + self.CLASS + '-wl').children('li').has($cb).data(_dataKeys.layer);
-            var uid = $cb.parents('li').first().data(_dataKeys.layerUid);
-
-            var checked = $cb.prop('checked');
-            layer.setNodeVisibility(uid, checked);
-
-            e.stopPropagation();
-
-        }).on('mouseup.tc', 'li', function (e) {
-            var $li = $(e.target);
-            if (!$li.hasClass(self.CLASS + '-leaf')) {
-                $li.toggleClass(TC.Consts.classes.COLLAPSED);
-                $li.find('ul').first().toggleClass(TC.Consts.classes.COLLAPSED);
-                e.stopPropagation();
-            }
-        });
-
         map.on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
             if (e && e.layer) {
                 e.layer.map = map;
@@ -72899,6 +72954,29 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
                 self.updateLayerTree(e.layer);
             }
         });
+    };
+
+    ctlProto._addBrowserEventHandlers = function () {
+        var self = this;
+        self._$div
+            .on(CLICKEVENT, 'input[type=checkbox]', function (e) { // No usamos TC.Consts.event.CLICK porque en iPad los eventos touchstart no van bien en los checkbox
+                var $cb = $(e.target);
+                var layer = $cb.closest('ul.' + self.CLASS + '-wl').children('li').has($cb).data(_dataKeys.layer);
+                var uid = $cb.parents('li').first().data(_dataKeys.layerUid);
+
+                var checked = $cb.prop('checked');
+                layer.setNodeVisibility(uid, checked);
+
+                e.stopPropagation();
+            })
+            .on(TC.Consts.event.MOUSEUP, 'li', function (e) {
+                var $li = $(e.target);
+                if (!$li.hasClass(self.CLASS + '-leaf')) {
+                    $li.toggleClass(TC.Consts.classes.COLLAPSED);
+                    $li.find('ul').first().toggleClass(TC.Consts.classes.COLLAPSED);
+                    e.stopPropagation();
+                }
+            });
     };
 
     ctlProto.update = function () {
@@ -73066,6 +73144,8 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
     TC.Consts.classes.DRAG = TC.Consts.classes.DRAG || 'tc-drag';
     TC.Consts.classes.DRAGEND = TC.Consts.classes.DRAGEND || 'tc-dragend';
 
+    TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
+
     ctlProto.template = {};
     if (TC.isDebug) {
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ListTOC.html";
@@ -73110,61 +73190,7 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
         TC.control.TOC.prototype.register.call(self, map);
 
         // Este control no tiene que aceptar servicios externos directamente
-        map.$events.off(TC.Consts.event.EXTERNALSERVICEADDED);
-
-        self._$div // GLS: como se trata de un override, desactivamos el click al que est\u00e1 suscrito por herencia y aplicamos el del override
-            .off(TC.Consts.event.CLICK, 'input[type=checkbox]')
-            .on(self.CLICKEVENT, 'input[type=checkbox]', function (e) {
-                // al estar en ipad el evento pasa a ser touchstart en la constante: TC.Consts.event.CLICK, los checkbox no funcionan bien con este evento
-                var $cb = $(e.target);
-
-                var $li = $cb.parents('li.' + self.CLASS + '-elm').first();
-                var layer = $li.data(_dataKeys.layer);
-                var checked = $cb.prop('checked');
-
-                layer.setVisibility(checked);
-
-                e.stopPropagation();
-            })
-            .on('change input', 'input[type=range]', function (e) {
-                var $range = $(e.target);
-
-                var layer = $range.parents('li').first().data(_dataKeys.layer);
-                layer.setOpacity($range.val() / 100);
-            })
-            .on(self.CLICKEVENT, '.' + self.CLASS + '-del', function (e) {
-                var $li = $(e.target).parents('li').first();
-                var layer = $li.data(_dataKeys.layer);
-                map.removeLayer(layer);
-            })
-            .on(self.CLICKEVENT, '.' + self.CLASS + '-del-all', function (e) {
-                TC.confirm(self.getLocaleString('layersRemove.confirm'), function () {
-                    var $lis = self._$div.find('li.' + self.CLASS + '-elm');
-                    var layers = new Array($lis.length);
-                    $lis.each(function (idx, elm) {
-                        layers[idx] = $(elm).data(_dataKeys.layer);
-                    });
-                    for (var i = 0, len = layers.length; i < len; i++) {
-                        map.removeLayer(layers[i]);
-                    }
-                });
-            })
-            .on(self.CLICKEVENT, '.' + self.CLASS + '-btn-info', function (e) {
-                var $a = $(e.target);
-                var $li = $a.parents('li').first();
-                var $info = $li.find('.' + self.CLASS + '-info');
-                // Cargamos la imagen de la leyenda
-                $info.find('.' + self.CLASS + '-legend img').each(function (idx, img) {
-                    var layer = $li.data(_dataKeys.layer);
-                    self.styleLegendImage($(img), layer);
-                });
-                $info.toggleClass(TC.Consts.classes.HIDDEN);
-
-                if ($li.find('input[type="checkbox"]').is(':checked')) {
-                    $li.find('.' + self.CLASS + '-dd').toggleClass(TC.Consts.classes.HIDDEN, !$info.hasClass(TC.Consts.classes.HIDDEN));
-                }
-                $a.toggleClass(TC.Consts.classes.CHECKED);
-            });
+        map.off(TC.Consts.event.EXTERNALSERVICEADDED);
 
         map
             .on(TC.Consts.event.LAYEROPACITY, function (e) {
@@ -73199,6 +73225,92 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                         }
                     }
                 }
+            })            
+            .on(TC.Consts.event.FEATURESIMPORT, function (e) {
+                var fileName = e.fileName;
+                if (e.features && e.features.length > 0) { // GLS: Escuchamos al evento FEATURESIMPORT para poder desplegar el control de capas cargadas
+                    // Ignoramos los GPX (se supone que los gestionar\u00e1 Geolocation)
+                    var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
+                    if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
+                        return;
+                    }
+
+                    map.one(TC.Consts.event.LAYERADD, function (e) {
+                        if (e && e.layer && e.layer.title == fileName) {
+                            // Desplegamos el control capas cargadas
+                            if (self.map && self.map.layout && self.map.layout.accordion) {
+                                if (self._$div.hasClass(TC.Consts.classes.COLLAPSED)) {
+                                    for (var i = 0; i < self.map.controls.length; i++) {
+                                        if (self.map.controls[i] !== self) {
+                                            self.map.controls[i]._$div.addClass(TC.Consts.classes.COLLAPSED);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // abrimos el panel de herramientas
+                            self.map.$events.trigger($.Event(TC.Consts.event.TOOLSOPEN), {});
+
+                            self._$div.removeClass(TC.Consts.classes.COLLAPSED);
+                        }
+                    });
+                }
+            });
+    };
+
+    ctlProto._addBrowserEventHandlers = function () {
+        var self = this;
+        self._$div
+            .on(self.CLICKEVENT, 'input[type=checkbox]', function (e) {
+                // al estar en ipad el evento pasa a ser touchstart en la constante: TC.Consts.event.CLICK, los checkbox no funcionan bien con este evento
+                var $cb = $(e.target);
+
+                var $li = $cb.parents('li.' + self.CLASS + '-elm').first();
+                var layer = $li.data(_dataKeys.layer);
+                var checked = $cb.prop('checked');
+
+                layer.setVisibility(checked);
+
+                e.stopPropagation();
+            })
+            .on('change input', 'input[type=range]', function (e) {
+                var $range = $(e.target);
+
+                var layer = $range.parents('li').first().data(_dataKeys.layer);
+                layer.setOpacity($range.val() / 100);
+            })
+            .on(self.CLICKEVENT, '.' + self.CLASS + '-del', function (e) {
+                var $li = $(e.target).parents('li').first();
+                var layer = $li.data(_dataKeys.layer);
+                self.map.removeLayer(layer);
+            })
+            .on(self.CLICKEVENT, '.' + self.CLASS + '-del-all', function (e) {
+                TC.confirm(self.getLocaleString('layersRemove.confirm'), function () {
+                    var $lis = self._$div.find('li.' + self.CLASS + '-elm');
+                    var layers = new Array($lis.length);
+                    $lis.each(function (idx, elm) {
+                        layers[idx] = $(elm).data(_dataKeys.layer);
+                    });
+                    for (var i = 0, len = layers.length; i < len; i++) {
+                        self.map.removeLayer(layers[i]);
+                    }
+                });
+            })
+            .on(self.CLICKEVENT, '.' + self.CLASS + '-btn-info', function (e) {
+                var $a = $(e.target);
+                var $li = $a.parents('li').first();
+                var $info = $li.find('.' + self.CLASS + '-info');
+                // Cargamos la imagen de la leyenda
+                $info.find('.' + self.CLASS + '-legend img').each(function (idx, img) {
+                    var layer = $li.data(_dataKeys.layer);
+                    self.styleLegendImage($(img), layer);
+                });
+                $info.toggleClass(TC.Consts.classes.HIDDEN);
+
+                if ($li.find('input[type="checkbox"]').is(':checked')) {
+                    $li.find('.' + self.CLASS + '-dd').toggleClass(TC.Consts.classes.HIDDEN, !$info.hasClass(TC.Consts.classes.HIDDEN));
+                }
+                $a.toggleClass(TC.Consts.classes.CHECKED);
             });
     };
 
@@ -73272,11 +73384,9 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                     TC.url.templating,
                     function () {
                         TC.loadJS(
-                            !$.fn.drag || !$.fn.drop,
-                            [TC.apiLocation + 'lib/jQuery/jquery.event.drag.js', TC.apiLocation + 'lib/jQuery/jquery.event.drop.js'],
+                            !$.fn.drag,
+                            [TC.apiLocation + 'lib/jQuery/jquery.event.drag.js'],
                             function () {
-                                $.drop({ mode: 'middle' });
-
                                 var layerTitle = layer.title ? layer.title : layer.capabilities.Service.Title;
                                 var layerData = {
                                     title: layer.options.hideTitle ? '' : layerTitle,
@@ -73369,64 +73479,116 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                                         $li
                                             .drag("start", function (e, dd) {
                                                 var $drag = $(this);
+                                                var $lis = $ul.children('li');
+                                                $lis.not($drag).addClass(TC.Consts.classes.DRAGEND);
+                                                var dragIdx = $lis.index($drag);
                                                 $drag.css('zIndex', 100).addClass(TC.Consts.classes.DRAG);
+                                                var $lastLi = $lis.last();
                                                 var positionLi = $drag.position();
-                                                var positionUl = $ul.position();
-                                                dd.limit = { top: -positionLi.top + positionUl.top, bottom: $ul.height() + positionUl.top - positionLi.top - $drag.height() };
+                                                dd.limit = {
+                                                    top: $lis.first().position().top - positionLi.top,
+                                                    bottom: $lastLi.height() + $lastLi.position().top - positionLi.top - $drag.height() - 1
+                                                };
+                                                dd.dropTargetIndex = -1;
                                             })
                                             .drag("end", function (e, dd) {
                                                 var $drag = $(this);
-                                                if (!dd.drop.length) {
-                                                    $drag
-                                                        .css({
-                                                            transform: '',
-                                                            zIndex: ''
-                                                        })
-                                                        .removeClass(TC.Consts.classes.DRAG);
+                                                $drag
+                                                    .removeClass(TC.Consts.classes.DRAG)
+                                                    .addClass(TC.Consts.classes.DRAGEND);
+                                                // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
+                                                var dragDeltaY = $drag.css('transform');
+                                                dragDeltaY = parseInt(dragDeltaY.substr(dragDeltaY.lastIndexOf(',') + 1));
+                                                var dragLiTop = this.getBoundingClientRect().top - dragDeltaY;
+                                                var dropElm;
+                                                var $drop;
+                                                if (dd.dropTargetIndex >= 0) {
+                                                    dropElm = $ul.children('li').get(dd.dropTargetIndex);
+                                                    $drop = $(dropElm);
+                                                    // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
+                                                    var dropDeltaY = $drop.css('transform');
+                                                    dropDeltaY = parseInt(dropDeltaY.substr(dropDeltaY.lastIndexOf(',') + 1));
+                                                    var dropLiTop = dropElm.getBoundingClientRect().top - dropDeltaY;
                                                 }
-                                                else {
-                                                    $drag.addClass(TC.Consts.classes.DRAGEND);
-                                                    for (var i = 0; i < dd.drop.length; i++) {
-                                                        $(dd.drop[i]).removeClass(TC.Consts.classes.DROP);
-                                                    }
-                                                    var $drop = $(dd.drop[0]);
-                                                    var deltaY = $drag.css('transform');
-                                                    deltaY = parseInt(deltaY.substr(deltaY.lastIndexOf(',') + 1));
-                                                    var dragLiTop = $drag.position().top - deltaY;
-                                                    var dropLiTop = $drop.position().top;
-                                                    deltaY = dropLiTop - dragLiTop;
-                                                    $drag.css('transform', 'translateY(' + deltaY + 'px)');
-                                                    var transitionEnd = 'transitionend.tc';
-                                                    $drag.on(transitionEnd, function (e) {
-                                                        if (e.originalEvent.propertyName === 'transform') {
-                                                            $drag.off(transitionEnd);
+                                                $drag.css('transform', $drop ? 'translateY(' + (dropLiTop - dragLiTop) + 'px)' : '');
+                                                var transitionEnd = 'transitionend.tc';
+                                                $drag.on(transitionEnd, function transitionEndHandler(e) {
+                                                    if (e.originalEvent.propertyName === 'transform') {
+                                                        $drag
+                                                            .off(transitionEnd, transitionEndHandler)
+                                                            .removeClass(TC.Consts.classes.DRAGEND)
+                                                            .css('zIndex', '');
+                                                        if ($drop) {
                                                             moveLayer($drag, $drop, function () {
-                                                                $drag
-                                                                    .removeClass(TC.Consts.classes.DRAGEND)
-                                                                    .removeClass(TC.Consts.classes.DRAG)
-                                                                    .css('zIndex', '')
-                                                                    .css('transform', '');
+                                                                $ul.children('li')
+                                                                    .css('transform', '')
+                                                                    .removeClass(TC.Consts.classes.DRAGEND);
                                                             });
                                                         }
-                                                    });
-                                                }
+                                                    }
+                                                });
                                             })
                                             .drag(function (e, dd) {
-                                                $(this).css('transform', 'translateY(' + Math.min(Math.max(dd.limit.top, Math.round(dd.deltaY)), dd.limit.bottom) + 'px)');
+                                                var $drag = $(this);
+                                                var deltaY = Math.min(Math.max(dd.limit.top, Math.round(dd.deltaY)), dd.limit.bottom);
+                                                var clientRect = this.getBoundingClientRect();
+                                                var dragHeight = clientRect.height - 1;
+                                                var yMiddle = (clientRect.top + clientRect.bottom) / 2;
+                                                var yThresholds = [];
+                                                var dragIdx;
+                                                var $lis = $ul.children('li');
+                                                $lis.each(function (idx, elm) {
+                                                    var cr = elm.getBoundingClientRect();
+                                                    yThresholds[idx] = { elm: elm, top: cr.top, bottom: cr.bottom };
+                                                    if (elm === dd.drag) {
+                                                        dragIdx = idx;
+                                                    }
+                                                });
+                                                var tValue;
+                                                var dropTargetIdx = -1;
+                                                for (var i = 0, len = yThresholds.length; i < len; i++) {
+                                                    var th = yThresholds[i];
+                                                    if (i < dragIdx) {
+                                                        if (yMiddle < th.bottom) {
+                                                            if (yMiddle > th.top && dd.deltaY > dd.prevDeltaY) {
+                                                                tValue = '';
+                                                            }
+                                                            else {
+                                                                tValue = 'translateY(' + dragHeight + 'px)';
+                                                                if (dropTargetIdx < 0) {
+                                                                    dropTargetIdx = i;
+                                                                }
+                                                            }
+                                                        }
+                                                        else {
+                                                            tValue = '';
+                                                        }
+                                                        $(th.elm).css('transform', tValue);
+                                                    }
+                                                    else if (i > dragIdx) {
+                                                        if (yMiddle > th.top) {
+                                                            if (yMiddle < th.bottom && dd.deltaY < dd.prevDeltaY) {
+                                                                tValue = '';
+                                                            }
+                                                            else {
+                                                                tValue = 'translateY(-' + dragHeight + 'px)';
+                                                                dropTargetIdx = i;
+                                                            }
+                                                        }
+                                                        else {
+                                                            tValue = '';
+                                                        }
+                                                        $(th.elm).css('transform', tValue);
+                                                    }
+                                                }
+                                                dd.dropTargetIndex = dropTargetIdx;
+                                                $drag.css('transform', 'translateY(' + deltaY + 'px)');
+                                                dd.prevDeltaY = dd.deltaY;
                                             },
                                                 {
                                                     handle: '.' + self.CLASS + '-dd'
                                                 }
-                                            )
-                                            .drop("init", function (e, dd) {
-                                                return !(this == dd.drag);
-                                            })
-                                            .drop("start", function () {
-                                                $(this).addClass(TC.Consts.classes.DROP);
-                                            })
-                                            .drop("end", function () {
-                                                $(this).removeClass(TC.Consts.classes.DROP);
-                                            });
+                                            );
 
                                         $ul.prepend($li);
                                         self.updateScale();
@@ -75672,11 +75834,18 @@ if (!window.OpenLayers) {
         return [xy.x, xy.y];
     };
 
-    TC.wrap.Map.prototype.getViewport = function () {
-        var result = new $.Deferred();
-        $.when(this.getMap()).then(function (olMap) {
-            result.resolve(olMap.getViewport());
-        });
+    TC.wrap.Map.prototype.getViewport = function (options) {
+        var self = this;
+        var opts = options || {};
+        if (opts.synchronous) {
+            result = self.map.getViewport();
+        }
+        else {
+            var result = new $.Deferred();
+            $.when(this.getMap()).then(function (olMap) {
+                result.resolve(olMap.getViewport());
+            });
+        }
         return result;
     };
 
@@ -77924,7 +78093,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
 
                 var checkRemoveData = function () {
                     if (layer.map.workLayers.length > 0) {
-                        var _wl = layer.map.workLayers.reverse();
+                        var _wl = layer.map.workLayers.slice().reverse();
                         for (var i = 0; i < _wl.length; i++) {
                             if (_wl[i].url == layer.url && _wl[i].getVisibility())
                                 return false;
@@ -78459,7 +78628,7 @@ if (!TC.control.SWCacheClient) {
         ctlProto.template[ctlProto.CLASS + '-off-panel'] = TC.apiLocation + "TC/templates/CacheBuilderOfflinePanel.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "offlineMaps" }).w(" <span class=\"tc-beta\">").h("i18n", ctx, {}, { "$key": "beta" }).w("</span></h2><div class=\"tc-ctl-cbuild-content\"><i class=\"tc-ctl-cbuild-map-search-icon\"></i><input type=\"search\" list=\"").f(ctx.get(["listId"], false), ctx, "h").w("\" class=\"tc-ctl-cbuild-map-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "cb.filter.plhr" }).w("\"").x(ctx.get(["storedMaps"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" maxlength=\"200\" /> <ul id=\"").f(ctx.get(["listId"], false), ctx, "h").w("\" class=\"tc-ctl-cbuild-list\"><li class=\"tc-ctl-cbuild-map-available-empty\"").x(ctx.get(["storedMaps"], false), ctx, { "block": body_3 }, {}).w("><span>").h("i18n", ctx, {}, { "$key": "cb.noMaps" }).w("</span></li><li class=\"tc-ctl-cbuild-map-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li>").s(ctx.get(["storedMaps"], false), ctx, { "block": body_4 }, {}).w("</ul><div class=\"tc-ctl-cbuild-new\"><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-new\" disabled title=\"").h("i18n", ctx, {}, { "$key": "newofflinemap" }).w("\">").h("i18n", ctx, {}, { "$key": "newOfflineMap" }).w("</button></div><div class=\"tc-ctl-cbuild-drawing tc-hidden\"><div class=\"tc-ctl-cbuild-tile-cmd\"><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-cancel-draw\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div><div class=\"tc-ctl-cbuild-progress tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "cb.DownloadingMap|s" }).w(": <span class=\"tc-ctl-cbuild-progress-count\"></span></p><div class=\"tc-ctl-cbuild-progress-bar\"><div class=\"tc-ctl-cbuild-progress-ratio\" style=\"width:0\"></div></div><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-cancel-dl\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" disabled"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk; } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" hidden"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.p("tc-ctl-cbuild-map-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_4.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "offlineMaps" }).w("</h2><div class=\"tc-ctl-cbuild-content\"><div class=\"tc-ctl-cbuild-draw tc-hidden\"></div><i class=\"tc-ctl-cbuild-map-search-icon\"></i><input type=\"search\" list=\"").f(ctx.get(["listId"], false), ctx, "h").w("\" class=\"tc-ctl-cbuild-map-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "cb.filter.plhr" }).w("\"").x(ctx.get(["storedMaps"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" maxlength=\"200\" /> <ul id=\"").f(ctx.get(["listId"], false), ctx, "h").w("\" class=\"tc-ctl-cbuild-list\"><li class=\"tc-ctl-cbuild-map-available-empty\"").x(ctx.get(["storedMaps"], false), ctx, { "block": body_3 }, {}).w("><span>").h("i18n", ctx, {}, { "$key": "cb.noMaps" }).w("</span></li><li class=\"tc-ctl-cbuild-map-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li>").s(ctx.get(["storedMaps"], false), ctx, { "block": body_4 }, {}).w("</ul><div class=\"tc-ctl-cbuild-new\"><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-new\" disabled title=\"").h("i18n", ctx, {}, { "$key": "newofflinemap" }).w("\">").h("i18n", ctx, {}, { "$key": "newOfflineMap" }).w("</button></div><div class=\"tc-ctl-cbuild-drawing tc-hidden\"><div class=\"tc-ctl-cbuild-tile-cmd\"><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-cancel-draw\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div><div class=\"tc-ctl-cbuild-progress tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "cb.DownloadingMap|s" }).w(": <span class=\"tc-ctl-cbuild-progress-count\"></span></p><div class=\"tc-ctl-cbuild-progress-bar\"><div class=\"tc-ctl-cbuild-progress-ratio\" style=\"width:0\"></div></div><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-cancel-dl\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" disabled"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk; } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" hidden"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.p("tc-ctl-cbuild-map-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_4.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-map-node'] = function () { dust.register(ctlProto.CLASS + '-map-node', body_0); function body_0(chk, ctx) { return chk.w("<li data-extent=\"").f(ctx.get(["extent"], false), ctx, "h").w("\"><span><a href=\"").f(ctx.get(["url"], false), ctx, "h").w("\" title=\"").f(ctx.get(["name"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</a></span><input class=\"tc-textbox tc-hidden\" type=\"text\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\" /><button class=\"tc-btn-save tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "save" }).w("\"></button><button class=\"tc-btn-cancel tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\"></button><button class=\"tc-btn-edit\" title=\"").h("i18n", ctx, {}, { "$key": "editMapName" }).w("\">").h("i18n", ctx, {}, { "$key": "editMapName" }).w("</button><button class=\"tc-btn-view\" title=\"").h("i18n", ctx, {}, { "$key": "viewMapExtent" }).w("\">").h("i18n", ctx, {}, { "$key": "viewMapExtent" }).w("</button><button class=\"tc-btn-delete\" title=\"").h("i18n", ctx, {}, { "$key": "deleteMap" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteMap" }).w("</button></li>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-bl-node'] = function () { dust.register(ctlProto.CLASS + '-bl-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-cbuild-bl-node\" data-tc-layer-uid=\"").f(ctx.get(["id"], false), ctx, "h").w("\"><label style=\"background-size: 100% 100%; background-image: url(").f(ctx.get(["thumbnail"], false), ctx, "h").w(")\"><input type=\"checkbox\" name=\"cbbl\" value=\"").f(ctx.get(["id"], false), ctx, "h").w("\" disabled><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label></li>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-cbuild-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "newOfflineMap" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><input type=\"text\" class=\"tc-ctl-cbuild-txt-name\" placeholder=\"").h("i18n", ctx, {}, { "$key": "nameRequired" }).w("\" required /><div class=\"tc-ctl-cbuild-bl-panel\"><h4>").h("i18n", ctx, {}, { "$key": "availableOfflineMaps" }).w("</h4><p>").h("i18n", ctx, {}, { "$key": "selectAtLeastOne" }).w(":</p><ul class=\"tc-ctl-cbuild-bl-list\"></ul></div><div class=\"tc-ctl-cbuild-res-panel\"><h4>").h("i18n", ctx, {}, { "$key": "maxRes" }).w("</h4><div class=\"tc-ctl-cbuild-res\"></div><input type=\"range\" class=\"tc-ctl-cbuild-rng-maxres\" disabled value=\"0\" title=\"").h("i18n", ctx, {}, { "$key": "maxRes" }).w("\"></div><div class=\"tc-ctl-cbuild-tile-count\"></div></div><div class=\"tc-modal-footer\"><button class=\"tc-button tc-modal-close tc-ctl-cbuild-btn-ok\" disabled>").h("i18n", ctx, {}, { "$key": "ok" }).w("</button><button type=\"button\" class=\"tc-button tc-modal-close tc-ctl-cbuild-btn-cancel\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
@@ -81981,6 +82150,7 @@ if (!TC.control.FeatureInfoCommons) {
             draggable: self.options.draggable
         })).then(function (popup) {
             self.popup = popup;
+            popup.caller = self;
             map.on(TC.Consts.event.POPUP, function (e) {
                 self.onShowPopUp(e)
 
@@ -82229,35 +82399,78 @@ TC.inherit(TC.control.FileImport, TC.Control);
             map.wrap.enableDragAndDrop(self.options);
         }
 
-        map.on(TC.Consts.event.FEATURESIMPORT, function (e) {
-            // Ignoramos los GPX (se supone que los gestionar\u00e1 Geolocation)
-            var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
-            if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
-                return;
-            }
-            map.addLayer({
-                id: TC.getUID(),
-                title: e.fileName,
-                type: TC.Consts.layerType.VECTOR
-            }).then(function (layer) {
-                for (var i = 0, len = e.features.length; i < len; i++) {
-                    layer.addFeature(e.features[i]);
+        map
+            .on(TC.Consts.event.FEATURESIMPORT, function (e) {
+                // Ignoramos los GPX (se supone que los gestionar\u00e1 Geolocation)
+                var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
+                if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
+                    return;
                 }
-                setTimeout(function () {
-                    map.zoomToFeatures(layer.features);
-                }, 100);
+                map.addLayer({
+                    id: TC.getUID(),
+                    title: e.fileName,
+                    type: TC.Consts.layerType.VECTOR
+                }).then(function (layer) {
+                    var geogCrs = 'EPSG:4326';
+                    var projectGeom = function (feature) {
+                        var geom = feature.geometry;
+                        if (geom) {
+                            var match = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(geom.join(' '));
+                            if (match && match.length >= 3 &&
+                                    Math.abs(match[1]) <= 180 &&
+                                    Math.abs(match[3]) <= 90) {
+
+                                feature.setCoords(TC.Util.reproject(geom, geogCrs, self.map.crs));
+                            }
+                        }
+
+                        return feature;
+                    };
+
+                    for (var i = 0, len = e.features.length; i < len; i++) {
+                        var projectedFeature = projectGeom(e.features[i]);
+                        layer.addFeature(projectedFeature);
+                    }
+                    setTimeout(function () {
+                        map.zoomToFeatures(layer.features);
+                    }, 100);
+                });
+            })
+            .on(TC.Consts.event.FEATURESIMPORTERROR, function (e) {
+                var dictKey;
+                var fileName = e.file.name;
+                if (fileName.toLowerCase().substr(fileName.length - 4) === '.kmz') {
+                    dictKey = 'fileImport.error.reasonKmz';
+                }
+                else {
+                    dictKey = 'fileImport.error.reasonUnknown';
+                }
+
+                TC.error(self.getLocaleString(dictKey, { fileName: fileName }), TC.Consts.msgErrorMode.TOAST);
+
+                var reader = new FileReader();
+                reader.onload = function (event) {
+                    TC.error("Error en la subida de un archivo: \n\n\t Nombre del archivo: " + fileName + " \n\t Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL);
+                };
+                reader.readAsText(e.file);                
             });
-        });
     };
 
     ctlProto.render = function () {
         var self = this;
-        self.renderData({ formats: self.formats }, function() {
-            self._$div.find('input[type=file]').on('change', function (e) {
-                if (self.map) {
-                    self.map.wrap.loadFiles(e.target.files);
-                }
-            });
+        self.renderData({ formats: self.formats }, function () {            
+            self._$div.find('input[type=file]')
+                // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
+                .on(TC.Consts.event.CLICK, function (e) {
+                    $(this).wrap('<form>').closest('form').get(0).reset();
+                    $(this).unwrap();
+                })
+                .on('change', function (e) {
+                    if (self.map) {
+                        console.log('salta el change');
+                        self.map.wrap.loadFiles(e.target.files);
+                    }
+                });
         });
     };
 
@@ -82512,7 +82725,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         ctlProto.template[ctlProto.CLASS + '-tracking-toast'] = TC.apiLocation + "TC/templates/GeolocationTrackingToast.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "geo" }).w(" <span class=\"tc-beta\">").h("i18n", ctx, {}, { "$key": "beta" }).w("</span></h2><div class=\"tc-ctl-geolocation-content\"> <div class=\"tc-ctl-geolocation-track\"><div class=\"tc-ctl-geolocation-track-snap-info\"></div><div class=\"tc-ctl-geolocation-info-tracking tc-hidden\"><div class=\"tc-ctl-p-results\"><div class=\"prpanel-group prsidebar-body \"><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><label>").h("i18n", ctx, {}, { "$key": "geo.mylocation" }).w("</label> <span id=\"trackingInfoClose\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span id=\"trackingInfoMin\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span> </h4></div><div id=\"results\" class=\"prpanel-collapse\"><div class=\"prpanel-body list-group\"> </div> </div></div></div><div id=\"trackingInfoMax\" class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("\"><i class=\"fa fa-list-alt\"></i></div></div></div><!-- img se insertan en el div del mapa--> <div id=\"tc-ctl-geolocation-track-elevation-marker\" class=\"tc-ctl-geolocation-trackMarker elevation\" style=\"display: none;\" /> <div class=\"tc-ctl-geolocation-track-panel-block\"><input id=\"tc-ctl-geolocation-track-panel-opened\" type=\"checkbox\" checked/><label for=\"tc-ctl-geolocation-track-panel-opened\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.1" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.2" }).w("</label><i class=\"tc-ctl-geolocation-track-panel-help icon-question-sign\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.3" }).w("\"></i></div><div class=\"tc-ctl-geolocation-track-mng\"><div class=\"tc-ctl-geolocation-select\"><form> <label class=\"tc-ctl-geolocation-btn-track\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"tracks\" /><span>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</span></label><label class=\"tc-ctl-geolocation-btn-tracks\" title=\"").h("i18n", ctx, {}, { "$key": "geo.tracks.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"track-available\" /><span>").h("i18n", ctx, {}, { "$key": "geo.tracks" }).w("</span></label> </form></div> <div class=\"tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden\"><i class=\"tc-ctl-geolocation-track-search-icon\"></i><input id=\"tc-ctl-geolocation-track-available-srch\" type=\"search\" list=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.filter.plhr" }).w("\" maxlength=\"200\" /> <ol id=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-lst\"><li class=\"tc-ctl-geolocation-track-available-empty\"><span>").h("i18n", ctx, {}, { "$key": "geo.noTracks" }).w("</span></li><li class=\"tc-ctl-geolocation-track-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li></ol><div class=\"tc-ctl-geolocation-track-cnt\"><input name=\"uploaded-file\" id=\"uploaded-file\" type=\"file\" class=\"tc-ctl-geolocation-track-import tc-button\" accept=\".gpx,.kml\" disabled /><label class=\"tc-button tc-icon-button\" for=\"uploaded-file\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.import.upload" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.import.lbl" }).w("</label></div></div><div class=\"tc-ctl-geolocation-tracks tc-ctl-geolocation-panel tc-hidden\"> <div class=\"tc-alert alert-warning tc-hidden\"><p id=\"panel-msg\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.1" }).w(" <ul><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.2" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.4" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.5" }).w("</li></ul></p></div> <div class=\"tc-ctl-geolocation-track-ui\"> <div class=\"tc-ctl-geolocation-track-render\"><input id=\"tc-ctl-geolocation-track-render\" type=\"checkbox\" hidden checked /><label for=\"tc-ctl-geolocation-track-render\" class=\"tc-ctl-geolocation-track-render\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("</label></div><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.activate" }).w("</button><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.deactivate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.deactivate" }).w("</button></div><div class=\"tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt\"><input type=\"text\" class=\"tc-ctl-geolocation-track-title tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.save" }).w("\"></button><input type=\"text\" class=\"tc-ctl-geolocation-track-waypoint tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.save" }).w("\"></button></div></div></div></div></div><!--se inserta en el div del mapa--><div class=\"tc-ctl-geolocation-track-center tc-hidden\"> <button class=\"tc-ctl-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.center" }).w("\"></button></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "geo" }).w("</h2><div class=\"tc-ctl-geolocation-content\"> <div class=\"tc-ctl-geolocation-track\"><div class=\"tc-ctl-geolocation-track-snap-info\"></div><div class=\"tc-ctl-geolocation-info-tracking tc-hidden\"><div class=\"tc-ctl-p-results\"><div class=\"prpanel-group prsidebar-body \"><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><label>").h("i18n", ctx, {}, { "$key": "geo.mylocation" }).w("</label> <span id=\"trackingInfoClose\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span id=\"trackingInfoMin\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span> </h4></div><div id=\"results\" class=\"prpanel-collapse\"><div class=\"prpanel-body list-group\"> </div> </div></div></div><div id=\"trackingInfoMax\" class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("\"><i class=\"fa fa-list-alt\"></i></div></div></div><!-- img se insertan en el div del mapa--> <div id=\"tc-ctl-geolocation-track-elevation-marker\" class=\"tc-ctl-geolocation-trackMarker elevation\" style=\"display: none;\" /> <div class=\"tc-ctl-geolocation-track-panel-block\"><input id=\"tc-ctl-geolocation-track-panel-opened\" type=\"checkbox\" checked/><label for=\"tc-ctl-geolocation-track-panel-opened\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.1" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.2" }).w("</label><i class=\"tc-ctl-geolocation-track-panel-help icon-question-sign\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.3" }).w("\"></i></div><div class=\"tc-ctl-geolocation-track-mng\"><div class=\"tc-ctl-geolocation-select\"><form> <label class=\"tc-ctl-geolocation-btn-track\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"tracks\" /><span>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</span></label><label class=\"tc-ctl-geolocation-btn-tracks\" title=\"").h("i18n", ctx, {}, { "$key": "geo.tracks.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"track-available\" /><span>").h("i18n", ctx, {}, { "$key": "geo.tracks" }).w("</span></label> </form></div> <div class=\"tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden\"><i class=\"tc-ctl-geolocation-track-search-icon\"></i><input id=\"tc-ctl-geolocation-track-available-srch\" type=\"search\" list=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.filter.plhr" }).w("\" maxlength=\"200\" /> <ol id=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-lst\"><li class=\"tc-ctl-geolocation-track-available-empty\"><span>").h("i18n", ctx, {}, { "$key": "geo.noTracks" }).w("</span></li><li class=\"tc-ctl-geolocation-track-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li></ol><div class=\"tc-ctl-geolocation-track-cnt\"><input name=\"uploaded-file\" id=\"uploaded-file\" type=\"file\" class=\"tc-ctl-geolocation-track-import tc-button\" accept=\".gpx,.kml\" disabled /><label class=\"tc-button tc-icon-button\" for=\"uploaded-file\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.import.upload" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.import.lbl" }).w("</label></div></div><div class=\"tc-ctl-geolocation-tracks tc-ctl-geolocation-panel tc-hidden\"> <div class=\"tc-alert alert-warning tc-hidden\"><p id=\"panel-msg\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.1" }).w(" <ul><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.2" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.4" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.5" }).w("</li></ul></p></div> <div class=\"tc-ctl-geolocation-track-ui\"> <div class=\"tc-ctl-geolocation-track-render\"><input id=\"tc-ctl-geolocation-track-render\" type=\"checkbox\" hidden checked /><label for=\"tc-ctl-geolocation-track-render\" class=\"tc-ctl-geolocation-track-render\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("</label></div><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.activate" }).w("</button><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.deactivate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.deactivate" }).w("</button></div><div class=\"tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt\"><input type=\"text\" class=\"tc-ctl-geolocation-track-title tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.save" }).w("\"></button><input type=\"text\" class=\"tc-ctl-geolocation-track-waypoint tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.save" }).w("\"></button></div></div></div></div></div><!--se inserta en el div del mapa--><div class=\"tc-ctl-geolocation-track-center tc-hidden\"> <button class=\"tc-ctl-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.center" }).w("\"></button></div>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-track-node'] = function () { dust.register(ctlProto.CLASS + '-track-node', body_0); function body_0(chk, ctx) { return chk.w("<li data-id=\"").f(ctx.get(["id"], false), ctx, "h").w("\" data-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span class=\"tc-draw tc-selectable\" title=\"").f(ctx.get(["name"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</span><input class=\"tc-textbox tc-hidden\" type=\"text\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\" /> <button class=\"tc-btn-simulate\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.simulate" }).w("\"></button><button hidden class=\"tc-btn-stop\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.stop" }).w("\"></button><button class=\"tc-btn-edit\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.edit" }).w("\"></button><button hidden class=\"tc-btn-pause\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.pause" }).w("\"></button> <button hidden class=\"tc-btn-backward\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.backward" }).w("\"></button><label hidden class=\"tc-spn-speed\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.velocity" }).w("\"></label><button hidden class=\"tc-btn-forward\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.forward" }).w("\"></button> <button class=\"tc-btn-save tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "save" }).w("\"></button><button class=\"tc-btn-cancel tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.cancel" }).w("\"></button><button class=\"tc-btn-delete\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.delete" }).w("\"></button><button class=\"tc-btn-export-gpx\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportGPX" }).w("\"></button><button class=\"tc-btn-export-kml\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportKML" }).w("\"></button> </li>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = function () { dust.register(ctlProto.CLASS + '-track-snapping-node', body_0); function body_0(chk, ctx) { return chk.w("<ul>").x(ctx.get(["n"], false), ctx, { "block": body_1 }, {}).w("<li> <span>X:</span> ").f(ctx.get(["x"], false), ctx, "h").w(" </li><li> <span>Y:</span> ").f(ctx.get(["y"], false), ctx, "h").w(" </li>").x(ctx.get(["z"], false), ctx, { "block": body_2 }, {}).x(ctx.get(["m"], false), ctx, { "block": body_4 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li> <span>").h("i18n", ctx, {}, { "$key": "geo.trk.snapping.name" }).w(":</span> ").f(ctx.get(["n"], false), ctx, "h").w(" </li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.h("ne", ctx, { "block": body_3 }, { "key": ctx.get(["z"], false), "value": 0 }).w(" "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li> <span>Z:</span> ").f(ctx.get(["z"], false), ctx, "h").w(" </li>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<li> ").f(ctx.get(["m"], false), ctx, "h").w(" </li>"); } body_4.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-geolocation-continue-track-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><button class=\"tc-button tc-ctl-geolocation-track-continue\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cnt" }).w(" </button><button class=\"tc-button tc-ctl-geolocation-track-new\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.new" }).w(" </button> <button class=\"tc-button tc-modal-close\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cancel" }).w(" </button></div></div></div><div class=\"tc-ctl-geolocation-track-advert-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p id=\"pageBlurMsg\">").h("i18n", ctx, {}, { "$key": "geo.trk.page.blur" }).w("</p><p class=\"tc-ctl-geolocation-track-advertisement p\"> <label> <input type=\"checkbox\" name=\"checkbox\" id=\"advertisement\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.advertisement" }).w(" </label> </p></div><div class=\"tc-modal-footer\"><button class=\"tc-button tc-ctl-geolocation-track-advert-ok\"> ").h("i18n", ctx, {}, { "$key": "ok" }).w(" </button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
@@ -82825,6 +83038,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             if (window.File && window.FileReader && window.FileList && window.Blob) {
                 self.track.$trackImportFile.removeAttr('disabled');
+                self.track.$trackImportFile.on(TC.Consts.event.CLICK, function (e) {
+                    $(this).wrap('<form>').closest('form').get(0).reset();
+                    $(this).unwrap();
+                })
                 self.track.$trackImportFile.on('change', function (e) {
                     if (!self._cleaning) { // Valido que el evento import no lo provoco yo al limpiar el fileinput (al limpiar se lanza el change)                        
                         self.clear(self.Const.Layers.TRACK);
@@ -84088,15 +84305,15 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 if (data.time) data.time = ("00000" + data.time.h).slice(-2) + ':' + ("00000" + data.time.m).slice(-2) + ':' + ("00000" + data.time.s).slice(-2);
                 var delta = self.map.options.pointBoundsRadius;
 
-                var size = {
+                self.elevationChartSize = {
                     height: Modernizr.mq('(min-width: 50em)') ? 128 : 70,
                     width: Modernizr.mq('(min-width: 50em)') ? 445 : (Modernizr.mq('(min-width: 40em)') ? 310 : 215)
                 };
 
                 data = $.extend({}, data, {
                     size: {
-                        height: size.height,
-                        width: size.width
+                        height: self.elevationChartSize.height,
+                        width: self.elevationChartSize.width
                     },
                     data: {
                         x: 'x',
@@ -84256,7 +84473,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                         // ¿es necesario pasar los labels a multiline?
                         var setMultilineLabels = function () {
-                            var x = d3.scale.ordinal().rangeRoundBands([0, size.width], .1, .3);
+                            var x = d3.scale.ordinal().rangeRoundBands([0, self.elevationChartSize.width], .1, .3);
                             d3.select('.c3-axis-x').selectAll('text:not(.c3-axis-x-label)')
                                 .call(function (textNode, width) {
                                     textNode.each(function () {
@@ -84282,7 +84499,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                                     });
                                 }, x.rangeBand());
                         };
-                        if (!d3.select('.c3-axis-x').node().getBBox().width) {
+                        if (!d3.select('.c3-axis-x').node().getBoundingClientRect().width) {
 
                             if (self.elevationChartLabelsRAF) {
                                 window.cancelAnimationFrame(self.elevationChartLabelsRAF);
@@ -84291,24 +84508,24 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                             function hasSize() {
                                 if (d3.select('.c3-axis-x').length && d3.select('.c3-axis-x').node() &&
-                                    !d3.select('.c3-axis-x').node().getBBox().width) {
+                                    !d3.select('.c3-axis-x').node().getBoundingClientRect().width) {
                                     self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
                                 } else {
                                     window.cancelAnimationFrame(self.elevationChartLabelsRAF);
                                     self.elevationChartLabelsRAF = undefined;
 
-                                    if (((d3.select('.c3-axis-x').node().getBBox().width >= size.width - d3.select('.c3-axis-y').node().getBBox().width) ||
-                                         (d3.select('.c3-axis-x').node().getBBox().width * 100 / (size.width - d3.select('.c3-axis-y').node().getBBox().width) > 90))) {
-                                            setMultilineLabels();
+                                    if (((d3.select('.c3-axis-x').node().getBoundingClientRect().width >= self.elevationChartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) ||
+                                         (d3.select('.c3-axis-x').node().getBoundingClientRect().width * 100 / (self.elevationChartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) > 90))) {
+                                        setMultilineLabels();
                                     }
                                 }
                             }
 
                             self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
                         }
-                        else if (((d3.select('.c3-axis-x').node().getBBox().width >= size.width - d3.select('.c3-axis-y').node().getBBox().width) ||
-                            (d3.select('.c3-axis-x').node().getBBox().width * 100 / (size.width - d3.select('.c3-axis-y').node().getBBox().width) > 90))) {
-                                setMultilineLabels();
+                        else if (((d3.select('.c3-axis-x').node().getBoundingClientRect().width >= self.elevationChartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) ||
+                            (d3.select('.c3-axis-x').node().getBoundingClientRect().width * 100 / (self.elevationChartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) > 90))) {
+                            setMultilineLabels();
                         }
                     });
 
@@ -84527,7 +84744,14 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         self.getTrackingData(li).then(function (data) {
             if (data)
-                self.wrap.drawTrackingData(data).then(function () { });
+                self.wrap.drawTrackingData(data).then(function () {
+                    var showFeatures = self.layerTrack.features;
+                    if (showFeatures && showFeatures.length > 0) {
+                        for (var i = 0; i < showFeatures.length; i++) {
+                            showFeatures[i].showsPopup = false;
+                        }
+                    }
+                });
         });
     };
 
@@ -85901,6 +86125,7 @@ if (!TC.Control) {
             draggable: self.options.draggable
         })).then(function (popup) {
             self.popup = popup;
+            popup.caller = self;
         });
     };
 
@@ -86243,6 +86468,7 @@ if (!TC.control.FeatureInfoCommons) {
                 draggable: self.options.draggable
             })).then(function (popup) {
                 self.popup = popup;
+                popup.caller = self;
 
                 map.on(TC.Consts.event.POPUP, function (e) {
                     self.onShowPopUp(e)
@@ -90163,6 +90389,10 @@ TC.inherit(TC.control.SelectContainer, TC.Control);
             self.title = self.getLocaleString(self.options.title || 'moreControls');
             self._$div.find('h2').first().html(self.title);
 
+            // GLS: a\u00f1ado la etiqueta Novedad
+            var beta = " " + self.getLocaleString("beta");
+            $('<span class="tc-beta">' + beta + '</span>').appendTo(self._$div.find('h2'));
+
             var bufferDeferreds = new Array(self.controlOptions.length);
             for (var i = 0, len = self.controlOptions.length; i < len; i++) {
                 var ctl = self.controlOptions[i];
@@ -91068,6 +91298,8 @@ if (!TC.control.MapContents) {
         };
 
         self.workLayers = [];
+        self.vector2DLayers = [];
+        self.vector2DFeatures = {};
 
         self.selectors = {
             divThreedMap: self.options.divMap
@@ -91075,8 +91307,12 @@ if (!TC.control.MapContents) {
 
         self.Consts = {
             BLANK_BASE: 'blank',
-            DEFAULT_TILE_SIZE: 256
+            DEFAULT_TILE_SIZE: 256,
+            TERRAIN_URL: 'https://pmpwvinet18.tcsa.local/customcesiumterrain/epsg3857/geodetic/_5m/5m'
         };
+
+        if (self.options.terrainURL)
+            self.Consts.TERRAIN_URL = self.options.terrainURL;
     };
 
     TC.inherit(TC.control.ThreeD, TC.Control);
@@ -91100,6 +91336,7 @@ if (!TC.control.MapContents) {
         TO_THREE_D: 'three_d'
     };
     ctlProto.threeDControls = [
+        "search",
         "attribution",
         "basemapSelector",
         "listTOC",
@@ -91157,10 +91394,14 @@ if (!TC.control.MapContents) {
             self.layerVisibility = self.Layer.Events.layerVisibility.bind(self);
             self.layerOpacity = self.Layer.Events.layerOpacity.bind(self);
             self.layerOrder = self.Layer.Events.layerOrder.bind(self);
+            self.layerUpdate = self.Layer.Events.layerUpdate.bind(self);
 
-            self.initialExtent = self.OverrideControls.Events.initialExtent.bind(self);
-            self.zoomin = self.OverrideControls.Events.zoomin.bind(self);
-            self.zoomout = self.OverrideControls.Events.zoomout.bind(self);
+            //self.featureAdded = self.Vector.Events.featureAdded.bind(self);
+            //self.featureRemoved = self.Vector.Events.featureRemoved.bind(self);
+
+            self.initialExtent = self.Controls.Events.initialExtent.bind(self);
+            self.zoomin = self.Controls.Events.zoomin.bind(self);
+            self.zoomout = self.Controls.Events.zoomout.bind(self);
 
             self.$button = self._$div.find('.' + self.CLASS + '-btn');
 
@@ -91204,10 +91445,11 @@ if (!TC.control.MapContents) {
                             self.$divThreedMap.removeClass(self.classes.LOADING);
                             self.$button.toggleClass(self.classes.BTNACTIVE);
 
-                            self.OverrideControls.adapter.call(self, self.direction.TO_THREE_D);
+                            self.Controls.adapter.call(self, self.direction.TO_THREE_D);
                             self.Cesium.setCameraFromMapView.call(self);
                             self.BaseMap.synchronizer.call(self, self.direction.TO_THREE_D);
                             self.Layer.synchronizer.call(self);
+                            //self.Controls.synchronizer.call(self);
 
                             $.when(self.viewer.readyPromise).then(function () {
 
@@ -91242,6 +91484,9 @@ if (!TC.control.MapContents) {
                             self.map.on(TC.Consts.event.LAYEROPACITY, self.layerOpacity);
                             self.map.on(TC.Consts.event.LAYERORDER, self.layerOrder);
 
+                            //self.map.on(TC.Consts.event.FEATUREADD, self.featureAdded);
+                            //self.map.on(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
+
                             $('.tc-ctl-nav-btn-home').on('click', self.initialExtent);
                             $('.tc-ctl-nav-btn-zoomin').on('click', self.zoomin);
                             $('.tc-ctl-nav-btn-zoomout').on('click', self.zoomout);
@@ -91272,11 +91517,14 @@ if (!TC.control.MapContents) {
                             self.map.off(TC.Consts.event.LAYEROPACITY, self.layerOpacity);
                             self.map.off(TC.Consts.event.LAYERORDER, self.layerOrder);
 
+                            //self.map.off(TC.Consts.event.FEATUREADD, self.featureAdded);
+                            //self.map.off(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
+
                             $('.tc-ctl-nav-btn-home').off('click', self.initialExtent);
                             $('.tc-ctl-nav-btn-zoomin').off('click', self.zoomin);
                             $('.tc-ctl-nav-btn-zoomout').off('click', self.zoomout);
 
-                            self.OverrideControls.adapter.call(self, self.direction.TO_TWO_D);
+                            self.Controls.adapter.call(self, self.direction.TO_TWO_D);
                             self.BaseMap.synchronizer.call(self, self.direction.TO_TWO_D);
                             self.Util.reset3D.call(self);
 
@@ -91381,9 +91629,9 @@ if (!TC.control.MapContents) {
 
         self.parent = parent;
 
-        var outHandler = function () {
+        var outHandler = function (e) {
             var self = this;
-
+            
             self.isFocusingCameraCtrls = false;
         };
         var inHandler = function () {
@@ -91461,8 +91709,8 @@ if (!TC.control.MapContents) {
         self.parent.viewer.scene.postRender.addEventListener(self.postRender);
 
         // gestionamos la opacidad de los controles pasados 5 segundos
-        self.$div.on(TC.Util.detectMouse() ? 'mouseout' : 'touchleave, touchend', self.outControls);
-        self.$div.on(TC.Util.detectMouse() ? 'mouseover' : 'touchmove, touchstart', self.inControls);
+        self.$div.on(TC.Util.detectMouse() ? 'mouseout' : 'touchleave touchend', self.outControls);
+        self.$div.on(TC.Util.detectMouse() ? 'mouseover' : 'touchmove touchstart', self.inControls);
 
         function setOpacity() {
             if (!self.lastFocused)
@@ -91564,6 +91812,8 @@ if (!TC.control.MapContents) {
                     } else if (eventType.hasOwnProperty('element')) {
                         self.draggingTilt.call(self, eventType.element, eventType.vector);
                     }
+
+                    return false;
                 }.bind(self));
                 self.$tiltIndicatorInner = self.$tiltIndicator.find('.' + self.parent.CLASS + self.selectors.tilt + '-inner');
                 self.$tiltIndicatorInner.on(TC.Consts.event.CLICK, self.resetTilt.bind(self));
@@ -91574,7 +91824,12 @@ if (!TC.control.MapContents) {
 
                 // left
                 self.$tiltUp = self.$tilt.find('.' + self.parent.CLASS + self.selectors.upArrow);
-                self.$tiltUp.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function () {
+                self.$tiltUp.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function (e) {
+
+                    if (e.stopPropagation) e.stopPropagation();
+                    if (e.preventDefault) e.preventDefault();
+
+                    self.inControls(e);
 
                     self.$tiltUp.blur();
 
@@ -91599,11 +91854,20 @@ if (!TC.control.MapContents) {
                     };
 
                     document.addEventListener(upEvent, self.tiltUpMouseUpFunction, false);
+
+                    e.cancelBubble = true;
+                    e.returnValue = false;
+                    return false;
                 }.bind(self));
 
                 // right
                 self.$tiltDown = self.$tilt.find('.' + self.parent.CLASS + self.selectors.downArrow);
-                self.$tiltDown.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function () {
+                self.$tiltDown.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function (e) {
+
+                    if (e.stopPropagation) e.stopPropagation();
+                    if (e.preventDefault) e.preventDefault();
+
+                    self.inControls(e);
 
                     self.$tiltDown.blur();
 
@@ -91628,6 +91892,10 @@ if (!TC.control.MapContents) {
                     };
 
                     document.addEventListener(upEvent, self.tiltDownMouseUpFunction, false);
+
+                    e.cancelBubble = true;
+                    e.returnValue = false;
+                    return false;
                 }.bind(self));
 
                 // rotation
@@ -91644,6 +91912,8 @@ if (!TC.control.MapContents) {
                     } else if (eventType.hasOwnProperty('element') == 1) {
                         self.draggingRotate.call(self, eventType.element, eventType.vector);
                     }
+
+                    return false;
                 }.bind(self));
 
                 self.$rotateIndicatorOuterCircle = $('.' + self.parent.CLASS + self.selectors.rotate + '-outer-circle');
@@ -91651,7 +91921,12 @@ if (!TC.control.MapContents) {
 
                 // left - right
                 self.$rotateLeft = self.$rotate.find('.' + self.parent.CLASS + self.selectors.leftArrow);
-                self.$rotateLeft.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function () {
+                self.$rotateLeft.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function (e) {
+
+                    if (e.stopPropagation) e.stopPropagation();
+                    if (e.preventDefault) e.preventDefault();
+
+                    self.inControls(e);
 
                     self.$rotateLeft.blur();
 
@@ -91676,10 +91951,19 @@ if (!TC.control.MapContents) {
 
                     document.addEventListener(upEvent, self.rotateLeftMouseUpFunction, false);
 
+                    e.cancelBubble = true;
+                    e.returnValue = false;
+                    return false;
+
                 }.bind(self));
 
                 self.$rotateRight = self.$rotate.find('.' + self.parent.CLASS + self.selectors.rightArrow);
-                self.$rotateRight.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function () {
+                self.$rotateRight.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function (e) {
+
+                    if (e.stopPropagation) e.stopPropagation();
+                    if (e.preventDefault) e.preventDefault();
+
+                    self.inControls(e);
 
                     self.$rotateRight.blur();
 
@@ -91703,6 +91987,10 @@ if (!TC.control.MapContents) {
                     };
 
                     document.addEventListener(upEvent, self.rotateRightMouseUpFunction, false);
+
+                    e.cancelBubble = true;
+                    e.returnValue = false;
+                    return false;
 
                 }.bind(self));
 
@@ -91904,17 +92192,24 @@ if (!TC.control.MapContents) {
             if (viewCenter == null || viewCenter == undefined) {
                 self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
                 self.rotateIsLook = true;
+            } else {
+                self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, Cesium.Ellipsoid.WGS84, newTransformScratch);
+                self.rotateIsLook = false;
             }
         } else {
             self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, Cesium.Ellipsoid.WGS84, newTransformScratch);
             self.rotateIsLook = false;
         }
 
-        var oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
-        camera.lookAtTransform(self.rotateFrame);
-        self.rotateInitialCameraAngle = Math.atan2(camera.position.y, camera.position.x);
-        self.rotateInitialCameraDistance = Cesium.Cartesian3.magnitude(new Cesium.Cartesian3(camera.position.x, camera.position.y, 0.0));
-        camera.lookAtTransform(oldTransform);
+        try {
+            var oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+            camera.lookAtTransform(self.rotateFrame);
+            self.rotateInitialCameraAngle = Math.atan2(camera.position.y, camera.position.x);
+            self.rotateInitialCameraDistance = Cesium.Cartesian3.magnitude(new Cesium.Cartesian3(camera.position.x, camera.position.y, 0.0));
+            camera.lookAtTransform(oldTransform);
+        } catch (e) {
+            self.rotateMouseUpFunction();
+        }
 
         self.rotateMouseMoveFunction = function (e) {
             var rotateRectangle = rotateElement.getBoundingClientRect();
@@ -91928,11 +92223,15 @@ if (!TC.control.MapContents) {
 
             camera = self.parent.viewer.scene.camera;
 
-            oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
-            camera.lookAtTransform(self.rotateFrame);
-            var currentCameraAngle = Math.atan2(camera.position.y, camera.position.x);
-            camera.rotateRight(newCameraAngle - currentCameraAngle);
-            camera.lookAtTransform(oldTransform);
+            try {
+                oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+                camera.lookAtTransform(self.rotateFrame);
+                var currentCameraAngle = Math.atan2(camera.position.y, camera.position.x);
+                camera.rotateRight(newCameraAngle - currentCameraAngle);
+                camera.lookAtTransform(oldTransform);
+            } catch (e) {
+                self.rotateMouseUpFunction();
+            }
         };
 
         self.rotateMouseUpFunction = function (e) {
@@ -92045,7 +92344,7 @@ if (!TC.control.MapContents) {
     // ebd382a8278a817fce316730d9e459bbb9b829e9/lib/Models/Cesium.js
     CustomRenderLoop = function (map2D, map3D, debug) {
         this.map2D = map2D;
-        this.listentTo = [TC.Consts.event.LAYERADD, TC.Consts.event.LAYERORDER, TC.Consts.event.LAYERREMOVE, TC.Consts.event.LAYEROPACITY, TC.Consts.event.LAYERVISIBILITY, TC.Consts.event.ZOOM, TC.Consts.event.BASELAYERCHANGE].join(' ');
+        this.listentTo = [TC.Consts.event.LAYERADD, TC.Consts.event.LAYERORDER, TC.Consts.event.LAYERREMOVE, TC.Consts.event.LAYEROPACITY, TC.Consts.event.LAYERVISIBILITY, TC.Consts.event.ZOOM, TC.Consts.event.BASELAYERCHANGE, TC.Consts.event.FEATUREADD, TC.Consts.event.FEATUREREMOVE, TC.Consts.event.LAYERUPDATE].join(' ');
         this.map3D = map3D;
 
         this.scene_ = this.map3D.scene;
@@ -92355,7 +92654,7 @@ if (!TC.control.MapContents) {
             var self = this;
             if (!self.terrainProvider)
                 self.terrainProvider = new Cesium.CesiumTerrainProvider({
-                    url: 'https://pmpwvinet18.tcsa.local/customcesiumterrain/epsg3857/geodetic/_5m/5m',
+                    url: self.Consts.TERRAIN_URL,
                     requestWaterMask: true,
                     requestVertexNormals: true
                 });
@@ -92374,7 +92673,7 @@ if (!TC.control.MapContents) {
                     globe.enableLighting = true;
 
                     self.viewer = self.Cesium._viewer = new Cesium.Viewer(self.selectors.divThreedMap, {
-                        terrainProvider: self.Cesium.getTerrainProvider(),
+                        terrainProvider: self.Cesium.getTerrainProvider.call(self),
                         terrainExaggeration: 1.0,
                         terrainShadows: Cesium.ShadowMode.ENABLED,
 
@@ -92405,6 +92704,7 @@ if (!TC.control.MapContents) {
                     self.viewer.scene.backgroundColor = Cesium.Color.WHITE;
                     self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
                     self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 500000;
+                    self.viewer.scene.globe.depthTestAgainstTerrain = true;
 
                     // borramos cualquier capa que haya
                     self.viewer.scene.imageryLayers.removeAll();
@@ -93020,7 +93320,10 @@ if (!TC.control.MapContents) {
         }
     };
 
-    ctlProto.OverrideControls = {
+    ctlProto.Controls = {
+        Cfg: {
+            zoomAmount: 200.0
+        },
         adapter: function (direction) {
             var self = this;
 
@@ -93048,8 +93351,50 @@ if (!TC.control.MapContents) {
                     break;
             }
         },
-        Cfg: {
-            zoomAmount: 200.0
+        synchronizer: function () {
+            var self = this;
+            var done = new $.Deferred();
+            var workLayers = [];
+
+            // obtengo de los controles habilitados en 3D las capas correspondientes
+            for (var i = 0; i < self.threeDControls.length; i++) {
+                var ctl = self.threeDControls[i];
+                ctl = ctl.substr(0, 1).toUpperCase() + ctl.substr(1);
+                var ctrl = self.map.getControlsByClass('TC.control.' + ctl);
+                if (ctrl && ctrl.length && ctrl[0].getLayer)
+                    workLayers.push(ctrl[0].getLayer());
+            }
+
+            $.when.apply($, workLayers).then(function () {
+                if (arguments && arguments.length) {
+                    for (var i = 0; i < arguments.length; i++) {
+                        self.vector2DLayers.push(arguments[i]);
+                    }
+                }
+
+                //for (var i = 0; i < self.vector2DLayers.length; i++) {
+                //    // creo una fuente de datos por cada una de las capas vectoriales
+                //    var vectorLayer = self.vector2DLayers[i];
+                //    if (vectorLayer.features && vectorLayer.features.length) {
+
+                //        // guardamos relaci\u00f3n entre capa 2d y primitivos
+                //        if (!self.vector2DPrimitives.hasOwnProperty(vectorLayer.id))
+                //            self.vector2DPrimitives[vectorLayer.id] = { primitives: [] };
+
+                //        // creamos un groundPrimitive con instancias (geometr\u00edas + estilos) de todas las features de una misma capa
+                //        var groundPrimitive = self.Vector.create.call(self, vectorLayer.features);
+                //        if (groundPrimitive) {
+                //            self.vector2DPrimitives[vectorLayer.id].primitives.push(groundPrimitive);
+                //            self.viewer.scene.groundPrimitives.add(groundPrimitive);
+                //        }
+                //    }
+                //    //self.viewer.dataSources.add(new Cesium.GeoJsonDataSource(vectorLayer.title || title.id));
+                //}
+
+                done.resolve();
+            });
+
+            return done;
         },
         Events: {
             initialExtent: function (e) {
@@ -93079,7 +93424,7 @@ if (!TC.control.MapContents) {
                 var center = new Cesium.Cartesian2(
                     self.viewer.scene.canvas.clientWidth / 2,
                     self.viewer.scene.canvas.clientHeight / 2);
-                self.Cesium.Events.Zoom.buttomsZoom.call(self, center, self.OverrideControls.Cfg.zoomAmount);
+                self.Cesium.Events.Zoom.buttomsZoom.call(self, center, self.Controls.Cfg.zoomAmount);
             },
             zoomout: function (e) {
                 var self = this;
@@ -93087,7 +93432,7 @@ if (!TC.control.MapContents) {
                 var center = new Cesium.Cartesian2(
                     self.viewer.scene.canvas.clientWidth / 2,
                     self.viewer.scene.canvas.clientHeight / 2);
-                self.Cesium.Events.Zoom.buttomsZoom.call(self, center, -self.OverrideControls.Cfg.zoomAmount);
+                self.Cesium.Events.Zoom.buttomsZoom.call(self, center, -self.Controls.Cfg.zoomAmount);
             }
         }
     };
@@ -93261,8 +93606,6 @@ if (!TC.control.MapContents) {
 
                 if (layer instanceof TC.layer.Raster)
                     self.Raster.synchronizer.call(self, layer);
-                //else if (layer instanceof TC.layer.Vector)
-                //    self.Vector.synchronizer.call(self, layer);
             }
         },
 
@@ -93326,6 +93669,18 @@ if (!TC.control.MapContents) {
 
                         self.workLayers.splice(e.newIndex, 0, self.workLayers.splice(e.oldIndex, 1)[0]);
                         break;
+                    }
+                }
+            },
+
+            layerUpdate: function (e) {
+                var self = this;
+
+                if (self.vector2DLayers.indexOf(e.layer) > -1) { // se trata de una capa vectorial de alg\u00fan control habilitado en 3D
+                    if (e.layer.features == 0) {
+                        console.log(e.layer.features.length);
+                    } else if (e.layer.features.length > 0) {
+                        console.log(e.layer.features.length);
                     }
                 }
             }
@@ -93414,60 +93769,366 @@ if (!TC.control.MapContents) {
     };
 
     ctlProto.Vector = {
-        getPosition: function (coords) {
+        _getObj: function (feature) {
             var self = this;
 
-            if (coords) {
-                return TC.Util.reproject(coords, self.map.crs, self.crs);;
-            }
-        },
-        getIcon: function (opt) {
-            var self = this;
+            var cartesians = [];
+            var toCartesian = function (coord) {
+                coord = TC.Util.reproject(coord, self.map.crs, self.crs);
 
-            if (opt.url && opt.width && opt.height)
-                return {
-                    image: opt.url,
-                    width: opt.width,
-                    height: opt.height
-                };
-        },
-        createEntity: function (feature) {
-            var self = this;
-            var entity;
+                cartesians.push(coord.length > 2 ?
+                    Cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]) :
+                    Cesium.Cartesian3.fromDegrees(coord[0], coord[1]));
+            };
+
+            var obj;
+            var geometry = feature.geometry;
+            var geometryType;
+            var point,
+                points,
+                ringsOrPolylines,
+                polygons,
+                isPolygon,
+                isLine,
+                isPoint;
+
+            var forPoints = function (points) {
+                if ($.isArray(points)) {
+                    for (var i = 0; i < points.length; i++) {
+                        toCartesian(points[i]);
+                    }
+                }
+            };
+            var forRingsOrPolylines = function (ringsOrPolylines) {
+                if ($.isArray(ringsOrPolylines)) {
+                    for (var i = 0; i < ringsOrPolylines.length; i++) {
+                        forPoints(ringsOrPolylines[i]);
+                    }
+                }
+            };
+            var forPolygons = function (polygons) {
+                if ($.isArray(polygons)) {
+                    for (var i = 0; i < polygons.length; i++) {
+                        forRingsOrPolylines(polygons[i]);
+                    }
+                }
+            };
+
+            var styles = feature.layer.styles[feature.STYLETYPE] == undefined ?
+                         feature.layer.styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
+                         feature.layer.styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
 
             switch (true) {
-                case feature instanceof TC.feature.Marker:
-                    var position = this.getPosition.call(self, feature.getCoords());
-                    var icon = this.getIcon.call(self, feature.options)
+                case (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon):
+                    polygons = geometry;
+                    if ($.isArray(polygons)) {
+                        forPolygons(polygons);
+                        isPolygon = true;
+                        geometryType = function (coords, feature) {
+                            return new Cesium.PolygonOutlineGeometry({
+                                polygonHierarchy: new Cesium.PolygonHierarchy(coords)
+                            });
+                        };
+                    }
+                    break;
+                case ((TC.feature.Polygon && feature instanceof TC.feature.Polygon) || (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline)):
+                    ringsOrPolylines = geometry;
+                    if ($.isArray(ringsOrPolylines)) {
+                        forRingsOrPolylines(ringsOrPolylines);
 
-                    entity = new Cesium.Entity({
-                        position: Cesium.Cartesian3.fromDegrees(position[0], position[1])
-                    });
-
-                    if (icon)
-                        entity.billboard = icon;
-
-                case feature instanceof TC.feature.Point:
+                        if (feature instanceof TC.feature.Polygon) {
+                            isPolygon = true;
+                            geometryType = function (coords, feature) {
+                                return new Cesium.PolygonOutlineGeometry({
+                                    polygonHierarchy: new Cesium.PolygonHierarchy(coords)
+                                });
+                            };
+                        }
+                        else if (feature instanceof TC.feature.MultiPolyline) {
+                            isPolygon = false;
+                            isLine = true;
+                            geometryType = function (coords, feature) {
+                                return new Cesium.CorridorGeometry({
+                                    positions: coords,
+                                    width: styles['strokeWidth'](feature)
+                                });
+                            };
+                        }
+                    }
+                    break;
+                case (TC.feature.Polyline && feature instanceof TC.feature.Polyline):
+                    points = geometry;
+                    if ($.isArray(points)) {
+                        forPoints(points);
+                        isPolygon = false;
+                        isLine = true;
+                        geometryType = function (coords, feature) {
+                            return new Cesium.CorridorGeometry({
+                                positions: coords,
+                                width: styles['strokeWidth'](feature)
+                            });
+                        };
+                    }
+                    break;
+                case (TC.feature.Point && feature instanceof TC.feature.Point):
+                    points = [geometry];
+                    forPoints(points);
+                    isPolygon = isLine = false;
+                    isPoint = true;
+                    geometryType = function (coords, feature) {
+                        // GLS: Si la feature cuenta con rotaci\u00f3n lo instanciamos mediante un Billboard que s\u00ed cuentan con rotaci\u00f3n. Los labels se renderizan letra a letra (por rendimiento) : https://groups.google.com/forum/#!topic/cesium-dev/4A9t8Y9tDiQ
+                        var rotation = styles['angle'](feature);
+                        if (rotation) {
+                            return {
+                                position: coords[0],                                
+                                billboard: {
+                                    image: Cesium.writeTextToCanvas(styles['label'](feature), {
+                                        //font: styles['fontSize'](feature) + 'px san-serif'
+                                        //,
+                                        fill: true,
+                                        fillColor: Cesium.Color.fromCssColorString(styles['fontColor'](feature)),
+                                        stroke: true,
+                                        strokeColor: Cesium.Color.fromCssColorString(styles['labelOutlineColor'](feature)),
+                                        strokeWidth: styles['labelOutlineWidth'](feature)
+                                    }),
+                                    rotation: Cesium.Math.toRadians(rotation), //heading
+                                    alignedAxis: Cesium.Cartesian3.UNIT_Z, //Makes rotation a heading
+                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                                    verticalOrigin: Cesium.VerticalOrigin.BASELINE
+                                }
+                            };
+                        } else {
+                            return {
+                                position: coords[0],
+                                label: {
+                                    text: styles['label'](feature),
+                                    font: styles['fontSize'](feature) + 'px san-serif',
+                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                                    verticalOrigin: Cesium.VerticalOrigin.BASELINE,
+                                    fillColor: Cesium.Color.fromCssColorString(styles['fontColor'](feature)),
+                                    outlineColor: Cesium.Color.fromCssColorString(styles['labelOutlineColor'](feature)),
+                                    outlineWidth: styles['labelOutlineWidth'](feature)
+                                }
+                            };
+                        }
+                    };
                     break;
             }
-            //if (feature instanceof TC.feature.Circle) { }
-            //if (feature instanceof TC.feature.Polyline) { }
-            //if (feature instanceof TC.feature.Polygon) { }
-            //if (feature instanceof TC.feature.MultiPolygon) { }
 
-            if (entity)
-                self.viewer.entities.add(entity);
+            if (cartesians.length == 0) {
+                return null;
+            }
+
+            //var color = Cesium.Color.fromCssColorString(styles[(isPolygon ? 'fill' : 'stroke') + 'Color'](feature)).withAlpha(styles[(isPolygon ? 'fill' : 'stroke') + 'Opacity'](feature));
+
+            if (isPolygon) {
+                var c = styles['fillColor'](feature);
+                var alpha = styles['fillOpacity'](feature);
+                var c = Cesium.Color.fromCssColorString(c);
+                color = c.withAlpha(alpha);
+            }
+            else if (isLine) {
+                var c = styles['strokeColor'](feature);
+                var alpha = styles['strokeOpacity'](feature);
+                var c = Cesium.Color.fromCssColorString(c);
+                color = c.withAlpha(alpha);
+            }
+
+            obj = {
+                id: feature.id,
+                attributes: feature.data,
+                geometry: geometryType(cartesians, feature),
+                geometryColor: isPoint ? null : Cesium.ColorGeometryInstanceAttribute.fromColor(color)
+            };
+
+            return obj;
         },
-        synchronizer: function (layer) {
+        create: function (features, idLayer) {
             var self = this;
+            var done = new $.Deferred();
 
-            if (layer.features && layer.features.length) {
-                for (var i = 0; i < layer.features.length; i++) {
-                    this.createEntity.call(self, layer.features[i]);
+            var threedFeature = [];
+
+            if (!(features instanceof Array))
+                features = [features];
+
+            var geometryInstances = [];
+            for (var i = 0; i < features.length; i++) {
+                var feature = features[i];
+                var obj = self.Vector._getObj.call(self, feature);
+                if (obj.geometryColor != null) {
+                    threedFeature.push(new Cesium.GeometryInstance({
+                        id: obj.id,
+                        geometry: obj.geometry,
+                        attributes: {
+                            color: obj.geometryColor
+                        }
+                    }));
+                } else { // No podemos anidar geometr\u00edas (GeometryInstance) para crear un \u00fanico objeto porque en el estilo hay alg\u00fan atributo (por rotaci\u00f3n, texto...) que lo impide
+                    threedFeature.push(
+                   /*new Cesium.Entity({
+                        id: obj.id,
+                        geometry: 
+                        */obj.geometry/*,
+                    })*/);
+                }
+            }
+
+            // guardamos la relaci\u00f3n de capa con features a a\u00f1adir
+            if (!self.vector2DFeatures.hasOwnProperty(idLayer)) {
+                self.vector2DFeatures[idLayer] = threedFeature;
+            }
+            else {
+                self.vector2DFeatures[idLayer] = self.vector2DFeatures[idLayer].concat(threedFeature);
+            }
+
+            return done.resolve(threedFeature);
+        },
+        Events: {
+            featureAdded: function (e) {
+                var self = this;
+                var idLayer = e.layer.id;
+                self.Vector.create.call(self, e.feature, idLayer).then(function (threedFeature) {
+                    var geometryInstances = [];
+
+                    for (var i = 0; i < threedFeature.length; i++) {
+                        var f = threedFeature[i];
+
+                        //var billboardCollection = self.viewer.scene.primitives.add(new Cesium.BillboardCollection({
+                        //    scene: self.viewer.scene
+                        //}));
+
+                        //billboardCollection.add({
+                        //    position: Cesium.Cartesian3.fromDegrees(42.8165698, -1.6418862),
+                        //    image: Cesium.writeTextToCanvas('lalal lalala lalala'),
+                        //    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                        //});
+
+                        if (f instanceof Cesium.GeometryInstance) { }
+                        else {
+
+
+
+                            //var billboardCollection = new Cesium.BillboardCollection({
+                            //    scene: self.viewer.scene
+                            //});
+
+                            //billboardCollection.add(f);
+
+                            //self.viewer.scene.primitives.add(billboardCollection);
+
+                            
+                        }
+                        //var e = self.viewer.entities.add(f);
+
+                        //switch (true) {
+                        //    case f instanceof Cesium.Entity:
+                        //        var e = self.viewer.entities.add(f);
+                        //        break;
+                        //    case f instanceof Cesium.GeometryInstance:
+                        //        geometryInstances.push(f);
+                        //        self.vector2DFeatures[idLayer].splice(i, 1);
+                        //        break;
+                        //}
+                    }
+
+                    //if (geometryInstances.length > 0) {
+                    //    f = new Cesium.GroundPrimitive({
+                    //        geometryInstances: geometryInstances
+                    //    });
+
+                    //    self.vector2DFeatures[idLayer].push(f);
+                    //    var g = self.viewer.scene.groundPrimitives.add(f);
+                    //}
+
+                    // center = Cesium.BoundingSphere.fromPoints(positions).center;
+                });
+            },
+            featureRemoved: function (e) {
+                var self = this;
+
+                if (self.vector2DLayers.indexOf(e.layer) > -1) { // se trata de una capa vectorial de alg\u00fan control habilitado en 3D
+                    if (self.vector2DFeatures.hasOwnProperty(e.layer.id)) {
+                        var threedFeature = self.vector2DFeatures[e.layer.id];
+
+                        for (var i = 0; i < threedFeature.length; i++) {
+                            var f = threedFeature[i];
+                            switch (true) {
+                                case f instanceof Cesium.Entity:
+                                    self.viewer.entities.removeById(f.id);
+                                    break;
+                                case f instanceof Cesium.GroundPrimitive:
+                                    self.viewer.scene.groundPrimitives.remove(f);
+                                    break;
+                            }
+                        }
+
+                        delete self.vector2DFeatures[e.layer.id];
+                    }
                 }
             }
         }
     };
+
+    //ctlProto.Vector = {
+    //    getPosition: function (coords) {
+    //        var self = this;
+
+    //        if (coords) {
+    //            return TC.Util.reproject(coords, self.map.crs, self.crs);;
+    //        }
+    //    },
+    //    getIcon: function (opt) {
+    //        var self = this;
+
+    //        if (opt.url && opt.width && opt.height)
+    //            return {
+    //                image: opt.url,
+    //                width: opt.width,
+    //                height: opt.height
+    //            };
+    //    },
+    //    createEntity: function (feature) {
+    //        var self = this;
+    //        var entity;
+
+    //        switch (true) {
+    //            case feature instanceof TC.feature.Marker:
+    //                var position = this.getPosition.call(self, feature.getCoords());
+    //                var icon = this.getIcon.call(self, feature.options)
+
+    //                entity = new Cesium.Entity({
+    //                    position: Cesium.Cartesian3.fromDegrees(position[0], position[1])
+    //                });
+
+    //                if (icon)
+    //                    entity.billboard = icon;
+
+    //            case feature instanceof TC.feature.Point:
+    //                break;
+    //        }
+    //        //if (feature instanceof TC.feature.Circle) { }
+    //        //if (feature instanceof TC.feature.Polyline) { }
+    //        //if (feature instanceof TC.feature.Polygon) { }
+    //        //if (feature instanceof TC.feature.MultiPolygon) { }
+
+    //        if (entity)
+    //            self.viewer.entities.add(entity);
+    //    },
+    //    synchronizer: function (layer) {
+    //        var self = this;
+
+
+
+    //        if (layer.features && layer.features.length) {
+    //            for (var i = 0; i < layer.features.length; i++) {
+    //                this.createEntity.call(self, layer.features[i]);
+    //            }
+    //        }
+    //    }
+    //};
 
     ctlProto.Util = {
         browserSupportWebGL: function () {
@@ -93651,6 +94312,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             TC.capabilities[layer.options.url] = TC.capabilities[layer.options.url] || capabilities;
             TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
 
+            if (capabilities.usesProxy) {
+                layer.usesProxy = true;
+            }
+            if (capabilities.usesSSL) {
+                layer.usesSSL = true;
+            }
             _createLayer(layer);
         });
 
@@ -93707,15 +94374,111 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             return result;
         };
 
+        var reallyCORSError = function (url) {
+            var defer = $.Deferred();
+            $.ajax({
+                type: "GET",
+                url: url,
+                dataType: "jsonp",
+                success: function (data) {
+                    //successful authentication here
+                    defer.resolve(false);
+                },
+                error: function (XHR, textStatus, errorThrown) {
+                    if (XHR.status && XHR.status === 200)
+                        defer.resolve(true);
+                    else
+                        defer.resolve(false);
+                }
+            });
+            return defer;
+        };
+
         var successCallback = function (data) {
             success(layer, data);
         };
+        //Declaro un funci\u00f3n que devuelve false si todav\u00eda no se cargado el SW y una vez cargado devuelve el valor del atributo
+        //serviceWorkerEnabled del control SWCacheClient
+        TC.isUsingServiceWorker = null;
+        if (!TC.isUsingServiceWorker) {
+            var map = layer.map || $("#map").data("map");
+            var control = map ? map.getControlsByClass(TC.control.SWCacheClient) : null;
+            if (control && control.length > 0) {
+                //busco es control de tipo SWCacheClient y me guardo la promesa te indica cuando se ha leido el SW
+                TC.isUsingServiceWorker = function () {
+                    if (control[0].getServiceWorker().state() !== "pending")
+                        return control[0].serviceWorkerEnabled;
+                    else
+                        return false;
+                }
+            }
+            else
+                TC.isUsingServiceWorker = function () { return false; }
+        }
         // Lanzamos la primera petici\u00f3n sin proxificar. Si falla (CORS, HTTP desde HTTPS...) pedimos proxificando.
-        getRequest(url).then(successCallback, function () {
-            getRequest(url, true).then(successCallback, function (jqXHR, textStatus, errorThrown) {
-                error(layer, textStatus + '][' + errorThrown);
+        if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(url)) {
+            var urlSecure = url.replace(/^(f|ht)tp?:\/\//i, "https://");
+            getRequest(urlSecure).then(successCallback, function (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status) {
+                    getRequest(url, true).then(function (data) {
+                        layer.usesProxy = true;
+                        layer.usesSSL = true;
+                        successCallback(data);
+                    }, function (jqXHR, textStatus, errorThrown) {
+                        error(layer, textStatus + '][' + errorThrown);
+                    });
+                }
+                else {
+                    if (TC.isUsingServiceWorker && TC.isUsingServiceWorker()) {
+                        getRequest(url, true).then(function (data) {
+                            layer.usesProxy = true;
+                            layer.usesSSL = false;
+                            successCallback(data);
+                        }, function (jqXHR, textStatus, errorThrown) {
+                            error(layer, textStatus + '][' + errorThrown);
+                        });
+                    }
+                    else {
+                        reallyCORSError(urlSecure).then(function (corsError) {
+                            if (!corsError) {
+                                getRequest(url, true).then(function (data) {
+                                    layer.usesProxy = true;
+                                    layer.usesSSL = false;
+                                    successCallback(data);
+                                }, function (jqXHR, textStatus, errorThrown) {
+                                    error(layer, textStatus + '][' + errorThrown);
+                                });
+                            }
+                            else {
+                                getRequest(url, true).then(function (data) {
+                                    layer.usesProxy = true;
+                                    layer.usesSSL = true;
+                                    successCallback(data);
+                                }, function (jqXHR, textStatus, errorThrown) {
+                                    error(layer, textStatus + '][' + errorThrown);
+                                });
+                            }
+                        });
+                    }
+                }
             });
-        });
+        }
+        else {
+            layer.usesSSL = true;
+            getRequest(url).then(successCallback, function (jqXHR, textStatus, errorThrown) {
+                if (!jqXHR.status) {
+                    layer.usesProxy = true;
+                    getRequest(url, true).then(function (data) {
+                        successCallback(data);
+                    }, function (jqXHR, textStatus, errorThrown) {
+                        error(layer, textStatus + '][' + errorThrown);
+                    });
+                }
+                else {
+                    error(layer, textStatus + '][' + errorThrown);
+                }
+            });
+        }
     };
 
     var capabilitiesError = function (layer, reason) {
@@ -93800,6 +94563,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
                 }
             }
+            if (layer.usesProxy) {
+                capabilities.usesProxy = true;
+            }
             capabilitiesPromises[layer.url].resolve(capabilities);
             storeCapabilities(layer, capabilities);
         }
@@ -93816,6 +94582,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                 error: 'Web worker error'
                             }
                         }
+                        if (layer.usesProxy) {
+                            capabilities.usesProxy = true;
+                        }
+                        if (layer.usesSSL) {
+                            capabilities.usesSSL = true;
+                        }
                         capabilitiesPromises[layer.url].resolve(capabilities);
                         worker.terminate();
                         storeCapabilities(layer, capabilities);
@@ -93825,6 +94597,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         text: data
                     });
                 })
+            }
+            else {
+                capabilities = data;
+                if (layer.usesProxy) {
+                    capabilities.usesProxy = true;
+                }
+                capabilitiesPromises[layer.url].resolve(capabilities);
             }
         }
     };
@@ -95745,6 +96524,9 @@ SITNA.syncLoadJS = function (url) {
  * @param {string|number} [options.defaultBaseLayer] Identificador o \u00edndice en <code>baseLayers</code> de la capa base por defecto. 
  * @param {SITNA.cfg.MapControlOptions} [options.controls] Opciones de controles de mapa.
  * @param {SITNA.cfg.StyleOptions} [options.styles] Opciones de estilo de entidades geogr\u00e1ficas.
+ * @param {string} [options.crossOrigin] Valor del atributo <code>crossorigin</code> de las im\u00e1genes del mapa para <a href="https://developer.mozilla.org/es/docs/Web/HTML/Imagen_con_CORS_habilitado">habilitar CORS</a>.
+ * Es necesario establecer esta opci\u00f3n para poder utilizar el m\u00e9todo SITNA.Map.{{#crossLink "SITNA.Map/exportImage:method"}}{{/crossLink}}. 
+ * Los valores soportados son <code>anonymous</code> y <code>use-credentials</code>.
  * @param {boolean} [options.mouseWheelZoom] La rueda del rat\u00f3n se puede utilizar para hacer zoom en el mapa.
  * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver SITNA.Cfg.{{#crossLink "SITNA.Cfg/proxy:property"}}{{/crossLink}}).
  * @example
@@ -96858,6 +97640,39 @@ SITNA.Map = function (div, options) {
 
         if (callback)
             callback();
+    };
+
+    /**
+      * <p>Exporta el mapa a una imagen PNG. Para poder utilizar este m\u00e9todo hay que establecer la opci\u00f3n <code>crossOrigin</code> al instanciar
+      * SITNA.{{#crossLink "SITNA.Map"}}{{/crossLink}}.</p>
+      * <p>Puede consultar tambi\u00e9n el ejemplo <a href="../../examples/Map.exportImage.html">online</a>.</p>
+      *
+      * @method exportImage
+      * @return {String} Imagen en un <a href="https://developer.mozilla.org/es/docs/Web/HTTP/Basics_of_HTTP/Datos_URIs">data URI</a>.
+      * @example
+      *     <div id="controls" class="controls">
+      *          <button id="imageBtn">Exportar imagen</button>
+      *     </div>
+      *      <div id="mapa"></div>
+      *      <script>
+      *          // Crear un mapa con la opci\u00f3n de im\u00e1genes CORS habilitada.
+      *          var map = new SITNA.Map("mapa", { crossOrigin: "anonymous" });
+      *
+      *          var exportImage = function () {
+      *              var dataUrl = map.exportImage();
+      *              var image = document.createElement("img");
+      *              image.setAttribute("src", dataUrl);
+      *              image.style.width = '25vw';
+      *              var div = document.createElement("div");
+      *              div.appendChild(image);
+      *              document.getElementById("controls").appendChild(div);
+      *          };
+      *         
+      *          document.getElementById("imageBtn").addEventListener("click", exportImage);
+      *      </script>
+      */
+    map.exportImage = function () {
+        return tcMap.exportImage();
     };
 
     map.search = null;

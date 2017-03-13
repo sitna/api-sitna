@@ -62,7 +62,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
 
                 var checkRemoveData = function () {
                     if (layer.map.workLayers.length > 0) {
-                        var _wl = layer.map.workLayers.reverse();
+                        var _wl = layer.map.workLayers.slice().reverse();
                         for (var i = 0; i < _wl.length; i++) {
                             if (_wl[i].url == layer.url && _wl[i].getVisibility())
                                 return false;

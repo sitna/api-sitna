@@ -1557,11 +1557,18 @@ if (!window.OpenLayers) {
         return [xy.x, xy.y];
     };
 
-    TC.wrap.Map.prototype.getViewport = function () {
-        var result = new $.Deferred();
-        $.when(this.getMap()).then(function (olMap) {
-            result.resolve(olMap.getViewport());
-        });
+    TC.wrap.Map.prototype.getViewport = function (options) {
+        var self = this;
+        var opts = options || {};
+        if (opts.synchronous) {
+            result = self.map.getViewport();
+        }
+        else {
+            var result = new $.Deferred();
+            $.when(this.getMap()).then(function (olMap) {
+                result.resolve(olMap.getViewport());
+            });
+        }
         return result;
     };
 
