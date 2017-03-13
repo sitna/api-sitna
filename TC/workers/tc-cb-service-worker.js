@@ -1,9 +1,29 @@
 ﻿(function() {
 
+    // Arreglo del bug de actualización de la cache d
     self.addEventListener('install', function (event) {
-        // No hacemos nada en la instalación del service worker
-        event.waitUntil(self.skipWaiting());
+        var cacheName = 'TC.offline.map.';
+        event.waitUntil(
+			caches.open(cacheName).then(function (cache) {
+			    cache.keys().then(function (keys) {
+			        console.log("Revisando cache...");
+			        fetch(keys[0]).then(function () {
+			            // Estamos online, borramos cache
+			            caches.delete(cacheName).then(function () {
+			                console.log("Cache con bug borrada");
+			            });
+			        }, function (e) {
+			            console.log(e);
+			        });
+			    });
+			})
+		);
     });
+
+    //self.addEventListener('install', function (event) {
+    // No hacemos nada en la instalaci\u00f3n del service worker
+    //    event.waitUntil(self.skipWaiting());
+    //});
 
     self.addEventListener('activate', function (event) {
         // Reclamamos el control inmediatamente, para evitar tener que recargar la página
