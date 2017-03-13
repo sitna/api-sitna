@@ -28,7 +28,7 @@
 //////////////////////////////
 
 var sitnaBuild = {
-    version: '1.1.3',
+    version: '1.2.0',
     targetPath: 'build/',
     tcmapTargetName: 'tcmap',
     sitnaTargetName: 'sitna',
