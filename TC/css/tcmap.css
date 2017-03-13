@@ -110,6 +110,7 @@ mark {
 
 p, pre {
     margin: 1em 0;
+    user-select: text;
 }
 
 code, kbd, pre, samp {
@@ -1236,7 +1237,7 @@ ul.tc-ctl-bms-branch, ul.tc-ctl-cbuild-bl-list {
 }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-progress {
-    height: 5em;
+    height: 6em;
 }
 
 .tc-ctl-cbuild-off-panel {
@@ -1313,10 +1314,10 @@ ul.tc-ctl-bms-branch input[type=radio], ul.tc-ctl-cbuild-bl-list input[type=chec
     display: none;
 }
 
-    ul.tc-ctl-bms-branch input[type=radio]:checked + div, ul.tc-ctl-cbuild-bl-list input[type=checkbox]:checked + div {
-        background-color: #c00;
-        border: 1px solid #c00;
-    }
+ul.tc-ctl-bms-branch input[type=radio]:checked + div, ul.tc-ctl-cbuild-bl-list input[type=checkbox]:checked + div {
+    background-color: #c00;
+    border: 1px solid #c00;
+}
 
 ul.tc-ctl-toc-branch {
     list-style-type: none;
@@ -1817,27 +1818,32 @@ div.tc-ctl-lcat-legend {
     margin-left: 0.4em;
 }
 
-.tc-ctl-ltoc li.tc-ctl-ltoc-elm, .tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-drag.tc-dragend {
+.tc-ctl-ltoc li.tc-ctl-ltoc-elm {
     position: relative;
     background-color: #fff;
     border: 1px solid #999;
     border-radius: 0.3em;
     padding: 0.3em;
     margin-top: -1px;
-    -webkit-transition: all .3s ease;
-    -moz-transition: all .3s ease;
-    -ie-transition: all .3s ease;
-    -o-transition: all .3s ease;
-    transition: all .3s ease;
+    box-sizing: border-box;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ie-transition: none;
+    -o-transition: none;
+    transition: none;
 }
 
-    .tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-ctl-ltoc-elm-notvisible {
-        color: #ccc;
-    }
+.tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-dragend {
+    -webkit-transition: all .1s linear;
+    -moz-transition: all .1s linear;
+    -ie-transition: all .1s linear;
+    -o-transition: all .1s linear;
+    transition: all .1s linear;
+}
 
-    .tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-drag {
-        transition: none;
-    }
+.tc-ctl-ltoc li.tc-ctl-ltoc-elm.tc-ctl-ltoc-elm-notvisible {
+    color: #ccc;
+}
 
 .tc-ctl-ltoc .tc-ctl-ltoc-lyr {
     width: 90%;
@@ -1916,10 +1922,6 @@ div.tc-ctl-lcat-legend {
 
 .tc-ctl-ltoc .tc-ctl-ltoc-del:after {
     content: '\2297';
-}
-
-.tc-ctl-ltoc .tc-ctl-ltoc-elm.tc-drop {
-    background-color: #eee;
 }
 
 .tc-ctl-ltoc input[type=checkbox] {
@@ -2209,48 +2211,62 @@ div.tc-ctl-lcat-legend {
     margin-bottom: 0.5em;
 }
 
-    .tc-ctl-meas-select label, .tc-ctl-share-select label, .tc-ctl-geolocation-select label, .tc-ctl-sctnr-select label {
-        position: relative;
-        display: inline-block;
-        height: 2em;
-        margin: 0.2em 0;
-        width: calc(50% - 1px);
-    }
+.tc-ctl-meas-select label, .tc-ctl-share-select label, .tc-ctl-geolocation-select label, .tc-ctl-sctnr-select label {
+    position: relative;
+    display: inline-block;
+    height: 2em;
+    margin: 0.2em 0;
+    width: calc(50% - 1px);
+}
 
-    .tc-ctl-meas-select input[type=radio], .tc-ctl-share-select input[type=radio], .tc-ctl-geolocation-select input[type=radio], .tc-ctl-sctnr-select input[type=radio] {
-        display: none;
-    }
+.tc-ctl-meas-select input[type=radio], 
+.tc-ctl-share-select input[type=radio], 
+.tc-ctl-geolocation-select input[type=radio], 
+.tc-ctl-sctnr-select input[type=radio] {
+    display: none;
+}
 
-        .tc-ctl-meas-select input[type=radio] ~ span, .tc-ctl-share-select input[type=radio] ~ span, .tc-ctl-geolocation-select input[type=radio] ~ span, .tc-ctl-sctnr-select input[type=radio] ~ span {
-            position: absolute;
-            display: block;
-            width: 100%;
-            height: 100%;
-            line-height: 2em;
-            text-align: center;
-            border-radius: 0.3em;
-            border: 1px solid #666;
-            background-color: #fff;
-            color: #666;
-            cursor: pointer;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+.tc-ctl-meas-select input[type=radio] ~ span, 
+.tc-ctl-share-select input[type=radio] ~ span, 
+.tc-ctl-geolocation-select input[type=radio] ~ span, 
+.tc-ctl-sctnr-select input[type=radio] ~ span {
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 2em;
+    text-align: center;
+    border: 1px solid #666;
+    background-color: #fff;
+    color: #666;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-        .tc-ctl-sctnr-select input[type=radio] ~ span {
-            border-bottom-right-radius: 0;
-            border-bottom-left-radius: 0;
-        }
+.tc-ctl-meas-select label:first-child input[type=radio]:checked ~ span,
+.tc-ctl-share-select label:first-child input[type=radio]:checked ~ span,
+.tc-ctl-geolocation-select label:first-child input[type=radio]:checked ~ span,
+.tc-ctl-sctnr-select label.tc-ctl-sctnr-tab:first-child input[type=radio]:checked ~ span {
+    border-bottom-left-radius: 0;
+}
 
-        .tc-ctl-meas-select input[type=radio] ~ span:before {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            font-family: mapskin;
-        }
+.tc-ctl-meas-select label:last-child input[type=radio]:checked ~ span,
+.tc-ctl-share-select label:last-child input[type=radio]:checked ~ span,
+.tc-ctl-geolocation-select label:last-child input[type=radio]:checked ~ span,
+.tc-ctl-sctnr-select label.tc-ctl-sctnr-tab:last-child input[type=radio]:checked ~ span {
+    border-bottom-right-radius: 0;
+}
+
+.tc-ctl-meas-select input[type=radio] ~ span:before {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    font-family: mapskin;
+}
 
 label.tc-ctl-meas-btn-len span:before {
     text-indent: -40%;
@@ -2281,13 +2297,14 @@ label.tc-ctl-meas-btn-area span:before {
     padding: 0;
 }
 
-    .tc-ctl.tc-ctl-sctnr-elm.tc-hidden {
-        -webkit-transition: none;
-        -moz-transition: none;
-        -ie-transition: none;
-        -o-transition: none;
-        transition: none;
-    }
+.tc-ctl.tc-ctl-sctnr-elm.tc-hidden {
+    position: absolute;
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ie-transition: none;
+    -o-transition: none;
+    transition: none;
+}
 
 .tc-ctl-share-select input[type=radio]:checked ~ span, .tc-ctl-geolocation-select input[type=radio]:checked ~ span {
     border-color: #666;
@@ -2340,24 +2357,34 @@ label.tc-ctl-meas-btn-area, label.tc-ctl-share-btn-iframe, label.tc-ctl-geolocat
     margin-left: 0;
 }
 
-.tc-ctl-meas-select label:first-child input[type=radio] ~ span, .tc-ctl-share-select label:first-child input[type=radio] ~ span, .tc-ctl-geolocation-select label:first-child input[type=radio] ~ span {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+.tc-ctl-meas-select label:first-child input[type=radio] ~ span, 
+.tc-ctl-share-select label:first-child input[type=radio] ~ span, 
+.tc-ctl-geolocation-select label:first-child input[type=radio] ~ span,
+.tc-ctl-sctnr label:first-child input[type=radio] ~ span {
+    border-top-left-radius: 0.3em;
+    border-bottom-left-radius: 0.3em;
 }
 
-.tc-ctl-meas-select label:last-child input[type=radio] ~ span, .tc-ctl-share-select label:last-child input[type=radio] ~ span, .tc-ctl-geolocation-select label:last-child input[type=radio] ~ span {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
+.tc-ctl-meas-select label:last-child input[type=radio] ~ span, 
+.tc-ctl-share-select label:last-child input[type=radio] ~ span, 
+.tc-ctl-geolocation-select label:last-child input[type=radio] ~ span, 
+.tc-ctl-sctnr label:last-child input[type=radio] ~ span {
+    border-top-right-radius: 0.3em;
+    border-bottom-right-radius: 0.3em;
 }
 
-.tc-ctl-meas-select input[type=radio]:checked ~ span, .tc-ctl-share-select input[type=radio]:checked ~ span, .tc-ctl-geolocation-select input[type=radio]:checked ~ span,
+.tc-ctl-meas-select input[type=radio]:checked ~ span, 
+.tc-ctl-share-select input[type=radio]:checked ~ span, 
+.tc-ctl-geolocation-select input[type=radio]:checked ~ span,
 .tc-ctl-sctnr-select input[type=radio]:checked ~ span {
     border-color: #c00;
     color: #c00;
     z-index: 10007;
 }
 
-.tc-ctl-share-select input[type=radio]:checked ~ span, .tc-ctl-geolocation-select input[type=radio]:checked ~ span, .tc-ctl-sctnr-select input[type=radio]:checked ~ span {
+.tc-ctl-share-select input[type=radio]:checked ~ span, 
+.tc-ctl-geolocation-select input[type=radio]:checked ~ span, 
+.tc-ctl-sctnr-select input[type=radio]:checked ~ span {
     border-bottom-color: #fff;
 }
 
@@ -4833,7 +4860,7 @@ body .tc-map .tc-modal .tc-modal-background {
 
 
 .tc-modal .tc-modal-body {
-    padding: 10px 20px;
+    padding: 10px 20px 20px 20px;
     font-size: 14px;
     color: #333;
 }
