@@ -593,6 +593,9 @@
                 }
             }
 
+            if (!window.jsonpack) {
+                TC.syncLoadJS(TC.apiLocation + TC.Consts.url.JSONPACK);
+            }
             return jsonpack.pack(state);
         };
 
@@ -780,6 +783,8 @@
                     return defer.promise();
                 };
 
+                var isAbsoluteUrl = /^(https?:)?\/\//i.test(layoutName);
+
                 var getFileFromAvailableLocation = function (key, fileName) {
                     var defered = $.Deferred();
 
@@ -791,6 +796,11 @@
                         apiLayoutUrl + layoutName + '/' + fileName,
                         apiLayoutUrl + 'responsive' + '/' + fileName
                     ];
+
+                    // flacunza: si la URL tiene pinta de ser absoluta es ella sola la más probable, así que la ponemos la primera
+                    if (isAbsoluteUrl) {
+                        urlsToQuery.unshift(layoutName + '/' + fileName);
+                    }
 
                     var i = 0;
                     (function iterate(pos) {
