@@ -54,8 +54,44 @@ TC.inherit(TC.control.PrintMap, TC.Control);
             if (self.printWindow && self.printWindow !== undefined)
                 self.printWindow.close();
 
+            window.refererMap = map
+
+            var mapFeatures = [];
+            var layer;
+            for (var i = 0; i < map.workLayers.length; i++) {
+                layer = map.workLayers[i];
+
+                if (((layer.type === TC.Consts.layerType.VECTOR || layer.type === TC.Consts.layerType.WFS) && layer.getVisibility() && layer.features.length > 0)) {
+                    var features = layer.features;
+
+                    for (var j = 0; j < features.length; j++) {
+                        var feat = features[j];
+                        var options = {};
+                        var styleObj = {};
+
+                        if (TC.feature.Marker && feat instanceof TC.feature.Marker && feat.options.noPrint) {
+                            continue;
+                        } else {
+                            if (feat.layer.styles) {
+                                var styles = feat.layer.styles[feat.STYLETYPE] == undefined ?
+                                     feat.layer.styles[(feat.STYLETYPE === "polyline" ? "line" : feat.STYLETYPE)] :
+                                     feat.layer.styles[(feat.STYLETYPE === "multipolygon" ? "polygon" : feat.STYLETYPE)];
+
+                                for (var item in styles) {
+                                    styleObj[item] = typeof (styles[item]) === "function" ? styles[item](feat) : styles[item];
+                                }
+                            }
+                        }
+
+                        mapFeatures.push({ geometry: feat.geometry, CLASSNAME: feat.CLASSNAME, options: $.extend({}, feat.options, styleObj, feat.getStyle(), { layer: null }) });
+                    }
+                }
+            }
+
+            window.mapFeatures = mapFeatures;
+
             self.printWindow = window.open(url, "print");
-            self.printWindow.onbeforeunload = function () {                
+            self.printWindow.onbeforeunload = function () {
                 delete this.printWindow;
             }.bind(this);
         };
