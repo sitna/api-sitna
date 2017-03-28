@@ -169,8 +169,8 @@ if (!TC.control.MapContents) {
             self.layerOrder = self.Layer.Events.layerOrder.bind(self);
             self.layerUpdate = self.Layer.Events.layerUpdate.bind(self);
 
-            //self.featureAdded = self.Vector.Events.featureAdded.bind(self);
-            //self.featureRemoved = self.Vector.Events.featureRemoved.bind(self);
+            self.featureAdded = self.Vector.Events.featureAdded.bind(self);
+            self.featureRemoved = self.Vector.Events.featureRemoved.bind(self);
 
             self.initialExtent = self.Controls.Events.initialExtent.bind(self);
             self.zoomin = self.Controls.Events.zoomin.bind(self);
@@ -222,7 +222,7 @@ if (!TC.control.MapContents) {
                             self.Cesium.setCameraFromMapView.call(self);
                             self.BaseMap.synchronizer.call(self, self.direction.TO_THREE_D);
                             self.Layer.synchronizer.call(self);
-                            //self.Controls.synchronizer.call(self);
+                            self.Controls.synchronizer.call(self);
 
                             $.when(self.viewer.readyPromise).then(function () {
 
@@ -257,8 +257,8 @@ if (!TC.control.MapContents) {
                             self.map.on(TC.Consts.event.LAYEROPACITY, self.layerOpacity);
                             self.map.on(TC.Consts.event.LAYERORDER, self.layerOrder);
 
-                            //self.map.on(TC.Consts.event.FEATUREADD, self.featureAdded);
-                            //self.map.on(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
+                            self.map.on(TC.Consts.event.FEATUREADD, self.featureAdded);
+                            self.map.on(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
 
                             $('.tc-ctl-nav-btn-home').on('click', self.initialExtent);
                             $('.tc-ctl-nav-btn-zoomin').on('click', self.zoomin);
@@ -290,8 +290,8 @@ if (!TC.control.MapContents) {
                             self.map.off(TC.Consts.event.LAYEROPACITY, self.layerOpacity);
                             self.map.off(TC.Consts.event.LAYERORDER, self.layerOrder);
 
-                            //self.map.off(TC.Consts.event.FEATUREADD, self.featureAdded);
-                            //self.map.off(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
+                            self.map.off(TC.Consts.event.FEATUREADD, self.featureAdded);
+                            self.map.off(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
 
                             $('.tc-ctl-nav-btn-home').off('click', self.initialExtent);
                             $('.tc-ctl-nav-btn-zoomin').off('click', self.zoomin);
@@ -404,7 +404,7 @@ if (!TC.control.MapContents) {
 
         var outHandler = function (e) {
             var self = this;
-            
+
             self.isFocusingCameraCtrls = false;
         };
         var inHandler = function () {
@@ -2541,15 +2541,42 @@ if (!TC.control.MapContents) {
         }
     };
 
+    ctlProto.CSFeature = {
+        setStyleProperties: function (styles, properties, feature) {
+            for (var key in properties) { // recorremos el diccionario de propiedades que admitimos como estilo
+                var attr = styles[properties[key].prop];
+                if (attr) {
+                    if (typeof (attr) === "function") { // si la propiedad del estilo es una función (como en el control de búsquedas) invocamos para obtener el valor
+                        var val = attr(feature);
+                        if (val) {
+                            properties[key].val = val;
+                        }
+                    } else {
+                        properties[key].val = attr; // obtenenemos el valor
+                    }
+                }
+            }
+        },
+
+        getCSColor: function (hexStringColor, alpha) {
+            var color = Cesium.Color.fromCssColorString(hexStringColor);
+            if (alpha) {
+                return color.withAlpha(alpha);
+            }
+
+            return color;
+        }
+    };
+
     ctlProto.Vector = {
-        _getObj: function (feature) {
+        createCSFeature: function (feature) {
             var self = this;
 
             var cartesians = [];
-            var toCartesian = function (coord) {
+            var toCartesian = function (coord, arr) {
                 coord = TC.Util.reproject(coord, self.map.crs, self.crs);
 
-                cartesians.push(coord.length > 2 ?
+                arr.push(coord.length > 2 ?
                     Cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]) :
                     Cesium.Cartesian3.fromDegrees(coord[0], coord[1]));
             };
@@ -2557,6 +2584,7 @@ if (!TC.control.MapContents) {
             var obj;
             var geometry = feature.geometry;
             var geometryType;
+            var options = {};
             var point,
                 points,
                 ringsOrPolylines,
@@ -2564,32 +2592,44 @@ if (!TC.control.MapContents) {
                 isPolygon,
                 isLine,
                 isPoint;
+            var pinBuilder = new Cesium.PinBuilder();
 
-            var forPoints = function (points) {
+            var forPoints = function (points, arr) {
                 if ($.isArray(points)) {
                     for (var i = 0; i < points.length; i++) {
-                        toCartesian(points[i]);
+                        toCartesian(points[i], arr);
                     }
                 }
             };
-            var forRingsOrPolylines = function (ringsOrPolylines) {
+            var forRingsOrPolylines = function (ringsOrPolylines, arr) {
                 if ($.isArray(ringsOrPolylines)) {
                     for (var i = 0; i < ringsOrPolylines.length; i++) {
-                        forPoints(ringsOrPolylines[i]);
+                        arr.push([]);
+                        forPoints(ringsOrPolylines[i], arr[arr.length - 1]);
                     }
                 }
             };
             var forPolygons = function (polygons) {
                 if ($.isArray(polygons)) {
                     for (var i = 0; i < polygons.length; i++) {
-                        forRingsOrPolylines(polygons[i]);
+                        cartesians.push([]);
+                        forRingsOrPolylines(polygons[i], cartesians[cartesians.length - 1]);
                     }
                 }
             };
 
-            var styles = feature.layer.styles[feature.STYLETYPE] == undefined ?
-                         feature.layer.styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
-                         feature.layer.styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
+            var styles;
+            if (!feature.layer.hasOwnProperty('styles')) {
+                styles = TC.Defaults.styles;
+            } else {
+                styles = feature.layer.styles;
+            }
+
+            styles = styles[feature.STYLETYPE] == undefined ?
+                     styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
+                     styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
+
+            styles = $.extend({}, styles, feature.options);
 
             switch (true) {
                 case (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon):
@@ -2597,33 +2637,115 @@ if (!TC.control.MapContents) {
                     if ($.isArray(polygons)) {
                         forPolygons(polygons);
                         isPolygon = true;
-                        geometryType = function (coords, feature) {
-                            return new Cesium.PolygonOutlineGeometry({
-                                polygonHierarchy: new Cesium.PolygonHierarchy(coords)
-                            });
+                        geometryType = function (coords, options) {
+                            var geomPolys = [];
+                            var geomOutlines = [];
+
+                            var getPolyGeom = function (polygonHierarchy) {
+                                return new Cesium.GeometryInstance({
+                                    id: feature.id,
+                                    geometry: new Cesium.PolygonGeometry({
+                                        polygonHierarchy: polygonHierarchy
+                                    }),
+                                    attributes: {
+                                        color: options.color
+                                    }
+                                });
+                            };
+                            var getOutlineGeom = function (outlineCoords) {
+                                return new Cesium.GeometryInstance({
+                                    id: feature.id + 'outLine',
+                                    geometry: new Cesium.CorridorGeometry({
+                                        positions: outlineCoords,
+                                        width: options.width
+                                    }),
+                                    attributes: {
+                                        color: options.outlineColor
+                                    }
+                                });
+                            };
+
+                            for (var i = 0; i < coords.length; i++) {
+                                for (var j = 0; j < coords[i].length; j++) {
+                                    var hierarchy;
+                                    if (j == 0) {
+                                        geomOutlines.push(getOutlineGeom(coords[i][0]));
+                                        hierarchy = new Cesium.PolygonHierarchy(coords[i][0]);
+                                    } else {
+                                        geomOutlines.push(getOutlineGeom(coords[i][j]));
+                                        hierarchy.holes.push(new Cesium.PolygonHierarchy(coords[i][j]));
+                                    }
+                                }
+
+                                geomPolys.push(getPolyGeom(hierarchy));
+                            }
+
+                            return [
+                                new Cesium.GroundPrimitive({
+                                    geometryInstances: geomPolys
+                                }),
+                                new Cesium.GroundPrimitive({
+                                    geometryInstances: geomOutlines
+                                })
+                            ];
                         };
                     }
                     break;
                 case ((TC.feature.Polygon && feature instanceof TC.feature.Polygon) || (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline)):
                     ringsOrPolylines = geometry;
                     if ($.isArray(ringsOrPolylines)) {
-                        forRingsOrPolylines(ringsOrPolylines);
+                        forRingsOrPolylines(ringsOrPolylines, cartesians);
 
                         if (feature instanceof TC.feature.Polygon) {
                             isPolygon = true;
-                            geometryType = function (coords, feature) {
-                                return new Cesium.PolygonOutlineGeometry({
-                                    polygonHierarchy: new Cesium.PolygonHierarchy(coords)
-                                });
+                            geometryType = function (coords, options) {
+                                return [
+                                    new Cesium.GroundPrimitive({
+                                        geometryInstances: new Cesium.GeometryInstance({
+                                            id: feature.id,
+                                            geometry: new Cesium.PolygonGeometry({
+                                                polygonHierarchy: new Cesium.PolygonHierarchy(coords)
+                                            }),
+                                            attributes: {
+                                                color: options.color
+                                            }
+                                        })
+                                    }),
+                                    new Cesium.GroundPrimitive({
+                                        geometryInstances: new Cesium.GeometryInstance({
+                                            id: feature.id + 'outLine',
+                                            geometry: new Cesium.CorridorGeometry({
+                                                positions: coords,
+                                                width: options.width
+                                            }),
+                                            attributes: {
+                                                color: options.outlineColor
+                                            }
+                                        })
+                                    })
+                                ];
                             };
                         }
                         else if (feature instanceof TC.feature.MultiPolyline) {
                             isPolygon = false;
                             isLine = true;
-                            geometryType = function (coords, feature) {
-                                return new Cesium.CorridorGeometry({
-                                    positions: coords,
-                                    width: styles['strokeWidth'](feature)
+                            geometryType = function (coords, options) {
+                                // GLS: con lo siguiente pinta bien calles
+                                if (coords.length == 1) {
+                                    coords = coords[0];
+                                }
+
+                                return new Cesium.GroundPrimitive({
+                                    geometryInstances: new Cesium.GeometryInstance({
+                                        id: feature.id,
+                                        geometry: new Cesium.CorridorGeometry({
+                                            positions: coords,
+                                            width: options.width
+                                        }),
+                                        attributes: {
+                                            color: options.color
+                                        }
+                                    })
                                 });
                             };
                         }
@@ -2632,61 +2754,128 @@ if (!TC.control.MapContents) {
                 case (TC.feature.Polyline && feature instanceof TC.feature.Polyline):
                     points = geometry;
                     if ($.isArray(points)) {
-                        forPoints(points);
+                        forPoints(points, cartesians);
                         isPolygon = false;
                         isLine = true;
-                        geometryType = function (coords, feature) {
-                            return new Cesium.CorridorGeometry({
-                                positions: coords,
-                                width: styles['strokeWidth'](feature)
+                        geometryType = function (coords, options) {
+                            return new Cesium.GroundPrimitive({
+                                geometryInstances: new Cesium.GeometryInstance({
+                                    id: feature.id,
+                                    geometry: new Cesium.CorridorGeometry({
+                                        positions: coords,
+                                        width: options.width
+                                    }),
+                                    attributes: {
+                                        color: options.color
+                                    }
+                                })
                             });
                         };
                     }
                     break;
-                case (TC.feature.Point && feature instanceof TC.feature.Point):
+                case (TC.feature.Marker && feature instanceof TC.feature.Marker):
                     points = [geometry];
-                    forPoints(points);
+                    forPoints(points, cartesians);
                     isPolygon = isLine = false;
                     isPoint = true;
-                    geometryType = function (coords, feature) {
-                        // GLS: Si la feature cuenta con rotación lo instanciamos mediante un Billboard que sí cuentan con rotación. Los labels se renderizan letra a letra (por rendimiento) : https://groups.google.com/forum/#!topic/cesium-dev/4A9t8Y9tDiQ
-                        var rotation = styles['angle'](feature);
-                        if (rotation) {
+                    geometryType = function (coords, options) {
+                        return {
+                            id: feature.id,
+                            name: feature.id,
+                            position: coords[0],
+                            billboard: {
+                                image: options.url,
+                                width: options.width,
+                                height: options.height,
+                                /*eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                pixelOffset: new Cesium.Cartesian2(options.anchor[0], options.anchor[1]),*/
+                                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                            }
+                        };
+                    };
+                    break;
+                case (TC.feature.Point && feature instanceof TC.feature.Point):
+                    points = [geometry];
+                    forPoints(points, cartesians);
+                    isPolygon = isLine = false;
+                    isPoint = true;
+                    geometryType = function (coords, options) {
+                        var text = options.label;
+                        //if (options.radius) {
+                        //    var point = {
+                        //        id: feature.id,
+                        //        name: feature.id,
+                        //        position: coords[0],
+                        //        point: {
+                        //            color: options.color,
+                        //            pixelSize: options.radius,
+                        //            outlineColor: options.outlineColor,
+                        //            outlineWidth: options.outlineWidth,
+                        //            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                        //        }
+                        //    };
+
+                        //    if (text) {
+                        //        point.label = {
+                        //            text: options.label,
+                        //            font: '14' + 'px san-serif Arial',
+                        //            showBackground: true,
+                        //            eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                        //            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                        //            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                        //            verticalOrigin: Cesium.VerticalOrigin.BASELINE,
+                        //            fillColor: options.fontColor
+                        //        };
+                        //    }
+
+                        //    return point;
+                        //}
+                        //else 
+                        if (text && !/^[0-9]*$/gi.test(text)) {
                             return {
-                                position: coords[0],                                
-                                billboard: {
-                                    image: Cesium.writeTextToCanvas(styles['label'](feature), {
-                                        //font: styles['fontSize'](feature) + 'px san-serif'
-                                        //,
-                                        fill: true,
-                                        fillColor: Cesium.Color.fromCssColorString(styles['fontColor'](feature)),
-                                        stroke: true,
-                                        strokeColor: Cesium.Color.fromCssColorString(styles['labelOutlineColor'](feature)),
-                                        strokeWidth: styles['labelOutlineWidth'](feature)
-                                    }),
-                                    rotation: Cesium.Math.toRadians(rotation), //heading
-                                    alignedAxis: Cesium.Cartesian3.UNIT_Z, //Makes rotation a heading
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-                                    verticalOrigin: Cesium.VerticalOrigin.BASELINE
-                                }
-                            };
-                        } else {
-                            return {
+                                id: feature.id,
+                                name: feature.id,
                                 position: coords[0],
                                 label: {
-                                    text: styles['label'](feature),
-                                    font: styles['fontSize'](feature) + 'px san-serif',
+                                    text: options.label,
+                                    font: '14' + 'px san-serif Arial',
+                                    showBackground: true,
+                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
                                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
                                     horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
                                     verticalOrigin: Cesium.VerticalOrigin.BASELINE,
-                                    fillColor: Cesium.Color.fromCssColorString(styles['fontColor'](feature)),
-                                    outlineColor: Cesium.Color.fromCssColorString(styles['labelOutlineColor'](feature)),
-                                    outlineWidth: styles['labelOutlineWidth'](feature)
+                                    fillColor: Cesium.Color.WHITE
+                                }
+                            };
+                        } else if (/^[0-9]*$/gi.test(text)) {
+                            return {
+                                id: feature.id,
+                                name: feature.id,
+                                position: coords[0],
+                                billboard: {
+                                    image: pinBuilder.fromText(text, options.fontColor, 48).toDataURL(),
+                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                                    translucencyByDistance: new Cesium.NearFarScalar(0.0, 1.0, 8.0e6, 0.0)
                                 }
                             };
                         }
-                    };
+                        else {
+                            return {
+                                id: feature.id,
+                                name: feature.id,
+                                position: coords[0],
+                                billboard: {
+                                    image: pinBuilder.fromColor(Cesium.Color.fromRandom({ alpha: 1 }), 48).toDataURL(),
+                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                                }
+                            };
+                        }
+                    }
                     break;
             }
 
@@ -2694,129 +2883,257 @@ if (!TC.control.MapContents) {
                 return null;
             }
 
-            //var color = Cesium.Color.fromCssColorString(styles[(isPolygon ? 'fill' : 'stroke') + 'Color'](feature)).withAlpha(styles[(isPolygon ? 'fill' : 'stroke') + 'Opacity'](feature));
-
             if (isPolygon) {
-                var c = styles['fillColor'](feature);
-                var alpha = styles['fillOpacity'](feature);
-                var c = Cesium.Color.fromCssColorString(c);
-                color = c.withAlpha(alpha);
+                var properties = {
+                    color: { prop: 'fillColor' },
+                    opacity: { prop: 'fillOpacity' },
+                    outlineColor: { prop: 'strokeColor' },
+                    outlineOpacity: { prop: 'strokeOpacity' },
+                    width: { prop: 'strokeWidth' }
+                };
+
+                self.CSFeature.setStyleProperties(styles, properties, feature);
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        color = self.CSFeature.getCSColor(properties.color.val);
+                    }
+                }
+
+                options.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                if (properties.outlineColor.hasOwnProperty('val')) {
+                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                        color = self.CSFeature.getCSColor(properties.outlineColor.val, properties.outlineOpacity.val);
+                    } else {
+                        color = self.CSFeature.getCSColor(properties.outlineColor.val);
+                    }
+                }
+
+                options.outlineColor = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                if (properties.width.hasOwnProperty('val')) {
+                    options.width = properties.width.val;
+                }
             }
             else if (isLine) {
-                var c = styles['strokeColor'](feature);
-                var alpha = styles['strokeOpacity'](feature);
-                var c = Cesium.Color.fromCssColorString(c);
-                color = c.withAlpha(alpha);
+                var properties = {
+                    color: { prop: 'strokeColor' },
+                    opacity: { prop: 'strokeOpacity' },
+                    width: { prop: 'strokeWidth' }
+                };
+
+                self.CSFeature.setStyleProperties(styles, properties, feature);
+
+                if (properties.width.hasOwnProperty('val')) {
+                    options.width = properties.width.val;
+                }
+
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        color = self.CSFeature.getCSColor(properties.color.val);
+                    }
+                }
+
+                options.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+            } else {
+                var properties = {
+                    rotation: { prop: 'angle' },
+                    label: { prop: 'label' },
+                    fontSize: { prop: 'fontSize' },
+                    fontColor: { prop: 'fontColor' },
+                    outlineLabelColor: { prop: 'labelOutlineColor' },
+                    outlineLabelWidth: { prop: 'labelOutlineWidth' },
+                    anchor: { prop: 'anchor' },
+                    height: { prop: 'height' },
+                    width: { prop: 'width' },
+                    url: { prop: 'url' },
+                    color: { prop: 'fillColor' },
+                    opacity: { prop: 'fillOpacity' },
+                    outlineColor: { prop: 'strokeColor' },
+                    outlineOpacity: { prop: 'strokeOpacity' },
+                    outlineWidth: { prop: 'strokeWidth' },
+                    radius: { prop: 'radius' }
+                };
+
+                self.CSFeature.setStyleProperties(styles, properties, feature);
+
+                if (properties.anchor.hasOwnProperty('val')) {
+                    if (!(properties.url.hasOwnProperty('val')) && feature.options.url) {
+                        options.url = feature.options.url;
+                    } else {
+                        options.url = properties.url.val;
+                    }
+
+                    options.anchor = properties.anchor.val;
+                }
+
+                if (properties.height.hasOwnProperty('val')) {
+                    options.height = properties.height.val;
+                }
+
+                if (properties.width.hasOwnProperty('val')) {
+                    options.width = properties.width.val;
+                }
+
+                if (properties.rotation.hasOwnProperty('val')) {
+                    options.rotation = properties.rotation.val;
+                }
+
+                if (properties.label.hasOwnProperty('val')) {
+                    options.label = properties.label.val;
+                }
+
+                if (properties.fontSize.hasOwnProperty('val')) {
+                    options.fontSize = properties.fontSize.val;
+                }
+
+                if (properties.fontColor.hasOwnProperty('val')) {
+                    options.fontColor = self.CSFeature.getCSColor(properties.fontColor.val);
+                }
+
+                if (properties.outlineLabelColor.hasOwnProperty('val')) {
+                    options.outlineLabelColor = self.CSFeature.getCSColor(properties.outlineLabelColor.val);
+                }
+
+                if (properties.outlineLabelWidth.hasOwnProperty('val')) {
+                    options.outlineLabelWidth = properties.outlineLabelWidth.val;
+                }
+
+
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        options.color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        options.color = self.CSFeature.getCSColor(properties.color.val);
+                    }
+                }
+
+                if (properties.outlineColor.hasOwnProperty('val')) {
+                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                        options.outlineColor = self.CSFeature.getCSColor(properties.outlineColor.val, properties.outlineOpacity.val);
+                    } else {
+                        options.outlineColor = self.CSFeature.getCSColor(properties.outlineColor.val);
+                    }
+                }
+
+                if (properties.outlineWidth.hasOwnProperty('val')) {
+                    options.outlineWidth = properties.outlineWidth.val;
+                }
+
+                if (properties.radius.hasOwnProperty('val')) {
+                    options.radius = properties.radius.val;
+                }
             }
 
             obj = {
                 id: feature.id,
                 attributes: feature.data,
-                geometry: geometryType(cartesians, feature),
-                geometryColor: isPoint ? null : Cesium.ColorGeometryInstanceAttribute.fromColor(color)
+                geometry: geometryType(cartesians, options),
+                boundigSphere: Cesium.BoundingSphere.fromPoints(cartesians)
             };
 
             return obj;
         },
-        create: function (features, idLayer) {
+        create: function (feature, idLayer) {
             var self = this;
             var done = new $.Deferred();
-
-            var threedFeature = [];
-
-            if (!(features instanceof Array))
-                features = [features];
-
-            var geometryInstances = [];
-            for (var i = 0; i < features.length; i++) {
-                var feature = features[i];
-                var obj = self.Vector._getObj.call(self, feature);
-                if (obj.geometryColor != null) {
-                    threedFeature.push(new Cesium.GeometryInstance({
-                        id: obj.id,
-                        geometry: obj.geometry,
-                        attributes: {
-                            color: obj.geometryColor
-                        }
-                    }));
-                } else { // No podemos anidar geometrías (GeometryInstance) para crear un único objeto porque en el estilo hay algún atributo (por rotación, texto...) que lo impide
-                    threedFeature.push(
-                   /*new Cesium.Entity({
-                        id: obj.id,
-                        geometry: 
-                        */obj.geometry/*,
-                    })*/);
-                }
-            }
-
-            // guardamos la relación de capa con features a añadir
-            if (!self.vector2DFeatures.hasOwnProperty(idLayer)) {
-                self.vector2DFeatures[idLayer] = threedFeature;
-            }
-            else {
-                self.vector2DFeatures[idLayer] = self.vector2DFeatures[idLayer].concat(threedFeature);
-            }
-
+            var threedFeature = self.Vector.createCSFeature.call(self, feature);
             return done.resolve(threedFeature);
         },
         Events: {
+            zoomToRectangle: function (rectangle) {
+                var self = this;
+
+                var boundingSphere = Cesium.BoundingSphere.fromRectangle3D(rectangle);
+                var controller = self.viewer.scene.screenSpaceCameraController;
+                controller.minimumZoomDistance = Math.min(controller.minimumZoomDistance, boundingSphere.radius * 0.5);
+                var zoomOptions = {};
+
+                self.viewer.camera.flyToBoundingSphere(boundingSphere, {
+                    duration: zoomOptions.duration,
+                    maximumHeight: zoomOptions.maximumHeight,
+                    offset: zoomOptions.offset
+                });
+            },
             featureAdded: function (e) {
                 var self = this;
                 var idLayer = e.layer.id;
                 self.Vector.create.call(self, e.feature, idLayer).then(function (threedFeature) {
-                    var geometryInstances = [];
+                    var currentRectangle;
+                    var f = threedFeature.geometry;
 
-                    for (var i = 0; i < threedFeature.length; i++) {
-                        var f = threedFeature[i];
+                    var addFeature = function (csFeature, rectangle) {
 
-                        //var billboardCollection = self.viewer.scene.primitives.add(new Cesium.BillboardCollection({
-                        //    scene: self.viewer.scene
-                        //}));
+                        var getRectangle = function (csFeature) {
+                            if (csFeature.geometryInstances) {
+                                var geom = csFeature.geometryInstances;
+                                for (var i = 0; i < geom.length; i++) {
+                                    if (!currentRectangle) {
+                                        currentRectangle = geom[i].geometry.rectangle;
+                                    } else {
+                                        if (!Cesium.Rectangle.equals(currentRectangle, geom[i].geometry.rectangle)) {
+                                            currentRectangle = Cesium.Rectangle.union(currentRectangle, geom[i].geometry.rectangle);
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        var saveFeature = function (idLayer, csFeature) {
+                            if (!self.vector2DFeatures.hasOwnProperty(idLayer)) {
+                                self.vector2DFeatures[idLayer] = [csFeature];
+                            } else {
+                                self.vector2DFeatures[idLayer].push(csFeature);
+                            }
+                        };
 
-                        //billboardCollection.add({
-                        //    position: Cesium.Cartesian3.fromDegrees(42.8165698, -1.6418862),
-                        //    image: Cesium.writeTextToCanvas('lalal lalala lalala'),
-                        //    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                        //});
-
-                        if (f instanceof Cesium.GeometryInstance) { }
-                        else {
-
-
-
-                            //var billboardCollection = new Cesium.BillboardCollection({
-                            //    scene: self.viewer.scene
-                            //});
-
-                            //billboardCollection.add(f);
-
-                            //self.viewer.scene.primitives.add(billboardCollection);
-
-                            
+                        switch (true) {
+                            case csFeature instanceof Cesium.GroundPrimitive: {
+                                self.Cesium.CustomRender.setBlockRendering(false);
+                                self.viewer.scene.groundPrimitives.add(csFeature);
+                                saveFeature(idLayer, csFeature);
+                                break;
+                            }
+                            case csFeature instanceof Object: {
+                                self.Cesium.CustomRender.setBlockRendering(false);
+                                self.viewer.entities.add(csFeature);
+                                saveFeature(idLayer, csFeature);
+                                break;
+                            }
                         }
-                        //var e = self.viewer.entities.add(f);
 
-                        //switch (true) {
-                        //    case f instanceof Cesium.Entity:
-                        //        var e = self.viewer.entities.add(f);
-                        //        break;
-                        //    case f instanceof Cesium.GeometryInstance:
-                        //        geometryInstances.push(f);
-                        //        self.vector2DFeatures[idLayer].splice(i, 1);
-                        //        break;
-                        //}
+                        if (rectangle) {
+                            getRectangle(csFeature);
+                        }
+                    };
+
+                    if (f instanceof Array) {
+                        for (var fType = 0; fType < f.length; fType++) {
+                            addFeature(f[fType], fType === 0);
+                        }
+                    } else {
+                        addFeature(f, false);
                     }
 
-                    //if (geometryInstances.length > 0) {
-                    //    f = new Cesium.GroundPrimitive({
-                    //        geometryInstances: geometryInstances
-                    //    });
+                    self.Cesium.CustomRender.setBlockRendering(false);
 
-                    //    self.vector2DFeatures[idLayer].push(f);
-                    //    var g = self.viewer.scene.groundPrimitives.add(f);
-                    //}
-
-                    // center = Cesium.BoundingSphere.fromPoints(positions).center;
+                    if (currentRectangle) {
+                        clearTimeout(self._featureAddedTimeout);
+                        self.Vector.Events.zoomToRectangle.call(self, currentRectangle);
+                    } else {
+                        /* GLS: Como nos llegan las features una en una no puedo saber de antemano si voy a tener rectángulo de polígono o líneas o si es un punto. 
+                           Por ello lo controlo con un timeout */
+                        clearTimeout(self._featureAddedTimeout);
+                        self._featureAddedTimeout = setTimeout(function () {
+                            self.viewer.flyTo(self.viewer.entities);
+                        }, 100);
+                    }
                 });
             },
             featureRemoved: function (e) {
@@ -2829,13 +3146,17 @@ if (!TC.control.MapContents) {
                         for (var i = 0; i < threedFeature.length; i++) {
                             var f = threedFeature[i];
                             switch (true) {
-                                case f instanceof Cesium.Entity:
-                                    self.viewer.entities.removeById(f.id);
-                                    break;
                                 case f instanceof Cesium.GroundPrimitive:
+                                    self.Cesium.CustomRender.setBlockRendering(false);
                                     self.viewer.scene.groundPrimitives.remove(f);
                                     break;
+                                case f instanceof Object:
+                                    self.Cesium.CustomRender.setBlockRendering(false);
+                                    self.viewer.entities.removeById(f.id);
+                                    break;
                             }
+
+                            self.Cesium.CustomRender.setBlockRendering(false);
                         }
 
                         delete self.vector2DFeatures[e.layer.id];
@@ -2844,64 +3165,6 @@ if (!TC.control.MapContents) {
             }
         }
     };
-
-    //ctlProto.Vector = {
-    //    getPosition: function (coords) {
-    //        var self = this;
-
-    //        if (coords) {
-    //            return TC.Util.reproject(coords, self.map.crs, self.crs);;
-    //        }
-    //    },
-    //    getIcon: function (opt) {
-    //        var self = this;
-
-    //        if (opt.url && opt.width && opt.height)
-    //            return {
-    //                image: opt.url,
-    //                width: opt.width,
-    //                height: opt.height
-    //            };
-    //    },
-    //    createEntity: function (feature) {
-    //        var self = this;
-    //        var entity;
-
-    //        switch (true) {
-    //            case feature instanceof TC.feature.Marker:
-    //                var position = this.getPosition.call(self, feature.getCoords());
-    //                var icon = this.getIcon.call(self, feature.options)
-
-    //                entity = new Cesium.Entity({
-    //                    position: Cesium.Cartesian3.fromDegrees(position[0], position[1])
-    //                });
-
-    //                if (icon)
-    //                    entity.billboard = icon;
-
-    //            case feature instanceof TC.feature.Point:
-    //                break;
-    //        }
-    //        //if (feature instanceof TC.feature.Circle) { }
-    //        //if (feature instanceof TC.feature.Polyline) { }
-    //        //if (feature instanceof TC.feature.Polygon) { }
-    //        //if (feature instanceof TC.feature.MultiPolygon) { }
-
-    //        if (entity)
-    //            self.viewer.entities.add(entity);
-    //    },
-    //    synchronizer: function (layer) {
-    //        var self = this;
-
-
-
-    //        if (layer.features && layer.features.length) {
-    //            for (var i = 0; i < layer.features.length; i++) {
-    //                this.createEntity.call(self, layer.features[i]);
-    //            }
-    //        }
-    //    }
-    //};
 
     ctlProto.Util = {
         browserSupportWebGL: function () {
