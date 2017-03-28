@@ -492,6 +492,7 @@ TC.inherit(TC.control.Search, TC.Control);
         };
     }
 
+
     ctlProto.register = function (map) {
         var self = this;
         TC.Control.prototype.register.call(self, map);
@@ -500,7 +501,7 @@ TC.inherit(TC.control.Search, TC.Control);
             data: []
         };
 
-        var styleFN = (function () {
+        self.layerStyleFN = (function () {
             function getFeatureType(idFeature) {
                 return idFeature.indexOf('.') > -1 ? idFeature.split('.')[0] : idFeature;
             };
@@ -512,8 +513,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 return self.availableSearchTypes[allowed].styles[id][geomType][property];
                             }
                 }
-
-                console.log('No hay estilo definido');
+                
                 return TC.Cfg.styles[geomType][property];
             };
 
@@ -534,6 +534,8 @@ TC.inherit(TC.control.Search, TC.Control);
 
         map.loaded(function () {
 
+            var styleFN = self.layerStyleFN;
+
             self.layerPromise = map.addLayer({
                 id: TC.getUID(),
                 title: 'B\u00fasquedas',
@@ -551,6 +553,11 @@ TC.inherit(TC.control.Search, TC.Control);
                         strokeColor: styleFN.bind(self, 'line', 'strokeColor', false),
                         strokeOpacity: styleFN.bind(self, 'line', 'strokeOpacity', false),
                         strokeWidth: styleFN.bind(self, 'line', 'strokeWidth', false)
+                    },
+                    marker: {                        
+                        anchor: TC.Defaults.styles.marker.anchor,
+                        height: TC.Defaults.styles.marker.height,
+                        width: TC.Defaults.styles.marker.width
                     },
                     point: {
                         radius: styleFN.bind(self, 'point', 'radius', false),
@@ -875,7 +882,10 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
 
         self.getLayer().then(function (l) {
+            var features = l.features;
             l.clearFeatures();
+
+            self.map.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { layer: l, feature: features }));
 
             for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
                 if (l.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
@@ -1451,7 +1461,6 @@ TC.inherit(TC.control.Search, TC.Control);
                     else result.push({
                         t: match[1].trim()
                     });
-
                     return true;
                 }
 
@@ -1484,8 +1493,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         t: root,
                         s: match[1].trim(),
                         p: _formatStreetNumber(match[2].trim())
-                    });
-
+                    });                    
                     return true;
                 }
 
@@ -1512,8 +1520,14 @@ TC.inherit(TC.control.Search, TC.Control);
                 else check = check.concat([sp, snp, s_or_t]);
 
                 var ch = 0;
-                while (ch < check.length && !check[ch].call(self, text, result)) {
-                    ch++;
+                try
+                {
+                    while (ch < check.length && !check[ch].call(self, text, result)) {                    
+                        ch++;
+                    }
+                }
+                catch (ex) {
+                    TC.error("Error en la b\u00fasqueda seg\u00fan el patr\u00f3n: " + text, TC.Consts.msgErrorMode.EMAIL);                    
                 }
             }
 
@@ -2044,7 +2058,6 @@ TC.inherit(TC.control.Search, TC.Control);
                         }
                         break;
                     default:
-
                 }
 
                 layer.type = goTo.params.type;
@@ -2063,6 +2076,9 @@ TC.inherit(TC.control.Search, TC.Control);
                                         self.$list.hide('fast');
                                         setQueryableFeatures.call(self, e.layer.features);
                                         self.layer.map.zoomToFeatures(e.layer.features);
+
+                                        self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features }));
+
                                     } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
                                         self.$list.html(goTo.emptyResultHTML);
                                         self.$text.trigger("targetUpdated.autocomplete");
@@ -2089,6 +2105,8 @@ TC.inherit(TC.control.Search, TC.Control);
                                 self.$list.hide('fast');
                                 setQueryableFeatures.call(self, e.layer.features);
                                 self.layer.map.zoomToFeatures(self.layer.features);
+
+                                self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features }));
 
                                 self.loading.removeWait(wait);
                             } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
@@ -2153,7 +2171,9 @@ TC.inherit(TC.control.Search, TC.Control);
             goTo.params = {
                 type: TC.Consts.layerType.VECTOR,
                 styles: {
-                    point: {}
+                    marker: {
+                        url: self.layerStyleFN.bind(self, 'marker', 'url', true)
+                    }
                 }
             };
 

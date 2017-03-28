@@ -134,6 +134,10 @@ TC.control.ResultsPanel.prototype.close = function () {
     self._$div.find('.prcollapsed-max').hide();
     self._$div.find(self.content.collapsedClass).attr('hidden', 'hidden').removeClass(self.classes.FA);
 
+    if (self.chart && self.chart.chart) {
+        self.chart.chart = self.chart.chart.destroy();
+    }
+
     self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELCLOSE), {});
 };
 
@@ -258,9 +262,9 @@ TC.control.ResultsPanel.prototype.openChart = function () {
                         };
                     };
                     
-                    c3.generate(chartOptions);
+                    self.chart.chart = c3.generate(chartOptions);                              
                 }                                
-            });            
+            });
         }
     } else {
         self.map.toast(data.msg);

@@ -72,6 +72,8 @@ TC.inherit(TC.feature.Point, TC.Feature);
 
     featProto.STYLETYPE = TC.Consts.geom.POINT;
 
+    featProto.CLASSNAME = 'TC.feature.Point';
+
     featProto.getCoords = function () {
         return this.wrap.getGeometry();
     };

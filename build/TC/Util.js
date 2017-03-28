@@ -167,13 +167,13 @@ var TC = TC || {};
                 result = iconUrlCache[cssClass];
             }
             else {
-                var iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
+                var $iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
                 // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
-                var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec(iconDiv.css('background-image'));
+                var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec($iconDiv.css('background-image'));
                 if (match && match.length > 1) {
                     result = match[match.length - 1];
                 }
-                iconDiv.remove();
+                $iconDiv.remove();
                 iconUrlCache[cssClass] = result;
             }
             return result;
@@ -622,11 +622,11 @@ var TC = TC || {};
             return undefined;
         },
         removeURLParameter: function (url, parameter) {
-            var urlparts = url.toLowerCase().split('?');
+            var urlparts = url.split('?');
             if (urlparts.length >= 2) {
 
                 var prefix = encodeURIComponent(parameter.toLowerCase()) + '=';
-                var pars = urlparts[1].split(/[&;]/g);
+                var pars = urlparts[1].toLowerCase().split(/[&;]/g);
 
                 //reverse iteration as may be destructive
                 for (var i = pars.length; i-- > 0;) {

@@ -66,7 +66,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         ctlProto.template = TC.apiLocation + "TC/templates/PrintPdf.html";
     }
     else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button disabled class=\"disabled tc-button tc-ctl-printMap-btn\" title=\"").h("i18n", ctx, {}, { "$key": "printPdf" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button disabled class=\"disabled tc-button tc-ctl-print-pdf-btn\" title=\"").h("i18n", ctx, {}, { "$key": "printpdf" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
     }
 
     var getUrlWithoutParams = function () {
@@ -145,7 +145,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             }
         });
 
-        var printBtnSelector = '.tc-ctl-printMap-btn';
+        var printBtnSelector = '.' + self.CLASS + '-btn';
         self.map.$events.on(TC.Consts.event.STARTLOADING, function () {
             var printBtn = self._$div.find(printBtnSelector);
             printBtn.addClass('disabled');
@@ -165,7 +165,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             getQrCode(getUrlWithoutParams());
         }
 
-        self._$div.on('click', '.tc-ctl-printMap-btn', function () {
+        self._$div.on('click', '.' + self.CLASS + '-btn', function () {
             self.createPdf();
         });
     };
@@ -384,7 +384,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                 docDefinition.content = docDefinition.content || {};
 
                 if (layers.length > 0) {
-                    for (var i = 0; i < layers.length; i++) {
+                    for (var i = layers.length - 1; i >= 0; i--) {
                         var layer = layers[i];
 
                         if (layer.type === TC.Consts.layerType.WMS && layer.getVisibility()) {
@@ -416,11 +416,13 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                                 if (layer.header) { // Si es un nombre de servicio o grupo de capas   
                                     docDefinition.content.push({ text: layer.header, fontSize: 10, margin: [indentation, 0, 0, 3] });
                                 } else { // Si es una capa con imagen de leyenda
-                                    var imageWidth = layer.image.canvas.width / 2;
-                                    var imageHeight = (imageWidth * layer.image.canvas.height / layer.image.canvas.width)
-
                                     docDefinition.content.push({ text: layer.title, fontSize: 9, margin: [indentation, 0, 0, 2] });
-                                    docDefinition.content.push({ image: layer.image.base64, width: imageWidth, height: imageHeight, margin: [indentation, 0, 0, 2] });
+
+                                    if (layer.image) {
+                                        var imageWidth = layer.image.canvas.width / 2;
+                                        var imageHeight = (imageWidth * layer.image.canvas.height / layer.image.canvas.width)
+                                        docDefinition.content.push({ image: layer.image.base64, width: imageWidth, height: imageHeight, margin: [indentation, 0, 0, 2] });
+                                    }
                                 }
                             }
                         }
@@ -471,18 +473,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var opener = window.opener;
 
         if (opener) {
-            var mapVar = self.options.openerMap;
-
-            if (mapVar) {
-                var mapVarChunks = mapVar.split('.');
-
-                var aux = opener;
-                for (var i = 0; i < mapVarChunks.length; i++) {
-                    aux = aux[mapVarChunks[i]];
-                }
-
-                var refererMap = aux;
-            }
+            var refererMap = opener.refererMap;
 
             if (refererMap) {
 
@@ -515,19 +506,12 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                     //Insertamos las capas de trabajo que no son compartidas mediante el control de estado
                     var workLayers = refererMap.workLayers;
+                    var layer;
 
                     for (var i = 0; i < workLayers.length; i++) {
-                        var layer = workLayers[i];
+                        layer = workLayers[i];
 
-                        if (((layer.type === TC.Consts.layerType.VECTOR || layer.type === TC.Consts.layerType.WFS) && layer.getVisibility() && layer.features.length > 0)) {
-                            var features = layer.features;
-                            self.map.addLayer(layer, function (l) {
-                                for (var i = 0; i < features.length; i++) {
-                                    l.addFeature(features[i]);
-                                }
-                            });
-                        }
-                        else if (layer.type === TC.Consts.layerType.WMS && layer.options.stateless) {
+                        if (layer.type === TC.Consts.layerType.WMS && layer.options.stateless) {
                             self.map.addLayer({
                                 "id": layer.id,
                                 "title": layer.title,
@@ -538,14 +522,59 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                                 "stateless": layer.stateless,
                                 "params": layer.params,
                                 "layerNames": layer.layerNames
+                            }, function (l) {
+                                l.setVisibility(layer.getVisibility());
+                                l.setOpacity(layer.getOpacity());
                             });
                         }
                     }
+
+                    var mapFeatures = window.opener.mapFeatures;
+
+                    if (mapFeatures) {
+                        self.map.addLayer({
+                            id: TC.getUID(),
+                            type: TC.Consts.layerType.VECTOR
+                        }, function (layer) {
+                            TC.loadJS(!TC.feature,
+                            [TC.apiLocation + 'TC/Feature.js', TC.apiLocation + 'TC/feature/Point.js', TC.apiLocation + 'TC/feature/Polyline.js',
+                            TC.apiLocation + 'TC/feature/Polygon.js', TC.apiLocation + 'TC/feature/MultiPolygon.js', TC.apiLocation + 'TC/feature/MultiPolyline.js',
+                            TC.apiLocation + 'TC/feature/Circle.js', TC.apiLocation + 'TC/feature/Marker.js'],
+                            function () {
+                                for (var i = 0; i < mapFeatures.length; i++) {
+                                    var feat = mapFeatures[i];
+                                    var feature;
+
+                                    switch (feat.CLASSNAME) {
+                                        case 'TC.feature.Point':
+                                            layer.addPoint(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.Polyline':
+                                            layer.addPolyline(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.Polygon':
+                                            layer.addPolygon(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.MultiPolygon':
+                                            layer.addMultiPolygon(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.MultiPolyline':
+                                            layer.addMultiPolyline(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.Circle':
+                                            layer.addCircle(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.Marker':
+                                            layer.addMarker(feat.geometry, feat.options);
+                                            break;
+                                    }
+                                }
+                            }
+                        );
+                        });
+                    }
                 });
-            } else {
-                TC.error('No se ha definido una variable con el contenido de TC.Map en el visor original');
             }
         }
-    }
-
+    };
 })();

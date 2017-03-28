@@ -119,7 +119,8 @@ TC.control.FeatureInfoCommons = function () {
         cssClass: TC.Consts.classes.POINT,
         anchor: [0.5, 0.5],
         width: 15,
-        height: 15
+        height: 15,
+        noPrint: true
     };
 
     ctlProto.onShowPopUp = function (e) {

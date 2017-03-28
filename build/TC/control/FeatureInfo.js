@@ -90,6 +90,24 @@ if (!TC.control.FeatureInfoCommons) {
         );
     };
 
+    var roundCoordinates = function roundCoordinates(obj, precision) {
+        var result;
+        var n = 20;
+        if ($.isArray(obj)) {
+            result = obj.slice();
+            for (var i = 0, len = result.length; i < len; i++) {
+                result[i] = roundCoordinates(result[i]);
+            }
+        }
+        else if (typeof obj === "number") {
+            result = Math.round(obj.toFixed(precision));
+        }
+        else {
+            result = obj;
+        }
+        return result;
+    };
+
     ctlProto.register = function (map) {
         var self = this;
         TC.control.Click.prototype.register.call(self, map);
@@ -204,7 +222,7 @@ if (!TC.control.FeatureInfoCommons) {
                     function () {
                         var hash = hex_md5(JSON.stringify({
                             data: feature.getData(),
-                            geometry: feature.geometry
+                            geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisi\u00f3n m\u00e1s fina (grado)
                         }));
                         shareCtl.extraParams = {};
                         shareCtl.extraParams[self.FEATURE_PARAM] = window.btoa(unescape(encodeURIComponent(JSON.stringify({
@@ -273,7 +291,7 @@ if (!TC.control.FeatureInfoCommons) {
                                                 sharedFeature = feature;
                                                 var hash = hex_md5(JSON.stringify({
                                                     data: feature.getData(),
-                                                    geometry: feature.geometry
+                                                    geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisi\u00f3n m\u00e1s fina (grado)
                                                 }));
                                                 if (featureObj.h !== hash) {
                                                     TC.alert(self.getLocaleString('finfo.featureChanged.warning'));

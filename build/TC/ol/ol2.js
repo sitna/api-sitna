@@ -3391,6 +3391,37 @@ if (!window.OpenLayers) {
         return result;
     };
 
+    TC.wrap.Feature.prototype.cloneFeature = function () {
+        var self = this;
+        return new self.feature.constructor(self.feature.geometry.clone(), self.feature.attributes, self.feature.style);
+    };
+
+    TC.wrap.Feature.prototype.getStyle = function () {
+        var style = this.feature.style;
+        var result = {};
+        if (style.fillColor) {
+            result.fillColor = style.fillColor;
+            result.fillOpacity = style.fillOpacity;
+        }
+        if (style.strokeColor) {
+            result.strokeColor = style.strokeColor;
+            result.strokeWidth = style.strokeWidth;
+        }
+        if (style.externalGraphic) {
+            result.url = style.externalGraphic;
+            result.anchor = [style.graphicXOffset / style.graphicWidth, style.graphicYOffset / style.graphicHeight];
+        }
+        if (style.label) {
+            result.label = style.label;
+            result.labelOffset = [style.labelXOffset, style.labelYOffset];
+            result.fontColor = style.fontColor;
+            result.labelOutlineColor = style.labelOutlineColor;
+            result.labelOutlineWidth = style.labelOutlineWidth;
+            result.fontSize = style.fontSize;
+        }
+        return result;
+    };
+
     TC.wrap.Feature.prototype.getGeometry = function () {
         var result;
         var self = this;

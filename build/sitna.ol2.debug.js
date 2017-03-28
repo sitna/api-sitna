@@ -67224,6 +67224,9 @@ var TC = TC || {};
                 }
             }
 
+            if (!window.jsonpack) {
+                TC.syncLoadJS(TC.apiLocation + TC.Consts.url.JSONPACK);
+            }
             return jsonpack.pack(state);
         };
 
@@ -67411,6 +67414,8 @@ var TC = TC || {};
                     return defer.promise();
                 };
 
+                var isAbsoluteUrl = /^(https?:)?\/\//i.test(layoutName);
+
                 var getFileFromAvailableLocation = function (key, fileName) {
                     var defered = $.Deferred();
 
@@ -67422,6 +67427,11 @@ var TC = TC || {};
                         apiLayoutUrl + layoutName + '/' + fileName,
                         apiLayoutUrl + 'responsive' + '/' + fileName
                     ];
+
+                    // flacunza: si la URL tiene pinta de ser absoluta es ella sola la m\u00e1s probable, as\u00ed que la ponemos la primera
+                    if (isAbsoluteUrl) {
+                        urlsToQuery.unshift(layoutName + '/' + fileName);
+                    }
 
                     var i = 0;
                     (function iterate(pos) {
@@ -68875,13 +68885,13 @@ var TC = TC || {};
                 result = iconUrlCache[cssClass];
             }
             else {
-                var iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
+                var $iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
                 // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
-                var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec(iconDiv.css('background-image'));
+                var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec($iconDiv.css('background-image'));
                 if (match && match.length > 1) {
                     result = match[match.length - 1];
                 }
-                iconDiv.remove();
+                $iconDiv.remove();
                 iconUrlCache[cssClass] = result;
             }
             return result;
@@ -69330,11 +69340,11 @@ var TC = TC || {};
             return undefined;
         },
         removeURLParameter: function (url, parameter) {
-            var urlparts = url.toLowerCase().split('?');
+            var urlparts = url.split('?');
             if (urlparts.length >= 2) {
 
                 var prefix = encodeURIComponent(parameter.toLowerCase()) + '=';
-                var pars = urlparts[1].split(/[&;]/g);
+                var pars = urlparts[1].toLowerCase().split(/[&;]/g);
 
                 //reverse iteration as may be destructive
                 for (var i = pars.length; i-- > 0;) {
@@ -70202,7 +70212,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.2.0';
+TC.version = '1.2.1';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -72209,6 +72219,8 @@ TC.Feature = function (coords, options) {
 
 TC.Feature.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
 
+TC.Feature.prototype.CLASSNAME = 'TC.Feature';
+
 TC.Feature.prototype.getPath = function () {
     var result = [];
     var self = this;
@@ -72325,6 +72337,17 @@ TC.Feature.prototype.getInfo = function () {
         result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
     }
     return result;
+};
+
+TC.Feature.prototype.clone = function () {
+    var self = this;
+    var nativeClone = self.wrap.cloneFeature();
+    nativeClone._wrap = self.wrap;
+    return new self.constructor(nativeClone, self.options);
+};
+
+TC.Feature.prototype.getStyle = function () {
+    return this.wrap.getStyle();
 };
 
 TC.Feature.prototype.showPopup = function (control) {
@@ -72469,6 +72492,8 @@ TC.inherit(TC.feature.Point, TC.Feature);
 
     featProto.STYLETYPE = TC.Consts.geom.POINT;
 
+    featProto.CLASSNAME = 'TC.feature.Point';
+
     featProto.getCoords = function () {
         return this.wrap.getGeometry();
     };
@@ -72506,6 +72531,8 @@ TC.inherit(TC.feature.Circle, TC.Feature);
     var featProto = TC.feature.Circle.prototype;
 
     featProto.STYLETYPE = TC.Consts.geom.POLYGON;
+
+    featProto.CLASSNAME = 'TC.feature.Circle';
 
     featProto.getCoords = function () {
         return this.wrap.getGeometry();
@@ -72597,6 +72624,8 @@ TC.feature.Marker = function (coords, options) {
 TC.inherit(TC.feature.Marker, TC.feature.Point);
 
 TC.feature.Marker.prototype.STYLETYPE = 'marker';
+
+TC.feature.Marker.prototype.CLASSNAME = 'TC.feature.Marker';
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
@@ -72625,6 +72654,8 @@ TC.feature.MultiPolygon = function (coords, options) {
 TC.inherit(TC.feature.MultiPolygon, TC.Feature);
 
 TC.feature.MultiPolygon.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
+
+TC.feature.MultiPolygon.prototype.CLASSNAME = 'TC.feature.MultiPolygon';
 
 TC.feature = TC.feature || {};
 
@@ -72655,6 +72686,8 @@ TC.feature.MultiPolyline = function (coords, options) {
 TC.inherit(TC.feature.MultiPolyline, TC.Feature);
 
 TC.feature.MultiPolyline.prototype.STYLETYPE = TC.Consts.geom.POLYLINE;
+
+TC.feature.MultiPolyline.prototype.CLASSNAME = 'TC.feature.MultiPolyline';
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
@@ -72684,6 +72717,8 @@ TC.feature.Polygon = function (coords, options) {
 TC.inherit(TC.feature.Polygon, TC.Feature);
 
 TC.feature.Polygon.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
+
+TC.feature.Polygon.prototype.CLASSNAME = 'TC.feature.Polygon';
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
@@ -72714,6 +72749,8 @@ TC.feature.Polyline = function (coords, options) {
 TC.inherit(TC.feature.Polyline, TC.Feature);
 
 TC.feature.Polyline.prototype.STYLETYPE = TC.Consts.geom.POLYLINE;
+
+TC.feature.Polyline.prototype.CLASSNAME = 'TC.feature.Polyline';
 TC.control = TC.control || {};
 
 if (!TC.Control) {
@@ -72829,11 +72866,11 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 $img.attr('src', TC.proxify(src));
             });
         }
-        var startIdx = src.indexOf('//');
+        var urlStartRegEx = /^(https?:)?\/\//i;
         if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(src)) {
             var srcSSL = "";
             if (SSLSupported == true)
-                srcSSL = src.replace(/^(f|ht)tp?:\/\//i, "https://");
+                srcSSL = src.replace(urlStartRegEx, "https://");
             else if (TC.isUsingServiceWorker())
                 srcSSL = TC.proxify(src)
             else
@@ -72841,7 +72878,8 @@ TC.inherit(TC.control.MapContents, TC.Control);
             $img.attr('src', srcSSL);
         }
         else {
-            $img.attr('src', startIdx < 0 ? src : src.substr(startIdx));
+            // Si es una ruta absoluta quitamos el protocolo
+            $img.attr('src', urlStartRegEx.test(src) ? src.substr(src.indexOf('//')) : src);
         }
     };
 
@@ -73820,7 +73858,8 @@ TC.control.FeatureInfoCommons = function () {
         cssClass: TC.Consts.classes.POINT,
         anchor: [0.5, 0.5],
         width: 15,
-        height: 15
+        height: 15,
+        noPrint: true
     };
 
     ctlProto.onShowPopUp = function (e) {
@@ -77664,6 +77703,37 @@ if (!window.OpenLayers) {
             }
         }
             }
+        }
+        return result;
+    };
+
+    TC.wrap.Feature.prototype.cloneFeature = function () {
+        var self = this;
+        return new self.feature.constructor(self.feature.geometry.clone(), self.feature.attributes, self.feature.style);
+    };
+
+    TC.wrap.Feature.prototype.getStyle = function () {
+        var style = this.feature.style;
+        var result = {};
+        if (style.fillColor) {
+            result.fillColor = style.fillColor;
+            result.fillOpacity = style.fillOpacity;
+        }
+        if (style.strokeColor) {
+            result.strokeColor = style.strokeColor;
+            result.strokeWidth = style.strokeWidth;
+        }
+        if (style.externalGraphic) {
+            result.url = style.externalGraphic;
+            result.anchor = [style.graphicXOffset / style.graphicWidth, style.graphicYOffset / style.graphicHeight];
+        }
+        if (style.label) {
+            result.label = style.label;
+            result.labelOffset = [style.labelXOffset, style.labelYOffset];
+            result.fontColor = style.fontColor;
+            result.labelOutlineColor = style.labelOutlineColor;
+            result.labelOutlineWidth = style.labelOutlineWidth;
+            result.fontSize = style.fontSize;
         }
         return result;
     };
@@ -82109,6 +82179,24 @@ if (!TC.control.FeatureInfoCommons) {
         );
     };
 
+    var roundCoordinates = function roundCoordinates(obj, precision) {
+        var result;
+        var n = 20;
+        if ($.isArray(obj)) {
+            result = obj.slice();
+            for (var i = 0, len = result.length; i < len; i++) {
+                result[i] = roundCoordinates(result[i]);
+            }
+        }
+        else if (typeof obj === "number") {
+            result = Math.round(obj.toFixed(precision));
+        }
+        else {
+            result = obj;
+        }
+        return result;
+    };
+
     ctlProto.register = function (map) {
         var self = this;
         TC.control.Click.prototype.register.call(self, map);
@@ -82223,7 +82311,7 @@ if (!TC.control.FeatureInfoCommons) {
                     function () {
                         var hash = hex_md5(JSON.stringify({
                             data: feature.getData(),
-                            geometry: feature.geometry
+                            geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisi\u00f3n m\u00e1s fina (grado)
                         }));
                         shareCtl.extraParams = {};
                         shareCtl.extraParams[self.FEATURE_PARAM] = window.btoa(unescape(encodeURIComponent(JSON.stringify({
@@ -82292,7 +82380,7 @@ if (!TC.control.FeatureInfoCommons) {
                                                 sharedFeature = feature;
                                                 var hash = hex_md5(JSON.stringify({
                                                     data: feature.getData(),
-                                                    geometry: feature.geometry
+                                                    geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisi\u00f3n m\u00e1s fina (grado)
                                                 }));
                                                 if (featureObj.h !== hash) {
                                                     TC.alert(self.getLocaleString('finfo.featureChanged.warning'));
@@ -82822,7 +82910,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     switch (true) {
                         case e.type + '.' + e.namespace === TC.Consts.event.LAYERREMOVE:
                             self.wrap.deactivateSnapping();
-                            var selected = self.getSelectedTrack()
+                            var selected = self.getSelectedTrack();
                             if (selected) {
                                 self.clearSelectedTrack();
                             }
@@ -83446,6 +83534,19 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         }
     };
 
+    ctlProto.activate = function () {
+        var self = this;
+        TC.Control.prototype.activate.call(self);        
+    };
+
+    ctlProto.deactivate = function () {
+        var self = this;
+        
+        self.clearSelection();
+        self.deactivateTracking();
+        TC.Control.prototype.deactivate.call(self);
+    };
+
     var _layerError = function () {
         var self = this;
 
@@ -83480,6 +83581,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         var isLayer = true;
         var newLayer = "";
+        var styles;
 
         switch (true) {
             case layerType == self.Const.Layers.TRACKING:
@@ -83489,6 +83591,32 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             case layerType == self.Const.Layers.TRACK:
                 isLayer = self.layerTrack !== undefined;
                 newLayer = "layerTrack";
+                styles = {
+                    line: {
+                        strokeWidth: 2,
+                        strokeColor: "#C52737"
+                    },
+                    point: {
+                        radius: 3,
+                        fillColor: "#C52737",
+                        strokeColor: "#ffffff",
+                        fontColor: "#C52737",
+                        fontSize: 10,
+                        fontWeight: "bold",
+                        labelOutlineColor: "#ffffff",
+                        labelOutlineWidth: 2,                        
+                        label: function (feature) {
+                            var name = feature.getData()['name'];
+                            if (name && (name + '').trim().length > 0) {
+                                name = (name + '').trim().toLowerCase();
+                            } else {
+                                name = '';
+                            }
+
+                            return name;
+                        }
+                    }
+                };
                 break;
             case layerType == self.Const.Layers.GPS:
                 isLayer = self.layerGPS !== undefined;
@@ -83503,12 +83631,18 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         } else if (!self.layerPromise || self.layerPromise.state() === "resolved") {
             self.layerPromise = new $.Deferred();
 
-            $.when(self.map.addLayer({
+            var opt = {
                 id: TC.getUID(),
                 type: TC.Consts.layerType.VECTOR,
                 title: self.getLocaleString("geo") + ' - ' + layerType,
                 stealth: true
-            })).then(function (layer) {
+            };
+
+            if (styles) {
+                opt.styles = styles;
+            }
+
+            $.when(self.map.addLayer(opt)).then(function (layer) {
                 this[newLayer] = layer;
                 this[newLayer].map.putLayerOnTop(layer);
                 self.layerPromise.resolve(this[newLayer]);
@@ -83664,6 +83798,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
     var _tracking = function () {
         var self = this;
+
+        self.activate();
 
         _activateTrackingBtns.call(self);
         duringTrackingToolsPanel.call(self);
@@ -84095,10 +84231,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.setSelectedTrack(li);
             self.drawTrackingData(li);
             self.elevationTrack(li);
+
+            self.activate();
         });
     };
 
-    var onResize;
+    
     ctlProto.elevationTrack = function (li, resized) {
         var self = this;
 
@@ -84107,9 +84245,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.uiSimulate(false, li);
         }
 
-        if (!onResize) {
-            onResize = self.elevationTrack.bind(self, li, true);
-            window.addEventListener("resize", onResize, false);
+        if (!self.onResize) {
+            self.onResize = self.elevationTrack.bind(self, li, true);
+            window.addEventListener("resize", self.onResize, false);
         }
         var elevationGain = {};
         var time = {};
@@ -84507,7 +84645,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                             }
 
                             function hasSize() {
-                                if (d3.select('.c3-axis-x').length && d3.select('.c3-axis-x').node() &&
+                                if (d3.select('.c3-axis-x').length && !(d3.select('.c3-axis-x').node())) {
+                                    self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
+                                }
+                                else if (d3.select('.c3-axis-x').length && d3.select('.c3-axis-x').node() &&
                                     !d3.select('.c3-axis-x').node().getBoundingClientRect().width) {
                                     self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
                                 } else {
@@ -84540,9 +84681,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.clear = function (layerType) {
         var self = this;
 
-        if (onResize) {
-            window.removeEventListener("resize", onResize, false);
-            onResize = undefined;
+        if (self.onResize) {
+            window.removeEventListener("resize", self.onResize, false);
+            self.onResize = undefined;
         }
 
         if (layerType == self.Const.Layers.TRACK) {
@@ -84574,7 +84715,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.saveTrack = function () {
         var self = this;
         var done = new $.Deferred();
-        var message = arguments.length > 0 ? arguments[0] : "";
+        var message = arguments.length > 0 && typeof (arguments[0]) == "string" ? arguments[0] : self.getLocaleString("geo.trk.save.alert");
 
         var _save = function (layerType) {
             self.getLayer(layerType).then(function (layer) {
@@ -84611,7 +84752,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                 try {
                     self.setStoredTracks(tracks).then(function () {
-                        self.map.toast(message || self.getLocaleString("geo.trk.save.alert"), { duration: 3000 });
+                        self.map.toast(message, { duration: 3000 });
 
                         clean(wait);
                         var index;
@@ -84727,14 +84868,34 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         return self.track.$trackList.find('li.' + self.Const.Classes.SELECTEDTRACK);
     };
 
-    ctlProto.clearSelectedTrack = function (li) {
+    ctlProto.clearSelectedTrack = function () {
         var self = this;
 
-        var selected = self.getSelectedTrack()
+        var selected = self.getSelectedTrack();
         if (selected) {
+
+            if (self.onResize) {
+                window.removeEventListener("resize", self.onResize, false);
+                self.onResize = undefined;
+            }
+
             selected.removeClass(self.Const.Classes.SELECTEDTRACK);
             $(selected).find(self.Const.Selector.DRAW).attr('title', $(selected).text());
         }
+    };
+
+    ctlProto.clearSelection = function () {
+        var self = this;
+
+        self.wrap.deactivateSnapping();
+        var selected = self.getSelectedTrack();
+        if (selected) {
+            self.clearSelectedTrack();
+        }
+        if (self.resultsPanelChart)
+            self.resultsPanelChart.close();
+
+        self.clear(self.Const.Layers.TRACK);        
     };
 
     ctlProto.drawTrackingData = function (li) {
@@ -84747,8 +84908,30 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 self.wrap.drawTrackingData(data).then(function () {
                     var showFeatures = self.layerTrack.features;
                     if (showFeatures && showFeatures.length > 0) {
+                        var lineTrack;
                         for (var i = 0; i < showFeatures.length; i++) {
+                            if (showFeatures[i].STYLETYPE.indexOf('line') > -1) {
+                                lineTrack = showFeatures[i];
+                            }
+
                             showFeatures[i].showsPopup = false;
+                        }
+                    }
+
+                    if (lineTrack && lineTrack.geometry) {
+                        var first = lineTrack.geometry[0];
+                        var last = lineTrack.geometry[lineTrack.geometry.length - 1];
+
+                        if (first && !(first === last)) {
+                            self.layerTrack.addMarker(first.slice().splice(0, 2), {
+                                showsPopup: false, cssClass: self.CLASS + '-track-marker-icon-end', anchor: [0.5, 1]
+                            });
+                        }
+
+                        if (last) {
+                            self.layerTrack.addMarker(last.slice().splice(0, 2), {
+                                showsPopup: false, cssClass: self.CLASS + '-track-marker-icon', anchor: [0.5, 1]
+                            });
                         }
                     }
                 });
@@ -86802,8 +86985,44 @@ TC.inherit(TC.control.PrintMap, TC.Control);
             if (self.printWindow && self.printWindow !== undefined)
                 self.printWindow.close();
 
+            window.refererMap = map
+
+            var mapFeatures = [];
+            var layer;
+            for (var i = 0; i < map.workLayers.length; i++) {
+                layer = map.workLayers[i];
+
+                if (((layer.type === TC.Consts.layerType.VECTOR || layer.type === TC.Consts.layerType.WFS) && layer.getVisibility() && layer.features.length > 0)) {
+                    var features = layer.features;
+
+                    for (var j = 0; j < features.length; j++) {
+                        var feat = features[j];
+                        var options = {};
+                        var styleObj = {};
+
+                        if (TC.feature.Marker && feat instanceof TC.feature.Marker && feat.options.noPrint) {
+                            continue;
+                        } else {
+                            if (feat.layer.styles) {
+                                var styles = feat.layer.styles[feat.STYLETYPE] == undefined ?
+                                     feat.layer.styles[(feat.STYLETYPE === "polyline" ? "line" : feat.STYLETYPE)] :
+                                     feat.layer.styles[(feat.STYLETYPE === "multipolygon" ? "polygon" : feat.STYLETYPE)];
+
+                                for (var item in styles) {
+                                    styleObj[item] = typeof (styles[item]) === "function" ? styles[item](feat) : styles[item];
+                                }
+                            }
+                        }
+
+                        mapFeatures.push({ geometry: feat.geometry, CLASSNAME: feat.CLASSNAME, options: $.extend({}, feat.options, styleObj, feat.getStyle(), { layer: null }) });
+                    }
+                }
+            }
+
+            window.mapFeatures = mapFeatures;
+
             self.printWindow = window.open(url, "print");
-            self.printWindow.onbeforeunload = function () {                
+            self.printWindow.onbeforeunload = function () {
                 delete this.printWindow;
             }.bind(this);
         };
@@ -86880,7 +87099,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         ctlProto.template = TC.apiLocation + "TC/templates/PrintPdf.html";
     }
     else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button disabled class=\"disabled tc-button tc-ctl-printMap-btn\" title=\"").h("i18n", ctx, {}, { "$key": "printPdf" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button disabled class=\"disabled tc-button tc-ctl-print-pdf-btn\" title=\"").h("i18n", ctx, {}, { "$key": "printpdf" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
     }
 
     var getUrlWithoutParams = function () {
@@ -86959,7 +87178,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             }
         });
 
-        var printBtnSelector = '.tc-ctl-printMap-btn';
+        var printBtnSelector = '.' + self.CLASS + '-btn';
         self.map.$events.on(TC.Consts.event.STARTLOADING, function () {
             var printBtn = self._$div.find(printBtnSelector);
             printBtn.addClass('disabled');
@@ -86979,7 +87198,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             getQrCode(getUrlWithoutParams());
         }
 
-        self._$div.on('click', '.tc-ctl-printMap-btn', function () {
+        self._$div.on('click', '.' + self.CLASS + '-btn', function () {
             self.createPdf();
         });
     };
@@ -87198,7 +87417,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                 docDefinition.content = docDefinition.content || {};
 
                 if (layers.length > 0) {
-                    for (var i = 0; i < layers.length; i++) {
+                    for (var i = layers.length - 1; i >= 0; i--) {
                         var layer = layers[i];
 
                         if (layer.type === TC.Consts.layerType.WMS && layer.getVisibility()) {
@@ -87230,11 +87449,13 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                                 if (layer.header) { // Si es un nombre de servicio o grupo de capas   
                                     docDefinition.content.push({ text: layer.header, fontSize: 10, margin: [indentation, 0, 0, 3] });
                                 } else { // Si es una capa con imagen de leyenda
-                                    var imageWidth = layer.image.canvas.width / 2;
-                                    var imageHeight = (imageWidth * layer.image.canvas.height / layer.image.canvas.width)
-
                                     docDefinition.content.push({ text: layer.title, fontSize: 9, margin: [indentation, 0, 0, 2] });
-                                    docDefinition.content.push({ image: layer.image.base64, width: imageWidth, height: imageHeight, margin: [indentation, 0, 0, 2] });
+
+                                    if (layer.image) {
+                                        var imageWidth = layer.image.canvas.width / 2;
+                                        var imageHeight = (imageWidth * layer.image.canvas.height / layer.image.canvas.width)
+                                        docDefinition.content.push({ image: layer.image.base64, width: imageWidth, height: imageHeight, margin: [indentation, 0, 0, 2] });
+                                    }
                                 }
                             }
                         }
@@ -87285,18 +87506,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var opener = window.opener;
 
         if (opener) {
-            var mapVar = self.options.openerMap;
-
-            if (mapVar) {
-                var mapVarChunks = mapVar.split('.');
-
-                var aux = opener;
-                for (var i = 0; i < mapVarChunks.length; i++) {
-                    aux = aux[mapVarChunks[i]];
-                }
-
-                var refererMap = aux;
-            }
+            var refererMap = opener.refererMap;
 
             if (refererMap) {
 
@@ -87329,19 +87539,12 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                     //Insertamos las capas de trabajo que no son compartidas mediante el control de estado
                     var workLayers = refererMap.workLayers;
+                    var layer;
 
                     for (var i = 0; i < workLayers.length; i++) {
-                        var layer = workLayers[i];
+                        layer = workLayers[i];
 
-                        if (((layer.type === TC.Consts.layerType.VECTOR || layer.type === TC.Consts.layerType.WFS) && layer.getVisibility() && layer.features.length > 0)) {
-                            var features = layer.features;
-                            self.map.addLayer(layer, function (l) {
-                                for (var i = 0; i < features.length; i++) {
-                                    l.addFeature(features[i]);
-                                }
-                            });
-                        }
-                        else if (layer.type === TC.Consts.layerType.WMS && layer.options.stateless) {
+                        if (layer.type === TC.Consts.layerType.WMS && layer.options.stateless) {
                             self.map.addLayer({
                                 "id": layer.id,
                                 "title": layer.title,
@@ -87352,16 +87555,61 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                                 "stateless": layer.stateless,
                                 "params": layer.params,
                                 "layerNames": layer.layerNames
+                            }, function (l) {
+                                l.setVisibility(layer.getVisibility());
+                                l.setOpacity(layer.getOpacity());
                             });
                         }
                     }
+
+                    var mapFeatures = window.opener.mapFeatures;
+
+                    if (mapFeatures) {
+                        self.map.addLayer({
+                            id: TC.getUID(),
+                            type: TC.Consts.layerType.VECTOR
+                        }, function (layer) {
+                            TC.loadJS(!TC.feature,
+                            [TC.apiLocation + 'TC/Feature.js', TC.apiLocation + 'TC/feature/Point.js', TC.apiLocation + 'TC/feature/Polyline.js',
+                            TC.apiLocation + 'TC/feature/Polygon.js', TC.apiLocation + 'TC/feature/MultiPolygon.js', TC.apiLocation + 'TC/feature/MultiPolyline.js',
+                            TC.apiLocation + 'TC/feature/Circle.js', TC.apiLocation + 'TC/feature/Marker.js'],
+                            function () {
+                                for (var i = 0; i < mapFeatures.length; i++) {
+                                    var feat = mapFeatures[i];
+                                    var feature;
+
+                                    switch (feat.CLASSNAME) {
+                                        case 'TC.feature.Point':
+                                            layer.addPoint(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.Polyline':
+                                            layer.addPolyline(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.Polygon':
+                                            layer.addPolygon(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.MultiPolygon':
+                                            layer.addMultiPolygon(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.MultiPolyline':
+                                            layer.addMultiPolyline(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.Circle':
+                                            layer.addCircle(feat.geometry, feat.options);
+                                            break;
+                                        case 'TC.feature.Marker':
+                                            layer.addMarker(feat.geometry, feat.options);
+                                            break;
+                                    }
+                                }
+                            }
+                        );
+                        });
+                    }
                 });
-            } else {
-                TC.error('No se ha definido una variable con el contenido de TC.Map en el visor original');
             }
         }
-    }
-
+    };
 })();
 
 TC.control = TC.control || {};
@@ -87499,6 +87747,10 @@ TC.control.ResultsPanel.prototype.close = function () {
     self._$div.find('.prcollapsed-max').hide();
     self._$div.find(self.content.collapsedClass).attr('hidden', 'hidden').removeClass(self.classes.FA);
 
+    if (self.chart && self.chart.chart) {
+        self.chart.chart = self.chart.chart.destroy();
+    }
+
     self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELCLOSE), {});
 };
 
@@ -87623,9 +87875,9 @@ TC.control.ResultsPanel.prototype.openChart = function () {
                         };
                     };
                     
-                    c3.generate(chartOptions);
+                    self.chart.chart = c3.generate(chartOptions);                              
                 }                                
-            });            
+            });
         }
     } else {
         self.map.toast(data.msg);
@@ -88372,6 +88624,7 @@ TC.inherit(TC.control.Search, TC.Control);
         };
     }
 
+
     ctlProto.register = function (map) {
         var self = this;
         TC.Control.prototype.register.call(self, map);
@@ -88380,7 +88633,7 @@ TC.inherit(TC.control.Search, TC.Control);
             data: []
         };
 
-        var styleFN = (function () {
+        self.layerStyleFN = (function () {
             function getFeatureType(idFeature) {
                 return idFeature.indexOf('.') > -1 ? idFeature.split('.')[0] : idFeature;
             };
@@ -88392,8 +88645,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 return self.availableSearchTypes[allowed].styles[id][geomType][property];
                             }
                 }
-
-                console.log('No hay estilo definido');
+                
                 return TC.Cfg.styles[geomType][property];
             };
 
@@ -88414,6 +88666,8 @@ TC.inherit(TC.control.Search, TC.Control);
 
         map.loaded(function () {
 
+            var styleFN = self.layerStyleFN;
+
             self.layerPromise = map.addLayer({
                 id: TC.getUID(),
                 title: 'B\u00fasquedas',
@@ -88431,6 +88685,11 @@ TC.inherit(TC.control.Search, TC.Control);
                         strokeColor: styleFN.bind(self, 'line', 'strokeColor', false),
                         strokeOpacity: styleFN.bind(self, 'line', 'strokeOpacity', false),
                         strokeWidth: styleFN.bind(self, 'line', 'strokeWidth', false)
+                    },
+                    marker: {                        
+                        anchor: TC.Defaults.styles.marker.anchor,
+                        height: TC.Defaults.styles.marker.height,
+                        width: TC.Defaults.styles.marker.width
                     },
                     point: {
                         radius: styleFN.bind(self, 'point', 'radius', false),
@@ -88755,7 +89014,10 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
 
         self.getLayer().then(function (l) {
+            var features = l.features;
             l.clearFeatures();
+
+            self.map.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { layer: l, feature: features }));
 
             for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
                 if (l.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
@@ -89331,7 +89593,6 @@ TC.inherit(TC.control.Search, TC.Control);
                     else result.push({
                         t: match[1].trim()
                     });
-
                     return true;
                 }
 
@@ -89364,8 +89625,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         t: root,
                         s: match[1].trim(),
                         p: _formatStreetNumber(match[2].trim())
-                    });
-
+                    });                    
                     return true;
                 }
 
@@ -89392,8 +89652,14 @@ TC.inherit(TC.control.Search, TC.Control);
                 else check = check.concat([sp, snp, s_or_t]);
 
                 var ch = 0;
-                while (ch < check.length && !check[ch].call(self, text, result)) {
-                    ch++;
+                try
+                {
+                    while (ch < check.length && !check[ch].call(self, text, result)) {                    
+                        ch++;
+                    }
+                }
+                catch (ex) {
+                    TC.error("Error en la b\u00fasqueda seg\u00fan el patr\u00f3n: " + text, TC.Consts.msgErrorMode.EMAIL);                    
                 }
             }
 
@@ -89924,7 +90190,6 @@ TC.inherit(TC.control.Search, TC.Control);
                         }
                         break;
                     default:
-
                 }
 
                 layer.type = goTo.params.type;
@@ -89943,6 +90208,9 @@ TC.inherit(TC.control.Search, TC.Control);
                                         self.$list.hide('fast');
                                         setQueryableFeatures.call(self, e.layer.features);
                                         self.layer.map.zoomToFeatures(e.layer.features);
+
+                                        self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features }));
+
                                     } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
                                         self.$list.html(goTo.emptyResultHTML);
                                         self.$text.trigger("targetUpdated.autocomplete");
@@ -89969,6 +90237,8 @@ TC.inherit(TC.control.Search, TC.Control);
                                 self.$list.hide('fast');
                                 setQueryableFeatures.call(self, e.layer.features);
                                 self.layer.map.zoomToFeatures(self.layer.features);
+
+                                self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features }));
 
                                 self.loading.removeWait(wait);
                             } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
@@ -90033,7 +90303,9 @@ TC.inherit(TC.control.Search, TC.Control);
             goTo.params = {
                 type: TC.Consts.layerType.VECTOR,
                 styles: {
-                    point: {}
+                    marker: {
+                        url: self.layerStyleFN.bind(self, 'marker', 'url', true)
+                    }
                 }
             };
 
@@ -91396,8 +91668,8 @@ if (!TC.control.MapContents) {
             self.layerOrder = self.Layer.Events.layerOrder.bind(self);
             self.layerUpdate = self.Layer.Events.layerUpdate.bind(self);
 
-            //self.featureAdded = self.Vector.Events.featureAdded.bind(self);
-            //self.featureRemoved = self.Vector.Events.featureRemoved.bind(self);
+            self.featureAdded = self.Vector.Events.featureAdded.bind(self);
+            self.featureRemoved = self.Vector.Events.featureRemoved.bind(self);
 
             self.initialExtent = self.Controls.Events.initialExtent.bind(self);
             self.zoomin = self.Controls.Events.zoomin.bind(self);
@@ -91449,7 +91721,7 @@ if (!TC.control.MapContents) {
                             self.Cesium.setCameraFromMapView.call(self);
                             self.BaseMap.synchronizer.call(self, self.direction.TO_THREE_D);
                             self.Layer.synchronizer.call(self);
-                            //self.Controls.synchronizer.call(self);
+                            self.Controls.synchronizer.call(self);
 
                             $.when(self.viewer.readyPromise).then(function () {
 
@@ -91484,8 +91756,8 @@ if (!TC.control.MapContents) {
                             self.map.on(TC.Consts.event.LAYEROPACITY, self.layerOpacity);
                             self.map.on(TC.Consts.event.LAYERORDER, self.layerOrder);
 
-                            //self.map.on(TC.Consts.event.FEATUREADD, self.featureAdded);
-                            //self.map.on(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
+                            self.map.on(TC.Consts.event.FEATUREADD, self.featureAdded);
+                            self.map.on(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
 
                             $('.tc-ctl-nav-btn-home').on('click', self.initialExtent);
                             $('.tc-ctl-nav-btn-zoomin').on('click', self.zoomin);
@@ -91517,8 +91789,8 @@ if (!TC.control.MapContents) {
                             self.map.off(TC.Consts.event.LAYEROPACITY, self.layerOpacity);
                             self.map.off(TC.Consts.event.LAYERORDER, self.layerOrder);
 
-                            //self.map.off(TC.Consts.event.FEATUREADD, self.featureAdded);
-                            //self.map.off(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
+                            self.map.off(TC.Consts.event.FEATUREADD, self.featureAdded);
+                            self.map.off(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
 
                             $('.tc-ctl-nav-btn-home').off('click', self.initialExtent);
                             $('.tc-ctl-nav-btn-zoomin').off('click', self.zoomin);
@@ -91631,7 +91903,7 @@ if (!TC.control.MapContents) {
 
         var outHandler = function (e) {
             var self = this;
-            
+
             self.isFocusingCameraCtrls = false;
         };
         var inHandler = function () {
@@ -93768,15 +94040,42 @@ if (!TC.control.MapContents) {
         }
     };
 
+    ctlProto.CSFeature = {
+        setStyleProperties: function (styles, properties, feature) {
+            for (var key in properties) { // recorremos el diccionario de propiedades que admitimos como estilo
+                var attr = styles[properties[key].prop];
+                if (attr) {
+                    if (typeof (attr) === "function") { // si la propiedad del estilo es una funci\u00f3n (como en el control de b\u00fasquedas) invocamos para obtener el valor
+                        var val = attr(feature);
+                        if (val) {
+                            properties[key].val = val;
+                        }
+                    } else {
+                        properties[key].val = attr; // obtenenemos el valor
+                    }
+                }
+            }
+        },
+
+        getCSColor: function (hexStringColor, alpha) {
+            var color = Cesium.Color.fromCssColorString(hexStringColor);
+            if (alpha) {
+                return color.withAlpha(alpha);
+            }
+
+            return color;
+        }
+    };
+
     ctlProto.Vector = {
-        _getObj: function (feature) {
+        createCSFeature: function (feature) {
             var self = this;
 
             var cartesians = [];
-            var toCartesian = function (coord) {
+            var toCartesian = function (coord, arr) {
                 coord = TC.Util.reproject(coord, self.map.crs, self.crs);
 
-                cartesians.push(coord.length > 2 ?
+                arr.push(coord.length > 2 ?
                     Cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]) :
                     Cesium.Cartesian3.fromDegrees(coord[0], coord[1]));
             };
@@ -93784,6 +94083,7 @@ if (!TC.control.MapContents) {
             var obj;
             var geometry = feature.geometry;
             var geometryType;
+            var options = {};
             var point,
                 points,
                 ringsOrPolylines,
@@ -93791,32 +94091,44 @@ if (!TC.control.MapContents) {
                 isPolygon,
                 isLine,
                 isPoint;
+            var pinBuilder = new Cesium.PinBuilder();
 
-            var forPoints = function (points) {
+            var forPoints = function (points, arr) {
                 if ($.isArray(points)) {
                     for (var i = 0; i < points.length; i++) {
-                        toCartesian(points[i]);
+                        toCartesian(points[i], arr);
                     }
                 }
             };
-            var forRingsOrPolylines = function (ringsOrPolylines) {
+            var forRingsOrPolylines = function (ringsOrPolylines, arr) {
                 if ($.isArray(ringsOrPolylines)) {
                     for (var i = 0; i < ringsOrPolylines.length; i++) {
-                        forPoints(ringsOrPolylines[i]);
+                        arr.push([]);
+                        forPoints(ringsOrPolylines[i], arr[arr.length - 1]);
                     }
                 }
             };
             var forPolygons = function (polygons) {
                 if ($.isArray(polygons)) {
                     for (var i = 0; i < polygons.length; i++) {
-                        forRingsOrPolylines(polygons[i]);
+                        cartesians.push([]);
+                        forRingsOrPolylines(polygons[i], cartesians[cartesians.length - 1]);
                     }
                 }
             };
 
-            var styles = feature.layer.styles[feature.STYLETYPE] == undefined ?
-                         feature.layer.styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
-                         feature.layer.styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
+            var styles;
+            if (!feature.layer.hasOwnProperty('styles')) {
+                styles = TC.Defaults.styles;
+            } else {
+                styles = feature.layer.styles;
+            }
+
+            styles = styles[feature.STYLETYPE] == undefined ?
+                     styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
+                     styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
+
+            styles = $.extend({}, styles, feature.options);
 
             switch (true) {
                 case (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon):
@@ -93824,33 +94136,115 @@ if (!TC.control.MapContents) {
                     if ($.isArray(polygons)) {
                         forPolygons(polygons);
                         isPolygon = true;
-                        geometryType = function (coords, feature) {
-                            return new Cesium.PolygonOutlineGeometry({
-                                polygonHierarchy: new Cesium.PolygonHierarchy(coords)
-                            });
+                        geometryType = function (coords, options) {
+                            var geomPolys = [];
+                            var geomOutlines = [];
+
+                            var getPolyGeom = function (polygonHierarchy) {
+                                return new Cesium.GeometryInstance({
+                                    id: feature.id,
+                                    geometry: new Cesium.PolygonGeometry({
+                                        polygonHierarchy: polygonHierarchy
+                                    }),
+                                    attributes: {
+                                        color: options.color
+                                    }
+                                });
+                            };
+                            var getOutlineGeom = function (outlineCoords) {
+                                return new Cesium.GeometryInstance({
+                                    id: feature.id + 'outLine',
+                                    geometry: new Cesium.CorridorGeometry({
+                                        positions: outlineCoords,
+                                        width: options.width
+                                    }),
+                                    attributes: {
+                                        color: options.outlineColor
+                                    }
+                                });
+                            };
+
+                            for (var i = 0; i < coords.length; i++) {
+                                for (var j = 0; j < coords[i].length; j++) {
+                                    var hierarchy;
+                                    if (j == 0) {
+                                        geomOutlines.push(getOutlineGeom(coords[i][0]));
+                                        hierarchy = new Cesium.PolygonHierarchy(coords[i][0]);
+                                    } else {
+                                        geomOutlines.push(getOutlineGeom(coords[i][j]));
+                                        hierarchy.holes.push(new Cesium.PolygonHierarchy(coords[i][j]));
+                                    }
+                                }
+
+                                geomPolys.push(getPolyGeom(hierarchy));
+                            }
+
+                            return [
+                                new Cesium.GroundPrimitive({
+                                    geometryInstances: geomPolys
+                                }),
+                                new Cesium.GroundPrimitive({
+                                    geometryInstances: geomOutlines
+                                })
+                            ];
                         };
                     }
                     break;
                 case ((TC.feature.Polygon && feature instanceof TC.feature.Polygon) || (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline)):
                     ringsOrPolylines = geometry;
                     if ($.isArray(ringsOrPolylines)) {
-                        forRingsOrPolylines(ringsOrPolylines);
+                        forRingsOrPolylines(ringsOrPolylines, cartesians);
 
                         if (feature instanceof TC.feature.Polygon) {
                             isPolygon = true;
-                            geometryType = function (coords, feature) {
-                                return new Cesium.PolygonOutlineGeometry({
-                                    polygonHierarchy: new Cesium.PolygonHierarchy(coords)
-                                });
+                            geometryType = function (coords, options) {
+                                return [
+                                    new Cesium.GroundPrimitive({
+                                        geometryInstances: new Cesium.GeometryInstance({
+                                            id: feature.id,
+                                            geometry: new Cesium.PolygonGeometry({
+                                                polygonHierarchy: new Cesium.PolygonHierarchy(coords)
+                                            }),
+                                            attributes: {
+                                                color: options.color
+                                            }
+                                        })
+                                    }),
+                                    new Cesium.GroundPrimitive({
+                                        geometryInstances: new Cesium.GeometryInstance({
+                                            id: feature.id + 'outLine',
+                                            geometry: new Cesium.CorridorGeometry({
+                                                positions: coords,
+                                                width: options.width
+                                            }),
+                                            attributes: {
+                                                color: options.outlineColor
+                                            }
+                                        })
+                                    })
+                                ];
                             };
                         }
                         else if (feature instanceof TC.feature.MultiPolyline) {
                             isPolygon = false;
                             isLine = true;
-                            geometryType = function (coords, feature) {
-                                return new Cesium.CorridorGeometry({
-                                    positions: coords,
-                                    width: styles['strokeWidth'](feature)
+                            geometryType = function (coords, options) {
+                                // GLS: con lo siguiente pinta bien calles
+                                if (coords.length == 1) {
+                                    coords = coords[0];
+                                }
+
+                                return new Cesium.GroundPrimitive({
+                                    geometryInstances: new Cesium.GeometryInstance({
+                                        id: feature.id,
+                                        geometry: new Cesium.CorridorGeometry({
+                                            positions: coords,
+                                            width: options.width
+                                        }),
+                                        attributes: {
+                                            color: options.color
+                                        }
+                                    })
                                 });
                             };
                         }
@@ -93859,61 +94253,128 @@ if (!TC.control.MapContents) {
                 case (TC.feature.Polyline && feature instanceof TC.feature.Polyline):
                     points = geometry;
                     if ($.isArray(points)) {
-                        forPoints(points);
+                        forPoints(points, cartesians);
                         isPolygon = false;
                         isLine = true;
-                        geometryType = function (coords, feature) {
-                            return new Cesium.CorridorGeometry({
-                                positions: coords,
-                                width: styles['strokeWidth'](feature)
+                        geometryType = function (coords, options) {
+                            return new Cesium.GroundPrimitive({
+                                geometryInstances: new Cesium.GeometryInstance({
+                                    id: feature.id,
+                                    geometry: new Cesium.CorridorGeometry({
+                                        positions: coords,
+                                        width: options.width
+                                    }),
+                                    attributes: {
+                                        color: options.color
+                                    }
+                                })
                             });
                         };
                     }
                     break;
-                case (TC.feature.Point && feature instanceof TC.feature.Point):
+                case (TC.feature.Marker && feature instanceof TC.feature.Marker):
                     points = [geometry];
-                    forPoints(points);
+                    forPoints(points, cartesians);
                     isPolygon = isLine = false;
                     isPoint = true;
-                    geometryType = function (coords, feature) {
-                        // GLS: Si la feature cuenta con rotaci\u00f3n lo instanciamos mediante un Billboard que s\u00ed cuentan con rotaci\u00f3n. Los labels se renderizan letra a letra (por rendimiento) : https://groups.google.com/forum/#!topic/cesium-dev/4A9t8Y9tDiQ
-                        var rotation = styles['angle'](feature);
-                        if (rotation) {
+                    geometryType = function (coords, options) {
+                        return {
+                            id: feature.id,
+                            name: feature.id,
+                            position: coords[0],
+                            billboard: {
+                                image: options.url,
+                                width: options.width,
+                                height: options.height,
+                                /*eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                pixelOffset: new Cesium.Cartesian2(options.anchor[0], options.anchor[1]),*/
+                                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                            }
+                        };
+                    };
+                    break;
+                case (TC.feature.Point && feature instanceof TC.feature.Point):
+                    points = [geometry];
+                    forPoints(points, cartesians);
+                    isPolygon = isLine = false;
+                    isPoint = true;
+                    geometryType = function (coords, options) {
+                        var text = options.label;
+                        //if (options.radius) {
+                        //    var point = {
+                        //        id: feature.id,
+                        //        name: feature.id,
+                        //        position: coords[0],
+                        //        point: {
+                        //            color: options.color,
+                        //            pixelSize: options.radius,
+                        //            outlineColor: options.outlineColor,
+                        //            outlineWidth: options.outlineWidth,
+                        //            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                        //        }
+                        //    };
+
+                        //    if (text) {
+                        //        point.label = {
+                        //            text: options.label,
+                        //            font: '14' + 'px san-serif Arial',
+                        //            showBackground: true,
+                        //            eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                        //            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                        //            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                        //            verticalOrigin: Cesium.VerticalOrigin.BASELINE,
+                        //            fillColor: options.fontColor
+                        //        };
+                        //    }
+
+                        //    return point;
+                        //}
+                        //else 
+                        if (text && !/^[0-9]*$/gi.test(text)) {
                             return {
-                                position: coords[0],                                
-                                billboard: {
-                                    image: Cesium.writeTextToCanvas(styles['label'](feature), {
-                                        //font: styles['fontSize'](feature) + 'px san-serif'
-                                        //,
-                                        fill: true,
-                                        fillColor: Cesium.Color.fromCssColorString(styles['fontColor'](feature)),
-                                        stroke: true,
-                                        strokeColor: Cesium.Color.fromCssColorString(styles['labelOutlineColor'](feature)),
-                                        strokeWidth: styles['labelOutlineWidth'](feature)
-                                    }),
-                                    rotation: Cesium.Math.toRadians(rotation), //heading
-                                    alignedAxis: Cesium.Cartesian3.UNIT_Z, //Makes rotation a heading
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-                                    verticalOrigin: Cesium.VerticalOrigin.BASELINE
-                                }
-                            };
-                        } else {
-                            return {
+                                id: feature.id,
+                                name: feature.id,
                                 position: coords[0],
                                 label: {
-                                    text: styles['label'](feature),
-                                    font: styles['fontSize'](feature) + 'px san-serif',
+                                    text: options.label,
+                                    font: '14' + 'px san-serif Arial',
+                                    showBackground: true,
+                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
                                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
                                     horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
                                     verticalOrigin: Cesium.VerticalOrigin.BASELINE,
-                                    fillColor: Cesium.Color.fromCssColorString(styles['fontColor'](feature)),
-                                    outlineColor: Cesium.Color.fromCssColorString(styles['labelOutlineColor'](feature)),
-                                    outlineWidth: styles['labelOutlineWidth'](feature)
+                                    fillColor: Cesium.Color.WHITE
+                                }
+                            };
+                        } else if (/^[0-9]*$/gi.test(text)) {
+                            return {
+                                id: feature.id,
+                                name: feature.id,
+                                position: coords[0],
+                                billboard: {
+                                    image: pinBuilder.fromText(text, options.fontColor, 48).toDataURL(),
+                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                                    translucencyByDistance: new Cesium.NearFarScalar(0.0, 1.0, 8.0e6, 0.0)
                                 }
                             };
                         }
-                    };
+                        else {
+                            return {
+                                id: feature.id,
+                                name: feature.id,
+                                position: coords[0],
+                                billboard: {
+                                    image: pinBuilder.fromColor(Cesium.Color.fromRandom({ alpha: 1 }), 48).toDataURL(),
+                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                                }
+                            };
+                        }
+                    }
                     break;
             }
 
@@ -93921,129 +94382,257 @@ if (!TC.control.MapContents) {
                 return null;
             }
 
-            //var color = Cesium.Color.fromCssColorString(styles[(isPolygon ? 'fill' : 'stroke') + 'Color'](feature)).withAlpha(styles[(isPolygon ? 'fill' : 'stroke') + 'Opacity'](feature));
-
             if (isPolygon) {
-                var c = styles['fillColor'](feature);
-                var alpha = styles['fillOpacity'](feature);
-                var c = Cesium.Color.fromCssColorString(c);
-                color = c.withAlpha(alpha);
+                var properties = {
+                    color: { prop: 'fillColor' },
+                    opacity: { prop: 'fillOpacity' },
+                    outlineColor: { prop: 'strokeColor' },
+                    outlineOpacity: { prop: 'strokeOpacity' },
+                    width: { prop: 'strokeWidth' }
+                };
+
+                self.CSFeature.setStyleProperties(styles, properties, feature);
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        color = self.CSFeature.getCSColor(properties.color.val);
+                    }
+                }
+
+                options.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                if (properties.outlineColor.hasOwnProperty('val')) {
+                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                        color = self.CSFeature.getCSColor(properties.outlineColor.val, properties.outlineOpacity.val);
+                    } else {
+                        color = self.CSFeature.getCSColor(properties.outlineColor.val);
+                    }
+                }
+
+                options.outlineColor = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                if (properties.width.hasOwnProperty('val')) {
+                    options.width = properties.width.val;
+                }
             }
             else if (isLine) {
-                var c = styles['strokeColor'](feature);
-                var alpha = styles['strokeOpacity'](feature);
-                var c = Cesium.Color.fromCssColorString(c);
-                color = c.withAlpha(alpha);
+                var properties = {
+                    color: { prop: 'strokeColor' },
+                    opacity: { prop: 'strokeOpacity' },
+                    width: { prop: 'strokeWidth' }
+                };
+
+                self.CSFeature.setStyleProperties(styles, properties, feature);
+
+                if (properties.width.hasOwnProperty('val')) {
+                    options.width = properties.width.val;
+                }
+
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        color = self.CSFeature.getCSColor(properties.color.val);
+                    }
+                }
+
+                options.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+            } else {
+                var properties = {
+                    rotation: { prop: 'angle' },
+                    label: { prop: 'label' },
+                    fontSize: { prop: 'fontSize' },
+                    fontColor: { prop: 'fontColor' },
+                    outlineLabelColor: { prop: 'labelOutlineColor' },
+                    outlineLabelWidth: { prop: 'labelOutlineWidth' },
+                    anchor: { prop: 'anchor' },
+                    height: { prop: 'height' },
+                    width: { prop: 'width' },
+                    url: { prop: 'url' },
+                    color: { prop: 'fillColor' },
+                    opacity: { prop: 'fillOpacity' },
+                    outlineColor: { prop: 'strokeColor' },
+                    outlineOpacity: { prop: 'strokeOpacity' },
+                    outlineWidth: { prop: 'strokeWidth' },
+                    radius: { prop: 'radius' }
+                };
+
+                self.CSFeature.setStyleProperties(styles, properties, feature);
+
+                if (properties.anchor.hasOwnProperty('val')) {
+                    if (!(properties.url.hasOwnProperty('val')) && feature.options.url) {
+                        options.url = feature.options.url;
+                    } else {
+                        options.url = properties.url.val;
+                    }
+
+                    options.anchor = properties.anchor.val;
+                }
+
+                if (properties.height.hasOwnProperty('val')) {
+                    options.height = properties.height.val;
+                }
+
+                if (properties.width.hasOwnProperty('val')) {
+                    options.width = properties.width.val;
+                }
+
+                if (properties.rotation.hasOwnProperty('val')) {
+                    options.rotation = properties.rotation.val;
+                }
+
+                if (properties.label.hasOwnProperty('val')) {
+                    options.label = properties.label.val;
+                }
+
+                if (properties.fontSize.hasOwnProperty('val')) {
+                    options.fontSize = properties.fontSize.val;
+                }
+
+                if (properties.fontColor.hasOwnProperty('val')) {
+                    options.fontColor = self.CSFeature.getCSColor(properties.fontColor.val);
+                }
+
+                if (properties.outlineLabelColor.hasOwnProperty('val')) {
+                    options.outlineLabelColor = self.CSFeature.getCSColor(properties.outlineLabelColor.val);
+                }
+
+                if (properties.outlineLabelWidth.hasOwnProperty('val')) {
+                    options.outlineLabelWidth = properties.outlineLabelWidth.val;
+                }
+
+
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        options.color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        options.color = self.CSFeature.getCSColor(properties.color.val);
+                    }
+                }
+
+                if (properties.outlineColor.hasOwnProperty('val')) {
+                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                        options.outlineColor = self.CSFeature.getCSColor(properties.outlineColor.val, properties.outlineOpacity.val);
+                    } else {
+                        options.outlineColor = self.CSFeature.getCSColor(properties.outlineColor.val);
+                    }
+                }
+
+                if (properties.outlineWidth.hasOwnProperty('val')) {
+                    options.outlineWidth = properties.outlineWidth.val;
+                }
+
+                if (properties.radius.hasOwnProperty('val')) {
+                    options.radius = properties.radius.val;
+                }
             }
 
             obj = {
                 id: feature.id,
                 attributes: feature.data,
-                geometry: geometryType(cartesians, feature),
-                geometryColor: isPoint ? null : Cesium.ColorGeometryInstanceAttribute.fromColor(color)
+                geometry: geometryType(cartesians, options),
+                boundigSphere: Cesium.BoundingSphere.fromPoints(cartesians)
             };
 
             return obj;
         },
-        create: function (features, idLayer) {
+        create: function (feature, idLayer) {
             var self = this;
             var done = new $.Deferred();
-
-            var threedFeature = [];
-
-            if (!(features instanceof Array))
-                features = [features];
-
-            var geometryInstances = [];
-            for (var i = 0; i < features.length; i++) {
-                var feature = features[i];
-                var obj = self.Vector._getObj.call(self, feature);
-                if (obj.geometryColor != null) {
-                    threedFeature.push(new Cesium.GeometryInstance({
-                        id: obj.id,
-                        geometry: obj.geometry,
-                        attributes: {
-                            color: obj.geometryColor
-                        }
-                    }));
-                } else { // No podemos anidar geometr\u00edas (GeometryInstance) para crear un \u00fanico objeto porque en el estilo hay alg\u00fan atributo (por rotaci\u00f3n, texto...) que lo impide
-                    threedFeature.push(
-                   /*new Cesium.Entity({
-                        id: obj.id,
-                        geometry: 
-                        */obj.geometry/*,
-                    })*/);
-                }
-            }
-
-            // guardamos la relaci\u00f3n de capa con features a a\u00f1adir
-            if (!self.vector2DFeatures.hasOwnProperty(idLayer)) {
-                self.vector2DFeatures[idLayer] = threedFeature;
-            }
-            else {
-                self.vector2DFeatures[idLayer] = self.vector2DFeatures[idLayer].concat(threedFeature);
-            }
-
+            var threedFeature = self.Vector.createCSFeature.call(self, feature);
             return done.resolve(threedFeature);
         },
         Events: {
+            zoomToRectangle: function (rectangle) {
+                var self = this;
+
+                var boundingSphere = Cesium.BoundingSphere.fromRectangle3D(rectangle);
+                var controller = self.viewer.scene.screenSpaceCameraController;
+                controller.minimumZoomDistance = Math.min(controller.minimumZoomDistance, boundingSphere.radius * 0.5);
+                var zoomOptions = {};
+
+                self.viewer.camera.flyToBoundingSphere(boundingSphere, {
+                    duration: zoomOptions.duration,
+                    maximumHeight: zoomOptions.maximumHeight,
+                    offset: zoomOptions.offset
+                });
+            },
             featureAdded: function (e) {
                 var self = this;
                 var idLayer = e.layer.id;
                 self.Vector.create.call(self, e.feature, idLayer).then(function (threedFeature) {
-                    var geometryInstances = [];
+                    var currentRectangle;
+                    var f = threedFeature.geometry;
 
-                    for (var i = 0; i < threedFeature.length; i++) {
-                        var f = threedFeature[i];
+                    var addFeature = function (csFeature, rectangle) {
 
-                        //var billboardCollection = self.viewer.scene.primitives.add(new Cesium.BillboardCollection({
-                        //    scene: self.viewer.scene
-                        //}));
+                        var getRectangle = function (csFeature) {
+                            if (csFeature.geometryInstances) {
+                                var geom = csFeature.geometryInstances;
+                                for (var i = 0; i < geom.length; i++) {
+                                    if (!currentRectangle) {
+                                        currentRectangle = geom[i].geometry.rectangle;
+                                    } else {
+                                        if (!Cesium.Rectangle.equals(currentRectangle, geom[i].geometry.rectangle)) {
+                                            currentRectangle = Cesium.Rectangle.union(currentRectangle, geom[i].geometry.rectangle);
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        var saveFeature = function (idLayer, csFeature) {
+                            if (!self.vector2DFeatures.hasOwnProperty(idLayer)) {
+                                self.vector2DFeatures[idLayer] = [csFeature];
+                            } else {
+                                self.vector2DFeatures[idLayer].push(csFeature);
+                            }
+                        };
 
-                        //billboardCollection.add({
-                        //    position: Cesium.Cartesian3.fromDegrees(42.8165698, -1.6418862),
-                        //    image: Cesium.writeTextToCanvas('lalal lalala lalala'),
-                        //    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                        //});
-
-                        if (f instanceof Cesium.GeometryInstance) { }
-                        else {
-
-
-
-                            //var billboardCollection = new Cesium.BillboardCollection({
-                            //    scene: self.viewer.scene
-                            //});
-
-                            //billboardCollection.add(f);
-
-                            //self.viewer.scene.primitives.add(billboardCollection);
-
-                            
+                        switch (true) {
+                            case csFeature instanceof Cesium.GroundPrimitive: {
+                                self.Cesium.CustomRender.setBlockRendering(false);
+                                self.viewer.scene.groundPrimitives.add(csFeature);
+                                saveFeature(idLayer, csFeature);
+                                break;
+                            }
+                            case csFeature instanceof Object: {
+                                self.Cesium.CustomRender.setBlockRendering(false);
+                                self.viewer.entities.add(csFeature);
+                                saveFeature(idLayer, csFeature);
+                                break;
+                            }
                         }
-                        //var e = self.viewer.entities.add(f);
 
-                        //switch (true) {
-                        //    case f instanceof Cesium.Entity:
-                        //        var e = self.viewer.entities.add(f);
-                        //        break;
-                        //    case f instanceof Cesium.GeometryInstance:
-                        //        geometryInstances.push(f);
-                        //        self.vector2DFeatures[idLayer].splice(i, 1);
-                        //        break;
-                        //}
+                        if (rectangle) {
+                            getRectangle(csFeature);
+                        }
+                    };
+
+                    if (f instanceof Array) {
+                        for (var fType = 0; fType < f.length; fType++) {
+                            addFeature(f[fType], fType === 0);
+                        }
+                    } else {
+                        addFeature(f, false);
                     }
 
-                    //if (geometryInstances.length > 0) {
-                    //    f = new Cesium.GroundPrimitive({
-                    //        geometryInstances: geometryInstances
-                    //    });
+                    self.Cesium.CustomRender.setBlockRendering(false);
 
-                    //    self.vector2DFeatures[idLayer].push(f);
-                    //    var g = self.viewer.scene.groundPrimitives.add(f);
-                    //}
-
-                    // center = Cesium.BoundingSphere.fromPoints(positions).center;
+                    if (currentRectangle) {
+                        clearTimeout(self._featureAddedTimeout);
+                        self.Vector.Events.zoomToRectangle.call(self, currentRectangle);
+                    } else {
+                        /* GLS: Como nos llegan las features una en una no puedo saber de antemano si voy a tener rect\u00e1ngulo de pol\u00edgono o l\u00edneas o si es un punto. 
+                           Por ello lo controlo con un timeout */
+                        clearTimeout(self._featureAddedTimeout);
+                        self._featureAddedTimeout = setTimeout(function () {
+                            self.viewer.flyTo(self.viewer.entities);
+                        }, 100);
+                    }
                 });
             },
             featureRemoved: function (e) {
@@ -94056,13 +94645,17 @@ if (!TC.control.MapContents) {
                         for (var i = 0; i < threedFeature.length; i++) {
                             var f = threedFeature[i];
                             switch (true) {
-                                case f instanceof Cesium.Entity:
-                                    self.viewer.entities.removeById(f.id);
-                                    break;
                                 case f instanceof Cesium.GroundPrimitive:
+                                    self.Cesium.CustomRender.setBlockRendering(false);
                                     self.viewer.scene.groundPrimitives.remove(f);
                                     break;
+                                case f instanceof Object:
+                                    self.Cesium.CustomRender.setBlockRendering(false);
+                                    self.viewer.entities.removeById(f.id);
+                                    break;
                             }
+
+                            self.Cesium.CustomRender.setBlockRendering(false);
                         }
 
                         delete self.vector2DFeatures[e.layer.id];
@@ -94071,64 +94664,6 @@ if (!TC.control.MapContents) {
             }
         }
     };
-
-    //ctlProto.Vector = {
-    //    getPosition: function (coords) {
-    //        var self = this;
-
-    //        if (coords) {
-    //            return TC.Util.reproject(coords, self.map.crs, self.crs);;
-    //        }
-    //    },
-    //    getIcon: function (opt) {
-    //        var self = this;
-
-    //        if (opt.url && opt.width && opt.height)
-    //            return {
-    //                image: opt.url,
-    //                width: opt.width,
-    //                height: opt.height
-    //            };
-    //    },
-    //    createEntity: function (feature) {
-    //        var self = this;
-    //        var entity;
-
-    //        switch (true) {
-    //            case feature instanceof TC.feature.Marker:
-    //                var position = this.getPosition.call(self, feature.getCoords());
-    //                var icon = this.getIcon.call(self, feature.options)
-
-    //                entity = new Cesium.Entity({
-    //                    position: Cesium.Cartesian3.fromDegrees(position[0], position[1])
-    //                });
-
-    //                if (icon)
-    //                    entity.billboard = icon;
-
-    //            case feature instanceof TC.feature.Point:
-    //                break;
-    //        }
-    //        //if (feature instanceof TC.feature.Circle) { }
-    //        //if (feature instanceof TC.feature.Polyline) { }
-    //        //if (feature instanceof TC.feature.Polygon) { }
-    //        //if (feature instanceof TC.feature.MultiPolygon) { }
-
-    //        if (entity)
-    //            self.viewer.entities.add(entity);
-    //    },
-    //    synchronizer: function (layer) {
-    //        var self = this;
-
-
-
-    //        if (layer.features && layer.features.length) {
-    //            for (var i = 0; i < layer.features.length; i++) {
-    //                this.createEntity.call(self, layer.features[i]);
-    //            }
-    //        }
-    //    }
-    //};
 
     ctlProto.Util = {
         browserSupportWebGL: function () {
@@ -97644,7 +98179,7 @@ SITNA.Map = function (div, options) {
 
     /**
       * <p>Exporta el mapa a una imagen PNG. Para poder utilizar este m\u00e9todo hay que establecer la opci\u00f3n <code>crossOrigin</code> al instanciar
-      * SITNA.{{#crossLink "SITNA.Map"}}{{/crossLink}}.</p>
+      * {{#crossLink "SITNA.Map"}}{{/crossLink}}.</p>
       * <p>Puede consultar tambi\u00e9n el ejemplo <a href="../../examples/Map.exportImage.html">online</a>.</p>
       *
       * @method exportImage

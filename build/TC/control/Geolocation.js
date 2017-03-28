@@ -261,7 +261,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     switch (true) {
                         case e.type + '.' + e.namespace === TC.Consts.event.LAYERREMOVE:
                             self.wrap.deactivateSnapping();
-                            var selected = self.getSelectedTrack()
+                            var selected = self.getSelectedTrack();
                             if (selected) {
                                 self.clearSelectedTrack();
                             }
@@ -885,6 +885,19 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         }
     };
 
+    ctlProto.activate = function () {
+        var self = this;
+        TC.Control.prototype.activate.call(self);        
+    };
+
+    ctlProto.deactivate = function () {
+        var self = this;
+        
+        self.clearSelection();
+        self.deactivateTracking();
+        TC.Control.prototype.deactivate.call(self);
+    };
+
     var _layerError = function () {
         var self = this;
 
@@ -919,6 +932,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         var isLayer = true;
         var newLayer = "";
+        var styles;
 
         switch (true) {
             case layerType == self.Const.Layers.TRACKING:
@@ -928,6 +942,32 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             case layerType == self.Const.Layers.TRACK:
                 isLayer = self.layerTrack !== undefined;
                 newLayer = "layerTrack";
+                styles = {
+                    line: {
+                        strokeWidth: 2,
+                        strokeColor: "#C52737"
+                    },
+                    point: {
+                        radius: 3,
+                        fillColor: "#C52737",
+                        strokeColor: "#ffffff",
+                        fontColor: "#C52737",
+                        fontSize: 10,
+                        fontWeight: "bold",
+                        labelOutlineColor: "#ffffff",
+                        labelOutlineWidth: 2,                        
+                        label: function (feature) {
+                            var name = feature.getData()['name'];
+                            if (name && (name + '').trim().length > 0) {
+                                name = (name + '').trim().toLowerCase();
+                            } else {
+                                name = '';
+                            }
+
+                            return name;
+                        }
+                    }
+                };
                 break;
             case layerType == self.Const.Layers.GPS:
                 isLayer = self.layerGPS !== undefined;
@@ -942,12 +982,18 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         } else if (!self.layerPromise || self.layerPromise.state() === "resolved") {
             self.layerPromise = new $.Deferred();
 
-            $.when(self.map.addLayer({
+            var opt = {
                 id: TC.getUID(),
                 type: TC.Consts.layerType.VECTOR,
                 title: self.getLocaleString("geo") + ' - ' + layerType,
                 stealth: true
-            })).then(function (layer) {
+            };
+
+            if (styles) {
+                opt.styles = styles;
+            }
+
+            $.when(self.map.addLayer(opt)).then(function (layer) {
                 this[newLayer] = layer;
                 this[newLayer].map.putLayerOnTop(layer);
                 self.layerPromise.resolve(this[newLayer]);
@@ -1103,6 +1149,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
     var _tracking = function () {
         var self = this;
+
+        self.activate();
 
         _activateTrackingBtns.call(self);
         duringTrackingToolsPanel.call(self);
@@ -1534,10 +1582,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.setSelectedTrack(li);
             self.drawTrackingData(li);
             self.elevationTrack(li);
+
+            self.activate();
         });
     };
 
-    var onResize;
+    
     ctlProto.elevationTrack = function (li, resized) {
         var self = this;
 
@@ -1546,9 +1596,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.uiSimulate(false, li);
         }
 
-        if (!onResize) {
-            onResize = self.elevationTrack.bind(self, li, true);
-            window.addEventListener("resize", onResize, false);
+        if (!self.onResize) {
+            self.onResize = self.elevationTrack.bind(self, li, true);
+            window.addEventListener("resize", self.onResize, false);
         }
         var elevationGain = {};
         var time = {};
@@ -1946,7 +1996,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                             }
 
                             function hasSize() {
-                                if (d3.select('.c3-axis-x').length && d3.select('.c3-axis-x').node() &&
+                                if (d3.select('.c3-axis-x').length && !(d3.select('.c3-axis-x').node())) {
+                                    self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
+                                }
+                                else if (d3.select('.c3-axis-x').length && d3.select('.c3-axis-x').node() &&
                                     !d3.select('.c3-axis-x').node().getBoundingClientRect().width) {
                                     self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
                                 } else {
@@ -1979,9 +2032,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.clear = function (layerType) {
         var self = this;
 
-        if (onResize) {
-            window.removeEventListener("resize", onResize, false);
-            onResize = undefined;
+        if (self.onResize) {
+            window.removeEventListener("resize", self.onResize, false);
+            self.onResize = undefined;
         }
 
         if (layerType == self.Const.Layers.TRACK) {
@@ -2013,7 +2066,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.saveTrack = function () {
         var self = this;
         var done = new $.Deferred();
-        var message = arguments.length > 0 ? arguments[0] : "";
+        var message = arguments.length > 0 && typeof (arguments[0]) == "string" ? arguments[0] : self.getLocaleString("geo.trk.save.alert");
 
         var _save = function (layerType) {
             self.getLayer(layerType).then(function (layer) {
@@ -2050,7 +2103,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                 try {
                     self.setStoredTracks(tracks).then(function () {
-                        self.map.toast(message || self.getLocaleString("geo.trk.save.alert"), { duration: 3000 });
+                        self.map.toast(message, { duration: 3000 });
 
                         clean(wait);
                         var index;
@@ -2166,14 +2219,34 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         return self.track.$trackList.find('li.' + self.Const.Classes.SELECTEDTRACK);
     };
 
-    ctlProto.clearSelectedTrack = function (li) {
+    ctlProto.clearSelectedTrack = function () {
         var self = this;
 
-        var selected = self.getSelectedTrack()
+        var selected = self.getSelectedTrack();
         if (selected) {
+
+            if (self.onResize) {
+                window.removeEventListener("resize", self.onResize, false);
+                self.onResize = undefined;
+            }
+
             selected.removeClass(self.Const.Classes.SELECTEDTRACK);
             $(selected).find(self.Const.Selector.DRAW).attr('title', $(selected).text());
         }
+    };
+
+    ctlProto.clearSelection = function () {
+        var self = this;
+
+        self.wrap.deactivateSnapping();
+        var selected = self.getSelectedTrack();
+        if (selected) {
+            self.clearSelectedTrack();
+        }
+        if (self.resultsPanelChart)
+            self.resultsPanelChart.close();
+
+        self.clear(self.Const.Layers.TRACK);        
     };
 
     ctlProto.drawTrackingData = function (li) {
@@ -2186,8 +2259,30 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 self.wrap.drawTrackingData(data).then(function () {
                     var showFeatures = self.layerTrack.features;
                     if (showFeatures && showFeatures.length > 0) {
+                        var lineTrack;
                         for (var i = 0; i < showFeatures.length; i++) {
+                            if (showFeatures[i].STYLETYPE.indexOf('line') > -1) {
+                                lineTrack = showFeatures[i];
+                            }
+
                             showFeatures[i].showsPopup = false;
+                        }
+                    }
+
+                    if (lineTrack && lineTrack.geometry) {
+                        var first = lineTrack.geometry[0];
+                        var last = lineTrack.geometry[lineTrack.geometry.length - 1];
+
+                        if (first && !(first === last)) {
+                            self.layerTrack.addMarker(first.slice().splice(0, 2), {
+                                showsPopup: false, cssClass: self.CLASS + '-track-marker-icon-end', anchor: [0.5, 1]
+                            });
+                        }
+
+                        if (last) {
+                            self.layerTrack.addMarker(last.slice().splice(0, 2), {
+                                showsPopup: false, cssClass: self.CLASS + '-track-marker-icon', anchor: [0.5, 1]
+                            });
                         }
                     }
                 });

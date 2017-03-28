@@ -35,10 +35,6 @@ body {
 
 html, body {
     -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
 }
 
 pre {
@@ -681,14 +677,34 @@ html, body {
     position: relative;
     overflow: hidden;
     background-color: #fff;
+    user-select: none;
+}
+
+.tc-map p {
+    user-select: text;
 }
 
     .tc-map.tc-loading {
-        background-color: #666;
-        animation: pulsation 6s infinite;
-        -moz-animation: pulsation 6s infinite; /* Firefox */
-        -webkit-animation: pulsation 6s infinite; /* Safari and Chrome */
-        -o-animation: pulsation 6s infinite; /* Opera */
+    background-color: #fff;
+}
+
+.tc-map.tc-loading:before {
+	content: " ";
+	border-radius: 50%;
+	box-shadow: #ccc 6vmin 0 0 0, #ccc 4.243vmin 4.243vmin 0 0, #ccc 0 6vmin 0 0, #ccc -4.243vmin 4.243vmin 0 0, #ccc -6vmin 0 0 0, #ccc -4.243vmin -4.243vmin 0 0, #ccc 0 -6vmin 0 0, #ccc 4.243vmin -4.243vmin 0 0;
+    position: absolute;
+    width: 3vmin;
+    height: 3vmin;
+	background-color: transparent;
+	left: 50%;
+	top: 50%;
+	margin-left: -2.5%;
+	margin-top: -2.5%;
+    font-size: 2vmin;
+    animation: spin 2s infinite linear;
+    -moz-animation: spin 2s infinite linear;
+    -webkit-animation: spin 2s infinite linear;
+    -o-animation: spin 2s infinite linear;
     }
 
         .tc-map.tc-loading * {
@@ -2517,35 +2533,39 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
     transition: all .2s ease;
 }
 
-    .tc-ctl-finfo-tools button:after {
-        position: absolute;
-        font-size: 1em;
-        height: 100%;
-        width: 100%;
-        text-align: center;
-        text-indent: 0;
-        line-height: 2em;
-        vertical-align: middle;
-        content: "\2193";
-        left: 0;
-        top: 0;
-    }
+.tc-ctl-finfo-tools button:after {
+    position: absolute;
+    font-size: 1em;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    text-indent: 0;
+    line-height: 2em;
+    vertical-align: middle;
+    content: "\2193";
+    left: 0;
+    top: 0;
+}
 
-    .tc-ctl-finfo-tools button:hover {
-        display: inline-block;
-        background-color: #c00;
-        color: #fff;
-    }
+.tc-ctl-finfo-tools button:hover {
+    display: inline-block;
+    background-color: #c00;
+    color: #fff;
+}
 
-    .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn {
-        position: absolute;
-        border-bottom-left-radius: 0.2em;
-    }
+.tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn {
+    position: absolute;
+    border-bottom-left-radius: 0.2em;
+}
 
-        .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
-            content: "\2261";
-        }
+.tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
+    content: "\2261";
+}
 
+/* Para hacer sitio al botón de herramientas */
+.tc-ctl-finfo-features tr:nth-child(1) td.tc-ctl-finfo-val {
+    padding-right: 2.1em;
+}
 .tc-ctl-finfo-counter {
     display: none;
 }

@@ -113,11 +113,11 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 $img.attr('src', TC.proxify(src));
             });
         }
-        var startIdx = src.indexOf('//');
+        var urlStartRegEx = /^(https?:)?\/\//i;
         if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(src)) {
             var srcSSL = "";
             if (SSLSupported == true)
-                srcSSL = src.replace(/^(f|ht)tp?:\/\//i, "https://");
+                srcSSL = src.replace(urlStartRegEx, "https://");
             else if (TC.isUsingServiceWorker())
                 srcSSL = TC.proxify(src)
             else
@@ -125,7 +125,8 @@ TC.inherit(TC.control.MapContents, TC.Control);
             $img.attr('src', srcSSL);
         }
         else {
-            $img.attr('src', startIdx < 0 ? src : src.substr(startIdx));
+            // Si es una ruta absoluta quitamos el protocolo
+            $img.attr('src', urlStartRegEx.test(src) ? src.substr(src.indexOf('//')) : src);
         }
     };
 

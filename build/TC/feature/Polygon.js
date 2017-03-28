@@ -27,3 +27,5 @@ TC.feature.Polygon = function (coords, options) {
 TC.inherit(TC.feature.Polygon, TC.Feature);
 
 TC.feature.Polygon.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
+
+TC.feature.Polygon.prototype.CLASSNAME = 'TC.feature.Polygon';

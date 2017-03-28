@@ -1170,7 +1170,7 @@ SITNA.Map = function (div, options) {
 
     /**
       * <p>Exporta el mapa a una imagen PNG. Para poder utilizar este m\u00e9todo hay que establecer la opci\u00f3n <code>crossOrigin</code> al instanciar
-      * SITNA.{{#crossLink "SITNA.Map"}}{{/crossLink}}.</p>
+      * {{#crossLink "SITNA.Map"}}{{/crossLink}}.</p>
       * <p>Puede consultar tambi\u00e9n el ejemplo <a href="../../examples/Map.exportImage.html">online</a>.</p>
       *
       * @method exportImage
