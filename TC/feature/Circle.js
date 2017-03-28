@@ -27,6 +27,8 @@ TC.inherit(TC.feature.Circle, TC.Feature);
 
     featProto.STYLETYPE = TC.Consts.geom.POLYGON;
 
+    featProto.CLASSNAME = 'TC.feature.Circle';
+
     featProto.getCoords = function () {
         return this.wrap.getGeometry();
     };

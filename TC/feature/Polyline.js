@@ -28,3 +28,5 @@ TC.feature.Polyline = function (coords, options) {
 TC.inherit(TC.feature.Polyline, TC.Feature);
 
 TC.feature.Polyline.prototype.STYLETYPE = TC.Consts.geom.POLYLINE;
+
+TC.feature.Polyline.prototype.CLASSNAME = 'TC.feature.Polyline';

@@ -79,3 +79,5 @@ TC.feature.Marker = function (coords, options) {
 TC.inherit(TC.feature.Marker, TC.feature.Point);
 
 TC.feature.Marker.prototype.STYLETYPE = 'marker';
+
+TC.feature.Marker.prototype.CLASSNAME = 'TC.feature.Marker';

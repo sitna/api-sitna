@@ -27,3 +27,5 @@ TC.feature.MultiPolyline = function (coords, options) {
 TC.inherit(TC.feature.MultiPolyline, TC.Feature);
 
 TC.feature.MultiPolyline.prototype.STYLETYPE = TC.Consts.geom.POLYLINE;
+
+TC.feature.MultiPolyline.prototype.CLASSNAME = 'TC.feature.MultiPolyline';

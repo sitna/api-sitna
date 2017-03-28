@@ -37,6 +37,8 @@ TC.Feature = function (coords, options) {
 
 TC.Feature.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
 
+TC.Feature.prototype.CLASSNAME = 'TC.Feature';
+
 TC.Feature.prototype.getPath = function () {
     var result = [];
     var self = this;
@@ -153,6 +155,17 @@ TC.Feature.prototype.getInfo = function () {
         result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
     }
     return result;
+};
+
+TC.Feature.prototype.clone = function () {
+    var self = this;
+    var nativeClone = self.wrap.cloneFeature();
+    nativeClone._wrap = self.wrap;
+    return new self.constructor(nativeClone, self.options);
+};
+
+TC.Feature.prototype.getStyle = function () {
+    return this.wrap.getStyle();
 };
 
 TC.Feature.prototype.showPopup = function (control) {

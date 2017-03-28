@@ -26,3 +26,5 @@ TC.feature.MultiPolygon = function (coords, options) {
 TC.inherit(TC.feature.MultiPolygon, TC.Feature);
 
 TC.feature.MultiPolygon.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
+
+TC.feature.MultiPolygon.prototype.CLASSNAME = 'TC.feature.MultiPolygon';
