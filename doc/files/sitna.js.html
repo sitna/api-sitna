@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.2.0</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.2.1</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -102,8 +102,10 @@
     <pre class="code prettyprint linenums">
 ﻿var SITNA = window.SITNA || {};
 var TC = window.TC || {};
+TC.isDebug = true;
 
 SITNA.syncLoadJS = function (url) {
+    url = TC.isDebug ? url : url.replace(/\.js$/, &quot;.min.js&quot;);
     var req = new XMLHttpRequest();
     req.open(&quot;GET&quot;, url, false); // &#x27;false&#x27;: synchronous.
     req.send(null);
@@ -1272,7 +1274,7 @@ SITNA.Map = function (div, options) {
 
     /**
       * &lt;p&gt;Exporta el mapa a una imagen PNG. Para poder utilizar este método hay que establecer la opción &lt;code&gt;crossOrigin&lt;/code&gt; al instanciar
-      * SITNA.{{#crossLink &quot;SITNA.Map&quot;}}{{/crossLink}}.&lt;/p&gt;
+      * {{#crossLink &quot;SITNA.Map&quot;}}{{/crossLink}}.&lt;/p&gt;
       * &lt;p&gt;Puede consultar también el ejemplo &lt;a href=&quot;../../examples/Map.exportImage.html&quot;&gt;online&lt;/a&gt;.&lt;/p&gt;
       *
       * @method exportImage
