@@ -610,7 +610,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.2.0';
+TC.version = '1.2.1';
 (function () {
     if (!TC.apiLocation) {
         var src;
