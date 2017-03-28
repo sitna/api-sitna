@@ -19,6 +19,15 @@ TC.inherit(TC.control.NavBar, TC.Control);
         var self = this;
         if (!self.wrap) {
             self.wrap = new TC.wrap.control.NavBar(self);
+
+            //setTimeout(function () {
+                //console.log('GLS: modifico la altura y el ancho del slider');
+                //$('.ol-zoomslider').css({
+                //    'width': '2em',
+                //    'height': '10em'
+                //});
+            //    console.log('GLS: modificado');
+            //}, 500);
         }
     };
 
