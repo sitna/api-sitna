@@ -1,7 +1,7 @@
 TC.feature = TC.feature || {};
 
 if (!TC.feature.Point) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point');
 }
 
 /**

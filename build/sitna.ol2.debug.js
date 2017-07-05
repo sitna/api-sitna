@@ -7,6 +7,21 @@
 * https://bitbucket.org/manolakis/dustjs-i18n
 * Copyright (c) 2015 Manuel Martin; Licensed MIT */
 !function(a,b){"function"==typeof define&&define.amd?define(["dustjs-linkedin"],function(c){return b(c,a)}):"object"==typeof module&&module.exports?module.exports=b(require("dustjs-linkedin"),this):a.dust=b(a.dust,a)}(this,function(a,b,c){"use strict";var d=Object.prototype.toString,e=typeof console!==c?console:{log:function(){}},f={isArray:Array.isArray||function(a){return"[object Array]"===d.call(a)},isAvailable:function(a){return h[a]!==c},log:e.log},g={selected:c,languages:{},filters:{}},h=g.languages;return typeof String.prototype.trim===c&&(String.prototype.trim=function(){return this.replace(/^\s+|\s+$/g,"")}),a.i18n={resetContext:function(){g.selected=c,Object.keys(h).forEach(function(a){delete h[a]})},setLanguage:function(a){if(!f.isAvailable(a))throw new Error("language '"+a+"' not available!");g.selected=a},setLanguages:function(a){f.isArray(a)&&a.forEach(function(a){f.isAvailable(a)||(h[a]={}),g.selected===c&&(g.selected=a)})},add:function(a,b){if(f.isAvailable(a)){var c=h[a];Object.keys(b).forEach(function(a){c[a]=b[a]})}},addFilter:function(a,b){a in g.filters||(g.filters[a]=b)}},a.helpers.i18n=function(b,d,e,i){if(i&&i.$key!==c){var j,k,l,m,n,o=g.selected,p=h[o],q=/\{(\s*[\w]+\s*)\}/g;m=a.helpers.tap(i.$key,b,d).split("|");var r=a.helpers.tap(m.shift(),b,d);for(n=p!==c&&p[r]!==c?p[r]:null;null!==(j=q.exec(n));)l=j[1].trim(),"$key"===l?(k="",f.log("$key can't be used as a parameter")):k=a.helpers.tap(i[j[1].trim()],b,d),n=n.replace(j[0],k);m.forEach(function(a){a in g.filters&&(n=g.filters[a](n))}),b.write(n)}else f.log("No key given in the i18n helper");return b},a});
+(function () {
+    dust.helpers.iterate = function (chunk, context, bodies, params) {
+        params = params || {};
+        var obj = params['on'] || context.current();
+        var excludedKeys = params.excludedKeys != null ? params.excludedKeys.split(',') : null;
+
+        for (var k in obj) {
+            if (excludedKeys == null || excludedKeys.indexOf(k) < 0) {
+                chunk = chunk.render(bodies.block, context.push({ key: k, value: obj[k] }));
+            }
+        }
+        return chunk;
+    }    
+})();
+
 /*!
     localForage -- Offline Storage, Improved
     Version 1.4.0
@@ -66693,7 +66708,7 @@ var TC = TC || {};
      *                     id: "topo_mallas",
      *                     title: "Toponimia y mallas cartogr\u00e1ficas",
      *                     type: TC.Consts.layerType.WMS,
-     *                     url: "http://idena.navarra.es/ogc/wms",
+     *                     url: "//idena.navarra.es/ogc/wms",
      *                     layerNames: "IDENA:toponimia,IDENA:mallas"
      *                 }
      *             ]
@@ -66932,11 +66947,11 @@ var TC = TC || {};
                 ],
                 function () {
                     TC.loadJSInOrder(
-                         !(TC.isLegacy ? window[TC.Consts.OLNS_LEGACY] : window[TC.Consts.OLNS]),
-                         [
+                        !(TC.isLegacy ? window[TC.Consts.OLNS_LEGACY] : window[TC.Consts.OLNS]),
+                        [
                             TC.url.ol,
                             TC.url.olConnector
-                         ],
+                        ],
                         function () {
                             TC.loadProjDef(self.options.crs, function () {
                                 self.wrap.setMap();
@@ -66998,13 +67013,15 @@ var TC = TC || {};
                                                     break;
                                                 }
                                                 layerDeleted = true;
+                                                //reducimos el contador de capas cargadas para que el feedback que bloquea el mapa no se quede forever.
+                                                self._remainingLayers--;
                                             }
                                         }
                                     }
 
                                     if (!layerDeleted) {
-                                    $.when(self.addLayer(lyrCfg)).then(setVisibility);
-                                }
+                                        $.when(self.addLayer(lyrCfg)).then(setVisibility);
+                                    }
                                 }
 
                                 if (self.state && self.state.layers) {
@@ -67019,12 +67036,18 @@ var TC = TC || {};
                                                 id: TC.getUID(),
                                                 url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
                                                 hideTitle: capa.h,
-                                                layerNames: [capa.n],
+                                                layerNames: capa.n ? capa.n.split(',') : "",
                                                 renderOptions: {
                                                     opacity: capa.o,
                                                     hide: !capa.v
                                                 }
                                             }).then(function (layer) {
+                                                layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
+                                                    var layer = this.parent;
+                                                    if (event.error.code === 401 || event.error.code === 403)
+                                                        layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
+                                                    layer.map.removeLayer(layer);
+                                                });
                                                 var rootNode = layer.wrap.getRootLayerNode();
                                                 layer.title = rootNode.Title || rootNode.title;
                                                 layer.setOpacity(op);
@@ -67133,7 +67156,7 @@ var TC = TC || {};
                                 // eliminamos la suscripci\u00f3n para no registrar el cambio de estado que vamos a provocar
                                 self.off(events, $.proxy(_addToHistory, self));
 
-                                // gestionamos la actualizaci\u00f3n para volver a suscribirnos a los eventos del mapa                                 
+                                // gestionamos la actualizaci\u00f3n para volver a suscribirnos a los eventos del mapa                        
                                 $.when(_loadIntoMap(e.state)).then(function () {
                                     setTimeout(function () {
                                         self.on(events, $.proxy(_addToHistory, self));
@@ -67153,7 +67176,7 @@ var TC = TC || {};
         var _addToHistory = function (e) {
             var CUSTOMEVENT = '.tc';
 
-            var state = _getMapState();            
+            var state = _getMapState();
             if (self.replaceCurrent) {
                 window.history.replaceState(state, null, null);
                 delete self.replaceCurrent;
@@ -67213,8 +67236,8 @@ var TC = TC || {};
                     if (layer.layerNames && layer.layerNames.length) {
                         entry = {
                             u: TC.Util.isOnCapabilities(layer.url),
-                            n: layer.layerNames[0],
-                            o: layer.wrap.getLayer().getOpacity(),
+                            n: $.isArray(layer.names) ? layer.names.join(',') : layer.names,
+                            o: layer.getOpacity(),
                             v: layer.getVisibility(),
                             h: layer.options.hideTitle
                         };
@@ -67269,7 +67292,12 @@ var TC = TC || {};
                     obj = jsonpack.unpack(stringOrJson);
                 }
                 catch (error) {
-                    obj = JSON.parse(stringOrJson);
+                    try {
+                        obj = JSON.parse(stringOrJson);
+                    }
+                    catch (err) {
+                        TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'));
+                    }
                 }
             } else {
                 obj = stringOrJson;
@@ -67280,7 +67308,7 @@ var TC = TC || {};
                 //capa base
                 if (obj.base != self.getBaseLayer().id) self.setBaseLayer(obj.base);
 
-                //extent                
+                //extent
                 if (obj.ext) promises.push(self.setExtent(obj.ext));
 
                 //capas cargadas        
@@ -67316,7 +67344,7 @@ var TC = TC || {};
                                 id: TC.getUID(),
                                 url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
                                 hideTitle: capa.h,
-                                layerNames: [capa.n],
+                                layerNames: capa.n ? capa.n.split(',') : "",
                                 renderOptions: {
                                     opacity: capa.o,
                                     hide: !capa.v
@@ -67327,7 +67355,7 @@ var TC = TC || {};
                                 /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
                                 esto es porque en el loadstate al establecer la opacidad dedido a un timeout pasados X segundos se lanzaba 
                                 este evento y produc\u00eda un push en el state innecesario*/
-                                layer.setOpacity(op,true);
+                                layer.setOpacity(op, true);
                                 layer.setVisibility(visibility);
                             }));
                         }
@@ -67362,15 +67390,57 @@ var TC = TC || {};
                     obj = jsonpack.unpack(TC.Util.base64ToUtf8(hash));
                 }
                 catch (error) {
-                    obj = JSON.parse(TC.Util.base64ToUtf8(hash));
+                    try {
+                        obj = JSON.parse(TC.Util.base64ToUtf8(hash));
+                    }
+                    catch (err) {
+                        TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), TC.Consts.msgErrorMode.TOAST);
+                        return;
+                    }
                 }
 
                 if (obj) {
+                    var inValidState = false;
+                    //chequeo la integriadad del objeto restaurado del State
+                    if (!obj.hasOwnProperty("ext")) {
+                        inValidState = true;
+                        obj.ext = self.options.initialExtent;
+                    }
+                    if (!obj.hasOwnProperty("base")) {
+                        inValidState = true;
+                        obj.base = self.options.defaultBaseLayer;
+                    }
+                    if (!obj.hasOwnProperty("layers")) {
+                        inValidState = true;
+                        obj.layers = [];
+                    }
+                    else {
+                        for (var i = obj.layers.length-1; i >=0; i--) {
+                            if (!obj.layers[i] || !obj.layers[i].hasOwnProperty("u") || !obj.layers[i].hasOwnProperty("n")) { 
+                                inValidState = true;
+                                obj.layers.length = obj.layers.length - 1;
+                                continue;
+                            }
+                            else if (!obj.layers[i].hasOwnProperty("o") || !obj.layers[i].hasOwnProperty("v") || !obj.layers[i].hasOwnProperty("h")) {
+                                inValidState=true
+                                jQuery.extend(obj.layers[i],{ 
+                                    o:(obj.layers[i].o || 1),
+                                    v: (obj.layers[i].v || true),
+                                    h: (obj.layers[i].h || false)
+                                });
+                            }
+                        }
+                    }
+                    if (inValidState)
+                        TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), TC.Consts.msgErrorMode.TOAST);
                     return obj;
                 }
+                TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), TC.Consts.msgErrorMode.TOAST);
             }
-
             return;
+        };
+
+        var _checkIntegrity = function () {
         };
 
         /*
@@ -67498,8 +67568,8 @@ var TC = TC || {};
                         TC.i18n[locale] = TC.i18n[locale] || {};
                         $.extend(TC.i18n[locale], data);
                         if (typeof (dust) !== 'undefined') {
-                        dust.i18n.add(locale, TC.i18n[locale]);
-                    }
+                            dust.i18n.add(locale, TC.i18n[locale]);
+                        }
                     }
                 })
             }
@@ -67530,122 +67600,122 @@ var TC = TC || {};
 
             if (self.options.layout) {
                 buildLayout(self.options.layout).done(function (layout) {
-                self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
+                    self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
 
-                var layoutURLs;
-                if (typeof layout === 'string') {
-                    layoutURLs = { href: $.trim(layout) };
-                }
-                else if (
-                    layout.hasOwnProperty('config') ||
-                    layout.hasOwnProperty('markup') ||
-                    layout.hasOwnProperty('style') ||
-                    layout.hasOwnProperty('ie8Style') ||
-                    layout.hasOwnProperty('script') ||
-                    layout.hasOwnProperty('href') ||
-                    layout.hasOwnProperty('i18n')
-                ) {
-                    layoutURLs = $.extend({}, layout);
-                }
-                if (layoutURLs.href) {
-                    layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
-                }
-                layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
-                layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
-                layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
-                layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
-                layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
-                layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
-                if (layoutURLs.i18n) {
-                    layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
-                }
-
-                self.layout = layoutURLs;
-
-                var layoutDeferreds = [];
-
-                var i18LayoutDeferred = $.Deferred();
-                layoutDeferreds.push(i18LayoutDeferred);
-
-                if (layoutURLs.config) {
-                    layoutDeferreds.push($.ajax({
-                        url: layoutURLs.config,
-                        type: 'GET',
-                        dataType: 'json',
-                        //async: Modernizr.canvas, // !IE8,
-                        success: function (data) {
-                            i18LayoutDeferred.resolve(data.i18n);
-                            self.options = mergeOptions(data, options);
-                        },
-                        error: function (e, name, description) {
-                            TC.error(name + ": " + description);
-                            i18LayoutDeferred.resolve(false);
-                        }
-                    }));
-                }
-                else {
-                    i18LayoutDeferred.resolve(false);
-                }
-
-                if (layoutURLs.markup) {
-                    var markupDeferred;
-                    if (locale) {
-                        markupDeferred = $.Deferred();
-                        layoutDeferreds.push(markupDeferred);
+                    var layoutURLs;
+                    if (typeof layout === 'string') {
+                        layoutURLs = { href: $.trim(layout) };
                     }
-                    layoutDeferreds.push($.ajax({
-                        url: layoutURLs.markup,
-                        type: 'GET',
-                        dataType: 'html',
-                        //async: Modernizr.canvas, // !IE8
-                        success: function (data) {
-                            // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
-                            i18LayoutDeferred.then(function (i18n) {
-                                if (i18n && locale) {
-                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
-                                        var templateId = 'tc-markup';
-                                        dust.loadSource(dust.compile(data, templateId));
-                                        dust.render(templateId, null, function (err, out) {
-                                            if (err) {
-                                                TC.error(err);
-                                                markupDeferred.reject();
-                                            }
-                                            else {
-                                                self._$div.append(out);
-                                                markupDeferred.resolve();
-                                            }
-                                        });
-                                    });
-                                }
-                                else {
-                                    self._$div.append(data);
-                                    if (locale) {
-                                        markupDeferred.resolve();
-                                    }
-                                }
-                            });
-                        },
-                        error: function () {
-                            markupDeferred.reject();
-                        }
-                    }));
-                }
+                    else if (
+                        layout.hasOwnProperty('config') ||
+                        layout.hasOwnProperty('markup') ||
+                        layout.hasOwnProperty('style') ||
+                        layout.hasOwnProperty('ie8Style') ||
+                        layout.hasOwnProperty('script') ||
+                        layout.hasOwnProperty('href') ||
+                        layout.hasOwnProperty('i18n')
+                    ) {
+                        layoutURLs = $.extend({}, layout);
+                    }
+                    if (layoutURLs.href) {
+                        layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
+                    }
+                    layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
+                    layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
+                    layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
+                    layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
+                    layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
+                    layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
+                    if (layoutURLs.i18n) {
+                        layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
+                    }
 
-                $.when.apply(this, layoutDeferreds).always(function () {
-                    TC.loadJS(
-                        layoutURLs.script,
-                        layoutURLs.script,
-                        function () {
-                            setHeightFix(self._$div);
-                            if (layoutURLs.style) {
-                                TC.loadCSS(layoutURLs.style);
+                    self.layout = layoutURLs;
+
+                    var layoutDeferreds = [];
+
+                    var i18LayoutDeferred = $.Deferred();
+                    layoutDeferreds.push(i18LayoutDeferred);
+
+                    if (layoutURLs.config) {
+                        layoutDeferreds.push($.ajax({
+                            url: layoutURLs.config,
+                            type: 'GET',
+                            dataType: 'json',
+                            //async: Modernizr.canvas, // !IE8,
+                            success: function (data) {
+                                i18LayoutDeferred.resolve(data.i18n);
+                                self.options = mergeOptions(data, options);
+                            },
+                            error: function (e, name, description) {
+                                TC.error(name + ": " + description);
+                                i18LayoutDeferred.resolve(false);
                             }
-                            if (!Modernizr.canvas && layoutURLs.ie8Style) {
-                                TC.loadCSS(layoutURLs.ie8Style);
+                        }));
+                    }
+                    else {
+                        i18LayoutDeferred.resolve(false);
+                    }
+
+                    if (layoutURLs.markup) {
+                        var markupDeferred;
+                        if (locale) {
+                            markupDeferred = $.Deferred();
+                            layoutDeferreds.push(markupDeferred);
+                        }
+                        layoutDeferreds.push($.ajax({
+                            url: layoutURLs.markup,
+                            type: 'GET',
+                            dataType: 'html',
+                            //async: Modernizr.canvas, // !IE8
+                            success: function (data) {
+                                // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
+                                i18LayoutDeferred.then(function (i18n) {
+                                    if (i18n && locale) {
+                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
+                                            var templateId = 'tc-markup';
+                                            dust.loadSource(dust.compile(data, templateId));
+                                            dust.render(templateId, null, function (err, out) {
+                                                if (err) {
+                                                    TC.error(err);
+                                                    markupDeferred.reject();
+                                                }
+                                                else {
+                                                    self._$div.append(out);
+                                                    markupDeferred.resolve();
+                                                }
+                                            });
+                                        });
+                                    }
+                                    else {
+                                        self._$div.append(data);
+                                        if (locale) {
+                                            markupDeferred.resolve();
+                                        }
+                                    }
+                                });
+                            },
+                            error: function () {
+                                markupDeferred.reject();
                             }
-                            init();
-                        });
-                });
+                        }));
+                    }
+
+                    $.when.apply(this, layoutDeferreds).always(function () {
+                        TC.loadJS(
+                            layoutURLs.script,
+                            layoutURLs.script,
+                            function () {
+                                setHeightFix(self._$div);
+                                if (layoutURLs.style) {
+                                    TC.loadCSS(layoutURLs.style);
+                                }
+                                if (!Modernizr.canvas && layoutURLs.ie8Style) {
+                                    TC.loadCSS(layoutURLs.ie8Style);
+                                }
+                                init();
+                            });
+                    });
                 });
             }
             else {
@@ -67670,20 +67740,23 @@ var TC = TC || {};
             self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
         };*/
         var oldError = TC.error;
-        TC.error = function (text, options) {
+        TC.error = function (text, options, subject) {
             if (!options) {
                 oldError(text);
                 self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
             }
             else {
-                var fnc = function (text, mode) {
+                var fnc = function (text, mode, subject) {
                     switch (mode) {
-                        case TC.Consts.msgErrorMode.TOAST:                            
+                        case TC.Consts.msgErrorMode.TOAST:
                             if (!self.toast) { console.warn("No existe el objeto Toast"); return; }
                             self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
                             break;
                         case TC.Consts.msgErrorMode.EMAIL:
-                            JL("onerrorLogger").fatalException(text, null);
+                            JL("onerrorLogger").fatalException(!subject ? text : {
+                                "msg": subject,
+                                "errorMsg": text,
+                            }, null);
                             break;
                         case TC.Consts.msgErrorMode.CONSOLE:
                         default:
@@ -67692,11 +67765,11 @@ var TC = TC || {};
                     }
                 }
                 if (!$.isArray(options)) {
-                    fnc(text, options)
+                    fnc(text, options, subject)
                 }
                 else {
                     for (var i = 0; i < options.length; i++)
-                        fnc(text, options[i])
+                        fnc(text, options[i], subject)
                 }
             }
 
@@ -67872,35 +67945,35 @@ var TC = TC || {};
 
                             if (l) {
                                 if (l.isCompatible(self.crs)) {
-                                self.layers[self.layers.length] = l;
-                                if (l.isBase) {
+                                    self.layers[self.layers.length] = l;
+                                    if (l.isBase) {
                                         if (self.state) {
                                             l.isDefault = self.state.base === l.id;
                                         }
                                         else if (typeof self.options.defaultBaseLayer === 'string') {
-                                        l.isDefault = self.options.defaultBaseLayer === l.id;
+                                            l.isDefault = self.options.defaultBaseLayer === l.id;
+                                        }
+                                        else if (typeof self.options.defaultBaseLayer === 'number') {
+                                            l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                        }
+                                        if (l.isDefault) {
+                                            self.wrap.setBaseLayer(l.wrap.getLayer());
+                                            self.baseLayer = l;
+                                        }
+                                        self.baseLayers[self.baseLayers.length] = l;
+                                        // If no base layer set, set the first one
+                                        if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
+                                            self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
+                                        }
                                     }
-                                    else if (typeof self.options.defaultBaseLayer === 'number') {
-                                        l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                    else {
+                                        self.wrap.insertLayer(l.wrap.getLayer(), idx);
+                                        self.workLayers[self.workLayers.length] = l;
                                     }
-                                    if (l.isDefault) {
-                                        self.wrap.setBaseLayer(l.wrap.getLayer());
-                                        self.baseLayer = l;
+                                    self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
+                                    if ($.isFunction(c)) {
+                                        c(l);
                                     }
-                                    self.baseLayers[self.baseLayers.length] = l;
-                                    // If no base layer set, set the first one
-                                    if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
-                                        self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
-                                    }
-                                }
-                                else {
-                                    self.wrap.insertLayer(l.wrap.getLayer(), idx);
-                                    self.workLayers[self.workLayers.length] = l;
-                                }
-                                self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
-                                if ($.isFunction(c)) {
-                                    c(l);
-                                }
 
                                 }
                                 else {
@@ -67908,12 +67981,12 @@ var TC = TC || {};
                                     var reason;
                                     if (l.isValidFromNames()) {
                                         reason = 'layerSrsNotCompatible'
-                                    }else {
+                                    } else {
                                         reason = 'layerNameNotValid';
                                     }
                                     errorMessage += TC.Util.getLocaleString(self.options.locale, reason);
                                     TC.error(errorMessage);
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));                                
+                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));
                                 }
                             }
                             self._remainingLayers = self._remainingLayers - 1;
@@ -68027,10 +68100,10 @@ var TC = TC || {};
     };
 
     /*
- *  setBaseLayer: Set a layer as base layer, must be in layers collection
- *  Parameters: TC.Layer or string, callback which accepts layer as parameter
- *  Returns: TC.Layer promise
- */
+    *  setBaseLayer: Set a layer as base layer, must be in layers collection
+    *  Parameters: TC.Layer or string, callback which accepts layer as parameter
+    *  Returns: TC.Layer promise
+    */
     mapProto.setBaseLayer = function (layer, callback) {
         var self = this;
         var result = null;
@@ -68108,8 +68181,8 @@ var TC = TC || {};
         var self = this;
         if ($.isFunction(callback)) {
             if (self.isReady) {
-            callback();
-        }
+                callback();
+            }
             else {
                 self.one(TC.Consts.event.MAPREADY, callback);
             }
@@ -68143,15 +68216,15 @@ var TC = TC || {};
      */
     mapProto.getLayerTree = function () {
 
-        
+
         var _traverse = function (o, func) {
             for (var i in o.children) {
                 if (o.children && o.children.length > 0) {
-                //bajar un nivel en el \u00e1rbol
+                    //bajar un nivel en el \u00e1rbol
                     _traverse(o.children[i], func);
-                } 
+                }
 
-                func.apply(this, [o]);                
+                func.apply(this, [o]);
             }
         };
 
@@ -68164,7 +68237,7 @@ var TC = TC || {};
         }
         for (var i = 0; i < self.workLayers.length; i++) {
             var tree = self.workLayers[i].getTree();
-           
+
             if (tree) {
                 result.workLayers.unshift(tree);
             }
@@ -68191,6 +68264,7 @@ var TC = TC || {};
             if ($dv.parent().length === 0) {
                 $dv.appendTo(self._$div);
             }
+            self.$events.trigger($.Event(TC.Consts.event.CONTROLADD, { control: ctl }));
             controlDeferred.resolve(ctl);
         };
 
@@ -68198,7 +68272,7 @@ var TC = TC || {};
             control = control.substr(0, 1).toUpperCase() + control.substr(1);
             TC.loadJS(
                 !TC.Control || !TC.control[control],
-                [TC.apiLocation + 'TC/control/' + control + '.js'],
+                [TC.apiLocation + 'TC/control/' + control],
                 function () {
                     _addCtl(new TC.control[control](null, options));
                 }
@@ -68387,6 +68461,9 @@ var TC = TC || {};
                 bounds[3] = Math.min(bounds[3], self.options.maxExtent[3]);
             }
             self.wrap.setExtent(bounds, opts);
+
+            // GLS: Necesito diferenciar un zoom program\u00e1tico de un zoom del usuario para la gesti\u00f3n del zoom en 3D
+            self.$events.trigger($.Event(TC.Consts.event.ZOOMTO, { extent: bounds }));
         }
     };
 
@@ -68716,14 +68793,22 @@ var TC = TC || {};
  * @type array
  */
 
-var TC = TC || {};
+; var TC = TC || {};
+(function (root, factory) {
+    if (typeof exports === "object") { // CommonJS
+        module.exports = factory();
+    } else if (typeof define === "function" && define.amd) { // AMD
+        define([], factory);
+    } else {
+        root.Util = factory();
+    }
+})(TC, function () {
 
-(function () {
     // Polyfill para IE
     Number.isInteger = Number.isInteger || function (value) {
         return typeof value === "number" &&
-        isFinite(value) &&
-        Math.floor(value) === value;
+            isFinite(value) &&
+            Math.floor(value) === value;
     };
 
     // GLS: Parche: Chrome no formatea correctamente los n\u00fameros en euskera, establece como separador de decimales el (.)
@@ -68756,7 +68841,7 @@ var TC = TC || {};
         }
     };
 
-    TC.Util = TC.Util || {
+    var Util = {
 
         getMapLocale: function (map) {
             return map.options && map.options.locale && map.options.locale.replace('_', '-') || "es-ES";
@@ -68848,6 +68933,20 @@ var TC = TC || {};
             return result;
         },
 
+        formatNumber: function (value, locale) {
+            var t = typeof value;
+            if (t === 'number') {
+                return value.toLocaleString(locale);
+            }
+            else if (t === 'string') {
+                n = parseFloat(value);
+                if (n === new Number(value).valueOf()) {
+                    return n.toLocaleString(locale);
+                }
+            }
+            return value;
+        },
+
         addProtocol: function (uri) {
             var result = uri;
             if (uri && uri.indexOf('//') === 0) {
@@ -68872,6 +68971,23 @@ var TC = TC || {};
                 result = document.createElement('div');
             }
             return result;
+        },
+
+        getScriptLocation: function () {
+            var src;
+            var script;
+            if (document.currentScript) {
+                script = document.currentScript;
+            }
+            else {
+                var scripts = document.getElementsByTagName('script');
+                script = scripts[scripts.length - 1];
+            }
+            src = script.getAttribute('src');
+            if (src) {
+                return src.substr(0, src.lastIndexOf('/') + 1);
+            }
+            return "";
         },
 
         /* 
@@ -69057,9 +69173,6 @@ var TC = TC || {};
         reproject: function (coords, sourceCrs, targetCrs) {
             var result;
             var multipoint = true;
-            if (!(TC.isLegacy ? window[TC.Consts.PROJ4JSOBJ_LEGACY] : window[TC.Consts.PROJ4JSOBJ])) {
-                TC.syncLoadJS(TC.url.proj4js);
-            }
             if (!$.isArray(coords) || !$.isArray(coords[0])) {
                 multipoint = false;
                 coords = [coords];
@@ -69283,8 +69396,8 @@ var TC = TC || {};
                 var testHover = function () {
                     //console.log('estamos en testHover');
                     var mq = '(hover: hover)',
-                    hover = !Modernizr.touch, // fallback if mq4 not supported: no hover for touch
-                    mqResult;
+                        hover = !Modernizr.touch, // fallback if mq4 not supported: no hover for touch
+                        mqResult;
 
                     if ('matchMedia' in window) {
                         //console.log('dispone de matchMedia');
@@ -69338,6 +69451,34 @@ var TC = TC || {};
                     return nodes;
             }
             return undefined;
+        },
+        addURLParameters: function (url, parameters) {
+            if (!parameters) {
+                return url;
+            }
+            var toAdd = Object.keys(parameters).map(function (key) {
+                return encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]);
+            }).join('&');
+            var urlparts = url.split('?');
+            if (urlparts.length >= 2) {
+
+                var params = urlparts[1].split(/[&;]/g);
+                params.push(toAdd);
+
+                url = urlparts[0] + '?' + params.join('&');
+                return url;
+            } else {
+                urlparts = url.split('#');
+                if (urlparts.length >= 2) {
+                    urlparts.shift();
+                    url = urlparts[0] + '?' + toAdd + '#' + urlparts.join('#');
+                    return url;
+                }
+                else {
+                    url = url + '?' + toAdd;
+                    return url;
+                }
+            }
         },
         removeURLParameter: function (url, parameter) {
             var urlparts = url.split('?');
@@ -69397,22 +69538,70 @@ var TC = TC || {};
             return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
         },
 
+        getLocaleUserChoice: function (options) {
+            var result = 'en_US';
+            options = options || {};
+            var cookieName = options.cookieName || 'SITNA.language';
+            var paramName = options.paramName || 'lang';
+            // Obtenemos preferencia de lenguaje
+            var browserLanguage = (navigator.languages && navigator.languages.length) ? navigator.languages[0] : navigator.language || navigator.userLanguage;
+            var lang = TC.Util.getParameterByName(paramName) || TC.Util.storage.getCookie(cookieName) || browserLanguage;
+            var hyphenIdx = lang.indexOf('-');
+            if (hyphenIdx >= 0) {
+                lang = lang.substr(0, hyphenIdx);
+            }
+            var expirationDate = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000);
+            TC.Util.storage.setCookie(cookieName, lang, { expires: expirationDate });
+
+            switch (lang) {
+                case 'eu':
+                    result = 'eu_ES';
+                    break;
+                case 'es':
+                    result = 'es_ES';
+                    break;
+                default:
+                    result = 'en_US';
+                    break;
+            }
+            return result;
+        },
+
+        downloadBlob: function (filename, blob) {
+            var link = document.createElement("a");
+            if (link.download !== undefined) {
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        },
+
         downloadFile: function (filename, type, data) {
             var blob = new Blob([data], { type: type });
             if (navigator.msSaveBlob) { // IE 10+
                 navigator.msSaveBlob(blob, filename);
             } else {
-                var link = document.createElement("a");
-                if (link.download !== undefined) { // feature detection
-                    // Browsers that support HTML5 download attribute
-                    var url = URL.createObjectURL(blob);
-                    link.setAttribute("href", url);
-                    link.setAttribute("download", filename);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
+                TC.Util.downloadBlob(filename, blob);
+            }
+        },
+
+        downloadDataURI: function (filename, type, dataURI) {
+            var binary = atob(dataURI.split(',')[1]);
+
+            var array = [];
+            for (var i = 0; i < binary.length; i++) {
+                array.push(binary.charCodeAt(i));
+            }
+            var blob = new Blob([new Uint8Array(array)], { type: type });
+
+            if (navigator.msSaveBlob) { // IE 10+
+                navigator.msSaveBlob(blob, filename);
+            } else {
+                TC.Util.downloadBlob(filename, blob);
             }
         },
 
@@ -69473,6 +69662,12 @@ var TC = TC || {};
             }
             return result;
         },
+        isSecureURL: function (url) {
+            //sino empieza por http ni por https la consideramos segura
+            if (!/^(f|ht)tps?:\/\//i.test(url))
+                return true;
+            return (/^(f|ht)tps:\/\//i.test(url));
+        },
 
         // Following functions are to be used:
         inBoth: function (list1, list2, comparerFn) {
@@ -69525,56 +69720,88 @@ var TC = TC || {};
         },
 
         imgToDataUrl: function (src, outputFormat) {
+
+            var createCanvas = function (img) {
+                var canvas = document.createElement('CANVAS');
+                var ctx = canvas.getContext('2d');
+                canvas.height = img.height;
+                canvas.width = img.width;
+                ctx.drawImage(img, 0, 0);
+
+                return canvas;
+            };
+
             var deferred = $.Deferred();
 
             var img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = function () {
-                var canvas = document.createElement('CANVAS');
-                var ctx = canvas.getContext('2d');
+                var canvas = createCanvas(img);
                 var dataURL;
-                canvas.height = this.height;
-                canvas.width = this.width;
-                ctx.drawImage(this, 0, 0);
                 dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
                     type: outputFormat || 'image/jpeg',
                     encoderOptions: 1.0
                 });
                 deferred.resolve(dataURL, canvas);
             };
-            src = src.replace(/^https?\:/i, "");
-            img.src = src;
+
+            img.onerror = function (error) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', TC.proxify(src), true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                xhr.responseType = 'arraybuffer';
+                xhr.onload = function (e) {
+                    if (this.status === 200) {
+                        var uInt8Array = new Uint8Array(this.response);
+                        var i = uInt8Array.length;
+                        var binaryString = new Array(i);
+                        while (i--) {
+                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                        }
+                        var data = binaryString.join('');
+                        var type = xhr.getResponseHeader('content-type');
+                        if (type.indexOf('image') === 0) {
+                            img.src = 'data:' + type + ';base64,' + window.btoa(data);
+                            img.onload = function () {
+                                var canvas = createCanvas(img);
+                                dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                                    type: outputFormat || 'image/jpeg',
+                                    encoderOptions: 1.0
+                                });
+                                deferred.resolve(dataURL, canvas);
+                            }
+                        }
+                    }
+                };
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status !== 200) {
+                            deferred.reject();
+                        }
+                    }
+                };
+
+                xhr.send();
+            };
+
+            var srcNoProtocol = src.replace(/^https?\:/i, "");
+            img.src = srcNoProtocol;
             if (img.complete || img.complete === undefined) {
                 img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-                img.src = src;
+                img.src = srcNoProtocol;
             }
 
             return deferred.promise();
         },
 
         addToCanvas: function (canvas, img, position) {
-            var cloneCanvas = function (oldCanvas) {
-
-                //create a new canvas
-                var newCanvas = document.createElement('canvas');
-                var context = newCanvas.getContext('2d');
-
-                //set dimensions
-                newCanvas.width = oldCanvas.width;
-                newCanvas.height = oldCanvas.height;
-
-                //apply the old canvas to the new one
-                context.drawImage(oldCanvas, 0, 0);
-
-                //return the new canvas
-                return newCanvas;
-            };
-
-            var newCanvas = cloneCanvas(canvas);
+            var newCanvas = TC.Util.cloneCanvas(canvas);
             var deferred = $.Deferred();
             var context = newCanvas.getContext('2d');
 
             var newImage = new Image();
+            img.crossOrigin = 'anonymous';
             newImage.src = img;
             newImage.onload = function () {
                 context.drawImage(newImage, position.x || 0, position.y || 0);
@@ -69584,21 +69811,225 @@ var TC = TC || {};
             return deferred.promise();
         },
 
+        cloneCanvas: function (oldCanvas) {
+            //create a new canvas
+            var newCanvas = document.createElement('canvas');
+            var context = newCanvas.getContext('2d');
+
+            //set dimensions
+            newCanvas.width = oldCanvas.width;
+            newCanvas.height = oldCanvas.height;
+
+            //apply the old canvas to the new one
+            context.drawImage(oldCanvas, 0, 0);
+
+            //return the new canvas
+            return newCanvas;
+        },
+
         calculateAspectRatioFit: function (srcWidth, srcHeight, maxWidth, maxHeight) {
             var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
 
             return { width: srcWidth * ratio, height: srcHeight * ratio };
         },
 
-        getFormattedDate: function (date) {
+        getFormattedDate: function (date, hasTime) {
             function pad(s) { return (s < 10) ? '0' + s : s; }
 
             var d = new Date(date);
-            return [d.getFullYear(), pad(d.getMonth() + 1), pad(d.getDate())].join('');
+            return [d.getFullYear(), pad(d.getMonth() + 1), pad(d.getDate())].concat(hasTime ? ["_", pad(d.getHours()), pad(d.getMinutes()), pad(d.getSeconds())] : []).join('');
 
+        },
+
+        replaceAccent: function (t) {
+            var translate = {
+                "ä": "a", "ö": "o", "\u00fc": "u",
+                "Ä": "A", "Ö": "O", "\u00dc": "U",
+                "\u00e1": "a", "\u00e9": "e", "i": "i", "\u00f3": "o", "\u00fa": "u",
+                "\u00c1": "A", "\u00c9": "E", "\u00cd": "I", "\u00d3": "O", "\u00da": "U",
+                "\u00f1": "n", "\u00d1": "N"
+            };
+            return t.replace(/[öä\u00fcÖÄ\u00dc\u00e1\u00e9\u00ed\u00f3\u00fa\u00c1\u00c9\u00cd\u00d3\u00da\u00f1\u00d1]/g, function (match) {
+                return translate[match];
+            });
+        },
+
+        downloadFileForm: function (url, data) {
+
+            var download = function (url, data) {
+                var form = $("<form/>", { "class": "tc-ctl-download-form", "method": "post", "enctype": "text/plain", "action": (TC.Util.detectIE() ? TC.proxify(url) : url) });
+                var input = $("<input/>", { "class": "tc-ctl-download-query", "name": data.substring(0, data.indexOf("=")) });
+                form.append(input);
+                var iframe = $("iframe").filter(function (i, item) { return $(item).data("url-download") === url });
+                if (iframe.length > 0)
+                    iframe = iframe.first();
+                else {
+                    iframe = $('<iframe style="visibility: hidden; display:none;"></iframe>');
+                    iframe.data("url-download", url);
+                    $('body').append(iframe);
+                }
+                var content = iframe[0].contentDocument;
+                content.open();
+                content.write(form[0].outerHTML);
+                content.close();
+                $('input', content).val(data.substring(data.indexOf("=") + 1));
+                form = $('form', content);
+                return form;
+            };
+            var jqObj = [];
+            if (jQuery.isArray(url)) {
+                var arrDownloads = url;
+                for (var i = 0; i < arrDownloads.length; i++) {
+                    jqObj.push(download(arrDownloads[i].url, arrDownloads[i].data));
+                }
+            }
+            else
+                jqObj.push(download(url, data));
+            $(jqObj).submit();
+            setTimeout(function () {
+                $(".tc-ctl-download-form").remove();
+            }, 1000);
+        },
+        WFSQueryBuilder: function (layers, feature, capabilities, outputFormat, onlyHits) {
+            if (!$.isArray(layers))
+                layers = [layers];
+            var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
+                'xmlns:ogc="http://www.opengis.net/ogc" service="WFS" {resultType} {format} ';
+            switch (capabilities.version) {
+                case "1.0.0":
+                case "1.1.0":
+                    queryHeader += 'xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" ';
+                    break;
+                case "2.0.0":
+                    queryHeader += 'xmlns:wfs=\"http://www.opengis.net/wfs/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\" ';
+                    break;
+            }
+            for (var i in capabilities) {
+                if (typeof (capabilities[i]) === "string" && i.indexOf("gml") < 0 && capabilities[i].indexOf("wfs") < 0)
+                    queryHeader += (i + '="' + capabilities[i] + '" ');
+            }
+
+            var query = '<wfs:GetFeature ' + queryHeader.format({ resultType: (onlyHits ? 'resultType="hits"' : ''), format: 'outputFormat="' + outputFormat + '"' }) + '>';
+            var queryBody = '';
+
+            var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}">{filter}</wfs:Query>';
+            $.each(layers, function (index, value) {
+                queryBody += queryItem.format({ typeName: value, filter: TC.Util.WFSFilterBuilder(feature, capabilities.version) });
+            });
+            query += queryBody + '</wfs:GetFeature>'
+            return query;
+        },
+        WFSFilterBuilder: function (feature, version) {
+            var filter = '';
+            if (jQuery.isPlainObject(feature)) {
+                filter = '<{prefix}:Filter><{prefix}:Intersects><fes:ValueReference></fes:ValueReference><{prefix}:Function name="querySingle"><{prefix}:Literal>{clipLayer}</{prefix}:Literal><{prefix}:Literal>{geometryName}</{prefix}:Literal><{prefix}:Literal>{where}</{prefix}:Literal></{prefix}:Function></{prefix}:Intersects></{prefix}:Filter>'
+                    .format({ prefix: (version === "2.0.0" ? "fes" : "ogc"), "clipLayer": feature.clipLayer, "geometryName": feature.geometryName, "where": feature.where })
+            }
+            else {
+                switch (true) {
+                    case !feature:
+                        break;
+                    case $.isArray(feature)://bbox
+                        var gmlEnvelope = ('<gml:Envelope>' +
+                            '<gml:lowerCorner>{lowerCorner}</gml:lowerCorner>' +
+                            '<gml:upperCorner>{upperCorner}</gml:upperCorner>' +
+                            '</gml:Envelope>').format({ lowerCorner: (feature[0] + ' ' + feature[1]), upperCorner: (feature[2] + ' ' + feature[3]) });
+                        switch (true) {
+                            case version === "1.0.0":
+                            case version === "1.1.0":
+                                filter += '<ogc:Filter><ogc:BBOX>' + gmlEnvelope + '</ogc:BBOX></ogc:Filter>';
+                                break;
+                            case version === "2.0.0":
+                                filter += '<fes:Filter><fes:BBOX>' + gmlEnvelope + '</fes:BBOX></fes:Filter>';
+                                break;
+                        }
+                        break;
+                    case feature instanceof TC.Feature:
+                        switch (true) {
+                            case version === "1.0.0":
+                            case version === "1.1.0":
+                                filter += '<ogc:Filter><ogc:Intersects><ogc:PropertyName></ogc:PropertyName>' + TC.Util.writeGMLGeometry(feature, "2.0") + '</ogc:Intersects></ogc:Filter>';
+                                break;
+                            case version === "2.0.0":
+                                filter += '<fes:Filter><fes:Intersects><fes:ValueReference></fes:ValueReference>' + TC.Util.writeGMLGeometry(feature, "3.2") + '</fes:Intersects></fes:Filter>';
+                                break;
+                        }
+
+                        break;
+                    default:
+                        TC.error("Geometr\u00eda no v\u00e1lida");
+                        break;
+                }
+            }
+
+            return filter;
+        },
+        writeGMLGeometry: function (feature, gmlVersion) {
+
+            var getGmlCoordinates = function (coords) {
+                var result;
+                if (gmlVersion.indexOf('3') === 0) {
+                    result = coords.toString();
+                    while (result.indexOf(",") >= 0) {
+                        result = result.replace(",", " ");
+                    }
+                }
+                else {
+                    result = coords;
+                    jQuery.each(result, function (i, item) { return item.join(",") }).join(" ");
+                }
+                return result;
+            };
+
+            switch (gmlVersion) {
+                case "3.1.1":
+                    break;
+                case "3.2":
+                    switch (true) {
+                        case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
+                            return "<gml:LineString srsDimension=\"2\"><gml:posList>" +
+                                getGmlCoordinates(feature.geometry) +
+                                "</gml:posList></gml:LineString>";
+                            break;
+                            break;
+                        default:
+                            return "<gml:Polygon srsDimension=\"2\"><gml:exterior><gml:LinearRing><gml:posList>" +
+                                getGmlCoordinates(feature.geometry[0]) +
+                                "</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>";
+                            break;
+                    }
+                    break;
+                case "2.0":
+                default:
+                    switch (true) {
+                        case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
+                            return "<gml:LineString><gml:coordinates>" +
+                                getGmlCoordinates(feature.geometry[0]) +
+                                "</gml:coordinates></gml:LineString>";
+                            break;
+                        default:
+                            return "<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>" +
+                                getGmlCoordinates(feature.geometry[0]) +
+                                "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon>";
+                            break;
+                    }
+                    break;
+            }
         }
+
     };
-})();
+    String.prototype.format = function () {
+        var str = this.toString();
+        if (!arguments.length)
+            return str;
+        var args = typeof arguments[0],
+            args = (("string" == args || "number" == args) ? arguments : arguments[0]);
+        for (arg in args)
+            str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), args[arg]);
+        return str;
+    };
+    return Util;
+});
 
 /*! async-js descargado de https://www.npmjs.com/package/async-js en 2015-04-23 (Ver https://github.com/th507/asyncJS) */
 /**
@@ -70212,7 +70643,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.2.1';
+TC.version = '1.3.0';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -70243,28 +70674,29 @@ if (!TC.Consts) {
     TC.Consts.URL_MAX_LENGTH = 2048;
     TC.Consts.METER_PRECISION = 0;
     TC.Consts.DEGREE_PRECISION = 5;
+    TC.Consts.EXTENT_TOLERANCE = 0.9998;/*URI: debido al redondeo del extente en el hash se obtiene un nivel de resoluci\u00f3n mayor al debido. Con este valor definimos una tolerancia para que use una resoluci\u00f3n si es muy muy muy pr\u00f3xima*/
     TC.Consts.url = {
         SPLIT_REGEX: /([^:]*:)?\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
         MODERNIZR: 'lib/modernizr.js',
         JQUERY_LEGACY: TC.apiLocation + 'lib/jquery/jquery.1.10.2.js',
         JQUERY: '//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.js',
         OL_LEGACY: 'lib/OpenLayers/OpenLayers.debug.js',
-        //OL: 'ol/build/ol-min.js',
         OL: 'lib/ol/build/ol-custom.js',
         OL_CONNECTOR_LEGACY: 'TC/ol/ol2.js',
-        OL_CONNECTOR: 'TC/ol/ol3.js',
+        OL_CONNECTOR: 'TC/ol/ol.js',
         TEMPLATING: 'lib/dust/dust-full-helpers.min.js',
         TEMPLATING_I18N: 'lib/dust/dustjs-i18n.min.js',
+        TEMPLATING_OVERRIDES: 'lib/dust/dust.overrides.js',
         PROJ4JS_LEGACY: 'lib/proj4js/legacy/proj4js-compressed.js',
         PROJ4JS: 'lib/proj4js/proj4-src.js',
         SPATIALREFERENCE: 'http://spatialreference.org/',
         LOCALFORAGE: TC.apiLocation + 'lib/localForage/localforage.min.js',
         D3C3: TC.apiLocation + 'lib/d3c3/d3c3.min.js',
-        CESIUM: TC.apiLocation + 'lib/cesium/debug/Cesium.js',
+        CESIUM: TC.apiLocation + 'lib/cesium/release/Cesium.js',
         JSNLOG: 'lib/jsnlog/jsnlog.min.js',
         ERROR_LOGGER: TC.apiLocation + 'errors/logger.ashx',
         PDFMAKE: TC.apiLocation + 'lib/pdfmake/pdfmake-fonts.min.js',
-        JSONPACK: 'lib/jsonpack/jsonpack.min.js',
+        JSONPACK: 'lib/jsonpack/jsonpack.min.js'
     };
     TC.Consts.classes = {
         MAP: 'tc-map',
@@ -70322,10 +70754,13 @@ if (!TC.Consts) {
         BEFOREFEATURESADD: 'beforefeaturesadd.tc',
         FEATURESADD: 'featuresadd.tc',
         FEATUREREMOVE: 'featureremove.tc',
+        FEATURESCLEAR: 'featuresclear.tc',
         FEATURESIMPORT: 'featuresimport.tc',
         FEATURESIMPORTERROR: 'featuresimporterror.tc',
         BEFORETILELOAD: 'beforetileload.tc',
         TILELOAD: 'tileload.tc',
+        TILELOADERROR: 'tileloaderror.tc',
+        CONTROLADD: 'controladd.tc',
         CONTROLACTIVATE: 'controlactivate.tc',
         CONTROLDEACTIVATE: 'controldeactivate.tc',
         BEFORECONTROLRENDER: 'beforecontrolrender.tc',
@@ -70336,6 +70771,8 @@ if (!TC.Consts) {
         LAYEROPACITY: 'layeropacity.tc',
         FEATURECLICK: 'featureclick.tc',
         NOFEATURECLICK: 'nofeatureclick.tc',
+        FEATUREOVER: 'featureover.tc',
+        FEATUREOUT: 'featureout.tc',
         BEFOREFEATUREINFO: 'beforefeatureinfo.tc',
         FEATUREINFO: 'featureinfo.tc',
         NOFEATUREINFO: 'nofeatureinfo.tc',
@@ -70344,7 +70781,8 @@ if (!TC.Consts) {
         MOUSEUP: 'mouseup.tc',
         STARTLOADING: 'startloading.tc',
         STOPLOADING: 'stoploading.tc',
-        EXTERNALSERVICEADDED: 'externalserviceadded.tc'
+        EXTERNALSERVICEADDED: 'externalserviceadded.tc',
+        ZOOMTO: 'zoomto.tc',
     };
     TC.Consts.layer = {
         IDENA_ORTHOPHOTO: 'ortofoto',
@@ -70438,7 +70876,9 @@ if (!TC.Consts) {
         STREET: 'street',
         NUMBER: 'number',
         URBAN: 'urban',
-        COMMONWEALTH: 'commonwealth'
+        COMMONWEALTH: 'commonwealth',
+        ROAD: 'road',
+        ROADPK: 'roadpk'
     };
     TC.Consts.mapSearchType = {
     	MUNICIPALITY: TC.Consts.searchType.MUNICIPALITY,
@@ -70848,7 +71288,14 @@ if (!TC.Consts) {
             return result;
         };
 
+        if (typeof TC.isDebug != "boolean") {
+            TC.isDebug = true;
+        };
+
         TC.syncLoadJS = function (url) {
+            if (!/(\.js|\/)$/i.test(url)) { // Si pedimos un archivo sin extensi\u00f3n se la ponemos seg\u00fan el entorno
+                url = url + (TC.isDebug ? '.js' : '.min.js');
+            }
             var req = new XMLHttpRequest();
             req.open("GET", url, false); // 'false': synchronous.
             req.send(null);
@@ -70874,14 +71321,12 @@ if (!TC.Consts) {
             }
         }
 
-        TC.isDebug = true;
-
         // Completamos los datos de versi\u00f3n
         $(document).ready(function () {
             var build;
             var mapLibrary = 'Unknown library';
             var OL2 = 'OpenLayers 2';
-            var OL3 = 'OpenLayers 3';
+            var OL = 'OpenLayers 4';
             if (TC.Control) {
                 build = 'Compiled';
                 if (TC.isLegacy) {
@@ -70891,13 +71336,13 @@ if (!TC.Consts) {
                 }
                 else {
                     if (window.ol) {
-                        mapLibrary = OL3;
+                        mapLibrary = OL;
                     }
                 }
             }
             else {
                 build = 'On demand';
-                mapLibrary = TC.isLegacy ? OL2 : OL3;
+                mapLibrary = TC.isLegacy ? OL2 : OL;
             }
             TC.version = TC.version + ' (' + build + '; ' + mapLibrary + '; @ ' + TC.apiLocation + ')';
         });
@@ -70920,6 +71365,12 @@ if (!TC.Consts) {
         TC.loadJS = function (condition, url, callback, inOrder) {
             if (arguments.length < 4) inOrder = false;
             var urls = $.isArray(url) ? url : [url];
+            urls = $.map(urls, function (elm) {
+                if (!/\.js$/i.test(elm)) { // Si pedimos un archivo sin extensi\u00f3n se la ponemos seg\u00fan el entorno
+                    return elm + (TC.isDebug ? '.js' : '.min.js');
+                }
+                return elm;
+            });
             //si tiene canvas, es que es un navegador nuevo
             if (Modernizr.canvas) {
                 if (condition) {
@@ -71033,10 +71484,6 @@ if (!TC.Consts) {
             }
         };
 
-        var transformCrsCode = function (crs) {
-
-        };
-
         TC.loadProjDef = function (crs, syncOrCallback) {
             var epsgPrefix = 'EPSG:';
             var urnPrefix = 'urn:ogc:def:crs:EPSG::';
@@ -71047,6 +71494,9 @@ if (!TC.Consts) {
 
             var getDef;
             if (TC.isLegacy) {
+                if (!window[TC.Consts.PROJ4JSOBJ_LEGACY]) {
+                    TC.syncLoadJS(TC.url.proj4js);
+                }
                 Proj4js.defs[epsgCode] = '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs';
                 Proj4js.defs[urnCode] = Proj4js.defs[epsgCode];
                 Proj4js.defs[gmlCode] = Proj4js.defs[epsgCode];
@@ -71055,6 +71505,9 @@ if (!TC.Consts) {
                 };
             }
             else {
+                if (!window[TC.Consts.PROJ4JSOBJ]) {
+                    TC.syncLoadJS(TC.url.proj4js);
+                }
                 proj4.defs(epsgCode, '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs');
                 proj4.defs(urnCode, proj4.defs(epsgCode));
                 proj4.defs(gmlCode, proj4.defs(epsgCode));
@@ -71091,7 +71544,14 @@ if (!TC.Consts) {
                 var url = TC.proxify(TC.Consts.url.SPATIALREFERENCE + 'ref/epsg/' + code + '/proj4js/');
                 if (typeof syncOrCallback === 'boolean') {
                     if (syncOrCallback) {
-                        TC.syncLoadJS(url);
+                        var req = new XMLHttpRequest();
+                        req.open("GET", url, false); // 'false': synchronous.
+                        req.send(null);
+                        var script = document.createElement("script");
+                        script.type = "text/javascript";
+                        script.text = req.responseText;
+                        getHead().appendChild(script);
+
                         loadDef(code);
                     }
                     else {
@@ -71114,7 +71574,8 @@ if (!TC.Consts) {
         TC.url = {
             templating: [
                 TC.apiLocation + TC.Consts.url.TEMPLATING,
-                TC.apiLocation + TC.Consts.url.TEMPLATING_I18N
+                TC.apiLocation + TC.Consts.url.TEMPLATING_I18N,
+                TC.apiLocation + TC.Consts.url.TEMPLATING_OVERRIDES
             ]
         };
 
@@ -71174,6 +71635,7 @@ if (!TC.Consts) {
             if (window.console) {
                 console.error(text);
             }
+
         };
 
         /**
@@ -71292,7 +71754,7 @@ if (!TC.Consts) {
                 OverviewMap: function () { TC.wrap.Control.apply(this, arguments); },
                 FeatureInfo: function () { TC.wrap.Control.apply(this, arguments); },
                 Popup: function () { TC.wrap.Control.apply(this, arguments); },
-                PolygonFeatureInfo: function () { TC.wrap.Control.apply(this, arguments); },
+                GeometryFeatureInfo: function () { TC.wrap.Control.apply(this, arguments); },
                 Geolocation: function () { TC.wrap.Control.apply(this, arguments); },
                 Draw: function () { TC.wrap.Control.apply(this, arguments); },
                 CacheBuilder: function () { TC.wrap.Control.apply(this, arguments); },
@@ -71310,7 +71772,7 @@ if (!TC.Consts) {
         TC.inherit(TC.wrap.control.OverviewMap, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Popup, TC.wrap.Control);
         TC.inherit(TC.wrap.control.FeatureInfo, TC.wrap.control.Click);
-        TC.inherit(TC.wrap.control.PolygonFeatureInfo, TC.wrap.control.Click);        
+        TC.inherit(TC.wrap.control.GeometryFeatureInfo, TC.wrap.control.Click);        
         TC.inherit(TC.wrap.control.Geolocation, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Draw, TC.wrap.Control);
         TC.inherit(TC.wrap.control.CacheBuilder, TC.wrap.Control);
@@ -71319,10 +71781,10 @@ if (!TC.Consts) {
         TC.loadCSS(TC.apiLocation + 'TC/css/tcmap.css');
 
         if (!TC.Map) {
-            TC.syncLoadJS(TC.apiLocation + 'TC/Map.js');
+            TC.syncLoadJS(TC.apiLocation + 'TC/Map');
         }
         if (!TC.Util) {
-            TC.syncLoadJS(TC.apiLocation + 'TC/Util.js');
+            TC.syncLoadJS(TC.apiLocation + 'TC/Util');
         }
 
         var uid = 1;
@@ -72286,6 +72748,7 @@ TC.Feature.prototype.setData = function (data) {
 TC.Feature.prototype.getInfo = function () {
     var result = null;
     var self = this;
+    var locale = self.layer && self.layer.map && TC.Util.getMapLocale(self.layer.map);
     var data = self.getData();
     if (typeof data === 'object') {
         var template = self.wrap.getTemplate();
@@ -72310,7 +72773,7 @@ TC.Feature.prototype.getInfo = function () {
                         html[html.length] = value;
                         html[html.length] = '" target="_blank">';
                     }
-                    html[html.length] = value !== void (0) ? value : '&mdash;';
+                    html[html.length] = value !== void (0) ? TC.Util.formatNumber(value, locale) : '&mdash;';
                     if (isUrl) {
                         html[html.length] = '</a>';
                     }
@@ -72334,7 +72797,7 @@ TC.Feature.prototype.getInfo = function () {
         }
     }
     if (!result) {
-        result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
+        result = TC.Util.getLocaleString(locale.replace('-', '_'), 'noData');
     }
     return result;
 };
@@ -72352,7 +72815,7 @@ TC.Feature.prototype.getStyle = function () {
 
 TC.Feature.prototype.showPopup = function (control) {
     var self = this;
-    if (self.showsPopup && self.layer && self.layer.map) {
+    if (self.layer && self.layer.map) {
         var ctlDeferred;
         var popup = control || self.popup;
         if (!popup) {
@@ -72371,7 +72834,7 @@ TC.Feature.prototype.showPopup = function (control) {
             ctlDeferred.resolve(popup);
         }
         else {
-            TC.loadJS(!TC.control || !TC.control.Popup, [TC.apiLocation + 'TC/control/Popup.js'], function () {
+            TC.loadJS(!TC.control || !TC.control.Popup, [TC.apiLocation + 'TC/control/Popup'], function () {
                 ctlDeferred = self.layer.map.addControl(new TC.control.Popup());
             });
         }
@@ -72418,10 +72881,17 @@ TC.Feature.prototype.unselect = function () {
 TC.Feature.prototype.isSelected = function () {
     return this._selected;
 };
+
+TC.Feature.prototype.toGML = function (version,srsName) {
+    return this.wrap.toGML(version,srsName);
+};
+
+
+
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
 }
 
 /**
@@ -72506,7 +72976,7 @@ TC.inherit(TC.feature.Point, TC.Feature);
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
 }
 
 TC.feature.Circle = function (coords, options) {
@@ -72546,7 +73016,7 @@ TC.inherit(TC.feature.Circle, TC.Feature);
 TC.feature = TC.feature || {};
 
 if (!TC.feature.Point) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point');
 }
 
 /**
@@ -72629,7 +73099,7 @@ TC.feature.Marker.prototype.CLASSNAME = 'TC.feature.Marker';
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
 }
 
 /*
@@ -72660,7 +73130,7 @@ TC.feature.MultiPolygon.prototype.CLASSNAME = 'TC.feature.MultiPolygon';
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
 }
 
 /*
@@ -72691,7 +73161,7 @@ TC.feature.MultiPolyline.prototype.CLASSNAME = 'TC.feature.MultiPolyline';
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
 }
 
 /*
@@ -72722,7 +73192,7 @@ TC.feature.Polygon.prototype.CLASSNAME = 'TC.feature.Polygon';
 TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
 }
 
 /*
@@ -72751,10 +73221,360 @@ TC.inherit(TC.feature.Polyline, TC.Feature);
 TC.feature.Polyline.prototype.STYLETYPE = TC.Consts.geom.POLYLINE;
 
 TC.feature.Polyline.prototype.CLASSNAME = 'TC.feature.Polyline';
+TC.filter = {};
+
+TC.filter.Filter = function (tagName) {
+    this.tagName_ = tagName;
+};
+
+TC.filter.Filter.prototype.getTagName = function () {
+    return this.tagName_;
+};
+
+TC.filter.Filter.prototype.writeFilterCondition_ = function () {
+
+    //return '<{prefix}:{tag}>{childs}</{prefix}:{tag}>'.format({prefix:"ogc",tag:filter.getTagName(),childs:""});
+    var filter = this;
+    return '<{prefix}:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">{inner}</{prefix}:Filter>'.format({
+        prefix: "ogc",
+        tag: filter.getTagName(),
+        inner: this.writeInnerCondition_(filter)
+    });
+
+    /*ol.xml.pushSerializeAndPop(item,
+        ol.format.WFS.GETFEATURE_SERIALIZERS_,
+        ol.xml.makeSimpleNodeFactory(filter.getTagName()),
+        [filter], objectStack);*/
+}
+TC.filter.Filter.prototype.writeInnerCondition_ = function (filter) {
+
+    if (filter instanceof TC.filter.LogicalNary) {
+        return filter.write()
+    }
+    else if (filter instanceof TC.filter.ComparisonBinary) {
+        return filter.write();
+    }
+    else if (filter instanceof TC.filter.Comparison) {
+        return filter.write();
+    }
+    else if (filter instanceof TC.filter.Spatial) {
+        return filter.write();
+    }
+    else
+        return filter.write();
+};
+TC.filter.Filter.prototype.writeInnerArrayCondition_ = function (filters) {
+    return filters.reduce(function (vi, va, index) {
+        return (vi instanceof TC.filter.Filter ? vi.writeInnerCondition_(vi) : vi) + va.writeInnerCondition_(va);
+    });
+}
+
+TC.filter.Filter.prototype.getText = function () {
+    return this.writeFilterCondition_();
+};
+
+TC.filter.and = function (conditions) {
+    var params = [null].concat(Array.prototype.slice.call(arguments));
+    return new (Function.prototype.bind.apply(TC.filter.And, params));
+};
+
+TC.filter.or = function (conditions) {
+    var params = [null].concat(Array.prototype.slice.call(arguments));
+    return new (Function.prototype.bind.apply(TC.filter.Or, params));
+};
+
+TC.filter.not = function (condition) {
+    return new TC.filter.Not(condition);
+};
+
+TC.filter.bbox = function (geometryName, extent, opt_srsName) {
+    return new TC.filter.Bbox(geometryName, extent, opt_srsName);
+};
+
+TC.filter.intersects = function (geometryName, geometry, opt_srsName) {
+    return new TC.filter.Intersects(geometryName, geometry, opt_srsName);
+};
+
+
+TC.filter.within = function (geometryName, geometry, opt_srsName) {
+    return new TC.filter.Within(geometryName, geometry, opt_srsName);
+};
+
+
+TC.filter.equalTo = function (propertyName, expression, opt_matchCase) {
+    return new TC.filter.EqualTo(propertyName, expression, opt_matchCase);
+};
+
+TC.filter.notEqualTo = function (propertyName, expression, opt_matchCase) {
+    return new TC.filter.NotEqualTo(propertyName, expression, opt_matchCase);
+};
+
+TC.filter.lessThan = function (propertyName, expression) {
+    return new TC.filter.LessThan(propertyName, expression);
+};
+
+TC.filter.lessThanOrEqualTo = function (propertyName, expression) {
+    return new TC.filter.LessThanOrEqualTo(propertyName, expression);
+};
+
+TC.filter.greaterThan = function (propertyName, expression) {
+    return new TC.filter.GreaterThan(propertyName, expression);
+};
+
+TC.filter.greaterThanOrEqualTo = function (propertyName, expression) {
+    return new TC.filter.GreaterThanOrEqualTo(propertyName, expression);
+};
+
+TC.filter.isNull = function (propertyName) {
+    return new TC.filter.IsNull(propertyName);
+};
+
+TC.filter.between = function (propertyName, lowerBoundary, upperBoundary) {
+    return new TC.filter.IsBetween(propertyName, lowerBoundary, upperBoundary);
+};
+
+TC.filter["function"] = function (functionName, params) {
+    return new TC.filter.Function(functionName, params);
+};
+
+TC.filter.like = function (propertyName, pattern,
+    opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase) {
+    return new TC.filter.IsLike(propertyName, pattern,
+        opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase);
+};
+
+TC.filter.LogicalNary = function (tagName, conditions) {
+
+    TC.filter.Filter.call(this, tagName);
+
+    this.conditions = Array.prototype.slice.call(arguments, 1);
+};
+TC.inherit(TC.filter.LogicalNary, TC.filter.Filter);
+
+TC.filter.And = function (conditions) {
+    var params = ['And'].concat(Array.prototype.slice.call(arguments));
+    TC.filter.LogicalNary.apply(this, params);
+};
+TC.inherit(TC.filter.And, TC.filter.LogicalNary);
+
+TC.filter.Or = function (conditions) {
+    var params = ['Or'].concat(Array.prototype.slice.call(arguments));
+    TC.filter.LogicalNary.apply(this, params);
+};
+TC.inherit(TC.filter.Or, TC.filter.LogicalNary);
+
+TC.filter.LogicalNary.prototype.write = function () {
+    return '<{prefix}:{tag}>{inner}</{prefix}:{tag}>'.format({
+        prefix: "ogc",
+        tag: this.getTagName(),
+        inner: this.writeInnerArrayCondition_(this.conditions)
+    });
+}
+
+TC.filter.Not = function (condition) {
+
+    TC.filter.Filter.call(this, 'Not');
+    this.condition = condition;
+};
+TC.inherit(TC.filter.Not, TC.filter.Filter);
+
+TC.filter.Bbox = function (geometryName, extent, opt_srsName) {
+
+    TC.filter.Filter.call(this, 'BBOX');
+
+    this.geometryName = geometryName;
+
+    this.extent = extent;
+
+    this.srsName = opt_srsName;
+};
+TC.inherit(TC.filter.Bbox, TC.filter.Filter);
+
+TC.filter.Comparison = function (tagName, propertyName) {
+
+    TC.filter.Filter.call(this, tagName);
+
+    this.propertyName = propertyName;
+};
+TC.inherit(TC.filter.Comparison, TC.filter.Filter);
+
+TC.filter.Comparison.prototype.write = function () {
+    var values = '';
+    //isbetween
+    if (this.lowerBoundary && this.upperBoundary)
+        values = '<ogc:LowerBoundary><ogc:Literal>{LowerBoundary}</ogc:Literal></ogc:LowerBoundary><ogc:UpperBoundary><ogc:Literal>{UpperBoundary}</ogc:Literal></ogc:UpperBoundary>'.format({
+            LowerBoundary: this.lowerBoundary,
+            UpperBoundary: this.upperBoundary
+        });
+    if (this.pattern)
+        values = '<ogc:Literal>{Pattern}</ogc:Literal>'.format({
+            Pattern: this.pattern
+        });
+    if (this.params)
+        if ($.isArray(this.params))
+            values = this.params.reduce(function (a, b, i) {
+                var fmt = function (text) {
+                    return '<ogc:Literal>{value}</ogc:Literal>'.format({ value: text });
+                }
+                return (i > 0 ? a : fmt(a)) + fmt(b);
+            });
+        else
+            values = '<ogc:Literal>{value}</ogc:Literal>'.format({ value: this.params });
+
+    return '<{prefix}:{tag}{matchCase}{escape}{singleChar}{wildCard}><{prefix}:PropertyName>{name}</{prefix}:PropertyName>{values}</{prefix}:{tag}>'.format({
+        prefix: "ogc",
+        tag: this.getTagName(),
+        matchCase: (typeof (this.matchCase) !== "undefined" ? " matchCase=\"" + this.matchCase + "\"" : ""),
+        escape: (typeof (this.escapeChar) !== "undefined" ? " escape=\"" + this.escapeChar + "\"" : ""),
+        singleChar: (typeof (this.singleChar) !== "undefined" ? " singleChar=\"" + this.singleChar + "\"" : ""),
+        wildCard: (typeof (this.wildCard) !== "undefined" ? " wildCard=\"" + this.wildCard + "\"" : ""),
+        name: this.propertyName,
+        values: values
+    });
+}
+
+TC.filter.ComparisonBinary = function (
+    tagName, propertyName, expression, opt_matchCase) {
+
+    TC.filter.Comparison.call(this, tagName, propertyName);
+
+    this.expression = expression;
+
+    this.matchCase = opt_matchCase;
+};
+TC.inherit(TC.filter.ComparisonBinary, TC.filter.Comparison);
+
+TC.filter.ComparisonBinary.prototype.write = function () {
+    return '<{prefix}:{tag}{matchCase}><{prefix}:PropertyName>{name}</{prefix}:PropertyName><{prefix}:Literal>{value}</{prefix}:Literal></{prefix}:{tag}>'.format({
+        prefix: "ogc",
+        tag: this.getTagName(),
+        matchCase: (typeof (this.matchCase) !== "undefined" ? " matchCase=\"" + this.matchCase + "\"" : ""),
+        //escape:(typeof(this.escapeChar)!=="undefined"? " escape=\"" + this.escapeChar+ "\"":""),
+        //singleChar:(typeof(this.singleChar)!=="undefined"? " singleChar=\"" + this.singleChar+ "\"":""),
+        //wildCard:(typeof(this.wildCard)!=="undefined"? " wildCard=\"" + this.wildCard+ "\"":""),
+        name: this.propertyName,
+        value: this.expression
+    });
+}
+TC.filter.EqualTo = function (propertyName, expression, opt_matchCase) {
+    TC.filter.ComparisonBinary.call(this, 'PropertyIsEqualTo', propertyName, expression, opt_matchCase);
+};
+TC.inherit(TC.filter.EqualTo, TC.filter.ComparisonBinary);
+
+TC.filter.GreaterThan = function (propertyName, expression) {
+    TC.filter.ComparisonBinary.call(this, 'PropertyIsGreaterThan', propertyName, expression);
+};
+TC.inherit(TC.filter.GreaterThan, TC.filter.ComparisonBinary);
+
+TC.filter.GreaterThanOrEqualTo = function (propertyName, expression) {
+    TC.filter.ComparisonBinary.call(this, 'PropertyIsGreaterThanOrEqualTo', propertyName, expression);
+};
+TC.inherit(TC.filter.GreaterThanOrEqualTo, TC.filter.ComparisonBinary);
+
+TC.filter.LessThan = function (propertyName, expression) {
+    TC.filter.ComparisonBinary.call(this, 'PropertyIsLessThan', propertyName, expression);
+};
+TC.inherit(TC.filter.LessThan, TC.filter.ComparisonBinary);
+
+TC.filter.LessThanOrEqualTo = function (propertyName, expression) {
+    TC.filter.ComparisonBinary.call(this, 'PropertyIsLessThanOrEqualTo', propertyName, expression);
+};
+TC.inherit(TC.filter.LessThanOrEqualTo, TC.filter.ComparisonBinary);
+
+TC.filter.NotEqualTo = function (propertyName, expression, opt_matchCase) {
+    TC.filter.ComparisonBinary.call(this, 'PropertyIsNotEqualTo', propertyName, expression, opt_matchCase);
+};
+TC.inherit(TC.filter.NotEqualTo, TC.filter.ComparisonBinary);
+
+TC.filter.IsLike = function (propertyName, pattern,
+    opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase) {
+    TC.filter.Comparison.call(this, 'PropertyIsLike', propertyName);
+
+    this.pattern = pattern;
+
+    this.wildCard = (opt_wildCard !== undefined) ? opt_wildCard : '*';
+
+    this.singleChar = (opt_singleChar !== undefined) ? opt_singleChar : '.';
+
+    this.escapeChar = (opt_escapeChar !== undefined) ? opt_escapeChar : '!';
+
+    this.matchCase = opt_matchCase;
+};
+TC.inherit(TC.filter.IsLike, TC.filter.Comparison);
+
+TC.filter.IsNull = function (propertyName) {
+    TC.filter.Comparison.call(this, 'PropertyIsNull', propertyName);
+};
+TC.inherit(TC.filter.IsNull, TC.filter.Comparison);
+
+TC.filter.IsBetween = function (propertyName, lowerBoundary, upperBoundary) {
+    TC.filter.Comparison.call(this, 'PropertyIsBetween', propertyName);
+    this.lowerBoundary = lowerBoundary;
+    this.upperBoundary = upperBoundary;
+};
+TC.inherit(TC.filter.IsBetween, TC.filter.Comparison);
+
+TC.filter.Function = function (fuctionName, params) {
+    TC.filter.Comparison.call(this, 'Function', fuctionName);
+    this.params = params
+};
+TC.inherit(TC.filter.Function, TC.filter.Comparison);
+
+
+TC.filter.Spatial = function (tagName, geometryName, geometry, opt_srsName) {
+    TC.filter.Filter.call(this, tagName);
+    this.geometryName = geometryName || 'the_geom';
+    this.geometry = geometry;
+    this.srsName = opt_srsName;
+};
+TC.inherit(TC.filter.Spatial, TC.filter.Filter);
+
+TC.filter.Spatial.prototype.write = function () {
+    return '<{prefix}:{tag}><{prefix}:PropertyName>{name}</{prefix}:PropertyName>{geometry}</{prefix}:{tag}>'.format({
+        prefix: "ogc",
+        tag: this.getTagName(),
+        name: this.geometryName,
+        srsName: (typeof (this.srsName) !== "undefined" ? " srsName=\"" + this.srsName + "\"" : ""),
+        geometry: this.geometry.wrap.toGML()
+    });
+};
+
+TC.filter.Bbox = function (geometryName, extent, opt_srsName) {
+    TC.filter.Filter.call(this, 'BBOX');
+    this.geometryName = geometryName;
+    this.extent = extent;
+    this.srsName = opt_srsName;
+};
+TC.inherit(TC.filter.Bbox, TC.filter.Filter);
+
+TC.filter.Bbox.prototype.write = function () {
+    var bbox = '<gml:Envelope{srsName}><gml:lowerCorner>{lowerCorner}</gml:lowerCorner><gml:upperCorner>{upperCorner}</gml:upperCorner></gml:Envelope>'
+	.format({
+	    srsName: (typeof (this.srsName) !== "undefined" ? " srsName=\"" + this.srsName + "\"" : ""),
+	    lowerCorner: (this.extent[0] + ' ' + this.extent[1]),
+	    upperCorner: (this.extent[2] + ' ' + this.extent[3])
+	});
+    return '<{prefix}:{tag}><{prefix}:PropertyName>{name}</{prefix}:PropertyName>{BBOX}</{prefix}:{tag}>'.format({
+        prefix: "ogc",
+        tag: this.getTagName(),
+        name: this.geometryName,
+        BBOX: bbox
+    });
+};
+
+TC.filter.Intersects = function (geometryName, geometry, opt_srsName) {
+    TC.filter.Spatial.call(this, 'Intersects', geometryName, geometry, opt_srsName);
+};
+TC.inherit(TC.filter.Intersects, TC.filter.Spatial);
+
+TC.filter.Within = function (geometryName, geometry, opt_srsName) {
+    TC.filter.Spatial.call(this, 'Within', geometryName, geometry, opt_srsName);
+};
+TC.inherit(TC.filter.Within, TC.filter.Spatial);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.MapContents = function () {
@@ -72773,6 +73593,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
     ctlProto.CLASS = 'tc-ctl-mc';
 
     var _dataKeys = {
+        layer: 'tcLayer',
         img: 'tcImg'
     };
 
@@ -72837,6 +73658,8 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 }, 100);
             }).on(TC.Consts.event.LAYERREMOVE, function (e) {
                 self.removeLayer(e.layer);
+            }).on(TC.Consts.event.LAYERORDER, function (e) {
+                self.updateLayerOrder(e.layer, e.oldIndex, e.newIndex);
             });
         });
     };
@@ -72851,8 +73674,41 @@ TC.inherit(TC.control.MapContents, TC.Control);
         this.layerTrees[layer.id] = layer.getTree();
     };
 
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+        var self = this;
+        if (oldIdx >= 0 && oldIdx !== newIdx) {
+            var $currentElm, $previousElm;
+            var $elms = self.getLayerUIElements();
+            for (var i = self.map.workLayers.length - 1; i >= 0; i--) {
+                var l = self.map.workLayers[i];
+                $previousElm = $currentElm;
+                $elms.each(function (idx, elm) {
+                    var $elm = $(elm);
+                    if ($elm.data(_dataKeys.layer) === l) {
+                        $currentElm = $elm;
+                        return false;
+                    }
+                });
+                if (l === layer) {
+                    if ($previousElm) {
+                        $previousElm.after($currentElm);
+                    }
+                    else {
+                        $elms.parent().prepend($currentElm);
+                    }
+                    break;
+                }
+            }
+        }
+    };
+
     ctlProto.removeLayer = function (layer) {
         this.update();
+    };
+
+    ctlProto.getLayerUIElements = function () {
+        var self = this;
+        return self._$div.find('ul').first().children();
     };
 
     var isGetLegendGraphic = function (url) {
@@ -72922,6 +73778,9 @@ TC.inherit(TC.control.MapContents, TC.Control);
                         ';fontSize:' + parseInt($watch.css('font-size')) +
                         ';fontColor:' + colorStr +
                         ';fontAntiAliasing:true';
+                    if (layer.params && layer.params.sld_body) {
+                        imgSrc = TC.Util.addURLParameters(imgSrc, { sld_body: layer.params.sld_body });
+                    }
                     $img.data(_dataKeys.img, imgSrc);
                 }
                 setImgSrc($img, imgSrc, layer.usesSSL);
@@ -72933,7 +73792,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
 }
 
 TC.control.TOC = function () {
@@ -72973,17 +73832,6 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         var self = this;
         TC.control.MapContents.prototype.register.call(self, map);
         self._addBrowserEventHandlers();
-
-        self.$events.on(TC.Consts.event.CONTROLRENDER, function () {
-            var controlOptions = self.options.controls || [];
-
-            if (controlOptions.length > 0) {
-                var ctl = controlOptions[0];
-                var newDiv = $('<div/>');
-                self._$div.append(newDiv);
-                map.addControl(ctl.name, $.extend({ 'div': newDiv }, ctl.options));
-            }
-        });
 
         map.on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
             if (e && e.layer) {
@@ -73157,12 +74005,35 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         });
     };
 
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+        // Este control no tiene que hacer nada
+    };
+
+    ctlProto.render = function (callback) {
+        var self = this;
+
+        TC.Control.prototype.render.call(self, function () {
+
+            var controlOptions = self.options.controls || [];
+
+            if (controlOptions.length > 0) {
+                var ctl = controlOptions[0];
+                var newDiv = $('<div/>');
+                self._$div.append(newDiv);
+                self.map.addControl(ctl.name, $.extend({ 'div': newDiv }, ctl.options));
+            }
+
+            if ($.isFunction(callback)) {
+                callback();
+            }
+        });
+    };
 })();
 
 TC.control = TC.control || {};
 
 if (!TC.control.TOC) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/TOC.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/TOC');
 }
 
 TC.control.ListTOC = function () {
@@ -73194,7 +74065,7 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
     }
     else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "loadedLayers" }).w("<span class=\"tc-ctl-ltoc-n\"></span><button class=\"tc-ctl-ltoc-del-all tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "removeAllLayersFromMap" }).w("\"></button></h2><div class=\"tc-ctl-ltoc-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</div><div class=\"tc-ctl-ltoc-content\"><form><ul>").s(ctx.get(["workLayers"], false), ctx, { "block": body_1 }, {}).w("</ul></form></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-ltoc-elm", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-elm'] = function () { dust.register(ctlProto.CLASS + '-elm', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-ltoc-elm\"><div class=\"tc-ctl-ltoc-lyr\">").f(ctx.get(["title"], false), ctx, "h").w("</div><div class=\"tc-ctl-ltoc-type\"></div><div class=\"tc-ctl-ltoc-path\">").s(ctx.get(["path"], false), ctx, { "block": body_1 }, {}).w("</div><div><div class=\"tc-ctl-ltoc-btn-info\" title=\"").h("i18n", ctx, {}, { "$key": "infoFromThisLayer" }).w("\"></div><input type=\"range\" value=\"").f(ctx.get(["opacity"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "transparencyOfThisLayer" }).w("\" /><input type=\"checkbox\" ").nx(ctx.get(["hide"], false), ctx, { "block": body_3 }, {}).w(" title=\"").h("i18n", ctx, {}, { "$key": "visibilityOfThisLayer" }).w("\" /></div><div class=\"tc-ctl-ltoc-info tc-hidden\">").x(ctx.get(["abstract"], false), ctx, { "block": body_4 }, {}).x(ctx.get(["legend"], false), ctx, { "block": body_5 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_7 }, {}).w("</div><div class=\"tc-ctl-ltoc-dd ").x(ctx.get(["hide"], false), ctx, { "block": body_9 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "dragToReorder" }).w("\"></div><div class=\"tc-ctl-ltoc-del ").nx(ctx.get(["hide"], false), ctx, { "block": body_10 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "removeLayerFromMap" }).w("\"></div></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" &bull; "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("checked=\"checked\""); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div>").f(ctx.get(["abstract"], false), ctx, "h").w("</div></div>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-legend\" data-tc-layer-name=\"").f(ctx.get(["layerNames"], false), ctx, "h").w("\"><h4>").h("i18n", ctx, {}, { "$key": "content" }).w("</h4>").s(ctx.get(["legend"], false), ctx, { "block": body_6 }, {}).w(" </div>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<div><p>").f(ctx.get(["title"], false), ctx, "h").w("</p><img data-tc-img=\"").f(ctx.get(["src"], false), ctx, "h").w("\" /></div>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_8 }, {}).w("</ul></div>"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("tc-hidden"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("tc-hidden"); } body_10.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-elm'] = function () { dust.register(ctlProto.CLASS + '-elm', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-ltoc-elm\" tabindex=\"-1\"><div class=\"tc-ctl-ltoc-lyr\">").x(ctx.get(["path"], false), ctx, { "block": body_1 }, {}).w("</div><div class=\"tc-ctl-ltoc-type\"></div><div class=\"tc-ctl-ltoc-path\" title=\"").s(ctx.get(["path"], false), ctx, { "else": body_2, "block": body_3 }, {}).w("\">").s(ctx.get(["path"], false), ctx, { "else": body_5, "block": body_6 }, {}).w("</div><div><div class=\"tc-ctl-ltoc-btn-info\" title=\"").h("i18n", ctx, {}, { "$key": "infoFromThisLayer" }).w("\"></div><input type=\"range\" value=\"").f(ctx.get(["opacity"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "transparencyOfThisLayer" }).w("\" /><input type=\"checkbox\" ").nx(ctx.get(["hide"], false), ctx, { "block": body_8 }, {}).w(" title=\"").h("i18n", ctx, {}, { "$key": "visibilityOfThisLayer" }).w("\" /></div><div class=\"tc-ctl-ltoc-info tc-hidden\">").x(ctx.get(["abstract"], false), ctx, { "block": body_9 }, {}).x(ctx.get(["legend"], false), ctx, { "block": body_10 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_12 }, {}).w("</div><div class=\"tc-ctl-ltoc-dd ").x(ctx.get(["hide"], false), ctx, { "block": body_14 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "dragToReorder" }).w("\"></div><div class=\"tc-ctl-ltoc-del ").nx(ctx.get(["hide"], false), ctx, { "block": body_15 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "removeLayerFromMap" }).w("\"></div></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_4 }, {}); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" &bull; "); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_7 }, {}); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w(" &bull; "); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("checked=\"checked\""); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div>").f(ctx.get(["abstract"], false), ctx, "h").w("</div></div>"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-legend\" data-tc-layer-name=\"").f(ctx.get(["layerNames"], false), ctx, "h").w("\"><h4>").h("i18n", ctx, {}, { "$key": "content" }).w("</h4>").s(ctx.get(["legend"], false), ctx, { "block": body_11 }, {}).w(" </div>"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<div><p>").f(ctx.get(["title"], false), ctx, "h").w("</p><img data-tc-img=\"").f(ctx.get(["src"], false), ctx, "h").w("\" /></div>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_13 }, {}).w("</ul></div>"); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h", ["s"]).w("\" type=\"").f(ctx.get(["format"], false), ctx, "h").w("\" title=\"").f(ctx.get(["formatDescription"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.w("tc-hidden"); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w("tc-hidden"); } body_15.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-type-sgl'] = function () { dust.register(ctlProto.CLASS + '-type-sgl', body_0); function body_0(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "singleLayer" }); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-type-grp'] = function () { dust.register(ctlProto.CLASS + '-type-grp', body_0); function body_0(chk, ctx) { return chk.w("<div>").h("i18n", ctx, {}, { "$key": "groupLayerThatContains" }).w(":</div><ul>").s(ctx.get(["Layer"], false), ctx, { "block": body_1 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-ltoc-type-grp-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-type-grp-node'] = function () { dust.register(ctlProto.CLASS + '-type-grp-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-ltoc-tip-grp-elm\"><span>").f(ctx.get(["Title"], false), ctx, "h").w("</span><ul>").s(ctx.get(["Layer"], false), ctx, { "block": body_1 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-ltoc-type-grp-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
@@ -73237,33 +74108,6 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                     $li.find('input[type=range]').val(Math.round(e.opacity * 100));
                 }
             })
-            .on(TC.Consts.event.LAYERORDER, function (e) {
-                if (e.oldIndex >= 0 && e.oldIndex !== e.newIndex) {
-                    var $currentLi, $previousLi;
-                    var $ul = self._$div.find('ul').first();
-                    var $lis = $ul.children('li.' + self.CLASS + '-elm');
-                    for (var i = map.workLayers.length - 1; i >= 0; i--) {
-                        var layer = map.workLayers[i];
-                        $previousLi = $currentLi;
-                        $lis.each(function (idx, elm) {
-                            var $li = $(elm);
-                            if ($li.data(_dataKeys.layer) === layer) {
-                                $currentLi = $li;
-                                return false;
-                            }
-                        });
-                        if (layer === e.layer) {
-                            if ($previousLi) {
-                                $previousLi.after($currentLi);
-                            }
-                            else {
-                                $ul.prepend($currentLi);
-                            }
-                            break;
-                        }
-                    }
-                }
-            })            
             .on(TC.Consts.event.FEATURESIMPORT, function (e) {
                 var fileName = e.fileName;
                 if (e.features && e.features.length > 0) { // GLS: Escuchamos al evento FEATURESIMPORT para poder desplegar el control de capas cargadas
@@ -73392,9 +74236,9 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
 
             if (layer && layer.options.method && layer.options.method === "POST") {
                 layer.getLegendGraphicImage()
-                .done(function (src) {
-                    deferred.resolve(src);
-                })
+                    .done(function (src) {
+                        deferred.resolve(src);
+                    })
                 .fail(function (err) { TC.error(err); });
             } else {
                 deferred.resolve();
@@ -73534,18 +74378,20 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                                                 $drag
                                                     .removeClass(TC.Consts.classes.DRAG)
                                                     .addClass(TC.Consts.classes.DRAGEND);
-                                                // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
-                                                var dragDeltaY = $drag.css('transform');
-                                                dragDeltaY = parseInt(dragDeltaY.substr(dragDeltaY.lastIndexOf(',') + 1));
+
+                                                var getDeltaYFromTransform = function (transform) {
+                                                    // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
+                                                    return parseInt(transform.substr(transform.lastIndexOf(',') + 1));
+                                                };
+
+                                                var dragDeltaY = getDeltaYFromTransform($drag.css('transform'));
                                                 var dragLiTop = this.getBoundingClientRect().top - dragDeltaY;
                                                 var dropElm;
                                                 var $drop;
                                                 if (dd.dropTargetIndex >= 0) {
                                                     dropElm = $ul.children('li').get(dd.dropTargetIndex);
                                                     $drop = $(dropElm);
-                                                    // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
-                                                    var dropDeltaY = $drop.css('transform');
-                                                    dropDeltaY = parseInt(dropDeltaY.substr(dropDeltaY.lastIndexOf(',') + 1));
+                                                    var dropDeltaY = getDeltaYFromTransform($drop.css('transform'));
                                                     var dropLiTop = dropElm.getBoundingClientRect().top - dropDeltaY;
                                                 }
                                                 $drag.css('transform', $drop ? 'translateY(' + (dropLiTop - dragLiTop) + 'px)' : '');
@@ -73626,7 +74472,33 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                                                 {
                                                     handle: '.' + self.CLASS + '-dd'
                                                 }
-                                            );
+                                            )
+                                            .on('keydown', function (e) {
+                                                // Para mover capas con el teclado.
+                                                var elm = this;
+                                                var setFocus = function () {
+                                                    elm.focus();
+                                                }
+                                                var $elm = $(this);
+                                                switch (true) {
+                                                    case /Up$/.test(e.key):
+                                                        var $prev = $elm.prev();
+                                                        if ($prev.length) {
+                                                            moveLayer($elm, $prev, setFocus);
+                                                        }
+                                                        break;
+                                                    case /Down$/.test(e.key):
+                                                        var $next = $elm.next();
+                                                        if ($next.length) {
+                                                            moveLayer($elm, $next, setFocus);
+                                                        }
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+
+                                                //e.stopPropagation();
+                                            });
 
                                         $ul.prepend($li);
                                         self.updateScale();
@@ -73664,6 +74536,10 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
         });
     };
 
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+        TC.control.MapContents.prototype.updateLayerOrder.call(this, layer, oldIdx, newIdx);
+    };
+
     ctlProto.removeLayer = function (layer) {
         var self = this;
         var idx = self.layers.indexOf(layer);
@@ -73684,6 +74560,11 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
         $('.' + self.CLASS + '-n').text(nChildren).toggleClass(TC.Consts.classes.VISIBLE, nChildren > 0);
     };
 
+    ctlProto.getLayerUIElements = function () {
+        var self = this;
+        return self._$div.find('ul').first().children('li.' + self.CLASS + '-elm');
+    };
+
     var _controlRemoveAllLayersBtnVisibility = function () {
         var self = this;
         var layersLoaded = self._$div.find('li');
@@ -73696,7 +74577,7 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Click = function () {
@@ -73740,12 +74621,24 @@ TC.inherit(TC.control.Click, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.control.Click) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/Click.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/Click');
 }
+
+TC.Consts.event.POPUPHIDE = TC.Consts.event.POPUPHIDE || 'popuphide.tc';
+TC.Consts.event.RESULTSPANELCLOSE = TC.Consts.event.RESULTSPANELCLOSE || 'resultspanelclose.tc';
 
 TC.control.FeatureInfoCommons = function () {
     var self = this;
     TC.control.Click.apply(self, arguments);
+
+    self.resultsLayer = null;
+    self.filterLayer = null;
+    self._layersDeferred = $.Deferred();
+    self.filterFeature = null;
+    self.info = null;
+    self.popup = null;
+    self.resultsPanel = null;
+    self.lastFeatureCount = null;
 
     self._$dialogDiv = $(TC.Util.getDiv(self.options.dialogDiv));
     if (!self.options.dialogDiv) {
@@ -73753,12 +74646,17 @@ TC.control.FeatureInfoCommons = function () {
     }
 };
 
+TC.control.FeatureInfoCommons.displayMode = {
+    POPUP: 'popup',
+    RESULTS_PANEL: 'resultsPanel'
+};
+
 (function () {
 
     var liSelector = 'ul.tc-ctl-finfo-features li';
 
     var downplayFeatures = function (ctl) {
-        ctl.popup.$popupDiv.find('ul.' + ctl.CLASS + '-services li')
+        ctl.getDisplayTarget().find('ul.' + ctl.CLASS + '-services li')
             .removeClass(TC.Consts.classes.CHECKED)
             .removeClass(TC.Consts.classes.DISABLED)
             .removeClass(TC.Consts.classes.FROMLEFT)
@@ -73774,7 +74672,7 @@ TC.control.FeatureInfoCommons = function () {
             // this puede ser o el elemento HTML de la lista correspondiente a la feature o la feature en s\u00ed
             if (this instanceof TC.Feature) {
                 feature = this;
-                ctl.popup.$popupDiv.find(liSelector).each(function (idx, li) {
+                ctl.getDisplayTarget().find(liSelector).each(function (idx, li) {
                     var $currentFeatureLi = $(li);
                     var $currentLayerLi = $currentFeatureLi.parents('li').first();
                     var $currentServiceLi = $currentLayerLi.parents('li').first();
@@ -73807,15 +74705,26 @@ TC.control.FeatureInfoCommons = function () {
                 $serviceLi.addClass(TC.Consts.classes.FROMRIGHT);
             }
             feature = feature || ctl.getFeature(ctl.info, $serviceLi.index(), $layerLi.index(), $featureLi.index());
-            var features = ctl.layer.features.slice();
+
+            
+            var features = ctl.resultsLayer.features.slice();
+            var featureAlreadyHighlighted = features.filter(function (item) {
+                return feature && feature.id === item.id;
+            });
+
+            //Si la feature a resaltar ya est\u00e1 resaltada, no hacemos nada. As\u00ed evitamos parpadeo
+            if (featureAlreadyHighlighted.length > 0) {
+                return;
+            }
+
             for (var i = 0; i < features.length; i++) {
                 var f = features[i];
-                if (f !== ctl.marker) {
-                    ctl.layer.removeFeature(f);
+                if (f !== ctl.filterFeature) {
+                    ctl.resultsLayer.removeFeature(f);
                 }
             }
             if (feature && feature.geometry) {
-                ctl.layer.addFeature(feature);
+                ctl.resultsLayer.addFeature(feature);
             }
             else {
                 $featureLi.addClass(TC.Consts.classes.DISABLED);
@@ -73824,7 +74733,7 @@ TC.control.FeatureInfoCommons = function () {
     };
 
     var getNextLi = function (ctl, delta) {
-        var $lis = ctl.popup.$popupDiv.find('ul.' + ctl.CLASS + '-features > li');
+        var $lis = ctl.getDisplayTarget().find('ul.' + ctl.CLASS + '-features > li');
         var length = $lis.length;
         var $checkedLi = $lis.filter('.' + TC.Consts.classes.CHECKED);
         var checkedIdx = $lis.index($checkedLi.get(0));
@@ -73835,7 +74744,92 @@ TC.control.FeatureInfoCommons = function () {
 
     var ctlProto = TC.control.FeatureInfoCommons.prototype;
 
-    ctlProto.CLASS = 'tc-ctl-abstract-finfo';
+    ctlProto.CLASS = 'tc-ctl-finfo';
+
+    ctlProto.template = {};
+    if (TC.isDebug) {
+        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureInfo.html";
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/FeatureInfoDialog.html";
+        ctlProto.template[ctlProto.CLASS + '-del-btn'] = TC.apiLocation + "TC/templates/FeatureInfoDeleteButton.html";
+    }
+    else {
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-services\">").s(ctx.get(["services"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</ul>").x(ctx.get(["featureCount"], false), ctx, { "block": body_25 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li><h3>").x(ctx.getPath(false, ["mapLayer", "title"]), ctx, { "else": body_3, "block": body_4 }, {}).w("</h3><div class=\"tc-ctl-finfo-service-content\">").s(ctx.get(["hasLimits"], false), ctx, { "else": body_5, "block": body_24 }, {}).w("</div></li>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.f(ctx.getPath(false, ["mapLayer", "id"]), ctx, "h"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.f(ctx.getPath(false, ["mapLayer", "title"]), ctx, "h"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-layers\">").s(ctx.get(["layers"], false), ctx, { "else": body_6, "block": body_7 }, {}).w("</ul>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataAtThisService" }).w("</li>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w("<li><h4>").s(ctx.get(["path"], false), ctx, { "block": body_8 }, {}).w(" <span class=\"tc-ctl-finfo-layer-n\">").f(ctx.getPath(false, ["features", "length"]), ctx, "h").w("</span> </h4> <div class=\"tc-ctl-finfo-layer-content\"><ul class=\"tc-ctl-finfo-features\">").s(ctx.get(["features"], false), ctx, { "else": body_10, "block": body_11 }, {}).w("</ul></div></li>"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_9 }, {}); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w(" &bull; "); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataInThisLayer" }).w("</li>"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<li>").x(ctx.get(["rawContent"], false), ctx, { "else": body_12, "block": body_18 }, {}).w("</li>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.x(ctx.get(["error"], false), ctx, { "else": body_13, "block": body_17 }, {}); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<h5>").f(ctx.get(["id"], false), ctx, "h").w("</h5><table").x(ctx.get(["geometry"], false), ctx, { "block": body_14 }, {}).w("><tbody>").s(ctx.get(["attributes"], false), ctx, { "block": body_15 }, {}).w("</tbody></table>").x(ctx.get(["geometry"], false), ctx, { "block": body_16 }, {}); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.w(" title=\"").h("i18n", ctx, {}, { "$key": "clickToCenter" }).w("\""); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w("<tr><th class=\"tc-ctl-finfo-attr\">").f(ctx.get(["name"], false), ctx, "h").w("</th><td class=\"tc-ctl-finfo-val\">").f(ctx.get(["value"], false), ctx, "h").w("</td></tr>"); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-tools\"><button class=\"tc-ctl-finfo-tools-btn\" title=\"").h("i18n", ctx, {}, { "$key": "tools" }).w("\">").h("i18n", ctx, {}, { "$key": "tools" }).w("</button></div>"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").h("i18n", ctx, {}, { "$key": "fi.error" }).w("<span class=\"tc-ctl-finfo-error-text\">").f(ctx.get(["error"], false), ctx, "h").w("</span></span>"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.w("<h5>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h5>").h("eq", ctx, { "else": body_19, "block": body_20 }, { "key": ctx.get(["rawFormat"], false), "value": "text/html" }); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("<pre>").f(ctx.get(["rawContent"], false), ctx, "h").w("</pre>"); } body_19.__dustBody = !0; function body_20(chk, ctx) { return chk.w(" ").x(ctx.get(["expandUrl"], false), ctx, { "block": body_21 }, {}); } body_20.__dustBody = !0; function body_21(chk, ctx) { return chk.h("ne", ctx, { "else": body_22, "block": body_23 }, { "key": ctx.get(["expandUrl"], false), "value": "" }); } body_21.__dustBody = !0; function body_22(chk, ctx) { return chk.w("<iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" />"); } body_22.__dustBody = !0; function body_23(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-features-iframe-cnt\"><iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" /><a class=\"tc-ctl-finfo-open\" onclick=\"window.open('").f(ctx.get(["expandUrl"], false), ctx, "h").w("', '_blank')\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\"></a></div>"); } body_23.__dustBody = !0; function body_24(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").f(ctx.get(["hasLimits"], false), ctx, "h").w("</span>"); } body_24.__dustBody = !0; function body_25(chk, ctx) { return chk.h("gt", ctx, { "block": body_26 }, { "key": ctx.get(["featureCount"], false), "value": "1", "type": "number" }); } body_25.__dustBody = !0; function body_26(chk, ctx) { return chk.w("<a class=\"tc-ctl-btn tc-ctl-finfo-btn-prev\">").h("i18n", ctx, {}, { "$key": "previous" }).w("</a><div class=\"tc-ctl-finfo-counter\"><span class=\"tc-ctl-finfo-idx\"></span>/").f(ctx.get(["featureCount"], false), ctx, "h").w("</div><a class=\"tc-ctl-btn tc-ctl-finfo-btn-next\">").h("i18n", ctx, {}, { "$key": "next" }).w("</a>"); } body_26.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><div class=\"tc-ctl-finfo-dialog-dl\"><h2>").h("i18n", ctx, {}, { "$key": "download" }).w("</h2><div><button class=\"tc-button tc-ctl-finfo-dl-btn-kml\" data-format=\"KML\" title=\"KML\">KML</button><button class=\"tc-button tc-ctl-finfo-dl-btn-gml\" data-format=\"GML\" title=\"GML\">GML</button><button class=\"tc-button tc-ctl-finfo-dl-btn-geojson\" data-format=\"GeoJSON\" title=\"GeoJSON\">GeoJSON</button><button class=\"tc-button tc-ctl-finfo-dl-btn-wkt\" data-format=\"WKT\" title=\"WKT\">WKT</button></div></div><div class=\"tc-ctl-finfo-dialog-share\"></div></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-del-btn'] = function () { dust.register(ctlProto.CLASS + '-del-btn', body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-finfo-del-btn\" title=\"").h("i18n", ctx, {}, { "$key": "deleteFeature" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteFeature" }).w("</button>"); } body_0.__dustBody = !0; return body_0 };
+    }
+
+    ctlProto.register = function (map) {
+        var self = this;
+        TC.control.Click.prototype.register.call(self, map);
+
+        var resultsLayer;
+        if (self.options.resultsLayer) { // En caso de que se haya indicado una capa por configuraci\u00f3n, la utilizamos
+            resultsLayer = self.options.resultsLayer;
+        } else {
+            resultsLayer = {
+                id: TC.getUID(),
+                title: self.CLASS + ': Results layer',
+                type: TC.Consts.layerType.VECTOR,
+                stealth: true
+            };
+        }
+        var filterLayer;
+        if (self.options.filterLayer) {
+            filterLayer = self.options.filterLayer;
+        }
+        else {
+            filterLayer = {
+                id: TC.getUID(),
+                title: self.CLASS + ': Filter layer',
+                stealth: true,
+                type: TC.Consts.layerType.VECTOR
+                , styles: {
+                    line: { strokeColor: self.lineColor, strokeWidth: 2 },
+                    polygon: { strokeColor: self.lineColor, strokeWidth: 2, fillColor: "#000", fillOpacity: 0.3 }
+                }
+            };
+        }
+
+        map.loaded(function () {
+            $.when(map.addLayer(resultsLayer), map.addLayer(filterLayer)).then(function (rl, fl) {
+                self.resultsLayer = rl;
+                self.filterLayer = fl;
+                self._layersDeferred.resolve();
+            });
+        });
+
+        self.displayMode = self.options.displayMode || TC.control.FeatureInfoCommons.displayMode.POPUP;
+        self.setDisplayMode(self.displayMode);
+
+        map
+            .on(TC.Consts.event.BEFOREFEATUREINFO, function (e) {
+                self.querying = true;
+                self.beforeGetFeatureInfo(e);
+            })
+            .on(TC.Consts.event.FEATUREINFO, function (e) {
+                self.querying = false;
+                if (self.isActive) {
+                    self.lastFeatureCount = self.countFeatures(e);
+                    self.responseCallback(e);
+                }
+            })
+            .on(TC.Consts.event.NOFEATUREINFO, function (e) {
+                self.querying = false;
+                self.lastFeatureCount = 0;
+                self.closeResults();
+            })
+            .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
+                if (e.control === self.getDisplayControl() && self.resultsLayer) {
+                    self.resultsLayer.clearFeatures();
+                    clearTimeout(self._removeFilterFeatureTimeout);
+                    self._removeFilterFeatureTimeout = setTimeout(function () {
+                        if (!self.querying) {
+                            self.filterLayer.clearFeatures();
+                        }
+                    }, 50);
+                }
+            });
+    };
 
     ctlProto.render = function (callback) {
         var self = this;
@@ -73844,7 +74838,7 @@ TC.control.FeatureInfoCommons = function () {
                 .html(html)
                 .on(TC.Consts.event.CLICK, 'button[data-format]', function (e) {
                     TC.Util.closeModal();
-                    var feature = self.layer.features[self.layer.features.length - 1];
+                    var feature = self.resultsLayer.features[self.resultsLayer.features.length - 1];
                     self.map.exportFeatures([feature], {
                         fileName: feature.id,
                         format: $(e.target).data('format')
@@ -73862,114 +74856,231 @@ TC.control.FeatureInfoCommons = function () {
         noPrint: true
     };
 
+    ctlProto.setDisplayMode = function (mode) {
+        var self = this;
+        self.displayMode = mode;
+        var map = self.map;
+        switch (mode) {
+            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+                if (!self.resultsPanel) {
+                    var rp = map.getControlsByClass('TC.control.ResultsPanel')[0];
+                    if (rp) {
+                        self.resultsPanel = rp;
+                    }
+                    else {
+                        var setResultsPanel = function setResultsPanel(e) {
+                            if (TC.control.ResultsPanel && e.control instanceof TC.control.ResultsPanel) {
+                                self.resultsPanel = e.control;
+                                map.off(TC.Consts.event.CONTROLADD, setResultsPanel);
+                            }
+                        };
+                        map.on(TC.Consts.event.CONTROLADD, setResultsPanel);
+                    }
+                }
+                break;
+            default:
+                self.displayMode = TC.control.FeatureInfoCommons.displayMode.POPUP;
+                if (!self.popup) {
+                    $.when(map.addControl('popup', {
+                        closeButton: true,
+                        draggable: self.options.draggable
+                    })).then(function (popup) {
+                        self.popup = popup;
+                        popup.caller = self;
+                        map.on(TC.Consts.event.POPUP, function (e) {
+                            self.onShowPopUp(e);
+                        });
+
+                        map.on(TC.Consts.event.POPUPHIDE, function (e) {
+                            if (e.control === popup) {
+                                //restaurar el ancho autom\u00e1tico
+                                self.popup.$popupDiv.css("width", "auto");
+                            }
+                        });
+                    });
+                }
+                break;
+        }
+    };
+
+    ctlProto.getDisplayControl = function () {
+        var self = this;
+        switch (self.displayMode) {
+            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+                return self.resultsPanel;
+            default:
+                return self.popup;
+        }
+    };
+
+    ctlProto.getDisplayTarget = function () {
+        var self = this;
+        switch (self.displayMode) {
+            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+                return self.resultsPanel.$divTable;
+            default:
+                return self.popup.$popupDiv;
+        }
+    };
+
+    ctlProto.displayResults = function () {
+        var self = this;
+        self.filterFeature.data = $('<div>').append(self._$div.clone()).html();
+        switch (self.displayMode) {
+            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+                self.getDisplayTarget().html(self.filterFeature.data);
+                self.resultsPanel.open();
+                self.displayResultsCallback();
+                break;
+            default:
+                if (self.popup) {
+                    self.filterFeature.showPopup(self.popup);
+                }
+                break;
+        }
+    };
+
+    ctlProto.closeResults = function () {
+        var self = this;
+        switch (self.displayMode) {
+            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+                if (self.resultsPanel) {
+                    self.resultsPanel.close();
+                }
+                break;
+            default:
+                if (self.popup && self.popup.isVisible()) {
+                    self.popup.hide();
+                }
+                break;
+        }
+    };
+
+    ctlProto.displayResultsCallback = function () {
+        var self = this;
+        var $target = self.getDisplayTarget();
+
+        // A\u00f1adimos eventos si no est\u00e1n a\u00f1adidos de antes
+        var handlerKey = 'ficHandlers';
+        var hasHandlers = $target.data(handlerKey);
+        if (!hasHandlers) {
+            var selector;
+            // Evento para resaltar una feature
+            var events = 'click'; // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
+            $target.on(events, liSelector, function (e) {
+                highlightFeature.call(this, self.map.activeControl);
+            });
+
+            events = 'mouseenter';
+            var mouseoverTimeout;
+            $target.on(events, liSelector, function (e) {
+                var that = this;
+                if ($(that).parents('.' + self.CLASS + '-layers > li').hasClass(TC.Consts.classes.CHECKED)) {
+                    highlightFeature.call(that, self.map.activeControl);
+                }
+            });
+
+            // Evento para ir a la siguiente feature
+            events = TC.Consts.event.CLICK;
+            selector = '.' + self.CLASS + '-btn-next';
+            $target.on(events, selector, function (e) {
+                highlightFeature.call(getNextLi(self.map.activeControl, 1), self.map.activeControl, 1);
+                return false;
+            });
+
+            // Evento para ir a la feature anterior
+            selector = '.' + self.CLASS + '-btn-prev';
+            $target.on(events, selector, function (e) {
+                highlightFeature.call(getNextLi(self.map.activeControl, -1), self.map.activeControl, -1);
+                return false;
+            });
+
+            // Evento para desplegar/replegar features de capa
+            selector = 'ul.' + self.CLASS + '-layers h4';
+            $target.on(events, selector, function (e) {
+                var $li = $(e.target).parent();
+                if ($li.hasClass(TC.Consts.classes.CHECKED)) {
+                    // Si no est\u00e1 en modo m\u00f3vil ocultamos la capa
+                    if ($target.find('.tc-ctl-finfo-btn-next').css('display') === 'none') {
+                        downplayFeatures(self.map.activeControl);
+                    }
+                }
+                else {
+                    highlightFeature.call($li.find(liSelector).first()[0], self.map.activeControl);
+                    if (self.displayMode === TC.control.FeatureInfoCommons.displayMode.POPUP) {
+                        self.popup.fitToView(true);
+                    }
+                }
+            });
+
+            // Evento para activar botones de herramientas
+            selector = '.' + self.CLASS + '-tools-btn';
+            $target.on(events, selector, function (e) {
+                var done = new $.Deferred();
+
+                if (!self.map.activeControl._shareCtl) {
+                    self.map.addControl('share', {
+                        div: self.map.activeControl._$dialogDiv.find('.tc-modal-body .tc-ctl-finfo-dialog-share')
+                    }).then(function (ctl) {
+                        self.map.activeControl._shareCtl = ctl;
+                        done.resolve();
+                    });
+                } else {
+                    done.resolve();
+                }
+
+                $.when(done).then(function () {
+                    TC.Util.showModal(self.map.activeControl._$dialogDiv.find('.' + self.map.activeControl.CLASS + '-dialog'), {
+                        openCallback: function () {
+                            self.map.activeControl.onShowModal();
+                        }
+                    });
+                });
+            });
+
+            $target.data(handlerKey, true);
+        }
+
+        if (self.info) {
+            if (self.info.defaultFeature) {
+                highlightFeature.call(self.info.defaultFeature, self);
+            }
+            else {
+                highlightFeature.call($target.find(liSelector).first()[0], self);
+            }
+        }
+
+        $target.find('table').on("click", function (e) {
+            if ($(this).parent().hasClass(TC.Consts.classes.DISABLED))
+                return;
+            if (self.resultsLayer.features[0]) {
+                // Proceso para desactivar highlightFeature mientras hacemos zoom
+                var zoomHandler = function zoomHandler() {
+                    self._zooming = false;
+                    self.map.off(TC.Consts.event.ZOOM, zoomHandler);
+                }
+                self.map.on(TC.Consts.event.ZOOM, zoomHandler);
+                self._zooming = true;
+                ///////
+                self.map.zoomToFeatures([self.resultsLayer.features[0]], { animate: true });
+            }
+            e.stopPropagation();
+        });
+        $target.find('table a').on("click", function (e) {
+            e.stopPropagation();
+        });
+    };
+
     ctlProto.onShowPopUp = function (e) {
         var self = this;
         var map = self.map;
         var transitionEnd = 'transitionend.tc';
         if (e.control === self.popup) {
 
-            var $popupDiv = self.popup.$popupDiv;
+            self.displayResultsCallback();
 
-            // A\u00f1adimos eventos si no est\u00e1n a\u00f1adidos de antes
-            var handlerKey = 'ficHandlers';
-            var hasHandlers = $popupDiv.data(handlerKey);
-            if (!hasHandlers) {
-                var selector;
-                // Evento para resaltar una feature
-                var events = 'click'; // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
-                $popupDiv.on(events, liSelector, function (e) {
-                    highlightFeature.call(this, self);
-                });
-
-                events = 'mouseover';
-                var mouseoverTimeout;
-                $popupDiv.on(events, liSelector, function (e) {
-                    var that = this;
-                    clearTimeout(mouseoverTimeout);
-                    mouseoverTimeout = setTimeout(function () { // El timeout es para evitar el parpadeo al pasar el rat\u00f3n por encima del acorde\u00f3n
-                        highlightFeature.call(that, self);
-                    }, 50);
-                });
-
-                events = 'mouseout';
-                $popupDiv.on(events, liSelector, function (e) {
-                    clearTimeout(mouseoverTimeout);
-                });
-
-                // Evento para ir a la siguiente feature
-                events = TC.Consts.event.CLICK;
-                selector = '.' + self.CLASS + '-btn-next';
-                $popupDiv.on(events, selector, function (e) {
-                    highlightFeature.call(getNextLi(self, 1), self, 1);
-                    return false;
-                });
-
-                // Evento para ir a la feature anterior
-                selector = '.' + self.CLASS + '-btn-prev';
-                $popupDiv.on(events, selector, function (e) {
-                    highlightFeature.call(getNextLi(self, -1), self, -1);
-                    return false;
-                });
-
-                // Evento para desplegar/replegar features de capa
-                selector = 'ul.' + self.CLASS + '-layers h4';
-                $popupDiv.on(events, selector, function (e) {
-                    var $li = $(e.target).parent();
-                    if ($li.hasClass(TC.Consts.classes.CHECKED)) {
-                        // Si no est\u00e1 en modo m\u00f3vil ocultamos la capa
-                        if ($popupDiv.find('.tc-ctl-finfo-btn-next').css('display') === 'none') {
-                            downplayFeatures(self);
-                        }
-                    }
-                    else {
-                        highlightFeature.call($li.find(liSelector).first()[0], self);
-                        self.popup.fitToView(true);
-                    }
-                });
-
-                // Evento para activar botones de herramientas
-                selector = '.' + self.CLASS + '-tools-btn';
-                $popupDiv.on(events, selector, function (e) {
-                    TC.Util.showModal(self._$dialogDiv.find('.' + self.CLASS + '-dialog'), {
-                        openCallback: function () {
-                            self.onShowModal();
-                        }
-                    });
-                });
-
-                $popupDiv.data(handlerKey, true);
-            }
-
-            if (self.info) {
-                if (self.info.defaultFeature) {
-                    highlightFeature.call(self.info.defaultFeature, self);
-                }
-                else {
-                    highlightFeature.call($popupDiv.find(liSelector).first()[0], self);
-                }
-            }
             //ajustar el ancho para que no sobre a la derecha
             self.fitSize();
-
-            $popupDiv.find('table').on("click", function (e) {
-                if ($(this).parent().hasClass(TC.Consts.classes.DISABLED))
-                    return;
-                if (self.layer.features[1]) { // 0: punto de pulsaci\u00f3n, 1: feature de inter\u00e9s
-                    // Proceso para desactivar highlightFeature mientras hacemos zoom
-                    var zoomHandler = function zoomHandler() {
-                        self._zooming = false;
-                        map.off(TC.Consts.event.ZOOM, zoomHandler);
-                    }
-                    map.on(TC.Consts.event.ZOOM, zoomHandler);
-                    self.zooming = true;
-                    ///////
-                    map.zoomToFeatures([self.layer.features[1]], { animate: true });
-                }
-                e.stopPropagation();
-            });
-            $popupDiv.find('table a').on("click", function (e) {
-                e.stopPropagation();
-            });
         }
     };
 
@@ -73983,16 +75094,16 @@ TC.control.FeatureInfoCommons = function () {
 
     ctlProto.fitSize = function () {
         var self = this;
-        var div = self.popup.$popupDiv;
+        var $div = self.getDisplayTarget();
         var max = 0;
         //medir la m\u00e1xima anchura de <ul>
-        div.find(".tc-ctl-finfo-features li").each(function (ix, elto) {
+        $div.find(".tc-ctl-finfo-features li").each(function (ix, elto) {
             var x = self;
             max = Math.max(max, $(elto).position().left + $(elto).width());
         });
 
         //alert("max=" + max);
-        if (max) div.width(max + 50);
+        if (max) $div.width(max + 50);
     };
 
     ctlProto.countFeatures = function (e) {
@@ -74037,38 +75148,34 @@ TC.control.FeatureInfoCommons = function () {
 
     ctlProto.beforeGetFeatureInfo = function (e) {
         var self = this;
-        if (self.popup && self.popup.isVisible()) {
-            self.popup.hide();
-        }
-        if (e.control === self && self.map && self.layer) {
+        self.closeResults();
+        if (e.control === self && self.map && self.resultsLayer) {
             self.lastFeatureCount = null;
 
-            var title = self.getLocaleString('featureInfo');
-            self.layer.clearFeatures();
+            self.resultsLayer.clearFeatures();
             self.info = null;
-
-            //aqu\u00ed se pone el puntito temporal
-            $.when(self.layer.addMarker(self.map.getCoordinateFromPixel(e.xy)
-                                   , $.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title })
-                   )
-           ).then(function (marker) {
-               //cuando se queda el puntito es porque esto sucede tras el cierre de la popup
-               //o sea
-               //lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
-               //pero en el caso raro (la primera vez), ocurre al rev\u00e9s. Entonces, ya se habr\u00e1 establecido lastFeatureCount (no ser\u00e1 null)
-               if (self.lastFeatureCount === null) {
-                   self.map.putLayerOnTop(self.layer);
-                   self.marker = marker;
-               }
-               else {
-                   self.layer.clearFeatures();
-               }
-           });
         }
-        else
-            if (self.popup) {
-                self.popup.hide();
-            }
+    };
+
+    ctlProto.activate = function () {
+        var self = this;
+        if (self.wrap) {
+            self.wrap.activate();
+        }
+        TC.Control.prototype.activate.call(self);
+    };
+
+    ctlProto.deactivate = function (stopChain) {
+        var self = this;
+        if (self.popup) {
+            self.popup.hide();
+        }
+        self.resultsLayer.clearFeatures();
+        self.filterLayer.clearFeatures();
+        if (self.wrap) {
+            self.wrap.deactivate();
+        }
+        TC.Control.prototype.deactivate.call(self, stopChain);
     };
 
 })();
@@ -74078,7 +75185,7 @@ TC.Consts = TC.Consts || {};
 TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Scale = function () {
@@ -74206,7 +75313,7 @@ TC.inherit(TC.control.Scale, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 (function () {
@@ -74252,6 +75359,9 @@ if (!TC.control.MapContents) {
                     console.error('Could not register service worker: ' + reason);
                 }
             );
+        }
+        else {
+            self._serviceWorkerDeferred.reject();
         }
     };
 
@@ -76214,6 +77324,7 @@ if (!window.OpenLayers) {
     };
     
     TC.wrap.layer.Raster.prototype.getAllLayerNodes = function () {
+        var self = this;
         var capabilities = this.parent.capabilities;
         switch (self.getServiceType()) {
             case TC.Consts.layerType.WMS:
@@ -77064,7 +78175,7 @@ if (!window.OpenLayers) {
         var self = this;
         if (self.parser) {
             if (!TC.Feature) {
-                TC.syncLoadJS(TC.apiLocation + 'TC/Feature.js');
+                TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
             }
             result = $.map(self.parser.read(data), function (feat) {
                 return new TC.Feature(null, { id: feat.fid, data: feat.data });
@@ -77251,6 +78362,14 @@ if (!window.OpenLayers) {
                 });
             });
         });
+    };
+
+    TC.wrap.control.OverviewMap.prototype.get3DCameraLayer = function () {
+        TC.error('TC.wrap.control.OverviewMap.prototype.get3DCameraLayer no implementado en OpenLayers 2');
+    };
+
+    TC.wrap.control.OverviewMap.prototype.draw3DCamera = function (options) {
+        TC.error('TC.wrap.control.OverviewMap.prototype.draw3DCamera no implementado en OpenLayers 2');
     };
 
     TC.wrap.control.OverviewMap.prototype.enable = function () {
@@ -77645,7 +78764,7 @@ if (!window.OpenLayers) {
         if (olFeat.geometry instanceof OpenLayers.Geometry.Point) {
             TC.loadJS(
                 !TC.feature || (TC.feature && !TC.feature.Point),
-                [TC.apiLocation + 'TC/feature/Point.js'],
+                [TC.apiLocation + 'TC/feature/Point'],
                 function () {
                     result.resolve(new TC.feature.Point(olFeat, options));
                 }
@@ -77655,7 +78774,7 @@ if (!window.OpenLayers) {
             if (olFeat.geometry instanceof OpenLayers.Geometry.LineString) {
                 TC.loadJS(
                     !TC.feature || (TC.feature && !TC.feature.Polyline),
-                    [TC.apiLocation + 'TC/feature/Polyline.js'],
+                    [TC.apiLocation + 'TC/feature/Polyline'],
                     function () {
                         result.resolve(new TC.feature.Polyline(olFeat, options));
                     }
@@ -77665,7 +78784,7 @@ if (!window.OpenLayers) {
                 if (olFeat.geometry instanceof OpenLayers.Geometry.MultiLineString) {
                     TC.loadJS(
                         !TC.feature || (TC.feature && !TC.feature.MultiPolyline),
-                        [TC.apiLocation + 'TC/feature/MultiPolyline.js'],
+                        [TC.apiLocation + 'TC/feature/MultiPolyline'],
                         function () {
                             result.resolve(new TC.feature.MultiPolyline(olFeat, options));
                         }
@@ -77675,7 +78794,7 @@ if (!window.OpenLayers) {
                     if (olFeat.geometry instanceof OpenLayers.Geometry.Polygon) {
                     TC.loadJS(
                         !TC.feature || (TC.feature && !TC.feature.Polygon),
-                        [TC.apiLocation + 'TC/feature/Polygon.js'],
+                        [TC.apiLocation + 'TC/feature/Polygon'],
                         function () {
                             result.resolve(new TC.feature.Polygon(olFeat, options));
                         }
@@ -77685,7 +78804,7 @@ if (!window.OpenLayers) {
                         if (olFeat.geometry instanceof OpenLayers.Geometry.MultiPolygon) {
                     TC.loadJS(
                                 !TC.feature || (TC.feature && !TC.feature.MultiPolygon),
-                                [TC.apiLocation + 'TC/feature/MultiPolygon.js'],
+                                [TC.apiLocation + 'TC/feature/MultiPolygon'],
                                 function () {
                                     result.resolve(new TC.feature.MultiPolygon(olFeat, options));
                                 }
@@ -77694,7 +78813,7 @@ if (!window.OpenLayers) {
                         else {
                             TC.loadJS(
                         !TC.Feature,
-                        [TC.apiLocation + 'TC/Feature.js'],
+                        [TC.apiLocation + 'TC/Feature'],
                         function () {
                             result.resolve(new TC.Feature(olFeat, options));
                         }
@@ -78102,7 +79221,7 @@ if (!window.OpenLayers) {
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Attribution = function () {
@@ -78112,7 +79231,9 @@ TC.control.Attribution = function () {
 
     self.apiAttribution = '';
     self.mainDataAttribution = '';
-    self.dataAttributions = [];
+    self.dataAttributions = self.options.dataAttributions && self.options.dataAttributions instanceof Array ?
+        self.options.dataAttributions : [self.options.dataAttributions] ||
+        [];
 };
 
 TC.inherit(TC.control.Attribution, TC.Control);
@@ -78232,7 +79353,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
 }
 
 TC.control.BasemapSelector = function () {
@@ -78333,6 +79454,10 @@ TC.inherit(TC.control.BasemapSelector, TC.control.MapContents);
         }
     };
 
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+        // Este control no tiene que hacer nada
+    };
+
     ctlProto.removeLayer = function (layer) {
         var self = this;
         if (layer.isBase) {
@@ -78352,7 +79477,7 @@ TC.inherit(TC.control.BasemapSelector, TC.control.MapContents);
 TC.control = TC.control || {};
 
 if (!TC.control.SWCacheClient) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
 }
 
 (function () {
@@ -79370,7 +80495,7 @@ if (!TC.control.SWCacheClient) {
             self.layer = layer;
             TC.loadJS(
                 !TC.control.Draw,
-                TC.apiLocation + 'TC/control/Draw.js',
+                TC.apiLocation + 'TC/control/Draw',
                 function () {
                     self.boxDraw = new TC.control.Draw({
                         div: self._$div.find(self._selectors.DRAW),
@@ -79914,7 +81039,7 @@ if (!TC.control.SWCacheClient) {
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Coordinates = function () {
@@ -80194,12 +81319,12 @@ TC.inherit(TC.control.Coordinates, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Download = function (options) {
     var self = this;
-    self._classSelector = '.' + self.CLASS;
+    self._classSelector = '.' + self.CLASS;   
 
     TC.Control.apply(self, arguments);
 
@@ -80214,7 +81339,7 @@ TC.inherit(TC.control.Download, TC.Control);
 
 (function () {
     var ctlProto = TC.control.Download.prototype;
-    
+
     ctlProto.CLASS = 'tc-ctl-download';
 
     ctlProto.template = {};
@@ -80223,7 +81348,7 @@ TC.inherit(TC.control.Download, TC.Control);
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Download.html";
         ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/DownloadDialog.html";
     } else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "download" }).w("</h2><div><div class=\"tc-ctl-download-div\"><div class=\"tc-ctl-download\"><div class=\"tc-group tc-ctl-download-cnt\"><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format\" class=\"tc-combo\"><option value=\"GML32\">GML</option><option value=\"application/json\">GeoJSON</option><option value=\"application/vnd.google-earth.kml+xml\">KML (Google Earth)</option><option value=\"shape-zip\">Shape (ESRI)</option></select></div></div><form class=\"tc-ctl-download-form\" method=\"post\" enctype=\"text/plain\"><!--HACK: El servicio WFS espera que en el payload del POST llegue la consulta WFS (en este caso GetFeature). El problema es que debe llegar solo la consulta,no en formato clave=valor. Por tanto, lo \u00fanico que se me ha ocurrido es buscar el primer signo ‘=’ de la consulta, y poner lo que hay a la izquerda en el namedel input Y lo de la derecha en el value (se inserta desde al archivo Download.js)--><input type=\"hidden\" name=\"<wfs:GetFeature xmlns:xsi\" class=\"tc-ctl-download-query\" /></form><div class=\"tc-group tc-ctl-download-cnt\"><i class=\"tc-ctl-download-help icon-question-sign\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "showDownloadHelp" }).w("\"></i><button class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadLayersFromCurrentExtent" }).w("\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div><div class=\"tc-alert alert-warning tc-hidden\"><p id=\"zoom-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures.instructions" }).w("</p><p id=\"layers-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded.instructions" }).w("</p><p id=\"url-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers.instructions" }).w("</p><p id=\"noFeatures-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noData" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noData.instructions" }).w("</p></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "download" }).w(" <span class=\"tc-beta\">").h("i18n", ctx, {}, { "$key": "beta" }).w("</span> </h2><div class=\"tc-ctl-sctnr tc-ctl-sctnr-select\"><form><label class=\"tc-ctl-sctnr-tab tc-ctl-download-image\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"image\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.map" }).w("</span></label><label class=\"tc-ctl-sctnr-tab tc-ctl-download-data\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"data\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.vector" }).w("</span></label></form></div><div class=\"tc-ctl tc-ctl-sctnr-elm tc-ctl-sctnr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image tc-hidden\"><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format-image\" class=\"tc-combo\"><option value=\"image/png\">PNG</option><option value=\"image/jpeg\">JPEG</option></select><div class=\"tc-ctl-download-div\"><input id=\"tc-ctl-download-image-qr\" class=\"tc-hidden\" type=\"checkbox\" checked style=\"display:none;\" /><label for=\"tc-ctl-download-image-qr\" class=\"tc-ctl-download-image-qr-label\" title=\"").h("i18n", ctx, {}, { "$key": "createQrCodeToImage" }).w("\">").h("i18n", ctx, {}, { "$key": "appendQRCode" }).w("</label></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadImageFromCurrentMap" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div></div><div class=\"tc-ctl tc-ctl-sctnr-elm tc-ctl-sctnr-elm-data tc-group tc-ctl-download-cnt tc-hidden\"><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format\" class=\"tc-combo\"><option value=\"GML32\">GML</option><option value=\"application/json\">GeoJSON</option><option value=\"application/vnd.google-earth.kml+xml\">KML (Google Earth)</option><option value=\"shape-zip\">Shape (ESRI)</option></select><div class=\"tc-ctl-download-div\"><i class=\"tc-ctl-download-help icon-question-sign\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "showDownloadHelp" }).w("\"></i></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadLayersFromCurrentExtent" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div><div class=\"tc-alert alert-warning tc-hidden\"><p id=\"zoom-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures.instructions" }).w("</p><p id=\"layers-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded.instructions" }).w("</p><p id=\"url-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers.instructions" }).w("</p><p id=\"noFeatures-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noData" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noData.instructions" }).w("</p><p id=\"novalid-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noValidService" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noValidService.instructions" }).w("</p></div></div>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w(" <div class=\"tc-ctl-download-help-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "downloadData" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "dl.instructions.1|s" }).w("</p><ul><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.2|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.3|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.4|s" }).w("<ul><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.5|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.6|s" }).w("</li></ul></li></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
@@ -80232,146 +81357,260 @@ TC.inherit(TC.control.Download, TC.Control);
         self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._$dialogDiv.html(html);
         }).then(function () {
-            TC.Control.prototype.render.call(self, callback);
+            TC.Control.prototype.render.call(self, function () {
+                var selDisabledCLASS = self.CLASS + '-seldisabled';
+
+                var cs = '.tc-ctl-sctnr';
+                self._selectors = {
+                    TAB: cs + '-tab',
+                    RADIOBUTTON: 'input[type=radio][name=sctnr-sel]',
+                    ELEMENT: cs + '-elm'
+                };
+
+                var clickHandler = function (e) {
+                    var $cb = $(this).closest(self._selectors.TAB).find(self._selectors.RADIOBUTTON);
+                    var newValue = $cb.val();
+                    var $elms = self._$div.find(self._selectors.ELEMENT);
+                    if (self._oldValue === newValue && self.options.deselectable) {
+                        setTimeout(function () {
+                            $cb.prop("checked", false);
+                        }, 0);
+                        self._oldValue = null;
+                        $active = $();
+                        $hidden = $elms;
+                    }
+                    else {
+                        $active = $elms.filter(self._selectors.ELEMENT + '-' + newValue);
+                        $hidden = $elms.not($active);
+                        self._oldValue = newValue;
+                    }
+
+                    $active.removeClass(TC.Consts.classes.HIDDEN);
+                    $hidden.addClass(TC.Consts.classes.HIDDEN);
+                    $cb.prop("checked", true);
+                };
+
+                self._$div.find('span').on(TC.Consts.event.CLICK, clickHandler);                
+
+                if (callback)
+                    callback();
+            });
         });
     };
 
     ctlProto.register = function (map) {
         var self = this;
-        TC.Control.prototype.register.call(self, map);
-        var layerNames = [];
-        var maxFeatures = 0;
-
-        /**
-         * Lee del capabilities del WFS la configuraci\u00f3n del n\u00famero m\u00e1ximo de features que el servidor devuelve en
-         * la operaci\u00f3n de GetFeature.
-         */
-        var _readWfsMaxFeaturesConstraint = function () {
-            if (!self.options.serviceUrl) {
-                TC.error("No se ha encontrado el par\u00e1metro serviceUrl en el control de descarga");
-                return;
-            }
-            $.get(self.options.serviceUrl + "?request=getcapabilities")
-                .done(function (data) {
-                    var operations = TC.Util.getElementByNodeName(data, "ows:Operation");
-                    if (operations && operations.length > 0) {
-                        var getFeatureNode;
-                        for (var i = 0; i < operations.length; i++) {
-                            if (operations[i].attributes["name"].value == "GetFeature") {
-                                getFeatureNode = operations[i];
-                            }
-                        }
-                        if (getFeatureNode) {
-                            var constraints = TC.Util.getElementByNodeName(getFeatureNode, "ows:Constraint");
-                            for (var i = 0; i < constraints.length; i++) {
-                                if (constraints[i].attributes["name"].value == "CountDefault") {
-                                    maxFeatures = parseInt(TC.Util.getElementByNodeName(constraints[i], "ows:DefaultValue")[0].textContent);
-                                }
-                            }
-                        }
-                    }
-                })
-                .fail(function (data) {
-                    console.error(data);
-                });
-        };
-
-        /**
-         * A\u00f1ade el nombre de una capa al array de capas a descargar.
-         */
-        var _process = function (value) {
-            layerNames.push(value.name);
-        };
-
-        /**
-         * Funci\u00f3n recursiva para recorrer el \u00e1rbol de capas existentes dentro de un nodo.
-         */
-        var _traverse = function (o, func) {
-            if (o instanceof Array) {
-                for (var i = 0; i < o.length; i++)
-                    _traverse(o[i], func);                
-                }
-            else {
-                if (o.hasOwnProperty('children') && o.children.length > 0)
-                    _traverse(o.children, func);
-            }
-
-            if (o.hasOwnProperty('children') && o.children.length == 0)
-                func.apply(this, [o]);
-        };
+        TC.Control.prototype.register.call(self, map);       
 
         /**
          * Descarga las features de las capas de trabajo actualmente seleccionadas. Comprueba que el n\u00famero de features a descargar
          * no excede el l\u00edmite impuesto por el servidor.
          */
+
+        var getUrlWithoutParams = function () {
+            var url = window.location.href;
+            var start = url.indexOf('?');
+            var end = url.indexOf('#');
+
+            //Borramos los par\u00e1metros de la URL y dejamos s\u00f3lo el hash
+            if (start > 0) {
+                if (start < end) {
+                    url = url.replace(url.substring(start, end), '');
+                } else {
+                    url = url.replace(url.substring(start, url.length - 1), '');
+                }
+            }
+
+            return url;
+        };
+
+        var getQrCode = function (url) {
+            var deferred = $.Deferred();
+            var QR_MAX_URL_LENGTH = 150;
+
+            if (url) {
+                TC.loadJS(
+                    typeof QRCode === 'undefined',
+                    [TC.apiLocation + 'lib/qrcode/qrcode.min.js'],
+                    function () {
+
+                        if (url.length > QR_MAX_URL_LENGTH) {
+                            url = TC.Util.shortenUrl(url);
+                        }
+
+                        $('body').append('<div id="qrcode"></div>');                                              
+                        var $codeContainer = $('#qrcode');                        
+                        var code = new QRCode($codeContainer.get(0), {
+                            text: url,
+                            width: 85,
+                            height: 85
+                        });
+                        setTimeout(function () {                            
+                            var imgBase64 = $codeContainer.find('img').attr('src');
+                            $codeContainer.remove();
+                            deferred.resolve(imgBase64);
+                        }, 100);
+                    });
+            } else {
+                deferred.resolve(imgBase64);
+            }
+
+            return deferred.promise();
+        };
+
         var _download = function () {
-            var format = self._$div.find("select").val();
-            var visibleLayers = _getVisibleLayers();
+            var wait = self.map.getLoadingIndicator().addWait();
 
-            if (visibleLayers.length > 0) {
-                layerNames = [];
+            var format = $active.find('select').val();
+            if ($active.find('select').val().indexOf('image') > -1) {
+                var doneQR = $.Deferred();
+                var canvas = self.map.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
+                var newCanvas = TC.Util.cloneCanvas(canvas);
+                var result;
 
-                for (var i = 0; i < visibleLayers.length; i++) {
-                    if (visibleLayers[i].url.indexOf(self.options.downloadServiceUrl) >= 0) {
-                        _traverse(visibleLayers[i].getTree(), _process);
-                    }
+                var sb = self.map.getControlsByClass(TC.control.ScaleBar);
+                if (sb.length == 0) {
+                    sb = new TC.control.ScaleBar();
+                    sb.register(self.map);
+                    sb.render();
                 }
 
-                var featureCount = 0;
-                //Hacemos una consulta con el par\u00e1metro hits para obtener el n\u00famero de features que devolver\u00e1 la petici\u00f3n
-                var extent = self.map.getExtent();
-                var queryHeader = '"http://www.w3.org/2001/XMLSchema-instance" ' +
-                'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
-                'xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" ' +
-                'xmlns:ogc="http://www.opengis.net/ogc" service="WFS" version="1.1.0" {resultType} outputFormat="{format}">';
+                if (sb) {
 
-                query = '<wfs:GetFeature xmlns:xsi=' + queryHeader.format({ resultType: 'resultType="hits"', format: "application/json" });
-                var queryItem = '<wfs:Query typeName="{typeName}">' +
-                    '<ogc:Filter xmlns="http://www.opengis.net/ogc">' +
-                      '<ogc:BBOX>' +
-                        '<gml:Envelope>' +
-                            '<gml:lowerCorner>{lowerCorner}</gml:lowerCorner>' +
-                            '<gml:upperCorner>{upperCorner}</gml:upperCorner>' +
-                        '</gml:Envelope>' +
-                      '</ogc:BBOX>' +
-                    '</ogc:Filter>' +
-                  '</wfs:Query>';
+                    var ctx = newCanvas.getContext("2d");
+                    ctx.save();
 
-                var queryBody = "";
-                $.each(layerNames, function (index, value) {
-                    queryBody += queryItem.format({ typeName: value, lowerCorner: extent[0] + ' ' + extent[1], upperCorner: extent[2] + ' ' + extent[3] });
-                });
-                query += queryBody + '</wfs:GetFeature>';
+                    var elem = document.getElementsByClassName("ol-scale-line-inner");
+                    var node = elem.item(0);
+                    var boundingCR = $.extend({}, node.getBoundingClientRect());
 
-                $.ajax({
-                    url: self.options.serviceUrl,
-                    async: false, //Para evitar que la pesta\u00f1a abierta con window.open sea bloqueada por el navegador
-                    data: query,
-                    contentType: "application/xml",
-                    type: "POST",
-                    success: function (data) {
-                        if (data.childNodes[0].attributes.numberOfFeatures) {
-                            featureCount = parseInt(data.childNodes[0].attributes.numberOfFeatures.value);
+                    elem = document.getElementsByClassName(sb[0].CLASS);
+                    var fillnode = elem.item(0);
+                    var fillBoundingCR = $.extend({}, fillnode.getBoundingClientRect());
 
-                            //Si el n\u00famero de features es mayor o igual que el l\u00edmite fijado por el servidor, es porque realmente
-                            //en ese \u00e1rea hay m\u00e1s. Por tanto, le pedimos al usuario que seleccione un \u00e1rea menor                    
-                            query = queryHeader.format({ resultType: "", format: format }) + queryBody + '</wfs:GetFeature>';
-                            if (featureCount < maxFeatures) {
-                                var downloadForm = $("form.tc-ctl-download-form");
-                                $(".tc-ctl-download-query").val(query);
-                                downloadForm.attr("action", self.options.serviceUrl + "?download=zip");
-                                downloadForm.submit();
-                            } else {
-                                _showAlerMsg({ zoom: true });
-                            }
-                        } else {
-                            _showAlerMsg({ noFeatures: true });
-                        }
+                    var text = node.textContent;
+
+                    var isRotated = false;                    
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = window.getComputedStyle(node).borderColor;
+
+                    var width, height;
+
+                    if (boundingCR.width > boundingCR.height) {
+
+                        width = boundingCR.width;
+                        height = boundingCR.height;
                     }
-                });
-            } else {
-                _showAlerMsg({ layers: true });
+                    else {
+
+                        width = boundingCR.height;
+                        height = boundingCR.width;                        
+                    }
+
+                    fillBoundingCR.left = boundingCR.left = 15;
+                    fillBoundingCR.left = fillBoundingCR.left - 2;
+
+                    fillBoundingCR.top = boundingCR.top = 15;
+                    fillBoundingCR.top--;
+
+                    ctx.moveTo(boundingCR.left, boundingCR.top);
+                    ctx.lineTo(boundingCR.left, boundingCR.top + height);
+                    ctx.lineTo(boundingCR.left + width, boundingCR.top + height);
+                    ctx.lineTo(boundingCR.left + width, boundingCR.top);
+
+                    ctx.stroke();
+
+                    var textMetrics = ctx.measureText(text);
+                    var textPosition = {
+                        x: boundingCR.left + width / 2,
+                        y: boundingCR.top + height / 2
+                    };                    
+
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillStyle = window.getComputedStyle(fillnode).backgroundColor;
+                    width += 4;
+                    height += 4;
+                    ctx.fillRect(fillBoundingCR.left, fillBoundingCR.top, width, height);                   
+
+                    ctx.globalAlpha = 1.0;
+                    ctx.fillStyle = window.getComputedStyle(node).color;
+
+                    ctx.font = window.getComputedStyle(node).fontSize + " " + window.getComputedStyle(node).fontFamily;
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(text, textPosition.x, textPosition.y);                    
+                }
+
+
+                if ($active.find('#tc-ctl-download-image-qr:checked').length > 0) {
+                    $.when(getQrCode(getUrlWithoutParams())).then(function (qrCodeBase64) {
+                        if (qrCodeBase64) {
+                            var ctx = newCanvas.getContext("2d");
+                            ctx.fillStyle = "#ffffff";
+                            ctx.fillRect(newCanvas.width - 91, newCanvas.height - 91, 91, 91);
+
+                            $.when(TC.Util.addToCanvas(newCanvas, qrCodeBase64, { x: newCanvas.width - 88, y: newCanvas.height - 88 })).then(function (mapCanvas) {
+                                doneQR.resolve(mapCanvas);
+                            });
+                        } else {
+                            TC.error(self.getLocaleString('dl.export.map.error') + ': ' + 'QR');
+                            self.map.getLoadingIndicator().removeWait(wait);
+                        }
+                    });
+                } else {
+                    doneQR.resolve(newCanvas);
+                }
+
+                $.when(doneQR).then(function (_canvas) {
+                    try {
+                        result = _canvas.toDataURL(format);                        
+                        TC.Util.downloadDataURI(window.location.hostname + '_' + TC.Util.getFormattedDate(new Date().toString(), true) + '.' + format.split('/')[1], format, result);
+                    } catch (e) {
+                        TC.error(self.getLocaleString('dl.export.map.error') + ': ' + e.message);
+                    }
+
+                    self.map.getLoadingIndicator().removeWait(wait);
+                });                
             }
+            else {
+                var visibleLayers = _getVisibleLayers();
+
+                var extent = self.map.getExtent();
+                var arrPromises = TC.WFSGetFeatureBuilder(self.map, extent, format, true);
+                $.when.apply($, arrPromises).then(function () {                    
+
+                    var responses = $.grep(arguments, function (item) { return item != null });
+                    if (responses.length === 0) {
+                        _showAlertMsg({ layers: true }, wait);
+                        return;
+                    }
+                    var arrDownloads = [];
+                    for (var i = 0; i < responses.length; i++) {
+                        if (responses[i].err) {
+                            switch (responses[i].err) {
+                                case "NumMaxFeatures":
+                                    _showAlertMsg({ zoom: true, serviceName: responses[i].service.mapLayer.title }, wait);
+                                    break;
+                                case "NameResolutionFailure":
+                                    _showAlertMsg({ noValid: true, serviceName: responses[i].service.mapLayer.title }, wait);
+                                    break;
+                                default:
+                                    _showAlertMsg({ noValid: true, serviceName: responses[i].service.mapLayer.title }, wait);
+                                //TC.error(responses[i].errorThrown, TC.Consts.msgErrorMode.CONSOLE)
+                            }
+                            continue;
+                        }
+                        var data = responses[i].data;
+                        var url = responses[i].url;
+                        if (data && url)
+                            arrDownloads.push({ url: url + "?download=zip", data: data });
+                    }
+
+                    TC.Util.downloadFileForm(arrDownloads);
+                    self.map.getLoadingIndicator().removeWait(wait);
+                });
+            }            
         };
 
         /**
@@ -80390,21 +81629,25 @@ TC.inherit(TC.control.Download, TC.Control);
             return visibleLayers;
         };
 
-        var _showAlerMsg = function (error) {
+        var _showAlertMsg = function (error, wait) {
             var alert = self._$div.find(".alert-warning");
             var errorMsg;
 
             if (error.zoom) {
-                errorMsg = alert.find("#zoom-msg").html();
+                errorMsg = alert.find("#zoom-msg").html().format({ serviceName: error.serviceName });
             } else if (error.layers) {
-                errorMsg = alert.find("#layers-msg").html();
+                errorMsg = self.getLocaleString('noLayersLoaded');
             } else if (error.url) {
-                errorMsg = alert.find("#url-msg").html();
+                errorMsg = self.getLocaleString('tooManySelectedLayers');
             } else if (error.noFeatures) {
                 errorMsg = alert.find("#noFeatures-msg").html();
+            } else if (error.noValid) {
+                errorMsg = alert.find("#novalid-msg").html().format({ serviceName: error.serviceName });
             }
 
-            self.map.toast(errorMsg, {type:TC.Consts.msgType.WARNING});            
+            self.map.toast(errorMsg, { type: TC.Consts.msgType.WARNING });
+
+            self.map.getLoadingIndicator().removeWait(wait);            
         };
 
         var _showHelp = function (evt) {
@@ -80412,7 +81655,6 @@ TC.inherit(TC.control.Download, TC.Control);
             TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-help-dialog'));
         };
 
-        _readWfsMaxFeaturesConstraint();
         self._$div.on(TC.Consts.event.CLICK, '.tc-ctl-download-btn', _download);
         self._$div.on(TC.Consts.event.CLICK, '.tc-ctl-download-help', _showHelp);
     };
@@ -80422,16 +81664,16 @@ TC.inherit(TC.control.Download, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 if (!TC.Feature || !TC.feature.Point) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point');
 }
 if (!TC.Feature || !TC.feature.Polyline) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polyline.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polyline');
 }
 if (!TC.Feature || !TC.feature.Polygon) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polygon.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polygon');
 }
 
 TC.Consts.event.DRAWSTART = 'drawstart.tc';
@@ -80751,7 +81993,7 @@ TC.Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
 TC.control = TC.control || {};
 
 if (!TC.control.SWCacheClient) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
 }
 
 TC.Consts.editMode = {
@@ -81928,7 +83170,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.ExternalWMS = function (options) {
@@ -82022,6 +83264,17 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                         "url": url,
                         "hideTree": false
                     };
+                    //URI: recorremos las opciones buscando el servicio que se va a agregar a ver si tiene parametro layerNames
+                    for (var i = 0; i < self.options.suggestions.length; i++) {
+                        var _current=$.grep(self.options.suggestions[i].items, function (item, i) {
+                            return item.url === url;
+                        });
+                        if (_current.length > 0 && _current[0].layerNames)
+                        {
+                            obj["layerNames"] = _current[0].layerNames;
+                            break;
+                        }
+                    }
 
                     var layer = new TC.layer.Raster(obj);
                     layer.getCapabilitiesPromise().then(function (cap) {
@@ -82060,12 +83313,14 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
         });
 
         map.on(TC.Consts.event.LAYERADD, function (e) {
-            var url = e.layer.url;
-            var $optionSelected = self._$div.find("select option").filter(function (idx, elm) {
-                return TC.Util.addProtocol(elm.value) === TC.Util.addProtocol(url);
-            });
-            self.markServicesAsSelected($optionSelected);
-            self._addedUrls.push(url);
+            if (e.layer && !e.layer.isBase) {
+                var url = e.layer.url;
+                var $optionSelected = self._$div.find("select option").filter(function (idx, elm) {
+                    return TC.Util.addProtocol(elm.value) === TC.Util.addProtocol(url);
+                });
+                self.markServicesAsSelected($optionSelected);
+                self._addedUrls.push(url);
+            }
         });
     };
 
@@ -82074,8 +83329,8 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ExternalWMS.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () {
-            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["title"], false), ctx, { "block": body_1 }, {}).w("<div><div class=\"tc-group tc-ctl-xwms-cnt\"> <select id=\"add-wms-select\" class=\"tc-combo\" title=\"WMS (Web Map Service)\"><option value=\"\">WMS</option>").s(ctx.get(["suggestions"], false), ctx, { "block": body_2 }, {}).w("</select><input type=\"text\" class=\"tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "writeAddressOrSelect" }).w("\" /></div><div class=\"tc-group tc-group tc-ctl-xwms-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "addService.title" }).w("\" name=\"agregar\">").h("i18n", ctx, {}, { "$key": "addService" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "addMaps" }).w("</h2>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<optgroup label=\"").f(ctx.get(["group"], false), ctx, "h").w("\">").s(ctx.get(["items"], false), ctx, { "block": body_3 }, {}).w("</optgroup>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<option value=\"").f(ctx.get(["url"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</option>"); } body_3.__dustBody = !0; return body_0;
+        ctlProto.template[ctlProto.CLASS] = function () {            
+            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["title"], false), ctx, { "block": body_1 }, {}).w("<div><div class=\"tc-group tc-ctl-xwms-cnt\"> <select id=\"add-wms-select\" class=\"tc-combo\" title=\"WMS (Web Map Service)\"><option value=\"\">WMS</option>").s(ctx.get(["suggestions"], false), ctx, { "block": body_2 }, {}).w("</select><input type=\"text\" class=\"tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "writeAddressOrSelect" }).w("\" /></div><div class=\"tc-group tc-group tc-ctl-xwms-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "addService.title" }).w("\" name=\"agregar\">").h("i18n", ctx, {}, { "$key": "addService" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "addMaps" }).w("</h2>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.x(ctx.get(["group"], false), ctx, { "block": body_3 }, {}).s(ctx.get(["items"], false), ctx, { "block": body_4 }, {}).x(ctx.get(["group"], false), ctx, { "block": body_5 }, {}); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<optgroup label=\"").f(ctx.get(["group"], false), ctx, "h").w("\">"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<option value=\"").f(ctx.get(["url"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</option>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("\t</optgroup>"); } body_5.__dustBody = !0; return body_0
         };
     }
 
@@ -82090,7 +83345,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.control.FeatureInfoCommons) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
 }
 
 (function () {
@@ -82120,36 +83375,24 @@ if (!TC.control.FeatureInfoCommons) {
                 self.map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, { xy: xy, control: self }));
             }
         };
-
-        self.layer = null;
-        self.marker = null;
-        self.info = null;
-        self.popup = null;
-        self.lastFeatureCount = null;
     };
 
     TC.inherit(TC.control.FeatureInfo, TC.control.FeatureInfoCommons);
 
     var ctlProto = TC.control.FeatureInfo.prototype;
 
-    ctlProto.CLASS = 'tc-ctl-finfo';
     ctlProto.FEATURE_PARAM = 'showfeature';
 
     var hashUrl = TC.apiLocation + 'lib/jshash/md5-min.js';
 
-    ctlProto.template = {};
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureInfo.html";
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/FeatureInfoDialog.html";
-        ctlProto.template[ctlProto.CLASS + '-del-btn'] = TC.apiLocation + "TC/templates/FeatureInfoDeleteButton.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-services\">").s(ctx.get(["services"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</ul>").x(ctx.get(["featureCount"], false), ctx, { "block": body_25 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li><h3>").x(ctx.getPath(false, ["mapLayer", "title"]), ctx, { "else": body_3, "block": body_4 }, {}).w("</h3><div class=\"tc-ctl-finfo-service-content\">").s(ctx.get(["hasLimits"], false), ctx, { "else": body_5, "block": body_24 }, {}).w("</div></li>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.f(ctx.getPath(false, ["mapLayer", "id"]), ctx, "h"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.f(ctx.getPath(false, ["mapLayer", "title"]), ctx, "h"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-layers\">").s(ctx.get(["layers"], false), ctx, { "else": body_6, "block": body_7 }, {}).w("</ul>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataAtThisService" }).w("</li>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w("<li><h4>").s(ctx.get(["path"], false), ctx, { "block": body_8 }, {}).w(" <span class=\"tc-ctl-finfo-layer-n\">").f(ctx.getPath(false, ["features", "length"]), ctx, "h").w("</span> </h4> <div class=\"tc-ctl-finfo-layer-content\"><ul class=\"tc-ctl-finfo-features\">").s(ctx.get(["features"], false), ctx, { "else": body_10, "block": body_11 }, {}).w("</ul></div></li>"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_9 }, {}); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w(" &bull; "); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataInThisLayer" }).w("</li>"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<li>").x(ctx.get(["rawContent"], false), ctx, { "else": body_12, "block": body_18 }, {}).w("</li>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.x(ctx.get(["error"], false), ctx, { "else": body_13, "block": body_17 }, {}); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<h5>").f(ctx.get(["id"], false), ctx, "h").w("</h5><table").x(ctx.get(["geometry"], false), ctx, { "block": body_14 }, {}).w("><tbody>").s(ctx.get(["attributes"], false), ctx, { "block": body_15 }, {}).w("</tbody></table>").x(ctx.get(["geometry"], false), ctx, { "block": body_16 }, {}); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.w(" title=\"").h("i18n", ctx, {}, { "$key": "clickToCenter" }).w("\""); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w("<tr><th class=\"tc-ctl-finfo-attr\">").f(ctx.get(["name"], false), ctx, "h").w("</th><td class=\"tc-ctl-finfo-val\">").f(ctx.get(["value"], false), ctx, "h").w("</td></tr>"); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-tools\"><button class=\"tc-ctl-finfo-tools-btn\" title=\"").h("i18n", ctx, {}, { "$key": "tools" }).w("\">").h("i18n", ctx, {}, { "$key": "tools" }).w("</button></div>"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").h("i18n", ctx, {}, { "$key": "fi.error" }).w("<span class=\"tc-ctl-finfo-error-text\">").f(ctx.get(["error"], false), ctx, "h").w("</span></span>"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.w("<h5>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h5>").h("eq", ctx, { "else": body_19, "block": body_20 }, { "key": ctx.get(["rawFormat"], false), "value": "text/html" }); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("<pre>").f(ctx.get(["rawContent"], false), ctx, "h").w("</pre>"); } body_19.__dustBody = !0; function body_20(chk, ctx) { return chk.w(" ").x(ctx.get(["expandUrl"], false), ctx, { "block": body_21 }, {}); } body_20.__dustBody = !0; function body_21(chk, ctx) { return chk.h("ne", ctx, { "else": body_22, "block": body_23 }, { "key": ctx.get(["expandUrl"], false), "value": "" }); } body_21.__dustBody = !0; function body_22(chk, ctx) { return chk.w("<iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" />"); } body_22.__dustBody = !0; function body_23(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-features-iframe-cnt\"><iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" /><a class=\"tc-ctl-finfo-open\" onclick=\"window.open('").f(ctx.get(["expandUrl"], false), ctx, "h").w("', '_blank')\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\"></a></div>"); } body_23.__dustBody = !0; function body_24(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").f(ctx.get(["hasLimits"], false), ctx, "h").w("</span>"); } body_24.__dustBody = !0; function body_25(chk, ctx) { return chk.h("gt", ctx, { "block": body_26 }, { "key": ctx.get(["featureCount"], false), "value": "1", "type": "number" }); } body_25.__dustBody = !0; function body_26(chk, ctx) { return chk.w("<a class=\"tc-ctl-btn tc-ctl-finfo-btn-prev\">").h("i18n", ctx, {}, { "$key": "previous" }).w("</a><div class=\"tc-ctl-finfo-counter\"><span class=\"tc-ctl-finfo-idx\"></span>/").f(ctx.get(["featureCount"], false), ctx, "h").w("</div><a class=\"tc-ctl-btn tc-ctl-finfo-btn-next\">").h("i18n", ctx, {}, { "$key": "next" }).w("</a>"); } body_26.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><div class=\"tc-ctl-finfo-dialog-dl\"><h2>").h("i18n", ctx, {}, { "$key": "download" }).w("</h2><div><button class=\"tc-button tc-ctl-finfo-dl-btn-kml\" data-format=\"KML\" title=\"KML\">KML</button><button class=\"tc-button tc-ctl-finfo-dl-btn-gml\" data-format=\"GML\" title=\"GML\">GML</button><button class=\"tc-button tc-ctl-finfo-dl-btn-geojson\" data-format=\"GeoJSON\" title=\"GeoJSON\">GeoJSON</button><button class=\"tc-button tc-ctl-finfo-dl-btn-wkt\" data-format=\"WKT\" title=\"WKT\">WKT</button></div></div><div class=\"tc-ctl-finfo-dialog-share\"></div></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-del-btn'] = function () { dust.register(ctlProto.CLASS + '-del-btn', body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-finfo-del-btn\" title=\"").h("i18n", ctx, {}, { "$key": "deleteFeature" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteFeature" }).w("</button>"); } body_0.__dustBody = !0; return body_0 };
-    }
-
     var loadSharedFeature = function (ctl, featureObj) {
+        //buscamos si la feature compartida pertenece a alguna de las capas a\u00f1adidas
+        if (jQuery.grep(ctl.map.workLayers, function (item,i) {
+            return item.type === TC.Consts.layerType.WMS && item.url === featureObj.s && item.getDisgregatedLayerNames().indexOf(featureObj.l) >= 0
+        }).length === 0) {
+            TC.error(TC.Util.getLocaleString(ctl.map.options.locale, 'sharedFeatureNotValid'), TC.Consts.msgErrorMode.TOAST);
+            return;
+        }
         ctl.sharedFeatureInfo = featureObj;
         TC.loadJS(
             !window.hex_md5,
@@ -82199,25 +83442,13 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.register = function (map) {
         var self = this;
-        TC.control.Click.prototype.register.call(self, map);
+        TC.control.FeatureInfoCommons.prototype.register.call(self, map);
 
         // Le ponemos un padre al div. Evitamos con esto que se a\u00f1ada el div al mapa (no es necesario, ya que es un mero buffer)
         self._$div.appendTo('<div>');
 
-        if (self.options.layer) { // En caso de que se haya indicado una capa por configuraci\u00f3n, la utilizamos
-            _layer = self.options.layer;
-        } else {
-            _layer = {
-                id: TC.getUID(),
-                type: TC.Consts.layerType.VECTOR,
-                stealth: true
-            };
-        }
-
         map.loaded(function () {
-            $.when(map.addLayer(_layer)).then(function (layer) {
-                self.layer = layer;
-
+            self._layersDeferred.then(function () {
                 // Comprobamos si es un mapa con feature compartida
                 var featureToShow = TC.Util.getParameterByName(self.FEATURE_PARAM);
                 if (featureToShow) {
@@ -82226,6 +83457,7 @@ if (!TC.control.FeatureInfoCommons) {
                         featureObj = JSON.parse(decodeURIComponent(escape(window.atob(featureToShow))));
                     }
                     catch (error) {
+                        TC.error(TC.Util.getLocaleString(self.map.options.locale, 'sharedFeatureNotValid'), TC.Consts.msgErrorMode.TOAST);
                     }
                     if (featureObj) {
                         loadSharedFeature(self, featureObj);
@@ -82233,69 +83465,45 @@ if (!TC.control.FeatureInfoCommons) {
                 }
             });
         });
-        $.when(map.addControl('popup', {
-            closeButton: true,
-            draggable: self.options.draggable
-        })).then(function (popup) {
-            self.popup = popup;
-            popup.caller = self;
-            map.on(TC.Consts.event.POPUP, function (e) {
-                self.onShowPopUp(e)
+    };
 
-                // A\u00f1adimos gesti\u00f3n de descargar/compartir feature
-                self.popup.$popupDiv.on(TC.Consts.event.CLICK, '.' + self.CLASS + '-tools-btn', function (e) {
-                    if (!self._shareCtl) {
-                        self.map.addControl('share', {
-                            div: self._$dialogDiv.find('.tc-modal-body .tc-ctl-finfo-dialog-share')
-                        }).then(function (ctl) {
-                            self._shareCtl = ctl;
-                        });
-                    }
-                });
+    ctlProto.beforeGetFeatureInfo = function (e) {
+        var self = this;
+        TC.control.FeatureInfoCommons.prototype.beforeGetFeatureInfo.call(self, e);
 
-            });
+        if (e.control === self && self.map && self.filterLayer) {
 
-            map.on(TC.Consts.event.POPUPHIDE, function (e)
-            {
-                if (e.control === popup)
-                {
-                    //restaurar el ancho autom\u00e1tico
-                    self.popup.$popupDiv.css("width", "auto");
+            //aqu\u00ed se pone el puntito temporal
+            var xy = null;
+            while (!xy) {
+                xy = self.map.getCoordinateFromPixel(e.xy)
+            }
+            var title = self.getLocaleString('featureInfo');
+            var markerOptions = $.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title });
+            if (self.displayMode !== TC.control.FeatureInfoCommons.POPUP) {
+                markerOptions.showsPopup = false;
+            }
+            self.filterLayer.clearFeatures();
+            $.when(self.filterLayer.addMarker(xy, markerOptions)
+            ).then(function (marker) {
+                //cuando se queda el puntito es porque esto sucede tras el cierre de la popup
+                //o sea
+                //lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
+                //pero en el caso raro (la primera vez), ocurre al rev\u00e9s. Entonces, ya se habr\u00e1 establecido lastFeatureCount (no ser\u00e1 null)
+                if (self.lastFeatureCount === null) {
+                    self.map.putLayerOnTop(self.filterLayer);
+                    self.filterFeature = marker;
+                }
+                else {
+                    self.filterLayer.clearFeatures();
                 }
             });
-        });
-
-
-        map.on(TC.Consts.event.BEFOREFEATUREINFO, function (e) {
-            self.beforeGetFeatureInfo(e);
-        });
-
-        map.on(TC.Consts.event.FEATUREINFO, function (e) {
-            if (self.isActive) {
-                self.lastFeatureCount = self.countFeatures(e);
-                self.responseCallback(e);
-            }
-        });
-
-        map.$events.on(TC.Consts.event.NOFEATUREINFO, function (e) {
-            self.lastFeatureCount = 0;
-            if (self.popup) {
-                self.popup.hide();
-            }
-        });
-
-        TC.loadJS(!TC.Consts.event.POPUPHIDE, [TC.apiLocation + 'TC/control/Popup.js'], function () {
-                map.$events.on(TC.Consts.event.POPUPHIDE, function (e) {
-                    if (self.popup === e.control && self.layer) {
-                        self.layer.clearFeatures();
-                    }
-                });
-            });
+        }
     };
 
     ctlProto.onShowModal = function () {
         var self = this;
-        var $featureLi = self.popup.$popupDiv.find('ul.' + self.CLASS + '-features li.' + TC.Consts.classes.CHECKED);
+        var $featureLi = self.getDisplayTarget().find('ul.' + self.CLASS + '-features li.' + TC.Consts.classes.CHECKED);
         var shareCtl = self._shareCtl;
         shareCtl.extraParams = null;
         var $layerLi = $featureLi.parents('li').first();
@@ -82334,7 +83542,7 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.responseCallback = function (e) {
         var self = this;
-        if (self.marker) {
+        if (self.filterFeature) {
             var services = e.services;
             self.info = { services: services, defaultFeature: e.defaultFeature };
 
@@ -82417,28 +83625,35 @@ if (!TC.control.FeatureInfoCommons) {
                                     title: self.getLocaleString('foi'),
                                 }).then(function (layer) {
                                     self.sharedFeatureLayer = layer;
-                                    self.layer.clearFeatures();
+                                    self.filterLayer.clearFeatures();
                                     layer.addFeature(sharedFeature);
                                     self.map.zoomToFeatures([sharedFeature]);
+                                });
+                                self.map.on(TC.Consts.event.POPUP, function (e) {
+                                    if (e.control === popup) {
+                                        popup.$popupDiv.find('table').on(TC.Consts.event.CLICK, function (e) {
+                                            self.map.zoomToFeatures([sharedFeature]);
+                                        });
+                                    }
                                 });
                             });
                         }
                         delete self.sharedFeatureInfo;
                     }
-                    else if (self.popup) {
-                        self.marker.data = $('<div>').append(self._$div.clone()).html();
-                        self.marker.showPopup(self.popup);
+                    else {
+                        self.displayResults();
                     }
                 });
             }
             else {
-                self.layer.clearFeatures();
+                self.resultsLayer.clearFeatures();
+                self.filterLayer.clearFeatures();
             }
         }
     };
 })();
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.FileImport = function () {
@@ -82538,7 +83753,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
                 var reader = new FileReader();
                 reader.onload = function (event) {
-                    TC.error("Error en la subida de un archivo: \n\n\t Nombre del archivo: " + fileName + " \n\t Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL);
+                    TC.error("Nombre del archivo: " + fileName + " \n Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL,"Error en la subida de un archivo");
                 };
                 reader.readAsText(e.file);                
             });
@@ -82567,7 +83782,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.FullScreen = function () {
@@ -82670,7 +83885,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
     for (var x = 0, max = vendors.length; x < max && !window.requestAnimationFrame; x += 1) {
         window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
         window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame']
-                                   || window[vendors[x] + 'CancelRequestAnimationFrame'];
+            || window[vendors[x] + 'CancelRequestAnimationFrame'];
     }
 
     if (!window.requestAnimationFrame) {
@@ -82678,7 +83893,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
             var currTime = new Date().getTime();
             var timeToCall = Math.max(0, 16 - (currTime - lastTime));
             var id = window.setTimeout(function () { callback(currTime + timeToCall); },
-              timeToCall);
+                timeToCall);
             lastTime = currTime + timeToCall;
             return id;
         };
@@ -82715,7 +83930,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Geolocation = function (options) {
@@ -82771,6 +83986,10 @@ TC.control.Geolocation = function (options) {
             KML: 'application/vnd.google-earth.kml+xml',
             GPX: 'application/gpx+xml'
         },
+        SupportedFileExtensions: [
+            '.kml',
+            '.gpx'
+        ],
         Tabs: {
             GPS: "gps"
         },
@@ -82850,58 +84069,62 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             map.on(TC.Consts.event.FEATURESIMPORT, function (e) {
                 var self = this;
 
-                if (e.fileName && e.features && e.features.length > 0) {
+                if (!self.isDisabled) {
+                    if (e.fileName && e.features && e.features.length > 0) {
 
-                    var isKML = /.kml/g.test(e.fileName.toLowerCase()) && self.importedByMe || false;
+                        var isKML = /.kml$/g.test(e.fileName.toLowerCase()) && self.importedByMe || false;
 
-                    if (/.gpx/g.test(e.fileName.toLowerCase()) || isKML) {
+                        if (/.gpx$/g.test(e.fileName.toLowerCase()) || isKML) {
 
-                        if (self.layerTrack) {
-                            self.map.removeLayer(self.layerTrack);
-                            self.layerTrack = undefined;
-                        }
+                            if (self.layerTrack) {
+                                self.map.removeLayer(self.layerTrack);
+                                self.layerTrack = undefined;
+                            }
 
-                        if (isKML) { // si trata de un KML importado desde el control Ubicar borro la capa del TOC
-                            for (var i = 0; i < self.map.workLayers.slice().reverse().length; i++) {
-                                var layer = self.map.workLayers.slice().reverse()[i];
-                                if (layer.title && layer.title.toLowerCase().trim() === e.fileName.toLowerCase().trim()) {
-                                    self.map.removeLayer(layer);
-                                    break;
+                            if (isKML) { // si trata de un KML importado desde el control Ubicar borro la capa del TOC
+                                for (var i = 0; i < self.map.workLayers.slice().reverse().length; i++) {
+                                    var layer = self.map.workLayers.slice().reverse()[i];
+                                    if (layer.title && layer.title.toLowerCase().trim() === e.fileName.toLowerCase().trim()) {
+                                        self.map.removeLayer(layer);
+                                        break;
+                                    }
                                 }
+                                self.importedByMe = false;
                             }
-                            self.importedByMe = false;
-                        }
 
-                        // GLS: a\u00f1adimos la capa para que se muestre en el TOC
-                        self.getLayer(self.Const.Layers.TRACK).then(function (layer) {
+                            // GLS: a\u00f1adimos la capa para que se muestre en el TOC
+                            self.getLayer(self.Const.Layers.TRACK).then(function (layer) {
 
-                            var wait = self.getLoadingIndicator().addWait();
-                            self.importedFileName = e.fileName;
-                            for (var i = 0, len = e.features.length; i < len; i++) {
-                                self.layerTrack.addFeature(e.features[i]);
-                            }
-                            self.wrap.processImportedFeatures(wait);
+                                var wait = self.getLoadingIndicator().addWait();
+                                self.importedFileName = e.fileName;
+                                for (var i = 0, len = e.features.length; i < len; i++) {
+                                    self.layerTrack.addFeature(e.features[i]);
+                                }
+                                self.wrap.processImportedFeatures(wait);
 
-                            if (self.layerTrack) { // Si tenemos capa es que todo ha ido bien y gestionamos el despliegue del control
-                                // Desplegamos el control "ubicar" al importar mediante drag&drop
-                                if (self.map && self.map.layout && self.map.layout.accordion) {
-                                    if (self._$div.hasClass(TC.Consts.classes.COLLAPSED)) {
-                                        for (var i = 0; i < self.map.controls.length; i++) {
-                                            if (self.map.controls[i] !== self) {
-                                                self.map.controls[i]._$div.addClass(TC.Consts.classes.COLLAPSED);
+                                if (self.layerTrack) { // Si tenemos capa es que todo ha ido bien y gestionamos el despliegue del control
+                                    // Desplegamos el control "ubicar" al importar mediante drag&drop
+                                    if (self.map && self.map.layout && self.map.layout.accordion) {
+                                        if (self._$div.hasClass(TC.Consts.classes.COLLAPSED)) {
+                                            for (var i = 0; i < self.map.controls.length; i++) {
+                                                if (self.map.controls[i] !== self) {
+                                                    self.map.controls[i]._$div.addClass(TC.Consts.classes.COLLAPSED);
+                                                }
                                             }
                                         }
                                     }
+
+                                    self._$div.removeClass(TC.Consts.classes.COLLAPSED);
+                                    $('.' + self.CLASS + '-btn-tracks > span').click();
+
+                                    // abrimos el panel de herramientas
+                                    self.map.$events.trigger($.Event(TC.Consts.event.TOOLSOPEN), {});
                                 }
-
-                                self._$div.removeClass(TC.Consts.classes.COLLAPSED);
-                                $('.' + self.CLASS + '-btn-tracks > span').click();
-
-                                // abrimos el panel de herramientas
-                                self.map.$events.trigger($.Event(TC.Consts.event.TOOLSOPEN), {});
-                            }
-                        });
+                            });
+                        }
                     }
+                } else if (/.gpx$/g.test(e.fileName.toLowerCase())) {
+                    self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: TC.Consts.msgType.WARNING });
                 }
             }.bind(self));
             map.on(TC.Consts.event.LAYERVISIBILITY + ' ' + TC.Consts.event.LAYEROPACITY + ' ' + TC.Consts.event.LAYERREMOVE, function (e) {
@@ -83297,11 +84520,15 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             });
 
             self.$events.on(self.Const.Event.IMPORTEDTRACK, function (e, index) {
-                var $listElement = self.track.$trackList.find('li[data-id="' + index + '"]');
-                _drawTrack(self, $listElement.find(sel.DRAW));
-                self.track.$trackList.animate({
-                    scrollTop: index * $listElement.outerHeight()
-                }, 'slow');
+                if (!self.isDisabled) {
+                    var $listElement = self.track.$trackList.find('li[data-id="' + index + '"]');
+                    _drawTrack(self, $listElement.find(sel.DRAW));
+                    self.track.$trackList.animate({
+                        scrollTop: index * $listElement.outerHeight()
+                    }, 'slow');
+                } else {
+                    self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: TC.Consts.msgType.WARNING });
+                }
             });
 
             var _stopOtherTracks = function (self, trackLiId) {
@@ -83384,8 +84611,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             $(document).on("click", self._classSelector + ' ' + sel.EDIT, function () {
                 _edit(true, $(this));
             });
-            $(document).on("click", self._classSelector + ' ' + sel.DELETE, function () {
-                _stopOtherTracks(self);
+            $(document).on("click", self._classSelector + ' ' + sel.DELETE, function () {                
                 self.removeTrack($(this).parent());
             });
             $(document).on("click", self._classSelector + ' ' + sel.SAVE, function () {
@@ -83411,16 +84637,20 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 var mimeType = className.replace(prefix, '').toUpperCase();
 
                 self.export(mimeType, $(this).parent()).then(function (data) {
-                    if (data) TC.Util.downloadFile($(that).parent().find('span').first().text() + '.' + mimeType.toLowerCase(), self.Const.MimeMap[mimeType], data);
-                    else TC.alert(self.getLocaleString("geo.error.export"));
+                    if (data) {
+                        var filename = $(that).parent().find('span').first().text();
+                        var regex = new RegExp(self.Const.SupportedFileExtensions.join('|'), 'gi');
+                        var cleanFilename = filename.replace(regex, '');
+                        TC.Util.downloadFile(cleanFilename + '.' + mimeType.toLowerCase(), self.Const.MimeMap[mimeType], data);
+                    } else {
+                        TC.alert(self.getLocaleString("geo.error.export"));
+                    }
                 });
             });
-
 
             $(document).on("click", self._classSelector + ' ' + sel.STOP, function () {
                 self.uiSimulate(false, $(this));
                 self.wrap.simulateTrackEnd();
-                //$(this).parent().find(sel.DRAW).attr('title', self.getLocaleString("tr.lst.draw"));
                 var $btnPause = $(this).parent().find(sel.PAUSE);
                 $btnPause.toggleClass('play', false);
                 $btnPause.attr('title', self.getLocaleString("tr.lst.pause"));
@@ -83536,12 +84766,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
     ctlProto.activate = function () {
         var self = this;
-        TC.Control.prototype.activate.call(self);        
+        TC.Control.prototype.activate.call(self);
     };
 
     ctlProto.deactivate = function () {
         var self = this;
-        
+
         self.clearSelection();
         self.deactivateTracking();
         TC.Control.prototype.deactivate.call(self);
@@ -83604,7 +84834,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         fontSize: 10,
                         fontWeight: "bold",
                         labelOutlineColor: "#ffffff",
-                        labelOutlineWidth: 2,                        
+                        labelOutlineWidth: 2,
                         label: function (feature) {
                             var name = feature.getData()['name'];
                             if (name && (name + '').trim().length > 0) {
@@ -84116,20 +85346,47 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.getStoredTracks = function () {
         var self = this;
         var done = new $.Deferred();
-        var tracks = {};
+        var tracks = [];
 
-        localforage.getItem(self.Const.LocalStorageKey.TRACKING)
-            .then(function (strTracks) {
-
-                if (strTracks && strTracks.length > 0) {
-                    tracks = JSON.parse(strTracks);
+        localforage.keys().then(function (keys) {
+            var promises = [];
+            keys = keys.filter(function (k) {
+                if (!(k.startsWith(self.Const.LocalStorageKey.TRACKINGTEMP)) && k.startsWith(self.Const.LocalStorageKey.TRACKING)) {
+                    promises.push(new $.Deferred());
+                    return true;
                 }
-
-                var tracksArray = _orderTracks(tracks);
-
-                self.availableTracks = tracksArray;
-                done.resolve(tracksArray);
+                return false;
             });
+
+            if (keys.length == 0) {
+                self.availableTracks = tracks;
+                done.resolve(tracks);
+            }
+
+            promises.forEach(function (p, i) {
+                localforage.getItem(keys[i], function (e, v) {
+                    p.resolve(v);
+                });
+            });
+
+            $.when.apply($, promises).then(function () {
+                var results = Array.prototype.slice.call(arguments, 0);
+                if (results && results.length) {
+                    results.forEach(function (r) {
+                        var r = JSON.parse(r);
+                        if (r instanceof Array) {
+                            tracks = tracks.concat(r);
+                        } else {
+                            tracks.push(r);
+                        }
+                    });
+
+                    var tracksArray = _orderTracks(tracks);
+                    self.availableTracks = tracksArray;
+                    done.resolve(tracksArray);
+                }
+            });
+        });
 
         return done;
     };
@@ -84157,10 +85414,19 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         var self = this;
         var done = new $.Deferred();
 
-        localforage.setItem(self.Const.LocalStorageKey.TRACKING, JSON.stringify(tracks)).then(function () {
+        var promises = [];
+        tracks.forEach(function (t) {
+            promises.push(new $.Deferred());
+            var promise = promises[promises.length - 1];
+            localforage.setItem(self.Const.LocalStorageKey.TRACKING + "#" + t.uid, JSON.stringify(t), function (e, v) {
+                promise.resolve(v);
+            });
+
+        });
+
+        $.when.apply($, promises).then(function () {
             self.getStoredTracks().then(function () {
                 self.bindTracks();
-
                 done.resolve();
             });
         });
@@ -84236,7 +85502,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         });
     };
 
-    
+
     ctlProto.elevationTrack = function (li, resized) {
         var self = this;
 
@@ -84443,9 +85709,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 if (data.time) data.time = ("00000" + data.time.h).slice(-2) + ':' + ("00000" + data.time.m).slice(-2) + ':' + ("00000" + data.time.s).slice(-2);
                 var delta = self.map.options.pointBoundsRadius;
 
+                var docWidth = document.documentElement.clientWidth / 100 * 40; // css panel contendor
                 self.elevationChartSize = {
-                    height: Modernizr.mq('(min-width: 50em)') ? 128 : 70,
-                    width: Modernizr.mq('(min-width: 50em)') ? 445 : (Modernizr.mq('(min-width: 40em)') ? 310 : 215)
+                    height: docWidth > 445 ? 128 : 70,
+                    width: docWidth > 445 ? 445 : docWidth > 310 ? 310 : 215
                 };
 
                 data = $.extend({}, data, {
@@ -84513,7 +85780,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             if (!self.resultsPanelChart) {
 
                 if (!TC.control.ResultsPanel)
-                    TC.syncLoadJS(TC.apiLocation + 'TC/control/ResultsPanel.js');
+                    TC.syncLoadJS(TC.apiLocation + 'TC/control/ResultsPanel');
 
                 if (!window.c3)
                     TC.syncLoadJS(TC.Consts.url.D3C3 || TC.apiLocation + 'lib/d3c3/d3c3.min.js');
@@ -84521,7 +85788,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 self.resultsPanelChart = new TC.control.ResultsPanel({
                     "div": "results-panel",
                     "content": "chart",
-                    "titles": { "max": self.getLocaleString("geo.trk.chart.chpe") },
+                    "titles": {
+                        "main": self.getLocaleString("geo.trk.chart.chpe"),
+                        "max": self.getLocaleString("geo.trk.chart.chpe")
+                    },
                     "openOn": self.Const.Event.DRAWTRACK,
                     "closeOn": self.Const.Event.CLEARTRACK,
                     "chart": {
@@ -84534,6 +85804,18 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 self.resultsPanelChart.register(self.map);
                 self.resultsPanelChart.render(function () {
 
+                    self.resultsPanelChart.activateSnapping = function (e) {
+                        if (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0)
+                            self.wrap.deactivateSnapping.call(self.wrap);
+                    };
+                    self.resultsPanelChart.deactivateSnapping = function (e) {
+                        if (self.layerTrack.getVisibility() && self.layerTrack.getOpacity() > 0)
+                            self.wrap.activateSnapping.call(self.wrap);
+                    };
+
+                    self.resultsPanelChart._$div.on('mouseover', self.resultsPanelChart.deactivateSnapping);
+                    self.resultsPanelChart._$div.on('mouseout', self.resultsPanelChart.activateSnapping);
+
                     self.track.htmlElevationMarker = document.getElementById('tc-ctl-geolocation-track-elevation-marker');
 
                     self.map.on(TC.Consts.event.RESULTSPANELMIN, function () {
@@ -84545,7 +85827,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         self.elevationActiveCollapsed.set(false);
                     });
                     self.map.on(TC.Consts.event.RESULTSPANELCLOSE, function () {
-                        $(self.wrap.miDiv).hide(); self.elevationActive.set(false);
+                        $(self.wrap.miDiv).hide();
+                        self.elevationActive.set(false);
                     });
                     self.map.on(TC.Consts.event.DRAWCHART, function (e, data) {
 
@@ -84588,10 +85871,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                                 var point = this.chart.coordinates[e.index].slice(0, 2);
                                 if (point) {
                                     TC.loadJS(!TC.feature || (TC.feature && !TC.feature.Point),
-                                       [TC.apiLocation + 'TC/feature/Point.js'],
-                                       function () {
-                                           this.map.zoomToFeatures([new TC.feature.Point(point)]);
-                                       }.bind(self)
+                                        [TC.apiLocation + 'TC/feature/Point'],
+                                        function () {
+                                            this.map.zoomToFeatures([new TC.feature.Point(point)]);
+                                        }.bind(self)
                                     );
                                 }
                             }.bind(self));
@@ -84656,7 +85939,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                                     self.elevationChartLabelsRAF = undefined;
 
                                     if (((d3.select('.c3-axis-x').node().getBoundingClientRect().width >= self.elevationChartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) ||
-                                         (d3.select('.c3-axis-x').node().getBoundingClientRect().width * 100 / (self.elevationChartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) > 90))) {
+                                        (d3.select('.c3-axis-x').node().getBoundingClientRect().width * 100 / (self.elevationChartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) > 90))) {
                                         setMultilineLabels();
                                     }
                                 }
@@ -84835,14 +86118,23 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             if (tracks) {
                 var dataId = $(li).attr('data-id');
                 if (tracks[dataId]) {
+                    var uid = tracks[dataId].uid;
 
                     TC.confirm(self.getLocaleString("geo.trk.delete.alert"), function () {
-                        delete tracks[dataId];
 
                         if (self.getSelectedTrack().length > 0 && $(self.getSelectedTrack()[0]).attr('data-id') == dataId)
                             self.clear(self.Const.Layers.TRACK);
 
-                        self.setStoredTracks(tracks);
+                        localforage.removeItem(self.Const.LocalStorageKey.TRACKING + '#' + uid);
+                        if ($(li).parent().find('li[class=""]').length == 1) {
+                            self.getStoredTracks().then(function () {
+                                self.bindTracks();                                
+                            });
+                        } else {
+                            $(li).remove();
+                        }
+                        
+
                     }, function () { });
                 }
             }
@@ -84859,7 +86151,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         li.addClass(self.Const.Classes.SELECTEDTRACK);
 
-        $(li).find(self.Const.Selector.DRAW).attr('title', self.getLocaleString("tr.lst.clear"));
+        $(li).attr('title', self.getLocaleString("tr.lst.clear") + $(li).find('span').text());
+        $(li).find(self.Const.Selector.DRAW).attr('title', $(li).attr('title'));
     };
 
     ctlProto.getSelectedTrack = function () {
@@ -84880,7 +86173,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             }
 
             selected.removeClass(self.Const.Classes.SELECTEDTRACK);
-            $(selected).find(self.Const.Selector.DRAW).attr('title', $(selected).text());
+            selected.attr('title', selected.text());
+            selected.find(self.Const.Selector.DRAW).attr('title', selected.attr('title'));
         }
     };
 
@@ -84892,10 +86186,17 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         if (selected) {
             self.clearSelectedTrack();
         }
-        if (self.resultsPanelChart)
+        if (self.resultsPanelChart) {
+
+            self.resultsPanelChart._$div.off('mouseover', self.resultsPanelChart.deactivateSnapping);
+            self.resultsPanelChart._$div.off('mouseout', self.resultsPanelChart.activateSnapping);
+
             self.resultsPanelChart.close();
 
-        self.clear(self.Const.Layers.TRACK);        
+            delete self.resultsPanelChart;
+        }
+
+        self.clear(self.Const.Layers.TRACK);
     };
 
     ctlProto.drawTrackingData = function (li) {
@@ -85037,8 +86338,122 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 })();
 TC.control = TC.control || {};
 
+if (!TC.control.FeatureInfoCommons) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
+}
+
+(function () {
+    TC.control.GeometryFeatureInfo = function () {
+        var self = this;
+        TC.control.FeatureInfoCommons.apply(this, arguments);
+        self.wrap = new TC.wrap.control.GeometryFeatureInfo(self);
+        self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor
+        self.callback = function (coords, xy) {
+            if (self._drawToken)
+                return;
+            self.closeResults();
+            //self.filterLayer.clearFeatures();
+            var visibleLayers = false;
+            for (var i = 0; i < self.map.workLayers.length; i++) {
+                var layer = self.map.workLayers[i];
+                if (layer.type === TC.Consts.layerType.WMS) {
+                    if (layer.getVisibility() && layer.names.length > 0) {
+                        visibleLayers = true;
+                        break;
+                    }
+                }
+            }
+            if (visibleLayers) {
+                self.closeResults();
+                self.wrap.beginDraw({
+                    geometryType: self.geometryType,
+                    xy: coords,
+                    layer: self.filterLayer,
+                    callback: function (feature) {
+                        self.wrap.getFeaturesByGeometry(feature);
+                    }
+                });
+            }
+        };
+        self._isDrawing = false;
+        self._isSearching = false;
+        self._drawToken = false;
+    };
+
+    TC.inherit(TC.control.GeometryFeatureInfo, TC.control.FeatureInfoCommons);
+
+    var ctlProto = TC.control.GeometryFeatureInfo.prototype;
+
+    ctlProto.register = function (map) {
+        var self = this;
+        TC.control.FeatureInfoCommons.prototype.register.call(self, map);
+
+        map
+            .on(TC.Consts.event.FEATUREINFOERROR, function (e) {
+                if (e.xhr && e.xhr.status === 404) {
+                    map.toast(e.control.getLocaleString("featureInfo.tooManyLayers"), { type: TC.Consts.msgType.ERROR });
+                }
+                self.lastFeatureCount = 0;
+                self.closeResults();
+            });
+
+        self.$events.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
+            self.wrap.cancelDraw();
+        });
+    };
+
+    ctlProto.responseCallback = function (e) {
+        var self = this;
+        if (self.filterFeature) {
+            var services = e.services;
+            self.info = { services: services };
+
+            // Eliminamos capas sin resultados a no ser que tenga un error
+            for (var i = 0; i < services.length; i++) {
+                var service = services[i];
+                if (service.hasLimits) {
+                    delete service.layers
+                    service.hasLimits = service.hasLimits;
+                }
+                else {
+                    for (var j = 0; j < service.layers.length; j++) {
+                        if (!service.layers[j].features.length) {
+                            service.layers.splice(j, 1);
+                            j = j - 1;
+                        }
+                    }
+                    if (!service.layers.length) {
+                        services.splice(i, 1);
+                        i = i - 1;
+                    }
+                }
+
+            }
+            if (services.length) {
+                self.renderData(e, function () {
+                    // Insert links
+                    self._$div.find('td.' + self.CLASS + '-val').each(function (idx, elm) {
+                        var $td = $(elm);
+                        var text = $td.text();
+                        if (TC.Util.isURL(text)) {
+                            $td.html('<a href="' + text + '" target="_blank">' + text + '</a>');
+                        }
+                    });
+
+                    self.displayResults();
+                });
+            }
+            else {
+                self.resultsLayer.clearFeatures();
+            }
+        }
+    };
+
+})();
+TC.control = TC.control || {};
+
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.LayerCatalog = function () {
@@ -85089,9 +86504,9 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
     else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "availableLayers" }).x(ctx.get(["enableSearch"], false), ctx, { "block": body_1 }, {}).w("</h2><div class=\"tc-ctl-lcat-search tc-hidden tc-collapsed\"><div class=\"tc-group\"><input type=\"search\" class=\"tc-ctl-lcat-input tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "textToSearchInLayers" }).w("\" /></div><ul></ul></div><div class=\"tc-ctl-lcat-tree\">").x(ctx.get(["layerTrees"], false), ctx, { "else": body_3, "block": body_4 }, {}).w("</div><div class=\"tc-ctl-lcat-info tc-hidden\">").p("tc-ctl-lcat-info", ctx, ctx.rebase(ctx.getPath(true, [])), {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.x(ctx.get(["layerTrees"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<button class=\"tc-ctl-lcat-btn-search\" title=\"").h("i18n", ctx, {}, { "$key": "searchlayersbytext" }).w("\"></button>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<div class=\"tc-ctl tc-ctl-lcat-loading\"><span>").h("i18n", ctx, {}, { "$key": "loadingLayerTree" }).w("...</span></div>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<ul class=\"tc-ctl-lcat-branch\">").s(ctx.get(["layerTrees"], false), ctx, { "block": body_5 }, {}).w("</ul>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.p("tc-ctl-lcat-branch", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_5.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-branch'] = function () { dust.register(ctlProto.CLASS + '-branch', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-lcat-branch tc-collapsed\">").s(ctx.get(["children"], false), ctx, { "block": body_3 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-ctl-lcat-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-collapsed\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.p("tc-ctl-lcat-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_3.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["isVisible"], false), ctx, { "block": body_1 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span data-tooltip=\"").x(ctx.get(["name"], false), ctx, { "block": body_4 }, {}).w("\">").f(ctx.get(["title"], false), ctx, "h").w("</span>").x(ctx.get(["name"], false), ctx, { "block": body_5 }, {}).w("<ul class=\"tc-ctl-lcat-branch tc-collapsed\">").s(ctx.get(["children"], false), ctx, { "block": body_6 }, {}).w("</ul></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-ctl-lcat-leaf\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-collapsed\""); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "clickToAddToMap" }); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<a class=\"tc-ctl-lcat-btn-info\"/>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.p("tc-ctl-lcat-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_6.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-info'] = function () { dust.register(ctlProto.CLASS + '-info', body_0); function body_0(chk, ctx) { return chk.w("<a class=\"tc-ctl-lcat-info-close\"></a><h2>").h("i18n", ctx, {}, { "$key": "layerInfo" }).w("</h2><h3 class=\"tc-ctl-lcat-title\">").f(ctx.get(["title"], false), ctx, "h").w("</h3>").x(ctx.get(["abstract"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-lcat-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div>").f(ctx.get(["abstract"], false), ctx, "h").w("</div></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<div class=\"tc-ctl-lcat-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_3 }, {}).w("</ul></div>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_3.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-results'] = function () { dust.register(ctlProto.CLASS + '-results', body_0); function body_0(chk, ctx) { return chk.s(ctx.get(["results"], false), ctx, { "else": body_1, "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li class=\"tc-ctl-lcat-no-results\"><h5>").h("i18n", ctx, {}, { "$key": "geo.noFilteredTracks" }).w("</h5></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li data-tc-layer-name=\"").f(ctx.get(["Name"], false), ctx, "h").w("\" ").x(ctx.get(["alreadyAdded"], false), ctx, { "else": body_3, "block": body_4 }, {}).w("><h5 class=\"tc-selectable\">").f(ctx.get(["Title"], false), ctx, "h").w("</h5><button class=\"tc-ctl-lcat-search-btn-info\" /><p>").f(ctx.get(["Abstract"], false), ctx, "h").w("</p></li>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" data-tooltip=\"").h("i18n", ctx, {}, { "$key": "clickToAddToMap" }).w("\" "); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" data-tooltip=\"").h("i18n", ctx, {}, { "$key": "layerAlreadyAdded" }).w("\" class=\"tc-checked\" "); } body_4.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["isVisible"], false), ctx, { "block": body_1 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span data-tooltip=\"").x(ctx.get(["name"], false), ctx, { "block": body_4 }, {}).w("\">").f(ctx.get(["title"], false), ctx, "h").w("</span>").x(ctx.get(["name"], false), ctx, { "block": body_5 }, {}).w("<ul class=\"tc-ctl-lcat-branch tc-collapsed\">").s(ctx.get(["children"], false), ctx, { "block": body_6 }, {}).w("</ul></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-ctl-lcat-leaf\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-collapsed\""); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "clickToAddToMap" }); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<button class=\"tc-ctl-lcat-btn-info\"/>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.p("tc-ctl-lcat-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_6.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-info'] = function () { dust.register(ctlProto.CLASS + '-info', body_0); function body_0(chk, ctx) { return chk.w("<a class=\"tc-ctl-lcat-info-close\"></a><h2>").h("i18n", ctx, {}, { "$key": "layerInfo" }).w("</h2><h3 class=\"tc-ctl-lcat-title\">").f(ctx.get(["title"], false), ctx, "h").w("</h3>").x(ctx.get(["abstract"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-lcat-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div>").f(ctx.get(["abstract"], false), ctx, "h").w("</div></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<div class=\"tc-ctl-lcat-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_3 }, {}).w("</ul></div>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h", ["s"]).w("\" type=\"").f(ctx.get(["format"], false), ctx, "h").w("\" title=\"").f(ctx.get(["formatDescription"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_3.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-results'] = function () { dust.register(ctlProto.CLASS + '-results', body_0); function body_0(chk, ctx) { return chk.s(ctx.get(["servicesFound"], false), ctx, { "else": body_1, "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li class=\"tc-ctl-lcat-no-results\"><h5>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</h5></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.h("gt", ctx, { "block": body_3 }, { "key": ctx.get(["servicesLooked"], false), "value": 1 }).s(ctx.get(["founds"], false), ctx, { "block": body_5 }, {}).h("gt", ctx, { "block": body_8 }, { "key": ctx.get(["servicesLooked"], false), "value": 1 }); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li class=\"tc-ctl-lcat-search-group ").x(ctx.getPath(false, ["service", "isCollapsed"]), ctx, { "block": body_4 }, {}).w("\" data-tc-service-index=\"").f(ctx.getPath(false, ["service", "index"]), ctx, "h").w("\"><h5>").f(ctx.getPath(false, ["service", "title"]), ctx, "h").w("</h5><ul>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("tc-collapsed"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<li data-tc-layer-name=\"").f(ctx.get(["Name"], false), ctx, "h").w("\" ").x(ctx.get(["alreadyAdded"], false), ctx, { "else": body_6, "block": body_7 }, {}).w("><h5 class=\"tc-selectable\">").f(ctx.get(["Title"], false), ctx, "h").w("</h5><button class=\"tc-ctl-lcat-search-btn-info\" /></li>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w(" data-tooltip=\"").h("i18n", ctx, {}, { "$key": "clickToAddToMap" }).w("\" "); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w(" data-tooltip=\"").h("i18n", ctx, {}, { "$key": "layerAlreadyAdded" }).w("\" class=\"tc-checked\" "); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("</ul></li>"); } body_8.__dustBody = !0; return body_0 };
     }
 
 
@@ -85100,7 +86515,8 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
         var _dataKeys = {
             LAYER: 'tcLayer',
             LAYERNAME: 'tcLayerName',
-            LAYERINFO: 'tcLayerInfo'
+            LAYERINFO: 'tcLayerInfo',
+            SERVICEINDEX: 'tcServiceIndex'
         };
 
         var SEARCH_MIN_LENGTH = 3;
@@ -85338,12 +86754,16 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                         };
 
                         reDraw($li).then(function () {
-                            map.addLayer({
-                                id: TC.getUID(),
-                                url: layer.options.url,
-                                hideTitle: layer.options.hideTitle,
-                                title: layer.title,
-                                layerNames: [layerName]
+                            var layerOptions = $.extend({}, layer.options);
+                            layerOptions.id = TC.getUID();
+                            layerOptions.layerNames = [layerName];
+                            map.addLayer(layerOptions).then(function (layer) {
+                                layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
+                                    var layer = this.parent;
+                                    if (event.error.code === 401 || event.error.code === 403)
+                                        layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
+                                    layer.map.removeLayer(layer);
+                                });
                             });
 
                             e.stopPropagation();
@@ -85389,7 +86809,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                         var layer = self.layers[idx];
                         var $root = $(elm).data(_dataKeys.LAYER, layer);
 
-                        var $as = $root.find('a.' + self.CLASS + '-btn-info');
+                        var $as = $root.find('.' + self.CLASS + '-btn-info');
                         var formatDescriptions = {};
                         $as.each(function (i, e) {
                             var $a = $(e);
@@ -85494,8 +86914,20 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                                        if (TC._search.retryTimeout)
                                            clearTimeout(TC._search.retryTimeout);
                                        TC._search.retryTimeout = setTimeout(function () {
-                                           var results = self.layers[0].searchSubLayers(text);
-                                           callback(results);
+                                           var results = [];
+                                           for (var index = 0; index < self.layers.length; index++) {
+                                               var _founds = self.layers[index].searchSubLayers(text);
+                                               if (_founds.length) {
+                                                   results.push({
+                                                       service: {
+                                                           index: index,
+                                                           title: self.layers[index].title || self.layers[index].id
+                                                       },
+                                                       founds: _founds
+                                                   });
+                                               }
+                                           }
+                                           callback({ servicesFound: results, servicesLooked: self.layers.length });
                                        }, TC._search.interval);
                                    }
                                },
@@ -85507,26 +86939,35 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                                },
                                buildHTML: function (data) {
                                    //si hay resultados, mostramos la lista
-                                   if (data.results.length > 0) {
+                                   if (data.results && data.results.servicesFound.length > 0) {
                                        var workLayers = self.map.getLayerTree().workLayers;
-                                       for (var j = 0; j < data.results.length; j++) {
-                                           delete data.results[j].alreadyAdded;
-                                           for (var i = 0; i < workLayers.length; i++) {
-                                               //if (workLayers[i].title == data.results[j].Title ) {
-                                               if (layerCheckedList.indexOf(data.results[j].Name) >= 0) {
-                                                   data.results[j].alreadyAdded = true;
-                                                   break;
+                                       for (var k = 0; k < data.results.servicesFound.length; k++) {
+                                           var founds = data.results.servicesFound[k].founds;
+                                           for (var j = 0; j < founds.length; j++) {
+                                               delete founds[j].alreadyAdded;
+                                               for (var i = 0; i < workLayers.length; i++) {
+                                                   //if (workLayers[i].title == data.results[j].Title ) {
+                                                   if (layerCheckedList.indexOf(founds[j].Name) >= 0) {
+                                                       founds[j].alreadyAdded = true;
+                                                       break;
+                                                   }
+                                               }
+                                               //Si la capa no tiene Name, no se puede a\u00f1adir al TOC
+                                               if (!founds[j].Name) {
+                                                   founds.splice(j, 1);
+                                                   j--;                                                   
                                                }
                                            }
-                                           //Si la capa no tiene Name, no se puede a\u00f1adir al TOC
-                                           if (!data.results[j].Name) {
-                                               data.results.splice(j, 1);
-                                               j--;
+                                           if (!data.results.servicesFound[k].founds.length) {
+                                               data.results.servicesFound.splice(k, 1);
+                                               continue;
                                            }
+                                           //si estaba collapsado mantenemos el estado
+                                           data.results.servicesFound[k].service.isCollapsed = $(self._$div.find(".tc-ctl-lcat-search-group")[k]).hasClass(TC.Consts.classes.COLLAPSED);
                                        }
                                    }
                                    var ret = "";
-                                   dust.render(self.CLASS + '-results', data, function (err, out) {
+                                   dust.render(self.CLASS + '-results', data.results, function (err, out) {
                                        ret = out;
                                    });
                                    return ret;
@@ -85548,11 +86989,16 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                             if (searchPane.hasClass(TC.Consts.classes.HIDDEN) || wasCollapsed) {
                                 searchPane.removeClass(TC.Consts.classes.HIDDEN);
                                 treePane.addClass(TC.Consts.classes.HIDDEN);
-                                infoPane.addClass(TC.Consts.classes.HIDDEN);
                                 self.$text[0].focus();
                                 $(this).addClass(self.CLASS + "-btn-tree");
                                 $(this).attr("title", self.getLocaleString('viewAvailableLayersTree'));
                                 $(this).removeClass(self.CLASS + "-btn-search");
+
+                                //Si no hay resultados resaltados en el buscador, ocultamos el panel de info
+                                var selectedCount = $('.tc-ctl-lcat-search li button.tc-checked').length;
+                                if (selectedCount === 0) {
+                                    infoPane.addClass(TC.Consts.classes.HIDDEN);
+                                }
                             }
                             else {
                                 searchPane.addClass(TC.Consts.classes.HIDDEN);
@@ -85560,20 +87006,28 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                                 $(this).addClass(self.CLASS + "-btn-search");
                                 $(this).attr("title", self.getLocaleString('searchLayersByText'));
                                 $(this).removeClass(self.CLASS + "-btn-tree");
+
+                                //Si hay resaltados en el \u00e1rbol, mostramos el panel de info
+                                var selectedCount = $('.tc-ctl-lcat-tree li button.tc-checked').length;
+                                if (selectedCount > 0) {
+                                    infoPane.removeClass(TC.Consts.classes.HIDDEN);
+                                }
                             }
                         });
 
 
                         //evento de expandir nodo de info
-                        //self._$div.off("click", ".tc-ctl-lcat-search button");
-                        self._$div.on("click", ".tc-ctl-lcat-search button", function (evt) {
+                        //self._$div.off("click", ".tc-ctl-lcat-search button");                        
+                        self._$div.on("click", "." + self.CLASS + "-search button." + self.CLASS + "-search-btn-info", function (evt) {
                             evt.stopPropagation();
-                            var li = $(this).parents("li:first");
-                            if (li.hasClass(TC.Consts.classes.ACTIVE)) {
-                                li.removeClass(TC.Consts.classes.ACTIVE);
+                            if (!$(this).hasClass(TC.Consts.classes.CHECKED)) {
+                                var $li = $(this).parent();
+                                self.showLayerInfo(self.layers[$li.parents('li').data(_dataKeys.SERVICEINDEX)], $li.data(_dataKeys.LAYERNAME));
+                                $(this).addClass(TC.Consts.classes.CHECKED);
+
                             } else {
-                                $(this).parents("ul:first").find("li." + TC.Consts.classes.ACTIVE).removeClass(TC.Consts.classes.ACTIVE);
-                                li.addClass(TC.Consts.classes.ACTIVE);
+                                $(this).removeClass(TC.Consts.classes.CHECKED);
+                                self.hideLayerInfo();
                             }
                         });
 
@@ -85581,6 +87035,11 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                         self._$div.on("click", ".tc-ctl-lcat-search li", function (evt) {
                             evt.stopPropagation();
                             var $li = $(this);
+                            if ($li.hasClass("tc-ctl-lcat-no-results")) return; //si clicko en el li de "no hay resultados" rompo el ciclo de ejecuci\u00f3n
+                            if ($li.hasClass("tc-ctl-lcat-search-group")) {
+                                $li.toggleClass(TC.Consts.classes.COLLAPSED);
+                                return;
+                            }
                             var layerName = $li.data(_dataKeys.LAYERNAME);
                             layerName = (layerName !== undefined) ? layerName.toString() : '';
 
@@ -85588,8 +87047,10 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                             if ($(this).hasClass(TC.Consts.classes.CHECKED)) {
                                 return;
                             } else {
-                                var url = self.layers[0].options.url;
-                                var title = self.layers[0].title;
+                                var $liParent = $li.parents("li.tc-ctl-lcat-search-group");
+
+                                var url = self.layers[($liParent.length == 0 ? 0 : $liParent.data(_dataKeys.SERVICEINDEX))].options.url;
+                                var title = self.layers[($liParent.length == 0 ? 0 : $liParent.data(_dataKeys.SERVICEINDEX))].title;
 
                                 self.map.addLayer({
                                     id: TC.getUID(),
@@ -85599,6 +87060,12 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                                     layerNames: [layerName]
                                 }, function (layer) {
                                     $li.data(_dataKeys.LAYER, layer);
+                                    layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
+                                        var layer = this.parent;
+                                        if (event.error.code === 401 || event.error.code === 403)
+                                            layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
+                                        layer.map.removeLayer(layer);
+                                    });
                                 });
                                 //marcamos el resultado como a\u00f1adido
                                 $(this).addClass(TC.Consts.classes.CHECKED);
@@ -85625,41 +87092,41 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
             var toggleInfo = function (layerName, info) {
                 var result = false;
                 var lName = $info.data(_dataKeys.LAYERNAME);
-                if (lName !== undefined && lName.toString() === layerName) {
-                    $info.data(_dataKeys.LAYERNAME, '');
+                //if (lName !== undefined && lName.toString() === layerName) {
+                //    $info.data(_dataKeys.LAYERNAME, '');
+                //    $info.removeClass(TC.Consts.classes.HIDDEN);
+                //}
+                //else {
+                if (info) {
+                    result = true;
+                    $info.data(_dataKeys.LAYERNAME, layerName);
                     $info.removeClass(TC.Consts.classes.HIDDEN);
-                }
-                else {
-                    if (info) {
-                        result = true;
-                        $info.data(_dataKeys.LAYERNAME, layerName);
-                        $info.removeClass(TC.Consts.classes.HIDDEN);
-                        dust.render(self.CLASS + '-info', info, function (err, out) {
-                            $info.html(out);
-                            if (err) {
-                                TC.error(err);
-                            }
-                            $info.find('.' + self.CLASS + '-info-close').on(TC.Consts.event.CLICK, function () {
-                                self.hideLayerInfo();
-                            });
+                    dust.render(self.CLASS + '-info', info, function (err, out) {
+                        $info.html(out);
+                        if (err) {
+                            TC.error(err);
+                        }
+                        $info.find('.' + self.CLASS + '-info-close').on(TC.Consts.event.CLICK, function () {
+                            self.hideLayerInfo();
                         });
-                    }
+                    });
                 }
+                //}
                 return result;
             };
 
-            self._$roots.find('a.' + self.CLASS + '-btn-info').removeClass(TC.Consts.classes.CHECKED);
+            self._$div.find('.' + self.CLASS + '-btn-info, .' + self.CLASS + '-search-btn-info').removeClass(TC.Consts.classes.CHECKED);
 
             self._$roots.each(function (idx, elm) {
                 var $root = $(elm);
                 if ($root.data(_dataKeys.LAYER) === layer) {
-                    var $as = $root.find('a.' + self.CLASS + '-btn-info');
+                    var $as = $root.find('.' + self.CLASS + '-btn-info');
                     $as.each(function (i, e) {
                         var $a = $(e);
                         var n = $a.parent().data(_dataKeys.LAYERNAME).toString();
                         if (n === name) {
                             var info = $a.data(_dataKeys.LAYERINFO);
-                            $a.toggleClass(TC.Consts.classes.CHECKED, toggleInfo(n, info));
+                            self._$div.find('li [data-tc-layer-name="' + n + '"] > button').toggleClass(TC.Consts.classes.CHECKED, toggleInfo(n, info));
                             result = info;
                             return false;
                         }
@@ -85675,7 +87142,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
 
     ctlProto.hideLayerInfo = function () {
         var self = this;
-        self._$roots.find('a.' + self.CLASS + '-btn-info').removeClass(TC.Consts.classes.CHECKED);
+        self._$div.find('.' + self.CLASS + '-btn-info, .' + self.CLASS + '-search-btn-info').removeClass(TC.Consts.classes.CHECKED);
         self._$div.find('.' + self.CLASS + '-info').addClass(TC.Consts.classes.HIDDEN);
     };
 
@@ -85713,11 +87180,15 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
         return result;
     };
 
+    ctlProto.loaded = function () {
+        return this._readyDeferred.promise();
+    };
+
 })();
 TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
 }
 
 TC.control.Legend = function () {
@@ -85751,6 +87222,21 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         TC.control.MapContents.prototype.register.call(self, map);
     };
 
+    ctlProto.loadGraphics = function () {
+        var self = this;
+        self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').not('.' + self.CLASS + '-empty').each(function (idx, elm) {
+            var $li = $(elm);
+            var layer = $li.data(_dataKeys.layer);
+            $li.find('li').each(function (i, e) {
+                var $_li = $(e);
+                var $img = $_li.find('img').first();
+                if ($img && $img.attr('src') != undefined && $img.attr('src').length == 0) {
+                    self.styleLegendImage($img, layer);
+                }
+            });
+        });
+    };
+
     ctlProto.updateScale = function () {
         var self = this;
         var inScale = self.CLASS + '-node-inscale';
@@ -85759,26 +87245,29 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').not('.' + self.CLASS + '-empty').each(function (idx, elm) {
             var $li = $(elm);
             var layer = $li.data(_dataKeys.layer);
-            var layersInScale = false;
-            $li.find('li').each(function (i, e) {
-                var $_li = $(e);
-                if ($_li.hasClass(self.CLASS + '-node-visible')) {
-                    var uid = $_li.data(_dataKeys.layerUid);
-                    if (layer.isVisibleByScale((uid))) {
-                        layersInScale = true;
-                        $_li.removeClass(outOfScale).addClass(inScale);
-                        var $img = $_li.find('img').first();
-                        if ($img.length > 0) {
-                            self.styleLegendImage($img, layer);
+
+            if (layer) {
+                var layersInScale = false;
+                $li.find('li').each(function (i, e) {
+                    var $_li = $(e);
+                    if ($_li.hasClass(self.CLASS + '-node-visible')) {
+                        var uid = $_li.data(_dataKeys.layerUid);
+                        if (layer.isVisibleByScale((uid))) {
+                            layersInScale = true;
+                            $_li.removeClass(outOfScale).addClass(inScale);
+                            var $img = $_li.find('img').first();
+                            if ($img.length > 0) {
+                                self.styleLegendImage($img, layer);
+                            }
+                        }
+                        else {
+                            $_li.addClass(outOfScale).removeClass(inScale);
                         }
                     }
-                    else {
-                        $_li.addClass(outOfScale).removeClass(inScale);
-                    }
-                }
-            });
-            $li.toggleClass(inScale, layersInScale);
-            $li.toggleClass(outOfScale, !layersInScale);
+                });
+                $li.toggleClass(inScale, layersInScale);
+                $li.toggleClass(outOfScale, !layersInScale);
+            }
         });
     };
 
@@ -85884,12 +87373,46 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         });
     };
 
+    ctlProto.getLayerUIElements = function () {
+        var self = this;
+        return self._$div.find('ul.' + self.CLASS + '-branch').first().children('li.' + self.CLASS + '-node');
+    };
 })();
 
 TC.control = TC.control || {};
 
+if (!TC.control.GeometryFeatureInfo) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/GeometryFeatureInfo');
+}
+
+(function () {
+    TC.control.LineFeatureInfo = function () {
+        var self = this;
+        TC.control.GeometryFeatureInfo.apply(this, arguments);
+        self.geometryType = TC.Consts.geom.POLYLINE;
+    };
+
+    TC.inherit(TC.control.LineFeatureInfo, TC.control.GeometryFeatureInfo);
+
+    var ctlProto = TC.control.LineFeatureInfo.prototype;
+
+    ctlProto.CLASS = 'tc-ctl-finfo';
+
+    ctlProto.template = {};
+    if (TC.isDebug) {
+        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureInfo.html";
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/FeatureInfoDialog.html";
+    }
+    else {
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-services\">").s(ctx.get(["services"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</ul>").x(ctx.get(["featureCount"], false), ctx, { "block": body_25 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li><h3>").x(ctx.getPath(false, ["mapLayer", "title"]), ctx, { "else": body_3, "block": body_4 }, {}).w("</h3><div class=\"tc-ctl-finfo-service-content\">").s(ctx.get(["hasLimits"], false), ctx, { "else": body_5, "block": body_24 }, {}).w("</div></li>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.f(ctx.getPath(false, ["mapLayer", "id"]), ctx, "h"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.f(ctx.getPath(false, ["mapLayer", "title"]), ctx, "h"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-layers\">").s(ctx.get(["layers"], false), ctx, { "else": body_6, "block": body_7 }, {}).w("</ul>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataAtThisService" }).w("</li>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w("<li><h4>").s(ctx.get(["path"], false), ctx, { "block": body_8 }, {}).w(" <span class=\"tc-ctl-finfo-layer-n\">").f(ctx.getPath(false, ["features", "length"]), ctx, "h").w("</span> </h4> <div class=\"tc-ctl-finfo-layer-content\"><ul class=\"tc-ctl-finfo-features\">").s(ctx.get(["features"], false), ctx, { "else": body_10, "block": body_11 }, {}).w("</ul></div></li>"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_9 }, {}); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w(" &bull; "); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataInThisLayer" }).w("</li>"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<li>").x(ctx.get(["rawContent"], false), ctx, { "else": body_12, "block": body_18 }, {}).w("</li>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.x(ctx.get(["error"], false), ctx, { "else": body_13, "block": body_17 }, {}); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<h5>").f(ctx.get(["id"], false), ctx, "h").w("</h5><table").x(ctx.get(["geometry"], false), ctx, { "block": body_14 }, {}).w("><tbody>").s(ctx.get(["attributes"], false), ctx, { "block": body_15 }, {}).w("</tbody></table>").x(ctx.get(["geometry"], false), ctx, { "block": body_16 }, {}); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.w(" title=\"").h("i18n", ctx, {}, { "$key": "clickToCenter" }).w("\""); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w("<tr><th class=\"tc-ctl-finfo-attr\">").f(ctx.get(["name"], false), ctx, "h").w("</th><td class=\"tc-ctl-finfo-val\">").f(ctx.get(["value"], false), ctx, "h").w("</td></tr>"); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-tools\"><button class=\"tc-ctl-finfo-tools-btn\" title=\"").h("i18n", ctx, {}, { "$key": "download" }).w("/").h("i18n", ctx, {}, { "$key": "share" }).w("\">").h("i18n", ctx, {}, { "$key": "download" }).w("/").h("i18n", ctx, {}, { "$key": "share" }).w("</button></div>"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").h("i18n", ctx, {}, { "$key": "fi.error" }).w("<span class=\"tc-ctl-finfo-error-text\">").f(ctx.get(["error"], false), ctx, "h").w("</span></span>"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.w("<h5>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h5>").h("eq", ctx, { "else": body_19, "block": body_20 }, { "key": ctx.get(["rawFormat"], false), "value": "text/html" }); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("<pre>").f(ctx.get(["rawContent"], false), ctx, "h").w("</pre>"); } body_19.__dustBody = !0; function body_20(chk, ctx) { return chk.w(" ").x(ctx.get(["expandUrl"], false), ctx, { "block": body_21 }, {}); } body_20.__dustBody = !0; function body_21(chk, ctx) { return chk.h("ne", ctx, { "else": body_22, "block": body_23 }, { "key": ctx.get(["expandUrl"], false), "value": "" }); } body_21.__dustBody = !0; function body_22(chk, ctx) { return chk.w("<iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" />"); } body_22.__dustBody = !0; function body_23(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-features-iframe-cnt\"><iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" /><a class=\"tc-ctl-finfo-open\" onclick=\"window.open('").f(ctx.get(["expandUrl"], false), ctx, "h").w("', '_blank')\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\"></a></div>"); } body_23.__dustBody = !0; function body_24(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").f(ctx.get(["hasLimits"], false), ctx, "h").w("</span>"); } body_24.__dustBody = !0; function body_25(chk, ctx) { return chk.h("gt", ctx, { "block": body_26 }, { "key": ctx.get(["featureCount"], false), "value": "1", "type": "number" }); } body_25.__dustBody = !0; function body_26(chk, ctx) { return chk.w("<a class=\"tc-ctl-btn tc-ctl-finfo-btn-prev\">").h("i18n", ctx, {}, { "$key": "previous" }).w("</a><div class=\"tc-ctl-finfo-counter\"><span class=\"tc-ctl-finfo-idx\"></span>/").f(ctx.get(["featureCount"], false), ctx, "h").w("</div><a class=\"tc-ctl-btn tc-ctl-finfo-btn-next\">").h("i18n", ctx, {}, { "$key": "next" }).w("</a>"); } body_26.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><div class=\"tc-ctl-finfo-dialog-dl\"><h2>").h("i18n", ctx, {}, { "$key": "download" }).w("</h2><div><button class=\"tc-button tc-ctl-finfo-dl-btn-kml\" data-format=\"KML\" title=\"KML\">KML</button><button class=\"tc-button tc-ctl-finfo-dl-btn-gml\" data-format=\"GML\" title=\"GML\">GML</button><button class=\"tc-button tc-ctl-finfo-dl-btn-geojson\" data-format=\"GeoJSON\" title=\"GeoJSON\">GeoJSON</button><button class=\"tc-button tc-ctl-finfo-dl-btn-wkt\" data-format=\"WKT\" title=\"WKT\">WKT</button></div></div><div class=\"tc-ctl-finfo-dialog-share\"></div></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+    }
+
+})();
+TC.control = TC.control || {};
+
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.LoadingIndicator = function () {
@@ -85980,7 +87503,8 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
             .on(TC.Consts.event.BEFOREFEATUREINFO, function (e) {
                 self.addWait(TC.Consts.event.FEATUREINFO);
             }).on(TC.Consts.event.FEATUREINFO + ' ' +
-                TC.Consts.event.NOFEATUREINFO, function (e) {
+                TC.Consts.event.NOFEATUREINFO + ' ' +
+                TC.Consts.event.FEATUREINFOERROR, function (e) {
                     self.removeWait(TC.Consts.event.FEATUREINFO);
                 });
         if (!TC.isDebug) {
@@ -86013,7 +87537,7 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.Consts.event.POINT = 'point.tc';
@@ -86057,7 +87581,7 @@ TC.inherit(TC.control.Measure, TC.Control);
         TC.Control.prototype.render.call(self, function () {
             TC.loadJS(
                 !TC.control.Draw,
-                TC.apiLocation + 'TC/control/Draw.js',
+                TC.apiLocation + 'TC/control/Draw',
                 function () {
                     if (self.options.mode) {
                         self._$div.find('.tc-ctl-meas-select').addClass(TC.Consts.classes.HIDDEN);
@@ -86102,7 +87626,7 @@ TC.inherit(TC.control.Measure, TC.Control);
 
                     TC.loadJS(
                     !TC.control.Draw,
-                    TC.apiLocation + 'TC/control/Draw.js',
+                    TC.apiLocation + 'TC/control/Draw',
                     function () {
                         self.drawLines = new TC.control.Draw({
                             "div": self._$div.find('.tc-ctl-meas-lines'),
@@ -86252,18 +87776,23 @@ TC.inherit(TC.control.Measure, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 (function () {
     TC.control.MultiFeatureInfo = function () {
         var self = this;
-        self.bgColor = null;
-        self.jackColor = null;
         self.lineColor = null;
         TC.Control.apply(self, arguments);
+        self.modes = self.options.modes || {};
+        if (typeof self.modes[TC.Consts.geom.POINT] === 'undefined') {
+            self.modes[TC.Consts.geom.POINT] = true;
+        }
+        if (typeof self.modes[TC.Consts.geom.POLYGON] === 'undefined') {
+            self.modes[TC.Consts.geom.POLYGON] = true;
+        }
         self.fInfoCtrl = null;
+        self.lineFInfoCtrl = null;
         self.polygonFInfoCtrl = null;
-        self._switch = null;
         self.lastCtrlActive = null;
         self.listTOCCtrl = null;
         self.popup = null;
@@ -86273,13 +87802,13 @@ if (!TC.Control) {
 
     var ctlProto = TC.control.MultiFeatureInfo.prototype;
 
-    ctlProto.CLASS = 'tc-ctl-multiFinfo';
+    ctlProto.CLASS = 'tc-ctl-m-finfo';
 
     if (TC.isDebug) {
         ctlProto.template = TC.apiLocation + "TC/templates/MultiFeatureInfo.html";
     }
     else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-switch\"><span class=\"tc-ctl-ltoc-switch-text tc-ctl-ltoc-switch-text-izda\">").h("i18n", ctx, {}, { "$key": "selectionByPoint" }).w("</span><input class=\"tc-ctl-ltoc-switch-radio\" type=\"checkbox\" /><span class=\"tc-ctl-ltoc-switch-text tc-ctl-ltoc-switch-text-dcha\">").h("i18n", ctx, {}, { "$key": "selectionByPrecinct" }).w("</span></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template = function () { dust.register(ctlProto.CLASS,body_0);function body_0(chk,ctx){return chk.w("<div class=\"tc-ctl-m-finfo-select\"><form><span>").h("i18n",ctx,{},{"$key":"selection"}).w("</span>").x(ctx.get(["pointSelectValue"], false),ctx,{"block":body_1},{}).x(ctx.get(["lineSelectValue"], false),ctx,{"block":body_2},{}).x(ctx.get(["polygonSelectValue"], false),ctx,{"block":body_3},{}).w("</form></div>");}body_0.__dustBody=!0;function body_1(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-point\" title=\"").h("i18n",ctx,{},{"$key":"selectionByPoint"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["pointSelectValue"], false),ctx,"h").w("\" checked /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byPoint"}).w("</span></label>");}body_1.__dustBody=!0;function body_2(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-line\" title=\"").h("i18n",ctx,{},{"$key":"selectionByLine"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["lineSelectValue"], false),ctx,"h").w("\" /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byLine"}).w("</span></label>");}body_2.__dustBody=!0;function body_3(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-polygon\" title=\"").h("i18n",ctx,{},{"$key":"selectionByPrecinct"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["polygonSelectValue"], false),ctx,"h").w("\" /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byPrecinct"}).w("</span></label>");}body_3.__dustBody=!0;return body_0};
     }
 
 
@@ -86287,20 +87816,37 @@ if (!TC.Control) {
         var self = this;
         TC.Control.prototype.register.call(self, map);
         map.loaded(function () {
-            var dfdInfo = $.Deferred();
-            var dfdPolygon = $.Deferred();
-            $.when(dfdInfo, dfdPolygon).then(function () {
-                self.fInfoCtrl.activate();
-                self.lastCtrlActive = self.fInfoCtrl;
-                self.lastCtrlActive.popup = self.popup;
-            });
-            $.when(map.addControl("FeatureInfo")).then(function (control) {
-                self.fInfoCtrl = control;
-                dfdInfo.resolve();
-            });
-            $.when(map.addControl("PolygonFeatureInfo", { "lineColor": self.lineColor })).then(function (control) {
-                self.polygonFInfoCtrl = control;
-                dfdPolygon.resolve();
+            var ctlDeferreds = [];
+            if (self.modes[TC.Consts.geom.POINT]) {
+                var finfoDeferred = $.Deferred();
+                ctlDeferreds.push(finfoDeferred);
+                $.when(map.addControl("featureInfo", { displayMode: self.options.displayMode })).then(function (control) {
+                    self.fInfoCtrl = control;
+                    finfoDeferred.resolve();
+                });
+            }
+            if (self.modes[TC.Consts.geom.POLYLINE]) {
+                var lfinfoDeferred = $.Deferred();
+                ctlDeferreds.push(lfinfoDeferred);
+                $.when(map.addControl("lineFeatureInfo", { displayMode: self.options.displayMode, lineColor: self.lineColor })).then(function (control) {
+                    self.lineFInfoCtrl = control;
+                    lfinfoDeferred.resolve();
+                });
+            }
+            if (self.modes[TC.Consts.geom.POLYGON]) {
+                var pfinfoDeferred = $.Deferred();
+                ctlDeferreds.push(pfinfoDeferred);
+                $.when(map.addControl("polygonFeatureInfo", { displayMode: self.options.displayMode, lineColor: self.lineColor })).then(function (control) {
+                    self.polygonFInfoCtrl = control;
+                    pfinfoDeferred.resolve();
+                });
+            }
+            $.when.apply(this, ctlDeferreds).then(function () {
+                if (self.fInfoCtrl) {
+                    self.fInfoCtrl.activate();
+                    self.lastCtrlActive = self.fInfoCtrl;
+                    self.lastCtrlActive.popup = self.popup;
+                }
             });
         });
         $.when(map.addControl('popup', {
@@ -86314,51 +87860,50 @@ if (!TC.Control) {
 
     ctlProto.render = function (callback) {
         var self = this;
-        self.bgColor = self.options.bgColor ? self.options.bgColor : "#666";
-        self.jackColor = self.options.jackColor ? self.options.jackColor : "#c00";
         self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor;
+        var renderData = {};
+        if (self.modes[TC.Consts.geom.POINT]) {
+            renderData.pointSelectValue = TC.Consts.geom.POINT;
+        }
+        if (self.modes[TC.Consts.geom.POLYLINE]) {
+            renderData.lineSelectValue = TC.Consts.geom.POLYLINE;
+        }
+        if (self.modes[TC.Consts.geom.POLYGON]) {
+            renderData.polygonSelectValue = TC.Consts.geom.POLYGON;
+        }
+        TC.Control.prototype.renderData.call(self, renderData,
+            function () {
+                var changeEvent = function () {
+                    switch (this.value) {
+                        case TC.Consts.geom.POLYLINE:
+                            //modo l\u00ednea
+                            console.log("seleccion por l\u00ednea");
+                            if (self.map.activeControl === self.fInfoCtrl || self.map.activeControl === self.polygonFInfoCtrl)
+                                self.lineFInfoCtrl.activate();
+                            self.lastCtrlActive = self.lineFInfoCtrl;
+                            break;
+                        case TC.Consts.geom.POLYGON:
+                            //modo poligono
+                            console.log("seleccion por pol\u00edgono");
+                            if (self.map.activeControl === self.fInfoCtrl || self.map.activeControl === self.lineFInfoCtrl)
+                                self.polygonFInfoCtrl.activate();
+                            self.lastCtrlActive = self.polygonFInfoCtrl;
+                            break;
+                        default:
+                            //modo point
+                            console.log("seleccion por punto");
+                            if (self.map.activeControl === self.polygonFInfoCtrl || self.map.activeControl === self.lineFInfoCtrl)
+                                self.fInfoCtrl.activate();
+                            self.lastCtrlActive = self.fInfoCtrl;
+                            break;
+                    }
+                };
+                self._$div.find('input[type=radio]').on('change', changeEvent);
 
-        //switchery
-        if (!self.options.native)
-            (function () { function require(name) { var module = require.modules[name]; if (!module) throw new Error('failed to require "' + name + '"'); if (!("exports" in module) && typeof module.definition === "function") { module.client = module.component = true; module.definition.call(this, module.exports = {}, module); delete module.definition } return module.exports } require.loader = "component"; require.helper = {}; require.helper.semVerSort = function (a, b) { var aArray = a.version.split("."); var bArray = b.version.split("."); for (var i = 0; i < aArray.length; ++i) { var aInt = parseInt(aArray[i], 10); var bInt = parseInt(bArray[i], 10); if (aInt === bInt) { var aLex = aArray[i].substr(("" + aInt).length); var bLex = bArray[i].substr(("" + bInt).length); if (aLex === "" && bLex !== "") return 1; if (aLex !== "" && bLex === "") return -1; if (aLex !== "" && bLex !== "") return aLex > bLex ? 1 : -1; continue } else if (aInt > bInt) { return 1 } else { return -1 } } return 0 }; require.latest = function (name, returnPath) { function showError(name) { throw new Error('failed to find latest module of "' + name + '"') } var versionRegexp = /(.*)~(.*)@v?(\d+\.\d+\.\d+[^\/]*)$/; var remoteRegexp = /(.*)~(.*)/; if (!remoteRegexp.test(name)) showError(name); var moduleNames = Object.keys(require.modules); var semVerCandidates = []; var otherCandidates = []; for (var i = 0; i < moduleNames.length; i++) { var moduleName = moduleNames[i]; if (new RegExp(name + "@").test(moduleName)) { var version = moduleName.substr(name.length + 1); var semVerMatch = versionRegexp.exec(moduleName); if (semVerMatch != null) { semVerCandidates.push({ version: version, name: moduleName }) } else { otherCandidates.push({ version: version, name: moduleName }) } } } if (semVerCandidates.concat(otherCandidates).length === 0) { showError(name) } if (semVerCandidates.length > 0) { var module = semVerCandidates.sort(require.helper.semVerSort).pop().name; if (returnPath === true) { return module } return require(module) } var module = otherCandidates.sort(function (a, b) { return a.name > b.name })[0].name; if (returnPath === true) { return module } return require(module) }; require.modules = {}; require.register = function (name, definition) { require.modules[name] = { definition: definition } }; require.define = function (name, exports) { require.modules[name] = { exports: exports } }; require.register("abpetkov~transitionize@0.0.3", function (exports, module) { module.exports = Transitionize; function Transitionize(element, props) { if (!(this instanceof Transitionize)) return new Transitionize(element, props); this.element = element; this.props = props || {}; this.init() } Transitionize.prototype.isSafari = function () { return /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor) }; Transitionize.prototype.init = function () { var transitions = []; for (var key in this.props) { transitions.push(key + " " + this.props[key]) } this.element.style.transition = transitions.join(", "); if (this.isSafari()) this.element.style.webkitTransition = transitions.join(", ") } }); require.register("ftlabs~fastclick@v0.6.11", function (exports, module) { function FastClick(layer) { "use strict"; var oldOnClick, self = this; this.trackingClick = false; this.trackingClickStart = 0; this.targetElement = null; this.touchStartX = 0; this.touchStartY = 0; this.lastTouchIdentifier = 0; this.touchBoundary = 10; this.layer = layer; if (!layer || !layer.nodeType) { throw new TypeError("Layer must be a document node") } this.onClick = function () { return FastClick.prototype.onClick.apply(self, arguments) }; this.onMouse = function () { return FastClick.prototype.onMouse.apply(self, arguments) }; this.onTouchStart = function () { return FastClick.prototype.onTouchStart.apply(self, arguments) }; this.onTouchMove = function () { return FastClick.prototype.onTouchMove.apply(self, arguments) }; this.onTouchEnd = function () { return FastClick.prototype.onTouchEnd.apply(self, arguments) }; this.onTouchCancel = function () { return FastClick.prototype.onTouchCancel.apply(self, arguments) }; if (FastClick.notNeeded(layer)) { return } if (this.deviceIsAndroid) { layer.addEventListener("mouseover", this.onMouse, true); layer.addEventListener("mousedown", this.onMouse, true); layer.addEventListener("mouseup", this.onMouse, true) } layer.addEventListener("click", this.onClick, true); layer.addEventListener("touchstart", this.onTouchStart, false); layer.addEventListener("touchmove", this.onTouchMove, false); layer.addEventListener("touchend", this.onTouchEnd, false); layer.addEventListener("touchcancel", this.onTouchCancel, false); if (!Event.prototype.stopImmediatePropagation) { layer.removeEventListener = function (type, callback, capture) { var rmv = Node.prototype.removeEventListener; if (type === "click") { rmv.call(layer, type, callback.hijacked || callback, capture) } else { rmv.call(layer, type, callback, capture) } }; layer.addEventListener = function (type, callback, capture) { var adv = Node.prototype.addEventListener; if (type === "click") { adv.call(layer, type, callback.hijacked || (callback.hijacked = function (event) { if (!event.propagationStopped) { callback(event) } }), capture) } else { adv.call(layer, type, callback, capture) } } } if (typeof layer.onclick === "function") { oldOnClick = layer.onclick; layer.addEventListener("click", function (event) { oldOnClick(event) }, false); layer.onclick = null } } FastClick.prototype.deviceIsAndroid = navigator.userAgent.indexOf("Android") > 0; FastClick.prototype.deviceIsIOS = /iP(ad|hone|od)/.test(navigator.userAgent); FastClick.prototype.deviceIsIOS4 = FastClick.prototype.deviceIsIOS && /OS 4_\d(_\d)?/.test(navigator.userAgent); FastClick.prototype.deviceIsIOSWithBadTarget = FastClick.prototype.deviceIsIOS && /OS ([6-9]|\d{2})_\d/.test(navigator.userAgent); FastClick.prototype.needsClick = function (target) { "use strict"; switch (target.nodeName.toLowerCase()) { case "button": case "select": case "textarea": if (target.disabled) { return true } break; case "input": if (this.deviceIsIOS && target.type === "file" || target.disabled) { return true } break; case "label": case "video": return true } return /\bneedsclick\b/.test(target.className) }; FastClick.prototype.needsFocus = function (target) { "use strict"; switch (target.nodeName.toLowerCase()) { case "textarea": return true; case "select": return !this.deviceIsAndroid; case "input": switch (target.type) { case "button": case "checkbox": case "file": case "image": case "radio": case "submit": return false } return !target.disabled && !target.readOnly; default: return /\bneedsfocus\b/.test(target.className) } }; FastClick.prototype.sendClick = function (targetElement, event) { "use strict"; var clickEvent, touch; if (document.activeElement && document.activeElement !== targetElement) { document.activeElement.blur() } touch = event.changedTouches[0]; clickEvent = document.createEvent("MouseEvents"); clickEvent.initMouseEvent(this.determineEventType(targetElement), true, true, window, 1, touch.screenX, touch.screenY, touch.clientX, touch.clientY, false, false, false, false, 0, null); clickEvent.forwardedTouchEvent = true; targetElement.dispatchEvent(clickEvent) }; FastClick.prototype.determineEventType = function (targetElement) { "use strict"; if (this.deviceIsAndroid && targetElement.tagName.toLowerCase() === "select") { return "mousedown" } return "click" }; FastClick.prototype.focus = function (targetElement) { "use strict"; var length; if (this.deviceIsIOS && targetElement.setSelectionRange && targetElement.type.indexOf("date") !== 0 && targetElement.type !== "time") { length = targetElement.value.length; targetElement.setSelectionRange(length, length) } else { targetElement.focus() } }; FastClick.prototype.updateScrollParent = function (targetElement) { "use strict"; var scrollParent, parentElement; scrollParent = targetElement.fastClickScrollParent; if (!scrollParent || !scrollParent.contains(targetElement)) { parentElement = targetElement; do { if (parentElement.scrollHeight > parentElement.offsetHeight) { scrollParent = parentElement; targetElement.fastClickScrollParent = parentElement; break } parentElement = parentElement.parentElement } while (parentElement) } if (scrollParent) { scrollParent.fastClickLastScrollTop = scrollParent.scrollTop } }; FastClick.prototype.getTargetElementFromEventTarget = function (eventTarget) { "use strict"; if (eventTarget.nodeType === Node.TEXT_NODE) { return eventTarget.parentNode } return eventTarget }; FastClick.prototype.onTouchStart = function (event) { "use strict"; var targetElement, touch, selection; if (event.targetTouches.length > 1) { return true } targetElement = this.getTargetElementFromEventTarget(event.target); touch = event.targetTouches[0]; if (this.deviceIsIOS) { selection = window.getSelection(); if (selection.rangeCount && !selection.isCollapsed) { return true } if (!this.deviceIsIOS4) { if (touch.identifier === this.lastTouchIdentifier) { event.preventDefault(); return false } this.lastTouchIdentifier = touch.identifier; this.updateScrollParent(targetElement) } } this.trackingClick = true; this.trackingClickStart = event.timeStamp; this.targetElement = targetElement; this.touchStartX = touch.pageX; this.touchStartY = touch.pageY; if (event.timeStamp - this.lastClickTime < 200) { event.preventDefault() } return true }; FastClick.prototype.touchHasMoved = function (event) { "use strict"; var touch = event.changedTouches[0], boundary = this.touchBoundary; if (Math.abs(touch.pageX - this.touchStartX) > boundary || Math.abs(touch.pageY - this.touchStartY) > boundary) { return true } return false }; FastClick.prototype.onTouchMove = function (event) { "use strict"; if (!this.trackingClick) { return true } if (this.targetElement !== this.getTargetElementFromEventTarget(event.target) || this.touchHasMoved(event)) { this.trackingClick = false; this.targetElement = null } return true }; FastClick.prototype.findControl = function (labelElement) { "use strict"; if (labelElement.control !== undefined) { return labelElement.control } if (labelElement.htmlFor) { return document.getElementById(labelElement.htmlFor) } return labelElement.querySelector("button, input:not([type=hidden]), keygen, meter, output, progress, select, textarea") }; FastClick.prototype.onTouchEnd = function (event) { "use strict"; var forElement, trackingClickStart, targetTagName, scrollParent, touch, targetElement = this.targetElement; if (!this.trackingClick) { return true } if (event.timeStamp - this.lastClickTime < 200) { this.cancelNextClick = true; return true } this.cancelNextClick = false; this.lastClickTime = event.timeStamp; trackingClickStart = this.trackingClickStart; this.trackingClick = false; this.trackingClickStart = 0; if (this.deviceIsIOSWithBadTarget) { touch = event.changedTouches[0]; targetElement = document.elementFromPoint(touch.pageX - window.pageXOffset, touch.pageY - window.pageYOffset) || targetElement; targetElement.fastClickScrollParent = this.targetElement.fastClickScrollParent } targetTagName = targetElement.tagName.toLowerCase(); if (targetTagName === "label") { forElement = this.findControl(targetElement); if (forElement) { this.focus(targetElement); if (this.deviceIsAndroid) { return false } targetElement = forElement } } else if (this.needsFocus(targetElement)) { if (event.timeStamp - trackingClickStart > 100 || this.deviceIsIOS && window.top !== window && targetTagName === "input") { this.targetElement = null; return false } this.focus(targetElement); if (!this.deviceIsIOS4 || targetTagName !== "select") { this.targetElement = null; event.preventDefault() } return false } if (this.deviceIsIOS && !this.deviceIsIOS4) { scrollParent = targetElement.fastClickScrollParent; if (scrollParent && scrollParent.fastClickLastScrollTop !== scrollParent.scrollTop) { return true } } if (!this.needsClick(targetElement)) { event.preventDefault(); this.sendClick(targetElement, event) } return false }; FastClick.prototype.onTouchCancel = function () { "use strict"; this.trackingClick = false; this.targetElement = null }; FastClick.prototype.onMouse = function (event) { "use strict"; if (!this.targetElement) { return true } if (event.forwardedTouchEvent) { return true } if (!event.cancelable) { return true } if (!this.needsClick(this.targetElement) || this.cancelNextClick) { if (event.stopImmediatePropagation) { event.stopImmediatePropagation() } else { event.propagationStopped = true } event.stopPropagation(); event.preventDefault(); return false } return true }; FastClick.prototype.onClick = function (event) { "use strict"; var permitted; if (this.trackingClick) { this.targetElement = null; this.trackingClick = false; return true } if (event.target.type === "submit" && event.detail === 0) { return true } permitted = this.onMouse(event); if (!permitted) { this.targetElement = null } return permitted }; FastClick.prototype.destroy = function () { "use strict"; var layer = this.layer; if (this.deviceIsAndroid) { layer.removeEventListener("mouseover", this.onMouse, true); layer.removeEventListener("mousedown", this.onMouse, true); layer.removeEventListener("mouseup", this.onMouse, true) } layer.removeEventListener("click", this.onClick, true); layer.removeEventListener("touchstart", this.onTouchStart, false); layer.removeEventListener("touchmove", this.onTouchMove, false); layer.removeEventListener("touchend", this.onTouchEnd, false); layer.removeEventListener("touchcancel", this.onTouchCancel, false) }; FastClick.notNeeded = function (layer) { "use strict"; var metaViewport; var chromeVersion; if (typeof window.ontouchstart === "undefined") { return true } chromeVersion = +(/Chrome\/([0-9]+)/.exec(navigator.userAgent) || [, 0])[1]; if (chromeVersion) { if (FastClick.prototype.deviceIsAndroid) { metaViewport = document.querySelector("meta[name=viewport]"); if (metaViewport) { if (metaViewport.content.indexOf("user-scalable=no") !== -1) { return true } if (chromeVersion > 31 && window.innerWidth <= window.screen.width) { return true } } } else { return true } } if (layer.style.msTouchAction === "none") { return true } return false }; FastClick.attach = function (layer) { "use strict"; return new FastClick(layer) }; if (typeof define !== "undefined" && define.amd) { define(function () { "use strict"; return FastClick }) } else if (typeof module !== "undefined" && module.exports) { module.exports = FastClick.attach; module.exports.FastClick = FastClick } else { window.FastClick = FastClick } }); require.register("component~indexof@0.0.3", function (exports, module) { module.exports = function (arr, obj) { if (arr.indexOf) return arr.indexOf(obj); for (var i = 0; i < arr.length; ++i) { if (arr[i] === obj) return i } return -1 } }); require.register("component~classes@1.2.1", function (exports, module) { var index = require("component~indexof@0.0.3"); var re = /\s+/; var toString = Object.prototype.toString; module.exports = function (el) { return new ClassList(el) }; function ClassList(el) { if (!el) throw new Error("A DOM element reference is required"); this.el = el; this.list = el.classList } ClassList.prototype.add = function (name) { if (this.list) { this.list.add(name); return this } var arr = this.array(); var i = index(arr, name); if (!~i) arr.push(name); this.el.className = arr.join(" "); return this }; ClassList.prototype.remove = function (name) { if ("[object RegExp]" == toString.call(name)) { return this.removeMatching(name) } if (this.list) { this.list.remove(name); return this } var arr = this.array(); var i = index(arr, name); if (~i) arr.splice(i, 1); this.el.className = arr.join(" "); return this }; ClassList.prototype.removeMatching = function (re) { var arr = this.array(); for (var i = 0; i < arr.length; i++) { if (re.test(arr[i])) { this.remove(arr[i]) } } return this }; ClassList.prototype.toggle = function (name, force) { if (this.list) { if ("undefined" !== typeof force) { if (force !== this.list.toggle(name, force)) { this.list.toggle(name) } } else { this.list.toggle(name) } return this } if ("undefined" !== typeof force) { if (!force) { this.remove(name) } else { this.add(name) } } else { if (this.has(name)) { this.remove(name) } else { this.add(name) } } return this }; ClassList.prototype.array = function () { var str = this.el.className.replace(/^\s+|\s+$/g, ""); var arr = str.split(re); if ("" === arr[0]) arr.shift(); return arr }; ClassList.prototype.has = ClassList.prototype.contains = function (name) { return this.list ? this.list.contains(name) : !!~index(this.array(), name) } }); require.register("component~event@0.1.4", function (exports, module) { var bind = window.addEventListener ? "addEventListener" : "attachEvent", unbind = window.removeEventListener ? "removeEventListener" : "detachEvent", prefix = bind !== "addEventListener" ? "on" : ""; exports.bind = function (el, type, fn, capture) { el[bind](prefix + type, fn, capture || false); return fn }; exports.unbind = function (el, type, fn, capture) { el[unbind](prefix + type, fn, capture || false); return fn } }); require.register("component~query@0.0.3", function (exports, module) { function one(selector, el) { return el.querySelector(selector) } exports = module.exports = function (selector, el) { el = el || document; return one(selector, el) }; exports.all = function (selector, el) { el = el || document; return el.querySelectorAll(selector) }; exports.engine = function (obj) { if (!obj.one) throw new Error(".one callback required"); if (!obj.all) throw new Error(".all callback required"); one = obj.one; exports.all = obj.all; return exports } }); require.register("component~matches-selector@0.1.5", function (exports, module) { var query = require("component~query@0.0.3"); var proto = Element.prototype; var vendor = proto.matches || proto.webkitMatchesSelector || proto.mozMatchesSelector || proto.msMatchesSelector || proto.oMatchesSelector; module.exports = match; function match(el, selector) { if (!el || el.nodeType !== 1) return false; if (vendor) return vendor.call(el, selector); var nodes = query.all(selector, el.parentNode); for (var i = 0; i < nodes.length; ++i) { if (nodes[i] == el) return true } return false } }); require.register("component~closest@0.1.4", function (exports, module) { var matches = require("component~matches-selector@0.1.5"); module.exports = function (element, selector, checkYoSelf, root) { element = checkYoSelf ? { parentNode: element } : element; root = root || document; while ((element = element.parentNode) && element !== document) { if (matches(element, selector)) return element; if (element === root) return } } }); require.register("component~delegate@0.2.3", function (exports, module) { var closest = require("component~closest@0.1.4"), event = require("component~event@0.1.4"); exports.bind = function (el, selector, type, fn, capture) { return event.bind(el, type, function (e) { var target = e.target || e.srcElement; e.delegateTarget = closest(target, selector, true, el); if (e.delegateTarget) fn.call(el, e) }, capture) }; exports.unbind = function (el, type, fn, capture) { event.unbind(el, type, fn, capture) } }); require.register("component~events@1.0.9", function (exports, module) { var events = require("component~event@0.1.4"); var delegate = require("component~delegate@0.2.3"); module.exports = Events; function Events(el, obj) { if (!(this instanceof Events)) return new Events(el, obj); if (!el) throw new Error("element required"); if (!obj) throw new Error("object required"); this.el = el; this.obj = obj; this._events = {} } Events.prototype.sub = function (event, method, cb) { this._events[event] = this._events[event] || {}; this._events[event][method] = cb }; Events.prototype.bind = function (event, method) { var e = parse(event); var el = this.el; var obj = this.obj; var name = e.name; var method = method || "on" + name; var args = [].slice.call(arguments, 2); function cb() { var a = [].slice.call(arguments).concat(args); obj[method].apply(obj, a) } if (e.selector) { cb = delegate.bind(el, e.selector, name, cb) } else { events.bind(el, name, cb) } this.sub(name, method, cb); return cb }; Events.prototype.unbind = function (event, method) { if (0 == arguments.length) return this.unbindAll(); if (1 == arguments.length) return this.unbindAllOf(event); var bindings = this._events[event]; if (!bindings) return; var cb = bindings[method]; if (!cb) return; events.unbind(this.el, event, cb) }; Events.prototype.unbindAll = function () { for (var event in this._events) { this.unbindAllOf(event) } }; Events.prototype.unbindAllOf = function (event) { var bindings = this._events[event]; if (!bindings) return; for (var method in bindings) { this.unbind(event, method) } }; function parse(event) { var parts = event.split(/ +/); return { name: parts.shift(), selector: parts.join(" ") } } }); require.register("switchery", function (exports, module) { var transitionize = require("abpetkov~transitionize@0.0.3"), fastclick = require("ftlabs~fastclick@v0.6.11"), classes = require("component~classes@1.2.1"), events = require("component~events@1.0.9"); module.exports = Switchery; var defaults = { color: "#64bd63", secondaryColor: "#dfdfdf", jackColor: "#fff", jackSecondaryColor: null, className: "switchery", disabled: false, disabledOpacity: .5, speed: "0.4s", size: "default" }; function Switchery(element, options) { if (!(this instanceof Switchery)) return new Switchery(element, options); this.element = element; this.options = options || {}; for (var i in defaults) { if (this.options[i] == null) { this.options[i] = defaults[i] } } if (this.element != null && this.element.type == "checkbox") this.init(); if (this.isDisabled() === true) this.disable() } Switchery.prototype.hide = function () { this.element.style.display = "none" }; Switchery.prototype.show = function () { var switcher = this.create(); this.insertAfter(this.element, switcher) }; Switchery.prototype.create = function () { this.switcher = document.createElement("span"); this.jack = document.createElement("small"); this.switcher.appendChild(this.jack); this.switcher.className = this.options.className; this.events = events(this.switcher, this); return this.switcher }; Switchery.prototype.insertAfter = function (reference, target) { reference.parentNode.insertBefore(target, reference.nextSibling) }; Switchery.prototype.setPosition = function (clicked) { var checked = this.isChecked(), switcher = this.switcher, jack = this.jack; if (clicked && checked) checked = false; else if (clicked && !checked) checked = true; if (checked === true) { this.element.checked = true; if (window.getComputedStyle) jack.style.left = parseInt(window.getComputedStyle(switcher).width) - parseInt(window.getComputedStyle(jack).width) + "px"; else jack.style.left = parseInt(switcher.currentStyle["width"]) - parseInt(jack.currentStyle["width"]) + "px"; if (this.options.color) this.colorize(); this.setSpeed() } else { jack.style.left = 0; this.element.checked = false; this.switcher.style.boxShadow = "inset 0 0 0 0 " + this.options.secondaryColor; this.switcher.style.borderColor = this.options.secondaryColor; this.switcher.style.backgroundColor = this.options.secondaryColor !== defaults.secondaryColor ? this.options.secondaryColor : "#fff"; this.jack.style.backgroundColor = this.options.jackSecondaryColor !== this.options.jackColor ? this.options.jackSecondaryColor : this.options.jackColor; this.setSpeed() } }; Switchery.prototype.setSpeed = function () { var switcherProp = {}, jackProp = { "background-color": this.options.speed, left: this.options.speed.replace(/[a-z]/, "") / 2 + "s" }; if (this.isChecked()) { switcherProp = { border: this.options.speed, "box-shadow": this.options.speed, "background-color": this.options.speed.replace(/[a-z]/, "") * 3 + "s" } } else { switcherProp = { border: this.options.speed, "box-shadow": this.options.speed } } transitionize(this.switcher, switcherProp); transitionize(this.jack, jackProp) }; Switchery.prototype.setSize = function () { var small = "switchery-small", normal = "switchery-default", large = "switchery-large"; switch (this.options.size) { case "small": classes(this.switcher).add(small); break; case "large": classes(this.switcher).add(large); break; default: classes(this.switcher).add(normal); break } }; Switchery.prototype.colorize = function () { var switcherHeight = this.switcher.offsetHeight / 2; this.switcher.style.backgroundColor = this.options.color; this.switcher.style.borderColor = this.options.color; this.switcher.style.boxShadow = "inset 0 0 0 " + switcherHeight + "px " + this.options.color; this.jack.style.backgroundColor = this.options.jackColor }; Switchery.prototype.handleOnchange = function (state) { if (document.dispatchEvent) { var event = document.createEvent("HTMLEvents"); event.initEvent("change", true, true); this.element.dispatchEvent(event) } else { this.element.fireEvent("onchange") } }; Switchery.prototype.handleChange = function () { var self = this, el = this.element; if (el.addEventListener) { el.addEventListener("change", function () { self.setPosition() }) } else { el.attachEvent("onchange", function () { self.setPosition() }) } }; Switchery.prototype.handleClick = function () { var switcher = this.switcher; fastclick(switcher); this.events.bind("click", "bindClick") }; Switchery.prototype.bindClick = function () { var parent = this.element.parentNode.tagName.toLowerCase(), labelParent = parent === "label" ? false : true; this.setPosition(labelParent); this.handleOnchange(this.element.checked) }; Switchery.prototype.markAsSwitched = function () { this.element.setAttribute("data-switchery", true) }; Switchery.prototype.markedAsSwitched = function () { return this.element.getAttribute("data-switchery") }; Switchery.prototype.init = function () { this.hide(); this.show(); this.setSize(); this.setPosition(); this.markAsSwitched(); this.handleChange(); this.handleClick() }; Switchery.prototype.isChecked = function () { return this.element.checked }; Switchery.prototype.isDisabled = function () { return this.options.disabled || this.element.disabled || this.element.readOnly }; Switchery.prototype.destroy = function () { this.events.unbind() }; Switchery.prototype.enable = function () { if (this.options.disabled) this.options.disabled = false; if (this.element.disabled) this.element.disabled = false; if (this.element.readOnly) this.element.readOnly = false; this.switcher.style.opacity = 1; this.events.bind("click", "bindClick") }; Switchery.prototype.disable = function () { if (this.options.disabled) this.options.disabled = true; if (this.element.disabled) this.element.disabled = true; if (this.element.readOnly) this.element.readOnly = true; this.switcher.style.opacity = this.options.disabledOpacity; this.destroy() } }); if (typeof exports == "object") { module.exports = require("switchery") } else if (typeof define == "function" && define.amd) { define("Switchery", [], function () { return require("switchery") }) } else { (this || window)["Switchery"] = require("switchery") } })();
-
-        TC.Control.prototype.render.call(self, function () {
-            var changeEvent = function () {
-                labelDcha.toggleClass("disabled");
-                labelIzda.toggleClass("disabled");
-                if (this.checked) {
-                    //modo poligono  
-                    console.log("seleccion por pol\u00edgono");
-                    if (self.map.activeControl === self.fInfoCtrl)
-                        self.polygonFInfoCtrl.activate();
-                    self.lastCtrlActive = self.polygonFInfoCtrl;
-                    //self.fInfoCtrl.deactivate(true);
+                if ($.isFunction(callback)) {
+                    callback();
                 }
-                else {
-                    //modo point                        
-                    console.log("seleccion por punto");
-                    if (self.map.activeControl === self.polygonFInfoCtrl)
-                        self.fInfoCtrl.activate();
-                    self.lastCtrlActive = self.fInfoCtrl;
-                    //self.polygonFInfoCtrl.deactivate(true);
-                }
-            };
-            var labelDcha = $(".tc-ctl-ltoc-switch-text-dcha", self._$div);
-            var labelIzda = $(".tc-ctl-ltoc-switch-text-izda", self._$div);
-            labelDcha.toggleClass("disabled");
-            if (typeof (Switchery) !== "undefined") {
-                self._switch = new Switchery($(".tc-ctl-ltoc-switch-radio", self._$div)[0], { size: 'small', color: self.bgColor, jackColor: self.jackColor, jackSecondaryColor: self.jackColor });
-                //bindeamos el change
-                self._switch.element.onchange = changeEvent;
-            }
-            else {
-                self._switch = $(".tc-ctl-ltoc-switch-radio", self._$div)[0];
-                self._switch.onclick = changeEvent;
-            }
-            if ($.isFunction(callback)) {
-                callback();
-            }
-        });
+            });
     };
     ctlProto.activate = function () {
         var self = this;
@@ -86388,7 +87933,7 @@ if (!TC.Control) {
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.NavBar = function () {
@@ -86406,15 +87951,6 @@ TC.inherit(TC.control.NavBar, TC.Control);
         var self = this;
         if (!self.wrap) {
             self.wrap = new TC.wrap.control.NavBar(self);
-
-            //setTimeout(function () {
-                //console.log('GLS: modifico la altura y el ancho del slider');
-                //$('.ol-zoomslider').css({
-                //    'width': '2em',
-                //    'height': '10em'
-                //});
-            //    console.log('GLS: modificado');
-            //}, 500);
         }
     };
 
@@ -86433,7 +87969,7 @@ TC.inherit(TC.control.NavBar, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.OverviewMap = function () {
@@ -86545,49 +88081,18 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
 })();
 TC.control = TC.control || {};
 
-if (!TC.control.FeatureInfoCommons) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons.js');
+if (!TC.control.GeometryFeatureInfo) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/GeometryFeatureInfo');
 }
 
 (function () {
     TC.control.PolygonFeatureInfo = function () {
         var self = this;
-        TC.control.FeatureInfoCommons.apply(this, arguments);
-        self.wrap = new TC.wrap.control.PolygonFeatureInfo(self);
-        self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor
-        self.callback = function (coords, xy) {
-            if (self._drawToken)
-                return;
-            self.popup.hide();
-            self.layerDraw.clearFeatures();
-            var visibleLayers = false;
-            for (var i = 0; i < self.map.workLayers.length; i++) {
-                var layer = self.map.workLayers[i];
-                if (layer.type === TC.Consts.layerType.WMS) {
-                    if (layer.getVisibility() && layer.names.length > 0) {
-                        visibleLayers = true;
-                        break;
-                    }
-                }
-            }
-            if (visibleLayers) {                
-                    self.popup.hide();
-                    self.wrap.beginDraw(coords, self.layerDraw, function (coordinates) {
-                        self.wrap.getFeaturesByPolygon(coordinates);
-                    });                
-            }
-        };
-        self.layer = null;
-        self.marker = null;
-        self.info = null;
-        self.popup = null;
-        self.lastFeatureCount = null;
-        self._isDrawing = false;
-        self._isSearching = false;
-        self._drawToken = false;
+        TC.control.GeometryFeatureInfo.apply(this, arguments);
+        self.geometryType = TC.Consts.geom.POLYGON;
     };
 
-    TC.inherit(TC.control.PolygonFeatureInfo, TC.control.FeatureInfoCommons);
+    TC.inherit(TC.control.PolygonFeatureInfo, TC.control.GeometryFeatureInfo);
 
     var ctlProto = TC.control.PolygonFeatureInfo.prototype;
 
@@ -86603,159 +88108,11 @@ if (!TC.control.FeatureInfoCommons) {
         ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><div class=\"tc-ctl-finfo-dialog-dl\"><h2>").h("i18n", ctx, {}, { "$key": "download" }).w("</h2><div><button class=\"tc-button tc-ctl-finfo-dl-btn-kml\" data-format=\"KML\" title=\"KML\">KML</button><button class=\"tc-button tc-ctl-finfo-dl-btn-gml\" data-format=\"GML\" title=\"GML\">GML</button><button class=\"tc-button tc-ctl-finfo-dl-btn-geojson\" data-format=\"GeoJSON\" title=\"GeoJSON\">GeoJSON</button><button class=\"tc-button tc-ctl-finfo-dl-btn-wkt\" data-format=\"WKT\" title=\"WKT\">WKT</button></div></div><div class=\"tc-ctl-finfo-dialog-share\"></div></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
-    ctlProto.register = function (map) {
-        var self = this;
-        
-        TC.control.Click.prototype.register.call(self, map);
-        
-        map.loaded(function () {
-            var layerPromise = self.map.addLayer({
-                id: TC.getUID(),
-                title: 'PolygonFeatureInfo',
-                stealth: true,
-                type: TC.Consts.layerType.VECTOR
-                        , styles: {
-                            point: { fillColor: self.lineColor, fillOpacity: 0, strokeColor: self.lineColor, strokeWidth: 2, radius: 6 },
-                            line: { strokeColor: self.lineColor, strokeWidth: 2 },
-                            polygon: { strokeColor: self.lineColor, strokeWidth: 2, fillColor: "#000", fillOpacity: 0.3 }
-                        }
-            });
-            $.when(map.addLayer({
-                id: TC.getUID(),
-                type: TC.Consts.layerType.VECTOR,
-                stealth: true
-            })).then(function (layer) {
-                self.layer = layer;
-            });
-            $.when(layerPromise).then(function (layer) {
-                self.layerDraw = layer;
-            });
-
-            var layerDrawPromise = self.map.addLayer({
-                id: TC.getUID(),
-                title: 'FeatureInfo',
-                stealth: true,
-                type: TC.Consts.layerType.VECTOR
-                        , styles: {
-                            point: { fillColor: "#D8ED6C", fillOpacity: 0, strokeColor: "#D8ED6C", strokeWidth: 2, radius: 6 },
-                            line: { strokeColor: "#D8ED6C", strokeWidth: 2 },
-                            polygon: { strokeColor: "#D8ED6C", strokeWidth: 2, fillColor: "#000", fillOpacity: 0.3 }
-                        }
-            });
-            $.when(layerDrawPromise).then(function (layer) {
-                self.layerDraw = layer;                
-            });
-
-            $.when(map.addControl('popup', {
-                closeButton: true,
-                draggable: self.options.draggable
-            })).then(function (popup) {
-                self.popup = popup;
-                popup.caller = self;
-
-                map.on(TC.Consts.event.POPUP, function (e) {
-                    self.onShowPopUp(e)
-                });
-
-                map.on(TC.Consts.event.POPUPHIDE, function (e) {
-                    if (e.control === popup) {
-                        //restaurar el ancho autom\u00e1tico
-                        self.popup.$popupDiv.css("width", "auto");
-                    }
-                });
-            });
-        });
-        map.$events.on(TC.Consts.event.POPUPHIDE, function (e) {
-            if (self.popup === e.control) {
-                self.layerDraw.clearFeatures();
-            }
-        });
-
-
-        map.on(TC.Consts.event.BEFOREFEATUREINFO, function (e) {
-            self.beforeGetFeatureInfo(e);
-        });
-
-        map.on(TC.Consts.event.FEATUREINFO, function (e) {
-            if (self.isActive) {
-                self.lastFeatureCount = self.countFeatures(e);
-                self.responseCallback(e);
-            }
-        });
-
-        map.$events.on(TC.Consts.event.NOFEATUREINFO, function (e) {
-            self.lastFeatureCount = 0;
-            if (self.popup) {
-                self.popup.hide();
-            }
-        });
-
-        TC.loadJS(!TC.Consts.event.POPUPHIDE, [TC.apiLocation + 'TC/control/Popup.js'], function () {
-            map.$events.on(TC.Consts.event.POPUPHIDE, function (e) {
-                if (self.popup === e.control) {
-                    self.layer.clearFeatures();
-                }
-            });
-        });
-        self.$events.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
-            self.wrap.cancelDraw();
-        });
-    };
-
-    ctlProto.responseCallback = function (e) {
-        var self = this;
-        if (self.marker) {
-            var services = e.services;
-            self.info = { services: services };
-
-            // Eliminamos capas sin resultados a no ser que tenga un error
-            for (var i = 0; i < services.length; i++) {
-                var service = services[i];
-                if (service.hasLimits) {
-                    delete service.layers
-                }
-                else {
-                    for (var j = 0; j < service.layers.length; j++) {
-                        if (!service.layers[j].features.length) {
-                            service.layers.splice(j, 1);
-                            j = j - 1;
-                        }
-                    }
-                    if (!service.layers.length) {
-                        services.splice(i, 1);
-                        i = i - 1;
-                    }
-                }
-
-            }
-            if (services.length) {
-                self.renderData(e, function () {
-                    // Insert links
-                    self._$div.find('td.' + self.CLASS + '-val').each(function (idx, elm) {
-                        var $td = $(elm);
-                        var text = $td.text();
-                        if (TC.Util.isURL(text)) {
-                            $td.html('<a href="' + text + '" target="_blank">' + text + '</a>');
-                        }
-                    });
-
-                    self.marker.data = $('<div>').append(self._$div.clone()).html();
-                    if (self.popup) {
-                        self.marker.showPopup(self.popup);
-                    }
-                });
-            }
-            else {
-                self.layer.clearFeatures();
-            }
-        }
-    };
-
 })();
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.Consts.event.POPUP = 'popup.tc';
@@ -86932,7 +88289,7 @@ TC.control.Print = function (options)
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.PrintMap = function () {
@@ -86985,7 +88342,8 @@ TC.inherit(TC.control.PrintMap, TC.Control);
             if (self.printWindow && self.printWindow !== undefined)
                 self.printWindow.close();
 
-            window.refererMap = map
+            TC.printPreview = {};
+            TC.printPreview.refererMap = map
 
             var mapFeatures = [];
             var layer;
@@ -87019,7 +88377,7 @@ TC.inherit(TC.control.PrintMap, TC.Control);
                 }
             }
 
-            window.mapFeatures = mapFeatures;
+            TC.printPreview.mapFeatures = mapFeatures;
 
             self.printWindow = window.open(url, "print");
             self.printWindow.onbeforeunload = function () {
@@ -87035,7 +88393,7 @@ TC.inherit(TC.control.PrintMap, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.PrintPdf = function () {
@@ -87225,6 +88583,10 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         self.canvas = $('.tc-map .ol-viewport canvas')[0];
         self.mapSize = TC.Util.calculateAspectRatioFit(self.canvas.width, self.canvas.height, pageWidth - (options.marginLeft * 2), pageHeight - (options.marginTop * 2) - options.headerHeight);
 
+        var imageErrorHandling = function (imageUrl) {
+            TC.error(self.getLocaleString('print.error'));
+            TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, TC.Consts.msgErrorMode.EMAIL, 'Error en la impresi\u00f3n'); //Correo de error
+        };
 
         var printHeader = function (docDefinition) {
             docDefinition.content = docDefinition.content || [];
@@ -87289,6 +88651,9 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                     resolve({ image: dataUrl, height: size.height, width: size.width });
 
+                }, function () { // reject
+                    imageErrorHandling(self.options.logo);
+                    deferred.reject();
                 });
             } else {
                 resolve();
@@ -87392,11 +88757,19 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                         (function (k, l) {
                             var layer = legendByGroup[k].layers[l];
                             var src = layer.src || layer.srcBase64;
+
                             if (src) {
+                                // Si estamos en la impresi\u00f3n en IE, proxificamos las im\u00e1genes. En caso contrario se genera un "Security Error" al generar el PDF
+                                if (self.map.options.crossOrigin && TC.Util.detectIE()) {
+                                    src = TC.proxify(src);
+                                }
+
                                 var promise = TC.Util.imgToDataUrl(src, 'image/png');
                                 imagePromises.push(promise);
                                 promise.then(function (base64, canvas) {
                                     layer.image = { base64: base64, canvas: canvas };
+                                }, function () { //reject
+                                    imageErrorHandling(src);
                                 });
                             }
                         })(i, j);
@@ -87460,6 +88833,8 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             }
                         }
                         deferred.resolve(docDefinition);
+                    }, function () { // reject
+                        deferred.reject();
                     });
 
                 } else {
@@ -87479,7 +88854,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             if (title) {
                 filename += title;
             } else {
-                var currentDate = TC.Util.getFormattedDate(new Date().toString());
+                var currentDate = TC.Util.getFormattedDate(new Date().toString(), true);
                 filename += currentDate;
             }
 
@@ -87490,15 +88865,19 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var loadingCtrl = self.map.getControlsByClass(TC.control.LoadingIndicator)[0];
         var hasWait = loadingCtrl.addWait();
 
+        var _removeWait = function () {
+            loadingCtrl.removeWait(hasWait);
+        }
+
         $.when(self.pdfLibPromise)
-            .then(createDoc)
+            .then(createDoc)            
             .then(printHeader)
+            .fail(_removeWait)
             .then(printMap)
             .then(printLegend)
+            .fail(_removeWait)
             .then(saveFile)
-            .then(function () {
-                loadingCtrl.removeWait(hasWait);
-            });
+            .then(_removeWait);
     };
 
     ctlProto.getLayersFromOpener = function (mapVar) {
@@ -87506,7 +88885,8 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var opener = window.opener;
 
         if (opener) {
-            var refererMap = opener.refererMap;
+            var TC = opener.TC;
+            var refererMap = TC.printPreview ? TC.printPreview.refererMap : null;
 
             if (refererMap) {
 
@@ -87562,7 +88942,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                         }
                     }
 
-                    var mapFeatures = window.opener.mapFeatures;
+                    var mapFeatures = TC.printPreview.mapFeatures;
 
                     if (mapFeatures) {
                         self.map.addLayer({
@@ -87570,9 +88950,9 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             type: TC.Consts.layerType.VECTOR
                         }, function (layer) {
                             TC.loadJS(!TC.feature,
-                            [TC.apiLocation + 'TC/Feature.js', TC.apiLocation + 'TC/feature/Point.js', TC.apiLocation + 'TC/feature/Polyline.js',
-                            TC.apiLocation + 'TC/feature/Polygon.js', TC.apiLocation + 'TC/feature/MultiPolygon.js', TC.apiLocation + 'TC/feature/MultiPolyline.js',
-                            TC.apiLocation + 'TC/feature/Circle.js', TC.apiLocation + 'TC/feature/Marker.js'],
+                            [TC.apiLocation + 'TC/Feature', TC.apiLocation + 'TC/feature/Point', TC.apiLocation + 'TC/feature/Polyline',
+                            TC.apiLocation + 'TC/feature/Polygon', TC.apiLocation + 'TC/feature/MultiPolygon', TC.apiLocation + 'TC/feature/MultiPolyline',
+                            TC.apiLocation + 'TC/feature/Circle', TC.apiLocation + 'TC/feature/Marker'],
                             function () {
                                 for (var i = 0; i < mapFeatures.length; i++) {
                                     var feat = mapFeatures[i];
@@ -87615,12 +88995,13 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.Consts.event.RESULTTOOLTIP = 'resulttooltip.tc';
 TC.Consts.event.RESULTTOOLTIPEND = 'resulttooltipend.tc';
 TC.Consts.event.DRAWCHART = 'drawchart.tc';
+TC.Consts.event.DRAWTABLE = 'drawtable.tc';
 TC.Consts.event.RESULTSPANELMIN = 'resultspanelmin.tc';
 TC.Consts.event.RESULTSPANELMAX = 'resultspanelmax.tc';
 TC.Consts.event.RESULTSPANELCLOSE = 'resultspanelclose.tc';
@@ -87633,7 +89014,7 @@ TC.control.ResultsPanel = function () {
     self.data = {};
     self.classes = {
         FA: 'fa'
-    };    
+    };
 
     self.contentType = {
         TABLE: {
@@ -87650,7 +89031,7 @@ TC.control.ResultsPanel = function () {
 
     if (self.options) {
         if (self.options.content)
-            self.content = self.contentType[self.options.content.toUpperCase()];        
+            self.content = self.contentType[self.options.content.toUpperCase()];
 
         if (self.options.chart)
             self.chart = self.options.chart;
@@ -87680,6 +89061,8 @@ TC.control.ResultsPanel.prototype.render = function (callback) {
 
     TC.Control.prototype.render.call(self, function () {
 
+        self.$mainTitle = self._$div.find('label');
+
         self.$minimize = self._$div.find('.prcollapsed-slide-submenu-min');
         self.$minimize.on('click', function () {
             self.minimize();
@@ -87698,11 +89081,33 @@ TC.control.ResultsPanel.prototype.render = function (callback) {
         if (self.content) {
             self.content = self.content;
 
-            if (self.options.titles && self.options.titles.max)
-                self.$maximize.attr('title', self.options.titles.max);
-        }        
-        
+            if (self.options.titles) {
+
+                if (self.options.titles.main) {
+                    self.$mainTitle.attr('title', self.options.titles.main);
+                    self.$mainTitle.html(self.options.titles.main);
+                }
+
+                if (self.options.titles.max) {
+                    self.$maximize.attr('title', self.options.titles.max);
+                }
+            }
+        }
+
         self._$div.find(self.content.collapsedClass).removeAttr('hidden').addClass(self.classes.FA);
+
+        self.$divTable = self._$div.find('.' + self.CLASS + '-table');
+        self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
+
+        TC.loadJS(Modernizr.touch, TC.apiLocation + 'lib/jQuery/jquery.touchSwipe.min.js', function () {
+            if (Modernizr.touch) {
+                var $head = self._$div.swipe({
+                    swipeLeft: function () {
+                        self.minimize();
+                    }
+                });
+            }
+        });
 
         if (callback && typeof (callback) === "function")
             callback.call();
@@ -87751,7 +89156,7 @@ TC.control.ResultsPanel.prototype.close = function () {
         self.chart.chart = self.chart.chart.destroy();
     }
 
-    self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELCLOSE), {});
+    self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELCLOSE, { control: self }));
 };
 
 TC.control.ResultsPanel.prototype.openChart = function () {
@@ -87763,11 +89168,11 @@ TC.control.ResultsPanel.prototype.openChart = function () {
         if (data.msg) {
             self.map.toast(data.msg);
         }
-        else {           
+        else {
 
-            var locale = TC.Util.getMapLocale(self.map);            
+            var locale = TC.Util.getMapLocale(self.map);
             self.getRenderedHtml(TC.control.ResultsPanel.prototype.CLASS + '-chart', { upHill: data.upHill.toLocaleString(locale), downHill: data.downHill.toLocaleString(locale) }, function (out) {
-                
+
                 console.log(self._$div.find('.' + TC.control.ResultsPanel.prototype.CLASS + '-chart').length);
                 self._$div.find('.' + TC.control.ResultsPanel.prototype.CLASS + '-chart').html(out);
 
@@ -87808,8 +89213,10 @@ TC.control.ResultsPanel.prototype.openChart = function () {
                 chartOptions.onrendered = function () {
                     self.map.$events.trigger($.Event(TC.Consts.event.DRAWCHART), { svg: this.svg[0][0] });
                     self._$div.find('.prsidebar-body').fadeIn('slide');
+
+                    self._$div.find('.' + self.CLASS + '-table').hide();
                 };
-                
+
                 if (window.c3) {
                     // GLS: Override de la funci\u00f3n generateDrawLine y generateDrawArea para establecer otro tipo de interpolaci\u00f3n en la l\u00ednea
                     window.c3.chart.internal.fn.generateDrawLine = function (lineIndices, isSub) {
@@ -87874,9 +89281,9 @@ TC.control.ResultsPanel.prototype.openChart = function () {
                             return path ? path : "M 0 0";
                         };
                     };
-                    
-                    self.chart.chart = c3.generate(chartOptions);                              
-                }                                
+
+                    self.chart.chart = c3.generate(chartOptions);
+                }
             });
         }
     } else {
@@ -87889,100 +89296,88 @@ TC.control.ResultsPanel.prototype.openChart = function () {
 TC.control.ResultsPanel.prototype.openTable = function () {
     var self = this;
 
-    var columns = arguments[0].columns, data = arguments[0].data;
+    var data = arguments[0];
+    if (data) {
 
-    /**
-     * Borra del JSON de datos las columnas que no se quieren mostrar
-     */
-    var deleteColumns = function () {
-        for (var i = 0; i < data.length; i++) {
-            for (var k in data[i]) {
-                if (columns.indexOf(k) < 0) {
-                    delete data[i][k];
+        var deleteColumns = function () {
+            for (var i = 0; i < data.length; i++) {
+                for (var k in data[i]) {
+                    if (columns.indexOf(k) < 0) {
+                        delete data[i][k];
+                    }
                 }
             }
-        }
-    };
+        };
 
-    if (data && data.length > 0) {
-        //Si no recibe columnas, las extrae de las claves del primer objeto de la colecci\u00f3n de datos
-        if (!columns) {
-            columns = [];
-            for (var k in data[0]) {
-                columns.push(k);
+        var css;
+        if (data.css) {
+            css = data.css;
+        }
+        var columns = data.columns, data = data.data;
+
+        if (data && data.length > 0) {
+            //Si no recibe columnas, las extrae de las claves del primer objeto de la colecci\u00f3n de datos
+            if (!columns) {
+                columns = [];
+                for (var k in data[0]) {
+                    columns.push(k);
+                }
             }
+
+            deleteColumns();
+
+            self.tableData = {
+                columns: columns,
+                results: data,
+                css: css
+            }
+
+            self.getRenderedHtml(self.CLASS + '-table', self.tableData, function (html) {
+                self._$div.find('.' + self.CLASS + '-table').html(html);
+            });
+
+            self._$div.find('.' + self.CLASS + '-chart').hide();
+            self._$div.find('.prsidebar-body').fadeIn('slide');
         }
-
-        deleteColumns();
-
-        self.tableData = {
-            columns: columns,
-            results: data
-        }
-
-        self.getRenderedHtml(self.CLASS + '-table', self.tableData, function (html) {
-            self._$div.find('.' + self.CLASS + '-table').html(html);
-        });
-
-        self._$div.find('.prsidebar-body').fadeIn('slide');
-
     }
 
     self.map.getLoadingIndicator().hide();
 
 };
 
-TC.control.ResultsPanel.prototype.open = function (data, columns) {
+TC.control.ResultsPanel.prototype.open = function (html) {
     var self = this;
 
-    /**
-     * Borra del JSON de datos las columnas que no se quieren mostrar
-     */
-    var deleteColumns = function () {
-        for (var i = 0; i < data.length; i++) {
-            for (var k in data[i]) {
-                if (columns.indexOf(k) < 0) {
-                    delete data[i][k];
-                }
-            }
+    var toCheck = self._$div.find('.' + self.CLASS + '-table');
+    var checkIsRendered = function () {
+        var clientRect = toCheck[0].getBoundingClientRect();
+        if (clientRect && clientRect.width > 100) {
+            window.cancelAnimationFrame(this.requestIsRendered);
+
+            this.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE), {});
         }
     };
 
-    if (data && data.length > 0) {
-        //Si no recibe columnas, las extrae de las claves del primer objeto de la colecci\u00f3n de datos
-        if (!columns) {
-            columns = [];
-            for (var k in data[0]) {
-                columns.push(k);
-            }
-        }
+    self.requestIsRendered = window.requestAnimationFrame(checkIsRendered.bind(self));
 
-        deleteColumns();
+    self._$div.find('.' + self.CLASS + '-table').html(html);
+    self._$div.find('.' + self.CLASS + '-chart').hide();
 
-        self.tableData = {
-            columns: columns,
-            results: data
-        }
-
-        self.getRenderedHtml(self.CLASS + '-table', self.tableData, function (html) {
-            self._$div.find('.' + self.CLASS + '-table').html(html);
-        });
-
-        self._$div.find('.prsidebar-body').fadeIn('slide');
-    } else {
-        TC.alert("No se han encontrado resultados");
+    // si est\u00e1 minimizado
+    if (self._$div.find(self.content.collapsedClass + ':visible').length == 1) {
+        self.maximize();
     }
 
+    self._$div.find('.prsidebar-body').fadeIn('slide');
 
     self.map.getLoadingIndicator().hide();
-
 };
 
 TC.control.ResultsPanel.prototype.register = function (map) {
     var self = this;
 
     TC.Control.prototype.register.call(self, map);
-    
+
     if (self.openOn) {
         self.map.$events.one(self.openOn, function (e, args) {
             self.content.fnOpen.call(self, args);
@@ -88007,12 +89402,12 @@ TC.control.ResultsPanel.prototype.register = function (map) {
         });
     }
 
-    
+
 };
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.ScaleBar = function () {
@@ -88050,7 +89445,7 @@ TC.inherit(TC.control.ScaleBar, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.control.Scale) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/Scale.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/Scale');
 }
 
 TC.control.ScaleSelector = function () {
@@ -88133,7 +89528,7 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Search = function () {
@@ -88229,6 +89624,7 @@ TC.control.Search = function () {
         goToIdFormat: 'M{0}P{1}Par{2}',
         idPropertiesIdentifier: '#'
     };
+
     self.availableSearchTypes[TC.Consts.searchType.COORDINATES] = {
         parser: self.getCoordinates,
         goTo: self.goToCoordinates,
@@ -88375,7 +89771,6 @@ TC.control.Search = function () {
         }
     };
 
-
     self.availableSearchTypes[TC.Consts.searchType.STREET] = {
         root: null,
         limit: null,
@@ -88397,7 +89792,7 @@ TC.control.Search = function () {
                 color: { "#CB0000": self.getLocaleString('search.list.street') }
             };
         },
-        outputProperties: ['ENTIDADC', 'VIA'],
+        outputProperties: ['ENTIDADC', 'VIA', 'CENTIDADC', 'CMUNICIPIO'],
         outputFormatLabel: '{1}, {0}',
         styles: {
             CATAST_Lin_CalleEje: {
@@ -88447,7 +89842,7 @@ TC.control.Search = function () {
                 color: { "#CB0000": self.getLocaleString('search.list.number') }
             };
         },
-        outputProperties: ['ENTIDADC', 'VIA', 'PORTAL'],
+        outputProperties: ['ENTIDADC', 'VIA', 'PORTAL', 'CENTIDADC', 'CMUNICIPIO'],
         outputFormatLabel: '{1} {2}, {0}',
         styles: {
             CATAST_Txt_Portal: {
@@ -88536,6 +89931,142 @@ TC.control.Search = function () {
         }
     };
 
+    self.rootCfg = {};
+    self.rootCfg[TC.Consts.searchType.MUNICIPALITY] = {
+        root: null,
+        limit: false,
+        url: self.url || '//idena.navarra.es/ogc/wfs',
+        version: self.version || '1.1.0',
+        outputFormat: TC.Consts.format.JSON,
+        featurePrefix: self.featurePrefix || 'IDENA',
+        geometryName: 'the_geom',
+        featureType: 'CATAST_Pol_Municipio',
+        dataIdProperty: ['CMUNICIPIO'],
+        queryProperties: {
+            tProperty: ['MUNICIPIO']
+        },
+        outputProperties: ['MUNICIPIO'],
+        outputFormatLabel: '{0}',
+        getRootLabel: function () {
+            var done = new $.Deferred();
+            if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel) {
+
+                var params = {};
+                params.SERVICE = 'WFS';
+                params.VERSION = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].version;
+                params.REQUEST = 'GetFeature';
+                params.TYPENAME = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].featurePrefix + ':' + self.rootCfg[TC.Consts.searchType.MUNICIPALITY].featureType;
+                params.OUTPUTFORMAT = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputFormat;
+                params.PROPERTYNAME = ['CMUNICIPIO'].concat(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputProperties).join(',');
+
+                params.CQL_FILTER = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].root.map(function (elem) {
+                    return ['CMUNICIPIO'].map(function (id, index) {
+                        return id + '=' + elem[index];
+                    }).join(' AND ');
+                });
+
+                params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
+
+                $.ajax({
+                    url: self.rootCfg[TC.Consts.searchType.MUNICIPALITY].url + '?' + $.param(params),
+                    type: 'GET'
+                }).done(function (data) {
+                    if (data.totalFeatures > 0) {
+
+                        self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = data.features.map(function (feature) {
+                            return {
+                                id: ['CMUNICIPIO'].map(function (elem) {
+                                    return feature.properties[elem];
+                                }).join('#'),
+                                label: feature.properties[self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputProperties[0]].toLowerCase()
+                            };
+                        });
+
+                        done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+
+                    } else {
+                        self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = [];
+                        done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+                    }
+                }).fail(function () {
+                    done.resolve([]);
+                });
+            }
+            else {
+                done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+            }
+
+            return done;
+        }
+    };
+    self.rootCfg[TC.Consts.searchType.LOCALITY] = {
+        root: null,
+        limit: false,
+        url: self.url || '//idena.navarra.es/ogc/wfs',
+        version: self.version || '1.1.0',
+        outputFormat: TC.Consts.format.JSON,
+        featurePrefix: self.featurePrefix || 'IDENA',
+        geometryName: 'the_geom',
+        featureType: ['ESTADI_Pol_EntidadPob'],
+        renderFeatureType: '',
+        dataIdProperty: ['CMUNICIPIO', 'CENTIDADC'],
+        queryProperties: {
+            tProperty: ['ENTINOAC']
+        },
+        outputProperties: ['ENTINOAC'],
+        getRootLabel: function () {
+            var done = new $.Deferred();
+            if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel) {
+
+                var params = {};
+                params.SERVICE = 'WFS';
+                params.VERSION = self.rootCfg[TC.Consts.searchType.LOCALITY].version;
+                params.REQUEST = 'GetFeature';
+                params.TYPENAME = self.rootCfg[TC.Consts.searchType.LOCALITY].featurePrefix + ':' + self.rootCfg[TC.Consts.searchType.LOCALITY].featureType;
+                params.OUTPUTFORMAT = self.rootCfg[TC.Consts.searchType.LOCALITY].outputFormat;
+                params.PROPERTYNAME = ['CMUNICIPIO', 'CENTIDAD'].concat(self.rootCfg[TC.Consts.searchType.LOCALITY].outputProperties).join(',');
+
+                params.CQL_FILTER = self.rootCfg[TC.Consts.searchType.LOCALITY].root.map(function (elem) {
+                    return ['CMUNICIPIO', 'CENTIDAD'].map(function (id, index) {
+                        return id + '=' + elem[index];
+                    }).join(' AND ');
+                });
+
+                params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
+
+                $.ajax({
+                    url: self.rootCfg[TC.Consts.searchType.LOCALITY].url + '?' + $.param(params),
+                    type: 'GET'
+                }).done(function (data) {
+                    if (data.totalFeatures > 0) {
+
+                        self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = data.features.map(function (feature) {
+                            return {
+                                id: ['CMUNICIPIO', 'CENTIDAD'].map(function (elem) {
+                                    return feature.properties[elem];
+                                }).join('#'),
+                                label: feature.properties[self.rootCfg[TC.Consts.searchType.LOCALITY].outputProperties[0]].toLowerCase()
+                            };
+                        });
+
+                        done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+
+                    } else {
+                        self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = [];
+                        done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+                    }
+                }).fail(function () {
+                    done.resolve([]);
+                });
+            }
+            else {
+                done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+            }
+
+            return done;
+        }
+    };
+
     self.allowedSearchTypes = self.options.allowedSearchTypes || {};
 
     if (self.options.allowedSearchTypes) {
@@ -88544,17 +90075,24 @@ TC.control.Search = function () {
             if (self.availableSearchTypes[allowed] && !$.isEmptyObject(self.options.allowedSearchTypes[allowed])) {
                 $.extend(self.availableSearchTypes[allowed], self.options.allowedSearchTypes[allowed]);
 
-                if (allowed != TC.Consts.searchType.MUNICIPALITY && self.options.allowedSearchTypes[allowed].root) {
-                    self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root = self.options.allowedSearchTypes[allowed].root;
-                    self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].limit = self.options.allowedSearchTypes[allowed].limit || true;
+                if (self.options.allowedSearchTypes[allowed].root &&
+                    (allowed != TC.Consts.searchType.MUNICIPALITY && self.options.allowedSearchTypes[allowed].rootType == TC.Consts.searchType.MUNICIPALITY) ||
+                    (allowed != TC.Consts.searchType.LOCALITY && self.options.allowedSearchTypes[allowed].rootType == TC.Consts.searchType.LOCALITY)) {
+
+                    self.rootCfg.active = self.rootCfg[self.options.allowedSearchTypes[allowed].rootType];
+                    self.rootCfg.active.root = self.options.allowedSearchTypes[allowed].root;
+                    self.rootCfg.active.limit = self.options.allowedSearchTypes[allowed].limit;
 
                     self.availableSearchTypes[TC.Consts.searchType.STREET].queryProperties.tProperty =
                         self.availableSearchTypes[TC.Consts.searchType.NUMBER].queryProperties.tProperty =
-                            self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].dataIdProperty;
-
+                        self.rootCfg.active.dataIdProperty;
                 }
             }
         }
+    }
+
+    if (self.rootCfg.active) {
+        self.rootCfg.active.getRootLabel();
     }
 
     self.queryableFeatures = self.options.queryableFeatures || false;
@@ -88571,12 +90109,13 @@ TC.control.Search = function () {
     self.NUMBER = TC.Consts.searchType.NUMBER;
     self.COMMONWEALTH = TC.Consts.searchType.COMMONWEALTH;
     self.URBAN = TC.Consts.searchType.URBAN;
+    self.ROAD = TC.Consts.searchType.ROAD;
+    self.ROADPK = TC.Consts.searchType.ROADPK;
 
     self.wrap = new TC.wrap.control.Search(self);
 
     self.interval = 500;
 
-    self.rootLabel = '';
     self.searchTypes = {
         CADASTRAL_SEARCH: {
             parser: self.getCadastralRef,
@@ -88600,10 +90139,361 @@ TC.control.Search = function () {
     };
 
     self.NORMAL_PATTERNS = {
-        ROMAN_NUMBER: /M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}){1,}?\S?\./g,
-        ABSOLUTE_NOT_DOT: /[`~!@#$%^&*_|+\=?;:'"\{\}\[\]\\]/g,
-        ABSOLUTE: /[`~!@#$%^&*_|+\=?;:'.\{\}\[\]\\]/g
+        ROMAN_NUMBER: /M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}){1,}?\S?\./i,
+        ABSOLUTE_NOT_DOT: /[`~!@#$%^&*_|+\=?;:'"\{\}\[\]\\]/gi,
+        ABSOLUTE: /[`~!@#$%^&*_|+\=?;:'.\{\}\[\]\\]/gi
     };
+
+    self.filter = (function (self) {
+
+        var getGoToElement = function (id, dataRole) {
+            for (var i = 0; i < self._search.data.length; i++) {
+                if (self._search.data[i].id == id && (!dataRole || (dataRole && self._search.data[i].dataRole === dataRole)))
+                    return self._search.data[i];
+            }
+        };
+
+        var getFeatureLayer = function (feature) {
+            var searchType = self.availableSearchTypes[feature.dataRole];
+            var dataLayer = feature.dataLayer;
+
+            if (searchType.renderFeatureType) {
+                if (!(feature.dataLayer instanceof Array))
+                    dataLayer = [feature.dataLayer];
+
+                dataLayer = dataLayer.concat((searchType.renderFeatureType instanceof Array ? searchType.renderFeatureType : [searchType.renderFeatureType]));
+            }
+
+            return dataLayer;
+        };
+
+        return {
+            getPropertyName: function (dataRole, e) {
+                return self.availableSearchTypes[dataRole].queryProperties[e + 'Property'];
+            },
+            getPropertyValue: function (role, propertyName) {
+                return self.availableSearchTypes[role][propertyName];
+            },
+            getIsLikeNode: function (name, value) {
+                var toEscape = /([\-\"\.\º\(\)\/])/g;
+                if (toEscape.test(value)) {
+                    value = value.replace(toEscape, "\\$1");
+                }
+
+                if (value.toString().indexOf(self._LIKE_PATTERN) > -1)
+                    return '<Or><PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
+                        '<PropertyName>' + name + '</PropertyName>' +
+                        '<Literal>' + value.toLowerCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
+                        '</PropertyIsLike>' +
+                        '<PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
+                        '<PropertyName>' + name + '</PropertyName>' +
+                        '<Literal>' + value.toUpperCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
+                        '</PropertyIsLike></Or>';
+                else
+                    return '<PropertyIsEqualTo>' +
+                        '<PropertyName>' + name + '</PropertyName>' +
+                        '<Literal>' + value.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
+                        '</PropertyIsEqualTo>';
+            },
+            getFilterNode: function (propertyName, propertyValue) {
+                var r;
+                if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
+                    var f = [];
+                    for (var key in propertyName) {
+                        if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
+                            r = '<Or>';
+                            for (var i = 0; i < propertyName[key].length; i++) {
+                                r += self.filter.getIsLikeNode($.trim(propertyName[key][i]), propertyValue);
+                            }
+
+                            r += '</Or>';
+                            f.push('(<Filter xmlns="http://www.opengis.net/ogc">' + r + '</Filter>)');
+                        } else {
+                            var propName = propertyName[key];
+                            if ((propertyName[key] instanceof Array) && propertyName[key].length == 1)
+                                propName = propertyName[key][0];
+
+                            f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
+                                '<Or>' + self.filter.getIsLikeNode($.trim(propName), propertyValue) + '</Or>' +
+                                '</Filter>)');
+                        }
+                    }
+
+                    return f.join('');
+
+                } else if (propertyName instanceof Array && propertyName.length > 1) {
+                    r = '<ogc:Or>';
+                    for (var i = 0; i < propertyName.length; i++) {
+                        r += self.filter.getIsLikeNode($.trim(propertyName[i]), propertyValue);
+                    }
+
+                    return r += '</ogc:Or>';
+                } else
+                    return self.filter.getIsLikeNode((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
+            },
+            getFilter: function (data, dataRole) {
+                var r = {};
+                r.multiL = false;
+                r.f = '';
+
+                var _f;
+
+                var bindRootFilterNode = function (filtersArr, dataT) {
+                    var rootFilters = [];
+
+                    if (dataT != self.rootCfg.active.root) {
+                        // GLS: Si llego aqu\u00ed, significa que el usuario est\u00e1 indicando la poblaci\u00f3n, 
+                        // por tanto no a\u00f1ado todas las ra\u00edces posibles, a\u00f1ado la poblaci\u00f3n que ha indicado (validando antes contra rootLabel)                     
+                        var item = dataT.split('#');
+
+                        for (var j = 0; j < self.rootCfg.active.dataIdProperty.length; j++) {
+
+                            if (j == 0 && self.rootCfg.active.dataIdProperty.length > 1) {
+                                rootFilters.push('<ogc:And>');
+                            }
+
+                            rootFilters.push(self.filter.getFilterNode(self.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
+
+                            if (j == self.rootCfg.active.dataIdProperty.length - 1 && self.rootCfg.active.dataIdProperty.length > 1) {
+                                rootFilters.push('</ogc:And>');
+                            }
+                        }
+                    } else {
+                        for (var i = 0; i < self.rootCfg.active.root.length; i++) {
+                            var item = self.rootCfg.active.root[i];
+
+                            if (i == 0 && self.rootCfg.active.root.length > 1) {
+                                rootFilters.push('<ogc:Or>');
+                            }
+
+                            for (var j = 0; j < self.rootCfg.active.dataIdProperty.length; j++) {
+
+                                if (j == 0 && self.rootCfg.active.dataIdProperty.length > 1) {
+                                    rootFilters.push('<ogc:And>');
+                                }
+
+                                rootFilters.push(self.filter.getFilterNode(self.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
+
+                                if (j == self.rootCfg.active.dataIdProperty.length - 1 && self.rootCfg.active.dataIdProperty.length > 1) {
+                                    rootFilters.push('</ogc:And>');
+                                }
+                            }
+                        }
+
+                        if (self.rootCfg.active.root.length > 1) {
+                            rootFilters.push('</ogc:Or>');
+                        }
+                    }
+
+                    return filtersArr.concat(rootFilters);
+                };
+
+                switch (dataRole) {
+                    case self.NUMBER:
+                        _f = [];
+                        if (!(self.rootCfg.active) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
+                            var match = /(\<|\>|\<\>)/gi.exec(data.t);
+                            if (match)
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                            else {
+                                if (self.rootCfg.active) {
+                                    _f = bindRootFilterNode(_f, data.t);
+                                }
+                                else {
+                                    _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                                }
+                            }
+
+                            match = /(\<|\>|\<\>)/gi.exec(data.s);
+                            if (match)
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                            else _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        }
+                        else {
+                            if (self.rootCfg.active) {
+                                _f = bindRootFilterNode(_f, data.t);
+                            } else {
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                            }
+                            _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        }
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 'p'), data.p + '*'));
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                        break;
+                    case self.STREET:
+                        _f = [];
+
+                        if (!(self.rootCfg.active) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
+                            var match = /(\<|\>|\<\>)/gi.exec(data.t);
+                            if (match)
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                            else {
+                                if (self.rootCfg.active) {
+                                    _f = bindRootFilterNode(_f, data.t);
+                                }
+                                else {
+                                    _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                                }
+                            }
+
+                            match = /(\<|\>|\<\>)/gi.exec(data.s);
+                            if (match)
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                            else _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        } else {
+
+                            if (self.rootCfg.active) {
+                                _f = bindRootFilterNode(_f, data.t);
+                            }
+                            else {
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                            }
+                            _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        }
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                        break;
+                    case self.COUNCIL:
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
+                        break;
+                    case self.URBAN:
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
+                        break;
+                    case self.LOCALITY:
+                        r.f = self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN);
+                        r.multiL = true;
+                        break;
+                    case self.MUNICIPALITY: {
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
+                        break;
+                    }
+                    case self.ROAD:
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
+                        break;
+                    case self.ROADPK:
+                        var _f = [];
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                        break;
+                }
+
+                return r;
+            },
+            getParams: function (data, dataRole, properties, dataIdProperties) {
+                var filters = self.filter.getFilter(data, dataRole);
+
+                var params = {
+                    REQUEST: 'GetFeature',
+                    SERVICE: 'WFS',
+                    MAXFEATURES: 500,
+                    VERSION: self.availableSearchTypes[dataRole].version,
+                    OUTPUTFORMAT: self.availableSearchTypes[dataRole].outputFormat
+                };
+
+                var featureTypes = self.filter.getPropertyValue(dataRole, 'featureType');
+                if (!(featureTypes instanceof Array))
+                    params.TYPENAME = self.availableSearchTypes[dataRole].featurePrefix ? self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes) : $.trim(featureTypes);
+                else {
+                    var ft = [];
+                    for (var i = 0; i < featureTypes.length; i++) {
+                        ft.push(self.availableSearchTypes[dataRole].featurePrefix ?
+                            self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes[i]) :
+                            $.trim(featureTypes[i]));
+                    }
+
+                    params.TYPENAME = ft.join(',');
+                }
+
+                var _getProperties = function (properties) {
+                    if ((properties || '') !== '') {
+                        if (!(properties instanceof Array)) {
+                            var p = [];
+                            if (properties instanceof Object) {
+                                for (var key in properties) {
+                                    var prop = properties[key][0];
+                                    if (properties[key].length > 1)
+                                        prop = properties[key].join(',');
+
+                                    p.push(prop);
+                                }
+                            }
+                            return p;
+                        }
+                        else
+                            return properties.join(',');
+                    }
+                };
+                var _properties = _getProperties(properties);
+                var _ids = _getProperties(dataIdProperties);
+
+                if (_properties instanceof Array && _ids instanceof Array) {
+                    params.PROPERTYNAME = '';
+                    for (var i = 0; i < _properties.length; i++) {
+                        params.PROPERTYNAME += '(' + _properties[i] + ',' + _ids[i] + ')';
+                    }
+                } else
+                    params.PROPERTYNAME = _properties + ',' + _ids;
+
+                params.FILTER = filters.f;
+
+                return $.param(params);
+            },
+
+            getGoToFilterLayer: function (id, dataRole) {
+                var feature = getGoToElement(id, dataRole);
+                return getFeatureLayer(feature);
+            },
+            getGoToFilter: function (id, dataRole) {
+                var props = [];
+                var _id = id.split('#');
+
+                var feature = getGoToElement(id, dataRole);
+                if (feature && feature.dataRole) {
+                    var searchType = self.availableSearchTypes[feature.dataRole];
+                    var source = searchType.dataIdProperty;
+                    var dataLayer = getFeatureLayer(feature);
+
+                    if (id.indexOf('#') > -1 && dataLayer instanceof Array) {
+                        for (var i = 0; i < dataLayer.length; i++) {
+
+                            for (var j = 0; j < source[dataLayer[i]].length; j++) {
+                                props.push({ name: source[dataLayer[i]][j], value: _id[j] });
+                            }
+                        }
+                    } else if (id.indexOf('#') == -1 && dataLayer instanceof Array) {
+                        var src = source;
+
+                        for (var i = 0; i < dataLayer.length; i++) {
+                            if (!props.hasOwnProperty(dataLayer[i])) {
+
+                                if (src instanceof Object && source.hasOwnProperty(dataLayer[i]))
+                                    src = source[dataLayer[i]];
+
+                                for (var j = 0; j < src.length; j++) {
+                                    if (j < _id.length)
+                                        props.push({ name: src[j], value: _id[j] });
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        if (source instanceof Object && source.hasOwnProperty(dataLayer))
+                            source = source[dataLayer];
+
+                        for (var i = 0; i < source.length; i++) {
+                            props.push({ name: source[i], value: _id[i] });
+                        }
+                    }
+                }
+
+                return self.transformFilter(props);
+            },
+
+            getGoToElement: function (id) {
+                return getGoToElement(id);
+            }
+        }
+    })(self);
 };
 
 TC.inherit(TC.control.Search, TC.Control);
@@ -88639,13 +90529,14 @@ TC.inherit(TC.control.Search, TC.Control);
             };
             function getStyle(property, geomType, id) {
                 for (var allowed in self.allowedSearchTypes) {
-                    if (self.availableSearchTypes[allowed].hasOwnProperty('featureType'))
-                        if (self.availableSearchTypes[allowed].featureType.indexOf(id) > -1 || self.availableSearchTypes[allowed].renderFeatureType && self.availableSearchTypes[allowed].renderFeatureType.indexOf(id) > -1)
-                            if (self.availableSearchTypes[allowed].styles[id].hasOwnProperty(geomType)) {
-                                return self.availableSearchTypes[allowed].styles[id][geomType][property];
+                    var type = self.availableSearchTypes[allowed] || self.allowedSearchTypes[allowed];
+                    if (type && type.hasOwnProperty('featureType'))
+                        if (type.featureType.indexOf(id) > -1 || type.renderFeatureType && type.renderFeatureType.indexOf(id) > -1)
+                            if (type.styles[id].hasOwnProperty(geomType)) {
+                                return type.styles[id][geomType][property];
                             }
                 }
-                
+
                 return TC.Cfg.styles[geomType][property];
             };
 
@@ -88657,10 +90548,24 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
 
                 var prop = getStyle(property, geomType, getFeatureType(f.id));
-                if (extractValue)
-                    return f.getData().hasOwnProperty(prop) ? f.getData()[prop] : '';
-                else
+                if (extractValue) {
+                    if (prop instanceof Array) {
+                        var values = prop.map(function (p) {
+                            return f.getData().hasOwnProperty(p) ? f.getData()[p] : '';
+                        });
+                        var searchType = this.getSearchTypeByFeature(getFeatureType(f.id));
+                        if (searchType) {
+                            return searchType.outputFormatLabel.tcFormat(values);
+                        } else {
+                            return values.join(' ');
+                        }
+                    } else {
+                        return f.getData().hasOwnProperty(prop) ? f.getData()[prop] : '';
+                    }
+                }
+                else {
                     return prop;
+                }
             };
         }());
 
@@ -88686,7 +90591,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         strokeOpacity: styleFN.bind(self, 'line', 'strokeOpacity', false),
                         strokeWidth: styleFN.bind(self, 'line', 'strokeWidth', false)
                     },
-                    marker: {                        
+                    marker: {
                         anchor: TC.Defaults.styles.marker.anchor,
                         height: TC.Defaults.styles.marker.height,
                         width: TC.Defaults.styles.marker.width
@@ -88719,6 +90624,89 @@ TC.inherit(TC.control.Search, TC.Control);
         self.OUTBBX_LABEL = self.getLocaleString('outsideOfLimits');
 
         self.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "properties", "outputFormat"];
+
+        self.availableSearchTypes[TC.Consts.searchType.ROAD] = {
+            root: null,
+            limit: false,
+            url: self.url || '//idena.navarra.es/ogc/wfs',
+            version: self.version || '1.1.0',
+            outputFormat: TC.Consts.format.JSON,
+            featurePrefix: self.featurePrefix || 'IDENA',
+            geometryName: 'the_geom',
+            featureType: 'INFRAE_Lin_CtraEje',
+            dataIdProperty: ['DCARRETERA'],
+            queryProperties: {
+                tProperty: ['DCARRETERA']
+            },
+            suggestionListHead: function () {
+                return {
+                    label: self.getLocaleString('search.list.road'),
+                    color: { '#00b2fc': self.getLocaleString('search.list.road') }
+                };
+            },
+            outputProperties: ['DCARRETERA'],
+            outputFormatLabel: self.getLocaleString('search.list.road.shorter') + ': ' + '{0}',
+            searchWeight: 2,
+            styles: {
+                INFRAE_Lin_CtraEje: {
+                    polygon: {
+                        strokeColor: "#00b2fc",
+                        strokeOpacity: 1,
+                        strokeWidth: 5
+                    },
+                    line: {
+                        strokeColor: "#00b2fc",
+                        strokeOpacity: 1,
+                        strokeWidth: 5,
+                        strokeLinecap: "round",
+                        strokeDashstyle: "solid"
+                    }
+                }
+            },
+            parser: self.getRoad,
+            goTo: self.goToRoad,
+            pattern: new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|NA?|PA?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))$", "i")
+        };
+
+        self.availableSearchTypes[TC.Consts.searchType.ROADPK] = {
+            root: null,
+            limit: false,
+            url: self.url || '//idena.navarra.es/ogc/wfs',
+            version: self.version || '1.1.0',
+            outputFormat: TC.Consts.format.JSON,
+            featurePrefix: self.featurePrefix || 'IDENA',
+            geometryName: 'the_geom',
+            featureType: 'INFRAE_Sym_CtraPK',
+            dataIdProperty: ['DCARRETERA', 'CPK'],
+            queryProperties: {
+                tProperty: ['DCARRETERA'],
+                sProperty: ['PK']
+            },
+            suggestionListHead: function () {
+                return {
+                    label: self.getLocaleString('search.list.pk.larger'),
+                    color: { '#00b2fc': (self.getLocaleString('search.list.road') + ' ' + self.getLocaleString('search.list.pk')) }
+                };
+            },
+            outputProperties: ['DCARRETERA', 'PK'],
+            outputFormatLabel: self.getLocaleString('search.list.road.shorter') + ': {0} ' + self.getLocaleString('search.list.pk') + ': {1}',
+            searchWeight: 2,
+            styles: {
+                INFRAE_Sym_CtraPK: {
+                    point: {
+                        label: ["DCARRETERA", "PK"],
+                        fontColor: "#00b2fc",
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        labelOutlineColor: "#ffffff",
+                        labelOutlineWidth: 2
+                    }
+                }
+            },
+            parser: self.getPK,
+            goTo: self.goToPK,
+            pattern: new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|NA?|PA?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))\\s*\\,*\\s*(?:(?:" + self.getLocaleString("search.list.pk") + "\\:?)|(?:P\\:?)|(?:K\\:?)|(?:KM\\:?)|(?:\\s+|\\,+))\\s*(\\d{1,4})$", "i")
+        };
     };
 
     ctlProto.renderData = function (data, callback) {
@@ -88727,7 +90715,7 @@ TC.inherit(TC.control.Search, TC.Control);
         self._search = self._search || {};
 
         var _search = function () {
-            self.search(self.$text.val(), function (list) {
+            self.search(self.$text.val(), function (list) {                
                 if (list.length === 1) {
                     self.$text.val(list[0].label);
                     self.goToResult(list[0].id);
@@ -88804,8 +90792,12 @@ TC.inherit(TC.control.Search, TC.Control);
                     e.preventDefault();
                     e.stopPropagation();
 
+                    self.lastPattern = "";
+
                     if (self.$list.find('li > a:not(.tc-ctl-search-li-loading,.tc-ctl-search-li-empty)').length === 1) {
                         _research();
+                    } else {                                                                        
+                        _search();
                     }
                     return false;
                 }
@@ -88833,6 +90825,8 @@ TC.inherit(TC.control.Search, TC.Control);
                 !self.$text.autocomplete,
                 [TC.apiLocation + 'lib/jQuery/autocomplete.js'],
                 function () {
+                    var searchDelay;
+
                     self.$text = self._$div.find('input.tc-ctl-search-txt');
                     self.$text.autocomplete({
                         link: '#',
@@ -88840,17 +90834,40 @@ TC.inherit(TC.control.Search, TC.Control);
                         minLength: 2,
                         ctx: self,
                         source: function (text, callback) {
-                            if (text != self.lastPattern) {
-                                self.$list.hide('fast');
+                            self.lastpress = performance.now();
 
-                                self.lastPattern = text;
+                            if (!searchDelay) {
+                                function step() {
+                                    var criteria = self.$text.val().trim();
 
-                                if (self.retryTimeout)
-                                    clearTimeout(self.retryTimeout);
+                                    if (criteria.length > 0 &&
+                                        (!self.lastPattern || criteria != self.lastPattern) &&
+                                        performance.now() - self.lastpress > self.interval) {
 
-                                self.retryTimeout = setTimeout(function () {
-                                    self.search(text, callback);
-                                }, self.interval);
+                                        window.cancelAnimationFrame(searchDelay);
+                                        searchDelay = undefined;
+
+                                        self.$list.hide('fast');
+
+                                        // Pendiente de afinar
+                                        //if (self.lastPattern && criteria.substring(0, criteria.lastIndexOf(' ')) == self.lastPattern) {                                            
+                                                
+                                        //    // Si el patr\u00f3n de b\u00fasqueda anterior y actual es el mismo m\u00e1s algo nuevo (t\u00edpico en la b\u00fasqueda de un portal), lo nuevo lo separo por coma
+                                        //    // self.lastPattern: "Calle Catalu\u00f1a/Katalunia Kalea, Pamplona"
+                                        //    // text: "Calle Catalu\u00f1a/Katalunia Kalea, Pamplona 18"
+
+                                        //    criteria = criteria.substring(0, criteria.lastIndexOf(' ')) + (self.lastPattern.trim().endsWith(',') ? "" : ",") + criteria.substring(criteria.lastIndexOf(' '));
+                                        //}
+
+                                        self.lastPattern = criteria;
+
+                                        self.search(criteria, callback);
+                                    } else {                                        
+                                        searchDelay = requestAnimationFrame(step);
+                                    }
+                                }
+
+                                searchDelay = requestAnimationFrame(step);
                             }
                         },
                         callback: function (e) {
@@ -88863,22 +90880,72 @@ TC.inherit(TC.control.Search, TC.Control);
                             self.lastPattern = self.$text.val();
                             self.goToResult(unescape($(_target).attr('href')).substring(1), $(_target).parent().attr('dataRole'));
                             self.$text.autocomplete('clear');;
-                        },
+                        }
+                        ,
                         buildHTML: function (results) {
+
                             var html = [];
                             var dataRoles = [];
+
+                            var reA = /[^a-zA-Z]/g;
+                            var reN = /[^0-9]/g;
+                            function sortAlphaNum(a, b) {
+                                var AInt = parseInt(a, 10);
+                                var BInt = parseInt(b, 10);
+
+                                if (isNaN(AInt) && isNaN(BInt)) {
+                                    var aA = a.replace(reA, "");
+                                    var bA = b.replace(reA, "");
+                                    if (aA === bA) {
+                                        var aN = parseInt(a.replace(reN, ""), 10);
+                                        var bN = parseInt(b.replace(reN, ""), 10);
+                                        return aN === bN ? 0 : aN > bN ? 1 : -1;
+                                    } else {
+                                        return aA > bA ? 1 : -1;
+                                    }
+                                } else if (isNaN(AInt)) {//A is not an Int
+                                    return 1;//to make alphanumeric sort first return -1 here
+                                } else if (isNaN(BInt)) {//B is not an Int
+                                    return -1;//to make alphanumeric sort first return 1 here
+                                } else {
+                                    return AInt > BInt ? 1 : -1;
+                                }
+                            };
+
+                            // ordenamos por roles y alfab\u00e9ticamente
                             var data = results.results.sort(function (a, b) {
                                 if (a.dataRole > b.dataRole)
                                     return 1;
                                 else if (a.dataRole < b.dataRole)
                                     return -1;
-                                else return 0;
+                                else {
+                                    return sortAlphaNum(a.label, b.label);
+                                }
                             });
+
+                            if (self.rootCfg.active) {// si hay root, aplicamos el orden por entidades 
+                                data = data.sort(function (a, b) {
+                                    var first = this.rootCfg.active.root[0].join('-');
+                                    var aRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return a.properties[elem].toString(); }).join('-');
+                                    var bRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return b.properties[elem].toString(); }).join('-');
+
+                                    if (aRoot !== first && bRoot === first) {
+                                        return 1;
+                                    } else if (aRoot === first && bRoot !== first) {
+                                        return -1;
+                                    } else {
+                                        return sortAlphaNum(a.label, b.label);
+                                    }
+
+                                }.bind(self));
+                            }
 
                             for (var i = 0; i < data.length; i++) {
                                 var elm = data[i];
                                 if (dataRoles.indexOf(elm.dataRole) == -1) {
-                                    var headerData = this.ctx.availableSearchTypes[elm.dataRole].suggestionListHead();
+
+                                    var type = this.ctx.availableSearchTypes[elm.dataRole] || this.ctx.allowedSearchTypes[elm.dataRole];
+                                    var headerData = type.suggestionListHead();
                                     var liHTML = '<li header><span class="header">' + headerData.label + '</span>';
 
                                     for (var color in headerData.color) {
@@ -88900,7 +90967,14 @@ TC.inherit(TC.control.Search, TC.Control);
                                 else
                                     normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
 
-                                var querys = normalizedLastPattern.trim().split(',');
+
+                                var querys = [];
+                                var separatorChar = ',';
+                                if (normalizedLastPattern.indexOf(separatorChar) == -1) {
+                                    separatorChar = ' ';
+                                }
+
+                                querys = normalizedLastPattern.trim().split(separatorChar);
 
                                 // si estamos tratando con coordenadas el separador es el espacio, no la coma
                                 if ((elm.label.indexOf(this.ctx.LAT_LABEL) > -1 && elm.label.indexOf(this.ctx.LON_LABEL) > -1) ||
@@ -88911,19 +90985,44 @@ TC.inherit(TC.control.Search, TC.Control);
                                         if (querys[t].trim().slice(-1) == ',')
                                             querys[t] = querys[t].slice(0, -1);
                                     }
-                                }
+                                }        
 
                                 for (var q = 0; q < querys.length; q++) {
-                                    strReg.push('(' + querys[q].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
-                                    var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
+                                    if (querys[q].trim().length > 0) {
+                                        strReg.push('(' + querys[q].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                                        var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
+                                        if (match) {
+                                            var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
+                                            for (var st = 0; st < _strReg.length; st++) {
+                                                if (_strReg[st].trim().length > 0)
+                                                    strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                                            }
+                                        }
+                                    }                                    
+                                }
+
+                                if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
+                                    var rPattern = self.availableSearchTypes[elm.dataRole].pattern;
+                                    var match = rPattern.exec(this.ctx.lastPattern);
                                     if (match) {
-                                        var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
-                                        for (var st = 0; st < _strReg.length; st++) {
-                                            if (_strReg[st].trim().length > 0)
-                                                strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                                        strReg = [];
+
+                                        if (match[2] && match[3]) {
+
+                                            strReg.push(match[2] + "-" + match[3]);
+
+                                            if (match[4]) {
+                                                strReg[strReg.length - 1] = strReg[strReg.length - 1] + "-" + match[4];
+                                            }
+
+                                            strReg[strReg.length - 1] = "(" + strReg[strReg.length - 1] + ")";
+                                        }
+
+                                        if (match[5]) {
+                                            strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
                                         }
                                     }
-                                }
+                                }                               
 
                                 var pattern = '(' + strReg.join('|') + ')';
                                 pattern = pattern.replace(/a/gi, "[a|\u00e1]");
@@ -88932,7 +91031,23 @@ TC.inherit(TC.control.Search, TC.Control);
                                 pattern = pattern.replace(/o/gi, "[o|\u00f3]");
                                 pattern = pattern.replace(/u/gi, "[u|\u00fa|\u00fc]");
                                 var rex = new RegExp(pattern, "gi");
-                                highlighted = elm.label.replace(rex, "<b>$1</b>");
+
+                                var label = elm.label;
+
+                                if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
+                                    highlighted = label.replace(rex,
+                                        function () {
+                                            var params = Array.prototype.slice.call(arguments, 0);
+
+                                            if (params[params.length - 3]) {
+                                                return params[0].replace(params[params.length - 3], "<b>" + params[params.length - 3] + "</b>");
+                                            } else {
+                                                return "<b>" + params[0] + "</b>";
+                                            }
+                                        });
+                                } else {
+                                    highlighted = label.replace(rex, "<b>$1</b>");
+                                }                               
 
                                 html[html.length] = '<li dataRole="' + elm.dataRole + '"><a href="' + '#' + encodeURIComponent(elm.id) + '"><span hidden>' + elm.label + '</span>' + highlighted + '</a></li>';
                             }
@@ -88954,9 +91069,9 @@ TC.inherit(TC.control.Search, TC.Control);
                                 } else {
                                     // Scenario 3: We're in the list but not on the last element, simply move down
                                     self.$list
-                                    .find('li:not([header])')
-                                    .find('a:focus')
-                                    .parent('li:not([header])')
+                                        .find('li:not([header])')
+                                        .find('a:focus')
+                                        .parent('li:not([header])')
                                         .nextAll('li:not([header]):first')
                                         .find('a').focus();
                                 }
@@ -88971,9 +91086,9 @@ TC.inherit(TC.control.Search, TC.Control);
                                 } else {
                                     // Scenario 3: We're in the list but not on the first element, simply move up
                                     self.$list
-                                    .find('li:not([header])')
-                                    .find('a:focus')
-                                    .parent('li:not([header])')
+                                        .find('li:not([header])')
+                                        .find('a:focus')
+                                        .parent('li:not([header])')
                                         .prevAll('li:not([header]):first')
                                         .find('a').focus();
                                 }
@@ -89008,6 +91123,19 @@ TC.inherit(TC.control.Search, TC.Control);
         var features = [];
 
         return self.layer.features;
+    };
+
+    ctlProto.getSearchTypeByFeature = function (id) {
+        var self = this;
+
+        for (var allowed in self.allowedSearchTypes) {
+            var type = self.availableSearchTypes[allowed] || self.allowedSearchTypes[allowed];
+            if (type && type.hasOwnProperty('featureType'))
+                if (type.featureType.indexOf(id) > -1 || type.renderFeatureType && type.renderFeatureType.indexOf(id) > -1)
+                    return type;
+        }
+
+        return null;
     };
 
     ctlProto.cleanMap = function () {
@@ -89080,7 +91208,9 @@ TC.inherit(TC.control.Search, TC.Control);
                 });
 
                 self._municipalitiesDeferred.resolve(TC.cache.search.municipalities);
-            });
+            }).fail(function () {
+                self._municipalitiesDeferred.resolve();
+            });;
         }
         return TC.cache.search.municipalities || self._municipalitiesDeferred.promise();
     };
@@ -89141,19 +91271,27 @@ TC.inherit(TC.control.Search, TC.Control);
                     if (point) {
                         self.availableSearchTypes[TC.Consts.searchType.COORDINATES].label = /^X(\d+(?:\.\d+)?)Y(\d+(?:\.\d+)?)$/.test(id) ? self.getLocaleString('search.list.coordinates.utm') + self.map.crs : self.getLocaleString('search.list.coordinates.geo');
 
+                        //console.log('getCoordinates promise resuelta');
                         deferred.resolve([{ id: id, label: self.getLabel(id), dataRole: TC.Consts.searchType.COORDINATES }]);
                     }
                     else {
+                        //console.log('getCoordinates promise resuelta');
                         deferred.resolve([]);
                     }
+                } else {
+                    //console.log('getCoordinates promise resuelta');
+                    deferred.resolve([]);
                 }
             } else {
+                //console.log('getCoordinates promise resuelta');
                 deferred.resolve([]);
             }
         } else {
+            //console.log('getCoordinates promise resuelta');
             deferred.resolve([]);
         }
 
+        //console.log('getCoordinates promise');
         return deferred.promise();
     };
 
@@ -89181,10 +91319,17 @@ TC.inherit(TC.control.Search, TC.Control);
                     });
 
                     var getItem = function (mun, munLabel, pol, par) {
+                        var properties = [];
+
+                        properties.push[self.MUN] = mun;
+                        properties.push[self.POL] = pol;
+                        properties.push[self.PAR] = par;
+
                         return {
                             id: self.MUN + mun + self.POL + pol + self.PAR + par,
                             label: self.getLabel(self.MUN + munLabel + self.POL + pol + self.PAR + par),
-                            dataRole: TC.Consts.searchType.CADASTRAL
+                            dataRole: TC.Consts.searchType.CADASTRAL,
+                            properties: properties
                         };
                     };
                     if (results.length > 0) {
@@ -89195,13 +91340,16 @@ TC.inherit(TC.control.Search, TC.Control);
                     if (/^[0-9]*$/g.test(match[1]))
                         results.push(getItem($.trim(match[1]), $.trim(match[1]), $.trim(match[2]), $.trim(match[3])));
 
+                    //console.log('getCadastralRef promise resuelta');
                     deferred.resolve(results);
                 }
             });
         } else {
+            //console.log('getCadastralRef promise resuelta - no es ref catastral');
             deferred.resolve([]);
         }
 
+        //console.log('getCadastralRef promise');
         return deferred.promise();
     };
 
@@ -89261,7 +91409,7 @@ TC.inherit(TC.control.Search, TC.Control);
         };
 
         var normalizedCriteria = function (value) {
-            var _value = '';            
+            var _value = '';
 
             value = self.removePunctuation(value);
 
@@ -89415,20 +91563,39 @@ TC.inherit(TC.control.Search, TC.Control);
 
             var bindRoot = function (result) {
                 if (root) {
-                    for (var i = 0; i < result.length; i++) {
+
+                    var i = result.length;
+                    while (i--) {
                         if (limit) {
                             if (result[i].t) {
-                                result[i].t = root;
+                                var indicatedRoot = this.rootCfg.active.rootLabel.filter(function (elem) {
+                                    return elem.label.indexOf(this.removePunctuation(result[i].t).toLowerCase()) > -1;
+                                }.bind(this));
+
+                                if (indicatedRoot.length == 1) {
+                                    result[i].t = indicatedRoot[0].id;
+                                } else if (indicatedRoot.length > 1) {
+
+                                    indicatedRoot.map(function (elem) {
+                                        var newResult = $.extend({}, result[i]);
+                                        newResult.t = elem.id;
+
+                                        result.push(newResult);
+                                    });
+
+                                } else if (indicatedRoot.length == 0) {
+                                    result.splice(i, 1);
+                                }
                             }
                         }
                         else result.push($.extend({}, result[i], { t: root }));
                     }
                 }
-            };
+            }.bind(self);
             var tsp = function (text, result) {
                 // town, street, portal - street, town, portal
                 var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
-                if (match) {
+                if (match && match[1] && match[2]) {
 
                     var getPortal = function () {
                         return _formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim());
@@ -89448,11 +91615,34 @@ TC.inherit(TC.control.Search, TC.Control);
 
                 return false;
             };
+            var spt = function (text, result) {
+                // street, portal, town
+                var match = /^(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
+                if (match && match[6] && match[1]) {
+
+                    var getPortal = function () {
+                        return _formatStreetNumber((match[2] || match[3] || match[4] || match[5]).trim());
+                    };
+                    // ninguno contiene n\u00famero duplicamos b\u00fasqueda
+                    if (/^([^0-9]+)$/i.test(match[6].trim()) && /^([^0-9]+)$/i.test(match[1].trim())) {
+                        result.push({ t: match[6].trim(), s: match[1].trim(), p: getPortal() });
+                        result.push({ t: match[1].trim(), s: match[6].trim(), p: getPortal() });
+                    }
+                    else {  // indicamos como calle el criterio que contiene n\u00fameros, ya que no existen municipios con n\u00fameros pero s\u00ed calles
+                        if (/^([^0-9]+)$/i.test(match[6].trim())) result.push({ t: match[6].trim(), s: match[1].trim(), p: getPortal() });
+                        else result.push({ s: match[6].trim(), t: match[1].trim(), p: getPortal() });
+                    }
+                    bindRoot(result);
+                    return true;
+                }
+
+                return false;
+            };
             var tnsp = function (text, result) {
                 // town, numbers street, portal
                 var match = /^(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
 
-                if (match) {
+                if (match && match[1] && match[2]) {
                     result.push({ t: match[2].trim(), s: match[1].trim(), p: _formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim()) });
                     bindRoot(result);
                     return true;
@@ -89463,7 +91653,7 @@ TC.inherit(TC.control.Search, TC.Control);
             var ts = function (text, result) {
                 // town, street
                 var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))$/i.exec(text);
-                if (match) {
+                if (match && match[1] && match[2]) {
                     // ninguno contiene n\u00famero duplicamos b\u00fasqueda
                     if (/^([^0-9]+)$/i.test(match[1].trim()) && /^([^0-9]+)$/i.test(match[2].trim())) {
                         result.push({ t: match[1].trim(), s: match[2].trim() });
@@ -89584,7 +91774,7 @@ TC.inherit(TC.control.Search, TC.Control);
             };
             var s_or_t = function (text, result) {
                 var match = /^([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9\<\>]+)$/i.exec(text);
-                if (match) {
+                if (match && match[1]) {
                     if (root)
                         result.push({
                             t: root,
@@ -89599,8 +91789,8 @@ TC.inherit(TC.control.Search, TC.Control);
                 return false;
             };
             var sp = function (text, result) { // calle sin n\u00fameros con portal (cuando exista un municipio root establecido)
-                var match = /^([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/]+)\s*\,?\s*(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(text);
-                if (match && text.indexOf(',') > -1 && text.split(',').length < 3) {
+                var match = /^([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/]+)\s*\,?\s*((\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
+                if (match && match[1] && match[2]) { // && text.indexOf(',') > -1 && text.split(',').length < 3) {
                     if (root)
                         result.push({
                             t: root,
@@ -89620,12 +91810,12 @@ TC.inherit(TC.control.Search, TC.Control);
             };
             var snp = function (text, result) { // calle puede contener n\u00fameros con portal (cuando exista un municipio root establecido)
                 var match = /^([^\,][0-9\s*\-\.\(\)\/]+)\s*\,?\s*(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(text);
-                if (match && root) {
+                if (match && match[1] && match[2] && root) {
                     result.push({
                         t: root,
                         s: match[1].trim(),
                         p: _formatStreetNumber(match[2].trim())
-                    });                    
+                    });
                     return true;
                 }
 
@@ -89634,7 +91824,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
             var test = function () {
                 var tests = [function (text) { return text.length >= 3; },
-                             function (text) { return /^\d+$/.test(text) ? false : (/^\d+\,\s*\d+$/.test(text) ? false : true); }];
+                function (text) { return /^\d+$/.test(text) ? false : (/^\d+\,\s*\d+$/.test(text) ? false : true); }];
 
                 for (var i = 0; i < tests.length; i++) {
                     if (!tests[i].call(self, text))
@@ -89646,49 +91836,35 @@ TC.inherit(TC.control.Search, TC.Control);
 
 
             if (test(text)) {
-                var check = [tsp, tnsp, ts, st];
+                var check = [tsp, spt, tnsp, ts, st];
                 if (root && text.split(',').length < 3)
                     check = [sp, snp, s_or_t].concat(check);
                 else check = check.concat([sp, snp, s_or_t]);
 
                 var ch = 0;
-                try
-                {
-                    while (ch < check.length && !check[ch].call(self, text, result)) {                    
+                try {
+                    while (ch < check.length && !check[ch].call(self, text, result)) {
                         ch++;
                     }
                 }
                 catch (ex) {
-                    TC.error("Error en la b\u00fasqueda seg\u00fan el patr\u00f3n: " + text, TC.Consts.msgErrorMode.EMAIL);                    
+                    TC.error("Error seg\u00fan el patr\u00f3n: " + text, TC.Consts.msgErrorMode.EMAIL, "Error en la b\u00fasqueda del callejero");
                 }
             }
 
             if (result.length > 0 && root) {
-                var deferredRootLabel = new $.Deferred();
-                if (!self.rootLabel) {
-                    $.when(self.getMunicipalities()).then(function (list) {
-                        for (var i = 0; i < list.length; i++) {
-                            if (list[i].id == root) {
-                                self.rootLabel = self.removePunctuation(list[i].label).toLowerCase();
-                                break;
-                            }
-                        }
-
-                        deferredRootLabel.resolve(self.rootLabel);
-                    });
-                }
-                else {
-                    deferredRootLabel.resolve(self.rootLabel);
-                }
-
-                $.when(deferredRootLabel).then(function (rootLabel) {
-                    if (rootLabel) {
+                $.when(self.rootCfg.active.getRootLabel()).then(function (rootLabel) {
+                    if (rootLabel) { // GLS: si en el array de resultados se encuentra como calle el valor de alguna entidad de poblaci\u00f3n configurada como ra\u00edz, la borramos 
                         var iData = result.length;
-
 
                         while (iData--) {
                             var data = result[iData];
-                            if (rootLabel.indexOf(self.removePunctuation(data.s).toLowerCase()) > -1 && data.t == root) {
+
+                            if (result.length > 1 &&
+                                data.t == root &&
+                                rootLabel.filter(function (elem) {
+                                    return elem.indexOf(self.removePunctuation(data.s).toLowerCase()) > -1;
+                                }).length > 0) {
                                 result.splice(iData, 1);
                                 break;
                             }
@@ -89704,201 +91880,13 @@ TC.inherit(TC.control.Search, TC.Control);
             return deferred.promise();
         };
 
-        var getPropertyName = function (dataRole, e) {
-            return self.availableSearchTypes[dataRole].queryProperties[e + 'Property'];
-        };
-        var getPropertyValue = function (role, propertyName) {
-            return self.availableSearchTypes[role][propertyName];
-        };
-        var getIsLikeNode = function (name, value) {
-            var toEscape = /([\-\"\.\º\(\)\/])/g;
-            if (toEscape.test(value)) {
-                value = value.replace(toEscape, "\\$1");
-            }
-
-            if (value.toString().indexOf(self._LIKE_PATTERN) > -1)
-                return '<Or><PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
-                            '<PropertyName>' + name + '</PropertyName>' +
-                            '<Literal>' + value.toLowerCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                       '</PropertyIsLike>' +
-                       '<PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
-                            '<PropertyName>' + name + '</PropertyName>' +
-                            '<Literal>' + value.toUpperCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                       '</PropertyIsLike></Or>';
-            else
-                return '<PropertyIsEqualTo>' +
-                            '<PropertyName>' + name + '</PropertyName>' +
-                            '<Literal>' + value.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                       '</PropertyIsEqualTo>';
-        };
-        var getFilterNode = function (propertyName, propertyValue) {
-            var r;
-            if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
-                var f = [];
-                for (var key in propertyName) {
-                    if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
-                        r = '<Or>';
-                        for (var i = 0; i < propertyName[key].length; i++) {
-                            r += getIsLikeNode($.trim(propertyName[key][i]), propertyValue);
-                        }
-
-                        r += '</Or>';
-                        f.push('(<Filter xmlns="http://www.opengis.net/ogc">' + r + '</Filter>)');
-                    } else {
-                        var propName = propertyName[key];
-                        if ((propertyName[key] instanceof Array) && propertyName[key].length == 1)
-                            propName = propertyName[key][0];
-
-                        f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
-                                    '<Or>' + getIsLikeNode($.trim(propName), propertyValue) + '</Or>' +
-                                '</Filter>)');
-                    }
-                }
-
-                return f.join('');
-
-            } else if (propertyName instanceof Array && propertyName.length > 1) {
-                r = '<ogc:Or>';
-                for (var i = 0; i < propertyName.length; i++) {
-                    r += getIsLikeNode($.trim(propertyName[i]), propertyValue);
-                }
-
-                return r += '</ogc:Or>';
-            } else
-                return getIsLikeNode((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
-        };
-        var getFilter = function (data, dataRole) {
-
-            var r = {};
-            r.multiL = false;
-            r.f = '';
-
-            var _f;
-            switch (dataRole) {
-                case self.NUMBER:
-                    _f = [];
-                    if (!(self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
-                        var match = /(\<|\>|\<\>)/gi.exec(data.t);
-                        if (match)
-                            _f.push(getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                        else _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-
-                        match = /(\<|\>|\<\>)/gi.exec(data.s);
-                        if (match)
-                            _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                        else _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
-                    }
-                    else {
-                        _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-                        _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
-                    }
-                    _f.push(getFilterNode(getPropertyName(dataRole, 'p'), data.p + '*'));
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
-                    break;
-                case self.STREET:
-                    _f = [];
-
-                    if (!(self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
-                        var match = /(\<|\>|\<\>)/gi.exec(data.t);
-                        if (match)
-                            _f.push(getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                        else _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-
-                        match = /(\<|\>|\<\>)/gi.exec(data.s);
-                        if (match)
-                            _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                        else _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
-                    } else {
-                        _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-                        _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
-                    }
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
-                    break;
-                case self.COUNCIL:
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                    break;
-                case self.URBAN:
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                    break;
-                case self.LOCALITY:
-                    r.f = getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN);
-                    r.multiL = true;
-                    break;
-                case self.MUNICIPALITY: {
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                    break;
-                }
-            }
-
-            return r;
-        };
-        var getParams = function (data, dataRole, properties, dataIdProperties) {
-
-            var filters = getFilter(data, dataRole);
-
-            var params = {
-                REQUEST: 'GetFeature',
-                SERVICE: 'WFS',
-                MAXFEATURES: 20,
-                VERSION: self.availableSearchTypes[dataRole].version,
-                OUTPUTFORMAT: self.availableSearchTypes[dataRole].outputFormat
-            };
-
-            var featureTypes = getPropertyValue(dataRole, 'featureType');
-            if (!(featureTypes instanceof Array))
-                params.TYPENAME = self.availableSearchTypes[dataRole].featurePrefix ? self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes) : $.trim(featureTypes);
-            else {
-                var ft = [];
-                for (var i = 0; i < featureTypes.length; i++) {
-                    ft.push(self.availableSearchTypes[dataRole].featurePrefix ?
-                                self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes[i]) :
-                                $.trim(featureTypes[i]));
-                }
-
-                params.TYPENAME = ft.join(',');
-            }
-
-            var _getProperties = function (properties) {
-                if ((properties || '') !== '') {
-                    if (!(properties instanceof Array)) {
-                        var p = [];
-                        if (properties instanceof Object) {
-                            for (var key in properties) {
-                                var prop = properties[key][0];
-                                if (properties[key].length > 1)
-                                    prop = properties[key].join(',');
-
-                                p.push(prop);
-                            }
-                        }
-                        return p;
-                    }
-                    else
-                        return properties.join(',');
-                }
-            };
-            var _properties = _getProperties(properties);
-            var _ids = _getProperties(dataIdProperties);
-
-            if (_properties instanceof Array && _ids instanceof Array) {
-                params.PROPERTYNAME = '';
-                for (var i = 0; i < _properties.length; i++) {
-                    params.PROPERTYNAME += '(' + _properties[i] + ',' + _ids[i] + ')';
-                }
-            } else
-                params.PROPERTYNAME = _properties + ',' + _ids;
-
-            params.FILTER = filters.f;
-
-            return $.param(params);
-        };
         var formatItems = function (features, dataRole, properties, dataIdProperties) {
             for (var i = 0; i < features.length; i++) {
                 var attributes = [], ids = [];
                 var valueToAdd = '';
                 var prop = properties;
                 var dataIdProp = dataIdProperties;
-                var strFormat = getPropertyValue(dataRole, 'outputFormatLabel');
+                var strFormat = self.filter.getPropertyValue(dataRole, 'outputFormatLabel');
                 var dataLayer = features[i].id.split('.').slice(0, 1).shift();
 
                 if (!(properties instanceof Array)) {
@@ -89926,8 +91914,12 @@ TC.inherit(TC.control.Search, TC.Control);
 
                     return outputArray;
                 };
-                if (attributes instanceof Array && strFormat && getUnique(attributes).length > 1) { valueToAdd = strFormat.tcFormat(attributes); }
-                else if (attributes instanceof Array && getUnique(attributes).length == 1) { valueToAdd = attributes[0]; }
+                if (attributes instanceof Array && strFormat && getUnique(attributes).length > 1) {
+                    valueToAdd = strFormat.tcFormat(attributes);
+                }
+                else if (attributes instanceof Array && getUnique(attributes).length == 1) {
+                    valueToAdd = attributes[0];
+                }
 
                 var text = valueToAdd.toCamelCase();
                 var intoResults = function (dataRole, text) {
@@ -89939,25 +91931,34 @@ TC.inherit(TC.control.Search, TC.Control);
                     return false;
                 };
                 if (!(intoResults(dataRole, text))) {
+
+                    var _properties = [];
+
+                    for (var p = 0; p < properties.length; p++) {
+                        _properties[properties[p]] = attributes[p];
+                    }
+
                     results.push({
                         text: text,
                         label: text,
                         id: ids.join('#'),
                         dataRole: dataRole,
-                        dataLayer: dataLayer
+                        dataLayer: dataLayer,
+                        properties: _properties
                     });
                 }
             }
-        };
+        }.bind(self);
 
         pattern = normalizedCriteria(pattern);
-        $.when(getObjectsTo(pattern, self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root || '', self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].limit || false))
-        .then(function (searchObjects) {
+        $.when(getObjectsTo(pattern, self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false)
+        ).then(function (searchObjects) {
             if (searchObjects) {
                 self._search.data = results;
 
                 if (self.request) {
                     for (var i = 0; i < self.request.length; i++) {
+                        //console.log("getAddress promise aborted");
                         self.request[i].abort();
                     }
 
@@ -89966,15 +91967,15 @@ TC.inherit(TC.control.Search, TC.Control);
                 } else self.request = [];
 
                 function searchQuery(data, dataRole) {
-                    var properties = getPropertyValue(dataRole, 'outputProperties');
-                    var dataIdProperties = getPropertyValue(dataRole, 'dataIdProperty');
+                    var properties = self.filter.getPropertyValue(dataRole, 'outputProperties');
+                    var dataIdProperties = self.filter.getPropertyValue(dataRole, 'dataIdProperty');
 
                     return $.ajax({
                         url: self.availableSearchTypes[dataRole].url,
                         type: 'POST',
                         contentType: "application/x-www-form-urlencoded;charset=UTF-8",
                         dataType: 'text',
-                        data: getParams(data, dataRole, properties, dataIdProperties),
+                        data: self.filter.getParams(data, dataRole, properties, dataIdProperties),
                         beforeSend: function () {
                             self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
                             self.$text.trigger("targetUpdated.autocomplete");
@@ -89985,6 +91986,9 @@ TC.inherit(TC.control.Search, TC.Control);
                     }).fail(function (data) {
                         if (data.statusText !== 'abort')
                             alert('error');
+
+                        //console.log('getAddress promise resuelta - data.statusText: ' + data.statusText);
+                        deferred.resolve(results);
                     });
                 }
 
@@ -90001,13 +92005,189 @@ TC.inherit(TC.control.Search, TC.Control);
                 });
                 $.when.apply($, self.request).then(function () {
                     self.request = null;
+                    //console.log('getAddress promise resuelta');
                     deferred.resolve(results);
                 });
             } else {
+                //console.log('getAddress promise resuelta - no encaja en address');
                 deferred.resolve(results);
             }
         });
 
+        //console.log('getAddress promise');
+        return deferred.promise();
+    };
+
+    ctlProto.getRoad = function (pattern) {
+        var self = this;
+        var deferred = new $.Deferred();
+
+        pattern = pattern.trim();
+        if (pattern.length < 2) {
+            deferred.resolve([]);
+        } else {
+            var type = TC.Consts.searchType.ROAD;
+
+            var roadPattern = self.availableSearchTypes[type].pattern;
+            var match = roadPattern.exec(pattern);
+            if (match && match[3]) {
+
+                var properties = self.filter.getPropertyValue(type, 'outputProperties');
+                var dataIdProperties = self.filter.getPropertyValue(type, 'dataIdProperty');
+                var outputFormatLabel = self.filter.getPropertyValue(type, 'outputFormatLabel');
+
+                var _pattern = match[2] ? match[2].trim() + "-" + match[3].trim() : match[3].trim();
+                if (match[4] && match[4].length > 0) {
+                    _pattern = _pattern + "-" + match[4].trim();
+                }
+
+                $.ajax({
+                    url: self.availableSearchTypes[type].url + '?' + self.filter.getParams({ t: _pattern }, type, properties, dataIdProperties),
+                    type: 'GET',
+                    contentType: "application/x-www-form-urlencoded;charset=UTF-8",
+                    beforeSend: function () {
+
+                        if (self.request) {
+                            for (var i = 0; i < self.request.length; i++) {
+                                self.request[i].abort();
+                            }
+
+                            self.request = [];
+
+                        } else self.request = [];
+
+                        self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
+                        self.$text.trigger("targetUpdated.autocomplete");
+                    }
+                }).done(function (data) {
+                    var result = [];
+                    if (data.totalFeatures > 0) {
+                        data.features.map(function (feature) {
+
+                            if (!result.some(function (elem) {
+                                return (elem.text == feature.properties[properties[0]]);
+                            })) {
+                                var label = outputFormatLabel.tcFormat(properties.map(function (outputProperty) {
+                                    return feature.properties[outputProperty];
+                                }));
+
+                                var text = properties.map(function (outputProperty) {
+                                    return feature.properties[outputProperty];
+                                }).join('-');
+
+                                result.push({
+                                    id: dataIdProperties.map(function (elem) {
+                                        return feature.properties[elem];
+                                    }).join('#'),
+                                    label: label,
+                                    text: text,
+                                    dataLayer: feature.id.split('.')[0],
+                                    dataRole: type
+                                });
+                            }
+                        });
+
+                        //console.log('getRoad promise resuelta');
+                        deferred.resolve(result);
+                    } else {
+                        //console.log('getRoad promise resuelta');
+                        deferred.resolve([]);
+                    }
+                }).fail(function (data) {
+                    //console.log('getRoad promise resuelta - xhr fail');
+                    deferred.resolve([]);
+                });
+            } else {
+                //console.log('getRoad promise resuelta - no encaja en road');
+                deferred.resolve([]);
+            }
+        }
+
+        //console.log('getRoad promise');
+        return deferred.promise();
+    };
+
+    ctlProto.getPK = function (pattern) {
+        var self = this;
+        var deferred = new $.Deferred();
+
+        pattern = pattern.trim();
+        if (pattern.length < 3) {
+            deferred.resolve([]);
+        } else {
+
+            var type = TC.Consts.searchType.ROADPK;
+
+            var roadPKPattern = self.availableSearchTypes[type].pattern;
+            var match = roadPKPattern.exec(pattern);
+            if (match && match[3] && match[5]) {
+
+                var properties = self.filter.getPropertyValue(type, 'outputProperties');
+                var dataIdProperties = self.filter.getPropertyValue(type, 'dataIdProperty');
+                var outputFormatLabel = self.filter.getPropertyValue(type, 'outputFormatLabel');
+
+                var _pattern = match[2] ? match[2].trim() + "-" + match[3].trim() : match[3].trim();
+                if (match[4] && match[4].length > 0) {
+                    _pattern = _pattern + "-" + match[4].trim();
+                }
+
+                $.ajax({
+                    url: self.availableSearchTypes[type].url + '?' + self.filter.getParams({ t: _pattern, s: match[5].trim() }, type, properties, dataIdProperties),
+                    type: 'GET',
+                    contentType: "application/x-www-form-urlencoded;charset=UTF-8",
+                    beforeSend: function () {
+
+                        if (self.request) {
+                            for (var i = 0; i < self.request.length; i++) {
+                                self.request[i].abort();
+                            }
+
+                            self.request = [];
+
+                        } else self.request = [];
+
+                        self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
+                        self.$text.trigger("targetUpdated.autocomplete");
+                    }
+                }).done(function (data) {
+                    var result = [];
+                    if (data.totalFeatures > 0) {
+                        data.features.map(function (feature) {
+
+                            if (!result.some(function (elem) {
+                                return (elem.label == feature.properties[properties[0]]);
+                            })) {
+                                var text = outputFormatLabel.tcFormat(properties.map(function (outputProperty) {
+                                    return feature.properties[outputProperty];
+                                }));
+                                result.push({
+                                    id: dataIdProperties.map(function (elem) {
+                                        return feature.properties[elem];
+                                    }).join('#'),
+                                    label: text,
+                                    text: text,
+                                    dataLayer: feature.id.split('.')[0],
+                                    dataRole: type
+                                });
+                            }
+                        });
+                        //console.log('getRoadPK promise resuelta');
+                        deferred.resolve(result);
+                    } else {
+                        //console.log('getRoadPK promise resuelta');
+                        deferred.resolve([]);
+                    }
+                }).fail(function (data) {
+                    //console.log('getRoadPK promise resuelta - xhr fail');
+                    deferred.resolve([]);
+                });
+            } else {
+                //console.log('getRoadPK promise resuelta - no encaja en pk');
+                deferred.resolve([]);
+            }
+        }
+
+        //console.log('getRoadPK promise');
         return deferred.promise();
     };
 
@@ -90038,6 +92218,12 @@ TC.inherit(TC.control.Search, TC.Control);
                         break;
                     case TC.Consts.searchType.COORDINATES:
                         addWaiting(self.availableSearchTypes[TC.Consts.searchType.COORDINATES].parser);
+                        break;
+                    case TC.Consts.searchType.ROAD:
+                        addWaiting(self.availableSearchTypes[TC.Consts.searchType.ROAD].parser);
+                        break;
+                    case TC.Consts.searchType.ROADPK:
+                        addWaiting(self.availableSearchTypes[TC.Consts.searchType.ROADPK].parser);
                         break;
                     case TC.Consts.searchType.MUNICIPALITY:
                     case TC.Consts.searchType.LOCALITY:
@@ -90079,7 +92265,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 return -1;
                             else
                                 return 0;
-                    });
+                    }.bind(self));
 
                 if (callback)
                     callback(results);
@@ -90115,7 +92301,7 @@ TC.inherit(TC.control.Search, TC.Control);
             self.loading = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
 
         var wait;
-        wait = self.loading.addWait();        
+        wait = self.loading.addWait();
 
         // en pantallas peque\u00f1as, colapsamos el panel de herramientas
         if (Modernizr.mq('(max-width: 30em)')) {
@@ -90142,14 +92328,29 @@ TC.inherit(TC.control.Search, TC.Control);
                             keepOnLooping = false;
                         }
                         break;
+                    case TC.Consts.searchType.ROAD:
+                        if (dataRole === TC.Consts.searchType.ROAD) {
+                            goTo = self.availableSearchTypes[TC.Consts.searchType.ROAD].goTo.call(self, id);
+                        }
+
+                        if (goTo !== null) {
+                            keepOnLooping = false;
+                        }
+                        break;
+                    case TC.Consts.searchType.ROADPK:
+                        goTo = self.availableSearchTypes[TC.Consts.searchType.ROADPK].goTo.call(self, id);
+                        if (goTo !== null) {
+                            keepOnLooping = false;
+                        }
+                        break;
                     case TC.Consts.searchType.MUNICIPALITY:
                     case TC.Consts.searchType.LOCALITY:
                     case TC.Consts.searchType.COUNCIL:
                     case TC.Consts.searchType.URBAN:
                     case TC.Consts.searchType.STREET:
                     case TC.Consts.searchType.NUMBER:
-                        var dr = dataRole || getElement.call(self, id).dataRole;
-                        if (dr) {
+                        var dr = dataRole || self.filter.getGoToElement(id).dataRole;
+                        if (dr && dr === allowedType) {
                             goTo = self.availableSearchTypes[dr].goTo.call(self, id, dr);
                             if (goTo !== null) {
                                 keepOnLooping = false;
@@ -90326,6 +92527,10 @@ TC.inherit(TC.control.Search, TC.Control);
         if (/^\M(\d+)\P(\d{1,2})Par{1}(\d{1,4})/g.test(id)) {
             var match = /^\M(\d+)\P(\d{1,2})Par{1}(\d{1,4})/g.exec(id);
 
+            if (!TC.filter) {
+                TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
+            }
+
             goTo.params = {
                 type: TC.Consts.layerType.WFS,
                 url: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].url,
@@ -90333,15 +92538,10 @@ TC.inherit(TC.control.Search, TC.Control);
                 geometryName: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].geometryName,
                 featurePrefix: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].featurePrefix,
                 featureType: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].featureType,
-                properties: [
-                    { name: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.municipality, value: $.trim(match[1]), type: TC.Consts.comparison.EQUAL_TO },
-                {
-                    name: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.polygon, value: $.trim(match[2]), type: TC.Consts.comparison.EQUAL_TO
-                },
-                {
-                    name: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.parcel, value: $.trim(match[3]), type: TC.Consts.comparison.EQUAL_TO
-                }
-                ],
+                properties: new TC.filter.and(
+                    new TC.filter.equalTo(self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.municipality, $.trim(match[1])),
+                    new TC.filter.equalTo(self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.polygon, $.trim(match[2])),
+                    new TC.filter.equalTo(self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.parcel, $.trim(match[3]))),
                 outputFormat: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].outputFormat,
                 styles: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].styles
             };
@@ -90354,89 +92554,74 @@ TC.inherit(TC.control.Search, TC.Control);
         return null;
     };
 
-    var getElement = function (id, dataRole) {
+    ctlProto.goToRoad = function (id) {
         var self = this;
+        var goTo = {};
 
-        for (var i = 0; i < self._search.data.length; i++) {
-            if (self._search.data[i].id == id && (!dataRole || (dataRole && self._search.data[i].dataRole === dataRole)))
-                return self._search.data[i];
-        }
+        var type = TC.Consts.searchType.ROAD;
+
+        goTo.params = {
+            type: TC.Consts.layerType.WFS,
+            url: self.availableSearchTypes[type].url,
+            version: self.availableSearchTypes[type].version,
+            geometryName: self.availableSearchTypes[type].geometryName,
+            featurePrefix: self.availableSearchTypes[type].featurePrefix,
+            featureType: self.filter.getGoToFilterLayer(id),
+            maxFeatures: 3000,
+            properties: self.filter.getGoToFilter(id, type),
+            outputFormat: self.availableSearchTypes[type].outputFormat,
+            styles: self.availableSearchTypes[type].styles
+        };
+
+        goTo.emptyResultHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
+
+        return goTo;
     };
+
+    ctlProto.goToPK = function (id) {
+        var self = this;
+        var goTo = {};
+
+        var type = TC.Consts.searchType.ROADPK;
+
+        goTo.params = {
+            type: TC.Consts.layerType.WFS,
+            url: self.availableSearchTypes[type].url,
+            version: self.availableSearchTypes[type].version,
+            geometryName: self.availableSearchTypes[type].geometryName,
+            featurePrefix: self.availableSearchTypes[type].featurePrefix,
+            featureType: self.filter.getGoToFilterLayer(id),
+            maxFeatures: 3000,
+            properties: self.filter.getGoToFilter(id, type),
+            outputFormat: self.availableSearchTypes[type].outputFormat,
+            styles: self.availableSearchTypes[type].styles
+        };
+
+        goTo.emptyResultHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
+
+        return goTo;
+    };
+
     ctlProto.goToAddress = function (id, dataRole) {
         var self = this;
         var goTo = {};
-        var feature;
 
-        var getProperties = function (source, dataLayer) {
-            var props = [];
-            var _id = id.split('#');
+        var type = self.availableSearchTypes[dataRole];
 
-            if (id.indexOf('#') > -1 && dataLayer instanceof Array) {
-                props = {};
-                for (var i = 0; i < dataLayer.length; i++) {
-                    props[dataLayer[i]] = [];
-                    for (var j = 0; j < source[dataLayer[i]].length; j++) {
-                        props[dataLayer[i]].push({ name: source[dataLayer[i]][j], value: _id[j], type: TC.Consts.comparison.EQUAL_TO });
-                    }
-                }
-            } else if (id.indexOf('#') == -1 && dataLayer instanceof Array) {
-                var src = source;
-                props = {};
-
-                for (var i = 0; i < dataLayer.length; i++) {
-                    if (!props.hasOwnProperty(dataLayer[i])) {
-                        props[dataLayer[i]] = [];
-
-                        if (src instanceof Object && source.hasOwnProperty(dataLayer[i]))
-                            src = source[dataLayer[i]];
-
-                        for (var j = 0; j < src.length; j++) {
-                            if (j < _id.length)
-                                props[dataLayer[i]].push({ name: src[j], value: _id[j], type: TC.Consts.comparison.EQUAL_TO });
-                        }
-                    }
-                }
-            }
-            else {
-                if (source instanceof Object && source.hasOwnProperty(dataLayer))
-                    source = source[dataLayer];
-
-                for (var i = 0; i < source.length; i++) {
-                    props.push({ name: source[i], value: _id[i], type: TC.Consts.comparison.EQUAL_TO });
-                }
-            }
-
-            return props;
+        goTo.params = {
+            type: TC.Consts.layerType.WFS,
+            url: type.url,
+            version: type.version,
+            geometryName: type.geometryName,
+            featurePrefix: type.featurePrefix,
+            featureType: self.filter.getGoToFilterLayer(id),
+            maxFeatures: 3000,
+            properties: self.filter.getGoToFilter(id, dataRole),
+            outputFormat: type.outputFormat,
+            styles: type.styles
         };
 
-        feature = getElement.call(self, id, dataRole);
-        if (feature && feature.dataRole) {
-            var searchType = self.availableSearchTypes[feature.dataRole];
-
-            var dataLayer = feature.dataLayer;
-            if (searchType.renderFeatureType) {
-                if (!(feature.dataLayer instanceof Array))
-                    dataLayer = [feature.dataLayer];
-
-                dataLayer = dataLayer.concat((searchType.renderFeatureType instanceof Array ? searchType.renderFeatureType : [searchType.renderFeatureType]));
-            }
-
-            goTo.params = {
-                type: TC.Consts.layerType.WFS,
-                url: searchType.url,
-                version: searchType.version,
-                geometryName: searchType.geometryName,
-                featurePrefix: searchType.featurePrefix,
-                featureType: dataLayer,
-                properties: getProperties(searchType.dataIdProperty, dataLayer),
-                outputFormat: searchType.outputFormat,
-                styles: searchType.styles
-            };
-
-            return goTo;
-        }
-
-        return null;
+        return goTo;
     };
 
     ctlProto.getPoint = function (pattern) {
@@ -90494,7 +92679,7 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.getLabel = function (id) {
         var self = this;
         var result = id;
-        var locale = TC.Util.getMapLocale(self.map);        
+        var locale = TC.Util.getMapLocale(self.map);
 
         if (id.match(new RegExp('^(?:' + self.LAT + '[-\\d])|(?:' + self.UTMX + '[\\d])'))) {
             result = result.replace(self.LAT, self.LAT_LABEL).replace(self.LON, ' ' + self.LON_LABEL).replace(self.UTMX, self.UTMX_LABEL).replace(self.UTMY, ' ' + self.UTMY_LABEL);
@@ -90510,12 +92695,12 @@ TC.inherit(TC.control.Search, TC.Control);
                 if (!Number.isInteger(parseFloat(match[1])))
                     result = result.replace(match[1], match[1].replace('.', localeDecimalSeparator));
                 if (!Number.isInteger(parseFloat(match[2])))
-                    result = result.replace(match[2], match[2].replace('.', localeDecimalSeparator));                
+                    result = result.replace(match[2], match[2].replace('.', localeDecimalSeparator));
             }
 
         } else if (id.match(new RegExp('^(?:' + self.LON + '[-\\d])'))) {
             result = result.replace(self.LON, self.LON_LABEL).replace(self.LAT, ' ' + self.LAT_LABEL);
-            
+
             var match = result.match(new RegExp('^' + $.trim(self.LON_LABEL) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LAT_LABEL) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
             if (match) {
                 result = result.replace(match[1], parseFloat(match[1]).toLocaleString(locale));
@@ -90556,6 +92741,34 @@ TC.inherit(TC.control.Search, TC.Control);
         return $('<div/>').html(text).text();
     };
 
+    ctlProto.transformFilter = function (properties) {
+        var self = this;
+
+        if (!TC.filter) {
+            TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
+        }
+
+        if (properties && properties instanceof Array) {
+            var filters = properties.map(function (elm) {
+                if (elm.hasOwnProperty("type")) {
+                    switch (true) {
+                        case elm.type == TC.Consts.comparison.EQUAL_TO: {
+                            return new TC.filter.equalTo(elm.name, elm.value);
+                        }
+                    }
+                } else {
+                    return new TC.filter.equalTo(elm.name, elm.value);
+                }
+            });
+
+            if (filters.length > 1) {
+                return TC.filter.and.apply(null, filters);
+            } else {
+                return filters[0];
+            }
+        }
+    };
+
 })();
 
 
@@ -90564,9 +92777,9 @@ if (!String.prototype.tcFormat) {
         var args = (arguments || [""])[0];
         return this.replace(/{(\d+)}/g, function (match, number) {
             return typeof args[number] != 'undefined' ?
-              args[number]
-              : match
-            ;
+                args[number]
+                : match
+                ;
         });
     };
 }
@@ -90614,10 +92827,22 @@ if (!Array.prototype.hasOwnProperty('findByProperty')) {
     });
 }
 
+if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function (searchString, position) {
+        var subjectString = this.toString();
+        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+            position = subjectString.length;
+        }
+        position -= searchString.length;
+        var lastIndex = subjectString.indexOf(searchString, position);
+        return lastIndex !== -1 && lastIndex === position;
+    };
+}
+
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.SelectContainer = function () {
@@ -90659,11 +92884,7 @@ TC.inherit(TC.control.SelectContainer, TC.Control);
         TC.Control.prototype.register.call(self, map);
         self.renderPromise().then(function () {
             self.title = self.getLocaleString(self.options.title || 'moreControls');
-            self._$div.find('h2').first().html(self.title);
-
-            // GLS: a\u00f1ado la etiqueta Novedad
-            var beta = " " + self.getLocaleString("beta");
-            $('<span class="tc-beta">' + beta + '</span>').appendTo(self._$div.find('h2'));
+            self._$div.find('h2').first().html(self.title);            
 
             var bufferDeferreds = new Array(self.controlOptions.length);
             for (var i = 0, len = self.controlOptions.length; i < len; i++) {
@@ -90745,7 +92966,7 @@ TC.inherit(TC.control.SelectContainer, TC.Control);
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Share = function (options) {
@@ -90907,13 +93128,10 @@ TC.inherit(TC.control.Share, TC.Control);
 
             var copyBtn = $(this);
             copyBtn.text(self.getLocaleString("copied"));
-            copyBtn.addClass("btn-default");
-            copyBtn.removeClass("btn-red");
+            
 
             setTimeout(function () {
                 copyBtn.text(self.getLocaleString("copy"));
-                copyBtn.removeClass("btn-default");
-                copyBtn.addClass("btn-red");
                 unselectInputField();
             }, 1000);
 
@@ -90936,7 +93154,7 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                window.location.href = 'mailto:?body=' + encodeURIComponent(url);
+                window.location.href = 'mailto:?body=' + encodeURIComponent(url + "\n");
             }
         });
 
@@ -90984,7 +93202,8 @@ TC.inherit(TC.control.Share, TC.Control);
                 var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducci\u00f3n de url
 
                 if (shortUrl !== undefined) {
-                    window.open("https://twitter.com/intent/tweet?text=Visor%20IDENA&amp;url=" + encodeURIComponent(shortUrl));
+                    var titulo = encodeURIComponent(window.document.title ? window.document.title : "Visor API SITNA");
+                    window.open("https://twitter.com/intent/tweet?text=" + titulo + "&amp;url=" + encodeURIComponent(shortUrl));
                     return false;
                 } else {
                     TC.error("La URL " + url + " no ha podido ser acortada por ser no v\u00e1lida");
@@ -91110,7 +93329,7 @@ TC.inherit(TC.control.Share, TC.Control);
 
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 (function () {
@@ -91500,8 +93719,44 @@ if (!TC.Control) {
 TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
+(function () {
+    if (!Array.prototype.filter) {
+        Array.prototype.filter = function (fun/*, thisArg*/) {
+            'use strict';
+
+            if (this === void 0 || this === null) {
+                throw new TypeError();
+            }
+
+            var t = Object(this);
+            var len = t.length >>> 0;
+            if (typeof fun !== 'function') {
+                throw new TypeError();
+            }
+
+            var res = [];
+            var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+            for (var i = 0; i < len; i++) {
+                if (i in t) {
+                    var val = t[i];
+
+                    // NOTE: Technically this should Object.defineProperty at
+                    //       the next index, as push can be affected by
+                    //       properties on Object.prototype and Array.prototype.
+                    //       But that method's new, and collisions should be
+                    //       rare, so use the more-compatible alternative.
+                    if (fun.call(thisArg, val, i, t)) {
+                        res.push(val);
+                    }
+                }
+            }
+
+            return res;
+        };
+    }
+})();
 (function () {
     var lastTime = 0,
         vendors = ['ms', 'moz', 'webkit', 'o'],
@@ -91511,7 +93766,7 @@ if (!TC.control.MapContents) {
     for (var x = 0, max = vendors.length; x < max && !window.requestAnimationFrame; x += 1) {
         window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
         window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame']
-                                   || window[vendors[x] + 'CancelRequestAnimationFrame'];
+            || window[vendors[x] + 'CancelRequestAnimationFrame'];
     }
 
     if (!window.requestAnimationFrame) {
@@ -91519,7 +93774,7 @@ if (!TC.control.MapContents) {
             var currTime = new Date().getTime();
             var timeToCall = Math.max(0, 16 - (currTime - lastTime));
             var id = window.setTimeout(function () { callback(currTime + timeToCall); },
-              timeToCall);
+                timeToCall);
             lastTime = currTime + timeToCall;
             return id;
         };
@@ -91554,24 +93809,15 @@ if (!TC.control.MapContents) {
 })();
 (function () {
     TC.Consts.classes.THREED = TC.Consts.classes.THREED || 'tc-threed';
+    TC.Consts.event.TERRAINLOADED = TC.Consts.event.TERRAINLOADED || 'terrainloaded.tc.threed';
+    TC.Consts.event.TERRAINRECEIVING = TC.Consts.event.TERRAINRECEIVING || 'terrainreceiving.tc.threed';
 
     TC.control.ThreeD = function () {
         var self = this;
 
         TC.Control.apply(self, arguments);
 
-        self.crs = 'EPSG:4326';
-        self.crsPattern = /(EPSG\:?4326)/i;
-
-        self.currentMapCfg = {
-            baseMap: '',
-            baseMaps: [],
-            baseVector: ''
-        };
-
-        self.workLayers = [];
-        self.vector2DLayers = [];
-        self.vector2DFeatures = {};
+        self.$events = $(self);
 
         self.selectors = {
             divThreedMap: self.options.divMap
@@ -91580,11 +93826,17 @@ if (!TC.control.MapContents) {
         self.Consts = {
             BLANK_BASE: 'blank',
             DEFAULT_TILE_SIZE: 256,
-            TERRAIN_URL: 'https://pmpwvinet18.tcsa.local/customcesiumterrain/epsg3857/geodetic/_5m/5m'
+            TERRAIN_URL: 'https://pmpwvinet18.tcsa.local/customcesiumterrain/epsg3857/geodetic/_5m/5m',
+            events: {
+                GFI: "gfi.tc.threed"
+            }
         };
 
         if (self.options.terrainURL)
             self.Consts.TERRAIN_URL = self.options.terrainURL;
+
+        if (self.options.isDebug)
+            TC.Consts.url.CESIUM = TC.apiLocation + 'lib/cesium/debug/Cesium.js';
     };
 
     TC.inherit(TC.control.ThreeD, TC.Control);
@@ -91601,7 +93853,10 @@ if (!TC.control.MapContents) {
         FOCUS: 'focus',
         HIGHLIGHTED: 'highlighted',
         DISABLED: 'disabled',
-        OUTFOCUS: 'outfocus'
+        OUTFOCUS: 'outfocus',
+        GFIRESULTSTR: '-gfiTR',
+        GFIRESULTSTH: '-gfiTH',
+        GFIRESULTSTD: '-gfiTD'
     };
     ctlProto.direction = {
         TO_TWO_D: 'two_d',
@@ -91614,12 +93869,14 @@ if (!TC.control.MapContents) {
         "listTOC",
         "selectContainer",
         "externalWMS",
+        "fileImport",
         "layerCatalog",
         "click",
         "fullScreen",
         "loadingIndicator",
         "navBar",
-        "state",
+        "overviewMap",
+        "legend",
         "fullScreen",
         "threeD"
     ];
@@ -91632,9 +93889,9 @@ if (!TC.control.MapContents) {
         ctlProto.template[ctlProto.CLASS + '-cm-ctls'] = TC.apiLocation + "TC/templates/ThreeDCameraControls.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-threed-btn\" title=\"").h("i18n", ctx, {}, { "$key": "threed.tip" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-overlay'] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-threed-overlay\" hidden><svg class=\"tc-ctl-threed-overlay-svg\"><defs><filter id=\"fGaussian\" x=\"0\" y=\"0\"><feGaussianBlur in=\"SourceGraphic\" stdDeviation=\"3\" /></filter></defs><rect width=\"100%\" height=\"100%\" fill=\"white\" fill-opacity=\"0.5\" filter=\"url(#fGaussian)\" /> </svg> </div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-cm-ctls'] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div><div class=\"tc-ctl-threed-cm-tilt\"> <button class=\"tc-ctl-threed-cm-up-arrow\" title=\"").h("i18n", ctx, {}, { "$key": "threed.tilt.left" }).w("\"><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAARCAYAAAHRZ37kAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAbKSURBVHjaYvz//z8DEDABsQgDBEgD8XmWq1evRsXHxy9lQAI7duyoZgDq4AJiNyBmAWKVv3//hgNpYYAAAkmAMA8QS75588YepIDF3NwcqOAvE7IxDPv27UsFaQFi5j179nQCaV2AAGIEEuxAOc179+4FrV+/PvrkyZMiv3//ZgKC/2pqap/Pnj0rvGvXrjigmk0gxe4mJiY7QKZZW1u/9PPzOyMqKvryw4cP+kVFRcYgcTY2tr9ycnKvAQII5jAQZgNiIZADgVgCiJW2bNkSD3UKWA0LUKMYENsAJVI2bdpk9uLFC05WVtZ/wsLCP8+dOyf85cuXI+Hh4SBnPGDMycm5f/z4cQUGPMDLy+tpU1OTL3NGRkb86dOnJYWEhH4kJydfA4bubqDkdV5eXh5gaAuAFP/8+ZPp5s2bYLdo3L17Nw1Iq0NDnBmIOWbMmFENdFIJkO0AxPIgOYAAYjQ2NmY4c+YMI8jTQMwJxALQCBX5+vWrKChWgDQXOzv7Px4enl8/fvz4x8XFxQ2MB8tJkyY5FxcXr7O3t18FVH8RiN8C8S+Qa0DBrPLv3z8jYCQFHThwwPbChQuC7969Y//z5w8TA5EAFA1hYWF38/LyeoBxeRQo9IjxxIkTRcDA6wFawIiugZGR8T8wxP8Dkw0DCwsojf1nBFrICHQIIy5LZGRkPsbExLSDXKz069cvt9jY2FZgVHECE8Zdb2/vHUAFF4DqngPxRyD+AcT/gJgLiLULCwvrgA5SFBER+aGhofFJRUXlpb6+/hUgfY2Dg+M2MMhuAARgpPxdEgjDOK7dDYZ0Kih6ij9ADlNp0EiQKBqlxRYn6Q9oaFRocWoQnJsUoX/AodUlCgdHpeBQI9QQFC008xTS+j7xChIGHXw57rh73u/7Pp/vswoRSc3w34R0kJEBJTKZIStxnc/nz3A/JGPse/VqLR4YU/MIPOJ/CzJAJrg3Y9t6HIWGEoos0BHM9Xr9HOcoFgqF82az+ZxKpbJ4vicgoQ+2s5/mCYwCB4pt1+v1IAjelWXZ2u12NXjHL5mjcwaXM1EUp6DCQpENh8O9RCKRs9vtN/isBo2gORXe73Q6R6DiBCNBarVaWhTh1jXzr0uSpGEymSwEAgEaMY/QKwcXV7lc7rRYLLoGg4GGYfbvonQBT02pVPIi+UaXy9WjhnN4uGw0GuY1qKk4jiPcFnRnUrGpqPq9uKIoPHIgIaIOhK7MZzKZa3B3QW4Z7Aun0/nu8/lGHo+nCQcvKDgDkhsoasJ8sqXTae9kMuGXRWnAUUhsNtsEfRGq1arAY5jdxePxvWw2GwmFQv1oNFrGirdarfYJ//RZpz+ZQwtmRQTudgwGAzVR8fv9Q5iowYDsdrsfEHdqYIOaZ0Z3PcDnIBaLyXjZhjosGJT7OfTFCusqlUoQo/cYmI5pN4IgtJmBN2jMjEy/BWi2fFqUCqMw7s2541hDVjIqEkw6i3CRxGUEIQkhaBe5aN8nkDZ9Dbe6ch1+gXZC4OAQs2nRP9x4J5X80+Cg0wjXa/Y7doTbDC3aRBcO773ie+/znvM8zzmGJ2fe3BnaXfyEHNlUk7oYpv7H79nnUyBL5fRS33FNdIKVJqvV6hNoO+UgTZgkmRkQfeGBAnM0S5fAbSiwNTgBsaWWIB/YVjGGqNUt6haeTCZhrDdCmq8T27AzwLqJm25K3cWfCB8lQqvzH8Fg0EGsLqwORCIRs91uh1qt1h66M8noo2w2O8rlcu8o6yGH+KiVGBFT4ZoCXx98JeiwxyHCkCoG3W93Op0kTpCAPPFut3tDxD0cDrewfBPw/kv9V0m3Su/vTF+KIiRoFS7g5+j8qncffuhC7AnAjznAQSqVOlLn6Sslztc0MsjMA9u27/V6vftIxqLL3RFwRNCrgH9xibQR1QxX+5bP598ymBxQGaFMT/k8NZrN5otSqfSSLMa1nIbvP7gQnZNOp8fE+0wm84YKHEG5Y4PMPmcoelav13NwK0Sp/whYSs6JZQJw4agLP11mjzn3C6EBz4tfjFj12ytw2y+9QVa4bzLTBcXH/hY83D6xLOt1oVB4JRze57e7NKGH5XL5KVPezpqfeNRcACUSie/JZPIMQ/zK/Rc8bRCNRgdk4VSF4XjFAcgNHDxAtW5K2+V9e5VKxarVarsXJxX4uxAO862F9HvGOod7lw4xYB2yf8jaBvQnZoHPwtG2+BwP/WKx+CEejz9GbLt44ZhS2IymNsOF7fHEqYpAhoy5xsJjZSKu1axGRUKs0UajsY9Odui0Aczb4eCzWCx2BrgxIPuAGVG1ExIwZj1V3z1Xi5vpKs+zn3aM2cxE/zCKAAAAAElFTkSuQmCC\" /></button><div><svg width=\"95\" height=\"95\" viewBox=\"0 0 145 145\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><defs><pattern id='video' width=\"100%\" height=\"100%\" viewBox=\"25 27 100 100\"><image x=\"40\" y=\"40\" height=\"65\" width=\"65\" xlink:href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEEAAABBCAYAAAH58PnTAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAA7NSURBVHjaYvj//z8DGk4CYlUgFgfiEiBmZGGAAgMDA4YLFy4EmpiYzGVAAmfOnJFlgnEuXrwIoq7A+MzMzDDmPpCiyUDdQFP/c5mamt6Cyfz9+xfG1ANZJwViARV+ZcAODJgYiACkKQL6ogSHmn+MQAfLABk8QHwDiPWBOARJwX8g7gYIIPSAFAbiMiBmAuI0IFZBCUgWFpY3UGs9gT51QHHL5cuXQQr+Qbl74I4FBR6QLgAGmO6fP3+YoOHUguIboEA/kJqEzSuMxsbG/6Hx8g9oChPO8JCWlv6KN8DWrVuXjNUKoF9BEvNAbCAuhQYcDFwCCCD0gGJgZGQEY1Cg7d279zzIjSBsYWHxByjmOWfOnOswMUtLy79AMUMWdGvV1NRgTJ+ysjIDGOf379/Md+7cqZs+fboGTOzXr18gbxSAnKoOZIQD8QEgPqatrf3n6tWrIMOdgbgCpPjnz59M7OzsoMh4DMSyUAMY2djYQCEZBzJkLTDMg5BS0gIgdQgoNo+YJAhUvxbDO0DNCTw8PNEMxANGrAn++/fvzCQYgj3XnDx58iAphrBAMwqDoKDgj927d4Myy04glgfiO0SasQ8ggEABi88CIyD2BOIL0CzyC4jNgNgFiM+DxDAClYmJieHfv3+gVOkHDOC1SDEwFUidRY4xoFg/hgF6enogirOiomIyWmxlA/FLZDFgAVeIEZg/fvwA5z5gOSqILnf37l1+ZD7I+xgG3L59G0R93bFjRzeyeGJi4i1gQC9EFsvIyLgBCsQYIFsIiFcA8StoRgMVsRlAbAt0CQ+wQPoCyipA/AGIRYF+5wV65zOQvRBeYkybNu2smZlZPJB5E5j+p1tZWaUQikNQ6Q/3QlZWlrGLi8tZINN9wYIF9sQkAlDNgBIGHz58YAeWC1soStLAohNUvv6nKE+AApIiAyjOlUBvMJJtgL6+/ls8GQy/Ac3NzZfmzp3rSpYXgKlriaenpzuotZCWlraUGM3AwhZcC3sA2VxAvAOIv0Hl+KHlgBa0wsEGPgHxNoAAxFc9SEJRGH2CkiSlQ04tIUpgNGSUlCASuBgIPTSIwMJcBKUGoRYNg3CNaAlCkRqkoB+s3PtxaQzM/pagLKXBIiiK6nzxFEnTJB99cOD93Hfvud+795zvMiXKnZJGVGBIQqAZYIEVj8dzg2X/xrLsQzQaPcazGaCHc/sWYBg7fNPlct2h3avFYnkgQ8PzaUALNAoqJV2pVOavYVykQeT14+hwBOJV8hupVPqMgSJ436LVag0/jSGXy59isdhExfUok8nyQEiATqPROPQTAYpsNiuGebbBovXlJpnJZKi/vook0DAP0k7gyul0npddZZB4uPgTxKZsO273XtDvqMNFAyDmNPCRG+xrquiMSSQSXx9g9vQ7moBeYMxsNhtSqVR94WwhuqcOh4Pc7oBrOwjB0ufKtdzgbrc7abPZlnC7QSRGTSbTQjqdptR8YItsc4J9CNyCxAuRQDvqUI9/OOX1eruYGkQkEtnFmpsjEqtQfev3NEGzrwOBwAputzj/7ggGg/MwhFamhoFJL1OKisoVSi+8rRnkJuGqcTxaBPoLU1rDkAgrtSBCIDNgt9vPRCIRw0f8embhcFhZjZnxQoLPqIaE4N9JhEKhI5w5BP9CQqfTpbCNZtVqdZSvTAg5dSzaEfF4fA8HJaqg96nSJJ1QKBQsDxwyJFZm1MBTfr+/GzJ6CV9Yw4sd4IT8XqVSvaOgJskmaW+nE7vP57Mmk0npX0bWaDT3qP6paFn/FIBd8wtpMozCuBtim7mlRa4IshpFdSHiVRcyUAutGAhjGE0I3EV3pXaVCIGDUIoJXkQ3gezOv9CNFxFNoTAczSAlFuJgTk1ii4a4Sls9jx3HNtg+1LVRJByY395v7/nenfOe33neqXbCTwkBqoUdEWA5K9V1CTbHJgD2meAroHNMxp2W+4IirixsjdsF0JTAqmF3p6am3hBkEDObbW1ty7g2QoARkCHQXIA5RkdHZy0WS6Smpmajo6NjBdcGYddgxxVXgOU4LqPEYkVs1GHXGxoa2kOhkCa11qB6frDb7Q/kSS8DZm4lqEPxcSh+s6i+93dKU4coD7S0tDgRBwfTOQy0e2UwGHzNzc2W1KYscdzk5OSgYkqiiY+b9GHV6SaXVSoAP7LPPLWwsHAg0zjwaK1isUJtSKpukUikQukev9+vW11dLVJa3XA4vE/RgbW1taSWDg59lWDM1DjGysrKNrKyK0aj0biRU4uLi98r3YMADYrCk/EP3XFI0YHFxcWCYDC4ZZLfnt7e3pl0LSSDq7u7m6LGs87OzneZIBYxMKwWgGVTT52SzJ5EJYQULjdSSSWby1JdXd1TOPE29UN1Ot3G9PQ09TC26vPYI9w2m82f6izGffN4PCNUWpiGtdzvZdeaFwmGghnX/KdGo6H2oRIt8KRINaZtQY0im8/n01ZWViaqjp+k1hyVurM1DmmsJeLLGD7AUCFSyo46YGNaNDU1Bbq6ulx4gxTtYz2I/e5cuConYFaz2dwOdN+/10qESlvlcrmWVVar9QvyVb/9Rnl5eXR8fHwILwdhXlhInv4qlvRxIBAoyVY5bGxsDKhTGRC9hBbReQNfzR38e0ligxvP6WxOvi1dpRVJgOz1ExMTdMIslcyQbSDgPBnTEGlS1d/ffxsvr8hK5B7PECjGgYGBiymKeG4hFW3b+bxSMjNxfX1dnTcHEo4A/r2O6b8Df48DpaWlm3lzIOGAMT8OAJ9f/skmVUlsYq/4XEAkdw4Qr9xuN5tVKmo8BK7I2VdgMpk+YnIeDT+CvZbGcynbk/N3A2q9Xp/E7319fTNOp/MhNSvhNp42UZqfoxqaTQdaW1u9hNJ7INd2cL96bGzsBa4Pi6K6Qpbk6RSIePsXB/Ver/dmT0/Pub3oSMiqHw6Hw2M0Gp/QARIxP7BIenvCaBiWmvfUoA+LHnBGXhfuYv7vorxwHt8vAdq3tlhIzzA8YzFda+kahxk7NYzj9IjVdu0Su+KicyN6IcoVjUPSSiSUhPRCREhwIxHitpS4cSGVaCR70RKJktZmmaXjMLUOsY4rdOws0/cZ799MdFjmpzW1X/KH+TP/N9/3fO/heZ/v+x0RKI4t349J5UAKiu1bXIPIGU2w7JCBgYEYouvq8fFxb1A0ou0vCJl5ooSPZTIZRAwj299zNoU97hr9eTEQYGtqWsWwoaGhj6iYUlB/XjS2A+pvW61WPyO7BsGes+lvVejvQkEgAFx4sN5cp2D1PjQajfdra2vfpQLJF88fHYNQ/xIYL8j2DQkJCQPsEwYevIXBBF+O6e/vT2psbAyjovzGSfOJjIzcKCkpmY6Njf2Z+4MlLIgG4bhSFQdcWJrypyuUrjiqBj7Lzc29S4W/7LS/K/RfXV39G9XeP/Fq4uEg8suEwsLCOJy6OKMvWtBfSkoKNi6GRYMQFBRk9z6VU4L/YvU/pWonvaysLOak3bLXWRwFLkNRUZFVMOjt7ZVXVlZ+4Oj4AW5+fv7TvLy870WzI19fX7sXBzm4wW1aqfco1Ec4CoBQJnR1dWkALibe1NQUKmYB8SzlPrhoqKtYEI6IakcTL2QG2d7enufOzo7o7SGUKuRKrktLS5a1tbXr55QiZaItAcKevYvTG/bnt4juLERFRW2K/S2FQrFLwW03MDDwZURExPpZTl/YcwdPT0+Qk3XRIBwnvXMqg9Y3S9cYEYsBf3//XUcGjmfc3Nz26+vrnxBpwTGj5ZaWlgm5XG5yFADwUIopw/RxAoFRyqZr+9fqhhyFhb92HZBWRULm+Y8swfxAxpok8vj7dN1tbm5+iH1LeycQj2vJyckLdXV1g6xLPuOxYIMktqqqKrGnp0d12smjpaenGylIowLAjvITKW+ue3EQu8kBzcIa5hYTim3+/IqF1L8bTgpgy4n8XjgtIJAjAACp8RZrX2rO6xBi5BQjrlGgC6Aor1xcXPQgf7dugbu7u+/7+fn9SdxgLSsra1GlUsGizMwRFng8Eh7zbe7TVa/Xe3R0dCipxPHd2tpyt+1PqVTuxsfHP8/Ozl6ioG1mnRbXU4EnJIOG0kBi29rakqgzOfmeSafTGZOSkvDFKaay80w1heMSAMRiCwL1dc1m9TFxDVKk2WyO6uvri5mcnLxpxx0s4OVk7tbUQd914Q0gqYOmbqF0aoGWD7e07Q/34+LiNhMTE+dYooXUPg0Qvi0uLv5qcHBQeXT3CQ1np8gX9T4+Pr/yQ7/zioDbQ5k2k6/vr6ysSI+QozvEDVJLS0vj4WZi+ch5K6g0n11yzR+Ilf4IEL4js0udmpryfl1gInJhIJPSs29OMHtbYbfZZxPF6n88OjqaXlBQcF9yiZtWq90i67ceR7lxmgwAHyOCEknmlEagfUPuA737S5ab73BBBPKBnd93yDcDJJe8seX7O0SWYDWpqan3yJfjqRYwEPUckeDw92FKhEUFwDclztFcXUQiKW1tbQ2nsjezpqYmj259ITnc/VJJnKidi7IKd+nu7tZQPr+3vr7+tsTJ2rnKy9vb2+5U2mqvNAiwCIPBcGtjY8OVsonlSoIgkBUxhc3/AgRnbG9AeAPCBYEAEROFymWqFf5VECCGEleY9/Ly2ufzS85BGc+zMktLS5utqKgwCunySoFAtHm1sbHxMdXws1xNqp0pJriKWfnMzMyZ4uJiFE7DrPzssZgi5ZLaaUA4k90GBwdv19XVjWs0Gkwer5VPsuoExcmTpTA1a5fO0EwAYfWk1/as59hcXA5ycnKm8fqmjaAC01+WHGp+wttJL/nedEZGxi9dXV1BqCcuY3zAvPAuMP07B2Xp60ePHn1OAe0hFGBhwPgSNjAbGhr0CoXCVlqD2itIa5j0AVIiC6zCrhNKaRRSn1Cs0HV2doad5f3Ii24eHh7m8vLyCZ1O10MfRwACVCGNyWSKbG9vfzA2NhZCk1+lSD+qUqmmeMX/kBzKaMKqvxLcKDw8XDIzM2PNBgwEdppw+hYltZKDZMjIyEi0Xq8PJ8Cu/1eTp9/ejI6O1mu1Wry7MMfzWv4LmdcMOPELkX0AAAAASUVORK5CYII='></image></pattern></defs><g class=\"tc-ctl-threed-cm-tilt-outer tc-ctl-threed-cm-tilt-outer-circle\"> <title>").h("i18n", ctx, {}, { "$key": "threed.rotate.drag" }).w("</title> <path d=\" M 72.5,20.21875 c -28.867432,0 -52.28125,23.407738 -52.28125,52.28125 0,28.87351 23.413818,52.3125 52.28125,52.3125 28.86743,0 52.28125,-23.43899 52.28125,-52.3125 0,-28.873512 -23.41382,-52.28125 -52.28125,-52.28125 z M 72.5,39.40625 c 18.297686,0 33.125,14.791695 33.125,33.09375 0,18.302054 -14.827314,33.125 -33.125,33.125 -18.297687,0 -33.09375,-14.822946 -33.09375,-33.125 0,-18.302056 14.796063,-33.09375 33.09375,-33.09375 z \"></path></g> <g class=\"tc-ctl-threed-cm-tilt-outer tc-ctl-threed-cm-tilt-outer-shell-circle\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.drag" }).w("</title><path d=\"M 72.5,20.21875 c -28.867432,0 -52.28125,23.407738 -52.28125,52.28125 0,28.87351 23.413818,52.3125 52.28125,52.3125 28.86743,0 52.28125,-23.43899 52.28125,-52.3125 0,-28.873512 -23.41382,-52.28125 -52.28125,-52.28125 z m 0,1.75 c 13.842515,0 26.368948,5.558092 35.5,14.5625 l -11.03125,11 0.625,0.625 11.03125,-11 c 8.9199,9.108762 14.4375,21.579143 14.4375,35.34375 0,13.764606 -5.5176,26.22729 -14.4375,35.34375 l -11.03125,-11 -0.625,0.625 11.03125,11 c -9.130866,9.01087 -21.658601,14.59375 -35.5,14.59375 -13.801622,0 -26.321058,-5.53481 -35.4375,-14.5 l 11.125,-11.09375 c 6.277989,6.12179 14.857796,9.90625 24.3125,9.90625 19.241896,0 34.875,-15.629154 34.875,-34.875 0,-19.245847 -15.633104,-34.84375 -34.875,-34.84375 -9.454704,0 -18.034511,3.760884 -24.3125,9.875 L 37.0625,36.4375 C 46.179178,27.478444 58.696991,21.96875 72.5,21.96875 z m -0.875,0.84375 0,13.9375 1.75,0 0,-13.9375 -1.75,0 z M 36.46875,37.0625 47.5625,48.15625 C 41.429794,54.436565 37.65625,63.027539 37.65625,72.5 c 0,9.472461 3.773544,18.055746 9.90625,24.34375 L 36.46875,107.9375 c -8.96721,-9.1247 -14.5,-21.624886 -14.5,-35.4375 0,-13.812615 5.53279,-26.320526 14.5,-35.4375 z M 72.5,39.40625 c 18.297686,0 33.125,14.791695 33.125,33.09375 0,18.302054 -14.827314,33.125 -33.125,33.125 -18.297687,0 -33.09375,-14.822946 -33.09375,-33.125 0,-18.302056 14.796063,-33.09375 33.09375,-33.09375 z M 22.84375,71.625 l 0,1.75 13.96875,0 0,-1.75 -13.96875,0 z m 85.5625,0 0,1.75 14,0 0,-1.75 -14,0 z M 71.75,108.25 l 0,13.9375 1.71875,0 0,-13.9375 -1.71875,0 z\"></path>\t</g><g class=\"tc-ctl-threed-cm-tilt-indicator\" hidden><path d=\"M 36.46875,37.0625 47.5625,48.15625 C 41.429794,54.436565 37.65625,63.027539 37.65625,72.5 c 0,9.472461 3.773544,18.055746 9.90625,24.34375 L 36.46875,107.9375 c -8.96721,-9.1247 -14.5,-21.624886 -14.5,-35.4375 0,-13.812615 5.53279,-26.320526 14.5,-35.4375 z\"></path></g><g class=\"tc-ctl-threed-cm-tilt-inner\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.reset" }).w("</title><path d=\"M 72.5,39.40625 c 18.297686,0 33.125,14.791695 33.125,33.09375 0,18.302054 -14.827314,33.125 -33.125,33.125 -18.297687,0 -33.09375,-14.822946 -33.09375,-33.125 0,-18.302056 14.796063,-33.09375 33.09375,-33.09375 z\"></path></g></svg> </div> <button class=\"tc-ctl-threed-cm-down-arrow\" title=\"").h("i18n", ctx, {}, { "$key": "threed.tilt.right" }).w("\"><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAARCAYAAAHRZ37kAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAbKSURBVHjaYvj//z8XELsBMQsQq/z9+zccSAuzXL16NSA+Pn4pAxLYsWNHNSNQFsRmAmIRqLg0EJ8HCCCGffv2pYK0AjHznj17OoG0LqOZmRnQyL9MyMYwgIwAYh4glnzz5o09yHKAAAKZ625iYrIDpMDa2vqln5/fGVFR0ZcfPnzQLyoqMgaJs7Gx/ZWTk3sNUswO5Gveu3cvaP369dEnT54U+f37NxMQ/FdTU/t89uxZ4V27dsUB1WwCCCCQVRp3795NA9LqUP8yAzHHjBkzql+8eFECZDsAsTxIjmX+/PnLpk6daigkJPQjKirqlqam5iWgBOunT5/Mvb29FUDOADrhi4GBwTzGnJyc+8ePH1dgwAO8vLyeNjU1+YLcLAbk22zZsiVl06ZNZkCrOVlZWf8JCwv/PHfunHBpaemR8PBwkJsfwIIIhNmAWAgUVEAsAcRKQAPioQENVgMQQCCTlX79+uUWGxvb+uXLF05g0N0FunWHjIzMBaBpz4H4IxD/AOJ/QMwFxNqFhYV1J06cUBQREfmhoaHxSUVF5aW+vv4VIH2Ng4PjNg8Pzw1GoIIioB97gBYwovuLkZHxP9D5/4Gxy8DCAko8/xn//PnD+O/fP0ZcYQF00MeYmJh2kItVgAqNgOkk6MCBA7YXLlwQfPfuHTvQACYGIgEoMYSFhd3Ny8vrAcb7UaDQI0ZjY2OGM2fOgFzABsScQCwATakiX79+FQUlOyDNxc7O/g/oxV8/fvz4x8XFxQ1MvJaTJk1yLi4uXmdvb78KqP4iEL8F4l8gywACMFI9LwmEQZR1PRjWalDpKqYkYunNLgq2x4hAPPkHeOwQBCEYgnj0P/CgefMUeOjYKQiCjoLBokk/lEBRZM22FnLpjX2ChAcXHst+zDc78+bNo4ptaNVfrVYPEomEjLM28M64paAJSZtiAUutVgtBhceQ9Njj8XQEQaD4PjAExsAnzcRIMq5UKufFYvEIfPfj8fgDurg1m80tdoECf1hiO6o+LBQKZ1arVRNF8SsYDCqBQKCBn8her7eObhqIe+J6vV4WZF8MBgMT40t3u90fCB75/f5XqorneQ3KMaC7TSyaM5/P76mqapxxTPtEPDudThWqeEkmkykOttCq1+s7CxQxvYCk+vwxqYJplVswRD0ajd6n0+mUEdp7VBRlq91ur/73C3DPAfwyyqDdzWQyNxjkJc2Jx3TfJEnqwE+E4XBohgKMlJBxutTj8/mUXC53FQ6HS/ikxRpQWwKT1zY2b7fZbIawy/uyLDu63a4JZ1MuNU0z0JKgMhraNwqyky1GIpEe9r7kcrmuEUaDG5GSZjqmy2R0a8A6sImENvBpxebRUA0wPdq4CdQwAfdiLBY7xd3nbDZbxPfd1Ez+FKTPe+8MHDP+FcACbDCTERlsgIOcvFwun+AtkdeweG4+168AvZZPbxJRFMWhMFC0lCIRCDGpUBMXRlImJSw0hpU7Iybu/VZ8BcOCBRt3JC4ajenGhUFh42AAS7HSSGVSGIq/q/clpNWFC33JzXsTmHn33znnykNCPBQ9IA136vX6w263u02bjYvFogMtO+DfWQHBBJsqMc3VDIiWpnsUyTEsRdr2Go3Gk8FgcIs0zmhLN51On0KhY4jskPSOwMcxYBuznyjQppoBV3d5dsXhPQ63qdWDarX6GA25bqQKEM2j0eg8m81+z+Vyp1z0mfOneDw+TKVSQy440Q/OFJyS3iV1DlKaMCWJS+b43g5gtWu12vZFbgNPC8zjroWwMEHMOHuoy5D9iPeP2D8S1HsY+oO/3+8/Q9SeNpvN+51OJ6Yd/NslOKThhOM8mMSLRCKeBMR5IeXiefGrG36y9prrugFpUtmROgtZjggx+P5y4eyxbdsvKpXK8yDl30Ksdnu93qaODX9cIhtcGEAFxMK+f7io3iyfz4+xd7TmS9jwACLq+lGDe47j3CXTu+1222YIuikwxiKrtPg/Fiy6hK9cKOJLuVx+UyqV9qmoaEJfMTQxoDP0kCCDabJ3AwbNkf0sjmfI/pYEgR6sQ3wWgQQujWTaMoYhVsC3FFoXQzI9aGYO+K5c6GOPDH6DxruQ4z4T04HSzqECfWoUUhxe0+kxoMhe15HkKrahwcRw8hqClKAXEwxKSfpyE9ugV8PsISoVEu2QtsF89DVUOD+nr2c46ZGpcDKZtFqtVow5bwfetADvGQ6OcPQtHPmaXm2pjI+UjdxVMEtwQX041x/OlFL8K0HIfyyQGhLLZDIh0BrS4Cz9T0DfMYA1FGcuCmoCogSXgyof4dyEOeNVoVCQkg81m1+VwgzrXALVD/k+37CYqFN0AAAAAElFTkSuQmCC\" /></button> </div><div class=\"tc-ctl-threed-cm-rotate\"><div class=\"tc-ctl-threed-cm-rotate-buttons\"><button class=\"tc-ctl-threed-cm-left-arrow\" title=\"").h("i18n", ctx, {}, { "$key": "threed.rotate.left" }).w("\"><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAARCAYAAAHRZ37kAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAbKSURBVHjaYvz//z8DEDABsQgDBEgD8XmWq1evRsXHxy9lQAI7duyoZgDq4AJiNyBmAWKVv3//hgNpYYAAAkmAMA8QS75588YepIDF3NwcqOAvE7IxDPv27UsFaQFi5j179nQCaV2AAGIEEuxAOc179+4FrV+/PvrkyZMiv3//ZgKC/2pqap/Pnj0rvGvXrjigmk0gxe4mJiY7QKZZW1u/9PPzOyMqKvryw4cP+kVFRcYgcTY2tr9ycnKvAQII5jAQZgNiIZADgVgCiJW2bNkSD3UKWA0LUKMYENsAJVI2bdpk9uLFC05WVtZ/wsLCP8+dOyf85cuXI+Hh4SBnPGDMycm5f/z4cQUGPMDLy+tpU1OTL3NGRkb86dOnJYWEhH4kJydfA4bubqDkdV5eXh5gaAuAFP/8+ZPp5s2bYLdo3L17Nw1Iq0NDnBmIOWbMmFENdFIJkO0AxPIgOYAAYjQ2NmY4c+YMI8jTQMwJxALQCBX5+vWrKChWgDQXOzv7Px4enl8/fvz4x8XFxQ2MB8tJkyY5FxcXr7O3t18FVH8RiN8C8S+Qa0DBrPLv3z8jYCQFHThwwPbChQuC7969Y//z5w8TA5EAFA1hYWF38/LyeoBxeRQo9IjxxIkTRcDA6wFawIiugZGR8T8wxP8Dkw0DCwsojf1nBFrICHQIIy5LZGRkPsbExLSDXKz069cvt9jY2FZgVHECE8Zdb2/vHUAFF4DqngPxRyD+AcT/gJgLiLULCwvrgA5SFBER+aGhofFJRUXlpb6+/hUgfY2Dg+M2MMhuAARgpPxdEgjDOK7dDYZ0Kih6ij9ADlNp0EiQKBqlxRYn6Q9oaFRocWoQnJsUoX/AodUlCgdHpeBQI9QQFC008xTS+j7xChIGHXw57rh73u/7Pp/vswoRSc3w34R0kJEBJTKZIStxnc/nz3A/JGPse/VqLR4YU/MIPOJ/CzJAJrg3Y9t6HIWGEoos0BHM9Xr9HOcoFgqF82az+ZxKpbJ4vicgoQ+2s5/mCYwCB4pt1+v1IAjelWXZ2u12NXjHL5mjcwaXM1EUp6DCQpENh8O9RCKRs9vtN/isBo2gORXe73Q6R6DiBCNBarVaWhTh1jXzr0uSpGEymSwEAgEaMY/QKwcXV7lc7rRYLLoGg4GGYfbvonQBT02pVPIi+UaXy9WjhnN4uGw0GuY1qKk4jiPcFnRnUrGpqPq9uKIoPHIgIaIOhK7MZzKZa3B3QW4Z7Aun0/nu8/lGHo+nCQcvKDgDkhsoasJ8sqXTae9kMuGXRWnAUUhsNtsEfRGq1arAY5jdxePxvWw2GwmFQv1oNFrGirdarfYJ//RZpz+ZQwtmRQTudgwGAzVR8fv9Q5iowYDsdrsfEHdqYIOaZ0Z3PcDnIBaLyXjZhjosGJT7OfTFCusqlUoQo/cYmI5pN4IgtJmBN2jMjEy/BWi2fFqUCqMw7s2541hDVjIqEkw6i3CRxGUEIQkhaBe5aN8nkDZ9Dbe6ch1+gXZC4OAQs2nRP9x4J5X80+Cg0wjXa/Y7doTbDC3aRBcO773ie+/znvM8zzmGJ2fe3BnaXfyEHNlUk7oYpv7H79nnUyBL5fRS33FNdIKVJqvV6hNoO+UgTZgkmRkQfeGBAnM0S5fAbSiwNTgBsaWWIB/YVjGGqNUt6haeTCZhrDdCmq8T27AzwLqJm25K3cWfCB8lQqvzH8Fg0EGsLqwORCIRs91uh1qt1h66M8noo2w2O8rlcu8o6yGH+KiVGBFT4ZoCXx98JeiwxyHCkCoG3W93Op0kTpCAPPFut3tDxD0cDrewfBPw/kv9V0m3Su/vTF+KIiRoFS7g5+j8qncffuhC7AnAjznAQSqVOlLn6Sslztc0MsjMA9u27/V6vftIxqLL3RFwRNCrgH9xibQR1QxX+5bP598ymBxQGaFMT/k8NZrN5otSqfSSLMa1nIbvP7gQnZNOp8fE+0wm84YKHEG5Y4PMPmcoelav13NwK0Sp/whYSs6JZQJw4agLP11mjzn3C6EBz4tfjFj12ytw2y+9QVa4bzLTBcXH/hY83D6xLOt1oVB4JRze57e7NKGH5XL5KVPezpqfeNRcACUSie/JZPIMQ/zK/Rc8bRCNRgdk4VSF4XjFAcgNHDxAtW5K2+V9e5VKxarVarsXJxX4uxAO862F9HvGOod7lw4xYB2yf8jaBvQnZoHPwtG2+BwP/WKx+CEejz9GbLt44ZhS2IymNsOF7fHEqYpAhoy5xsJjZSKu1axGRUKs0UajsY9Odui0Aczb4eCzWCx2BrgxIPuAGVG1ExIwZj1V3z1Xi5vpKs+zn3aM2cxE/zCKAAAAAElFTkSuQmCC\" /></button><button class=\"tc-ctl-threed-cm-right-arrow\" title=\"").h("i18n", ctx, {}, { "$key": "threed.rotate.right" }).w("\"><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAARCAYAAAHRZ37kAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAbKSURBVHjaYvj//z8XELsBMQsQq/z9+zccSAuzXL16NSA+Pn4pAxLYsWNHNSNQFsRmAmIRqLg0EJ8HCCCGffv2pYK0AjHznj17OoG0LqOZmRnQyL9MyMYwgIwAYh4glnzz5o09yHKAAAKZ625iYrIDpMDa2vqln5/fGVFR0ZcfPnzQLyoqMgaJs7Gx/ZWTk3sNUswO5Gveu3cvaP369dEnT54U+f37NxMQ/FdTU/t89uxZ4V27dsUB1WwCCCCQVRp3795NA9LqUP8yAzHHjBkzql+8eFECZDsAsTxIjmX+/PnLpk6daigkJPQjKirqlqam5iWgBOunT5/Mvb29FUDOADrhi4GBwTzGnJyc+8ePH1dgwAO8vLyeNjU1+YLcLAbk22zZsiVl06ZNZkCrOVlZWf8JCwv/PHfunHBpaemR8PBwkJsfwIIIhNmAWAgUVEAsAcRKQAPioQENVgMQQCCTlX79+uUWGxvb+uXLF05g0N0FunWHjIzMBaBpz4H4IxD/AOJ/QMwFxNqFhYV1J06cUBQREfmhoaHxSUVF5aW+vv4VIH2Ng4PjNg8Pzw1GoIIioB97gBYwovuLkZHxP9D5/4Gxy8DCAko8/xn//PnD+O/fP0ZcYQF00MeYmJh2kItVgAqNgOkk6MCBA7YXLlwQfPfuHTvQACYGIgEoMYSFhd3Ny8vrAcb7UaDQI0ZjY2OGM2fOgFzABsScQCwATakiX79+FQUlOyDNxc7O/g/oxV8/fvz4x8XFxQ1MvJaTJk1yLi4uXmdvb78KqP4iEL8F4l8gywACMFI9LwmEQZR1PRjWalDpKqYkYunNLgq2x4hAPPkHeOwQBCEYgnj0P/CgefMUeOjYKQiCjoLBokk/lEBRZM22FnLpjX2ChAcXHst+zDc78+bNo4ptaNVfrVYPEomEjLM28M64paAJSZtiAUutVgtBhceQ9Njj8XQEQaD4PjAExsAnzcRIMq5UKufFYvEIfPfj8fgDurg1m80tdoECf1hiO6o+LBQKZ1arVRNF8SsYDCqBQKCBn8her7eObhqIe+J6vV4WZF8MBgMT40t3u90fCB75/f5XqorneQ3KMaC7TSyaM5/P76mqapxxTPtEPDudThWqeEkmkykOttCq1+s7CxQxvYCk+vwxqYJplVswRD0ajd6n0+mUEdp7VBRlq91ur/73C3DPAfwyyqDdzWQyNxjkJc2Jx3TfJEnqwE+E4XBohgKMlJBxutTj8/mUXC53FQ6HS/ikxRpQWwKT1zY2b7fZbIawy/uyLDu63a4JZ1MuNU0z0JKgMhraNwqyky1GIpEe9r7kcrmuEUaDG5GSZjqmy2R0a8A6sImENvBpxebRUA0wPdq4CdQwAfdiLBY7xd3nbDZbxPfd1Ez+FKTPe+8MHDP+FcACbDCTERlsgIOcvFwun+AtkdeweG4+168AvZZPbxJRFMWhMFC0lCIRCDGpUBMXRlImJSw0hpU7Iybu/VZ8BcOCBRt3JC4ajenGhUFh42AAS7HSSGVSGIq/q/clpNWFC33JzXsTmHn33znnykNCPBQ9IA136vX6w263u02bjYvFogMtO+DfWQHBBJsqMc3VDIiWpnsUyTEsRdr2Go3Gk8FgcIs0zmhLN51On0KhY4jskPSOwMcxYBuznyjQppoBV3d5dsXhPQ63qdWDarX6GA25bqQKEM2j0eg8m81+z+Vyp1z0mfOneDw+TKVSQy440Q/OFJyS3iV1DlKaMCWJS+b43g5gtWu12vZFbgNPC8zjroWwMEHMOHuoy5D9iPeP2D8S1HsY+oO/3+8/Q9SeNpvN+51OJ6Yd/NslOKThhOM8mMSLRCKeBMR5IeXiefGrG36y9prrugFpUtmROgtZjggx+P5y4eyxbdsvKpXK8yDl30Ksdnu93qaODX9cIhtcGEAFxMK+f7io3iyfz4+xd7TmS9jwACLq+lGDe47j3CXTu+1222YIuikwxiKrtPg/Fiy6hK9cKOJLuVx+UyqV9qmoaEJfMTQxoDP0kCCDabJ3AwbNkf0sjmfI/pYEgR6sQ3wWgQQujWTaMoYhVsC3FFoXQzI9aGYO+K5c6GOPDH6DxruQ4z4T04HSzqECfWoUUhxe0+kxoMhe15HkKrahwcRw8hqClKAXEwxKSfpyE9ugV8PsISoVEu2QtsF89DVUOD+nr2c46ZGpcDKZtFqtVow5bwfetADvGQ6OcPQtHPmaXm2pjI+UjdxVMEtwQX041x/OlFL8K0HIfyyQGhLLZDIh0BrS4Cz9T0DfMYA1FGcuCmoCogSXgyof4dyEOeNVoVCQkg81m1+VwgzrXALVD/k+37CYqFN0AAAAAElFTkSuQmCC\" /></button></div> <div><svg width=\"95\" height=\"95\" viewBox=\"0 0 145 145\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><defs><pattern id='arrow' width=\"100%\" height=\"100%\" viewBox=\"22 30 100 100\"><image x=\"40\" y=\"40\" height=\"65\" width=\"65\" xlink:href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEEAAABBCAYAAAH58PnTAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAABHpSURBVHjaYvj//z8DGlZEF4MzjI2NQTQLkAZS/1mRFTExoILWpKSku0C6H0UUSQcjyJSurq77UNMYsZkUM23atHNI/BQYA67IxMRkkZmZmSsSfxa6IktxcfHvQPoHmhsdQATYXqCu/zDRPXv2HHFxcbGB8c+cOcMIc7Q+EDOjhQ+IbwDyAEAAgU1CAuxQ+ieG96EBuQiI10HZYIxsAhPQTX+h9rMAqb8o3gaC/NOnTx+AsiuxWQEKVVEQDWWjhK6nn5/fYyD9FcnEILgJUB3SQKwNMwFmCsgx2tCgfiImJvYdFLovX77khJpiCPKFDJABCvK3aEEuDMQ8AAGEnuLA4QHDQL4Z1CobJDEMjJ7gGJDiSwPotJNQJx4G8vVwqWXCYYCMvb39JRA7PDz8AYg2NTW9ABRXIsoQoEKRvLy8s1+/fmUFsgOQ4oYRaOB5IFOckCG8mzZt2n/s2DExoAERQP5uZMm7d+/yAXPGUSBTAJch7J8+fdrW1NSkAzQgFxgOK7E5fd68ecq3bt3aAWRywcRgiRAUz4uAGiOBBoDS2e1Zs2Y5ArEKnoDfDKRCgPgXLJriQFHp6+v75efPn3uB/AIgNgdiESBmh9IgfgFQfjcwSX6BRn06KKwAAgg9Q6EDUZBrgfgVThW4Ehq09Jry7du3uSCX4EpoLHhs1wKGTTbU3zOA1GlSEhgzkEpDEsqG5nLiDAACeXNz80ykQi8eSKkQmzpBgRb19+9fRmjUwkA8VI6gCySAybgUyr4ME3RycioCUtLEGOAHSsKrVq06AWSfhQkCUywbkAomZIBAR0cHuMRTUlJqgxY0cFBUVFQBpETwGeC0Zs0a+bS0tDtA9iF02w4dOiQBpNxwGcB17tw5sO1AA9qAIf8RW6ivW7euGpSLsRlgBtRooqur+w7I3oordbW1tWkBKWt0A0ABBA75+fPndwKpd6DCBkirYTPk3bt3NbCKCGaANtDJXmxsbP+AbDlg+t/j5eX1CCjWjM0ANzc3kAsMYOUBKNmCU92vX7+YYOkfBNLT028zMTExTJ8+XRWLOflAHMeAXB8tW7bsOigHAnEgECsDMRcUg9gBQDx55cqV15BqHklQeQCqZUA2fAHi5+hxjwWA1EsCMT8Q3wIIQHv1hCgZxFFbWzu0lRlFRUFLC9seKiLqIGaYCB36o1JeVoS6bEYFm9q2HoJOIVYIFhFBKSjZIcRuedFTt8A8yHbISFe36OBGFxdKek9+wod8pWvuwI8Zhvlm3jcz7/3e9BIUEknzF77sQBx2Op33cbRzaH8gAKVvkLGaXmVEM1gxIM4Gg8EXlUrlINxVQqiyXY20QweBRZhqTkcikflsNrubfcVi0RAIBEiGcwJw7UAAwBg9Wz6f9ycSiXYmpvtgncvldqHPh6YN47asCQhMzBx5olQqzfv9/jYnrFbrEmTvW2cMducAdoc7YhHAwwOBCcnkY+DenMfjOc4+yEgjFAp97L7YuCeH6vU6lcIowP8fBCai/BxB+I1G48m2Fuv1K5CiR2i+UfsGOd0IlQmSXApPPDAIqhCF8Rqod6YtiDrdb1j2B2i+Ek1QLWazmYBnSWPE6KAgtCK2VwBgutMJo/YYVRzxBdHqoTF0hNflR9avFgT79yEuwZPOKI7mOapniHIvAAogbrEhE/JjfYGg2NDfu00m02zn4gHAa1RPEAuY+NdqKIjxV1Fdpq1RW3NEBQBT9EWXy3Wz2WxqBcBbVA/pSLoA9K2ONpvtBqppcTHrui+esjDpnkfau10ulzezA4b9HS2zPKqOAhATz17EJLzWVLVa7YuGjUZjg8PhuJVOpznPS8RXWlmlN2fZynwQjUbvxOPx/eyAN39fKBQ2xWKxcVBuVDOEYrFYlsLh8F1aGsR3JQiam1PwcPfwip9S+5ja4PV6P9nt9kWtVruArs9CUf7ZRknN461WazKTyeyBeZiAZVHVCD7EJNfwtbJMEDwfQzKZvIDttbrd7p9wID9kkUVZiA/QZVlwpfOk/ocp1wkwvRzxTjlCMm5bKpUaq9VqRZ/P95Tvjj8C0Ga9L01GUbi5BXMrLcMMS9l0w2olOdNNTWdZ0D+wb6EImiJICOIXMRSF/FIgqCCiIP4Dgh/0Q0ZqIIY/6oNE1KdtCM3UmRD+mNl53s4dL2ub7zvnhRfkePfee897znOe59wT+USUoZFU8D9Sgr9/8aP6ZToFqRUNxs07Ozt2ouGpdrsdJPgLzd2LMPdMyAxOXtTS0vK6s7MTFL4EAR0PkdGp/QELLQBYFQgMm5/Ss8rxcnCmTIoG8OIupVWJMJAniplnp6p9WVIcpwd9qyB6bRL2+fl5tCRQIbOiSdFEeQCU/Nb4+HhZBM0Dj9zh7DgTCpfEOV3S19eXJ9VzrfZYptqyWXRlMh4k3AM4fR4FXrkwNDY2fpNPmJiYKGNuYEjoBji90DVxkgS1C3ttbe26fF5PTw/6e6XwFHssYR4AtucSMX0YDAal3xD4/Iw0cXl5uYKZll4RpCqAYg0XnGdESl/SJozslfeMlJXyyQaD4XBubu4VumT0eE6CZyUekGCXitVjsbjZbN6FMKVnN3wySjjNe8L0TJ+ITwBwsdP3LhKGoaEhCFn02Lci/aCurg6gVMh8Q3Na6o70cpGCktqWer3+KC0t7S06mtFg1+/3J3Or3nQa2h6C3d7e3lBJJOGC8vaRcT/q921ubi5keL4U7wZE0alA70kYrVbrPH//mI2MhYWFq+yFrFheiLUBBNzt0dHRUmFob29fw7u5g3qiZujq6nLCg/K+lhrRggJTMjg4GGpVEcvF6cELfyvJ8cnJSZz+AaexVs0GAKV5KysroaLD91Mf6FmPxQvDBxFVJ8OzUY1ikmCX2HCBMDY1NcH1a9zMUjy6u7ttXKSuKVFL5xg8LB6P5xGBj/R/p9O5waf3qZVrLHgFPCcrkWugWffr6+vvCWN/fz96v5+Y+aoera2tuNVxME3XxNqABLsQM5ubmxKMWiwWLPqO5fph2GYVkdCDgwNtIBCojATP/zWsAbskVh2ye5fPTDghWHBLlIJrJ25u5ir1gtvtBpQXsYc1kVjxeYbdSiFUqbIF6cF9Bb77TQ7O6yy/HT6fL1npBiBWob6IRSGWUMr3wzeARfM7OjqKhWFgYGCVF3NjYar1ZoLirMXFxXSWdaoGxZWdPFrASIrAPtbJPIGTlU9NTUk3E6QRj41G41F1dXWVKESnHawjXIym24gpEQNgsjaS6SG+R2pXQ7HgjLQ4NudwODZIyi+NjIwsUZr6YVOyiba2tlJubqUIRpTEwfSccrw1lsZvaGjwUFbgQuQ7sx1xdXuFi46F4sdCG8uemZnJjMa2KIjRAkIz7Ku4MLg4PT0dupqiQPnjcrl+1NTU+Gw2GyD4GzetvFyItpkN7ck4IwrO5ZycnAwq38gStH+t5MHcsbGxrNnZ2QzBJ4eHh/MpHkB0tPAAcj+XoPYNucdvMpn2eSHk/TovuMUghBIcDG/ph7FnHSNeCqecyBxkWLbX600m9nyDWNULcd+g48npXIT2uSEhThiMR/fLwErH4HOBKZqe34uDBf4KUL3VxjR1heG2Fkpbe1uhorIhkwRGdFBo14pg+Y6L/NVEUaNmJsTEGL/iognRaFzMEqOJMSHhl/KDkPBn/jFkMewjGWEidoJsoFvmJoFogfFtaS3sfclz9fZaoZ/oTnKjmGvLec573vd5nvOeSA2KRf2DJRwUHSa88PBy7Nq16zdBEMYkRsd0qDUnlAOVeB24hD0glnSozFyly5uamr6icGior6//mh1G7FAW4PpwJOb/AgTskSSEO7MDJ/3bl1evXl3oLWlpaSkljc1dPOVsAgAoXagq84MHAQBoAQBnvc1EuypPnjxpkTkdmzo6Osogs3PAjpcFCNUyRUAKAHAMDQ1Vkua0kaBVB1FWBffu3eNoYFbNjgwLHW28gVDFGYBEZGOuU7bJycltJDcKxsfHE4P9H+Y8J06csFCB5YhwADjmtZpIPNH3CgJ+4QTQXhbtTMzKDx06lO92uxdllrOzsytqa2sLRkdHK+A6ZCKSEuMFRLwiQQoAq54yIiE2WuEA6cz+DxrxAgYJCw0BYSGuWAUgNoBwxAUIVRyiIAEcYD1KXjmJ3yLa66sDTAm93tfY2OgifhCUDzx9+tSwY8cOh8/nq5QAsQqiSfnBggAT3QDXh02TknPnzhV2dnYGAKBUKuevXbvWrdVq52iS75wQUcuVR44csUNm5ANYoyKCI5BlAQEArIRZw2Ro6/Xr17fcuXPnY/m7ly9f7rFarZOhfO6DBw9SiMuzlGYHIg/qRAj31CLuIEjosAhAMZGfzRTumUE8nZ6qqqohxWLNjLLR1ta2jgC1A4hcRJohVkCoYwCAlA4z2ytubm4uu3LlylvHxcePH+/bvn27C1awEn7kJ6F8DwNKlUN1+vRpLwQVu3kDEFn+9wmCCmwwFeRmS3t7uzMYAJTk/t63b98vsBBGUPbWh/NlfKCXnp5etHv3bg/8dBGMaUWITSGxBkGuBzaTaC+R02Ee1dXVA2fPnuUWip9gCs9D/Ie9ggyw2Wz20ZbyAgj+jCEYzXPLCYIIgBmszk7kpvTYsWMW0bEQR0lJyfOLFy9yBPzInhJygSEaj6Curu6ztLQ0z8aNG0UQ+HkOs2NuORKjSIdTwObsL1682LZz504He4fSF/Py8kZJKfJpzA+whv+BQRqNSaJgoA8ePGh/+PBhJSzjbERkkiKM7qBIQRABSEZCs/r9/orDhw9b0O/8etBKzdTX17sQAVIAfNEAIHUeSWfk0QIwvf4c5mAytpkyXiCIesCIhMZ6oIwEkY2kccBBPyWv6ZaWlvsajYbvO3Bj+F/w57yKGA4GnhRpASnSKonOSMZCKeMBglpCh5m9lZ45c8bW29u7SvqSwWDw8pEsAcCnovdRDhcAeJcxGc3gazscifRXjgirhF6HDIQqTADSoQdKqQoU3717N036EjemEwC/pqam8ulMJ/xoLoeeeAAgDjbj9+7dWwggOEIzELEJsQJBpMM8Ye5x2UrJrhC3DQLGpUuXerKzszkHcDJkf3w43gCIo7+/30gLI+oMCxbMEEoFXAoEkQ6ngQ4X3bx5s6ipqWmD/EUSRK6KiorvQYb6UApfEgBzimUavDBEy7laOKU6Yykg1CEAsA50uKi1tbX4xo0bb13eOHXqVJ/T6eTJMyH6HTV7RgQA0leFh8uYHtG1MtZA3L59O91kMhUdPXrUi0rkB3eYQmkOGQSRDq+B6ckAlBFJyZW/eODAgT9ramo6sAX4eGgCezEF/YtaPHo8ZiSvPOiNmI9bt25lUmL219bWSoEYAL32hwLCW3S4p6fHef78+U3yF4m6DhLizzBxAwD7FBFkhLvEJSvZ6/Wupn0ruFwu4dGjR0JfX59AmV3HN7ziAURDQ0MWlWoPCTYRiFeKN329AVtUfgIlAvBaEA0MDHyxZ88eu9wdZj1AdPgP8WeizWqaGB+aGInJmYg76Nkmi/aEK9rBN5QdDgdXK25m6RW3qhQIKQhKsC3x0lah2+2uptJjowkmyUshd1APDw8nMXOLWIEplXzg/YoBjuZzFs3sK1bME3Ptslqt39GPP0ty1kuFrHddSocXDkimpqaq+UAcrV4R/wJr166dobI5mZubO06JcoK7PAjEEVDoGYSpGltIoG2TwtcQu7q6hO7ubuOTJ08Mg4ODOrFHJpLBLW2NjY2dmZmZrahe/aheLMnnpZdrDSgpC1xg//79NUu1I/BKkqz1ZGVlTVoslnF6JkjZTeh0Or4h4AZT/BcTnoABMo3Je7BX55CIExCJOknlEJBbkvGYKWrW0LYz8cUCylVGzjOhRCRfzWpubv5WEIQ2aBk+cudDYJ8IggZf9tHIyEguJbu6x48fZ3GG5ZXMycmZsNlsY/n5+VMZGRljtMLSCY5hkuMoQ9KJinf9RQPkFSY9F4xAyUqpGk8i8lSSDCADQDJJgaKIMVM+MlEUGSiajASYkSOJ76YQEMMXLlz4xm63c4fMM8zBI40E8cg8BZVhleJNW5UPE5vCn9OSCc4GmaQ/FkrxHZVLBQ4jBUkDkLSYhx4g6RVvbnt5sFBuMFlxO3r/A5xDGD4oV+nPAAAAAElFTkSuQmCC'></image></pattern></defs><g class=\"tc-ctl-threed-cm-rotate-outer tc-ctl-threed-cm-rotate-outer-circle\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.drag" }).w("</title><path d=\" M 72.5,20.21875 c -28.867432,0 -52.28125,23.407738 -52.28125,52.28125 0,28.87351 23.413818,52.3125 52.28125,52.3125 28.86743,0 52.28125,-23.43899 52.28125,-52.3125 0,-28.873512 -23.41382,-52.28125 -52.28125,-52.28125 z M 72.5,39.40625 c 18.297686,0 33.125,14.791695 33.125,33.09375 0,18.302054 -14.827314,33.125 -33.125,33.125 -18.297687,0 -33.09375,-14.822946 -33.09375,-33.125 0,-18.302056 14.796063,-33.09375 33.09375,-33.09375 z \"></path></g> <g class=\"tc-ctl-threed-cm-rotate-outer tc-ctl-threed-cm-rotate-outer-shell-circle\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.drag" }).w("</title><path d=\"M 72.5,20.21875 c -28.867432,0 -52.28125,23.407738 -52.28125,52.28125 0,28.87351 23.413818,52.3125 52.28125,52.3125 28.86743,0 52.28125,-23.43899 52.28125,-52.3125 0,-28.873512 -23.41382,-52.28125 -52.28125,-52.28125 z m 0,1.75 c 13.842515,0 26.368948,5.558092 35.5,14.5625 l -11.03125,11 0.625,0.625 11.03125,-11 c 8.9199,9.108762 14.4375,21.579143 14.4375,35.34375 0,13.764606 -5.5176,26.22729 -14.4375,35.34375 l -11.03125,-11 -0.625,0.625 11.03125,11 c -9.130866,9.01087 -21.658601,14.59375 -35.5,14.59375 -13.801622,0 -26.321058,-5.53481 -35.4375,-14.5 l 11.125,-11.09375 c 6.277989,6.12179 14.857796,9.90625 24.3125,9.90625 19.241896,0 34.875,-15.629154 34.875,-34.875 0,-19.245847 -15.633104,-34.84375 -34.875,-34.84375 -9.454704,0 -18.034511,3.760884 -24.3125,9.875 L 37.0625,36.4375 C 46.179178,27.478444 58.696991,21.96875 72.5,21.96875 z m -0.875,0.84375 0,13.9375 1.75,0 0,-13.9375 -1.75,0 z M 36.46875,37.0625 47.5625,48.15625 C 41.429794,54.436565 37.65625,63.027539 37.65625,72.5 c 0,9.472461 3.773544,18.055746 9.90625,24.34375 L 36.46875,107.9375 c -8.96721,-9.1247 -14.5,-21.624886 -14.5,-35.4375 0,-13.812615 5.53279,-26.320526 14.5,-35.4375 z M 72.5,39.40625 c 18.297686,0 33.125,14.791695 33.125,33.09375 0,18.302054 -14.827314,33.125 -33.125,33.125 -18.297687,0 -33.09375,-14.822946 -33.09375,-33.125 0,-18.302056 14.796063,-33.09375 33.09375,-33.09375 z M 22.84375,71.625 l 0,1.75 13.96875,0 0,-1.75 -13.96875,0 z m 85.5625,0 0,1.75 14,0 0,-1.75 -14,0 z M 71.75,108.25 l 0,13.9375 1.71875,0 0,-13.9375 -1.71875,0 z\"></path>\t</g><g class=\"tc-ctl-threed-cm-rotate-inner\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.reset" }).w("</title><path d=\"M 72.5,39.40625 c 18.297686,0 33.125,14.791695 33.125,33.09375 0,18.302054 -14.827314,33.125 -33.125,33.125 -18.297687,0 -33.09375,-14.822946 -33.09375,-33.125 0,-18.302056 14.796063,-33.09375 33.09375,-33.09375 z\"></path></g></svg> </div> </div><div class=\"tc-ctl-threed-cm-help\"></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-cm-ctls'] = function () { dust.register(ctlProto.CLASS + '-cm-ctls', body_0); function body_0(chk, ctx) { return chk.w("<div><svg xmlns:dc=\"http://purl.org/dc/elements/1.1/\"xmlns:cc=\"http://creativecommons.org/ns#\"xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"xmlns:svg=\"http://www.w3.org/2000/svg\"xmlns=\"http://www.w3.org/2000/svg\"xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"width=\"220\"height=\"135\"viewBox=\"0 0 63.40233 35.531682\"version=\"1.1\"id=\"threedControls\"><g inkscape:groupmode=\"layer\"id=\"backgroundLayer\"inkscape:label=\"backgroundLayer\"transform=\"translate(-2.3693123,-42.387899)\"><path style=\"fill:#ffffff;fill-opacity:0.23999999;stroke:none;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.3169643;paint-order:stroke fill markers\"d=\"M 48.005285,42.387899 A 17.766048,17.766048 0 0 0 34.067635,49.16888 17.754217,17.754217 0 0 0 20.123267,42.399784 17.754217,17.754217 0 0 0 2.3693123,60.153739 a 17.754217,17.754217 0 0 0 17.7539547,17.75447 17.754217,17.754217 0 0 0 13.923699,-6.76961 17.766048,17.766048 0 0 0 13.958319,6.78098 17.766048,17.766048 0 0 0 17.766357,-17.76584 17.766048,17.766048 0 0 0 -17.766357,-17.76584 z\"id=\"background\"inkscape:connector-curvature=\"0\" /></g><g inkscape:label=\"tiltLayer\"inkscape:groupmode=\"layer\"id=\"tiltLayer\"transform=\"translate(-26.69084,-42.254264)\"style=\"display:inline\"><g class=\"tc-ctl-threed-cm-tilt-indicator\"><path class=\"tc-ctl-threed-cm-tilt-inner\"id=\"tiltInner\"d=\"m 44.44423,52.861576 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z\"inkscape:connector-curvature=\"0\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.reset" }).w("</title></path><path class=\"tc-ctl-threed-cm-tilt-inner-image\"d=\"m 40.116095,64.124648 c -0.12075,-0.119221 -0.171366,-0.928328 -0.171366,-2.739326 0,-2.143319 0.03709,-2.606753 0.223349,-2.79065 0.19727,-0.194769 0.269957,-0.196719 0.622509,-0.01671 0.219537,0.112088 0.761654,0.542242 1.204705,0.955894 l 0.805547,0.752098 v 0.939855 c 0,0.51692 -0.06955,1.085596 -0.154558,1.263727 -0.173436,0.363428 -1.919571,1.804317 -2.186551,1.804317 -0.09475,0 -0.249383,-0.07614 -0.343635,-0.169192 z m 3.287741,-0.05029 c -0.307698,-0.212789 -0.317387,-0.295835 -0.317387,-2.721198 0,-1.757783 0.05096,-2.552024 0.171366,-2.670904 0.120776,-0.119243 0.941399,-0.169194 2.779684,-0.169194 2.432612,0 2.618273,0.01838 2.756146,0.27272 0.08484,0.156511 0.147831,1.267987 0.147831,2.608402 0,3.088986 0.189068,2.899662 -2.895738,2.899662 -1.872744,0 -2.3862,-0.04266 -2.641902,-0.219488 z m 0.586357,-6.180807 c -0.314529,-0.267117 -0.397432,-0.458143 -0.397432,-0.915756 0,-0.785501 0.427643,-1.207722 1.223233,-1.207722 1.162181,0 1.675866,1.23538 0.851939,2.048861 -0.522115,0.515494 -1.126934,0.542392 -1.67774,0.07462 z m 2.780604,-0.09201 c -0.374474,-0.369724 -0.423284,-0.501051 -0.3506,-0.943285 0.118405,-0.72038 0.53618,-1.088187 1.236028,-1.088187 0.699848,0 1.117624,0.367807 1.236028,1.088187 0.07269,0.442234 0.02388,0.573561 -0.3506,0.943285 -0.300932,0.297119 -0.573881,0.429526 -0.885428,0.429526 -0.311544,0 -0.584496,-0.132407 -0.885428,-0.429526 z\"id=\"tiltImage\"inkscape:connector-curvature=\"0\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.reset" }).w("</title></path><path class=\"tc-ctl-threed-cm-tilt-outer tc-ctl-threed-cm-tilt-outer-circle\"id=\"tiltOuter\"d=\"m 44.44423,48.705554 c -6.246102,0 -11.312196,5.070128 -11.312196,11.324146 0,6.254017 5.066094,11.330914 11.312196,11.330914 6.246102,0 11.312196,-5.076897 11.312196,-11.330914 0,-6.254018 -5.066094,-11.324146 -11.312196,-11.324146 z m 0,4.156022 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z\"inkscape:connector-curvature=\"0\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.drag" }).w("</title></path><path class=\"tc-ctl-threed-cm-tilt-outer tc-ctl-threed-cm-tilt-outer-shell-circle\"sodipodi:nodetypes=\"ssssssccccsccccssccsssccscccccccsccssscsssssccccccccccccccc\"inkscape:connector-curvature=\"0\"id=\"tiltShell\"d=\"m 44.44423,48.705554 c -6.246102,0 -11.312196,5.070128 -11.312196,11.324146 0,6.254017 5.066094,11.330914 11.312196,11.330914 6.246102,0 11.312196,-5.076897 11.312196,-11.330914 0,-6.254018 -5.066094,-11.324146 -11.312196,-11.324146 z m 0,0.379051 c 2.995132,0 5.705501,1.203885 7.681205,3.154245 l -2.386853,2.382605 0.135232,0.135376 2.386853,-2.382606 c 1.930016,1.972963 3.12387,4.674054 3.12387,7.655475 0,2.981421 -1.193854,5.680844 -3.12387,7.655474 l -2.386853,-2.382605 -0.135232,0.135375 2.386853,2.382606 c -1.975664,1.951759 -4.686314,3.161013 -7.681205,3.161013 -1.94179,0 -3.766282,-0.506879 -5.347316,-1.395323 -0.850442,-0.477894 -1.630441,-1.06619 -2.320365,-1.745384 l 2.407138,-2.402912 c 1.358381,1.325983 3.214811,2.145699 5.260543,2.145699 4.163407,0 7.545972,-3.385283 7.545972,-7.553943 0,-4.168661 -3.382565,-7.547175 -7.545972,-7.547175 -2.045732,0 -3.902162,0.81461 -5.260543,2.13893 l -2.407138,-2.402912 c 1.972594,-1.940536 4.681097,-3.133938 7.667681,-3.133938 z m -0.189325,0.182756 v 3.01887 h 0.378651 v -3.01887 z m -7.606826,3.086558 2.400376,2.402912 C 37.721509,56.11715 36.90502,57.97796 36.90502,60.0297 c 0,2.05174 0.816489,3.910884 2.143435,5.272869 l -2.400376,2.402912 c -0.435151,-0.44326 -0.832923,-0.923297 -1.188195,-1.435068 -0.462681,-0.666492 -0.853281,-1.386809 -1.160484,-2.149815 -0.508689,-1.263436 -0.788715,-2.64392 -0.788715,-4.090898 0,-2.99182 1.197141,-5.70104 3.137394,-7.675781 z m 7.796151,0.507657 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z m -10.744219,6.978598 v 0.379051 h 3.022445 v -0.379051 z m 18.513325,0 v 0.379051 h 3.029207 v -0.379051 z m -7.931385,7.932994 v 3.01887 h 0.37189 v -3.01887 z\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.drag" }).w("</title></path></g></g><g id=\"rotateLayer\"inkscape:groupmode=\"layer\"inkscape:label=\"rotateLayer\"style=\"display:inline\"transform=\"translate(-2.3693123,-42.387899)\"><path class=\"tc-ctl-threed-cm-rotate-right\"sodipodi:nodetypes=\"cccccccc\"inkscape:connector-curvature=\"0\"id=\"right\"d=\"m 53.241331,72.907368 0.900176,1.930847 c 3.602027,-1.827343 6.291427,-4.493353 8.092762,-8.066897 l 0.969844,0.452626 -0.663464,-4.788009 -3.222445,2.974451 0.983506,0.459005 c -1.447339,3.107391 -3.949649,5.598011 -7.060379,7.037977 z\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.right" }).w("</title></path><path class=\"tc-ctl-threed-cm-rotate-left\"sodipodi:nodetypes=\"cccccccc\"inkscape:connector-curvature=\"0\"id=\"left\"d=\"m 42.795431,72.906221 -0.900176,1.930846 c -3.602027,-1.827342 -6.291427,-4.493352 -8.092762,-8.066896 l -0.969844,0.452626 0.663465,-4.788009 3.222444,2.974451 -0.983506,0.459005 c 1.44734,3.107391 3.949649,5.598011 7.060379,7.037977 z\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.left" }).w("</title></path><path class=\"tc-ctl-threed-cm-tilt-up\"sodipodi:nodetypes=\"cccccccc\"inkscape:connector-curvature=\"0\"id=\"up\"d=\"M 7.737296,54.610066 5.80645,53.70989 c 1.827342,-3.602027 4.493352,-6.291427 8.066896,-8.092762 l -0.452626,-0.969844 4.788009,0.663465 -2.974451,3.222444 -0.459005,-0.983506 c -3.107391,1.44734 -5.598011,3.949649 -7.037977,7.060379 z\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.left" }).w("</title></path><path class=\"tc-ctl-threed-cm-tilt-down\"sodipodi:nodetypes=\"cccccccc\"inkscape:connector-curvature=\"0\"id=\"down\"d=\"m 7.684579,65.708846 -1.930847,0.900176 c 1.827343,3.602027 4.493353,6.291427 8.066897,8.092762 l -0.452626,0.969844 4.788009,-0.663464 -2.974451,-3.222445 -0.459005,0.983506 C 11.615165,71.321886 9.124545,68.819576 7.684579,65.708846 Z\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.right" }).w("</title></path><g class=\"tc-ctl-threed-cm-rotate-indicator\"><path class=\"tc-ctl-threed-cm-rotate-inner\"inkscape:connector-curvature=\"0\"d=\"m 48.010487,52.995444 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z\"id=\"rotateInner\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.reset" }).w("</title></path><path class=\"tc-ctl-threed-cm-rotate-inner-image\"d=\"m 45.461645,60.604061 c 0.860585,-1.857231 1.777009,-3.864779 2.036499,-4.461218 0.471802,-1.084433 0.471802,-1.084433 0.66474,-0.667935 2.070474,4.46957 3.86201,8.443545 3.825603,8.485934 -0.02561,0.02982 -0.943964,-0.165127 -2.040793,-0.433206 -1.994234,-0.487419 -1.994234,-0.487419 -3.881098,-0.01711 -1.037775,0.258673 -1.950491,0.470314 -2.028258,0.470314 -0.07777,0 0.562721,-1.519553 1.423307,-3.376784 z m 1.23418,2.027617 c 1.353421,-0.310159 1.353421,-0.310159 1.353421,-2.998288 0,-1.534227 -0.05572,-2.627602 -0.129797,-2.547123 -0.101525,0.110295 -2.316061,4.831583 -2.659547,5.670031 -0.09645,0.23543 -0.15884,0.240844 1.435923,-0.12462 z\"id=\"rotateImage\"inkscape:connector-curvature=\"0\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.reset" }).w("</title></path><path class=\"tc-ctl-threed-cm-rotate-outer tc-ctl-threed-cm-rotate-outer-circle\"inkscape:connector-curvature=\"0\"d=\"m 48.010487,48.839422 c -6.246102,0 -11.312196,5.070128 -11.312196,11.324146 0,6.254017 5.066094,11.330914 11.312196,11.330914 6.246102,0 11.312196,-5.076897 11.312196,-11.330914 0,-6.254018 -5.066094,-11.324146 -11.312196,-11.324146 z m 0,4.156022 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z\"id=\"rotateOuter\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.drag" }).w("</title></path><path class=\"tc-ctl-threed-cm-rotate-outer tc-ctl-threed-cm-rotate-outer-shell-circle\"d=\"m 48.010487,48.839422 c -6.246102,0 -11.312196,5.070128 -11.312196,11.324146 0,6.254017 5.066094,11.330914 11.312196,11.330914 6.246102,0 11.312196,-5.076897 11.312196,-11.330914 0,-6.254018 -5.066094,-11.324146 -11.312196,-11.324146 z m 0,0.379051 c 2.995132,0 5.705501,1.203885 7.681205,3.154245 l -2.386853,2.382605 0.135232,0.135376 2.386853,-2.382606 c 1.930016,1.972963 3.12387,4.674054 3.12387,7.655475 0,2.981421 -1.193854,5.680844 -3.12387,7.655474 l -2.386853,-2.382605 -0.135232,0.135375 2.386853,2.382606 c -1.975664,1.951759 -4.686314,3.161013 -7.681205,3.161013 -1.94179,0 -3.766282,-0.506879 -5.347316,-1.395323 -0.850442,-0.477894 -1.630441,-1.06619 -2.320365,-1.745384 l 2.407138,-2.402912 c 1.358381,1.325983 3.214811,2.145699 5.260543,2.145699 4.163407,0 7.545972,-3.385283 7.545972,-7.553943 0,-4.168661 -3.382565,-7.547175 -7.545972,-7.547175 -2.045732,0 -3.902162,0.81461 -5.260543,2.13893 l -2.407138,-2.402912 c 1.972594,-1.940536 4.681097,-3.133938 7.667681,-3.133938 z m -0.189325,0.182756 v 3.01887 h 0.378651 v -3.01887 z m -7.606826,3.086558 2.400376,2.402912 c -1.326946,1.360319 -2.143435,3.221129 -2.143435,5.272869 0,2.05174 0.816489,3.910884 2.143435,5.272869 l -2.400376,2.402912 c -0.435151,-0.44326 -0.832923,-0.923297 -1.188195,-1.435068 -0.462681,-0.666492 -0.853281,-1.386809 -1.160484,-2.149815 -0.508689,-1.263436 -0.788715,-2.64392 -0.788715,-4.090898 0,-2.99182 1.197141,-5.70104 3.137394,-7.675781 z m 7.796151,0.507657 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z m -10.744219,6.978598 v 0.379051 h 3.022445 v -0.379051 z m 18.513325,0 v 0.379051 H 58.8088 v -0.379051 z m -7.931385,7.932994 v 3.01887 h 0.37189 v -3.01887 z\"id=\"rotateShell\"inkscape:connector-curvature=\"0\"sodipodi:nodetypes=\"ssssssccccsccccssccsssccscccccccsccssscsssssccccccccccccccc\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.drag" }).w("</title></path></g></g></svg></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-overlay'] = function () { dust.register(ctlProto.CLASS + '-overlay', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-threed-overlay\" hidden><svg class=\"tc-ctl-threed-overlay-svg\"><defs><filter id=\"fGaussian\" x=\"0\" y=\"0\"><feGaussianBlur in=\"SourceGraphic\" stdDeviation=\"3\" /></filter></defs><rect width=\"100%\" height=\"100%\" fill=\"white\" fill-opacity=\"0.5\" filter=\"url(#fGaussian)\" /> </svg> </div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-threed-btn tc-beta-button\" title=\"").h("i18n", ctx, {}, { "$key": "threed.tip" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
     }
 
     ctlProto.viewer;
@@ -91658,31 +93915,14 @@ if (!TC.control.MapContents) {
                 self.overlay = $(html);
             });
 
-            self.beforeBaseLayerChanged = self.BaseMap.Events.beforeBaseLayerChanged.bind(self);
-            self.baseLayerChanged = self.BaseMap.Events.baseLayerChanged.bind(self);
-
-            self.layerAdded = self.Layer.Events.layerAdded.bind(self);
-            self.layerRemoved = self.Layer.Events.layerRemoved.bind(self);
-            self.layerVisibility = self.Layer.Events.layerVisibility.bind(self);
-            self.layerOpacity = self.Layer.Events.layerOpacity.bind(self);
-            self.layerOrder = self.Layer.Events.layerOrder.bind(self);
-            self.layerUpdate = self.Layer.Events.layerUpdate.bind(self);
-
-            self.featureAdded = self.Vector.Events.featureAdded.bind(self);
-            self.featureRemoved = self.Vector.Events.featureRemoved.bind(self);
-
-            self.initialExtent = self.Controls.Events.initialExtent.bind(self);
-            self.zoomin = self.Controls.Events.zoomin.bind(self);
-            self.zoomout = self.Controls.Events.zoomout.bind(self);
-
             self.$button = self._$div.find('.' + self.CLASS + '-btn');
 
             self.$button.on(TC.Consts.event.CLICK, function () {
 
                 self.$button.attr('disabled', 'disabled');
 
-                if (!self.waitting)
-                    self.waitting = self.map.getLoadingIndicator().addWait();
+                if (!self.waiting)
+                    self.waiting = self.map.getLoadingIndicator().addWait();
 
                 var ctls = [];
                 for (var i = 0, len = self.threeDControls.length; i < len; i++) {
@@ -91694,7 +93934,10 @@ if (!TC.control.MapContents) {
                 self.ctrlsToMng = ctls;
 
                 if (!self.mapIs3D) {
-                    if (self.Util.browserSupportWebGL.call(self) || !self.Util.browserSupportWebGL.call(self)) {
+
+                    self.activate();
+
+                    if (self.browserSupportWebGL.call(self) || !self.browserSupportWebGL.call(self)) {
                         self.mapIs3D = true;
 
                         self.overlay.removeAttr('hidden');
@@ -91709,7 +93952,7 @@ if (!TC.control.MapContents) {
                         self.$button.attr('title', self.getLocaleString("threed.two.tip"));
                         self.$button.removeClass(self.classes.BETA);
 
-                        self.Cesium.getViewer.call(self).then(function (cesiumViewer) {
+                        self.map3D.loadViewer.call(self).then(function () {
 
                             self.$divThreedMap.removeClass("tc-ctl-threed-divMap-fadeOut").addClass("tc-ctl-threed-divMap-fadeIn");
                             $(self.mapView.viewHTML).removeClass("tc-ctl-threed-divMap-fadeIn").addClass("tc-ctl-threed-divMap-fadeOut");
@@ -91717,11 +93960,32 @@ if (!TC.control.MapContents) {
                             self.$divThreedMap.removeClass(self.classes.LOADING);
                             self.$button.toggleClass(self.classes.BTNACTIVE);
 
-                            self.Controls.adapter.call(self, self.direction.TO_THREE_D);
-                            self.Cesium.setCameraFromMapView.call(self);
-                            self.BaseMap.synchronizer.call(self, self.direction.TO_THREE_D);
-                            self.Layer.synchronizer.call(self);
-                            self.Controls.synchronizer.call(self);
+                            if (self.options.allowedGFI) {
+
+                                self.map3D.linked2DControls.featureInfo = new TwoDLinkedFeatureInfo(self);
+
+                                var handler = new Cesium.ScreenSpaceEventHandler(self.viewer.canvas, false);
+                                handler.setInputAction(function (movement) {
+                                    var ray = self.viewer.camera.getPickRay(movement.position);
+                                    var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
+                                    if (position) {
+                                        self.map3D.getInfoOnPickedPosition.call(self, position);
+                                    }
+                                }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+                            }
+
+                            // extent
+                            self.map3D.setCameraFromMapView.call(self);
+
+                            // mapa de fondo
+                            self.map3D.setBaseLayer.call(self, self.map.baseLayer);
+
+                            // capas de trabajo
+                            self.map.workLayers.filter(function (elem) {
+                                return elem instanceof TC.layer.Raster;
+                            }).reverse().forEach(function (layer) {
+                                self.map3D.addLayer.call(self, layer);
+                            });
 
                             $.when(self.viewer.readyPromise).then(function () {
 
@@ -91729,42 +93993,52 @@ if (!TC.control.MapContents) {
                                 else self.cameraControls.render.call(self.cameraControls);
 
                                 var angle = Cesium.Math.toRadians(50);
-                                var pickBP = self.Cesium.Util.pickBottomPoint(self.viewer.scene);
+                                var pickBP = pickBottomPoint(self.viewer.scene);
                                 pickBP = Cesium.Matrix4.fromTranslation(pickBP);
 
                                 var animationCallback = function () {
 
+                                    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.map3D.initialRectangle = self.viewer.camera.computeViewRectangle();
+                                    Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+
                                     self.$button.removeAttr('disabled');
 
                                     self.overlay.attr('hidden', 'hidden');
-                                    self.map.getLoadingIndicator().removeWait(self.waitting);
-                                    delete self.waitting;
+                                    self.map.getLoadingIndicator().removeWait(self.waiting);
+                                    delete self.waiting;
+
+                                    self.$events.on(TC.Consts.event.TERRAINLOADED, function () {
+
+                                        if (self.viewer.billboardCollection) {
+
+                                            for (var i = 0; i < self.viewer.billboardCollection.length; i++) {
+
+                                                var cartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(self.viewer.billboardCollection.get(i).position);
+                                                var height = self.viewer.scene.globe.getHeight(cartographic);
+                                                var finalCartographic = {
+                                                    longitude: cartographic.longitude,
+                                                    latitude: cartographic.latitude,
+                                                    height: cartographic.height + height
+                                                };
+
+                                                self.viewer.billboardCollection.get(i).position = Cesium.Ellipsoid.WGS84.cartographicToCartesian(finalCartographic);
+                                            }
+
+                                            self.map3D.customRender.restart();
+                                        }
+                                    });
                                 };
 
-                                self.Cesium.Util.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, pickBP, {
+                                self.map3D.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, pickBP, {
                                     duration: 2000,
                                     callback: animationCallback
                                 });
                             }.bind(self));
-
-                            self.map.on(TC.Consts.event.BEFOREBASELAYERCHANGE, self.beforeBaseLayerChanged);
-                            self.map.on(TC.Consts.event.BASELAYERCHANGE, self.baseLayerChanged);
-
-                            self.map.on(TC.Consts.event.LAYERADD, self.layerAdded);
-                            self.map.on(TC.Consts.event.LAYERREMOVE, self.layerRemoved);
-                            self.map.on(TC.Consts.event.LAYERVISIBILITY, self.layerVisibility);
-                            self.map.on(TC.Consts.event.LAYEROPACITY, self.layerOpacity);
-                            self.map.on(TC.Consts.event.LAYERORDER, self.layerOrder);
-
-                            self.map.on(TC.Consts.event.FEATUREADD, self.featureAdded);
-                            self.map.on(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
-
-                            $('.tc-ctl-nav-btn-home').on('click', self.initialExtent);
-                            $('.tc-ctl-nav-btn-zoomin').on('click', self.zoomin);
-                            $('.tc-ctl-nav-btn-zoomout').on('click', self.zoomout);
                         });
                     }
                 } else {
+
+                    self.deactivate();
 
                     self.cameraControls.resetRotation({ duration: 1000 }).then(function () {
 
@@ -91775,32 +94049,10 @@ if (!TC.control.MapContents) {
                             self.map._$div.removeClass(TC.Consts.classes.THREED);
 
                             self.$button.attr('title', self.getLocaleString("threed.tip"));
-                            //self.$button.addClass(self.classes.BETA);
 
-                            // paramos nuestro render
-                            self.Cesium.CustomRender.stop();
+                            self.map3D.destroy.call(self);
 
-                            self.map.off(TC.Consts.event.BEFOREBASELAYERCHANGE, self.beforeBaseLayerChanged);
-                            self.map.off(TC.Consts.event.BASELAYERCHANGE, self.baseLayerChanged);
-
-                            self.map.off(TC.Consts.event.LAYERADD, self.layerAdded);
-                            self.map.off(TC.Consts.event.LAYERREMOVE, self.layerRemoved);
-                            self.map.off(TC.Consts.event.LAYERVISIBILITY, self.layerVisibility);
-                            self.map.off(TC.Consts.event.LAYEROPACITY, self.layerOpacity);
-                            self.map.off(TC.Consts.event.LAYERORDER, self.layerOrder);
-
-                            self.map.off(TC.Consts.event.FEATUREADD, self.featureAdded);
-                            self.map.off(TC.Consts.event.FEATUREREMOVE, self.featureRemoved);
-
-                            $('.tc-ctl-nav-btn-home').off('click', self.initialExtent);
-                            $('.tc-ctl-nav-btn-zoomin').off('click', self.zoomin);
-                            $('.tc-ctl-nav-btn-zoomout').off('click', self.zoomout);
-
-                            self.Controls.adapter.call(self, self.direction.TO_TWO_D);
-                            self.BaseMap.synchronizer.call(self, self.direction.TO_TWO_D);
-                            self.Util.reset3D.call(self);
-
-                            self.Cesium.setViewFromCameraView.call(self).then(function () {
+                            self.map3D.setViewFromCameraView.call(self).then(function () {
                                 self.$divThreedMap.removeClass(self.classes.MAPTHREED);
 
                                 self.$divThreedMap.removeClass("tc-ctl-threed-divMap-fadeIn").addClass("tc-ctl-threed-divMap-fadeOut");
@@ -91812,16 +94064,19 @@ if (!TC.control.MapContents) {
                                 self.$button.removeAttr('disabled');
                                 self.$button.toggleClass(self.classes.BTNACTIVE);
 
-                                self.map.getLoadingIndicator().removeWait(self.waitting);
-                                delete self.waitting;
+                                self.map.getLoadingIndicator().removeWait(self.waiting);
+                                delete self.waiting;
                             });
+
+                            self.mapView.setRotation(0);
+                            self._ovMap.wrap.draw3DCamera(null);
                         };
 
-                        var bottom = self.Cesium.Util.pickBottomPoint(self.viewer.scene);
+                        var bottom = pickBottomPoint(self.viewer.scene);
                         var transform = Cesium.Matrix4.fromTranslation(bottom);
-                        var angle = self.Cesium.Util.computeAngleToZenith(self.viewer.scene, bottom);
+                        var angle = computeAngleToZenith(self.viewer.scene, bottom);
 
-                        self.Cesium.Util.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, transform, {
+                        self.map3D.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, transform, {
                             duration: 1500,
                             callback: animationCallback
                         });
@@ -91837,6 +94092,7 @@ if (!TC.control.MapContents) {
 
     ctlProto.activate = function () {
         var self = this;
+
         TC.Control.prototype.activate.call(self);
     };
 
@@ -91846,17 +94102,30 @@ if (!TC.control.MapContents) {
     };
 
     MapView = function (map, parent) {
-        this.map = map;
-        this.parent = parent;
+        var self = this;
+        self.map = map;
+        self.parent = parent;
 
-        $.when(this.map.getViewHTML()).then(function (html) {
-            this.viewHTML = html;
-        }.bind(this));
+        $.when(self.map.getViewHTML()).then(function (html) {
+            self.viewHTML = html;
+        }.bind(self));
 
-        this.proj4Obj = proj4(this.map.crs);
-        this.proj4Obj.oProj.METERS_PER_UNIT = 1;
+        self.proj4Obj = proj4(self.map.crs);
+        self.proj4Obj.oProj.METERS_PER_UNIT = 1;
 
-        this.maxResolution;
+        self.maxResolution;
+
+        //flacunza: modificamos TC.Map.setCenter para que se haga desde la vista 3D cuando est\u00e1 activa
+        //as\u00ed evitamos parpadeos en el mapa de situaci\u00f3n
+        self._oldMapSetCenter = map.setCenter;
+        map.setCenter = function (coords, options) {
+            if (parent.mapIs3D) {
+                parent.map3D.flyToMapCoordinates.call(parent, coords);
+            }
+            else {
+                self._oldMapSetCenter.call(map, coords, options);
+            }
+        };
     };
     MapView.prototype.getCenter = function () {
         return this.map.getCenter();
@@ -91883,8 +94152,11 @@ if (!TC.control.MapContents) {
 
         return this.maxResolution;
     };
+    MapView.prototype.getPixelFromCoordinate = function (coords) {
+        return this.map.getPixelFromCoordinate(coords);
+    };
     MapView.prototype.setCenter = function (center) {
-        this.map.setCenter(center);
+        this._oldMapSetCenter.call(this.map, center);
     };
     MapView.prototype.setExtent = function (extent) {
         this.map.setExtent(extent);
@@ -91894,6 +94166,294 @@ if (!TC.control.MapContents) {
     };
     MapView.prototype.setRotation = function (rotation) {
         this.map.setRotation(rotation);
+    };
+
+    // Funciones para c\u00e1lculo de FOV
+    var getFarCoords = function (origin, nearPoint) {
+        var radius = 1000000; // 1000 km
+        var dx = nearPoint[0] - origin[0];
+        var dy = nearPoint[1] - origin[1];
+        var angle = Math.atan(dy / dx);
+        // Math.atan solo da resultados entre -90º y 90º, si estamos mirando al hemisferio oeste hay que sumar 180º al \u00e1ngulo
+        if (dx < 0) {
+            angle = angle + Math.PI;
+        }
+        return [origin[0] + radius * Math.cos(angle), origin[1] + radius * Math.sin(angle)];
+    };
+
+    var distanceSquared = function (p1, p2) {
+        var dx = p2[0] - p1[0];
+        var dy = p2[1] - p1[1];
+        return dx * dx + dy * dy;
+    };
+
+    var getFarMapCoords = function (obj) {
+        // Calculamos puntos lejanos cuando no los tenemos (cuando estamos mirando al horizonte).
+        // Cogemos un punto proyectado desde la esquina inferior del canvas, 
+        // cogemos un segundo punto en el lateral del canvas inmediatamente por encima 
+        // y prologamos la l\u00ednea que pasa por ambos puntos proyectados.
+        var self = this;
+        obj = obj || {};
+        if (obj.nearMapCoords) {
+            var nextPixel = obj.bottomPixel.clone();
+            nextPixel.y = Math.round(nextPixel.y * 9 / 10);
+            var nextCoords = pickMapCoords.call(self, nextPixel);
+            if (nextCoords) {
+                // Ordenamos la dupla por distancia, porque si estamos mirando desde dentro de un monte 
+                // el punto que se supone que es el m\u00e1s lejano en realidad est\u00e1 m\u00e1s cerca.
+                var coordsArray = [obj.nearMapCoords, nextCoords].sort(function (a, b) {
+                    return distanceSquared(obj.cameraPosition, a) - distanceSquared(obj.cameraPosition, b);
+                });
+                return getFarCoords.apply(this, coordsArray);
+            }
+        }
+        return null;
+    };
+
+    var pickMapCoords = function (pixel) {
+        var self = this;
+        var pickPoint = pickOnTerrainOrEllipsoid(self.viewer.scene, pixel);
+        if (pickPoint) {
+            pickPoint = Cesium.Cartographic.fromCartesian(pickPoint);
+            return TC.Util.reproject([Cesium.Math.toDegrees(pickPoint.longitude), Cesium.Math.toDegrees(pickPoint.latitude)], self.map3D.crs, self.map.crs);
+        }
+        return null;
+    }
+
+    // Funciones utilidades c\u00e1mara
+    var calcDistanceForResolution = function (resolution, latitude) {
+        var self = this;
+
+        var fovy = self.viewer.camera.frustum.fovy;
+        var metersPerUnit = self.mapView.proj4Obj.oProj.METERS_PER_UNIT;
+        var visibleMapUnits = resolution * self.mapView.viewHTML.getBoundingClientRect().height;
+        var relativeCircumference = Math.cos(Math.abs(latitude));
+        var visibleMeters = visibleMapUnits * metersPerUnit * relativeCircumference;
+
+        return (visibleMeters / 2) / Math.tan(fovy / 2);
+    };
+
+    var calcResolutionForDistance = function (distance, latitude) {
+        var self = this;
+
+        var canvas = self.viewer.scene.canvas;
+        var fovy = self.viewer.camera.frustum.fovy;
+        var metersPerUnit = self.mapView.proj4Obj.oProj.METERS_PER_UNIT;
+
+        var visibleMeters = 2 * distance * Math.tan(fovy / 2);
+        var relativeCircumference = Math.cos(Math.abs(latitude));
+        var visibleMapUnits = visibleMeters / metersPerUnit / relativeCircumference;
+        var resolution = visibleMapUnits / canvas.clientHeight;
+
+        // validamos que la resoluci\u00f3n calculada est\u00e9 disponible en el array de resoluciones disponibles
+        // si no contamos con un array de resoluciones lo calculamos
+        var resolutions = self.map.getResolutions();
+        if (resolutions == null) {
+            resolutions = new Array(22);
+            for (var i = 0, ii = resolutions.length; i < ii; ++i) {
+                resolutions[i] = self.mapView.getMaxResolution() / Math.pow(2, i);
+            }
+        }
+
+        // obtenemos la resoluci\u00f3n m\u00e1s pr\u00f3xima a la calculada
+        for (var i = 0; i < resolutions.length; i++) {
+            if (resolutions[i] < Math.abs(resolution)) {
+                resolution = resolutions[i - 1];
+                break;
+            } else if (resolutions[i] === Math.abs(resolution)) {
+                resolution = resolutions[i];
+                break;
+            } else if (i === resolutions.length - 1) {
+                resolution = resolutions[i];
+            }
+        }
+
+        return resolution;
+    };
+
+    var rotateAroundAxis = function (camera, angle, axis, transform, opt_options) {
+        var clamp = Cesium.Math.clamp;
+        var defaultValue = Cesium.defaultValue;
+
+        var options = opt_options || {};
+        var duration = defaultValue(options.duration, 500); // ms
+
+        var linear = function (a) {
+            return a
+        };
+        var easing = defaultValue(options.easing, linear);
+        var callback = options.callback;
+
+        var start;
+        var lastProgress = 0;
+        var oldTransform = new Cesium.Matrix4();
+
+        var done = new $.Deferred();
+
+        function animation(timestamp) {
+            if (!start)
+                start = timestamp;
+
+            var progress = easing(clamp((timestamp - start) / duration, 0, 1));
+
+            camera.transform.clone(oldTransform);
+            var stepAngle = (progress - lastProgress) * angle;
+            lastProgress = progress;
+            camera.lookAtTransform(transform);
+            camera.rotate(axis, stepAngle);
+            camera.lookAtTransform(oldTransform);
+
+            if (progress < 1) {
+                requestAnimationFrame(animation);
+            } else {
+                if (callback) {
+                    callback();
+                }
+                done.resolve();
+            }
+
+        }
+
+        requestAnimationFrame(animation);
+
+        return done;
+    };
+
+    var pickOnTerrainOrEllipsoid = function (scene, pixel) {
+        var self = this;
+
+        var ray = scene.camera.getPickRay(pixel);
+        var target = scene.globe.pick(ray, scene);
+        return target || scene.camera.pickEllipsoid(pixel);
+    };
+
+    var pickCenterPoint = function (scene) {
+        var self = this;
+
+        var canvas = scene.canvas;
+        var center = new Cesium.Cartesian2(
+            canvas.clientWidth / 2,
+            canvas.clientHeight / 2);
+        return pickOnTerrainOrEllipsoid(scene, center);
+    };
+
+    var pickBottomPoint = function (scene) {
+        var self = this;
+
+        var canvas = scene.canvas;
+        var bottom = new Cesium.Cartesian2(
+            canvas.clientWidth / 2, canvas.clientHeight);
+        return pickOnTerrainOrEllipsoid(scene, bottom);
+    };
+
+    var bottomFovRay = function (scene) {
+        var self = this;
+
+        var camera = scene.camera;
+        var fovy2 = camera.frustum.fovy / 2;
+        var direction = camera.direction;
+        var rotation = Cesium.Quaternion.fromAxisAngle(camera.right, fovy2);
+        var matrix = Cesium.Matrix3.fromQuaternion(rotation);
+        var vector = new Cesium.Cartesian3();
+        Cesium.Matrix3.multiplyByVector(matrix, direction, vector);
+        return new Cesium.Ray(camera.position, vector);
+    };
+
+    var setHeadingUsingBottomCenter = function (scene, heading, bottomCenter, opt_options) {
+        var self = this;
+
+        var camera = scene.camera;
+        // Compute the camera position to zenith quaternion
+        var angleToZenith = computeAngleToZenith(scene, bottomCenter);
+        var axis = camera.right;
+        var quaternion = Cesium.Quaternion.fromAxisAngle(axis, angleToZenith);
+        var rotation = Cesium.Matrix3.fromQuaternion(quaternion);
+
+        // Get the zenith point from the rotation of the position vector
+        var vector = new Cesium.Cartesian3();
+        Cesium.Cartesian3.subtract(camera.position, bottomCenter, vector);
+        var zenith = new Cesium.Cartesian3();
+        Cesium.Matrix3.multiplyByVector(rotation, vector, zenith);
+        Cesium.Cartesian3.add(zenith, bottomCenter, zenith);
+
+        // Actually rotate around the zenith normal
+        var transform = Cesium.Matrix4.fromTranslation(zenith);
+        rotateAroundAxis(camera, heading, zenith, transform, opt_options);
+    };
+
+    var signedAngleBetween = function (first, second, normal) {
+        var self = this;
+
+        // We are using the dot for the angle.
+        // Then the cross and the dot for the sign.
+        var a = new Cesium.Cartesian3();
+        var b = new Cesium.Cartesian3();
+        var c = new Cesium.Cartesian3();
+        Cesium.Cartesian3.normalize(first, a);
+        Cesium.Cartesian3.normalize(second, b);
+        Cesium.Cartesian3.cross(a, b, c);
+
+        var cosine = Cesium.Cartesian3.dot(a, b);
+        var sine = Cesium.Cartesian3.magnitude(c);
+
+        // Sign of the vector product and the orientation normal
+        var sign = Cesium.Cartesian3.dot(normal, c);
+        var angle = Math.atan2(sine, cosine);
+        return sign >= 0 ? angle : -angle;
+    };
+
+    var computeAngleToZenith = function (scene, pivot) {
+        var self = this;
+
+        // This angle is the sum of the angles 'fy' and 'a', which are defined
+        // using the pivot point and its surface normal.
+        //        Zenith |    camera
+        //           \   |   /
+        //            \fy|  /
+        //             \ |a/
+        //              \|/pivot
+        var camera = scene.camera;
+        var fy = camera.frustum.fovy / 2;
+        var ray = bottomFovRay(scene);
+        var direction = Cesium.Cartesian3.clone(ray.direction);
+        Cesium.Cartesian3.negate(direction, direction);
+
+        var normal = new Cesium.Cartesian3();
+        Cesium.Ellipsoid.WGS84.geocentricSurfaceNormal(pivot, normal);
+
+        var left = new Cesium.Cartesian3();
+        Cesium.Cartesian3.negate(camera.right, left);
+
+        var a = signedAngleBetween(normal, direction, left);
+        return a + fy;
+    };
+
+    var computeSignedTiltAngleOnGlobe = function (scene) {
+        var self = this;
+
+        var camera = scene.camera;
+        var ray = new Cesium.Ray(camera.position, camera.direction);
+        var target = scene.globe.pick(ray, scene);
+
+        if (!target) {
+            // no tiles in the area were loaded?
+            var ellipsoid = Cesium.Ellipsoid.WGS84;
+            var obj = Cesium.IntersectionTests.rayEllipsoid(ray, ellipsoid);
+            if (obj) {
+                target = Cesium.Ray.getPoint(ray, obj.start);
+            }
+        }
+
+        if (!target) {
+            return undefined;
+        }
+
+        var normal = new Cesium.Cartesian3();
+        Cesium.Ellipsoid.WGS84.geocentricSurfaceNormal(target, normal);
+
+        var angleBetween = signedAngleBetween;
+        var angle = angleBetween(camera.direction, normal, camera.right) - Math.PI;
+        return Cesium.Math.convertLongitudeRange(angle);
     };
 
     CameraControls = function (parent) {
@@ -91918,7 +94478,6 @@ if (!TC.control.MapContents) {
                 self.$tiltIndicatorOuterShellCircle.attr('class', self.$tiltIndicatorOuterShellCircle.attr('class').replace(self.parent.classes.OUTFOCUS, ''));
                 self.$rotateIndicatorOuterCircle.attr('class', self.$rotateIndicatorOuterCircle.attr('class').replace(self.parent.classes.OUTFOCUS, ''));
                 self.$rotateIndicatorOuterShellCircle.attr('class', self.$rotateIndicatorOuterShellCircle.attr('class').replace(self.parent.classes.OUTFOCUS, ''));
-                self.$imgs.css({ 'opacity': '1' });
             }
         };
 
@@ -91932,28 +94491,80 @@ if (!TC.control.MapContents) {
         };
         var postRenderHandler = function () {
             var self = this;
+            var ctl = self.parent;
 
-            if (self.parent.Cesium.arePendingTiles.call(self.parent))
+            if (self.parent.map3D.isLoadingTiles.call(self.parent))
                 self.customCollisionDetection();
+
+            var camera = self.getCamera();
+            var position = camera.positionCartographic;
 
             if (self.moving) {
 
-                cssRotate(self.$tiltIndicator, self.getCamera().pitch);
-                cssRotate(self.$rotateIndicator, -self.getCamera().heading);
+                cssRotate(self.$tiltIndicator, camera.pitch);
+                cssRotate(self.$rotateIndicator, -camera.heading);
 
                 self.disableTilt(5);
+
+                self._coordsXY = TC.Util.reproject([Cesium.Math.toDegrees(position.longitude), Cesium.Math.toDegrees(position.latitude)], ctl.map3D.crs, ctl.map.crs);
+                ctl.mapView.setCenter(self._coordsXY);
+                ctl.mapView.setResolution(calcResolutionForDistance.call(ctl, position.height, position.latitude));
+                //ctl.mapView.setRotation(-camera.heading);
             }
+
+            // flacunza: calculamos el pol\u00edgono de FOV para dibujar en el mapa de situaci\u00f3n
+            // Lo calculamos aunque no nos estemos moviendo porque el terreno puede estar carg\u00e1ndose
+            if (self._coordsXY) {
+                ctl._ovMap = ctl._ovMap || ctl.map.getControlsByClass('TC.control.OverviewMap')[0];
+                if (ctl._ovMap) {
+                    var scene = ctl.viewer.scene;
+                    var canvas = scene.canvas;
+                    var bottomLeft = new Cesium.Cartesian2(0, canvas.clientHeight - 1);
+                    var bottomRight = new Cesium.Cartesian2(canvas.clientWidth - 1, canvas.clientHeight - 1);
+                    var fovCoords = [
+                        bottomLeft,
+                        bottomRight,
+                        new Cesium.Cartesian2(canvas.clientWidth - 1, 0),
+                        new Cesium.Cartesian2(0, 0)
+                    ].map(function (elm) {
+                        return pickMapCoords.call(ctl, elm);
+                    }).filter(function (elm) {
+                        return elm !== null;
+                    });
+                    if (fovCoords.length && fovCoords.length < 4) { // Vemos horizonte
+                        // flacunza: Si vemos horizonte no tenemos puntos de terreno para las esquinas superiores, 
+                        // por eso intentamos calcular unos puntos "en el infinito".
+                        var farCoordsLeft = getFarMapCoords.call(ctl, {
+                            nearMapCoords: fovCoords[0],
+                            bottomPixel: bottomLeft,
+                            cameraPosition: self._coordsXY
+                        });
+                        var farCoordsRight = getFarMapCoords.call(ctl, {
+                            nearMapCoords: fovCoords[1],
+                            bottomPixel: bottomRight,
+                            cameraPosition: self._coordsXY
+                        });
+                        if (farCoordsLeft && farCoordsRight) {
+                            fovCoords[2] = farCoordsRight;
+                            fovCoords[3] = farCoordsLeft;
+                        }
+
+                    }
+                    ctl._ovMap.wrap.draw3DCamera({ position: self._coordsXY, heading: camera.heading, fov: fovCoords });
+                }
+            }
+
         };
         var cssRotate = function (element, angle) {
-            var value = 'rotate(' + angle + 'rad)';
-            element.css({
-                '-ms-transform': value,
-                '-webkit-transform': value,
-                'transform': value
-            });
+            var coord = $(element)[0].getBBox();
+            value = 'rotate(' + Cesium.Math.toDegrees(angle) + ' ' + (coord.x + (coord.width / 2)) + ' ' + (coord.y + (coord.height / 2)) + ')';
+            document.getElementsByClassName(element[0].className.baseVal)[0].setAttribute('transform', value);
         };
 
+        self.outControlsEvents = TC.Util.detectMouse() ? 'mouseleave' : 'touchleave, touchend';
         self.outControls = outHandler.bind(self);
+
+        self.inControlsEvents = TC.Util.detectMouse() ? 'mouseenter' : 'touchmove, touchstart';
         self.inControls = inHandler.bind(self);
 
         self.moveStart = moveStartHandler.bind(self);
@@ -91964,10 +94575,10 @@ if (!TC.control.MapContents) {
             tilt: '-cm-tilt',
             rotate: '-cm-rotate',
             indicator: '-indicator',
-            leftArrow: '-cm-left-arrow',
-            rightArrow: '-cm-right-arrow',
-            downArrow: '-cm-down-arrow',
-            upArrow: '-cm-up-arrow'
+            leftArrow: '-left',
+            rightArrow: '-right',
+            downArrow: '-down',
+            upArrow: '-up'
         };
 
         self.render();
@@ -91981,8 +94592,8 @@ if (!TC.control.MapContents) {
         self.parent.viewer.scene.postRender.addEventListener(self.postRender);
 
         // gestionamos la opacidad de los controles pasados 5 segundos
-        self.$div.on(TC.Util.detectMouse() ? 'mouseout' : 'touchleave touchend', self.outControls);
-        self.$div.on(TC.Util.detectMouse() ? 'mouseover' : 'touchmove touchstart', self.inControls);
+        self.$div.on(self.outControlsEvents, self.outControls);
+        self.$div.on(self.inControlsEvents, self.inControls);
 
         function setOpacity() {
             if (!self.lastFocused)
@@ -91996,7 +94607,6 @@ if (!TC.control.MapContents) {
                     self.$tiltIndicatorOuterShellCircle.attr('class', self.$tiltIndicatorOuterShellCircle.attr('class') + ' ' + self.parent.classes.OUTFOCUS);
                     self.$rotateIndicatorOuterCircle.attr('class', self.$rotateIndicatorOuterCircle.attr('class') + ' ' + self.parent.classes.OUTFOCUS);
                     self.$rotateIndicatorOuterShellCircle.attr('class', self.$rotateIndicatorOuterShellCircle.attr('class') + ' ' + self.parent.classes.OUTFOCUS);
-                    self.$imgs.css({ 'opacity': '0.2' });
                 }
             }
 
@@ -92015,8 +94625,8 @@ if (!TC.control.MapContents) {
         self.parent.viewer.scene.postRender.removeEventListener(self.postRender);
 
         // gestionamos la opacidad de los controles pasados 5 segundos
-        self.$div.off(TC.Util.detectMouse() ? 'mouseout' : 'touchleave, touchend', self.outControls);
-        self.$div.off(TC.Util.detectMouse() ? 'mouseover' : 'touchmove, touchstart', self.inControls);
+        self.$div.off(self.outControlsEvents, self.outControls);
+        self.$div.off(self.inControlsEvents, self.inControls);
         window.cancelAnimationFrame(self.rAFInOutControls);
         self.lastFocused = undefined;
         self.rAFInOutControls = undefined;
@@ -92024,7 +94634,7 @@ if (!TC.control.MapContents) {
     CameraControls.prototype.getCamera = function () {
         var self = this;
 
-        return self.parent.Cesium.Camera.getCamera.call(self.parent);
+        return self.parent.viewer.scene.camera;
     };
     CameraControls.prototype.render = function () {
         var self = this;
@@ -92040,9 +94650,20 @@ if (!TC.control.MapContents) {
                 self.$div.appendTo(self.parent.map._$div);
                 $(html).appendTo(self.$div);
 
-                self.$imgs = $.merge(self.$div.find('img'), self.$div.find('image'));
 
-                var mouseDown = function (e) {
+                // tilt
+                var tiltSelector = '.' + self.parent.CLASS + self.selectors.tilt;
+
+                self.$tiltIndicatorInner = self.$div.find("[class^=" + tiltSelector.replace('.', '') + "-inner" + "]");
+                self.$tiltIndicatorInner.on(TC.Consts.event.CLICK, self.resetTilt.bind(self));
+
+                self.$tiltIndicator = self.$div.find(tiltSelector + '-indicator');
+
+                self.$tiltIndicatorOuterCircle = self.$div.find(tiltSelector + '-outer-circle');
+                self.$tiltIndicatorOuterShellCircle = self.$div.find(tiltSelector + '-outer-shell-circle');
+
+                self.$tiltIndicatorCircle = self.$div.find("[class^=" + tiltSelector.replace('.', '') + "-outer" + "]");
+                self.$tiltIndicatorCircle.on('mousedown', function (e) {
                     var self = this;
 
                     if (e.stopPropagation) e.stopPropagation();
@@ -92051,59 +94672,34 @@ if (!TC.control.MapContents) {
                     var vectorScratch = new Cesium.Cartesian2();
                     var element = e.currentTarget;
                     var rectangle = e.currentTarget.getBoundingClientRect();
-                    var maxDistance = rectangle.width / 2.0;
                     var center = new Cesium.Cartesian2((rectangle.right - rectangle.left) / 2.0, (rectangle.bottom - rectangle.top) / 2.0);
                     var clickLocation = new Cesium.Cartesian2(e.clientX - rectangle.left, e.clientY - rectangle.top);
                     var vector = Cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
-                    var distanceFromCenter = Cesium.Cartesian2.magnitude(vector);
 
-                    var distanceFraction = distanceFromCenter / maxDistance;
+                    self.draggingTilt.call(self, element, vector);
 
-                    var nominalTotalRadius = 145;
-                    var norminalResetRadius = 50;
-
-                    if (distanceFraction < norminalResetRadius / nominalTotalRadius) {
-                        return 0;
-                    } else if (distanceFraction < 1.0) {
-                        return { element: element, vector: vector };
-                    } else {
-                        return true;
-                    }
-                };
-
-                // tilt
-                self.$tilt = $('.' + self.parent.CLASS + self.selectors.tilt, self.$div);
-                self.$tiltIndicator = self.$tilt.find('svg');
-                self.$tiltIndicator.on('mousedown', function (e) {
-                    var self = this;
-
-                    var eventType = mouseDown.call(self, e);
-
-                    if (eventType == 0) {
-                        self.resetTilt.call(self);
-                    } else if (eventType.hasOwnProperty('element')) {
-                        self.draggingTilt.call(self, eventType.element, eventType.vector);
-                    }
-
+                    e.cancelBubble = true;
+                    e.returnValue = false;
                     return false;
                 }.bind(self));
-                self.$tiltIndicatorInner = self.$tiltIndicator.find('.' + self.parent.CLASS + self.selectors.tilt + '-inner');
-                self.$tiltIndicatorInner.on(TC.Consts.event.CLICK, self.resetTilt.bind(self));
-                self.$tiltIndicatorOuter = self.$tiltIndicator.find('.' + self.parent.CLASS + self.selectors.tilt + '-outer');
-
-                self.$tiltIndicatorOuterCircle = $('.' + self.parent.CLASS + self.selectors.tilt + '-outer-circle');
-                self.$tiltIndicatorOuterShellCircle = $('.' + self.parent.CLASS + self.selectors.tilt + '-outer-shell-circle');
 
                 // left
-                self.$tiltUp = self.$tilt.find('.' + self.parent.CLASS + self.selectors.upArrow);
+                self.$tiltUp = self.$div.find(tiltSelector + self.selectors.upArrow);
                 self.$tiltUp.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function (e) {
+
+                    if ($(e.target).attr('disabled') !== undefined) {
+                        if (e.stopPropagation) e.stopPropagation();
+                        if (e.preventDefault) e.preventDefault();
+
+                        e.cancelBubble = true;
+                        e.returnValue = false;
+                        return false;
+                    }
 
                     if (e.stopPropagation) e.stopPropagation();
                     if (e.preventDefault) e.preventDefault();
 
                     self.inControls(e);
-
-                    self.$tiltUp.blur();
 
                     var upEvent = TC.Util.detectMouse() ? 'mouseup' : 'touchend';
 
@@ -92133,15 +94729,23 @@ if (!TC.control.MapContents) {
                 }.bind(self));
 
                 // right
-                self.$tiltDown = self.$tilt.find('.' + self.parent.CLASS + self.selectors.downArrow);
+                self.$tiltDown = self.$div.find(tiltSelector + self.selectors.downArrow);
                 self.$tiltDown.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function (e) {
+
+
+                    if ($(e.target).attr('disabled') !== undefined) {
+                        if (e.stopPropagation) e.stopPropagation();
+                        if (e.preventDefault) e.preventDefault();
+
+                        e.cancelBubble = true;
+                        e.returnValue = false;
+                        return false;
+                    }
 
                     if (e.stopPropagation) e.stopPropagation();
                     if (e.preventDefault) e.preventDefault();
 
                     self.inControls(e);
-
-                    self.$tiltDown.blur();
 
                     var upEvent = TC.Util.detectMouse() ? 'mouseup' : 'touchend';
 
@@ -92171,36 +94775,45 @@ if (!TC.control.MapContents) {
                 }.bind(self));
 
                 // rotation
-                self.$rotate = $('.' + self.parent.CLASS + self.selectors.rotate, self.$div);
-                self.$rotateIndicator = self.$rotate.find('svg');
-                self.$rotateIndicatorInner = self.$rotateIndicator.find('.' + self.parent.CLASS + self.selectors.rotate + '-inner');
-                self.$rotateIndicator.on('mousedown', function (e) {
+                var rotateSelector = '.' + self.parent.CLASS + self.selectors.rotate;
+
+                self.$rotateIndicatorInner = self.$div.find("[class^=" + rotateSelector.replace('.', '') + "-inner" + "]");
+                self.$rotateIndicatorInner.on(TC.Consts.event.CLICK, self.resetRotation.bind(self));
+
+                self.$rotateIndicator = self.$div.find(rotateSelector + '-indicator');
+
+                self.$rotateIndicatorOuterCircle = self.$div.find(rotateSelector + '-outer-circle');
+                self.$rotateIndicatorOuterShellCircle = self.$div.find(rotateSelector + '-outer-shell-circle');
+
+                self.$rotateIndicatorCircle = self.$div.find("[class^=" + rotateSelector.replace('.', '') + "-outer" + "]");
+                self.$rotateIndicatorCircle.on('mousedown', function (e) {
                     var self = this;
 
-                    var eventType = mouseDown.call(self, e);
+                    if (e.stopPropagation) e.stopPropagation();
+                    if (e.preventDefault) e.preventDefault();
 
-                    if (eventType == 0) {
-                        self.resetRotation.call(self);
-                    } else if (eventType.hasOwnProperty('element') == 1) {
-                        self.draggingRotate.call(self, eventType.element, eventType.vector);
-                    }
+                    var vectorScratch = new Cesium.Cartesian2();
+                    var element = e.currentTarget;
+                    var rectangle = e.currentTarget.getBoundingClientRect();
+                    var center = new Cesium.Cartesian2((rectangle.right - rectangle.left) / 2.0, (rectangle.bottom - rectangle.top) / 2.0);
+                    var clickLocation = new Cesium.Cartesian2(e.clientX - rectangle.left, e.clientY - rectangle.top);
+                    var vector = Cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
 
+                    self.draggingRotate.call(self, element, vector);
+
+                    e.cancelBubble = true;
+                    e.returnValue = false;
                     return false;
                 }.bind(self));
 
-                self.$rotateIndicatorOuterCircle = $('.' + self.parent.CLASS + self.selectors.rotate + '-outer-circle');
-                self.$rotateIndicatorOuterShellCircle = $('.' + self.parent.CLASS + self.selectors.rotate + '-outer-shell-circle');
-
-                // left - right
-                self.$rotateLeft = self.$rotate.find('.' + self.parent.CLASS + self.selectors.leftArrow);
+                // left
+                self.$rotateLeft = self.$div.find(rotateSelector + self.selectors.leftArrow);
                 self.$rotateLeft.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function (e) {
 
                     if (e.stopPropagation) e.stopPropagation();
                     if (e.preventDefault) e.preventDefault();
 
                     self.inControls(e);
-
-                    self.$rotateLeft.blur();
 
                     var upEvent = TC.Util.detectMouse() ? 'mouseup' : 'touchend';
 
@@ -92229,15 +94842,13 @@ if (!TC.control.MapContents) {
 
                 }.bind(self));
 
-                self.$rotateRight = self.$rotate.find('.' + self.parent.CLASS + self.selectors.rightArrow);
+                self.$rotateRight = self.$div.find(rotateSelector + self.selectors.rightArrow);
                 self.$rotateRight.on(TC.Util.detectMouse() ? 'mousedown' : 'touchstart', function (e) {
 
                     if (e.stopPropagation) e.stopPropagation();
                     if (e.preventDefault) e.preventDefault();
 
                     self.inControls(e);
-
-                    self.$rotateRight.blur();
 
                     var upEvent = TC.Util.detectMouse() ? 'mouseup' : 'touchend';
 
@@ -92276,27 +94887,42 @@ if (!TC.control.MapContents) {
 
         var _angle = Cesium.Math.toRadians(Math.abs(angle));
 
-        if (self.parent.Cesium.Util.pickBottomPoint(self.parent.viewer.scene) == undefined)
+        if (pickBottomPoint(self.parent.viewer.scene) == undefined)
             self.isTiltUpDisabled = true;
         else self.isTiltUpDisabled = self.getCamera().pitch + _angle >= Cesium.Math.PI_OVER_TWO;
+
         self.isTiltDownDisabled = self.getCamera().pitch - _angle <= -Cesium.Math.PI_OVER_TWO;
 
         // left
-        if (self.isTiltUpDisabled) self.$tiltUp.addClass(self.parent.classes.CAMERACTRARROWDISABLED);
-        else self.$tiltUp.removeClass(self.parent.classes.CAMERACTRARROWDISABLED);
         self.$tiltUp.attr('disabled', self.isTiltUpDisabled);
+        if (self.isTiltUpDisabled) {
+            if (self.$tiltUp.attr('class').indexOf(self.parent.classes.CAMERACTRARROWDISABLED) == -1) {
+                self.$tiltUp.attr('class', self.$tiltUp.attr('class') + ' ' + self.parent.classes.CAMERACTRARROWDISABLED);
+            }
+        }
+        else {
+            self.$tiltUp.attr('class', self.$tiltUp.attr('class').replace(' ' + self.parent.classes.CAMERACTRARROWDISABLED, ''));
+        }
+
 
         // right
-        if (self.isTiltDownDisabled) self.$tiltDown.addClass(self.parent.classes.CAMERACTRARROWDISABLED);
-        else self.$tiltDown.removeClass(self.parent.classes.CAMERACTRARROWDISABLED);
         self.$tiltDown.attr('disabled', self.isTiltDownDisabled);
+        if (self.isTiltDownDisabled) {
+            if (self.$tiltDown.attr('class').indexOf(self.parent.classes.CAMERACTRARROWDISABLED) == -1) {
+                self.$tiltDown.attr('class', self.$tiltDown.attr('class') + ' ' + self.parent.classes.CAMERACTRARROWDISABLED);
+            }
+        }
+        else {
+            self.$tiltDown.attr('class', self.$tiltDown.attr('class').replace(' ' + self.parent.classes.CAMERACTRARROWDISABLED, ''));
+        }
+
     };
     CameraControls.prototype.tilt = function (angle) {
         var self = this;
 
         self.disableTilt(angle);
 
-        if (self.parent.Cesium.Util.pickBottomPoint(self.parent.viewer.scene) == undefined) {
+        if (pickCenterPoint(self.parent.viewer.scene) == undefined) {
             if (angle > 0) self.getCamera().lookUp();
             else self.getCamera().lookDown();
         }
@@ -92307,19 +94933,19 @@ if (!TC.control.MapContents) {
         }
 
         var _angle = Cesium.Math.toRadians(angle);
-        var pivot = self.parent.Cesium.Util.pickBottomPoint(self.parent.viewer.scene);
+        var pivot = pickCenterPoint(self.parent.viewer.scene);
         if (pivot) {
             var transform = Cesium.Matrix4.fromTranslation(pivot);
-            self.parent.Cesium.Util.rotateAroundAxis(self.getCamera(), -_angle, self.getCamera().right, transform, { duration: 100 });
+            self.parent.map3D.rotateAroundAxis(self.getCamera(), -_angle, self.getCamera().right, transform, { duration: 100 });
         }
     };
     CameraControls.prototype.rotate = function (angle) {
         var self = this;
 
         angle = Cesium.Math.toRadians(angle);
-        var bottom = self.parent.Cesium.Util.pickBottomPoint(self.parent.viewer.scene);
+        var bottom = pickBottomPoint(self.parent.viewer.scene);
         if (bottom) {
-            self.parent.Cesium.Util.setHeadingUsingBottomCenter(self.parent.viewer.scene, angle, bottom, { duration: 100 });
+            setHeadingUsingBottomCenter(self.parent.viewer.scene, angle, bottom, { duration: 100 });
         }
     };
     CameraControls.prototype.draggingTilt = function (tiltElement, cursorVector) {
@@ -92348,7 +94974,7 @@ if (!TC.control.MapContents) {
         var scene = self.parent.viewer.scene;
         var camera = scene.camera;
 
-        var pivot = self.parent.Cesium.Util.pickBottomPoint(scene);
+        var pivot = pickCenterPoint(scene);
         if (!pivot) {
             self.tiltFrame = Cesium.Transforms.eastNorthUpToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
             self.tiltIsLook = true;
@@ -92367,7 +94993,7 @@ if (!TC.control.MapContents) {
             var timestamp = performance.now();
             var deltaT = timestamp - self.tiltLastTimestamp;
 
-            var pivot = self.parent.Cesium.Util.pickBottomPoint(scene);
+            var pivot = pickCenterPoint(scene);
             if (pivot && !self.tiltLastPivot)
                 self.tiltLastPivot = pivot;
 
@@ -92439,8 +95065,7 @@ if (!TC.control.MapContents) {
     CameraControls.prototype.draggingRotate = function (rotateElement, cursorVector) {
         var self = this;
 
-        self.$rotateInner = $(rotateElement).find('.' + self.parent.CLASS + self.selectors.rotate + '-outer-circle');
-        self.$rotateInner.attr('class', self.$rotateInner.attr('class') + ' ' + self.parent.classes.HIGHLIGHTED);
+        self.$rotateIndicatorOuterCircle.attr('class', self.$rotateIndicatorOuterCircle.attr('class') + ' ' + self.parent.classes.HIGHLIGHTED);
 
         var oldTransformScratch = new Cesium.Matrix4();
         var newTransformScratch = new Cesium.Matrix4();
@@ -92458,9 +95083,9 @@ if (!TC.control.MapContents) {
         var scene = self.parent.viewer.scene;
         var camera = scene.camera;
 
-        var viewCenter = self.parent.Cesium.Util.pickCenterPoint(self.parent.viewer.scene);
+        var viewCenter = pickCenterPoint(self.parent.viewer.scene);
         if (viewCenter == null || viewCenter == undefined) {
-            viewCenter = self.parent.Cesium.Util.pickBottomPoint(self.parent.viewer.scene);
+            viewCenter = pickBottomPoint(self.parent.viewer.scene);
             if (viewCenter == null || viewCenter == undefined) {
                 self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
                 self.rotateIsLook = true;
@@ -92509,7 +95134,7 @@ if (!TC.control.MapContents) {
         self.rotateMouseUpFunction = function (e) {
             self.isRotating = false;
 
-            self.$rotateInner.attr('class', self.$rotateInner.attr('class').replace(self.parent.classes.HIGHLIGHTED, ''));
+            self.$rotateIndicatorOuterCircle.attr('class', self.$rotateIndicatorOuterCircle.attr('class').replace(self.parent.classes.HIGHLIGHTED, ''));
 
             document.removeEventListener('mousemove', self.rotateMouseMoveFunction, false);
             document.removeEventListener('mouseup', self.rotateMouseUpFunction, false);
@@ -92549,9 +95174,9 @@ if (!TC.control.MapContents) {
             };
         }
 
-        var bottom = self.parent.Cesium.Util.pickBottomPoint(self.parent.viewer.scene);
+        var bottom = pickBottomPoint(self.parent.viewer.scene);
         if (bottom) {
-            self.parent.Cesium.Util.setHeadingUsingBottomCenter(self.parent.viewer.scene, currentRotation, bottom, options);
+            setHeadingUsingBottomCenter(self.parent.viewer.scene, currentRotation, bottom, options);
         }
 
         return done;
@@ -92610,13 +95235,41 @@ if (!TC.control.MapContents) {
             }
         }
     };
+    CameraControls.prototype.limitCameraToInitExtent = function () {
+        var self = this;
+
+        var pos = self.viewer.camera.positionCartographic.clone();
+
+        if (!(pos.longitude >= self.initExtent.west &&
+            pos.longitude <= self.initExtent.east &&
+            pos.latitude >= self.initExtent.south &&
+            pos.latitude <= self.initExtent.north)) {
+            // add a padding based on the camera height
+            var maxHeight = self.viewer.scene.screenSpaceCameraController.maximumZoomDistance;
+            var padding = pos.height * 0.05 / maxHeight;
+            pos.longitude = Math.max(self.initExtent.west - padding, pos.longitude);
+            pos.latitude = Math.max(self.initExtent.south - padding, pos.latitude);
+            pos.longitude = Math.min(self.initExtent.east + padding, pos.longitude);
+            pos.latitude = Math.min(self.initExtent.north + padding, pos.latitude);
+            self.viewer.camera.setView({
+                destination: Cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),
+                orientation: {
+                    heading: self.viewer.camera.heading,
+                    pitch: self.viewer.camera.pitch
+                }
+            });
+        }
+
+        // Set the minimumZoomDistance according to the camera height
+        self.viewer.scene.screenSpaceCameraController.minimumZoomDistance = pos.height > 1800 ? 400 : 200;
+    };
 
     // Apache v2 license
     // https://github.com/TerriaJS/terriajs/blob/
     // ebd382a8278a817fce316730d9e459bbb9b829e9/lib/Models/Cesium.js
     CustomRenderLoop = function (map2D, map3D, debug) {
         this.map2D = map2D;
-        this.listentTo = [TC.Consts.event.LAYERADD, TC.Consts.event.LAYERORDER, TC.Consts.event.LAYERREMOVE, TC.Consts.event.LAYEROPACITY, TC.Consts.event.LAYERVISIBILITY, TC.Consts.event.ZOOM, TC.Consts.event.BASELAYERCHANGE, TC.Consts.event.FEATUREADD, TC.Consts.event.FEATUREREMOVE, TC.Consts.event.LAYERUPDATE].join(' ');
+        this.listentTo = [TC.Consts.event.LAYERADD, TC.Consts.event.LAYERORDER, TC.Consts.event.LAYERREMOVE, TC.Consts.event.LAYEROPACITY, TC.Consts.event.LAYERVISIBILITY, TC.Consts.event.ZOOM, TC.Consts.event.BASELAYERCHANGE, TC.Consts.event.FEATUREADD, TC.Consts.event.FEATUREREMOVE, TC.Consts.event.LAYERUPDATE, TC.Consts.event.TERRAINLOADED, TC.Consts.event.ZOOMTO].join(' ');
         this.map3D = map3D;
 
         this.scene_ = this.map3D.scene;
@@ -92626,6 +95279,15 @@ if (!TC.control.MapContents) {
         this.lastCameraViewMatrix_ = new Cesium.Matrix4();
         this.lastCameraMoveTime_ = 0;
         this.stoppedRendering = false;
+
+        this._removeTileLoadProgressListener = this.scene_.globe.tileLoadProgressEvent.addEventListener(function (event) {
+            if (event === 0) {
+                this.tilesWaiting = false;
+            }
+            else {
+                this.tilesWaiting = true;
+            }
+        }.bind(this));
 
         this._removePostRenderListener = this.scene_.postRender.addEventListener(this.postRender.bind(this));
 
@@ -92676,11 +95338,6 @@ if (!TC.control.MapContents) {
 
         this.repaintOn_(this._wheelEvent, false);
 
-        // PENDIENTE DE GESTIONAR CUANDO TENGAMOS PICKING
-        // Handle left click by picking objects from the map.        
-        //this.map3D.screenSpaceEventHandler.setInputAction(function (e) {
-        //    this.pickFromScreenPosition(e.position);
-        //}.bind(this), ScreenSpaceEventType.LEFT_CLICK);
 
         window.addEventListener('resize', this._boundNotifyRepaintRequired, false);
 
@@ -92732,8 +95389,6 @@ if (!TC.control.MapContents) {
             that.notifyRepaintRequired();
         };
 
-
-
         // conectamos con los cambios del map 2d
         this.map2D.on(this.listentTo, this._boundNotifyRepaintRequired);
     };
@@ -92741,6 +95396,11 @@ if (!TC.control.MapContents) {
         if (!!this._removePostRenderListener) {
             this._removePostRenderListener();
             this._removePostRenderListener = undefined;
+        }
+
+        if (!!this._removeTileLoadProgressListener) {
+            this._removeTileLoadProgressListener();
+            this._removeTileLoadProgressListener = undefined;
         }
 
         this.removeRepaintOn_('mousemove', false);
@@ -92790,12 +95450,8 @@ if (!TC.control.MapContents) {
 
         var cameraMovedIn3LastSecond = now - this.lastCameraMoveTime_ < 3000;
 
-        var surface = scene.globe['_surface'];
-        var tilesWaiting = !surface['_tileProvider'].ready ||
-            surface['_tileLoadQueueHigh'].length > 0 || surface['_tileLoadQueueMedium'].length > 0 || surface['_tileLoadQueueLow'].length > 0 || surface['_debug']['tilesWaitingForChildren'] > 0;
-
         var tweens = scene['tweens'];
-        if (!cameraMovedIn3LastSecond && !tilesWaiting && tweens.length == 0) {
+        if (!cameraMovedIn3LastSecond && !this.tilesWaiting && tweens.length == 0) {
             if (this.verboseRendering) {
                 console.log('stopping rendering @ ' + Date.now());
             }
@@ -92805,7 +95461,7 @@ if (!TC.control.MapContents) {
 
         Cesium.Matrix4.clone(camera.viewMatrix, this.lastCameraViewMatrix_);
     };
-    CustomRenderLoop.prototype.restartRenderLoop = function () {
+    CustomRenderLoop.prototype.restart = function () {
         this.notifyRepaintRequired();
     };
     CustomRenderLoop.prototype.notifyRepaintRequired = function () {
@@ -92821,1227 +95477,439 @@ if (!TC.control.MapContents) {
         this.verboseRendering = debug;
     };
 
-    idRequestAnimationFrame = null;
-    ctlProto.Cesium = {
-        CustomRender: {
-            _blockRendering: false,
-            _canvasClientWidth: 0.0,
-            _canvasClientHeight: 0.0,
-            _resolutionScale: 1.0,
-            _canvas: null,
-            _clock: null,
+    CustomRender = function (map2D, map3D, isSlower) {
+        this.idRequestAnimationFrame = null;
 
-            _handleResize: function (vw) {
-                var width = this._canvas.clientWidth;
-                var height = this._canvas.clientHeight;
+        this._blockRendering = false;
+        this._canvasClientWidth = 0.0;
+        this._canvasClientHeight = 0.0;
+        this._resolutionScale = 1.0;
 
-                if (width === 0 | height === 0) {
-                    // The canvas DOM element is not ready yet.
-                    return;
-                }
+        this._viewer = map3D;
+        this._canvas = map3D.scene.canvas;
+        this._clock = map3D.clock || new Cesium.Clock();
 
-                if (width === this._canvasClientWidth &&
-                    height === this._canvasClientHeight) {
-                    return;
-                }
+        this._handleResize = function (vw) {
+            var width = this._canvas.clientWidth;
+            var height = this._canvas.clientHeight;
 
-                var resolutionScale = this._resolutionScale;
-                //if (!olcs.supportsImageRenderingPixelated()) {
-                //    resolutionScale *= window.devicePixelRatio || 1.0;
-                //}                
-
-                this._canvasClientWidth = width;
-                this._canvasClientHeight = height;
-
-                width *= resolutionScale;
-                height *= resolutionScale;
-
-                this._canvas.width = width;
-                this._canvas.height = height;
-                vw.scene.camera.frustum.aspectRatio = width / height;
-            },
-            _renderingAnimation: function (viewer) {
-                var self = this;
-                var vw = viewer;
-                function animation() {
-                    if (!self._blockRendering) {
-                        vw.scene.initializeFrame();
-                        self._handleResize(vw);
-                        var currentTime = self._clock.tick() || Cesium.JulianDate.now();
-                        vw.scene.render(currentTime);
-                    } else {
-                        self._clock.tick();
-                    }
-
-                    idRequestAnimationFrame = requestAnimationFrame(animation);
-                };
-                idRequestAnimationFrame = requestAnimationFrame(animation);
-            },
-
-            start: function (map2D, map3D, isSlower) {
-                this._canvas = map3D.scene.canvas;
-                this._clock = map3D.clock || new Cesium.Clock();
-                if (isSlower) {
-                    /* seg\u00fan he le\u00eddo, al detectar que el navegador cuenta con webgl pero aun as\u00ed es lento,
-                                           podemos renderizar en el canvas disponible un globo m\u00e1s peque\u00f1o mejorando el rendimiento y perdiendo calidad. 
-                                           Tenemos controlado si el usuario est\u00e1 en un navegador lento mostrando advertencia.
-                                           Para ello: setResolutionScale(1/(window.devicePixelRatio || 1.0)) */
-                    this._resolutionScale = 0.5;
-                }
-                this.customRender = new CustomRenderLoop(map2D, map3D, true);
-                this.customRender.parent = this;
-                this._renderingAnimation(map3D);
-            },
-            stop: function () {
-                window.cancelAnimationFrame(idRequestAnimationFrame);
-            },
-            setBlockRendering: function (block) {
-                this._blockRendering = block;
-            }
-        },
-        arePendingTiles: function () {
-            var self = this;
-
-            var surface = self.viewer.scene.globe['_surface'];
-            return !surface['_tileProvider'].ready ||
-                surface['_tileLoadQueueHigh'].length > 0 ||
-                surface['_tileLoadQueueMedium'].length > 0 ||
-                surface['_tileLoadQueueLow'].length > 0 ||
-                surface['_debug']['tilesWaitingForChildren'] > 0;
-        },
-        getCesium: function () {
-            var self = this;
-            var done = new $.Deferred();
-            if (window.Cesium)
-                done.resolve();
-            else {
-                TC.loadJS(!window.Cesium, [TC.Consts.url.CESIUM], function () {
-                    done.resolve();
-                });
+            if (width === 0 | height === 0) {
+                // The canvas DOM element is not ready yet.
+                return;
             }
 
-            return done;
-        },
-        getTerrainProvider: function () {
-            var self = this;
-            if (!self.terrainProvider)
-                self.terrainProvider = new Cesium.CesiumTerrainProvider({
-                    url: self.Consts.TERRAIN_URL,
-                    requestWaterMask: true,
-                    requestVertexNormals: true
-                });
-
-            return self.terrainProvider;
-        },
-        getViewer: function () {
-            var self = this;
-            var done = new $.Deferred();
-
-            if (!self.viewer) {
-                self.Cesium.getCesium().then(function () {
-
-                    var globe = new Cesium.Globe();
-                    globe.baseColor = Cesium.Color.WHITE;
-                    globe.enableLighting = true;
-
-                    self.viewer = self.Cesium._viewer = new Cesium.Viewer(self.selectors.divThreedMap, {
-                        terrainProvider: self.Cesium.getTerrainProvider.call(self),
-                        terrainExaggeration: 1.0,
-                        terrainShadows: Cesium.ShadowMode.ENABLED,
-
-                        animation: false,
-                        timeline: false,
-                        fullscreenButton: false,
-                        baseLayerPicker: false,
-                        imageryProvider: false,
-                        navigationInstructionsInitiallyVisible: false,
-                        navigationHelpButton: false,
-                        geocoder: false,
-                        homeButton: false,
-                        infoBox: false,
-                        sceneModePicker: false,
-                        selectionIndicator: false,
-                        globe: globe,
-                        useDefaultRenderLoop: !self.options.customRender
-                    });
-
-                    if (self.options.customRender) {
-                        // lanzamos el nuestro render                    
-                        self.Cesium.CustomRender.start(self.map, self.viewer, self.isSlower);
-                    }
-
-                    self.viewer.readyPromise = new $.Deferred();
-
-                    // personalizaci\u00f3n de la escena
-                    self.viewer.scene.backgroundColor = Cesium.Color.WHITE;
-                    self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
-                    self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 500000;
-                    self.viewer.scene.globe.depthTestAgainstTerrain = true;
-
-                    // borramos cualquier capa que haya
-                    self.viewer.scene.imageryLayers.removeAll();
-
-                    // A\u00f1adimos bot\u00f3n que pinta una caja en cada uno de los tiles renderizados con una etiqueta que indica las coordenadas (X,Y, Nivel) del tile
-                    if (self.options && self.options.showTileCoordinates) {
-                        var tileCoordsLayer;
-
-                        self.$divThreedMap.append('<button class="tc-ctl-threed-show-tile-btn"></button>');
-                        self.$btnShowTileCoords = $('.tc-ctl-threed-show-tile-btn');
-                        self.$btnShowTileCoords.on(TC.Consts.event.CLICK, function () {
-                            if ($(this).hasClass('showing')) {
-                                self.viewer.scene.imageryLayers.raiseToTop(tileCoordsLayer);
-                                self.viewer.scene.imageryLayers.remove(tileCoordsLayer, true);
-                            } else {
-                                tileCoordsLayer = self.viewer.scene.imageryLayers.addImageryProvider(new Cesium.TileCoordinatesImageryProvider());
-                            }
-
-                            $(this).toggleClass('showing');
-                        });
-                    }
-
-                    // registramos listeners para capturar errores del terreno y del render
-                    self.viewer.terrainProvider.errorEvent.addEventListener(self.Cesium.Events.tileProviderError.bind(self));
-                    self.viewer.scene.renderError.addEventListener(self.Cesium.Events.renderError.bind(self));
-
-                    // controlamos la carga de tiles para mostrar loading cuando pida tiles
-                    self.Cesium.Util.tileLoadHelper = new Cesium.EventHelper();
-                    self.Cesium.Util.tileLoadHelper.add(self.viewer.scene.globe.tileLoadProgressEvent, function (data) {
-                        if (!self.waitting)
-                            self.waitting = self.map.getLoadingIndicator().addWait();
-
-                        if (data === 0) {
-                            self.map.getLoadingIndicator().removeWait(self.waitting);
-                            delete self.waitting;
-
-                            self.viewer.readyPromise.resolve();
-                        }
-                    }.bind(self));
-
-                    // deshabilitamos el zoom por defecto y manejamos nosotros zoom con rueda y botones +/-
-                    self.Cesium.Util.zoomHandler.call(self);
-
-                    // eliminamos los creditos de cesium (no encuentro la manera de que no los ponga)
-                    $('.cesium-viewer-bottom').remove();
-
-                    done.resolve(self.viewer);
-                });
-            } else { done.resolve(self.viewer); }
-
-            return done;
-        },
-
-        setCameraFromMapView: function () {
-            var self = this;
-            var center = self.mapView.getCenter();
-            var latlon = TC.Util.reproject(center, self.map.crs, self.crs);
-            self.distance = self.Cesium.Util.calcDistanceForResolution.call(self, self.mapView.getResolution() || 0, Cesium.Math.toRadians(latlon[0]));
-
-            self.Cesium.Camera.updateCamera.call(self);
-        },
-        setViewFromCameraView: function () {
-            var self = this;
-
-            if (!self.setViewFromCameraViewInProgress || self.setViewFromCameraViewInProgress.state() == "resolved") {
-                self.setViewFromCameraViewInProgress = new $.Deferred();
-
-                var ellipsoid = Cesium.Ellipsoid.WGS84;
-                var scene = self.viewer.scene;
-                var target = target_ = self.Cesium.Util.pickCenterPoint(scene);
-
-                if (!target_) {
-                    var globe = self.viewer.scene.globe;
-                    var carto = self.viewer.camera.positionCartographic.clone();
-                    var height = globe.getHeight(carto);
-                    carto.height = height || 0;
-                    target_ = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
-                }
-
-
-                self.distance = Cesium.Cartesian3.distance(target_, self.viewer.camera.position);
-                var targetCartographic = ellipsoid.cartesianToCartographic(target_);
-
-                var centerMapCRS = TC.Util.reproject(
-                    [Cesium.Math.toDegrees(targetCartographic.longitude), Cesium.Math.toDegrees(targetCartographic.latitude)],
-                    self.crs, self.map.crs);
-
-                self.mapView.setCenter(centerMapCRS);
-
-                self.mapView.setResolution(self.Cesium.Util.calcResolutionForDistance.call(self, self.distance, targetCartographic ? targetCartographic.latitude : 0));
-
-                self.setViewFromCameraViewInProgress.resolve();
-                // GLS: No tenemos la rotaci\u00f3n del mapa activada por problemas con el iPad
-                //if (target) {
-                //    var pos = self.viewer.camera.position;
-
-                //    var targetNormal = new Cesium.Cartesian3();
-                //    ellipsoid.geocentricSurfaceNormal(target, targetNormal);
-
-                //    var targetToCamera = new Cesium.Cartesian3();
-                //    Cesium.Cartesian3.subtract(pos, target, targetToCamera);
-                //    Cesium.Cartesian3.normalize(targetToCamera, targetToCamera);
-
-                //    // HEADING
-                //    var up = self.viewer.camera.up;
-                //    var right = self.viewer.camera.right;
-                //    var normal = new Cesium.Cartesian3(-target.y, target.x, 0);
-                //    var heading = Cesium.Cartesian3.angleBetween(right, normal);
-                //    var cross = Cesium.Cartesian3.cross(target, up, new Cesium.Cartesian3());
-                //    var orientation = cross.z;
-
-                //    self.mapView.setRotation((orientation < 0 ? heading : -heading));
-                //    self.setViewFromCameraViewInProgress.resolve();
-                //}
+            if (width === this._canvasClientWidth &&
+                height === this._canvasClientHeight) {
+                return;
             }
 
-            return self.setViewFromCameraViewInProgress;
-        },
+            var resolutionScale = this._resolutionScale;
 
-        Events: {
-            Zoom: {
-                _toZoom: {
-                    direction: 1,
-                    amount: 0,
-                    endPosition: {}
-                },
-                zoom: function (position, amount) {
-                    var self = this;
-                    var scene = self.viewer.scene;
+            this._canvasClientWidth = width;
+            this._canvasClientHeight = height;
 
-                    if (!position || !position.endPosition) {
-                        var canvas = scene.canvas;
-                        var center = new Cesium.Cartesian2(
-                            canvas.clientWidth / 2,
-                            canvas.clientHeight / 2);
-                        position = { endPosition: center };
-                    }
+            width *= resolutionScale;
+            height *= resolutionScale;
 
-                    var pickRay = scene.camera.getPickRay(position.endPosition);
-                    var intersection = scene.globe.pick(pickRay, scene);
-                    if (intersection) {
+            this._canvas.width = width;
+            this._canvas.height = height;
+            vw.scene.camera.frustum.aspectRatio = width / height;
+        };
+        this._renderingAnimation = function () {
 
-                        var distanceMeasure = Cesium.Cartesian3.distance(pickRay.origin, intersection);
-                        if (distanceMeasure < 1) { return; }
-                        else {
-                            // cerca / lejos
-                            self.Cesium.Events.Zoom._toZoom.direction = amount > 0 ? 1 : 0;
-                            self.Cesium.Events.Zoom._toZoom.amount += (distanceMeasure * 5 / 100);
-                            self.Cesium.Events.Zoom._toZoom.endPosition = position.endPosition;
-                        }
-                    }
-
-                    var setNewPosition = function (data) {
-                        var self = this;
-                        var scene = self.viewer.scene;
-
-                        var pickRay = scene.camera.getPickRay(position.endPosition || data.endPosition);
-                        var intersection = scene.globe.pick(pickRay, scene);
-                        if (intersection) {
-
-                            var distanceMeasure = Cesium.Cartesian3.distance(pickRay.origin, intersection);
-                            if (distanceMeasure < 1) { return; }
-                            else {
-
-                                var cameraPosition = scene.camera.position;
-                                var cameraDirection = scene.camera.direction;
-
-                                var toMove = toGo = new Cesium.Cartesian3();
-                                Cesium.Cartesian3.multiplyByScalar(pickRay.direction, data.direction == 1 ? data.amount : -data.amount, toMove);
-                                Cesium.Cartesian3.add(cameraPosition, toMove, toGo);
-
-                                var ray = new Cesium.Ray(toGo, pickRay.direction);
-                                var intersectionToGo = scene.globe.pick(ray, scene);
-                                if (intersectionToGo) {
-
-                                    var reset = function () {
-                                        this.Cesium.Events.Zoom._toZoom = {
-                                            direction: 1,
-                                            amount: 0,
-                                            endPosition: {}
-                                        };
-
-                                        return;
-                                    };
-
-                                    if (Cesium.Cartesian3.distance(toGo, intersectionToGo) < 1 ||
-                                        Cesium.Ellipsoid.WGS84.cartesianToCartographic(toGo).height > scene.screenSpaceCameraController.maximumZoomDistance ||
-                                        Math.abs(Cesium.Ellipsoid.WGS84.cartesianToCartographic(toGo).height) < scene.screenSpaceCameraController.minimumZoomDistance) {
-                                        reset.call(self);
-                                    }
-                                    else {
-                                        self.viewer.camera.flyTo({
-                                            destination: toGo,
-                                            orientation: {
-                                                heading: scene.camera.heading,
-                                                pitch: scene.camera.pitch,
-                                                roll: scene.camera.roll
-                                            },
-                                            duration: 1,
-                                            easingFunction: Cesium.EasingFunction.LINEAR_NONE,
-                                            complete: function (distance) {
-                                                this.Cesium.Events.Zoom._toZoom = {
-                                                    direction: 1,
-                                                    amount: 0,
-                                                    endPosition: {}
-                                                };
-                                            }.bind(self, Cesium.Cartesian3.distance(toGo, intersectionToGo))
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    };
-
-                    setTimeout(function () { // GLS: No hemos encontrado otra forma para acumular pasos de la rueda
-                        setNewPosition.call(self, self.Cesium.Events.Zoom._toZoom);
-                    }.bind(self), 50);
-                },
-                buttomsZoom: function (position, amount) {
-                    var self = this;
-
-                    self.Cesium.Events.Zoom.zoom.call(self, { endPosition: position }, amount);
-                },
-                wheelZoom: function (wheelZoomAmount) {
-                    var self = this;
-
-                    self.Cesium.Events.Zoom.zoom.call(self, self.Cesium._mousePosition, wheelZoomAmount);
-                }
-            },
-            renderError: function (e) {
-                var self = this;
-
-                self.$divThreedMap.addClass(self.classes.LOADING);
-                self.map.toast('Error', { type: TC.Consts.msgType.ERROR });
-            },
-            tileProviderError: function (e) {
-                var self = this;
-
-                switch (e.error.statusCode) {
-                    case 403:
-                    case 404: break;
-                }
-            }
-        },
-
-        Camera: {
-            limitCamera: function () {
-                var self = this;
-
-                var pos = self.viewer.camera.positionCartographic.clone();
-
-                if (!(pos.longitude >= self.initExtent.west &&
-                       pos.longitude <= self.initExtent.east &&
-                       pos.latitude >= self.initExtent.south &&
-                       pos.latitude <= self.initExtent.north)) {
-                    // add a padding based on the camera height
-                    var maxHeight = self.viewer.scene.screenSpaceCameraController.maximumZoomDistance;
-                    var padding = pos.height * 0.05 / maxHeight;
-                    pos.longitude = Math.max(self.initExtent.west - padding, pos.longitude);
-                    pos.latitude = Math.max(self.initExtent.south - padding, pos.latitude);
-                    pos.longitude = Math.min(self.initExtent.east + padding, pos.longitude);
-                    pos.latitude = Math.min(self.initExtent.north + padding, pos.latitude);
-                    self.viewer.camera.setView({
-                        destination: Cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),
-                        orientation: {
-                            heading: self.viewer.camera.heading,
-                            pitch: self.viewer.camera.pitch
-                        }
-                    });
+            function animation() {
+                if (!this._blockRendering) {
+                    this._viewer.scene.initializeFrame();
+                    this._handleResize(this._viewer);
+                    var currentTime = this._clock.tick() || Cesium.JulianDate.now();
+                    this._viewer.scene.render(currentTime);
+                } else {
+                    this._clock.tick();
                 }
 
-                // Set the minimumZoomDistance according to the camera height
-                self.viewer.scene.screenSpaceCameraController.minimumZoomDistance = pos.height > 1800 ? 400 : 200;
-            },
-            updateCamera: function () {
-                var self = this;
+                this.idRequestAnimationFrame = requestAnimationFrame(animation.bind(this));
+            };
+            this.idRequestAnimationFrame = requestAnimationFrame(animation.bind(this));
+        };
 
-                var center = self.mapView.getCenter();
-                if (!center) {
-                    return;
-                }
-
-                var latlon = TC.Util.reproject(center, self.map.crs, self.crs);
-                var carto = new Cesium.Cartographic(Cesium.Math.toRadians(latlon[0]), Cesium.Math.toRadians(latlon[1]));
-                if (self.viewer.scene.globe) {
-                    carto.height = self.viewer.scene.globe.getHeight(carto) || 0;
-                }
-
-                var destination = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
-                var orientation = {
-                    pitch: Cesium.Math.toRadians(-90),
-                    heading: -self.mapView.getRotation(),
-                    roll: 0.0
-                };
-
-                self.viewer.camera.setView({
-                    destination: destination,
-                    orientation: orientation
-                });
-
-                self.viewer.camera.moveBackward(self.distance);
-            },
-            getCamera: function () {
-                var self = this;
-
-                return self.viewer.scene.camera;
-            },
-            getHeight: function () {
-                var self = this;
-
-                return Cesium.Ellipsoid.WGS84.cartesianToCartographic(self.Cesium.Camera.getCamera.call(self).position).height;
-            }
-        },
-
-        Util: {
-
-            calcDistanceForResolution: function (resolution, latitude) {
-                var self = this;
-
-                var fovy = self.viewer.camera.frustum.fovy;
-                var metersPerUnit = self.mapView.proj4Obj.oProj.METERS_PER_UNIT;
-                var visibleMapUnits = resolution * self.mapView.viewHTML.getBoundingClientRect().height;
-                var relativeCircumference = Math.cos(Math.abs(latitude));
-                var visibleMeters = visibleMapUnits * metersPerUnit * relativeCircumference;
-
-                return (visibleMeters / 2) / Math.tan(fovy / 2);
-            },
-            calcResolutionForDistance: function (distance, latitude) {
-                var self = this;
-
-                var canvas = self.viewer.scene.canvas;
-                var fovy = self.viewer.camera.frustum.fovy;
-                var metersPerUnit = self.mapView.proj4Obj.oProj.METERS_PER_UNIT;
-
-                var visibleMeters = 2 * distance * Math.tan(fovy / 2);
-                var relativeCircumference = Math.cos(Math.abs(latitude));
-                var visibleMapUnits = visibleMeters / metersPerUnit / relativeCircumference;
-                var resolution = visibleMapUnits / canvas.clientHeight;
-
-                // validamos que la resoluci\u00f3n calculada est\u00e9 disponible en el array de resoluciones disponibles
-                // si no contamos con un array de resoluciones lo calculamos
-                var resolutions = self.map.getResolutions();
-                if (resolutions == null) {
-                    resolutions = new Array(22);
-                    for (var i = 0, ii = resolutions.length; i < ii; ++i) {
-                        resolutions[i] = self.mapView.getMaxResolution() / Math.pow(2, i);
-                    }
-                }
-
-                // obtenemos la resoluci\u00f3n m\u00e1s pr\u00f3xima a la calculada
-                for (var i = 0; i < resolutions.length; i++) {
-                    if (resolutions[i] < resolution) {
-                        resolution = resolutions[i];
-                        break;
-                    }
-                }
-
-                return resolution;
-            },
-
-            rotateAroundAxis: function (camera, angle, axis, transform, opt_options) {
-                var self = this;
-
-                var clamp = Cesium.Math.clamp;
-                var defaultValue = Cesium.defaultValue;
-
-                var options = opt_options || {};
-                var duration = defaultValue(options.duration, 500); // ms
-
-                var linear = function (a) {
-                    return a
-                };
-                var easing = defaultValue(options.easing, linear);
-                var callback = options.callback;
-
-                var start;
-                var lastProgress = 0;
-                var oldTransform = new Cesium.Matrix4();
-
-                var done = new $.Deferred();
-
-                function animation(timestamp) {
-                    if (!start)
-                        start = timestamp;
-
-                    var progress = easing(clamp((timestamp - start) / duration, 0, 1));
-
-                    camera.transform.clone(oldTransform);
-                    var stepAngle = (progress - lastProgress) * angle;
-                    lastProgress = progress;
-                    camera.lookAtTransform(transform);
-                    camera.rotate(axis, stepAngle);
-                    camera.lookAtTransform(oldTransform);
-
-                    if (progress < 1) {
-                        requestAnimationFrame(animation);
-                    } else {
-                        if (callback) {
-                            callback();
-                        }
-                        done.resolve();
-                    }
-
-                }
-
-                requestAnimationFrame(animation);
-
-                return done;
-            },
-
-            pickOnTerrainOrEllipsoid: function (scene, pixel) {
-                var self = this;
-
-                var ray = scene.camera.getPickRay(pixel);
-                var target = scene.globe.pick(ray, scene);
-                return target || scene.camera.pickEllipsoid(pixel);
-            },
-            pickCenterPoint: function (scene) {
-                var self = this;
-
-                var canvas = scene.canvas;
-                var center = new Cesium.Cartesian2(
-                    canvas.clientWidth / 2,
-                    canvas.clientHeight / 2);
-                return self.pickOnTerrainOrEllipsoid(scene, center);
-            },
-            pickBottomPoint: function (scene) {
-                var self = this;
-
-                var canvas = scene.canvas;
-                var bottom = new Cesium.Cartesian2(
-                    canvas.clientWidth / 2, canvas.clientHeight);
-                return self.pickOnTerrainOrEllipsoid(scene, bottom);
-            },
-
-            bottomFovRay: function (scene) {
-                var self = this;
-
-                var camera = scene.camera;
-                var fovy2 = camera.frustum.fovy / 2;
-                var direction = camera.direction;
-                var rotation = Cesium.Quaternion.fromAxisAngle(camera.right, fovy2);
-                var matrix = Cesium.Matrix3.fromQuaternion(rotation);
-                var vector = new Cesium.Cartesian3();
-                Cesium.Matrix3.multiplyByVector(matrix, direction, vector);
-                return new Cesium.Ray(camera.position, vector);
-            },
-
-            setHeadingUsingBottomCenter: function (scene, heading, bottomCenter, opt_options) {
-                var self = this;
-
-                var camera = scene.camera;
-                // Compute the camera position to zenith quaternion
-                var angleToZenith = self.computeAngleToZenith(scene, bottomCenter);
-                var axis = camera.right;
-                var quaternion = Cesium.Quaternion.fromAxisAngle(axis, angleToZenith);
-                var rotation = Cesium.Matrix3.fromQuaternion(quaternion);
-
-                // Get the zenith point from the rotation of the position vector
-                var vector = new Cesium.Cartesian3();
-                Cesium.Cartesian3.subtract(camera.position, bottomCenter, vector);
-                var zenith = new Cesium.Cartesian3();
-                Cesium.Matrix3.multiplyByVector(rotation, vector, zenith);
-                Cesium.Cartesian3.add(zenith, bottomCenter, zenith);
-
-                // Actually rotate around the zenith normal
-                var transform = Cesium.Matrix4.fromTranslation(zenith);
-                self.rotateAroundAxis(camera, heading, zenith, transform, opt_options);
-            },
-
-            signedAngleBetween: function (first, second, normal) {
-                var self = this;
-
-                // We are using the dot for the angle.
-                // Then the cross and the dot for the sign.
-                var a = new Cesium.Cartesian3();
-                var b = new Cesium.Cartesian3();
-                var c = new Cesium.Cartesian3();
-                Cesium.Cartesian3.normalize(first, a);
-                Cesium.Cartesian3.normalize(second, b);
-                Cesium.Cartesian3.cross(a, b, c);
-
-                var cosine = Cesium.Cartesian3.dot(a, b);
-                var sine = Cesium.Cartesian3.magnitude(c);
-
-                // Sign of the vector product and the orientation normal
-                var sign = Cesium.Cartesian3.dot(normal, c);
-                var angle = Math.atan2(sine, cosine);
-                return sign >= 0 ? angle : -angle;
-            },
-
-            computeAngleToZenith: function (scene, pivot) {
-                var self = this;
-
-                // This angle is the sum of the angles 'fy' and 'a', which are defined
-                // using the pivot point and its surface normal.
-                //        Zenith |    camera
-                //           \   |   /
-                //            \fy|  /
-                //             \ |a/
-                //              \|/pivot
-                var camera = scene.camera;
-                var fy = camera.frustum.fovy / 2;
-                var ray = self.bottomFovRay(scene);
-                var direction = Cesium.Cartesian3.clone(ray.direction);
-                Cesium.Cartesian3.negate(direction, direction);
-
-                var normal = new Cesium.Cartesian3();
-                Cesium.Ellipsoid.WGS84.geocentricSurfaceNormal(pivot, normal);
-
-                var left = new Cesium.Cartesian3();
-                Cesium.Cartesian3.negate(camera.right, left);
-
-                var a = self.signedAngleBetween(normal, direction, left);
-                return a + fy;
-            },
-            computeSignedTiltAngleOnGlobe: function (scene) {
-                var self = this;
-
-                var camera = scene.camera;
-                var ray = new Cesium.Ray(camera.position, camera.direction);
-                var target = scene.globe.pick(ray, scene);
-
-                if (!target) {
-                    // no tiles in the area were loaded?
-                    var ellipsoid = Cesium.Ellipsoid.WGS84;
-                    var obj = Cesium.IntersectionTests.rayEllipsoid(ray, ellipsoid);
-                    if (obj) {
-                        target = Cesium.Ray.getPoint(ray, obj.start);
-                    }
-                }
-
-                if (!target) {
-                    return undefined;
-                }
-
-                var normal = new Cesium.Cartesian3();
-                Cesium.Ellipsoid.WGS84.geocentricSurfaceNormal(target, normal);
-
-                var angleBetween = self.signedAngleBetween;
-                var angle = angleBetween(camera.direction, normal, camera.right) - Math.PI;
-                return Cesium.Math.convertLongitudeRange(angle);
-            },
-
-            zoomHandler: function () {
-                var self = this;
-
-                if (!TC.Util.detectMobile()) {
-                    self.viewer.scene.screenSpaceCameraController.enableZoom = false;
-
-                    var element = self.viewer.scene.canvas;
-                    // detect available wheel event
-                    var wheelEvent;
-                    if ('onwheel' in element) {
-                        // spec event type
-                        wheelEvent = 'wheel';
-                    } else if (document.onmousewheel !== undefined) {
-                        // legacy event type
-                        wheelEvent = 'mousewheel';
-                    } else {
-                        // older Firefox
-                        wheelEvent = 'DOMMouseScroll';
-                    }
-                    element.addEventListener(wheelEvent, function (event) {
-                        var delta;
-                        // standard wheel event uses deltaY.  sign is opposite wheelDelta.
-                        // deltaMode indicates what unit it is in.
-                        if (event.deltaY) {
-                            var deltaMode = event.deltaMode;
-                            if (deltaMode === event.DOM_DELTA_PIXEL) {
-                                delta = -event.deltaY;
-                            } else if (deltaMode === event.DOM_DELTA_LINE) {
-                                delta = -event.deltaY * 40;
-                            } else {
-                                // DOM_DELTA_PAGE
-                                delta = -event.deltaY * 120;
-                            }
-                        } else if (event.detail > 0) {
-                            // old Firefox versions use event.detail to count the number of clicks. The sign
-                            // of the integer is the direction the wheel is scrolled.
-                            delta = event.detail * -120;
-                        } else {
-                            delta = event.wheelDelta;
-                        }
-
-                        self.Cesium.Events.Zoom.wheelZoom.call(self, delta);
-
-                    }, false);
-
-                    var eventHandler = new Cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
-                    eventHandler.setInputAction(function (event) {
-                        self.Cesium._mousePosition = event;
-                    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-                    eventHandler.setInputAction(function (wheelZoomAmount) {
-                        self.Cesium.Events.Zoom.wheelZoom.call(self, wheelZoomAmount);
-                    }, Cesium.ScreenSpaceEventType.WHEEL);
-                    var pinchCenterPosition = new Cesium.Cartesian2();
-                    var pinchAmount = 0;
-                    eventHandler.setInputAction(function (event) {
-                        Cesium.Cartesian2.lerp(event.position1, event.position2, 0.5, pinchCenterPosition);
-                    }, Cesium.ScreenSpaceEventType.PINCH_START);
-                    eventHandler.setInputAction(function (event) {
-                        var diff = event.distance.endPosition.y - event.distance.startPosition.y;
-                        var rangeWindowRatio = diff / self.viewer.scene.canvas.clientHeight;
-                        rangeWindowRatio = Math.min(rangeWindowRatio, self.viewer.scene.screenSpaceCameraController.maximumMovementRatio);
-                        pinchAmount = rangeWindowRatio;
-                    }, Cesium.ScreenSpaceEventType.PINCH_MOVE);
-                    eventHandler.setInputAction(function (event) {
-                        self.Cesium.Events.Zoom.zoom.call(self, { endPosition: pinchCenterPosition }, pinchAmount);
-                    }, Cesium.ScreenSpaceEventType.PINCH_END);
-                }
-            }
+        if (isSlower) {
+            /* seg\u00fan he le\u00eddo, al detectar que el navegador cuenta con webgl pero aun as\u00ed es lento,
+                                   podemos renderizar en el canvas disponible un globo m\u00e1s peque\u00f1o mejorando el rendimiento y perdiendo calidad. 
+                                   Tenemos controlado si el usuario est\u00e1 en un navegador lento mostrando advertencia.
+                                   Para ello: setResolutionScale(1/(window.devicePixelRatio || 1.0)) */
+            this._resolutionScale = 0.5;
         }
+        this.renderLoop = new CustomRenderLoop(map2D, map3D, false);
+        this.renderLoop.parent = this;
+    };
+    CustomRender.prototype.start = function (debug) {
+        this.renderLoop.setDebug(debug || false);
+        this._renderingAnimation();
+    };
+    CustomRender.prototype.stop = function () {
+        window.cancelAnimationFrame(this.idRequestAnimationFrame);
+    };
+    CustomRender.prototype.restart = function () {
+        this.renderLoop.restart();
+    };
+    CustomRender.prototype.setBlockRendering = function (block) {
+        this._blockRendering = block;
+    };
+    CustomRender.prototype.getCanvas = function () {
+        return this._canvas;
     };
 
-    ctlProto.Controls = {
-        Cfg: {
-            zoomAmount: 200.0
-        },
-        adapter: function (direction) {
-            var self = this;
+    TwoDLinkedFeatureInfo = function (map) {
+        this.layer = null;
 
-            for (var i = 0, len = self.map.controls.length; i < len; i++) {
-                var ctl = self.map.controls[i];
-                if (self.ctrlsToMng.indexOf(ctl) < 0) {
+        var marker = null;
+        var ctlResultsPanel = null;
+        var ctlFeatureInfo = null;
+        var saved$popupDiv = null;
 
-                    switch (true) {
-                        case (self.direction.TO_TWO_D == direction):
-                            ctl.enable();
-                            break;
-                        case (self.direction.TO_THREE_D == direction):
-                            ctl.disable();
-                            break;
-                    }
-                }
-            }
-
-            switch (true) {
-                case (self.direction.TO_TWO_D == direction):
-                    $('[data-no-3d]').removeClass(TC.Consts.classes.HIDDEN);
-                    break;
-                case (self.direction.TO_THREE_D == direction):
-                    $('[data-no-3d]').addClass(TC.Consts.classes.HIDDEN);
-                    break;
-            }
-        },
-        synchronizer: function () {
-            var self = this;
+        var getResultsPanelCtl = function () {
             var done = new $.Deferred();
-            var workLayers = [];
 
-            // obtengo de los controles habilitados en 3D las capas correspondientes
-            for (var i = 0; i < self.threeDControls.length; i++) {
-                var ctl = self.threeDControls[i];
-                ctl = ctl.substr(0, 1).toUpperCase() + ctl.substr(1);
-                var ctrl = self.map.getControlsByClass('TC.control.' + ctl);
-                if (ctrl && ctrl.length && ctrl[0].getLayer)
-                    workLayers.push(ctrl[0].getLayer());
+            if (!ctlResultsPanel) {
+                if (!TC.control.ResultsPanel) {
+                    TC.syncLoadJS(TC.apiLocation + 'TC/control/ResultsPanel')
+                }
+
+                ctlResultsPanel = new TC.control.ResultsPanel({
+                    "div": "results-panel",
+                    "content": "table",
+                    "titles": {
+                        "main": map.getLocaleString("threed.rs.panel.gfi"),
+                        "max": map.getLocaleString("threed.rs.panel.gfi")
+                    },
+                    "openOn": map.Consts.events.GFI
+                });
+                ctlResultsPanel.register(map.map);
+                ctlResultsPanel.render(function () {
+
+                    ctlResultsPanel.onClose = function () {
+                        removeMarker();
+                        map.map.$events.trigger($.Event(TC.Consts.event.POPUPHIDE, { control: ctlFeatureInfo.popup }));
+                    }.bind(this);
+
+                    map.map.on(TC.Consts.event.RESULTSPANELCLOSE, ctlResultsPanel.onClose);
+
+                    done.resolve();
+                });
+            } else {
+                done.resolve();
             }
 
-            $.when.apply($, workLayers).then(function () {
-                if (arguments && arguments.length) {
-                    for (var i = 0; i < arguments.length; i++) {
-                        self.vector2DLayers.push(arguments[i]);
+            return done;
+        };
+        var setMarker = function (pickedPosition) {
+            if (!marker) {
+                var markerStyle = TC.control.FeatureInfoCommons.prototype.markerStyle;
+
+                var billboard = {
+                    position: pickedPosition,
+                    billboard: {
+                        image: TC.Util.getBackgroundUrlFromCss(map.CLASS + '-marker'),
+                        eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                    }
+                };
+
+                marker = map.map3D.addNativeFeature.call(map, billboard);
+
+            } else {
+                marker.position = pickedPosition;
+            }
+        };
+        var removeMarker = function () {
+            map.map3D.removeFeature.call(map, marker);
+            marker = null;
+        };
+
+        ctlFeatureInfo = map.map.getControlsByClass(TC.control.FeatureInfo)[0];
+        if (ctlFeatureInfo) {
+            ctlFeatureInfo.marker = true;
+            saved$popupDiv = ctlFeatureInfo.popup.$popupDiv;
+            ctlFeatureInfo.popup.hide();
+
+            this.layer = ctlFeatureInfo.layer;
+            map.map3D.vector2DLayers.push(this.layer);
+        }
+
+
+        this.clear = function () {
+
+            this.layer = null;
+            removeMarker();
+
+            if (ctlResultsPanel) {
+                if (ctlResultsPanel.onClose) {
+                    map.map.off(TC.Consts.event.RESULTSPANELCLOSE, ctlResultsPanel.onClose);
+                }
+
+                ctlResultsPanel.close();
+            }
+            if (ctlFeatureInfo) {
+                ctlFeatureInfo.popup.$popupDiv = saved$popupDiv;
+                ctlFeatureInfo.popup.hide();
+            }
+        };
+        this.send = function (pickedPosition) {
+            var done = new $.Deferred();
+
+            if (!map.waiting)
+                map.waiting = map.map.getLoadingIndicator().addWait();
+
+            ctlFeatureInfo.popup.$popupDiv = saved$popupDiv;
+
+            setMarker(pickedPosition);
+
+            $.when(getResultsPanelCtl()).then(function () {
+
+                var pickedLocation = Cesium.Ellipsoid.WGS84.cartesianToCartographic(pickedPosition);
+                var reprojected = TC.Util.reproject([Cesium.Math.toDegrees(pickedLocation.longitude), Cesium.Math.toDegrees(pickedLocation.latitude)], map.map3D.crs, map.map.crs);
+                var radius = (map.map.options.pixelTolerance || TC.Cfg.pixelTolerance);
+                var mapWidth = 2 * radius + 1;
+
+                var tilesToRender = map.viewer.scene.globe._surface._tilesToRender;
+                var pickedTile;
+
+                for (var textureIndex = 0; !pickedTile && textureIndex < tilesToRender.length; ++textureIndex) {
+                    var tile = tilesToRender[textureIndex];
+                    if (Cesium.Rectangle.contains(tile.rectangle, pickedLocation)) {
+                        pickedTile = tile;
                     }
                 }
 
-                //for (var i = 0; i < self.vector2DLayers.length; i++) {
-                //    // creo una fuente de datos por cada una de las capas vectoriales
-                //    var vectorLayer = self.vector2DLayers[i];
-                //    if (vectorLayer.features && vectorLayer.features.length) {
+                if (!pickedTile) {
+                    return done;
+                }
 
-                //        // guardamos relaci\u00f3n entre capa 2d y primitivos
-                //        if (!self.vector2DPrimitives.hasOwnProperty(vectorLayer.id))
-                //            self.vector2DPrimitives[vectorLayer.id] = { primitives: [] };
+                var imageryTiles = pickedTile.data.imagery;
+                for (var i = imageryTiles.length - 1; i >= 0; --i) {
+                    var terrainImagery = imageryTiles[i];
+                    var imagery = terrainImagery.readyImagery;
+                    if (!imagery) {
+                        return done;
+                    }
+                }
 
-                //        // creamos un groundPrimitive con instancias (geometr\u00edas + estilos) de todas las features de una misma capa
-                //        var groundPrimitive = self.Vector.create.call(self, vectorLayer.features);
-                //        if (groundPrimitive) {
-                //            self.vector2DPrimitives[vectorLayer.id].primitives.push(groundPrimitive);
-                //            self.viewer.scene.groundPrimitives.add(groundPrimitive);
-                //        }
-                //    }
-                //    //self.viewer.dataSources.add(new Cesium.GeoJsonDataSource(vectorLayer.title || title.id));
-                //}
+                var resolution = calcResolutionForDistance.call(map,
+                    map.viewer.camera.positionCartographic.height,
+                    map.viewer.camera.positionCartographic.latitude);
+                var boxHalfWidth = mapWidth * resolution / 2;
 
-                done.resolve();
+                var bbox = [
+                    reprojected[0] - boxHalfWidth,
+                    reprojected[1] - boxHalfWidth,
+                    reprojected[0] + boxHalfWidth,
+                    reprojected[1] + boxHalfWidth
+                ];
+                var ij = [radius, radius];
+
+                map.map.one(TC.Consts.event.POPUP, function (e) {
+                    ctlResultsPanel.open(e.control.$popupDiv.find('.' + ctlFeatureInfo.CLASS).clone(true, true));
+                    ctlFeatureInfo.popup.$popupDiv = ctlResultsPanel.$divTable;
+                    ctlFeatureInfo.onShowPopUp(e);
+                    ctlFeatureInfo.popup.$popupDiv.removeAttr('style');
+
+                    done.resolve(e);
+                });
+
+                map.map.one(TC.Consts.event.NOFEATUREINFO, function (e) {
+                    ctlFeatureInfo.isActive = savedIsActive;
+
+                    removeMarker(s);
+
+                    if (ctlResultsPanel) {
+                        ctlResultsPanel.close();
+                    }
+
+                    done.resolve(e);
+                });
+
+                map.map.one(TC.Consts.event.FEATUREINFO, function (e) {
+                    ctlFeatureInfo.isActive = savedIsActive;
+
+                    if (e.featureCount == 0) {
+                        removeMarker();
+
+                        if (ctlResultsPanel) {
+                            ctlResultsPanel.close();
+                        }
+                    }
+
+                    done.resolve(e);
+                });
+
+                savedIsActive = ctlFeatureInfo.isActive;
+                ctlFeatureInfo.isActive = true;
+                ctlFeatureInfo.beforeGetFeatureInfo({ xy: ij, control: ctlFeatureInfo });
+                ctlFeatureInfo.wrap.getFeatureInfo(ij, {
+                    mapSize: [mapWidth, mapWidth],
+                    boundingBox: bbox
+                });
             });
 
             return done;
-        },
-        Events: {
-            initialExtent: function (e) {
-                var self = this;
-
-                if (self.map.options.initialExtent && self.map.options.initialExtent.length == 4) {
-
-                    $.when(self.map.setExtent(self.map.options.initialExtent)).then(function () {
-
-                        var ext = self.map.getExtent();
-                        var coordsXY = TC.Util.reproject(ext.slice(0, 2), self.map.crs, self.crs);
-                        var coordsXY2 = TC.Util.reproject(ext.slice(2), self.map.crs, self.crs);
-
-                        self.initExtent = Cesium.Rectangle.fromDegrees(coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]);
-
-                        Cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.initExtent;
-                        Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
-
-                        self.viewer.camera.flyHome(4);
-
-                    }.bind(self));
-                }
-            },
-            zoomin: function (e) {
-                var self = this;
-
-                var center = new Cesium.Cartesian2(
-                    self.viewer.scene.canvas.clientWidth / 2,
-                    self.viewer.scene.canvas.clientHeight / 2);
-                self.Cesium.Events.Zoom.buttomsZoom.call(self, center, self.Controls.Cfg.zoomAmount);
-            },
-            zoomout: function (e) {
-                var self = this;
-
-                var center = new Cesium.Cartesian2(
-                    self.viewer.scene.canvas.clientWidth / 2,
-                    self.viewer.scene.canvas.clientHeight / 2);
-                self.Cesium.Events.Zoom.buttomsZoom.call(self, center, -self.Controls.Cfg.zoomAmount);
+        };
+    };
+    TwoDLinkedLegend = function (map) {
+        var ctlLegend = map.map.getControlsByClass(TC.control.Legend)[0];
+        this.refresh = function () {
+            if (ctlLegend && map.map3D.workLayers.length > 0) {
+                ctlLegend.loadGraphics();
             }
         }
     };
 
-    ctlProto.BaseMap = {
-        analogLayers: {
-            layers: [],
-            getProperties: function (layer) {
-                var self = this;
-                // almacenamos la configuraci\u00f3n an\u00e1loga para el mapa de fondo no soportado.
-                if (layer.options && layer.options.hasOwnProperty('4326')) {
-                    self.BaseMap.analogLayers.layers.push({ id: layer.id, opts: layer.options["4326"] });
-                    return self.BaseMap.analogLayers.layers[self.BaseMap.analogLayers.layers.length - 1].opts;
-                }
+    RasterConverter = function (crsPattern) {
+        this.layerCrs = null;
+
+        var crsPattern = crsPattern;
+
+        var paths = {
+            CRS: ["Capability", "Layer", "CRS"],
+            TILEMATRIXSET: ["Contents", "TileMatrixSet", "Identifier"],
+            TILEMATRIXSETLABELS: ["Contents", "TileMatrixSet"]
+        };
+        var getOfPath = function (obj, p, i) {
+            if (i < p.length - 1) {
+                if (obj.hasOwnProperty(p[i]))
+                    return getOfPath(obj[p[i]], p, ++i);
                 else return null;
-            },
-            findById: function (id) {
-                if (this.layers.length == 0)
-                    return null;
-                else {
-                    for (var i = 0; i < this.layers.length; i++) {
-                        if (this.layers[i].id.toLowerCase().trim() === id.toLowerCase().trim())
-                            return this.layers[i].opts;
+            } else {
+                if (obj instanceof Array) {
+                    var _obj = [];
+                    for (var a = 0; a < obj.length; a++) {
+                        if (obj[a].hasOwnProperty(p[i]))
+                            _obj.push(obj[a][p[i]]);
                     }
 
-                    return null;
+                    return _obj;
+                } else return obj[p[i]];
+            }
+        };
+        var getCRSByLayerOnCapabilities = function (layer) {
+            if ((capsURL = TC.Util.isOnCapabilities(layer.url))) {
+                if ((caps = TC.capabilities[capsURL])) {
+                    return getOfPath(caps, paths.CRS, 0) || getOfPath(caps, paths.TILEMATRIXSET, 0);
                 }
             }
-        },
-        synchronizer: function (direction) {
-            var self = this;
 
-            switch (true) {
-                case (self.direction.TO_TWO_D == direction):
-                    self.BaseMap.Util.addNoCompatibleBaseLayers.call(self);
-
-                    self.map.baseLayer = self.currentMapCfg.baseMap == self.Consts.BLANK_BASE ? self.currentMapCfg.baseVector : self.currentMapCfg.baseMap;
-                    self.map.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: self.map.baseLayer }));
-                    break;
-                case (self.direction.TO_THREE_D == direction):
-                    self.BaseMap.Util.checkCompatibleBaseMaps.call(self);
-                    self.BaseMap.Util.removeNoCompatibleBaseLayers.call(self);
-
-                    if (self.map.baseLayer instanceof TC.layer.Raster) {
-                        var layer = self.map.baseLayer;
-
-                        if (layer.options.relatedWMTS) {
-                            self.map.baseLayer = layer = self.map.getLayer(layer.options.relatedWMTS);
-                            self.map.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: self.map.baseLayer }));
-                        } else if ((obj = self.BaseMap.analogLayers.findById(self.map.baseLayer.id)) != null) {
-                            $.extend(obj, { map: self.map });
-                            layer = new TC.layer.Raster(obj);
-                            layer.isBase = true;
-                        }
-
-                        self.Raster.synchronizer.call(self, layer);
-                    }
-                    else self.baseLayer = self.Consts.BLANK_BASE;
-
-                    break;
-            }
-        },
-
-        Events: {
-            beforeBaseLayerChanged: function (e) {
-                var self = this;
-
-                if (!self.waitting)
-                    self.waitting = self.map.getLoadingIndicator().addWait();
-            },
-            baseLayerChanged: function (e) {
-                var self = this;
-
-                if (self.baseLayer && self.baseLayer !== self.Consts.BLANK_BASE) {
-                    self.viewer.scene.imageryLayers.raiseToTop(self.baseLayer);
-                    self.viewer.scene.imageryLayers.remove(self.baseLayer, true);
-                }
-
-                if (e.layer instanceof TC.layer.Vector)
-                    self.baseLayer = self.Consts.BLANK_BASE;
-                else {
-                    var layer = e.layer;
-                    if ((obj = self.BaseMap.analogLayers.findById(e.layer.id)) != null) {
-                        $.extend(obj, { map: self.map });
-                        layer = new TC.layer.Raster(obj);
-                        layer.isBase = true;
-                    }
-
-                    self.Raster.synchronizer.call(self, layer);
-                }
-
-                self.currentMapCfg.baseMap = self.map.baseLayer;
-            },
-        },
-
-        Util: {
-            checkCompatibleBaseMaps: function () {
-                var self = this;
-                var isBaseRaster = self.map.baseLayer instanceof TC.layer.Raster;
-
-                if (isBaseRaster) {
-                    if ((crs = self.Raster.isCompatible.call(self, self.map.baseLayer)) == null)
-                        if (self.BaseMap.analogLayers.getProperties.call(self, self.map.baseLayer) == null)
-                            self.map.toast(self.getLocaleString('threed.baseLayerNoCompatible', { name: self.map.baseLayer.layerNames }));
-                } else {
-                    self.currentMapCfg.baseVector = self.map.baseLayer;
-                }
-
-                if (self.currentMapCfg.baseMaps.length === 0) {
-                    for (var i = 0; i < self.map.baseLayers.length; i++) {
-                        if (self.map.baseLayers[i] instanceof TC.layer.Raster && !self.Raster.isCompatible.call(self, self.map.baseLayers[i]))
-                            if (self.BaseMap.analogLayers.getProperties.call(self, self.map.baseLayers[i]) == null)
-                                self.currentMapCfg.baseMaps.push({ l: self.map.baseLayers[i], i: i });
-                    }
-                }
-
-                self.currentMapCfg.baseMap = isBaseRaster ? self.map.baseLayer : self.Consts.BLANK_BASE;
-            },
-            removeNoCompatibleBaseLayers: function () {
-                var self = this;
-                var selectNewBaseLayer = false;
-
-                if (self.currentMapCfg.baseMaps && self.currentMapCfg.baseMaps.length) {
-                    for (var i = 0; i < self.currentMapCfg.baseMaps.length; i++) {
-                        for (var j = 0; j < self.map.baseLayers.length; j++) {
-                            if (self.map.baseLayers[j] === self.currentMapCfg.baseMaps[i].l) {
-
-                                if (self.currentMapCfg.baseMap == self.map.baseLayers[j]) {
-                                    // si uno de los mapas de fondo no soportados para 3d es el mapa de fondo seleccionado ahora mismo
-                                    // seleciono otro de los que s\u00ed son soportados
-                                    selectNewBaseLayer = true;
-                                }
-
-                                self.map.$events.trigger($.Event(TC.Consts.event.LAYERREMOVE, { layer: self.map.baseLayers[j] }));
-                                self.map.baseLayers.splice(j, 1);
-                                break;
-                            }
+            return null;
+        };
+        var getTileMatrixSetLabelByLayerOnCapabilities = function (layer, crs) {
+            if ((capsURL = TC.Util.isOnCapabilities(layer.url))) {
+                if ((caps = TC.capabilities[capsURL])) {
+                    var tileMatrixSet = getOfPath(caps, paths.TILEMATRIXSETLABELS, 0);
+                    for (var a = 0; a < tileMatrixSet.length; a++) {
+                        if (tileMatrixSet[a]["Identifier"] === crs) {
+                            return getOfPath(tileMatrixSet[a], ["TileMatrix", "Identifier"], 0);
                         }
                     }
-
-                    if (selectNewBaseLayer) {
-                        // si uno de los mapas de fondo no soportados para 3d es el mapa de fondo seleccionado ahora mismo
-                        // seleciono otro de los que s\u00ed son soportados
-
-                        self.map.baseLayer = self.map.baseLayers[0];
-                        self.map.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: self.map.baseLayer }));
-                    }
-                }
-            },
-            addNoCompatibleBaseLayers: function () {
-                var self = this;
-
-                if (self.currentMapCfg.baseMaps && self.currentMapCfg.baseMaps.length) {
-                    for (var i = 0; i < self.currentMapCfg.baseMaps.length; i++) {
-                        self.map.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: self.currentMapCfg.baseMaps[i].l }));
-                        self.map.baseLayers.splice(self.currentMapCfg.baseMaps[i].i, 0, self.currentMapCfg.baseMaps[i].l);
-                    }
                 }
             }
-        }
-    };
 
-    ctlProto.Layer = {
-        synchronizer: function () {
-            var self = this;
+            return null;
+        };
 
-            var workLayers = self.map.workLayers.slice().reverse();
+        var wmtsLayer = function (layer) {
+            var tileMatrixSetLabels = getTileMatrixSetLabelByLayerOnCapabilities(layer, this.layerCrs);
 
-            for (var i = 0; i < workLayers.length; i++) {
-                var layer = workLayers[i];
-
-                if (layer instanceof TC.layer.Raster)
-                    self.Raster.synchronizer.call(self, layer);
-            }
-        },
-
-        Events: {
-            layerAdded: function (e) {
-                var self = this;
-
-                self.Raster.synchronizer.call(self, e.layer);
-            },
-            layerRemoved: function (e) {
-                var self = this;
-
-                for (var i = 0; i < self.workLayers.length; i++) {
-                    if (self.workLayers[i].imageryProvider.layers.join(',') === e.layer.names.join(',')) {
-                        self.viewer.scene.imageryLayers.raiseToTop(self.workLayers[i]);
-                        self.viewer.scene.imageryLayers.remove(self.workLayers[i], true);
-
-                        self.workLayers.splice(i, 1);
-                        break;
-                    }
-                }
-            },
-            layerVisibility: function (e) {
-                var self = this;
-
-                for (var i = 0; i < self.workLayers.length; i++) {
-                    if (self.workLayers[i].imageryProvider.layers.join(',') === e.layer.names.join(',')) {
-                        self.workLayers[i].show = e.layer.getVisibility();
-                        break;
-                    }
-                }
-            },
-            layerOpacity: function (e) {
-                var self = this;
-
-                for (var i = 0; i < self.workLayers.length; i++) {
-                    if (self.workLayers[i].imageryProvider.layers.join(',') === e.layer.names.join(',')) {
-                        self.workLayers[i].alpha = e.layer.getOpacity();
-                        break;
-                    }
-                }
-            },
-            layerOrder: function (e) {
-                var self = this;
-
-                for (var i = 0; i < self.workLayers.length; i++) {
-                    if (self.workLayers[i].imageryProvider && self.workLayers[i].imageryProvider.layers.join(',') === e.layer.names.join(',')) {
-
-                        if (e.oldIndex > e.newIndex) {
-                            var positions = e.oldIndex - e.newIndex;
-                            for (var p = 0; p < positions; p++) {
-                                self.viewer.scene.imageryLayers.lower(self.workLayers[i]);
-                            }
-
-                        } else {
-                            var positions = e.newIndex - e.oldIndex;
-                            for (var p = 0; p < positions; p++) {
-                                self.viewer.scene.imageryLayers.raise(self.workLayers[i]);
-                            }
-                        }
-
-                        self.workLayers.splice(e.newIndex, 0, self.workLayers.splice(e.oldIndex, 1)[0]);
-                        break;
-                    }
-                }
-            },
-
-            layerUpdate: function (e) {
-                var self = this;
-
-                if (self.vector2DLayers.indexOf(e.layer) > -1) { // se trata de una capa vectorial de alg\u00fan control habilitado en 3D
-                    if (e.layer.features == 0) {
-                        console.log(e.layer.features.length);
-                    } else if (e.layer.features.length > 0) {
-                        console.log(e.layer.features.length);
-                    }
-                }
-            }
-        }
-    };
-
-    ctlProto.Raster = {
-        isCompatible: function (layer) {
-            var self = this;
-
-            var crs = self.Util.getCRSByLayerOnCapabilities(layer);
-            if (crs && crs.length && self.crsPattern.test(crs.join(',')))
-                return crs.join(',').match(self.crsPattern)[0];
-            else return null;
-        },
-        getWMTSLayerSynchronizer: function (layer, crs) {
-            var self = this;
-
-            var tileMatrixSetLabels = this.Util.getTileMatrixSetLabelByLayerOnCapabilities(layer, crs);
-
-            return new Cesium.WebMapTileServiceImageryProvider({
+            var options = {
                 url: layer.options.urlPattern,
                 layer: layer.layerNames,
                 style: 'default',
                 format: layer.format || layer.options.format,
-                tileMatrixSetID: crs,
+                tileMatrixSetID: this.layerCrs,
                 tileMatrixLabels: tileMatrixSetLabels,
                 tilingScheme: new Cesium.GeographicTilingScheme()
-            });
-        },
-        getWMSLayerSynchronizer: function (layer) {
-            var self = this;
+            };
 
-            return new Cesium.WebMapServiceImageryProvider({
+            if (layer.usesProxy) {
+                options.proxy = {
+                    getURL: function (url) {
+                        return TC.proxify(url);
+                    }
+                };
+            }
+
+            return new Cesium.WebMapTileServiceImageryProvider(options);
+        }
+        var wmsLayer = function (layer) {
+            var options = {
                 url: layer.url,
                 layers: layer.layerNames,
                 parameters: {
+                    version: "1.3.0",
                     transparent: true,
                     format: layer.format || layer.options.format
                 }
-            });
-        },
-        synchronizer: function (layer) {
-            var self = this;
+            };
 
-            if (layer instanceof TC.layer.Raster) {
-                var csmLayer;
+            if (layer.usesProxy ||
+                (layer.usesSSL && !TC.Util.isSameOrigin(layer.url))) {
+                options.proxy = {
+                    getURL: function (url) {
+                        return TC.proxify(url);
+                    }
+                };
+            }
 
+            return new Cesium.WebMapServiceImageryProvider(options);
+        };
+
+        this.isCompatible = function (layer) {
+            var crs = getCRSByLayerOnCapabilities(layer);
+            if (crs && crs.length && crsPattern.test(crs.join(','))) {
+                this.layerCrs = crs.join(',').match(crsPattern)[0];
+                return true;
+            } else { return false; }
+        };
+        this.convert = function (layer) {
+            var csmLayer;
+
+            this.isCompatible(layer);
+
+            if (this.layerCrs != null) {
                 switch (true) {
-                    case TC.Consts.layerType.WMTS == layer.type: {
-                        if ((crs = self.Raster.isCompatible.call(self, layer)) != null) {
-                            csmLayer = self.Raster.getWMTSLayerSynchronizer.call(self, layer, crs);
-                        }
-                        else {
-                            self.map.toast(self.getLocaleString('threed.crsNoCompatible', { name: layer.layerNames }));
-                        }
+                    case TC.Consts.layerType.WMTS == layer.type:
+                        csmLayer = wmtsLayer.call(this, layer);
                         break;
-                    }
-                    case TC.Consts.layerType.WMS == layer.type: {
-                        if ((crs = self.Raster.isCompatible.call(self, layer)) != null) {
-                            csmLayer = self.Raster.getWMSLayerSynchronizer(layer);
-                        }
-                        else {
-                            self.map.toast(self.getLocaleString('threed.crsNoCompatible', { name: layer.layerNames }));
-                        }
+                    case TC.Consts.layerType.WMS == layer.type:
+                        csmLayer = wmsLayer(layer);
                         break;
-                    }
                 }
 
                 if (csmLayer) {
-
-                    var newImageryLayer = self.viewer.scene.imageryLayers.addImageryProvider(csmLayer);
-
-                    if (layer.isBase) { // si la capa es el mapa de fondo lo env\u00edo al fondo de las capas en 3D
-                        self.baseLayer = newImageryLayer;
-                        self.viewer.scene.imageryLayers.lowerToBottom(newImageryLayer);
-                    } else {
-                        newImageryLayer.show = layer.getVisibility();
-                        newImageryLayer.alpha = layer.getOpacity();
-
-                        self.workLayers.push(newImageryLayer);
+                    if (csmLayer["enablePickFeatures"] !== undefined) {
+                        csmLayer.enablePickFeatures = false;
+                        csmLayer["tcLayer"] = layer;
                     }
+
+                    return csmLayer;
                 }
             }
-        }
-    };
 
-    ctlProto.CSFeature = {
-        setStyleProperties: function (styles, properties, feature) {
+            return null;
+        };
+    };
+    FeatureConverter = function () {
+        var scene = null;
+        var toCesiumColor = function (hexStringColor, alpha) {
+            if (hexStringColor instanceof Array) {
+                hexStringColor = "rgba(" + hexStringColor[0] + ", " + hexStringColor[1] + ", " + hexStringColor[2] + ", " + hexStringColor[3] + ")";
+            }
+            var color = Cesium.Color.fromCssColorString(hexStringColor);
+            if (alpha) {
+                return color.withAlpha(alpha);
+            }
+
+            return color;
+        }
+        var setStyleProperties = function (styles, properties, feature) {
             for (var key in properties) { // recorremos el diccionario de propiedades que admitimos como estilo
                 var attr = styles[properties[key].prop];
                 if (attr) {
@@ -94055,25 +95923,480 @@ if (!TC.control.MapContents) {
                     }
                 }
             }
-        },
+        }
+        var getPixelSize = function (coords) {
+            var rectangle;
 
-        getCSColor: function (hexStringColor, alpha) {
-            var color = Cesium.Color.fromCssColorString(hexStringColor);
-            if (alpha) {
-                return color.withAlpha(alpha);
+            if (coords.length == 1) {
+                var point = coords[0];
+                var delta = 1000;
+                var minx, miny, maxx, maxy;
+                minx = new Cesium.Cartesian3(point.x - delta, point.y, point.z);
+                miny = new Cesium.Cartesian3(point.x, point.y - delta, point.z);
+                maxx = new Cesium.Cartesian3(point.x + delta, point.y, point.z);
+                maxy = new Cesium.Cartesian3(point.x, point.y + delta, point.z);
+
+                rectangle = Cesium.Rectangle.fromCartesianArray([minx, miny, maxx, maxy], Cesium.Ellipsoid.WGS84);
+            } else {
+                rectangle = Cesium.Rectangle.fromCartesianArray(coords, Cesium.Ellipsoid.WGS84);
             }
 
-            return color;
-        }
-    };
+            var neededCameraPosition = scene.camera.getRectangleCameraCoordinates(rectangle);
+            var distance = Cesium.Cartesian3.distance(neededCameraPosition, Cesium.BoundingSphere.fromPoints(coords).center);
+            var pixelSize = scene.camera.frustum.getPixelDimensions(scene.drawingBufferWidth, scene.drawingBufferHeight, distance, new Cesium.Cartesian2());
+            pixelSize = Math.max(pixelSize.x, pixelSize.y);
+            return Math.round(pixelSize) == 0 ? 1 : pixelSize;
+        };
 
-    ctlProto.Vector = {
-        createCSFeature: function (feature) {
+        var getFeatureStyle = function (feature) {
             var self = this;
+            var styles;
+
+            if (!feature.layer.hasOwnProperty('styles')) {
+                styles = TC.Defaults.styles;
+            } else {
+                styles = feature.layer.styles;
+            }
+
+            styles = styles[feature.STYLETYPE] == undefined ?
+                styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
+                styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
+
+            styles = $.extend({}, styles, feature.options, feature.getStyle());
+
+            return styles;
+        }
+        var polygonConverter = function (feature) {
+            var self = this;
+            var polygon = {};
+            var styles = getFeatureStyle(feature);
+
+            polygon.options = function () {
+                var opt = {};
+                var properties = {
+                    color: { prop: 'fillColor' },
+                    opacity: { prop: 'fillOpacity' },
+                    outlineColor: { prop: 'strokeColor' },
+                    outlineOpacity: { prop: 'strokeOpacity' },
+                    width: { prop: 'strokeWidth' }
+                };
+
+                setStyleProperties(styles, properties, feature);
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        color = toCesiumColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        color = toCesiumColor(properties.color.val);
+                    }
+                }
+
+                opt.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                if (properties.outlineColor.hasOwnProperty('val')) {
+                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                        color = toCesiumColor(properties.outlineColor.val, properties.outlineOpacity.val);
+                    } else {
+                        color = toCesiumColor(properties.outlineColor.val);
+                    }
+                }
+
+                opt.outlineColor = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                if (properties.width.hasOwnProperty('val')) {
+                    opt.width = properties.width.val;
+                }
+
+                return opt;
+            };
+
+            if (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon) {
+                polygon.geometryType = function (coords, options) {
+                    var geomPolys = [];
+                    var geomOutlines = [];
+
+                    var getPolyGeom = function (polygonHierarchy) {
+                        return new Cesium.GeometryInstance({
+                            id: feature.id,
+                            geometry: new Cesium.PolygonGeometry({
+                                polygonHierarchy: polygonHierarchy
+                            }),
+                            attributes: {
+                                color: options.color
+                            }
+                        });
+                    };
+
+                    var getOutlineGeom = function (outlineCoords) {
+                        return new Cesium.GeometryInstance({
+                            id: feature.id + 'outLine',
+                            geometry: new Cesium.CorridorGeometry({
+                                positions: outlineCoords,
+                                width: getPixelSize(outlineCoords) * options.width
+                            }),
+                            attributes: {
+                                color: options.outlineColor
+                            }
+                        });
+                    };
+
+                    for (var i = 0; i < coords.length; i++) {
+                        for (var j = 0; j < coords[i].length; j++) {
+                            var hierarchy;
+                            if (j == 0) {
+                                geomOutlines.push(getOutlineGeom(coords[i][0]));
+                                hierarchy = new Cesium.PolygonHierarchy(coords[i][0]);
+                            } else {
+                                geomOutlines.push(getOutlineGeom(coords[i][j]));
+                                hierarchy.holes.push(new Cesium.PolygonHierarchy(coords[i][j]));
+                            }
+                        }
+
+                        geomPolys.push(getPolyGeom(hierarchy));
+                    }
+
+                    return [
+                        new Cesium.GroundPrimitive({
+                            geometryInstances: geomPolys
+                        }),
+                        new Cesium.GroundPrimitive({
+                            geometryInstances: geomOutlines
+                        })
+                    ];
+                };
+            }
+            else if (TC.feature.Polygon && feature instanceof TC.feature.Polygon) {
+                polygon.geometryType = function (coords, options) {
+                    return [
+                        new Cesium.GroundPrimitive({
+                            geometryInstances: new Cesium.GeometryInstance({
+                                id: feature.id,
+                                geometry: new Cesium.PolygonGeometry({
+                                    polygonHierarchy: new Cesium.PolygonHierarchy(coords)
+                                }),
+                                attributes: {
+                                    color: options.color
+                                }
+                            })
+                        }),
+                        new Cesium.GroundPrimitive({
+                            geometryInstances: new Cesium.GeometryInstance({
+                                id: feature.id + 'outLine',
+                                geometry: new Cesium.CorridorGeometry({
+                                    positions: coords,
+                                    width: getPixelSize(coords) * options.width
+                                }),
+                                attributes: {
+                                    color: options.outlineColor
+                                }
+                            })
+                        })
+                    ];
+                };
+            }
+
+            return polygon;
+        };
+        var lineConverter = function (feature) {
+            var self = this;
+            var line = {};
+            var styles = getFeatureStyle(feature);
+
+            line.options = function () {
+                var opt = {};
+                var properties = {
+                    color: { prop: 'strokeColor' },
+                    opacity: { prop: 'strokeOpacity' },
+                    width: { prop: 'strokeWidth' }
+                };
+
+                setStyleProperties(styles, properties, feature);
+
+                if (properties.width.hasOwnProperty('val')) {
+                    opt.width = properties.width.val;
+                }
+
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        color = toCesiumColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        color = toCesiumColor(properties.color.val);
+                    }
+                }
+
+                opt.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                return opt;
+            };
+
+            if (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline) {
+                line.geometryType = function (coords, options) {
+                    // GLS: con lo siguiente pinta bien calles
+                    if (coords.length == 1) {
+                        coords = coords[0];
+                    }
+
+                    return new Cesium.GroundPrimitive({
+                        geometryInstances: new Cesium.GeometryInstance({
+                            id: feature.id,
+                            geometry: new Cesium.CorridorGeometry({
+                                positions: coords,
+                                width: getPixelSize(coords) * options.width
+                            }),
+                            attributes: {
+                                color: options.color
+                            }
+                        })
+                    });
+                };
+            }
+            else if (TC.feature.Polyline && feature instanceof TC.feature.Polyline) {
+                line.geometryType = function (coords, options) {
+                    return new Cesium.GroundPrimitive({
+                        geometryInstances: new Cesium.GeometryInstance({
+                            id: feature.id,
+                            geometry: new Cesium.CorridorGeometry({
+                                positions: coords,
+                                width: getPixelSize(coords) * options.width
+                            }),
+                            attributes: {
+                                color: options.color
+                            }
+                        })
+                    });
+                };
+            }
+
+            return line;
+        };
+        var pointConverter = function (feature) {
+            var self = this;
+            var point = {};
+            var styles = getFeatureStyle(feature);
+
+            point.options = function () {
+                var opt = {};
+
+                var properties = {
+                    rotation: { prop: 'angle' },
+                    label: { prop: 'label' },
+                    fontSize: { prop: 'fontSize' },
+                    fontColor: { prop: 'fontColor' },
+                    outlineLabelColor: { prop: 'labelOutlineColor' },
+                    outlineLabelWidth: { prop: 'labelOutlineWidth' },
+                    anchor: { prop: 'anchor' },
+                    height: { prop: 'height' },
+                    width: { prop: 'width' },
+                    url: { prop: 'url' },
+                    color: { prop: 'fillColor' },
+                    opacity: { prop: 'fillOpacity' },
+                    outlineColor: { prop: 'strokeColor' },
+                    outlineOpacity: { prop: 'strokeOpacity' },
+                    outlineWidth: { prop: 'strokeWidth' },
+                    radius: { prop: 'radius' }
+                };
+
+                setStyleProperties(styles, properties, feature);
+
+                if (properties.anchor.hasOwnProperty('val')) {
+                    if (!(properties.url.hasOwnProperty('val')) && feature.options.url) {
+                        opt.url = feature.options.url;
+                    } else {
+                        opt.url = properties.url.val;
+                    }
+
+                    opt.anchor = properties.anchor.val;
+                }
+
+                if (properties.height.hasOwnProperty('val')) {
+                    opt.height = properties.height.val;
+                }
+
+                if (properties.width.hasOwnProperty('val')) {
+                    opt.width = properties.width.val;
+                }
+
+                if (properties.rotation.hasOwnProperty('val')) {
+                    opt.rotation = properties.rotation.val;
+                }
+
+                if (properties.label.hasOwnProperty('val')) {
+                    opt.label = properties.label.val;
+                }
+
+                if (properties.fontSize.hasOwnProperty('val')) {
+                    opt.fontSize = properties.fontSize.val;
+                }
+
+                if (properties.fontColor.hasOwnProperty('val')) {
+                    opt.fontColor = toCesiumColor(properties.fontColor.val);
+                }
+
+                if (properties.outlineLabelColor.hasOwnProperty('val')) {
+                    opt.outlineLabelColor = toCesiumColor(properties.outlineLabelColor.val);
+                }
+
+                if (properties.outlineLabelWidth.hasOwnProperty('val')) {
+                    opt.outlineLabelWidth = properties.outlineLabelWidth.val;
+                }
+
+
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        opt.color = toCesiumColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        opt.color = toCesiumColor(properties.color.val);
+                    }
+                }
+
+                if (properties.outlineColor.hasOwnProperty('val')) {
+                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                        opt.outlineColor = toCesiumColor(properties.outlineColor.val, properties.outlineOpacity.val);
+                    } else {
+                        opt.outlineColor = toCesiumColor(properties.outlineColor.val);
+                    }
+                }
+
+                if (properties.outlineWidth.hasOwnProperty('val')) {
+                    opt.outlineWidth = properties.outlineWidth.val;
+                }
+
+                if (properties.radius.hasOwnProperty('val')) {
+                    opt.radius = properties.radius.val;
+                }
+
+                return opt;
+            };
+
+            if (TC.feature.Marker && feature instanceof TC.feature.Marker) {
+                point.geometryType = function (coords, options) {
+                    var billboard = {
+                        id: feature.id,
+                        name: feature.id,
+                        position: coords[0],
+                        billboard: {
+                            image: options.url,
+                            width: options.width,
+                            height: options.height,
+                            eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                            pixelOffset: new Cesium.Cartesian2(options.anchor[0], options.anchor[1]),
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                        }
+                    };
+
+                    if (!options.label) {
+                        return billboard;
+                    } else {
+                        return [billboard, {
+                            id: feature.id,
+                            name: feature.id,
+                            position: coords[0],
+                            label: {
+                                text: options.label,
+                                font: '14pt sans-serif',
+                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                                horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                fillColor: options.fontColor,
+                                showBackground: true,
+                                eyeOffset: new Cesium.Cartesian3(0, 0, -100)
+                            }
+                        }];
+                    }
+                };
+            }
+            else if (TC.feature.Point && feature instanceof TC.feature.Point) {
+                var pinBuilder = new Cesium.PinBuilder();
+
+                point.geometryType = function (coords, options) {
+                    var text = options.label;
+
+                    if (text && !/^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)) {
+                        return {
+                            id: feature.id,
+                            name: feature.id,
+                            position: coords[0],
+                            label: {
+                                text: options.label,
+                                font: '14' + 'px san-serif Arial',
+                                showBackground: true,
+                                eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                                horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                                verticalOrigin: Cesium.VerticalOrigin.BASELINE,
+                                fillColor: Cesium.Color.WHITE
+                            }
+                        };
+                    } else if (/^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)) {
+                        return {
+                            id: feature.id,
+                            name: feature.id,
+                            position: coords[0],
+                            billboard: {
+                                image: pinBuilder.fromText(text, options.fontColor, 48).toDataURL(),
+                                eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                            }
+                        };
+                    }
+                    //else if (options.radius) {
+                    //    return [
+                    //        new Cesium.GroundPrimitive({
+                    //            geometryInstances: new Cesium.GeometryInstance({
+                    //                id: feature.id,
+                    //                geometry: new Cesium.CircleGeometry({
+                    //                    center: coords[0],
+                    //                    radius: getPixelSize(coords) * options.radius
+                    //                }),
+                    //                attributes: {
+                    //                    color: Cesium.ColorGeometryInstanceAttribute.fromColor(options.color)
+                    //                }
+                    //            })
+                    //        })
+                    //        /*,
+                    //        new Cesium.GroundPrimitive({
+                    //            geometryInstances: new Cesium.GeometryInstance({
+                    //                id: feature.id + 'outLine',
+                    //                geometry: new Cesium.CorridorGeometry({
+                    //                    positions: coords,
+                    //                    width: getPixelSize(coords) * options.outlineWidth
+                    //                }),
+                    //                attributes: {
+                    //                    color: options.outlineColor
+                    //                }
+                    //            })
+                    //        })*/
+                    //    ];
+                    //}
+                    else {
+                        return {
+                            id: feature.id,
+                            name: feature.id,
+                            position: coords[0],
+                            billboard: {
+                                image: pinBuilder.fromColor(Cesium.Color.fromCssColorString(TC.Cfg.styles.point.fillColor), 24).toDataURL(),
+                                eyeOffset: new Cesium.Cartesian3(0, 0, -100),
+                                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                            }
+                        };
+                    }
+                };
+            }
+
+            return point;
+        };
+
+        this.convert = function (scn, feature, sourceCrs, targetCrs) {
+            scene = scn;
 
             var cartesians = [];
             var toCartesian = function (coord, arr) {
-                coord = TC.Util.reproject(coord, self.map.crs, self.crs);
+                coord = TC.Util.reproject(coord, sourceCrs, targetCrs);
 
                 arr.push(coord.length > 2 ?
                     Cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]) :
@@ -94082,16 +96405,12 @@ if (!TC.control.MapContents) {
 
             var obj;
             var geometry = feature.geometry;
-            var geometryType;
-            var options = {};
+            var converted;
+
             var point,
                 points,
                 ringsOrPolylines,
-                polygons,
-                isPolygon,
-                isLine,
-                isPoint;
-            var pinBuilder = new Cesium.PinBuilder();
+                polygons;
 
             var forPoints = function (points, arr) {
                 if ($.isArray(points)) {
@@ -94117,77 +96436,13 @@ if (!TC.control.MapContents) {
                 }
             };
 
-            var styles;
-            if (!feature.layer.hasOwnProperty('styles')) {
-                styles = TC.Defaults.styles;
-            } else {
-                styles = feature.layer.styles;
-            }
-
-            styles = styles[feature.STYLETYPE] == undefined ?
-                     styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
-                     styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
-
-            styles = $.extend({}, styles, feature.options);
-
             switch (true) {
                 case (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon):
                     polygons = geometry;
                     if ($.isArray(polygons)) {
                         forPolygons(polygons);
-                        isPolygon = true;
-                        geometryType = function (coords, options) {
-                            var geomPolys = [];
-                            var geomOutlines = [];
 
-                            var getPolyGeom = function (polygonHierarchy) {
-                                return new Cesium.GeometryInstance({
-                                    id: feature.id,
-                                    geometry: new Cesium.PolygonGeometry({
-                                        polygonHierarchy: polygonHierarchy
-                                    }),
-                                    attributes: {
-                                        color: options.color
-                                    }
-                                });
-                            };
-                            var getOutlineGeom = function (outlineCoords) {
-                                return new Cesium.GeometryInstance({
-                                    id: feature.id + 'outLine',
-                                    geometry: new Cesium.CorridorGeometry({
-                                        positions: outlineCoords,
-                                        width: options.width
-                                    }),
-                                    attributes: {
-                                        color: options.outlineColor
-                                    }
-                                });
-                            };
-
-                            for (var i = 0; i < coords.length; i++) {
-                                for (var j = 0; j < coords[i].length; j++) {
-                                    var hierarchy;
-                                    if (j == 0) {
-                                        geomOutlines.push(getOutlineGeom(coords[i][0]));
-                                        hierarchy = new Cesium.PolygonHierarchy(coords[i][0]);
-                                    } else {
-                                        geomOutlines.push(getOutlineGeom(coords[i][j]));
-                                        hierarchy.holes.push(new Cesium.PolygonHierarchy(coords[i][j]));
-                                    }
-                                }
-
-                                geomPolys.push(getPolyGeom(hierarchy));
-                            }
-
-                            return [
-                                new Cesium.GroundPrimitive({
-                                    geometryInstances: geomPolys
-                                }),
-                                new Cesium.GroundPrimitive({
-                                    geometryInstances: geomOutlines
-                                })
-                            ];
-                        };
+                        converted = polygonConverter.call(self, feature);
                     }
                     break;
                 case ((TC.feature.Polygon && feature instanceof TC.feature.Polygon) || (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline)):
@@ -94196,57 +96451,10 @@ if (!TC.control.MapContents) {
                         forRingsOrPolylines(ringsOrPolylines, cartesians);
 
                         if (feature instanceof TC.feature.Polygon) {
-                            isPolygon = true;
-                            geometryType = function (coords, options) {
-                                return [
-                                    new Cesium.GroundPrimitive({
-                                        geometryInstances: new Cesium.GeometryInstance({
-                                            id: feature.id,
-                                            geometry: new Cesium.PolygonGeometry({
-                                                polygonHierarchy: new Cesium.PolygonHierarchy(coords)
-                                            }),
-                                            attributes: {
-                                                color: options.color
-                                            }
-                                        })
-                                    }),
-                                    new Cesium.GroundPrimitive({
-                                        geometryInstances: new Cesium.GeometryInstance({
-                                            id: feature.id + 'outLine',
-                                            geometry: new Cesium.CorridorGeometry({
-                                                positions: coords,
-                                                width: options.width
-                                            }),
-                                            attributes: {
-                                                color: options.outlineColor
-                                            }
-                                        })
-                                    })
-                                ];
-                            };
+                            converted = polygonConverter(feature);
                         }
                         else if (feature instanceof TC.feature.MultiPolyline) {
-                            isPolygon = false;
-                            isLine = true;
-                            geometryType = function (coords, options) {
-                                // GLS: con lo siguiente pinta bien calles
-                                if (coords.length == 1) {
-                                    coords = coords[0];
-                                }
-
-                                return new Cesium.GroundPrimitive({
-                                    geometryInstances: new Cesium.GeometryInstance({
-                                        id: feature.id,
-                                        geometry: new Cesium.CorridorGeometry({
-                                            positions: coords,
-                                            width: options.width
-                                        }),
-                                        attributes: {
-                                            color: options.color
-                                        }
-                                    })
-                                });
-                            };
+                            converted = lineConverter(feature);
                         }
                     }
                     break;
@@ -94254,127 +96462,21 @@ if (!TC.control.MapContents) {
                     points = geometry;
                     if ($.isArray(points)) {
                         forPoints(points, cartesians);
-                        isPolygon = false;
-                        isLine = true;
-                        geometryType = function (coords, options) {
-                            return new Cesium.GroundPrimitive({
-                                geometryInstances: new Cesium.GeometryInstance({
-                                    id: feature.id,
-                                    geometry: new Cesium.CorridorGeometry({
-                                        positions: coords,
-                                        width: options.width
-                                    }),
-                                    attributes: {
-                                        color: options.color
-                                    }
-                                })
-                            });
-                        };
+
+                        converted = lineConverter(feature);
                     }
                     break;
                 case (TC.feature.Marker && feature instanceof TC.feature.Marker):
                     points = [geometry];
                     forPoints(points, cartesians);
-                    isPolygon = isLine = false;
-                    isPoint = true;
-                    geometryType = function (coords, options) {
-                        return {
-                            id: feature.id,
-                            name: feature.id,
-                            position: coords[0],
-                            billboard: {
-                                image: options.url,
-                                width: options.width,
-                                height: options.height,
-                                /*eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                pixelOffset: new Cesium.Cartesian2(options.anchor[0], options.anchor[1]),*/
-                                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                            }
-                        };
-                    };
+
+                    converted = pointConverter(feature);
                     break;
                 case (TC.feature.Point && feature instanceof TC.feature.Point):
                     points = [geometry];
                     forPoints(points, cartesians);
-                    isPolygon = isLine = false;
-                    isPoint = true;
-                    geometryType = function (coords, options) {
-                        var text = options.label;
-                        //if (options.radius) {
-                        //    var point = {
-                        //        id: feature.id,
-                        //        name: feature.id,
-                        //        position: coords[0],
-                        //        point: {
-                        //            color: options.color,
-                        //            pixelSize: options.radius,
-                        //            outlineColor: options.outlineColor,
-                        //            outlineWidth: options.outlineWidth,
-                        //            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                        //        }
-                        //    };
 
-                        //    if (text) {
-                        //        point.label = {
-                        //            text: options.label,
-                        //            font: '14' + 'px san-serif Arial',
-                        //            showBackground: true,
-                        //            eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                        //            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                        //            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-                        //            verticalOrigin: Cesium.VerticalOrigin.BASELINE,
-                        //            fillColor: options.fontColor
-                        //        };
-                        //    }
-
-                        //    return point;
-                        //}
-                        //else 
-                        if (text && !/^[0-9]*$/gi.test(text)) {
-                            return {
-                                id: feature.id,
-                                name: feature.id,
-                                position: coords[0],
-                                label: {
-                                    text: options.label,
-                                    font: '14' + 'px san-serif Arial',
-                                    showBackground: true,
-                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-                                    verticalOrigin: Cesium.VerticalOrigin.BASELINE,
-                                    fillColor: Cesium.Color.WHITE
-                                }
-                            };
-                        } else if (/^[0-9]*$/gi.test(text)) {
-                            return {
-                                id: feature.id,
-                                name: feature.id,
-                                position: coords[0],
-                                billboard: {
-                                    image: pinBuilder.fromText(text, options.fontColor, 48).toDataURL(),
-                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                                    translucencyByDistance: new Cesium.NearFarScalar(0.0, 1.0, 8.0e6, 0.0)
-                                }
-                            };
-                        }
-                        else {
-                            return {
-                                id: feature.id,
-                                name: feature.id,
-                                position: coords[0],
-                                billboard: {
-                                    image: pinBuilder.fromColor(Cesium.Color.fromRandom({ alpha: 1 }), 48).toDataURL(),
-                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                                }
-                            };
-                        }
-                    }
+                    converted = pointConverter(feature);
                     break;
             }
 
@@ -94382,415 +96484,1385 @@ if (!TC.control.MapContents) {
                 return null;
             }
 
-            if (isPolygon) {
-                var properties = {
-                    color: { prop: 'fillColor' },
-                    opacity: { prop: 'fillOpacity' },
-                    outlineColor: { prop: 'strokeColor' },
-                    outlineOpacity: { prop: 'strokeOpacity' },
-                    width: { prop: 'strokeWidth' }
-                };
-
-                self.CSFeature.setStyleProperties(styles, properties, feature);
-                var color;
-                if (properties.color.hasOwnProperty('val')) {
-                    if (properties.opacity.hasOwnProperty('val')) {
-                        color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
-                    } else {
-                        color = self.CSFeature.getCSColor(properties.color.val);
-                    }
-                }
-
-                options.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
-
-                if (properties.outlineColor.hasOwnProperty('val')) {
-                    if (properties.outlineOpacity.hasOwnProperty('val')) {
-                        color = self.CSFeature.getCSColor(properties.outlineColor.val, properties.outlineOpacity.val);
-                    } else {
-                        color = self.CSFeature.getCSColor(properties.outlineColor.val);
-                    }
-                }
-
-                options.outlineColor = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
-
-                if (properties.width.hasOwnProperty('val')) {
-                    options.width = properties.width.val;
-                }
-            }
-            else if (isLine) {
-                var properties = {
-                    color: { prop: 'strokeColor' },
-                    opacity: { prop: 'strokeOpacity' },
-                    width: { prop: 'strokeWidth' }
-                };
-
-                self.CSFeature.setStyleProperties(styles, properties, feature);
-
-                if (properties.width.hasOwnProperty('val')) {
-                    options.width = properties.width.val;
-                }
-
-                var color;
-                if (properties.color.hasOwnProperty('val')) {
-                    if (properties.opacity.hasOwnProperty('val')) {
-                        color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
-                    } else {
-                        color = self.CSFeature.getCSColor(properties.color.val);
-                    }
-                }
-
-                options.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
-            } else {
-                var properties = {
-                    rotation: { prop: 'angle' },
-                    label: { prop: 'label' },
-                    fontSize: { prop: 'fontSize' },
-                    fontColor: { prop: 'fontColor' },
-                    outlineLabelColor: { prop: 'labelOutlineColor' },
-                    outlineLabelWidth: { prop: 'labelOutlineWidth' },
-                    anchor: { prop: 'anchor' },
-                    height: { prop: 'height' },
-                    width: { prop: 'width' },
-                    url: { prop: 'url' },
-                    color: { prop: 'fillColor' },
-                    opacity: { prop: 'fillOpacity' },
-                    outlineColor: { prop: 'strokeColor' },
-                    outlineOpacity: { prop: 'strokeOpacity' },
-                    outlineWidth: { prop: 'strokeWidth' },
-                    radius: { prop: 'radius' }
-                };
-
-                self.CSFeature.setStyleProperties(styles, properties, feature);
-
-                if (properties.anchor.hasOwnProperty('val')) {
-                    if (!(properties.url.hasOwnProperty('val')) && feature.options.url) {
-                        options.url = feature.options.url;
-                    } else {
-                        options.url = properties.url.val;
-                    }
-
-                    options.anchor = properties.anchor.val;
-                }
-
-                if (properties.height.hasOwnProperty('val')) {
-                    options.height = properties.height.val;
-                }
-
-                if (properties.width.hasOwnProperty('val')) {
-                    options.width = properties.width.val;
-                }
-
-                if (properties.rotation.hasOwnProperty('val')) {
-                    options.rotation = properties.rotation.val;
-                }
-
-                if (properties.label.hasOwnProperty('val')) {
-                    options.label = properties.label.val;
-                }
-
-                if (properties.fontSize.hasOwnProperty('val')) {
-                    options.fontSize = properties.fontSize.val;
-                }
-
-                if (properties.fontColor.hasOwnProperty('val')) {
-                    options.fontColor = self.CSFeature.getCSColor(properties.fontColor.val);
-                }
-
-                if (properties.outlineLabelColor.hasOwnProperty('val')) {
-                    options.outlineLabelColor = self.CSFeature.getCSColor(properties.outlineLabelColor.val);
-                }
-
-                if (properties.outlineLabelWidth.hasOwnProperty('val')) {
-                    options.outlineLabelWidth = properties.outlineLabelWidth.val;
-                }
-
-
-                var color;
-                if (properties.color.hasOwnProperty('val')) {
-                    if (properties.opacity.hasOwnProperty('val')) {
-                        options.color = self.CSFeature.getCSColor(properties.color.val, properties.opacity.val);
-                    } else {
-                        options.color = self.CSFeature.getCSColor(properties.color.val);
-                    }
-                }
-
-                if (properties.outlineColor.hasOwnProperty('val')) {
-                    if (properties.outlineOpacity.hasOwnProperty('val')) {
-                        options.outlineColor = self.CSFeature.getCSColor(properties.outlineColor.val, properties.outlineOpacity.val);
-                    } else {
-                        options.outlineColor = self.CSFeature.getCSColor(properties.outlineColor.val);
-                    }
-                }
-
-                if (properties.outlineWidth.hasOwnProperty('val')) {
-                    options.outlineWidth = properties.outlineWidth.val;
-                }
-
-                if (properties.radius.hasOwnProperty('val')) {
-                    options.radius = properties.radius.val;
-                }
-            }
-
             obj = {
                 id: feature.id,
                 attributes: feature.data,
-                geometry: geometryType(cartesians, options),
+                geometry: converted.geometryType(cartesians, converted.options()),
                 boundigSphere: Cesium.BoundingSphere.fromPoints(cartesians)
             };
 
             return obj;
-        },
-        create: function (feature, idLayer) {
+        };
+    };
+
+    ctlProto.map3D = (function () {
+
+        var currentMapCfg = {
+            baseMap: '',
+            baseMaps: [],
+            baseVector: ''
+        };
+        var analogLayers = {
+            layers: [],
+            getProperties: function (layer) {
+                var self = this;
+                // almacenamos la configuraci\u00f3n an\u00e1loga para el mapa de fondo no soportado.
+                if (layer.options && layer.options.hasOwnProperty('4326')) {
+                    analogLayers.layers.push({ id: layer.id, opts: layer.options["4326"] });
+                    return analogLayers.layers[analogLayers.layers.length - 1].opts;
+                }
+                else return null;
+            },
+            findById: function (id) {
+                if (this.layers.length == 0)
+                    return null;
+                else {
+                    for (var i = 0; i < this.layers.length; i++) {
+                        if (this.layers[i].id.toLowerCase().trim() === id.toLowerCase().trim())
+                            return this.layers[i].opts;
+                    }
+
+                    return null;
+                }
+            }
+        };
+        var checkCompatibleBaseMaps = function (map) {
             var self = this;
-            var done = new $.Deferred();
-            var threedFeature = self.Vector.createCSFeature.call(self, feature);
-            return done.resolve(threedFeature);
-        },
-        Events: {
-            zoomToRectangle: function (rectangle) {
-                var self = this;
 
-                var boundingSphere = Cesium.BoundingSphere.fromRectangle3D(rectangle);
-                var controller = self.viewer.scene.screenSpaceCameraController;
-                controller.minimumZoomDistance = Math.min(controller.minimumZoomDistance, boundingSphere.radius * 0.5);
-                var zoomOptions = {};
+            var isBaseRaster = map.baseLayer instanceof TC.layer.Raster;
 
-                self.viewer.camera.flyToBoundingSphere(boundingSphere, {
-                    duration: zoomOptions.duration,
-                    maximumHeight: zoomOptions.maximumHeight,
-                    offset: zoomOptions.offset
-                });
-            },
-            featureAdded: function (e) {
-                var self = this;
-                var idLayer = e.layer.id;
-                self.Vector.create.call(self, e.feature, idLayer).then(function (threedFeature) {
-                    var currentRectangle;
-                    var f = threedFeature.geometry;
+            if (isBaseRaster) {
+                if ((crs = rasterConverter.isCompatible(map.baseLayer)) == null)
+                    if (analogLayers.getProperties.call(self, self.map.baseLayer) == null)
+                        map.toast(self.getLocaleString('threed.baseLayerNoCompatible', { name: map.baseLayer.layerNames }));
+            } else {
+                currentMapCfg.baseVector = map.baseLayer;
+            }
 
-                    var addFeature = function (csFeature, rectangle) {
+            if (currentMapCfg.baseMaps.length === 0) {
+                for (var i = 0; i < map.baseLayers.length; i++) {
+                    if (map.baseLayers[i] instanceof TC.layer.Raster && !rasterConverter.isCompatible(map.baseLayers[i]))
+                        if (analogLayers.getProperties.call(self, map.baseLayers[i]) == null)
+                            currentMapCfg.baseMaps.push({ l: map.baseLayers[i], i: i });
+                }
+            }
 
-                        var getRectangle = function (csFeature) {
-                            if (csFeature.geometryInstances) {
-                                var geom = csFeature.geometryInstances;
-                                for (var i = 0; i < geom.length; i++) {
-                                    if (!currentRectangle) {
-                                        currentRectangle = geom[i].geometry.rectangle;
-                                    } else {
-                                        if (!Cesium.Rectangle.equals(currentRectangle, geom[i].geometry.rectangle)) {
-                                            currentRectangle = Cesium.Rectangle.union(currentRectangle, geom[i].geometry.rectangle);
-                                        }
-                                    }
-                                }
+            currentMapCfg.baseMap = isBaseRaster ? map.baseLayer : self.Consts.BLANK_BASE;
+        };
+        var removeNoCompatibleBaseLayers = function (map) {
+            var selectNewBaseLayer = false;
+
+            if (currentMapCfg.baseMaps && currentMapCfg.baseMaps.length) {
+                for (var i = 0; i < currentMapCfg.baseMaps.length; i++) {
+                    for (var j = 0; j < map.baseLayers.length; j++) {
+                        if (map.baseLayers[j] === currentMapCfg.baseMaps[i].l) {
+
+                            if (currentMapCfg.baseMap == map.baseLayers[j]) {
+                                // si uno de los mapas de fondo no soportados para 3d es el mapa de fondo seleccionado ahora mismo
+                                // seleciono otro de los que s\u00ed son soportados
+                                selectNewBaseLayer = true;
                             }
-                        };
-                        var saveFeature = function (idLayer, csFeature) {
-                            if (!self.vector2DFeatures.hasOwnProperty(idLayer)) {
-                                self.vector2DFeatures[idLayer] = [csFeature];
-                            } else {
-                                self.vector2DFeatures[idLayer].push(csFeature);
-                            }
-                        };
 
-                        switch (true) {
-                            case csFeature instanceof Cesium.GroundPrimitive: {
-                                self.Cesium.CustomRender.setBlockRendering(false);
-                                self.viewer.scene.groundPrimitives.add(csFeature);
-                                saveFeature(idLayer, csFeature);
-                                break;
-                            }
-                            case csFeature instanceof Object: {
-                                self.Cesium.CustomRender.setBlockRendering(false);
-                                self.viewer.entities.add(csFeature);
-                                saveFeature(idLayer, csFeature);
-                                break;
-                            }
+                            map.$events.trigger($.Event(TC.Consts.event.LAYERREMOVE, { layer: map.baseLayers[j] }));
+                            map.baseLayers.splice(j, 1);
+                            break;
                         }
-
-                        if (rectangle) {
-                            getRectangle(csFeature);
-                        }
-                    };
-
-                    if (f instanceof Array) {
-                        for (var fType = 0; fType < f.length; fType++) {
-                            addFeature(f[fType], fType === 0);
-                        }
-                    } else {
-                        addFeature(f, false);
                     }
+                }
 
-                    self.Cesium.CustomRender.setBlockRendering(false);
+                if (selectNewBaseLayer) {
+                    // si uno de los mapas de fondo no soportados para 3d es el mapa de fondo seleccionado ahora mismo
+                    // seleciono otro de los que s\u00ed son soportados
 
-                    if (currentRectangle) {
-                        clearTimeout(self._featureAddedTimeout);
-                        self.Vector.Events.zoomToRectangle.call(self, currentRectangle);
-                    } else {
-                        /* GLS: Como nos llegan las features una en una no puedo saber de antemano si voy a tener rect\u00e1ngulo de pol\u00edgono o l\u00edneas o si es un punto. 
-                           Por ello lo controlo con un timeout */
-                        clearTimeout(self._featureAddedTimeout);
-                        self._featureAddedTimeout = setTimeout(function () {
-                            self.viewer.flyTo(self.viewer.entities);
-                        }, 100);
-                    }
-                });
-            },
-            featureRemoved: function (e) {
-                var self = this;
-
-                if (self.vector2DLayers.indexOf(e.layer) > -1) { // se trata de una capa vectorial de alg\u00fan control habilitado en 3D
-                    if (self.vector2DFeatures.hasOwnProperty(e.layer.id)) {
-                        var threedFeature = self.vector2DFeatures[e.layer.id];
-
-                        for (var i = 0; i < threedFeature.length; i++) {
-                            var f = threedFeature[i];
-                            switch (true) {
-                                case f instanceof Cesium.GroundPrimitive:
-                                    self.Cesium.CustomRender.setBlockRendering(false);
-                                    self.viewer.scene.groundPrimitives.remove(f);
-                                    break;
-                                case f instanceof Object:
-                                    self.Cesium.CustomRender.setBlockRendering(false);
-                                    self.viewer.entities.removeById(f.id);
-                                    break;
-                            }
-
-                            self.Cesium.CustomRender.setBlockRendering(false);
-                        }
-
-                        delete self.vector2DFeatures[e.layer.id];
-                    }
+                    map.baseLayer = map.baseLayers[0];
+                    map.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: map.baseLayer }));
+                }
+            }
+        };
+        var addNoCompatibleBaseLayers = function (map) {
+            if (currentMapCfg.baseMaps && currentMapCfg.baseMaps.length) {
+                for (var i = 0; i < currentMapCfg.baseMaps.length; i++) {
+                    map.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: currentMapCfg.baseMaps[i].l }));
+                    map.baseLayers.splice(currentMapCfg.baseMaps[i].i, 0, currentMapCfg.baseMaps[i].l);
                 }
             }
         }
-    };
 
-    ctlProto.Util = {
-        browserSupportWebGL: function () {
+        var rasterConverter = new RasterConverter(/(EPSG\:?4326)/i);
+        var featureConverter = new FeatureConverter();
+
+        var getCesiumLibrary = function () {
             var self = this;
-            var result = false;
+            var done = new $.Deferred();
+            if (window.Cesium)
+                done.resolve();
+            else {
+                TC.loadJS(!window.Cesium, [TC.Consts.url.CESIUM], function () {
+                    done.resolve();
+                });
+            }
 
-            //Check for webgl support and if not, then fall back to leaflet
-            if (!window.WebGLRenderingContext) {
-                // Browser has no idea what WebGL is. Suggest they
-                // get a new browser by presenting the user with link to
-                // http://get.webgl.org
-                result = false;
-            } else {
-                var canvas = document.createElement('canvas');
+            return done;
+        };
+        var overrideDesktopZoom = function () {
+            var self = this;
 
-                var webglOptions = {
-                    alpha: false,
-                    stencil: false,
-                    failIfMajorPerformanceCaveat: true
-                };
+            if (!TC.Util.detectMobile()) {
+                self.viewer.scene.screenSpaceCameraController.enableZoom = false;
 
-                try {
-                    var gl = canvas.getContext("webgl", webglOptions) ||
-                             canvas.getContext("experimental-webgl", webglOptions) ||
-                             canvas.getContext("webkit-3d", webglOptions) ||
-                             canvas.getContext("moz-webgl", webglOptions);
-                    if (!gl) {
-                        // We couldn't get a WebGL context without a major performance caveat.  Let's see if we can get one at all.
-                        webglOptions.failIfMajorPerformanceCaveat = false;
-                        gl = canvas.getContext("webgl", webglOptions) ||
-                             canvas.getContext("experimental-webgl", webglOptions) ||
-                             canvas.getContext("webkit-3d", webglOptions) ||
-                             canvas.getContext("moz-webgl", webglOptions);
-                        if (!gl) {
-                            // No WebGL at all.
-                            result = false;
-                        } else {
-                            // We can do WebGL, but only with software rendering (or similar).
-                            result = 'slow';
-                            self.isSlower = true;
-                        }
-                    } else {
-                        // WebGL is good to go!
-                        result = true;
-                    }
-                } catch (e) {
-                    console.log(E);
+                var element = self.viewer.scene.canvas;
+                // detect available wheel event
+                var wheelEvent;
+                if ('onwheel' in element) {
+                    // spec event type
+                    wheelEvent = 'wheel';
+                } else if (document.onmousewheel !== undefined) {
+                    // legacy event type
+                    wheelEvent = 'mousewheel';
+                } else {
+                    // older Firefox
+                    wheelEvent = 'DOMMouseScroll';
                 }
+                element.addEventListener(wheelEvent, function (event) {
+                    var delta;
+                    // standard wheel event uses deltaY.  sign is opposite wheelDelta.
+                    // deltaMode indicates what unit it is in.
+                    if (event.deltaY) {
+                        var deltaMode = event.deltaMode;
+                        if (deltaMode === event.DOM_DELTA_PIXEL) {
+                            delta = -event.deltaY;
+                        } else if (deltaMode === event.DOM_DELTA_LINE) {
+                            delta = -event.deltaY * 40;
+                        } else {
+                            // DOM_DELTA_PAGE
+                            delta = -event.deltaY * 120;
+                        }
+                    } else if (event.detail > 0) {
+                        // old Firefox versions use event.detail to count the number of clicks. The sign
+                        // of the integer is the direction the wheel is scrolled.
+                        delta = event.detail * -120;
+                    } else {
+                        delta = event.wheelDelta;
+                    }
 
-                if (result === "slow" || !result) {
-                    var warning = result === "slow" ? "threed.slowSupport.supported" : "threed.not.supported";
-                    self.map.toast(self.getLocaleString(warning), {
-                        type: TC.Consts.msgType.WARNING,
-                        duration: 10000
+                    self.map3D.zoomToCartesian.call(self, self.map3D._lastMousePosition, delta);
+
+                }, false);
+
+                var eventHandler = new Cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
+                eventHandler.setInputAction(function (event) {
+                    self.map3D._lastMousePosition = event;
+                }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                eventHandler.setInputAction(function (wheelZoomAmount) {
+                    self.map3D.zoomToCartesian.call(self, self.map3D._lastMousePosition, wheelZoomAmount);
+                }, Cesium.ScreenSpaceEventType.WHEEL);
+                var pinchCenterPosition = new Cesium.Cartesian2();
+                var pinchAmount = 0;
+                eventHandler.setInputAction(function (event) {
+                    Cesium.Cartesian2.lerp(event.position1, event.position2, 0.5, pinchCenterPosition);
+                }, Cesium.ScreenSpaceEventType.PINCH_START);
+                eventHandler.setInputAction(function (event) {
+                    var diff = event.distance.endPosition.y - event.distance.startPosition.y;
+                    var rangeWindowRatio = diff / self.viewer.scene.canvas.clientHeight;
+                    rangeWindowRatio = Math.min(rangeWindowRatio, self.viewer.scene.screenSpaceCameraController.maximumMovementRatio);
+                    pinchAmount = rangeWindowRatio;
+                }, Cesium.ScreenSpaceEventType.PINCH_MOVE);
+                eventHandler.setInputAction(function (event) {
+                    self.map3D.zoomToCartesian.call(self, { endPosition: pinchCenterPosition }, pinchAmount);
+                }, Cesium.ScreenSpaceEventType.PINCH_END);
+            }
+        };
+
+        var addFeature = function (csFeature) {
+            var addedFeature = csFeature;
+            switch (true) {
+                case csFeature instanceof Cesium.GroundPrimitive: {
+                    this.viewer.scene.groundPrimitives.add(csFeature);
+                    break;
+                }
+                case csFeature instanceof Object && csFeature.hasOwnProperty('billboard'): {
+                    if (!this.viewer.billboardCollection) {
+                        this.viewer.billboardCollection = this.viewer.scene.primitives.add(new Cesium.BillboardCollection({
+                            scene: this.viewer.scene
+                        }));
+                    }
+
+                    var billboardAtCollection = this.viewer.billboardCollection.add({
+                        position: csFeature.position,
+                        image: csFeature.billboard.image,
+                        verticalOrigin: csFeature.billboard.verticalOrigin,
+                        heightReference: csFeature.billboard.heightReference
+                    });
+
+                    addedFeature = billboardAtCollection;
+                    break;
+                }
+                case csFeature instanceof Object: {
+                    addedFeature = this.viewer.entities.add(csFeature);
+                    break;
+                }
+            }
+
+            return addedFeature;
+        };
+        var linkFeature = function (map, idLayer, feature) {
+            if (!map.vector2DFeatures.hasOwnProperty(idLayer)) {
+                map.vector2DFeatures[idLayer] = [feature];
+            } else {
+                map.vector2DFeatures[idLayer].push(feature);
+            }
+        };
+
+        var listenTo = [
+            TC.Consts.event.BEFOREBASELAYERCHANGE, TC.Consts.event.BASELAYERCHANGE,
+            TC.Consts.event.LAYERADD, TC.Consts.event.LAYERREMOVE, TC.Consts.event.LAYERVISIBILITY, TC.Consts.event.LAYEROPACITY, TC.Consts.event.LAYERORDER,
+            TC.Consts.event.FEATUREADD, TC.Consts.event.FEATUREREMOVE, TC.Consts.event.FEATURESCLEAR,
+            TC.Consts.event.ZOOM, TC.Consts.event.ZOOMTO];
+        var event2DHandler = function (e) {
+            var self = this;
+
+            var eventType = e.type + '.tc';
+            switch (true) {
+                case eventType == TC.Consts.event.BEFOREBASELAYERCHANGE:
+                    if (!self.waiting)
+                        self.waiting = self.map.getLoadingIndicator().addWait();
+                    break;
+                case eventType == TC.Consts.event.BASELAYERCHANGE: {
+                    self.map3D.setBaseLayer.call(self, e.layer);
+                    break;
+                }
+                case eventType == TC.Consts.event.LAYERADD: {
+                    self.map3D.addLayer.call(self, e.layer);
+                    break;
+                }
+                case eventType == TC.Consts.event.LAYERREMOVE: {
+                    self.map3D.removeLayer.call(self, e.layer);
+                    break;
+                }
+                case eventType == TC.Consts.event.LAYERVISIBILITY: {
+                    self.map3D.setRenderOptionsLayer.call(self, e.layer, { visibility: e.layer.getVisibility() });
+                    break;
+                }
+                case eventType == TC.Consts.event.LAYEROPACITY: {
+                    self.map3D.setRenderOptionsLayer.call(self, e.layer, { opacity: e.layer.getOpacity() });
+                    break;
+                }
+                case eventType == TC.Consts.event.LAYERORDER: {
+                    for (var i = 0; i < self.map3D.workLayers.length; i++) {
+                        if (self.map3D.workLayers[i].imageryProvider && self.map3D.workLayers[i].imageryProvider.layers.join(',') === e.layer.names.join(',')) {
+
+                            if (e.oldIndex > e.newIndex) {
+                                var positions = e.oldIndex - e.newIndex;
+                                for (var p = 0; p < positions; p++) {
+                                    self.viewer.scene.imageryLayers.lower(self.map3D.workLayers[i]);
+                                }
+
+                            } else {
+                                var positions = e.newIndex - e.oldIndex;
+                                for (var p = 0; p < positions; p++) {
+                                    self.viewer.scene.imageryLayers.raise(self.map3D.workLayers[i]);
+                                }
+                            }
+
+                            self.map3D.workLayers.splice(e.newIndex, 0, self.map3D.workLayers.splice(e.oldIndex, 1)[0]);
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case eventType == TC.Consts.event.FEATUREADD: {
+                    self.map3D.addFeature.call(self, e.feature);
+                    break;
+                }
+                case eventType == TC.Consts.event.FEATUREREMOVE: {
+                    if (self.map3D.vector2DFeatures && self.map3D.vector2DFeatures.hasOwnProperty(e.layer.id)) {
+                        var threedFeature = self.map3D.vector2DFeatures[e.layer.id];
+
+                        for (var i = 0; i < threedFeature.length; i++) {
+                            self.map3D.removeFeature.call(self, threedFeature[i]);
+                        }
+
+                        delete self.map3D.vector2DFeatures[e.layer.id];
+                    }
+                    break;
+                }
+                case eventType == TC.Consts.event.FEATURESCLEAR: {
+                    if (self.map3D.vector2DFeatures && self.map3D.vector2DFeatures.hasOwnProperty(e.layer.id)) {
+                        var threedFeature = self.map3D.vector2DFeatures[e.layer.id];
+
+                        for (var i = 0; i < threedFeature.length; i++) {
+                            self.map3D.removeFeature.call(self, threedFeature[i]);
+                        }
+
+                        delete self.map3D.vector2DFeatures[e.layer.id];
+                    }
+                    break;
+                }
+                case eventType == TC.Consts.event.ZOOM: {
+                    if (self.cameraControls && !self.cameraControls.moving) {
+                        self.map3D.flyToMapCoordinates.call(self, self.mapView.getCenter());
+                    }
+                    break;
+                }
+                case eventType == TC.Consts.event.ZOOMTO: {
+                    if (self.lastZoom && performance.now() - self.lastZoom < 50) {
+                        return;
+                    }
+                    self.lastZoom = performance.now();
+
+                    var coordsXY = TC.Util.reproject(e.extent.slice(0, 2), self.map.crs, self.map3D.crs);
+                    var coordsXY2 = TC.Util.reproject(e.extent.slice(2), self.map.crs, self.map3D.crs);
+                    var rectangle = Cesium.Rectangle.fromDegrees(coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]);
+
+                    self.map3D.flyToRectangle.call(self, rectangle);
+                    break;
+                }
+            }
+        };
+
+        var alterAllowedControls = function (direction) {
+            var self = this;
+
+            for (var i = 0, len = self.map.controls.length; i < len; i++) {
+                var ctl = self.map.controls[i];
+                if (self.ctrlsToMng.indexOf(ctl) < 0) {
+
+                    switch (true) {
+                        case (self.direction.TO_TWO_D == direction):
+                            ctl.enable();
+                            break;
+                        case (self.direction.TO_THREE_D == direction):
+                            ctl.disable();
+                            break;
+                    }
+                }
+            }
+
+            switch (true) {
+                case (self.direction.TO_TWO_D == direction):
+                    $('[data-no-3d]').removeClass(TC.Consts.classes.HIDDEN);
+                    self.ctrlsToMng.forEach(function (ctl) {
+                        ctl._$div.removeClass(TC.Consts.classes.THREED);
+                    });
+                    break;
+                case (self.direction.TO_THREE_D == direction):
+                    $('[data-no-3d]').addClass(TC.Consts.classes.HIDDEN);
+                    self.ctrlsToMng.forEach(function (ctl) {
+                        ctl._$div.addClass(TC.Consts.classes.THREED);
+                    });
+                    break;
+            }
+
+            self.map3D.linked2DControls.legend = new TwoDLinkedLegend(self);
+        };
+        var getAllowedControlsLayer = function () {
+            var self = this;
+
+            var done = new $.Deferred();
+            var workLayers = [];
+
+            // obtengo de los controles habilitados en 3D y sus correspondientes capas 
+            for (var i = 0; i < self.threeDControls.length; i++) {
+                var ctl = self.threeDControls[i];
+                ctl = ctl.substr(0, 1).toUpperCase() + ctl.substr(1);
+                var ctrl = self.map.getControlsByClass('TC.control.' + ctl);
+                if (ctrl && ctrl.length && ctrl[0].getLayer) {
+                    workLayers.push(ctrl[0].getLayer());
+                }
+                else if (ctrl[0].layer) {
+                    workLayers.push(ctrl[0].layer);
+                } else if (ctrl[0].layers) {
+                    ctrl[0].layers.forEach(function (elem) {
+                        if (elem instanceof TC.layer.Vector) {
+                            workLayers.push(elem);
+                        }
+                    });
+                }
+            }
+
+            $.when.apply($, workLayers).then(function () {
+
+                if (arguments && arguments.length) {
+
+                    self.map3D.vector2DLayers = Array.prototype.slice.call(arguments, 0).filter(function (elem) {
+                        return elem instanceof TC.layer.Vector;
+                    });
+
+                    self.map3D.vector2DLayers.forEach(function (layer) {
+                        if (layer.features && layer.features.length) {
+                            layer.features.forEach(function (feature) {
+                                self.map3D.addFeature.call(self, feature);
+                            });
+                        }
                     });
                 }
 
-                return result;
+                done.resolve();
+            });
+
+            return done;
+        };
+
+        var override2DZoom = function (activate) {
+            var self = this;
+
+            var amount = 200.0;
+            var initialExtent, zoomin, zoomout;
+
+            var zoom = function (amount) {
+                var self = this;
+
+                var center = new Cesium.Cartesian2(
+                    self.viewer.scene.canvas.clientWidth / 2,
+                    self.viewer.scene.canvas.clientHeight / 2);
+
+                self.map3D.zoomToCartesian.call(self, { endPosition: center }, amount);
+            };
+
+            if (activate) {
+                initialExtent = function (e) {
+                    var self = this;
+
+                    if (e.stopPropagation) e.stopPropagation();
+                    if (e.preventDefault) e.preventDefault();
+
+                    var coordsXY = TC.Util.reproject(self.map.options.initialExtent.slice(0, 2), self.map.crs, self.map3D.crs);
+                    var coordsXY2 = TC.Util.reproject(self.map.options.initialExtent.slice(2), self.map.crs, self.map3D.crs);
+                    var rectangle = Cesium.Rectangle.fromDegrees(coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]);
+
+                    self.map3D.flyToRectangle.call(self, rectangle, { duration: 0.1 });
+
+                    return false;
+
+                }.bind(self);
+
+                zoomin = function (e) {
+                    zoom.call(self, amount);
+                }.bind(self);
+
+                zoomout = function (e) {
+                    zoom.call(self, -amount);
+                }.bind(self);
+
+                $('.' + TC.control.NavBar.prototype.CLASS + '-btn-home').on('click', initialExtent);
+                $('.' + TC.control.NavBar.prototype.CLASS + '-btn-zoomin').on('click', zoomin);
+                $('.' + TC.control.NavBar.prototype.CLASS + '-btn-zoomout').on('click', zoomout);
             }
-        },
-        paths: {
-            CRS: ["Capability", "Layer", "CRS"],
-            TILEMATRIXSET: ["Contents", "TileMatrixSet", "Identifier"],
-            TILEMATRIXSETLABELS: ["Contents", "TileMatrixSet"]
-        },
-        getOfPath: function (obj, p, i) {
-            if (i < p.length - 1) {
-                if (obj.hasOwnProperty(p[i]))
-                    return this.getOfPath(obj[p[i]], p, ++i);
-                else return null;
-            } else {
-                if (obj instanceof Array) {
-                    var _obj = [];
-                    for (var a = 0; a < obj.length; a++) {
-                        if (obj[a].hasOwnProperty(p[i]))
-                            _obj.push(obj[a][p[i]]);
+            else {
+                $('.' + TC.control.NavBar.prototype.CLASS + '-btn-home').off('click', initialExtent);
+                $('.' + TC.control.NavBar.prototype.CLASS + '-btn-zoomin').off('click', zoomin);
+                $('.' + TC.control.NavBar.prototype.CLASS + '-btn-zoomout').off('click', zoomout);
+            }
+        };
+
+        return {
+            crs: 'EPSG:4326',
+            crsPattern: /(EPSG\:?4326)/i,
+
+            customRender: null,
+
+            baseLayer: null,
+
+            workLayers: [],
+            vector2DLayers: [],
+            vector2DFeatures: {},
+
+            linked2DControls: {},
+
+            isLoadingTiles: function () {
+                var self = this;
+
+                var surface = self.viewer.scene.globe['_surface'];
+                return !surface['_tileProvider'].ready ||
+                    surface['_tileLoadQueueHigh'].length > 0 ||
+                    surface['_tileLoadQueueMedium'].length > 0 ||
+                    surface['_tileLoadQueueLow'].length > 0 ||
+                    surface['_debug']['tilesWaitingForChildren'] > 0;
+            },
+
+            loadTerrainProvider: function () {
+                var self = this;
+                if (!self.terrainProvider)
+                    self.terrainProvider = new Cesium.CesiumTerrainProvider({
+                        url: self.Consts.TERRAIN_URL,
+                        requestWaterMask: true,
+                        requestVertexNormals: true
+                    });
+
+                return self.terrainProvider;
+            },
+            loadViewer: function () {
+                var self = this;
+                var done = new $.Deferred();
+
+                if (!self.viewer) {
+                    getCesiumLibrary().then(function () {
+
+                        var globe = new Cesium.Globe();
+                        globe.baseColor = Cesium.Color.WHITE;
+                        globe.enableLighting = true;
+
+                        self.viewer = self.map3D.viewer = new Cesium.Viewer(self.selectors.divThreedMap, {
+                            terrainProvider: self.map3D.loadTerrainProvider.call(self),
+                            terrainExaggeration: 1.0,
+                            terrainShadows: Cesium.ShadowMode.ENABLED,
+
+                            animation: false,
+                            timeline: false,
+                            fullscreenButton: false,
+                            baseLayerPicker: false,
+                            imageryProvider: false,
+                            navigationInstructionsInitiallyVisible: false,
+                            navigationHelpButton: false,
+                            geocoder: false,
+                            homeButton: false,
+                            infoBox: false,
+                            sceneModePicker: false,
+                            selectionIndicator: false,
+                            globe: globe,
+                            useDefaultRenderLoop: !self.options.customRender
+                        });
+
+                        if (self.options.customRender) {
+                            // lanzamos el nuestro render                    
+                            self.map3D.customRender = new CustomRender(self.map, self.viewer, self.isSlower);
+                            self.map3D.customRender.start(self.options.isDebug || false);
+                            self.map3D.customRender.parent = self;
+                        }
+
+                        self.viewer.readyPromise = new $.Deferred();
+
+                        // personalizaci\u00f3n de la escena
+                        self.viewer.scene.backgroundColor = Cesium.Color.WHITE;
+                        self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
+                        self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 500000;
+                        self.viewer.scene.globe.depthTestAgainstTerrain = true;
+
+                        // borramos cualquier capa que haya
+                        self.viewer.scene.imageryLayers.removeAll();
+
+                        // registramos listeners para capturar errores del terreno y del render
+                        self.viewer.terrainProvider.errorEvent.addEventListener(function (e) {
+                            var self = this;
+
+                            if (e.error) {
+                                switch (e.error.statusCode) {
+                                    case 403:
+                                    case 404: break;
+                                }
+                            }
+                        }, self);
+                        self.viewer.scene.renderError.addEventListener(function (e) {
+                            var self = this;
+
+                            self.$divThreedMap.addClass(self.classes.LOADING);
+                            self.map.toast('Error', { type: TC.Consts.msgType.ERROR });
+                        }, self);
+
+                        // controlamos la carga de tiles para mostrar loading cuando pida tiles
+                        self.map3D.tileLoadingHandler = new Cesium.EventHelper();
+                        self.map3D.tileLoadingHandler.add(self.viewer.scene.globe.tileLoadProgressEvent, function (data) {
+                            if (!self.waiting)
+                                self.waiting = self.map.getLoadingIndicator().addWait();
+
+                            if (data === 0) {
+                                self.map.getLoadingIndicator().removeWait(self.waiting);
+                                delete self.waiting;
+
+                                self.viewer.readyPromise.resolve();
+
+                                self.$events.trigger(TC.Consts.event.TERRAINLOADED, {});
+                            } else {
+                                self.$events.trigger(TC.Consts.event.TERRAINRECEIVING, {});
+                            }
+                        }.bind(self));
+
+                        // deshabilitamos el zoom por defecto y manejamos nosotros zoom con rueda
+                        overrideDesktopZoom.call(self);
+                        // sobrescribimos el comportamiento de lo botones + /- y la casita
+                        override2DZoom.call(self, true);
+
+                        // eliminamos los creditos de cesium (no encuentro la manera de que no los ponga)
+                        $('.cesium-viewer-bottom').remove();
+
+                        // enlazamos con los eventos del mapa 2D
+                        self.map3D._event2DHandler = event2DHandler.bind(self);
+                        self.map.on(listenTo.join(' '), self.map3D._event2DHandler);
+
+                        // modificamos los controles disponibles
+                        alterAllowedControls.call(self, self.direction.TO_THREE_D);
+
+                        // obtenemos las capas de trabajo de los controles habilitados
+                        getAllowedControlsLayer.call(self);
+
+                        done.resolve(self.viewer);
+                    });
+                } else { done.resolve(self.viewer); }
+
+                return done;
+            },
+
+            setBaseLayer: function (layer) {
+                var self = this;
+
+                if (!self.map3D.baseLayer) {
+
+                    checkCompatibleBaseMaps.call(self, self.map);
+                    removeNoCompatibleBaseLayers.call(self, self.map);
+
+                    if (layer instanceof TC.layer.Raster) {
+
+                        if (layer.options.relatedWMTS) {
+                            self.map.baseLayer = layer = self.map.getLayer(layer.options.relatedWMTS);
+                            self.map.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: self.map.baseLayer }));
+                        } else if ((obj = analogLayers.findById(self.map.baseLayer.id)) != null) {
+                            $.extend(obj, { map: self.map });
+                            layer = new TC.layer.Raster(obj);
+                            layer.isBase = true;
+                        }
+
+                        self.map3D.addLayer.call(self, layer);
+                    }
+                    else {
+                        self.map3D.baseLayer = self.Consts.BLANK_BASE;
+                    }
+                } else {
+
+                    if (self.map3D.baseLayer !== self.Consts.BLANK_BASE) {
+                        self.viewer.scene.imageryLayers.raiseToTop(self.map3D.baseLayer);
+                        self.viewer.scene.imageryLayers.remove(self.map3D.baseLayer, true);
                     }
 
-                    return _obj;
-                } else return obj[p[i]];
-            }
-        },
-        getCRSByLayerOnCapabilities: function (layer) {
-            if ((capsURL = TC.Util.isOnCapabilities(layer.url))) {
-                if ((caps = TC.capabilities[capsURL])) {
-                    return this.getOfPath(caps, this.paths.CRS, 0) || this.getOfPath(caps, this.paths.TILEMATRIXSET, 0);
-                }
-            }
+                    if (layer instanceof TC.layer.Vector) {
+                        self.map3D.baseLayer = self.Consts.BLANK_BASE;
 
-            return null;
-        },
-        getTileMatrixSetLabelByLayerOnCapabilities: function (layer, crs) {
-            if ((capsURL = TC.Util.isOnCapabilities(layer.url))) {
-                if ((caps = TC.capabilities[capsURL])) {
-                    var tileMatrixSet = this.getOfPath(caps, this.paths.TILEMATRIXSETLABELS, 0);
-                    for (var a = 0; a < tileMatrixSet.length; a++) {
-                        if (tileMatrixSet[a]["Identifier"] === crs) {
-                            return this.getOfPath(tileMatrixSet[a], ["TileMatrix", "Identifier"], 0);
+                        self.map.getLoadingIndicator().removeWait(self.waiting);
+                        delete self.waiting;
+                    }
+                    else {
+                        if ((obj = analogLayers.findById(layer.id)) != null) {
+                            $.extend(obj, { map: self.map });
+                            layer = new TC.layer.Raster(obj);
+                            layer.isBase = true;
+                        }
+
+                        self.map3D.addLayer.call(self, layer);
+                    }
+                }
+
+                currentMapCfg.baseMap = self.map.baseLayer;
+            },
+
+            addLayer: function (layer) {
+                var self = this;
+
+                switch (true) {
+                    case TC.Consts.layerType.VECTOR == layer.type: {
+                        self.map3D.vector2DLayers.push(layer);
+                        break;
+                    }
+                    case TC.Consts.layerType.WMTS == layer.type:
+                    case TC.Consts.layerType.WMS == layer.type: {
+                        if (!rasterConverter.isCompatible(layer)) {
+                            self.map.toast(self.getLocaleString('threed.crsNoCompatible', { name: layer.layerNames }));
+                        } else {
+                            var convertedLayer = rasterConverter.convert(layer);
+                            if (convertedLayer) {
+                                var newImageryLayer = self.viewer.scene.imageryLayers.addImageryProvider(convertedLayer);
+
+                                if (layer.isBase) { // si la capa es el mapa de fondo lo env\u00edo al fondo de las capas en 3D
+                                    self.map3D.baseLayer = newImageryLayer;
+                                    self.viewer.scene.imageryLayers.lowerToBottom(newImageryLayer);
+                                } else {
+                                    newImageryLayer.show = layer.getVisibility();
+                                    newImageryLayer.alpha = layer.getOpacity();
+
+                                    self.map3D.workLayers.push(newImageryLayer);
+
+                                    self.map3D.linked2DControls.legend.refresh();
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            },
+            removeLayer: function (layer) {
+                var self = this;
+
+                switch (true) {
+                    case TC.Consts.layerType.VECTOR == layer.type: {
+
+                        if (self.map3D.vector2DFeatures && self.map3D.vector2DFeatures.hasOwnProperty(layer.id)) {
+                            var threedFeature = self.map3D.vector2DFeatures[layer.id];
+
+                            for (var i = 0; i < threedFeature.length; i++) {
+                                self.map3D.removeFeature.call(self, threedFeature[i]);
+                            }
+
+                            delete self.map3D.vector2DFeatures[layer.id];
+                        }
+
+                        // GLS revisar, deber\u00eda estar en workLayers¿? 
+                        // self.map3D.workLayers.splice(i, 1);
+                        break;
+                    }
+                    case TC.Consts.layerType.WMTS == layer.type:
+                    case TC.Consts.layerType.WMS == layer.type: {
+                        for (var i = 0; i < self.map3D.workLayers.length; i++) {
+                            if (layer.names && self.map3D.workLayers[i].imageryProvider.layers.join(',') === layer.names.join(',') ||
+                                layer.title && self.map3D.workLayers[i].imageryProvider.layers.join(',') === layer.title) {
+                                self.viewer.scene.imageryLayers.raiseToTop(self.map3D.workLayers[i]);
+                                self.viewer.scene.imageryLayers.remove(self.map3D.workLayers[i], true);
+
+                                self.map3D.workLayers.splice(i, 1);
+                                break;
+                            }
                         }
                     }
                 }
+            },
+            setRenderOptionsLayer: function (layer, options) {
+                var self = this;
+
+                switch (true) {
+                    case TC.Consts.layerType.Vector == layer.type: {
+                        if (self.map3D.vector2DFeatures[layer.id]) {
+                            var features = self.map3D.vector2DFeatures[layer.id];
+                            for (var i = 0; i < features.length; i++) {
+                                self.map3D.setRenderOptionsFeature(features[i], { show: !features[i].show });
+                            }
+                        }
+                        break;
+                    }
+                    case TC.Consts.layerType.WMTS == layer.type:
+                    case TC.Consts.layerType.WMS == layer.type: {
+                        for (var i = 0; i < self.map3D.workLayers.length; i++) {
+                            if (layer.names && self.map3D.workLayers[i].imageryProvider.layers.join(',') === layer.names.join(',') ||
+                                layer.title && self.map3D.workLayers[i].imageryProvider.layers.join(',') === layer.title) {
+
+                                if (options.hasOwnProperty('visibility')) {
+                                    self.map3D.workLayers[i].show = options.visibility;
+                                }
+
+                                if (options.hasOwnProperty('opacity')) {
+                                    self.map3D.workLayers[i].alpha = options.opacity;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            },
+
+            flyToMapCoordinates: function (coords) {
+                var self = this;
+                var lonlat = TC.Util.reproject(coords, self.map.crs, self.map3D.crs);
+                var height = self.viewer.camera.positionCartographic.height;
+                var destination = Cesium.Cartesian3.fromDegrees(lonlat[0], lonlat[1], height);
+
+                var camera = self.viewer.camera;
+                camera.flyTo({
+                    destination: destination,
+                    orientation: {
+                        heading: camera.heading,
+                        pitch: camera.pitch
+                    }
+                });
+            },
+            flyToRectangle: function (rectangle, options) {
+                var self = this;
+                var done = $.Deferred();
+
+                options = options || {};
+
+                var epsilon = Cesium.Math.EPSILON3;
+                if (rectangle.east === rectangle.west) {
+                    rectangle.east += epsilon;
+                    rectangle.west -= epsilon;
+                }
+
+                if (rectangle.north === rectangle.south) {
+                    rectangle.north += epsilon;
+                    rectangle.south -= epsilon;
+                }
+
+                var enlargeFactor = 0.2;
+                var marginX = rectangle.width * enlargeFactor / 2;
+                var marginY = rectangle.height * enlargeFactor / 2;
+                rectangle.east -= marginX;
+                rectangle.west += marginY;
+                rectangle.north += marginY;
+                rectangle.south -= marginY;
+
+                var scene = self.viewer.scene;
+                var camera = scene.camera;
+
+                var destinationCartesian = camera.getRectangleCameraCoordinates(rectangle);
+
+                var destination = Cesium.Ellipsoid.WGS84.cartesianToCartographic(destinationCartesian);
+
+                var terrainProvider = scene.globe.terrainProvider;
+                var level = 6;
+                var center = [Cesium.Rectangle.center(rectangle)];
+
+                Cesium.sampleTerrain(terrainProvider, level, center).then(function (results) {
+
+                    var finalDestinationCartographic = {
+                        longitude: destination.longitude,
+                        latitude: destination.latitude,
+                        height: destination.height + results[0].height
+                    };
+
+                    var finalDestination = Cesium.Ellipsoid.WGS84.cartographicToCartesian(finalDestinationCartographic);
+
+                    self.$events.one(TC.Consts.event.TERRAINLOADED, function () {
+
+                        var withTerrainDestinationCartesian = camera.getRectangleCameraCoordinates(rectangle);
+                        var withTerrainDestinationCarto = Cesium.Ellipsoid.WGS84.cartesianToCartographic(withTerrainDestinationCartesian);
+
+                        var height = self.viewer.scene.globe.getHeight(withTerrainDestinationCarto);
+
+                        var withTerrainFinalCartographic = {
+                            longitude: withTerrainDestinationCarto.longitude,
+                            latitude: withTerrainDestinationCarto.latitude,
+                            height: withTerrainDestinationCarto.height + height
+                        };
+
+                        var withTerrainFinalDestination = Cesium.Ellipsoid.WGS84.cartographicToCartesian(withTerrainFinalCartographic);
+
+                        camera.flyTo({
+                            duration: 3,
+                            destination: withTerrainFinalDestination,
+                            complete: function () {
+                                var angle = Cesium.Math.toRadians(50);
+                                var pickBP = pickBottomPoint(this.viewer.scene);
+                                pickBP = Cesium.Matrix4.fromTranslation(pickBP);
+
+                                this.map3D.rotateAroundAxis(this.viewer.scene.camera, -angle, this.viewer.scene.camera.right, pickBP, {
+                                    duration: 250,
+                                    callback: function () {
+                                        done.resolve();
+                                    }
+                                });
+                            }.bind(self)
+                        });
+                    });
+
+                    camera.flyTo({
+                        duration: options.duration || 1,
+                        destination: finalDestination,
+                        complete: function () {
+                            if (!self.map3D.isLoadingTiles.call(self)) {
+                                self.$events.trigger(TC.Consts.event.TERRAINLOADED, {});
+                            }
+                        }
+                    });
+                });
+
+                return done;
+            },
+
+            zoomToCartesian: function (position, amount) {
+                var self = this;
+                var scene = self.viewer.scene;
+
+                if (!position || !position.endPosition) {
+                    var canvas = scene.canvas;
+                    var center = new Cesium.Cartesian2(
+                        canvas.clientWidth / 2,
+                        canvas.clientHeight / 2);
+                    position = { endPosition: center };
+                }
+
+                var pickRay = scene.camera.getPickRay(position.endPosition);
+                var intersection = scene.globe.pick(pickRay, scene);
+                if (intersection) {
+
+                    var distanceMeasure = Cesium.Cartesian3.distance(pickRay.origin, intersection);
+                    if (distanceMeasure < 1) { return; }
+                    else {
+                        if (!self.map3D._zoomTo) {
+                            self.map3D._zoomTo = {
+                                amount: 0
+                            };
+                        }
+                        self.map3D._zoomTo.direction = amount > 0 ? 1 : 0;
+                        self.map3D._zoomTo.amount += (distanceMeasure * 5 / 100);
+                        self.map3D._zoomTo.endPosition = position.endPosition;
+                    }
+                }
+
+                var setNewPosition = function (data) {
+                    var self = this;
+                    var scene = self.viewer.scene;
+
+                    var pickRay = scene.camera.getPickRay(position.endPosition || data.endPosition);
+                    var intersection = scene.globe.pick(pickRay, scene);
+                    if (intersection) {
+
+                        var distanceMeasure = Cesium.Cartesian3.distance(pickRay.origin, intersection);
+                        if (distanceMeasure < 1) { return; }
+                        else {
+
+                            var cameraPosition = scene.camera.position;
+                            var cameraDirection = scene.camera.direction;
+
+                            var toMove = toGo = new Cesium.Cartesian3();
+                            Cesium.Cartesian3.multiplyByScalar(pickRay.direction, data.direction == 1 ? data.amount : -data.amount, toMove);
+                            Cesium.Cartesian3.add(cameraPosition, toMove, toGo);
+
+                            var ray = new Cesium.Ray(toGo, pickRay.direction);
+                            var intersectionToGo = scene.globe.pick(ray, scene);
+                            if (intersectionToGo) {
+
+                                var reset = function () {
+                                    this.map3D._zoomTo = {
+                                        direction: 1,
+                                        amount: 0,
+                                        endPosition: {}
+                                    };
+
+                                    return;
+                                };
+
+                                if (Cesium.Cartesian3.distance(toGo, intersectionToGo) < 1 ||
+                                    Math.abs(Cesium.Ellipsoid.WGS84.cartesianToCartographic(toGo).height) < scene.screenSpaceCameraController.minimumZoomDistance) {
+                                    reset.call(self);
+                                }
+                                else {
+                                    self.viewer.camera.flyTo({
+                                        destination: toGo,
+                                        orientation: {
+                                            heading: scene.camera.heading,
+                                            pitch: scene.camera.pitch,
+                                            roll: scene.camera.roll
+                                        },
+                                        duration: 1,
+                                        easingFunction: Cesium.EasingFunction.LINEAR_NONE,
+                                        complete: function (distance) {
+                                            this.map3D._zoomTo = {
+                                                direction: 1,
+                                                amount: 0,
+                                                endPosition: {}
+                                            };
+                                        }.bind(self, Cesium.Cartesian3.distance(toGo, intersectionToGo))
+                                    });
+                                }
+                            }
+                        }
+                    }
+                };
+
+                setTimeout(function () { // GLS: No hemos encontrado otra forma para acumular pasos de la rueda
+                    setNewPosition.call(self, self.map3D._zoomTo);
+                }.bind(self), 50);
+            },
+
+            rotateAroundAxis: function (camera, angle, axis, transform, opt_options) {
+                return rotateAroundAxis(camera, angle, axis, transform, opt_options);
+            },
+
+            addFeature: function (feature, options) {
+                var self = this;
+
+                if (self.map3D.linked2DControls.featureInfo) {
+                    if (feature.layer === self.map3D.linked2DControls.featureInfo.layer && feature instanceof TC.feature.Marker) {
+                        return;
+                    }
+                }
+
+                if (self.map3D.vector2DLayers.indexOf(feature.layer) > -1) {
+
+                    var csfeature = featureConverter.convert(self.viewer.scene, feature, self.map.crs, self.map3D.crs);
+                    if (csfeature) {
+                        if (csfeature.geometry instanceof Array) {
+                            csfeature.geometry.forEach(function (geom) {
+                                geom = addFeature.call(self, geom);
+                                linkFeature(self.map3D, feature.layer.id, geom);
+                            });
+                        }
+                        else {
+                            var geom = addFeature.call(self, csfeature.geometry);
+                            linkFeature(self.map3D, feature.layer.id, geom);
+                        }
+                    }
+                }
+            },
+            removeFeature: function (feature) {
+                var self = this;
+
+                if (feature) {
+                    switch (true) {
+                        case feature instanceof Cesium.GroundPrimitive:
+                            self.viewer.scene.groundPrimitives.remove(feature);
+                            break;
+                        case feature instanceof Cesium.Billboard:
+                            self.viewer.billboardCollection.remove(feature);
+                            break;
+                        case feature instanceof Object:
+                            self.viewer.entities.removeById(feature.id);
+                            break;
+                    }
+
+                    self.map3D.customRender.restart();
+                }
+            },
+            setRenderOptionsFeature: function (feature, options) {
+                if (feature) {
+                    feature.show = options.show;
+                }
+            },
+
+            addNativeFeature: function (cesiumFeature) {
+                return addFeature.call(this, cesiumFeature);
+            },
+
+            setCameraFromMapView: function () {
+                var self = this;
+
+                var center = self.mapView.getCenter();
+
+                if (!center) {
+                    return;
+                }
+
+                var latlon = TC.Util.reproject(center, self.map.crs, self.map3D.crs);
+                var distance = calcDistanceForResolution.call(self, self.mapView.getResolution() || 0, Cesium.Math.toRadians(latlon[0]));
+
+                var latlon = TC.Util.reproject(center, self.map.crs, self.map3D.crs);
+                var carto = new Cesium.Cartographic(Cesium.Math.toRadians(latlon[0]), Cesium.Math.toRadians(latlon[1]));
+                if (self.viewer.scene.globe) {
+                    carto.height = self.viewer.scene.globe.getHeight(carto) || 0;
+                }
+
+                var destination = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
+                var orientation = {
+                    pitch: Cesium.Math.toRadians(-90),
+                    heading: -self.mapView.getRotation(),
+                    roll: 0.0
+                };
+
+                self.viewer.camera.setView({
+                    destination: destination,
+                    orientation: orientation
+                });
+
+                self.viewer.camera.moveBackward(distance);
+            },
+            setViewFromCameraView: function () {
+                var self = this;
+
+                if (!self.setViewFromCameraViewInProgress || self.setViewFromCameraViewInProgress.state() == "resolved") {
+                    self.setViewFromCameraViewInProgress = new $.Deferred();
+
+                    var ellipsoid = Cesium.Ellipsoid.WGS84;
+                    var scene = self.viewer.scene;
+                    var target = target_ = pickCenterPoint(scene);
+
+                    if (!target_) {
+                        var globe = self.viewer.scene.globe;
+                        var carto = self.viewer.camera.positionCartographic.clone();
+                        var height = globe.getHeight(carto);
+                        carto.height = height || 0;
+                        target_ = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
+                    }
+
+
+                    var distance = Cesium.Cartesian3.distance(target_, self.viewer.camera.position);
+                    var targetCartographic = ellipsoid.cartesianToCartographic(target_);
+
+                    var centerMapCRS = TC.Util.reproject(
+                        [Cesium.Math.toDegrees(targetCartographic.longitude), Cesium.Math.toDegrees(targetCartographic.latitude)],
+                        self.map3D.crs, self.map.crs);
+
+                    self.mapView.setCenter(centerMapCRS);
+
+                    self.mapView.setResolution(calcResolutionForDistance.call(self, distance, targetCartographic ? targetCartographic.latitude : 0));
+
+                    self.setViewFromCameraViewInProgress.resolve();
+                    // GLS: No tenemos la rotaci\u00f3n del mapa activada por problemas con el iPad
+                    //if (target) {
+                    //    var pos = self.viewer.camera.position;
+
+                    //    var targetNormal = new Cesium.Cartesian3();
+                    //    ellipsoid.geocentricSurfaceNormal(target, targetNormal);
+
+                    //    var targetToCamera = new Cesium.Cartesian3();
+                    //    Cesium.Cartesian3.subtract(pos, target, targetToCamera);
+                    //    Cesium.Cartesian3.normalize(targetToCamera, targetToCamera);
+
+                    //    // HEADING
+                    //    var up = self.viewer.camera.up;
+                    //    var right = self.viewer.camera.right;
+                    //    var normal = new Cesium.Cartesian3(-target.y, target.x, 0);
+                    //    var heading = Cesium.Cartesian3.angleBetween(right, normal);
+                    //    var cross = Cesium.Cartesian3.cross(target, up, new Cesium.Cartesian3());
+                    //    var orientation = cross.z;
+
+                    //    self.mapView.setRotation((orientation < 0 ? heading : -heading));
+                    //    self.setViewFromCameraViewInProgress.resolve();
+                    //}
+                }
+
+                return self.setViewFromCameraViewInProgress;
+            },
+
+            getInfoOnPickedPosition: function (pickedPosition) {
+                var self = this;
+
+                if (!pickedPosition) {
+                    return;
+                } else {
+
+                    self.map.one(TC.Consts.event.DRAWTABLE, function (e) {
+                        self.map.getLoadingIndicator().removeWait(self.waiting);
+                        delete self.waiting;
+                    });
+
+                    self.map3D.linked2DControls.featureInfo.send.call(self, pickedPosition).then(function (e) {
+                        self.map.getLoadingIndicator().removeWait(self.waiting);
+                        delete self.waiting;
+                    });
+                }
+            },
+
+            destroy: function () {
+                var self = this;
+
+                // paramos nuestro render
+                self.map3D.customRender.stop();
+                self.map3D.vector2DLayers = [];
+                self.map3D.vector2DFeatures = {};
+
+                // eliminamos el enlace con los eventos del mapa 2D
+                self.map.off(listenTo.join(' '), self.map3D._event2DHandler);
+
+                // modificamos los controles disponibles
+                alterAllowedControls.call(self, self.direction.TO_TWO_D);
+
+                // sobrescribimos el comportamiento de lo botones + /- y la casita
+                override2DZoom.call(self, false);
+
+                addNoCompatibleBaseLayers();
+
+                self.map.baseLayer = currentMapCfg.baseMap == self.Consts.BLANK_BASE ? currentMapCfg.baseVector : currentMapCfg.baseMap;
+                self.map.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: self.map.baseLayer }));
+                currentMapCfg.baseMap = '';
+
+                self.map3D.baseLayer = null;
+
+                self.map3D.workLayers = [];
+
+                self.cameraControls.unbind();
+
+                if (self.map3D.linked2DControls.featureInfo) {
+                    self.map3D.linked2DControls.featureInfo.clear(self.map);
+                }
+
+                self.map3D.tileLoadingHandler.removeAll();
+                delete self.map3D.tileLoadingHandler;
+            }
+        }
+    })();
+
+    ctlProto.browserSupportWebGL = function () {
+        var self = this;
+        var result = false;
+
+        //Check for webgl support and if not, then fall back to leaflet
+        if (!window.WebGLRenderingContext) {
+            // Browser has no idea what WebGL is. Suggest they
+            // get a new browser by presenting the user with link to
+            // http://get.webgl.org
+            result = false;
+        } else {
+            var canvas = document.createElement('canvas');
+
+            var webglOptions = {
+                alpha: false,
+                stencil: false,
+                failIfMajorPerformanceCaveat: true
+            };
+
+            try {
+                var gl = canvas.getContext("webgl", webglOptions) ||
+                    canvas.getContext("experimental-webgl", webglOptions) ||
+                    canvas.getContext("webkit-3d", webglOptions) ||
+                    canvas.getContext("moz-webgl", webglOptions);
+                if (!gl) {
+                    // We couldn't get a WebGL context without a major performance caveat.  Let's see if we can get one at all.
+                    webglOptions.failIfMajorPerformanceCaveat = false;
+                    gl = canvas.getContext("webgl", webglOptions) ||
+                        canvas.getContext("experimental-webgl", webglOptions) ||
+                        canvas.getContext("webkit-3d", webglOptions) ||
+                        canvas.getContext("moz-webgl", webglOptions);
+                    if (!gl) {
+                        // No WebGL at all.
+                        result = false;
+                    } else {
+                        // We can do WebGL, but only with software rendering (or similar).
+                        result = 'slow';
+                        self.isSlower = true;
+                    }
+                } else {
+                    // WebGL is good to go!
+                    result = true;
+                }
+            } catch (e) {
+                console.log(E);
             }
 
-            return null;
-        },
-        reset3D: function () {
-            var self = this;
+            if (result === "slow" || !result) {
+                var warning = result === "slow" ? "threed.slowSupport.supported" : "threed.not.supported";
+                self.map.toast(self.getLocaleString(warning), {
+                    type: TC.Consts.msgType.WARNING,
+                    duration: 10000
+                });
+            }
 
-            self.currentMapCfg.baseMap = '';
-            self.workLayers = [];
-
-            self.cameraControls.unbind();
-
-            self.Cesium.Util.tileLoadHelper.removeAll();
-            delete self.Cesium.Util.tileLoadHelper;
+            return result;
         }
     };
 })();
 TC.layer = TC.layer || {};
 
 if (!TC.Layer) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Layer.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Layer');
 }
 
 TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7';
 
 (function () {
+
+    var ServiceRequest = function () {
+        this.strategy;
+
+        this.setStrategy = function (strategy) {
+            this.strategy = strategy;
+        };
+
+        this.query = function (url, layer, success, error) {
+            return this.strategy.query(url, layer, success, error);
+        };
+    };
+
+    /**
+     * Estrategia por defecto. Sigue el siguiente flujo:
+     * 1. Pedir capabilities sin modificar URL
+     * 2. Si falla (falta de CORS), pedir capabilities proxificado
+     * 3. Siempre pedir Mapas y Leyendas con URLs originales sin proxificar (no afecta CORS)
+     */ 
+    var DefaultStrategy = function () {
+        this.query = function (url, layer, success, error) {
+            layer.usesSSL = TC.Util.isSecureURL(url);
+            getRequest(url).then(success, function (jqXHR, textStatus, errorThrown) {
+                if (!jqXHR.status) {
+                    layer.usesProxy = true;
+                    getRequest(url, true).then(function (data) {
+                        success(data);
+                    }, function (jqXHR, textStatus, errorThrown) {
+                        error(layer, textStatus + '][' + errorThrown);
+                    });
+                }
+                else {
+                    error(layer, textStatus + '][' + errorThrown);
+                }
+            });
+        };
+    };
+
+    /**
+     * Estrategia por defecto. Sigue el siguiente flujo:
+     * 1. Pedir capabilities directamente modificando protocolo (https)
+     * 2. Si falla(por no soportar https o por falta de CORS), pedir capabilities proxificado (con URL original http)
+     * 3. Si responde 2 (aunque falle por CORS), pedir Mapas y Leyendas modificando protocolo (https), no afecta CORS
+     * 4. Si no responde 2, pedir im\u00e1genes proxificadas (\u00fanico caso y por ServiceWorker)
+     */
+    var AskingForHttpFromHttpsStrategy = function () {
+        var reallyCORSError = function (url) {
+            var defer = $.Deferred();
+            $.ajax({
+                type: "GET",
+                url: url,
+                    dataType: "jsonp",
+                    success: function (data) {
+                        //successful authentication here
+                    defer.resolve(false);
+                },
+                    error: function (XHR, textStatus, errorThrown) {
+                        if (XHR.status && XHR.status === 200 && textStatus !== 'parsererror') {
+                        defer.resolve(true);
+                    } else {
+                        defer.resolve(false);
+                    }
+                }
+            });
+            return defer;
+        };
+
+        this.query = function (url, layer, success, error) {
+            var urlSecure = url.replace(/^(f|ht)tp?:\/\//i, "https://");
+            getRequest(urlSecure).then(function (data) {
+                //esto gestiona el primer caso del algoritmo de Carlos
+                layer.usesSSL = true;
+                success(data);
+            }, function (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status) {
+                    getRequest(url, true).then(function (data) {
+                        layer.usesProxy = true;
+                        layer.usesSSL = true;
+                        success(data);
+                    }, function (jqXHR, textStatus, errorThrown) {
+                        error(layer, textStatus + '][' + errorThrown);
+                    });
+                }
+                else {
+                    if (TC.isUsingServiceWorker && TC.isUsingServiceWorker()) {
+                        getRequest(url, true).then(function (data) {
+                            layer.usesProxy = true;
+                            layer.usesSSL = false;
+                            success(data);
+                        }, function (jqXHR, textStatus, errorThrown) {
+                            error(layer, textStatus + '][' + errorThrown);
+                        });
+                    }
+                    else {
+                        reallyCORSError(urlSecure).then(function (corsError) {
+                            if (!corsError) {
+                                getRequest(url, true).then(function (data) {
+                                    layer.usesProxy = false;
+                                    layer.usesSSL = false;
+                                    success(data);
+                                }, function (jqXHR, textStatus, errorThrown) {
+                                    error(layer, textStatus + '][' + errorThrown);
+                                });
+                            }
+                            else {
+                                getRequest(url, true).then(function (data) {
+                                    layer.usesProxy = true;
+                                    layer.usesSSL = TC.Util.isSecureURL(url);
+                                    success(data);
+                                }, function (jqXHR, textStatus, errorThrown) {
+                                    error(layer, textStatus + '][' + errorThrown);
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        };
+    };
+
+    var getRequest = function (url, retry) {
+        var result = TC._capabilitiesRequests[url] = (!retry && TC._capabilitiesRequests[url]) || $.ajax({
+            url: retry ? TC.proxify(url) : url,
+            type: 'GET',
+            dataType: isWebWorkerEnabled ? 'text' : 'xml'
+        });
+        return result;
+    };
+
     var capabilitiesPromises = {};
 
     var isWebWorkerEnabled = window.hasOwnProperty('Worker');
@@ -94900,44 +97972,14 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
         url = url + '?' + $.param(params);
         TC._capabilitiesRequests = TC._capabilitiesRequests || {};
-        var getRequest = function (url, retry) {
-            var result = TC._capabilitiesRequests[url] = (!retry && TC._capabilitiesRequests[url]) || $.ajax({
-                url: retry ? TC.proxify(url) : url,
-                type: 'GET',
-                dataType: isWebWorkerEnabled ? 'text' : 'xml'
-            });
-            return result;
-        };
 
-        var reallyCORSError = function (url) {
-            var defer = $.Deferred();
-            $.ajax({
-                type: "GET",
-                url: url,
-                dataType: "jsonp",
-                success: function (data) {
-                    //successful authentication here
-                    defer.resolve(false);
-                },
-                error: function (XHR, textStatus, errorThrown) {
-                    if (XHR.status && XHR.status === 200)
-                        defer.resolve(true);
-                    else
-                        defer.resolve(false);
-                }
-            });
-            return defer;
-        };
-
-        var successCallback = function (data) {
-            success(layer, data);
-        };
+        
         //Declaro un funci\u00f3n que devuelve false si todav\u00eda no se cargado el SW y una vez cargado devuelve el valor del atributo
         //serviceWorkerEnabled del control SWCacheClient
         TC.isUsingServiceWorker = null;
         if (!TC.isUsingServiceWorker) {
             var map = layer.map || $("#map").data("map");
-            var control = map ? map.getControlsByClass(TC.control.SWCacheClient) : null;
+            var control = map ? map.getControlsByClass('TC.control.SWCacheClient') : null;
             if (control && control.length > 0) {
                 //busco es control de tipo SWCacheClient y me guardo la promesa te indica cuando se ha leido el SW
                 TC.isUsingServiceWorker = function () {
@@ -94950,70 +97992,26 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             else
                 TC.isUsingServiceWorker = function () { return false; }
         }
+
+        queryService(url, layer, success, error);
+    };
+
+    var queryService = function (url, layer, success, error) {
+        var request = new ServiceRequest();
+
+        var successCallback = function (data) {
+            success(layer, data);
+        };
+
         // Lanzamos la primera petici\u00f3n sin proxificar. Si falla (CORS, HTTP desde HTTPS...) pedimos proxificando.
         if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(url)) {
-            var urlSecure = url.replace(/^(f|ht)tp?:\/\//i, "https://");
-            getRequest(urlSecure).then(successCallback, function (jqXHR, textStatus, errorThrown) {
-                if (jqXHR.status) {
-                    getRequest(url, true).then(function (data) {
-                        layer.usesProxy = true;
-                        layer.usesSSL = true;
-                        successCallback(data);
-                    }, function (jqXHR, textStatus, errorThrown) {
-                        error(layer, textStatus + '][' + errorThrown);
-                    });
-                }
-                else {
-                    if (TC.isUsingServiceWorker && TC.isUsingServiceWorker()) {
-                        getRequest(url, true).then(function (data) {
-                            layer.usesProxy = true;
-                            layer.usesSSL = false;
-                            successCallback(data);
-                        }, function (jqXHR, textStatus, errorThrown) {
-                            error(layer, textStatus + '][' + errorThrown);
-                        });
-                    }
-                    else {
-                        reallyCORSError(urlSecure).then(function (corsError) {
-                            if (!corsError) {
-                                getRequest(url, true).then(function (data) {
-                                    layer.usesProxy = true;
-                                    layer.usesSSL = false;
-                                    successCallback(data);
-                                }, function (jqXHR, textStatus, errorThrown) {
-                                    error(layer, textStatus + '][' + errorThrown);
-                                });
-                            }
-                            else {
-                                getRequest(url, true).then(function (data) {
-                                    layer.usesProxy = true;
-                                    layer.usesSSL = true;
-                                    successCallback(data);
-                                }, function (jqXHR, textStatus, errorThrown) {
-                                    error(layer, textStatus + '][' + errorThrown);
-                                });
-                            }
-                        });
-                    }
-                }
-            });
+            request.setStrategy(new AskingForHttpFromHttpsStrategy());
         }
-        else {
-            layer.usesSSL = true;
-            getRequest(url).then(successCallback, function (jqXHR, textStatus, errorThrown) {
-                if (!jqXHR.status) {
-                    layer.usesProxy = true;
-                    getRequest(url, true).then(function (data) {
-                        successCallback(data);
-                    }, function (jqXHR, textStatus, errorThrown) {
-                        error(layer, textStatus + '][' + errorThrown);
-                    });
-                }
-                else {
-                    error(layer, textStatus + '][' + errorThrown);
-                }
-            });
+        else {            
+            request.setStrategy(new DefaultStrategy());            
         }
+
+        request.query(url, layer, successCallback, error);
     };
 
     var capabilitiesError = function (layer, reason) {
@@ -95991,10 +98989,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         }
                     }
 
-                    var legend = self.wrap.getLegend(capabilitiesNode);
-                    if (legend.src) {
-                        r.legend = legend;
-                    }
+                    r.legend = self.wrap.getLegend(capabilitiesNode);
 
                     // No muestra ramas irrelevantes si hideTree = true
                     if (!forceAddition && !isRootNode) {
@@ -96187,6 +99182,20 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
         return result;
     };
+    TC.layer.Raster.prototype.getChildrenLayers = function (layer) {
+        var self = this;
+        var result = [];
+        var _fnRecursiva = function (lyr, arr) {
+            if (lyr && lyr.Layer && lyr.Layer.length) {
+                for (var i = 0; i < lyr.Layer.length; i++) {
+                    arr[arr.length] = lyr.Layer[i];
+                    _fnRecursiva(lyr.Layer[i], arr)
+                }
+            }
+        };
+        _fnRecursiva(layer, result);
+        return result;
+    };
 
     TC.layer.Raster.prototype.compareNames = function (n1, n2, looseComparison) {
         var result = n1 === n2;
@@ -96217,10 +99226,46 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     //Devuelve un array de subLayers cuyo nombre o descripci\u00f3n contenga el texto indicado
     //case insensitive
     TC.layer.Raster.prototype.searchSubLayers = function (text) {
+        if (!this.patternFn) {
+            this.patternFn = function (t) {
+                t = t.replace(/[^a-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f1 ]/gi, '\\' + '$&');
+                t = t.replace(/(a|\u00e1)/gi, "(a|\u00e1)");
+                t = t.replace(/(e|\u00e9)/gi, "(e|\u00e9)");
+                t = t.replace(/(i|\u00ed)/gi, "(i|\u00ed)");
+                t = t.replace(/(o|\u00f3)/gi, "(o|\u00f3)");
+                t = t.replace(/(u|\u00fa|\u00fc)/gi, "(u|\u00fa|\u00fc)");
+                t = t.replace(/(n|\u00f1)/gi, "(n|\u00f1)");
+                return t;
+            }
+        }
         if (text && text.length && text.length >= 3) {
             var self = this;
-            var layers = self.wrap.getAllLayerNodes();
-            var filter = text.trim().toLowerCase();
+            var layers = null;
+            /*URI:Si la cadena a buscar contiene a la busqueda anterior, por ejemplo, antes he buscado "cat" y ahora busco "cata" porque esto escribiendo "catastro" ...
+            en vez de buscar en todas las capas del servicio busco en los resultados encotrados en la b\u00fasqueda anterior */
+            if (this.lastPattern && text.indexOf(this.lastPattern) >= 0) {
+                layers = this.lastMatches
+            }
+            else {
+                /*si se ha definido el parametro layers de esta capa en configuraci\u00f3n filtro las capas del capability para que busque solo en las capas que est\u00e9n en 
+                configuraci\u00f3n y sus hijas*/
+                if (self.availableNames && self.availableNames.length > 0) {
+                    layers = []
+                    for (var i = 0; i < self.availableNames.length; i++) {
+                        var layer = self.getLayerNodeByName(self.availableNames[i]);
+                        if (layer) {
+                            layers[layers.length] = layer;
+                            layers = layers.concat(self.getChildrenLayers(layer));
+                        }
+                    }
+                }
+                else {
+                    layers = self.wrap.getAllLayerNodes();
+                }
+            }
+
+            var filter = this.patternFn(text);
+            var re = new RegExp(filter, "i");
 
             var matches = layers.map(function (ly, ix) {
                 delete ly.tcScore;
@@ -96229,15 +99274,17 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
                 self.wrap.normalizeLayerNode(ly);
 
-                var title = ly.Title.toLowerCase().trim();
-                var titleIx = title.indexOf(filter);
+                var title = ly.Title.trim();
+                var res = re.exec(title);
+                var titleIx = res ? res.index : -1;
                 var abstractIx = -1;
                 if (ly.Abstract) {
-                    var abs = ly.Abstract.toLowerCase().trim();
-                    abstractIx = abs.indexOf(filter);
+                    var abs = ly.Abstract.trim();
+                    var res2 = re.exec(abs);
+                    abstractIx = res2 ? res2.index : -1;
                 }
 
-                if (title == filter)
+                if (res && title == res[0])
                     ly.tcScore = 20;
                 else if (titleIx == 0)
                     ly.tcScore = 15;
@@ -96257,8 +99304,20 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 return elto != null;
             })
             .sort(function (a, b) {
-                return b.tcScore - a.tcScore;
+                if (b.tcScore === a.tcScore) {
+                    //si la puntuaci\u00f3n es la misma reordenamos por t\u00edtulo
+                    var titleA = TC.Util.replaceAccent(a.Title);
+                    var titleB = TC.Util.replaceAccent(b.Title);
+                    if (titleA < titleB) return -1;
+                    if (titleA > titleB) return 1;
+                    return 0;
+                }
+                else
+                    return b.tcScore - a.tcScore;
             });
+
+            this.lastPattern = text;
+            this.lastMatches = matches;
 
             return matches;
         }
@@ -96311,50 +99370,50 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             return deferred.resolve(self.options.params.base64LegendSrc);
         }
 
-        if (self.options.params.sld_body) {
-            if (typeof window.btoa === 'function') {
-                var name = self.names[0];
-                var info = self.wrap.getInfo(name);
-                var xhr = new XMLHttpRequest();
-                var url = info.legend[0].src.split('?'); // Separamos los par\u00e1metros de la ra\u00edz de la URL
-                var dataEntries = url[1].split("&"); // Separamos clave/valor de cada par\u00e1metro
-                var params = "sld_body=" + self.options.params.sld_body;
+        if (typeof window.btoa === 'function') {
+            var name = self.names[0];
+            var info = self.wrap.getInfo(name);
+            var xhr = new XMLHttpRequest();
+            var url = info.legend[0].src.split('?'); // Separamos los par\u00e1metros de la ra\u00edz de la URL
+            var dataEntries = url[1].split("&"); // Separamos clave/valor de cada par\u00e1metro
+            var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
 
-                for (var i = 0 ; i < dataEntries.length ; i++) {
-                    var chunks = dataEntries[i].split('=');
+            for (var i = 0 ; i < dataEntries.length ; i++) {
+                var chunks = dataEntries[i].split('=');
 
-                    if (chunks && chunks.length > 1 && chunks[1]) {
-                        params += "&" + dataEntries[i];
+                if (chunks && chunks.length > 1 && chunks[1]) {
+                    params += "&" + dataEntries[i];
+                }
+            }
+            if (self.options.params.env) {
+                params += "&" + self.options.params.env;
+            }
+
+            xhr.open('POST', url[0], true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = function (e) {
+                if (this.status === 200) {
+                    var uInt8Array = new Uint8Array(this.response);
+                    var i = uInt8Array.length;
+                    var binaryString = new Array(i);
+                    while (i--) {
+                        binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                    }
+                    var data = binaryString.join('');
+                    var type = xhr.getResponseHeader('content-type');
+                    if (type.indexOf('image') === 0) {
+                        var imageSrc;
+                        imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
+                        self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
+                        deferred.resolve(imageSrc);
                     }
                 }
-                xhr.open('POST', url[0], true);
-                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-                xhr.responseType = 'arraybuffer';
-                xhr.onload = function (e) {
-                    if (this.status === 200) {
-                        var uInt8Array = new Uint8Array(this.response);
-                        var i = uInt8Array.length;
-                        var binaryString = new Array(i);
-                        while (i--) {
-                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
-                        }
-                        var data = binaryString.join('');
-                        var type = xhr.getResponseHeader('content-type');
-                        if (type.indexOf('image') === 0) {
-                            var imageSrc;
-                            imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
-                            self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
-                            deferred.resolve(imageSrc);
-                        }
-                    }
-                };
-                xhr.send(params);
-            } else {
-                deferred.reject("Funci\u00f3n window.btoa no soportada por el navegador");
-            }
+            };
+            xhr.send(params);
         } else {
-            deferred.reject("No se ha especificado par\u00e1metro sld_body para la capa " + self.names[0]);
+            deferred.reject("Funci\u00f3n window.btoa no soportada por el navegador");
         }
         return deferred.promise();
     };
@@ -96386,13 +99445,11 @@ var esriParser = {
     }
 };
 TC.layer.Raster.prototype.getWFSCapabilitiesPromise = function () {
+    var self = this;
     if (typeof (WFSCapabilities) === "undefined") {
-        TC.syncLoadJS(TC.apiLocation + 'TC/layer/WFSCapabilitiesParser.js');
+        TC.syncLoadJS(TC.apiLocation + 'TC/layer/WFSCapabilitiesParser');
     }
-    var url = this.options.url.substring(0, this.options.url.lastIndexOf("/wms")
-                    || this.options.url.lastIndexOf("/WMS")
-                    || this.options.url.lastIndexOf("/"))
-                    + "/wfs";
+    var url = this.options.url.replace(/service=wms/i, "service=wfs").replace(/\/wms(\/|\?|\b)/i, "$'/wfs/")
     var defer = $.Deferred();
     var basicUrl = url.substring(url.indexOf("://") < 0 ? 0 : url.indexOf("://") + 3);
     if (TC.WFScapabilities[basicUrl]) {
@@ -96406,21 +99463,49 @@ TC.layer.Raster.prototype.getWFSCapabilitiesPromise = function () {
     params.VERSION = '2.0.0';
     params.REQUEST = 'GetCapabilities';
     $.ajax({
-        url: TC.proxify(url) + '?' + $.param(params),
+        url: (this.usesProxy ? TC.proxify(url + '?' + $.param(params)) : (this.usesSSL ? url.replace(/^(f|ht)tp?:\/\//i, "https://") + '?' + $.param(params) : url + '?' + $.param(params))),
         type: 'GET'
     }).then(function () {
-        var capabilities = WFSCapabilities.Parse(arguments[0]);
+        var capabilities
+        var xmlDoc;
+        if (jQuery.isXMLDoc(arguments[0]))
+            xmlDoc = arguments[0];
+        else
+            xmlDoc = (new DOMParser()).parseFromString(arguments[0], 'text/xml');
+        //comprueba si el servidor ha devuelto una excepcion
+
+        var errorNode = $(xmlDoc).find("ServiceException");
+        if (errorNode.length === 0)
+            errorNode = $(xmlDoc).find("ExceptionText");
+        if (errorNode.length > 0) {
+            defer.reject(null, "error", errorNode.html());
+            return;
+        }
+        try{
+            capabilities = WFSCapabilities.Parse(xmlDoc);
+        }
+        catch (err) {
+            defer.reject(err);
+            return;
+        }
+        
+        if (!capabilities.Operations) {
+            defer.reject(null);
+            return;
+        }
         var _url = (capabilities.Operations.GetCapabilities.DCP && capabilities.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"]) || capabilities.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource
         TC.WFScapabilities[_url] = capabilities;
         TC.WFScapabilities[basicUrl] = capabilities;
-        defer.resolve(WFSCapabilities.Parse(arguments[0]));
+        defer.resolve(capabilities);
+    }, function (jqXHR,textStatus,errorThrown) {
+        defer.reject(jqXHR, textStatus, errorThrown);
     });
     return defer;
 };
 TC.layer = TC.layer || {};
 
 if (!TC.Layer) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Layer.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Layer');
 }
 
 /**
@@ -96559,7 +99644,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         var opts = $.extend(true, {}, style, options);
         TC.loadJS(
             !TC.feature || (TC.feature && !TC.feature[constructorName]),
-            [TC.apiLocation + 'TC/feature/' + constructorName + '.js'],
+            [TC.apiLocation + 'TC/feature/' + constructorName],
             function () {
                 var FeatureConstructor = TC.feature[constructorName]
                 var features = new Array(coordsArray.length);
@@ -97009,18 +100094,7 @@ TC.Geometry = TC.Geometry || {
 };
 var SITNA = window.SITNA || {};
 var TC = window.TC || {};
-
-SITNA.syncLoadJS = function (url) {
-    var req = new XMLHttpRequest();
-    req.open("GET", url, false); // 'false': synchronous.
-    req.send(null);
-
-    var head = document.getElementsByTagName("head")[0];
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    script.text = req.responseText;
-    head.appendChild(script);
-};
+TC.isDebug = true;
 
 (function () {
     if (!window.TC || !window.TC.Cfg) {
@@ -97035,7 +100109,16 @@ SITNA.syncLoadJS = function (url) {
         }
         var src = script.getAttribute('src');
         TC.apiLocation = src.substr(0, src.lastIndexOf('/') + 1);
-        SITNA.syncLoadJS(TC.apiLocation + 'tcmap.js');
+        var url = TC.apiLocation + (TC.isDebug ? 'tcmap.js' : 'tcmap.min.js');
+        var req = new XMLHttpRequest();
+        req.open("GET", url, false); // 'false': synchronous.
+        req.send(null);
+
+        var head = document.getElementsByTagName("head")[0];
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        script.text = req.responseText;
+        head.appendChild(script);
     }
 })();
 
@@ -97088,6 +100171,12 @@ SITNA.syncLoadJS = function (url) {
  *                 -0.32135009765625,
  *                 43.55789822064767
  *             ],
+ *             baselayerExtent: [
+ *                 -2.84820556640625,
+ *                 41.78912492257675,
+ *                 -0.32135009765625,
+ *                 43.55789822064767
+ *             ],
  *             baseLayers: [
  * 				SITNA.Consts.layer.IDENA_DYNBASEMAP
  *             ],
@@ -97110,7 +100199,7 @@ SITNA.syncLoadJS = function (url) {
  *                     id: "topo_mallas",
  *                     title: "Toponimia y mallas cartogr\u00e1ficas",
  *                     type: SITNA.Consts.layerType.WMS,
- *                     url: "http://idena.navarra.es/ogc/wms",
+ *                     url: "//idena.navarra.es/ogc/wms",
  *                     layerNames: "IDENA:toponimia,IDENA:mallas"
  *                 }
  *             ]
@@ -98072,11 +101161,11 @@ SITNA.Map = function (div, options) {
                 featurePrefix: prefix,
                 featureType: layer,
                 maxFeatures: 1,
-                properties: [{
+                properties: tcSearch.transformFilter([{
                     name: field, value: id, type: TC.Consts.comparison.EQUAL_TO
-                }],
+                }]),
                 outputFormat: TC.Consts.format.JSON
-            };
+            };            
 
             var tcSrchGenericLayer;
             tcMap.addLayer(layerOptions).then(function (layer) {
@@ -98100,13 +101189,13 @@ SITNA.Map = function (div, options) {
             });
 
             tcMap.on(TC.Consts.event.LAYERUPDATE, function (e) {
-                if (e.layer == tcSrchGenericLayer && e.layer.features && e.layer.features.length == 0)
+                if (e.layer == tcSrchGenericLayer && e.newData && e.newData.features && e.newData.features.length == 0)
                     tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
                         type: TC.Consts.msgType.INFO, duration: 5000
                     });
 
                 if (callback)
-                    callback(e.layer == tcSrchGenericLayer && e.layer.features && e.layer.features.length == 0 ? null : idQuery);
+                    callback(e.layer == tcSrchGenericLayer && e.newData && e.newData.features && e.newData.features.length == 0 ? null : idQuery);
             });
         }
     };

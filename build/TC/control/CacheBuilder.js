@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.control.SWCacheClient) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
 }
 
 (function () {
@@ -1019,7 +1019,7 @@ if (!TC.control.SWCacheClient) {
             self.layer = layer;
             TC.loadJS(
                 !TC.control.Draw,
-                TC.apiLocation + 'TC/control/Draw.js',
+                TC.apiLocation + 'TC/control/Draw',
                 function () {
                     self.boxDraw = new TC.control.Draw({
                         div: self._$div.find(self._selectors.DRAW),

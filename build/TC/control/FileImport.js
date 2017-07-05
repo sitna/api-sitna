@@ -1,5 +1,5 @@
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.FileImport = function () {
@@ -99,7 +99,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
                 var reader = new FileReader();
                 reader.onload = function (event) {
-                    TC.error("Error en la subida de un archivo: \n\n\t Nombre del archivo: " + fileName + " \n\t Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL);
+                    TC.error("Nombre del archivo: " + fileName + " \n Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL,"Error en la subida de un archivo");
                 };
                 reader.readAsText(e.file);                
             });

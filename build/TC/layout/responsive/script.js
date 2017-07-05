@@ -4,6 +4,8 @@ $(function () {
     var ovmap;
 
     $('.right-panel > h1').on(TC.Consts.event.CLICK, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         var $tab = $(e.target);
         var $panel = $tab.parent();
         $panel.toggleClass('right-collapsed');
@@ -22,6 +24,8 @@ $(function () {
     });
 
     $('.left-panel > h1').on(TC.Consts.event.CLICK, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         var $tab = $(e.target);
         var $panel = $tab.parent();
         $panel.toggleClass('left-collapsed');

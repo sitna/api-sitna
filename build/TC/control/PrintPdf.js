@@ -2,7 +2,7 @@
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.PrintPdf = function () {
@@ -192,6 +192,10 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         self.canvas = $('.tc-map .ol-viewport canvas')[0];
         self.mapSize = TC.Util.calculateAspectRatioFit(self.canvas.width, self.canvas.height, pageWidth - (options.marginLeft * 2), pageHeight - (options.marginTop * 2) - options.headerHeight);
 
+        var imageErrorHandling = function (imageUrl) {
+            TC.error(self.getLocaleString('print.error'));
+            TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, TC.Consts.msgErrorMode.EMAIL, 'Error en la impresi\u00f3n'); //Correo de error
+        };
 
         var printHeader = function (docDefinition) {
             docDefinition.content = docDefinition.content || [];
@@ -256,6 +260,9 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                     resolve({ image: dataUrl, height: size.height, width: size.width });
 
+                }, function () { // reject
+                    imageErrorHandling(self.options.logo);
+                    deferred.reject();
                 });
             } else {
                 resolve();
@@ -359,11 +366,19 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                         (function (k, l) {
                             var layer = legendByGroup[k].layers[l];
                             var src = layer.src || layer.srcBase64;
+
                             if (src) {
+                                // Si estamos en la impresi\u00f3n en IE, proxificamos las im\u00e1genes. En caso contrario se genera un "Security Error" al generar el PDF
+                                if (self.map.options.crossOrigin && TC.Util.detectIE()) {
+                                    src = TC.proxify(src);
+                                }
+
                                 var promise = TC.Util.imgToDataUrl(src, 'image/png');
                                 imagePromises.push(promise);
                                 promise.then(function (base64, canvas) {
                                     layer.image = { base64: base64, canvas: canvas };
+                                }, function () { //reject
+                                    imageErrorHandling(src);
                                 });
                             }
                         })(i, j);
@@ -427,6 +442,8 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             }
                         }
                         deferred.resolve(docDefinition);
+                    }, function () { // reject
+                        deferred.reject();
                     });
 
                 } else {
@@ -446,7 +463,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             if (title) {
                 filename += title;
             } else {
-                var currentDate = TC.Util.getFormattedDate(new Date().toString());
+                var currentDate = TC.Util.getFormattedDate(new Date().toString(), true);
                 filename += currentDate;
             }
 
@@ -457,15 +474,19 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var loadingCtrl = self.map.getControlsByClass(TC.control.LoadingIndicator)[0];
         var hasWait = loadingCtrl.addWait();
 
+        var _removeWait = function () {
+            loadingCtrl.removeWait(hasWait);
+        }
+
         $.when(self.pdfLibPromise)
-            .then(createDoc)
+            .then(createDoc)            
             .then(printHeader)
+            .fail(_removeWait)
             .then(printMap)
             .then(printLegend)
+            .fail(_removeWait)
             .then(saveFile)
-            .then(function () {
-                loadingCtrl.removeWait(hasWait);
-            });
+            .then(_removeWait);
     };
 
     ctlProto.getLayersFromOpener = function (mapVar) {
@@ -473,7 +494,8 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var opener = window.opener;
 
         if (opener) {
-            var refererMap = opener.refererMap;
+            var TC = opener.TC;
+            var refererMap = TC.printPreview ? TC.printPreview.refererMap : null;
 
             if (refererMap) {
 
@@ -529,7 +551,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                         }
                     }
 
-                    var mapFeatures = window.opener.mapFeatures;
+                    var mapFeatures = TC.printPreview.mapFeatures;
 
                     if (mapFeatures) {
                         self.map.addLayer({
@@ -537,9 +559,9 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             type: TC.Consts.layerType.VECTOR
                         }, function (layer) {
                             TC.loadJS(!TC.feature,
-                            [TC.apiLocation + 'TC/Feature.js', TC.apiLocation + 'TC/feature/Point.js', TC.apiLocation + 'TC/feature/Polyline.js',
-                            TC.apiLocation + 'TC/feature/Polygon.js', TC.apiLocation + 'TC/feature/MultiPolygon.js', TC.apiLocation + 'TC/feature/MultiPolyline.js',
-                            TC.apiLocation + 'TC/feature/Circle.js', TC.apiLocation + 'TC/feature/Marker.js'],
+                            [TC.apiLocation + 'TC/Feature', TC.apiLocation + 'TC/feature/Point', TC.apiLocation + 'TC/feature/Polyline',
+                            TC.apiLocation + 'TC/feature/Polygon', TC.apiLocation + 'TC/feature/MultiPolygon', TC.apiLocation + 'TC/feature/MultiPolyline',
+                            TC.apiLocation + 'TC/feature/Circle', TC.apiLocation + 'TC/feature/Marker'],
                             function () {
                                 for (var i = 0; i < mapFeatures.length; i++) {
                                     var feat = mapFeatures[i];

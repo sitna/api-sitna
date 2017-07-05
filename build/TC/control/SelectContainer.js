@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.SelectContainer = function () {
@@ -43,11 +43,7 @@ TC.inherit(TC.control.SelectContainer, TC.Control);
         TC.Control.prototype.register.call(self, map);
         self.renderPromise().then(function () {
             self.title = self.getLocaleString(self.options.title || 'moreControls');
-            self._$div.find('h2').first().html(self.title);
-
-            // GLS: a\u00f1ado la etiqueta Novedad
-            var beta = " " + self.getLocaleString("beta");
-            $('<span class="tc-beta">' + beta + '</span>').appendTo(self._$div.find('h2'));
+            self._$div.find('h2').first().html(self.title);            
 
             var bufferDeferreds = new Array(self.controlOptions.length);
             for (var i = 0, len = self.controlOptions.length; i < len; i++) {
