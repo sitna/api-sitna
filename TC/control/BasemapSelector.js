@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
 }
 
 TC.control.BasemapSelector = function () {
@@ -100,6 +100,10 @@ TC.inherit(TC.control.BasemapSelector, TC.control.MapContents);
                 }
             );
         }
+    };
+
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+        // Este control no tiene que hacer nada
     };
 
     ctlProto.removeLayer = function (layer) {

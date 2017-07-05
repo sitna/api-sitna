@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.MapContents = function () {
@@ -20,6 +20,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
     ctlProto.CLASS = 'tc-ctl-mc';
 
     var _dataKeys = {
+        layer: 'tcLayer',
         img: 'tcImg'
     };
 
@@ -84,6 +85,8 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 }, 100);
             }).on(TC.Consts.event.LAYERREMOVE, function (e) {
                 self.removeLayer(e.layer);
+            }).on(TC.Consts.event.LAYERORDER, function (e) {
+                self.updateLayerOrder(e.layer, e.oldIndex, e.newIndex);
             });
         });
     };
@@ -98,8 +101,41 @@ TC.inherit(TC.control.MapContents, TC.Control);
         this.layerTrees[layer.id] = layer.getTree();
     };
 
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+        var self = this;
+        if (oldIdx >= 0 && oldIdx !== newIdx) {
+            var $currentElm, $previousElm;
+            var $elms = self.getLayerUIElements();
+            for (var i = self.map.workLayers.length - 1; i >= 0; i--) {
+                var l = self.map.workLayers[i];
+                $previousElm = $currentElm;
+                $elms.each(function (idx, elm) {
+                    var $elm = $(elm);
+                    if ($elm.data(_dataKeys.layer) === l) {
+                        $currentElm = $elm;
+                        return false;
+                    }
+                });
+                if (l === layer) {
+                    if ($previousElm) {
+                        $previousElm.after($currentElm);
+                    }
+                    else {
+                        $elms.parent().prepend($currentElm);
+                    }
+                    break;
+                }
+            }
+        }
+    };
+
     ctlProto.removeLayer = function (layer) {
         this.update();
+    };
+
+    ctlProto.getLayerUIElements = function () {
+        var self = this;
+        return self._$div.find('ul').first().children();
     };
 
     var isGetLegendGraphic = function (url) {
@@ -169,6 +205,9 @@ TC.inherit(TC.control.MapContents, TC.Control);
                         ';fontSize:' + parseInt($watch.css('font-size')) +
                         ';fontColor:' + colorStr +
                         ';fontAntiAliasing:true';
+                    if (layer.params && layer.params.sld_body) {
+                        imgSrc = TC.Util.addURLParameters(imgSrc, { sld_body: layer.params.sld_body });
+                    }
                     $img.data(_dataKeys.img, imgSrc);
                 }
                 setImgSrc($img, imgSrc, layer.usesSSL);
