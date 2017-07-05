@@ -1,16 +1,16 @@
 ﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 if (!TC.Feature || !TC.feature.Point) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point');
 }
 if (!TC.Feature || !TC.feature.Polyline) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polyline.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polyline');
 }
 if (!TC.Feature || !TC.feature.Polygon) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polygon.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Polygon');
 }
 
 TC.Consts.event.DRAWSTART = 'drawstart.tc';

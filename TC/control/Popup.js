@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.Consts.event.POPUP = 'popup.tc';
