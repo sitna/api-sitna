@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 (function () {
@@ -47,6 +47,9 @@ if (!TC.control.MapContents) {
                     console.error('Could not register service worker: ' + reason);
                 }
             );
+        }
+        else {
+            self._serviceWorkerDeferred.reject();
         }
     };
 
