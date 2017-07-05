@@ -4,11 +4,15 @@
         <select id="add-wms-select" class="tc-combo" title="WMS (Web Map Service)">
             <option value="">WMS</option>
             {#suggestions}
+			{?group}
             <optgroup label="{group}">
+			{/group}
                 {#items}
                 <option value="{url}">{name}</option>
                 {/items}
+			{?group}	
             </optgroup>
+			{/group}
             {/suggestions}
         </select>
         <input type="text" class="tc-textbox" placeholder="{@i18n $key="writeAddressOrSelect"/}" />
