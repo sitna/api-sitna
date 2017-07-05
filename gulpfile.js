@@ -8,7 +8,12 @@
   uglify = require('gulp-uglify'),
   cleanCSS = require('gulp-clean-css'),
   dust = require('gulp-dust'),
-  zip = require('gulp-zip');
+  zip = require('gulp-zip'),
+  jsonlint = require("gulp-jsonlint"),
+  mocha = require('gulp-mocha'),
+  mochaPhantomJS = require('gulp-mocha-phantomjs'),
+  casperJs = require('gulp-casperjs'),
+  merge = require('merge-stream');
 
 //////// Gestión de errores ////////
 //var plumber = require('gulp-plumber');
@@ -27,8 +32,9 @@
 //};
 //////////////////////////////
 
+
 var sitnaBuild = {
-    version: '1.2.1',
+    version: '1.3.0',
     targetPath: 'build/',
     tcmapTargetName: 'tcmap',
     sitnaTargetName: 'sitna',
@@ -36,6 +42,7 @@ var sitnaBuild = {
         'lib/Modernizr.js',
         'lib/dust/dust-full-helpers.min.js',
         'lib/dust/dustjs-i18n.min.js',
+        'lib/dust/dust.overrides.js',
         'lib/localForage/localforage.min.js',
         'lib/jsnlog/jsnlog.min.js'
     ],
@@ -54,6 +61,7 @@ var sitnaBuild = {
         'TC/Feature.js',
         'TC/feature/Point.js',
         'TC/feature/**/*.js',
+        'TC/Filter.js',
         'TC/control/MapContents.js',
         'TC/control/TOC.js',
         'TC/control/ListTOC.js',
@@ -101,7 +109,7 @@ var sitnaBuild = {
     examplesTask: function () {
         return gulp.src([
                 'examples/**/*.html'
-        ])
+        ])            
             .pipe(convertEncoding({ to: 'ISO-8859-1' }))
             .pipe(gulp.dest(this.fullTargetPath + 'examples/'));
     },
@@ -121,6 +129,13 @@ var sitnaBuild = {
             .pipe(gulp.dest(this.fullTargetPath + 'TC/'));
     },
 
+    jsonValidateTask: function () {
+        return gulp.src("TC/**/*.json")
+            .pipe(jsonlint())
+            .pipe(jsonlint.reporter())
+            .pipe(jsonlint.failOnError());
+    },
+
     resourcesTask: function () {
         return gulp.src([
                 '**/*',
@@ -129,6 +144,8 @@ var sitnaBuild = {
                 '!build/**/*',
                 '!examples/**/*.html',
                 '!kml/**/*',
+                '!images/**/*',
+                '!screenshots/**/*',
                 '!node_modules/**/*',
                 '!obj/**/*',
                 '!Properties/**/*',
@@ -196,19 +213,20 @@ var sitnaBuild = {
             'lib/jquery/jquery.1.10.2.js'
         ];
         var ol2Src2 = [
-            '!TC/ol/ol3.js',
+            '!TC/ol/ol.js',
             '!TC/workers/**/*'
         ];
-        var ol3Src1 = [
+        var olSrc1 = [
             'lib/ol/build/ol-debug.js',
             'lib/proj4js/proj4.js',
             'lib/jquery/jquery.2.1.3.js'
         ];
-        var ol3Src2 = [
+        var olSrc2 = [
             '!TC/ol/ol2.js',
             '!TC/workers/**/*'
         ];
 
+        sitnaBuild.jsonValidateTask();
         sitnaBuild.resourcesTask();
         sitnaBuild.zipTask();
         sitnaBuild.cssTask();
@@ -224,13 +242,18 @@ var sitnaBuild = {
         sitnaBuild.isLegacy = true;
         sitnaBuild.compiledTask(ol2Src1, ol2Src2, sitnaBuild.sitnaSrc);
 
-        sitnaBuild.maps = 'ol3';
+        sitnaBuild.maps = 'ol';
         sitnaBuild.isLegacy = false;
-        sitnaBuild.compiledTask(ol3Src1, ol3Src2, sitnaBuild.sitnaSrc);
+        sitnaBuild.compiledTask(olSrc1, olSrc2, sitnaBuild.sitnaSrc);
     }
 };
 
-gulp.task('default', function () {
+gulp.task('default', ['unitTests', 'e2eTests'], function () {
+    sitnaBuild.fullTargetPath = sitnaBuild.targetPath + '/';
+    sitnaBuild.fullTask();
+});
+
+gulp.task('noTests', function () {
     sitnaBuild.fullTargetPath = sitnaBuild.targetPath + '/';
     sitnaBuild.fullTask();
 });
@@ -248,4 +271,30 @@ gulp.task('clean', function (cb) {
     del([
       sitnaBuild.targetPath + '**'
     ], cb);
+});
+
+gulp.task('unitTests', function () {
+    const reportDir = 'test/unit/testResults';
+    return del(reportDir + '/**/*', function () {
+        var browserStream = mochaPhantomJS({
+            reporter: 'spec',
+            dump: reportDir + '/browserTestResults.txt'
+        })
+        browserStream.write({ path: 'http://localhost:56187/test/unit/browser/runner.html' });
+        browserStream.end();
+
+        return merge(
+            gulp.src(['test/unit/node/**/*.js'], { read: false })
+                .pipe(mocha({
+                    reporter: 'mochawesome',
+                    reporterOptions: 'reportDir=' + reportDir + ',reportFilename=nodeTestResults'
+                })),
+            browserStream
+            );
+    });
+});
+
+gulp.task('e2eTests', function () {
+    return gulp.src('test/endToEnd/test.js')
+        .pipe(casperJs());
 });
