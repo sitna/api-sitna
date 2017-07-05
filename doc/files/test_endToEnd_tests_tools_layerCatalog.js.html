@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>SITNA.cfg.StyleOptions - API SITNA</title>
+    <title>test\endToEnd\tests\tools\layerCatalog.js - API SITNA</title>
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
     <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
@@ -96,274 +96,44 @@
 
         <div id="docs-main" class="apidocs">
             <div class="content container">
-                <h1>Clase SITNA.cfg.StyleOptions</h1>
-<div class="box meta">
-    
+                <h1 class="file-heading">Archivo: test\endToEnd\tests\tools\layerCatalog.js</h1>
 
-    
+<div class="file">
+    <pre class="code prettyprint linenums">
+﻿var capture = require(&#x27;./../../utils&#x27;).capture;
 
-    
-        <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l1979"><code>sitna.js:1979</code></a>
-        </div>
-    
+/**
+ * Probamos si al pulsar el botón &quot;i&quot; en un resultado del buscador de capas se muestra el mismo panel que en el árbol.
+ */
+exports.testCatalogSearchMoreInfoBtn = function (test) {
+    const suggestionsSelector = &#x27;.tc-ctl-search-list&#x27;;
 
-    
+    casper.then(function () {
+        const catalogSearchBtnSelector = &#x27;.tc-ctl-lcat .tc-ctl-lcat-btn-search&#x27;;
+        const catalogSearchInputSelector = &#x27;.tc-ctl-lcat-input&#x27;;
+        const catalogResultsListSelector = &#x27;.tc-ctl-lcat-search &gt; ul .tc-ctl-lcat-search-btn-info&#x27;;
+        const catalogAbstractContainerSelector = &#x27;.tc-ctl-lcat-info&#x27;;
 
-    
+        casper.waitForSelector(catalogSearchBtnSelector, function () {
+            this.click(catalogSearchBtnSelector);
+            casper.waitForSelector(catalogSearchInputSelector, function () {
+                this.sendKeys(catalogSearchInputSelector, &quot;cat&quot;);
+
+                casper.waitForSelector(catalogResultsListSelector, function () {
+                    capture(&#x27;layer-catalog-search-info&#x27;);
+                    this.click(catalogResultsListSelector + &#x27;:first-of-type&#x27;);
+                    casper.wait(500, function () {
+                        test.assert(
+                            casper.getElementAttribute(catalogAbstractContainerSelector, &#x27;class&#x27;).indexOf(&#x27;tc-hidden&#x27;) &lt; 0,
+                            &#x27;El boton i del buscador de capas muestra el mismo panel de resultados que el arbol&#x27;);
+                    });
+                });
+            });
+        });
+    });
+};
+    </pre>
 </div>
-
-
-
-<div class="box intro">
-    <p>Opciones de estilo de entidades geográficas.
-Esta clase no tiene constructor.</p>
-
-</div>
-
-<!-- Class member index -->
-
-<a name="index" class="anchor-link"></a>
-<div class="index">
-<h2>&Iacute;ndice</h2>
-
-    <div id="api-options" style="display:none">
-        Mostrar:
-        <label for="api-show-inherited">
-            <input type="checkbox" id="api-show-inherited">
-            Inherited
-        </label>
-
-        <label for="api-show-protected">
-            <input type="checkbox" id="api-show-protected">
-            Protected
-        </label>
-
-        <label for="api-show-private">
-            <input type="checkbox" id="api-show-private">
-            Private
-        </label>
-        <label for="api-show-deprecated">
-            <input type="checkbox" id="api-show-deprecated">
-            Deprecated
-        </label>
-
-    </div>
-
-
-
-
-    <div class="index-section properties">
-        <h3>Propiedades</h3>
-
-        <ul class="index-list properties">
-            
-                <li class="index-item property">
-                    <a href="#property_line">line</a>
-
-                    
-                </li>
-            
-                <li class="index-item property">
-                    <a href="#property_marker">marker</a>
-
-                    
-                </li>
-            
-                <li class="index-item property">
-                    <a href="#property_polygon">polygon</a>
-
-                    
-                </li>
-            
-        </ul>
-    </div>
-
-
-
-
-
-
-
-
-</div>
-
-
-<div class="class-detail">
-
-
-    <div class="properties-detail">
-        <h2>Properties</h2>
-
-        
-            <a name="property_line" class="anchor-link"></a>
-<div class="property item">
-    <h3 class="name"><code>line</code>
-    <span class="type"><a href="../classes/SITNA.cfg.LineStyleOptions.html" class="crosslink">SITNA.cfg.LineStyleOptions</a> | Undefined</span>
-
-    
-
-    
-
-    
-
-    
-
-    </h3>
-
-    <div class="meta">
-        
-            
-                
-                <p style="display:none">
-                
-                Se define en
-                
-            
-        
-        
-        <a href="../files/sitna.js.html#l1990"><code>sitna.js:1990</code></a>
-        
-        </p>
-
-        
-
-        
-    </div>
-
-    <div class="extended-detail">
-        <div class="description">
-            <p>Opciones de estilo de línea.</p>
-
-        </div>
-
-        
-
-        
-
-        
-    </div>
-</div>
-
-        
-            <a name="property_marker" class="anchor-link"></a>
-<div class="property item">
-    <h3 class="name"><code>marker</code>
-    <span class="type"><a href="../classes/SITNA.cfg.MarkerStyleOptions.html" class="crosslink">SITNA.cfg.MarkerStyleOptions</a> | Undefined</span>
-
-    
-
-    
-
-    
-
-    
-
-    </h3>
-
-    <div class="meta">
-        
-            
-                
-                <p style="display:none">
-                
-                Se define en
-                
-            
-        
-        
-        <a href="../files/sitna.js.html#l1985"><code>sitna.js:1985</code></a>
-        
-        </p>
-
-        
-
-        
-    </div>
-
-    <div class="extended-detail">
-        <div class="description">
-            <p>Opciones de estilo de marcador (punto de mapa con icono).</p>
-
-        </div>
-
-        
-
-        
-
-        
-    </div>
-</div>
-
-        
-            <a name="property_polygon" class="anchor-link"></a>
-<div class="property item">
-    <h3 class="name"><code>polygon</code>
-    <span class="type"><a href="../classes/SITNA.cfg.PolygonStyleOptions.html" class="crosslink">SITNA.cfg.PolygonStyleOptions</a> | Undefined</span>
-
-    
-
-    
-
-    
-
-    
-
-    </h3>
-
-    <div class="meta">
-        
-            
-                
-                <p style="display:none">
-                
-                Se define en
-                
-            
-        
-        
-        <a href="../files/sitna.js.html#l1995"><code>sitna.js:1995</code></a>
-        
-        </p>
-
-        
-
-        
-    </div>
-
-    <div class="extended-detail">
-        <div class="description">
-            <p>Opciones de estilo de polígono.</p>
-
-        </div>
-
-        
-
-        
-
-        
-    </div>
-</div>
-
-        
-
-        <div class="no-visible-items-message">
-            <p>No hay propiedades que cumplan la configuraci&oacute;n actual de filtro. Puede cambiar la configuraci&oacute;n de filtro en la secci&oacute;n "&Iacute;ndice" de esta p&aacute;gina. <a href="#index" class="index-jump-link">&iacute;ndice</a></p>
-        </div>
-
-    </div>
-
-
-
-
-
-
-
-
-
-
-</div>
-
 
             </div>
         </div>
