@@ -108,8 +108,14 @@ function tXml(S, options) {
 
     function parseName() {
         var start = pos;
-        while (nameSpacer.indexOf(S[pos]) === -1) {
-            pos++;
+        var c = S[pos];
+        while (nameSpacer.indexOf(c) === -1) {
+            c = S[++pos];
+            // flacunza: Ignoramos los prefijos
+            if (c === ':') {
+                pos++;
+                start = pos;
+            }
         }
         return S.slice(start, pos);
     }
@@ -440,7 +446,7 @@ console.log("MILLISECONDS",end2-start2);
     };
 
     var flattenOnlineResource = function (olr) {
-        return olr['xlink:href'];
+        return olr['href'];
     };
 
     var flattenLayerUrls = function (layer, tag) {
@@ -628,7 +634,7 @@ console.log("MILLISECONDS",end2-start2);
             }
             result[i] = {
                 Constraint : verb.Constraint,
-                href: verb['xlink:href']
+                href: verb['href']
             };
         }
         return result;
@@ -652,7 +658,7 @@ console.log("MILLISECONDS",end2-start2);
     };
 
     var postprocessWMS = function (xml) {
-        var capabilities = xml['?xml'] && xml['?xml']['WMS_Capabilities'];
+        var capabilities = xml['?xml'] && (xml['?xml']['WMS_Capabilities'] || xml['?xml']['WMT_MS_Capabilities']);
         if (capabilities) {
             processWMSLayer(capabilities.Capability.Layer);
             var request = capabilities.Capability.Request;
