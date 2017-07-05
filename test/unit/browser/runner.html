@@ -1,0 +1,25 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+        <title>Mocha</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div id="mocha"></div>
+        <script src="/lib/ol/build/ol-debug.js"></script>
+        <script src="/tcmap.js"></script> 
+        <script src="/TC/ol/ol.js"></script>
+        <script src="../../../../node_modules/mocha/mocha.js"></script> 
+        <script src="../../../../node_modules/chai/chai.js"></script>
+        <script>
+            if (window.initMochaPhantomJS) initMochaPhantomJS();
+            mocha.setup('bdd');
+        </script> 
+        <!-- Tests -->
+        <script src="ol.js"></script>
+        <script>
+            mocha.run();
+        </script> 
+    </body>
+</html>
