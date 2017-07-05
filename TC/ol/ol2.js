@@ -1898,6 +1898,7 @@
     };
     
     TC.wrap.layer.Raster.prototype.getAllLayerNodes = function () {
+        var self = this;
         var capabilities = this.parent.capabilities;
         switch (self.getServiceType()) {
             case TC.Consts.layerType.WMS:
@@ -2748,7 +2749,7 @@
         var self = this;
         if (self.parser) {
             if (!TC.Feature) {
-                TC.syncLoadJS(TC.apiLocation + 'TC/Feature.js');
+                TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
             }
             result = $.map(self.parser.read(data), function (feat) {
                 return new TC.Feature(null, { id: feat.fid, data: feat.data });
@@ -2935,6 +2936,14 @@
                 });
             });
         });
+    };
+
+    TC.wrap.control.OverviewMap.prototype.get3DCameraLayer = function () {
+        TC.error('TC.wrap.control.OverviewMap.prototype.get3DCameraLayer no implementado en OpenLayers 2');
+    };
+
+    TC.wrap.control.OverviewMap.prototype.draw3DCamera = function (options) {
+        TC.error('TC.wrap.control.OverviewMap.prototype.draw3DCamera no implementado en OpenLayers 2');
     };
 
     TC.wrap.control.OverviewMap.prototype.enable = function () {
@@ -3329,7 +3338,7 @@
         if (olFeat.geometry instanceof OpenLayers.Geometry.Point) {
             TC.loadJS(
                 !TC.feature || (TC.feature && !TC.feature.Point),
-                [TC.apiLocation + 'TC/feature/Point.js'],
+                [TC.apiLocation + 'TC/feature/Point'],
                 function () {
                     result.resolve(new TC.feature.Point(olFeat, options));
                 }
@@ -3339,7 +3348,7 @@
             if (olFeat.geometry instanceof OpenLayers.Geometry.LineString) {
                 TC.loadJS(
                     !TC.feature || (TC.feature && !TC.feature.Polyline),
-                    [TC.apiLocation + 'TC/feature/Polyline.js'],
+                    [TC.apiLocation + 'TC/feature/Polyline'],
                     function () {
                         result.resolve(new TC.feature.Polyline(olFeat, options));
                     }
@@ -3349,7 +3358,7 @@
                 if (olFeat.geometry instanceof OpenLayers.Geometry.MultiLineString) {
                     TC.loadJS(
                         !TC.feature || (TC.feature && !TC.feature.MultiPolyline),
-                        [TC.apiLocation + 'TC/feature/MultiPolyline.js'],
+                        [TC.apiLocation + 'TC/feature/MultiPolyline'],
                         function () {
                             result.resolve(new TC.feature.MultiPolyline(olFeat, options));
                         }
@@ -3359,7 +3368,7 @@
                     if (olFeat.geometry instanceof OpenLayers.Geometry.Polygon) {
                     TC.loadJS(
                         !TC.feature || (TC.feature && !TC.feature.Polygon),
-                        [TC.apiLocation + 'TC/feature/Polygon.js'],
+                        [TC.apiLocation + 'TC/feature/Polygon'],
                         function () {
                             result.resolve(new TC.feature.Polygon(olFeat, options));
                         }
@@ -3369,7 +3378,7 @@
                         if (olFeat.geometry instanceof OpenLayers.Geometry.MultiPolygon) {
                     TC.loadJS(
                                 !TC.feature || (TC.feature && !TC.feature.MultiPolygon),
-                                [TC.apiLocation + 'TC/feature/MultiPolygon.js'],
+                                [TC.apiLocation + 'TC/feature/MultiPolygon'],
                                 function () {
                                     result.resolve(new TC.feature.MultiPolygon(olFeat, options));
                                 }
@@ -3378,7 +3387,7 @@
                         else {
                             TC.loadJS(
                         !TC.Feature,
-                        [TC.apiLocation + 'TC/Feature.js'],
+                        [TC.apiLocation + 'TC/Feature'],
                         function () {
                             result.resolve(new TC.Feature(olFeat, options));
                         }
