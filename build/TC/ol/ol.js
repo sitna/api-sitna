@@ -2118,15 +2118,35 @@
                 img.src = imageUrl;
 
             } else if (this.status >= 400 && this.status < 500) {
+                img.src = TC.Consts.BLANK_IMAGE;
                 self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
             }
         };
+
         function errorResponse(e) {
-            self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
+
+            self._proxify = true;
+
+            var xhr2 = new XMLHttpRequest();
+            xhr2.open("GET", TC.proxify(src));
+            xhr2.responseType = "blob";
+
+            xhr2.onload = okResponse;
+            xhr2.onerror = function () {
+                img.src = TC.Consts.BLANK_IMAGE;
+                self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
+            };
+
+            try {
+                xhr2.send();
+            } catch (e) {
+                img.src = TC.Consts.BLANK_IMAGE;
+                self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
+            }
         };
 
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", src);                
+        xhr.open("GET", self._proxify ? TC.proxify(src) : src);
         xhr.responseType = "blob";
 
         xhr.onload = okResponse;
@@ -2160,10 +2180,11 @@
                 params += "&" + dataEntries[i];
             }
         }
-        xhr.open('POST', url[0], true);        
+        xhr.open('POST', self._proxify ? TC.proxify(url[0]) : url[0], true);
 
         xhr.responseType = 'blob';
-        xhr.onload = function (e) {
+
+        var okResponse = function (e) {
 
             if (this.status === 200) {
                 var imageUrl = URL.createObjectURL(this.response);
@@ -2179,11 +2200,31 @@
                 img.src = imageUrl;
 
             } else if (this.status >= 400 && this.status < 500) {
+                img.src = TC.Consts.BLANK_IMAGE;
                 self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
             }
         };
+
+        xhr.onload = okResponse;
         xhr.onerror = function () {
-            self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
+            self._proxify = true;
+
+            var xhr2 = new XMLHttpRequest();
+            xhr2.open("POST", TC.proxify(src));
+            xhr2.responseType = "blob";
+
+            xhr2.onload = okResponse;
+            xhr2.onerror = function () {
+                img.src = TC.Consts.BLANK_IMAGE;
+                self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
+            };
+
+            try {
+                xhr2.send();
+            } catch (e) {
+                img.src = TC.Consts.BLANK_IMAGE;
+                self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
+            }
         };
         xhr.send(params);
 
