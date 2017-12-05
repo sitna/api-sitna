@@ -2248,3 +2248,8 @@ input[type=range][disabled] {
     max-height: none;
     opacity: 1;
 }
+.ol-box {
+    box-sizing:border-box;
+    border-radius:2px;
+    border:2px solid #c00
+}
