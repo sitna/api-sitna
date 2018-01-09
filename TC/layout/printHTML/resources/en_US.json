@@ -1,0 +1,6 @@
+﻿{
+    "print.advice.title": "Printing tip",
+    "print.advice.desc": "Before printing, keep in mind that you can zoom and pan over the map to adjust the area selected",
+    "print.config": "Printing configuration",
+    "print.config.desc": "Keep in mind that paper size and orientation selected in your printer configuration must match your current selection"
+}

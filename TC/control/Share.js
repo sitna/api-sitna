@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Share = function (options) {
@@ -163,13 +163,10 @@ TC.inherit(TC.control.Share, TC.Control);
 
             var copyBtn = $(this);
             copyBtn.text(self.getLocaleString("copied"));
-            copyBtn.addClass("btn-default");
-            copyBtn.removeClass("btn-red");
+            
 
             setTimeout(function () {
                 copyBtn.text(self.getLocaleString("copy"));
-                copyBtn.removeClass("btn-default");
-                copyBtn.addClass("btn-red");
                 unselectInputField();
             }, 1000);
 
@@ -192,7 +189,7 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                window.location.href = 'mailto:?body=' + encodeURIComponent(url);
+                window.location.href = 'mailto:?body=' + encodeURIComponent(url + "\n");
             }
         });
 
@@ -240,7 +237,8 @@ TC.inherit(TC.control.Share, TC.Control);
                 var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducción de url
 
                 if (shortUrl !== undefined) {
-                    window.open("https://twitter.com/intent/tweet?text=Visor%20IDENA&amp;url=" + encodeURIComponent(shortUrl));
+                    var titulo = encodeURIComponent(window.document.title ? window.document.title : "Visor API SITNA");
+                    window.open("https://twitter.com/intent/tweet?text=" + titulo + "&amp;url=" + encodeURIComponent(shortUrl));
                     return false;
                 } else {
                     TC.error("La URL " + url + " no ha podido ser acortada por ser no válida");

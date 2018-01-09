@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.PrintMap = function () {
@@ -54,7 +54,8 @@ TC.inherit(TC.control.PrintMap, TC.Control);
             if (self.printWindow && self.printWindow !== undefined)
                 self.printWindow.close();
 
-            window.refererMap = map
+            TC.printPreview = {};
+            TC.printPreview.refererMap = map
 
             var mapFeatures = [];
             var layer;
@@ -88,7 +89,7 @@ TC.inherit(TC.control.PrintMap, TC.Control);
                 }
             }
 
-            window.mapFeatures = mapFeatures;
+            TC.printPreview.mapFeatures = mapFeatures;
 
             self.printWindow = window.open(url, "print");
             self.printWindow.onbeforeunload = function () {

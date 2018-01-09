@@ -104,6 +104,7 @@ TC.Feature.prototype.setData = function (data) {
 TC.Feature.prototype.getInfo = function () {
     var result = null;
     var self = this;
+    var locale = self.layer && self.layer.map && TC.Util.getMapLocale(self.layer.map);
     var data = self.getData();
     if (typeof data === 'object') {
         var template = self.wrap.getTemplate();
@@ -128,7 +129,7 @@ TC.Feature.prototype.getInfo = function () {
                         html[html.length] = value;
                         html[html.length] = '" target="_blank">';
                     }
-                    html[html.length] = value !== void (0) ? value : '&mdash;';
+                    html[html.length] = value !== void (0) ? TC.Util.formatNumber(value, locale) : '&mdash;';
                     if (isUrl) {
                         html[html.length] = '</a>';
                     }
@@ -152,7 +153,7 @@ TC.Feature.prototype.getInfo = function () {
         }
     }
     if (!result) {
-        result = TC.Util.getLocaleString(TC.Cfg.locale, 'noData');
+        result = TC.Util.getLocaleString(locale.replace('-', '_'), 'noData');
     }
     return result;
 };
@@ -170,7 +171,7 @@ TC.Feature.prototype.getStyle = function () {
 
 TC.Feature.prototype.showPopup = function (control) {
     var self = this;
-    if (self.showsPopup && self.layer && self.layer.map) {
+    if (self.layer && self.layer.map) {
         var ctlDeferred;
         var popup = control || self.popup;
         if (!popup) {
@@ -189,7 +190,7 @@ TC.Feature.prototype.showPopup = function (control) {
             ctlDeferred.resolve(popup);
         }
         else {
-            TC.loadJS(!TC.control || !TC.control.Popup, [TC.apiLocation + 'TC/control/Popup.js'], function () {
+            TC.loadJS(!TC.control || !TC.control.Popup, [TC.apiLocation + 'TC/control/Popup'], function () {
                 ctlDeferred = self.layer.map.addControl(new TC.control.Popup());
             });
         }
@@ -236,3 +237,9 @@ TC.Feature.prototype.unselect = function () {
 TC.Feature.prototype.isSelected = function () {
     return this._selected;
 };
+
+TC.Feature.prototype.toGML = function (version,srsName) {
+    return this.wrap.toGML(version,srsName);
+};
+
+

@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Search = function () {
@@ -97,6 +97,7 @@ TC.control.Search = function () {
         goToIdFormat: 'M{0}P{1}Par{2}',
         idPropertiesIdentifier: '#'
     };
+
     self.availableSearchTypes[TC.Consts.searchType.COORDINATES] = {
         parser: self.getCoordinates,
         goTo: self.goToCoordinates,
@@ -243,7 +244,6 @@ TC.control.Search = function () {
         }
     };
 
-
     self.availableSearchTypes[TC.Consts.searchType.STREET] = {
         root: null,
         limit: null,
@@ -265,7 +265,7 @@ TC.control.Search = function () {
                 color: { "#CB0000": self.getLocaleString('search.list.street') }
             };
         },
-        outputProperties: ['ENTIDADC', 'VIA'],
+        outputProperties: ['ENTIDADC', 'VIA', 'CENTIDADC', 'CMUNICIPIO'],
         outputFormatLabel: '{1}, {0}',
         styles: {
             CATAST_Lin_CalleEje: {
@@ -315,7 +315,7 @@ TC.control.Search = function () {
                 color: { "#CB0000": self.getLocaleString('search.list.number') }
             };
         },
-        outputProperties: ['ENTIDADC', 'VIA', 'PORTAL'],
+        outputProperties: ['ENTIDADC', 'VIA', 'PORTAL', 'CENTIDADC', 'CMUNICIPIO'],
         outputFormatLabel: '{1} {2}, {0}',
         styles: {
             CATAST_Txt_Portal: {
@@ -404,6 +404,142 @@ TC.control.Search = function () {
         }
     };
 
+    self.rootCfg = {};
+    self.rootCfg[TC.Consts.searchType.MUNICIPALITY] = {
+        root: null,
+        limit: false,
+        url: self.url || '//idena.navarra.es/ogc/wfs',
+        version: self.version || '1.1.0',
+        outputFormat: TC.Consts.format.JSON,
+        featurePrefix: self.featurePrefix || 'IDENA',
+        geometryName: 'the_geom',
+        featureType: 'CATAST_Pol_Municipio',
+        dataIdProperty: ['CMUNICIPIO'],
+        queryProperties: {
+            tProperty: ['MUNICIPIO']
+        },
+        outputProperties: ['MUNICIPIO'],
+        outputFormatLabel: '{0}',
+        getRootLabel: function () {
+            var done = new $.Deferred();
+            if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel) {
+
+                var params = {};
+                params.SERVICE = 'WFS';
+                params.VERSION = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].version;
+                params.REQUEST = 'GetFeature';
+                params.TYPENAME = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].featurePrefix + ':' + self.rootCfg[TC.Consts.searchType.MUNICIPALITY].featureType;
+                params.OUTPUTFORMAT = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputFormat;
+                params.PROPERTYNAME = ['CMUNICIPIO'].concat(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputProperties).join(',');
+
+                params.CQL_FILTER = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].root.map(function (elem) {
+                    return ['CMUNICIPIO'].map(function (id, index) {
+                        return id + '=' + elem[index];
+                    }).join(' AND ');
+                });
+
+                params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
+
+                $.ajax({
+                    url: self.rootCfg[TC.Consts.searchType.MUNICIPALITY].url + '?' + $.param(params),
+                    type: 'GET'
+                }).done(function (data) {
+                    if (data.totalFeatures > 0) {
+
+                        self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = data.features.map(function (feature) {
+                            return {
+                                id: ['CMUNICIPIO'].map(function (elem) {
+                                    return feature.properties[elem];
+                                }).join('#'),
+                                label: feature.properties[self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputProperties[0]].toLowerCase()
+                            };
+                        });
+
+                        done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+
+                    } else {
+                        self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = [];
+                        done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+                    }
+                }).fail(function () {
+                    done.resolve([]);
+                });
+            }
+            else {
+                done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+            }
+
+            return done;
+        }
+    };
+    self.rootCfg[TC.Consts.searchType.LOCALITY] = {
+        root: null,
+        limit: false,
+        url: self.url || '//idena.navarra.es/ogc/wfs',
+        version: self.version || '1.1.0',
+        outputFormat: TC.Consts.format.JSON,
+        featurePrefix: self.featurePrefix || 'IDENA',
+        geometryName: 'the_geom',
+        featureType: ['ESTADI_Pol_EntidadPob'],
+        renderFeatureType: '',
+        dataIdProperty: ['CMUNICIPIO', 'CENTIDADC'],
+        queryProperties: {
+            tProperty: ['ENTINOAC']
+        },
+        outputProperties: ['ENTINOAC'],
+        getRootLabel: function () {
+            var done = new $.Deferred();
+            if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel) {
+
+                var params = {};
+                params.SERVICE = 'WFS';
+                params.VERSION = self.rootCfg[TC.Consts.searchType.LOCALITY].version;
+                params.REQUEST = 'GetFeature';
+                params.TYPENAME = self.rootCfg[TC.Consts.searchType.LOCALITY].featurePrefix + ':' + self.rootCfg[TC.Consts.searchType.LOCALITY].featureType;
+                params.OUTPUTFORMAT = self.rootCfg[TC.Consts.searchType.LOCALITY].outputFormat;
+                params.PROPERTYNAME = ['CMUNICIPIO', 'CENTIDAD'].concat(self.rootCfg[TC.Consts.searchType.LOCALITY].outputProperties).join(',');
+
+                params.CQL_FILTER = self.rootCfg[TC.Consts.searchType.LOCALITY].root.map(function (elem) {
+                    return ['CMUNICIPIO', 'CENTIDAD'].map(function (id, index) {
+                        return id + '=' + elem[index];
+                    }).join(' AND ');
+                });
+
+                params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
+
+                $.ajax({
+                    url: self.rootCfg[TC.Consts.searchType.LOCALITY].url + '?' + $.param(params),
+                    type: 'GET'
+                }).done(function (data) {
+                    if (data.totalFeatures > 0) {
+
+                        self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = data.features.map(function (feature) {
+                            return {
+                                id: ['CMUNICIPIO', 'CENTIDAD'].map(function (elem) {
+                                    return feature.properties[elem];
+                                }).join('#'),
+                                label: feature.properties[self.rootCfg[TC.Consts.searchType.LOCALITY].outputProperties[0]].toLowerCase()
+                            };
+                        });
+
+                        done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+
+                    } else {
+                        self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = [];
+                        done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+                    }
+                }).fail(function () {
+                    done.resolve([]);
+                });
+            }
+            else {
+                done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+            }
+
+            return done;
+        }
+    };
+
     self.allowedSearchTypes = self.options.allowedSearchTypes || {};
 
     if (self.options.allowedSearchTypes) {
@@ -412,17 +548,24 @@ TC.control.Search = function () {
             if (self.availableSearchTypes[allowed] && !$.isEmptyObject(self.options.allowedSearchTypes[allowed])) {
                 $.extend(self.availableSearchTypes[allowed], self.options.allowedSearchTypes[allowed]);
 
-                if (allowed != TC.Consts.searchType.MUNICIPALITY && self.options.allowedSearchTypes[allowed].root) {
-                    self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root = self.options.allowedSearchTypes[allowed].root;
-                    self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].limit = self.options.allowedSearchTypes[allowed].limit || true;
+                if (self.options.allowedSearchTypes[allowed].root &&
+                    (allowed != TC.Consts.searchType.MUNICIPALITY && self.options.allowedSearchTypes[allowed].rootType == TC.Consts.searchType.MUNICIPALITY) ||
+                    (allowed != TC.Consts.searchType.LOCALITY && self.options.allowedSearchTypes[allowed].rootType == TC.Consts.searchType.LOCALITY)) {
+
+                    self.rootCfg.active = self.rootCfg[self.options.allowedSearchTypes[allowed].rootType];
+                    self.rootCfg.active.root = self.options.allowedSearchTypes[allowed].root;
+                    self.rootCfg.active.limit = self.options.allowedSearchTypes[allowed].limit;
 
                     self.availableSearchTypes[TC.Consts.searchType.STREET].queryProperties.tProperty =
                         self.availableSearchTypes[TC.Consts.searchType.NUMBER].queryProperties.tProperty =
-                            self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].dataIdProperty;
-
+                        self.rootCfg.active.dataIdProperty;
                 }
             }
         }
+    }
+
+    if (self.rootCfg.active) {
+        self.rootCfg.active.getRootLabel();
     }
 
     self.queryableFeatures = self.options.queryableFeatures || false;
@@ -439,12 +582,13 @@ TC.control.Search = function () {
     self.NUMBER = TC.Consts.searchType.NUMBER;
     self.COMMONWEALTH = TC.Consts.searchType.COMMONWEALTH;
     self.URBAN = TC.Consts.searchType.URBAN;
+    self.ROAD = TC.Consts.searchType.ROAD;
+    self.ROADPK = TC.Consts.searchType.ROADPK;
 
     self.wrap = new TC.wrap.control.Search(self);
 
     self.interval = 500;
 
-    self.rootLabel = '';
     self.searchTypes = {
         CADASTRAL_SEARCH: {
             parser: self.getCadastralRef,
@@ -468,10 +612,361 @@ TC.control.Search = function () {
     };
 
     self.NORMAL_PATTERNS = {
-        ROMAN_NUMBER: /M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}){1,}?\S?\./g,
-        ABSOLUTE_NOT_DOT: /[`~!@#$%^&*_|+\=?;:'"\{\}\[\]\\]/g,
-        ABSOLUTE: /[`~!@#$%^&*_|+\=?;:'.\{\}\[\]\\]/g
+        ROMAN_NUMBER: /M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}){1,}?\S?\./i,
+        ABSOLUTE_NOT_DOT: /[`~!@#$%^&*_|+\=?;:'"\{\}\[\]\\]/gi,
+        ABSOLUTE: /[`~!@#$%^&*_|+\=?;:'.\{\}\[\]\\]/gi
     };
+
+    self.filter = (function (self) {
+
+        var getGoToElement = function (id, dataRole) {
+            for (var i = 0; i < self._search.data.length; i++) {
+                if (self._search.data[i].id == id && (!dataRole || (dataRole && self._search.data[i].dataRole === dataRole)))
+                    return self._search.data[i];
+            }
+        };
+
+        var getFeatureLayer = function (feature) {
+            var searchType = self.availableSearchTypes[feature.dataRole];
+            var dataLayer = feature.dataLayer;
+
+            if (searchType.renderFeatureType) {
+                if (!(feature.dataLayer instanceof Array))
+                    dataLayer = [feature.dataLayer];
+
+                dataLayer = dataLayer.concat((searchType.renderFeatureType instanceof Array ? searchType.renderFeatureType : [searchType.renderFeatureType]));
+            }
+
+            return dataLayer;
+        };
+
+        return {
+            getPropertyName: function (dataRole, e) {
+                return self.availableSearchTypes[dataRole].queryProperties[e + 'Property'];
+            },
+            getPropertyValue: function (role, propertyName) {
+                return self.availableSearchTypes[role][propertyName];
+            },
+            getIsLikeNode: function (name, value) {
+                var toEscape = /([\-\"\.\º\(\)\/])/g;
+                if (toEscape.test(value)) {
+                    value = value.replace(toEscape, "\\$1");
+                }
+
+                if (value.toString().indexOf(self._LIKE_PATTERN) > -1)
+                    return '<Or><PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
+                        '<PropertyName>' + name + '</PropertyName>' +
+                        '<Literal>' + value.toLowerCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
+                        '</PropertyIsLike>' +
+                        '<PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
+                        '<PropertyName>' + name + '</PropertyName>' +
+                        '<Literal>' + value.toUpperCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
+                        '</PropertyIsLike></Or>';
+                else
+                    return '<PropertyIsEqualTo>' +
+                        '<PropertyName>' + name + '</PropertyName>' +
+                        '<Literal>' + value.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
+                        '</PropertyIsEqualTo>';
+            },
+            getFilterNode: function (propertyName, propertyValue) {
+                var r;
+                if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
+                    var f = [];
+                    for (var key in propertyName) {
+                        if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
+                            r = '<Or>';
+                            for (var i = 0; i < propertyName[key].length; i++) {
+                                r += self.filter.getIsLikeNode($.trim(propertyName[key][i]), propertyValue);
+                            }
+
+                            r += '</Or>';
+                            f.push('(<Filter xmlns="http://www.opengis.net/ogc">' + r + '</Filter>)');
+                        } else {
+                            var propName = propertyName[key];
+                            if ((propertyName[key] instanceof Array) && propertyName[key].length == 1)
+                                propName = propertyName[key][0];
+
+                            f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
+                                '<Or>' + self.filter.getIsLikeNode($.trim(propName), propertyValue) + '</Or>' +
+                                '</Filter>)');
+                        }
+                    }
+
+                    return f.join('');
+
+                } else if (propertyName instanceof Array && propertyName.length > 1) {
+                    r = '<ogc:Or>';
+                    for (var i = 0; i < propertyName.length; i++) {
+                        r += self.filter.getIsLikeNode($.trim(propertyName[i]), propertyValue);
+                    }
+
+                    return r += '</ogc:Or>';
+                } else
+                    return self.filter.getIsLikeNode((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
+            },
+            getFilter: function (data, dataRole) {
+                var r = {};
+                r.multiL = false;
+                r.f = '';
+
+                var _f;
+
+                var bindRootFilterNode = function (filtersArr, dataT) {
+                    var rootFilters = [];
+
+                    if (dataT != self.rootCfg.active.root) {
+                        // GLS: Si llego aqu\u00ed, significa que el usuario est\u00e1 indicando la poblaci\u00f3n, 
+                        // por tanto no a\u00f1ado todas las ra\u00edces posibles, a\u00f1ado la poblaci\u00f3n que ha indicado (validando antes contra rootLabel)                     
+                        var item = dataT.split('#');
+
+                        for (var j = 0; j < self.rootCfg.active.dataIdProperty.length; j++) {
+
+                            if (j == 0 && self.rootCfg.active.dataIdProperty.length > 1) {
+                                rootFilters.push('<ogc:And>');
+                            }
+
+                            rootFilters.push(self.filter.getFilterNode(self.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
+
+                            if (j == self.rootCfg.active.dataIdProperty.length - 1 && self.rootCfg.active.dataIdProperty.length > 1) {
+                                rootFilters.push('</ogc:And>');
+                            }
+                        }
+                    } else {
+                        for (var i = 0; i < self.rootCfg.active.root.length; i++) {
+                            var item = self.rootCfg.active.root[i];
+
+                            if (i == 0 && self.rootCfg.active.root.length > 1) {
+                                rootFilters.push('<ogc:Or>');
+                            }
+
+                            for (var j = 0; j < self.rootCfg.active.dataIdProperty.length; j++) {
+
+                                if (j == 0 && self.rootCfg.active.dataIdProperty.length > 1) {
+                                    rootFilters.push('<ogc:And>');
+                                }
+
+                                rootFilters.push(self.filter.getFilterNode(self.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
+
+                                if (j == self.rootCfg.active.dataIdProperty.length - 1 && self.rootCfg.active.dataIdProperty.length > 1) {
+                                    rootFilters.push('</ogc:And>');
+                                }
+                            }
+                        }
+
+                        if (self.rootCfg.active.root.length > 1) {
+                            rootFilters.push('</ogc:Or>');
+                        }
+                    }
+
+                    return filtersArr.concat(rootFilters);
+                };
+
+                switch (dataRole) {
+                    case self.NUMBER:
+                        _f = [];
+                        if (!(self.rootCfg.active) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
+                            var match = /(\<|\>|\<\>)/gi.exec(data.t);
+                            if (match)
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                            else {
+                                if (self.rootCfg.active) {
+                                    _f = bindRootFilterNode(_f, data.t);
+                                }
+                                else {
+                                    _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                                }
+                            }
+
+                            match = /(\<|\>|\<\>)/gi.exec(data.s);
+                            if (match)
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                            else _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        }
+                        else {
+                            if (self.rootCfg.active) {
+                                _f = bindRootFilterNode(_f, data.t);
+                            } else {
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                            }
+                            _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        }
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 'p'), data.p + '*'));
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                        break;
+                    case self.STREET:
+                        _f = [];
+
+                        if (!(self.rootCfg.active) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
+                            var match = /(\<|\>|\<\>)/gi.exec(data.t);
+                            if (match)
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                            else {
+                                if (self.rootCfg.active) {
+                                    _f = bindRootFilterNode(_f, data.t);
+                                }
+                                else {
+                                    _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                                }
+                            }
+
+                            match = /(\<|\>|\<\>)/gi.exec(data.s);
+                            if (match)
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                            else _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        } else {
+
+                            if (self.rootCfg.active) {
+                                _f = bindRootFilterNode(_f, data.t);
+                            }
+                            else {
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                            }
+                            _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        }
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                        break;
+                    case self.COUNCIL:
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
+                        break;
+                    case self.URBAN:
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
+                        break;
+                    case self.LOCALITY:
+                        r.f = self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN);
+                        r.multiL = true;
+                        break;
+                    case self.MUNICIPALITY: {
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
+                        break;
+                    }
+                    case self.ROAD:
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
+                        break;
+                    case self.ROADPK:
+                        var _f = [];
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                        break;
+                }
+
+                return r;
+            },
+            getParams: function (data, dataRole, properties, dataIdProperties) {
+                var filters = self.filter.getFilter(data, dataRole);
+
+                var params = {
+                    REQUEST: 'GetFeature',
+                    SERVICE: 'WFS',
+                    MAXFEATURES: 500,
+                    VERSION: self.availableSearchTypes[dataRole].version,
+                    OUTPUTFORMAT: self.availableSearchTypes[dataRole].outputFormat
+                };
+
+                var featureTypes = self.filter.getPropertyValue(dataRole, 'featureType');
+                if (!(featureTypes instanceof Array))
+                    params.TYPENAME = self.availableSearchTypes[dataRole].featurePrefix ? self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes) : $.trim(featureTypes);
+                else {
+                    var ft = [];
+                    for (var i = 0; i < featureTypes.length; i++) {
+                        ft.push(self.availableSearchTypes[dataRole].featurePrefix ?
+                            self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes[i]) :
+                            $.trim(featureTypes[i]));
+                    }
+
+                    params.TYPENAME = ft.join(',');
+                }
+
+                var _getProperties = function (properties) {
+                    if ((properties || '') !== '') {
+                        if (!(properties instanceof Array)) {
+                            var p = [];
+                            if (properties instanceof Object) {
+                                for (var key in properties) {
+                                    var prop = properties[key][0];
+                                    if (properties[key].length > 1)
+                                        prop = properties[key].join(',');
+
+                                    p.push(prop);
+                                }
+                            }
+                            return p;
+                        }
+                        else
+                            return properties.join(',');
+                    }
+                };
+                var _properties = _getProperties(properties);
+                var _ids = _getProperties(dataIdProperties);
+
+                if (_properties instanceof Array && _ids instanceof Array) {
+                    params.PROPERTYNAME = '';
+                    for (var i = 0; i < _properties.length; i++) {
+                        params.PROPERTYNAME += '(' + _properties[i] + ',' + _ids[i] + ')';
+                    }
+                } else
+                    params.PROPERTYNAME = _properties + ',' + _ids;
+
+                params.FILTER = filters.f;
+
+                return $.param(params);
+            },
+
+            getGoToFilterLayer: function (id, dataRole) {
+                var feature = getGoToElement(id, dataRole);
+                return getFeatureLayer(feature);
+            },
+            getGoToFilter: function (id, dataRole) {
+                var props = [];
+                var _id = id.split('#');
+
+                var feature = getGoToElement(id, dataRole);
+                if (feature && feature.dataRole) {
+                    var searchType = self.availableSearchTypes[feature.dataRole];
+                    var source = searchType.dataIdProperty;
+                    var dataLayer = getFeatureLayer(feature);
+
+                    if (id.indexOf('#') > -1 && dataLayer instanceof Array) {
+                        for (var i = 0; i < dataLayer.length; i++) {
+
+                            for (var j = 0; j < source[dataLayer[i]].length; j++) {
+                                props.push({ name: source[dataLayer[i]][j], value: _id[j] });
+                            }
+                        }
+                    } else if (id.indexOf('#') == -1 && dataLayer instanceof Array) {
+                        var src = source;
+
+                        for (var i = 0; i < dataLayer.length; i++) {
+                            if (!props.hasOwnProperty(dataLayer[i])) {
+
+                                if (src instanceof Object && source.hasOwnProperty(dataLayer[i]))
+                                    src = source[dataLayer[i]];
+
+                                for (var j = 0; j < src.length; j++) {
+                                    if (j < _id.length)
+                                        props.push({ name: src[j], value: _id[j] });
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        if (source instanceof Object && source.hasOwnProperty(dataLayer))
+                            source = source[dataLayer];
+
+                        for (var i = 0; i < source.length; i++) {
+                            props.push({ name: source[i], value: _id[i] });
+                        }
+                    }
+                }
+
+                return self.transformFilter(props);
+            },
+
+            getGoToElement: function (id) {
+                return getGoToElement(id);
+            }
+        }
+    })(self);
 };
 
 TC.inherit(TC.control.Search, TC.Control);
@@ -507,13 +1002,14 @@ TC.inherit(TC.control.Search, TC.Control);
             };
             function getStyle(property, geomType, id) {
                 for (var allowed in self.allowedSearchTypes) {
-                    if (self.availableSearchTypes[allowed].hasOwnProperty('featureType'))
-                        if (self.availableSearchTypes[allowed].featureType.indexOf(id) > -1 || self.availableSearchTypes[allowed].renderFeatureType && self.availableSearchTypes[allowed].renderFeatureType.indexOf(id) > -1)
-                            if (self.availableSearchTypes[allowed].styles[id].hasOwnProperty(geomType)) {
-                                return self.availableSearchTypes[allowed].styles[id][geomType][property];
+                    var type = self.availableSearchTypes[allowed] || self.allowedSearchTypes[allowed];
+                    if (type && type.hasOwnProperty('featureType'))
+                        if (type.featureType.indexOf(id) > -1 || type.renderFeatureType && type.renderFeatureType.indexOf(id) > -1)
+                            if (type.styles[id].hasOwnProperty(geomType)) {
+                                return type.styles[id][geomType][property];
                             }
                 }
-                
+
                 return TC.Cfg.styles[geomType][property];
             };
 
@@ -525,10 +1021,24 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
 
                 var prop = getStyle(property, geomType, getFeatureType(f.id));
-                if (extractValue)
-                    return f.getData().hasOwnProperty(prop) ? f.getData()[prop] : '';
-                else
+                if (extractValue) {
+                    if (prop instanceof Array) {
+                        var values = prop.map(function (p) {
+                            return f.getData().hasOwnProperty(p) ? f.getData()[p] : '';
+                        });
+                        var searchType = this.getSearchTypeByFeature(getFeatureType(f.id));
+                        if (searchType) {
+                            return searchType.outputFormatLabel.tcFormat(values);
+                        } else {
+                            return values.join(' ');
+                        }
+                    } else {
+                        return f.getData().hasOwnProperty(prop) ? f.getData()[prop] : '';
+                    }
+                }
+                else {
                     return prop;
+                }
             };
         }());
 
@@ -554,7 +1064,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         strokeOpacity: styleFN.bind(self, 'line', 'strokeOpacity', false),
                         strokeWidth: styleFN.bind(self, 'line', 'strokeWidth', false)
                     },
-                    marker: {                        
+                    marker: {
                         anchor: TC.Defaults.styles.marker.anchor,
                         height: TC.Defaults.styles.marker.height,
                         width: TC.Defaults.styles.marker.width
@@ -587,6 +1097,89 @@ TC.inherit(TC.control.Search, TC.Control);
         self.OUTBBX_LABEL = self.getLocaleString('outsideOfLimits');
 
         self.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "properties", "outputFormat"];
+
+        self.availableSearchTypes[TC.Consts.searchType.ROAD] = {
+            root: null,
+            limit: false,
+            url: self.url || '//idena.navarra.es/ogc/wfs',
+            version: self.version || '1.1.0',
+            outputFormat: TC.Consts.format.JSON,
+            featurePrefix: self.featurePrefix || 'IDENA',
+            geometryName: 'the_geom',
+            featureType: 'INFRAE_Lin_CtraEje',
+            dataIdProperty: ['DCARRETERA'],
+            queryProperties: {
+                tProperty: ['DCARRETERA']
+            },
+            suggestionListHead: function () {
+                return {
+                    label: self.getLocaleString('search.list.road'),
+                    color: { '#00b2fc': self.getLocaleString('search.list.road') }
+                };
+            },
+            outputProperties: ['DCARRETERA'],
+            outputFormatLabel: self.getLocaleString('search.list.road.shorter') + ': ' + '{0}',
+            searchWeight: 2,
+            styles: {
+                INFRAE_Lin_CtraEje: {
+                    polygon: {
+                        strokeColor: "#00b2fc",
+                        strokeOpacity: 1,
+                        strokeWidth: 5
+                    },
+                    line: {
+                        strokeColor: "#00b2fc",
+                        strokeOpacity: 1,
+                        strokeWidth: 5,
+                        strokeLinecap: "round",
+                        strokeDashstyle: "solid"
+                    }
+                }
+            },
+            parser: self.getRoad,
+            goTo: self.goToRoad,
+            pattern: new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|NA?|PA?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))$", "i")
+        };
+
+        self.availableSearchTypes[TC.Consts.searchType.ROADPK] = {
+            root: null,
+            limit: false,
+            url: self.url || '//idena.navarra.es/ogc/wfs',
+            version: self.version || '1.1.0',
+            outputFormat: TC.Consts.format.JSON,
+            featurePrefix: self.featurePrefix || 'IDENA',
+            geometryName: 'the_geom',
+            featureType: 'INFRAE_Sym_CtraPK',
+            dataIdProperty: ['DCARRETERA', 'CPK'],
+            queryProperties: {
+                tProperty: ['DCARRETERA'],
+                sProperty: ['PK']
+            },
+            suggestionListHead: function () {
+                return {
+                    label: self.getLocaleString('search.list.pk.larger'),
+                    color: { '#00b2fc': (self.getLocaleString('search.list.road') + ' ' + self.getLocaleString('search.list.pk')) }
+                };
+            },
+            outputProperties: ['DCARRETERA', 'PK'],
+            outputFormatLabel: self.getLocaleString('search.list.road.shorter') + ': {0} ' + self.getLocaleString('search.list.pk') + ': {1}',
+            searchWeight: 2,
+            styles: {
+                INFRAE_Sym_CtraPK: {
+                    point: {
+                        label: ["DCARRETERA", "PK"],
+                        fontColor: "#00b2fc",
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        labelOutlineColor: "#ffffff",
+                        labelOutlineWidth: 2
+                    }
+                }
+            },
+            parser: self.getPK,
+            goTo: self.goToPK,
+            pattern: new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|NA?|PA?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))\\s*\\,*\\s*(?:(?:" + self.getLocaleString("search.list.pk") + "\\:?)|(?:P\\:?)|(?:K\\:?)|(?:KM\\:?)|(?:\\s+|\\,+))\\s*(\\d{1,4})$", "i")
+        };
     };
 
     ctlProto.renderData = function (data, callback) {
@@ -595,7 +1188,7 @@ TC.inherit(TC.control.Search, TC.Control);
         self._search = self._search || {};
 
         var _search = function () {
-            self.search(self.$text.val(), function (list) {
+            self.search(self.$text.val(), function (list) {                
                 if (list.length === 1) {
                     self.$text.val(list[0].label);
                     self.goToResult(list[0].id);
@@ -672,8 +1265,12 @@ TC.inherit(TC.control.Search, TC.Control);
                     e.preventDefault();
                     e.stopPropagation();
 
+                    self.lastPattern = "";
+
                     if (self.$list.find('li > a:not(.tc-ctl-search-li-loading,.tc-ctl-search-li-empty)').length === 1) {
                         _research();
+                    } else {                                                                        
+                        _search();
                     }
                     return false;
                 }
@@ -701,6 +1298,8 @@ TC.inherit(TC.control.Search, TC.Control);
                 !self.$text.autocomplete,
                 [TC.apiLocation + 'lib/jQuery/autocomplete.js'],
                 function () {
+                    var searchDelay;
+
                     self.$text = self._$div.find('input.tc-ctl-search-txt');
                     self.$text.autocomplete({
                         link: '#',
@@ -708,17 +1307,40 @@ TC.inherit(TC.control.Search, TC.Control);
                         minLength: 2,
                         ctx: self,
                         source: function (text, callback) {
-                            if (text != self.lastPattern) {
-                                self.$list.hide('fast');
+                            self.lastpress = performance.now();
 
-                                self.lastPattern = text;
+                            if (!searchDelay) {
+                                function step() {
+                                    var criteria = self.$text.val().trim();
 
-                                if (self.retryTimeout)
-                                    clearTimeout(self.retryTimeout);
+                                    if (criteria.length > 0 &&
+                                        (!self.lastPattern || criteria != self.lastPattern) &&
+                                        performance.now() - self.lastpress > self.interval) {
 
-                                self.retryTimeout = setTimeout(function () {
-                                    self.search(text, callback);
-                                }, self.interval);
+                                        window.cancelAnimationFrame(searchDelay);
+                                        searchDelay = undefined;
+
+                                        self.$list.hide('fast');
+
+                                        // Pendiente de afinar
+                                        //if (self.lastPattern && criteria.substring(0, criteria.lastIndexOf(' ')) == self.lastPattern) {                                            
+                                                
+                                        //    // Si el patr\u00f3n de b\u00fasqueda anterior y actual es el mismo m\u00e1s algo nuevo (t\u00edpico en la b\u00fasqueda de un portal), lo nuevo lo separo por coma
+                                        //    // self.lastPattern: "Calle Catalu\u00f1a/Katalunia Kalea, Pamplona"
+                                        //    // text: "Calle Catalu\u00f1a/Katalunia Kalea, Pamplona 18"
+
+                                        //    criteria = criteria.substring(0, criteria.lastIndexOf(' ')) + (self.lastPattern.trim().endsWith(',') ? "" : ",") + criteria.substring(criteria.lastIndexOf(' '));
+                                        //}
+
+                                        self.lastPattern = criteria;
+
+                                        self.search(criteria, callback);
+                                    } else {                                        
+                                        searchDelay = requestAnimationFrame(step);
+                                    }
+                                }
+
+                                searchDelay = requestAnimationFrame(step);
                             }
                         },
                         callback: function (e) {
@@ -731,22 +1353,72 @@ TC.inherit(TC.control.Search, TC.Control);
                             self.lastPattern = self.$text.val();
                             self.goToResult(unescape($(_target).attr('href')).substring(1), $(_target).parent().attr('dataRole'));
                             self.$text.autocomplete('clear');;
-                        },
+                        }
+                        ,
                         buildHTML: function (results) {
+
                             var html = [];
                             var dataRoles = [];
+
+                            var reA = /[^a-zA-Z]/g;
+                            var reN = /[^0-9]/g;
+                            function sortAlphaNum(a, b) {
+                                var AInt = parseInt(a, 10);
+                                var BInt = parseInt(b, 10);
+
+                                if (isNaN(AInt) && isNaN(BInt)) {
+                                    var aA = a.replace(reA, "");
+                                    var bA = b.replace(reA, "");
+                                    if (aA === bA) {
+                                        var aN = parseInt(a.replace(reN, ""), 10);
+                                        var bN = parseInt(b.replace(reN, ""), 10);
+                                        return aN === bN ? 0 : aN > bN ? 1 : -1;
+                                    } else {
+                                        return aA > bA ? 1 : -1;
+                                    }
+                                } else if (isNaN(AInt)) {//A is not an Int
+                                    return 1;//to make alphanumeric sort first return -1 here
+                                } else if (isNaN(BInt)) {//B is not an Int
+                                    return -1;//to make alphanumeric sort first return 1 here
+                                } else {
+                                    return AInt > BInt ? 1 : -1;
+                                }
+                            };
+
+                            // ordenamos por roles y alfab\u00e9ticamente
                             var data = results.results.sort(function (a, b) {
                                 if (a.dataRole > b.dataRole)
                                     return 1;
                                 else if (a.dataRole < b.dataRole)
                                     return -1;
-                                else return 0;
+                                else {
+                                    return sortAlphaNum(a.label, b.label);
+                                }
                             });
+
+                            if (self.rootCfg.active) {// si hay root, aplicamos el orden por entidades 
+                                data = data.sort(function (a, b) {
+                                    var first = this.rootCfg.active.root[0].join('-');
+                                    var aRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return a.properties[elem].toString(); }).join('-');
+                                    var bRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return b.properties[elem].toString(); }).join('-');
+
+                                    if (aRoot !== first && bRoot === first) {
+                                        return 1;
+                                    } else if (aRoot === first && bRoot !== first) {
+                                        return -1;
+                                    } else {
+                                        return sortAlphaNum(a.label, b.label);
+                                    }
+
+                                }.bind(self));
+                            }
 
                             for (var i = 0; i < data.length; i++) {
                                 var elm = data[i];
                                 if (dataRoles.indexOf(elm.dataRole) == -1) {
-                                    var headerData = this.ctx.availableSearchTypes[elm.dataRole].suggestionListHead();
+
+                                    var type = this.ctx.availableSearchTypes[elm.dataRole] || this.ctx.allowedSearchTypes[elm.dataRole];
+                                    var headerData = type.suggestionListHead();
                                     var liHTML = '<li header><span class="header">' + headerData.label + '</span>';
 
                                     for (var color in headerData.color) {
@@ -768,7 +1440,14 @@ TC.inherit(TC.control.Search, TC.Control);
                                 else
                                     normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
 
-                                var querys = normalizedLastPattern.trim().split(',');
+
+                                var querys = [];
+                                var separatorChar = ',';
+                                if (normalizedLastPattern.indexOf(separatorChar) == -1) {
+                                    separatorChar = ' ';
+                                }
+
+                                querys = normalizedLastPattern.trim().split(separatorChar);
 
                                 // si estamos tratando con coordenadas el separador es el espacio, no la coma
                                 if ((elm.label.indexOf(this.ctx.LAT_LABEL) > -1 && elm.label.indexOf(this.ctx.LON_LABEL) > -1) ||
@@ -779,19 +1458,44 @@ TC.inherit(TC.control.Search, TC.Control);
                                         if (querys[t].trim().slice(-1) == ',')
                                             querys[t] = querys[t].slice(0, -1);
                                     }
-                                }
+                                }        
 
                                 for (var q = 0; q < querys.length; q++) {
-                                    strReg.push('(' + querys[q].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
-                                    var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
+                                    if (querys[q].trim().length > 0) {
+                                        strReg.push('(' + querys[q].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                                        var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
+                                        if (match) {
+                                            var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
+                                            for (var st = 0; st < _strReg.length; st++) {
+                                                if (_strReg[st].trim().length > 0)
+                                                    strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                                            }
+                                        }
+                                    }                                    
+                                }
+
+                                if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
+                                    var rPattern = self.availableSearchTypes[elm.dataRole].pattern;
+                                    var match = rPattern.exec(this.ctx.lastPattern);
                                     if (match) {
-                                        var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
-                                        for (var st = 0; st < _strReg.length; st++) {
-                                            if (_strReg[st].trim().length > 0)
-                                                strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                                        strReg = [];
+
+                                        if (match[2] && match[3]) {
+
+                                            strReg.push(match[2] + "-" + match[3]);
+
+                                            if (match[4]) {
+                                                strReg[strReg.length - 1] = strReg[strReg.length - 1] + "-" + match[4];
+                                            }
+
+                                            strReg[strReg.length - 1] = "(" + strReg[strReg.length - 1] + ")";
+                                        }
+
+                                        if (match[5]) {
+                                            strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
                                         }
                                     }
-                                }
+                                }                               
 
                                 var pattern = '(' + strReg.join('|') + ')';
                                 pattern = pattern.replace(/a/gi, "[a|\u00e1]");
@@ -800,7 +1504,23 @@ TC.inherit(TC.control.Search, TC.Control);
                                 pattern = pattern.replace(/o/gi, "[o|\u00f3]");
                                 pattern = pattern.replace(/u/gi, "[u|\u00fa|\u00fc]");
                                 var rex = new RegExp(pattern, "gi");
-                                highlighted = elm.label.replace(rex, "<b>$1</b>");
+
+                                var label = elm.label;
+
+                                if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
+                                    highlighted = label.replace(rex,
+                                        function () {
+                                            var params = Array.prototype.slice.call(arguments, 0);
+
+                                            if (params[params.length - 3]) {
+                                                return params[0].replace(params[params.length - 3], "<b>" + params[params.length - 3] + "</b>");
+                                            } else {
+                                                return "<b>" + params[0] + "</b>";
+                                            }
+                                        });
+                                } else {
+                                    highlighted = label.replace(rex, "<b>$1</b>");
+                                }                               
 
                                 html[html.length] = '<li dataRole="' + elm.dataRole + '"><a href="' + '#' + encodeURIComponent(elm.id) + '"><span hidden>' + elm.label + '</span>' + highlighted + '</a></li>';
                             }
@@ -822,9 +1542,9 @@ TC.inherit(TC.control.Search, TC.Control);
                                 } else {
                                     // Scenario 3: We're in the list but not on the last element, simply move down
                                     self.$list
-                                    .find('li:not([header])')
-                                    .find('a:focus')
-                                    .parent('li:not([header])')
+                                        .find('li:not([header])')
+                                        .find('a:focus')
+                                        .parent('li:not([header])')
                                         .nextAll('li:not([header]):first')
                                         .find('a').focus();
                                 }
@@ -839,9 +1559,9 @@ TC.inherit(TC.control.Search, TC.Control);
                                 } else {
                                     // Scenario 3: We're in the list but not on the first element, simply move up
                                     self.$list
-                                    .find('li:not([header])')
-                                    .find('a:focus')
-                                    .parent('li:not([header])')
+                                        .find('li:not([header])')
+                                        .find('a:focus')
+                                        .parent('li:not([header])')
                                         .prevAll('li:not([header]):first')
                                         .find('a').focus();
                                 }
@@ -876,6 +1596,19 @@ TC.inherit(TC.control.Search, TC.Control);
         var features = [];
 
         return self.layer.features;
+    };
+
+    ctlProto.getSearchTypeByFeature = function (id) {
+        var self = this;
+
+        for (var allowed in self.allowedSearchTypes) {
+            var type = self.availableSearchTypes[allowed] || self.allowedSearchTypes[allowed];
+            if (type && type.hasOwnProperty('featureType'))
+                if (type.featureType.indexOf(id) > -1 || type.renderFeatureType && type.renderFeatureType.indexOf(id) > -1)
+                    return type;
+        }
+
+        return null;
     };
 
     ctlProto.cleanMap = function () {
@@ -948,7 +1681,9 @@ TC.inherit(TC.control.Search, TC.Control);
                 });
 
                 self._municipalitiesDeferred.resolve(TC.cache.search.municipalities);
-            });
+            }).fail(function () {
+                self._municipalitiesDeferred.resolve();
+            });;
         }
         return TC.cache.search.municipalities || self._municipalitiesDeferred.promise();
     };
@@ -1009,19 +1744,27 @@ TC.inherit(TC.control.Search, TC.Control);
                     if (point) {
                         self.availableSearchTypes[TC.Consts.searchType.COORDINATES].label = /^X(\d+(?:\.\d+)?)Y(\d+(?:\.\d+)?)$/.test(id) ? self.getLocaleString('search.list.coordinates.utm') + self.map.crs : self.getLocaleString('search.list.coordinates.geo');
 
+                        //console.log('getCoordinates promise resuelta');
                         deferred.resolve([{ id: id, label: self.getLabel(id), dataRole: TC.Consts.searchType.COORDINATES }]);
                     }
                     else {
+                        //console.log('getCoordinates promise resuelta');
                         deferred.resolve([]);
                     }
+                } else {
+                    //console.log('getCoordinates promise resuelta');
+                    deferred.resolve([]);
                 }
             } else {
+                //console.log('getCoordinates promise resuelta');
                 deferred.resolve([]);
             }
         } else {
+            //console.log('getCoordinates promise resuelta');
             deferred.resolve([]);
         }
 
+        //console.log('getCoordinates promise');
         return deferred.promise();
     };
 
@@ -1049,10 +1792,17 @@ TC.inherit(TC.control.Search, TC.Control);
                     });
 
                     var getItem = function (mun, munLabel, pol, par) {
+                        var properties = [];
+
+                        properties.push[self.MUN] = mun;
+                        properties.push[self.POL] = pol;
+                        properties.push[self.PAR] = par;
+
                         return {
                             id: self.MUN + mun + self.POL + pol + self.PAR + par,
                             label: self.getLabel(self.MUN + munLabel + self.POL + pol + self.PAR + par),
-                            dataRole: TC.Consts.searchType.CADASTRAL
+                            dataRole: TC.Consts.searchType.CADASTRAL,
+                            properties: properties
                         };
                     };
                     if (results.length > 0) {
@@ -1063,13 +1813,16 @@ TC.inherit(TC.control.Search, TC.Control);
                     if (/^[0-9]*$/g.test(match[1]))
                         results.push(getItem($.trim(match[1]), $.trim(match[1]), $.trim(match[2]), $.trim(match[3])));
 
+                    //console.log('getCadastralRef promise resuelta');
                     deferred.resolve(results);
                 }
             });
         } else {
+            //console.log('getCadastralRef promise resuelta - no es ref catastral');
             deferred.resolve([]);
         }
 
+        //console.log('getCadastralRef promise');
         return deferred.promise();
     };
 
@@ -1129,7 +1882,7 @@ TC.inherit(TC.control.Search, TC.Control);
         };
 
         var normalizedCriteria = function (value) {
-            var _value = '';            
+            var _value = '';
 
             value = self.removePunctuation(value);
 
@@ -1283,20 +2036,39 @@ TC.inherit(TC.control.Search, TC.Control);
 
             var bindRoot = function (result) {
                 if (root) {
-                    for (var i = 0; i < result.length; i++) {
+
+                    var i = result.length;
+                    while (i--) {
                         if (limit) {
                             if (result[i].t) {
-                                result[i].t = root;
+                                var indicatedRoot = this.rootCfg.active.rootLabel.filter(function (elem) {
+                                    return elem.label.indexOf(this.removePunctuation(result[i].t).toLowerCase()) > -1;
+                                }.bind(this));
+
+                                if (indicatedRoot.length == 1) {
+                                    result[i].t = indicatedRoot[0].id;
+                                } else if (indicatedRoot.length > 1) {
+
+                                    indicatedRoot.map(function (elem) {
+                                        var newResult = $.extend({}, result[i]);
+                                        newResult.t = elem.id;
+
+                                        result.push(newResult);
+                                    });
+
+                                } else if (indicatedRoot.length == 0) {
+                                    result.splice(i, 1);
+                                }
                             }
                         }
                         else result.push($.extend({}, result[i], { t: root }));
                     }
                 }
-            };
+            }.bind(self);
             var tsp = function (text, result) {
                 // town, street, portal - street, town, portal
                 var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
-                if (match) {
+                if (match && match[1] && match[2]) {
 
                     var getPortal = function () {
                         return _formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim());
@@ -1316,11 +2088,34 @@ TC.inherit(TC.control.Search, TC.Control);
 
                 return false;
             };
+            var spt = function (text, result) {
+                // street, portal, town
+                var match = /^(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
+                if (match && match[6] && match[1]) {
+
+                    var getPortal = function () {
+                        return _formatStreetNumber((match[2] || match[3] || match[4] || match[5]).trim());
+                    };
+                    // ninguno contiene n\u00famero duplicamos b\u00fasqueda
+                    if (/^([^0-9]+)$/i.test(match[6].trim()) && /^([^0-9]+)$/i.test(match[1].trim())) {
+                        result.push({ t: match[6].trim(), s: match[1].trim(), p: getPortal() });
+                        result.push({ t: match[1].trim(), s: match[6].trim(), p: getPortal() });
+                    }
+                    else {  // indicamos como calle el criterio que contiene n\u00fameros, ya que no existen municipios con n\u00fameros pero s\u00ed calles
+                        if (/^([^0-9]+)$/i.test(match[6].trim())) result.push({ t: match[6].trim(), s: match[1].trim(), p: getPortal() });
+                        else result.push({ s: match[6].trim(), t: match[1].trim(), p: getPortal() });
+                    }
+                    bindRoot(result);
+                    return true;
+                }
+
+                return false;
+            };
             var tnsp = function (text, result) {
                 // town, numbers street, portal
                 var match = /^(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
 
-                if (match) {
+                if (match && match[1] && match[2]) {
                     result.push({ t: match[2].trim(), s: match[1].trim(), p: _formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim()) });
                     bindRoot(result);
                     return true;
@@ -1331,7 +2126,7 @@ TC.inherit(TC.control.Search, TC.Control);
             var ts = function (text, result) {
                 // town, street
                 var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))$/i.exec(text);
-                if (match) {
+                if (match && match[1] && match[2]) {
                     // ninguno contiene n\u00famero duplicamos b\u00fasqueda
                     if (/^([^0-9]+)$/i.test(match[1].trim()) && /^([^0-9]+)$/i.test(match[2].trim())) {
                         result.push({ t: match[1].trim(), s: match[2].trim() });
@@ -1452,7 +2247,7 @@ TC.inherit(TC.control.Search, TC.Control);
             };
             var s_or_t = function (text, result) {
                 var match = /^([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9\<\>]+)$/i.exec(text);
-                if (match) {
+                if (match && match[1]) {
                     if (root)
                         result.push({
                             t: root,
@@ -1467,8 +2262,8 @@ TC.inherit(TC.control.Search, TC.Control);
                 return false;
             };
             var sp = function (text, result) { // calle sin n\u00fameros con portal (cuando exista un municipio root establecido)
-                var match = /^([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/]+)\s*\,?\s*(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(text);
-                if (match && text.indexOf(',') > -1 && text.split(',').length < 3) {
+                var match = /^([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/]+)\s*\,?\s*((\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
+                if (match && match[1] && match[2]) { // && text.indexOf(',') > -1 && text.split(',').length < 3) {
                     if (root)
                         result.push({
                             t: root,
@@ -1488,12 +2283,12 @@ TC.inherit(TC.control.Search, TC.Control);
             };
             var snp = function (text, result) { // calle puede contener n\u00fameros con portal (cuando exista un municipio root establecido)
                 var match = /^([^\,][0-9\s*\-\.\(\)\/]+)\s*\,?\s*(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(text);
-                if (match && root) {
+                if (match && match[1] && match[2] && root) {
                     result.push({
                         t: root,
                         s: match[1].trim(),
                         p: _formatStreetNumber(match[2].trim())
-                    });                    
+                    });
                     return true;
                 }
 
@@ -1502,7 +2297,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
             var test = function () {
                 var tests = [function (text) { return text.length >= 3; },
-                             function (text) { return /^\d+$/.test(text) ? false : (/^\d+\,\s*\d+$/.test(text) ? false : true); }];
+                function (text) { return /^\d+$/.test(text) ? false : (/^\d+\,\s*\d+$/.test(text) ? false : true); }];
 
                 for (var i = 0; i < tests.length; i++) {
                     if (!tests[i].call(self, text))
@@ -1514,49 +2309,35 @@ TC.inherit(TC.control.Search, TC.Control);
 
 
             if (test(text)) {
-                var check = [tsp, tnsp, ts, st];
+                var check = [tsp, spt, tnsp, ts, st];
                 if (root && text.split(',').length < 3)
                     check = [sp, snp, s_or_t].concat(check);
                 else check = check.concat([sp, snp, s_or_t]);
 
                 var ch = 0;
-                try
-                {
-                    while (ch < check.length && !check[ch].call(self, text, result)) {                    
+                try {
+                    while (ch < check.length && !check[ch].call(self, text, result)) {
                         ch++;
                     }
                 }
                 catch (ex) {
-                    TC.error("Error en la b\u00fasqueda seg\u00fan el patr\u00f3n: " + text, TC.Consts.msgErrorMode.EMAIL);                    
+                    TC.error("Error seg\u00fan el patr\u00f3n: " + text, TC.Consts.msgErrorMode.EMAIL, "Error en la b\u00fasqueda del callejero");
                 }
             }
 
             if (result.length > 0 && root) {
-                var deferredRootLabel = new $.Deferred();
-                if (!self.rootLabel) {
-                    $.when(self.getMunicipalities()).then(function (list) {
-                        for (var i = 0; i < list.length; i++) {
-                            if (list[i].id == root) {
-                                self.rootLabel = self.removePunctuation(list[i].label).toLowerCase();
-                                break;
-                            }
-                        }
-
-                        deferredRootLabel.resolve(self.rootLabel);
-                    });
-                }
-                else {
-                    deferredRootLabel.resolve(self.rootLabel);
-                }
-
-                $.when(deferredRootLabel).then(function (rootLabel) {
-                    if (rootLabel) {
+                $.when(self.rootCfg.active.getRootLabel()).then(function (rootLabel) {
+                    if (rootLabel) { // GLS: si en el array de resultados se encuentra como calle el valor de alguna entidad de poblaci\u00f3n configurada como ra\u00edz, la borramos 
                         var iData = result.length;
-
 
                         while (iData--) {
                             var data = result[iData];
-                            if (rootLabel.indexOf(self.removePunctuation(data.s).toLowerCase()) > -1 && data.t == root) {
+
+                            if (result.length > 1 &&
+                                data.t == root &&
+                                rootLabel.filter(function (elem) {
+                                    return elem.indexOf(self.removePunctuation(data.s).toLowerCase()) > -1;
+                                }).length > 0) {
                                 result.splice(iData, 1);
                                 break;
                             }
@@ -1572,201 +2353,13 @@ TC.inherit(TC.control.Search, TC.Control);
             return deferred.promise();
         };
 
-        var getPropertyName = function (dataRole, e) {
-            return self.availableSearchTypes[dataRole].queryProperties[e + 'Property'];
-        };
-        var getPropertyValue = function (role, propertyName) {
-            return self.availableSearchTypes[role][propertyName];
-        };
-        var getIsLikeNode = function (name, value) {
-            var toEscape = /([\-\"\.\º\(\)\/])/g;
-            if (toEscape.test(value)) {
-                value = value.replace(toEscape, "\\$1");
-            }
-
-            if (value.toString().indexOf(self._LIKE_PATTERN) > -1)
-                return '<Or><PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
-                            '<PropertyName>' + name + '</PropertyName>' +
-                            '<Literal>' + value.toLowerCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                       '</PropertyIsLike>' +
-                       '<PropertyIsLike escape="\\" singleChar="_" wildCard="*" matchCase="false">' +
-                            '<PropertyName>' + name + '</PropertyName>' +
-                            '<Literal>' + value.toUpperCase().replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                       '</PropertyIsLike></Or>';
-            else
-                return '<PropertyIsEqualTo>' +
-                            '<PropertyName>' + name + '</PropertyName>' +
-                            '<Literal>' + value.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
-                       '</PropertyIsEqualTo>';
-        };
-        var getFilterNode = function (propertyName, propertyValue) {
-            var r;
-            if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
-                var f = [];
-                for (var key in propertyName) {
-                    if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
-                        r = '<Or>';
-                        for (var i = 0; i < propertyName[key].length; i++) {
-                            r += getIsLikeNode($.trim(propertyName[key][i]), propertyValue);
-                        }
-
-                        r += '</Or>';
-                        f.push('(<Filter xmlns="http://www.opengis.net/ogc">' + r + '</Filter>)');
-                    } else {
-                        var propName = propertyName[key];
-                        if ((propertyName[key] instanceof Array) && propertyName[key].length == 1)
-                            propName = propertyName[key][0];
-
-                        f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
-                                    '<Or>' + getIsLikeNode($.trim(propName), propertyValue) + '</Or>' +
-                                '</Filter>)');
-                    }
-                }
-
-                return f.join('');
-
-            } else if (propertyName instanceof Array && propertyName.length > 1) {
-                r = '<ogc:Or>';
-                for (var i = 0; i < propertyName.length; i++) {
-                    r += getIsLikeNode($.trim(propertyName[i]), propertyValue);
-                }
-
-                return r += '</ogc:Or>';
-            } else
-                return getIsLikeNode((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
-        };
-        var getFilter = function (data, dataRole) {
-
-            var r = {};
-            r.multiL = false;
-            r.f = '';
-
-            var _f;
-            switch (dataRole) {
-                case self.NUMBER:
-                    _f = [];
-                    if (!(self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
-                        var match = /(\<|\>|\<\>)/gi.exec(data.t);
-                        if (match)
-                            _f.push(getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                        else _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-
-                        match = /(\<|\>|\<\>)/gi.exec(data.s);
-                        if (match)
-                            _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                        else _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
-                    }
-                    else {
-                        _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-                        _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
-                    }
-                    _f.push(getFilterNode(getPropertyName(dataRole, 'p'), data.p + '*'));
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
-                    break;
-                case self.STREET:
-                    _f = [];
-
-                    if (!(self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
-                        var match = /(\<|\>|\<\>)/gi.exec(data.t);
-                        if (match)
-                            _f.push(getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                        else _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-
-                        match = /(\<|\>|\<\>)/gi.exec(data.s);
-                        if (match)
-                            _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                        else _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
-                    } else {
-                        _f.push(getFilterNode(getPropertyName(dataRole, 't'), self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root ? data.t : self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-                        _f.push(getFilterNode(getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
-                    }
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
-                    break;
-                case self.COUNCIL:
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                    break;
-                case self.URBAN:
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                    break;
-                case self.LOCALITY:
-                    r.f = getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN);
-                    r.multiL = true;
-                    break;
-                case self.MUNICIPALITY: {
-                    r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + getFilterNode(getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                    break;
-                }
-            }
-
-            return r;
-        };
-        var getParams = function (data, dataRole, properties, dataIdProperties) {
-
-            var filters = getFilter(data, dataRole);
-
-            var params = {
-                REQUEST: 'GetFeature',
-                SERVICE: 'WFS',
-                MAXFEATURES: 20,
-                VERSION: self.availableSearchTypes[dataRole].version,
-                OUTPUTFORMAT: self.availableSearchTypes[dataRole].outputFormat
-            };
-
-            var featureTypes = getPropertyValue(dataRole, 'featureType');
-            if (!(featureTypes instanceof Array))
-                params.TYPENAME = self.availableSearchTypes[dataRole].featurePrefix ? self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes) : $.trim(featureTypes);
-            else {
-                var ft = [];
-                for (var i = 0; i < featureTypes.length; i++) {
-                    ft.push(self.availableSearchTypes[dataRole].featurePrefix ?
-                                self.availableSearchTypes[dataRole].featurePrefix + ':' + $.trim(featureTypes[i]) :
-                                $.trim(featureTypes[i]));
-                }
-
-                params.TYPENAME = ft.join(',');
-            }
-
-            var _getProperties = function (properties) {
-                if ((properties || '') !== '') {
-                    if (!(properties instanceof Array)) {
-                        var p = [];
-                        if (properties instanceof Object) {
-                            for (var key in properties) {
-                                var prop = properties[key][0];
-                                if (properties[key].length > 1)
-                                    prop = properties[key].join(',');
-
-                                p.push(prop);
-                            }
-                        }
-                        return p;
-                    }
-                    else
-                        return properties.join(',');
-                }
-            };
-            var _properties = _getProperties(properties);
-            var _ids = _getProperties(dataIdProperties);
-
-            if (_properties instanceof Array && _ids instanceof Array) {
-                params.PROPERTYNAME = '';
-                for (var i = 0; i < _properties.length; i++) {
-                    params.PROPERTYNAME += '(' + _properties[i] + ',' + _ids[i] + ')';
-                }
-            } else
-                params.PROPERTYNAME = _properties + ',' + _ids;
-
-            params.FILTER = filters.f;
-
-            return $.param(params);
-        };
         var formatItems = function (features, dataRole, properties, dataIdProperties) {
             for (var i = 0; i < features.length; i++) {
                 var attributes = [], ids = [];
                 var valueToAdd = '';
                 var prop = properties;
                 var dataIdProp = dataIdProperties;
-                var strFormat = getPropertyValue(dataRole, 'outputFormatLabel');
+                var strFormat = self.filter.getPropertyValue(dataRole, 'outputFormatLabel');
                 var dataLayer = features[i].id.split('.').slice(0, 1).shift();
 
                 if (!(properties instanceof Array)) {
@@ -1794,8 +2387,12 @@ TC.inherit(TC.control.Search, TC.Control);
 
                     return outputArray;
                 };
-                if (attributes instanceof Array && strFormat && getUnique(attributes).length > 1) { valueToAdd = strFormat.tcFormat(attributes); }
-                else if (attributes instanceof Array && getUnique(attributes).length == 1) { valueToAdd = attributes[0]; }
+                if (attributes instanceof Array && strFormat && getUnique(attributes).length > 1) {
+                    valueToAdd = strFormat.tcFormat(attributes);
+                }
+                else if (attributes instanceof Array && getUnique(attributes).length == 1) {
+                    valueToAdd = attributes[0];
+                }
 
                 var text = valueToAdd.toCamelCase();
                 var intoResults = function (dataRole, text) {
@@ -1807,25 +2404,34 @@ TC.inherit(TC.control.Search, TC.Control);
                     return false;
                 };
                 if (!(intoResults(dataRole, text))) {
+
+                    var _properties = [];
+
+                    for (var p = 0; p < properties.length; p++) {
+                        _properties[properties[p]] = attributes[p];
+                    }
+
                     results.push({
                         text: text,
                         label: text,
                         id: ids.join('#'),
                         dataRole: dataRole,
-                        dataLayer: dataLayer
+                        dataLayer: dataLayer,
+                        properties: _properties
                     });
                 }
             }
-        };
+        }.bind(self);
 
         pattern = normalizedCriteria(pattern);
-        $.when(getObjectsTo(pattern, self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].root || '', self.availableSearchTypes[TC.Consts.searchType.MUNICIPALITY].limit || false))
-        .then(function (searchObjects) {
+        $.when(getObjectsTo(pattern, self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false)
+        ).then(function (searchObjects) {
             if (searchObjects) {
                 self._search.data = results;
 
                 if (self.request) {
                     for (var i = 0; i < self.request.length; i++) {
+                        //console.log("getAddress promise aborted");
                         self.request[i].abort();
                     }
 
@@ -1834,15 +2440,15 @@ TC.inherit(TC.control.Search, TC.Control);
                 } else self.request = [];
 
                 function searchQuery(data, dataRole) {
-                    var properties = getPropertyValue(dataRole, 'outputProperties');
-                    var dataIdProperties = getPropertyValue(dataRole, 'dataIdProperty');
+                    var properties = self.filter.getPropertyValue(dataRole, 'outputProperties');
+                    var dataIdProperties = self.filter.getPropertyValue(dataRole, 'dataIdProperty');
 
                     return $.ajax({
                         url: self.availableSearchTypes[dataRole].url,
                         type: 'POST',
                         contentType: "application/x-www-form-urlencoded;charset=UTF-8",
                         dataType: 'text',
-                        data: getParams(data, dataRole, properties, dataIdProperties),
+                        data: self.filter.getParams(data, dataRole, properties, dataIdProperties),
                         beforeSend: function () {
                             self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
                             self.$text.trigger("targetUpdated.autocomplete");
@@ -1853,6 +2459,9 @@ TC.inherit(TC.control.Search, TC.Control);
                     }).fail(function (data) {
                         if (data.statusText !== 'abort')
                             alert('error');
+
+                        //console.log('getAddress promise resuelta - data.statusText: ' + data.statusText);
+                        deferred.resolve(results);
                     });
                 }
 
@@ -1869,13 +2478,189 @@ TC.inherit(TC.control.Search, TC.Control);
                 });
                 $.when.apply($, self.request).then(function () {
                     self.request = null;
+                    //console.log('getAddress promise resuelta');
                     deferred.resolve(results);
                 });
             } else {
+                //console.log('getAddress promise resuelta - no encaja en address');
                 deferred.resolve(results);
             }
         });
 
+        //console.log('getAddress promise');
+        return deferred.promise();
+    };
+
+    ctlProto.getRoad = function (pattern) {
+        var self = this;
+        var deferred = new $.Deferred();
+
+        pattern = pattern.trim();
+        if (pattern.length < 2) {
+            deferred.resolve([]);
+        } else {
+            var type = TC.Consts.searchType.ROAD;
+
+            var roadPattern = self.availableSearchTypes[type].pattern;
+            var match = roadPattern.exec(pattern);
+            if (match && match[3]) {
+
+                var properties = self.filter.getPropertyValue(type, 'outputProperties');
+                var dataIdProperties = self.filter.getPropertyValue(type, 'dataIdProperty');
+                var outputFormatLabel = self.filter.getPropertyValue(type, 'outputFormatLabel');
+
+                var _pattern = match[2] ? match[2].trim() + "-" + match[3].trim() : match[3].trim();
+                if (match[4] && match[4].length > 0) {
+                    _pattern = _pattern + "-" + match[4].trim();
+                }
+
+                $.ajax({
+                    url: self.availableSearchTypes[type].url + '?' + self.filter.getParams({ t: _pattern }, type, properties, dataIdProperties),
+                    type: 'GET',
+                    contentType: "application/x-www-form-urlencoded;charset=UTF-8",
+                    beforeSend: function () {
+
+                        if (self.request) {
+                            for (var i = 0; i < self.request.length; i++) {
+                                self.request[i].abort();
+                            }
+
+                            self.request = [];
+
+                        } else self.request = [];
+
+                        self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
+                        self.$text.trigger("targetUpdated.autocomplete");
+                    }
+                }).done(function (data) {
+                    var result = [];
+                    if (data.totalFeatures > 0) {
+                        data.features.map(function (feature) {
+
+                            if (!result.some(function (elem) {
+                                return (elem.text == feature.properties[properties[0]]);
+                            })) {
+                                var label = outputFormatLabel.tcFormat(properties.map(function (outputProperty) {
+                                    return feature.properties[outputProperty];
+                                }));
+
+                                var text = properties.map(function (outputProperty) {
+                                    return feature.properties[outputProperty];
+                                }).join('-');
+
+                                result.push({
+                                    id: dataIdProperties.map(function (elem) {
+                                        return feature.properties[elem];
+                                    }).join('#'),
+                                    label: label,
+                                    text: text,
+                                    dataLayer: feature.id.split('.')[0],
+                                    dataRole: type
+                                });
+                            }
+                        });
+
+                        //console.log('getRoad promise resuelta');
+                        deferred.resolve(result);
+                    } else {
+                        //console.log('getRoad promise resuelta');
+                        deferred.resolve([]);
+                    }
+                }).fail(function (data) {
+                    //console.log('getRoad promise resuelta - xhr fail');
+                    deferred.resolve([]);
+                });
+            } else {
+                //console.log('getRoad promise resuelta - no encaja en road');
+                deferred.resolve([]);
+            }
+        }
+
+        //console.log('getRoad promise');
+        return deferred.promise();
+    };
+
+    ctlProto.getPK = function (pattern) {
+        var self = this;
+        var deferred = new $.Deferred();
+
+        pattern = pattern.trim();
+        if (pattern.length < 3) {
+            deferred.resolve([]);
+        } else {
+
+            var type = TC.Consts.searchType.ROADPK;
+
+            var roadPKPattern = self.availableSearchTypes[type].pattern;
+            var match = roadPKPattern.exec(pattern);
+            if (match && match[3] && match[5]) {
+
+                var properties = self.filter.getPropertyValue(type, 'outputProperties');
+                var dataIdProperties = self.filter.getPropertyValue(type, 'dataIdProperty');
+                var outputFormatLabel = self.filter.getPropertyValue(type, 'outputFormatLabel');
+
+                var _pattern = match[2] ? match[2].trim() + "-" + match[3].trim() : match[3].trim();
+                if (match[4] && match[4].length > 0) {
+                    _pattern = _pattern + "-" + match[4].trim();
+                }
+
+                $.ajax({
+                    url: self.availableSearchTypes[type].url + '?' + self.filter.getParams({ t: _pattern, s: match[5].trim() }, type, properties, dataIdProperties),
+                    type: 'GET',
+                    contentType: "application/x-www-form-urlencoded;charset=UTF-8",
+                    beforeSend: function () {
+
+                        if (self.request) {
+                            for (var i = 0; i < self.request.length; i++) {
+                                self.request[i].abort();
+                            }
+
+                            self.request = [];
+
+                        } else self.request = [];
+
+                        self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
+                        self.$text.trigger("targetUpdated.autocomplete");
+                    }
+                }).done(function (data) {
+                    var result = [];
+                    if (data.totalFeatures > 0) {
+                        data.features.map(function (feature) {
+
+                            if (!result.some(function (elem) {
+                                return (elem.label == feature.properties[properties[0]]);
+                            })) {
+                                var text = outputFormatLabel.tcFormat(properties.map(function (outputProperty) {
+                                    return feature.properties[outputProperty];
+                                }));
+                                result.push({
+                                    id: dataIdProperties.map(function (elem) {
+                                        return feature.properties[elem];
+                                    }).join('#'),
+                                    label: text,
+                                    text: text,
+                                    dataLayer: feature.id.split('.')[0],
+                                    dataRole: type
+                                });
+                            }
+                        });
+                        //console.log('getRoadPK promise resuelta');
+                        deferred.resolve(result);
+                    } else {
+                        //console.log('getRoadPK promise resuelta');
+                        deferred.resolve([]);
+                    }
+                }).fail(function (data) {
+                    //console.log('getRoadPK promise resuelta - xhr fail');
+                    deferred.resolve([]);
+                });
+            } else {
+                //console.log('getRoadPK promise resuelta - no encaja en pk');
+                deferred.resolve([]);
+            }
+        }
+
+        //console.log('getRoadPK promise');
         return deferred.promise();
     };
 
@@ -1906,6 +2691,12 @@ TC.inherit(TC.control.Search, TC.Control);
                         break;
                     case TC.Consts.searchType.COORDINATES:
                         addWaiting(self.availableSearchTypes[TC.Consts.searchType.COORDINATES].parser);
+                        break;
+                    case TC.Consts.searchType.ROAD:
+                        addWaiting(self.availableSearchTypes[TC.Consts.searchType.ROAD].parser);
+                        break;
+                    case TC.Consts.searchType.ROADPK:
+                        addWaiting(self.availableSearchTypes[TC.Consts.searchType.ROADPK].parser);
                         break;
                     case TC.Consts.searchType.MUNICIPALITY:
                     case TC.Consts.searchType.LOCALITY:
@@ -1947,7 +2738,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 return -1;
                             else
                                 return 0;
-                    });
+                    }.bind(self));
 
                 if (callback)
                     callback(results);
@@ -1983,7 +2774,7 @@ TC.inherit(TC.control.Search, TC.Control);
             self.loading = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
 
         var wait;
-        wait = self.loading.addWait();        
+        wait = self.loading.addWait();
 
         // en pantallas peque\u00f1as, colapsamos el panel de herramientas
         if (Modernizr.mq('(max-width: 30em)')) {
@@ -2010,14 +2801,29 @@ TC.inherit(TC.control.Search, TC.Control);
                             keepOnLooping = false;
                         }
                         break;
+                    case TC.Consts.searchType.ROAD:
+                        if (dataRole === TC.Consts.searchType.ROAD) {
+                            goTo = self.availableSearchTypes[TC.Consts.searchType.ROAD].goTo.call(self, id);
+                        }
+
+                        if (goTo !== null) {
+                            keepOnLooping = false;
+                        }
+                        break;
+                    case TC.Consts.searchType.ROADPK:
+                        goTo = self.availableSearchTypes[TC.Consts.searchType.ROADPK].goTo.call(self, id);
+                        if (goTo !== null) {
+                            keepOnLooping = false;
+                        }
+                        break;
                     case TC.Consts.searchType.MUNICIPALITY:
                     case TC.Consts.searchType.LOCALITY:
                     case TC.Consts.searchType.COUNCIL:
                     case TC.Consts.searchType.URBAN:
                     case TC.Consts.searchType.STREET:
                     case TC.Consts.searchType.NUMBER:
-                        var dr = dataRole || getElement.call(self, id).dataRole;
-                        if (dr) {
+                        var dr = dataRole || self.filter.getGoToElement(id).dataRole;
+                        if (dr && dr === allowedType) {
                             goTo = self.availableSearchTypes[dr].goTo.call(self, id, dr);
                             if (goTo !== null) {
                                 keepOnLooping = false;
@@ -2194,6 +3000,10 @@ TC.inherit(TC.control.Search, TC.Control);
         if (/^\M(\d+)\P(\d{1,2})Par{1}(\d{1,4})/g.test(id)) {
             var match = /^\M(\d+)\P(\d{1,2})Par{1}(\d{1,4})/g.exec(id);
 
+            if (!TC.filter) {
+                TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
+            }
+
             goTo.params = {
                 type: TC.Consts.layerType.WFS,
                 url: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].url,
@@ -2201,15 +3011,10 @@ TC.inherit(TC.control.Search, TC.Control);
                 geometryName: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].geometryName,
                 featurePrefix: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].featurePrefix,
                 featureType: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].featureType,
-                properties: [
-                    { name: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.municipality, value: $.trim(match[1]), type: TC.Consts.comparison.EQUAL_TO },
-                {
-                    name: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.polygon, value: $.trim(match[2]), type: TC.Consts.comparison.EQUAL_TO
-                },
-                {
-                    name: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.parcel, value: $.trim(match[3]), type: TC.Consts.comparison.EQUAL_TO
-                }
-                ],
+                properties: new TC.filter.and(
+                    new TC.filter.equalTo(self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.municipality, $.trim(match[1])),
+                    new TC.filter.equalTo(self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.polygon, $.trim(match[2])),
+                    new TC.filter.equalTo(self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].queryProperties.parcel, $.trim(match[3]))),
                 outputFormat: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].outputFormat,
                 styles: self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].styles
             };
@@ -2222,89 +3027,74 @@ TC.inherit(TC.control.Search, TC.Control);
         return null;
     };
 
-    var getElement = function (id, dataRole) {
+    ctlProto.goToRoad = function (id) {
         var self = this;
+        var goTo = {};
 
-        for (var i = 0; i < self._search.data.length; i++) {
-            if (self._search.data[i].id == id && (!dataRole || (dataRole && self._search.data[i].dataRole === dataRole)))
-                return self._search.data[i];
-        }
+        var type = TC.Consts.searchType.ROAD;
+
+        goTo.params = {
+            type: TC.Consts.layerType.WFS,
+            url: self.availableSearchTypes[type].url,
+            version: self.availableSearchTypes[type].version,
+            geometryName: self.availableSearchTypes[type].geometryName,
+            featurePrefix: self.availableSearchTypes[type].featurePrefix,
+            featureType: self.filter.getGoToFilterLayer(id),
+            maxFeatures: 3000,
+            properties: self.filter.getGoToFilter(id, type),
+            outputFormat: self.availableSearchTypes[type].outputFormat,
+            styles: self.availableSearchTypes[type].styles
+        };
+
+        goTo.emptyResultHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
+
+        return goTo;
     };
+
+    ctlProto.goToPK = function (id) {
+        var self = this;
+        var goTo = {};
+
+        var type = TC.Consts.searchType.ROADPK;
+
+        goTo.params = {
+            type: TC.Consts.layerType.WFS,
+            url: self.availableSearchTypes[type].url,
+            version: self.availableSearchTypes[type].version,
+            geometryName: self.availableSearchTypes[type].geometryName,
+            featurePrefix: self.availableSearchTypes[type].featurePrefix,
+            featureType: self.filter.getGoToFilterLayer(id),
+            maxFeatures: 3000,
+            properties: self.filter.getGoToFilter(id, type),
+            outputFormat: self.availableSearchTypes[type].outputFormat,
+            styles: self.availableSearchTypes[type].styles
+        };
+
+        goTo.emptyResultHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
+
+        return goTo;
+    };
+
     ctlProto.goToAddress = function (id, dataRole) {
         var self = this;
         var goTo = {};
-        var feature;
 
-        var getProperties = function (source, dataLayer) {
-            var props = [];
-            var _id = id.split('#');
+        var type = self.availableSearchTypes[dataRole];
 
-            if (id.indexOf('#') > -1 && dataLayer instanceof Array) {
-                props = {};
-                for (var i = 0; i < dataLayer.length; i++) {
-                    props[dataLayer[i]] = [];
-                    for (var j = 0; j < source[dataLayer[i]].length; j++) {
-                        props[dataLayer[i]].push({ name: source[dataLayer[i]][j], value: _id[j], type: TC.Consts.comparison.EQUAL_TO });
-                    }
-                }
-            } else if (id.indexOf('#') == -1 && dataLayer instanceof Array) {
-                var src = source;
-                props = {};
-
-                for (var i = 0; i < dataLayer.length; i++) {
-                    if (!props.hasOwnProperty(dataLayer[i])) {
-                        props[dataLayer[i]] = [];
-
-                        if (src instanceof Object && source.hasOwnProperty(dataLayer[i]))
-                            src = source[dataLayer[i]];
-
-                        for (var j = 0; j < src.length; j++) {
-                            if (j < _id.length)
-                                props[dataLayer[i]].push({ name: src[j], value: _id[j], type: TC.Consts.comparison.EQUAL_TO });
-                        }
-                    }
-                }
-            }
-            else {
-                if (source instanceof Object && source.hasOwnProperty(dataLayer))
-                    source = source[dataLayer];
-
-                for (var i = 0; i < source.length; i++) {
-                    props.push({ name: source[i], value: _id[i], type: TC.Consts.comparison.EQUAL_TO });
-                }
-            }
-
-            return props;
+        goTo.params = {
+            type: TC.Consts.layerType.WFS,
+            url: type.url,
+            version: type.version,
+            geometryName: type.geometryName,
+            featurePrefix: type.featurePrefix,
+            featureType: self.filter.getGoToFilterLayer(id),
+            maxFeatures: 3000,
+            properties: self.filter.getGoToFilter(id, dataRole),
+            outputFormat: type.outputFormat,
+            styles: type.styles
         };
 
-        feature = getElement.call(self, id, dataRole);
-        if (feature && feature.dataRole) {
-            var searchType = self.availableSearchTypes[feature.dataRole];
-
-            var dataLayer = feature.dataLayer;
-            if (searchType.renderFeatureType) {
-                if (!(feature.dataLayer instanceof Array))
-                    dataLayer = [feature.dataLayer];
-
-                dataLayer = dataLayer.concat((searchType.renderFeatureType instanceof Array ? searchType.renderFeatureType : [searchType.renderFeatureType]));
-            }
-
-            goTo.params = {
-                type: TC.Consts.layerType.WFS,
-                url: searchType.url,
-                version: searchType.version,
-                geometryName: searchType.geometryName,
-                featurePrefix: searchType.featurePrefix,
-                featureType: dataLayer,
-                properties: getProperties(searchType.dataIdProperty, dataLayer),
-                outputFormat: searchType.outputFormat,
-                styles: searchType.styles
-            };
-
-            return goTo;
-        }
-
-        return null;
+        return goTo;
     };
 
     ctlProto.getPoint = function (pattern) {
@@ -2362,7 +3152,7 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.getLabel = function (id) {
         var self = this;
         var result = id;
-        var locale = TC.Util.getMapLocale(self.map);        
+        var locale = TC.Util.getMapLocale(self.map);
 
         if (id.match(new RegExp('^(?:' + self.LAT + '[-\\d])|(?:' + self.UTMX + '[\\d])'))) {
             result = result.replace(self.LAT, self.LAT_LABEL).replace(self.LON, ' ' + self.LON_LABEL).replace(self.UTMX, self.UTMX_LABEL).replace(self.UTMY, ' ' + self.UTMY_LABEL);
@@ -2378,12 +3168,12 @@ TC.inherit(TC.control.Search, TC.Control);
                 if (!Number.isInteger(parseFloat(match[1])))
                     result = result.replace(match[1], match[1].replace('.', localeDecimalSeparator));
                 if (!Number.isInteger(parseFloat(match[2])))
-                    result = result.replace(match[2], match[2].replace('.', localeDecimalSeparator));                
+                    result = result.replace(match[2], match[2].replace('.', localeDecimalSeparator));
             }
 
         } else if (id.match(new RegExp('^(?:' + self.LON + '[-\\d])'))) {
             result = result.replace(self.LON, self.LON_LABEL).replace(self.LAT, ' ' + self.LAT_LABEL);
-            
+
             var match = result.match(new RegExp('^' + $.trim(self.LON_LABEL) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LAT_LABEL) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
             if (match) {
                 result = result.replace(match[1], parseFloat(match[1]).toLocaleString(locale));
@@ -2424,6 +3214,34 @@ TC.inherit(TC.control.Search, TC.Control);
         return $('<div/>').html(text).text();
     };
 
+    ctlProto.transformFilter = function (properties) {
+        var self = this;
+
+        if (!TC.filter) {
+            TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
+        }
+
+        if (properties && properties instanceof Array) {
+            var filters = properties.map(function (elm) {
+                if (elm.hasOwnProperty("type")) {
+                    switch (true) {
+                        case elm.type == TC.Consts.comparison.EQUAL_TO: {
+                            return new TC.filter.equalTo(elm.name, elm.value);
+                        }
+                    }
+                } else {
+                    return new TC.filter.equalTo(elm.name, elm.value);
+                }
+            });
+
+            if (filters.length > 1) {
+                return TC.filter.and.apply(null, filters);
+            } else {
+                return filters[0];
+            }
+        }
+    };
+
 })();
 
 
@@ -2432,9 +3250,9 @@ if (!String.prototype.tcFormat) {
         var args = (arguments || [""])[0];
         return this.replace(/{(\d+)}/g, function (match, number) {
             return typeof args[number] != 'undefined' ?
-              args[number]
-              : match
-            ;
+                args[number]
+                : match
+                ;
         });
     };
 }
@@ -2480,4 +3298,16 @@ if (!Array.prototype.hasOwnProperty('findByProperty')) {
             }
         }
     });
+}
+
+if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function (searchString, position) {
+        var subjectString = this.toString();
+        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+            position = subjectString.length;
+        }
+        position -= searchString.length;
+        var lastIndex = subjectString.indexOf(searchString, position);
+        return lastIndex !== -1 && lastIndex === position;
+    };
 }

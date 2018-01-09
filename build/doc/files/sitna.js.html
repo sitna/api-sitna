@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.2.1</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.3.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -104,19 +104,6 @@
 var TC = window.TC || {};
 TC.isDebug = true;
 
-SITNA.syncLoadJS = function (url) {
-    url = TC.isDebug ? url : url.replace(/\.js$/, &quot;.min.js&quot;);
-    var req = new XMLHttpRequest();
-    req.open(&quot;GET&quot;, url, false); // &#x27;false&#x27;: synchronous.
-    req.send(null);
-
-    var head = document.getElementsByTagName(&quot;head&quot;)[0];
-    var script = document.createElement(&quot;script&quot;);
-    script.type = &quot;text/javascript&quot;;
-    script.text = req.responseText;
-    head.appendChild(script);
-};
-
 (function () {
     if (!window.TC || !window.TC.Cfg) {
         var src;
@@ -130,7 +117,16 @@ SITNA.syncLoadJS = function (url) {
         }
         var src = script.getAttribute(&#x27;src&#x27;);
         TC.apiLocation = src.substr(0, src.lastIndexOf(&#x27;/&#x27;) + 1);
-        SITNA.syncLoadJS(TC.apiLocation + &#x27;tcmap.js&#x27;);
+        var url = TC.apiLocation + (TC.isDebug ? &#x27;tcmap.js&#x27; : &#x27;tcmap.min.js&#x27;);
+        var req = new XMLHttpRequest();
+        req.open(&quot;GET&quot;, url, false); // &#x27;false&#x27;: synchronous.
+        req.send(null);
+
+        var head = document.getElementsByTagName(&quot;head&quot;)[0];
+        var script = document.createElement(&quot;script&quot;);
+        script.type = &quot;text/javascript&quot;;
+        script.text = req.responseText;
+        head.appendChild(script);
     }
 })();
 
@@ -183,6 +179,12 @@ SITNA.syncLoadJS = function (url) {
  *                 -0.32135009765625,
  *                 43.55789822064767
  *             ],
+ *             baselayerExtent: [
+ *                 -2.84820556640625,
+ *                 41.78912492257675,
+ *                 -0.32135009765625,
+ *                 43.55789822064767
+ *             ],
  *             baseLayers: [
  * 				SITNA.Consts.layer.IDENA_DYNBASEMAP
  *             ],
@@ -205,7 +207,7 @@ SITNA.syncLoadJS = function (url) {
  *                     id: &quot;topo_mallas&quot;,
  *                     title: &quot;Toponimia y mallas cartográficas&quot;,
  *                     type: SITNA.Consts.layerType.WMS,
- *                     url: &quot;http://idena.navarra.es/ogc/wms&quot;,
+ *                     url: &quot;//idena.navarra.es/ogc/wms&quot;,
  *                     layerNames: &quot;IDENA:toponimia,IDENA:mallas&quot;
  *                 }
  *             ]
@@ -1167,11 +1169,11 @@ SITNA.Map = function (div, options) {
                 featurePrefix: prefix,
                 featureType: layer,
                 maxFeatures: 1,
-                properties: [{
+                properties: tcSearch.transformFilter([{
                     name: field, value: id, type: TC.Consts.comparison.EQUAL_TO
-                }],
+                }]),
                 outputFormat: TC.Consts.format.JSON
-            };
+            };            
 
             var tcSrchGenericLayer;
             tcMap.addLayer(layerOptions).then(function (layer) {
@@ -1195,13 +1197,13 @@ SITNA.Map = function (div, options) {
             });
 
             tcMap.on(TC.Consts.event.LAYERUPDATE, function (e) {
-                if (e.layer == tcSrchGenericLayer &amp;&amp; e.layer.features &amp;&amp; e.layer.features.length == 0)
+                if (e.layer == tcSrchGenericLayer &amp;&amp; e.newData &amp;&amp; e.newData.features &amp;&amp; e.newData.features.length == 0)
                     tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
                         type: TC.Consts.msgType.INFO, duration: 5000
                     });
 
                 if (callback)
-                    callback(e.layer == tcSrchGenericLayer &amp;&amp; e.layer.features &amp;&amp; e.layer.features.length == 0 ? null : idQuery);
+                    callback(e.layer == tcSrchGenericLayer &amp;&amp; e.newData &amp;&amp; e.newData.features &amp;&amp; e.newData.features.length == 0 ? null : idQuery);
             });
         }
     };

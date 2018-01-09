@@ -2,12 +2,13 @@
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.Consts.event.RESULTTOOLTIP = 'resulttooltip.tc';
 TC.Consts.event.RESULTTOOLTIPEND = 'resulttooltipend.tc';
 TC.Consts.event.DRAWCHART = 'drawchart.tc';
+TC.Consts.event.DRAWTABLE = 'drawtable.tc';
 TC.Consts.event.RESULTSPANELMIN = 'resultspanelmin.tc';
 TC.Consts.event.RESULTSPANELMAX = 'resultspanelmax.tc';
 TC.Consts.event.RESULTSPANELCLOSE = 'resultspanelclose.tc';
@@ -20,7 +21,7 @@ TC.control.ResultsPanel = function () {
     self.data = {};
     self.classes = {
         FA: 'fa'
-    };    
+    };
 
     self.contentType = {
         TABLE: {
@@ -37,7 +38,7 @@ TC.control.ResultsPanel = function () {
 
     if (self.options) {
         if (self.options.content)
-            self.content = self.contentType[self.options.content.toUpperCase()];        
+            self.content = self.contentType[self.options.content.toUpperCase()];
 
         if (self.options.chart)
             self.chart = self.options.chart;
@@ -67,6 +68,8 @@ TC.control.ResultsPanel.prototype.render = function (callback) {
 
     TC.Control.prototype.render.call(self, function () {
 
+        self.$mainTitle = self._$div.find('label');
+
         self.$minimize = self._$div.find('.prcollapsed-slide-submenu-min');
         self.$minimize.on('click', function () {
             self.minimize();
@@ -85,11 +88,33 @@ TC.control.ResultsPanel.prototype.render = function (callback) {
         if (self.content) {
             self.content = self.content;
 
-            if (self.options.titles && self.options.titles.max)
-                self.$maximize.attr('title', self.options.titles.max);
-        }        
-        
+            if (self.options.titles) {
+
+                if (self.options.titles.main) {
+                    self.$mainTitle.attr('title', self.options.titles.main);
+                    self.$mainTitle.html(self.options.titles.main);
+                }
+
+                if (self.options.titles.max) {
+                    self.$maximize.attr('title', self.options.titles.max);
+                }
+            }
+        }
+
         self._$div.find(self.content.collapsedClass).removeAttr('hidden').addClass(self.classes.FA);
+
+        self.$divTable = self._$div.find('.' + self.CLASS + '-table');
+        self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
+
+        TC.loadJS(Modernizr.touch, TC.apiLocation + 'lib/jQuery/jquery.touchSwipe.min.js', function () {
+            if (Modernizr.touch) {
+                var $head = self._$div.swipe({
+                    swipeLeft: function () {
+                        self.minimize();
+                    }
+                });
+            }
+        });
 
         if (callback && typeof (callback) === "function")
             callback.call();
@@ -138,7 +163,7 @@ TC.control.ResultsPanel.prototype.close = function () {
         self.chart.chart = self.chart.chart.destroy();
     }
 
-    self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELCLOSE), {});
+    self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELCLOSE, { control: self }));
 };
 
 TC.control.ResultsPanel.prototype.openChart = function () {
@@ -150,11 +175,11 @@ TC.control.ResultsPanel.prototype.openChart = function () {
         if (data.msg) {
             self.map.toast(data.msg);
         }
-        else {           
+        else {
 
-            var locale = TC.Util.getMapLocale(self.map);            
+            var locale = TC.Util.getMapLocale(self.map);
             self.getRenderedHtml(TC.control.ResultsPanel.prototype.CLASS + '-chart', { upHill: data.upHill.toLocaleString(locale), downHill: data.downHill.toLocaleString(locale) }, function (out) {
-                
+
                 console.log(self._$div.find('.' + TC.control.ResultsPanel.prototype.CLASS + '-chart').length);
                 self._$div.find('.' + TC.control.ResultsPanel.prototype.CLASS + '-chart').html(out);
 
@@ -195,8 +220,10 @@ TC.control.ResultsPanel.prototype.openChart = function () {
                 chartOptions.onrendered = function () {
                     self.map.$events.trigger($.Event(TC.Consts.event.DRAWCHART), { svg: this.svg[0][0] });
                     self._$div.find('.prsidebar-body').fadeIn('slide');
+
+                    self._$div.find('.' + self.CLASS + '-table').hide();
                 };
-                
+
                 if (window.c3) {
                     // GLS: Override de la funci\u00f3n generateDrawLine y generateDrawArea para establecer otro tipo de interpolaci\u00f3n en la l\u00ednea
                     window.c3.chart.internal.fn.generateDrawLine = function (lineIndices, isSub) {
@@ -261,9 +288,9 @@ TC.control.ResultsPanel.prototype.openChart = function () {
                             return path ? path : "M 0 0";
                         };
                     };
-                    
-                    self.chart.chart = c3.generate(chartOptions);                              
-                }                                
+
+                    self.chart.chart = c3.generate(chartOptions);
+                }
             });
         }
     } else {
@@ -276,100 +303,88 @@ TC.control.ResultsPanel.prototype.openChart = function () {
 TC.control.ResultsPanel.prototype.openTable = function () {
     var self = this;
 
-    var columns = arguments[0].columns, data = arguments[0].data;
+    var data = arguments[0];
+    if (data) {
 
-    /**
-     * Borra del JSON de datos las columnas que no se quieren mostrar
-     */
-    var deleteColumns = function () {
-        for (var i = 0; i < data.length; i++) {
-            for (var k in data[i]) {
-                if (columns.indexOf(k) < 0) {
-                    delete data[i][k];
+        var deleteColumns = function () {
+            for (var i = 0; i < data.length; i++) {
+                for (var k in data[i]) {
+                    if (columns.indexOf(k) < 0) {
+                        delete data[i][k];
+                    }
                 }
             }
-        }
-    };
+        };
 
-    if (data && data.length > 0) {
-        //Si no recibe columnas, las extrae de las claves del primer objeto de la colecci\u00f3n de datos
-        if (!columns) {
-            columns = [];
-            for (var k in data[0]) {
-                columns.push(k);
+        var css;
+        if (data.css) {
+            css = data.css;
+        }
+        var columns = data.columns, data = data.data;
+
+        if (data && data.length > 0) {
+            //Si no recibe columnas, las extrae de las claves del primer objeto de la colecci\u00f3n de datos
+            if (!columns) {
+                columns = [];
+                for (var k in data[0]) {
+                    columns.push(k);
+                }
             }
+
+            deleteColumns();
+
+            self.tableData = {
+                columns: columns,
+                results: data,
+                css: css
+            }
+
+            self.getRenderedHtml(self.CLASS + '-table', self.tableData, function (html) {
+                self._$div.find('.' + self.CLASS + '-table').html(html);
+            });
+
+            self._$div.find('.' + self.CLASS + '-chart').hide();
+            self._$div.find('.prsidebar-body').fadeIn('slide');
         }
-
-        deleteColumns();
-
-        self.tableData = {
-            columns: columns,
-            results: data
-        }
-
-        self.getRenderedHtml(self.CLASS + '-table', self.tableData, function (html) {
-            self._$div.find('.' + self.CLASS + '-table').html(html);
-        });
-
-        self._$div.find('.prsidebar-body').fadeIn('slide');
-
     }
 
     self.map.getLoadingIndicator().hide();
 
 };
 
-TC.control.ResultsPanel.prototype.open = function (data, columns) {
+TC.control.ResultsPanel.prototype.open = function (html) {
     var self = this;
 
-    /**
-     * Borra del JSON de datos las columnas que no se quieren mostrar
-     */
-    var deleteColumns = function () {
-        for (var i = 0; i < data.length; i++) {
-            for (var k in data[i]) {
-                if (columns.indexOf(k) < 0) {
-                    delete data[i][k];
-                }
-            }
+    var toCheck = self._$div.find('.' + self.CLASS + '-table');
+    var checkIsRendered = function () {
+        var clientRect = toCheck[0].getBoundingClientRect();
+        if (clientRect && clientRect.width > 100) {
+            window.cancelAnimationFrame(this.requestIsRendered);
+
+            this.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE), {});
         }
     };
 
-    if (data && data.length > 0) {
-        //Si no recibe columnas, las extrae de las claves del primer objeto de la colecci\u00f3n de datos
-        if (!columns) {
-            columns = [];
-            for (var k in data[0]) {
-                columns.push(k);
-            }
-        }
+    self.requestIsRendered = window.requestAnimationFrame(checkIsRendered.bind(self));
 
-        deleteColumns();
+    self._$div.find('.' + self.CLASS + '-table').html(html);
+    self._$div.find('.' + self.CLASS + '-chart').hide();
 
-        self.tableData = {
-            columns: columns,
-            results: data
-        }
-
-        self.getRenderedHtml(self.CLASS + '-table', self.tableData, function (html) {
-            self._$div.find('.' + self.CLASS + '-table').html(html);
-        });
-
-        self._$div.find('.prsidebar-body').fadeIn('slide');
-    } else {
-        TC.alert("No se han encontrado resultados");
+    // si est\u00e1 minimizado
+    if (self._$div.find(self.content.collapsedClass + ':visible').length == 1) {
+        self.maximize();
     }
 
+    self._$div.find('.prsidebar-body').fadeIn('slide');
 
     self.map.getLoadingIndicator().hide();
-
 };
 
 TC.control.ResultsPanel.prototype.register = function (map) {
     var self = this;
 
     TC.Control.prototype.register.call(self, map);
-    
+
     if (self.openOn) {
         self.map.$events.one(self.openOn, function (e, args) {
             self.content.fnOpen.call(self, args);
@@ -394,5 +409,5 @@ TC.control.ResultsPanel.prototype.register = function (map) {
         });
     }
 
-    
+
 };

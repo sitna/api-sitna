@@ -1,6 +1,6 @@
-<li class="tc-ctl-ltoc-elm">
-    <div class="tc-ctl-ltoc-lyr">{#path}{title}{/path}</div>
-    <div class="tc-ctl-ltoc-type"></div><div class="tc-ctl-ltoc-path">{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}</div>
+<li class="tc-ctl-ltoc-elm" tabindex="-1">
+    <div class="tc-ctl-ltoc-lyr">{?path}{title}{/path}</div>
+    <div class="tc-ctl-ltoc-type"></div><div class="tc-ctl-ltoc-path" title="{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}">{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}</div>
     <div>
         <div class="tc-ctl-ltoc-btn-info" title="{@i18n $key="infoFromThisLayer"/}"></div>
         <input type="range" value="{opacity}" title="{@i18n $key="transparencyOfThisLayer"/}" />
@@ -26,7 +26,7 @@
             <h4>{@i18n $key="metadata"/}</h4>
             <ul>
                 {#metadata}
-                <li><a href="{url}" target="_blank">{formatDescription}</a></li>
+                <li><a href="{url|s}" type="{format}" title="{formatDescription}" target="_blank">{formatDescription}</a></li>
                 {/metadata}
             </ul>
         </div>

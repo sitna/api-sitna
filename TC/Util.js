@@ -1,11 +1,19 @@
-﻿var TC = TC || {};
+﻿; var TC = TC || {};
+(function (root, factory) {
+    if (typeof exports === "object") { // CommonJS
+        module.exports = factory();
+    } else if (typeof define === "function" && define.amd) { // AMD
+        define([], factory);
+    } else {
+        root.Util = factory();
+    }
+})(TC, function () {
 
-(function () {
     // Polyfill para IE
     Number.isInteger = Number.isInteger || function (value) {
         return typeof value === "number" &&
-        isFinite(value) &&
-        Math.floor(value) === value;
+            isFinite(value) &&
+            Math.floor(value) === value;
     };
 
     // GLS: Parche: Chrome no formatea correctamente los números en euskera, establece como separador de decimales el (.)
@@ -38,7 +46,7 @@
         }
     };
 
-    TC.Util = TC.Util || {
+    var Util = {
 
         getMapLocale: function (map) {
             return map.options && map.options.locale && map.options.locale.replace('_', '-') || "es-ES";
@@ -130,6 +138,20 @@
             return result;
         },
 
+        formatNumber: function (value, locale) {
+            var t = typeof value;
+            if (t === 'number') {
+                return value.toLocaleString(locale);
+            }
+            else if (t === 'string') {
+                n = parseFloat(value);
+                if (n === new Number(value).valueOf()) {
+                    return n.toLocaleString(locale);
+                }
+            }
+            return value;
+        },
+
         addProtocol: function (uri) {
             var result = uri;
             if (uri && uri.indexOf('//') === 0) {
@@ -154,6 +176,23 @@
                 result = document.createElement('div');
             }
             return result;
+        },
+
+        getScriptLocation: function () {
+            var src;
+            var script;
+            if (document.currentScript) {
+                script = document.currentScript;
+            }
+            else {
+                var scripts = document.getElementsByTagName('script');
+                script = scripts[scripts.length - 1];
+            }
+            src = script.getAttribute('src');
+            if (src) {
+                return src.substr(0, src.lastIndexOf('/') + 1);
+            }
+            return "";
         },
 
         /* 
@@ -339,9 +378,6 @@
         reproject: function (coords, sourceCrs, targetCrs) {
             var result;
             var multipoint = true;
-            if (!(TC.isLegacy ? window[TC.Consts.PROJ4JSOBJ_LEGACY] : window[TC.Consts.PROJ4JSOBJ])) {
-                TC.syncLoadJS(TC.url.proj4js);
-            }
             if (!$.isArray(coords) || !$.isArray(coords[0])) {
                 multipoint = false;
                 coords = [coords];
@@ -565,8 +601,8 @@
                 var testHover = function () {
                     //console.log('estamos en testHover');
                     var mq = '(hover: hover)',
-                    hover = !Modernizr.touch, // fallback if mq4 not supported: no hover for touch
-                    mqResult;
+                        hover = !Modernizr.touch, // fallback if mq4 not supported: no hover for touch
+                        mqResult;
 
                     if ('matchMedia' in window) {
                         //console.log('dispone de matchMedia');
@@ -620,6 +656,34 @@
                     return nodes;
             }
             return undefined;
+        },
+        addURLParameters: function (url, parameters) {
+            if (!parameters) {
+                return url;
+            }
+            var toAdd = Object.keys(parameters).map(function (key) {
+                return encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]);
+            }).join('&');
+            var urlparts = url.split('?');
+            if (urlparts.length >= 2) {
+
+                var params = urlparts[1].split(/[&;]/g);
+                params.push(toAdd);
+
+                url = urlparts[0] + '?' + params.join('&');
+                return url;
+            } else {
+                urlparts = url.split('#');
+                if (urlparts.length >= 2) {
+                    urlparts.shift();
+                    url = urlparts[0] + '?' + toAdd + '#' + urlparts.join('#');
+                    return url;
+                }
+                else {
+                    url = url + '?' + toAdd;
+                    return url;
+                }
+            }
         },
         removeURLParameter: function (url, parameter) {
             var urlparts = url.split('?');
@@ -679,22 +743,70 @@
             return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
         },
 
+        getLocaleUserChoice: function (options) {
+            var result = 'en_US';
+            options = options || {};
+            var cookieName = options.cookieName || 'SITNA.language';
+            var paramName = options.paramName || 'lang';
+            // Obtenemos preferencia de lenguaje
+            var browserLanguage = (navigator.languages && navigator.languages.length) ? navigator.languages[0] : navigator.language || navigator.userLanguage;
+            var lang = TC.Util.getParameterByName(paramName) || TC.Util.storage.getCookie(cookieName) || browserLanguage;
+            var hyphenIdx = lang.indexOf('-');
+            if (hyphenIdx >= 0) {
+                lang = lang.substr(0, hyphenIdx);
+            }
+            var expirationDate = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000);
+            TC.Util.storage.setCookie(cookieName, lang, { expires: expirationDate });
+
+            switch (lang) {
+                case 'eu':
+                    result = 'eu_ES';
+                    break;
+                case 'es':
+                    result = 'es_ES';
+                    break;
+                default:
+                    result = 'en_US';
+                    break;
+            }
+            return result;
+        },
+
+        downloadBlob: function (filename, blob) {
+            var link = document.createElement("a");
+            if (link.download !== undefined) {
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        },
+
         downloadFile: function (filename, type, data) {
             var blob = new Blob([data], { type: type });
             if (navigator.msSaveBlob) { // IE 10+
                 navigator.msSaveBlob(blob, filename);
             } else {
-                var link = document.createElement("a");
-                if (link.download !== undefined) { // feature detection
-                    // Browsers that support HTML5 download attribute
-                    var url = URL.createObjectURL(blob);
-                    link.setAttribute("href", url);
-                    link.setAttribute("download", filename);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
+                TC.Util.downloadBlob(filename, blob);
+            }
+        },
+
+        downloadDataURI: function (filename, type, dataURI) {
+            var binary = atob(dataURI.split(',')[1]);
+
+            var array = [];
+            for (var i = 0; i < binary.length; i++) {
+                array.push(binary.charCodeAt(i));
+            }
+            var blob = new Blob([new Uint8Array(array)], { type: type });
+
+            if (navigator.msSaveBlob) { // IE 10+
+                navigator.msSaveBlob(blob, filename);
+            } else {
+                TC.Util.downloadBlob(filename, blob);
             }
         },
 
@@ -755,6 +867,12 @@
             }
             return result;
         },
+        isSecureURL: function (url) {
+            //sino empieza por http ni por https la consideramos segura
+            if (!/^(f|ht)tps?:\/\//i.test(url))
+                return true;
+            return (/^(f|ht)tps:\/\//i.test(url));
+        },
 
         // Following functions are to be used:
         inBoth: function (list1, list2, comparerFn) {
@@ -807,56 +925,88 @@
         },
 
         imgToDataUrl: function (src, outputFormat) {
+
+            var createCanvas = function (img) {
+                var canvas = document.createElement('CANVAS');
+                var ctx = canvas.getContext('2d');
+                canvas.height = img.height;
+                canvas.width = img.width;
+                ctx.drawImage(img, 0, 0);
+
+                return canvas;
+            };
+
             var deferred = $.Deferred();
 
             var img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = function () {
-                var canvas = document.createElement('CANVAS');
-                var ctx = canvas.getContext('2d');
+                var canvas = createCanvas(img);
                 var dataURL;
-                canvas.height = this.height;
-                canvas.width = this.width;
-                ctx.drawImage(this, 0, 0);
                 dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
                     type: outputFormat || 'image/jpeg',
                     encoderOptions: 1.0
                 });
                 deferred.resolve(dataURL, canvas);
             };
-            src = src.replace(/^https?\:/i, "");
-            img.src = src;
+
+            img.onerror = function (error) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', TC.proxify(src), true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                xhr.responseType = 'arraybuffer';
+                xhr.onload = function (e) {
+                    if (this.status === 200) {
+                        var uInt8Array = new Uint8Array(this.response);
+                        var i = uInt8Array.length;
+                        var binaryString = new Array(i);
+                        while (i--) {
+                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                        }
+                        var data = binaryString.join('');
+                        var type = xhr.getResponseHeader('content-type');
+                        if (type.indexOf('image') === 0) {
+                            img.src = 'data:' + type + ';base64,' + window.btoa(data);
+                            img.onload = function () {
+                                var canvas = createCanvas(img);
+                                dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                                    type: outputFormat || 'image/jpeg',
+                                    encoderOptions: 1.0
+                                });
+                                deferred.resolve(dataURL, canvas);
+                            }
+                        }
+                    }
+                };
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status !== 200) {
+                            deferred.reject();
+                        }
+                    }
+                };
+
+                xhr.send();
+            };
+
+            var srcNoProtocol = src.replace(/^https?\:/i, "");
+            img.src = srcNoProtocol;
             if (img.complete || img.complete === undefined) {
                 img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-                img.src = src;
+                img.src = srcNoProtocol;
             }
 
             return deferred.promise();
         },
 
         addToCanvas: function (canvas, img, position) {
-            var cloneCanvas = function (oldCanvas) {
-
-                //create a new canvas
-                var newCanvas = document.createElement('canvas');
-                var context = newCanvas.getContext('2d');
-
-                //set dimensions
-                newCanvas.width = oldCanvas.width;
-                newCanvas.height = oldCanvas.height;
-
-                //apply the old canvas to the new one
-                context.drawImage(oldCanvas, 0, 0);
-
-                //return the new canvas
-                return newCanvas;
-            };
-
-            var newCanvas = cloneCanvas(canvas);
+            var newCanvas = TC.Util.cloneCanvas(canvas);
             var deferred = $.Deferred();
             var context = newCanvas.getContext('2d');
 
             var newImage = new Image();
+            img.crossOrigin = 'anonymous';
             newImage.src = img;
             newImage.onload = function () {
                 context.drawImage(newImage, position.x || 0, position.y || 0);
@@ -866,18 +1016,222 @@
             return deferred.promise();
         },
 
+        cloneCanvas: function (oldCanvas) {
+            //create a new canvas
+            var newCanvas = document.createElement('canvas');
+            var context = newCanvas.getContext('2d');
+
+            //set dimensions
+            newCanvas.width = oldCanvas.width;
+            newCanvas.height = oldCanvas.height;
+
+            //apply the old canvas to the new one
+            context.drawImage(oldCanvas, 0, 0);
+
+            //return the new canvas
+            return newCanvas;
+        },
+
         calculateAspectRatioFit: function (srcWidth, srcHeight, maxWidth, maxHeight) {
             var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
 
             return { width: srcWidth * ratio, height: srcHeight * ratio };
         },
 
-        getFormattedDate: function (date) {
+        getFormattedDate: function (date, hasTime) {
             function pad(s) { return (s < 10) ? '0' + s : s; }
 
             var d = new Date(date);
-            return [d.getFullYear(), pad(d.getMonth() + 1), pad(d.getDate())].join('');
+            return [d.getFullYear(), pad(d.getMonth() + 1), pad(d.getDate())].concat(hasTime ? ["_", pad(d.getHours()), pad(d.getMinutes()), pad(d.getSeconds())] : []).join('');
 
+        },
+
+        replaceAccent: function (t) {
+            var translate = {
+                "ä": "a", "ö": "o", "ü": "u",
+                "Ä": "A", "Ö": "O", "Ü": "U",
+                "á": "a", "é": "e", "i": "i", "ó": "o", "ú": "u",
+                "Á": "A", "É": "E", "Í": "I", "Ó": "O", "Ú": "U",
+                "ñ": "n", "Ñ": "N"
+            };
+            return t.replace(/[öäüÖÄÜáéíóúÁÉÍÓÚñÑ]/g, function (match) {
+                return translate[match];
+            });
+        },
+
+        downloadFileForm: function (url, data) {
+
+            var download = function (url, data) {
+                var form = $("<form/>", { "class": "tc-ctl-download-form", "method": "post", "enctype": "text/plain", "action": (TC.Util.detectIE() ? TC.proxify(url) : url) });
+                var input = $("<input/>", { "class": "tc-ctl-download-query", "name": data.substring(0, data.indexOf("=")) });
+                form.append(input);
+                var iframe = $("iframe").filter(function (i, item) { return $(item).data("url-download") === url });
+                if (iframe.length > 0)
+                    iframe = iframe.first();
+                else {
+                    iframe = $('<iframe style="visibility: hidden; display:none;"></iframe>');
+                    iframe.data("url-download", url);
+                    $('body').append(iframe);
+                }
+                var content = iframe[0].contentDocument;
+                content.open();
+                content.write(form[0].outerHTML);
+                content.close();
+                $('input', content).val(data.substring(data.indexOf("=") + 1));
+                form = $('form', content);
+                return form;
+            };
+            var jqObj = [];
+            if (jQuery.isArray(url)) {
+                var arrDownloads = url;
+                for (var i = 0; i < arrDownloads.length; i++) {
+                    jqObj.push(download(arrDownloads[i].url, arrDownloads[i].data));
+                }
+            }
+            else
+                jqObj.push(download(url, data));
+            $(jqObj).submit();
+            setTimeout(function () {
+                $(".tc-ctl-download-form").remove();
+            }, 1000);
+        },
+        WFSQueryBuilder: function (layers, feature, capabilities, outputFormat, onlyHits) {
+            if (!$.isArray(layers))
+                layers = [layers];
+            var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
+                'xmlns:ogc="http://www.opengis.net/ogc" service="WFS" {resultType} {format} ';
+            switch (capabilities.version) {
+                case "1.0.0":
+                case "1.1.0":
+                    queryHeader += 'xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" ';
+                    break;
+                case "2.0.0":
+                    queryHeader += 'xmlns:wfs=\"http://www.opengis.net/wfs/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\" ';
+                    break;
+            }
+            for (var i in capabilities) {
+                if (typeof (capabilities[i]) === "string" && i.indexOf("gml") < 0 && capabilities[i].indexOf("wfs") < 0)
+                    queryHeader += (i + '="' + capabilities[i] + '" ');
+            }
+
+            var query = '<wfs:GetFeature ' + queryHeader.format({ resultType: (onlyHits ? 'resultType="hits"' : ''), format: 'outputFormat="' + outputFormat + '"' }) + '>';
+            var queryBody = '';
+
+            var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}">{filter}</wfs:Query>';
+            $.each(layers, function (index, value) {
+                queryBody += queryItem.format({ typeName: value, filter: TC.Util.WFSFilterBuilder(feature, capabilities.version) });
+            });
+            query += queryBody + '</wfs:GetFeature>'
+            return query;
+        },
+        WFSFilterBuilder: function (feature, version) {
+            var filter = '';
+            if (jQuery.isPlainObject(feature)) {
+                filter = '<{prefix}:Filter><{prefix}:Intersects><fes:ValueReference></fes:ValueReference><{prefix}:Function name="querySingle"><{prefix}:Literal>{clipLayer}</{prefix}:Literal><{prefix}:Literal>{geometryName}</{prefix}:Literal><{prefix}:Literal>{where}</{prefix}:Literal></{prefix}:Function></{prefix}:Intersects></{prefix}:Filter>'
+                    .format({ prefix: (version === "2.0.0" ? "fes" : "ogc"), "clipLayer": feature.clipLayer, "geometryName": feature.geometryName, "where": feature.where })
+            }
+            else {
+                switch (true) {
+                    case !feature:
+                        break;
+                    case $.isArray(feature)://bbox
+                        var gmlEnvelope = ('<gml:Envelope>' +
+                            '<gml:lowerCorner>{lowerCorner}</gml:lowerCorner>' +
+                            '<gml:upperCorner>{upperCorner}</gml:upperCorner>' +
+                            '</gml:Envelope>').format({ lowerCorner: (feature[0] + ' ' + feature[1]), upperCorner: (feature[2] + ' ' + feature[3]) });
+                        switch (true) {
+                            case version === "1.0.0":
+                            case version === "1.1.0":
+                                filter += '<ogc:Filter><ogc:BBOX>' + gmlEnvelope + '</ogc:BBOX></ogc:Filter>';
+                                break;
+                            case version === "2.0.0":
+                                filter += '<fes:Filter><fes:BBOX>' + gmlEnvelope + '</fes:BBOX></fes:Filter>';
+                                break;
+                        }
+                        break;
+                    case feature instanceof TC.Feature:
+                        switch (true) {
+                            case version === "1.0.0":
+                            case version === "1.1.0":
+                                filter += '<ogc:Filter><ogc:Intersects><ogc:PropertyName></ogc:PropertyName>' + TC.Util.writeGMLGeometry(feature, "2.0") + '</ogc:Intersects></ogc:Filter>';
+                                break;
+                            case version === "2.0.0":
+                                filter += '<fes:Filter><fes:Intersects><fes:ValueReference></fes:ValueReference>' + TC.Util.writeGMLGeometry(feature, "3.2") + '</fes:Intersects></fes:Filter>';
+                                break;
+                        }
+
+                        break;
+                    default:
+                        TC.error("Geometr\u00eda no v\u00e1lida");
+                        break;
+                }
+            }
+
+            return filter;
+        },
+        writeGMLGeometry: function (feature, gmlVersion) {
+
+            var getGmlCoordinates = function (coords) {
+                var result;
+                if (gmlVersion.indexOf('3') === 0) {
+                    result = coords.toString();
+                    while (result.indexOf(",") >= 0) {
+                        result = result.replace(",", " ");
+                    }
+                }
+                else {
+                    result = coords;
+                    jQuery.each(result, function (i, item) { return item.join(",") }).join(" ");
+                }
+                return result;
+            };
+
+            switch (gmlVersion) {
+                case "3.1.1":
+                    break;
+                case "3.2":
+                    switch (true) {
+                        case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
+                            return "<gml:LineString srsDimension=\"2\"><gml:posList>" +
+                                getGmlCoordinates(feature.geometry) +
+                                "</gml:posList></gml:LineString>";
+                            break;
+                            break;
+                        default:
+                            return "<gml:Polygon srsDimension=\"2\"><gml:exterior><gml:LinearRing><gml:posList>" +
+                                getGmlCoordinates(feature.geometry[0]) +
+                                "</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>";
+                            break;
+                    }
+                    break;
+                case "2.0":
+                default:
+                    switch (true) {
+                        case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
+                            return "<gml:LineString><gml:coordinates>" +
+                                getGmlCoordinates(feature.geometry[0]) +
+                                "</gml:coordinates></gml:LineString>";
+                            break;
+                        default:
+                            return "<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>" +
+                                getGmlCoordinates(feature.geometry[0]) +
+                                "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon>";
+                            break;
+                    }
+                    break;
+            }
         }
+
     };
-})();
+    String.prototype.format = function () {
+        var str = this.toString();
+        if (!arguments.length)
+            return str;
+        var args = typeof arguments[0],
+            args = (("string" == args || "number" == args) ? arguments : arguments[0]);
+        for (arg in args)
+            str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), args[arg]);
+        return str;
+    };
+    return Util;
+});

@@ -1,12 +1,141 @@
 ﻿TC.layer = TC.layer || {};
 
 if (!TC.Layer) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Layer.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Layer');
 }
 
 TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7';
 
 (function () {
+
+    var ServiceRequest = function () {
+        this.strategy;
+
+        this.setStrategy = function (strategy) {
+            this.strategy = strategy;
+        };
+
+        this.query = function (url, layer, success, error) {
+            return this.strategy.query(url, layer, success, error);
+        };
+    };
+
+    /**
+     * Estrategia por defecto. Sigue el siguiente flujo:
+     * 1. Pedir capabilities sin modificar URL
+     * 2. Si falla (falta de CORS), pedir capabilities proxificado
+     * 3. Siempre pedir Mapas y Leyendas con URLs originales sin proxificar (no afecta CORS)
+     */ 
+    var DefaultStrategy = function () {
+        this.query = function (url, layer, success, error) {
+            layer.usesSSL = TC.Util.isSecureURL(url);
+            getRequest(url).then(success, function (jqXHR, textStatus, errorThrown) {
+                if (!jqXHR.status) {
+                    layer.usesProxy = true;
+                    getRequest(url, true).then(function (data) {
+                        success(data);
+                    }, function (jqXHR, textStatus, errorThrown) {
+                        error(layer, textStatus + '][' + errorThrown);
+                    });
+                }
+                else {
+                    error(layer, textStatus + '][' + errorThrown);
+                }
+            });
+        };
+    };
+
+    /**
+     * Estrategia por defecto. Sigue el siguiente flujo:
+     * 1. Pedir capabilities directamente modificando protocolo (https)
+     * 2. Si falla(por no soportar https o por falta de CORS), pedir capabilities proxificado (con URL original http)
+     * 3. Si responde 2 (aunque falle por CORS), pedir Mapas y Leyendas modificando protocolo (https), no afecta CORS
+     * 4. Si no responde 2, pedir imágenes proxificadas (único caso y por ServiceWorker)
+     */
+    var AskingForHttpFromHttpsStrategy = function () {
+        var reallyCORSError = function (url) {
+            var defer = $.Deferred();
+            $.ajax({
+                type: "GET",
+                url: url,
+                    dataType: "jsonp",
+                    success: function (data) {
+                        //successful authentication here
+                    defer.resolve(false);
+                },
+                    error: function (XHR, textStatus, errorThrown) {
+                        if (XHR.status && XHR.status === 200 && textStatus !== 'parsererror') {
+                        defer.resolve(true);
+                    } else {
+                        defer.resolve(false);
+                    }
+                }
+            });
+            return defer;
+        };
+
+        this.query = function (url, layer, success, error) {
+            var urlSecure = url.replace(/^(f|ht)tp?:\/\//i, "https://");
+            getRequest(urlSecure).then(function (data) {
+                //esto gestiona el primer caso del algoritmo de Carlos
+                layer.usesSSL = true;
+                success(data);
+            }, function (jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status) {
+                    getRequest(url, true).then(function (data) {
+                        layer.usesProxy = true;
+                        layer.usesSSL = true;
+                        success(data);
+                    }, function (jqXHR, textStatus, errorThrown) {
+                        error(layer, textStatus + '][' + errorThrown);
+                    });
+                }
+                else {
+                    if (TC.isUsingServiceWorker && TC.isUsingServiceWorker()) {
+                        getRequest(url, true).then(function (data) {
+                            layer.usesProxy = true;
+                            layer.usesSSL = false;
+                            success(data);
+                        }, function (jqXHR, textStatus, errorThrown) {
+                            error(layer, textStatus + '][' + errorThrown);
+                        });
+                    }
+                    else {
+                        reallyCORSError(urlSecure).then(function (corsError) {
+                            if (!corsError) {
+                                getRequest(url, true).then(function (data) {
+                                    layer.usesProxy = false;
+                                    layer.usesSSL = false;
+                                    success(data);
+                                }, function (jqXHR, textStatus, errorThrown) {
+                                    error(layer, textStatus + '][' + errorThrown);
+                                });
+                            }
+                            else {
+                                getRequest(url, true).then(function (data) {
+                                    layer.usesProxy = true;
+                                    layer.usesSSL = TC.Util.isSecureURL(url);
+                                    success(data);
+                                }, function (jqXHR, textStatus, errorThrown) {
+                                    error(layer, textStatus + '][' + errorThrown);
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        };
+    };
+
+    var getRequest = function (url, retry) {
+        var result = TC._capabilitiesRequests[url] = (!retry && TC._capabilitiesRequests[url]) || $.ajax({
+            url: retry ? TC.proxify(url) : url,
+            type: 'GET',
+            dataType: isWebWorkerEnabled ? 'text' : 'xml'
+        });
+        return result;
+    };
+
     var capabilitiesPromises = {};
 
     var isWebWorkerEnabled = window.hasOwnProperty('Worker');
@@ -116,44 +245,14 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
         url = url + '?' + $.param(params);
         TC._capabilitiesRequests = TC._capabilitiesRequests || {};
-        var getRequest = function (url, retry) {
-            var result = TC._capabilitiesRequests[url] = (!retry && TC._capabilitiesRequests[url]) || $.ajax({
-                url: retry ? TC.proxify(url) : url,
-                type: 'GET',
-                dataType: isWebWorkerEnabled ? 'text' : 'xml'
-            });
-            return result;
-        };
 
-        var reallyCORSError = function (url) {
-            var defer = $.Deferred();
-            $.ajax({
-                type: "GET",
-                url: url,
-                dataType: "jsonp",
-                success: function (data) {
-                    //successful authentication here
-                    defer.resolve(false);
-                },
-                error: function (XHR, textStatus, errorThrown) {
-                    if (XHR.status && XHR.status === 200)
-                        defer.resolve(true);
-                    else
-                        defer.resolve(false);
-                }
-            });
-            return defer;
-        };
-
-        var successCallback = function (data) {
-            success(layer, data);
-        };
+        
         //Declaro un función que devuelve false si todavía no se cargado el SW y una vez cargado devuelve el valor del atributo
         //serviceWorkerEnabled del control SWCacheClient
         TC.isUsingServiceWorker = null;
         if (!TC.isUsingServiceWorker) {
             var map = layer.map || $("#map").data("map");
-            var control = map ? map.getControlsByClass(TC.control.SWCacheClient) : null;
+            var control = map ? map.getControlsByClass('TC.control.SWCacheClient') : null;
             if (control && control.length > 0) {
                 //busco es control de tipo SWCacheClient y me guardo la promesa te indica cuando se ha leido el SW
                 TC.isUsingServiceWorker = function () {
@@ -166,70 +265,26 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             else
                 TC.isUsingServiceWorker = function () { return false; }
         }
+
+        queryService(url, layer, success, error);
+    };
+
+    var queryService = function (url, layer, success, error) {
+        var request = new ServiceRequest();
+
+        var successCallback = function (data) {
+            success(layer, data);
+        };
+
         // Lanzamos la primera petición sin proxificar. Si falla (CORS, HTTP desde HTTPS...) pedimos proxificando.
         if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(url)) {
-            var urlSecure = url.replace(/^(f|ht)tp?:\/\//i, "https://");
-            getRequest(urlSecure).then(successCallback, function (jqXHR, textStatus, errorThrown) {
-                if (jqXHR.status) {
-                    getRequest(url, true).then(function (data) {
-                        layer.usesProxy = true;
-                        layer.usesSSL = true;
-                        successCallback(data);
-                    }, function (jqXHR, textStatus, errorThrown) {
-                        error(layer, textStatus + '][' + errorThrown);
-                    });
-                }
-                else {
-                    if (TC.isUsingServiceWorker && TC.isUsingServiceWorker()) {
-                        getRequest(url, true).then(function (data) {
-                            layer.usesProxy = true;
-                            layer.usesSSL = false;
-                            successCallback(data);
-                        }, function (jqXHR, textStatus, errorThrown) {
-                            error(layer, textStatus + '][' + errorThrown);
-                        });
-                    }
-                    else {
-                        reallyCORSError(urlSecure).then(function (corsError) {
-                            if (!corsError) {
-                                getRequest(url, true).then(function (data) {
-                                    layer.usesProxy = true;
-                                    layer.usesSSL = false;
-                                    successCallback(data);
-                                }, function (jqXHR, textStatus, errorThrown) {
-                                    error(layer, textStatus + '][' + errorThrown);
-                                });
-                            }
-                            else {
-                                getRequest(url, true).then(function (data) {
-                                    layer.usesProxy = true;
-                                    layer.usesSSL = true;
-                                    successCallback(data);
-                                }, function (jqXHR, textStatus, errorThrown) {
-                                    error(layer, textStatus + '][' + errorThrown);
-                                });
-                            }
-                        });
-                    }
-                }
-            });
+            request.setStrategy(new AskingForHttpFromHttpsStrategy());
         }
-        else {
-            layer.usesSSL = true;
-            getRequest(url).then(successCallback, function (jqXHR, textStatus, errorThrown) {
-                if (!jqXHR.status) {
-                    layer.usesProxy = true;
-                    getRequest(url, true).then(function (data) {
-                        successCallback(data);
-                    }, function (jqXHR, textStatus, errorThrown) {
-                        error(layer, textStatus + '][' + errorThrown);
-                    });
-                }
-                else {
-                    error(layer, textStatus + '][' + errorThrown);
-                }
-            });
+        else {            
+            request.setStrategy(new DefaultStrategy());            
         }
+
+        request.query(url, layer, successCallback, error);
     };
 
     var capabilitiesError = function (layer, reason) {
@@ -1207,10 +1262,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         }
                     }
 
-                    var legend = self.wrap.getLegend(capabilitiesNode);
-                    if (legend.src) {
-                        r.legend = legend;
-                    }
+                    r.legend = self.wrap.getLegend(capabilitiesNode);
 
                     // No muestra ramas irrelevantes si hideTree = true
                     if (!forceAddition && !isRootNode) {
@@ -1403,6 +1455,20 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
         return result;
     };
+    TC.layer.Raster.prototype.getChildrenLayers = function (layer) {
+        var self = this;
+        var result = [];
+        var _fnRecursiva = function (lyr, arr) {
+            if (lyr && lyr.Layer && lyr.Layer.length) {
+                for (var i = 0; i < lyr.Layer.length; i++) {
+                    arr[arr.length] = lyr.Layer[i];
+                    _fnRecursiva(lyr.Layer[i], arr)
+                }
+            }
+        };
+        _fnRecursiva(layer, result);
+        return result;
+    };
 
     TC.layer.Raster.prototype.compareNames = function (n1, n2, looseComparison) {
         var result = n1 === n2;
@@ -1433,10 +1499,46 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     //Devuelve un array de subLayers cuyo nombre o descripción contenga el texto indicado
     //case insensitive
     TC.layer.Raster.prototype.searchSubLayers = function (text) {
+        if (!this.patternFn) {
+            this.patternFn = function (t) {
+                t = t.replace(/[^a-záéíóúüñ ]/gi, '\\' + '$&');
+                t = t.replace(/(a|á)/gi, "(a|á)");
+                t = t.replace(/(e|é)/gi, "(e|é)");
+                t = t.replace(/(i|í)/gi, "(i|í)");
+                t = t.replace(/(o|ó)/gi, "(o|ó)");
+                t = t.replace(/(u|ú|ü)/gi, "(u|ú|ü)");
+                t = t.replace(/(n|ñ)/gi, "(n|ñ)");
+                return t;
+            }
+        }
         if (text && text.length && text.length >= 3) {
             var self = this;
-            var layers = self.wrap.getAllLayerNodes();
-            var filter = text.trim().toLowerCase();
+            var layers = null;
+            /*URI:Si la cadena a buscar contiene a la busqueda anterior, por ejemplo, antes he buscado "cat" y ahora busco "cata" porque esto escribiendo "catastro" ...
+            en vez de buscar en todas las capas del servicio busco en los resultados encotrados en la búsqueda anterior */
+            if (this.lastPattern && text.indexOf(this.lastPattern) >= 0) {
+                layers = this.lastMatches
+            }
+            else {
+                /*si se ha definido el parametro layers de esta capa en configuraci\u00f3n filtro las capas del capability para que busque solo en las capas que est\u00e9n en 
+                configuraci\u00f3n y sus hijas*/
+                if (self.availableNames && self.availableNames.length > 0) {
+                    layers = []
+                    for (var i = 0; i < self.availableNames.length; i++) {
+                        var layer = self.getLayerNodeByName(self.availableNames[i]);
+                        if (layer) {
+                            layers[layers.length] = layer;
+                            layers = layers.concat(self.getChildrenLayers(layer));
+                        }
+                    }
+                }
+                else {
+                    layers = self.wrap.getAllLayerNodes();
+                }
+            }
+
+            var filter = this.patternFn(text);
+            var re = new RegExp(filter, "i");
 
             var matches = layers.map(function (ly, ix) {
                 delete ly.tcScore;
@@ -1445,15 +1547,17 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
                 self.wrap.normalizeLayerNode(ly);
 
-                var title = ly.Title.toLowerCase().trim();
-                var titleIx = title.indexOf(filter);
+                var title = ly.Title.trim();
+                var res = re.exec(title);
+                var titleIx = res ? res.index : -1;
                 var abstractIx = -1;
                 if (ly.Abstract) {
-                    var abs = ly.Abstract.toLowerCase().trim();
-                    abstractIx = abs.indexOf(filter);
+                    var abs = ly.Abstract.trim();
+                    var res2 = re.exec(abs);
+                    abstractIx = res2 ? res2.index : -1;
                 }
 
-                if (title == filter)
+                if (res && title == res[0])
                     ly.tcScore = 20;
                 else if (titleIx == 0)
                     ly.tcScore = 15;
@@ -1473,8 +1577,20 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 return elto != null;
             })
             .sort(function (a, b) {
-                return b.tcScore - a.tcScore;
+                if (b.tcScore === a.tcScore) {
+                    //si la puntuación es la misma reordenamos por título
+                    var titleA = TC.Util.replaceAccent(a.Title);
+                    var titleB = TC.Util.replaceAccent(b.Title);
+                    if (titleA < titleB) return -1;
+                    if (titleA > titleB) return 1;
+                    return 0;
+                }
+                else
+                    return b.tcScore - a.tcScore;
             });
+
+            this.lastPattern = text;
+            this.lastMatches = matches;
 
             return matches;
         }
@@ -1527,50 +1643,50 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             return deferred.resolve(self.options.params.base64LegendSrc);
         }
 
-        if (self.options.params.sld_body) {
-            if (typeof window.btoa === 'function') {
-                var name = self.names[0];
-                var info = self.wrap.getInfo(name);
-                var xhr = new XMLHttpRequest();
-                var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
-                var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
-                var params = "sld_body=" + self.options.params.sld_body;
+        if (typeof window.btoa === 'function') {
+            var name = self.names[0];
+            var info = self.wrap.getInfo(name);
+            var xhr = new XMLHttpRequest();
+            var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
+            var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
+            var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
 
-                for (var i = 0 ; i < dataEntries.length ; i++) {
-                    var chunks = dataEntries[i].split('=');
+            for (var i = 0 ; i < dataEntries.length ; i++) {
+                var chunks = dataEntries[i].split('=');
 
-                    if (chunks && chunks.length > 1 && chunks[1]) {
-                        params += "&" + dataEntries[i];
+                if (chunks && chunks.length > 1 && chunks[1]) {
+                    params += "&" + dataEntries[i];
+                }
+            }
+            if (self.options.params.env) {
+                params += "&" + self.options.params.env;
+            }
+
+            xhr.open('POST', url[0], true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = function (e) {
+                if (this.status === 200) {
+                    var uInt8Array = new Uint8Array(this.response);
+                    var i = uInt8Array.length;
+                    var binaryString = new Array(i);
+                    while (i--) {
+                        binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                    }
+                    var data = binaryString.join('');
+                    var type = xhr.getResponseHeader('content-type');
+                    if (type.indexOf('image') === 0) {
+                        var imageSrc;
+                        imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
+                        self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
+                        deferred.resolve(imageSrc);
                     }
                 }
-                xhr.open('POST', url[0], true);
-                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-                xhr.responseType = 'arraybuffer';
-                xhr.onload = function (e) {
-                    if (this.status === 200) {
-                        var uInt8Array = new Uint8Array(this.response);
-                        var i = uInt8Array.length;
-                        var binaryString = new Array(i);
-                        while (i--) {
-                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
-                        }
-                        var data = binaryString.join('');
-                        var type = xhr.getResponseHeader('content-type');
-                        if (type.indexOf('image') === 0) {
-                            var imageSrc;
-                            imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
-                            self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
-                            deferred.resolve(imageSrc);
-                        }
-                    }
-                };
-                xhr.send(params);
-            } else {
-                deferred.reject("Función window.btoa no soportada por el navegador");
-            }
+            };
+            xhr.send(params);
         } else {
-            deferred.reject("No se ha especificado parámetro sld_body para la capa " + self.names[0]);
+            deferred.reject("Función window.btoa no soportada por el navegador");
         }
         return deferred.promise();
     };
@@ -1602,13 +1718,11 @@ var esriParser = {
     }
 };
 TC.layer.Raster.prototype.getWFSCapabilitiesPromise = function () {
+    var self = this;
     if (typeof (WFSCapabilities) === "undefined") {
-        TC.syncLoadJS(TC.apiLocation + 'TC/layer/WFSCapabilitiesParser.js');
+        TC.syncLoadJS(TC.apiLocation + 'TC/layer/WFSCapabilitiesParser');
     }
-    var url = this.options.url.substring(0, this.options.url.lastIndexOf("/wms")
-                    || this.options.url.lastIndexOf("/WMS")
-                    || this.options.url.lastIndexOf("/"))
-                    + "/wfs";
+    var url = this.options.url.replace(/service=wms/i, "service=wfs").replace(/\/wms(\/|\?|\b)/i, "$'/wfs/")
     var defer = $.Deferred();
     var basicUrl = url.substring(url.indexOf("://") < 0 ? 0 : url.indexOf("://") + 3);
     if (TC.WFScapabilities[basicUrl]) {
@@ -1622,14 +1736,42 @@ TC.layer.Raster.prototype.getWFSCapabilitiesPromise = function () {
     params.VERSION = '2.0.0';
     params.REQUEST = 'GetCapabilities';
     $.ajax({
-        url: TC.proxify(url) + '?' + $.param(params),
+        url: (this.usesProxy ? TC.proxify(url + '?' + $.param(params)) : (this.usesSSL ? url.replace(/^(f|ht)tp?:\/\//i, "https://") + '?' + $.param(params) : url + '?' + $.param(params))),
         type: 'GET'
     }).then(function () {
-        var capabilities = WFSCapabilities.Parse(arguments[0]);
+        var capabilities
+        var xmlDoc;
+        if (jQuery.isXMLDoc(arguments[0]))
+            xmlDoc = arguments[0];
+        else
+            xmlDoc = (new DOMParser()).parseFromString(arguments[0], 'text/xml');
+        //comprueba si el servidor ha devuelto una excepcion
+
+        var errorNode = $(xmlDoc).find("ServiceException");
+        if (errorNode.length === 0)
+            errorNode = $(xmlDoc).find("ExceptionText");
+        if (errorNode.length > 0) {
+            defer.reject(null, "error", errorNode.html());
+            return;
+        }
+        try{
+            capabilities = WFSCapabilities.Parse(xmlDoc);
+        }
+        catch (err) {
+            defer.reject(err);
+            return;
+        }
+        
+        if (!capabilities.Operations) {
+            defer.reject(null);
+            return;
+        }
         var _url = (capabilities.Operations.GetCapabilities.DCP && capabilities.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"]) || capabilities.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource
         TC.WFScapabilities[_url] = capabilities;
         TC.WFScapabilities[basicUrl] = capabilities;
-        defer.resolve(WFSCapabilities.Parse(arguments[0]));
+        defer.resolve(capabilities);
+    }, function (jqXHR,textStatus,errorThrown) {
+        defer.reject(jqXHR, textStatus, errorThrown);
     });
     return defer;
 };

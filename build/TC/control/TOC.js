@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
 }
 
 TC.control.TOC = function () {
@@ -41,17 +41,6 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         var self = this;
         TC.control.MapContents.prototype.register.call(self, map);
         self._addBrowserEventHandlers();
-
-        self.$events.on(TC.Consts.event.CONTROLRENDER, function () {
-            var controlOptions = self.options.controls || [];
-
-            if (controlOptions.length > 0) {
-                var ctl = controlOptions[0];
-                var newDiv = $('<div/>');
-                self._$div.append(newDiv);
-                map.addControl(ctl.name, $.extend({ 'div': newDiv }, ctl.options));
-            }
-        });
 
         map.on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
             if (e && e.layer) {
@@ -225,4 +214,27 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         });
     };
 
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+        // Este control no tiene que hacer nada
+    };
+
+    ctlProto.render = function (callback) {
+        var self = this;
+
+        TC.Control.prototype.render.call(self, function () {
+
+            var controlOptions = self.options.controls || [];
+
+            if (controlOptions.length > 0) {
+                var ctl = controlOptions[0];
+                var newDiv = $('<div/>');
+                self._$div.append(newDiv);
+                self.map.addControl(ctl.name, $.extend({ 'div': newDiv }, ctl.options));
+            }
+
+            if ($.isFunction(callback)) {
+                callback();
+            }
+        });
+    };
 })();

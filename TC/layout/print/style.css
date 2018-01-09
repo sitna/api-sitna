@@ -90,7 +90,7 @@ div.tc-map {
     overflow: visible;
 }
 
-.tc-ctl-printMap-btn {
+.tc-ctl-print-pdf-btn {
     padding: 0.3em 1.5em;
     margin: 0.5em 0;
     position: absolute;
@@ -98,11 +98,11 @@ div.tc-map {
     z-index: 1010;
 }
 
-    .tc-ctl-printMap-btn:active {
+    .tc-ctl-print-pdf-btn:active {
         padding-right: 1.5em;
     }
 
-    .tc-ctl-printMap-btn:before {
+    .tc-ctl-print-pdf-btn:before {
         color: #fff;
         font-family: 'FontAwesome';
         font-size: 1.4em;

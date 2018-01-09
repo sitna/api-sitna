@@ -3,7 +3,7 @@ TC.Consts = TC.Consts || {};
 TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Scale = function () {

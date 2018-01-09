@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.control.SWCacheClient) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
 }
 
 TC.Consts.editMode = {

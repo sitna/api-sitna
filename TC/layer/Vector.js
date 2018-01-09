@@ -1,7 +1,7 @@
 ﻿TC.layer = TC.layer || {};
 
 if (!TC.Layer) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Layer.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Layer');
 }
 
 /**
@@ -140,7 +140,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         var opts = $.extend(true, {}, style, options);
         TC.loadJS(
             !TC.feature || (TC.feature && !TC.feature[constructorName]),
-            [TC.apiLocation + 'TC/feature/' + constructorName + '.js'],
+            [TC.apiLocation + 'TC/feature/' + constructorName],
             function () {
                 var FeatureConstructor = TC.feature[constructorName]
                 var features = new Array(coordsArray.length);

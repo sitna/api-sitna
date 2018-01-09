@@ -610,7 +610,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.2.1';
+TC.version = '1.3.0';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -641,28 +641,29 @@ if (!TC.Consts) {
     TC.Consts.URL_MAX_LENGTH = 2048;
     TC.Consts.METER_PRECISION = 0;
     TC.Consts.DEGREE_PRECISION = 5;
+    TC.Consts.EXTENT_TOLERANCE = 0.9998;/*URI: debido al redondeo del extente en el hash se obtiene un nivel de resolución mayor al debido. Con este valor definimos una tolerancia para que use una resolución si es muy muy muy próxima*/
     TC.Consts.url = {
         SPLIT_REGEX: /([^:]*:)?\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
         MODERNIZR: 'lib/modernizr.js',
         JQUERY_LEGACY: TC.apiLocation + 'lib/jquery/jquery.1.10.2.js',
         JQUERY: '//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.js',
         OL_LEGACY: 'lib/OpenLayers/OpenLayers.debug.js',
-        //OL: 'ol/build/ol-min.js',
         OL: 'lib/ol/build/ol-custom.js',
         OL_CONNECTOR_LEGACY: 'TC/ol/ol2.js',
-        OL_CONNECTOR: 'TC/ol/ol3.js',
+        OL_CONNECTOR: 'TC/ol/ol.js',
         TEMPLATING: 'lib/dust/dust-full-helpers.min.js',
         TEMPLATING_I18N: 'lib/dust/dustjs-i18n.min.js',
+        TEMPLATING_OVERRIDES: 'lib/dust/dust.overrides.js',
         PROJ4JS_LEGACY: 'lib/proj4js/legacy/proj4js-compressed.js',
         PROJ4JS: 'lib/proj4js/proj4-src.js',
         SPATIALREFERENCE: 'http://spatialreference.org/',
         LOCALFORAGE: TC.apiLocation + 'lib/localForage/localforage.min.js',
         D3C3: TC.apiLocation + 'lib/d3c3/d3c3.min.js',
-        CESIUM: TC.apiLocation + 'lib/cesium/debug/Cesium.js',
+        CESIUM: TC.apiLocation + 'lib/cesium/release/Cesium.js',
         JSNLOG: 'lib/jsnlog/jsnlog.min.js',
         ERROR_LOGGER: TC.apiLocation + 'errors/logger.ashx',
         PDFMAKE: TC.apiLocation + 'lib/pdfmake/pdfmake-fonts.min.js',
-        JSONPACK: 'lib/jsonpack/jsonpack.min.js',
+        JSONPACK: 'lib/jsonpack/jsonpack.min.js'
     };
     TC.Consts.classes = {
         MAP: 'tc-map',
@@ -720,10 +721,13 @@ if (!TC.Consts) {
         BEFOREFEATURESADD: 'beforefeaturesadd.tc',
         FEATURESADD: 'featuresadd.tc',
         FEATUREREMOVE: 'featureremove.tc',
+        FEATURESCLEAR: 'featuresclear.tc',
         FEATURESIMPORT: 'featuresimport.tc',
         FEATURESIMPORTERROR: 'featuresimporterror.tc',
         BEFORETILELOAD: 'beforetileload.tc',
         TILELOAD: 'tileload.tc',
+        TILELOADERROR: 'tileloaderror.tc',
+        CONTROLADD: 'controladd.tc',
         CONTROLACTIVATE: 'controlactivate.tc',
         CONTROLDEACTIVATE: 'controldeactivate.tc',
         BEFORECONTROLRENDER: 'beforecontrolrender.tc',
@@ -734,6 +738,8 @@ if (!TC.Consts) {
         LAYEROPACITY: 'layeropacity.tc',
         FEATURECLICK: 'featureclick.tc',
         NOFEATURECLICK: 'nofeatureclick.tc',
+        FEATUREOVER: 'featureover.tc',
+        FEATUREOUT: 'featureout.tc',
         BEFOREFEATUREINFO: 'beforefeatureinfo.tc',
         FEATUREINFO: 'featureinfo.tc',
         NOFEATUREINFO: 'nofeatureinfo.tc',
@@ -742,7 +748,8 @@ if (!TC.Consts) {
         MOUSEUP: 'mouseup.tc',
         STARTLOADING: 'startloading.tc',
         STOPLOADING: 'stoploading.tc',
-        EXTERNALSERVICEADDED: 'externalserviceadded.tc'
+        EXTERNALSERVICEADDED: 'externalserviceadded.tc',
+        ZOOMTO: 'zoomto.tc',
     };
     TC.Consts.layer = {
         IDENA_ORTHOPHOTO: 'ortofoto',
@@ -836,7 +843,9 @@ if (!TC.Consts) {
         STREET: 'street',
         NUMBER: 'number',
         URBAN: 'urban',
-        COMMONWEALTH: 'commonwealth'
+        COMMONWEALTH: 'commonwealth',
+        ROAD: 'road',
+        ROADPK: 'roadpk'
     };
     TC.Consts.mapSearchType = {
     	MUNICIPALITY: TC.Consts.searchType.MUNICIPALITY,
@@ -1246,7 +1255,14 @@ if (!TC.Consts) {
             return result;
         };
 
+        if (typeof TC.isDebug != "boolean") {
+            TC.isDebug = true;
+        };
+
         TC.syncLoadJS = function (url) {
+            if (!/(\.js|\/)$/i.test(url)) { // Si pedimos un archivo sin extensión se la ponemos según el entorno
+                url = url + (TC.isDebug ? '.js' : '.min.js');
+            }
             var req = new XMLHttpRequest();
             req.open("GET", url, false); // 'false': synchronous.
             req.send(null);
@@ -1272,14 +1288,12 @@ if (!TC.Consts) {
             }
         }
 
-        TC.isDebug = true;
-
         // Completamos los datos de versión
         $(document).ready(function () {
             var build;
             var mapLibrary = 'Unknown library';
             var OL2 = 'OpenLayers 2';
-            var OL3 = 'OpenLayers 3';
+            var OL = 'OpenLayers 4';
             if (TC.Control) {
                 build = 'Compiled';
                 if (TC.isLegacy) {
@@ -1289,13 +1303,13 @@ if (!TC.Consts) {
                 }
                 else {
                     if (window.ol) {
-                        mapLibrary = OL3;
+                        mapLibrary = OL;
                     }
                 }
             }
             else {
                 build = 'On demand';
-                mapLibrary = TC.isLegacy ? OL2 : OL3;
+                mapLibrary = TC.isLegacy ? OL2 : OL;
             }
             TC.version = TC.version + ' (' + build + '; ' + mapLibrary + '; @ ' + TC.apiLocation + ')';
         });
@@ -1318,6 +1332,12 @@ if (!TC.Consts) {
         TC.loadJS = function (condition, url, callback, inOrder) {
             if (arguments.length < 4) inOrder = false;
             var urls = $.isArray(url) ? url : [url];
+            urls = $.map(urls, function (elm) {
+                if (!/\.js$/i.test(elm)) { // Si pedimos un archivo sin extensión se la ponemos según el entorno
+                    return elm + (TC.isDebug ? '.js' : '.min.js');
+                }
+                return elm;
+            });
             //si tiene canvas, es que es un navegador nuevo
             if (Modernizr.canvas) {
                 if (condition) {
@@ -1431,10 +1451,6 @@ if (!TC.Consts) {
             }
         };
 
-        var transformCrsCode = function (crs) {
-
-        };
-
         TC.loadProjDef = function (crs, syncOrCallback) {
             var epsgPrefix = 'EPSG:';
             var urnPrefix = 'urn:ogc:def:crs:EPSG::';
@@ -1445,6 +1461,9 @@ if (!TC.Consts) {
 
             var getDef;
             if (TC.isLegacy) {
+                if (!window[TC.Consts.PROJ4JSOBJ_LEGACY]) {
+                    TC.syncLoadJS(TC.url.proj4js);
+                }
                 Proj4js.defs[epsgCode] = '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs';
                 Proj4js.defs[urnCode] = Proj4js.defs[epsgCode];
                 Proj4js.defs[gmlCode] = Proj4js.defs[epsgCode];
@@ -1453,6 +1472,9 @@ if (!TC.Consts) {
                 };
             }
             else {
+                if (!window[TC.Consts.PROJ4JSOBJ]) {
+                    TC.syncLoadJS(TC.url.proj4js);
+                }
                 proj4.defs(epsgCode, '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs');
                 proj4.defs(urnCode, proj4.defs(epsgCode));
                 proj4.defs(gmlCode, proj4.defs(epsgCode));
@@ -1489,7 +1511,14 @@ if (!TC.Consts) {
                 var url = TC.proxify(TC.Consts.url.SPATIALREFERENCE + 'ref/epsg/' + code + '/proj4js/');
                 if (typeof syncOrCallback === 'boolean') {
                     if (syncOrCallback) {
-                        TC.syncLoadJS(url);
+                        var req = new XMLHttpRequest();
+                        req.open("GET", url, false); // 'false': synchronous.
+                        req.send(null);
+                        var script = document.createElement("script");
+                        script.type = "text/javascript";
+                        script.text = req.responseText;
+                        getHead().appendChild(script);
+
                         loadDef(code);
                     }
                     else {
@@ -1512,7 +1541,8 @@ if (!TC.Consts) {
         TC.url = {
             templating: [
                 TC.apiLocation + TC.Consts.url.TEMPLATING,
-                TC.apiLocation + TC.Consts.url.TEMPLATING_I18N
+                TC.apiLocation + TC.Consts.url.TEMPLATING_I18N,
+                TC.apiLocation + TC.Consts.url.TEMPLATING_OVERRIDES
             ]
         };
 
@@ -1572,6 +1602,7 @@ if (!TC.Consts) {
             if (window.console) {
                 console.error(text);
             }
+
         };
 
         /**
@@ -1690,7 +1721,7 @@ if (!TC.Consts) {
                 OverviewMap: function () { TC.wrap.Control.apply(this, arguments); },
                 FeatureInfo: function () { TC.wrap.Control.apply(this, arguments); },
                 Popup: function () { TC.wrap.Control.apply(this, arguments); },
-                PolygonFeatureInfo: function () { TC.wrap.Control.apply(this, arguments); },
+                GeometryFeatureInfo: function () { TC.wrap.Control.apply(this, arguments); },
                 Geolocation: function () { TC.wrap.Control.apply(this, arguments); },
                 Draw: function () { TC.wrap.Control.apply(this, arguments); },
                 CacheBuilder: function () { TC.wrap.Control.apply(this, arguments); },
@@ -1708,7 +1739,7 @@ if (!TC.Consts) {
         TC.inherit(TC.wrap.control.OverviewMap, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Popup, TC.wrap.Control);
         TC.inherit(TC.wrap.control.FeatureInfo, TC.wrap.control.Click);
-        TC.inherit(TC.wrap.control.PolygonFeatureInfo, TC.wrap.control.Click);        
+        TC.inherit(TC.wrap.control.GeometryFeatureInfo, TC.wrap.control.Click);        
         TC.inherit(TC.wrap.control.Geolocation, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Draw, TC.wrap.Control);
         TC.inherit(TC.wrap.control.CacheBuilder, TC.wrap.Control);
@@ -1717,10 +1748,10 @@ if (!TC.Consts) {
         TC.loadCSS(TC.apiLocation + 'TC/css/tcmap.css');
 
         if (!TC.Map) {
-            TC.syncLoadJS(TC.apiLocation + 'TC/Map.js');
+            TC.syncLoadJS(TC.apiLocation + 'TC/Map');
         }
         if (!TC.Util) {
-            TC.syncLoadJS(TC.apiLocation + 'TC/Util.js');
+            TC.syncLoadJS(TC.apiLocation + 'TC/Util');
         }
 
         var uid = 1;

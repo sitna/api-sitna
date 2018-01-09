@@ -1,0 +1,59 @@
+
+
+  Tests de ol.js
+    ol.proj.get
+      ✓ "EPSG:4326" debe devolver una proyeccion WGS84
+      ✓ "http://www.opengis.net/gml/srs/epsg.xml#4326" debe devolver una proyeccion WGS84
+      ✓ "urn:ogc:def:crs:EPSG::4326" debe devolver una proyeccion WGS84
+      ✓ "http://www.opengis.net/gml/srs/epsg.xml#4326" debe devolver una proyeccion WGS84
+      ✓ un objeto ol.proj.Projection debe devolver un objeto ol.proj.Projection
+    ol.format.GMLBase.prototype.readGeometryElement
+      ✓ en GML un nodo sin geometria debe devolver undefined
+      ✓ en GML2 un nodo sin geometria debe devolver undefined
+    ol.format.GMLBase.prototype.readFeatureElement
+      ✓ en GML un nodo debe devolver un objeto ol.Feature
+      ✓ en GML2 un nodo debe devolver un objeto ol.Feature
+      ✓ en GML debe leer una propiedad de un nodo
+      ✓ en GML2 debe leer una propiedad de un nodo
+      ✓ en GML debe intentar leer una geometria de un nodo con nietos
+      ✓ en GML2 debe intentar leer una geometria de un nodo con nietos
+    ol.format.KML.createStyleDefaults_
+      ✓ debe devolver un estilo
+    ol.format.KML.readDocumentOrFolder_
+      ✓ un nodo "nodo" debe devolver un array vacio
+    ol.format.KML.readStyle_
+      ✓ un nodo vacio debe devolver un estilo
+    ol.format.KML.readURI_
+      ✓ un nodo con texto debe devolver ese texto
+    ol.format.KML.whenParser_
+      ✓ un nodo "when" debe ejecutarse
+    ol.format.KML.prototype.readFeatures
+      ✓ un documento kml vacio debe devolver un array vacio
+    ol.format.XSD.readDateTime
+      ✓ un nodo vacio debe devolver undefined
+      ✓ un nodo con una fecha debe devolver un numero
+    ol.format.GML3Patched
+      ✓ debe ser un constructor de la clase ol.format.GML3
+    ol.format.GML3CRS84
+      ✓ debe ser un constructor de la clase ol.format.GML3
+    ol.format.GML2CRS84
+      ✓ debe ser un constructor de la clase ol.format.GML2
+    ol.format.GMLBase.prototype.readFeaturesInternal
+      ✓ en GML un nodo cualquiera debe devolver un array vacio
+      ✓ en GML2 un nodo cualquiera debe devolver un array vacio
+      ✓ en GML un nodo "member" debe devolver ol.Feature
+      ✓ en GML2 un nodo "member" debe devolver ol.Feature
+      ✓ en GML un nodo "featureMember" debe devolver ol.Feature
+      ✓ en GML2 un nodo "featureMember" debe devolver ol.Feature
+      ✓ en GML un nodo "featureMembers" debe devolver un array de ol.Feature
+      ✓ en GML2 un nodo "featureMembers" debe devolver un array de ol.Feature
+      ✓ en GML un nodo "FeatureCollection" debe devolver un array
+      ✓ en GML2 un nodo "FeatureCollection" debe devolver un array
+    ol.control.OverviewMap.prototype.validateExtent_
+      ✓ se debe poder ejecutar
+    ol.control.OverviewMap.prototype.resetExtent_
+      ✓ se debe poder ejecutar
+
+
+  36 passing (53ms)
+

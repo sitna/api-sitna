@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.LoadingIndicator = function () {
@@ -92,7 +92,8 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
             .on(TC.Consts.event.BEFOREFEATUREINFO, function (e) {
                 self.addWait(TC.Consts.event.FEATUREINFO);
             }).on(TC.Consts.event.FEATUREINFO + ' ' +
-                TC.Consts.event.NOFEATUREINFO, function (e) {
+                TC.Consts.event.NOFEATUREINFO + ' ' +
+                TC.Consts.event.FEATUREINFOERROR, function (e) {
                     self.removeWait(TC.Consts.event.FEATUREINFO);
                 });
         if (!TC.isDebug) {

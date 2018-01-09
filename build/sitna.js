@@ -1,17 +1,6 @@
 var SITNA = window.SITNA || {};
 var TC = window.TC || {};
-
-SITNA.syncLoadJS = function (url) {
-    var req = new XMLHttpRequest();
-    req.open("GET", url, false); // 'false': synchronous.
-    req.send(null);
-
-    var head = document.getElementsByTagName("head")[0];
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    script.text = req.responseText;
-    head.appendChild(script);
-};
+TC.isDebug = true;
 
 (function () {
     if (!window.TC || !window.TC.Cfg) {
@@ -26,7 +15,16 @@ SITNA.syncLoadJS = function (url) {
         }
         var src = script.getAttribute('src');
         TC.apiLocation = src.substr(0, src.lastIndexOf('/') + 1);
-        SITNA.syncLoadJS(TC.apiLocation + 'tcmap.js');
+        var url = TC.apiLocation + (TC.isDebug ? 'tcmap.js' : 'tcmap.min.js');
+        var req = new XMLHttpRequest();
+        req.open("GET", url, false); // 'false': synchronous.
+        req.send(null);
+
+        var head = document.getElementsByTagName("head")[0];
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        script.text = req.responseText;
+        head.appendChild(script);
     }
 })();
 
@@ -79,6 +77,12 @@ SITNA.syncLoadJS = function (url) {
  *                 -0.32135009765625,
  *                 43.55789822064767
  *             ],
+ *             baselayerExtent: [
+ *                 -2.84820556640625,
+ *                 41.78912492257675,
+ *                 -0.32135009765625,
+ *                 43.55789822064767
+ *             ],
  *             baseLayers: [
  * 				SITNA.Consts.layer.IDENA_DYNBASEMAP
  *             ],
@@ -101,7 +105,7 @@ SITNA.syncLoadJS = function (url) {
  *                     id: "topo_mallas",
  *                     title: "Toponimia y mallas cartogr\u00e1ficas",
  *                     type: SITNA.Consts.layerType.WMS,
- *                     url: "http://idena.navarra.es/ogc/wms",
+ *                     url: "//idena.navarra.es/ogc/wms",
  *                     layerNames: "IDENA:toponimia,IDENA:mallas"
  *                 }
  *             ]
@@ -1063,11 +1067,11 @@ SITNA.Map = function (div, options) {
                 featurePrefix: prefix,
                 featureType: layer,
                 maxFeatures: 1,
-                properties: [{
+                properties: tcSearch.transformFilter([{
                     name: field, value: id, type: TC.Consts.comparison.EQUAL_TO
-                }],
+                }]),
                 outputFormat: TC.Consts.format.JSON
-            };
+            };            
 
             var tcSrchGenericLayer;
             tcMap.addLayer(layerOptions).then(function (layer) {
@@ -1091,13 +1095,13 @@ SITNA.Map = function (div, options) {
             });
 
             tcMap.on(TC.Consts.event.LAYERUPDATE, function (e) {
-                if (e.layer == tcSrchGenericLayer && e.layer.features && e.layer.features.length == 0)
+                if (e.layer == tcSrchGenericLayer && e.newData && e.newData.features && e.newData.features.length == 0)
                     tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
                         type: TC.Consts.msgType.INFO, duration: 5000
                     });
 
                 if (callback)
-                    callback(e.layer == tcSrchGenericLayer && e.layer.features && e.layer.features.length == 0 ? null : idQuery);
+                    callback(e.layer == tcSrchGenericLayer && e.newData && e.newData.features && e.newData.features.length == 0 ? null : idQuery);
             });
         }
     };

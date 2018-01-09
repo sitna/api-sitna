@@ -62,7 +62,7 @@ var TC = TC || {};
      *                     id: "topo_mallas",
      *                     title: "Toponimia y mallas cartogr\u00e1ficas",
      *                     type: TC.Consts.layerType.WMS,
-     *                     url: "http://idena.navarra.es/ogc/wms",
+     *                     url: "//idena.navarra.es/ogc/wms",
      *                     layerNames: "IDENA:toponimia,IDENA:mallas"
      *                 }
      *             ]
@@ -301,11 +301,11 @@ var TC = TC || {};
                 ],
                 function () {
                     TC.loadJSInOrder(
-                         !(TC.isLegacy ? window[TC.Consts.OLNS_LEGACY] : window[TC.Consts.OLNS]),
-                         [
+                        !(TC.isLegacy ? window[TC.Consts.OLNS_LEGACY] : window[TC.Consts.OLNS]),
+                        [
                             TC.url.ol,
                             TC.url.olConnector
-                         ],
+                        ],
                         function () {
                             TC.loadProjDef(self.options.crs, function () {
                                 self.wrap.setMap();
@@ -367,13 +367,15 @@ var TC = TC || {};
                                                     break;
                                                 }
                                                 layerDeleted = true;
+                                                //reducimos el contador de capas cargadas para que el feedback que bloquea el mapa no se quede forever.
+                                                self._remainingLayers--;
                                             }
                                         }
                                     }
 
                                     if (!layerDeleted) {
-                                    $.when(self.addLayer(lyrCfg)).then(setVisibility);
-                                }
+                                        $.when(self.addLayer(lyrCfg)).then(setVisibility);
+                                    }
                                 }
 
                                 if (self.state && self.state.layers) {
@@ -388,12 +390,18 @@ var TC = TC || {};
                                                 id: TC.getUID(),
                                                 url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
                                                 hideTitle: capa.h,
-                                                layerNames: [capa.n],
+                                                layerNames: capa.n ? capa.n.split(',') : "",
                                                 renderOptions: {
                                                     opacity: capa.o,
                                                     hide: !capa.v
                                                 }
                                             }).then(function (layer) {
+                                                layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
+                                                    var layer = this.parent;
+                                                    if (event.error.code === 401 || event.error.code === 403)
+                                                        layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
+                                                    layer.map.removeLayer(layer);
+                                                });
                                                 var rootNode = layer.wrap.getRootLayerNode();
                                                 layer.title = rootNode.Title || rootNode.title;
                                                 layer.setOpacity(op);
@@ -502,7 +510,7 @@ var TC = TC || {};
                                 // eliminamos la suscripci\u00f3n para no registrar el cambio de estado que vamos a provocar
                                 self.off(events, $.proxy(_addToHistory, self));
 
-                                // gestionamos la actualizaci\u00f3n para volver a suscribirnos a los eventos del mapa                                 
+                                // gestionamos la actualizaci\u00f3n para volver a suscribirnos a los eventos del mapa                        
                                 $.when(_loadIntoMap(e.state)).then(function () {
                                     setTimeout(function () {
                                         self.on(events, $.proxy(_addToHistory, self));
@@ -522,7 +530,7 @@ var TC = TC || {};
         var _addToHistory = function (e) {
             var CUSTOMEVENT = '.tc';
 
-            var state = _getMapState();            
+            var state = _getMapState();
             if (self.replaceCurrent) {
                 window.history.replaceState(state, null, null);
                 delete self.replaceCurrent;
@@ -582,8 +590,8 @@ var TC = TC || {};
                     if (layer.layerNames && layer.layerNames.length) {
                         entry = {
                             u: TC.Util.isOnCapabilities(layer.url),
-                            n: layer.layerNames[0],
-                            o: layer.wrap.getLayer().getOpacity(),
+                            n: $.isArray(layer.names) ? layer.names.join(',') : layer.names,
+                            o: layer.getOpacity(),
                             v: layer.getVisibility(),
                             h: layer.options.hideTitle
                         };
@@ -638,7 +646,12 @@ var TC = TC || {};
                     obj = jsonpack.unpack(stringOrJson);
                 }
                 catch (error) {
-                    obj = JSON.parse(stringOrJson);
+                    try {
+                        obj = JSON.parse(stringOrJson);
+                    }
+                    catch (err) {
+                        TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'));
+                    }
                 }
             } else {
                 obj = stringOrJson;
@@ -649,7 +662,7 @@ var TC = TC || {};
                 //capa base
                 if (obj.base != self.getBaseLayer().id) self.setBaseLayer(obj.base);
 
-                //extent                
+                //extent
                 if (obj.ext) promises.push(self.setExtent(obj.ext));
 
                 //capas cargadas        
@@ -685,7 +698,7 @@ var TC = TC || {};
                                 id: TC.getUID(),
                                 url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
                                 hideTitle: capa.h,
-                                layerNames: [capa.n],
+                                layerNames: capa.n ? capa.n.split(',') : "",
                                 renderOptions: {
                                     opacity: capa.o,
                                     hide: !capa.v
@@ -696,7 +709,7 @@ var TC = TC || {};
                                 /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
                                 esto es porque en el loadstate al establecer la opacidad dedido a un timeout pasados X segundos se lanzaba 
                                 este evento y produc\u00eda un push en el state innecesario*/
-                                layer.setOpacity(op,true);
+                                layer.setOpacity(op, true);
                                 layer.setVisibility(visibility);
                             }));
                         }
@@ -731,15 +744,57 @@ var TC = TC || {};
                     obj = jsonpack.unpack(TC.Util.base64ToUtf8(hash));
                 }
                 catch (error) {
-                    obj = JSON.parse(TC.Util.base64ToUtf8(hash));
+                    try {
+                        obj = JSON.parse(TC.Util.base64ToUtf8(hash));
+                    }
+                    catch (err) {
+                        TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), TC.Consts.msgErrorMode.TOAST);
+                        return;
+                    }
                 }
 
                 if (obj) {
+                    var inValidState = false;
+                    //chequeo la integriadad del objeto restaurado del State
+                    if (!obj.hasOwnProperty("ext")) {
+                        inValidState = true;
+                        obj.ext = self.options.initialExtent;
+                    }
+                    if (!obj.hasOwnProperty("base")) {
+                        inValidState = true;
+                        obj.base = self.options.defaultBaseLayer;
+                    }
+                    if (!obj.hasOwnProperty("layers")) {
+                        inValidState = true;
+                        obj.layers = [];
+                    }
+                    else {
+                        for (var i = obj.layers.length-1; i >=0; i--) {
+                            if (!obj.layers[i] || !obj.layers[i].hasOwnProperty("u") || !obj.layers[i].hasOwnProperty("n")) { 
+                                inValidState = true;
+                                obj.layers.length = obj.layers.length - 1;
+                                continue;
+                            }
+                            else if (!obj.layers[i].hasOwnProperty("o") || !obj.layers[i].hasOwnProperty("v") || !obj.layers[i].hasOwnProperty("h")) {
+                                inValidState=true
+                                jQuery.extend(obj.layers[i],{ 
+                                    o:(obj.layers[i].o || 1),
+                                    v: (obj.layers[i].v || true),
+                                    h: (obj.layers[i].h || false)
+                                });
+                            }
+                        }
+                    }
+                    if (inValidState)
+                        TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), TC.Consts.msgErrorMode.TOAST);
                     return obj;
                 }
+                TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), TC.Consts.msgErrorMode.TOAST);
             }
-
             return;
+        };
+
+        var _checkIntegrity = function () {
         };
 
         /*
@@ -867,8 +922,8 @@ var TC = TC || {};
                         TC.i18n[locale] = TC.i18n[locale] || {};
                         $.extend(TC.i18n[locale], data);
                         if (typeof (dust) !== 'undefined') {
-                        dust.i18n.add(locale, TC.i18n[locale]);
-                    }
+                            dust.i18n.add(locale, TC.i18n[locale]);
+                        }
                     }
                 })
             }
@@ -899,122 +954,122 @@ var TC = TC || {};
 
             if (self.options.layout) {
                 buildLayout(self.options.layout).done(function (layout) {
-                self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
+                    self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
 
-                var layoutURLs;
-                if (typeof layout === 'string') {
-                    layoutURLs = { href: $.trim(layout) };
-                }
-                else if (
-                    layout.hasOwnProperty('config') ||
-                    layout.hasOwnProperty('markup') ||
-                    layout.hasOwnProperty('style') ||
-                    layout.hasOwnProperty('ie8Style') ||
-                    layout.hasOwnProperty('script') ||
-                    layout.hasOwnProperty('href') ||
-                    layout.hasOwnProperty('i18n')
-                ) {
-                    layoutURLs = $.extend({}, layout);
-                }
-                if (layoutURLs.href) {
-                    layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
-                }
-                layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
-                layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
-                layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
-                layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
-                layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
-                layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
-                if (layoutURLs.i18n) {
-                    layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
-                }
-
-                self.layout = layoutURLs;
-
-                var layoutDeferreds = [];
-
-                var i18LayoutDeferred = $.Deferred();
-                layoutDeferreds.push(i18LayoutDeferred);
-
-                if (layoutURLs.config) {
-                    layoutDeferreds.push($.ajax({
-                        url: layoutURLs.config,
-                        type: 'GET',
-                        dataType: 'json',
-                        //async: Modernizr.canvas, // !IE8,
-                        success: function (data) {
-                            i18LayoutDeferred.resolve(data.i18n);
-                            self.options = mergeOptions(data, options);
-                        },
-                        error: function (e, name, description) {
-                            TC.error(name + ": " + description);
-                            i18LayoutDeferred.resolve(false);
-                        }
-                    }));
-                }
-                else {
-                    i18LayoutDeferred.resolve(false);
-                }
-
-                if (layoutURLs.markup) {
-                    var markupDeferred;
-                    if (locale) {
-                        markupDeferred = $.Deferred();
-                        layoutDeferreds.push(markupDeferred);
+                    var layoutURLs;
+                    if (typeof layout === 'string') {
+                        layoutURLs = { href: $.trim(layout) };
                     }
-                    layoutDeferreds.push($.ajax({
-                        url: layoutURLs.markup,
-                        type: 'GET',
-                        dataType: 'html',
-                        //async: Modernizr.canvas, // !IE8
-                        success: function (data) {
-                            // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
-                            i18LayoutDeferred.then(function (i18n) {
-                                if (i18n && locale) {
-                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
-                                        var templateId = 'tc-markup';
-                                        dust.loadSource(dust.compile(data, templateId));
-                                        dust.render(templateId, null, function (err, out) {
-                                            if (err) {
-                                                TC.error(err);
-                                                markupDeferred.reject();
-                                            }
-                                            else {
-                                                self._$div.append(out);
-                                                markupDeferred.resolve();
-                                            }
-                                        });
-                                    });
-                                }
-                                else {
-                                    self._$div.append(data);
-                                    if (locale) {
-                                        markupDeferred.resolve();
-                                    }
-                                }
-                            });
-                        },
-                        error: function () {
-                            markupDeferred.reject();
-                        }
-                    }));
-                }
+                    else if (
+                        layout.hasOwnProperty('config') ||
+                        layout.hasOwnProperty('markup') ||
+                        layout.hasOwnProperty('style') ||
+                        layout.hasOwnProperty('ie8Style') ||
+                        layout.hasOwnProperty('script') ||
+                        layout.hasOwnProperty('href') ||
+                        layout.hasOwnProperty('i18n')
+                    ) {
+                        layoutURLs = $.extend({}, layout);
+                    }
+                    if (layoutURLs.href) {
+                        layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
+                    }
+                    layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
+                    layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
+                    layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
+                    layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
+                    layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
+                    layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
+                    if (layoutURLs.i18n) {
+                        layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
+                    }
 
-                $.when.apply(this, layoutDeferreds).always(function () {
-                    TC.loadJS(
-                        layoutURLs.script,
-                        layoutURLs.script,
-                        function () {
-                            setHeightFix(self._$div);
-                            if (layoutURLs.style) {
-                                TC.loadCSS(layoutURLs.style);
+                    self.layout = layoutURLs;
+
+                    var layoutDeferreds = [];
+
+                    var i18LayoutDeferred = $.Deferred();
+                    layoutDeferreds.push(i18LayoutDeferred);
+
+                    if (layoutURLs.config) {
+                        layoutDeferreds.push($.ajax({
+                            url: layoutURLs.config,
+                            type: 'GET',
+                            dataType: 'json',
+                            //async: Modernizr.canvas, // !IE8,
+                            success: function (data) {
+                                i18LayoutDeferred.resolve(data.i18n);
+                                self.options = mergeOptions(data, options);
+                            },
+                            error: function (e, name, description) {
+                                TC.error(name + ": " + description);
+                                i18LayoutDeferred.resolve(false);
                             }
-                            if (!Modernizr.canvas && layoutURLs.ie8Style) {
-                                TC.loadCSS(layoutURLs.ie8Style);
+                        }));
+                    }
+                    else {
+                        i18LayoutDeferred.resolve(false);
+                    }
+
+                    if (layoutURLs.markup) {
+                        var markupDeferred;
+                        if (locale) {
+                            markupDeferred = $.Deferred();
+                            layoutDeferreds.push(markupDeferred);
+                        }
+                        layoutDeferreds.push($.ajax({
+                            url: layoutURLs.markup,
+                            type: 'GET',
+                            dataType: 'html',
+                            //async: Modernizr.canvas, // !IE8
+                            success: function (data) {
+                                // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
+                                i18LayoutDeferred.then(function (i18n) {
+                                    if (i18n && locale) {
+                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
+                                            var templateId = 'tc-markup';
+                                            dust.loadSource(dust.compile(data, templateId));
+                                            dust.render(templateId, null, function (err, out) {
+                                                if (err) {
+                                                    TC.error(err);
+                                                    markupDeferred.reject();
+                                                }
+                                                else {
+                                                    self._$div.append(out);
+                                                    markupDeferred.resolve();
+                                                }
+                                            });
+                                        });
+                                    }
+                                    else {
+                                        self._$div.append(data);
+                                        if (locale) {
+                                            markupDeferred.resolve();
+                                        }
+                                    }
+                                });
+                            },
+                            error: function () {
+                                markupDeferred.reject();
                             }
-                            init();
-                        });
-                });
+                        }));
+                    }
+
+                    $.when.apply(this, layoutDeferreds).always(function () {
+                        TC.loadJS(
+                            layoutURLs.script,
+                            layoutURLs.script,
+                            function () {
+                                setHeightFix(self._$div);
+                                if (layoutURLs.style) {
+                                    TC.loadCSS(layoutURLs.style);
+                                }
+                                if (!Modernizr.canvas && layoutURLs.ie8Style) {
+                                    TC.loadCSS(layoutURLs.ie8Style);
+                                }
+                                init();
+                            });
+                    });
                 });
             }
             else {
@@ -1039,20 +1094,23 @@ var TC = TC || {};
             self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
         };*/
         var oldError = TC.error;
-        TC.error = function (text, options) {
+        TC.error = function (text, options, subject) {
             if (!options) {
                 oldError(text);
                 self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
             }
             else {
-                var fnc = function (text, mode) {
+                var fnc = function (text, mode, subject) {
                     switch (mode) {
-                        case TC.Consts.msgErrorMode.TOAST:                            
+                        case TC.Consts.msgErrorMode.TOAST:
                             if (!self.toast) { console.warn("No existe el objeto Toast"); return; }
                             self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
                             break;
                         case TC.Consts.msgErrorMode.EMAIL:
-                            JL("onerrorLogger").fatalException(text, null);
+                            JL("onerrorLogger").fatalException(!subject ? text : {
+                                "msg": subject,
+                                "errorMsg": text,
+                            }, null);
                             break;
                         case TC.Consts.msgErrorMode.CONSOLE:
                         default:
@@ -1061,11 +1119,11 @@ var TC = TC || {};
                     }
                 }
                 if (!$.isArray(options)) {
-                    fnc(text, options)
+                    fnc(text, options, subject)
                 }
                 else {
                     for (var i = 0; i < options.length; i++)
-                        fnc(text, options[i])
+                        fnc(text, options[i], subject)
                 }
             }
 
@@ -1241,35 +1299,35 @@ var TC = TC || {};
 
                             if (l) {
                                 if (l.isCompatible(self.crs)) {
-                                self.layers[self.layers.length] = l;
-                                if (l.isBase) {
+                                    self.layers[self.layers.length] = l;
+                                    if (l.isBase) {
                                         if (self.state) {
                                             l.isDefault = self.state.base === l.id;
                                         }
                                         else if (typeof self.options.defaultBaseLayer === 'string') {
-                                        l.isDefault = self.options.defaultBaseLayer === l.id;
+                                            l.isDefault = self.options.defaultBaseLayer === l.id;
+                                        }
+                                        else if (typeof self.options.defaultBaseLayer === 'number') {
+                                            l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                        }
+                                        if (l.isDefault) {
+                                            self.wrap.setBaseLayer(l.wrap.getLayer());
+                                            self.baseLayer = l;
+                                        }
+                                        self.baseLayers[self.baseLayers.length] = l;
+                                        // If no base layer set, set the first one
+                                        if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
+                                            self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
+                                        }
                                     }
-                                    else if (typeof self.options.defaultBaseLayer === 'number') {
-                                        l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                    else {
+                                        self.wrap.insertLayer(l.wrap.getLayer(), idx);
+                                        self.workLayers[self.workLayers.length] = l;
                                     }
-                                    if (l.isDefault) {
-                                        self.wrap.setBaseLayer(l.wrap.getLayer());
-                                        self.baseLayer = l;
+                                    self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
+                                    if ($.isFunction(c)) {
+                                        c(l);
                                     }
-                                    self.baseLayers[self.baseLayers.length] = l;
-                                    // If no base layer set, set the first one
-                                    if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
-                                        self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
-                                    }
-                                }
-                                else {
-                                    self.wrap.insertLayer(l.wrap.getLayer(), idx);
-                                    self.workLayers[self.workLayers.length] = l;
-                                }
-                                self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
-                                if ($.isFunction(c)) {
-                                    c(l);
-                                }
 
                                 }
                                 else {
@@ -1277,12 +1335,12 @@ var TC = TC || {};
                                     var reason;
                                     if (l.isValidFromNames()) {
                                         reason = 'layerSrsNotCompatible'
-                                    }else {
+                                    } else {
                                         reason = 'layerNameNotValid';
                                     }
                                     errorMessage += TC.Util.getLocaleString(self.options.locale, reason);
                                     TC.error(errorMessage);
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));                                
+                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));
                                 }
                             }
                             self._remainingLayers = self._remainingLayers - 1;
@@ -1396,10 +1454,10 @@ var TC = TC || {};
     };
 
     /*
- *  setBaseLayer: Set a layer as base layer, must be in layers collection
- *  Parameters: TC.Layer or string, callback which accepts layer as parameter
- *  Returns: TC.Layer promise
- */
+    *  setBaseLayer: Set a layer as base layer, must be in layers collection
+    *  Parameters: TC.Layer or string, callback which accepts layer as parameter
+    *  Returns: TC.Layer promise
+    */
     mapProto.setBaseLayer = function (layer, callback) {
         var self = this;
         var result = null;
@@ -1477,8 +1535,8 @@ var TC = TC || {};
         var self = this;
         if ($.isFunction(callback)) {
             if (self.isReady) {
-            callback();
-        }
+                callback();
+            }
             else {
                 self.one(TC.Consts.event.MAPREADY, callback);
             }
@@ -1512,15 +1570,15 @@ var TC = TC || {};
      */
     mapProto.getLayerTree = function () {
 
-        
+
         var _traverse = function (o, func) {
             for (var i in o.children) {
                 if (o.children && o.children.length > 0) {
-                //bajar un nivel en el \u00e1rbol
+                    //bajar un nivel en el \u00e1rbol
                     _traverse(o.children[i], func);
-                } 
+                }
 
-                func.apply(this, [o]);                
+                func.apply(this, [o]);
             }
         };
 
@@ -1533,7 +1591,7 @@ var TC = TC || {};
         }
         for (var i = 0; i < self.workLayers.length; i++) {
             var tree = self.workLayers[i].getTree();
-           
+
             if (tree) {
                 result.workLayers.unshift(tree);
             }
@@ -1560,6 +1618,7 @@ var TC = TC || {};
             if ($dv.parent().length === 0) {
                 $dv.appendTo(self._$div);
             }
+            self.$events.trigger($.Event(TC.Consts.event.CONTROLADD, { control: ctl }));
             controlDeferred.resolve(ctl);
         };
 
@@ -1567,7 +1626,7 @@ var TC = TC || {};
             control = control.substr(0, 1).toUpperCase() + control.substr(1);
             TC.loadJS(
                 !TC.Control || !TC.control[control],
-                [TC.apiLocation + 'TC/control/' + control + '.js'],
+                [TC.apiLocation + 'TC/control/' + control],
                 function () {
                     _addCtl(new TC.control[control](null, options));
                 }
@@ -1756,6 +1815,9 @@ var TC = TC || {};
                 bounds[3] = Math.min(bounds[3], self.options.maxExtent[3]);
             }
             self.wrap.setExtent(bounds, opts);
+
+            // GLS: Necesito diferenciar un zoom program\u00e1tico de un zoom del usuario para la gesti\u00f3n del zoom en 3D
+            self.$events.trigger($.Event(TC.Consts.event.ZOOMTO, { extent: bounds }));
         }
     };
 

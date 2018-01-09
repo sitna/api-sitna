@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.Consts.event.POINT = 'point.tc';
@@ -45,7 +45,7 @@ TC.inherit(TC.control.Measure, TC.Control);
         TC.Control.prototype.render.call(self, function () {
             TC.loadJS(
                 !TC.control.Draw,
-                TC.apiLocation + 'TC/control/Draw.js',
+                TC.apiLocation + 'TC/control/Draw',
                 function () {
                     if (self.options.mode) {
                         self._$div.find('.tc-ctl-meas-select').addClass(TC.Consts.classes.HIDDEN);
@@ -90,7 +90,7 @@ TC.inherit(TC.control.Measure, TC.Control);
 
                     TC.loadJS(
                     !TC.control.Draw,
-                    TC.apiLocation + 'TC/control/Draw.js',
+                    TC.apiLocation + 'TC/control/Draw',
                     function () {
                         self.drawLines = new TC.control.Draw({
                             "div": self._$div.find('.tc-ctl-meas-lines'),

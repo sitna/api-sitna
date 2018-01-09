@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
 }
 
 TC.control.Legend = function () {
@@ -35,6 +35,21 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         TC.control.MapContents.prototype.register.call(self, map);
     };
 
+    ctlProto.loadGraphics = function () {
+        var self = this;
+        self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').not('.' + self.CLASS + '-empty').each(function (idx, elm) {
+            var $li = $(elm);
+            var layer = $li.data(_dataKeys.layer);
+            $li.find('li').each(function (i, e) {
+                var $_li = $(e);
+                var $img = $_li.find('img').first();
+                if ($img && $img.attr('src') != undefined && $img.attr('src').length == 0) {
+                    self.styleLegendImage($img, layer);
+                }
+            });
+        });
+    };
+
     ctlProto.updateScale = function () {
         var self = this;
         var inScale = self.CLASS + '-node-inscale';
@@ -43,26 +58,29 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').not('.' + self.CLASS + '-empty').each(function (idx, elm) {
             var $li = $(elm);
             var layer = $li.data(_dataKeys.layer);
-            var layersInScale = false;
-            $li.find('li').each(function (i, e) {
-                var $_li = $(e);
-                if ($_li.hasClass(self.CLASS + '-node-visible')) {
-                    var uid = $_li.data(_dataKeys.layerUid);
-                    if (layer.isVisibleByScale((uid))) {
-                        layersInScale = true;
-                        $_li.removeClass(outOfScale).addClass(inScale);
-                        var $img = $_li.find('img').first();
-                        if ($img.length > 0) {
-                            self.styleLegendImage($img, layer);
+
+            if (layer) {
+                var layersInScale = false;
+                $li.find('li').each(function (i, e) {
+                    var $_li = $(e);
+                    if ($_li.hasClass(self.CLASS + '-node-visible')) {
+                        var uid = $_li.data(_dataKeys.layerUid);
+                        if (layer.isVisibleByScale((uid))) {
+                            layersInScale = true;
+                            $_li.removeClass(outOfScale).addClass(inScale);
+                            var $img = $_li.find('img').first();
+                            if ($img.length > 0) {
+                                self.styleLegendImage($img, layer);
+                            }
+                        }
+                        else {
+                            $_li.addClass(outOfScale).removeClass(inScale);
                         }
                     }
-                    else {
-                        $_li.addClass(outOfScale).removeClass(inScale);
-                    }
-                }
-            });
-            $li.toggleClass(inScale, layersInScale);
-            $li.toggleClass(outOfScale, !layersInScale);
+                });
+                $li.toggleClass(inScale, layersInScale);
+                $li.toggleClass(outOfScale, !layersInScale);
+            }
         });
     };
 
@@ -168,4 +186,8 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         });
     };
 
+    ctlProto.getLayerUIElements = function () {
+        var self = this;
+        return self._$div.find('ul.' + self.CLASS + '-branch').first().children('li.' + self.CLASS + '-node');
+    };
 })();

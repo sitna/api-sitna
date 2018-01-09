@@ -1,3 +1,8 @@
-<div class="tc-ctl-ltoc-switch">
-    <span class="tc-ctl-ltoc-switch-text tc-ctl-ltoc-switch-text-izda">{@i18n $key="selectionByPoint"/}</span><input class="tc-ctl-ltoc-switch-radio" type="checkbox" /><span class="tc-ctl-ltoc-switch-text tc-ctl-ltoc-switch-text-dcha">{@i18n $key="selectionByPrecinct"/}</span>
+<div class="tc-ctl-m-finfo-select">
+    <form>
+        <span>{@i18n $key="selection"/}</span>
+        {?pointSelectValue}<label class="tc-ctl-m-finfo-btn-point" title="{@i18n $key="selectionByPoint"/}"><input type="radio" name="selectmode" value="{pointSelectValue}" checked /><span class="tc-ctl-btn">{@i18n $key="byPoint"/}</span></label>{/pointSelectValue}
+        {?lineSelectValue}<label class="tc-ctl-m-finfo-btn-line" title="{@i18n $key="selectionByLine"/}"><input type="radio" name="selectmode" value="{lineSelectValue}" /><span class="tc-ctl-btn">{@i18n $key="byLine"/}</span></label>{/lineSelectValue}
+        {?polygonSelectValue}<label class="tc-ctl-m-finfo-btn-polygon" title="{@i18n $key="selectionByPrecinct"/}"><input type="radio" name="selectmode" value="{polygonSelectValue}" /><span class="tc-ctl-btn">{@i18n $key="byPrecinct"/}</span></label>{/polygonSelectValue}
+    </form>
 </div>

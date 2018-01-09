@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
 TC.control.Attribution = function () {
@@ -11,7 +11,9 @@ TC.control.Attribution = function () {
 
     self.apiAttribution = '';
     self.mainDataAttribution = '';
-    self.dataAttributions = [];
+    self.dataAttributions = self.options.dataAttributions && self.options.dataAttributions instanceof Array ?
+        self.options.dataAttributions : [self.options.dataAttributions] ||
+        [];
 };
 
 TC.inherit(TC.control.Attribution, TC.Control);

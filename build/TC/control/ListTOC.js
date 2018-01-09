@@ -1,7 +1,7 @@
 TC.control = TC.control || {};
 
 if (!TC.control.TOC) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/TOC.js');
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/TOC');
 }
 
 TC.control.ListTOC = function () {
@@ -33,7 +33,7 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
     }
     else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "loadedLayers" }).w("<span class=\"tc-ctl-ltoc-n\"></span><button class=\"tc-ctl-ltoc-del-all tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "removeAllLayersFromMap" }).w("\"></button></h2><div class=\"tc-ctl-ltoc-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</div><div class=\"tc-ctl-ltoc-content\"><form><ul>").s(ctx.get(["workLayers"], false), ctx, { "block": body_1 }, {}).w("</ul></form></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-ltoc-elm", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-elm'] = function () { dust.register(ctlProto.CLASS + '-elm', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-ltoc-elm\"><div class=\"tc-ctl-ltoc-lyr\">").f(ctx.get(["title"], false), ctx, "h").w("</div><div class=\"tc-ctl-ltoc-type\"></div><div class=\"tc-ctl-ltoc-path\">").s(ctx.get(["path"], false), ctx, { "block": body_1 }, {}).w("</div><div><div class=\"tc-ctl-ltoc-btn-info\" title=\"").h("i18n", ctx, {}, { "$key": "infoFromThisLayer" }).w("\"></div><input type=\"range\" value=\"").f(ctx.get(["opacity"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "transparencyOfThisLayer" }).w("\" /><input type=\"checkbox\" ").nx(ctx.get(["hide"], false), ctx, { "block": body_3 }, {}).w(" title=\"").h("i18n", ctx, {}, { "$key": "visibilityOfThisLayer" }).w("\" /></div><div class=\"tc-ctl-ltoc-info tc-hidden\">").x(ctx.get(["abstract"], false), ctx, { "block": body_4 }, {}).x(ctx.get(["legend"], false), ctx, { "block": body_5 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_7 }, {}).w("</div><div class=\"tc-ctl-ltoc-dd ").x(ctx.get(["hide"], false), ctx, { "block": body_9 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "dragToReorder" }).w("\"></div><div class=\"tc-ctl-ltoc-del ").nx(ctx.get(["hide"], false), ctx, { "block": body_10 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "removeLayerFromMap" }).w("\"></div></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" &bull; "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("checked=\"checked\""); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div>").f(ctx.get(["abstract"], false), ctx, "h").w("</div></div>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-legend\" data-tc-layer-name=\"").f(ctx.get(["layerNames"], false), ctx, "h").w("\"><h4>").h("i18n", ctx, {}, { "$key": "content" }).w("</h4>").s(ctx.get(["legend"], false), ctx, { "block": body_6 }, {}).w(" </div>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<div><p>").f(ctx.get(["title"], false), ctx, "h").w("</p><img data-tc-img=\"").f(ctx.get(["src"], false), ctx, "h").w("\" /></div>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_8 }, {}).w("</ul></div>"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("tc-hidden"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("tc-hidden"); } body_10.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-elm'] = function () { dust.register(ctlProto.CLASS + '-elm', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-ltoc-elm\" tabindex=\"-1\"><div class=\"tc-ctl-ltoc-lyr\">").x(ctx.get(["path"], false), ctx, { "block": body_1 }, {}).w("</div><div class=\"tc-ctl-ltoc-type\"></div><div class=\"tc-ctl-ltoc-path\" title=\"").s(ctx.get(["path"], false), ctx, { "else": body_2, "block": body_3 }, {}).w("\">").s(ctx.get(["path"], false), ctx, { "else": body_5, "block": body_6 }, {}).w("</div><div><div class=\"tc-ctl-ltoc-btn-info\" title=\"").h("i18n", ctx, {}, { "$key": "infoFromThisLayer" }).w("\"></div><input type=\"range\" value=\"").f(ctx.get(["opacity"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "transparencyOfThisLayer" }).w("\" /><input type=\"checkbox\" ").nx(ctx.get(["hide"], false), ctx, { "block": body_8 }, {}).w(" title=\"").h("i18n", ctx, {}, { "$key": "visibilityOfThisLayer" }).w("\" /></div><div class=\"tc-ctl-ltoc-info tc-hidden\">").x(ctx.get(["abstract"], false), ctx, { "block": body_9 }, {}).x(ctx.get(["legend"], false), ctx, { "block": body_10 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_12 }, {}).w("</div><div class=\"tc-ctl-ltoc-dd ").x(ctx.get(["hide"], false), ctx, { "block": body_14 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "dragToReorder" }).w("\"></div><div class=\"tc-ctl-ltoc-del ").nx(ctx.get(["hide"], false), ctx, { "block": body_15 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "removeLayerFromMap" }).w("\"></div></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_4 }, {}); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" &bull; "); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_7 }, {}); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w(" &bull; "); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("checked=\"checked\""); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div>").f(ctx.get(["abstract"], false), ctx, "h").w("</div></div>"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-legend\" data-tc-layer-name=\"").f(ctx.get(["layerNames"], false), ctx, "h").w("\"><h4>").h("i18n", ctx, {}, { "$key": "content" }).w("</h4>").s(ctx.get(["legend"], false), ctx, { "block": body_11 }, {}).w(" </div>"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<div><p>").f(ctx.get(["title"], false), ctx, "h").w("</p><img data-tc-img=\"").f(ctx.get(["src"], false), ctx, "h").w("\" /></div>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.w("<div class=\"tc-ctl-ltoc-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_13 }, {}).w("</ul></div>"); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h", ["s"]).w("\" type=\"").f(ctx.get(["format"], false), ctx, "h").w("\" title=\"").f(ctx.get(["formatDescription"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.w("tc-hidden"); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w("tc-hidden"); } body_15.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-type-sgl'] = function () { dust.register(ctlProto.CLASS + '-type-sgl', body_0); function body_0(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "singleLayer" }); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-type-grp'] = function () { dust.register(ctlProto.CLASS + '-type-grp', body_0); function body_0(chk, ctx) { return chk.w("<div>").h("i18n", ctx, {}, { "$key": "groupLayerThatContains" }).w(":</div><ul>").s(ctx.get(["Layer"], false), ctx, { "block": body_1 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-ltoc-type-grp-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-type-grp-node'] = function () { dust.register(ctlProto.CLASS + '-type-grp-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-ltoc-tip-grp-elm\"><span>").f(ctx.get(["Title"], false), ctx, "h").w("</span><ul>").s(ctx.get(["Layer"], false), ctx, { "block": body_1 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-ltoc-type-grp-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
@@ -76,33 +76,6 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                     $li.find('input[type=range]').val(Math.round(e.opacity * 100));
                 }
             })
-            .on(TC.Consts.event.LAYERORDER, function (e) {
-                if (e.oldIndex >= 0 && e.oldIndex !== e.newIndex) {
-                    var $currentLi, $previousLi;
-                    var $ul = self._$div.find('ul').first();
-                    var $lis = $ul.children('li.' + self.CLASS + '-elm');
-                    for (var i = map.workLayers.length - 1; i >= 0; i--) {
-                        var layer = map.workLayers[i];
-                        $previousLi = $currentLi;
-                        $lis.each(function (idx, elm) {
-                            var $li = $(elm);
-                            if ($li.data(_dataKeys.layer) === layer) {
-                                $currentLi = $li;
-                                return false;
-                            }
-                        });
-                        if (layer === e.layer) {
-                            if ($previousLi) {
-                                $previousLi.after($currentLi);
-                            }
-                            else {
-                                $ul.prepend($currentLi);
-                            }
-                            break;
-                        }
-                    }
-                }
-            })            
             .on(TC.Consts.event.FEATURESIMPORT, function (e) {
                 var fileName = e.fileName;
                 if (e.features && e.features.length > 0) { // GLS: Escuchamos al evento FEATURESIMPORT para poder desplegar el control de capas cargadas
@@ -231,9 +204,9 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
 
             if (layer && layer.options.method && layer.options.method === "POST") {
                 layer.getLegendGraphicImage()
-                .done(function (src) {
-                    deferred.resolve(src);
-                })
+                    .done(function (src) {
+                        deferred.resolve(src);
+                    })
                 .fail(function (err) { TC.error(err); });
             } else {
                 deferred.resolve();
@@ -373,18 +346,20 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                                                 $drag
                                                     .removeClass(TC.Consts.classes.DRAG)
                                                     .addClass(TC.Consts.classes.DRAGEND);
-                                                // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
-                                                var dragDeltaY = $drag.css('transform');
-                                                dragDeltaY = parseInt(dragDeltaY.substr(dragDeltaY.lastIndexOf(',') + 1));
+
+                                                var getDeltaYFromTransform = function (transform) {
+                                                    // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
+                                                    return parseInt(transform.substr(transform.lastIndexOf(',') + 1));
+                                                };
+
+                                                var dragDeltaY = getDeltaYFromTransform($drag.css('transform'));
                                                 var dragLiTop = this.getBoundingClientRect().top - dragDeltaY;
                                                 var dropElm;
                                                 var $drop;
                                                 if (dd.dropTargetIndex >= 0) {
                                                     dropElm = $ul.children('li').get(dd.dropTargetIndex);
                                                     $drop = $(dropElm);
-                                                    // css('transform') tendr\u00e1 un valor as\u00ed: 'matrix(1, 0, 0, 1, 0, Y)'
-                                                    var dropDeltaY = $drop.css('transform');
-                                                    dropDeltaY = parseInt(dropDeltaY.substr(dropDeltaY.lastIndexOf(',') + 1));
+                                                    var dropDeltaY = getDeltaYFromTransform($drop.css('transform'));
                                                     var dropLiTop = dropElm.getBoundingClientRect().top - dropDeltaY;
                                                 }
                                                 $drag.css('transform', $drop ? 'translateY(' + (dropLiTop - dragLiTop) + 'px)' : '');
@@ -465,7 +440,33 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                                                 {
                                                     handle: '.' + self.CLASS + '-dd'
                                                 }
-                                            );
+                                            )
+                                            .on('keydown', function (e) {
+                                                // Para mover capas con el teclado.
+                                                var elm = this;
+                                                var setFocus = function () {
+                                                    elm.focus();
+                                                }
+                                                var $elm = $(this);
+                                                switch (true) {
+                                                    case /Up$/.test(e.key):
+                                                        var $prev = $elm.prev();
+                                                        if ($prev.length) {
+                                                            moveLayer($elm, $prev, setFocus);
+                                                        }
+                                                        break;
+                                                    case /Down$/.test(e.key):
+                                                        var $next = $elm.next();
+                                                        if ($next.length) {
+                                                            moveLayer($elm, $next, setFocus);
+                                                        }
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+
+                                                //e.stopPropagation();
+                                            });
 
                                         $ul.prepend($li);
                                         self.updateScale();
@@ -503,6 +504,10 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
         });
     };
 
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+        TC.control.MapContents.prototype.updateLayerOrder.call(this, layer, oldIdx, newIdx);
+    };
+
     ctlProto.removeLayer = function (layer) {
         var self = this;
         var idx = self.layers.indexOf(layer);
@@ -521,6 +526,11 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
         self._$div.find('.' + self.CLASS + '-del-all').toggleClass(TC.Consts.classes.HIDDEN, nChildren === 0);
         self._$div.find('.' + self.CLASS + '-empty').toggleClass(TC.Consts.classes.HIDDEN, nChildren > 0);
         $('.' + self.CLASS + '-n').text(nChildren).toggleClass(TC.Consts.classes.VISIBLE, nChildren > 0);
+    };
+
+    ctlProto.getLayerUIElements = function () {
+        var self = this;
+        return self._$div.find('ul').first().children('li.' + self.CLASS + '-elm');
     };
 
     var _controlRemoveAllLayersBtnVisibility = function () {
