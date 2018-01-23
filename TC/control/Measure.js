@@ -84,7 +84,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                     }
                 });
 
-                $.when(self.layerPromise).then(function (layer) {
+                self.layerPromise.then(function (layer) {
                     self.layer = layer;
                     self.layer.map.putLayerOnTop(self.layer);
 
