@@ -12,7 +12,7 @@ TC.control.Print = function (options)
 
     self.ready = false;
 
-    self.title = opts.title || 'Página de impresión';
+    self.title = opts.title || TC.Util.getLocaleString(TC.Cfg.locale, 'printPage');
     self.cssUrl = opts.cssUrl || TC.apiLocation + 'TC/css/print.css';
 
     if (opts.target)
