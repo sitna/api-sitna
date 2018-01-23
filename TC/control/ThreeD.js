@@ -90,9 +90,10 @@ if (!TC.control.MapContents) {
     }
 })();
 (function () {
-    TC.Consts.classes.THREED = TC.Consts.classes.THREED || 'tc-threed';
-    TC.Consts.event.TERRAINLOADED = TC.Consts.event.TERRAINLOADED || 'terrainloaded.tc.threed';
-    TC.Consts.event.TERRAINRECEIVING = TC.Consts.event.TERRAINRECEIVING || 'terrainreceiving.tc.threed';
+    TC.Consts.classes.THREED = TC.Consts.classes.THREED || "tc-threed";
+    TC.Consts.classes.THREED_HIDDEN = TC.Consts.classes.THREED_HIDDEN || "tc-threed-hidden"
+    TC.Consts.event.TERRAINLOADED = TC.Consts.event.TERRAINLOADED || "terrainloaded.tc.threed";
+    TC.Consts.event.TERRAINRECEIVING = TC.Consts.event.TERRAINRECEIVING || "terrainreceiving.tc.threed";
 
     TC.control.ThreeD = function () {
         var self = this;
@@ -101,6 +102,9 @@ if (!TC.control.MapContents) {
 
         self.$events = $(self);
 
+        // GLS: Apaño resultsPanel
+        self._manageResultsPanel = {};
+
         self.selectors = {
             divThreedMap: self.options.divMap
         };
@@ -108,10 +112,7 @@ if (!TC.control.MapContents) {
         self.Consts = {
             BLANK_BASE: 'blank',
             DEFAULT_TILE_SIZE: 256,
-            TERRAIN_URL: 'https://pmpwvinet18.tcsa.local/customcesiumterrain/epsg3857/geodetic/_5m/5m',
-            events: {
-                GFI: "gfi.tc.threed"
-            }
+            TERRAIN_URL: 'https://pmpwvinet18.tcsa.local/customcesiumterrain/epsg3857/geodetic/_5m/5m'
         };
 
         if (self.options.terrainURL)
@@ -136,15 +137,13 @@ if (!TC.control.MapContents) {
         HIGHLIGHTED: 'highlighted',
         DISABLED: 'disabled',
         OUTFOCUS: 'outfocus',
-        GFIRESULTSTR: '-gfiTR',
-        GFIRESULTSTH: '-gfiTH',
-        GFIRESULTSTD: '-gfiTD'
+        COORDSTHREEDMARKER: 'tc-ctl-coords-threed'
     };
     ctlProto.direction = {
         TO_TWO_D: 'two_d',
         TO_THREE_D: 'three_d'
     };
-    ctlProto.threeDControls = [
+    ctlProto.allowedControls = [
         "search",
         "attribution",
         "basemapSelector",
@@ -160,7 +159,10 @@ if (!TC.control.MapContents) {
         "overviewMap",
         "legend",
         "fullScreen",
-        "threeD"
+        "threeD",
+        "coordinates",
+        "geolocation",
+        "resultsPanel"
     ];
 
     ctlProto.template = {};
@@ -186,6 +188,11 @@ if (!TC.control.MapContents) {
         TC.Control.prototype.register.call(self, map);
 
         self.mapView = new MapView(map, self);
+
+        map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+            self.mapView.metersPerUnit = self.map.getMetersPerUnit();
+        });
+
     };
 
     ctlProto.renderData = function (data, callback) {
@@ -207,8 +214,8 @@ if (!TC.control.MapContents) {
                     self.waiting = self.map.getLoadingIndicator().addWait();
 
                 var ctls = [];
-                for (var i = 0, len = self.threeDControls.length; i < len; i++) {
-                    var ctl = self.threeDControls[i];
+                for (var i = 0, len = self.allowedControls.length; i < len; i++) {
+                    var ctl = self.allowedControls[i];
                     ctl = ctl.substr(0, 1).toUpperCase() + ctl.substr(1);
                     ctls = ctls.concat(self.map.getControlsByClass('TC.control.' + ctl));
                 }
@@ -244,10 +251,12 @@ if (!TC.control.MapContents) {
 
                             if (self.options.allowedGFI) {
 
-                                self.map3D.linked2DControls.featureInfo = new TwoDLinkedFeatureInfo(self);
+                                if (!self.map3D.linked2DControls.featureInfo) {
+                                    self.map3D.linked2DControls.featureInfo = new TwoDLinkedFeatureInfo(self);
+                                }
 
-                                var handler = new Cesium.ScreenSpaceEventHandler(self.viewer.canvas, false);
-                                handler.setInputAction(function (movement) {
+                                var eventHandler = new Cesium.ScreenSpaceEventHandler(self.viewer.canvas, false);
+                                eventHandler.setInputAction(function (movement) {
                                     var ray = self.viewer.camera.getPickRay(movement.position);
                                     var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
                                     if (position) {
@@ -363,6 +372,12 @@ if (!TC.control.MapContents) {
                             callback: animationCallback
                         });
                     });
+
+                    // GLS: revisar cuando el 3D sea una vista del mapa y no un control
+                    self.map.activeControl = self.map.previousActiveControl;
+                    self.map.activeControl.activate();
+                    self.map.previousActiveControl = self;
+
                 }
             });
         });
@@ -380,10 +395,19 @@ if (!TC.control.MapContents) {
 
     ctlProto.deactivate = function () {
         var self = this;
+
+        if (self.map.activeControl === self) { return; } else {
+            self.ctrlsToMng.filter(function (ctrl) {
+                return ctrl.isActive && !(ctrl instanceof TC.control.ThreeD);
+            }).forEach(function (ctrl) {
+                ctrl.deactivate();
+            });
+        }
+
         TC.Control.prototype.deactivate.call(self);
     };
 
-    MapView = function (map, parent) {
+    var MapView = function (map, parent) {
         var self = this;
         self.map = map;
         self.parent = parent;
@@ -392,8 +416,7 @@ if (!TC.control.MapContents) {
             self.viewHTML = html;
         }.bind(self));
 
-        self.proj4Obj = proj4(self.map.crs);
-        self.proj4Obj.oProj.METERS_PER_UNIT = 1;
+        self.metersPerUnit = map.getMetersPerUnit();
 
         self.maxResolution;
 
@@ -448,6 +471,13 @@ if (!TC.control.MapContents) {
     };
     MapView.prototype.setRotation = function (rotation) {
         this.map.setRotation(rotation);
+    };
+
+    //  Funciones compatibilidad CRS
+    var isCompatible = function (layer, crs) {
+        return layer.type === TC.Consts.layerType.WMTS ?
+               layer.wrap.getCompatibleMatrixSets(crs).length > 0 :
+               layer.isCompatible(crs);
     };
 
     // Funciones para cálculo de FOV
@@ -507,10 +537,9 @@ if (!TC.control.MapContents) {
         var self = this;
 
         var fovy = self.viewer.camera.frustum.fovy;
-        var metersPerUnit = self.mapView.proj4Obj.oProj.METERS_PER_UNIT;
         var visibleMapUnits = resolution * self.mapView.viewHTML.getBoundingClientRect().height;
         var relativeCircumference = Math.cos(Math.abs(latitude));
-        var visibleMeters = visibleMapUnits * metersPerUnit * relativeCircumference;
+        var visibleMeters = visibleMapUnits * self.mapView.metersPerUnit * relativeCircumference;
 
         return (visibleMeters / 2) / Math.tan(fovy / 2);
     };
@@ -520,11 +549,10 @@ if (!TC.control.MapContents) {
 
         var canvas = self.viewer.scene.canvas;
         var fovy = self.viewer.camera.frustum.fovy;
-        var metersPerUnit = self.mapView.proj4Obj.oProj.METERS_PER_UNIT;
 
         var visibleMeters = 2 * distance * Math.tan(fovy / 2);
         var relativeCircumference = Math.cos(Math.abs(latitude));
-        var visibleMapUnits = visibleMeters / metersPerUnit / relativeCircumference;
+        var visibleMapUnits = visibleMeters / self.mapView.metersPerUnit / relativeCircumference;
         var resolution = visibleMapUnits / canvas.clientHeight;
 
         // validamos que la resolución calculada esté disponible en el array de resoluciones disponibles
@@ -738,7 +766,7 @@ if (!TC.control.MapContents) {
         return Cesium.Math.convertLongitudeRange(angle);
     };
 
-    CameraControls = function (parent) {
+    var CameraControls = function (parent) {
         var self = this;
 
         self.parent = parent;
@@ -1549,7 +1577,7 @@ if (!TC.control.MapContents) {
     // Apache v2 license
     // https://github.com/TerriaJS/terriajs/blob/
     // ebd382a8278a817fce316730d9e459bbb9b829e9/lib/Models/Cesium.js
-    CustomRenderLoop = function (map2D, map3D, debug) {
+    var CustomRenderLoop = function (map2D, map3D, debug) {
         this.map2D = map2D;
         this.listentTo = [TC.Consts.event.LAYERADD, TC.Consts.event.LAYERORDER, TC.Consts.event.LAYERREMOVE, TC.Consts.event.LAYEROPACITY, TC.Consts.event.LAYERVISIBILITY, TC.Consts.event.ZOOM, TC.Consts.event.BASELAYERCHANGE, TC.Consts.event.FEATUREADD, TC.Consts.event.FEATUREREMOVE, TC.Consts.event.LAYERUPDATE, TC.Consts.event.TERRAINLOADED, TC.Consts.event.ZOOMTO].join(' ');
         this.map3D = map3D;
@@ -1759,7 +1787,7 @@ if (!TC.control.MapContents) {
         this.verboseRendering = debug;
     };
 
-    CustomRender = function (map2D, map3D, isSlower) {
+    var CustomRender = function (map2D, map3D, isSlower) {
         this.idRequestAnimationFrame = null;
 
         this._blockRendering = false;
@@ -1841,40 +1869,35 @@ if (!TC.control.MapContents) {
         return this._canvas;
     };
 
-    TwoDLinkedFeatureInfo = function (map) {
-        this.layer = null;
-
+    var TwoDLinkedFeatureInfo = function (map) {
+        var pending = false;
         var marker = null;
         var ctlResultsPanel = null;
         var ctlFeatureInfo = null;
         var saved$popupDiv = null;
+
+        var savedIsActive;
+        var savedMode;
+        var map2DgetResolutionFN = map.map.getResolution;
 
         var getResultsPanelCtl = function () {
             var done = new $.Deferred();
 
             if (!ctlResultsPanel) {
                 if (!TC.control.ResultsPanel) {
-                    TC.syncLoadJS(TC.apiLocation + 'TC/control/ResultsPanel')
+                    TC.syncLoadJS(TC.apiLocation + 'TC/control/ResultsPanel');
                 }
 
-                ctlResultsPanel = new TC.control.ResultsPanel({
+                map.map.addControl("ResultsPanel", {
                     "div": "results-panel",
                     "content": "table",
                     "titles": {
                         "main": map.getLocaleString("threed.rs.panel.gfi"),
                         "max": map.getLocaleString("threed.rs.panel.gfi")
-                    },
-                    "openOn": map.Consts.events.GFI
-                });
-                ctlResultsPanel.register(map.map);
-                ctlResultsPanel.render(function () {
-
-                    ctlResultsPanel.onClose = function () {
-                        removeMarker();
-                        map.map.$events.trigger($.Event(TC.Consts.event.POPUPHIDE, { control: ctlFeatureInfo.popup }));
-                    }.bind(this);
-
-                    map.map.on(TC.Consts.event.RESULTSPANELCLOSE, ctlResultsPanel.onClose);
+                    }
+                }).then(function (control) {
+                    ctlResultsPanel = control;
+                    map.ctlResultsPanel = ctlResultsPanel;
 
                     done.resolve();
                 });
@@ -1911,39 +1934,43 @@ if (!TC.control.MapContents) {
 
         ctlFeatureInfo = map.map.getControlsByClass(TC.control.FeatureInfo)[0];
         if (ctlFeatureInfo) {
-            ctlFeatureInfo.marker = true;
-            saved$popupDiv = ctlFeatureInfo.popup.$popupDiv;
-            ctlFeatureInfo.popup.hide();
 
-            this.layer = ctlFeatureInfo.layer;
-            map.map3D.vector2DLayers.push(this.layer);
+            savedMode = ctlFeatureInfo.displayMode;
+
+            $.when(getResultsPanelCtl()).then(function () {
+                ctlFeatureInfo.setDisplayMode(TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL);
+
+                map.map.on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
+                    if (e.control === ctlFeatureInfo.getDisplayControl()) {
+                        if (!ctlFeatureInfo.querying) {
+                            removeMarker();
+                        }
+                    }
+                });
+            });
         }
-
-
         this.clear = function () {
-
-            this.layer = null;
+            ctlFeatureInfo.closeResults();
             removeMarker();
 
-            if (ctlResultsPanel) {
-                if (ctlResultsPanel.onClose) {
-                    map.map.off(TC.Consts.event.RESULTSPANELCLOSE, ctlResultsPanel.onClose);
-                }
-
-                ctlResultsPanel.close();
-            }
-            if (ctlFeatureInfo) {
-                ctlFeatureInfo.popup.$popupDiv = saved$popupDiv;
-                ctlFeatureInfo.popup.hide();
-            }
+            map.ctlResultsPanel.close();
+        };
+        this.reset = function () {
+            this.clear();
+            ctlFeatureInfo.setDisplayMode(savedMode);
+            map.map.getResolution = map2DgetResolutionFN;
         };
         this.send = function (pickedPosition) {
             var done = new $.Deferred();
 
+            pending = true;
+
+            if (ctlFeatureInfo.displayMode !== TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL) {
+                ctlFeatureInfo.setDisplayMode(TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL);
+            }
+
             if (!map.waiting)
                 map.waiting = map.map.getLoadingIndicator().addWait();
-
-            ctlFeatureInfo.popup.$popupDiv = saved$popupDiv;
 
             setMarker(pickedPosition);
 
@@ -1954,11 +1981,11 @@ if (!TC.control.MapContents) {
                 var radius = (map.map.options.pixelTolerance || TC.Cfg.pixelTolerance);
                 var mapWidth = 2 * radius + 1;
 
-                var tilesToRender = map.viewer.scene.globe._surface._tilesToRender;
+                var tilesRendered = map.viewer.scene.globe._surface._tilesToRender;
                 var pickedTile;
 
-                for (var textureIndex = 0; !pickedTile && textureIndex < tilesToRender.length; ++textureIndex) {
-                    var tile = tilesToRender[textureIndex];
+                for (var textureIndex = 0; !pickedTile && textureIndex < tilesRendered.length; ++textureIndex) {
+                    var tile = tilesRendered[textureIndex];
                     if (Cesium.Rectangle.contains(tile.rectangle, pickedLocation)) {
                         pickedTile = tile;
                     }
@@ -1977,67 +2004,68 @@ if (!TC.control.MapContents) {
                     }
                 }
 
-                var resolution = calcResolutionForDistance.call(map,
-                    map.viewer.camera.positionCartographic.height,
-                    map.viewer.camera.positionCartographic.latitude);
-                var boxHalfWidth = mapWidth * resolution / 2;
+                var nativeRectangle = pickedTile.tilingScheme.tileXYToNativeRectangle(pickedTile.x, pickedTile.y, pickedTile.level);
 
-                var bbox = [
-                    reprojected[0] - boxHalfWidth,
-                    reprojected[1] - boxHalfWidth,
-                    reprojected[0] + boxHalfWidth,
-                    reprojected[1] + boxHalfWidth
-                ];
-                var ij = [radius, radius];
+                var readyImageryToGetNativeRectangle = (imageryTiles.filter(function (imagery) {
+                    return imagery.readyImagery.imageryLayer.isBaseLayer();
+                })[0] || {} ).readyImagery;
 
-                map.map.one(TC.Consts.event.POPUP, function (e) {
-                    ctlResultsPanel.open(e.control.$popupDiv.find('.' + ctlFeatureInfo.CLASS).clone(true, true));
-                    ctlFeatureInfo.popup.$popupDiv = ctlResultsPanel.$divTable;
-                    ctlFeatureInfo.onShowPopUp(e);
-                    ctlFeatureInfo.popup.$popupDiv.removeAttr('style');
+                map.map.getResolution = function () {
 
-                    done.resolve(e);
-                });
+                    var west_south = TC.Util.reproject([nativeRectangle.west, nativeRectangle.south], map.map3D.crs, map.map.crs);
+                    var east_north = TC.Util.reproject([nativeRectangle.east, nativeRectangle.north], map.map3D.crs, map.map.crs);
 
+                    var xResolution = (east_north[0] - west_south[0]) / (readyImageryToGetNativeRectangle && readyImageryToGetNativeRectangle.imageryLayer.imageryProvider.tileWidth || 256);
+                    var yResolution = (east_north[1] - west_south[1]) / (readyImageryToGetNativeRectangle && readyImageryToGetNativeRectangle.imageryLayer.imageryProvider.tileHeight || 256);
+
+                    return Math.max(xResolution, yResolution);
+
+                }.bind(map, readyImageryToGetNativeRectangle, nativeRectangle);
+
+                var that = map;
                 map.map.one(TC.Consts.event.NOFEATUREINFO, function (e) {
-                    ctlFeatureInfo.isActive = savedIsActive;
-
-                    removeMarker(s);
-
-                    if (ctlResultsPanel) {
-                        ctlResultsPanel.close();
-                    }
-
+                    pending = false;
                     done.resolve(e);
-                });
+
+                }.bind(this, ctlFeatureInfo));
 
                 map.map.one(TC.Consts.event.FEATUREINFO, function (e) {
-                    ctlFeatureInfo.isActive = savedIsActive;
+                    pending = false;
 
-                    if (e.featureCount == 0) {
-                        removeMarker();
+                    // GLS: Apaño para poder publicar y a la espera de la refactorización del panel de resultados
+                    if (!that._manageResultsPanel.featureInfo) {
+                        that._manageResultsPanel.featureInfo = true;
+                    }
 
-                        if (ctlResultsPanel) {
-                            ctlResultsPanel.close();
+                    if (that._manageResultsPanel.geolocation) {
+                        if (!that.map3D.linked2DControls.geolocation.track.$info.hasClass(TC.Consts.classes.HIDDEN)) {
+                            that.map3D.linked2DControls.geolocation.track.$info.addClass(TC.Consts.classes.HIDDEN);
                         }
                     }
+                    // Fin apaño
 
                     done.resolve(e);
                 });
 
                 savedIsActive = ctlFeatureInfo.isActive;
                 ctlFeatureInfo.isActive = true;
-                ctlFeatureInfo.beforeGetFeatureInfo({ xy: ij, control: ctlFeatureInfo });
-                ctlFeatureInfo.wrap.getFeatureInfo(ij, {
-                    mapSize: [mapWidth, mapWidth],
-                    boundingBox: bbox
-                });
+                ctlFeatureInfo.beforeRequest({
+                    xy: [0, 0]
+                }); // Es irrelevante dónde va a poner el marcador, no se va a ver                
+
+                ctlFeatureInfo.callback(reprojected);
             });
 
             return done;
         };
+        this.get2DMarker = function () {
+            return ctlFeatureInfo.filterFeature;
+        };
+        this.isPending = function () {
+            return pending;
+        };
     };
-    TwoDLinkedLegend = function (map) {
+    var TwoDLinkedLegend = function (map) {
         var ctlLegend = map.map.getControlsByClass(TC.control.Legend)[0];
         this.refresh = function () {
             if (ctlLegend && map.map3D.workLayers.length > 0) {
@@ -2046,7 +2074,7 @@ if (!TC.control.MapContents) {
         }
     };
 
-    RasterConverter = function (crsPattern) {
+    var RasterConverter = function (crsPattern) {
         this.layerCrs = null;
 
         var crsPattern = crsPattern;
@@ -2073,15 +2101,6 @@ if (!TC.control.MapContents) {
                 } else return obj[p[i]];
             }
         };
-        var getCRSByLayerOnCapabilities = function (layer) {
-            if ((capsURL = TC.Util.isOnCapabilities(layer.url))) {
-                if ((caps = TC.capabilities[capsURL])) {
-                    return getOfPath(caps, paths.CRS, 0) || getOfPath(caps, paths.TILEMATRIXSET, 0);
-                }
-            }
-
-            return null;
-        };
         var getTileMatrixSetLabelByLayerOnCapabilities = function (layer, crs) {
             if ((capsURL = TC.Util.isOnCapabilities(layer.url))) {
                 if ((caps = TC.capabilities[capsURL])) {
@@ -2102,6 +2121,12 @@ if (!TC.control.MapContents) {
 
             var options = {
                 url: layer.options.urlPattern,
+                proxy: {
+                    getURL: function (url) {
+                        var _url = layer.getWebGLUrl(url);
+                        return _url || url;
+                    }
+                },
                 layer: layer.layerNames,
                 style: 'default',
                 format: layer.format || layer.options.format,
@@ -2110,19 +2135,17 @@ if (!TC.control.MapContents) {
                 tilingScheme: new Cesium.GeographicTilingScheme()
             };
 
-            if (layer.usesProxy) {
-                options.proxy = {
-                    getURL: function (url) {
-                        return TC.proxify(url);
-                    }
-                };
-            }
-
             return new Cesium.WebMapTileServiceImageryProvider(options);
         }
         var wmsLayer = function (layer) {
             var options = {
                 url: layer.url,
+                proxy: {
+                    getURL: function (url) {
+                        var _url = layer.getWebGLUrl(url);
+                        return _url || url;
+                    }
+                },
                 layers: layer.layerNames,
                 parameters: {
                     version: "1.3.0",
@@ -2131,54 +2154,36 @@ if (!TC.control.MapContents) {
                 }
             };
 
-            if (layer.usesProxy ||
-                (layer.usesSSL && !TC.Util.isSameOrigin(layer.url))) {
-                options.proxy = {
-                    getURL: function (url) {
-                        return TC.proxify(url);
-                    }
-                };
-            }
-
             return new Cesium.WebMapServiceImageryProvider(options);
         };
 
-        this.isCompatible = function (layer) {
-            var crs = getCRSByLayerOnCapabilities(layer);
-            if (crs && crs.length && crsPattern.test(crs.join(','))) {
-                this.layerCrs = crs.join(',').match(crsPattern)[0];
-                return true;
-            } else { return false; }
-        };
-        this.convert = function (layer) {
+        this.convert = function (layer, map3DCRS) {
             var csmLayer;
 
-            this.isCompatible(layer);
+            this.layerCrs = map3DCRS;
 
-            if (this.layerCrs != null) {
-                switch (true) {
-                    case TC.Consts.layerType.WMTS == layer.type:
-                        csmLayer = wmtsLayer.call(this, layer);
-                        break;
-                    case TC.Consts.layerType.WMS == layer.type:
-                        csmLayer = wmsLayer(layer);
-                        break;
+            switch (true) {
+                case TC.Consts.layerType.WMTS == layer.type:
+                    csmLayer = wmtsLayer.call(this, layer);
+                    break;
+                case TC.Consts.layerType.WMS == layer.type:
+                    csmLayer = wmsLayer(layer);
+                    break;
+            }
+
+            if (csmLayer) {
+                if (csmLayer["enablePickFeatures"] !== undefined) {
+                    csmLayer.enablePickFeatures = false;
+                    csmLayer["tcLayer"] = layer;
                 }
 
-                if (csmLayer) {
-                    if (csmLayer["enablePickFeatures"] !== undefined) {
-                        csmLayer.enablePickFeatures = false;
-                        csmLayer["tcLayer"] = layer;
-                    }
-
-                    return csmLayer;
-                }
+                return csmLayer;
             }
 
             return null;
         };
     };
-    FeatureConverter = function () {
+    var FeatureConverter = function () {
         var scene = null;
         var toCesiumColor = function (hexStringColor, alpha) {
             if (hexStringColor instanceof Array) {
@@ -2248,6 +2253,107 @@ if (!TC.control.MapContents) {
 
             return styles;
         }
+        var circleConverter = function (feature) {
+            var self = this;
+            var circle = {};
+            var styles = getFeatureStyle(feature);
+
+            circle.options = function () {
+                var opt = {};
+
+                var properties = {
+                    color: { prop: 'strokeColor' },
+                    opacity: { prop: 'fillOpacity' },
+                    outlineColor: { prop: 'fillColor' },
+                    outlineOpacity: { prop: 'strokeOpacity' },
+                    width: { prop: 'strokeWidth' }
+                };
+
+                setStyleProperties(styles, properties, feature);
+                var color;
+                if (properties.color.hasOwnProperty('val')) {
+                    if (properties.opacity.hasOwnProperty('val')) {
+                        color = toCesiumColor(properties.color.val, properties.opacity.val);
+                    } else {
+                        color = toCesiumColor(properties.color.val);
+                    }
+                }
+
+                opt.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                if (properties.outlineColor.hasOwnProperty('val')) {
+                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                        color = toCesiumColor(properties.outlineColor.val, properties.outlineOpacity.val);
+                    } else {
+                        color = toCesiumColor(properties.outlineColor.val);
+                    }
+                }
+
+                opt.outlineColor = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+
+                if (properties.width.hasOwnProperty('val')) {
+                    opt.width = properties.width.val;
+                }
+
+                return opt;
+            };
+
+            circle.geometryType = function (coords, options) {
+
+                return new Cesium.GroundPrimitive({
+                    geometryInstances: new Cesium.GeometryInstance({
+                        id: feature.id,
+                        geometry: new Cesium.CircleGeometry({
+                            center: coords[0],
+                            radius: feature.geometry[1]
+                        }),
+                        attributes: {
+                            color: options.color
+                        }
+                    })
+                });
+
+                // Para obtener el contorno de círculo 
+                //var radius = feature.geometry[1];
+                //var outlineEllipse = Cesium.EllipseGeometryLibrary.computeEllipsePositions({
+                //    semiMinorAxis: radius,
+                //    semiMajorAxis: radius,
+                //    rotation: 0,
+                //    center: coords[0],
+                //    granularity: Cesium.Math.toRadians(0.5)
+                //}, false, true);
+
+                //var outerPositions = Cesium.Cartesian3.unpackArray(outlineEllipse.outerPositions);
+
+                //var outlineSize = getPixelSize(outerPositions);
+                //var metersPerPixel = scene.camera.getPixelSize(Cesium.BoundingSphere.fromPoints(outerPositions), scene.drawingBufferWidth, scene.drawingBufferHeight);
+                //var outlineInMeters = metersPerPixel * outlineSize;
+
+                //var outlineHoleEllipse = Cesium.EllipseGeometryLibrary.computeEllipsePositions({
+                //    semiMinorAxis: radius - outlineInMeters,
+                //    semiMajorAxis: radius - outlineInMeters,
+                //    rotation: 0,
+                //    center: coords[0],
+                //    granularity: Cesium.Math.toRadians(0.5)
+                //}, false, true);
+
+                //var innerPositions = Cesium.Cartesian3.unpackArray(outlineHoleEllipse.outerPositions);
+
+                //var outlineCircleGeom = new Cesium.GroundPrimitive({
+                //    geometryInstances: new Cesium.GeometryInstance({
+                //        id: feature.id + 'outline',
+                //        geometry: new Cesium.PolygonGeometry({
+                //            polygonHierarchy: new Cesium.PolygonHierarchy(outerPositions, [new Cesium.PolygonHierarchy(innerPositions)])
+                //        }),
+                //        attributes: {
+                //            color: options.outlineColor
+                //        }
+                //    })
+                //});
+            };
+
+            return circle;
+        };
         var polygonConverter = function (feature) {
             var self = this;
             var polygon = {};
@@ -2349,6 +2455,11 @@ if (!TC.control.MapContents) {
             }
             else if (TC.feature.Polygon && feature instanceof TC.feature.Polygon) {
                 polygon.geometryType = function (coords, options) {
+
+                    if ($.isArray(coords) && coords.length === 1 && $.isArray(coords[0])) {
+                        coords = coords[0];
+                    }
+
                     return [
                         new Cesium.GroundPrimitive({
                             geometryInstances: new Cesium.GeometryInstance({
@@ -2414,13 +2525,12 @@ if (!TC.control.MapContents) {
 
             if (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline) {
                 line.geometryType = function (coords, options) {
+                    var geomInstances = [];
+
                     // GLS: con lo siguiente pinta bien calles
                     if (coords.length == 1) {
                         coords = coords[0];
-                    }
-
-                    return new Cesium.GroundPrimitive({
-                        geometryInstances: new Cesium.GeometryInstance({
+                        geomInstances.push(new Cesium.GeometryInstance({
                             id: feature.id,
                             geometry: new Cesium.CorridorGeometry({
                                 positions: coords,
@@ -2429,7 +2539,34 @@ if (!TC.control.MapContents) {
                             attributes: {
                                 color: options.color
                             }
-                        })
+                        }));
+                    } else {
+                        coords = coords.sort(function (a, b) {
+                            if (a.length > b.length) {
+                                return -1;
+                            }
+                            if (a.length < b.length) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+                        var pixelSize = getPixelSize(coords[0]);
+                        for (var i = 0; i < coords.length; i++) {
+                            geomInstances.push(new Cesium.GeometryInstance({
+                                id: feature.id,
+                                geometry: new Cesium.CorridorGeometry({
+                                    positions: coords[i],
+                                    width: pixelSize * options.width
+                                }),
+                                attributes: {
+                                    color: options.color
+                                }
+                            }));
+                        }
+                    }
+
+                    return new Cesium.GroundPrimitive({
+                        geometryInstances: geomInstances
                     });
                 };
             }
@@ -2625,42 +2762,42 @@ if (!TC.control.MapContents) {
                             }
                         };
                     }
-                    //else if (options.radius) {
-                    //    return [
-                    //        new Cesium.GroundPrimitive({
-                    //            geometryInstances: new Cesium.GeometryInstance({
-                    //                id: feature.id,
-                    //                geometry: new Cesium.CircleGeometry({
-                    //                    center: coords[0],
-                    //                    radius: getPixelSize(coords) * options.radius
-                    //                }),
-                    //                attributes: {
-                    //                    color: Cesium.ColorGeometryInstanceAttribute.fromColor(options.color)
-                    //                }
-                    //            })
-                    //        })
-                    //        /*,
-                    //        new Cesium.GroundPrimitive({
-                    //            geometryInstances: new Cesium.GeometryInstance({
-                    //                id: feature.id + 'outLine',
-                    //                geometry: new Cesium.CorridorGeometry({
-                    //                    positions: coords,
-                    //                    width: getPixelSize(coords) * options.outlineWidth
-                    //                }),
-                    //                attributes: {
-                    //                    color: options.outlineColor
-                    //                }
-                    //            })
-                    //        })*/
-                    //    ];
-                    //}
+                        //else if (options.radius) {
+                        //    return [
+                        //        new Cesium.GroundPrimitive({
+                        //            geometryInstances: new Cesium.GeometryInstance({
+                        //                id: feature.id,
+                        //                geometry: new Cesium.CircleGeometry({
+                        //                    center: coords[0],
+                        //                    radius: getPixelSize(coords) * options.radius
+                        //                }),
+                        //                attributes: {
+                        //                    color: Cesium.ColorGeometryInstanceAttribute.fromColor(options.color)
+                        //                }
+                        //            })
+                        //        })
+                        //        /*,
+                        //        new Cesium.GroundPrimitive({
+                        //            geometryInstances: new Cesium.GeometryInstance({
+                        //                id: feature.id + 'outLine',
+                        //                geometry: new Cesium.CorridorGeometry({
+                        //                    positions: coords,
+                        //                    width: getPixelSize(coords) * options.outlineWidth
+                        //                }),
+                        //                attributes: {
+                        //                    color: options.outlineColor
+                        //                }
+                        //            })
+                        //        })*/
+                        //    ];
+                        //}
                     else {
                         return {
                             id: feature.id,
                             name: feature.id,
                             position: coords[0],
                             billboard: {
-                                image: pinBuilder.fromColor(Cesium.Color.fromCssColorString(TC.Cfg.styles.point.fillColor), 24).toDataURL(),
+                                image: pinBuilder.fromColor(Cesium.Color.fromCssColorString(feature.options.fillColor || TC.Cfg.styles.point.fillColor), 32).toDataURL(),
                                 eyeOffset: new Cesium.Cartesian3(0, 0, -100),
                                 verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                                 heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
@@ -2678,6 +2815,10 @@ if (!TC.control.MapContents) {
 
             var cartesians = [];
             var toCartesian = function (coord, arr) {
+                if (!$.isArray(coord)) {
+                    return;
+                }
+
                 coord = TC.Util.reproject(coord, sourceCrs, targetCrs);
 
                 arr.push(coord.length > 2 ?
@@ -2719,6 +2860,10 @@ if (!TC.control.MapContents) {
             };
 
             switch (true) {
+                case (TC.feature.Circle && feature instanceof TC.feature.Circle):
+                    forPoints(geometry, cartesians);
+                    converted = circleConverter.call(self, feature);
+                    break;
                 case (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon):
                     polygons = geometry;
                     if ($.isArray(polygons)) {
@@ -2784,48 +2929,41 @@ if (!TC.control.MapContents) {
             baseMaps: [],
             baseVector: ''
         };
-        var analogLayers = {
-            layers: [],
-            getProperties: function (layer) {
-                var self = this;
-                // almacenamos la configuración análoga para el mapa de fondo no soportado.
-                if (layer.options && layer.options.hasOwnProperty('4326')) {
-                    analogLayers.layers.push({ id: layer.id, opts: layer.options["4326"] });
-                    return analogLayers.layers[analogLayers.layers.length - 1].opts;
-                }
-                else return null;
-            },
-            findById: function (id) {
-                if (this.layers.length == 0)
-                    return null;
-                else {
-                    for (var i = 0; i < this.layers.length; i++) {
-                        if (this.layers[i].id.toLowerCase().trim() === id.toLowerCase().trim())
-                            return this.layers[i].opts;
-                    }
 
-                    return null;
-                }
-            }
-        };
         var checkCompatibleBaseMaps = function (map) {
             var self = this;
 
             var isBaseRaster = map.baseLayer instanceof TC.layer.Raster;
 
             if (isBaseRaster) {
-                if ((crs = rasterConverter.isCompatible(map.baseLayer)) == null)
-                    if (analogLayers.getProperties.call(self, self.map.baseLayer) == null)
+                if (!isCompatible(map.baseLayer, self.map3D.crs)) {
+                    var fallBackLayer = map.baseLayer.getFallbackLayer();
+                    if (fallBackLayer && !isCompatible(fallBackLayer, self.map3D.crs)) {
                         map.toast(self.getLocaleString('threed.baseLayerNoCompatible', { name: map.baseLayer.layerNames }));
+                    }
+                }
             } else {
                 currentMapCfg.baseVector = map.baseLayer;
             }
 
             if (currentMapCfg.baseMaps.length === 0) {
-                for (var i = 0; i < map.baseLayers.length; i++) {
-                    if (map.baseLayers[i] instanceof TC.layer.Raster && !rasterConverter.isCompatible(map.baseLayers[i]))
-                        if (analogLayers.getProperties.call(self, map.baseLayers[i]) == null)
+
+                var noCompatible = map.baseLayers.filter(function (baseLayer) {
+                    return !isCompatible(baseLayer, self.map3D.crs);
+                }).filter(function (baseLayer, i) {
+                    if (baseLayer.getFallbackLayer()) {
+                        return !isCompatible(baseLayer.getFallbackLayer(), self.map3D.crs);
+                    } else {
+                        return true;
+                    }
+                });
+
+                if (noCompatible.length > 0) {
+                    for (var i = 0; i < map.baseLayers.length; i++) {
+                        if (noCompatible.indexOf(map.baseLayers[i]) > -1) {
                             currentMapCfg.baseMaps.push({ l: map.baseLayers[i], i: i });
+                        }
+                    }
                 }
             }
 
@@ -2862,10 +3000,12 @@ if (!TC.control.MapContents) {
             }
         };
         var addNoCompatibleBaseLayers = function (map) {
+            var self = this;
+
             if (currentMapCfg.baseMaps && currentMapCfg.baseMaps.length) {
                 for (var i = 0; i < currentMapCfg.baseMaps.length; i++) {
-                    map.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: currentMapCfg.baseMaps[i].l }));
-                    map.baseLayers.splice(currentMapCfg.baseMaps[i].i, 0, currentMapCfg.baseMaps[i].l);
+                    self.map.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: currentMapCfg.baseMaps[i].l }));
+                    self.map.baseLayers.splice(currentMapCfg.baseMaps[i].i, 0, currentMapCfg.baseMaps[i].l);
                 }
             }
         }
@@ -2912,12 +3052,12 @@ if (!TC.control.MapContents) {
                     if (event.deltaY) {
                         var deltaMode = event.deltaMode;
                         if (deltaMode === event.DOM_DELTA_PIXEL) {
-                            delta = -event.deltaY;
+                            delta = - event.deltaY;
                         } else if (deltaMode === event.DOM_DELTA_LINE) {
-                            delta = -event.deltaY * 40;
+                            delta = - event.deltaY * 40;
                         } else {
                             // DOM_DELTA_PAGE
-                            delta = -event.deltaY * 120;
+                            delta = - event.deltaY * 120;
                         }
                     } else if (event.detail > 0) {
                         // old Firefox versions use event.detail to count the number of clicks. The sign
@@ -3105,84 +3245,185 @@ if (!TC.control.MapContents) {
         var alterAllowedControls = function (direction) {
             var self = this;
 
-            for (var i = 0, len = self.map.controls.length; i < len; i++) {
-                var ctl = self.map.controls[i];
-                if (self.ctrlsToMng.indexOf(ctl) < 0) {
-
+            self.map.controls.map(function (mapCtrl) {
+                if (self.ctrlsToMng.indexOf(mapCtrl) < 0) {
                     switch (true) {
                         case (self.direction.TO_TWO_D == direction):
-                            ctl.enable();
+                            mapCtrl.enable();
                             break;
                         case (self.direction.TO_THREE_D == direction):
-                            ctl.disable();
+                            mapCtrl.disable();
                             break;
                     }
                 }
-            }
+            });
 
             switch (true) {
                 case (self.direction.TO_TWO_D == direction):
-                    $('[data-no-3d]').removeClass(TC.Consts.classes.HIDDEN);
+                    $('[data-no-3d]').removeClass(TC.Consts.classes.THREED_HIDDEN);
                     self.ctrlsToMng.forEach(function (ctl) {
                         ctl._$div.removeClass(TC.Consts.classes.THREED);
                     });
                     break;
                 case (self.direction.TO_THREE_D == direction):
-                    $('[data-no-3d]').addClass(TC.Consts.classes.HIDDEN);
+                    $('[data-no-3d]').addClass(TC.Consts.classes.THREED_HIDDEN);
                     self.ctrlsToMng.forEach(function (ctl) {
                         ctl._$div.addClass(TC.Consts.classes.THREED);
                     });
                     break;
             }
 
-            self.map3D.linked2DControls.legend = new TwoDLinkedLegend(self);
-        };
-        var getAllowedControlsLayer = function () {
-            var self = this;
+            var coordsCtl;
+            if (!self.map3D.linked2DControls.coordinates && self.allowedControls.indexOf("coordinates") > -1) {
+                self.map3D.linked2DControls.coordinates = self.ctrlsToMng.filter(function (ctrl) {
+                    return ctrl instanceof TC.control.Coordinates;
+                })[0];
+            }
+            coordsCtl = self.map3D.linked2DControls.coordinates;
 
-            var done = new $.Deferred();
-            var workLayers = [];
+            if (self.direction.TO_THREE_D === direction) {
+                self.map3D.linked2DControls.legend = new TwoDLinkedLegend(self);
 
-            // obtengo de los controles habilitados en 3D y sus correspondientes capas 
-            for (var i = 0; i < self.threeDControls.length; i++) {
-                var ctl = self.threeDControls[i];
-                ctl = ctl.substr(0, 1).toUpperCase() + ctl.substr(1);
-                var ctrl = self.map.getControlsByClass('TC.control.' + ctl);
-                if (ctrl && ctrl.length && ctrl[0].getLayer) {
-                    workLayers.push(ctrl[0].getLayer());
+                if (!self.map3D.linked2DControls.geolocation && self.allowedControls.indexOf("geolocation") > -1) {
+                    self.map3D.linked2DControls.geolocation = self.ctrlsToMng.filter(function (ctrl) {
+                        return ctrl instanceof TC.control.Geolocation;
+                    })[0];
                 }
-                else if (ctrl[0].layer) {
-                    workLayers.push(ctrl[0].layer);
-                } else if (ctrl[0].layers) {
-                    ctrl[0].layers.forEach(function (elem) {
-                        if (elem instanceof TC.layer.Vector) {
-                            workLayers.push(elem);
+
+                if (self.map3D.linked2DControls.geolocation) {
+                    self.map3D.linked2DControls.geolocation.wrap.setTrackOnMapVisibility(false);
+
+                    self.map3D.linked2DControls.geolocation.__askTracking = self.map3D.linked2DControls.geolocation._askTracking;
+                    self.map3D.linked2DControls.geolocation._askTracking = function () {
+                        return false;
+                    };
+
+                    self.map3D.linked2DControls.geolocation._setFormatInfoNewPosition = self.map3D.linked2DControls.geolocation.setFormatInfoNewPosition;
+                    var that = self;
+                    self.map3D.linked2DControls.geolocation.setFormatInfoNewPosition = function (newPosition) {
+                        var self = this;
+
+                        // GLS: Apaño para poder publicar y a la espera de la refactorización del panel de resultados
+                        if (!that._manageResultsPanel.geolocation) {
+                            that._manageResultsPanel.geolocation = true;
                         }
-                    });
+
+                        if (that._manageResultsPanel.featureInfo && that.map3D.linked2DControls.featureInfo) {
+                            that.map3D.linked2DControls.featureInfo.clear();
+                        }
+
+                        if (that.map3D.linked2DControls.geolocation.track.$info.hasClass(TC.Consts.classes.HIDDEN)) {
+                            that.map3D.linked2DControls.geolocation.track.$info.removeClass(TC.Consts.classes.HIDDEN);
+                        }
+                        // Fin apaño
+
+
+                        var data = {};
+                        var locale = TC.Util.getMapLocale(self.map);
+                        var geoCoords = TC.Util.reproject(newPosition.position, self.map.crs, self.map3D.crs);
+                        data.x = geoCoords[0].toLocaleString(locale);
+                        data.y = geoCoords[1].toLocaleString(locale);
+                        data.z = (Math.round(newPosition.altitude).toLocaleString(locale));
+                        data.accuracy = (Math.round(newPosition.accuracy).toLocaleString(locale));
+                        data.speed = newPosition.speed.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+                        var cartesian = new Cesium.Cartographic(Cesium.Math.toRadians(geoCoords[0]), Cesium.Math.toRadians(geoCoords[1]));
+                        var height = self.viewer.scene.globe.getHeight(cartesian);
+                        if (height) {
+                            data.mdt = Math.round(height).toLocaleString(locale);
+                        }
+
+                        data.isGeo = true;
+
+                        return data;
+                    }.bind(self);
+
+                    self.map3D.linked2DControls.geolocation.wrap._hasCoordinates = self.map3D.linked2DControls.geolocation.wrap.hasCoordinates;
+                    self.map3D.linked2DControls.geolocation.wrap.hasCoordinates = function () {
+                        return false;
+                    }
                 }
             }
 
-            $.when.apply($, workLayers).then(function () {
+            if (coordsCtl) {
+                $viewport = $(coordsCtl.map.wrap.getViewport());
+                if (self.direction.TO_THREE_D === direction) {
+                    $viewport.off(TC.Consts.event.MOUSEMOVE + '.coords');
 
-                if (arguments && arguments.length) {
-
-                    self.map3D.vector2DLayers = Array.prototype.slice.call(arguments, 0).filter(function (elem) {
-                        return elem instanceof TC.layer.Vector;
-                    });
-
-                    self.map3D.vector2DLayers.forEach(function (layer) {
-                        if (layer.features && layer.features.length) {
-                            layer.features.forEach(function (feature) {
-                                self.map3D.addFeature.call(self, feature);
-                            });
-                        }
+                    coordsCtl.isGeo = true;
+                    coordsCtl.crs = self.map3D.crs;
+                }
+                else {
+                    coordsCtl.isGeo = self.map.wrap.isGeo();
+                    coordsCtl.crs = self.map.crs;
+                    $viewport.on(TC.Consts.event.MOUSEMOVE + '.coords', function (e) {
+                        coordsCtl.onMouseMove(e);
                     });
                 }
+                coordsCtl.geoCrs = self.map3D.crs;
+                coordsCtl.render();
 
-                done.resolve();
+                var eventHandler = new Cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas, false);
+                eventHandler.setInputAction(function (movement) {
+                    var ray = self.viewer.camera.getPickRay(movement.endPosition || movement.position);
+                    var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
+                    if (position) {
+
+                        var positionCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
+
+                        var lat, lon, ele;
+                        lat = Cesium.Math.toDegrees(positionCartographic.latitude);
+                        lon = Cesium.Math.toDegrees(positionCartographic.longitude);
+                        var locale = TC.Util.getMapLocale(self.map);
+                        ele = Math.round(positionCartographic.height).toLocaleString(locale);
+
+                        if (TC.Util.detectMobile()) {
+
+                            var coords = TC.Util.reproject([lon, lat], self.map3D.crs, self.map.crs);
+                            if (ele > 0) {
+                                coords.push(ele);
+                            }
+
+                            coordsCtl.clear();
+                            coordsCtl.coordsToClick({ coordinate: coords, cssClass: self.classes.COORDSTHREEDMARKER });
+
+                            coordsCtl.latLon = [lat, lon];
+                            if (ele > 0) {
+                                coordsCtl.latLon.push(ele + " m");
+                            }
+
+                            coordsCtl.update();
+                        } else {
+                            coordsCtl.latLon = [lat, lon];
+                            if (ele > 0) {
+                                coordsCtl.latLon.push(ele + " m");
+                            }
+
+                            coordsCtl.update();
+                        }
+                    } else {
+                        coordsCtl.clear();
+                    }
+                }, (TC.Util.detectMobile() ? Cesium.ScreenSpaceEventType.LEFT_CLICK : Cesium.ScreenSpaceEventType.MOUSE_MOVE));
+
+                $('.' + self.classes.MAPTHREED).on('mouseout.tc', function (e) {
+                    if (!coordsCtl.isPointerOver(e)) {
+                        coordsCtl.clear();
+                    }
+                });
+            }
+        };
+
+        var draw2DDrawedFeatures = function () {
+            var self = this;
+
+            self.map.workLayers.filter(function (layer) {
+                return layer instanceof TC.layer.Vector;
+            }).forEach(function (vectorLayer) {
+                vectorLayer.features.forEach(function (feature) {
+                    self.map3D.addFeature.call(self, feature);
+                });
             });
-
-            return done;
         };
 
         var override2DZoom = function (activate) {
@@ -3197,6 +3438,23 @@ if (!TC.control.MapContents) {
                 var center = new Cesium.Cartesian2(
                     self.viewer.scene.canvas.clientWidth / 2,
                     self.viewer.scene.canvas.clientHeight / 2);
+
+                /*
+                var x = center.x;
+                var y = center.y;
+                var event = new window.WheelEvent ("wheel", {deltaY: -100,
+                    deltaMode: 0,
+                    DOM_DELTA_PIXEL: 0,
+                    DOM_DELTA_LINE: 1,
+                    detail: 0,
+                    wheelDelta: 120,
+                    layerX: x, layerY: y,
+                    clientX: x, clientY: y,
+                    offsetX: x, offsetY: y,
+                    pageX: x, pageY: y,
+                    screenX: x, screenY: y
+                });
+                self.viewer.scene.canvas.dispatchEvent(event);*/
 
                 self.map3D.zoomToCartesian.call(self, { endPosition: center }, amount);
             };
@@ -3267,8 +3525,8 @@ if (!TC.control.MapContents) {
                 if (!self.terrainProvider)
                     self.terrainProvider = new Cesium.CesiumTerrainProvider({
                         url: self.Consts.TERRAIN_URL,
-                        requestWaterMask: true,
-                        requestVertexNormals: true
+                        requestWaterMask: false,
+                        requestVertexNormals: false
                     });
 
                 return self.terrainProvider;
@@ -3287,7 +3545,7 @@ if (!TC.control.MapContents) {
                         self.viewer = self.map3D.viewer = new Cesium.Viewer(self.selectors.divThreedMap, {
                             terrainProvider: self.map3D.loadTerrainProvider.call(self),
                             terrainExaggeration: 1.0,
-                            terrainShadows: Cesium.ShadowMode.ENABLED,
+                            terrainShadows: Cesium.ShadowMode.DISABLED,
 
                             animation: false,
                             timeline: false,
@@ -3318,7 +3576,7 @@ if (!TC.control.MapContents) {
                         self.viewer.scene.backgroundColor = Cesium.Color.WHITE;
                         self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
                         self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 500000;
-                        self.viewer.scene.globe.depthTestAgainstTerrain = true;
+                        self.viewer.scene.globe.depthTestAgainstTerrain = false;
 
                         // borramos cualquier capa que haya
                         self.viewer.scene.imageryLayers.removeAll();
@@ -3334,11 +3592,23 @@ if (!TC.control.MapContents) {
                                 }
                             }
                         }, self);
-                        self.viewer.scene.renderError.addEventListener(function (e) {
+                        self.viewer.scene.renderError.addEventListener(function (target, error) {
                             var self = this;
 
-                            self.$divThreedMap.addClass(self.classes.LOADING);
-                            self.map.toast('Error', { type: TC.Consts.msgType.ERROR });
+                            if (error && error.code === 18) { // GLS: 18 - SECURITY_ERR
+                                self.map3D.customRender.stop();
+
+                                if (!self.map3D.viewer.useDefaultRenderLoop) {
+                                    self.map3D.viewer.useDefaultRenderLoop = true;
+                                }
+
+                                self.map3D.customRender.start();
+                            } else {
+                                self.$divThreedMap.removeClass(self.classes.LOADING);
+                                self.map.toast(self.getLocaleString("fi.error"), { type: TC.Consts.msgType.ERROR });
+
+                                self.$button.click();
+                            }
                         }, self);
 
                         // controlamos la carga de tiles para mostrar loading cuando pida tiles
@@ -3374,18 +3644,33 @@ if (!TC.control.MapContents) {
                         // modificamos los controles disponibles
                         alterAllowedControls.call(self, self.direction.TO_THREE_D);
 
-                        // obtenemos las capas de trabajo de los controles habilitados
-                        getAllowedControlsLayer.call(self);
+                        // pintamos las features que están en el mapa 2D
+                        draw2DDrawedFeatures.call(self);
 
                         done.resolve(self.viewer);
                     });
-                } else { done.resolve(self.viewer); }
+                } else {
+                    done.resolve(self.viewer);
+                }
 
                 return done;
             },
 
             setBaseLayer: function (layer) {
                 var self = this;
+
+                var get3DLayer = function (layer) {
+                    if (!isCompatible(layer, self.map3D.crs)) {
+                        if (layer.getFallbackLayer() !== null && isCompatible(layer.getFallbackLayer(), self.map3D.crs)) {
+                            layer = layer.getFallbackLayer();
+                        } else {
+                            self.map.toast(self.getLocaleString('threed.crsNoCompatible', { name: layer.layerNames }));
+                            layer = null;
+                        }
+                    }
+
+                    return layer;
+                };
 
                 if (!self.map3D.baseLayer) {
 
@@ -3397,13 +3682,17 @@ if (!TC.control.MapContents) {
                         if (layer.options.relatedWMTS) {
                             self.map.baseLayer = layer = self.map.getLayer(layer.options.relatedWMTS);
                             self.map.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: self.map.baseLayer }));
-                        } else if ((obj = analogLayers.findById(self.map.baseLayer.id)) != null) {
-                            $.extend(obj, { map: self.map });
-                            layer = new TC.layer.Raster(obj);
-                            layer.isBase = true;
-                        }
+                        } else {
 
-                        self.map3D.addLayer.call(self, layer);
+                            layer = get3DLayer(layer);
+
+                            if (layer) {
+                                if (!layer.isBase) {
+                                    layer.isBase = true;
+                                }
+                                self.map3D.addLayer.call(self, layer);
+                            }
+                        }
                     }
                     else {
                         self.map3D.baseLayer = self.Consts.BLANK_BASE;
@@ -3422,13 +3711,14 @@ if (!TC.control.MapContents) {
                         delete self.waiting;
                     }
                     else {
-                        if ((obj = analogLayers.findById(layer.id)) != null) {
-                            $.extend(obj, { map: self.map });
-                            layer = new TC.layer.Raster(obj);
-                            layer.isBase = true;
-                        }
+                        layer = get3DLayer(layer);
 
-                        self.map3D.addLayer.call(self, layer);
+                        if (layer) {
+                            layer.map = self.map;
+                            layer.isBase = true;
+
+                            self.map3D.addLayer.call(self, layer);
+                        }
                     }
                 }
 
@@ -3445,10 +3735,10 @@ if (!TC.control.MapContents) {
                     }
                     case TC.Consts.layerType.WMTS == layer.type:
                     case TC.Consts.layerType.WMS == layer.type: {
-                        if (!rasterConverter.isCompatible(layer)) {
+                        if (!layer.isBase && !layer.isCompatible(self.map3D.crs)) {
                             self.map.toast(self.getLocaleString('threed.crsNoCompatible', { name: layer.layerNames }));
                         } else {
-                            var convertedLayer = rasterConverter.convert(layer);
+                            var convertedLayer = rasterConverter.convert(layer, self.map3D.crs);
                             if (convertedLayer) {
                                 var newImageryLayer = self.viewer.scene.imageryLayers.addImageryProvider(convertedLayer);
 
@@ -3508,7 +3798,7 @@ if (!TC.control.MapContents) {
                 var self = this;
 
                 switch (true) {
-                    case TC.Consts.layerType.Vector == layer.type: {
+                    case TC.Consts.layerType.VECTOR == layer.type: {
                         if (self.map3D.vector2DFeatures[layer.id]) {
                             var features = self.map3D.vector2DFeatures[layer.id];
                             for (var i = 0; i < features.length; i++) {
@@ -3613,6 +3903,7 @@ if (!TC.control.MapContents) {
 
                         var withTerrainFinalDestination = Cesium.Ellipsoid.WGS84.cartographicToCartesian(withTerrainFinalCartographic);
 
+                        //console.log('2º flyto');
                         camera.flyTo({
                             duration: 3,
                             destination: withTerrainFinalDestination,
@@ -3624,6 +3915,7 @@ if (!TC.control.MapContents) {
                                 this.map3D.rotateAroundAxis(this.viewer.scene.camera, -angle, this.viewer.scene.camera.right, pickBP, {
                                     duration: 250,
                                     callback: function () {
+                                        //console.log('2º FIN flyto');
                                         done.resolve();
                                     }
                                 });
@@ -3662,7 +3954,9 @@ if (!TC.control.MapContents) {
                 if (intersection) {
 
                     var distanceMeasure = Cesium.Cartesian3.distance(pickRay.origin, intersection);
-                    if (distanceMeasure < 1) { return; }
+                    if (distanceMeasure < 1) {
+                        return;
+                    }
                     else {
                         if (!self.map3D._zoomTo) {
                             self.map3D._zoomTo = {
@@ -3684,7 +3978,9 @@ if (!TC.control.MapContents) {
                     if (intersection) {
 
                         var distanceMeasure = Cesium.Cartesian3.distance(pickRay.origin, intersection);
-                        if (distanceMeasure < 1) { return; }
+                        if (distanceMeasure < 1) {
+                            return;
+                        }
                         else {
 
                             var cameraPosition = scene.camera.position;
@@ -3748,14 +4044,7 @@ if (!TC.control.MapContents) {
             addFeature: function (feature, options) {
                 var self = this;
 
-                if (self.map3D.linked2DControls.featureInfo) {
-                    if (feature.layer === self.map3D.linked2DControls.featureInfo.layer && feature instanceof TC.feature.Marker) {
-                        return;
-                    }
-                }
-
-                if (self.map3D.vector2DLayers.indexOf(feature.layer) > -1) {
-
+                var add = function () {
                     var csfeature = featureConverter.convert(self.viewer.scene, feature, self.map.crs, self.map3D.crs);
                     if (csfeature) {
                         if (csfeature.geometry instanceof Array) {
@@ -3769,6 +4058,20 @@ if (!TC.control.MapContents) {
                             linkFeature(self.map3D, feature.layer.id, geom);
                         }
                     }
+                };
+
+                // GLS: Para no pintar la cruz-marker del FeatureInfo
+                if (self.map3D.linked2DControls.featureInfo && self.map3D.linked2DControls.featureInfo.isPending()) {
+                    // GLS: llega antes aquí que al callback de la instrucción que crea la feature, por eso necesito el timeout
+                    setTimeout(function () {
+                        if (self.map3D.linked2DControls.featureInfo.get2DMarker() === feature) {
+                            return;
+                        } else {
+                            add();
+                        }
+                    }, 5);
+                } else {
+                    add();
                 }
             },
             removeFeature: function (feature) {
@@ -3926,7 +4229,7 @@ if (!TC.control.MapContents) {
                 // sobrescribimos el comportamiento de lo botones + /- y la casita
                 override2DZoom.call(self, false);
 
-                addNoCompatibleBaseLayers();
+                addNoCompatibleBaseLayers.call(self);
 
                 self.map.baseLayer = currentMapCfg.baseMap == self.Consts.BLANK_BASE ? currentMapCfg.baseVector : currentMapCfg.baseMap;
                 self.map.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: self.map.baseLayer }));
@@ -3939,7 +4242,17 @@ if (!TC.control.MapContents) {
                 self.cameraControls.unbind();
 
                 if (self.map3D.linked2DControls.featureInfo) {
-                    self.map3D.linked2DControls.featureInfo.clear(self.map);
+                    self.map3D.linked2DControls.featureInfo.reset();
+                }
+
+                if (self.map3D.linked2DControls.coordinates) {
+                    self.map3D.linked2DControls.coordinates.clear();
+                }
+
+                if (self.map3D.linked2DControls.geolocation) {
+                    self.map3D.linked2DControls.geolocation.isGeo = false;
+                    self.map3D.linked2DControls.geolocation.setFormatInfoNewPosition = self.map3D.linked2DControls.geolocation._setFormatInfoNewPosition;
+                    self.map3D.linked2DControls.geolocation._askTracking = self.map3D.linked2DControls.geolocation.__askTracking;
                 }
 
                 self.map3D.tileLoadingHandler.removeAll();
