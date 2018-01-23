@@ -78,7 +78,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 }
                 self._updateLayerTreeTimeout = setTimeout(function () {
                     if (self.map.workLayers.indexOf(e.layer) > -1) {
-                    // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
+                        // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
                         self.updateLayerTree(e.layer);
                         delete self._updateLayerTreeTimeout;
                     }
@@ -142,30 +142,6 @@ TC.inherit(TC.control.MapContents, TC.Control);
         return /[&?]REQUEST=getLegendGraphic/i.test(url);
     };
 
-    var setImgSrc = function ($img, src, SSLSupported) {
-        var ERROR = 'error.tc';
-        if (TC.Cfg.proxy) {
-            $img.off(ERROR).on(ERROR, function () {
-                $img.attr('src', TC.proxify(src));
-            });
-        }
-        var urlStartRegEx = /^(https?:)?\/\//i;
-        if (TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(src)) {
-            var srcSSL = "";
-            if (SSLSupported == true)
-                srcSSL = src.replace(urlStartRegEx, "https://");
-            else if (TC.isUsingServiceWorker())
-                srcSSL = TC.proxify(src)
-            else
-                srcSSL = src;
-            $img.attr('src', srcSSL);
-        }
-        else {
-            // Si es una ruta absoluta quitamos el protocolo
-            $img.attr('src', urlStartRegEx.test(src) ? src.substr(src.indexOf('//')) : src);
-        }
-    };
-
     /**
      * Carga y le da estilo a la imagen de la leyenda.
      * @param {string} requestMethod Si queremos pedir la imagen de la leyenda por POST, podemos especificarlo utilizando el parámetro requestMethod.
@@ -173,10 +149,27 @@ TC.inherit(TC.control.MapContents, TC.Control);
     ctlProto.styleLegendImage = function ($img, layer) {
         if (!$img.attr('src')) {
             var imgSrc = $img.data(_dataKeys.img);
+
+            var ERROR = 'error.tc';
+            $img.off(ERROR).on(ERROR, function () {
+                var imgSRC_protocol = $img.attr('src');
+                // GLS: hemos modificado el protocolo?¿
+                if (imgSRC_protocol.indexOf(layer.url) === -1) {
+                    var protocolRegex = /^(https?:\/\/)/i;
+                    if (protocolRegex.test(imgSRC_protocol) && protocolRegex.test(layer.url)) {
+                        imgSRC_protocol = imgSRC_protocol.replace(imgSRC_protocol.match(protocolRegex)[1], layer.url.match(protocolRegex)[1]);
+                    }
+                }
+
+                $img.off('error.tc');
+
+                $img.attr('src', layer instanceof TC.layer.Raster ? layer.getByProxy_(imgSRC_protocol) : TC.proxify(imgSRC_protocol));
+            }.bind(layer));
+
             if (layer && layer.options.method && layer.options.method === "POST") {
                 layer.getLegendGraphicImage()
                 .done(function (src) {
-                    setImgSrc($img, src);
+                    $img.attr('src', layer.getLegendUrl(src));
                 })
                 .fail(function (err) { TC.error(err); });
             } else {
@@ -210,7 +203,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     }
                     $img.data(_dataKeys.img, imgSrc);
                 }
-                setImgSrc($img, imgSrc, layer.usesSSL);
+                $img.attr('src', imgSrc);
             }
         }
     };
