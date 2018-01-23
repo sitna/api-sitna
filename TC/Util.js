@@ -382,8 +382,8 @@
                 multipoint = false;
                 coords = [coords];
             }
-            TC.loadProjDef(sourceCrs, true);
-            TC.loadProjDef(targetCrs, true);
+            TC.loadProjDef({ crs: sourceCrs, sync: true });
+            TC.loadProjDef({ crs: targetCrs, sync: true });
             var sourcePrj = new Proj4js.Proj(sourceCrs);
             var targetPrj = new Proj4js.Proj(targetCrs);
             result = new Array(coords.length);
@@ -421,6 +421,29 @@
         },
         mod: function (n) { // modulo for negative values
             return ((n % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+        },
+
+        getCRSCode: function (crs) {
+            var result = null;
+            crs = crs.trim();
+            if (/^EPSG:\d{4,6}$/g.test(crs) || //formato EPSG
+                /^urn:ogc:def:crs:EPSG:.*:\d{4,6}/g.test(crs) || // formato URN
+                /http:\/\/www.opengis.net\/gml\/srs\/epsg.xml#\d{4,6}$/g.test(crs)) { // formato GML
+                var match = crs.trim().match(/^.+[:#](\d{4,6})$/); // devuelve la parte numérica del código
+                if (match) {
+                    result = match[1];
+                }
+            }
+            return result;
+        },
+
+        CRSCodesEqual: function (crs1, crs2) {
+            if (crs1 === crs2) {
+                return true;
+            }
+            var code1 = this.getCRSCode(crs1);
+            var code2 = this.getCRSCode(crs2);
+            return code1 !== null && code2 !== null && code1 === code2;
         },
 
         getLocaleString: function (locale, key, texts) {
@@ -744,7 +767,7 @@
         },
 
         getLocaleUserChoice: function (options) {
-            var result = 'en_US';
+            var result = 'en-US';
             options = options || {};
             var cookieName = options.cookieName || 'SITNA.language';
             var paramName = options.paramName || 'lang';
@@ -760,13 +783,13 @@
 
             switch (lang) {
                 case 'eu':
-                    result = 'eu_ES';
+                    result = 'eu-ES';
                     break;
                 case 'es':
-                    result = 'es_ES';
+                    result = 'es-ES';
                     break;
                 default:
-                    result = 'en_US';
+                    result = 'en-US';
                     break;
             }
             return result;
@@ -943,11 +966,16 @@
             img.onload = function () {
                 var canvas = createCanvas(img);
                 var dataURL;
-                dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
-                    type: outputFormat || 'image/jpeg',
-                    encoderOptions: 1.0
-                });
-                deferred.resolve(dataURL, canvas);
+
+                try {
+                    dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                        type: outputFormat || 'image/jpeg',
+                        encoderOptions: 1.0
+                    });
+                    deferred.resolve(dataURL, canvas);
+                } catch (error) {                    
+                    img.src = TC.proxify(src);
+                }
             };
 
             img.onerror = function (error) {
@@ -989,12 +1017,11 @@
 
                 xhr.send();
             };
-
-            var srcNoProtocol = src.replace(/^https?\:/i, "");
-            img.src = srcNoProtocol;
+            
+            img.src = src;
             if (img.complete || img.complete === undefined) {
                 img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-                img.src = srcNoProtocol;
+                img.src = src;
             }
 
             return deferred.promise();
@@ -1095,7 +1122,7 @@
                 $(".tc-ctl-download-form").remove();
             }, 1000);
         },
-        WFSQueryBuilder: function (layers, feature, capabilities, outputFormat, onlyHits) {
+        WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits) {
             if (!$.isArray(layers))
                 layers = [layers];
             var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
@@ -1119,7 +1146,7 @@
 
             var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}">{filter}</wfs:Query>';
             $.each(layers, function (index, value) {
-                queryBody += queryItem.format({ typeName: value, filter: TC.Util.WFSFilterBuilder(feature, capabilities.version) });
+                queryBody += queryItem.format({ typeName: value, filter: (filter ? filter.getText(capabilities.version) : "") });
             });
             query += queryBody + '</wfs:GetFeature>'
             return query;
@@ -1220,8 +1247,64 @@
                     }
                     break;
             }
-        }
+        },
 
+        isServiceWorker: function () {
+            if (navigator.serviceWorker) {
+                if (navigator.serviceWorker.controller && navigator.serviceWorker.controller.state === "activated") {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        },
+
+        isSameOriginByLocation: function (uri, location) {
+            var result = uri.indexOf("http") !== 0 && uri.indexOf("//") !== 0;
+            var urlParts = !result && uri.match(TC.Consts.url.SPLIT_REGEX);
+            if (urlParts) {
+                var uProtocol = urlParts[1];
+                result = (uProtocol == location.protocol || uProtocol == undefined) && urlParts[3] == location.hostname;
+                var uPort = urlParts[4], lPort = location.port;
+                if (uPort != 80 && uPort !== "" || lPort != "80" && lPort !== "") {
+                    result = result && uPort == lPort;
+                }
+            }
+            return result;
+        },
+
+        isSameProtocol: function (uri, location) {
+            var protocolRegex = /^(https?:\/\/)/i;
+            var uriProtocol = uri.match(protocolRegex);
+            if (uriProtocol && uriProtocol.length > 1) {
+                var locationProtocol = location.match(protocolRegex);
+                if (locationProtocol && locationProtocol.length > 1) {
+                    return uriProtocol[0].trim() === locationProtocol[0].trim();
+                }
+            }
+
+            return false;
+        },
+
+        consoleRegister: function (msg) {
+            if (TC.isDebug) {
+                console.log(msg);
+            }
+        },
+
+        getSorterByProperty: function (propName) {
+            return function (a, b) {
+                if (a[propName] > b[propName]) {
+                    return 1;
+                }
+                if (a[propName] < b[propName]) {
+                    return -1;
+                }
+                return 0;
+            };
+        },
     };
     String.prototype.format = function () {
         var str = this.toString();
