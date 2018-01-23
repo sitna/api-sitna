@@ -28,7 +28,7 @@
     for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
         window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
         window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame']
-                                   || window[vendors[x] + 'CancelRequestAnimationFrame'];
+            || window[vendors[x] + 'CancelRequestAnimationFrame'];
     }
 
     if (!window.requestAnimationFrame)
@@ -36,7 +36,7 @@
             var currTime = new Date().getTime();
             var timeToCall = Math.max(0, 16 - (currTime - lastTime));
             var id = window.setTimeout(function () { callback(currTime + timeToCall); },
-              timeToCall);
+                timeToCall);
             lastTime = currTime + timeToCall;
             return id;
         };
@@ -50,22 +50,25 @@
     var MOUSEMOVE = 'mousemove.tc';
     var MOUSEOUT = 'mouseout.tc';
     var MOUSEOVER = 'mouseover.tc';
+    var MOUSEENTER = 'mouseenter.tc';
 
     var cssUrl = TC.url.ol.substr(0, TC.url.ol.lastIndexOf('/'));
     cssUrl = cssUrl.substr(0, cssUrl.lastIndexOf('/') + 1) + 'css/ol.css';
     //TC.loadCSS(cssUrl);
 
+    // OpenLayers usa para las proyecciones geográficas un valor ol.proj.METERS_PER_UNIT[ol.proj.Units.DEGREES], calculado con una esfera, salvo
+    // EPSG:4326, en la que usa ol.proj.EPSG4326.METERS_PER_UNIT, calculado con el geoide. Esto hace que las proyecciones en EPSG:4258 salgan desplazadas,
+    // pese a que para todos los efectos son iguales a las EPSG:4326. Para evitar eso, introducimos en las 4258 el valor ol.proj.EPSG4326.METERS_PER_UNIT.
+    ol.proj.get('EPSG:4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
+    ol.proj.get('urn:ogc:def:crs:EPSG::4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
+    ol.proj.get('http://www.opengis.net/gml/srs/epsg.xml#4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
+
     // Reescribimos la obtención de proyección para que soporte códigos tipo EPSG:X, urn:ogc:def:crs:EPSG::X y http://www.opengis.net/gml/srs/epsg.xml#X
     ol.proj.oldGet = ol.proj.get;
     ol.proj.get = function (projectionLike) {
         if (typeof projectionLike === 'string') {
-            for (var i = 0, len = ol.proj.EPSG4326.PROJECTIONS.length; i < len; i++) {
-                var proj = ol.proj.EPSG4326.PROJECTIONS[i];
-                if (proj.getCode() === projectionLike) {
-                    return proj;
-                }
-            }
-            TC.loadProjDef(projectionLike, true);
+            projectionLike = projectionLike.trim();
+            TC.loadProjDef({ crs: projectionLike, sync: true });
         }
         return ol.proj.oldGet.call(this, projectionLike);
     };
@@ -73,19 +76,19 @@
     // Reescritura de código para transformar las geometrías de getFeatureInfo que están en un CRS distinto
     ol.format.GMLBase.prototype.readGeometryElement = function (node, objectStack) {
         var context = /** @type {Object} */ (objectStack[0]);
-        var srsName = context['srsName'] = node.firstElementChild.getAttribute('srsName');
+        context['srsName'] = node.firstElementChild.getAttribute('srsName');
         /** @type {ol.geom.Geometry} */
 
         // Parche para poder leer coordenadas en EPSG:4326 con orden incorrecto (las crea QGIS, por ejemplo)
         if (this instanceof ol.format.GML2CRS84 || this instanceof ol.format.GML3CRS84) {
-            if (srsName !== 'EPSG:4326' || !srsName) {
+            if (context.srsName !== 'EPSG:4326' || !context.srsName) {
                 throw new Error("Conflicto de CRS");
             }
         }
-        if (srsName) {
-            context.srsName = this.srsName || srsName;
-            context.dataProjection = ol.proj.get(context.srsName);
+        if (!context.srsName) {
+            context.srsName = this.srsName;
         }
+        context.dataProjection = ol.proj.get(context.srsName);
         var geometry = ol.xml.pushParseAndPop(null,
             this.GEOMETRY_PARSERS_, node, objectStack, this);
         if (geometry) {
@@ -110,7 +113,7 @@
             // Otherwise assume it is a geometry node.
             if (n.childNodes.length === 0 ||
                 (n.childNodes.length === 1 &&
-                (n.firstChild.nodeType === 3 || n.firstChild.nodeType === 4))) {
+                    (n.firstChild.nodeType === 3 || n.firstChild.nodeType === 4))) {
                 var value = ol.xml.getAllTextContent(n, false);
                 if (ol.format.GMLBase.ONLY_WHITESPACE_RE_.test(value)) {
                     value = undefined;
@@ -298,19 +301,19 @@
         var c = b[b.length - 1];
         ol.asserts.assert(goog.isObject(c), "gxTrackObject should be an Object");
         var c = c.whens
-          , d = ol.xml.getAllTextContent(a, !1);
+            , d = ol.xml.getAllTextContent(a, !1);
         if (d = /^\s*(\d{4})($|-(\d{2})($|-(\d{2})($|T(\d{2}):(\d{2}):(\d{2})(?:.?\d{3})?(Z|(?:([+\-])(\d{2})(?::(\d{2}))?)))))\s*$/.exec(d)) {
             var e = parseInt(d[1], 10)
-              , f = d[3] ? parseInt(d[3],
-            10) - 1 : 0
-              , g = d[5] ? parseInt(d[5], 10) : 1
-              , h = d[7] ? parseInt(d[7], 10) : 0
-              , k = d[8] ? parseInt(d[8], 10) : 0
-              , l = d[9] ? parseInt(d[9], 10) : 0
-              , e = Date.UTC(e, f, g, h, k, l);
+                , f = d[3] ? parseInt(d[3],
+                    10) - 1 : 0
+                , g = d[5] ? parseInt(d[5], 10) : 1
+                , h = d[7] ? parseInt(d[7], 10) : 0
+                , k = d[8] ? parseInt(d[8], 10) : 0
+                , l = d[9] ? parseInt(d[9], 10) : 0
+                , e = Date.UTC(e, f, g, h, k, l);
             d[10] && "Z" != d[10] && (f = "-" == d[11] ? -1 : 1,
-            e += 60 * f * parseInt(d[12], 10),
-            d[13] && (e += 3600 * f * parseInt(d[13], 10)));
+                e += 60 * f * parseInt(d[12], 10),
+                d[13] && (e += 3600 * f * parseInt(d[13], 10)));
             c.push(e)
         } else
             c.push(0)
@@ -363,15 +366,15 @@
         a = ol.xml.getAllTextContent(a, !1);
         if (a = /^\s*(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(Z|(?:([+\-])(\d{2})(?::(\d{2}))?))\s*$/.exec(a)) {
             var b = parseInt(a[1], 10)
-              , c = parseInt(a[2], 10) - 1
-              , d = parseInt(a[3], 10)
-              , e = parseInt(a[4], 10)
-              , f = parseInt(a[5], 10)
-              , g = parseInt(a[6], 10)
-              , b = Date.UTC(b, c, d, e, f, g); // GLS quito el paso a segundos / 1E3
+                , c = parseInt(a[2], 10) - 1
+                , d = parseInt(a[3], 10)
+                , e = parseInt(a[4], 10)
+                , f = parseInt(a[5], 10)
+                , g = parseInt(a[6], 10)
+                , b = Date.UTC(b, c, d, e, f, g); // GLS quito el paso a segundos / 1E3
             "Z" != a[7] && (c = "-" == a[8] ? -1 : 1,
-            b += 60 * c * parseInt(a[9], 10),
-            void 0 !== a[10] && (b += 3600 * c * parseInt(a[10], 10)));
+                b += 60 * c * parseInt(a[9], 10),
+                void 0 !== a[10] && (b += 3600 * c * parseInt(a[10], 10)));
             return b
         };
     };
@@ -418,30 +421,30 @@
     };
 
     ol.format.GPX.WPT_TYPE_SERIALIZERS_ = ol.xml.makeStructureNS(
-    ol.format.GPX.NAMESPACE_URIS_, {
-        'ele': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
-        'time': ol.xml.makeChildAppender(ol.format.XSD.writeDateTimeTextNode),
-        'magvar': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
-        'geoidheight': ol.xml.makeChildAppender(
-            ol.format.XSD.writeDecimalTextNode),
-        'name': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
-        'cmt': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
-        'desc': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
-        'src': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
-        'link': ol.xml.makeChildAppender(ol.format.GPX.writeLink_),
-        'sym': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
-        'type': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
-        'fix': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
-        'sat': ol.xml.makeChildAppender(
-            ol.format.XSD.writeNonNegativeIntegerTextNode),
-        'hdop': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
-        'vdop': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
-        'pdop': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
-        'ageofdgpsdata': ol.xml.makeChildAppender(
-            ol.format.XSD.writeDecimalTextNode),
-        'dgpsid': ol.xml.makeChildAppender(
-            ol.format.XSD.writeNonNegativeIntegerTextNode)
-    });
+        ol.format.GPX.NAMESPACE_URIS_, {
+            'ele': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
+            'time': ol.xml.makeChildAppender(ol.format.XSD.writeDateTimeTextNode),
+            'magvar': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
+            'geoidheight': ol.xml.makeChildAppender(
+                ol.format.XSD.writeDecimalTextNode),
+            'name': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
+            'cmt': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
+            'desc': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
+            'src': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
+            'link': ol.xml.makeChildAppender(ol.format.GPX.writeLink_),
+            'sym': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
+            'type': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
+            'fix': ol.xml.makeChildAppender(ol.format.XSD.writeStringTextNode),
+            'sat': ol.xml.makeChildAppender(
+                ol.format.XSD.writeNonNegativeIntegerTextNode),
+            'hdop': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
+            'vdop': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
+            'pdop': ol.xml.makeChildAppender(ol.format.XSD.writeDecimalTextNode),
+            'ageofdgpsdata': ol.xml.makeChildAppender(
+                ol.format.XSD.writeDecimalTextNode),
+            'dgpsid': ol.xml.makeChildAppender(
+                ol.format.XSD.writeNonNegativeIntegerTextNode)
+        });
 
     // GLS: Obtenemos las combinaciones posibles
     var getAllCombinations = function (array) {
@@ -450,7 +453,7 @@
 
         var len = Math.pow(2, array.length);
 
-        for (var i = 0; i < len ; i++) {
+        for (var i = 0; i < len; i++) {
             temp = [];
             for (var j = 0; j < array.length; j++) {
                 if ((i & Math.pow(2, j))) {
@@ -567,7 +570,7 @@
         var result = new ol.format.GML(options);
         result.FEATURE_COLLECTION_PARSERS[ol.format.GMLBase.GMLNS][
             'featureMember'] =
-                ol.xml.makeArrayPusher(ol.format.GMLBase.prototype.readFeaturesInternal);
+            ol.xml.makeArrayPusher(ol.format.GMLBase.prototype.readFeaturesInternal);
         return result;
     };
 
@@ -654,8 +657,8 @@
                     if (featurePrefix === p) {
                         parsers[featureTypes[i].split(':').pop()] =
                             (localName == 'featureMembers') ?
-                            ol.xml.makeArrayPusher(this.readFeatureElement, this) :
-                            ol.xml.makeReplacer(this.readFeatureElement, this);
+                                ol.xml.makeArrayPusher(this.readFeatureElement, this) :
+                                ol.xml.makeReplacer(this.readFeatureElement, this);
                     }
                 }
                 parsersNS[featureNS[p]] = parsers;
@@ -708,10 +711,10 @@
         var minResolution = this.minResolution_;
         var max = Math.log(maxResolution / minResolution) / Math.log(power);
         return (
-        /**
-             * @param {number} resolution Resolution.
-             * @return {number} Value.
-         */
+            /**
+                 * @param {number} resolution Resolution.
+                 * @return {number} Value.
+             */
             function (resolution) {
                 var value =
                     (Math.log(maxResolution / resolution) / Math.log(power)) / max;
@@ -756,7 +759,7 @@
                         extent[1] - coord2[1],
                         coord2[0] - extent[2],
                         coord2[1] - extent[3]
-                        );
+                    );
                     ovview.fit(ol.extent.buffer(extent, buffer));
                 }
             }
@@ -793,8 +796,8 @@
             enableRotation: false
         };
 
-        if (mapWrap.parent.options.maxExtent) {
-            pms.extent = mapWrap.parent.options.initialExtent;
+        if (mapWrap.parent.maxExtent) {
+            pms.extent = mapWrap.parent.initialExtent;
         }
 
         if (layer instanceof TC.layer.Raster) {
@@ -831,11 +834,12 @@
         return pms;
     };
 
+
     TC.wrap.Map.prototype.setMap = function () {
         var self = this;
         var center = [
-            (self.parent.options.initialExtent[0] + self.parent.options.initialExtent[2]) / 2,
-            (self.parent.options.initialExtent[1] + self.parent.options.initialExtent[3]) / 2
+            (self.parent.initialExtent[0] + self.parent.initialExtent[2]) / 2,
+            (self.parent.initialExtent[1] + self.parent.initialExtent[3]) / 2
         ];
 
         var proj4Obj = proj4(self.parent.crs);
@@ -862,7 +866,12 @@
                 var result = [];
                 var dimension = opt_dimension || 2;
                 for (var i = 0; i < input.length; i += dimension) {
-                    result = result.concat(fn(input.slice(i, i + dimension)));
+                    var transformed = Array.prototype.slice.call(fn(input.slice(i, i + dimension)));
+                    if (dimension === 3 || dimension === 4) {
+                        transformed = transformed.slice(0, 2).concat(input.slice(i + 2, (i + 2) + (dimension - 2)));
+                    }
+
+                    result = result.concat(transformed);
                 }
                 if ($.isArray(opt_output)) {
                     opt_output.length = 0;
@@ -881,10 +890,10 @@
             };
 
             ol.proj.addEquivalentTransforms(
-              ol.proj.EPSG4326.PROJECTIONS,
-              equivalentProjections,
-              fromEPSG4326,
-              toEPSG4326);
+                ol.proj.EPSG4326.PROJECTIONS,
+                equivalentProjections,
+                fromEPSG4326,
+                toEPSG4326);
         };
 
         addEquivalentProjections();
@@ -906,8 +915,8 @@
             center: center,
             enableRotation: false
         };
-        if (self.parent.options.maxExtent) {
-            var maxExtent = self.parent.options.maxExtent;
+        if (self.parent.maxExtent) {
+            var maxExtent = self.parent.maxExtent;
             viewOptions.extent = maxExtent;
             var rect = self.parent.div.getBoundingClientRect();
             var ratio = rect.width / rect.height;
@@ -930,7 +939,6 @@
             controls: [],
             interactions: interactions
         });
-        self.map.getView().fit(self.parent.options.initialExtent);
         self.map._wrap = self;
 
         // Para evitar estiramientos en canvas
@@ -980,11 +988,11 @@
          * Restringe los niveles de zoom activos sobre el mapa dependiendo de las opciones definidas sobre
          * el mapa base activo.
          */
-        var limitZoomLevels = function (layer, viewOptions) {
+        var limitZoomLevels = function (layer) {
             var prevRes = self.map.getView().getResolution();
             var prevZoom = self.map.getView().getZoom();
 
-            var pms = viewOptions || getResolutionOptions(self, layer);
+            var pms = getResolutionOptions(self, layer);
 
             var view = new ol.View(pms);
             self.map.setView(view);
@@ -992,13 +1000,109 @@
         };
 
         self.parent.$events.on(TC.Consts.event.BASELAYERCHANGE, function (e) {
-            limitZoomLevels(e.layer);
+            // Solo se limitan las resoluciones cuando estamos en un CRS por defecto, donde no se repixelan teselas
+            if (self.parent.crs === self.parent.options.crs) {
+                limitZoomLevels(e.layer);
+            }
         });
         self.parent.$events.on(TC.Consts.event.MAPLOAD, function (e) {
             limitZoomLevels(self.parent.getBaseLayer());
+
+            /* GLS: 
+                Era OL quien iba por distinto camino al establecer el extent inicial y desde la casita. 
+                Al instanciar el mapa no tenemos mapa de fondo y tampoco resoluciones, en ese caso OL asigna una función de cálculo de resolución. 
+                Al hacer click en la casita, ya tenemos mapa de fondo y también array de resoluciones, en ese caso OL asigna otra función diferente de cálculo de resoluciones. 
+                Por eso daba distinto resultado, porque llama a distintas funciones. 
+                La solución: cambiar el orden de la llamada a fitToExtent, aquí, al evento MapLoad, donde ya tenemos mapa de fondo con sus resoluciones, así, van por la misma función de cálculo. */
+			self.map.getView().fit(self.parent.initialExtent);
         });
     };
 
+    var getMetersPerUnit = function (proj, extentInDegrees) {
+        var units = proj.getUnits();
+        if (!units || units === ol.proj.Units.DEGREES) {
+            return TC.Util.getMetersPerDegree(extentInDegrees);
+        }
+        return ol.proj.METERS_PER_UNIT[units];
+    };
+
+    TC.wrap.Map.prototype.getMetersPerUnit = function () {
+        var self = this;
+        return getMetersPerUnit(ol.proj.get(self.parent.crs), self.getExtent());
+    };
+
+    var getUnitRatio = function (options) {
+        var self = this;
+        options = options || {};
+        var defaultCrs = self.parent.options.crs || TC.Cfg.crs;
+        var defaultProj = ol.proj.get(defaultCrs);
+        var newProj = ol.proj.get(options.crs);
+        return getMetersPerUnit(newProj, options.extentInDegrees) / getMetersPerUnit(defaultProj, options.extentInDegrees);
+    };
+
+    var normalizeProjection = function (options) {
+        var result;
+        if (options.axisOrientation) {
+            result = new ol.proj.Projection({
+                code: options.crs,
+                axisOrientation: options.axisOrientation
+            });
+        }
+        else {
+            result = ol.proj.get(options.crs);
+        }
+        if (!result.getUnits()) {
+            result.units_ = ol.proj.Units.DEGREES;
+        }
+        return result;
+    };
+
+    TC.wrap.Map.prototype.setProjection = function (options) {
+        var self = this;
+        options = options || {};
+        var baseLayer = options.baseLayer || self.parent.baseLayer;
+        var extent;
+        if (options.extent) {
+            extent = options.extent;
+        }
+        else {
+            extent = ol.proj.transformExtent(self.getExtent(), self.parent.crs, options.crs);
+        }
+        var unitRatio = getUnitRatio.call(self, {
+            crs: options.crs,
+            extent: extent
+        });
+        var projection = normalizeProjection(options);
+        var oldView = self.map.getView();
+        var viewOptions = {
+            projection: projection,
+            enableRotation: false
+        };
+        var resolutions = baseLayer.getResolutions();
+        
+        if (resolutions && resolutions.length) {
+            viewOptions.resolutions = resolutions;
+        }
+        else {
+            viewOptions.minZoom = oldView.getMinZoom();
+            viewOptions.maxZoom = oldView.getMaxZoom();
+            var minResolution = baseLayer.wrap.layer.getMinResolution();
+            if (minResolution !== 0) {
+                viewOptions.minResolution = minResolution;
+            }
+            var maxResolution = baseLayer.wrap.layer.getMaxResolution();
+            if (maxResolution !== Number.POSITIVE_INFINITY) {
+                viewOptions.maxResolution = maxResolution;
+            }
+        }
+        var newView = new ol.View(viewOptions);
+        self.map.setView(newView);
+        self.parent.initialExtent = unitRatio !== 1 ? ol.proj.transformExtent(self.parent.initialExtent, self.parent.crs, options.crs) : self.parent.options.initialExtent;
+        if (self.parent.options.maxExtent) {
+            self.parent.maxExtent = unitRatio !== 1 ? ol.proj.transformExtent(self.parent.maxExtent, self.parent.crs, options.crs) : self.parent.options.maxExtent;
+        }
+        newView.fit(extent, { nearest: true });
+    };
 
     /*
      *  insertLayer: inserts OpenLayers layer at index
@@ -1008,7 +1112,7 @@
         var self = this;
         var layers = self.map.getLayers();
         var alreadyExists = false;
-        for (var i = 0; i < layers.getLength() ; i++) {
+        for (var i = 0; i < layers.getLength(); i++) {
             if (layers.item(i) === olLayer) {
                 alreadyExists = true;
                 break;
@@ -1019,12 +1123,27 @@
             layers.insertAt(idx, olLayer);
         }
         else {
-            layers.insertAt(idx, olLayer);
-            if (olLayer instanceof ol.layer.Tile) {
-                var resolutions = olLayer.getSource().getResolutions();
-                var view = self.map.getView();
-                view.maxResolution_ = resolutions[0];
-                view.minResolution_ = resolutions[resolutions.length - 1];
+            if (idx < 0) {
+                layers.push(olLayer);
+            }
+            else {
+                layers.insertAt(idx, olLayer);
+            }
+            // Solo se limitan las resoluciones cuando estamos en un CRS por defecto, donde no se repixelan teselas
+            var view = self.map.getView();
+            if (self.parent.crs === self.parent.options.crs) {
+                if (olLayer instanceof ol.layer.Tile) {
+                    var resolutions = olLayer.getSource().getResolutions();
+                    view.maxResolution_ = resolutions[0];
+                    view.minResolution_ = resolutions[resolutions.length - 1];
+                }
+            }
+            else {
+                // Cambiamos los límites de resolución de la capa a los de la vista. Esto lo hacemos porque su resolución está en otro CRS.
+                if (olLayer instanceof ol.layer.Tile) {
+                    olLayer.setMaxResolution(view.getMaxResolution());
+                    olLayer.setMinResolution(view.getMinResolution());
+                }
             }
 
             var wrap = olLayer._wrap;
@@ -1102,27 +1221,53 @@
         var self = this;
         var deferred = new $.Deferred();
 
-        // Toda esta lógica antes de llamar a setLayer() es para hacer un zoom a la nueva resolución
-        // cuando la nueva capa no llega a la resolución actual
-        var viewOptions = getResolutionOptions(self, olLayer._wrap.parent);
-        var view = self.map.getView();
-
         var setLayer = function () {
             var curBl = self.parent.getBaseLayer();
             if (curBl) {
                 self.map.removeLayer(curBl.wrap.getLayer());
+                if (olLayer instanceof ol.layer.Image) { // Si es imagen no teselada
+                    var unitRatio = getUnitRatio.call(self, {
+                        crs: self.parent.crs,
+                        extent: self.parent.getExtent()
+                    });
+                    olLayer._wrap.setProjection({
+                        crs: self.parent.crs
+                    });
+                }
             }
             self.insertLayer(olLayer, 0);
             deferred.resolve();
         };
-        var currentResolution = view.getResolution();
-        if (viewOptions.resolutions && viewOptions.resolutions.indexOf(currentResolution) < 0) {
-            //buscamos la resolución inmediata superior
-            viewOptions.resolution = $.grep(viewOptions.resolutions.sort(function (a, b) { return a - b }), function (item) { return item > viewOptions.resolution })[0];
-            view.animate({ resolution: viewOptions.resolution, duration: TC.Consts.ZOOM_ANIMATION_DURATION }, function () {
-                setLayer();
-            });
 
+        // Toda esta lógica antes de llamar a setLayer() es para hacer un zoom a la nueva resolución
+        // cuando la nueva capa no llega a la resolución actual
+        var viewOptions = getResolutionOptions(self, olLayer._wrap.parent);
+        var view = self.map.getView();
+        var currentResolution = view.getResolution();
+        // Solo se limitan las resoluciones cuando estamos en un CRS por defecto, donde no se repixelan teselas
+        if (self.parent.crs === self.parent.options.crs && viewOptions.resolutions) {
+            //buscamos la nueva resolución: o una que sea similar a la actual dentro de los márgenes admitidos, o la inmediata superior
+            var newRes = viewOptions.resolutions
+                .sort(function (a, b) { return a - b })
+                .reduce(function (prev, elm) {
+                    if (prev === 0 &&
+                        (elm > currentResolution || Math.abs(1 - (currentResolution / elm)) < self.parent.options.maxResolutionError)) {
+                        return elm;
+                    }
+                    return prev;
+                }, 0);
+            if (newRes !== currentResolution) {
+                if (self.parent.isLoaded) {
+                    view.animate({ resolution: newRes, duration: TC.Consts.ZOOM_ANIMATION_DURATION }, setLayer);
+                }
+                else { // Primera carga, no animamos
+                    view.setResolution(newRes);
+                setLayer();
+        }
+            }
+        else {
+            setLayer();
+        }
         }
         else {
             setLayer();
@@ -1181,7 +1326,7 @@
                     var olSource = olLayer.getSource();
                     if (olSource.getResolutions != goog.abstractMethod) {
                         var res = view.getResolutionForExtent(extent, mapSize);
-                        var resolutions = self.parent.baseLayer.getResolutions();
+                        var resolutions = self.map.getView().getResolutions();
 
                         if (resolutions && resolutions.length > 0) {
                             var minRes = Math.min.apply(self, resolutions);
@@ -1216,15 +1361,24 @@
 
     TC.wrap.Map.prototype.setCenter = function (coords, options) {
         var self = this;
+        var deferred = $.Deferred();
+
+        var callback = function () {
+            deferred.resolve();
+        };
+
         var opts = options || {};
         var view = self.map.getView();
 
         if (opts.animate) {
-            view.animate({ center: coords, duration: TC.Consts.ZOOM_ANIMATION_DURATION });
+            view.animate({ center: coords, duration: TC.Consts.ZOOM_ANIMATION_DURATION }, callback);
         }
         else {
             view.setCenter(coords);
+            deferred.resolve();
         }
+
+        return deferred.promise();
     };
 
     TC.wrap.Map.prototype.getCenter = function () {
@@ -1251,21 +1405,9 @@
         return this.map.getView().getRotation();
     };
 
-    /*    
     TC.wrap.Map.prototype.getResolutions = function () {
-        var result = [];
-        var self = this;
-
-        var ly = self.parent.getBaseLayer().wrap.layer;
-        if (ly.getSource)
-        {
-            var ts = ly.getSource();
-            if (ts.getResolutions && ts.getResolutions != goog.abstractMethod) result = ts.getResolutions();
-            }
-
-        return result;
+        return this.map.getView().getResolutions() || [];
     };
-    */
 
     TC.wrap.Map.prototype.getCoordinateFromPixel = function (xy) {
         return this.map.getCoordinateFromPixel(xy);
@@ -1295,7 +1437,8 @@
     };
 
     TC.wrap.Map.prototype.isGeo = function () {
-        return this.map.getView().getProjection().getUnits() === ol.proj.Units.DEGREES;
+        var units = this.map.getView().getProjection().getUnits();
+        return !units || units === ol.proj.Units.DEGREES;
     };
 
     TC.wrap.Map.prototype.addPopup = function (popupCtl) {
@@ -1371,7 +1514,7 @@
                                     }
                                     popup.setOffset([popupCtl._currentOffset[0] + dd.deltaX, popupCtl._currentOffset[1] + dd.deltaY]);
                                 }, {
-                                    not: 'th,td, td *,input,select'
+                                    not: 'th,td, td *,input,select,.tc-ctl-finfo-coords'
                                 })
                                 .on('mouseenter', function (e) {
                                     $olMapViewport.off(MOUSEMOVE + '.popup');
@@ -1391,7 +1534,7 @@
                                 hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
                                     var result = true;
                                     feature = feature;
-                                    if (feature._wrap && !feature._wrap.parent.showsPopup) {
+                                    if (feature._wrap && !feature._wrap.parent.showsPopup && !feature._wrap.parent.options.selectable) {
                                         result = false;
                                     }
 
@@ -1684,6 +1827,37 @@
         return layer instanceof ol.layer.Layer;
     };
 
+    TC.wrap.Layer.prototype.setProjection = function (options) {
+        const self = this;
+        options = options || {};
+        const layer = self.parent;
+        if (layer.map) {
+            const unitRatio = getUnitRatio.call(self, {
+                crs: options.crs,
+                extentInDegrees: ol.proj.transformExtent(layer.map.getExtent(), layer.map.crs, 'EPSG:4326')
+            });
+
+            var resolutions = layer.getResolutions();
+            if (resolutions && resolutions.length) {
+                resolutions = resolutions.map(function (r) {
+                    return r / unitRatio;
+                });
+                layer.wrap.layer.setMaxResolution(result[0]);
+                layer.wrap.layer.setMinResolution(result[result.length - 1]);
+            }
+            else {
+                if (layer.minResolution) {
+                    layer.minResolution = layer.minResolution / unitRatio;
+                    self.layer.setMinResolution(layer.minResolution);
+                }
+                if (layer.maxResolution) {
+                    layer.maxResolution = layer.maxResolution / unitRatio;
+                    self.layer.setMaxResolution(layer.maxResolution);
+                }
+            }
+        }
+    };
+
     TC.wrap.layer.Raster.prototype.WmsParser = ol.format.WMSCapabilities;
 
     TC.wrap.layer.Raster.prototype.WmtsParser = ol.format.WMTSCapabilities;
@@ -1805,13 +1979,20 @@
     };
 
     TC.wrap.layer.Raster.prototype.getAttribution = function (capabilities) {
-        var result = null;
+        const result = {};
         if (capabilities) {
-            if (capabilities.ServiceIdentification) {
-                result = capabilities.ServiceIdentification.Title;
+            if (capabilities.ServiceProvider) {
+                result.name = capabilities.ServiceProvider.ProviderName.trim();
+                result.site = capabilities.ServiceProvider.ProviderSite;
+                if (result.site.href) {
+                    result.site = result.site.href;
+                }
+            }
+            else if (capabilities.ServiceIdentification) {
+                result.name = capabilities.ServiceIdentification.Title.trim();
             }
             else {
-                result = capabilities.Service.Title;
+                result.name = capabilities.Service.Title.trim();
             }
         }
         return result;
@@ -1972,8 +2153,8 @@
         var styles = node.Style;
         if (styles && styles.length) {
             if (styles.length && styles[0].LegendURL && styles[0].LegendURL.length) {
-                var legend = styles[0].LegendURL[0];
-                result.src = $('<textarea />').html(legend.OnlineResource).text();
+                var legend = styles[0].LegendURL[0];                
+                result.src = this.parent.getLegendUrl($('<textarea />').html(legend.OnlineResource).text());
                 // Eliminado porque GeoServer miente con el tamaño de sus imágenes de la leyenda
                 //if (legend.size) {
                 //    result.width = legend.size[0];
@@ -2023,16 +2204,76 @@
                 }
                 break;
             case TC.Consts.layerType.WMTS:
-                var crsRegExp = new RegExp('^urn:ogc:def:crs:' + crs.replace(':', ':.*:') + '$|^' + crs + '$', 'g');
                 result = false;
                 if (layer.capabilities && layer.capabilities.Contents && layer.capabilities.Contents.TileMatrixSet) {
                     var tms = layer.capabilities.Contents.TileMatrixSet;
                     for (var i = 0; i < tms.length; i++) {
                         if (tms[i].Identifier === layer.options.matrixSet) {
-                            result = crsRegExp.test(tms[i].SupportedCRS);
+                            result = TC.Util.CRSCodesEqual(crs, tms[i].SupportedCRS);
                             break;
                         }
                     }
+                }
+                break;
+            default:
+                break;
+        }
+        return result;
+    };
+
+    TC.wrap.layer.Raster.prototype.getCompatibleCRS = function () {
+        var self = this;
+        var result = [];
+        var layer = self.parent;
+        switch (self.getServiceType()) {
+            case TC.Consts.layerType.WMS:
+                if (layer.capabilities && layer.capabilities.Capability && layer.capabilities.Capability.Layer) {
+                    if (layer.names.length > 0) {
+                        const crsLists = layer.names
+                            .map(function (name) {
+                                return layer
+                                    .getNodePath(name) // array de nodos
+                                    .map(function (node) {
+                                        return node.CRS || node.SRS || [];
+                                    }) // array de arrays de crs
+                                    .reduce(function (prev, cur) {
+                                        cur.forEach(function (elm) {
+                                            if (prev.indexOf(elm) < 0) {
+                                                prev[prev.length - 1] = elm;
+                                            }
+                                        });// array con todos los crs
+                                        return prev;
+                                    });
+                            });
+                                
+                        const otherCrsLists = crsLists.slice(1);
+                        result = crsLists[0].filter(function (elm) {
+                            return otherCrsLists.every(function (crsList) {
+                                return crsList.indexOf(elm) >= 0;
+                            });
+                        });
+                    }
+                }
+                break;
+            case TC.Consts.layerType.WMTS:
+                if (layer.capabilities && layer.capabilities.Contents) {
+                    layer.capabilities.Contents.Layer
+                        .filter(function (l) {
+                            return l.Identifier === layer.layerNames;
+                        })  // La capa de interés
+                        .forEach(function (l) {
+                            const tileMatrixSets = l.TileMatrixSetLink
+                                .map(function (tmsl) {
+                                    return tmsl.TileMatrixSet;
+                                });
+                            result = layer.capabilities.Contents.TileMatrixSet
+                                .filter(function (tms) {
+                                    return tileMatrixSets.indexOf(tms.Identifier) >= 0;
+                                }) // TileMatrixSets asociados a la capa de interés
+                                .map(function (tms) {
+                                    return tms.SupportedCRS;
+                                });
+                        });
                 }
                 break;
             default:
@@ -2061,18 +2302,57 @@
                 }
                 break;
             case TC.Consts.layerType.WMTS:
-                var crsRegExp = new RegExp('^urn:ogc:def:crs:' + crs.replace(':', ':.*:') + '$', 'g');
                 if (layer.capabilities && layer.capabilities.Contents && layer.capabilities.Contents.TileMatrixSet) {
-                    var tms = layer.capabilities.Contents.TileMatrixSet;
-                    for (var i = 0; i < tms.length; i++) {
-                        if (crsRegExp.test(tms[i].SupportedCRS)) {
-                            result[result.length] = tms[i].Identifier;
+                    var tmsList = layer.capabilities.Contents.TileMatrixSet;
+                    for (var i = 0, ii = tmsList.length; i < ii; i++) {
+                        var tms = tmsList[i];
+                        if (TC.Util.CRSCodesEqual(crs, tms.SupportedCRS)) {
+                            var tmsIdentifier = tms.Identifier;
+                            var layerList = layer.capabilities.Contents.Layer;
+                            for (var j = 0, jj = layerList.length; j < jj; j++) {
+                                var tmsLinkList = layerList[j].TileMatrixSetLink;
+                                for (var k = 0, kk = tmsLinkList.length; k < kk; k++) {
+                                    if (tmsLinkList[k].TileMatrixSet === tmsIdentifier) {
+                                        result[result.length] = layerList[j].Identifier;
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
                 break;
             default:
                 break;
+        }
+        return result;
+    };
+
+    TC.wrap.layer.Raster.prototype.getCompatibleMatrixSets = function (crs) {
+        var self = this;
+        var result = [];
+        normalizeProjection({ crs: crs });
+        var layer = self.parent;
+        if (self.getServiceType() === TC.Consts.layerType.WMTS) {
+            var layerList = layer.capabilities.Contents.Layer;
+            var tmsList = layer.capabilities.Contents.TileMatrixSet;
+            for (var i = 0, ii = layerList.length; i < ii; i++) {
+                if (layer.layerNames === layerList[i].Identifier) {
+                    var tmsLinkList = layerList[i].TileMatrixSetLink;
+                    for (var j = 0, jj = tmsLinkList.length; j < jj; j++) {
+                        var tmsLink = tmsLinkList[j];
+                        for (var k = 0, kk = tmsList.length; k < kk; k++) {
+                            var tms = tmsList[k];
+                            if (tms.Identifier === tmsLink.TileMatrixSet) {
+                                if (TC.Util.CRSCodesEqual(crs, tms.SupportedCRS)) {
+                                    result[result.length] = tms.Identifier;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
         return result;
     };
@@ -2087,123 +2367,11 @@
         });
     };
 
-    var imageLoadFunction = function (image, src) {
-        var self = this;
-        var img = image.getImage();
-
-        if (self.parent.usesSSL) {
-            src = src.replace(/^(f|ht)tp?:\/\//i, "https://");
-        } else if (self.parent.usesProxy && TC.Util.isSecureURL(document.location.href) && !TC.Util.isSecureURL(src)) {
-            src = TC.proxify(src);
-        }
-
-        // Si estamos en la impresión en IE, proxificamos las imágenes. En caso contrario se genera un "Security Error" al generar el PDF
-        if (self.parent.map && self.parent.map.options.crossOrigin && TC.Util.detectIE()) {
-            src = TC.proxify(src);
-        }
-
-        function okResponse(e) {
-            if (this.status === 200) {
-                var imageUrl = URL.createObjectURL(this.response);
-
-                var throwEvent = function (evt) {
-
-                    URL.revokeObjectURL(evt.target.src);
-
-                    self.$events.trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
-                };
-
-                img.addEventListener('load', throwEvent);
-                img.addEventListener('error', throwEvent);
-                img.src = imageUrl;
-
-            } else if (this.status >= 400 && this.status < 500) {
-                self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
-            }
-        };
-        function errorResponse(e) {
-            self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
-        };
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", src);                
-        xhr.responseType = "blob";
-
-        xhr.onload = okResponse;
-        xhr.onerror = errorResponse;
-
-        try {
-            xhr.send();
-        } catch (e) {
-            errorResponse.call(e);
-        }
-
-    };
-
-    /**
-     * Carga el tile de la capa por POST.
-     */
-    var imagePostFunction = function (image, src) {
-        var self = this;
-        self.$events.trigger($.Event(TC.Consts.event.BEFORETILELOAD, { tile: image }));
-        var img = image.getImage();
-
-        var xhr = new XMLHttpRequest();
-        var url = src.split('?');
-        var dataEntries = url[1].split("&");
-        var params = "";
-
-        for (var i = 0; i < dataEntries.length; i++) {
-            var chunks = dataEntries[i].split('=');
-
-            if (chunks && chunks.length > 1 && chunks[1] && chunks[0] !== "LAYERS") { //Quitamos el parámetro LAYERS de la petición
-                params += "&" + dataEntries[i];
-            }
-        }
-        xhr.open('POST', url[0], true);        
-
-        xhr.responseType = 'blob';
-        xhr.onload = function (e) {
-
-            if (this.status === 200) {
-                var imageUrl = URL.createObjectURL(this.response);
-
-                var throwEvent = function (evt) {
-                    URL.revokeObjectURL(evt.target.src);
-
-                    self.$events.trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
-                };
-
-                img.addEventListener('load', throwEvent);
-                img.addEventListener('error', throwEvent);
-                img.src = imageUrl;
-
-            } else if (this.status >= 400 && this.status < 500) {
-                self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
-            }
-        };
-        xhr.onerror = function () {
-            self.$events.trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
-        };
-        xhr.send(params);
-
-    };
-
-    TC.wrap.layer.Raster.prototype.createWmsLayer = function (url, params, options) {
+    TC.wrap.layer.Raster.prototype.createWMSLayer = function (url, params, options) {
         var self = this;
         var result = null;
-        var imageFunction = null;
-
-        //True si la capa va a ser cargada por POST
-        var imageLoadByPost = options && options.method && options.method === 'POST';
 
         self.$events = $(self);
-
-        if (imageLoadByPost) { //Si queremos cargar la capa por POST, sobreescribimos la función que pide la imagen
-            imageFunction = $.proxy(imagePostFunction, self);
-        } else {
-            imageFunction = $.proxy(imageLoadFunction, self);
-        }
 
         var source = new ol.source.ImageWMS({
             url: url,
@@ -2211,7 +2379,7 @@
             params: params,
             extent: TC.Cfg.initialExtent,
             ratio: TC.Cfg.imageRatio,
-            imageLoadFunction: imageFunction
+            imageLoadFunction: $.proxy(self.parent.getImageLoad, self.parent)
         });
 
         source.on(ol.source.Image.EventType_.IMAGELOADSTART, function (e) {
@@ -2226,7 +2394,7 @@
 
 
         var layerOptions = {
-            visible: !!params.LAYERS.length || imageLoadByPost, //Las capas de temáticos cargadas por POST no tienen el atributo LAYERS
+            visible: !!params.LAYERS.length || (options && options.method && options.method === 'POST'), //Las capas de temáticos cargadas por POST no tienen el atributo LAYERS
             source: source
         };
 
@@ -2245,13 +2413,11 @@
         return result;
     };
 
-    TC.wrap.layer.Raster.prototype.createWmtsLayer = function (matrixSet, layerName, options) {
+    var createWmtsSource = function (options) {
         var self = this;
         var result = null;
-
-        self.$events = $(self);
         var sourceOptions = ol.source.WMTS.optionsFromCapabilities(self.parent.capabilities, {
-            layer: layerName,
+            layer: options.layerNames,
             matrixSet: options.matrixSet,
             crossOrigin: options.map ? options.map.options.crossOrigin : undefined,
             requestEncoding: options.encoding,
@@ -2266,18 +2432,42 @@
 
         sourceOptions.crossOrigin = options.map ? options.map.options.crossOrigin : undefined;
 
-        var source = new ol.source.WMTS(sourceOptions);
-        source.setTileLoadFunction($.proxy(imageLoadFunction, self));
+        result = new ol.source.WMTS(sourceOptions);
+        result.setTileLoadFunction($.proxy(self.parent.getImageLoad, self.parent));
 
-        source.on(ol.source.TileEventType.TILELOADSTART, function (e) {
+        result.on(ol.source.TileEventType.TILELOADSTART, function (e) {
             self.$events.trigger($.Event(TC.Consts.event.BEFORETILELOAD, { tile: e.tile.getImage() }));
         });
-        source.on(ol.source.TileEventType.TILELOADEND, function (e) {
+        result.on(ol.source.TileEventType.TILELOADEND, function (e) {
             self.$events.trigger($.Event(TC.Consts.event.TILELOAD, { tile: e.tile.getImage() }));
         });
-        source.on(ol.source.TileEventType.TILELOADERROR, function (e) {
+        result.on(ol.source.TileEventType.TILELOADERROR, function (e) {
             self.$events.trigger($.Event(TC.Consts.event.TILELOAD, { tile: e.tile.getImage() }));
         });
+
+        var prevFn = $.proxy(result.getResolutions, result);
+        result.getResolutions = function () {
+            var resolutions = prevFn();
+            var matrix = self.parent.getLimitedMatrixSet();
+            //esto está mal, porque matrix podría empezar más abajo (tener recortado por ambos lados)
+            if (matrix && matrix.length) {
+                var ix = matrix[0].matrixIndex;
+                resolutions = resolutions.slice(ix, matrix.length + ix);
+            }
+
+            return resolutions;
+        };
+
+        return result;
+    };
+
+    TC.wrap.layer.Raster.prototype.createWMTSLayer = function (options) {
+        var self = this;
+        var result = null;
+
+        self.$events = $(self);
+
+        var source = createWmtsSource.call(self, options);
 
         var layerOptions = {
             source: source
@@ -2291,20 +2481,6 @@
         result = new ol.layer.Tile(layerOptions);
         result._wrap = self;
 
-        var prevFn = $.proxy(source.getResolutions, source);
-        source.getResolutions = function () {
-            var resolutions = prevFn();
-            var matrix = result._wrap.parent.getLimitedMatrixSet();
-            //esto está mal, porque matrix podría empezar más abajo (tener recortado por ambos lados)
-            if (matrix && matrix.length) {
-                var ix = matrix[0].matrixIndex;
-                resolutions = resolutions.slice(ix, matrix.length + ix);
-            }
-
-            return resolutions;
-        };
-
-
         self.addCommonEvents(result);
 
         var resolutions = source.getResolutions();
@@ -2314,6 +2490,7 @@
 
         return result;
     };
+
 
     /*
      *  getParams: Gets the WMS layer getmap parameters
@@ -2329,6 +2506,26 @@
      */
     TC.wrap.layer.Raster.prototype.setParams = function (params) {
         this.layer.getSource().updateParams(params);
+    };
+
+    TC.wrap.layer.Raster.prototype.setMatrixSet = function (matrixSet) {
+        const self = this;
+        const oldResolutions = self.layer.getSource().getResolutions();
+        if (self.parent.type === TC.Consts.layerType.WMTS) {
+            const newSource = createWmtsSource.call(self, $.extend({}, self.parent.options, { matrixSet: matrixSet }));
+            const newResolutions = newSource.getResolutions();
+            const newMaxResolution = newResolutions[0]
+            const newMinResolution = newResolutions[newResolutions.length - 1];
+            self.layer.setMaxResolution(newMaxResolution);
+            self.layer.setMinResolution(newMinResolution);
+            if (self.parent.minResolution) {
+                self.parent.minResolution = newMinResolution;
+            }
+            if (self.parent.maxResolution) {
+                self.parent.maxResolution = newMaxResolution;
+            }
+            self.layer.setSource(newSource);
+        }
     };
 
     TC.wrap.layer.Raster.prototype.getResolutions = function () {
@@ -2443,7 +2640,7 @@
         var isCluster = feature && $.isArray(feature.features) && feature.features.length > 1 && options.cluster;
         var styles;
         if (isCluster) {
-            styles = options.cluster.styles || TC.Cfg.styles.cluster;
+            styles = $.extend(true, {}, TC.Cfg.styles.cluster, options.cluster.styles);
         }
         else {
             styles = options.styles || TC.Cfg.styles;
@@ -2500,7 +2697,7 @@
             var pointOptions = styles.point;
             var circleOptions = {
                 radius: getStyleValue(pointOptions.radius, feature) ||
-                    (getStyleValue(pointOptions.height, feature) + getStyleValue(pointOptions.width, feature)) / 4
+                (getStyleValue(pointOptions.height, feature) + getStyleValue(pointOptions.width, feature)) / 4
             };
             if (pointOptions.fillColor) {
                 circleOptions.fill = new ol.style.Fill({
@@ -2620,8 +2817,21 @@
     TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeStyle) {
         var self = this;
 
+        var createGenericLoader = function (url, format) {
+            var internalLoader = ol.featureloader.xhr(url, format);
+            return function (extent, resolution, projection) {
+                self.parent.state = TC.Layer.state.LOADING;
+                if (self.parent.map) {
+                    self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self.parent }));
+                }
+                internalLoader.call(this, extent, resolution, projection);
+            };
+        };
+        var usesGenericLoader = false;
+
         var source;
         var vectorOptions;
+
         var getTypeFromUrl = function (url) {
             var idx = url.indexOf('?');
             if (idx >= 0) {
@@ -2645,7 +2855,7 @@
                     return TC.Consts.layerType.VECTOR;
             }
         };
-       
+
         if ($.isArray(options.url) || options.urls) {
             var urls = options.urls || options.url;
             urls = $.map(urls, function (elm, idx) {
@@ -2665,17 +2875,28 @@
                 projection: options.crs
             };
             vectorOptions.format = getFormatFromName(getTypeFromUrl(options.url)) || getFormatFromName(options.type);
+            vectorOptions.loader = createGenericLoader(vectorOptions.url, vectorOptions.format);
+            usesGenericLoader = true;
         }
         else if (options.data) {
             vectorOptions = {
                 projection: options.crs,
                 loader: function (extent, resolution, projection) {
+                    self.parent.state = TC.Layer.state.LOADING;
+                    if (self.parent.map) {
+                        self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self.parent }));
+                    }
                     var format = this.getFormat();
                     try {
                         var fs = format.readFeatures(options.data, { featureProjection: projection });
                         this.addFeatures(fs);
+                        self.parent.state = TC.Layer.state.IDLE;
+                        if (self.parent.map) {
+                            self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self.parent, newData: data }));
+                        }
                     }
                     catch (e) {
+                        self.parent.state = TC.Layer.state.IDLE;
                         if (self.parent.map) {
                             self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: self.parent, reason: e.message }));
                         }
@@ -2718,8 +2939,8 @@
                         var featureType = $.isArray(options.featureType) ? options.featureType : [options.featureType];
                         if (!options.properties || (options.properties instanceof Array && !options.properties.length) || !(Object.keys(options.properties).length)) {
                             url = url + '?service=WFS&' +
-                            'version=' + version + '&request=GetFeature&typename=' + featureType.join(',') + '&' +
-                            'outputFormat=' + mimeType + '&srsname=' + crs;
+                                'version=' + version + '&request=GetFeature&typename=' + featureType.join(',') + '&' +
+                                'outputFormat=' + mimeType + '&srsname=' + crs;
                             if (extent[0] !== -Infinity && extent[1] !== -Infinity && extent[2] !== Infinity && extent[3] !== Infinity) {
                                 url = url + '&bbox=' + extent.join(',') + ',' + crs;
                             }
@@ -2802,6 +3023,14 @@
 
         source = new ol.source.Vector(vectorOptions);
 
+        if (usesGenericLoader) {
+            source.on(ol.events.EventType.CHANGE, function (e) {
+                if (self.parent.map) {
+                    self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self.parent }));
+                }
+            });
+        }
+
         source._tcLayer = self.parent;
 
         var markerStyle = options.style && options.style.marker ? options.style.marker : TC.Cfg.styles.marker;
@@ -2818,7 +3047,7 @@
             });
 
             // Animación
-            if (options.cluster.animation) {
+            if (options.cluster.animate) {
                 var getCurrentCoordinates = function (fromCoords, toCoords, duration, start) {
                     var fraction = Math.min((Date.now() - start) / duration, 1);
                     var dx = (toCoords[0] - fromCoords[0]) * fraction;
@@ -2985,7 +3214,16 @@
             source: source
         };
 
-        if (!(vectorOptions && vectorOptions.format instanceof ol.format.KML)) {
+        if (options.minResolution) {
+            layerOptions.minResolution = options.minResolution;
+        }
+        if (options.maxResolution) {
+            layerOptions.maxResolution = options.maxResolution;
+        }
+
+        // En KML conservamos el estilo que viene con el archivo, así que no entramos aquí.
+        // A no ser que tenga clusters, porque OL no soporta por defecto la combinación de estilo KML con clusters.
+        if (!(vectorOptions && vectorOptions.format instanceof ol.format.KML) || options.cluster) {
             layerOptions.style = nativeStyle || options.styles;
         }
 
@@ -3247,11 +3485,70 @@
                     });
                 }
                 olMap.addInteraction(self.interaction);
+
+                // GLS: En IE no muestra la manita en el over sobre marcadores trasladables.
+                if (TC.Util.detectIE()) {
+                    self._handlerDraggablePointerMove = function (e) {
+                        if (e.dragging) {
+                            return;
+                        }
+
+                        var pixel = olMap.getEventPixel(e.originalEvent);
+                        var hit = olMap.hasFeatureAtPixel(pixel);
+                        if (hit) {
+                            olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
+                                if (layer._wrap && layer._wrap.parent && layer._wrap.parent.id === self.parent.id && feature) {
+                                    olMap.getTarget().style.cursor = 'move';
+                                } else {
+                                    olMap.getTarget().style.cursor = '';
+                                }
+                            });
+                        } else {
+                            olMap.getTarget().style.cursor = '';
+                        }
+                    };
+
+                    olMap.on('pointermove', self._handlerDraggablePointerMove);
+                }
             }
             else if (self.interaction) {
                 olMap.removeInteraction(self.interaction);
+
+                // GLS: En IE no muestra la manita en el over sobre marcadores trasladables.
+                if (TC.Util.detectIE() && self._handlerDraggablePointerMove && $.isFunction(self._handlerDraggablePointerMove)) {
+                    olMap.un('pointermove', self._handlerDraggablePointerMove);
+                    delete self._handlerDraggablePointerMove;
+                }
             }
         });
+    };
+
+    TC.wrap.layer.Vector.prototype.getFeaturesInExtent = function (extent, tolerance) {
+        var self = this;
+        var features = this.getLayer().getSource().getFeatures();
+        var featuresInExtent = [];
+
+        if (tolerance) {
+            var leftCorner = self.parent.map.getPixelFromCoordinate([extent[0], extent[1]]);
+            var rightCorner = self.parent.map.getPixelFromCoordinate([extent[2], extent[3]]);
+            leftCorner[0] -= tolerance[0] / 2;
+            leftCorner[1] += tolerance[1];
+            rightCorner[0] += tolerance[0] / 2;
+            extent = self.parent.map.getCoordinateFromPixel(leftCorner).concat(self.parent.map.getCoordinateFromPixel(rightCorner));
+        }
+
+        for (var i = 0; i < features.length; i++) {
+            var feat = features[i];
+
+            var geometry = feat.getGeometry();
+            var coordinate = geometry.getCoordinates();
+
+            if (ol.extent.containsCoordinate(extent, coordinate)) {
+                featuresInExtent.push(feat._wrap.parent);
+            }
+        }
+
+        return featuresInExtent;
     };
 
     TC.wrap.control.Click.prototype.register = function (map) {
@@ -3339,7 +3636,7 @@
                     }
                 }
             });
-            self.z2eCtl = new ol.control.ZoomToExtent({ target: div, extent: map.options.initialExtent, tipLabel: '' });
+            self.z2eCtl = new ol.control.ZoomToExtent({ target: div, extent: map.initialExtent, tipLabel: '' });
 
             olMap.addControl(self.zCtl);
             olMap.addControl(self.zsCtl);
@@ -3390,19 +3687,14 @@
         }
     };
 
+    TC.wrap.control.NavBar.prototype.setInitialExtent = function (extent) {
+        this.z2eCtl.extent_ = extent;
+    };
 
     TC.wrap.control.Coordinates.prototype.register = function (map) {
         var self = this;
         var result = new $.Deferred();
         self.map = map;
-
-        self._cleanCoordsTrigger = function (e) {
-            var popup = self.map.getControlsByClass(TC.control.Popup)[0];
-            if (e.toElement && $(e.toElement).attr('class') && popup && $(e.toElement).attr('class').indexOf(popup.CLASS) > -1)
-                self.parent.coordsToClick({ coordinate: [(self.map.getExtent()[0] + self.map.getExtent()[2]) / 2, (self.map.getExtent()[1] + self.map.getExtent()[3]) / 2] });
-            else
-                self.parent.cleanCoordsPointer(e);
-        };
 
         self._coordsTrigger = function (e) {
             self.parent.coordsToClick(e);
@@ -3415,38 +3707,27 @@
             self.parent.units = projection.getUnits();
             self.parent.isGeo = self.parent.units === ol.proj.Units.DEGREES;
 
-            var viewport = olMap.getViewport();
-            $(viewport).add(self.parent.div)
-                .on(MOUSEMOVE + '.coords', function (e) {
-
-                    //// si el movimiento se produce dentro del div del control de coordenadas no hacemos nada.
-                    //if (e.currentTarget == self.parent.div)
-                    //    return;
-
-                    var coords = olMap.getEventCoordinate(e);
-                    if (coords) {
-                        if (self.parent.isGeo) {
-                            self.parent.latLon = coords.reverse();
-                        } else {
-                            self.parent.xy = coords;
-                        }
-                        self.parent.update.apply(self.parent, arguments);
-                    }
-
-                })
-                .on(MOUSEOUT, function (e) {
-                    //if (e.currentTarget == self.parent.div && e.toElement == self.parent.div && $(e.toElement).parent() == self.parent.div)
-                    //    return;
-
-                    self.parent.clear.apply(self.parent, arguments);
-                });
-
+            $(olMap.getViewport()).add(self.parent.div);
             result.resolve();
         });
+
         return result;
+    };
 
+    TC.wrap.control.Coordinates.prototype.onMouseMove = function (e) {
+        var self = this;
+        $.when(self.map.wrap.getMap()).then(function (olMap) {
+            var coords = olMap.getEventCoordinate(e);
+            if (coords) {
+                if (self.parent.isGeo) {
+                    self.parent.latLon = coords.reverse();
+                } else {
+                    self.parent.xy = coords;
+                }
 
-
+                self.parent.update.apply(self.parent, arguments);
+            }
+        });
     };
 
     TC.wrap.control.Geolocation.prototype.register = function (map) {
@@ -3472,7 +3753,7 @@
     TC.wrap.control.Geolocation.prototype.hasCoordinates = function () {
         var self = this;
 
-        return self.trackData && self.trackData.trackFeature && self.trackData.trackFeature.getGeometry().getCoordinates().length >= 1;
+        return self.trackData && self.trackData.trackFeature && self.trackData.trackFeature.wrap.feature.getGeometry().getCoordinates().length >= 1;
     };
 
     var getTime = function (timeFrom, timeTo) {
@@ -3602,15 +3883,15 @@
         var y = Math.round(position[1]);
 
         if (self.trackData && self.trackData.trackFeature) {
-            var last = self.trackData.trackFeature.getGeometry().getLastCoordinate();
+            var last = self.trackData.trackFeature.wrap.feature.getGeometry().getLastCoordinate();
             if (last && last.length == 0)
-                self.trackData.trackFeature.getGeometry().appendCoordinate([x, y, heading, m]);
+                self.trackData.trackFeature.wrap.feature.getGeometry().appendCoordinate([x, y, heading, m]);
             else {
                 var lx = Math.round(last[0]);
                 var ly = Math.round(last[1]);
 
                 if (x != lx || y != ly)
-                    self.trackData.trackFeature.getGeometry().appendCoordinate([x, y, heading, m]);
+                    self.trackData.trackFeature.wrap.feature.getGeometry().appendCoordinate([x, y, heading, m]);
             }
         }
 
@@ -3627,7 +3908,7 @@
         if (geoposition && geoposition.coords) {
             self.parent.layerGPS.clearFeatures();
 
-            accuracy = geoposition.coords.accuracy || 0;
+            accuracy = (geoposition.coords.accuracy / self.parent.map.getMetersPerUnit()) || 0;
             heading = geoposition.coords.heading || geoposition[2] || 0;
             speed = geoposition.coords.speed ? geoposition.coords.speed * 3.6 : 0;
             altitude = geoposition.coords.altitude || 0;
@@ -3639,7 +3920,7 @@
 
                 self.addPosition(projectedPosition, heading, new Date().getTime(), speed, accuracy, altitudeAccuracy, altitude);
 
-                var coords = self.trackData.trackFeature.getGeometry().getCoordinates();
+                var coords = self.trackData.trackFeature.wrap.feature.getGeometry().getCoordinates();
                 var len = coords.length;
                 if (len >= 2) {
                     self.parent.deltaMean = (coords[len - 1][3] - coords[0][3]) / (len - 1);
@@ -3647,7 +3928,7 @@
 
                 self.parent.$events.trigger($.Event(self.parent.Const.Event.POSITIONCHANGE, {
                     pd: {
-                        "position": [projectedPosition[0], projectedPosition[1]],
+                        "position": projectedPosition,
                         "altitude": altitude,
                         "accuracy": accuracy,
                         "heading": TC.Util.radToDeg(heading),
@@ -3709,43 +3990,52 @@
             self.trackData = {};
             var sessionwaypoint = [];
 
+            var nativeTrackingFeature = new ol.Feature({
+                geometry: new ol.geom.LineString([], ('XYZM')),
+                tracking: true
+            });
+
             if (self.parent.sessionTracking) {
+                var JSONParser = new TC.wrap.parser.JSON();
+                var features = JSONParser.parser.readFeatures(self.parent.sessionTracking);
 
-                var _sessionTracking = (new ol.format.GeoJSON()).readFeatures(self.parent.sessionTracking);
+                features.filter(function (feature) {
+                    var type = feature.getGeometry().getType().toLowerCase();
+                    if (type === 'point') { sessionwaypoint.push(feature); }
+                    return type === 'linestring' || type === 'multilinestring';
+                }).forEach(function (feature) {
+                    feature.setProperties({ 'tracking': true });
+                    feature.getGeometry().setCoordinates(feature.getGeometry().getCoordinates(), "XYZM");
 
-                for (var i = 0; i < _sessionTracking.length; i++) {
-                    var type = _sessionTracking[i].getGeometry().getType().toLowerCase();
+                    nativeTrackingFeature = feature;
+                });
+            }            
 
-                    if (type == 'point')
-                        sessionwaypoint.push(_sessionTracking[i]);
-                    else if (type == 'linestring') {
-                        self.trackData.trackFeature = _sessionTracking[i];
-                        self.trackData.trackFeature.setProperties({ 'tracking': true });
-                    }
-                }
+            if (nativeTrackingFeature) {
+                $.when(TC.wrap.Feature.createFeature(nativeTrackingFeature)).then(function (tcFeature) {
+                    self.trackData.trackFeature = tcFeature;
 
-                // qué pasa cuando quiera añadir un nuevo segmento ¿? añado nuevo lineString equivalente a segmento pero dónde¿?
-                // lo que hay en session lo añado como feature a la capa y creo un nuevo linestring que será el nuevo segmento
-                // y lo referencio a self.trackData.trackFeature
-            }
-            else {
-                self.trackData.trackFeature = new ol.Feature({
-                    geometry: new ol.geom.LineString([], ('XYZM')),
-                    tracking: true
+                    self.parent.layerTracking.addFeature(self.trackData.trackFeature);
                 });
             }
 
-            self.parent.layerTracking.wrap.layer.setSource(new ol.source.Vector({
-                features: [self.trackData.trackFeature]
-            }));
-
             if (sessionwaypoint.length > 0) {
-                self.parent.layerTracking.wrap.addFeatures(sessionwaypoint);
+
+                $.when.apply($, sessionwaypoint.map(function (waypoint) {
+                    return TC.wrap.Feature.createFeature(waypoint);
+                })).then(function (features) {
+                    features = Array.prototype.slice.call(arguments, 0);
+                    if (features) {
+                        features.forEach(function (feature) {
+                            self.parent.layerTracking.addFeature(feature);
+                        });
+                    }
+                });
             }
 
             self.parent.layerTracking.wrap.layer.setStyle(trackingStyleFN);
 
-            if (self.trackData.trackFeature.getGeometry().getCoordinates().length > 1)
+            if (self.trackData.trackFeature.wrap.feature.getGeometry().getCoordinates().length > 1)
                 self.parent.map.setExtent(self.parent.layerTracking.wrap.layer.getSource().getExtent());
 
             self.parent.currentPositionWaiting = self.parent.getLoadingIndicator().addWait();
@@ -3757,37 +4047,37 @@
             function getCurrentPosition() {
                 var id = getCurrentPositionRequest++;
                 navigator.geolocation.getCurrentPosition(
-                  function (data) {
-                      clearInterval(getCurrentPositionInterval);
-                      self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
-                      self.positionChangehandler(data).then(function (obj) {
-                          if (self.parent.geopositionTracking == true && obj && obj.marker && obj.accuracy) {
-                              self.currentPositionTrk = navigator.geolocation.watchPosition(
-                              self.positionChangehandler.bind(self),
-                              self.parent.onGeolocateError.bind(self.parent), options);
-                          }
-                      });
-                  },
-                  function (error) {
-                      switch (error.code) {
-                          case error.TIMEOUT:
-                              getCurrentPosition();
-                              break;
-                          default:
-                              clearInterval(getCurrentPositionInterval);
-                              self.parent.onGeolocateError.call(self.parent, error);
-                      }
-                  }, {
-                      timeout: 5000 + id,
-                      maximumAge: 10,
-                      enableHighAccuracy: true
-                  }
+                    function (data) {
+                        clearInterval(getCurrentPositionInterval);
+                        self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
+                        self.positionChangehandler(data).then(function (obj) {
+                            if (self.parent.geopositionTracking == true && obj && obj.marker && obj.accuracy) {
+                                self.currentPositionTrk = navigator.geolocation.watchPosition(
+                                    self.positionChangehandler.bind(self),
+                                    self.parent.onGeolocateError.bind(self.parent), options);
+                            }
+                        });
+                    },
+                    function (error) {
+                        switch (error.code) {
+                            case error.TIMEOUT:
+                                getCurrentPosition();
+                                break;
+                            default:
+                                clearInterval(getCurrentPositionInterval);
+                                self.parent.onGeolocateError.call(self.parent, error);
+                        }
+                    }, {
+                        timeout: 5000 + id,
+                        maximumAge: 10,
+                        enableHighAccuracy: true
+                    }
                 );
             }
             getCurrentPositionInterval = setInterval(getCurrentPosition, 1000);
 
             setTimeout(function () {
-                if (self.trackData && self.trackData.trackFeature.getGeometry().getLastCoordinate().length == 0) {
+                if (self.trackData && self.trackData.trackFeature.wrap.feature.getGeometry().getLastCoordinate().length == 0) {
                     clearInterval(getCurrentPositionInterval);
 
                     self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
@@ -3846,9 +4136,8 @@
     TC.wrap.control.Geolocation.prototype.clear = function (layer) {
         var self = this;
 
-        if (layer && layer.wrap.layer) {
-            layer.wrap.layer.getSource().clear();
-            layer.wrap.layer.setSource(new ol.source.Vector());
+        if (layer) {
+            layer.clearFeatures();
         }
 
         attachedDTD = false;
@@ -3919,8 +4208,22 @@
                 var locale = self.parent.map.options.locale && self.parent.map.options.locale.replace('_', '-') || undefined;
                 data.x = Math.round(closestPoint[0]).toLocaleString(locale);
                 data.y = Math.round(closestPoint[1]).toLocaleString(locale);
-                data.z = closestPoint.length >= 3 ? (Math.round(closestPoint[2] * 100) / 100).toLocaleString(locale) : undefined;
-                data.m = closestPoint.length == 4 && closestPoint[3] > 0 ? new Date(closestPoint[3]).toLocaleString(locale) : undefined;
+
+                var getZ = function (position) {
+                    return closestPoint[position] ? (Math.round(closestPoint[position] * 100) / 100).toLocaleString(locale) : undefined;
+                };
+                var getM = function (position) {
+                    return closestPoint[position] > 0 ? new Date(closestPoint[position]).toLocaleString(locale) : undefined;
+                };
+
+                if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYZM) {
+                    data.z = getZ(2);
+                    data.m = getM(3);
+                } else if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYZ) {
+                    data.z = getZ(2);
+                } else if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYM) {
+                    data.m = getM(2);
+                }
 
                 if (data) {
                     self.parent.getRenderedHtml(self.parent.CLASS + '-track-snapping-node', data, function (html) {
@@ -3933,13 +4236,19 @@
         }
     };
 
-    TC.wrap.control.Geolocation.prototype.drawTrackingData = function (data) {
+    TC.wrap.control.Geolocation.prototype.drawTrackingData = function (track) {
         var self = this;
         var deferred = $.Deferred();
         var featurePromises = [];
 
         var JSONParser = new TC.wrap.parser.JSON();
-        var features = JSONParser.parser.readFeatures(data);
+        var features = JSONParser.parser.readFeatures(track.data);
+
+        features.filter(function (feature) {
+            return feature.getGeometry().getType().toLowerCase() === 'linestring' || feature.getGeometry().getType().toLowerCase() === 'multilinestring';
+        }).forEach(function (feature) {
+            feature.getGeometry().setCoordinates(feature.getGeometry().getCoordinates(), track.layout);
+        });
 
         self.activateSnapping.call(self);
 
@@ -3969,6 +4278,13 @@
         parser = parser.parser;
 
         var features = layer.wrap.layer.getSource().getFeatures();
+        var layout;
+        features.map(function (feature) {
+            if (feature.getGeometry() instanceof ol.geom.MultiLineString ||
+                feature.getGeometry() instanceof ol.geom.LineString) {
+                layout = feature.getGeometry().getLayout();
+            }
+        });
 
         if (setTrackingProperty) {
             for (var i = 0; i < features.length; i++) {
@@ -3977,7 +4293,7 @@
             }
         }
 
-        return parser.writeFeatures(features);
+        return { features: parser.writeFeatures(features), layout: layout };
     };
 
     TC.wrap.control.Geolocation.prototype.export = function (type, li) {
@@ -3989,7 +4305,7 @@
             if (data) {
 
                 var src = new ol.source.Vector({
-                    features: (new ol.format.GeoJSON()).readFeatures(data)
+                    features: (new ol.format.GeoJSON()).readFeatures(data.data)
                 })
 
                 if (src.getFeatures().length > 0) {
@@ -4131,7 +4447,7 @@
                 var ls = clone.getGeometry().getLineStrings();
 
                 var coords = segmentsUnion(ls);
-                toAdd.push(new ol.Feature({ geometry: new ol.geom.LineString(coords) }));
+                toAdd.push(new ol.Feature({ geometry: new ol.geom.LineString(coords, feature.getGeometry().getLayout()) }));
                 toRemove.push(feature);
             }
         }
@@ -4212,7 +4528,19 @@
                 if (showFeatures && showFeatures.length > 0) {
                     for (var i = 0; i < showFeatures.length; i++) {
                         showFeatures[i].showsPopup = false;
+
+                        if (self.parent.layerTrack.styles) {
+                            if (showFeatures[i] instanceof TC.feature.Point && self.parent.layerTrack.styles.point) {
+                                showFeatures[i].setStyle(self.parent.layerTrack.styles.point);
+                            } else if (showFeatures[i] instanceof TC.feature.Polyline && self.parent.layerTrack.styles.line) {
+                                showFeatures[i].setStyle(self.parent.layerTrack.styles.line);
+                            }
+                        }
                     }
+
+                    self.parent._trackLayerBindEvents(false);
+                    self.parent.layerTrack.setVisibility(true);
+                    self.parent._trackLayerBindEvents(true);
                 }
 
                 self.parent.map.setExtent(source.getExtent());
@@ -4588,17 +4916,12 @@
         var self = this;
 
         self.olMap.on(ol.MapBrowserEventType.SINGLECLICK, self._coordsTrigger);
-
-        var viewport = self.olMap.getViewport();
-        $(viewport).on(MOUSEOUT, self._cleanCoordsTrigger);
     };
 
     TC.wrap.control.Coordinates.prototype.coordsDeactivate = function () {
         var self = this;
 
         self.olMap.un(ol.MapBrowserEventType.SINGLECLICK, self._coordsTrigger);
-        var viewport = self.olMap.getViewport();
-        $(viewport).off(MOUSEOUT, self._cleanCoordsTrigger);
     };
 
     TC.wrap.Parser = function () {
@@ -4671,8 +4994,8 @@
                             $drag.after(dd.$dragged);
                             boxBottom = parseInt($drag.css('bottom'));
                             boxLeft = parseInt($drag.css('left'));
-                            var bottomLeft = ovmMap.getPixelFromCoordinate([map.options.maxExtent[0], map.options.maxExtent[1]]);
-                            var topRight = ovmMap.getPixelFromCoordinate([map.options.maxExtent[2], map.options.maxExtent[3]]);
+                            var bottomLeft = ovmMap.getPixelFromCoordinate([map.maxExtent[0], map.maxExtent[1]]);
+                            var topRight = ovmMap.getPixelFromCoordinate([map.maxExtent[2], map.maxExtent[3]]);
                             var mapSize = ovmMap.getSize();
                             dd.limit = {
                                 bottom: mapSize[1] - bottomLeft[1],
@@ -4691,17 +5014,17 @@
                             var halfWidth = (extent[2] - extent[0]) / 2;
                             var halfHeight = (extent[3] - extent[1]) / 2;
 
-                            if (newCenter[0] + halfWidth > map.options.maxExtent[2]) {
-                                newCenter[0] = map.options.maxExtent[2] - halfWidth;
+                            if (newCenter[0] + halfWidth > map.maxExtent[2]) {
+                                newCenter[0] = map.maxExtent[2] - halfWidth;
                             }
-                            else if (newCenter[0] - halfWidth < map.options.maxExtent[0]) {
-                                newCenter[0] = map.options.maxExtent[0] + halfWidth;
+                            else if (newCenter[0] - halfWidth < map.maxExtent[0]) {
+                                newCenter[0] = map.maxExtent[0] + halfWidth;
                             }
-                            if (newCenter[1] + halfHeight > map.options.maxExtent[3]) {
-                                newCenter[1] = map.options.maxExtent[3] - halfHeight;
+                            if (newCenter[1] + halfHeight > map.maxExtent[3]) {
+                                newCenter[1] = map.maxExtent[3] - halfHeight;
                             }
-                            else if (newCenter[1] - halfHeight < map.options.maxExtent[1]) {
-                                newCenter[1] = map.options.maxExtent[1] + halfHeight;
+                            else if (newCenter[1] - halfHeight < map.maxExtent[1]) {
+                                newCenter[1] = map.maxExtent[1] + halfHeight;
                             }
 
                             map.setCenter(newCenter, { animate: true });
@@ -4722,11 +5045,7 @@
             $.when(map.wrap.getMap()).then(function (olMap) {
 
                 // Modificamos mapa para que tenga la proyección correcta
-                self.ovMap.ovmap_.setView(
-                    new ol.View(
-                        getResolutionOptions(map.wrap, olLayer._wrap.parent)
-                    )
-                );
+                self.reset();
 
                 var $load = $(self.parent.div).find('.' + self.parent.CLASS + '-load');
                 olLayer._wrap.$events.on(TC.Consts.event.BEFORETILELOAD, function () {
@@ -4742,6 +5061,30 @@
                 self.parent.$events.trigger($.Event(TC.Consts.event.MAPLOAD));
             });
         });
+    };
+
+    TC.wrap.control.OverviewMap.prototype.reset = function (options) {
+        var self = this;
+        options = options || {};
+        var layer = options.layer || self.parent.layer;
+        if (self.parent.map && layer) {
+            var olMap = self.ovMap.ovmap_;
+            $.when(layer.wrap.getLayer()).then(function (olLayer) {
+                if (layer !== self.parent.layer) {
+                    olMap.getLayers().forEach(function (l) {
+                        if (l instanceof ol.layer.Image || l instanceof ol.layer.Tile) {
+                            olMap.removeLayer(l);
+                        }
+                    });
+                    olMap.addLayer(olLayer);
+                }
+                olMap.setView(
+                    new ol.View(
+                        getResolutionOptions(self.parent.map.wrap, layer)
+                    )
+                );
+            });
+        }
     };
 
     TC.wrap.control.OverviewMap.prototype.get3DCameraLayer = function () {
@@ -4819,37 +5162,14 @@
             TC.wrap.control.Click.prototype.register.call(self, map);
             var _clickTrigger = self._trigger;
             self._trigger = function (e) {
-                self.hasElegibleLayers().then(function (hasLayers) {
-                    if (hasLayers) {
-                        if (_clickTrigger.call(self, e)) {
-                            map.$events.trigger($.Event(TC.Consts.event.BEFOREFEATUREINFO, {
-                                xy: e.pixel, control: self.parent
-                            }));
-                        };
-                    }
-                });
+                self.parent.beforeRequest({ xy: e.pixel });
+                var result = _clickTrigger.call(self, e);
+                if (!result) {
+                    map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, { control: self.parent }));
+                }
+                return result;
             }
         });
-    };
-
-    TC.wrap.control.FeatureInfo.prototype.hasElegibleLayers = function () {
-        var def = $.Deferred();
-        var map = this.parent.map;
-        var ret = false;
-        $.when(map.wrap.getMap()).then(function (olMap) {
-            olMap.getLayers().forEach(function (olLayer) {
-                var layer = olLayer._wrap.parent;
-                var source = olLayer.getSource();
-                //Por qué en workLayers están el vectorial de medición, y cosas así?
-                if (source.getGetFeatureInfoUrl && $.inArray(layer, map.workLayers) >= 0) {
-                    ret = true;
-                    return false;   //break del foreach
-                }
-            });
-            def.resolve(ret);
-        });
-
-        return def;
     };
 
     var bufferElm;
@@ -4898,88 +5218,95 @@
         });
     };
 
-    TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (xy, options) {
+    TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolution, options) {
         var self = this;
         var opts = options || {};
         var map = self.parent.map;
         $.when(map.wrap.getMap()).then(function (olMap) {
-            var targetServices = {
-            };
-            var auxInfo = {
-            };
+            var targetServices = {};
+            var auxInfo = {};
             var requestDeferreds = [];
             var featurePromises = [];
 
             //var infoFormats = [];
             var layers = olMap.getLayers().getArray();
+
+            // GLS: filtro el array de capas para quedarnos con las capas que son raster y visibles.
+            layers = layers.filter(function (elem) { return elem instanceof ol.layer.Image && elem.getVisible(); });
+
             for (var j = 0; j < layers.length; j++) {
                 var olLayer = layers[j];
-                if (olLayer.getVisible()) {
-                    var layer = olLayer._wrap.parent;
-                    var source = olLayer.getSource();
+                var layer = olLayer._wrap.parent;
+                var source = olLayer.getSource();
 
-                    //console.log("Source: " + layer.layerNames.join(","));
-                    //Por qué en workLayers están el vectorial de medición, y cosas así?
-                    if (source.getGetFeatureInfoUrl && $.inArray(layer, map.workLayers) >= 0 && layer.names.length > 0
-                        && (!opts.serviceUrl || opts.serviceUrl === layer.url)) { // Mirar si en las opciones pone que solo busque en un servicio
+                //console.log("Source: " + layer.layerNames.join(","));
+                //Por qué en workLayers están el vectorial de medición, y cosas así?
+                if (source.getGetFeatureInfoUrl && $.inArray(layer, map.workLayers) >= 0 && layer.names.length > 0
+                    && (!opts.serviceUrl || opts.serviceUrl === layer.url)) { // Mirar si en las opciones pone que solo busque en un servicio
 
-                        //
-                        var targetService = {
+                    //
+                    var targetService = {};
+                    if (!targetServices[layer.url]) {
+                        targetService = {
+                            layers: [],
+                            mapLayer: layer,
+                            title: layer.wrap.getServiceTitle(),
+                            request: null
                         };
-                        if (!targetServices[layer.title]) {
-                            targetService = {
-                                layers: [], mapLayer: layer, request: null
-                            };
-                            targetServices[layer.title] = targetService;
-                            auxInfo[layer.title] = {
-                                "source": jQuery.extend(true, {}, source),
-                                "layers": []
-                            };
+                        targetServices[layer.url] = targetService;
+                        auxInfo[layer.url] = {
+                            "source": jQuery.extend(true, {}, source),
+                            "layers": []
+                        };
+                    }
+                    else {
+                        targetService = targetServices[layer.url];
+                    }
+
+                    //var targetService = {
+                    //    layers: [], mapLayer: layer
+                    //};
+                    var disgregatedNames = layer.getDisgregatedLayerNames();
+                    if (opts.layerName) { // Mirar si en las opciones pone que solo busque en una capa
+                        if (disgregatedNames.indexOf(opts.layerName) >= 0 && olLayer._wrap.getInfo(opts.layerName).queryable) {
+                            addLayerToService(targetService, layer, opts.layerName);
+                            auxInfo[layer.url].layers.push(opts.layerName);
                         }
-                        else {
-                            targetService = targetServices[layer.title];
+                    }
+                    else {
+                        for (var i = 0; i < disgregatedNames.length; i++) {
+                            var name = disgregatedNames[i];
+                            if (olLayer._wrap.getInfo(name).queryable) {
+                                addLayerToService(targetService, layer, name);
+                            }
+                            else {
+                                TC.Util.consoleRegister('Capa "' + disgregatedNames[i] + '" no queryable, la eliminamos de la petición GFI');
+                                disgregatedNames.splice(i, 1);
+                                i = i - 1;
+                            }
                         }
 
-                        //var targetService = {
-                        //    layers: [], mapLayer: layer
-                        //};
-                        var disgregatedNames = layer.getDisgregatedLayerNames();
-                        if (opts.layerName) { // Mirar si en las opciones pone que solo busque en una capa
-                            if (disgregatedNames.indexOf(opts.layerName) >= 0 && olLayer._wrap.getInfo(opts.layerName).queryable) {
-                                addLayerToService(targetService, layer, opts.layerName);
-                                auxInfo[layer.title].layers.push(opts.layerName);
-                            }
-                        }
-                        else {
-                            for (var i = 0; i < disgregatedNames.length; i++) {
-                                var name = disgregatedNames[i];
-                                if (olLayer._wrap.getInfo(name).queryable) {
-                                    addLayerToService(targetService, layer, name);
-                                }
-                                else {
-                                    disgregatedNames.splice(i, 1);
-                                    i = i - 1;
-                                }
-                            }
-                            auxInfo[layer.title].layers = auxInfo[layer.title].layers.concat(disgregatedNames);
+                        // GLS: validamos si nos queda alguna capa a la cual consultar
+                        if (disgregatedNames.length > 0) {
+                            auxInfo[layer.url].layers = auxInfo[layer.url].layers.concat(disgregatedNames);
                         }
                     }
                 }
             }
 
-            var size = opts.mapSize || olMap.getSize();
-            var roundedx = Math.round(xy[0]);
-            var roundedy = Math.round(xy[1]);
-            var bbox = opts.boundingBox || map.getExtent();
-            var resolution = olMap.getView().getResolution();
+            for (var serviceUrl in targetServices) {
+                var targetService = targetServices[serviceUrl];
+                var source = auxInfo[serviceUrl].source;
+                var layers = auxInfo[serviceUrl].layers;
 
-            for (var title in targetServices) {
-                var targetService = targetServices[title];
-                var source = auxInfo[title].source;
-                var layers = auxInfo[title].layers;
+                // GLS: validamos si hay capas a las cuales consultar, si no hay continuamos con el siguiente servicio
+                if (!layers || (layers && layers.length === 0)) {
+                    continue;
+                }
+
                 var params = source.getParams();
                 source.params_.LAYERS = layers.join(',');
-                var url = source.getGetFeatureInfoUrl(xy, resolution, map.crs, {
+                var gfiURL = source.getGetFeatureInfoUrl(coords, resolution, map.crs, {
                     'QUERY_LAYERS': layers.join(','),
                     'INFO_FORMAT': params.INFO_FORMAT,
                     'FEATURE_COUNT': 1000,
@@ -4987,32 +5314,25 @@
                     'buffer': map.options.pixelTolerance
                 });
 
-                url = url
-                    .replace(/I=\d+(\.\d+)?/, 'I=' + roundedx) // Se redondea porque en IE pone decimales si el zoom de la página no es 100%
-                    .replace(/J=\d+(\.\d+)?/, 'J=' + roundedy)
-                    .replace(/WIDTH=\d+/, 'WIDTH=' + size[0])
-                    .replace(/HEIGHT=\d+/, 'HEIGHT=' + size[1])
-                    .replace(/BBOX=-?\d+(\.\d+)?\%2C-?\d+(\.\d+)?\%2C-?\d+(\.\d+)?\%2C-?\d+(\.\d+)?/, 'BBOX=' + bbox.join('%2C'))
-                    .replace(/sld_body=[a-zA-Z%0-9._]*/); // Quitamos el parámetro sld_body
+                gfiURL = gfiURL.replace(/sld_body=[a-zA-Z%0-9._]*/); // Quitamos el parámetro sld_body
 
 
-                var expUrl = url;
-                //proxificar si es necesario
-                if (targetService.mapLayer.usesProxy) {
-                    url = TC.proxify(url);
-                }
-                else if (targetService.mapLayer.usesSSL) {
-                    url = url.replace(/^(f|ht)tp?:\/\//i, "https://");
-                }
+                var expUrl = gfiURL;
+                gfiURL = targetService.mapLayer.getFeatureInfoUrl(gfiURL);
+
                 var def = $.ajax({
-                    url: url
+                    url: gfiURL
                 });
-                def.originalUrl = url;
-                def.title = title;
+                def.originalUrl = gfiURL;
+                def.serviceUrl = serviceUrl;
                 def.requestedFormat = params.INFO_FORMAT;
                 def.expandUrl = expUrl;
+
+                TC.Util.consoleRegister("Lanzamos GFI");
+
                 requestDeferreds.push(def);
             }
+
             if (requestDeferreds.length > 0) {
                 $.when.apply(self, requestDeferreds).then(function () {
                     var responses = requestDeferreds.length > 1 ? arguments : [arguments];
@@ -5021,7 +5341,7 @@
                     var featureInsertionPoints = [];
                     for (var i = 0; i < responses.length; i++) {
                         var response = responses[i];
-                        var service = targetServices[requestDeferreds[i].title];
+                        var service = targetServices[requestDeferreds[i].serviceUrl];
                         var featureInfo = response[2];
                         if (response[1] === 'success') {
                             someSuccess = true;
@@ -5152,16 +5472,27 @@
                                 }
                             }
                             else { // iFormat !== featureInfo.requestedFormat
+
+                                // GLS:
+                                TC.Util.consoleRegister("Respuesta GFI: lo más probable es que el servidor esté devolviendo una excepción");
+                                TC.Util.consoleRegister("Lanzamos los eventos que corresponde y mostramos tostada");
+
                                 // En este caso lo más probable es que el servidor esté devolviendo una excepción
-                                map.$events.trigger($.Event(TC.Consts.event.FEATUREINFOERROR, {
-                                    xy: xy, control: self.parent, layer: service.mapLayer, message: featureInfo.responseText
-                                }));
+                                self.parent.responseError({
+                                    message: featureInfo.responseText,
+                                    status: featureInfo.status
+                                });
+                                // GLS: misma gestión de error que en ol.js - > function (a, b, c) { // error...
+                                map.toast(self.parent.getLocaleString('featureInfo.error'), {
+                                    type: TC.Consts.msgType.ERROR
+                                });
                             }
                         }
                         else {
-                            map.$events.trigger($.Event(TC.Consts.event.FEATUREINFOERROR, {
-                                xy: xy, control: self.parent, layer: service.mapLayer, message: featureInfo.responseText
-                            }));
+                            self.parent.responseError({
+                                message: featureInfo.responseText,
+                                status: featureInfo.status
+                            });
                         }
                     }
                     if (someSuccess) {
@@ -5181,7 +5512,6 @@
                         $.when.apply(this, finfoPromises).then(function () {
                             var defaultFeature;
                             if (arguments.length) {
-                                var coord = map.wrap.getCoordinateFromPixel(xy);
                                 for (var i = 0; i < arguments.length; i++) {
                                     var feat = arguments[i];
                                     if (feat) {
@@ -5197,7 +5527,7 @@
                                         }
                                         // Esta feature es solo para ver, no debe reaccionar a clics
                                         feat.showsPopup = false;
-                                        if (!defaultFeature && TC.Geometry.isInside(coord, feat.geometry)) {
+                                        if (!defaultFeature && TC.Geometry.isInside(coords, feat.geometry)) {
                                             defaultFeature = feat;
                                         }
                                         featureInsertionPoints[i].push(feat);
@@ -5206,31 +5536,49 @@
                             }
 
                             var services = [];
-                            for (var title in targetServices)
-                                if (targetServices.hasOwnProperty(title))
-                                    services.push(targetServices[title]);
+                            for (var serviceUrl in targetServices) {
+                                if (targetServices.hasOwnProperty(serviceUrl)) {
+                                    services.push(targetServices[serviceUrl]);
+                                }
+                            }
 
-                            map.$events.trigger($.Event(TC.Consts.event.FEATUREINFO, {
-                                xy: xy || null,
+                            self.parent.responseCallback({
+                                coords: coords,
+                                resolution: resolution,
                                 services: services,
                                 featureCount: featureCount,
-                                defaultFeature: defaultFeature,
-                                control: self.parent
-                            }));
+                                defaultFeature: defaultFeature
+                            });
                         });
                     }
                 },
-            function (a, b, c) { // error
-                map.$events.trigger(TC.Consts.event.NOFEATUREINFO);
-                map.toast(self.parent.getLocaleString('featureInfo.error'), {
-                    type: TC.Consts.msgType.ERROR
-                });
-            });
+                    function (a, b, c) { // error
+                        self.parent.responseCallback({});
+                        map.toast(self.parent.getLocaleString('featureInfo.error'), {
+                            type: TC.Consts.msgType.ERROR
+                        });
+                    });
             }
             else {
-                map.$events.trigger($.Event(TC.Consts.event.FEATUREINFO, {
-                    xy: xy, services: targetServices, featureCount: 0, control: self.parent
-                }));
+
+                if (map.workLayers.filter(function (layer) {
+                    return layer instanceof TC.layer.Raster;
+                }).length > 0) {
+                    map.toast(self.parent.getLocaleString('featureInfo.notQueryableLayers'), {
+                        type: TC.Consts.msgType.INFO
+                    });
+                }
+
+                // GLS: nos suscribimos TC.Consts.event.BEFOREFEATUREINFO y lanzamos el mismo evento de zero resultados ya que puede darse que la resolución se lance antes del before.
+                map.$events.on(TC.Consts.event.BEFOREFEATUREINFO, function () {
+                    self.parent.responseCallback({
+                        coords: coords, resolution: resolution, services: targetServices, featureCount: 0
+                    });
+                });
+
+                self.parent.responseCallback({
+                    coords: coords, resolution: resolution, services: targetServices, featureCount: 0
+                });
             }
         });
     };
@@ -5241,7 +5589,7 @@
             TC.wrap.control.Click.prototype.register.call(self, map);
             var _clickTrigger = self._trigger;
             self._trigger = function (e) {
-                self.hasElegibleLayers().then(function (hasLayers) {
+                self.hasEligibleLayers().then(function (hasLayers) {
                     if (hasLayers) {
                         if (!self.parent._isSearching) {
                             if (e.type == ol.MapBrowserEventType.SINGLECLICK && !self.parent._isDrawing && !self.parent._isSearching) {
@@ -5255,7 +5603,7 @@
         });
     };
 
-    TC.wrap.control.GeometryFeatureInfo.prototype.hasElegibleLayers = function () {
+    TC.wrap.control.GeometryFeatureInfo.prototype.hasEligibleLayers = function () {
         var def = $.Deferred();
         var map = this.parent.map;
         var ret = false;
@@ -5382,9 +5730,11 @@
     };
 
 
-    var WFSGetFeatureBuilder = function (map, spatialFilter, outputFormat, download) {
+    var WFSGetFeatureBuilder = function (map, filter, outputFormat, download) {
         var arrPromises = [];
-        var services = {
+        var services = {};
+        var _getServiceTitle = function (service) {
+            return service.mapLayer.title || (service.mapLayer.tree && service.mapLayer.tree.title) || service.mapLayer.capabilities.Service.Title
         };
         $.when(map.wrap.getMap()).then(function (olMap) {
             olMap.getLayers().forEach(function (olLayer) {
@@ -5420,6 +5770,7 @@
                 arrPromises.push(services[layer.url.toLowerCase()].defer);
                 $.when(services[layer.url.toLowerCase()].request).then(function (capabilities) {
                     var service = null;
+                    var errors = [];
                     for (var url in services)
                         if (services[url].request && services[url].request.promise() == this) {
                             service = services[url];
@@ -5430,10 +5781,10 @@
                     if (!(layerList instanceof Array) || !layerList.length) return;//condici\u00f3n de salida
                     //comprobamos que tiene el getfeature habilitado
                     if (typeof (capabilities.Operations.GetFeature) === "undefined") {
-                        defer.resolve("El servicio " + service.mapLayer.title + " no tiene habilitado el GetFeature de WFS");
+                        errors.push({ key: TC.Consts.WFSErrors.GetFeatureNotAvailable, params: { serviceTitle: _getServiceTitle(service) } })
+                        defer.resolve({ "errors": errors });
                         return;
                     }
-
                     var availableLayers = [];
                     for (var i = 0; i < layerList.length; i++) {
                         //Comprbamos si la capa en el WMS tiene el mimso nombre que en el WFS
@@ -5443,93 +5794,133 @@
                             layer = layer.substring(0, layer.lastIndexOf("_"));
                         }
                         if (!capabilities.FeatureTypes.hasOwnProperty(layer)) {
-                            TC.error("El servicio " + service.mapLayer.title + " no dispone de la capa " + layer);
+                            var titles = service.mapLayer.getPath(layer);
+                            errors.push({ key: TC.Consts.WFSErrors.LayersNotAvailable, params: { serviceTitle: _getServiceTitle(service), "layerName": titles[titles.length-1] } });
                             continue;
                         }
                         if (availableLayers.indexOf(layer) < 0)
                             availableLayers.push(layer);
                     }
                     if (availableLayers.length == 0) {
-                        TC.error("No hay ninguna capa v\u00e1lida para el servicio " + service.mapLayer.title + " por lo que no se consultar\u00e1 dicho servicio");
-                        defer.resolve(null);
+                        errors.push({ key: TC.Consts.WFSErrors.NoValidLayers, params: { serviceTitle: _getServiceTitle(service) } });
+                        defer.resolve({ "errors": errors });
                         return;
                     }
                     if (capabilities.Operations.GetFeature.CountDefault)
                         _numMaxFeatures = capabilities.Operations.GetFeature.CountDefault.DefaultValue;
                     //comprobamos si soporta querys    
                     if (
-					((capabilities.version === "1.0.0" || capabilities.version === "1.1.0") && !capabilities.Operations.GetFeature.Operations.hasOwnProperty("Query"))
-					||
-					(capabilities.version === "2.0.0" && capabilities.Operations.QueryExpressions.AllowedValues.Value.indexOf("wfs:Query") < 0)
-					) {
-                        TC.error("El servicio " + service.mapLayer.title + " no tiene habilitado el Query de WFS");
+                        (capabilities.version === "1.0.0" && !capabilities.Operations.GetFeature.Operations.hasOwnProperty("Query"))
+                        ||
+                        ((capabilities.version === "2.0.0" || capabilities.version === "1.1.0") && capabilities.Operations.QueryExpressions.AllowedValues.Value.indexOf("wfs:Query") < 0)
+                    ) {
+                        errors.push({ key: TC.Consts.WFSErrors.QueryNotAvailable, params: { serviceTitle: _getServiceTitle(service) } });
+                        defer.resolve({ "errors": errors });
+                        return;
                     }
                     var url = (capabilities.Operations.GetFeature.DCPType ? capabilities.Operations.GetFeature.DCPType[1].HTTP.Post.onlineResource : capabilities.Operations.GetFeature.DCP.HTTP.Post["xlink:href"]);
-                    var url2 = (service.mapLayer.usesProxy ? TC.proxify(url) : (service.mapLayer.usesSSL ? url.replace(/^(f|ht)tp?:\/\//i, "https://") : url));
+                    var url2 = service.mapLayer.getFeatureUrl(url);
 
                     if (_numMaxFeatures) {
                         jQuery.ajax({
                             url: url2,
-                            data: TC.Util.WFSQueryBuilder(availableLayers, spatialFilter, capabilities, outputFormat, true),
+                            data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, true),
                             cache: false,
                             contentType: "application/xml",
                             type: "POST",
                         }).then(function () {
-                            var capabilitiesAsJSON = xml2json(arguments[0]);
-                            if (capabilitiesAsJSON.Exception)
-                            {
+                            if (arguments[0] instanceof XMLDocument) {
+                                var responseAsJSON = xml2json(arguments[0]);
+                                if (responseAsJSON.Exception) {
+                                    defer.resolve({
+                                        errors: [{
+                                            key: TC.Consts.WFSErrors.Indeterminate,
+                                            params: {
+                                                err: responseAsJSON.Exception.exceptionCode, errorThrown: responseAsJSON.Exception.ExceptionText, serviceTitle: service.mapLayer.title
+                                            }
+                                        }]
+                                    })
+                                    return;
+                                }
+                            }                            
+                            var featFounds = parseInt(responseAsJSON.numberMatched || responseAsJSON.numberOfFeatures, 10)
+                            if (isNaN(featFounds) || featFounds > parseInt(_numMaxFeatures, 10)) {
                                 defer.resolve({
-                                    err: capabilitiesAsJSON.Exception.exceptionCode, errorThrown: capabilitiesAsJSON.Exception.ExceptionText, service: service
+                                    errors: [{
+                                        key: TC.Consts.WFSErrors.NumMaxFeatures, params: { limit: _numMaxFeatures, serviceTitle: _getServiceTitle(service) }
+                                    }]
                                 });
                                 return;
                             }
-                            var featFounds = parseInt(capabilitiesAsJSON.numberMatched || capabilitiesAsJSON.numberOfFeatures, 10)
-                            if (isNaN(featFounds) || featFounds > parseInt(_numMaxFeatures, 10)) {
+                            else if (featFounds === 0) {
                                 defer.resolve({
-                                    err: "NumMaxFeatures", limit: _numMaxFeatures, service: service
+                                    errors: [{
+                                        key: TC.Consts.WFSErrors.NoFeatures, params: { serviceTitle: _getServiceTitle(service) }
+                                    }]
                                 });
-                                return;
                             }
                             else if (download)
                                 defer.resolve({
                                     url: url,
-                                    data: TC.Util.WFSQueryBuilder(availableLayers, spatialFilter, capabilities, outputFormat, false),
+                                    data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
                                     service: service,
-                                    numFeatures: featFounds
+                                    numFeatures: featFounds,
+                                    errors: errors
                                 });
 
                         }
-						, function (xhr, textStatus, errorThrown) {
-						    defer.resolve({ err: textStatus, errorThrown: errorThrown, service: service })
-						    return;
-						});
+                        , function (xhr, textStatus, errorThrown) {
+                            defer.resolve({
+                                errors: [{
+                                    key: TC.Consts.WFSErrors.Indeterminate,
+                                    params: { err: textStatus, errorThrown: errorThrown, serviceTitle: _getServiceTitle(service) }
+                                }]
+                            });
+                            return;
+                        });
                     }
                     else {
                         if (!download) {
                             defer.resolve({
                                 url: url2,
-                                data: TC.Util.WFSQueryBuilder(availableLayers, spatialFilter, capabilities, outputFormat, false),
-                                service: service
+                                data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
+                                service: service,
+                                errors: errors
                             });
                         }
                     }
                     if (download && !_numMaxFeatures) {
                         defer.resolve({
                             url: url,
-                            data: TC.Util.WFSQueryBuilder(availableLayers, spatialFilter, capabilities, outputFormat, false),
-                            service: service
+                            data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
+                            service: service,
+                            errors: errors
                         });
                     }
                     if (!download) {
                         jQuery.ajax({
                             url: url2,
-                            data: TC.Util.WFSQueryBuilder(availableLayers, spatialFilter, capabilities, outputFormat, false),
+                            data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
                             cache: false,
                             contentType: "application/xml",
                             type: "POST",
                         }).then(function () {
                             if (arguments[1] == "success") {
-                                defer.resolve({ service: service, response: arguments });
+                                if (arguments[0] instanceof XMLDocument) {
+                                    var responseAsJSON = xml2json(arguments[0]);
+                                    if (responseAsJSON.Exception) {
+                                        defer.resolve({
+                                            errors: [{
+                                                key: TC.Consts.WFSErrors.Indeterminate,
+                                                params: {
+                                                    err: responseAsJSON.Exception.exceptionCode, errorThrown: responseAsJSON.Exception.ExceptionText, serviceTitle: service.mapLayer.title
+                                                }
+                                            }]
+                                        })
+                                        return;
+                                    }
+                                }                                
+                                defer.resolve({ service: service, response: arguments, errors: errors });
                             }
                             else {
                                 defer.reject(arguments);
@@ -5537,7 +5928,12 @@
                             }
                         },
                             function (xhr, textStatus, errorThrown) {
-                                defer.resolve({ err: textStatus, errorThrown: errorThrown, service: service })
+                                defer.resolve({
+                                    errors: [{
+                                        key: TC.Consts.WFSErrors.Indeterminate,
+                                        params: { err: textStatus, errorThrown: errorThrown, serviceTitle: _getServiceTitle(service) }
+                                    }]
+                                });
                                 return;
                             });
                     }
@@ -5547,14 +5943,14 @@
                         if (services[title].request && services[title].request.promise() == this) {
                             service = services[title];
                         }
-                    service.defer.resolve({ err: errorThrown, service: service });
+                    service.defer.resolve({ errors: [{ key: TC.Consts.WFSErrors.GetCapabilities, params: { err: errorThrown, serviceTitle: _getServiceTitle(service) } }] });
                 });
             });
         });
         return arrPromises;
     };
     TC.WFSGetFeatureBuilder = WFSGetFeatureBuilder;
-    
+
     var readFeaturesFromResponse = function (map, data, jqXHR) {
         var featureInsertionPoints = [];
         var format;
@@ -5610,7 +6006,7 @@
             });
         }
     };
-    var funcionQueDistribuyeFeaturesPorServicios = function (features, service) {
+    var featureToServiceDistributor = function (features, service) {
         var featurePromises = [];
         var featureInsertionPoints = [];
         var defer = $.Deferred();
@@ -5678,6 +6074,7 @@
                 for (var i = 0; i < arguments.length; i++) {
                     var feat = arguments[i];
                     feat.attributes = [];
+                    feat.showsPopup = false;
                     for (var key in feat.data) {
                         var value = feat.data[key];
                         if (typeof value !== 'object') {
@@ -5692,7 +6089,6 @@
             defer.resolve({
                 service: service
             })
-            //map.$events.trigger($.Event(TC.Consts.event.FEATUREINFO, { xy: xy || null, services: targetServices, featureCount: featureCount, control: self.parent }));
         });
         return defer;
     }
@@ -5720,12 +6116,9 @@
                 xy = olMap.getPixelFromCoordinate(new ol.geom.Point(bestPoint).getCoordinates());
             }
 
-            //self.parent.beforeGetFeatureInfo($.Event(TC.Consts.event.BEFOREFEATUREINFO, { xy: xy, control: self.parent }));
-            map.$events.trigger($.Event(TC.Consts.event.BEFOREFEATUREINFO, {
-                xy: xy, control: self.parent
-            }));
+            self.parent.beforeRequest({ xy: xy });
 
-            var arrPromises = WFSGetFeatureBuilder(map, feature, "JSON");
+            var arrPromises = WFSGetFeatureBuilder(map, new TC.filter.intersects(feature), "JSON");
 
             var featureInsertionPoints = {
             };
@@ -5736,47 +6129,61 @@
                 var hayError = false;
 
                 for (var i = 0; i < arguments.length; i++) {
+                    arrDeferred[arrDeferred.length] = new $.Deferred();
+
                     if (!arguments[i]) continue;
-                    if (arguments[i].err) {
-                        hayError = true;
-                        var defer = new $.Deferred();
-                        arrDeferred[arrDeferred.length] = defer;
-                        targetServices.push(arguments[i].service);
-                        switch (arguments[i].err) {
-                            case "NumMaxFeatures":
-                                map.toast(self.parent.getLocaleString("featureInfo.tooManyFeatures").format(arguments[i].limit, arguments[i].service.mapLayer.title), { type: TC.Consts.msgType.WARNING });
-                                break;
-                            case "NameResolutionFailure":
-                                map.toast(self.parent.getLocaleString("featureInfo.inValidService").format(arguments[i].service.mapLayer.title), { type: TC.Consts.msgType.WARNING });
-                                break;
+                    if (arguments[i].errors && arguments[i].errors.length) {
+                        for (var j = 0; j < arguments[i].errors.length; j++) {
+                            var errorMsg, errorType = TC.Consts.msgType.WARNING;
+                            hayError = true;
+                            var error = arguments[i].errors[j];
+                            switch (error.key) {
+                                case TC.Consts.WFSErrors.NumMaxFeatures:
+                                    errorMsg = self.parent.getLocaleString("wfs.tooManyFeatures", error.params);
+                                    break;
+                                    /*case TC.Consts.WFSErrors.NoLayers:
+                                        errorMsg = self.parent.getLocaleString('noLayersLoaded');*/
+                                    break;
+                                case TC.Consts.WFSErrors.GetCapabilities:
+                                    errorMsg = self.parent.getLocaleString('wfsGFI.inValidService', error.params);
+                                    break;
+                                case TC.Consts.WFSErrors.NoFeatures:
+                                    //si no hay features nos callamos. Quizas en un futuro se muestre una alerta
+                                    hayError = false;
+                                    continue;
+                                    break;
+                                case TC.Consts.WFSErrors.Indeterminate:
+                                    errorMsg = self.parent.getLocaleString("wfs.IndeterminateError");
+                                    TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
+                                    errorType = TC.Consts.msgType.ERROR;
+                                    break;
+                                default:
+                                    errorMsg = self.parent.getLocaleString("wfsGFI." + error.key, error.params);
+                                    break;
+                            }
+
+                            map.toast(errorMsg, { type: errorType });
                         }
-                        targetServices.push(arguments[i].service);
-                        defer.resolve();
-                        continue;
+                        if (!arguments[i].response) {
+                            arrDeferred[arrDeferred.length - 1].resolve();
+                            continue;
+                        }
                     }
-                    var featuresFound = readFeaturesFromResponse(map, arguments[i].response[0], arguments[i].response[2]);
+
+                    // Puede no haber response porque la URL no es correcta, metemos un condicional
+                    var featuresFound = arguments[i].response ? readFeaturesFromResponse(map, arguments[i].response[0], arguments[i].response[2]) : [];
                     //ahora se distribuye la features por servicio y capa
-                    arrDeferred[arrDeferred.length] = funcionQueDistribuyeFeaturesPorServicios(featuresFound, arguments[i].service);
-                    targetServices.push(arguments[i].service)
-                    for (var j = 0; j < arguments[i].service.layers.length; j++)
-                        featureCount = featureCount + featuresFound.length;
+                    arrDeferred[arrDeferred.length - 1] = featureToServiceDistributor(featuresFound, arguments[i].service);
+                    targetServices.push(arguments[i].service);
+                    featureCount = featureCount + featuresFound.length;
                 }
                 $.when.apply($, arrDeferred).then(function () {
-                    if (!featureCount && !hayError) {
-                        map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, {
-                            xy: xy, control: self.parent
-                        }));
-                    }
-                    else {
-                        map.$events.trigger($.Event(TC.Consts.event.FEATUREINFO, {
-                            xy: xy || null, services: targetServices, featureCount: featureCount, control: self.parent
-                        }));
-                    }
+                    self.parent.responseCallback({
+                        xy: xy || null, services: targetServices, featureCount: featureCount
+                    });
                 });
             }, function (e) {
-                map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, {
-                    xy: xy, control: self.parent
-                }));
+                self.parent.responseCallback({});
             })
         });
     };
@@ -5983,6 +6390,7 @@
         }
         self.feature._wrap = self;
         self.feature.setStyle(createNativeStyle({ styles: { point: options } }, self.feature));
+        self.setData(self.parent.data);
     };
 
     TC.wrap.Feature.prototype.createMarker = function (coords, options) {
@@ -6000,6 +6408,7 @@
             }
             self.feature._wrap = self;
             self.feature.setStyle(createNativeStyle({ styles: { marker: options } }, self.feature));
+            self.setData(self.parent.data);
         }
         else {
             self.createPoint(coords, options);
@@ -6020,6 +6429,7 @@
         if (options) {
             self.feature.setStyle(createNativeStyle({ styles: { line: options } }, self.feature));
         }
+        self.setData(self.parent.data);
     };
 
     TC.wrap.Feature.prototype.createPolygon = function (coords, options) {
@@ -6058,6 +6468,7 @@
         if (opts.strokeColor || opts.strokeWidth || opts.fillColor || opts.fillOpacity) {
             self.feature.setStyle(createNativeStyle({ styles: { polygon: opts } }, self.feature));
         }
+        self.setData(self.parent.data);
     };
 
 
@@ -6086,6 +6497,7 @@
         if (options) {
             self.feature.setStyle(createNativeStyle({ styles: { line: options } }, self.feature));
         }
+        self.setData(self.parent.data);
     };
 
     TC.wrap.Feature.prototype.createMultiPolygon = function (coords, options) {
@@ -6133,6 +6545,7 @@
         if (opts.strokeColor || opts.strokeWidth || opts.fillColor || opts.fillOpacity) {
             self.feature.setStyle(createNativeStyle({ styles: { polygon: opts } }, self.feature));
         }
+        self.setData(self.parent.data);
     };
 
     TC.wrap.Feature.prototype.createCircle = function (coords, options) {
@@ -6171,9 +6584,10 @@
                 })
             );
         }
+        self.setData(self.parent.data);
     };
 
-    TC.wrap.Feature.createFeature = function (olFeat) {
+    TC.wrap.Feature.createFeature = function (olFeat, opts) {
         var result = new $.Deferred();
         var olGeometry = olFeat.getGeometry();
         var options = {
@@ -6215,8 +6629,8 @@
         }
         if (geomStr) {
             TC.loadJS(
-        !TC.feature || (TC.feature && !TC.feature[geomStr]),
-        [TC.apiLocation + 'TC/feature/' + geomStr],
+                !TC.feature || (TC.feature && !TC.feature[geomStr]),
+                [TC.apiLocation + 'TC/feature/' + geomStr],
                 function () {
                     var feat = new TC.feature[geomStr](olFeat, options);
                     feat.data = feat.wrap.getData();
@@ -6406,6 +6820,7 @@
         var geom = olFeat.getGeometry();
         if (geom instanceof ol.geom.Point) {
             var imageOptions;
+            var labelOptions;
             if (options.anchor) { // Marcador
                 var styleIcon = {
                     anchor: getStyleValue(options.anchor, feature),
@@ -6420,7 +6835,7 @@
             else { // Punto sin icono
                 var circleOptions = {
                     radius: getStyleValue(options.radius, feature) ||
-                (getStyleValue(options.height, feature) + getStyleValue(options.width, feature)) / 4
+                    (getStyleValue(options.height, feature) + getStyleValue(options.width, feature)) / 4
                 };
                 if (options.fillColor) {
                     circleOptions.fill = new ol.style.Fill({
@@ -6438,9 +6853,16 @@
                 if (!isNaN(circleOptions.radius))
                     imageOptions = new ol.style.Circle(circleOptions);
             }
-            olFeat.setStyle(new ol.style.Style({
-                image: imageOptions
-            }));
+            var styles = olFeat.getStyle();
+            if (styles instanceof Array && styles.length > 0) {
+                var style = styles[0];
+                style.setImage(imageOptions);
+                style.setText(new ol.style.Text({ text: options.label }));
+            } else {
+                olFeat.setStyle(new ol.style.Style({
+                    image: imageOptions
+                }));
+            }
         }
         else if (geom instanceof ol.geom.LineString || geom instanceof ol.geom.MultiLineString) {
             olFeat.setStyle(new ol.style.Style({
@@ -6463,6 +6885,8 @@
                 })
             }));
         }
+
+        olFeat.changed();
     };
 
     TC.wrap.Feature.prototype.getInnerPoint = function (options) {
@@ -6555,7 +6979,7 @@
                 self._innerCentroid = self.getInnerPoint({ clipBox: currentExtent });
 
                 popupCtl.$contentDiv.html(self.parent.getInfo());
-                if (popupCtl.options.closeButton) {
+                if (popupCtl.options.closeButton || popupCtl.options.closeButton === undefined) {
                     var n = popupCtl.$popupDiv.find("." + popupCtl.CLASS + '-close').length;
                     if (n == 0) {
                         var $btn = $('<div>').addClass(popupCtl.CLASS + '-close').attr('title', popupCtl.getLocaleString('close')).appendTo(popupCtl.$popupDiv);
@@ -6727,21 +7151,24 @@
 
     TC.wrap.control.Draw.prototype.getMeasureData = function () {
         var self = this;
+
         var formatLength = function (line, data) {
+            line = new ol.geom.LineString(TC.Util.reproject(line.getCoordinates(), self.parent.map.crs, self.parent.map.options.utmCrs));
             data.length = line.getLength();
-            data.units = self.units;
-            if (data.length > 100 && self.units === ol.proj.Units.METERS) {
+            data.units = ol.proj.Units.METERS;
+            if (data.length > 100) {
                 data.length = data.length / 1000;
                 data.units = 'km';
             }
         };
 
         var formatArea = function (polygon, data) {
+            polygon = new ol.geom.Polygon([TC.Util.reproject(polygon.getLinearRing(0).getCoordinates(), self.parent.map.crs, self.parent.map.options.utmCrs)]);
             data.area = polygon.getArea();
             var ring = polygon.getLinearRing(0);
             data.perimeter = ol.geom.flat.length.linearRing(ring.flatCoordinates, 0, ring.flatCoordinates.length, ring.stride);
-            data.units = self.units;
-            if (data.area > 10000 && self.units === ol.proj.Units.METERS) {
+            data.units = ol.proj.Units.METERS;
+            if (data.area > 10000) {
                 data.area = data.area / 1000000;
                 data.perimeter = data.perimeter / 1000;
                 data.units = 'km';
@@ -6780,7 +7207,6 @@
         }
         if (self.parent.map) {
             $.when(self.parent.map.wrap.getMap(), self.parent.getLayer()).then(function (olMap, layer) {
-                self.units = olMap.getView().getProjection().getUnits();
                 $.when(layer && layer.wrap.getLayer()).then(function (olLayer) {
 
                     if (!self.$viewport) self.$viewport = $(olMap.getViewport());
@@ -6791,8 +7217,8 @@
                             .off(TC.Consts.event.CLICK, self.clickHandler)
                         if (self.parent.measure)
                             self.$viewport
-                            .off(MOUSEMOVE + '.draw', self.mouseMoveHandler)
-                            .off(MOUSEOVER, self.mouseOverHandler);
+                                .off(MOUSEMOVE + '.draw', self.mouseMoveHandler)
+                                .off(MOUSEOVER, self.mouseOverHandler);
                     }
 
                     if (self.snapInteraction) {
@@ -6804,8 +7230,8 @@
                             .on(TC.Consts.event.CLICK, self, self.clickHandler)
                         if (self.parent.measure)
                             self.$viewport
-                            .on(MOUSEMOVE + '.draw', self, self.mouseMoveHandler)
-                            .on(MOUSEOVER, self, self.mouseOverHandler);
+                                .on(MOUSEMOVE + '.draw', self, self.mouseMoveHandler)
+                                .on(MOUSEOVER, self, self.mouseOverHandler);
 
                         var drawOptions = {
                             type: type,
@@ -6847,7 +7273,7 @@
                                 var start = coordinates[0];
                                 var end = coordinates[1];
                                 geometry.setCoordinates([
-                                  [start, [start[0], end[1]], end, [end[0], start[1]], start]
+                                    [start, [start[0], end[1]], end, [end[0], start[1]], start]
                                 ]);
                                 return geometry;
                             };
@@ -7346,18 +7772,60 @@
             });
         }
     };
-    
+
     //TC.wrap.control.Edit.prototype.clearSession = function () {
     //    var self = this;
     //    delete self.session;
     //};
 
-    TC.wrap.Feature.prototype.toGML = function (version,srsName) {
-        var parser = new ol.format.GML()
+    TC.wrap.Feature.prototype.toGML = function (version, srsName) {
+        var parser = new ol.format.GML();
         var xml = parser.writeGeometryNode(this.feature.getGeometry());
-        return new XMLSerializer().serializeToString(xml.firstChild);
+        //reemplazo todos los <loquesea por <gml:loquesea y </loquesea por </gml:loquesea
+        return new XMLSerializer().serializeToString(xml.firstChild).replace(/\<\/?\w/gm, function (str) { var pos = str.indexOf("/") > 0 ? str.indexOf("/") + 1 : 1; return str.substring(0, pos) + "gml:" + str.substring(pos) })
+        //return new XMLSerializer().serializeToString(xml.firstChild).replace(/\</gm, "<gml:");
     };
 
+
+    TC.wrap.Feature.prototype.toGeoJSON = function () {
+        var parser = new ol.format.GeoJSON();
+        return parser.writeGeometry(this.feature.getGeometry());
+    };
+
+    TC.wrap.Geometry.write = function (options) {
+        options = options || {};
+        var geometry;
+        switch (options.format) {
+            default:
+                options.parser = new ol.format.GeoJSON();
+        };
+        switch (options.type) {
+            case TC.Consts.geom.POLYLINE:
+                geometry = new ol.geom.LineString(options.coordinates);
+                break;
+            case TC.Consts.geom.POLYGON:
+                geometry = new ol.geom.Polygon(options.coordinates);
+                break;
+            case TC.Consts.geom.MULTIPOINT:
+                geometry = new ol.geom.MultiPoint(options.coordinates);
+                break;
+            case TC.Consts.geom.MULTIPOLYLINE:
+                geometry = new ol.geom.MultiLineString(options.coordinates);
+                break;
+            case TC.Consts.geom.MULTIPOLYGON:
+                geometry = new ol.geom.MultiPolygon(options.coordinates);
+                break;
+            case TC.Consts.geom.POINT:
+            default:
+                geometry = new ol.geom.Point(options.coordinates);
+                break;
+        };
+        return options.parser.writeGeometry(geometry);
+    };
+
+    TC.wrap.Geometry.toGeoJSON = function (options) {
+        return TC.wrap.Geometry.write(options);
+    };
 
     return ol;
 });
