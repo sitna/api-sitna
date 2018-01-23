@@ -22,6 +22,8 @@
      * @param {array} [options.workLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como contenido del mapa. 
      * @param {TC.cfg.MapControlOptions} [options.controls] Opciones de controles de mapa.
      * @param {TC.cfg.StyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
+     * @param {string} [options.locale="es-ES"] Código de idioma de la interfaz de usuario. Este código debe ser obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
+     * Los valores posibles son <code>es-ES</code>, <code>eu-ES</code> y <code>en-US</code>.
      * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver TC.Cfg.{{#crossLink "TC.Cfg/proxy:property"}}{{/crossLink}}).
      * @example
      *     <div id="mapa"/>
@@ -69,8 +71,116 @@
      *         });
      *     </script>
      */
-    var pendingLayers = [];
-    var pendingLayerCallbacks = [];
+
+    const getReduceByBooleanFunction = function (prop) {
+        return function (prev, cur, idx) {
+            return cur[prop] ? idx : prev;
+        };
+    };
+    const getReduceByIdFunction = function (id) {
+        return function (prev, cur, idx, arr) {
+            return cur.id === id ? idx : prev;
+        };
+    };
+    const layerBuffer = {
+        layers: [],
+        contains: function (id) {
+            return this.layers.some(function (l) {
+                return l.id === id;
+            });
+        },
+        getIndex: function (id) {
+            return this.layers.reduce(getReduceByIdFunction(id), -1);
+        },
+        add: function (id, deferred, isRaster, isBase) {
+            var idx;
+            const obj = {
+                id: id,
+                deferred: deferred,
+                isRaster: isRaster,
+                isBase: isBase
+            };
+            if (isRaster) {
+                idx = layerBuffer.getRasterIndex();
+                this.layers.splice(idx, 0, obj);
+            }
+            else {
+                idx = this.layers.length;
+                this.layers[idx] = obj;
+            }
+        },
+        remove: function (id) {
+            this.layers.splice(this.getIndex(id), 1);
+        },
+        getMapLayers: function () {
+            return this.layers
+                .filter(function (l) {
+                    return l.deferred.state() === 'resolved';
+                })
+                .map(function (l) {
+                    return l.mapLayer;
+                });
+        },
+        resolve: function (map, layer, isBase) {
+            this.layers[this.getIndex(layer.id)].mapLayer = layer;
+            map.layers = this.getMapLayers();
+            if (isBase) {
+                map.baseLayers = map.layers.filter(function (l) {
+                    return l.isBase;
+                });
+            }
+            else {
+                map.workLayers = map.layers.filter(function (l) {
+                    return !l.isBase;
+                });
+            }
+        },
+        getResolvedWorkLayerIndex: function (map, id) {
+            return this.layers.filter(function (l) {
+                return l.id === id || (!l.isBase && l.deferred.state() !== 'pending');
+            }).reduce(getReduceByIdFunction(id), - 1);
+        },
+        getResolvedVisibleLayerIndex: function (map, id) {
+            var index = this.getResolvedWorkLayerIndex(map, id);
+            if (map.baseLayer) {
+                index = index + 1;
+            }
+            return index;
+        },
+        getRasterIndex: function () {
+            return this.layers.reduce(getReduceByBooleanFunction('isRaster'), -1) + 1;
+        },
+        checkMapLoad: function (map) {
+            const self = this;
+            if (map.options.baseLayers
+                .concat(map.options.workLayers)
+                .every(function (l) {
+                    return self.contains(l.id || l);
+                }) && // Si ya se han empezado a procesar todas las capas de las opciones
+                !this.layers.some(function (layer) {
+                return layer.deferred.state() === 'pending'; // Si ya se han terminado de procesar
+            })) {
+                // Gestionamos el final de la carga del mapa
+                // If no base layer set, set the first one that is not disabled
+                if (!map.baseLayer) {
+                    map.wrap.setBaseLayer(map.baseLayers.filter(function (layer) {
+                        return !layer.mustReproject;
+                    })[0].wrap.getLayer());
+                }
+                if (!map.isLoaded) {
+                    map.isLoaded = true;
+                    map.$events.trigger($.Event(TC.Consts.event.MAPLOAD));
+                    map._$div.removeClass(TC.Consts.classes.LOADING);
+                }
+            }
+        }
+    };
+
+    const getAvailableBaseLayer = function (id) {
+        return TC.Cfg.availableBaseLayers.filter(function (abl) {
+            return abl.id === id;
+        })[0];
+    }
 
     TC.Map = TC.Map || function (div, options) {
         ///<summary>
@@ -233,14 +343,22 @@
             TC.Cfg = $.extend({}, TC.Defaults, TC.Cfg);
             TC.ready = true;
         }
+
+        // GLS: mergeOptions es inclusivo, para poder sobrescribir los tipos de búsqueda, añado con valor a false las que el usuario no haya configurado.
+        if (options && options.controls && options.controls.search && options.controls.search.allowedSearchTypes) {
+            for (var allowed in TC.Cfg.controls.search.allowedSearchTypes) {
+                if (!options.controls.search.allowedSearchTypes.hasOwnProperty(allowed)) {
+                    options.controls.search.allowedSearchTypes[allowed] = false;
+                }
+            }
+        }
+
         /**
          * Objeto de opciones del constructor.
          * @property options
          * @type object
          */
         self.options = mergeOptions(options);
-
-        self._remainingLayers = 0;
 
         var init = function () {
             if (self.options.stateful) {
@@ -259,8 +377,6 @@
                 self.options.baseLayers = options.baseLayers;
             }
 
-            self._remainingLayers = self.options.baseLayers.length + self.options.workLayers.length;
-
             if (self.options.zoomToFeatures) {
                 // zoom a features solo cuando se cargue el mapa
                 var handleFeaturesAdd = function handleFeaturesAdd(e) {
@@ -277,7 +393,17 @@
                 var _handleLayerAdd = function _handleLayerAdd(e) {
                     if (e.layer.isBase && e.layer === self.baseLayer) {
                         if (typeof self.state !== "undefined") {
-                            self.setExtent(self.state.ext);
+                            if (self.state.crs) {
+                                self.loaded(function () {
+                                    self.setProjection({
+                                        crs: self.state.crs,
+                                        extent: self.state.ext
+                                    });
+                                });
+                            }
+                            else {
+                                self.setExtent(self.state.ext);
+                            }
                         }
                         self.off(TC.Consts.event.LAYERADD, _handleLayerAdd);
                     }
@@ -291,6 +417,8 @@
              * @type string
              */
             self.crs = self.options.crs;
+            self.initialExtent = self.options.initialExtent;
+            self.maxExtent = self.options.maxExtent;
 
             self.wrap = new TC.wrap.Map(self);
 
@@ -307,113 +435,109 @@
                             TC.url.olConnector
                         ],
                         function () {
-                            TC.loadProjDef(self.options.crs, function () {
-                                self.wrap.setMap();
-                                for (var name in self.options.controls) {
-                                    if (self.options.controls[name]) {
+                            TC.loadProjDef({
+                                crs: self.options.crs,
+                                callback: function () {
+                                    self.wrap.setMap();
+                                    for (var name in self.options.controls) {
+                                        if (self.options.controls[name]) {
 
-                                        if (typeof self.options.controls[name] === 'boolean') {
-                                            self.addControl(name);
-                                        }
-                                        else {
-                                            var options = self.options.controls[name];
-                                            name = name.substr(0, 1).toUpperCase() + name.substr(1);
-                                            self.addControl(name, options);
-                                        }
-                                    }
-                                }
-
-                                self.on(TC.Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
-                                self.on(TC.Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
-
-                                var i;
-                                var j;
-                                var lyrCfg;
-                                for (i = 0; i < self.options.baseLayers.length; i++) {
-                                    lyrCfg = self.options.baseLayers[i];
-                                    if (typeof lyrCfg === 'string') {
-                                        for (j = 0; j < TC.Cfg.availableBaseLayers.length; j++) {
-                                            if (TC.Cfg.availableBaseLayers[j].id === lyrCfg) {
-                                                lyrCfg = TC.Cfg.availableBaseLayers[j];
-                                                break;
+                                            if (typeof self.options.controls[name] === 'boolean') {
+                                                self.addControl(name);
                                             }
-                                        }
-                                    }
-                                    self.addLayer($.extend({}, lyrCfg, { isBase: true, map: self }));
-                                }
-
-                                var setVisibility = function (layer) {
-                                    if (layer.isRaster() && !layer.names) {
-                                        layer.setVisibility(false);
-                                    }
-                                };
-                                for (i = 0; i < self.options.workLayers.length; i++) {
-                                    var layerDeleted = false;
-
-                                    lyrCfg = $.extend({}, self.options.workLayers[i], { map: self });
-
-                                    if (self.state) {
-                                        if (lyrCfg.type !== TC.Consts.layerType.VECTOR) {
-
-                                            for (var i = 0; i < self.state.layers.length; i++) {
-                                                var _layer = self.state.layers[i];
-                                                if (_layer.u === lyrCfg.url && lyrCfg.layerNames.indexOf(_layer.n) >= 0) {
-                                                    lyrCfg.hideTitle = _layer.hideTitle;
-                                                    lyrCfg.renderOptions = {
-                                                        opacity: _layer.o,
-                                                        hide: !_layer.v
-                                                    };
-                                                    _layer.Added = true;
-                                                    break;
-                                                }
-                                                layerDeleted = true;
-                                                //reducimos el contador de capas cargadas para que el feedback que bloquea el mapa no se quede forever.
-                                                self._remainingLayers--;
+                                            else {
+                                                var options = self.options.controls[name];
+                                                name = name.substr(0, 1).toUpperCase() + name.substr(1);
+                                                self.addControl(name, options);
                                             }
                                         }
                                     }
 
-                                    if (!layerDeleted) {
-                                        $.when(self.addLayer(lyrCfg)).then(setVisibility);
+                                    self.on(TC.Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
+                                    self.on(TC.Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
+
+                                    var i;
+                                    var j;
+                                    var lyrCfg;
+                                    for (i = 0; i < self.options.baseLayers.length; i++) {
+                                        lyrCfg = self.options.baseLayers[i];
+                                        if (typeof lyrCfg === 'string') {
+                                            lyrCfg = getAvailableBaseLayer(lyrCfg);
+                                        }
+                                        self.addLayer($.extend({}, lyrCfg, { isBase: true, map: self }));
                                     }
-                                }
 
-                                if (self.state && self.state.layers) {
-                                    self.state.layers.forEach(function (capa) {
+                                    var setVisibility = function (layer) {
+                                        if (layer.isRaster() && !layer.names) {
+                                            layer.setVisibility(false);
+                                        }
+                                    };
+                                    for (i = 0; i < self.options.workLayers.length; i++) {
+                                        var layerDeleted = false;
 
-                                        if (!capa.Added) {
-                                            var op = capa.o;
-                                            var visibility = capa.v;
+                                        lyrCfg = $.extend({}, self.options.workLayers[i], { map: self });
 
-                                            // añado como promesa cada una de las capas que se añaden
-                                            self.addLayer({
-                                                id: TC.getUID(),
-                                                url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
-                                                hideTitle: capa.h,
-                                                layerNames: capa.n ? capa.n.split(',') : "",
-                                                renderOptions: {
-                                                    opacity: capa.o,
-                                                    hide: !capa.v
+                                        if (self.state) {
+                                            if (lyrCfg.type !== TC.Consts.layerType.VECTOR) {
+
+                                                for (var i = 0; i < self.state.layers.length; i++) {
+                                                    var _layer = self.state.layers[i];
+                                                    if (_layer.u === lyrCfg.url && lyrCfg.layerNames.indexOf(_layer.n) >= 0) {
+                                                        lyrCfg.hideTitle = _layer.hideTitle;
+                                                        lyrCfg.renderOptions = {
+                                                            opacity: _layer.o,
+                                                            hide: !_layer.v
+                                                        };
+                                                        _layer.Added = true;
+                                                        break;
+                                                    }
+                                                    layerDeleted = true;
                                                 }
-                                            }).then(function (layer) {
-                                                layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
-                                                    var layer = this.parent;
-                                                    if (event.error.code === 401 || event.error.code === 403)
-                                                        layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
-                                                    layer.map.removeLayer(layer);
+                                            }
+                                        }
+
+                                        if (!layerDeleted) {
+                                            self.addLayer(lyrCfg).then(setVisibility);
+                                        }
+                                    }
+
+                                    if (self.state && self.state.layers) {
+                                        self.state.layers.forEach(function (capa) {
+
+                                            if (!capa.Added) {
+                                                var op = capa.o;
+                                                var visibility = capa.v;
+
+                                                // añado como promesa cada una de las capas que se añaden
+                                                self.addLayer({
+                                                    id: TC.getUID(),
+                                                    url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
+                                                    hideTitle: capa.h,
+                                                    layerNames: capa.n ? capa.n.split(',') : "",
+                                                    renderOptions: {
+                                                        opacity: capa.o,
+                                                        hide: !capa.v
+                                                    }
+                                                }).then(function (layer) {
+                                                    layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
+                                                        var layer = this.parent;
+                                                        if (event.error.code === 401 || event.error.code === 403)
+                                                            layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
+                                                        layer.map.removeLayer(layer);
+                                                    });
+                                                    var rootNode = layer.wrap.getRootLayerNode();
+                                                    layer.title = rootNode.Title || rootNode.title;
+                                                    layer.setOpacity(op);
+                                                    layer.setVisibility(visibility);
                                                 });
-                                                var rootNode = layer.wrap.getRootLayerNode();
-                                                layer.title = rootNode.Title || rootNode.title;
-                                                layer.setOpacity(op);
-                                                layer.setVisibility(visibility);
-                                            });
-                                        }
-                                    });
+                                            }
+                                        });
+                                    }
+                                    self.isReady = true;
+                                    self.$events.trigger($.Event(TC.Consts.event.MAPREADY));
+                                    setHeightFix(self._$div);
                                 }
-                                self.isReady = true;
-                                self.$events.trigger($.Event(TC.Consts.event.MAPREADY));
                             });
-
                         }
                     );
                 }
@@ -453,13 +577,6 @@
                 }
             });
         };
-
-        self.one(TC.Consts.event.MAPREADY, function () {
-            setHeightFix(self._$div);
-        });
-        self.one(TC.Consts.event.MAPLOAD, function () {
-            self._$div.removeClass(TC.Consts.classes.LOADING);
-        });
 
         var _setupStateControl = function () {
             var MIN_TIMEOUT_VALUE = 4;
@@ -570,6 +687,10 @@
         var _getMapState = function () {
             var state = {};
 
+            if (self.crs !== self.options.crs) {
+                state.crs = self.crs;
+            }
+
             var ext = self.getExtent();
             for (var i = 0; i < ext.length; i++) {
                 if (Math.abs(ext[i]) > 180)
@@ -611,7 +732,7 @@
 
             var layersToRemove = [];
             self.workLayers.forEach(function (layer) {
-                if (layer.type != "vector") {
+                if (!(layer instanceof (TC.layer.Vector))) {
                     layersToRemove.push(layer);
                 }
             });
@@ -660,10 +781,27 @@
             if (obj) {
 
                 //capa base
-                if (obj.base != self.getBaseLayer().id) self.setBaseLayer(obj.base);
+                if (obj.base != self.getBaseLayer().id) {
+                    if (self.getLayer(obj.base)) {
+                        self.setBaseLayer(obj.base);
+                    }
+                    const firstOption = self.baseLayers.filter(function (baseLayer) {
+                        return baseLayer.fallbackLayer === obj.base;
+                    })[0];
+                    self.addLayer(firstOption.getFallbackLayer()).then(function (newLayer) {
+                            self.setBaseLayer(newLayer);
+                        });
+                }
 
                 //extent
-                if (obj.ext) promises.push(self.setExtent(obj.ext));
+                if (obj.ext) {
+                    if (obj.crs && obj.crs !== self.crs) {
+                        promises.push(self.setProjection({ crs: obj.crs || self.options.crs, extent: obj.ext }));
+                    }
+                    else {
+                        promises.push(self.setExtent(obj.ext));
+                    }
+                }
 
                 //capas cargadas        
                 //borrar primero
@@ -681,15 +819,13 @@
                         for (j = 0; j < self.options.workLayers.length; j++) {
                             var lyrCfg = $.extend({}, self.options.workLayers[j], { map: self });
 
-                            if (lyrCfg.type !== TC.Consts.layerType.VECTOR) {
-
-                                if (capa.u === lyrCfg.url && lyrCfg.layerNames.indexOf(capa.n)) {
-                                    layerInConfig = true;
-                                    lyrCfg.renderOptions.opacity = capa.o;
-                                    lyrCfg.renderOptions.hide = !capa.v;
-                                    promises.push(self.addLayer(lyrCfg).then(setVisibility));
-                                    break;
-                                }
+                            if (capa.u === lyrCfg.url && lyrCfg.layerNames.indexOf(capa.n) >= 0) {
+                                layerInConfig = true;
+                                lyrCfg.renderOptions = { "opacity": capa.o, "hide": !capa.v };
+                                promises.push(self.addLayer(lyrCfg).then(function (layer) {
+                                    layer.setVisibility(visibility);
+                                    layer.setOpacity(op, true);
+                                }));
                             }
                         }
 
@@ -716,7 +852,7 @@
                     }
                 }
 
-                $.when.apply($, promises).done(function () {
+                $.when.apply($, promises).always(function () {
                     resolved();
                 });
             }
@@ -769,16 +905,16 @@
                         obj.layers = [];
                     }
                     else {
-                        for (var i = obj.layers.length-1; i >=0; i--) {
-                            if (!obj.layers[i] || !obj.layers[i].hasOwnProperty("u") || !obj.layers[i].hasOwnProperty("n")) { 
+                        for (var i = obj.layers.length - 1; i >= 0; i--) {
+                            if (!obj.layers[i] || !obj.layers[i].hasOwnProperty("u") || !obj.layers[i].hasOwnProperty("n")) {
                                 inValidState = true;
                                 obj.layers.length = obj.layers.length - 1;
                                 continue;
                             }
                             else if (!obj.layers[i].hasOwnProperty("o") || !obj.layers[i].hasOwnProperty("v") || !obj.layers[i].hasOwnProperty("h")) {
-                                inValidState=true
-                                jQuery.extend(obj.layers[i],{ 
-                                    o:(obj.layers[i].o || 1),
+                                inValidState = true
+                                jQuery.extend(obj.layers[i], {
+                                    o: (obj.layers[i].o || 1),
                                     v: (obj.layers[i].v || true),
                                     h: (obj.layers[i].h || false)
                                 });
@@ -818,10 +954,10 @@
         };
 
         var buildLayout = function (layout) {
-            var defered = $.Deferred();
+            var deferred = $.Deferred();
 
             if (typeof (layout) === 'string') {
-                var layoutName = layout;
+                var layoutPath = layout;
 
                 var tryGetFile = function (url, resource) {
                     var defer = $.Deferred();
@@ -838,30 +974,30 @@
                     return defer.promise();
                 };
 
-                var isAbsoluteUrl = /^(https?:)?\/\//i.test(layoutName);
+                var isAbsoluteUrl = /^(https?:)?\/\//i.test(layoutPath);
 
                 var getFileFromAvailableLocation = function (key, fileName) {
-                    var defered = $.Deferred();
+                    var deferred = $.Deferred();
 
                     // 1. Buscamos en un layout local
                     // 2. Buscamos en un layout en el API con el mismo nombre
                     // 3. Buscamos en el layout responsive del API
                     var urlsToQuery = [
-                        layoutUrl + layoutName + '/' + fileName,
-                        apiLayoutUrl + layoutName + '/' + fileName,
-                        apiLayoutUrl + 'responsive' + '/' + fileName
+                        layoutPath + '/' + fileName,
+                        apiTcUrl + layoutPath + '/' + fileName,
+                        apiTcUrl + 'layout/responsive' + '/' + fileName
                     ];
 
                     // flacunza: si la URL tiene pinta de ser absoluta es ella sola la más probable, así que la ponemos la primera
                     if (isAbsoluteUrl) {
-                        urlsToQuery.unshift(layoutName + '/' + fileName);
+                        urlsToQuery.unshift(layoutPath + '/' + fileName);
                     }
 
                     var i = 0;
                     (function iterate(pos) {
                         tryGetFile(urlsToQuery[pos], key).done(function (result) {
                             if (result.found) {
-                                defered.resolve(addFileToLayout(layout, result));
+                                deferred.resolve(addFileToLayout(layout, result));
                             } else {
                                 iterate(++pos);
                             }
@@ -869,14 +1005,14 @@
                     })(i);
 
 
-                    return defered.promise();
+                    return deferred.promise();
                 };
 
                 var addFileToLayout = function (layout, data) {
                     if (!(data.resource in layout)) {
                         var aux = $.extend(true, {}, layout);
 
-                        var resourceUrl = (data.found ? data.url : apiLayoutUrl + layoutName + '/' + layoutFiles[data.resource]);
+                        var resourceUrl = (data.found ? data.url : apiTcUrl + layoutPath + '/' + layoutFiles[data.resource]);
                         layout[data.resource] = resourceUrl;
                     }
 
@@ -884,11 +1020,10 @@
                 };
 
                 //buscamos el parámetro layout en la url del navegador
-                var apiLayoutUrl = TC.apiLocation + 'TC/layout/';
-                var layoutUrl = 'layout/';
-                var defaultLayout = 'idena';
+                var apiTcUrl = TC.apiLocation + 'TC/';
+                //var defaultLayout = 'idena';
                 var layout = {};
-                //var layoutName = idena.layout ? idena.layout : defaultLayout;
+                //var layoutPath = idena.layout ? idena.layout : defaultLayout;
 
                 var layoutFiles = { script: 'script.js', style: 'style.css', markup: 'markup.html', config: 'config.json', i18n: 'resources' };
                 var layoutFilesLength = Object.keys(layoutFiles).length;
@@ -897,15 +1032,15 @@
                     getFileFromAvailableLocation(key, layoutFiles[key]).done(function (layout) {
                         //Cuando hayamos rellenado el objeto layout, finalizamos
                         if (Object.keys(layout).length === layoutFilesLength) {
-                            defered.resolve(layout);
+                            deferred.resolve(layout);
                         }
                     });
                 }
             } else {
-                defered.resolve(layout);
+                deferred.resolve(layout);
             }
 
-            return defered.promise();
+            return deferred.promise();
         };
 
 
@@ -1028,17 +1163,14 @@
                                     if (i18n && locale) {
                                         TC.i18n.loadResources(true, layoutURLs.i18n, locale).always(function () {
                                             var templateId = 'tc-markup';
-                                            dust.loadSource(dust.compile(data, templateId));
-                                            dust.render(templateId, null, function (err, out) {
-                                                if (err) {
-                                                    TC.error(err);
-                                                    markupDeferred.reject();
-                                                }
-                                                else {
-                                                    self._$div.append(out);
-                                                    markupDeferred.resolve();
-                                                }
-                                            });
+                                            var replacerFunction = function (str, match1, match2) {
+                                                return TC.Util.getLocaleString(locale, match1 || match2);
+                                            };
+                                            //data = data.replace(/\{\{([^\}\{]+)\}\}/g, replacerFunction); // Estilo {{key}}
+                                            //data = data.replace(/\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFunction); // Estilo {@i18n $key="key"/}
+                                            data = data.replace(/(?:\{\{([^\}\{]+)\}\}|\{@i18n \$key="([^\}\{]+)"\/\})/g, replacerFunction); // Ambos estilos anteriores
+                                            self._$div.append(data);
+                                            markupDeferred.resolve();
                                         });
                                     }
                                     else {
@@ -1160,9 +1292,7 @@
 
             for (var i = 0; i < layerOption['baseLayers'].length; i++) {
                 if (typeof layerOption['baseLayers'][i] === 'object') {
-                    $.extend(layerOption['baseLayers'][i], $.grep(TC.Cfg.availableBaseLayers, function (elm) {
-                        return elm.id === layerOption['baseLayers'][i].id;
-                    })[0]);
+                    $.extend(layerOption['baseLayers'][i], getAvailableBaseLayer(layerOption['baseLayers'][i].id));
                 }
             }
         } else {
@@ -1182,6 +1312,19 @@
 
     var mapProto = TC.Map.prototype;
 
+    var crsLayerError = function (map, layer) {
+        var errorMessage = 'Layer "' + layer.title + '" ("' + layer.names + '"): ';
+        var reason;
+        if (layer.isValidFromNames()) {
+            reason = 'layerSrsNotCompatible'
+        } else {
+            reason = 'layerNameNotValid';
+        }
+        errorMessage += TC.Util.getLocaleString(map.options.locale, reason);
+        TC.error(errorMessage);
+        map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: layer, reason: reason }));
+    };
+
     /**
      * Añade una capa al mapa.
      * @method addLayer
@@ -1191,51 +1334,33 @@
      * @return {jQuery.Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
      */
     mapProto.addLayer = function (layer, callback) {
-        var self = this;
+        const self = this;
 
-        var rasterLayer = isRaster(layer);
-        if (rasterLayer) {
-            var plIdx;
-            for (plIdx = 0, len = pendingLayers.length; plIdx < len; plIdx++) {
-                if (!isRaster(pendingLayers[plIdx])) {
-                    break;
-                }
-            }
-            pendingLayers.splice(plIdx, 0, layer);
-            pendingLayerCallbacks.splice(plIdx, 0, callback);
-        }
-        else {
-            pendingLayers.push(layer);
-            pendingLayerCallbacks.push(callback);
-        }
+        const layerDeferred = new $.Deferred();
 
-        var layerDeferred = new $.Deferred();
-        var getLayerId = function (l) {
-            return typeof l === 'string' ? l : l.id;
-        };
-        // Si está el mapa cargando miramos si esta no es una de las capas planeadas en workLayers y baseLayers
-        // Si es así, esperamos a esa también para que el mapa lance el evento MAPLOAD
-        var layerId = getLayerId(layer);
-        var layerFound = false;
-        for (var i = 0; i < self.options.baseLayers.length && !layerFound; i++) {
-            if (getLayerId(self.options.baseLayers[i]) === layerId) {
-                layerFound = true;
+        layerDeferred.then(function (l) {
+            layerBuffer.resolve(self, l, l.isBase);
+            self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
+            layerBuffer.checkMapLoad(self);
+            if ($.isFunction(callback)) {
+                callback(l);
             }
+        },
+        function (l) {
+            layerBuffer.checkMapLoad(self);
+        });
+
+        const isLayerRaster = isRaster(layer);
+        if (typeof layer === 'object' && !layer.id) {
+            layer.id = TC.getUID();
         }
-        for (var i = 0; i < self.options.workLayers.length && !layerFound; i++) {
-            if (getLayerId(self.options.workLayers[i]) === layerId) {
-                layerFound = true;
-            }
-        }
-        if (!layerFound && !self.isLoaded) {
-            self._remainingLayers = self._remainingLayers + 1;
-        }
+        layerBuffer.add(layer.id || layer, layerDeferred, isLayerRaster, layer.isBase);
 
         var lyr;
         var test;
         var objUrl;
 
-        if (rasterLayer) {
+        if (isLayerRaster) {
             test = !TC.layer || !TC.layer.Raster;
             objUrl = TC.apiLocation + 'TC/layer/Raster.js';
         }
@@ -1248,12 +1373,7 @@
             [objUrl],
             function () {
                 if (typeof layer === 'string') {
-                    for (var i = 0; i < TC.Cfg.availableBaseLayers.length; i++) {
-                        if (TC.Cfg.availableBaseLayers[i].id === layer) {
-                            lyr = new TC.layer.Raster($.extend({}, TC.Cfg.availableBaseLayers[i], { map: self }));
-                            break;
-                        }
-                    }
+                    lyr = new TC.layer.Raster($.extend({}, getAvailableBaseLayer(layer), { map: self }));
                 }
                 else {
                     if (layer instanceof TC.Layer) {
@@ -1271,88 +1391,81 @@
                     }
                 }
 
-                var iLayer = $.inArray(layer, pendingLayers);
-                if (iLayer < 0) iLayer = 0;
-                pendingLayers[iLayer] = lyr;
-                pendingLayerCallbacks[iLayer] = callback;
                 self.$events.trigger($.Event(TC.Consts.event.BEFORELAYERADD, { layer: lyr }));
 
                 $.when(self.wrap.getMap(), lyr.wrap.getLayer()).then(function () {
 
-                    var processedLayers = $.grep(pendingLayers, function (elm) {
-                        return elm.wrap && elm.wrap.isNative(elm.wrap.getLayer());
-                    });
-                    if (processedLayers.length === pendingLayers.length) {
-                        // All OpenLayers layers loaded, we can add to OpenLayers map. This is done to preserve layer order.
-                        var nPendingLayers = pendingLayers.length;
-                        for (var i = 0; i < nPendingLayers; i++) {
-                            var l = pendingLayers.shift();
-                            var c = pendingLayerCallbacks.shift();
-                            var idx = -1;
-                            // Nos aseguramos de que las capas raster se quedan por debajo de las vectoriales
-                            if (isRaster(l)) {
-                                idx = self.wrap.indexOfFirstVector();
-                            }
-                            if (idx === -1) {
-                                idx = self.wrap.getLayerCount();
-                            }
+                    // Nos aseguramos de que las capas raster se quedan por debajo de las vectoriales
+                    var idx;
+                    if (isRaster(lyr)) {
+                        idx = self.wrap.indexOfFirstVector();
+                    }
+                    if (idx === -1) {
+                        idx = self.wrap.getLayerCount();
+                    }
 
-                            if (l) {
-                                if (l.isCompatible(self.crs)) {
-                                    self.layers[self.layers.length] = l;
-                                    if (l.isBase) {
-                                        if (self.state) {
-                                            l.isDefault = self.state.base === l.id;
-                                        }
-                                        else if (typeof self.options.defaultBaseLayer === 'string') {
-                                            l.isDefault = self.options.defaultBaseLayer === l.id;
-                                        }
-                                        else if (typeof self.options.defaultBaseLayer === 'number') {
-                                            l.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
-                                        }
-                                        if (l.isDefault) {
-                                            self.wrap.setBaseLayer(l.wrap.getLayer());
-                                            self.baseLayer = l;
-                                        }
-                                        self.baseLayers[self.baseLayers.length] = l;
-                                        // If no base layer set, set the first one
-                                        if (self.options.baseLayers.length === self.baseLayers.length && !self.baseLayer) {
-                                            self.wrap.setBaseLayer(self.baseLayers[0].wrap.getLayer());
-                                        }
-                                    }
-                                    else {
-                                        self.wrap.insertLayer(l.wrap.getLayer(), idx);
-                                        self.workLayers[self.workLayers.length] = l;
-                                    }
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERADD, { layer: l }));
-                                    if ($.isFunction(c)) {
-                                        c(l);
-                                    }
-
+                    const currentCrs = self.state ? self.state.crs || self.crs : self.crs;
+                    const isCompatible = lyr.isCompatible(currentCrs);
+                    if (lyr.isBase) {
+                        if (!isCompatible) {
+                            if (!lyr.type === TC.Consts.layerType.WMTS) {
+                                lyr.mustReproject = true;
+                            }
+                            else {
+                                const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
+                                if (compatibleMatrixSet) {
+                                    lyr.wrap.setMatrixSet(compatibleMatrixSet);
                                 }
                                 else {
-                                    var errorMessage = 'Layer "' + l.title + '" ("' + l.names + '"): ';
-                                    var reason;
-                                    if (l.isValidFromNames()) {
-                                        reason = 'layerSrsNotCompatible'
-                                    } else {
-                                        reason = 'layerNameNotValid';
-                                    }
-                                    errorMessage += TC.Util.getLocaleString(self.options.locale, reason);
-                                    TC.error(errorMessage);
-                                    self.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: l, reason: reason }));
-                                }
-                            }
-                            self._remainingLayers = self._remainingLayers - 1;
-                            if (self._remainingLayers === 0) {
-                                if (!self.isLoaded) {
-                                    self.isLoaded = true;
-                                    self.$events.trigger($.Event(TC.Consts.event.MAPLOAD));
+                                    lyr.mustReproject = true;
                                 }
                             }
                         }
+                        if (self.state) {
+                            lyr.isDefault = (self.state.base === lyr.id) || (self.state.base === lyr.options.fallbackLayer);
+                        }
+                        else if (typeof self.options.defaultBaseLayer === 'string') {
+                            lyr.isDefault = self.options.defaultBaseLayer === lyr.id;
+                        }
+                        else if (typeof self.options.defaultBaseLayer === 'number') {
+                            lyr.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                        }
+                        if (lyr.isDefault) {
+                            if (lyr.mustReproject) {
+                                if (lyr.options.fallbackLayer) {
+                                    self.addLayer($.extend({},
+                                        getAvailableBaseLayer(lyr.options.fallbackLayer), {
+                                            isBase: true,
+                                            map: self,
+                                            stealth: true,
+                                            firstOption: lyr
+                                        })).then(function (fbLayer) {
+                                        self.wrap.setBaseLayer(fbLayer.wrap.getLayer());
+                                    });
+                                }
+                                else {
+                                    crsLayerError(self, lyr);
+                                    layerDeferred.reject(layer);
+                                }
+                            }
+                            else {
+                                self.wrap.setBaseLayer(lyr.wrap.getLayer());
+                                self.baseLayer = lyr;
+                            }
+                        }
+                        //self.baseLayers[self.baseLayers.length] = lyr;
+                        layerDeferred.resolve(lyr);
                     }
-                    layerDeferred.resolve(lyr);
+                    else {
+                        if (isCompatible) {
+                            self.wrap.insertLayer(lyr.wrap.getLayer(), layerBuffer.getResolvedVisibleLayerIndex(self, lyr.id));
+                            layerDeferred.resolve(lyr);
+                        }
+                        else {
+                            crsLayerError(self, lyr);
+                            layerDeferred.reject(layer);
+                        }
+                    }
                 });
             }
         );
@@ -1393,7 +1506,9 @@
                 }
             }
             self.wrap.removeLayer(olLayer);
+            layerBuffer.remove(layer.id);
             self.$events.trigger($.Event(TC.Consts.event.LAYERREMOVE, { layer: layer }));
+            layerBuffer.checkMapLoad(self);
             result.resolve(layer);
         });
 
@@ -1432,7 +1547,7 @@
                     self.layers.splice(beforeIdx, 1);
                 }
                 self.layers.splice(idx, 0, layer);
-                self.workLayers = $.grep(self.layers, function (elm) {
+                self.workLayers = self.layers.filter(function (elm) {
                     return !elm.isBase;
                 });
                 self.$events.trigger($.Event(TC.Consts.event.LAYERORDER, { layer: layer, oldIndex: beforeIdx, newIndex: idx }));
@@ -1472,12 +1587,10 @@
                 }
             }
             if (!found) {
-                for (i = 0; i < TC.Cfg.availableBaseLayers.length; i++) {
-                    if (TC.Cfg.availableBaseLayers[i].id === layer) {
-                        layer = self.addLayer($.extend(true, {}, TC.Cfg.availableBaseLayers[i], { isDefault: true, map: self }));
-                        found = true;
-                        break;
-                    }
+                layer = getAvailableBaseLayer(layer);
+                if (layer) {
+                    layer = self.addLayer($.extend(true, {}, layer, { isDefault: true, map: self }));
+                    found = true;
                 }
             }
         }
@@ -1488,20 +1601,25 @@
             TC.error('Base layer is not in layers collection');
         }
         else {
-            self.$events.trigger($.Event(TC.Consts.event.BEFOREBASELAYERCHANGE, { oldLayer: self.getBaseLayer(), newLayer: layer }));
+            if (layer.mustReproject) {
+                TC.error('Base layer must be reprojected');
+            }
+            else {
+                self.$events.trigger($.Event(TC.Consts.event.BEFOREBASELAYERCHANGE, { oldLayer: self.getBaseLayer(), newLayer: layer }));
 
-            result = layer;
-            $.when(self.wrap.getMap(), layer).then(function (olMap, lyr) {
-                $.when(lyr.wrap.getLayer()).then(function (olLayer) {
-                    self.wrap.setBaseLayer(olLayer).then(function () {
-                        self.baseLayer = lyr;
-                        self.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: lyr }));
-                        if ($.isFunction(callback)) {
-                            callback();
-                        }
+                result = layer;
+                $.when(self.wrap.getMap(), layer).then(function (olMap, lyr) {
+                    $.when(lyr.wrap.getLayer()).then(function (olLayer) {
+                        self.wrap.setBaseLayer(olLayer).then(function () {
+                            self.baseLayer = lyr;
+                            self.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: lyr }));
+                            if ($.isFunction(callback)) {
+                                callback();
+                            }
+                        });
                     });
                 });
-            });
+            }
         }
         return result;
     };
@@ -1723,7 +1841,7 @@
      * @param {boolean} [options.animate=true] Establece si se realiza una animación al centrar.
      */
     mapProto.setCenter = function (coord, options) {
-        this.wrap.setCenter(coord, options);
+        return this.wrap.setCenter(coord, options);
     };
 
     mapProto.getCenter = function () {
@@ -1740,6 +1858,115 @@
 
     mapProto.getViewHTML = function () {
         return this.wrap.getViewport();
+    };
+
+
+    mapProto.getCRSList = function (options) {
+        const self = this;
+        options = options || {};
+        const layers = options.layers || self.workLayers.concat(self.baseLayer);
+        const crsLists = layers
+            .filter(function (layer) {
+                return layer.isRaster();
+            }) // capas raster
+            .map(function (layer) {
+                return layer.getCompatibleCRS({ normalized: true, includeFallback: options.includeFallbacks });
+            });
+        const otherCrsLists = crsLists.slice(1);
+        return crsLists[0].filter(function (elm) {
+            return otherCrsLists.every(function (crsList) {
+                return crsList.indexOf(elm) >= 0;
+            });
+        });
+    };
+
+    mapProto.loadProjections = function (options) {
+        const self = this;
+        options = options || {};
+        const deferred = $.Deferred();
+        const crsList = options.crsList || [];
+        $.when.apply(self, crsList
+            .map(function (crs) {
+                return TC.getProjectionData({
+                    crs: TC.Util.getCRSCode(crs)
+                });
+            })).then(function () {
+                var projList = Array.prototype.slice.call(arguments)
+                    .filter(function (response) {
+                        return response.status === 'ok';
+                    })
+                    .map(function (response) {
+                        const projData = response.results[0];
+                        const code = 'EPSG:' + projData.code;
+                        TC.loadProjDef({
+                            crs: code,
+                            def: projData.def,
+                            name: projData.name
+                        });
+                        return {
+                            code: code,
+                            name: projData.name,
+                            proj4: projData.proj4,
+                            unit: projData.unit
+                        };
+                    });
+                if (options.orderBy) {
+                    projList = projList
+                        .sort(TC.Util.getSorterByProperty(options.orderBy));
+                }
+                deferred.resolve(projList);
+            },
+            function (error) {
+                deferred.reject(error);
+            });
+        return deferred.promise();
+    };
+
+    mapProto.setProjection = function (options) {
+        const self = this;
+        const deferred = $.Deferred();
+        options = options || {};
+        if (options.crs) {
+            const baseLayer = options.baseLayer || self.baseLayer;
+            TC.loadProjDef({
+                crs: options.crs,
+                callback: function () {
+                    if (baseLayer.isCompatible(options.crs) || baseLayer.wrap.getCompatibleMatrixSets(options.crs).length > 0) {
+                        baseLayer.setProjection(options);
+                        self.wrap.setProjection(options);
+                        self.crs = options.crs;
+                        // En las capas base disponibles, evaluar su compatibilidad con el nuevo CRS
+                        self.baseLayers
+                            .filter(function (layer) {
+                                return layer !== baseLayer;
+                            })
+                            .forEach(function (layer) {
+                            if (isRaster(layer)) {
+                                layer.setProjection(options);
+                            }
+                            });
+                        var resolveChange = function () {
+                            self.$events.trigger($.Event(TC.Consts.event.PROJECTIONCHANGE, { crs: options.crs }));
+                            deferred.resolve();
+                        };
+                        if (options.baseLayer) {
+                            self.setBaseLayer(options.baseLayer, resolveChange);
+                        }
+                        else {
+                            resolveChange();
+                        }
+                    }
+                    else {
+                        deferred.reject();
+                    }
+                }
+            });
+        }
+        return deferred.promise();
+    };
+
+    mapProto.getMetersPerUnit = function () {
+        return this.wrap.getMetersPerUnit();
     };
 
     /**
@@ -1778,7 +2005,7 @@
             var bounds = [Infinity, Infinity, -Infinity, -Infinity];
             var opts = options || {};
             var radius = opts.pointBoundsRadius || self.options.pointBoundsRadius;
-            radius = self.wrap.isGeo() ? radius / TC.Util.getMetersPerDegree(self.getExtent()) : radius;
+            radius = radius / self.getMetersPerUnit();
             var extentMargin = opts.extentMargin;
             if (typeof extentMargin !== 'number') {
                 extentMargin = self.options.extentMargin;
@@ -1880,7 +2107,7 @@
                 id: TC.getUID(), title: TC.i18n[map.options.locale]['vectors'], type: TC.Consts.layerType.VECTOR
             });
             map.vectors = result;
-            $.when(result).then(function (vectors) {
+            result.then(function (vectors) {
                 map.vectors = vectors;
             });
         }
@@ -1997,7 +2224,7 @@
     };
 
     mapProto.getResolutions = function () {
-        return this.getBaseLayer().getResolutions();
+        return this.wrap.getResolutions();
     };
 
     mapProto.getResolution = function () {
