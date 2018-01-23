@@ -15,22 +15,23 @@
   casperJs = require('gulp-casperjs'),
   merge = require('merge-stream');
 
-//////// Gestión de errores ////////
-//var plumber = require('gulp-plumber');
-//var gutil = require('gulp-util');
 
-//var gulp_src = gulp.src;
-//gulp.src = function () {
-//    return gulp_src.apply(gulp, arguments)
-//      .pipe(plumber(function (error) {
-//          // Output an error message
-//          gutil.log(gutil.colors.red('Error (' + error.plugin + '): ' + error.message));
-//          // emit the end event, to properly end the task
-//          this.emit('end');
-//      })
-//    );
-//};
-//////////////////////////////
+////////// Gestión de errores ////////
+var plumber = require('gulp-plumber');
+var gutil = require('gulp-util');
+
+var gulp_src = gulp.src;
+gulp.src = function () {
+    return gulp_src.apply(gulp, arguments)
+      .pipe(plumber(function (error) {
+          // Output an error message
+          gutil.log(gutil.colors.red('Error (' + error.plugin + '): ' + error.message));
+          // emit the end event, to properly end the task
+          this.emit('end');
+      })
+    );
+};
+////////////////////////////////
 
 
 var sitnaBuild = {
@@ -43,7 +44,7 @@ var sitnaBuild = {
         'lib/dust/dust-full-helpers.min.js',
         'lib/dust/dustjs-i18n.min.js',
         'lib/dust/dust.overrides.js',
-        'lib/localForage/localforage.min.js',
+        'lib/localForage/localforage.js', // No meter localforage.min.js porque da problemas
         'lib/jsnlog/jsnlog.min.js'
     ],
     midSrc: [
@@ -114,9 +115,9 @@ var sitnaBuild = {
             .pipe(gulp.dest(this.fullTargetPath + 'examples/'));
     },
 
-    roadmapTask: function () {
+    releasePageTask: function () {
         return gulp.src([
-                'batch/roadmap.html'
+                'batch/releases.html'
         ])
             .pipe(gulp.dest(this.fullTargetPath + 'doc/'));
     },
@@ -125,7 +126,9 @@ var sitnaBuild = {
         return gulp.src([
                 'TC/**/*.css'
         ])
-            //.pipe(cleanCSS())
+            //.pipe(cleanCSS({
+            //    level: 0
+            //}))
             .pipe(gulp.dest(this.fullTargetPath + 'TC/'));
     },
 
@@ -231,13 +234,13 @@ var sitnaBuild = {
         sitnaBuild.zipTask();
         sitnaBuild.cssTask();
         sitnaBuild.examplesTask();
-        sitnaBuild.roadmapTask();
+        sitnaBuild.releasePageTask();
 
         sitnaBuild.maps = '';
         sitnaBuild.onDemandTask(['sitna.js'], sitnaBuild.fullTargetPath);
         sitnaBuild.onDemandTask(['tcmap.js'], sitnaBuild.fullTargetPath);
         sitnaBuild.onDemandTask(['TC/**/*.js'], sitnaBuild.fullTargetPath + 'TC/');
-
+            
         sitnaBuild.maps = 'ol2';
         sitnaBuild.isLegacy = true;
         sitnaBuild.compiledTask(ol2Src1, ol2Src2, sitnaBuild.sitnaSrc);
@@ -248,7 +251,7 @@ var sitnaBuild = {
     }
 };
 
-gulp.task('default', ['unitTests', 'e2eTests'], function () {
+gulp.task('default', ['unitTests', 'e2eTests', 'rasterJSTest'], function () {
     sitnaBuild.fullTargetPath = sitnaBuild.targetPath + '/';
     sitnaBuild.fullTask();
 });
@@ -295,6 +298,26 @@ gulp.task('unitTests', function () {
 });
 
 gulp.task('e2eTests', function () {
-    return gulp.src('test/endToEnd/test.js')
-        .pipe(casperJs());
+    return gulp.src('test/endToEnd/test.js').pipe(casperJs());
+});
+
+gulp.task('rasterJSTest', function () {
+    const reportDir = 'test/unit/testResults';
+
+    //return gulp.src(['test/unit/browser/layer/Raster.js'], { read: false })
+    //            .pipe(mocha({
+    //                reporter: 'mochawesome',
+    //                reporterOptions: 'reportDir=' + reportDir + ',reportFilename=nodeTestResults'
+    //            }));
+    return del(reportDir + '/**/*', function () {
+        var browserStream = mochaPhantomJS({
+            reporter: 'spec',
+            dump: reportDir + '/browserTestResults.txt'
+        })
+        browserStream.write({ path: 'http://localhost:56187/test/unit/browser/runner.html' });
+        browserStream.end();
+
+        return browserStream;
+            
+    });
 });
