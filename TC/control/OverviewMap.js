@@ -72,8 +72,20 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
                     lyr = new TC.layer.Raster(layer);
                 }
             }
+
+            // GLS: Referencio el mapa en la capa. Como no se añade la capa al mapa, no hay referencia.
+            lyr.map = map;
+
             self.layer = lyr;
             self.wrap.register(map);
+
+            map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+                var resetOptions = {};
+                if (e.crs !== map.options.crs) {
+                    resetOptions.layer = self.layer.getFallbackLayer();
+                }
+                self.wrap.reset(resetOptions);
+            });
         });
     };
 
