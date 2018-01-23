@@ -1,0 +1,11 @@
+﻿{
+	"viewerTitle":"&nbsp;",
+    "legend": "Leyenda",
+	"overviewMap": "Mapa situación",
+	"overviewMap.tooltip": "Mapa de situación",
+	"tools": "Herramientas",
+	"viewHelp": "Ayuda",
+	"viewHelp.tooltip":"Manual de usuario",
+    "search.placeholder": "Calle, dirección, parcela o coordenadas",
+    "search.instructions": "Buscar calle, dirección, referencia catastral, coordenadas UTM o latitud-longitud"
+}

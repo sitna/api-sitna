@@ -1,0 +1,16 @@
+﻿body.tc-ctl-print-page {
+    margin: 1em;
+}
+
+body.tc-ctl-print-page table {
+    border-collapse: collapse;
+}
+
+body.tc-ctl-print-page th,body.tc-ctl-print-page td {
+    text-align: left;
+    border: 1px solid #ccc;
+}
+
+body.tc-ctl-print-page .tc-ctl-print-btn {
+    display: none;
+}

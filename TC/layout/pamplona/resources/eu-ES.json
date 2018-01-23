@@ -1,0 +1,11 @@
+﻿{
+	"viewerTitle":"Visor corporativo(EU)",
+	"legend": "Legenda",
+	"overviewMap": "Kokapen mapan",
+	"overviewMap.tooltip": "Kokapen mapan",
+	"tools": "Tresnak",	
+	"viewHelp": "Ayuda(EU)",
+	"viewHelp.tooltip":"Manual de usuario(EU)",	
+    "search.placeholder": "Calle, dirección, parcela o coordenadas(EU)",
+    "search.instructions": "Buscar calle, dirección, referencia catastral, coordenadas UTM o latitud-longitud(EU)"
+}
