@@ -299,6 +299,7 @@ if (!TC.control.SWCacheClient) {
     ctlProto.MAP_DEFINITION_PARAM_NAME = "map-def";
     ctlProto.MAP_EXTENT_PARAM_NAME = "map-extent";
     ctlProto.LOCAL_STORAGE_KEY_PREFIX = "TC.offline.map.";
+    ctlProto.ROOT_CACHE_NAME = "root";
     ctlProto.COOKIE_KEY_PREFIX = "TC.offline.map.";
     ctlProto.CACHE_REQUEST_PATH = "offline";
     ctlProto.SERVICE_WORKER_FLAG = 'sw';
@@ -971,7 +972,7 @@ if (!TC.control.SWCacheClient) {
                 });
             };
             var deleteManifestCache = function () {
-                self.deleteCache(self.LOCAL_STORAGE_KEY_PREFIX, { silent: true });
+                self.deleteCache(self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME, { silent: true });
             };
             if (appCache.status === appCache.CACHED || appCache.status === appCache.UPDATEREADY || appCache.status === appCache.UNCACHED) {
                 cacheManifestList();
@@ -1116,7 +1117,7 @@ if (!TC.control.SWCacheClient) {
             var isLayerAdded = function () {
                 return $blList.find('li[data-tc-layer-uid="' + layer.id + '"]').length > 0
             };
-            var isValidLayer = layer.type === TC.Consts.layerType.WMTS;
+            var isValidLayer = layer.type === TC.Consts.layerType.WMTS && !layer.mustReproject;
             if (TC.Util.detectSafari() && TC.Util.detectIOS()) {
                 isValidLayer = isValidLayer && TC.Util.isSameOrigin(layer.url);
             }
@@ -1314,7 +1315,7 @@ if (!TC.control.SWCacheClient) {
     ctlProto.cacheUrlList = function (urlList, options) {
         var self = this;
         var opts = options || {};
-        self.createCache(opts.name || self.LOCAL_STORAGE_KEY_PREFIX + 'common', {
+        self.createCache(opts.name || (self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME), {
             urlList: urlList,
             silent: opts.silent
         });
