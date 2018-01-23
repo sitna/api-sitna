@@ -175,7 +175,7 @@ TC.Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
                             }
                         });
 
-                        $.when(self.layerPromise).then(function (layer) {
+                        self.layerPromise.then(function (layer) {
                             self.layer = layer;
                             map.putLayerOnTop(self.layer);
                         });
