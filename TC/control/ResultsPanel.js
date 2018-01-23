@@ -45,6 +45,9 @@ TC.control.ResultsPanel = function () {
 
         if (self.options.table)
             self.table = self.options.table;
+
+        if (self.options.save)
+            self.save = self.options.save;
     }
 };
 
@@ -58,17 +61,23 @@ if (TC.isDebug) {
     TC.control.ResultsPanel.prototype.template[TC.control.ResultsPanel.prototype.CLASS + '-table'] = TC.apiLocation + "TC/templates/ResultsPanelTable.html";
     TC.control.ResultsPanel.prototype.template[TC.control.ResultsPanel.prototype.CLASS + '-chart'] = TC.apiLocation + "TC/templates/ResultsPanelChart.html";
 } else {
-    TC.control.ResultsPanel.prototype.template[TC.control.ResultsPanel.prototype.CLASS] = function () { dust.register(TC.control.ResultsPanel.prototype.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"prpanel-group prsidebar-body \" style=\"display: none\" data-no-cb data-no-3d><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><label>").h("i18n", ctx, {}, { "$key": "geo.trk.chart.chpe" }).w("</label> <span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-csv\" hidden title=\"Exportar a Excel\"><i class=\"fa fa-file-excel-o\"></i></span></h4></div><div id=\"results\" class=\"prpanel-collapse collapse in\"><div class=\"prpanel-body list-group tc-ctl-p-results-table\">").p("tc-ctl-p-results-table", ctx, ctx.rebase(ctx.getPath(true, [])), {}).w("</div><div class=\"prpanel-body list-group tc-ctl-p-results-chart\"></div></div></div></div><div class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\" data-no-cb data-no-3d><i class=\"fa-list-alt\" hidden></i><i class=\"fa-area-chart\" hidden></i></div>"); } body_0.__dustBody = !0; return body_0 };
+    TC.control.ResultsPanel.prototype.template[TC.control.ResultsPanel.prototype.CLASS] = function () { dust.register(TC.control.ResultsPanel.prototype.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"prpanel-group prsidebar-body \" style=\"display: none\" data-no-cb><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><span class=\"prpanel-title-text\"></span> <span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-csv\" hidden title=\"Exportar a Excel\"><i class=\"fa fa-file-excel-o\"></i></span></h4></div><div id=\"results\" class=\"prpanel-collapse collapse in\"><div class=\"prpanel-body list-group tc-ctl-p-results-table\"> </div><div class=\"prpanel-body list-group tc-ctl-p-results-chart\"></div></div></div></div><div class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\" data-no-cb><i class=\"fa-list-alt\" hidden></i><i class=\"fa-area-chart\" hidden></i></div>"); } body_0.__dustBody = !0; return body_0 };
     TC.control.ResultsPanel.prototype.template[TC.control.ResultsPanel.prototype.CLASS + '-table'] = function () { dust.register(TC.control.ResultsPanel.prototype.CLASS + '-table', body_0); function body_0(chk, ctx) { return chk.w("<table class=\"table\" style=\"display:none;\"><thead>").s(ctx.get(["columns"], false), ctx, { "block": body_1 }, {}).w("</thead><tbody>").s(ctx.get(["results"], false), ctx, { "block": body_2 }, {}).w("</tbody></table>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<th>").f(ctx.getPath(true, []), ctx, "h").w("</th>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<tr>").h("iterate", ctx, { "block": body_3 }, { "on": ctx.getPath(true, []) }).w("</tr>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<td>").f(ctx.get(["value"], false), ctx, "h").w("</td>"); } body_3.__dustBody = !0; return body_0 };
     TC.control.ResultsPanel.prototype.template[TC.control.ResultsPanel.prototype.CLASS + '-chart'] = function () { dust.register(TC.control.ResultsPanel.prototype.CLASS + '-chart', body_0); function body_0(chk, ctx) { return chk.w("<div id=\"track-chart\">").x(ctx.get(["msg"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<span id=\"elevationGain\" >").h("i18n", ctx, {}, { "$key": "geo.trk.chart.elevationGain" }).w(": +").f(ctx.get(["upHill"], false), ctx, "h").w("m, -").f(ctx.get(["downHill"], false), ctx, "h").w("m</span><div id=\"chart\"></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["msg"], false), ctx, "h"); } body_2.__dustBody = !0; return body_0 };
 }
+
+TC.control.ResultsPanel.prototype.isVisible = function () {
+    var self = this;
+
+    self._$div.find('.prsidebar-body').is(':visible') || self._$div.find('.prcollapsed-max').is(':visible');
+};
 
 TC.control.ResultsPanel.prototype.render = function (callback) {
     var self = this;
 
     TC.Control.prototype.render.call(self, function () {
 
-        self.$mainTitle = self._$div.find('label');
+        self.$mainTitle = self._$div.find('.prpanel-title-text');
 
         self.$minimize = self._$div.find('.prcollapsed-slide-submenu-min');
         self.$minimize.on('click', function () {
@@ -84,6 +93,16 @@ TC.control.ResultsPanel.prototype.render = function (callback) {
         self.$maximize.on('click', function () {
             self.maximize();
         });
+
+        if (self.save) {
+            self.$save = self._$div.find('.prcollapsed-slide-submenu-csv');
+            self.$save.on('click', function () {
+                self.exportToExcel();
+            });
+            self.$save.removeAttr("hidden");
+        }
+
+
 
         if (self.content) {
             self.content = self.content;
@@ -180,7 +199,6 @@ TC.control.ResultsPanel.prototype.openChart = function () {
             var locale = TC.Util.getMapLocale(self.map);
             self.getRenderedHtml(TC.control.ResultsPanel.prototype.CLASS + '-chart', { upHill: data.upHill.toLocaleString(locale), downHill: data.downHill.toLocaleString(locale) }, function (out) {
 
-                console.log(self._$div.find('.' + TC.control.ResultsPanel.prototype.CLASS + '-chart').length);
                 self._$div.find('.' + TC.control.ResultsPanel.prototype.CLASS + '-chart').html(out);
 
                 var chartOptions = {
@@ -331,16 +349,19 @@ TC.control.ResultsPanel.prototype.openTable = function () {
                 }
             }
 
-            deleteColumns();
+            //deleteColumns();
 
             self.tableData = {
                 columns: columns,
                 results: data,
                 css: css
             }
-
-            self.getRenderedHtml(self.CLASS + '-table', self.tableData, function (html) {
-                self._$div.find('.' + self.CLASS + '-table').html(html);
+            self.getRenderedHtml(self.CLASS + '-table', self.tableData).then(function (html) {
+                var table = self._$div.find('.' + self.CLASS + '-table');
+                var parent = table.parent();
+                table.detach();
+                table.append(html);
+                parent.append(table);
             });
 
             self._$div.find('.' + self.CLASS + '-chart').hide();
@@ -367,7 +388,9 @@ TC.control.ResultsPanel.prototype.open = function (html) {
 
     self.requestIsRendered = window.requestAnimationFrame(checkIsRendered.bind(self));
 
-    self._$div.find('.' + self.CLASS + '-table').html(html);
+    if (html) {
+        self._$div.find('.' + self.CLASS + '-table').html(html);
+    }
     self._$div.find('.' + self.CLASS + '-chart').hide();
 
     // si está minimizado
@@ -409,5 +432,33 @@ TC.control.ResultsPanel.prototype.register = function (map) {
         });
     }
 
+
+};
+
+TC.control.ResultsPanel.prototype.exportToExcel = function () {
+    var _ctl = this;
+
+    var rows = [_ctl.tableData.columns];
+
+    $.each(_ctl.tableData.results, function (index, value) {
+        var row = [];
+        for (var k in value) {
+            if (value.hasOwnProperty(k) && k !== "Id" && k !== "Geom") { //Las columnas ID y Geom no aparece en la exportaci\u00f3n
+                row.push(value[k]);
+            }
+        }
+        rows.push(row);
+    });
+    var _fncSave = function (exporter) {
+        var fileName = _ctl.save.fileName ? _ctl.save.fileName : 'resultados.xls';
+        var title = (_ctl.options.titles && _ctl.options.titles.main ? _ctl.options.titles.main : null);
+        exporter.Save(fileName, rows, title);
+    }
+    if (!TC.Util.ExcelExport)
+        TC.loadJS(true, TC.apiLocation + 'TC/TC.Util.ExcelExport', function () {
+            _fncSave(new TC.Util.ExcelExport());
+        });
+    else
+        _fncSave(new TC.Util.ExcelExport());
 
 };
