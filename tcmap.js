@@ -656,7 +656,7 @@ if (!TC.Consts) {
         TEMPLATING_OVERRIDES: 'lib/dust/dust.overrides.js',
         PROJ4JS_LEGACY: 'lib/proj4js/legacy/proj4js-compressed.js',
         PROJ4JS: 'lib/proj4js/proj4-src.js',
-        SPATIALREFERENCE: 'http://spatialreference.org/',
+        EPSG: 'https://epsg.io/',
         LOCALFORAGE: TC.apiLocation + 'lib/localForage/localforage.min.js',
         D3C3: TC.apiLocation + 'lib/d3c3/d3c3.min.js',
         CESIUM: TC.apiLocation + 'lib/cesium/release/Cesium.js',
@@ -675,6 +675,7 @@ if (!TC.Consts) {
         CHECKED: 'tc-checked',
         DISABLED: 'tc-disabled',
         ACTIVE: 'tc-active',
+        DEFAULT: 'tc-default',
         LASTCHILD: 'tc-lastchild',
         TRANSPARENT: 'tc-transparent',
         DROP: 'tc-drop',
@@ -746,10 +747,13 @@ if (!TC.Consts) {
         FEATUREINFOERROR: 'featureinfoerror.tc',
         CLICK: 'click.tc',
         MOUSEUP: 'mouseup.tc',
+        MOUSEMOVE: 'mousemove.tc',
+        MOUSELEAVE: 'mouseleave.tc',
         STARTLOADING: 'startloading.tc',
         STOPLOADING: 'stoploading.tc',
         EXTERNALSERVICEADDED: 'externalserviceadded.tc',
         ZOOMTO: 'zoomto.tc',
+        PROJECTIONCHANGE: 'projectionchange.tc'
     };
     TC.Consts.layer = {
         IDENA_ORTHOPHOTO: 'ortofoto',
@@ -758,8 +762,14 @@ if (!TC.Consts) {
         IDENA_CARTO: 'cartografia',
         IDENA_ORTHOPHOTO2012: 'ortofoto2012',
         IDENA_DYNBASEMAP: 'mapabase_dinamico',
+        IDENA_DYNORTHOPHOTO: 'ortofoto_dinamico',
+        IDENA_DYNORTHOPHOTO2012: 'ortofoto2012_dinamico',
         IDENA_BW_RELIEF: 'relieve_bn',
         IDENA_BASEMAP_ORTHOPHOTO: 'base_orto',
+        OSM: 'osm',
+        CARTO_VOYAGER: 'carto_voyager',
+        CARTO_LIGHT: 'carto_light',
+        CARTO_DARK: 'carto_dark',
         BLANK: 'ninguno'
     };
     TC.Consts.text = {
@@ -855,7 +865,17 @@ if (!TC.Consts) {
     	GENERIC: 'generic'
     };
     TC.Consts.comparison = {
-        EQUAL_TO: '=='
+        EQUAL_TO: '==',
+        NOT_EQUAL_TO: '!=',
+        LESS_THAN: '<',
+        GREATER_THAN: '>',
+        LESS_THAN_EQUAL_TO: '=<',
+        GREATER_THAN_EQUAL_TO: '>=',
+        LIKE: 'is'
+    };
+    TC.Consts.logicalOperator = {
+        AND: 'and',
+        OR: 'or'
     };
     TC.Consts.WMTSEncoding = {
         KVP: 'KVP',
@@ -879,7 +899,20 @@ if (!TC.Consts) {
         TOPOJSON: 'TopoJSON',
         GPX: 'GPX',
         WKT: 'WKT'
-};
+    };
+    //enumerado de errores y warninqs derivados de descargas, getfeatures
+    TC.Consts.WFSErrors = {
+        GetFeatureNotAvailable: "GetFeatureNotAvailable",
+        LayersNotAvailable: "LayersNotAvailable",
+        NoLayers: "NoLayers",
+        NoValidLayers: "noValidLayers",
+        QueryNotAvailable: "QueryNotAvailable",
+        CapabilitiesParseError: "CapabilitiesParseError",
+        NumMaxFeatures: "NumMaxFeatures",
+        GetCapabilities: "GetCapabilities",
+        Indeterminate: "Indeterminate",
+        NoFeatures: "NoFeatures"
+    }
     /**
      * Colección de identificadores de estados de visibilidad.
      * No se deberían modificar las propiedades de esta clase.
@@ -926,24 +959,8 @@ if (!TC.Consts) {
             var count = feature.features.length;
             var result = clusterRadii[count];
             if (!result) {
-                result = Math.round(Math.sqrt(count) * 15);
+                result = 2 + Math.round(Math.sqrt(count) * 5);
                 clusterRadii[count] = result;
-            }
-            return result;
-        };
-
-        var clusterFillColors = {};
-        var getClusterFillColor = function (feature) {
-            var count = feature.features.length;
-            var result = clusterFillColors[count];
-            if (!result) {
-                var r = Math.round(100 + 155 * Math.min(6, count) / 6);
-                if (r > 255) r = 255;
-                var g = Math.round(255 - 155 * Math.max(0, count - 4) / 6);
-                if (g < 100) g = 100;
-                var b = 100;
-                result = '#' + r.toString(16) + g.toString(16) + b.toString(16);
-                clusterFillColors[count] = result;
             }
             return result;
         };
@@ -967,10 +984,11 @@ if (!TC.Consts) {
             notifyApplicationErrors: false,
             maxErrorCount: 10,
 
-            locale: 'es_ES',
+            locale: 'es-ES',
 
             screenSize: 20,
-            pixelTolerance: 10,
+            pixelTolerance: 10, // Used in GFI requests
+            maxResolutionError: 0.01, // Max error ratio to consider two resolutions equivalent
 
             toastDuration: 5000,
 
@@ -988,7 +1006,8 @@ if (!TC.Consts) {
                     format: 'image/png',
                     isDefault: true,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNBASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO,
@@ -1001,7 +1020,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO2012,
@@ -1014,7 +1034,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012
                 },
                 {
                     id: TC.Consts.layer.IDENA_CADASTER,
@@ -1058,7 +1079,7 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-base_ortho.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-base_ortho.png'
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNBASEMAP,
@@ -1070,6 +1091,80 @@ if (!TC.Consts) {
                     isDefault: false,
                     hideTree: true,
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png'
+                },
+                {
+                    id: TC.Consts.layer.IDENA_DYNORTHOPHOTO,
+                    title: 'Ortofoto',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'ortofoto_maxima_actualidad',
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.png'
+                },
+                {
+                    id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012,
+                    title: 'Ortofoto 2012',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'ortofoto_5000_2012',
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.png'
+                },
+                {
+                    id: TC.Consts.layer.OSM,
+                    title: 'OSM',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/osm/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'osm',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-osm.png'
+                },
+                {
+                    id: TC.Consts.layer.CARTO_VOYAGER,
+                    title: 'CARTO Voyager',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/carto/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'voyager',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-voyager.png'
+                },
+                {
+                    id: TC.Consts.layer.CARTO_LIGHT,
+                    title: 'CARTO light',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/carto/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'light_all',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-light.png'
+                },
+                {
+                    id: TC.Consts.layer.CARTO_DARK,
+                    title: 'CARTO dark',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/carto/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'dark_all',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-dark.png'
                 },
                 {
                     id: TC.Consts.layer.BLANK,
@@ -1105,8 +1200,12 @@ if (!TC.Consts) {
                 search: {
                     url: '//idena.navarra.es/ogc/wfs',
                     allowedSearchTypes: {
-                        coordinates: {},
-                        municipality: {}
+                        coordinates: {},                        
+                        municipality: {},
+                        urban: {},
+                        street: {},
+                        number: {},
+                        cadastral: {}
                     }
                 },
                 measure: false,
@@ -1144,19 +1243,16 @@ if (!TC.Consts) {
                     strokeColor: '#f00',
                     strokeWidth: 2,
                     fillColor: '#000',
-                    fillOpacity: .3
+                    fillOpacity: 0.3
                 },
                 cluster: {
                     point: {
-                        cssClass: '',
-                        anchor: [0.5, 0.5],
-                        fillColor: getClusterFillColor,
+                        fillColor: '#336',
                         fillOpacity: 0.6,
-                        width: getClusterRadius,
-                        height: getClusterRadius,
+                        radius: getClusterRadius,
                         label: '${features.length}',
-                        fontColor: "#000",
-                        fontSize: 12
+                        fontColor: "#fff",
+                        fontSize: 9
                     }
                 },
                 selection: {
@@ -1451,22 +1547,48 @@ if (!TC.Consts) {
             }
         };
 
-        TC.loadProjDef = function (crs, syncOrCallback) {
+        var projectionDataCache = {};
+
+        TC.getProjectionData = function (options) {
+            var deferred = $.Deferred();
+            options = options || {};
+            var code = options.crs.substr(options.crs.indexOf(':') + 1);
+            var projData = projectionDataCache[code];
+            if (projData) {
+                deferred.resolve(projData);
+            }
+            else {
+                var url = TC.proxify(TC.Consts.url.EPSG + '?format=json&q=' + code);
+                var ajaxOptions = {
+                    dataType: 'json',
+                    success: function (data) {
+                        projectionDataCache[code] = data;
+                        deferred.resolve(data);
+                    },
+                    error: function (error) {
+                        deferred.reject(error);
+                    }
+                };
+                if (options.sync) {
+                    ajaxOptions.async = false;
+                }
+                $.ajax(url, ajaxOptions);
+            }
+            return deferred.promise();
+        };
+
+        TC.loadProjDef = function (options) {
+            options = options || {};
+            var crs = options.crs;
             var epsgPrefix = 'EPSG:';
             var urnPrefix = 'urn:ogc:def:crs:EPSG::';
             var gmlPrefix = 'http://www.opengis.net/gml/srs/epsg.xml#';
-            var epsgCode = epsgPrefix + '25830';
-            var urnCode = urnPrefix + '25830';
-            var gmlCode = gmlPrefix + '25830';
 
             var getDef;
             if (TC.isLegacy) {
                 if (!window[TC.Consts.PROJ4JSOBJ_LEGACY]) {
                     TC.syncLoadJS(TC.url.proj4js);
                 }
-                Proj4js.defs[epsgCode] = '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs';
-                Proj4js.defs[urnCode] = Proj4js.defs[epsgCode];
-                Proj4js.defs[gmlCode] = Proj4js.defs[epsgCode];
                 getDef = function (name) {
                     return Proj4js.defs[name];
                 };
@@ -1475,9 +1597,6 @@ if (!TC.Consts) {
                 if (!window[TC.Consts.PROJ4JSOBJ]) {
                     TC.syncLoadJS(TC.url.proj4js);
                 }
-                proj4.defs(epsgCode, '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs');
-                proj4.defs(urnCode, proj4.defs(epsgCode));
-                proj4.defs(gmlCode, proj4.defs(epsgCode));
                 getDef = function (name) {
                     return proj4.defs(name);
                 };
@@ -1489,52 +1608,79 @@ if (!TC.Consts) {
                     transform: proj4
                 };
             }
-            var loadDef = function (code) {
-                epsgCode = epsgPrefix + code;
-                urnCode = urnPrefix + code;
-                gmlCode = gmlPrefix + code;
-                Proj4js.defs[urnCode] = Proj4js.defs[epsgCode];
-                Proj4js.defs[gmlCode] = Proj4js.defs[epsgCode];
-                if (!TC.isLegacy) {
-                    proj4.defs(epsgCode, Proj4js.defs[epsgCode]);
-                    proj4.defs(urnCode, Proj4js.defs[epsgCode]);
-                    proj4.defs(gmlCode, Proj4js.defs[epsgCode]);
-                }
-            };
-            if (!getDef(crs)) {
-                var idx = crs.lastIndexOf('#');
-                if (idx < 0) {
-                    idx = crs.lastIndexOf(':');
-                }
-                var code = crs.substr(idx + 1);
-                
-                var url = TC.proxify(TC.Consts.url.SPATIALREFERENCE + 'ref/epsg/' + code + '/proj4js/');
-                if (typeof syncOrCallback === 'boolean') {
-                    if (syncOrCallback) {
-                        var req = new XMLHttpRequest();
-                        req.open("GET", url, false); // 'false': synchronous.
-                        req.send(null);
-                        var script = document.createElement("script");
-                        script.type = "text/javascript";
-                        script.text = req.responseText;
-                        getHead().appendChild(script);
-
-                        loadDef(code);
+            var loadDef = function (code, def, name/*, bbox*/) {
+                var epsgCode = epsgPrefix + code;
+                var urnCode = urnPrefix + code;
+                var gmlCode = gmlPrefix + code;
+                var axisUnawareDef;
+                if (typeof def === 'object') {
+                    axisUnawareDef = $.extend({}, def);
+                    def = $.extend({}, def);
+                    if (axisUnawareDef.axis) {
+                        delete axisUnawareDef.axis;
                     }
-                    else {
-                        TC.loadJS(true, url);
+                }
+                else if (typeof def === 'string') {
+                    axisUnawareDef = def.replace('+axis=neu', '');
+                }
+                Proj4js.defs[epsgCode] = def;
+                Proj4js.defs[urnCode] = def;
+                // Por convención, los CRS definidos por URI siempre tienen orden de coordenadas X-Y.
+                Proj4js.defs[gmlCode] = axisUnawareDef;
+                if (!TC.isLegacy) {
+                    proj4.defs(epsgCode, def);
+                    proj4.defs(urnCode, proj4.defs(epsgCode));
+                // Por convención, los CRS definidos por URI siempre tienen orden de coordenadas X-Y.
+                    proj4.defs(gmlCode, axisUnawareDef);
+                }
+                getDef(epsgCode).name = name;
+                getDef(gmlCode).name = name;
+                //if (bbox) {
+                //    var newProj = ol.proj.get(epsgCode);
+                //    var fromLonLat = ol.proj.getTransform('EPSG:4326', newProj);
+                //    // very approximate calculation of projection extent
+                //    var extent = ol.extent.applyTransform(
+                //        [bbox[1], bbox[2], bbox[3], bbox[0]], fromLonLat);
+                //    newProj.setExtent(extent);
+                //    ol.proj.get(urnCode).setExtent(extent);
+                //    ol.proj.get(gmlCode).setExtent(extent);
+                //}
+            };
+            var loadDefResponse = function (data) {
+                var result = data.status === 'ok' && data.number_result === 1;
+                if (result) {
+                    var def = data.results[0];
+                    loadDef(def.code, def.proj4, def.name/*, def.bbox*/);
+                }
+                return result;
+            };
+
+            var idx = crs.lastIndexOf('#');
+            if (idx < 0) {
+                idx = crs.lastIndexOf(':');
+            }
+            var code = crs.substr(idx + 1);
+            var def = getDef(crs);
+            if (def) {
+                loadDef(code, def, options.name);
+                if ($.isFunction(options.callback)) {
+                    options.callback();
+                }
+            }
+            else {
+                if (options.def) {
+                    loadDef(code, options.def, options.name);
+                    if ($.isFunction(options.callback)) {
+                        options.callback();
                     }
                 }
                 else {
-                    TC.loadJS(true, url, function () {
-                        loadDef(code);
-                        syncOrCallback();
+                    TC.getProjectionData(options).then(function (data) {
+                        if (loadDefResponse(data) && $.isFunction(options.callback)) {
+                            options.callback();
+                        };
                     });
                 }
-            }
-            else if ($.isFunction(syncOrCallback)) {
-                loadDef(code);
-                syncOrCallback();
             }
         };
 
@@ -1556,6 +1702,16 @@ if (!TC.Consts) {
             TC.url.olConnector = TC.apiLocation + TC.Consts.url.OL_CONNECTOR;
             TC.url.proj4js = TC.apiLocation + TC.Consts.url.PROJ4JS;
         }
+
+        // Precargamos el CRS por defecto
+        TC.loadProjDef({ crs: 'EPSG:25830', name: 'ETRS89 / UTM zone 30N', def: '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs' });
+        // Precargamos los CRS de IDENA que tienen orden de ejes neu
+        TC.loadProjDef({ crs: 'EPSG:4258', name: 'ETRS89', def: '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:3040', name: 'ETRS89 / UTM zone 28N (N-E)', def: '+proj=utm +zone=28 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:3041', name: 'ETRS89 / UTM zone 29N (N-E)', def: '+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:3042', name: 'ETRS89 / UTM zone 30N (N-E)', def: '+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:3043', name: 'ETRS89 / UTM zone 31N (N-E)', def: '+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:4230', name: 'ED50', def: '+proj=longlat +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +no_defs +axis=neu' });
 
         TC.Cfg = $.extend(true, {}, TC.Defaults, TC.Cfg);
 
@@ -1727,7 +1883,8 @@ if (!TC.Consts) {
                 CacheBuilder: function () { TC.wrap.Control.apply(this, arguments); },
                 Edit: function () { TC.wrap.Control.apply(this, arguments); }
             },
-            Feature: function () { }
+            Feature: function () { },
+            Geometry: function () { }
         };
         TC.inherit(TC.wrap.layer.Raster, TC.wrap.Layer);
         TC.inherit(TC.wrap.layer.Vector, TC.wrap.Layer);
