@@ -3,6 +3,9 @@
 if (!TC.control.FeatureInfoCommons) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
 }
+if (!TC.filter) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
+}
 
 (function () {
     TC.control.GeometryFeatureInfo = function () {
@@ -10,33 +13,6 @@ if (!TC.control.FeatureInfoCommons) {
         TC.control.FeatureInfoCommons.apply(this, arguments);
         self.wrap = new TC.wrap.control.GeometryFeatureInfo(self);
         self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor
-        self.callback = function (coords, xy) {
-            if (self._drawToken)
-                return;
-            self.closeResults();
-            //self.filterLayer.clearFeatures();
-            var visibleLayers = false;
-            for (var i = 0; i < self.map.workLayers.length; i++) {
-                var layer = self.map.workLayers[i];
-                if (layer.type === TC.Consts.layerType.WMS) {
-                    if (layer.getVisibility() && layer.names.length > 0) {
-                        visibleLayers = true;
-                        break;
-                    }
-                }
-            }
-            if (visibleLayers) {
-                self.closeResults();
-                self.wrap.beginDraw({
-                    geometryType: self.geometryType,
-                    xy: coords,
-                    layer: self.filterLayer,
-                    callback: function (feature) {
-                        self.wrap.getFeaturesByGeometry(feature);
-                    }
-                });
-            }
-        };
         self._isDrawing = false;
         self._isSearching = false;
         self._drawToken = false;
@@ -50,24 +26,47 @@ if (!TC.control.FeatureInfoCommons) {
         var self = this;
         TC.control.FeatureInfoCommons.prototype.register.call(self, map);
 
-        map
-            .on(TC.Consts.event.FEATUREINFOERROR, function (e) {
-                if (e.xhr && e.xhr.status === 404) {
-                    map.toast(e.control.getLocaleString("featureInfo.tooManyLayers"), { type: TC.Consts.msgType.ERROR });
-                }
-                self.lastFeatureCount = 0;
-                self.closeResults();
-            });
-
         self.$events.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
             self.wrap.cancelDraw();
         });
     };
 
-    ctlProto.responseCallback = function (e) {
+    ctlProto.callback = function (coords, xy) {
         var self = this;
+        if (self._drawToken) {
+            return;
+        }
+        self.closeResults();
+        //self.filterLayer.clearFeatures();
+        var visibleLayers = false;
+        for (var i = 0; i < self.map.workLayers.length; i++) {
+            var layer = self.map.workLayers[i];
+            if (layer.type === TC.Consts.layerType.WMS) {
+                if (layer.getVisibility() && layer.names.length > 0) {
+                    visibleLayers = true;
+                    break;
+                }
+            }
+        }
+        if (visibleLayers) {
+            self.closeResults();
+            self.wrap.beginDraw({
+                geometryType: self.geometryType,
+                xy: coords,
+                layer: self.filterLayer,
+                callback: function (feature) {
+                    self.wrap.getFeaturesByGeometry(feature);
+                }
+            });
+        }
+    };
+
+    ctlProto.responseCallback = function (options) {
+        var self = this;
+        TC.control.FeatureInfoCommons.prototype.responseCallback.call(self, options);
+
         if (self.filterFeature) {
-            var services = e.services;
+            var services = options.services;
             self.info = { services: services };
 
             // Eliminamos capas sin resultados a no ser que tenga un error
@@ -92,16 +91,8 @@ if (!TC.control.FeatureInfoCommons) {
 
             }
             if (services.length) {
-                self.renderData(e, function () {
-                    // Insert links
-                    self._$div.find('td.' + self.CLASS + '-val').each(function (idx, elm) {
-                        var $td = $(elm);
-                        var text = $td.text();
-                        if (TC.Util.isURL(text)) {
-                            $td.html('<a href="' + text + '" target="_blank">' + text + '</a>');
-                        }
-                    });
-
+                self.renderData(options, function () {
+                    self.insertLinks();
                     self.displayResults();
                 });
             }

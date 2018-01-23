@@ -13,24 +13,16 @@ if (!TC.control.FeatureInfoCommons) {
         TC.Consts.classes.FROMLEFT = 'tc-fromleft';
         TC.Consts.classes.FROMRIGHT = 'tc-fromright';
 
-        self.callback = function (coords, xy) {
-            var visibleLayers = false;
-            for (var i = 0; i < self.map.workLayers.length; i++) {
-                var layer = self.map.workLayers[i];
-                if (layer.type === TC.Consts.layerType.WMS) {
-                    if (layer.getVisibility() && layer.names.length > 0) {
-                        visibleLayers = true;
-                        break;
-                    }
+        if (self.options.displayElevation) {
+            TC.loadJS(
+                !TC.tool || !TC.tool.Elevation,
+                TC.apiLocation + 'TC/tool/Elevation',
+                function () {
+                    const elevationOptions = typeof self.options.displayElevation === 'boolean' ? {} : self.options.displayElevation;
+                    self.elevation = new TC.tool.Elevation(elevationOptions);
                 }
-            }
-            if (visibleLayers) {
-                self.wrap.getFeatureInfo(xy);
-            }
-            else {
-                self.map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, { xy: xy, control: self }));
-            }
-        };
+            );
+        }
     };
 
     TC.inherit(TC.control.FeatureInfo, TC.control.FeatureInfoCommons);
@@ -55,24 +47,17 @@ if (!TC.control.FeatureInfoCommons) {
             [hashUrl],
             function () {
                 // Creamos una consulta getFeatureInfo ad-hoc, con la resolución a la que estaba la consulta original.
-                // Hacemos la consulta sobre un cuadro de la anchura del radio de tolerancia.
-                var radius = ctl.map.options.pixelTolerance || TC.Cfg.pixelTolerance;
-                var mapWidth = 2 * radius + 1;
-                var ij = [radius, radius];
-                var boxHalfWidth = mapWidth * featureObj.r / 2;
-                var bbox = [
-                    featureObj.xy[0] - boxHalfWidth,
-                    featureObj.xy[1] - boxHalfWidth,
-                    featureObj.xy[0] + boxHalfWidth,
-                    featureObj.xy[1] + boxHalfWidth
-                ];
-                ctl.beforeGetFeatureInfo({ xy: ij, control: ctl });
-                ctl.wrap.getFeatureInfo(ij, {
-                    serviceUrl: featureObj.s,
-                    layerName: featureObj.l,
-                    featureId: featureObj.f,
-                    mapSize: [mapWidth, mapWidth],
-                    boundingBox: bbox
+                const coords = [-100, -100];
+                ctl.beforeRequest({ xy: coords }); // xy negativo para que no se vea el marcador, ya que no sabemos dónde ponerlo.
+                //aquí se pone el puntito temporal
+                ctl.filterLayer.clearFeatures();
+                $.when(ctl.filterLayer.addMarker(coords)).then(function (marker) {
+                    ctl.filterFeature = marker;
+                    ctl.wrap.getFeatureInfo(featureObj.xy, featureObj.r, {
+                        serviceUrl: featureObj.s,
+                        layerName: featureObj.l,
+                        featureId: featureObj.f
+                    });
                 });
             }
         );
@@ -123,43 +108,9 @@ if (!TC.control.FeatureInfoCommons) {
         });
     };
 
-    ctlProto.beforeGetFeatureInfo = function (e) {
-        var self = this;
-        TC.control.FeatureInfoCommons.prototype.beforeGetFeatureInfo.call(self, e);
-
-        if (e.control === self && self.map && self.filterLayer) {
-
-            //aquí se pone el puntito temporal
-            var xy = null;
-            while (!xy) {
-                xy = self.map.getCoordinateFromPixel(e.xy)
-            }
-            var title = self.getLocaleString('featureInfo');
-            var markerOptions = $.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title });
-            if (self.displayMode !== TC.control.FeatureInfoCommons.POPUP) {
-                markerOptions.showsPopup = false;
-            }
-            self.filterLayer.clearFeatures();
-            $.when(self.filterLayer.addMarker(xy, markerOptions)
-            ).then(function (marker) {
-                //cuando se queda el puntito es porque esto sucede tras el cierre de la popup
-                //o sea
-                //lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
-                //pero en el caso raro (la primera vez), ocurre al revés. Entonces, ya se habrá establecido lastFeatureCount (no será null)
-                if (self.lastFeatureCount === null) {
-                    self.map.putLayerOnTop(self.filterLayer);
-                    self.filterFeature = marker;
-                }
-                else {
-                    self.filterLayer.clearFeatures();
-                }
-            });
-        }
-    };
-
     ctlProto.onShowModal = function () {
         var self = this;
-        var $featureLi = self.getDisplayTarget().find('ul.' + self.CLASS + '-features li.' + TC.Consts.classes.CHECKED);
+        var $featureLi = $(self.getDisplayTarget()).find('ul.' + self.CLASS + '-features li.' + TC.Consts.classes.CHECKED);
         var shareCtl = self._shareCtl;
         shareCtl.extraParams = null;
         var $layerLi = $featureLi.parents('li').first();
@@ -196,115 +147,188 @@ if (!TC.control.FeatureInfoCommons) {
         }
     };
 
-    ctlProto.responseCallback = function (e) {
+    ctlProto.callback = function (coords, xy) {
         var self = this;
-        if (self.filterFeature) {
-            var services = e.services;
-            self.info = { services: services, defaultFeature: e.defaultFeature };
 
-            // Eliminamos capas sin resultados
-            for (var i = 0; i < services.length; i++) {
-                var service = services[i];
-                for (var j = 0; j < service.layers.length; j++) {
-                    if (!service.layers[j].features.length) {
-                        service.layers.splice(j, 1);
-                        j = j - 1;
+        if (self.elevation) {
+            self.querying = true;
+
+            self.elevationRequest = self.elevation.getElevation({
+                crs: self.map.crs,
+                coordinates: coords
+            });
+        }
+
+        if (self.map && self.filterLayer) {
+            //aquí se pone el puntito temporal
+            var title = self.getLocaleString('featureInfo');
+            var markerOptions = $.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title });
+            if (self.displayMode !== TC.control.FeatureInfoCommons.POPUP) {
+                markerOptions.showsPopup = false;
+            }
+            self.filterLayer.clearFeatures();
+            $.when(self.filterLayer.addMarker(coords, markerOptions)
+            ).then(function (marker) {
+                ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
+                ////o sea
+                ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
+                ////pero en el caso raro (la primera vez), ocurre al revés. Entonces, ya se habrá establecido lastFeatureCount (no será null)
+                //if (self.lastFeatureCount === null) {
+                //    self.map.putLayerOnTop(self.filterLayer);
+                //    self.filterFeature = marker;
+                //}
+                //else {
+                //    self.filterLayer.clearFeatures();
+                //}
+                self.map.putLayerOnTop(self.filterLayer);
+                self.filterFeature = marker;
+
+                var visibleLayers = false;
+                for (var i = 0; i < self.map.workLayers.length; i++) {
+                    var layer = self.map.workLayers[i];
+                    if (layer.type === TC.Consts.layerType.WMS) {
+                        if (layer.getVisibility() && layer.names.length > 0) {
+                            visibleLayers = true;
+                            break;
+                        }
                     }
                 }
-                if (!service.layers.length) {
-                    services.splice(i, 1);
-                    i = i - 1;
+                var resolution = self.map.getResolution();
+                if (visibleLayers) {
+                    self.wrap.getFeatureInfo(coords, resolution);
                 }
-            }
-            if (services.length) {
-                self.renderData(e, function () {
-                    // Insert links
-                    self._$div.find('td.' + self.CLASS + '-val').each(function (idx, elm) {
-                        var $td = $(elm);
-                        var text = $td.text();
-                        if (TC.Util.isURL(text)) {
-                            $td.html('<a href="' + text + '" target="_blank" title="' + self.getLocaleString('linkInNewWindow') + '">' + text + '</a>');
-                        }
-                    });
+                else {
+                    self.responseCallback({ coords: coords });
+                }
+            });
+        }
+    };
 
-                    if (self.sharedFeatureInfo) {
-                        self._$div.find('ul.' + self.CLASS + '-services li')
-                            .addClass(TC.Consts.classes.CHECKED);
-                        var sharedFeature;
-                        var featureObj = self.sharedFeatureInfo;
-                        for (var i = 0, ii = self.info.services.length; i < ii; i++) {
-                            var service = self.info.services[i];
-                            if (service.mapLayer.url === featureObj.s) {
-                                for (var j = 0, jj = service.layers.length; j < jj; j++) {
-                                    var layer = service.layers[j];
-                                    if (layer.name === featureObj.l) {
-                                        for (var k = 0, kk = layer.features.length; k < kk; k++) {
-                                            var feature = layer.features[k];
-                                            if (feature.id === featureObj.f) {
-                                                sharedFeature = feature;
-                                                var hash = hex_md5(JSON.stringify({
-                                                    data: feature.getData(),
-                                                    geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
-                                                }));
-                                                if (featureObj.h !== hash) {
-                                                    TC.alert(self.getLocaleString('finfo.featureChanged.warning'));
-                                                }
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                                break;
+    ctlProto.responseCallback = function (options) {
+        var self = this;
+
+        $.when(self.elevationRequest).then(function (elevCoords) {            
+
+            TC.control.FeatureInfoCommons.prototype.responseCallback.call(self, options);
+            self.querying = true;
+
+            if (self.filterFeature) {
+                var services = options.services;
+                self.info = { services: services, defaultFeature: options.defaultFeature };
+
+                // Eliminamos capas sin resultados
+                if (services) {
+                    for (var i = 0; i < services.length; i++) {
+                        var service = services[i];
+                        for (var j = 0; j < service.layers.length; j++) {
+                            if (!service.layers[j].features.length) {
+                                service.layers.splice(j, 1);
+                                j = j - 1;
                             }
                         }
-                        if (sharedFeature) {
-                            self.map.addControl(new TC.control.Popup({ div: TC.Util.getDiv(), closeButton: true })).then(function (popup) {
-                                sharedFeature.data = self._$div.html();
-                                popup.$popupDiv.addClass(self.CLASS + '-lite');
-                                var btnTitle = self.getLocaleString('deleteFeature');
-                                self.getRenderedHtml(self.CLASS + '-del-btn', null, function (html) {
-                                    popup.$popupDiv.append(html);
-                                    popup.$popupDiv.find('.' + self.CLASS + '-del-btn')
-                                        .on(TC.Consts.event.CLICK, function (e) {
-                                            TC.confirm(self.getLocaleString('deleteFeature.confirm'), function () {
-                                                self.map.removeLayer(self.sharedFeatureLayer);
-                                                delete self.sharedFeatureLayer;
-                                            });
-                                        });
-                                });
-                                sharedFeature.showsPopup = true;
-                                sharedFeature.popup = popup;
-                                self.map.addLayer({
-                                    id: TC.getUID(),
-                                    type: TC.Consts.layerType.VECTOR,
-                                    title: self.getLocaleString('foi'),
-                                }).then(function (layer) {
-                                    self.sharedFeatureLayer = layer;
-                                    self.filterLayer.clearFeatures();
-                                    layer.addFeature(sharedFeature);
-                                    self.map.zoomToFeatures([sharedFeature]);
-                                });
-                                self.map.on(TC.Consts.event.POPUP, function (e) {
-                                    if (e.control === popup) {
-                                        popup.$popupDiv.find('table').on(TC.Consts.event.CLICK, function (e) {
-                                            self.map.zoomToFeatures([sharedFeature]);
-                                        });
-                                    }
-                                });
-                            });
+                        if (!service.layers.length) {
+                            services.splice(i, 1);
+                            i = i - 1;
                         }
-                        delete self.sharedFeatureInfo;
                     }
-                    else {
-                        self.displayResults();
-                    }
-                });
+                }
+
+                var locale = self.map.options.locale || TC.Cfg.locale;
+                options.isGeo = self.map.wrap.isGeo();
+                if (elevCoords) {
+                    options.elevation = TC.Util.formatNumber(Math.round(elevCoords[0][2]), locale);
+                }
+                if (options.coords) {
+                    options.crs = self.map.crs;
+                    options.coords = options.coords.map(function (value) {
+                        return TC.Util.formatNumber(Math.round(value), locale);
+                    });
+                }
+                if ((services && services.length) || elevCoords) {
+                    self.renderData(options, function () {
+                        self.insertLinks();
+
+                        if (self.sharedFeatureInfo) {
+                            self._$div.find('ul.' + self.CLASS + '-services li')
+                                .addClass(TC.Consts.classes.CHECKED);
+                            var sharedFeature;
+                            var featureObj = self.sharedFeatureInfo;
+                            for (var i = 0, ii = self.info.services.length; i < ii; i++) {
+                                var service = self.info.services[i];
+                                if (service.mapLayer.url === featureObj.s) {
+                                    for (var j = 0, jj = service.layers.length; j < jj; j++) {
+                                        var layer = service.layers[j];
+                                        if (layer.name === featureObj.l) {
+                                            for (var k = 0, kk = layer.features.length; k < kk; k++) {
+                                                var feature = layer.features[k];
+                                                if (feature.id === featureObj.f) {
+                                                    sharedFeature = feature;
+                                                    var hash = hex_md5(JSON.stringify({
+                                                        data: feature.getData(),
+                                                        geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
+                                                    }));
+                                                    if (featureObj.h !== hash) {
+                                                        TC.alert(self.getLocaleString('finfo.featureChanged.warning'));
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            if (sharedFeature) {
+                                self.map.addControl(new TC.control.Popup({ div: TC.Util.getDiv(), closeButton: true })).then(function (popup) {
+                                    sharedFeature.data = self._$div.html();
+                                    popup.$popupDiv.addClass(self.CLASS + '-lite');
+                                    var btnTitle = self.getLocaleString('deleteFeature');
+                                    self.getRenderedHtml(self.CLASS + '-del-btn', null, function (html) {
+                                        popup.$popupDiv.append(html);
+                                        popup.$popupDiv.find('.' + self.CLASS + '-del-btn')
+                                            .on(TC.Consts.event.CLICK, function (e) {
+                                                TC.confirm(self.getLocaleString('deleteFeature.confirm'), function () {
+                                                    self.map.removeLayer(self.sharedFeatureLayer);
+                                                    delete self.sharedFeatureLayer;
+                                                });
+                                            });
+                                    });
+                                    sharedFeature.showsPopup = true;
+                                    sharedFeature.popup = popup;
+                                    self.map.addLayer({
+                                        id: TC.getUID(),
+                                        type: TC.Consts.layerType.VECTOR,
+                                        title: self.getLocaleString('foi'),
+                                    }).then(function (layer) {
+                                        self.sharedFeatureLayer = layer;
+                                        self.filterLayer.clearFeatures();
+                                        layer.addFeature(sharedFeature);
+                                        self.map.zoomToFeatures([sharedFeature]);
+                                    });
+                                    self.map.on(TC.Consts.event.POPUP, function (e) {
+                                        if (e.control === popup) {
+                                            popup.$popupDiv.find('table').on(TC.Consts.event.CLICK, function (e) {
+                                                self.map.zoomToFeatures([sharedFeature]);
+                                            });
+                                        }
+                                    });
+                                });
+                            }
+                            delete self.sharedFeatureInfo;
+                        }
+                        else {
+                            self.displayResults();
+                        }
+                    });                    
+                }
+                else {
+                    self.resultsLayer.clearFeatures();
+                    self.filterLayer.clearFeatures();                    
+                }
+
+                self.querying = false;
             }
-            else {
-                self.resultsLayer.clearFeatures();
-                self.filterLayer.clearFeatures();
-            }
-        }
+        });
     };
 })();
