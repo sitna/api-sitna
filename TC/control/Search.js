@@ -1,4 +1,21 @@
-﻿TC.control = TC.control || {};
+﻿(function () {
+    // Polyfill window.performance.now
+    if (!window.performance) {
+        window.performance = {
+            offset: Date.now(),
+            now: function () {
+                return Date.now() - this.offset;
+            }
+        };
+    } else if (window.performance && !window.performance.now) {
+        window.performance.offset = Date.now();
+        window.performance.now = function () {
+            return Date.now() - window.performance.offset;
+        };
+    }
+}());
+
+TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -540,10 +557,9 @@ TC.control.Search = function () {
         }
     };
 
-    self.allowedSearchTypes = self.options.allowedSearchTypes || {};
-
     if (self.options.allowedSearchTypes) {
         for (var allowed in self.options.allowedSearchTypes) {
+
             // GLS: Limitamos la búsqueda en portales y calles cuando así se establezca en la configuración de las búsquedas
             if (self.availableSearchTypes[allowed] && !$.isEmptyObject(self.options.allowedSearchTypes[allowed])) {
                 $.extend(self.availableSearchTypes[allowed], self.options.allowedSearchTypes[allowed]);
@@ -561,8 +577,15 @@ TC.control.Search = function () {
                         self.rootCfg.active.dataIdProperty;
                 }
             }
+
+            // Si esta a false lo borramos de las disponibles
+            if (!self.options.allowedSearchTypes[allowed]) {
+                delete self.options.allowedSearchTypes[allowed];
+            }
         }
     }
+
+    self.allowedSearchTypes = self.options.allowedSearchTypes || {};
 
     if (self.rootCfg.active) {
         self.rootCfg.active.getRootLabel();
@@ -1016,7 +1039,7 @@ TC.inherit(TC.control.Search, TC.Control);
             return function (geomType, property, extractValue, f) {
                 var self = this;
 
-                if (!(f instanceof TC.Feature)) {
+                if (TC.Feature && !(f instanceof TC.Feature)) {
                     self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, geom: f.geom }));
                 }
 
@@ -1087,7 +1110,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
             });
 
-            $.when(self.layerPromise).then(function (layer) {
+            self.layerPromise.then(function (layer) {
                 self.layer = layer;
             });
         });
@@ -1188,7 +1211,7 @@ TC.inherit(TC.control.Search, TC.Control);
         self._search = self._search || {};
 
         var _search = function () {
-            self.search(self.$text.val(), function (list) {                
+            self.search(self.$text.val(), function (list) {
                 if (list.length === 1) {
                     self.$text.val(list[0].label);
                     self.goToResult(list[0].id);
@@ -1206,11 +1229,15 @@ TC.inherit(TC.control.Search, TC.Control);
             var _research = function () {
                 self.$text.val(self.$list[0].label || self.$list.find('li:not([header]) > a > span').text());
                 self.lastPattern = self.$text.val();
-                self.goToResult(self.$list[0].id || unescape(self.$list.find('li:not([header]) > a').attr('href')).substring(1));
+                self.goToResult(self.$list[0].id || unescape(self.$list.find('li:not([header]) > a').attr('href')).substring(1), self.$list.find('li:not([header])').attr('dataRole'));
                 self.$list.hide('fast');
             };
 
             self.$text = self._$div.find('input.tc-ctl-search-txt');
+            if (self.options && self.options.placeHolder) {
+                self.$text.attr('placeHolder', self.options.placeHolder.trim());
+            }
+
             self.$list = self._$div.find('.tc-ctl-search-list');
             self.$button = self._$div.find('.tc-ctl-search-btn');
             self.$button.on(TC.Consts.event.CLICK, function () {
@@ -1225,6 +1252,10 @@ TC.inherit(TC.control.Search, TC.Control);
                     else self.$text.trigger('keyup.autocomplete');
                 });
             });
+            if (self.options.instructions) {
+                self.$text.attr('title', self.options.instructions.trim());
+                self.$button.attr('title', self.options.instructions.trim());
+            }
 
             // GLS: añadimos la funcionalidad al mensaje de "No hay resultados", al hacer click repliega el mensaje.
             self.$list.on(TC.Consts.event.CLICK, 'a.tc-ctl-search-li-empty', function () {
@@ -1269,7 +1300,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
                     if (self.$list.find('li > a:not(.tc-ctl-search-li-loading,.tc-ctl-search-li-empty)').length === 1) {
                         _research();
-                    } else {                                                                        
+                    } else {
                         _search();
                     }
                     return false;
@@ -1324,7 +1355,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
                                         // Pendiente de afinar
                                         //if (self.lastPattern && criteria.substring(0, criteria.lastIndexOf(' ')) == self.lastPattern) {                                            
-                                                
+
                                         //    // Si el patrón de búsqueda anterior y actual es el mismo más algo nuevo (típico en la búsqueda de un portal), lo nuevo lo separo por coma
                                         //    // self.lastPattern: "Calle Cataluña/Katalunia Kalea, Pamplona"
                                         //    // text: "Calle Cataluña/Katalunia Kalea, Pamplona 18"
@@ -1335,7 +1366,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                         self.lastPattern = criteria;
 
                                         self.search(criteria, callback);
-                                    } else {                                        
+                                    } else {
                                         searchDelay = requestAnimationFrame(step);
                                     }
                                 }
@@ -1458,7 +1489,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                         if (querys[t].trim().slice(-1) == ',')
                                             querys[t] = querys[t].slice(0, -1);
                                     }
-                                }        
+                                }
 
                                 for (var q = 0; q < querys.length; q++) {
                                     if (querys[q].trim().length > 0) {
@@ -1471,7 +1502,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                                     strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
                                             }
                                         }
-                                    }                                    
+                                    }
                                 }
 
                                 if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
@@ -1495,7 +1526,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                             strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
                                         }
                                     }
-                                }                               
+                                }
 
                                 var pattern = '(' + strReg.join('|') + ')';
                                 pattern = pattern.replace(/a/gi, "[a|á]");
@@ -1520,7 +1551,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                         });
                                 } else {
                                     highlighted = label.replace(rex, "<b>$1</b>");
-                                }                               
+                                }
 
                                 html[html.length] = '<li dataRole="' + elm.dataRole + '"><a href="' + '#' + encodeURIComponent(elm.id) + '"><span hidden>' + elm.label + '</span>' + highlighted + '</a></li>';
                             }
@@ -2337,7 +2368,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 data.t == root &&
                                 rootLabel.filter(function (elem) {
                                     return elem.indexOf(self.removePunctuation(data.s).toLowerCase()) > -1;
-                                }).length > 0) {
+                            }).length > 0) {
                                 result.splice(iData, 1);
                                 break;
                             }
@@ -2848,8 +2879,6 @@ TC.inherit(TC.control.Search, TC.Control);
 
         if (goTo) {
 
-            wait = self.loading.addWait();
-
             self.getLayer().then(function (layer) {
                 switch (true) {
                     case goTo.params.type == TC.Consts.layerType.VECTOR:
@@ -2862,6 +2891,8 @@ TC.inherit(TC.control.Search, TC.Control);
                         for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
                             layer[self.WFS_TYPE_ATTRS[i]] = goTo.params[self.WFS_TYPE_ATTRS[i]];
                         }
+
+                        wait = self.loading.addWait();
                         break;
                     default:
                 }
@@ -2876,7 +2907,18 @@ TC.inherit(TC.control.Search, TC.Control);
                                 if (e.layer == layer) {
                                     if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
                                         self.$list.hide('fast');
-                                        e.layer.map.setExtent(e.layer.wrap.layer.getSource().getExtent());
+                                        var bounds = e.layer.wrap.layer.getSource().getExtent();
+                                        var radius = e.layer.map.options.pointBoundsRadius;
+
+                                        if (bounds[2] - bounds[0] === 0) {
+                                            bounds[0] = bounds[0] - radius;
+                                            bounds[2] = bounds[2] + radius;
+                                        }
+                                        if (bounds[3] - bounds[1] === 0) {
+                                            bounds[1] = bounds[1] - radius;
+                                            bounds[3] = bounds[3] + radius;
+                                        }
+                                        e.layer.map.setExtent(bounds);
                                     }
                                     else if (e.layer.features && e.layer.features.length > 0) {
                                         self.$list.hide('fast');
@@ -2896,17 +2938,6 @@ TC.inherit(TC.control.Search, TC.Control);
                                 }
                             });
 
-                            if (goTo.params.type != TC.Consts.layerType.WFS) {
-                                self.map.one(TC.Consts.event.FEATURESADD, function (e) {
-                                    if (e.layer.features && e.layer.features.length == 0) {
-                                        self.$list.html(goTo.emptyResultHTML);
-                                        self.$text.trigger("targetUpdated.autocomplete");
-
-                                        self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
-                                    }
-                                });
-                            }
-
                             if (e.layer.features && e.layer.features.length > 0) {
                                 self.$list.hide('fast');
                                 setQueryableFeatures.call(self, e.layer.features);
@@ -2919,55 +2950,64 @@ TC.inherit(TC.control.Search, TC.Control);
                                 self.$list.html(goTo.emptyResultHTML);
                                 self.$text.trigger("targetUpdated.autocomplete");
 
-                                self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
+                                if (!(e.newData && e.newData.features && e.newData.features.length > 0)) {
+                                    self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
+                                }
 
                                 self.loading.removeWait(wait);
                             }
                         }
                     });
-
-                    if (layer.features.length == 0) // GLS: Si la capa no contiene features, en el método refresh no se lanzará el evento LAYERUPDATE, por tanto, debo lanzarlo yo misma
-                        self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: layer, id: id }));
                 });
             });
+
+
         } else if (!customSearchType) { self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY)); }
     };
 
-    var drawPoint = function (e) {
+    var drawPoint = function (id) {
         var self = this;
 
-        if (e && e.layer == self.layer) {
-            var id = e.id;
+        wait = self.loading.addWait();
 
-            var point = self.getPoint(id);
-            var delta;
-            var title;
-            var deferred;
+        var point = self.getPoint(id);
+        var delta;
+        var title;
+        var deferred;
+
+        if (point && self.insideLimit(point)) {
+            title = self.getLabel(id);
+            deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
+            delta = self.map.options.pointBoundsRadius;
+            self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+        } else {
+            var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
+            id = self.LAT + match[2] + self.LON + match[1];
+            point = self.getPoint(id);
 
             if (point && self.insideLimit(point)) {
                 title = self.getLabel(id);
                 deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
                 delta = self.map.options.pointBoundsRadius;
                 self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+
+                self.$text.val(title);
             } else {
-                var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
-                id = self.LAT + match[2] + self.LON + match[1];
-                point = self.getPoint(id);
+                self.$list.html(goTo.emptyResultHTML);
+                self.$text.trigger("targetUpdated.autocomplete");
 
-                if (point && self.insideLimit(point)) {
-                    title = self.getLabel(id);
-                    deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
-                    delta = self.map.options.pointBoundsRadius;
-                    self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+                self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
 
-                    self.$text.val(title);
-                }
+                self.loading.removeWait(wait);
             }
-
-            $.when(deferred).then(function (feat) {
-                self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: [feat] }));
-            });
         }
+
+        $.when(deferred).then(function (feat) {
+            self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: [feat] }));
+
+            self.loading.removeWait(wait);
+        });
+
     };
     ctlProto.goToCoordinates = function (id) {
         var self = this;
@@ -2985,8 +3025,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
             goTo.emptyResultHTML = '<li><a class="tc-ctl-search-li-empty">' + self.OUTBBX_LABEL + '</a></li>';
 
-            var draw = drawPoint.bind(self);
-            self.map.one(TC.Consts.event.LAYERUPDATE, draw);
+            drawPoint.call(self, id);
 
             return goTo;
         }
@@ -3252,7 +3291,7 @@ if (!String.prototype.tcFormat) {
             return typeof args[number] != 'undefined' ?
                 args[number]
                 : match
-                ;
+            ;
         });
     };
 }
