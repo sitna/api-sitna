@@ -119,6 +119,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 }
             }
             result.name = self.name || result.name;
+            result.customLegend = self.options.customLegend; //Atributo para pasar una plantilla HTML diferente a la por defecto (LegendNode.html)
             result.title = self.title || result.title;
             result.uid = self.id;
         }
@@ -511,5 +512,20 @@ TC.inherit(TC.layer.Vector, TC.Layer);
     layerProto.refresh = function () {
         var self = this;
         return this.wrap.reloadSource();
+    };
+
+    layerProto.getFeaturesInCurrentExtent = function (tolerance) {
+        var self = this;
+
+        var extent = self.map.getExtent();
+        return this.getFeaturesInExtent(extent, tolerance);
+    };
+
+    layerProto.getFeaturesInExtent = function (extent, tolerance) {
+        return this.wrap.getFeaturesInExtent(extent, tolerance);
+    };
+
+    layerProto.setProjection = function (options) {
+        this.wrap.setProjection(options);
     };
 })();
