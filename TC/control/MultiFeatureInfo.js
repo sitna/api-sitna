@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
+if (!TC.control.FeatureInfoCommons) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
 }
 (function () {
     TC.control.MultiFeatureInfo = function () {
@@ -19,11 +19,10 @@ if (!TC.Control) {
         self.lineFInfoCtrl = null;
         self.polygonFInfoCtrl = null;
         self.lastCtrlActive = null;
-        self.listTOCCtrl = null;
         self.popup = null;
     };
 
-    TC.inherit(TC.control.MultiFeatureInfo, TC.Control);
+    TC.inherit(TC.control.MultiFeatureInfo, TC.control.FeatureInfoCommons);
 
     var ctlProto = TC.control.MultiFeatureInfo.prototype;
 
@@ -70,16 +69,8 @@ if (!TC.Control) {
                 if (self.fInfoCtrl) {
                     self.fInfoCtrl.activate();
                     self.lastCtrlActive = self.fInfoCtrl;
-                    self.lastCtrlActive.popup = self.popup;
                 }
             });
-        });
-        $.when(map.addControl('popup', {
-            closeButton: true,
-            draggable: self.options.draggable
-        })).then(function (popup) {
-            self.popup = popup;
-            popup.caller = self;
         });
     };
 
