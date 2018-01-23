@@ -4,7 +4,7 @@
 {?abstract}
 <div class="tc-ctl-lcat-abstract">
     <h4>{@i18n $key="abstract"/}</h4>
-    <div>{abstract}</div>
+    <div><pre>{abstract|s}</pre></div>
 </div>
 {/abstract}
 {?metadata}
@@ -12,7 +12,7 @@
     <h4>{@i18n $key="metadata"/}</h4>
     <ul>
         {#metadata}
-        <li><a href="{url|s}" type="{format}" title="{formatDescription}" target="_blank">{formatDescription}</a></li>
+        <li><a href="{url|s}" type="{format}" title="{formatDescription}" target="_blank">{formatDescription|s}</a></li>
         {/metadata}
     </ul>
 </div>
