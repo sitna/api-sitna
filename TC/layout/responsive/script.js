@@ -57,10 +57,13 @@
             }
             //mover el Multifeature info dentro del TOC
             if (TC.control.MultiFeatureInfo) {
-                    var mfi = $("." + TC.control.MultiFeatureInfo.prototype.CLASS);
+                var toc = map.getControlsByClass('TC.control.ListTOC')[0];
+                if (toc) {
+                    var mfi = $('.' + TC.control.MultiFeatureInfo.prototype.CLASS);
                     mfi.detach();
-                    $(".tc-ctl-ltoc h2").after(mfi);
+                    $('.' + toc.CLASS + '-content').prepend(mfi);
                 }
+            }
         });
 
         TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
