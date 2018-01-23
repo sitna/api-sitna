@@ -302,18 +302,7 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
                         };
 
                         reDraw($li).then(function () {
-                            var layerOptions = $.extend({}, layer.options);
-                            layerOptions.id = TC.getUID();
-                            layerOptions.layerNames = [layerName];
-                            map.addLayer(layerOptions).then(function (layer) {
-                                layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
-                                    var layer = this.parent;
-                                    if (event.error.code === 401 || event.error.code === 403)
-                                        layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
-                                    layer.map.removeLayer(layer);
-                                });
-                            });
-
+                            self.addLayerToMap(layer, layerName);
                             e.stopPropagation();
                         });
                     }
@@ -694,9 +683,6 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
         self._$div.find('.' + self.CLASS + '-info').addClass(TC.Consts.classes.HIDDEN);
     };
 
-
-
-
     ctlProto.addLayer = function (layer) {
         var result = $.Deferred();
         var self = this;
@@ -726,6 +712,21 @@ TC.inherit(TC.control.LayerCatalog, TC.Control);
         } else { result.resolve(); }
 
         return result;
+    };
+
+    ctlProto.addLayerToMap = function (layer, layerName) {
+        const self = this;
+        const layerOptions = $.extend({}, layer.options);
+        layerOptions.id = TC.getUID();
+        layerOptions.layerNames = [layerName];
+        self.map.addLayer(layerOptions).then(function (layer) {
+            layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
+                var layer = this.parent;
+                if (event.error.code === 401 || event.error.code === 403)
+                    layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
+                layer.map.removeLayer(layer);
+            });
+        });
     };
 
     ctlProto.loaded = function () {
