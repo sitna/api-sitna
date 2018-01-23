@@ -124,11 +124,11 @@ if (!TC.Control) {
         }
         if (!self.layer) {
             map.loaded(function () {
-                $.when(map.addLayer({
+                map.addLayer({
                     id: layerId,
                     stealth: true,
                     type: TC.Consts.layerType.VECTOR                    
-                })).then(function (layer) {
+                }).then(function (layer) {
                     self.layer = layer;
                 });
             });
