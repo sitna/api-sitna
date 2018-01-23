@@ -62,6 +62,22 @@
         }
     }
 })();
+(function () {
+    // Polyfill window.performance.now
+    if (!window.performance) {
+        window.performance = {
+            offset: Date.now(),
+            now: function () {
+                return Date.now() - this.offset;
+            }
+        };
+    } else if (window.performance && !window.performance.now) {
+        window.performance.offset = Date.now();
+        window.performance.now = function () {
+            return Date.now() - window.performance.offset;
+        };
+    }
+}());
 
 TC.control = TC.control || {};
 
@@ -168,11 +184,11 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         ctlProto.template[ctlProto.CLASS + '-tracking-toast'] = TC.apiLocation + "TC/templates/GeolocationTrackingToast.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "geo" }).w("</h2><div class=\"tc-ctl-geolocation-content\"> <div class=\"tc-ctl-geolocation-track\"><div class=\"tc-ctl-geolocation-track-snap-info\"></div><div class=\"tc-ctl-geolocation-info-tracking tc-hidden\"><div class=\"tc-ctl-p-results\"><div class=\"prpanel-group prsidebar-body \"><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><label>").h("i18n", ctx, {}, { "$key": "geo.mylocation" }).w("</label> <span id=\"trackingInfoClose\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span id=\"trackingInfoMin\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span> </h4></div><div id=\"results\" class=\"prpanel-collapse\"><div class=\"prpanel-body list-group\"> </div> </div></div></div><div id=\"trackingInfoMax\" class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("\"><i class=\"fa fa-list-alt\"></i></div></div></div><!-- img se insertan en el div del mapa--> <div id=\"tc-ctl-geolocation-track-elevation-marker\" class=\"tc-ctl-geolocation-trackMarker elevation\" style=\"display: none;\" /> <div class=\"tc-ctl-geolocation-track-panel-block\"><input id=\"tc-ctl-geolocation-track-panel-opened\" type=\"checkbox\" checked/><label for=\"tc-ctl-geolocation-track-panel-opened\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.1" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.2" }).w("</label><i class=\"tc-ctl-geolocation-track-panel-help icon-question-sign\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.3" }).w("\"></i></div><div class=\"tc-ctl-geolocation-track-mng\"><div class=\"tc-ctl-geolocation-select\"><form> <label class=\"tc-ctl-geolocation-btn-track\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"tracks\" /><span>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</span></label><label class=\"tc-ctl-geolocation-btn-tracks\" title=\"").h("i18n", ctx, {}, { "$key": "geo.tracks.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"track-available\" /><span>").h("i18n", ctx, {}, { "$key": "geo.tracks" }).w("</span></label> </form></div> <div class=\"tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden\"><i class=\"tc-ctl-geolocation-track-search-icon\"></i><input id=\"tc-ctl-geolocation-track-available-srch\" type=\"search\" list=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.filter.plhr" }).w("\" maxlength=\"200\" /> <ol id=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-lst\"><li class=\"tc-ctl-geolocation-track-available-empty\"><span>").h("i18n", ctx, {}, { "$key": "geo.noTracks" }).w("</span></li><li class=\"tc-ctl-geolocation-track-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li></ol><div class=\"tc-ctl-geolocation-track-cnt\"><input name=\"uploaded-file\" id=\"uploaded-file\" type=\"file\" class=\"tc-ctl-geolocation-track-import tc-button\" accept=\".gpx,.kml\" disabled /><label class=\"tc-button tc-icon-button\" for=\"uploaded-file\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.import.upload" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.import.lbl" }).w("</label></div></div><div class=\"tc-ctl-geolocation-tracks tc-ctl-geolocation-panel tc-hidden\"> <div class=\"tc-alert alert-warning tc-hidden\"><p id=\"panel-msg\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.1" }).w(" <ul><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.2" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.4" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.5" }).w("</li></ul></p></div> <div class=\"tc-ctl-geolocation-track-ui\"> <div class=\"tc-ctl-geolocation-track-render\"><input id=\"tc-ctl-geolocation-track-render\" type=\"checkbox\" hidden checked /><label for=\"tc-ctl-geolocation-track-render\" class=\"tc-ctl-geolocation-track-render\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("</label></div><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.activate" }).w("</button><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.deactivate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.deactivate" }).w("</button></div><div class=\"tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt\"><input type=\"text\" class=\"tc-ctl-geolocation-track-title tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.save" }).w("\"></button><input type=\"text\" class=\"tc-ctl-geolocation-track-waypoint tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.save" }).w("\"></button></div></div></div></div></div><!--se inserta en el div del mapa--><div class=\"tc-ctl-geolocation-track-center tc-hidden\"> <button class=\"tc-ctl-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.center" }).w("\"></button></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "geo" }).w("</h2><div class=\"tc-ctl-geolocation-content\"> <div class=\"tc-ctl-geolocation-track\"><div class=\"tc-ctl-geolocation-track-snap-info\"></div><div class=\"tc-ctl-geolocation-info-tracking tc-hidden\"><div class=\"tc-ctl-p-results\"><div class=\"prpanel-group prsidebar-body \"><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><label>").h("i18n", ctx, {}, { "$key": "geo.mylocation" }).w("</label> <span id=\"trackingInfoClose\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span id=\"trackingInfoMin\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span> </h4></div><div id=\"results\" class=\"prpanel-collapse\"><div class=\"prpanel-body list-group\"> </div> </div></div></div><div id=\"trackingInfoMax\" class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("\"><i class=\"fa fa-list-alt\"></i></div></div></div><!-- img se insertan en el div del mapa--> <div id=\"tc-ctl-geolocation-track-elevation-marker\" class=\"tc-ctl-geolocation-trackMarker elevation\" style=\"display: none;\" /> <div class=\"tc-ctl-geolocation-track-panel-block\" data-no-3d><input id=\"tc-ctl-geolocation-track-panel-opened\" type=\"checkbox\" checked/><label for=\"tc-ctl-geolocation-track-panel-opened\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.1" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.2" }).w("</label><i class=\"tc-ctl-geolocation-track-panel-help icon-question-sign\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.3" }).w("\"></i></div><div class=\"tc-ctl-geolocation-track-mng\"><div class=\"tc-ctl-geolocation-select\"><form> <label class=\"tc-ctl-geolocation-btn-track\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.title" }).w("\"><input type=\"radio\" name=\"mode\" checked value=\"tracks\" /><span>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</span></label><label data-no-3d class=\"tc-ctl-geolocation-btn-tracks\" title=\"").h("i18n", ctx, {}, { "$key": "geo.tracks.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"track-available\" /><span>").h("i18n", ctx, {}, { "$key": "geo.tracks" }).w("</span></label> </form></div> <div data-no-3d class=\"tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden\"><i class=\"tc-ctl-geolocation-track-search-icon\"></i><input id=\"tc-ctl-geolocation-track-available-srch\" type=\"search\" list=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.filter.plhr" }).w("\" maxlength=\"200\" /> <ol id=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-lst\"><li class=\"tc-ctl-geolocation-track-available-empty\"><span>").h("i18n", ctx, {}, { "$key": "geo.noTracks" }).w("</span></li><li class=\"tc-ctl-geolocation-track-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li></ol><div class=\"tc-ctl-geolocation-track-cnt\"><input name=\"uploaded-file\" id=\"uploaded-file\" type=\"file\" class=\"tc-ctl-geolocation-track-import tc-button\" accept=\".gpx,.kml\" disabled /><label class=\"tc-button tc-icon-button\" for=\"uploaded-file\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.import.upload" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.import.lbl" }).w("</label></div></div><div class=\"tc-ctl-geolocation-tracks tc-ctl-geolocation-panel\"> <div class=\"tc-alert alert-warning tc-hidden\" data-no-3d><p id=\"panel-msg\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.1" }).w(" <ul><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.2" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.4" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.5" }).w("</li></ul></p></div> <div class=\"tc-ctl-geolocation-track-ui\"> <div data-no-3d class=\"tc-ctl-geolocation-track-render\"><input id=\"tc-ctl-geolocation-track-render\" type=\"checkbox\" hidden checked /><label for=\"tc-ctl-geolocation-track-render\" class=\"tc-ctl-geolocation-track-render\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("</label></div><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.activate" }).w("</button><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.deactivate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.deactivate" }).w("</button></div><div data-no-3d class=\"tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt\"><input type=\"text\" class=\"tc-ctl-geolocation-track-title tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.save" }).w("\"></button><input type=\"text\" class=\"tc-ctl-geolocation-track-waypoint tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.save" }).w("\"></button></div></div></div></div></div><!--se inserta en el div del mapa--><div class=\"tc-ctl-geolocation-track-center tc-hidden\"> <button class=\"tc-ctl-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.center" }).w("\"></button></div>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-track-node'] = function () { dust.register(ctlProto.CLASS + '-track-node', body_0); function body_0(chk, ctx) { return chk.w("<li data-id=\"").f(ctx.get(["id"], false), ctx, "h").w("\" data-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span class=\"tc-draw tc-selectable\" title=\"").f(ctx.get(["name"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</span><input class=\"tc-textbox tc-hidden\" type=\"text\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\" /> <button class=\"tc-btn-simulate\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.simulate" }).w("\"></button><button hidden class=\"tc-btn-stop\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.stop" }).w("\"></button><button class=\"tc-btn-edit\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.edit" }).w("\"></button><button hidden class=\"tc-btn-pause\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.pause" }).w("\"></button> <button hidden class=\"tc-btn-backward\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.backward" }).w("\"></button><label hidden class=\"tc-spn-speed\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.velocity" }).w("\"></label><button hidden class=\"tc-btn-forward\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.forward" }).w("\"></button> <button class=\"tc-btn-save tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "save" }).w("\"></button><button class=\"tc-btn-cancel tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.cancel" }).w("\"></button><button class=\"tc-btn-delete\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.delete" }).w("\"></button><button class=\"tc-btn-export-gpx\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportGPX" }).w("\"></button><button class=\"tc-btn-export-kml\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportKML" }).w("\"></button> </li>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = function () { dust.register(ctlProto.CLASS + '-track-snapping-node', body_0); function body_0(chk, ctx) { return chk.w("<ul>").x(ctx.get(["n"], false), ctx, { "block": body_1 }, {}).w("<li> <span>X:</span> ").f(ctx.get(["x"], false), ctx, "h").w(" </li><li> <span>Y:</span> ").f(ctx.get(["y"], false), ctx, "h").w(" </li>").x(ctx.get(["z"], false), ctx, { "block": body_2 }, {}).x(ctx.get(["m"], false), ctx, { "block": body_4 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li> <span>").h("i18n", ctx, {}, { "$key": "geo.trk.snapping.name" }).w(":</span> ").f(ctx.get(["n"], false), ctx, "h").w(" </li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.h("ne", ctx, { "block": body_3 }, { "key": ctx.get(["z"], false), "value": 0 }).w(" "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li> <span>Z:</span> ").f(ctx.get(["z"], false), ctx, "h").w(" </li>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<li> ").f(ctx.get(["m"], false), ctx, "h").w(" </li>"); } body_4.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-geolocation-continue-track-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><button class=\"tc-button tc-ctl-geolocation-track-continue\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cnt" }).w(" </button><button class=\"tc-button tc-ctl-geolocation-track-new\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.new" }).w(" </button> <button class=\"tc-button tc-modal-close\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cancel" }).w(" </button></div></div></div><div class=\"tc-ctl-geolocation-track-advert-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p id=\"pageBlurMsg\">").h("i18n", ctx, {}, { "$key": "geo.trk.page.blur" }).w("</p><p class=\"tc-ctl-geolocation-track-advertisement p\"> <label> <input type=\"checkbox\" name=\"checkbox\" id=\"advertisement\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.advertisement" }).w(" </label> </p></div><div class=\"tc-modal-footer\"><button class=\"tc-button tc-ctl-geolocation-track-advert-ok\"> ").h("i18n", ctx, {}, { "$key": "ok" }).w(" </button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-tracking-toast'] = function () { dust.register(ctlProto.CLASS + '-tracking-toast', body_0); function body_0(chk, ctx) { return chk.w("<ul><li><span>X:</span> ").f(ctx.get(["x"], false), ctx, "h").w("<br /><span>Y:</span> ").f(ctx.get(["y"], false), ctx, "h").w("<br />").x(ctx.get(["z"], false), ctx, { "block": body_1 }, {}).w("</li><li>").x(ctx.get(["accuracy"], false), ctx, { "block": body_2 }, {}).x(ctx.get(["speed"], false), ctx, { "block": body_3 }, {}).w("</li></ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<span>Z:</span> ").f(ctx.get(["z"], false), ctx, "h").w(" m<br />"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<span>").h("i18n", ctx, {}, { "$key": "geo.trk.accuracy" }).w(":</span> ").f(ctx.get(["accuracy"], false), ctx, "h").w(" m<br />"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<span>").h("i18n", ctx, {}, { "$key": "geo.trk.speed" }).w(":</span> ").f(ctx.get(["speed"], false), ctx, "h").w(" km/h<br />"); } body_3.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-geolocation-continue-track-dialog tc-modal\" data-no-3d><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><button class=\"tc-button tc-ctl-geolocation-track-continue\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cnt" }).w(" </button><button class=\"tc-button tc-ctl-geolocation-track-new\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.new" }).w(" </button> <button class=\"tc-button tc-modal-close\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cancel" }).w(" </button></div></div></div><div class=\"tc-ctl-geolocation-track-advert-dialog tc-modal\" data-no-3d><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p id=\"pageBlurMsg\">").h("i18n", ctx, {}, { "$key": "geo.trk.page.blur" }).w("</p><p class=\"tc-ctl-geolocation-track-advertisement p\"> <label> <input type=\"checkbox\" name=\"checkbox\" id=\"advertisement\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.advertisement" }).w(" </label> </p></div><div class=\"tc-modal-footer\"><button class=\"tc-button tc-ctl-geolocation-track-advert-ok\"> ").h("i18n", ctx, {}, { "$key": "ok" }).w(" </button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-tracking-toast'] = function () { dust.register(ctlProto.CLASS + '-tracking-toast', body_0); function body_0(chk, ctx) { return chk.w("<ul><li><span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(":</span> ").f(ctx.get(["x"], false), ctx, "h").w("<br /><span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_3, "block": body_4 }, {}).w(":</span> ").f(ctx.get(["y"], false), ctx, "h").w("<br />").x(ctx.get(["z"], false), ctx, { "block": body_5 }, {}).w("</li><li>").x(ctx.get(["accuracy"], false), ctx, { "block": body_8 }, {}).x(ctx.get(["speed"], false), ctx, { "block": body_9 }, {}).x(ctx.get(["mdt"], false), ctx, { "block": body_10 }, {}).w("</li></ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("X"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lon" }); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("Y"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_6, "block": body_7 }, {}).w(":</span> ").f(ctx.get(["z"], false), ctx, "h").w(" m<br />"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("Z"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "ele" }); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("<span>").h("i18n", ctx, {}, { "$key": "geo.trk.accuracy" }).w(":</span> ").f(ctx.get(["accuracy"], false), ctx, "h").w(" m<br />"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("<span>").h("i18n", ctx, {}, { "$key": "geo.trk.speed" }).w(":</span> ").f(ctx.get(["speed"], false), ctx, "h").w(" km/h<br />"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("<span title=\"").h("i18n", ctx, {}, { "$key": "mdt.title" }).w("\">").h("i18n", ctx, {}, { "$key": "ele" }).w(" (").h("i18n", ctx, {}, { "$key": "mdt" }).w("):</span> ").f(ctx.get(["mdt"], false), ctx, "h").w(" m<br />"); } body_10.__dustBody = !0; return body_0 };
     }
 
     ctlProto.register = function (map) {
@@ -183,25 +199,66 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         self.wrap.register(map);
 
         map.loaded(function () {
-            $.when(map.addLayer({
+            map.addLayer({
                 id: TC.getUID(),
                 type: TC.Consts.layerType.VECTOR,
                 stealth: true,
                 title: 'Posicionar.GPS',
-            })).then(function (layer) {
+            }).then(function (layer) {
                 self.layerGPS = layer;
             });
-            $.when(map.addLayer({
+            map.addLayer({
                 id: TC.getUID(),
                 type: TC.Consts.layerType.VECTOR,
                 stealth: true,
                 title: 'Posicionar.Tracking',
-            })).then(function (layer) {
+            }).then(function (layer) {
                 self.layerTracking = layer;
             });
 
+            var trackLayerChanged = function (e) {
+                var self = this;
+                if (e.layer == self.layerTrack) {
+                    switch (true) {
+                        case e.type + '.' + e.namespace === TC.Consts.event.LAYERREMOVE:
+                            self.wrap.deactivateSnapping();
+                            var selected = self.getSelectedTrack();
+                            if (selected) {
+                                self.clearSelectedTrack();
+                            }
+                            if (self.resultsPanelChart)
+                                self.resultsPanelChart.close();
 
-            // GLS: falta la gestión del drag&drop al fileInput aunque debería saltar el mismo evento y funcionar correctamente
+                            // GLS: limpiamos la referencia a la capa para poder gestionar las nuevas selecciones en la lista/importaciones
+                            self.layerTrack = undefined;
+                            break;
+                        case e.opacity > 0 && e.opacity < 1:
+                            return;
+                        case e.layer.getVisibility() == false:
+                            if (self.resultsPanelChart)
+                                self.resultsPanelChart.minimize();
+                        case e.opacity == 0:
+                            self.wrap.deactivateSnapping();
+                            break;
+                        case e.layer.getVisibility() == true:
+                            if (self.resultsPanelChart)
+                                self.resultsPanelChart.maximize();
+                        case e.opacity == 1:
+                            self.wrap.activateSnapping();
+                            break;
+                    }
+                }
+            }.bind(self);
+            self._trackLayerBindEvents = function (bind) {
+                var self = this;
+
+                if (bind) {
+                    map.on(TC.Consts.event.LAYERVISIBILITY + ' ' + TC.Consts.event.LAYEROPACITY + ' ' + TC.Consts.event.LAYERREMOVE, trackLayerChanged);
+                } else {
+                    map.off(TC.Consts.event.LAYERVISIBILITY + ' ' + TC.Consts.event.LAYEROPACITY + ' ' + TC.Consts.event.LAYERREMOVE, trackLayerChanged);
+                }
+            };
+
             map.on(TC.Consts.event.FEATURESIMPORT, function (e) {
                 var self = this;
 
@@ -230,6 +287,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                             // GLS: añadimos la capa para que se muestre en el TOC
                             self.getLayer(self.Const.Layers.TRACK).then(function (layer) {
+
+                                self._trackLayerBindEvents(false);
+                                self.layerTrack.setVisibility(false);
+                                self._trackLayerBindEvents(true);
 
                                 var wait = self.getLoadingIndicator().addWait();
                                 self.importedFileName = e.fileName;
@@ -261,39 +322,6 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     }
                 } else if (/.gpx$/g.test(e.fileName.toLowerCase())) {
                     self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: TC.Consts.msgType.WARNING });
-                }
-            }.bind(self));
-            map.on(TC.Consts.event.LAYERVISIBILITY + ' ' + TC.Consts.event.LAYEROPACITY + ' ' + TC.Consts.event.LAYERREMOVE, function (e) {
-                var self = this;
-                if (e.layer == self.layerTrack) {
-                    switch (true) {
-                        case e.type + '.' + e.namespace === TC.Consts.event.LAYERREMOVE:
-                            self.wrap.deactivateSnapping();
-                            var selected = self.getSelectedTrack();
-                            if (selected) {
-                                self.clearSelectedTrack();
-                            }
-                            if (self.resultsPanelChart)
-                                self.resultsPanelChart.close();
-
-                            // GLS: limpiamos la referencia a la capa para poder gestionar las nuevas selecciones en la lista/importaciones
-                            self.layerTrack = undefined;
-                            break;
-                        case e.opacity > 0 && e.opacity < 1:
-                            return;
-                        case e.layer.getVisibility() == false:
-                            if (self.resultsPanelChart)
-                                self.resultsPanelChart.minimize();
-                        case e.opacity == 0:
-                            self.wrap.deactivateSnapping();
-                            break;
-                        case e.layer.getVisibility() == true:
-                            if (self.resultsPanelChart)
-                                self.resultsPanelChart.maximize();
-                        case e.opacity == 1:
-                            self.wrap.activateSnapping();
-                            break;
-                    }
                 }
             }.bind(self));
         });
@@ -647,11 +675,11 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     self.getLoadingIndicator().removeWait(wait)
                 });
             });
-            $(document).on("click", sel.DRAW, function () {
+            $(document).on("click", sel.DRAW, function () {                
                 var wait = self.getLoadingIndicator().addWait();
 
                 $.when(_drawTrack(self, this)).then(function () {
-                    self.getLoadingIndicator().removeWait(wait)
+                    self.getLoadingIndicator().removeWait(wait);                    
                 });
             });
 
@@ -698,8 +726,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 setTimeout(function () {
                     if ($trackLi.hasClass(self.Const.Classes.SELECTEDTRACK)) {
                         self.uiSimulate(false, $(btnDraw));
-                        self.clear(self.Const.Layers.TRACK);
 
+                        self.clear(self.Const.Layers.TRACK);
+                        
                         $(btnDraw).attr("title", $(btnDraw).text());
                         self.elevationActive.set(false);
 
@@ -747,7 +776,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             $(document).on("click", self._classSelector + ' ' + sel.EDIT, function () {
                 _edit(true, $(this));
             });
-            $(document).on("click", self._classSelector + ' ' + sel.DELETE, function () {                
+            $(document).on("click", self._classSelector + ' ' + sel.DELETE, function () {
                 self.removeTrack($(this).parent());
             });
             $(document).on("click", self._classSelector + ' ' + sel.SAVE, function () {
@@ -908,9 +937,11 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.deactivate = function () {
         var self = this;
 
+        TC.Util.closeModal();
         self.clearSelection();
         self.deactivateTracking();
         TC.Control.prototype.deactivate.call(self);
+
     };
 
     var _layerError = function () {
@@ -953,6 +984,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             case layerType == self.Const.Layers.TRACKING:
                 isLayer = self.layerTracking !== undefined;
                 newLayer = "layerTracking";
+                styles = {
+                    line: {
+                        strokeWidth: 2,
+                        strokeColor: "#00ced1"
+                    }
+                };
                 break;
             case layerType == self.Const.Layers.TRACK:
                 isLayer = self.layerTrack !== undefined;
@@ -1008,7 +1045,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 opt.styles = styles;
             }
 
-            $.when(self.map.addLayer(opt)).then(function (layer) {
+            self.map.addLayer(opt).then(function (layer) {
                 this[newLayer] = layer;
                 this[newLayer].map.putLayerOnTop(layer);
                 self.layerPromise.resolve(this[newLayer]);
@@ -1075,7 +1112,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                     if (insideLimit(projectedPosition)) {
                         $.when(
-                            layer.addCircle([projectedPosition, data.accuracy]),
+                            layer.addCircle([projectedPosition, data.accuracy / self.map.getMetersPerUnit()]),
                             layer.addMarker(projectedPosition, {
                                 title: 'GPS', cssClass: TC.Consts.classes.POINT, anchor: [0.5, 0.5]
                             })
@@ -1154,6 +1191,35 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         return true;
     };
 
+    ctlProto.setFormatInfoNewPosition = function (newPosition) {
+        var self = this;
+
+        var data = {};
+        var locale = TC.Util.getMapLocale(self.map);
+        data.x = Math.round(newPosition.position[0]).toLocaleString(locale);
+        data.y = Math.round(newPosition.position[1]).toLocaleString(locale);
+        data.z = (Math.round(newPosition.altitude).toLocaleString(locale));
+        data.accuracy = (Math.round(newPosition.accuracy).toLocaleString(locale));
+        data.speed = newPosition.speed.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+        return data;
+    };
+
+    ctlProto.renderInfoNewPosition = function (d) {
+        var self = this;
+
+        self.getRenderedHtml(self.CLASS + '-tracking-toast', self.setFormatInfoNewPosition(d.pd), function (html) {
+
+            self.track.$info.find('.prpanel-body').html(html);
+
+            if (self.track.$info.hasClass(TC.Consts.classes.HIDDEN)) {
+                self.track.$info.removeClass(TC.Consts.classes.HIDDEN);
+            }
+
+            self.trackingActive.set(true);
+        });
+    };
+
 
     var duringTrackingToolsPanel = function () {
         var self = this;
@@ -1175,27 +1241,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         self.$events.on(self.Const.Event.POSITIONCHANGE, function (d) {
 
             self.currentPoint = d.pd;
-
-            var data = {};
-            var locale = TC.Util.getMapLocale(self.map);
-            data.x = Math.round(d.pd.position[0]).toLocaleString(locale);
-            data.y = Math.round(d.pd.position[1]).toLocaleString(locale);
-            data.z = (Math.round(d.pd.altitude).toLocaleString(locale));
-            data.accuracy = (Math.round(d.pd.accuracy).toLocaleString(locale));
-            data.speed = d.pd.speed.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
-            if (data) {
-                self.getRenderedHtml(self.CLASS + '-tracking-toast', data, function (html) {
-
-                    self.track.$info.find('.prpanel-body').html(html);
-
-                    if (self.track.$info.hasClass(TC.Consts.classes.HIDDEN)) {
-                        self.track.$info.removeClass(TC.Consts.classes.HIDDEN);
-                    }
-
-                    self.trackingActive.set(true);
-                });
-            }
+            self.renderInfoNewPosition(d);
 
             self.track.$trackName.removeAttr('disabled');
             self.track.$trackSave.removeAttr('disabled');
@@ -1204,7 +1250,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.track.$trackAdd.removeAttr('disabled');
 
             // cada vez que se registra una nueva posición almacenamos en sessionStorage
-            TC.Util.storage.setSessionLocalValue(self.Const.LocalStorageKey.TRACKINGTEMP, self.wrap.formattedToStorage(self.layerTracking));
+            TC.Util.storage.setSessionLocalValue(self.Const.LocalStorageKey.TRACKINGTEMP, self.wrap.formattedToStorage(self.layerTracking).features);
         });
         self.$events.on(self.Const.Event.STATEUPDATED, function (data) {
             //$(self.track.htmlMarker).attr('src', data.moving ? 'layout/idena/img/geo-marker-heading.png' : 'layout/idena/img/geo-marker.png');
@@ -1396,9 +1442,28 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         });
     };
 
+    ctlProto._askTracking = function (callback) {
+        var self = this;
+
+        TC.Util.showModal(self._$dialogDiv.find('.tc-ctl-geolocation-continue-track-dialog'), {
+            closeCallback: function () {
+
+                if ($.isFunction(callback)) {
+                    callback();
+                }
+            }
+        });
+
+        return true;
+    };
+
     ctlProto.activateTracking = function () {
         var self = this;
         var trackingAvailable = true;
+
+        if (!self.isActive) {
+            self.activate();
+        }
 
         self.clear(self.Const.Layers.TRACKING);
 
@@ -1418,11 +1483,13 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             self.sessionTracking = TC.Util.storage.getSessionLocalValue(self.Const.LocalStorageKey.TRACKINGTEMP);
             if (self.sessionTracking) {
-                TC.Util.showModal(self._$dialogDiv.find('.tc-ctl-geolocation-continue-track-dialog'), {
-                    closeCallback: function () {
-                        _deactivateTrackingBtns.call(self);
-                    }
+                var asked = self._askTracking(function () {
+                    _deactivateTrackingBtns.call(self);
                 });
+
+                if (!asked) {
+                    self.track.$trackRenew.click();
+                }
             } else _tracking.call(self);
         } else { _deactivateTrackingBtns.call(self); }
     };
@@ -1488,8 +1555,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             var promises = [];
             keys = keys.filter(function (k) {
                 if (!(k.startsWith(self.Const.LocalStorageKey.TRACKINGTEMP)) && k.startsWith(self.Const.LocalStorageKey.TRACKING)) {
-                    promises.push(new $.Deferred());
-                    return true;
+                    if (/trk#\d/i.exec(k)) {
+                        promises.push(new $.Deferred());
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
                 return false;
             });
@@ -1517,7 +1588,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         }
                     });
 
-                    var tracksArray = _orderTracks(tracks);
+                    var tracksArray = tracks.length > 1 ? _orderTracks(tracks) : tracks;
                     self.availableTracks = tracksArray;
                     done.resolve(tracksArray);
                 }
@@ -1534,10 +1605,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         var tracksArray = [];
 
         for (var index in tracks) {
-            if (tracks[index]) {
+            if (tracks[index] && typeof (tracks[index]) === "object") {
                 tracksArray.push(tracks[index]);
                 tracksArray.sort(function (a, b) {
-                    return a.name.localeCompare(b.name);
+                    if (typeof (a.name) === "string") {
+                        return $.isFunction(a.name.localeCompare) ? a.name.localeCompare(b.name) : 0;
+                    } else { return 0; }
                 });
             }
         }
@@ -1600,15 +1673,22 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             else {
                 var currentSelectedTrackId = $(self.getSelectedTrack()[0]).attr('data-uid');
                 self.track.$trackList.find('li[data-id]').remove();
-                for (var t in tracks) {
-                    self.getRenderedHtml(self.CLASS + '-track-node', {
-                        id: t, uid: tracks[t].uid, name: tracks[t].name ? tracks[t].name.trim() : ''
-                    }, function (html) {
-                        self.track.$trackList.append(html);
-                    });
+
+                for (var i = 0; i < tracks.length; i++) {
+                    var t = tracks[i];
+                    if (typeof (t) === "object") {
+                        self.getRenderedHtml(self.CLASS + '-track-node', {
+                            id: i, uid: t.uid, name: t.name ? t.name.trim() : ''
+                        }, function (html) {
+                            self.track.$trackList.append(html);
+                        });
+                    }
                 }
 
-                self.setSelectedTrack(self.track.$trackList.find('li[data-uid="' + currentSelectedTrackId + '"]'));
+                if (currentSelectedTrackId) {
+                    self.setSelectedTrack(self.track.$trackList.find('li[data-uid="' + currentSelectedTrackId + '"]'));
+                }
+
                 self.track.$trackSearch.removeAttr('disabled');
             }
         });
@@ -1651,146 +1731,121 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.onResize = self.elevationTrack.bind(self, li, true);
             window.addEventListener("resize", self.onResize, false);
         }
-        var elevationGain = {};
-        var time = {};
-        var km = 0;
+
         self.chart = {
             coordinates: []
         };
-
-        //duringTrackingToolsPanel.call(self);
 
         if (self.track.elevationChart)
             self.track.elevationChart = self.track.elevationChart.destroy();
 
         var getChartData = function (li) {
             var done = new $.Deferred();
-            var x, ele;
-            x = [];
-            ele = [];
 
-            self.getTrackingData(li).then(function (geoJSON) {
+            self.getTrackingData(li).then(function (track) {
+                var geoJSON = track.data;
                 if (geoJSON) {
-                    var f = (new ol.format.GeoJSON()).readFeatures(geoJSON);
-                    for (var i = 0; i < f.length; i++) {
-                        var geom = f[i].getGeometry();
+                    var x, ele; x = []; ele = [];
+                    var empty = true;
+                    var minEle, maxEle;
+                    var elevationGain = {};
+                    var time = {};
+                    var km = 0;
+                    var geom;
 
-                        var getDistance = function () {
+                    var f = (new ol.format.GeoJSON()).readFeatures(geoJSON);
+
+                    var getDistance = function () {
+                        if (geom.getLayout() == ol.geom.GeometryLayout.XYZ ||
+                            geom.getLayout() == ol.geom.GeometryLayout.XYZM) {
                             var distance = geom.getLength();
                             return parseFloat((distance / 1000).toFixed(2));
-                        };
-                        var getTime = function () {
-                            if (geom.getLayout() == ol.geom.GeometryLayout.XYZM) {
-                                var diff = geom.getLastCoordinate()[3] - geom.getFirstCoordinate()[3];
-                                return {
-                                    s: Math.floor((diff / 1000) % 60),
-                                    m: Math.floor(((diff / (1000 * 60)) % 60)),
-                                    h: Math.floor(((diff / (1000 * 60 * 60)) % 24))
-                                };
-                            }
-
-                            return null;
-                        };
-                        var getHill = function (coords) {
-                            if (coords && coords.length > 0 && coords[0].length > 2) { // si tenemos la Z
-                                var uphill = 0;
-                                var downhill = 0;
-
-                                var previousHeight = 0;
-                                var sectorMinHeight = 0;
-                                var sectorMaxHeight = 0;
-                                var previousUphill = true;
-
-                                for (var c = 0; c < coords.length; c++) {
-                                    var point = coords[c];
-                                    var height = point[2];
-                                    if (c == 0) //--inicializar
-                                    {
-                                        previousHeight = height;
-                                        sectorMinHeight = height;
-                                        sectorMaxHeight = height;
-                                    }
-
-                                    sectorMinHeight = Math.min(sectorMinHeight, height); //--actualizar mínimo y máximo del sector
-                                    sectorMaxHeight = Math.max(sectorMaxHeight, height);
-
-                                    var delta = height - previousHeight; //--calcular desnivel del punto respecto al anterior
-                                    // self.gapHill: altura de los dientes a despreciar
-                                    if (delta > self.gapHill || (delta > 0 && c == coords.length - 1)) //--Si se sube más del filtro (o se acaba el segmento subiendo)
-                                    {
-                                        if (previousUphill) //--Si en el segmento anterior también se subía, incrementamos el desnivel positivo acumulado
-                                        {
-                                            uphill += delta;
-                                        }
-                                        else //--Si en el segmento anterior se bajaba, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
-                                        {
-                                            downhill -= sectorMinHeight - previousHeight;
-                                            uphill += height - sectorMinHeight;
-                                            previousUphill = true; //--preparar para el paso siguiente
-                                        }
-                                        previousHeight = height; //--preparar para el paso siguiente
-                                        sectorMinHeight = height;
-                                        sectorMaxHeight = height;
-                                    }
-                                    else if (delta < -self.gapHill || (delta < 0 && c == coords.length - 1)) //--Si se baja más del filtro (o se acaba el segmento bajando)
-                                    {
-                                        if (!previousUphill) //--Si en el segmento anterior también se bajaba, incrementamos el desnivel negativo acumulado
-                                        {
-                                            downhill -= delta;
-                                        }
-                                        else //--Si en el segmento anterior se subía, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
-                                        {
-                                            uphill += sectorMaxHeight - previousHeight;
-                                            downhill -= height - sectorMaxHeight;
-                                            previousUphill = false; //--preparar para el paso siguiente
-                                        }
-                                        previousHeight = height; //--preparar para el paso siguiente
-                                        sectorMinHeight = height;
-                                        sectorMaxHeight = height;
-                                    }
-
-                                }
-
-                                return {
-                                    upHill: Math.round(uphill),
-                                    downHill: Math.round(downhill)
-                                };
-
-                            } else { return null; }
-                        };
-
-                        switch (geom.getType().toLowerCase()) {
-                            case 'point':
-                                continue;
-                                break;
-                            case 'linestring':
-                                time = getTime(geom);
-                                km = getDistance(geom);
-                                elevationGain = getHill(geom.getCoordinates());
-                                self.chart.coordinates = self.chart.coordinates.concat(geom.getCoordinates());
-                                break;
-                            case 'multilinestring':
-                                var _time;
-                                var ls = geom.getLineStrings();
-                                for (var i = 0; i < ls.length; i++) {
-                                    km = km + getDistance(ls[i]);
-
-                                    if (ls[i].getLayout() == ol.geom.GeometryLayout.XYZM)
-                                        _time = _time + (ls[i].getLastCoordinate()[3] - ls[i].getFirstCoordinate()[3]);
-
-                                    self.chart.coordinates = self.chart.coordinates.concat(ls[i].getCoordinates());
-                                }
-
-                                if (_time)
-                                    time = getTime(_time);
-                                break;
-                            default:
-                                return null;
-                                break;
                         }
 
-                        /* x */
+                        return null;
+                    };
+                    var getTime = function () {
+                        if (geom.getLayout() == ol.geom.GeometryLayout.XYZM ||
+                            geom.getLayout() == ol.geom.GeometryLayout.XYM) {
+                            var diff = geom.getLastCoordinate()[3] - geom.getFirstCoordinate()[3];
+                            return {
+                                s: Math.floor((diff / 1000) % 60),
+                                m: Math.floor(((diff / (1000 * 60)) % 60)),
+                                h: Math.floor(((diff / (1000 * 60 * 60)) % 24))
+                            };
+                        }
 
+                        return null;
+                    };
+                    var getHill = function (coords) {
+                        if (coords && coords.length > 0 && coords[0].length > 2) { // si tenemos la Z
+                            var uphill = 0;
+                            var downhill = 0;
+
+                            var previousHeight = 0;
+                            var sectorMinHeight = 0;
+                            var sectorMaxHeight = 0;
+                            var previousUphill = true;
+
+                            for (var c = 0; c < coords.length; c++) {
+                                var point = coords[c];
+                                var height = point[2];
+                                if (c == 0) //--inicializar
+                                {
+                                    previousHeight = height;
+                                    sectorMinHeight = height;
+                                    sectorMaxHeight = height;
+                                }
+
+                                sectorMinHeight = Math.min(sectorMinHeight, height); //--actualizar mínimo y máximo del sector
+                                sectorMaxHeight = Math.max(sectorMaxHeight, height);
+
+                                var delta = height - previousHeight; //--calcular desnivel del punto respecto al anterior
+                                // self.gapHill: altura de los dientes a despreciar
+                                if (delta > self.gapHill || (delta > 0 && c == coords.length - 1)) //--Si se sube más del filtro (o se acaba el segmento subiendo)
+                                {
+                                    if (previousUphill) //--Si en el segmento anterior también se subía, incrementamos el desnivel positivo acumulado
+                                    {
+                                        uphill += delta;
+                                    }
+                                    else //--Si en el segmento anterior se bajaba, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
+                                    {
+                                        downhill -= sectorMinHeight - previousHeight;
+                                        uphill += height - sectorMinHeight;
+                                        previousUphill = true; //--preparar para el paso siguiente
+                                    }
+                                    previousHeight = height; //--preparar para el paso siguiente
+                                    sectorMinHeight = height;
+                                    sectorMaxHeight = height;
+                                }
+                                else if (delta < -self.gapHill || (delta < 0 && c == coords.length - 1)) //--Si se baja más del filtro (o se acaba el segmento bajando)
+                                {
+                                    if (!previousUphill) //--Si en el segmento anterior también se bajaba, incrementamos el desnivel negativo acumulado
+                                    {
+                                        downhill -= delta;
+                                    }
+                                    else //--Si en el segmento anterior se subía, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
+                                    {
+                                        uphill += sectorMaxHeight - previousHeight;
+                                        downhill -= height - sectorMaxHeight;
+                                        previousUphill = false; //--preparar para el paso siguiente
+                                    }
+                                    previousHeight = height; //--preparar para el paso siguiente
+                                    sectorMinHeight = height;
+                                    sectorMaxHeight = height;
+                                }
+
+                            }
+
+                            return {
+                                upHill: Math.round(uphill),
+                                downHill: Math.round(downhill)
+                            };
+
+                        } else { return null; }
+                    };
+
+                    var addX = function (x) {
                         if (self.chart.coordinates.length > 0) {
                             var distance = 0;
                             x.push(distance);
@@ -1803,13 +1858,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                                 x.push(parseFloat(distance.toFixed(2)));
                             }
                         }
-
-
-                        /* ele */
-                        var empty = true;
+                    };
+                    var addElevation = function (ele) {
                         var y = [];
-                        var minEle;
-                        var maxEle;
                         for (var i = 0; i < self.chart.coordinates.length; i++) {
                             if (self.chart.coordinates[i].length > 2) {
                                 var v = (Math.round(self.chart.coordinates[i][2] * 10) / 10);
@@ -1826,14 +1877,66 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                             } else return done.resolve(null);
                         }
+                    };
+
+                    f.filter(function (feature) {
+                        return feature.getGeometry().getType().toLowerCase() === 'linestring' || feature.getGeometry().getType().toLowerCase() === 'multilinestring';
+                    }).forEach(function (feature) {
+                        geom = feature.getGeometry();
+
+                        switch (geom.getType().toLowerCase()) {
+                            case 'linestring':
+
+                                if (track.layout === ol.geom.GeometryLayout.XYZM ||
+                                    track.layout === ol.geom.GeometryLayout.XYZ) {
+
+                                    time = getTime(geom);
+                                    km = getDistance(geom);
+                                    elevationGain = getHill(geom.getCoordinates());
+                                    self.chart.coordinates = self.chart.coordinates.concat(geom.getCoordinates());
+
+                                    addX(x);
+                                    addElevation(ele);
+                                }
+                                break;
+                            case 'multilinestring':
+
+                                if (track.layout === ol.geom.GeometryLayout.XYZM ||
+                                    track.layout === ol.geom.GeometryLayout.XYZ) {
+
+                                    var _time;
+                                    var ls = geom.getLineStrings();
+                                    for (var i = 0; i < ls.length; i++) {
+                                        km = km + getDistance(ls[i]);
+
+                                        if (ls[i].getLayout() == ol.geom.GeometryLayout.XYZM)
+                                            _time = _time + (ls[i].getLastCoordinate()[3] - ls[i].getFirstCoordinate()[3]);
+
+                                        self.chart.coordinates = self.chart.coordinates.concat(ls[i].getCoordinates());
+
+                                        if (_time) { time = getTime(_time); }
+
+                                        addX(x);
+                                        addElevation(ele);
+                                    }
+                                }
+
+                                break;
+                            default:
+                                return null;
+                                break;
+                        }
+                    });
+
+                    if (ele instanceof Array && ele.length == 0) {
+                        empty = true;
                     }
+
+                    self.chartData = !empty ? $.extend({}, { time: time, ele: ele, x: x, miny: minEle, maxy: maxEle }, elevationGain) : null;
+                    return done.resolve(self.chartData);
                 }
 
-                if (ele instanceof Array && ele.length == 0)
-                    empty = true;
-
-                self.chartData = !empty ? $.extend({}, { time: time, ele: ele, x: x, miny: minEle, maxy: maxEle }, elevationGain) : null;
-                return done.resolve(self.chartData);
+                return done.resolve(null);
             });
 
             return done;
@@ -1941,7 +2044,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 self.resultsPanelChart.render(function () {
 
                     self.resultsPanelChart.activateSnapping = function (e) {
-                        if (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0)
+                        if (self.layerTrack && (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0))
                             self.wrap.deactivateSnapping.call(self.wrap);
                     };
                     self.resultsPanelChart.deactivateSnapping = function (e) {
@@ -2114,6 +2217,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             // overlay de la simulación
             self.wrap.simulateTrackEnd();
 
+            self.wrap.clear();
+
             // eliminamos la selección en la lista de tracks
             self.track.$trackList.find('li').removeClass(self.Const.Classes.SELECTEDTRACK);
 
@@ -2124,6 +2229,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             }
 
             self.map.$events.trigger($.Event(self.Const.Event.CLEARTRACK), {});
+
         } else {
             self.getLayer(layerType).then(function (layer) {
                 self.wrap.clear(layer);
@@ -2144,13 +2250,17 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 var trackName = self.importedFileName || self.track.$trackName.val().trim();
 
                 var tracks = self.availableTracks;
-                if (!tracks)
-                    tracks = {};
+                if (!tracks) {
+                    tracks = [];
+                }
 
                 var uid = TC.getUID();
+                var formatted = self.wrap.formattedToStorage(layer, true);
+
                 tracks.push({
                     name: trackName,
-                    data: self.wrap.formattedToStorage(layer, true),
+                    data: formatted.features,
+                    layout: formatted.layout,
                     uid: parseInt(uid)
                 });
                 tracks = _orderTracks(tracks);
@@ -2228,7 +2338,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         self.track.$trackAdd.attr('disabled', 'disabled');
 
         // cada vez que se añade un waypoint almacenamos en sessionStorage
-        TC.Util.storage.setSessionLocalValue(self.Const.LocalStorageKey.TRACKINGTEMP, self.wrap.formattedToStorage(self.layerTracking));
+        TC.Util.storage.setSessionLocalValue(self.Const.LocalStorageKey.TRACKINGTEMP, self.wrap.formattedToStorage(self.layerTracking).features);
 
         self.getLoadingIndicator().removeWait(wait);
     };
@@ -2261,15 +2371,13 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         if (self.getSelectedTrack().length > 0 && $(self.getSelectedTrack()[0]).attr('data-id') == dataId)
                             self.clear(self.Const.Layers.TRACK);
 
-                        localforage.removeItem(self.Const.LocalStorageKey.TRACKING + '#' + uid);
-                        if ($(li).parent().find('li[class=""]').length == 1) {
+                        localforage.removeItem(self.Const.LocalStorageKey.TRACKING + '#' + uid).then(function () {
                             self.getStoredTracks().then(function () {
-                                self.bindTracks();                                
+                                self.bindTracks();
                             });
-                        } else {
-                            $(li).remove();
-                        }
-                        
+                        }).catch(function (err) {
+                            console.log(err);
+                        });
 
                     }, function () { });
                 }
@@ -2280,6 +2388,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.setSelectedTrack = function (li) {
         var self = this;
 
+        if (!self.isActive) {
+            self.activate();
+        }
+
         self.track.$trackList.find('li[data-id] > span').each(function () {
             $(this).attr("title", $(this).text());
         });
@@ -2287,7 +2399,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         li.addClass(self.Const.Classes.SELECTEDTRACK);
 
-        $(li).attr('title', self.getLocaleString("tr.lst.clear") + $(li).find('span').text());
+        $(li).attr('title', self.getLocaleString("tr.lst.clear") + " " + $(li).find('span').text());
         $(li).find(self.Const.Selector.DRAW).attr('title', $(li).attr('title'));
     };
 
@@ -2340,9 +2452,10 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         self.wrap.clear();
 
-        self.getTrackingData(li).then(function (data) {
-            if (data)
-                self.wrap.drawTrackingData(data).then(function () {
+        self.getTrackingData(li).then(function (track) {
+            var data = track.data;
+            if (track.data)
+                self.wrap.drawTrackingData(track).then(function () {
                     var showFeatures = self.layerTrack.features;
                     if (showFeatures && showFeatures.length > 0) {
                         var lineTrack;
@@ -2384,7 +2497,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             if (tracks) {
                 var dataId = $(_li).attr('data-id');
                 if (tracks[dataId]) {
-                    return done.resolve(tracks[dataId].data);
+                    return done.resolve({ data: tracks[dataId].data, layout: tracks[dataId].layout });
                 }
             }
 

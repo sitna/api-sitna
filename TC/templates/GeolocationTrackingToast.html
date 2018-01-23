@@ -1,9 +1,9 @@
 ﻿<ul>
     <li>
-        <span>X:</span> {x}<br />
-        <span>Y:</span> {y}<br />
+        <span>{?isGeo}{@i18n $key="lon"/}{:else}X{/isGeo}:</span> {x}<br />
+        <span>{?isGeo}{@i18n $key="lat"/}{:else}Y{/isGeo}:</span> {y}<br />
         {?z}
-        <span>Z:</span> {z} m<br />
+        <span>{?isGeo}{@i18n $key="ele"/}{:else}Z{/isGeo}:</span> {z} m<br />
         {/z}
     </li>
     <li>
@@ -13,5 +13,8 @@
         {?speed}
         <span>{@i18n $key="geo.trk.speed"/}:</span> {speed}  km/h<br />
         {/speed}
+        {?mdt}
+        <span title="{@i18n $key="mdt.title"/}">{@i18n $key="ele"/} ({@i18n $key="mdt"/}):</span> {mdt} m<br />
+        {/mdt }
     </li>
 </ul>
