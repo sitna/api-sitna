@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>SITNA.consts.MimeType - API SITNA</title>
+    <title>SITNA.cfg.ClusterOptions - API SITNA</title>
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
     <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
@@ -104,7 +104,7 @@
 
         <div id="docs-main" class="apidocs">
             <div class="content container">
-                <h1>Clase SITNA.consts.MimeType</h1>
+                <h1>Clase SITNA.cfg.ClusterOptions</h1>
 <div class="box meta">
     
 
@@ -112,7 +112,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l1382"><code>sitna.js:1382</code></a>
+            Se define en: <a href="../files/sitna.js.html#l1766"><code>sitna.js:1766</code></a>
         </div>
     
 
@@ -124,9 +124,10 @@
 
 
 <div class="box intro">
-    <p>Colección de tipos MIME de utilidad.
-No se deberían modificar las propiedades de esta clase.</p>
-
+    <p>Opciones de clustering de puntos de una capa, define si los puntos se tienen que agrupar cuando están más cerca entre sí que un valor umbral.
+Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase
+(consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_layout" class="crosslink">layout</a> para ver instrucciones de uso de maquetaciones).</p>
+<p>Esta clase no tiene constructor.</p>
 </div>
 
 <!-- Class member index -->
@@ -167,13 +168,19 @@ No se deberían modificar las propiedades de esta clase.</p>
         <ul class="index-list properties">
             
                 <li class="index-item property">
-                    <a href="#property_JPEG">JPEG</a>
+                    <a href="#property_animate">animate</a>
 
                     
                 </li>
             
                 <li class="index-item property">
-                    <a href="#property_PNG">PNG</a>
+                    <a href="#property_distance">distance</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_styles">styles</a>
 
                     
                 </li>
@@ -198,17 +205,15 @@ No se deberían modificar las propiedades de esta clase.</p>
         <h2>Properties</h2>
 
         
-            <a name="property_JPEG" class="anchor-link"></a>
+            <a name="property_animate" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>JPEG</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+    <h3 class="name"><code>animate</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | Undefined</span>
 
     
 
     
 
-    
-        <span class="flag final">final</span>
     
 
     
@@ -226,7 +231,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1394"><code>sitna.js:1394</code></a>
+        <a href="../files/sitna.js.html#l1779"><code>sitna.js:1779</code></a>
         
         </p>
 
@@ -237,7 +242,7 @@ No se deberían modificar las propiedades de esta clase.</p>
 
     <div class="extended-detail">
         <div class="description">
-            <p>Tipo MIME de imagen JPEG.</p>
+            <p>Si se establece a <code>true</code>, los puntos se agrupan y desagrupan con una transición animada.</p>
 
         </div>
 
@@ -250,17 +255,15 @@ No se deberían modificar las propiedades de esta clase.</p>
 </div>
 
         
-            <a name="property_PNG" class="anchor-link"></a>
+            <a name="property_distance" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>PNG</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+    <h3 class="name"><code>distance</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
 
     
 
     
 
-    
-        <span class="flag final">final</span>
     
 
     
@@ -278,7 +281,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1388"><code>sitna.js:1388</code></a>
+        <a href="../files/sitna.js.html#l1774"><code>sitna.js:1774</code></a>
         
         </p>
 
@@ -289,7 +292,57 @@ No se deberían modificar las propiedades de esta clase.</p>
 
     <div class="extended-detail">
         <div class="description">
-            <p>Tipo MIME de imagen PNG.</p>
+            <p>Distancia en píxels que tienen que tener como máximo los puntos entre sí para que se agrupen en un cluster.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_styles" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>styles</code>
+    <span class="type"><a href="../classes/SITNA.cfg.ClusterStyleOptions.html" class="crosslink">SITNA.cfg.ClusterStyleOptions</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1784"><code>sitna.js:1784</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Opciones de estilo de los clusters.</p>
 
         </div>
 

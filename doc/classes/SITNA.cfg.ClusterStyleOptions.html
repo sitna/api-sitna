@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>SITNA.consts.MimeType - API SITNA</title>
+    <title>SITNA.cfg.ClusterStyleOptions - API SITNA</title>
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
     <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
@@ -104,7 +104,7 @@
 
         <div id="docs-main" class="apidocs">
             <div class="content container">
-                <h1>Clase SITNA.consts.MimeType</h1>
+                <h1>Clase SITNA.cfg.ClusterStyleOptions</h1>
 <div class="box meta">
     
 
@@ -112,7 +112,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l1382"><code>sitna.js:1382</code></a>
+            Se define en: <a href="../files/sitna.js.html#l2326"><code>sitna.js:2326</code></a>
         </div>
     
 
@@ -124,9 +124,8 @@
 
 
 <div class="box intro">
-    <p>Colección de tipos MIME de utilidad.
-No se deberían modificar las propiedades de esta clase.</p>
-
+    <p>Opciones de estilo de cluster de puntos. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase
+(consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_layout" class="crosslink">layout</a> para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>
 </div>
 
 <!-- Class member index -->
@@ -167,13 +166,7 @@ No se deberían modificar las propiedades de esta clase.</p>
         <ul class="index-list properties">
             
                 <li class="index-item property">
-                    <a href="#property_JPEG">JPEG</a>
-
-                    
-                </li>
-            
-                <li class="index-item property">
-                    <a href="#property_PNG">PNG</a>
+                    <a href="#property_point">point</a>
 
                     
                 </li>
@@ -198,17 +191,15 @@ No se deberían modificar las propiedades de esta clase.</p>
         <h2>Properties</h2>
 
         
-            <a name="property_JPEG" class="anchor-link"></a>
+            <a name="property_point" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>JPEG</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+    <h3 class="name"><code>point</code>
+    <span class="type"><a href="../classes/SITNA.cfg.PointStyleOptions.html" class="crosslink">SITNA.cfg.PointStyleOptions</a> | Undefined</span>
 
     
 
     
 
-    
-        <span class="flag final">final</span>
     
 
     
@@ -226,7 +217,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1394"><code>sitna.js:1394</code></a>
+        <a href="../files/sitna.js.html#l2332"><code>sitna.js:2332</code></a>
         
         </p>
 
@@ -237,64 +228,71 @@ No se deberían modificar las propiedades de esta clase.</p>
 
     <div class="extended-detail">
         <div class="description">
-            <p>Tipo MIME de imagen JPEG.</p>
-
+            <p>Opciones de estilo del punto que representa el cluster. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase
+(consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_layout" class="crosslink">layout</a> para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>
+<p>Puede consultar también el ejemplo <a href="../../examples/cfg.ClusterStyleOptions.point.html">online</a>.</p>
         </div>
 
         
 
         
+            <div class="example">
+                <h4>Ejemplos:</h4>
 
-        
-    </div>
-</div>
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Creamos un mapa con una capa vectorial,
+    // clustering activado a 50 pixels y estilos personalizados.
+    var map = new SITNA.Map(&quot;mapa&quot;, {
+        workLayers: [
+           {
+               id: &quot;cluster&quot;,
+               type: SITNA.Consts.layerType.VECTOR,
+               title: &quot;Clusters&quot;,
+               cluster: {
+                   distance: 50,
+                   styles: {
+                       point: {
+                           fillColor: &quot;#f90&quot;,
+                           fillOpacity: 1,
+                           strokeColor: &quot;#c60&quot;,
+                           strokeWidth: 2,
+                           fontColor: &quot;#f90&quot;
+                       }
+                   }
+               }
+           }
+       ]
+    });
 
-        
-            <a name="property_PNG" class="anchor-link"></a>
-<div class="property item">
-    <h3 class="name"><code>PNG</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+   map.loaded(function () {
+       // Añadimos puntos aleatorios
+       var extent = TC.Cfg.initialExtent;
+       var dx = extent[2] - extent[0];
+       var dy = extent[3] - extent[1];
 
-    
+       var randomPoint = function () {
+           var x = extent[0] + Math.random() * dx;
+           var y = extent[1] + Math.random() * dy;
+           return [x, y];
+       }
 
-    
+       for (var i = 0; i &lt; 200; i++) {
+           var point = randomPoint();
+           map.addMarker(point, {
+               layer: &quot;cluster&quot;,
+               data: {
+                   x: point[0],
+                   y: point[1]
+               }
+           });
+       }
+   });
+&lt;/script&gt;</code></pre>
 
-    
-        <span class="flag final">final</span>
-    
-
-    
-
-    </h3>
-
-    <div class="meta">
-        
-            
-                
-                <p style="display:none">
-                
-                Se define en
-                
-            
-        
-        
-        <a href="../files/sitna.js.html#l1388"><code>sitna.js:1388</code></a>
-        
-        </p>
-
-        
-
-        
-    </div>
-
-    <div class="extended-detail">
-        <div class="description">
-            <p>Tipo MIME de imagen PNG.</p>
-
-        </div>
-
-        
-
+                </div>
+            </div>
         
 
         

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>SITNA.cfg.LineStyleOptions - API SITNA</title>
+    <title>SITNA.cfg.PointStyleOptions - API SITNA</title>
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
     <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
@@ -104,15 +104,19 @@
 
         <div id="docs-main" class="apidocs">
             <div class="content container">
-                <h1>Clase SITNA.cfg.LineStyleOptions</h1>
+                <h1>Clase SITNA.cfg.PointStyleOptions</h1>
 <div class="box meta">
     
 
     
+        <div class="extends">
+            Extiende <a href="../classes/SITNA.cfg.PolygonStyleOptions.html" class="crosslink">SITNA.cfg.PolygonStyleOptions</a>
+        </div>
+    
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l2261"><code>sitna.js:2261</code></a>
+            Se define en: <a href="../files/sitna.js.html#l2300"><code>sitna.js:2300</code></a>
         </div>
     
 
@@ -124,7 +128,7 @@
 
 
 <div class="box intro">
-    <p>Opciones de estilo de línea. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase
+    <p>Opciones de estilo de punto. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de las propiedades de esta clase
 (consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#property_layout" class="crosslink">layout</a> para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>
 </div>
 
@@ -163,15 +167,45 @@
     <div class="index-section properties">
         <h3>Propiedades</h3>
 
-        <ul class="index-list properties">
+        <ul class="index-list properties extends">
             
-                <li class="index-item property">
-                    <a href="#property_strokeColor">strokeColor</a>
+                <li class="index-item property inherited">
+                    <a href="#property_fillColor">fillColor</a>
+
+                    
+                </li>
+            
+                <li class="index-item property inherited">
+                    <a href="#property_fillOpacity">fillOpacity</a>
 
                     
                 </li>
             
                 <li class="index-item property">
+                    <a href="#property_fontColor">fontColor</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_fontSize">fontSize</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_radius">radius</a>
+
+                    
+                </li>
+            
+                <li class="index-item property inherited">
+                    <a href="#property_strokeColor">strokeColor</a>
+
+                    
+                </li>
+            
+                <li class="index-item property inherited">
                     <a href="#property_width">width</a>
 
                     
@@ -197,10 +231,108 @@
         <h2>Properties</h2>
 
         
-            <a name="property_strokeColor" class="anchor-link"></a>
-<div class="property item">
-    <h3 class="name"><code>strokeColor</code>
+            <a name="property_fillColor" class="anchor-link"></a>
+<div class="property item inherited">
+    <h3 class="name"><code>fillColor</code>
     <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                <p>Hereda de
+                <a href="../classes/SITNA.cfg.PolygonStyleOptions.html#property_fillColor" class="type">SITNA.cfg.PolygonStyleOptions</a>:
+            
+        
+        
+        <a href="../files/sitna.js.html#l2287"><code>sitna.js:2287</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Color de relleno, representado en formato hex triplet (<code>&quot;#RRGGBB&quot;</code>).</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">&quot;#000&quot; en polígonos, &quot;#336&quot; en clusters</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_fillOpacity" class="anchor-link"></a>
+<div class="property item inherited">
+    <h3 class="name"><code>fillOpacity</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                <p>Hereda de
+                <a href="../classes/SITNA.cfg.PolygonStyleOptions.html#property_fillOpacity" class="type">SITNA.cfg.PolygonStyleOptions</a>:
+            
+        
+        
+        <a href="../files/sitna.js.html#l2293"><code>sitna.js:2293</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Opacidad de relleno, valor de 0 a 1.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">0.3 en polígonos, 0.6 en clusters</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_fontColor" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>fontColor</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | Undefined</span>
 
     
 
@@ -220,6 +352,159 @@
                 
                 Se define en
                 
+            
+        
+        
+        <a href="../files/sitna.js.html#l2313"><code>sitna.js:2313</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (<code>&quot;#RRGGBB&quot;</code>).</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">&quot;#fff&quot; en clusters</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_fontSize" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>fontSize</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l2319"><code>sitna.js:2319</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Tamaño de fuente del texto de la etiqueta descriptiva del punto.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">9 en clusters</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_radius" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>radius</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a> | Undefined</span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l2307"><code>sitna.js:2307</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Radio en pixels del símbolo que representa el punto.</p>
+
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">6 en puntos</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_strokeColor" class="anchor-link"></a>
+<div class="property item inherited">
+    <h3 class="name"><code>strokeColor</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                <p>Hereda de
+                <a href="../classes/SITNA.cfg.LineStyleOptions.html#property_strokeColor" class="type">SITNA.cfg.LineStyleOptions</a>:
             
         
         
@@ -250,7 +535,7 @@
 
         
             <a name="property_width" class="anchor-link"></a>
-<div class="property item">
+<div class="property item inherited">
     <h3 class="name"><code>width</code>
     <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
 
@@ -267,11 +552,8 @@
     <div class="meta">
         
             
-                
-                <p style="display:none">
-                
-                Se define en
-                
+                <p>Hereda de
+                <a href="../classes/SITNA.cfg.LineStyleOptions.html#property_width" class="type">SITNA.cfg.LineStyleOptions</a>:
             
         
         

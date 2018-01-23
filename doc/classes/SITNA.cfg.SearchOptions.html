@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>SITNA.cfg.MarkerOptions - API SITNA</title>
+    <title>SITNA.cfg.SearchOptions - API SITNA</title>
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
     <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
@@ -104,19 +104,19 @@
 
         <div id="docs-main" class="apidocs">
             <div class="content container">
-                <h1>Clase SITNA.cfg.MarkerOptions</h1>
+                <h1>Clase SITNA.cfg.SearchOptions</h1>
 <div class="box meta">
     
 
     
         <div class="extends">
-            Extiende <a href="../classes/SITNA.cfg.MarkerStyleOptions.html" class="crosslink">SITNA.cfg.MarkerStyleOptions</a>
+            Extiende <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a>
         </div>
     
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l2391"><code>sitna.js:2391</code></a>
+            Se define en: <a href="../files/sitna.js.html#l2045"><code>sitna.js:2045</code></a>
         </div>
     
 
@@ -128,9 +128,9 @@
 
 
 <div class="box intro">
-    <p>Opciones de marcador. El icono se obtiene de las propiedades <a href="../classes/SITNA.cfg.MarkerOptions.html#property_url" class="crosslink">url</a>, 
-<a href="../classes/SITNA.cfg.MarkerOptions.html#property_cssClass" class="crosslink">cssClass</a> y <a href="../classes/SITNA.cfg.MarkerOptions.html#property_group" class="crosslink">group</a>, por ese orden de preferencia.</p>
-<p>Esta clase no tiene constructor.</p>
+    <p>Opciones de control de búsquedas.
+Esta clase no tiene constructor.</p>
+<p>Puede consultar el ejemplo <a href="../../examples/cfg.SearchOptions.html">online</a>.</p>
 </div>
 
 <!-- Class member index -->
@@ -170,62 +170,56 @@
 
         <ul class="index-list properties extends">
             
-                <li class="index-item property inherited">
-                    <a href="#property_anchor">anchor</a>
-
-                    
-                </li>
-            
-                <li class="index-item property inherited">
-                    <a href="#property_classes">classes</a>
+                <li class="index-item property">
+                    <a href="#property_cadastralParcel">cadastralParcel</a>
 
                     
                 </li>
             
                 <li class="index-item property">
-                    <a href="#property_cssClass">cssClass</a>
-
-                    
-                </li>
-            
-                <li class="index-item property">
-                    <a href="#property_data">data</a>
-
-                    
-                </li>
-            
-                <li class="index-item property">
-                    <a href="#property_group">group</a>
+                    <a href="#property_coordinates">coordinates</a>
 
                     
                 </li>
             
                 <li class="index-item property inherited">
-                    <a href="#property_height">height</a>
+                    <a href="#property_div">div</a>
 
                     
                 </li>
             
                 <li class="index-item property">
-                    <a href="#property_layer">layer</a>
+                    <a href="#property_instructions">instructions</a>
 
                     
                 </li>
             
                 <li class="index-item property">
-                    <a href="#property_showPopup">showPopup</a>
+                    <a href="#property_municipality">municipality</a>
 
                     
                 </li>
             
                 <li class="index-item property">
-                    <a href="#property_url">url</a>
+                    <a href="#property_placeHolder">placeHolder</a>
 
                     
                 </li>
             
-                <li class="index-item property inherited">
-                    <a href="#property_width">width</a>
+                <li class="index-item property">
+                    <a href="#property_postalAddress">postalAddress</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_street">street</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_town">town</a>
 
                     
                 </li>
@@ -250,10 +244,140 @@
         <h2>Properties</h2>
 
         
-            <a name="property_anchor" class="anchor-link"></a>
+            <a name="property_cadastralParcel" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>cadastralParcel</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l2095"><code>sitna.js:2095</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Esta propiedad activa/desactiva la búsqueda de parcelas catastrales en el buscador del mapa. Formato: municipio, polígono, parcela.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
+        
+
+        
+            <div class="example">
+                <h4>Ejemplos:</h4>
+
+                <div class="example-content">
+                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;/&gt; 
+&lt;script&gt;
+    // Creamos un mapa con el control de búsquedas. 
+    // Configuramos el buscador desactivando la búsqueda de parcelas y la localización de coordenadas.
+    // Indicamos un placeHolder y tooltip (propiedad &quot;instructions&quot;) acorde con las búsquedas configuradas.
+    var map = new SITNA.Map(&quot;mapa&quot;, {
+        controls: {
+            search: { 
+                coordinates: false,
+                cadastralParcel: false,
+                municipality: false,
+                town: true,
+                street: true,
+                postalAddress: true,
+                placeHolder: &quot;Municipio, casco urbano, calle o portal&quot;,
+                instructions: &quot;Buscar municipio, casco urbano, calle o portal&quot;
+            }
+        }
+    });
+&lt;/script&gt; </code></pre>
+
+                </div>
+            </div>
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_coordinates" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>coordinates</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l2065"><code>sitna.js:2065</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Esta propiedad activa/desactiva la localización de coordenadas en Sistema de Referencia ETRS89, bien UTM Huso 30 Norte (EPSG:25830) o latitud-longitud (EPSG:4258, EPSG:4326 o CRS:84) en el buscador del mapa.</p>
+        </div>
+
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_div" class="anchor-link"></a>
 <div class="property item inherited">
-    <h3 class="name"><code>anchor</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+    <h3 class="name"><code>div</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/Document_Object_Model_(DOM)/HTMLElement" class="crosslink external" target="_blank">HTMLElement</a> | <a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | Undefined</span>
 
     
 
@@ -269,11 +393,11 @@
         
             
                 <p>Hereda de
-                <a href="../classes/SITNA.cfg.MarkerStyleOptions.html#property_anchor" class="type">SITNA.cfg.MarkerStyleOptions</a>:
+                <a href="../classes/SITNA.cfg.ControlOptions.html#property_div" class="type">SITNA.cfg.ControlOptions</a>:
             
         
         
-        <a href="../files/sitna.js.html#l2242"><code>sitna.js:2242</code></a>
+        <a href="../files/sitna.js.html#l1928"><code>sitna.js:1928</code></a>
         
         </p>
 
@@ -284,12 +408,10 @@
 
     <div class="extended-detail">
         <div class="description">
-            <p>Posicionamiento relativo del icono respecto al punto del mapa, representado por un array de dos números entre 0 y 1, siendo [0, 0] la esquina superior izquierda del icono.</p>
+            <p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
 
         </div>
 
-        
-            <p class="default"><strong>Por defecto:</strong> <span class="default-value">[.5, 1]</span></p>
         
 
         
@@ -299,59 +421,10 @@
 </div>
 
         
-            <a name="property_classes" class="anchor-link"></a>
-<div class="property item inherited">
-    <h3 class="name"><code>classes</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
-
-    
-
-    
-
-    
-
-    
-
-    </h3>
-
-    <div class="meta">
-        
-            
-                <p>Hereda de
-                <a href="../classes/SITNA.cfg.MarkerStyleOptions.html#property_classes" class="type">SITNA.cfg.MarkerStyleOptions</a>:
-            
-        
-        
-        <a href="../files/sitna.js.html#l2236"><code>sitna.js:2236</code></a>
-        
-        </p>
-
-        
-
-        
-    </div>
-
-    <div class="extended-detail">
-        <div class="description">
-            <p>Lista de nombres de clase CSS a utilizar para los iconos de los marcadores. La API extraerá la URL de las imágenes del atributo <code>background-image</code> asociado a la clase.</p>
-
-        </div>
-
-        
-            <p class="default"><strong>Por defecto:</strong> <span class="default-value">[&quot;tc-marker1&quot;, &quot;tc-marker2&quot;, &quot;tc-marker3&quot;, &quot;tc-marker4&quot;, &quot;tc-marker5&quot;]</span></p>
-        
-
-        
-
-        
-    </div>
-</div>
-
-        
-            <a name="property_cssClass" class="anchor-link"></a>
+            <a name="property_instructions" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>cssClass</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | Undefined</span>
+    <h3 class="name"><code>instructions</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
 
     
 
@@ -374,7 +447,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l2406"><code>sitna.js:2406</code></a>
+        <a href="../files/sitna.js.html#l2059"><code>sitna.js:2059</code></a>
         
         </p>
 
@@ -385,10 +458,11 @@
 
     <div class="extended-detail">
         <div class="description">
-            <p>Nombre de clase CSS. El marcador adoptará como icono el valor del atributo <code>background-image</code> de dicha clase.</p>
-
+            <p>Esta propiedad establece el atributo &quot;title&quot; del cajetín y del botón del buscador del mapa.</p>
         </div>
 
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">Buscar municipio, casco urbano, calle, dirección, referencia catastral, coordenadas UTM o latitud-longitud</span></p>
         
 
         
@@ -398,10 +472,10 @@
 </div>
 
         
-            <a name="property_data" class="anchor-link"></a>
+            <a name="property_municipality" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>data</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object" class="crosslink external" target="_blank">Object</a> | Undefined</span>
+    <h3 class="name"><code>municipality</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
 
     
 
@@ -424,7 +498,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l2421"><code>sitna.js:2421</code></a>
+        <a href="../files/sitna.js.html#l2071"><code>sitna.js:2071</code></a>
         
         </p>
 
@@ -435,10 +509,11 @@
 
     <div class="extended-detail">
         <div class="description">
-            <p>Objeto de datos en pares clave/valor para mostrar cuando se pulsa sobre el marcador.</p>
-
+            <p>Esta propiedad activa/desactiva la búsqueda de municipios en el buscador del mapa.</p>
         </div>
 
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
         
 
         
@@ -448,10 +523,10 @@
 </div>
 
         
-            <a name="property_group" class="anchor-link"></a>
+            <a name="property_placeHolder" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>group</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | Undefined</span>
+    <h3 class="name"><code>placeHolder</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
 
     
 
@@ -474,7 +549,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l2399"><code>sitna.js:2399</code></a>
+        <a href="../files/sitna.js.html#l2053"><code>sitna.js:2053</code></a>
         
         </p>
 
@@ -485,12 +560,11 @@
 
     <div class="extended-detail">
         <div class="description">
-            <p>Nombre de grupo en el que incluir el marcador. Estos grupos se muestran en la tabla de contenidos y en la leyenda.
-Todos los marcadores pertenecientes al mismo grupo tienen el mismo icono. Los iconos se asignan automáticamente, rotando por la lista disponible en
-SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.html#property_classes" class="crosslink">classes</a>.</p>
-
+            <p>Esta propiedad establece el atributo &quot;placeHolder&quot; del cajetín del buscador del mapa.</p>
         </div>
 
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">Municipio, casco urbano, calle, dirección…</span></p>
         
 
         
@@ -500,59 +574,10 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 </div>
 
         
-            <a name="property_height" class="anchor-link"></a>
-<div class="property item inherited">
-    <h3 class="name"><code>height</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
-
-    
-
-    
-
-    
-
-    
-
-    </h3>
-
-    <div class="meta">
-        
-            
-                <p>Hereda de
-                <a href="../classes/SITNA.cfg.MarkerStyleOptions.html#property_height" class="type">SITNA.cfg.MarkerStyleOptions</a>:
-            
-        
-        
-        <a href="../files/sitna.js.html#l2254"><code>sitna.js:2254</code></a>
-        
-        </p>
-
-        
-
-        
-    </div>
-
-    <div class="extended-detail">
-        <div class="description">
-            <p>Altura en píxeles del icono.</p>
-
-        </div>
-
-        
-            <p class="default"><strong>Por defecto:</strong> <span class="default-value">32</span></p>
-        
-
-        
-
-        
-    </div>
-</div>
-
-        
-            <a name="property_layer" class="anchor-link"></a>
+            <a name="property_postalAddress" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>layer</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | Undefined</span>
+    <h3 class="name"><code>postalAddress</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
 
     
 
@@ -575,7 +600,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l2416"><code>sitna.js:2416</code></a>
+        <a href="../files/sitna.js.html#l2089"><code>sitna.js:2089</code></a>
         
         </p>
 
@@ -586,10 +611,11 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 
     <div class="extended-detail">
         <div class="description">
-            <p>Identificador de la capa vectorial a la que añadir el marcador.</p>
-
+            <p>Esta propiedad activa/desactiva la búsqueda de direcciones postales en el buscador del mapa. Formato: entidad de población, vía, portal.</p>
         </div>
 
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
         
 
         
@@ -599,10 +625,10 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 </div>
 
         
-            <a name="property_showPopup" class="anchor-link"></a>
+            <a name="property_street" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>showPopup</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | Undefined</span>
+    <h3 class="name"><code>street</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
 
     
 
@@ -625,7 +651,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l2426"><code>sitna.js:2426</code></a>
+        <a href="../files/sitna.js.html#l2083"><code>sitna.js:2083</code></a>
         
         </p>
 
@@ -636,10 +662,11 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 
     <div class="extended-detail">
         <div class="description">
-            <p>Si se establece a <code>true</code>, al añadirse el marcador al mapa se muestra con el bocadillo de información asociada visible por defecto.</p>
-
+            <p>Esta propiedad activa/desactiva la búsqueda de vías en el buscador del mapa. Formato: entidad de población, vía</p>
         </div>
 
+        
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
         
 
         
@@ -649,10 +676,10 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 </div>
 
         
-            <a name="property_url" class="anchor-link"></a>
+            <a name="property_town" class="anchor-link"></a>
 <div class="property item">
-    <h3 class="name"><code>url</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a> | Undefined</span>
+    <h3 class="name"><code>town</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a></span>
 
     
 
@@ -675,7 +702,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l2411"><code>sitna.js:2411</code></a>
+        <a href="../files/sitna.js.html#l2077"><code>sitna.js:2077</code></a>
         
         </p>
 
@@ -686,59 +713,11 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 
     <div class="extended-detail">
         <div class="description">
-            <p>URL de archivo de imagen que se utilizará para el icono.</p>
-
+            <p>Esta propiedad activa/desactiva la búsqueda de cascos urbanos en el buscador del mapa.</p>
         </div>
 
         
-
-        
-
-        
-    </div>
-</div>
-
-        
-            <a name="property_width" class="anchor-link"></a>
-<div class="property item inherited">
-    <h3 class="name"><code>width</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Number" class="crosslink external" target="_blank">Number</a></span>
-
-    
-
-    
-
-    
-
-    
-
-    </h3>
-
-    <div class="meta">
-        
-            
-                <p>Hereda de
-                <a href="../classes/SITNA.cfg.MarkerStyleOptions.html#property_width" class="type">SITNA.cfg.MarkerStyleOptions</a>:
-            
-        
-        
-        <a href="../files/sitna.js.html#l2248"><code>sitna.js:2248</code></a>
-        
-        </p>
-
-        
-
-        
-    </div>
-
-    <div class="extended-detail">
-        <div class="description">
-            <p>Anchura en píxeles del icono.</p>
-
-        </div>
-
-        
-            <p class="default"><strong>Por defecto:</strong> <span class="default-value">32</span></p>
+            <p class="default"><strong>Por defecto:</strong> <span class="default-value">true</span></p>
         
 
         

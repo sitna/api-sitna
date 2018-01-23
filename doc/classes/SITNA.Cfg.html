@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -51,6 +51,10 @@
             
                 <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
             
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterOptions.html">SITNA.cfg.ClusterOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterStyleOptions.html">SITNA.cfg.ClusterStyleOptions</a></li>
+            
                 <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
             
                 <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
@@ -67,7 +71,11 @@
             
                 <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
             
+                <li><a class="type" href="../classes/SITNA.cfg.PointStyleOptions.html">SITNA.cfg.PointStyleOptions</a></li>
+            
                 <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.SearchOptions.html">SITNA.cfg.SearchOptions</a></li>
             
                 <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
             
@@ -104,7 +112,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l1398"><code>sitna.js:1398</code></a>
+            Se define en: <a href="../files/sitna.js.html#l1438"><code>sitna.js:1438</code></a>
         </div>
     
 
@@ -276,7 +284,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1484"><code>sitna.js:1484</code></a>
+        <a href="../files/sitna.js.html#l1524"><code>sitna.js:1524</code></a>
         
         </p>
 
@@ -352,7 +360,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1535"><code>sitna.js:1535</code></a>
+        <a href="../files/sitna.js.html#l1575"><code>sitna.js:1575</code></a>
         
         </p>
 
@@ -404,7 +412,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1422"><code>sitna.js:1422</code></a>
+        <a href="../files/sitna.js.html#l1462"><code>sitna.js:1462</code></a>
         
         </p>
 
@@ -485,7 +493,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1508"><code>sitna.js:1508</code></a>
+        <a href="../files/sitna.js.html#l1548"><code>sitna.js:1548</code></a>
         
         </p>
 
@@ -537,7 +545,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1451"><code>sitna.js:1451</code></a>
+        <a href="../files/sitna.js.html#l1491"><code>sitna.js:1491</code></a>
         
         </p>
 
@@ -590,7 +598,7 @@ el sistema de referencia espacial del mapa. Por defecto la extensión es la de N
             
         
         
-        <a href="../files/sitna.js.html#l1541"><code>sitna.js:1541</code></a>
+        <a href="../files/sitna.js.html#l1581"><code>sitna.js:1581</code></a>
         
         </p>
 
@@ -604,17 +612,31 @@ el sistema de referencia espacial del mapa. Por defecto la extensión es la de N
             <p>URL de la carpeta de maquetación. Para prescindir de maquetación, establecer esta propiedad a <code>null</code>.</p>
 <p>La API busca en la carpeta de maquetación los siguientes archivos:</p>
 <ul>
-     <li><code>markup.html</code>, con código HTML que se inyectará en el elemento del DOM del mapa.</li>
+     <li><code>markup.html</code>, con la plantilla HTML que se inyectará en el elemento del DOM del mapa.</li>
      <li><code>config.json</code>, con un objeto JSON que sobreescribirá propiedades de <a href="../classes/SITNA.Cfg.html" class="crosslink">SITNA.Cfg</a>.</li>
      <li><code>style.css</code>, para personalizar el estilo del visor y sus controles.</li>
      <li><code>script.js</code>, para añadir lógica nueva. Este es el lugar idóneo para la lógica de la nueva interfaz definida por el marcado inyectado con <code>markup.html</code>.</li>
      <li><code>ie8.css</code>, para adaptar el estilo a Internet Explorer 8, dado que este navegador tiene soporte CSS3 deficiente.</li>
+     <li><code>resources/&#42;.json</code>, donde <code>&#42;</code> es el código IETF del idioma que tendrá la interfaz de usuario, por ejemplo <code>resources/es-ES.json</code>.
+     Si se van a soportar varios idiomas hay que preparar un archivo por idioma. Para saber cómo establecer un idioma de interfaz de usuario, consultar la opción <code>locale</code> del constructor de <a href="../classes/SITNA.Map.html" class="crosslink">SITNA.Map</a>.
  </ul>
-<p>Todos estos archivos son opcionales.</p><p>La maquetación por defecto añade los siguientes controles al conjunto por defecto: <code>navBar</code>, <code>basemapSelector</code>, 
+<p>Todos estos archivos son opcionales.</p>
+<p>La maquetación por defecto añade los siguientes controles al conjunto por defecto: <code>navBar</code>, <code>basemapSelector</code>,
 <code>TOC</code>, <code>legend</code>, <code>scaleBar</code>, <code>search</code>, <code>measure</code>, <code>overviewMap</code> y <code>popup</code>. Puede <a href="../../tc/layout/responsive/responsive.zip">descargar la maquetación por defecto</a>.</p>
-<p>Puede consultar el ejemplo <a href="../../examples/Cfg.layout.html">online</a>. 
-Sus archivos de maquetación son <a href="../../examples/layout/example/markup.html">markup.html</a>, <a href="../../examples/layout/example/config.json">config.json</a> y 
-<a href="../../examples/layout/example/style.css">style.css</a>.</p>
+<h4>Soporte multiidioma</h4>
+<p>La API soporta actualmente tres idiomas: castellano, euskera e inglés. Para saber cómo establecer un idioma de interfaz de usuario, consultar la opción <code>locale</code> del constructor de <a href="../classes/SITNA.Map.html" class="crosslink">SITNA.Map</a>.
+Los textos específicos para cada idioma se guardan en archivos <code><em>.json</code>, donde <code></em></code> es el código IETF del idioma de la interfaz de usuario, dentro de la subcarpeta
+resources en la dirección donde se aloja la API SITNA. Por ejemplo, los textos en castellano se guardan en <code>resources/es-ES.json</code>. Estos archivos contienen un diccionario en formato JSON de pares clave/valor, siendo la clave un identificador
+único de cadena y el valor el texto en el idioma elegido.</p>
+<p>Para añadir soporte multiidioma a la maquetación, hay que crear un archivo de recursos de texto para cada idioma soportado y colocarlo en la subcarpeta <code>resources</code>
+dentro de la carpeta de maquetación. Este diccionario se combinará con el diccionario de textos propio de la API.</p>
+<p>Por otro lado, la plantilla contenida en <code>markup.html</code> puede tener identificadores de cadena de texto en el siguiente formato: <code>&#123;&#123;identificador&#125;&#125;</code>. La API sustituirá estos textos por los valores del
+diccionario correspondiente al idioma de la interfaz de usuario.</p>
+<p>Finalmente, hay que activar el soporte multiidioma añadiendo a <code>config.json</code> una clave <code>"i18n": true</code>.</p>
+<p>Puede consultar el ejemplo <a href="../../examples/Cfg.layout.html">online</a>.
+Sus archivos de maquetación son <a href="../../examples/layout/example/markup.html">markup.html</a>, <a href="../../examples/layout/example/config.json">config.json</a>, 
+<a href="../../examples/layout/example/style.css">style.css</a>, <a href="../../examples/layout/example/resources/es-ES.json">resources/es-ES.json</a>,
+<a href="../../examples/layout/example/resources/eu-ES.json">resources/eu-ES.json</a> y <a href="../../examples/layout/example/resources/en-US.json">resources/en-US.json</a>.</p>
         </div>
 
         
@@ -626,13 +648,49 @@ Sus archivos de maquetación son <a href="../../examples/layout/example/markup.h
                 <h4>Ejemplos:</h4>
 
                 <div class="example-content">
-                    <pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+                    <pre class="code prettyprint"><code>&lt;!-- layout/example/markup.html --&gt;
+ &lt;div id=&quot;controls&quot;&gt;
+     &lt;h1&gt;{{stJamesWayInNavarre}}&lt;/h1&gt;
+     &lt;div id=&quot;toc&quot; /&gt;
+     &lt;div id=&quot;legend&quot; /&gt;
+ &lt;/div&gt;
+&lt;div id=&quot;languages&quot;&gt;
+    &lt;a class=&quot;lang&quot; href=&quot;?lang=es-ES&quot; title=&quot;{{spanish}}&quot;&gt;ES&lt;/a&gt;
+    &lt;a class=&quot;lang&quot; href=&quot;?lang=eu-ES&quot; title=&quot;{{basque}}&quot;&gt;EU&lt;/a&gt;
+    &lt;a class=&quot;lang&quot; href=&quot;?lang=en-US&quot; title=&quot;{{english}}&quot;&gt;EN&lt;/a&gt;
+&lt;/div&gt;</code></pre>
+<pre class="code prettyprint"><code>resources/es-ES.json
+{
+    &quot;stJamesWayInNavarre&quot;: &quot;Camino de Santiago en Navarra&quot;,
+    &quot;spanish&quot;: &quot;castellano&quot;,
+    &quot;basque&quot;: &quot;euskera&quot;,
+    &quot;english&quot;: &quot;inglés&quot;
+}</code></pre>
+<pre class="code prettyprint"><code>resources/eu-ES.json
+{
+    &quot;stJamesWayInNavarre&quot;: &quot;Nafarroan Donejakue bidea&quot;,
+    &quot;spanish&quot;: &quot;gaztelania&quot;,
+    &quot;basque&quot;: &quot;euskara&quot;,
+    &quot;english&quot;: &quot;ingelesa&quot;
+}</code></pre>
+<pre class="code prettyprint"><code>resources/en-US.json
+{
+    &quot;stJamesWayInNavarre&quot;: &quot;St. James&#39; Way in Navarre&quot;,
+    &quot;spanish&quot;: &quot;spanish&quot;,
+    &quot;basque&quot;: &quot;basque&quot;,
+    &quot;english&quot;: &quot;english&quot;
+}</code></pre>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
 &lt;script&gt;
-    // Establecer un proxy porque se hacen peticiones a otro dominio.
-    SITNA.Cfg.proxy = &quot;proxy.ashx?&quot;;
+   // Obtener el idioma de interfaz de usuario
+   var selectedLocale = location.search.substr(location.search.indexOf(&quot;?lang=&quot;) + 6) || &quot;es-ES&quot;;
+   // Establecer un proxy porque se hacen peticiones a otro dominio.
+   SITNA.Cfg.proxy = &quot;proxy.ashx?&quot;;
 
-    SITNA.Cfg.layout = &quot;layout/example&quot;;
-    var map = new SITNA.Map(&quot;mapa&quot;);
+   SITNA.Cfg.layout = &quot;layout/example&quot;;
+   var map = new SITNA.Map(&quot;mapa&quot;, {
+       locale: selectedLocale
+   });
 &lt;/script&gt;</code></pre>
 
                 </div>
@@ -670,7 +728,7 @@ Sus archivos de maquetación son <a href="../../examples/layout/example/markup.h
             
         
         
-        <a href="../files/sitna.js.html#l1458"><code>sitna.js:1458</code></a>
+        <a href="../files/sitna.js.html#l1498"><code>sitna.js:1498</code></a>
         
         </p>
 
@@ -723,7 +781,7 @@ el sistema de referencia espacial del mapa. Por defecto la extensión es la de N
             
         
         
-        <a href="../files/sitna.js.html#l1465"><code>sitna.js:1465</code></a>
+        <a href="../files/sitna.js.html#l1505"><code>sitna.js:1505</code></a>
         
         </p>
 
@@ -734,7 +792,7 @@ el sistema de referencia espacial del mapa. Por defecto la extensión es la de N
 
     <div class="extended-detail">
         <div class="description">
-            <p>La rueda de scroll del ratón se puede utilizar para hacer zoom en el mapa.</p>
+            <p>Si se establece a <code>true</code>, la rueda de scroll del ratón se puede utilizar para hacer zoom en el mapa.</p>
         </div>
 
         
@@ -774,7 +832,7 @@ el sistema de referencia espacial del mapa. Por defecto la extensión es la de N
             
         
         
-        <a href="../files/sitna.js.html#l1471"><code>sitna.js:1471</code></a>
+        <a href="../files/sitna.js.html#l1511"><code>sitna.js:1511</code></a>
         
         </p>
 
@@ -832,7 +890,7 @@ Como estas circunstancias están fuera del ámbito de alcance de esta API, es po
             
         
         
-        <a href="../files/sitna.js.html#l1406"><code>sitna.js:1406</code></a>
+        <a href="../files/sitna.js.html#l1446"><code>sitna.js:1446</code></a>
         
         </p>
 
@@ -900,7 +958,7 @@ seguridad de Javascript, dado que el proxy está alojado en el dominio propio.</
             
         
         
-        <a href="../files/sitna.js.html#l1570"><code>sitna.js:1570</code></a>
+        <a href="../files/sitna.js.html#l1664"><code>sitna.js:1664</code></a>
         
         </p>
 
@@ -950,7 +1008,7 @@ seguridad de Javascript, dado que el proxy está alojado en el dominio propio.</
             
         
         
-        <a href="../files/sitna.js.html#l1514"><code>sitna.js:1514</code></a>
+        <a href="../files/sitna.js.html#l1554"><code>sitna.js:1554</code></a>
         
         </p>
 
