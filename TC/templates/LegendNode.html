@@ -1,18 +1,22 @@
-﻿<li {?children}class="tc-ctl-legend-node" {:else}class="tc-ctl-legend-node tc-ctl-legend-leaf" {/children} data-tc-layer-name="{name}" data-tc-layer-uid="{uid}">
-    <div class="tc-ctl-legend-title">{title}</div>
-    {?legend}
-    <div class="tc-ctl-legend-watch">
-        {?legend.src}
-        <img src="" data-tc-img="{legend.src}" {?legend.width}style="width:{legend.width}px;height:{legend.height}px;"{/legend.width} />
-        {:else}
-        <div class="tc-ctl-legend-img" style="border:solid {legend.strokeWidth}px {legend.strokeColor};background-color:{legend.fillColor}{?legend.width};width:{legend.width}px;height:{legend.height}px;border-radius:50%{/legend.width}"></div>
-        {/legend.src}
-    </div>
-    <div class="tc-ctl-legend-nvr">{@i18n $key="notVisibleAtCurrentResolution"/}</div>
-    {/legend}
-    <ul class="tc-ctl-legend-branch">
-        {#children}
-        {>tc-ctl-legend-node:./}
-        {/children}
-    </ul>
-</li>
+﻿{?customLegend}
+    {customLegend|s}
+{:else}
+    <li {?children}class="tc-ctl-legend-node" {:else}class="tc-ctl-legend-node tc-ctl-legend-leaf" {/children} data-tc-layer-name="{name}" data-tc-layer-uid="{uid}">
+        <div class="tc-ctl-legend-title">{title}</div>
+        {?legend}
+        <div class="tc-ctl-legend-watch">
+            {?legend.src}
+            <img src="" data-tc-img="{legend.src}" {?legend.width}style="width:{legend.width}px;height:{legend.height}px;"{/legend.width} />
+            {:else}
+            <div class="tc-ctl-legend-img" style="border:solid {legend.strokeWidth}px {legend.strokeColor};background-color:{legend.fillColor}{?legend.width};width:{legend.width}px;height:{legend.height}px;border-radius:50%{/legend.width}"></div>
+            {/legend.src}
+        </div>
+        <div class="tc-ctl-legend-nvr">{@i18n $key="notVisibleAtCurrentResolution"/}</div>
+        {/legend}
+        <ul class="tc-ctl-legend-branch">
+            {#children}
+            {>tc-ctl-legend-node:./}
+            {/children}
+        </ul>
+    </li>
+{/customLegend}
