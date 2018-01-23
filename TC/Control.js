@@ -78,14 +78,23 @@ TC.Control.prototype.renderData = function (data, callback) {
                     var template = templates[key];
                     if (typeof template === 'string')
                     {
-                        var def = $.ajax({
-                            url: template,
-                            type: "get",
-                            dataType: "html"
-                        });
-                        def.templateKey = key;
-                                                                        
-                        htmDefs.push(def);
+                        if (dust.cache[self.CLASS]) {
+                            dust.render(self.CLASS, data, function (err, out) {
+                                self._$div.html(out);
+                                if (err) {
+                                    TC.error(err);
+                                }
+                            });                            
+                        } else {
+                            var def = $.ajax({
+                                url: template,
+                                type: "get",
+                                dataType: "html"
+                            });
+                            def.templateKey = key;
+
+                            htmDefs.push(def);
+                        }                        
                     }
                     else if ($.isFunction(template))
                     {
