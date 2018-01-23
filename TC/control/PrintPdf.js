@@ -123,6 +123,9 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var self = this;
         TC.Control.prototype.register.call(self, map);
 
+        // GLS: Añado el flag al mapa para tenerlo en cuenta cuando se establece la función de carga de imágenes
+        self.map.mustBeExportable = true;
+
         self.pdfLibPromise = function () {
             var deferred = $.Deferred();
 
@@ -357,10 +360,11 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             };
 
             var _getLegendImages = function () {
-                var imagePromises = [];
+                var imagePromises = [];                
 
                 for (var i = 0; i < legendByGroup.length; i++) {
                     var layers = legendByGroup[i].layers;
+                    var serviceUrl = legendByGroup[i].serviceUrl;                    
 
                     for (var j = 0; j < layers.length; j++) {
                         (function (k, l) {
@@ -368,17 +372,37 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             var src = layer.src || layer.srcBase64;
 
                             if (src) {
-                                // Si estamos en la impresión en IE, proxificamos las imágenes. En caso contrario se genera un "Security Error" al generar el PDF
-                                if (self.map.options.crossOrigin && TC.Util.detectIE()) {
-                                    src = TC.proxify(src);
-                                }
+                                imagePromises.push($.Deferred());
+                                var done = imagePromises[imagePromises.length - 1];
 
-                                var promise = TC.Util.imgToDataUrl(src, 'image/png');
-                                imagePromises.push(promise);
-                                promise.then(function (base64, canvas) {
-                                    layer.image = { base64: base64, canvas: canvas };
-                                }, function () { //reject
-                                    imageErrorHandling(src);
+                                imagePromises.push($.Deferred());
+                                var validation = imagePromises[imagePromises.length - 1];
+
+                                var image = new Image();
+                                image.onload = function () {                                    
+                                    done.resolve(src, validation);
+                                };
+                                image.onerror = function () {
+                                    if (src.indexOf(serviceUrl) === -1) {
+                                        var protocolRegex = /^(https?:\/\/)/i;
+                                        if (protocolRegex.test(src) && protocolRegex.test(serviceUrl)) {
+                                            src = src.replace(src.match(protocolRegex)[1], serviceUrl.match(protocolRegex)[1]);
+                                        }
+                                    }
+                                    done.resolve(src, validation);
+                                };
+                                image.src = src;
+
+                                done.then(function () {
+                                    var params = Array.prototype.slice.call(arguments);
+                                    var promise = TC.Util.imgToDataUrl(params[0], 'image/png');
+                                    promise.then(function (base64, canvas) {
+                                        layer.image = { base64: base64, canvas: canvas };                                        
+                                        params[1].resolve();
+                                    }, function () {
+                                        params[1].resolve();
+                                        imageErrorHandling(src);
+                                    });
                                 });
                             }
                         })(i, j);
@@ -407,7 +431,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             _traverse(layer.getTree(), _process, layer, 0);
 
                             if (result.length > 0) {
-                                legendByGroup.push({ title: layer.title, layers: result });
+                                legendByGroup.push({ title: layer.title, layers: result, serviceUrl: layer.url });
                             }
                         }
                     }
@@ -479,7 +503,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         }
 
         $.when(self.pdfLibPromise)
-            .then(createDoc)            
+            .then(createDoc)
             .then(printHeader)
             .fail(_removeWait)
             .then(printMap)
