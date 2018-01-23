@@ -117,6 +117,7 @@ TC.Feature.prototype.getInfo = function () {
         }
         else {
             var html = [];
+            var openText = TC.Util.getLocaleString(locale, 'open');
             for (var key in data) {
                 var value = data[key];
                 if (typeof value === 'string' || typeof value === 'number' || typeof value === 'undefined') {
@@ -128,10 +129,11 @@ TC.Feature.prototype.getInfo = function () {
                         html[html.length] = '<a href="';
                         html[html.length] = value;
                         html[html.length] = '" target="_blank">';
-                    }
-                    html[html.length] = value !== void (0) ? TC.Util.formatNumber(value, locale) : '&mdash;';
-                    if (isUrl) {
+                        html[html.length] = openText;
                         html[html.length] = '</a>';
+                    }
+                    else {
+                        html[html.length] = value !== void (0) ? TC.Util.formatNumber(value, locale) : '&mdash;';
                     }
                     html[html.length] = '</td></tr>';
                 }
@@ -153,7 +155,7 @@ TC.Feature.prototype.getInfo = function () {
         }
     }
     if (!result) {
-        result = TC.Util.getLocaleString(locale.replace('-', '_'), 'noData');
+        result = TC.Util.getLocaleString(locale, 'noData');
     }
     return result;
 };
