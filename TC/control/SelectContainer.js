@@ -43,7 +43,7 @@ TC.inherit(TC.control.SelectContainer, TC.Control);
         TC.Control.prototype.register.call(self, map);
         self.renderPromise().then(function () {
             self.title = self.getLocaleString(self.options.title || 'moreControls');
-            self._$div.find('h2').first().html(self.title);            
+            self._$div.find('h2').first().html(self.title);
 
             var bufferDeferreds = new Array(self.controlOptions.length);
             for (var i = 0, len = self.controlOptions.length; i < len; i++) {
@@ -99,11 +99,12 @@ TC.inherit(TC.control.SelectContainer, TC.Control);
 
             self._$div.find('span').on(TC.Consts.event.CLICK, clickHandler);
 
-            for (var i = 0, len = self._ctlDeferreds.length; i < len; i++) {
-                self.getControl(i).then(function (ctl) {
-                    ctl.render();
-                });
-            }
+            // GLS: Si en el register de control se llama a render, ¿por qué volvemos a llamarlo aquí?
+            //for (var i = 0, len = self._ctlDeferreds.length; i < len; i++) {
+            //    self.getControl(i).then(function (ctl) {
+            //        ctl.render();
+            //    });
+            //}
 
             if (typeof self.options.defaultSelection === 'number') {
                 clickHandler.call(self._$div.find(self._selectors.RADIOBUTTON).get(self.options.defaultSelection));
