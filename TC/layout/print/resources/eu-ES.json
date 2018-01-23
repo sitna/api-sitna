@@ -1,0 +1,8 @@
+﻿{
+    "print.advice.title": "Inprimatze aholkua",
+    "print.advice.desc": "Inprimatzeko zatia moldatzeko, mapan zoom egin eta mapan zehar mugitu zaitezke",
+    "print.config": "Imprimatze konfigurazioa",
+    "print.config.desc": "Gogoratu paperaren tamaina eta orientazioa konfiguratu behar duzula moldatutako zatiarekiko",
+    "print.qr.error": "Ezin izan da QR codea sortu URL baliogabea delako (funtzionalitate hau ez dago localhost domeinu-ko URLetan",
+    "print.error": "Ezin izan da PDF artxiboa sortu"
+}

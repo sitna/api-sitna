@@ -1,0 +1,8 @@
+﻿{
+    "print.advice.title": "Consejo de impresión",
+    "print.advice.desc": "Puede navegar y hacer zoom sobre el mapa para ajustar el área a imprimir",
+    "print.config": "Configuración de impresión",
+    "print.config.desc": "Recuerde que debe configurar el tamaño y orientación del papel a utilizar por su impresora de acuerdo a su selección",
+    "print.qr.error": "No se ha podido generar código QR porque la URL es inválida (funcionalidad no disponible en URLs que pertenecen al dominio localhost",
+    "print.error": "No se ha podido generar el archivo PDF"
+}
