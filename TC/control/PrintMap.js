@@ -39,7 +39,7 @@ TC.inherit(TC.control.PrintMap, TC.Control);
                 printParameters = '&';
             }
 
-            printParameters += "layout=print&orientation=" +
+            printParameters += "layout=layout/print&orientation=" +
                                   $("#print-design").val() + "&title=" +
                                   $("input.tc-ctl-printMap-title").val() + "&size=" +
                                   $("#print-size").val();
