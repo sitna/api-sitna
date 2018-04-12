@@ -14,6 +14,8 @@ TC.control.ExternalWMS = function (options) {
     this._addedUrls = [];
 
     TC.Control.apply(self, arguments);
+
+    self.allowReprojection = typeof self.options.allowReprojection === 'boolean' ? self.options.allowReprojection : true;
 };
 
 TC.inherit(TC.control.ExternalWMS, TC.Control);
@@ -115,7 +117,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                             return;
                         } else {
                             var root = cap.Capability.Layer;
-                            if (root.CRS && root.CRS.indexOf(self.map.crs) == -1) {
+                            if (root.CRS && root.CRS.indexOf(self.map.crs) == -1 && !self.allowReprojection) {
                                 //no soportado. avisar y fallar
                                 TC.alert(self.getLocaleString('serviceSrsNotCompatible'));
                                 loadingCtrl.hide();
