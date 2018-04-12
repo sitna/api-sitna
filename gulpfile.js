@@ -1,19 +1,19 @@
 ﻿var gulp = require('gulp'),
     del = require('del'),
-  //jshint = require('gulp-jshint'),
-  replace = require('gulp-replace'),
-  rename = require('gulp-rename'),
-  concat = require('gulp-concat'),
-  convertEncoding = require('gulp-convert-encoding'),
-  uglify = require('gulp-uglify'),
-  cleanCSS = require('gulp-clean-css'),
-  dust = require('gulp-dust'),
-  zip = require('gulp-zip'),
-  jsonlint = require("gulp-jsonlint"),
-  mocha = require('gulp-mocha'),
-  mochaPhantomJS = require('gulp-mocha-phantomjs'),
-  casperJs = require('gulp-casperjs'),
-  merge = require('merge-stream');
+    //jshint = require('gulp-jshint'),
+    replace = require('gulp-replace'),
+    rename = require('gulp-rename'),
+    concat = require('gulp-concat'),
+    convertEncoding = require('gulp-convert-encoding'),
+    minify = require('gulp-minify'),
+    cleanCSS = require('gulp-clean-css'),
+    dust = require('gulp-dust'),
+    zip = require('gulp-zip'),
+    jsonlint = require("gulp-jsonlint"),
+    mocha = require('gulp-mocha'),
+    mochaPhantomJS = require('gulp-mocha-phantomjs'),
+    casperJs = require('gulp-casperjs'),
+    merge = require('merge-stream');
 
 
 ////////// Gestión de errores ////////
@@ -23,13 +23,13 @@ var gutil = require('gulp-util');
 var gulp_src = gulp.src;
 gulp.src = function () {
     return gulp_src.apply(gulp, arguments)
-      .pipe(plumber(function (error) {
-          // Output an error message
-          gutil.log(gutil.colors.red('Error (' + error.plugin + '): ' + error.message));
-          // emit the end event, to properly end the task
-          this.emit('end');
-      })
-    );
+        .pipe(plumber(function (error) {
+            // Output an error message
+            gutil.log(gutil.colors.red('Error (' + error.plugin + '): ' + error.message));
+            // emit the end event, to properly end the task
+            this.emit('end');
+        })
+        );
 };
 ////////////////////////////////
 
@@ -44,7 +44,7 @@ var sitnaBuild = {
         'lib/dust/dust-full-helpers.min.js',
         'lib/dust/dustjs-i18n.min.js',
         'lib/dust/dust.overrides.js',
-        'lib/localForage/localforage.js', // No meter localforage.min.js porque da problemas
+        'lib/localForage/localforage.min.js',
         'lib/jsnlog/jsnlog.min.js'
     ],
     midSrc: [
@@ -54,6 +54,8 @@ var sitnaBuild = {
         'lib/jQuery/jquery.event.drop.js',
         'lib/jQuery/jquery-watch.min.js',
         'lib/qrcode/qrcode.min.js',
+        'lib/jsonpack/jsonpack.min.js',
+        'lib/ua-parser/ua-parser.min.js',
         'TC/Map.js',
         'TC/Util.js',
         'tcmap.js',
@@ -70,6 +72,8 @@ var sitnaBuild = {
         'TC/control/FeatureInfoCommons.js',
         'TC/control/Scale.js',
         'TC/control/SWCacheClient.js',
+        'TC/control/Measure.js',
+        'TC/control/ProjectionSelector.js',
         'TC/ol/**/*.js',
         'TC/control/**/*.js',
         'TC/layer/**/*.js',
@@ -109,22 +113,22 @@ var sitnaBuild = {
 
     examplesTask: function () {
         return gulp.src([
-                'examples/**/*.html'
-        ])            
+            'examples/**/*.html'
+        ])
             .pipe(convertEncoding({ to: 'ISO-8859-1' }))
             .pipe(gulp.dest(this.fullTargetPath + 'examples/'));
     },
 
     releasePageTask: function () {
         return gulp.src([
-                'batch/releases.html'
+            'batch/releases.html'
         ])
             .pipe(gulp.dest(this.fullTargetPath + 'doc/'));
     },
 
     cssTask: function () {
         return gulp.src([
-                'TC/**/*.css'
+            'TC/**/*.css'
         ])
             //.pipe(cleanCSS({
             //    level: 0
@@ -141,33 +145,33 @@ var sitnaBuild = {
 
     resourcesTask: function () {
         return gulp.src([
-                '**/*',
-                '!App_Start/**/*',
-                '!batch/**/*',
-                '!build/**/*',
-                '!examples/**/*.html',
-                '!kml/**/*',
-                '!images/**/*',
-                '!screenshots/**/*',
-                '!node_modules/**/*',
-                '!obj/**/*',
-                '!Properties/**/*',
-                '!pruebas/**/*',
-                '!TC/**/*.js',
-                '!TC/**/*.css',
-                '!test/**/*',
-                '!**/*.cs',
-                '!*',
-                '!bin/*.pdb', //exclude symbol files
-                '!bin/*.dll.config',
-                '!bin/*.xml'
+            '**/*',
+            '!App_Start/**/*',
+            '!batch/**/*',
+            '!build/**/*',
+            '!examples/**/*.html',
+            '!kml/**/*',
+            '!images/**/*',
+            '!screenshots/**/*',
+            '!node_modules/**/*',
+            '!obj/**/*',
+            '!Properties/**/*',
+            '!pruebas/**/*',
+            '!TC/**/*.js',
+            '!TC/**/*.css',
+            '!test/**/*',
+            '!**/*.cs',
+            '!*',
+            '!bin/*.pdb', //exclude symbol files
+            '!bin/*.dll.config',
+            '!bin/*.xml'
         ])
             .pipe(gulp.dest(this.fullTargetPath));
     },
 
     zipTask: function () {
         return gulp.src([
-                'TC/layout/responsive/**/*'
+            'TC/layout/responsive/**/*'
         ])
             .pipe(zip('responsive.zip'))
             .pipe(gulp.dest(this.fullTargetPath + 'TC/layout/responsive/'));
@@ -191,8 +195,15 @@ var sitnaBuild = {
             .pipe(rename(targetName + '.' + this.maps + '.debug.js'))
             .pipe(gulp.dest(this.fullTargetPath));
         return sitnaBuild.unsetDebug(stream)
-            .pipe(uglify({ compress: { sequences: false }, output: { ascii_only: true } })) // sequences = false para evitar error "Maximum call stack size exceeded"
-            .pipe(rename(targetName + '.' + this.maps + '.min.js'))
+            .pipe(minify({
+                ext: {
+                    min: [/(.*)\.debug\.js$/, '$1.min.js']
+                },
+                noSource: true,
+                compress: { sequences: false },
+                output: { ascii_only: true }
+            })) // sequences = false para evitar error "Maximum call stack size exceeded"
+            //.pipe(rename(targetName + '.' + this.maps + '.min.js'))
             .pipe(gulp.dest(this.fullTargetPath));
     },
 
@@ -201,8 +212,15 @@ var sitnaBuild = {
         stream = sitnaBuild.replaceStrings(stream)
             .pipe(gulp.dest(dest));
         return sitnaBuild.unsetDebug(stream)
-            .pipe(uglify())
-            .pipe(rename({ extname: '.min.js' }))
+            .pipe(minify({
+                ext: {
+                    min: '.min.js'
+                },
+                noSource: true,
+                compress: { sequences: false },
+                output: { ascii_only: true }
+            }))
+            //.pipe(rename({ extname: '.min.js' }))
             .pipe(gulp.dest(dest));
     },
 
@@ -240,7 +258,7 @@ var sitnaBuild = {
         sitnaBuild.onDemandTask(['sitna.js'], sitnaBuild.fullTargetPath);
         sitnaBuild.onDemandTask(['tcmap.js'], sitnaBuild.fullTargetPath);
         sitnaBuild.onDemandTask(['TC/**/*.js'], sitnaBuild.fullTargetPath + 'TC/');
-            
+
         sitnaBuild.maps = 'ol2';
         sitnaBuild.isLegacy = true;
         sitnaBuild.compiledTask(ol2Src1, ol2Src2, sitnaBuild.sitnaSrc);
@@ -261,18 +279,22 @@ gulp.task('noTests', function () {
     sitnaBuild.fullTask();
 });
 
-gulp.task('uglifyOL', function () {
+gulp.task('minifyOL', function () {
     return gulp.src([
         'lib/ol/build/ol-custom.js'
     ])
-        .pipe(uglify({ compress: { sequences: false }, output: { ascii_only: true } }))
+        .pipe(minify({
+            compress: { sequences: false },
+            output: { ascii_only: true }
+        }))
         .pipe(rename('ol-min.js'))
         .pipe(gulp.dest('lib/ol/build/'));
 });
 
 gulp.task('clean', function (cb) {
     del([
-      sitnaBuild.targetPath + '**'
+        sitnaBuild.targetPath + '**',
+        '!' + sitnaBuild.targetPath
     ], cb);
 });
 
@@ -293,7 +315,7 @@ gulp.task('unitTests', function () {
                     reporterOptions: 'reportDir=' + reportDir + ',reportFilename=nodeTestResults'
                 })),
             browserStream
-            );
+        );
     });
 });
 
@@ -318,6 +340,6 @@ gulp.task('rasterJSTest', function () {
         browserStream.end();
 
         return browserStream;
-            
+
     });
 });
