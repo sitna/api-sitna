@@ -53,7 +53,7 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
                     }
                     return result;
                 };
-                var lyrObj = findLayerById(layer, TC.Cfg.availableBaseLayers);
+                var lyrObj = findLayerById(layer, map.options.availableBaseLayers);
                 if (!$.isPlainObject(lyrObj)) {
                     lyrObj = findLayerById(layer, map.options.baseLayers);
                 }
@@ -79,13 +79,19 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
             self.layer = lyr;
             self.wrap.register(map);
 
-            map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
-                var resetOptions = {};
-                if (e.crs !== map.options.crs) {
-                    resetOptions.layer = self.layer.getFallbackLayer();
-                }
-                self.wrap.reset(resetOptions);
-            });
+            const resetOVMapProjection = function (e) {
+                const resetOptions = {};
+                self.layer.getCapabilitiesPromise().then(function () {
+                    if (!self.layer.isCompatible(map.crs) && self.layer.wrap.getCompatibleMatrixSets(map.crs).length === 0) {
+                        resetOptions.layer = self.layer.getFallbackLayer();
+                    }
+                    self.wrap.reset(resetOptions);
+                });
+            };
+
+            resetOVMapProjection({ crs: map.crs });
+
+            map.on(TC.Consts.event.PROJECTIONCHANGE, resetOVMapProjection);
         });
     };
 
