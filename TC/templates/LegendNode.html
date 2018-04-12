@@ -6,9 +6,11 @@
         {?legend}
         <div class="tc-ctl-legend-watch">
             {?legend.src}
-            <img src="" data-tc-img="{legend.src}" {?legend.width}style="width:{legend.width}px;height:{legend.height}px;"{/legend.width} />
+            <img src="" data-tc-img="{legend.src}" {?legend.width}style="width:{legend.width}px;height:{legend.height}px;" {/legend.width} />
             {:else}
-            <div class="tc-ctl-legend-img" style="border:solid {legend.strokeWidth}px {legend.strokeColor};background-color:{legend.fillColor}{?legend.width};width:{legend.width}px;height:{legend.height}px;border-radius:50%{/legend.width}"></div>
+                {?legend.width}
+                    <div class="tc-ctl-legend-img" style="border:solid {legend.strokeWidth}px {legend.strokeColor};background-color:{legend.fillColor}{?legend.width};width:{legend.width}px;height:{legend.height}px;border-radius:50%{/legend.width}"></div>
+                {/legend.width}
             {/legend.src}
         </div>
         <div class="tc-ctl-legend-nvr">{@i18n $key="notVisibleAtCurrentResolution"/}</div>
