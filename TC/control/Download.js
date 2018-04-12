@@ -265,8 +265,10 @@ TC.inherit(TC.control.Download, TC.Control);
                 var visibleLayers = _getVisibleLayers();
 
                 var extent = self.map.getExtent();
+                var coordsXY = TC.Util.reproject(extent.slice(0, 2), self.map.crs, TC.Defaults.crs);
+                var coordsXY2 = TC.Util.reproject(extent.slice(2), self.map.crs, TC.Defaults.crs);
 
-                var arrPromises = TC.WFSGetFeatureBuilder(self.map, new TC.filter.bbox(extent), format, true);
+                var arrPromises = TC.WFSGetFeatureBuilder(self.map, new TC.filter.bbox([coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]]), format, true);
                 $.when.apply($, arrPromises).then(function () {                    
 
                     var responses = $.grep(arguments, function (item) { return item != null });
