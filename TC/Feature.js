@@ -70,9 +70,7 @@ TC.Feature.prototype.getBounds = function () {
 };
 
 TC.Feature.prototype.setStyle = function (style) {
-    var self = this;
-    $.extend(true, self.options, style);
-    this.wrap.setStyle(self.options);
+    this.wrap.setStyle(style);
 };
 
 TC.Feature.prototype.getLegend = function () {
@@ -226,7 +224,7 @@ TC.Feature.prototype.unselect = function () {
     var self = this;
     self._selected = false;
     // Volvemos al estilo por defecto
-    self.setStyle();
+    self.setStyle(self.options);
 
     if (self.layer) {
         var idx = $.inArray(self, self.layer.selectedFeatures);
