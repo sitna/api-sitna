@@ -206,8 +206,7 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.responseCallback = function (options) {
         var self = this;
-
-        $.when(self.elevationRequest).then(function (elevCoords) {            
+        const endCallback = function (elevCoords) {
 
             TC.control.FeatureInfoCommons.prototype.responseCallback.call(self, options);
             self.querying = true;
@@ -235,16 +234,16 @@ if (!TC.control.FeatureInfoCommons) {
 
                 var locale = self.map.options.locale || TC.Cfg.locale;
                 options.isGeo = self.map.wrap.isGeo();
-                if (elevCoords) {
+                if (elevCoords.length) {
                     options.elevation = TC.Util.formatNumber(Math.round(elevCoords[0][2]), locale);
                 }
                 if (options.coords) {
                     options.crs = self.map.crs;
                     options.coords = options.coords.map(function (value) {
-                        return TC.Util.formatNumber(Math.round(value), locale);
+                        return TC.Util.formatNumber(value.toFixed(options.isGeo ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION), locale);
                     });
                 }
-                if ((services && services.length) || elevCoords) {
+                if ((services && services.length) || elevCoords.length) {
                     self.renderData(options, function () {
                         self.insertLinks();
 
@@ -320,15 +319,21 @@ if (!TC.control.FeatureInfoCommons) {
                         else {
                             self.displayResults();
                         }
-                    });                    
+                    });
                 }
                 else {
                     self.resultsLayer.clearFeatures();
-                    self.filterLayer.clearFeatures();                    
+                    self.filterLayer.clearFeatures();
                 }
 
                 self.querying = false;
             }
-        });
+        };
+        if (self.elevation) {
+            self.elevationRequest.then(endCallback);
+        }
+        else {
+            endCallback([]);
+        }
     };
 })();
