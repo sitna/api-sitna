@@ -649,7 +649,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
                     var drawendHandler = function (e) {
                         //var styleObj = {};
-                        var feature = e.geometry;
+                        var feature = e.feature;
                         var featConstructor;
                         switch (self.geometryType) {
                             case TC.Consts.geom.POINT:
