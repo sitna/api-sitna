@@ -378,20 +378,48 @@
         reproject: function (coords, sourceCrs, targetCrs) {
             var result;
             var multipoint = true;
-            if (!$.isArray(coords) || !$.isArray(coords[0])) {
+            var multiring = true;
+            var multipoly = true;
+            if ($.isArray(coords[0])) {
+                if ($.isArray(coords[0][0])) {
+                    if (!$.isArray(coords[0][0][0])) {
+                        multipoly = false;
+                        coords = [coords];
+                    }
+                }
+                else {
+                    multiring = false;
+                    coords = [[coords]];
+                }
+            }
+            else {
                 multipoint = false;
-                coords = [coords];
+                multiring = false;
+                multipoly = false;
+                coords = [[[coords]]];
             }
             TC.loadProjDef({ crs: sourceCrs, sync: true });
             TC.loadProjDef({ crs: targetCrs, sync: true });
             var sourcePrj = new Proj4js.Proj(sourceCrs);
             var targetPrj = new Proj4js.Proj(targetCrs);
             result = new Array(coords.length);
-            for (var i = 0, len = coords.length; i < len; i++) {
-                var point = Proj4js.transform(sourcePrj, targetPrj, { x: coords[i][0], y: coords[i][1] });
-                result[i] = [point.x, point.y];
-            }
+            coords.forEach(function (poly, pidx) {
+                const rp = result[pidx] = [];
+                poly.forEach(function (ring, ridx) {
+                    const rr = rp[ridx] = [];
+                    ring.forEach(function (coord, cidx) {
+                        var point = Proj4js.transform(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
+                        rr[cidx] = [point.x, point.y];
+                    });
+                });
+            });
             if (!multipoint) {
+                result = result[0][0][0];
+            }
+            else if (!multiring) {
+                result = result[0][0];
+            }
+            else if (!multipoly) {
                 result = result[0];
             }
             return result;
@@ -613,6 +641,7 @@
         },
         detectChrome: function () {
             return window.chrome;
+
         },
         detectSafari: function () {
             return !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/);
@@ -669,6 +698,22 @@
         detectMobile: function () {
             return (TC.Util.detectAndroid() || TC.Util.detectIOS() || TC.Util.detectMobileWindows() || TC.Util.detectBlackBerry());
         },
+        getBrowser: function () {
+            if (!window.UAParser) {
+                TC.syncLoadJS(TC.apiLocation + TC.Consts.url.UA_PARSER);
+            }
+
+            var parser = new UAParser();
+            var browser = parser.getBrowser();
+            return { name: browser.name, version: browser.major };
+        },
+        getSupportedBrowserVersions: function () {
+            return $.getJSON(TC.apiLocation + 'TC/config/browser-versions.json', function (data) {
+                return data;
+            }).fail(function () {
+                TC.error("Error al intentar descargar el archivo de versiones aceptadas de los navegadores", TC.Consts.msgErrorMode.EMAIL, "Error de conexión");
+            });
+        },
         getElementByNodeName: function (parentNode, nodeName) {
             var colonIndex = nodeName.indexOf(":");
             var tag = nodeName.substr(colonIndex + 1);
@@ -685,8 +730,9 @@
                 return url;
             }
             var toAdd = Object.keys(parameters).map(function (key) {
-                return encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]);
+                return encodeURIComponent(key) + '=' + (parameters[key] ? encodeURIComponent(parameters[key]) : '');
             }).join('&');
+
             var urlparts = url.split('?');
             if (urlparts.length >= 2) {
 
@@ -871,6 +917,18 @@
             return result;
         },
 
+        colorArrayToString: function (color) {
+            if ($.isArray(color)) {
+                color = color
+                    .slice(0, 3)
+                    .reduce(function (prev, cur) {
+                        const str = cur.toString(16);
+                        return prev + '00'.substring(0, 2 - str.length) + str;
+                    }, '#');
+            }
+            return color;
+        },
+
         // Generic helper function that can be used for the three operations:        
         operation: function (list1, list2, comparerFn, operationIsUnion) {
             var result = [];
@@ -973,7 +1031,7 @@
                         encoderOptions: 1.0
                     });
                     deferred.resolve(dataURL, canvas);
-                } catch (error) {                    
+                } catch (error) {
                     img.src = TC.proxify(src);
                 }
             };
@@ -1017,7 +1075,7 @@
 
                 xhr.send();
             };
-            
+
             img.src = src;
             if (img.complete || img.complete === undefined) {
                 img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
@@ -1025,6 +1083,31 @@
             }
 
             return deferred.promise();
+        },
+
+        imTagToDataUrl: function (img, outputFormat) {
+            var createCanvas = function (img) {
+                var canvas = document.createElement('CANVAS');
+                var ctx = canvas.getContext('2d');
+                canvas.height = img.height;
+                canvas.width = img.width;
+                ctx.drawImage(img, 0, 0);
+
+                return canvas;
+            };
+
+            var canvas = createCanvas(img);
+            var dataURL;
+
+            try {
+                dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                    type: outputFormat || 'image/jpeg',
+                    encoderOptions: 1.0
+                });
+                return { base64: dataURL, canvas: canvas };
+            } catch (error) {
+                return null;
+            }
         },
 
         addToCanvas: function (canvas, img, position) {
