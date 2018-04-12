@@ -1025,14 +1025,15 @@ if (!TC.control.SWCacheClient) {
                     self.boxDraw = new TC.control.Draw({
                         div: self._$div.find(self._selectors.DRAW),
                         mode: TC.Consts.geom.RECTANGLE,
-                        layer: self.layer
+                        layer: self.layer,
+                        persistent: false
                     });
                     self.boxDraw.$events
                         .on(TC.Consts.event.DRAWSTART, function (e) {
                             self.map.toast(self.getLocaleString('clickOnDownloadAreaOppositeCorner'), { type: TC.Consts.msgType.INFO });
                         })
                         .on(TC.Consts.event.DRAWEND, function (e) {
-                            var points = e.geometry.geometry[0];
+                            var points = e.feature.geometry[0];
                             var pStart = points[0];
                             var pEnd = points[2];
                             var minx = Math.min(pStart[0], pEnd[0]);
