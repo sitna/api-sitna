@@ -16,6 +16,7 @@
         "streetView": false,
         "attribution": false,
         "search": false,
-        "featureInfo": false
+        "featureInfo": false,
+        "coordinates": false
     }
 }
