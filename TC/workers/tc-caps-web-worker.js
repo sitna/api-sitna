@@ -513,7 +513,7 @@ console.log("MILLISECONDS",end2-start2);
             });
         }
         // Convertimos OnlineResource a string
-        if (layer.hasOwnProperty('Attribution')) {
+        if (layer.hasOwnProperty('Attribution') && layer.Attribution.OnlineResource) {
             layer.Attribution.OnlineResource = flattenOnlineResource(layer.Attribution.OnlineResource);
         }
         flattenLayerUrls(layer, 'AuthorityURL');
