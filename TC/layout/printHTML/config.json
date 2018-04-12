@@ -32,7 +32,7 @@
         },
         {
             "id": "baseYOrto",
-            "title": "Mapa base/ortofoto 2014",
+            "title": "Mapa base/ortofoto",
             "type": "WMS",
             "url": "//idena.navarra.es/ogc/wms",
             "layerNames": [ "mapaBase_orto" ],
