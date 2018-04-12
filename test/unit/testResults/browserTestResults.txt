@@ -1,5 +1,7 @@
 
 
+
+
   Tests de ol.js
     ol.proj.get
       ✓ "EPSG:4326" debe devolver una proyeccion WGS84
@@ -53,7 +55,186 @@
       ✓ se debe poder ejecutar
     ol.control.OverviewMap.prototype.resetExtent_
       ✓ se debe poder ejecutar
+    TC.wrap.Map.prototype.exportFeatures
+      ✓ debe poder generar GML
+
+  Tests de TC.layer.Raster
+    ✓ getByProxy_: el resultado contiene el valor de TC.Cfg.proxy
+  Tests de ol.js
+    ✓ getBySSL_: de "http://gls/prueba" a "https://gls/prueba"
+    ✓ getByUrl_: de "https://gls/prueba" a "https://gls/prueba"
+    Enumeraciones, propiedades y funciones internas de OL que usamos en la optimización de la validación de CORS siguen disponibles
+      ✓ Enum ol.ImageState sigue disponible
+      ✓ Propiedad interna image_ sigue disponible
+      ✓ Función changed sigue disponible
+    getLegendUrl
+      ✓ Debe modificar a HTTPS cuando el servicio lo es y la leyenda es HTTP
+https://estoesungetlegend
+      ✓ Con serviceworker y servicio sin CORS: la url debe ser directa
+    imageLoadingError_
+      ✓ Debe establecer getUrl a getByProxy_
+    imageLoadedBlob_
+    ol.proj.get
+      ✓ Con status 200 y excepción en el cuerpo de respuesta debe cargar TC.Consts.BLANK_IMAGE
+      ✓ "EPSG:4326" debe devolver una proyeccion WGS84
+      ✓ Con status >= 400 y status <= 500 debe cargar TC.Consts.BLANK_IMAGE      ✓ "http://www.opengis.net/gml/srs/epsg.xml#4326" debe devolver una proyeccion WGS84
+
+    imageLoad_blank_
+      ✓ Debe cargar TC.Consts.BLANK_IMAGE
+    getCapabilitiesUrl_ServiceWorker_
+      ✓ "urn:ogc:def:crs:EPSG::4326" debe devolver una proyeccion WGS84
+      ✓ "http://www.opengis.net/gml/srs/epsg.xml#4326" debe devolver una proyeccion WGS84
+      ✓ un objeto ol.proj.Projection debe devolver un objeto ol.proj.Projection
+    ol.format.GMLBase.prototype.readGeometryElement
+      ✓ en GML un nodo sin geometria debe devolver undefined
+      ✓ en GML2 un nodo sin geometria debe devolver undefined
+    ol.format.GMLBase.prototype.readFeatureElement
+      ✓ en GML un nodo debe devolver un objeto ol.Feature
+      ✓ en GML2 un nodo debe devolver un objeto ol.Feature
+      ✓ en GML debe leer una propiedad de un nodo
+      ✓ en GML2 debe leer una propiedad de un nodo
+      ✓ en GML debe intentar leer una geometria de un nodo con nietos
+      ✓ en GML2 debe intentar leer una geometria de un nodo con nietos
+    ol.format.KML.createStyleDefaults_
+      ✓ debe devolver un estilo
+    ol.format.KML.readDocumentOrFolder_
+      ✓ un nodo "nodo" debe devolver un array vacio
+    ol.format.KML.readStyle_
+      ✓ un nodo vacio debe devolver un estilo
+    ol.format.KML.readURI_
+      ✓ un nodo con texto debe devolver ese texto
+    ol.format.KML.whenParser_
+      ✓ un nodo "when" debe ejecutarse
+    ol.format.KML.prototype.readFeatures
+      ✓ un documento kml vacio debe devolver un array vacio
+    ol.format.XSD.readDateTime
+      ✓ un nodo vacio debe devolver undefined
+      ✓ un nodo con una fecha debe devolver un numero
+    ol.format.GML3Patched
+      ✓ debe ser un constructor de la clase ol.format.GML3
+    ol.format.GML3CRS84
+      ✓ debe ser un constructor de la clase ol.format.GML3
+    ol.format.GML2CRS84
+      ✓ debe ser un constructor de la clase ol.format.GML2
+    ol.format.GMLBase.prototype.readFeaturesInternal
+      ✓ en GML un nodo cualquiera debe devolver un array vacio
+      ✓ en GML2 un nodo cualquiera debe devolver un array vacio
+      ✓ en GML un nodo "member" debe devolver ol.Feature
+      ✓ en GML2 un nodo "member" debe devolver ol.Feature
+      ✓ en GML un nodo "featureMember" debe devolver ol.Feature
+      ✓ en GML2 un nodo "featureMember" debe devolver ol.Feature
+      ✓ en GML un nodo "featureMembers" debe devolver un array de ol.Feature
+      ✓ en GML2 un nodo "featureMembers" debe devolver un array de ol.Feature
+      ✓ en GML un nodo "FeatureCollection" debe devolver un array
+      ✓ en GML2 un nodo "FeatureCollection" debe devolver un array
+    ol.control.OverviewMap.prototype.validateExtent_
+      ✓ se debe poder ejecutar
+    ol.control.OverviewMap.prototype.resetExtent_
+      ✓ se debe poder ejecutar
+    TC.wrap.Map.prototype.exportFeatures
+      ✓ debe poder generar GML
+
+  Tests de TC.layer.Raster
+    ✓ getByProxy_: el resultado contiene el valor de TC.Cfg.proxy
+    ✓ getBySSL_: de "http://gls/prueba" a "https://gls/prueba"
+    ✓ getByUrl_: de "https://gls/prueba" a "https://gls/prueba"
+    Enumeraciones, propiedades y funciones internas de OL que usamos en la optimización de la validación de CORS siguen disponibles
+      ✓ Enum ol.ImageState sigue disponible
+      ✓ Propiedad interna image_ sigue disponible
+      ✓ Función changed sigue disponible
+    getLegendUrl
+      ✓ Debe modificar a HTTPS cuando el servicio lo es y la leyenda es HTTP
+https://estoesungetlegend
+      ✓ Con serviceworker y servicio sin CORS: la url debe ser directa
+    imageLoadingError_
+      ✓ Debe establecer getUrl a getByProxy_
+    imageLoadedBlob_
+      ✓ Con status 200 y excepción en el cuerpo de respuesta debe cargar TC.Consts.BLANK_IMAGE
+      ✓ Con status >= 400 y status <= 500 debe cargar TC.Consts.BLANK_IMAGE
+    imageLoad_blank_
+      ✓ Debe cargar TC.Consts.BLANK_IMAGE
+    getCapabilitiesUrl_ServiceWorker_
+      ✓ Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (504ms)
+      ✓ Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_
+      ✓ Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_
+      ✓ Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_
+    getCapabilitiesUrl_MixedContent_FromHTTPS_
+      ✓ Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (504ms)
+      ✓ Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_
+      ✓ Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_
+      ✓ Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_
+    getCapabilitiesUrl_MixedContent_FromHTTPS_
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (497ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_
+    getCapabilitiesUrl_MixedContent_FromHTTP_
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (497ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_
+    getCapabilitiesUrl_MixedContent_FromHTTP_
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (501ms)
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (502ms)
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+    getCapabilitiesUrl_MixedContent_
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+    getCapabilitiesUrl_MixedContent_
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (501ms)
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (501ms)
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+    getCapabilitiesUrl_ProtocolSiblings_
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+    getCapabilitiesUrl_ProtocolSiblings_
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (502ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (501ms)
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (510ms)
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (502ms)
+    getCapabilitiesUrl_CORSSupport_
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (503ms)
+    getCapabilitiesUrl_CORSSupport_
+      ✓ Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (502ms)
+      ✓ Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (505ms)
+      ✓ Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+      ✓ Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (505ms)
+      ✓ Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (501ms)
+    setCapabilitiesUrl_
+      ✓ Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (508ms)
+    setCapabilitiesUrl_
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (502ms)
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (504ms)
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (503ms)
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+      ✓ location.href: http:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (503ms)
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (510ms)
+      ✓ location.href: http:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (504ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (501ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (501ms)
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ location.href: https:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (511ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+      ✓ location.href: https:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (511ms)
+      ✓ ServiceWorker: 1 location.href: https:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (502ms)
+      ✓ ServiceWorker: 1 location.href: https:// Servicio CORS: 1 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByUrl_ (501ms)
+      ✓ ServiceWorker: 1 location.href: https:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (502ms)
+      ✓ ServiceWorker: 1 location.href: https:// Servicio CORS: 0 HTTPS: 1 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
+      ✓ ServiceWorker: 1 location.href: https:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (503ms)
+      ✓ ServiceWorker: 1 location.href: https:// Servicio CORS: 0 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (509ms)
+      ✓ ServiceWorker: 1 location.href: https:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (501ms)
 
 
-  36 passing (53ms)
+  81 passing (14s)
+
+      ✓ ServiceWorker: 1 location.href: https:// Servicio CORS: 1 HTTPS: 0 método de carga debe ser TC.layer.Raster.prototype.getByProxy_ (514ms)
+
+
+  81 passing (14s)
 

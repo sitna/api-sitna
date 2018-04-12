@@ -218,4 +218,35 @@ describe('Tests de ol.js', function () {
             chai.expect(ol.control.OverviewMap).to.respondTo('_resetExtent_');
         });
     });
+
+    describe('TC.wrap.Map.prototype.exportFeatures', function () {
+        var self = {
+            parent: {
+                crs: 'EPSG:25830',
+                options: {
+                    styles: {
+                        point: {
+                            fillColor: '#f00',
+                            fillOpacity: 0.5,
+                            strokeColor: '#f00',
+                            strokeWidth: 2,
+                            radius: 6
+                        }
+                    }
+                }
+            }
+        };
+        var feature = {
+            wrap: {
+                feature: new ol.Feature(new ol.geom.Point([0, 0]))
+            }
+        };
+        var options = {
+            fileName: 'prueba',
+            format: 'GML'
+        };
+        it('debe poder generar GML', function () {
+            chai.expect(TC.wrap.Map.prototype.exportFeatures.call(self, [feature], options)).to.be.a('string');
+        });
+    });
 });
