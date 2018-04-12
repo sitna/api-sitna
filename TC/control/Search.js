@@ -31,6 +31,10 @@ TC.control.Search = function () {
     self.version = '1.1.0';
     self.featurePrefix = 'IDENA';
 
+    if (self.options && self.options.url) {
+        self.url = self.options.url;
+    }
+
     self._LIKE_PATTERN = '*';
 
     self.UTMX = 'X';
@@ -2919,6 +2923,11 @@ TC.inherit(TC.control.Search, TC.Control);
                                             bounds[3] = bounds[3] + radius;
                                         }
                                         e.layer.map.setExtent(bounds);
+
+                                        // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
+                                        self.map.$events.trigger($.Event(TC.Consts.event.ZOOMTO, {
+                                            extent: bounds, layer: e.layer
+                                        }));
                                     }
                                     else if (e.layer.features && e.layer.features.length > 0) {
                                         self.$list.hide('fast');
