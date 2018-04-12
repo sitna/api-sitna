@@ -244,7 +244,11 @@ TC.Control.prototype.activate = function () {
     if (self.map && self.map.activeControl && self.map.activeControl != self)
     {
         self.map.previousActiveControl = self.map.activeControl;
-        self.map.activeControl.deactivate();
+
+        /* provisional hasta que el 3D deje de ser un control */
+        if (!(self instanceof TC.control.ThreeD)) {
+            self.map.activeControl.deactivate();
+        }
     }
     self.isActive = true;
     if (self.map) {
