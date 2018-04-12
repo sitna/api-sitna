@@ -40,7 +40,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 self.updateLayerTree(map.layers[i]);
             }
 
-            map.on(TC.Consts.event.ZOOM, function () {
+            map.on(TC.Consts.event.ZOOM + ' ' + TC.Consts.event.PROJECTIONCHANGE, function () {
                 self.updateScale();
             }).on(TC.Consts.event.UPDATEPARAMS, function (e) {
                 var names = e.layer.names;
