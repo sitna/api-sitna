@@ -432,7 +432,6 @@ html, body {
     height: 100%;
     margin: 0;
     font-family: Arial, helvetica, sans-serif;
-    overflow: hidden;
     clip: rect(0,0,0,0);
 }
 
@@ -631,16 +630,16 @@ li.tc-ctl-toc-node {
     content: '\f141';
 }
 
-.tc-ctl-finfo-dialog-dl button {
+.tc-ctl-finfo-dialog-dl button, .tc-ctl-dmm-dialog-dl button {
     width: 50%;
 }
 
-    .tc-ctl-finfo-dialog-dl button.tc-ctl-finfo-dl-btn-gml {
+    .tc-ctl-finfo-dialog-dl button:nth-child(even), .tc-ctl-dmm-dialog-dl button:nth-child(even) {
         border-top-right-radius: 0.3em;
         border-bottom-right-radius: 0.3em;
     }
 
-    .tc-ctl-finfo-dialog-dl button.tc-ctl-finfo-dl-btn-geojson {
+    .tc-ctl-finfo-dialog-dl button:nth-child(2n+3), .tc-ctl-dmm-dialog-dl button:nth-child(2n+3) {
         text-indent: 0;
         border-top-left-radius: 0.3em;
         border-bottom-left-radius: 0.3em;
@@ -826,12 +825,21 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
         content: '\f002';
     }
 
-.tc-ctl-meas {
+.tc-ctl-meas, .tc-ctl-dmm {
     text-align: center;
 }
 
-    .tc-ctl-meas h2 {
+
+    .tc-ctl-meas h2, .tc-ctl-dmm h2 {
         text-align: left;
+    }
+
+    .tc-ctl-dmm .tc-ctl-mod {
+        text-align: left;
+    }
+
+    .tc-ctl-dmm .tc-ctl-mod-style {
+        text-align: center;
     }
 
 .tools-panel .tc-ctl-sctnr .tc-ctl.tc-collapsed > div {
@@ -839,7 +847,7 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     opacity: 1;
 }
 
-.tc-ctl-meas-len, .tc-ctl-meas-area {
+.tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
     /* la regla position:fixed no tiene efecto, ya que el div padre se ocuta mediante la regla transform: translateX */
     /* lo anterior no pasa en IE, así que hay que comentar -ms-transform y transform */
     -webkit-transform: translateX(-100%); /* Safari and Chrome */
@@ -850,30 +858,20 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     position: fixed;
     background-color: #fff;
     padding-top: 0.5em;
-    top: 0;
+    bottom: 0;
     left: 0;
     width: 100%;
-    border-bottom: 1px solid #ccc;
+    border-top: 1px solid #ccc;
     -webkit-box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
     -moz-box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
     box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
 }
 
-.tc-ctl-meas-lines, .tc-ctl-meas-polygon {
+.tc-ctl-meas-line, .tc-ctl-meas-polygon {
     padding: 0;
 }
 
-label.tc-ctl-meas-btn-len span {
-    text-align: left;
-    text-indent: 15%;
-}
-
-label.tc-ctl-meas-btn-area span {
-    text-align: left;
-    text-indent: 10%;
-}
-
-.tc-ctl-meas-len, .tc-ctl-meas-area {
+.tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
     overflow: hidden;
     -webkit-transition: all .3s ease;
     -moz-transition: all .3s ease;
@@ -882,7 +880,12 @@ label.tc-ctl-meas-btn-area span {
     transition: all .3s ease;
 }
 
-.tc-ctl-meas .tc-hidden {
+.tc-ctl-meas-prof-btn:before {
+    font-family: FontAwesome;
+    content: "\f1fe";
+}
+
+.tc-ctl-meas .tc-hidden, .tc-ctl-dmm .tc-hidden {
     padding-top: 0;
     display: block;
     height: 0;
@@ -894,12 +897,82 @@ label.tc-ctl-meas-btn-area span {
 
 .tc-ctl-meas-txt {
     display: inline-block;
-    width: 96%;
-    margin: 1em 0 0.5em 0;
+    width: 100%;
+    margin: 0.5em 0 0.5em 0;
     border: 1px solid #ccc;
     border-radius: 0.3em;
     text-align: left;
     padding: 0.3em;
+    box-sizing: border-box;
+}
+
+.tc-ctl-dmm-cmd {
+    display: inline-block;
+    width: 40%;
+}
+
+.tc-ctl-dmm-mod {
+    display: block;
+    width: 100%;
+    padding: 0;
+}
+
+.tc-ctl-dmm-mod button {
+    width: 20%;
+}
+
+.tc-ctl-dmm-tool {
+    position: relative;
+}
+
+.tc-ctl-dmm-cmd {
+    position: absolute;
+    top: 0;
+    left: 60%;
+}
+
+.tc-collapsed .tc-ctl-dmm-cmd, .tc-collapsed .tc-ctl-dmm-mod {
+    display: none;
+}
+
+.tc-ctl-dmm-mod .tc-ctl-mod-btn-delete {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 1px solid #fff;
+}
+
+    .tc-ctl-dmm-mod .tc-ctl-mod-btn-delete:disabled {
+        border-right: 1px solid #fff;
+    }
+
+.tc-ctl-meas .tc-ctl-dmm-mod .tc-ctl-mod-btn-text {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 1px solid #fff;
+}
+
+.tc-ctl-dmm-cmd button {
+    width: 50%;
+    text-indent: -1000vw;
+    position: relative;
+}
+
+    .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-left: 1px solid #fff;
+    }
+
+        .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr:disabled {
+            border-left: 1px solid #fff;
+        }
+
+.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr:after {
+    content: '\f1f8';
+}
+
+.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl:after {
+    content: '\f019';
 }
 
 .tc-ctl-finfo {
@@ -1312,7 +1385,8 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
     .tc-ctl-legend-tree > ul.tc-ctl-legend-branch > li.tc-ctl-legend-node {
-        overflow: auto;
+        overflow-y: hidden;
+        overflow-x: auto;
     }
 
 .left-collapsed > h1 {
@@ -1849,7 +1923,7 @@ label.tc-ctl-edit-btn-polygon span {
         border-top-right-radius: 0.3em;
     }
 
-    .tc-ctl-meas-len, .tc-ctl-meas-area {
+    .tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
         z-index: 10010;
         width: 100vw;
         border-right: 1px solid #ccc;
@@ -1862,7 +1936,7 @@ label.tc-ctl-edit-btn-polygon span {
 }
 
 @media screen and (min-width: 42em) {
-    /*.tc-ctl-meas-len, .tc-ctl-meas-area {
+    /*.tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
         position: inherit;
         left: auto;
         top: auto;
@@ -1901,7 +1975,10 @@ label.tc-ctl-edit-btn-polygon span {
         transform: translate(-50%, -50%);
     }
 
-    .tc-ctl-finfo-dialog-dl {
+    .tc-modal .tc-modal-body {
+        max-height: 80vh;
+    }
+    .tc-ctl-finfo-dialog-dl,.tc-ctl-dmm-dialog-dl {
         min-width: 20em;
     }
 
@@ -1909,15 +1986,23 @@ label.tc-ctl-edit-btn-polygon span {
             width: 25%;
         }
 
-            .tc-ctl-finfo-dialog-dl button.tc-ctl-finfo-dl-btn-gml {
+            .tc-ctl-finfo-dialog-dl button:nth-child(even) {
                 border-top-right-radius: 0;
                 border-bottom-right-radius: 0;
             }
 
-            .tc-ctl-finfo-dialog-dl button.tc-ctl-finfo-dl-btn-geojson {
-                text-indent: -0.6em;
+            .tc-ctl-finfo-dialog-dl button:nth-child(2n+3) {
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;
+            }
+
+            .tc-ctl-finfo-dialog-dl button:last-child {
+                border-top-right-radius: 0.3em;
+                border-bottom-right-radius: 0.3em;
+            }
+
+            .tc-ctl-finfo-dialog-dl button.tc-ctl-finfo-dl-btn-geojson {
+                text-indent: -0.6em;
             }
 
     .tc-ctl-p-results {
@@ -2080,7 +2165,7 @@ label.tc-ctl-edit-btn-polygon span {
         padding-right: 1em;
     }
 
-    #track-chart {
+    .tc-track-chart {
         z-index: 10007;
         right: 3em;
     }
@@ -2210,7 +2295,7 @@ label.tc-ctl-edit-btn-polygon span {
     .tc-ctl-p-results-table .tc-ctl-finfo h3 {
         display: block;
         border-bottom: none;
-    }    
+    }
 
     .tc-ctl-finfo.tc-threed ul.tc-ctl-finfo-services > li {
         padding-top: 0.5em;
@@ -2219,11 +2304,11 @@ label.tc-ctl-edit-btn-polygon span {
 
 @media screen and (min-width: 42em) and (min-height: 42em) {
 
-    .tc-ctl-meas {
+    .tc-ctl-meas, .tc-ctl-dmm {
         text-align: inherit;
     }
 
-    .tc-ctl-meas-len, .tc-ctl-meas-area {
+    .tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
         /* la regla position:fixed no tiene efecto, ya que el div padre se ocuta mediante la regla transform: translateX */
         -webkit-transform: none;
         -moz-transform: none;
@@ -2238,6 +2323,7 @@ label.tc-ctl-edit-btn-polygon span {
         -o-box-shadow: none;
         width: 100%;
         position: relative;
+        padding-top: 0;
     }
 
     .tc-ctl-popup {
@@ -2473,7 +2559,7 @@ label.tc-ctl-edit-btn-polygon span {
     .tc-ctl-p-results-table .tc-ctl-finfo h3 {
         display: block;
         border-bottom: none;
-    }    
+    }
 
     .tc-ctl-finfo.tc-threed ul.tc-ctl-finfo-services > li {
         padding-top: 0.2em;
@@ -2649,12 +2735,12 @@ label.tc-ctl-edit-btn-polygon span {
     padding: 0;
 }
 
-.tc-ctl-draw > button {
+.tc-ctl-draw-tools > button, .tc-ctl-mod > button {
     text-indent: -1000vw;
 }
 
 
-    .tc-ctl-draw > button:after {
+    .tc-ctl-draw-tools > button:after, .tc-ctl-mod > button:after, .tc-ctl-dmm-cmd > button:after {
         position: absolute;
         font-size: 1em;
         height: 100%;
@@ -2687,6 +2773,30 @@ label.tc-ctl-edit-btn-polygon span {
     content: '\f00d';
 }
 
+.tc-ctl-mod-btn-select:after {
+    content: '\f25a';
+}
+
+.tc-ctl-mod-btn-delete:after {
+    content: '\f12d';
+}
+
+.tc-ctl-mod-btn-join:after {
+    content: '\f247';
+}
+
+.tc-ctl-mod-btn-split:after {
+    content: '\f248';
+}
+
+.tc-ctl-mod-btn-text:after {
+    content: 'A';
+}
+
+.tc-ctl-mod-btn-cancel:after {
+    content: '\f00d';
+}
+
 .tc-ctl-draw {
     -webkit-transition: all .3s ease;
     -moz-transition: all .3s ease;
@@ -2695,7 +2805,7 @@ label.tc-ctl-edit-btn-polygon span {
     transition: all .3s ease;
 }
 
-[disabled] {
+[disabled], .tc-active[disabled] {
     background-color: rgba(234, 234, 227, 1);
     border-color: rgba(234, 234, 227, 1);
     cursor: default;
@@ -2721,7 +2831,11 @@ input[type=range][disabled] {
     transition: none;
 }
 
-
+.ol-box {
+    box-sizing: border-box;
+    border-radius: 2px;
+    border: 2px solid #f00;
+}
 
 
 
