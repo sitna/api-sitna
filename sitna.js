@@ -31,6 +31,9 @@ TC.isDebug = true;
 /**
  * <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
  * estar dentro de una función de callback pasada como parámetro al método {{#crossLink "SITNA.Map/loaded:method"}}{{/crossLink}}.</p>
+ * <p>Las opciones de configuración del mapa son una combinación de las opciones de configuración global (definidas en {{#crossLink "SITNA.Cfg"}}{{/crossLink}}), las opciones
+ * definidas por el {{#crossLink "SITNA.Cfg/layout:property"}}{{/crossLink}} que utilicemos, y las opciones pasadas como parámetro al constructor. Estas opciones están ordenadas de menor a mayor prevalencia,
+ * de modo que por ejemplo una opción pasada como parámetro del constructor siempre sobreescribirá una opción de la configuración global.</p>
  * <p>Puede consultar también online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
  * @class SITNA.Map
  * @constructor
@@ -1256,7 +1259,7 @@ SITNA.Map = function (div, options) {
  */
 SITNA.Consts = TC.Consts;
 /**
- * Identificadores de capas útiles de IDENA.
+ * Identificadores de capas útiles de IDENA y otros servicios de terceros.
  * @property layer
  * @type SITNA.consts.Layer
  * @final
@@ -1318,13 +1321,13 @@ SITNA.Consts = TC.Consts;
  */
 
 /**
- * Colección de identificadores de capas útiles de IDENA.
+ * Colección de identificadores de capas útiles de IDENA y otros servicios de terceros.
  * No se deberían modificar las propiedades de esta clase.
  * @class SITNA.consts.Layer
  * @static
  */
 /**
- * Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+ * Identificador de la capa de ortofoto de máxima actualidad del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
  * @property IDENA_ORTHOPHOTO
  * @type string
  * @final
@@ -1348,7 +1351,7 @@ SITNA.Consts = TC.Consts;
  * @final
  */
 /**
- * Identificador de la capa de la combinación de ortofoto 2014 y mapa base del WMS de IDENA.
+ * Identificador de la capa de la combinación de ortofoto de máxima actualidad y mapa base del WMS de IDENA.
  * @property IDENA_BASEMAP_ORTHOPHOTO
  * @type string
  * @final
@@ -1360,14 +1363,74 @@ SITNA.Consts = TC.Consts;
  * @final
  */
 /**
- * Identificador de la capa de mapa base del WMS de IDENA.
- * @property IDENA_DYNBASEMAP
+ * Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+ * @property IDENA_ORTHOPHOTO2014
  * @type string
  * @final
  */
 /**
  * Identificador de la capa de ortofoto 2012 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
  * @property IDENA_ORTHOPHOTO2012
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de mapa base del WMS de IDENA.
+ * @property IDENA_DYNBASEMAP
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de ortofoto de máxima actualidad del WMS de IDENA.
+ * @property IDENA_DYNORTHOPHOTO
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de ortofoto 2014 del WMS de IDENA.
+ * @property IDENA_DYNORTHOPHOTO2014
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de ortofoto 2012 del WMS de IDENA.
+ * @property IDENA_DYNORTHOPHOTO2012
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de OpenStreetMap a través del WMTS de la API SITNA.
+ * @property OSM
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Carto Voyager a través del WMTS de la API SITNA.
+ * @property CARTO_VOYAGER
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Carto Light a través del WMTS de la API SITNA.
+ * @property CARTO_LIGHT
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Carto Dark a través del WMTS de la API SITNA.
+ * @property CARTO_DARK
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Mapbox Streets a través del WMTS de la API SITNA.
+ * @property MAPBOX_STREETS
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Mapbox Satellite a través del WMTS de la API SITNA.
+ * @property MAPBOX_SATELLITE
  * @type string
  * @final
  */
