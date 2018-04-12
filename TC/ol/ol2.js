@@ -3546,6 +3546,58 @@
         };
     };
 
+    const mapToOLCoords = function (coords) {
+        return coords.map(function (coord) {
+            return { x: coord[0], y: coord[1] };
+        })
+    };
+
+    const mapToArrayCoords = function (coords) {
+        return coords.map(function (vertex) {
+            return [vertex.x, vertex.y];
+        })
+    };
+
+    TC.wrap.Feature.prototype.getLength = function (options) {
+        const self = this;
+        options = options || {};
+
+        const geom = self.feature.geometry;
+        var coordinates;
+        if (geom instanceof OpenLayers.Geometry.Polygon) {
+            coordinates = mapToArrayCoords(geom.getVertices());
+            if (options.crs) {
+                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+            }
+            const ring = new OpenLayers.Geometry.LinearRing(mapToOLCoords(coordinates));
+            return ring.getLength();
+        }
+        else if (geom instanceof OpenLayers.Geometry.LineString) {
+            coordinates = mapToArrayCoords(geom.getVertices());
+            if (options.crs) {
+                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+            }
+            const line = new OpenLayers.Geometry.LineString(mapToOLCoords(coordinates));
+            return line.getLength();
+        }
+    };
+
+    TC.wrap.Feature.prototype.getArea = function (options) {
+        const self = this;
+        options = options || {};
+
+        const geom = self.feature.geometry;
+        var coordinates;
+        if (geom instanceof OpenLayers.Geometry.Polygon) {
+            coordinates = mapToArrayCoords(geom.getVertices());
+            if (options.crs) {
+                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+            }
+            const polygon = new OpenLayers.Geometry.Polygon([new OpenLayers.Geometry.LinearRing(mapToOLCoords(coordinates))]);
+            return polygon.getArea();
+        }
+    };
+
     TC.wrap.Feature.prototype.setStyle = function (options) {
         var self = this;
 
@@ -3754,12 +3806,10 @@
                             data.area = e.measure;
                             data.perimeter = self.control.getLength(e.geometry, e.units);
                         }
-                        if(self.parent.measure)
+                        if (self.parent.measure) {
                             self.parent.$events.trigger($.Event(type, data));
-                        else
-                        {                            
-                            self.parent.$events.trigger($.Event(TC.Consts.event.DRAWEND, { "geometry": new TC.feature.Polygon(e.geometry.components) }));
                         }
+                        self.parent.$events.trigger($.Event(TC.Consts.event.DRAWEND, { feature: new TC.feature.Polygon(e.geometry.components) }));
 
                     };
                     self.control = new OpenLayers.Control.Measure(handler,
