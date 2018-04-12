@@ -1,12 +1,13 @@
 ﻿TC.control = TC.control || {};
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
+if (!TC.control.ProjectionSelector) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/ProjectionSelector');
 }
 
 (function () {
-    TC.control.Coordinates = function () {
+    TC.control.Coordinates = function (options) {
         var self = this;
+        options = options || {};
 
         self.crs = '';
         self.xy = [0, 0, 0];
@@ -18,35 +19,23 @@ if (!TC.Control) {
         self.units = 'm';
         self.isGeo = false;
 
-        TC.Control.apply(self, arguments);
+        TC.control.ProjectionSelector.apply(self, arguments);
+
+        $.extend(self._cssClasses, {
+            CRS: self.CLASS + '-crs',
+            GEOCRS: self.CLASS + '-geocrs',
+            X: self.CLASS + '-x',
+            Y: self.CLASS + '-y',
+            LAT: self.CLASS + '-lat',
+            LON: self.CLASS + '-lon',
+            ELEVATION: self.CLASS + '-elevation'
+        });
+
         self.geoCrs = self.options.geoCrs || TC.Cfg.geoCrs;
         self.wrap = new TC.wrap.control.Coordinates(self);
-
-        self._$dialogDiv = $(TC.Util.getDiv(self.options.dialogDiv));
-        if (!self.options.dialogDiv) {
-            self._$dialogDiv.appendTo('body');
-        }
-
-        self._$dialogDiv.on(TC.Consts.event.CLICK, 'button', function (e) {
-            const $btn = $(e.target);
-            const crs = $btn.data(_dataKeys.PROJCODE);
-            if (crs) {
-                const setProjectionOptions = { crs: crs };
-                if ($btn.hasClass(TC.Consts.classes.WARNING)) {
-                    // Hay que cambiar el mapa de fondo al callback
-                    setProjectionOptions.baseLayer = self.map.baseLayer.getFallbackLayer();
-                }
-                TC.loadProjDef({
-                    crs: crs,
-                    callback: function () {
-                        self.map.setProjection(setProjectionOptions);
-                    }
-                });
-            }
-        });
     };
 
-    TC.inherit(TC.control.Coordinates, TC.Control);
+    TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
 
     var ctlProto = TC.control.Coordinates.prototype;
 
@@ -63,13 +52,13 @@ if (!TC.Control) {
         ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/CoordinatesDialog.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div>CRS: <span class=\"tc-ctl-coords-crs\">").f(ctx.get(["crs"], false), ctx, "h").w("</span></div><div class=\"tc-ctl-coords-xy\">").x(ctx.get(["isGeo"], false), ctx, { "else": body_1, "block": body_3 }, {}).w("</div>").x(ctx.get(["showGeo"], false), ctx, { "block": body_5 }, {}).w("<span class=\"close\"></span>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("X: <span class=\"tc-ctl-coords-x\">").f(ctx.get(["x"], false), ctx, "h").w("</span> Y: <span class=\"tc-ctl-coords-y\">").f(ctx.get(["y"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" Z: <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-coords-lat\">").f(ctx.get(["lat"], false), ctx, "h").w("</span> ").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-coords-lon\">").f(ctx.get(["lon"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_4 }, {}); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" ").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-alt\"><div class=\"tc-ctl-coords-xy\">").h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-coords-lat\">").f(ctx.get(["lat"], false), ctx, "h").w("</span> ").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-coords-lon\">").f(ctx.get(["lon"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_6 }, {}).w("</div></div>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w(" ").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_6.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-crs-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "changeCRS" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "coords.currentProjection|h" }).w("</p><p class=\"tc-ctl-coords-no-change\">").h("i18n", ctx, {}, { "$key": "coords.noCrs.warning|s" }).w("</p><div class=\"tc-ctl-coords-change\"><p>").h("i18n", ctx, {}, { "$key": "coords.instructions|s" }).w("</p><p class=\"tc-msg-warning\">").h("i18n", ctx, {}, { "$key": "coords.instructions.warning|s" }).w("</p><ul class=\"tc-ctl-coords-crs-list\"></ul></div></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div>CRS: <span class=\"tc-ctl-coords-crs\">").f(ctx.get(["crs"], false), ctx, "h").w("</span><button class=\"tc-ctl-coords-crs\" title=\"").h("i18n", ctx, {}, { "$key": "changeCRS" }).w("\">").f(ctx.get(["crs"], false), ctx, "h").w("</button></div><div class=\"tc-ctl-coords-xy\">").x(ctx.get(["isGeo"], false), ctx, { "else": body_1, "block": body_3 }, {}).w("</div>").x(ctx.get(["showGeo"], false), ctx, { "block": body_5 }, {}).w("<span class=\"close\"></span>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("x: <span class=\"tc-ctl-coords-x\">").f(ctx.get(["x"], false), ctx, "h").w("</span> y: <span class=\"tc-ctl-coords-y\">").f(ctx.get(["y"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" z: <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-coords-lat\">").f(ctx.get(["lat"], false), ctx, "h").w("</span> ").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-coords-lon\">").f(ctx.get(["lon"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_4 }, {}); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" ").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-alt\">CRS: <span class=\"tc-ctl-coords-geocrs\">").f(ctx.get(["geoCrs"], false), ctx, "h").w("</span></div><div class=\"tc-ctl-coords-xy\">").h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-coords-lat\">").f(ctx.get(["lat"], false), ctx, "h").w("</span> ").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-coords-lon\">").f(ctx.get(["lon"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_6 }, {}).w(" </div>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w(" ").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_6.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-crs-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "changeCRS" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "coords.currentProjection|h" }).w("</p><p class=\"tc-ctl-coords-no-change\">").h("i18n", ctx, {}, { "$key": "coords.noCrs.warning|s" }).w("</p><div class=\"tc-ctl-coords-change\"><p>").h("i18n", ctx, {}, { "$key": "coords.instructions|s" }).w("</p><p class=\"tc-msg-warning tc-hidden\">").h("i18n", ctx, {}, { "$key": "coords.instructions.warning|s" }).w("</p></div><ul class=\"tc-ctl-coords-crs-list tc-crs-list\"></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
     ctlProto.register = function (map) {
         var self = this;
-        TC.Control.prototype.register.call(self, map);
+        TC.control.ProjectionSelector.prototype.register.call(self, map);
 
         self.crs = self.map.crs;
 
@@ -133,16 +122,16 @@ if (!TC.Control) {
                 isGeo: self.isGeo,
                 showGeo: !self.isGeo && self.options.showGeo
             }, function () {
-                self.$crs = self._$div.find('.' + self.CLASS + '-crs');
-                self.$geoCrs = self._$div.find('.' + self.CLASS + '-geocrs');
-                self.$x = self._$div.find('.' + self.CLASS + '-x');
-                self.$y = self._$div.find('.' + self.CLASS + '-y');
-                self.$lat = self._$div.find('.' + self.CLASS + '-lat');
-                self.$lon = self._$div.find('.' + self.CLASS + '-lon');
-                self.$ele = self._$div.find('.' + self.CLASS + '-elevation');
+                self.$crs = self._$div.find('.' + self._cssClasses.CRS);
+                self.$geoCrs = self._$div.find('.' + self._cssClasses.GEOCRS);
+                self.$x = self._$div.find('.' + self._cssClasses.X);
+                self.$y = self._$div.find('.' + self._cssClasses.Y);
+                self.$lat = self._$div.find('.' + self._cssClasses.LAT);
+                self.$lon = self._$div.find('.' + self._cssClasses.LON);
+                self.$ele = self._$div.find('.' + self._cssClasses.ELEVATION);
 
                 self.$crs.filter('button').on(TC.Consts.event.CLICK, function (e) {
-                    self.showChangeProjectionDialog();
+                    self.showProjectionChangeDialog();
                 });
 
                 //self._$div.on('mousemove' + '.coords', function (e) {
@@ -307,7 +296,7 @@ if (!TC.Control) {
         var self = this;
 
         // Si streetView está activo, no responde al click
-        if (!$(self.map._$div).hasClass('tc-ctl-sv-active tc-collapsed')) {
+        if (!$(self.map._$div).hasClass('tc-ctl-sv-active ' + TC.Consts.classes.COLLAPSED)) {
 
             var coordsBounding = self._$div[0].getBoundingClientRect();
             if ((coordsBounding.left <= e.clientX && e.clientX <= coordsBounding.right && coordsBounding.top <= e.clientY && e.clientY <= coordsBounding.bottom)) {
@@ -372,48 +361,6 @@ if (!TC.Control) {
             });
         } else done.resolve(self.layer);
         return done;
-    };
-
-    ctlProto.showChangeProjectionDialog = function () {
-        const self = this;
-        const $dialog = self._$dialogDiv.find('.' + self.CLASS + '-crs-dialog');
-        const $ul = $dialog
-            .find('ul.' + self.CLASS + '-crs-list')
-            .empty();
-        const blCRSList = self.map.baseLayer.getCompatibleCRS();
-        self.map.loadProjections({
-            crsList: self.map.getCRSList({ includeFallbacks: true }),
-            orderBy: 'name'
-        }).then(function (projList) {
-            projList
-                .forEach(function (projObj) {
-                    if (TC.Util.CRSCodesEqual(self.map.crs, projObj.code)) {
-                        $dialog.find('.' + self.CLASS + '-cur-crs-name').html(projObj.name);
-                        $dialog.find('.' + self.CLASS + '-cur-crs-code').html(projObj.code);
-                    }
-                    else {
-                        const $button = $('<button>')
-                            .html(projObj.name + ' (' + projObj.code + ')')
-                            .data(_dataKeys.PROJCODE, projObj.code);
-
-                        if (blCRSList.filter(function (crs) {
-                            return TC.Util.CRSCodesEqual(crs, projObj.code)
-                        }).length === 0) {
-                            // Es un CRS del fallback
-                            $button
-                                .addClass(TC.Consts.classes.WARNING)
-                                .attr('title', self.getLocaleString('mapWillReprojectOnTheFly'));
-                        }
-
-                        $ul
-                            .append($('<li>')
-                                .append($button));
-                    }
-                });
-            $dialog.find('.' + self.CLASS + '-change').css('display', projList.length > 1 ? '' : 'none');
-            $dialog.find('.' + self.CLASS + '-no-change').css('display', projList.length > 1 ? 'none' : '');
-        });
-        TC.Util.showModal($dialog);
     };
 
 })();
