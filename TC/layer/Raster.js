@@ -181,7 +181,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         $.when(getCapabilitesUrlPromise, capabilitiesFromUrl).done(function (state, capabilities) {
             // GLS: Si el estado es done, es que durante las pruebas hemos obtenido el capabilities correctamente y 
-            //      se ha asignado el método que proporciona la URL para sucesiones peticiones (GFI, GetFeature...)
+            //      se ha asignado el método que proporciona la URL para próximas peticiones (GFI, GetFeature...)
             if (state === layer.capabilitiesState_.DONE && capabilities) {
                 processedCapabilities(capabilities);
             } else if (capabilities) {
@@ -1439,6 +1439,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         self.matrixSet = matrixSet;
                         self.wrap.setMatrixSet(matrixSet);
                     }
+                    else {
+                        self.wrap.setProjection(options);
+                    }
                     self.mustReproject = !matrixSet;
                     break;
                 case TC.Consts.layerType.WMS:
@@ -1459,7 +1462,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var self = this;
         var result;
         var _getOgcScale = function () {
-            return self.map.wrap.getResolution() / 0.00028; // OGC assumes 0.28 mm / pixel
+            return self.map.wrap.getResolution() * self.map.getMetersPerUnit() / 0.00028; // OGC assumes 0.28 mm / pixel
         };
         var currentScale;
         var i;
@@ -1865,13 +1868,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     layerProto.searchSubLayers = function (text) {
         if (!this.patternFn) {
             this.patternFn = function (t) {
-                t = t.replace(/[^a-z\dáéíóúü]/gi, '\\' + '$&');
+                t = t.replace(/[^a-z\dáéíóúüñ]/gi, '\\' + '$&');
                 t = t.replace(/(a|á)/gi, "(a|á)");
                 t = t.replace(/(e|é)/gi, "(e|é)");
                 t = t.replace(/(i|í)/gi, "(i|í)");
                 t = t.replace(/(o|ó)/gi, "(o|ó)");
                 t = t.replace(/(u|ú|ü)/gi, "(u|ú|ü)");
-                t = t.replace(/(n|ñ)/gi, "(n|ñ)");
+                t = t.replace(/n/gi, "(n|ñ)");
                 return t;
             }
         }
@@ -2069,9 +2072,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     layerProto.getWebGLUrl = function (src, location) {
         var self = this;
+        var done = new $.Deferred();
 
         if (self.getWebGLUrl !== layerProto.getWebGLUrl) {
-            return self.getWebGLUrl.call(self, src);
+            done.resolve(self.getWebGLUrl.call(self, src));            
         } else {
             // GLS: 
             // Buscamos en las capas de trabajo si exite alguna del mismo servicio. 
@@ -2081,12 +2085,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             TC.Util.consoleRegister("Si hay capa hermana asignamos la misma función de carga de imágenes sin validar nada.");
 
             var sameService = self.getSiblingLoadedLayer.call(self, function (elem) {
-                return elem.getWebGLUrl !== layerProto.getWebGLUrl;
+                return elem.getWebGLUrl.toString() !== layerProto.getWebGLUrl.toString();
             });
 
             if (sameService) {
                 TC.Util.consoleRegister("Tenemos capa hermana, no validamos nada más.");
                 self.getWebGLUrl = sameService.getWebGLUrl;
+                done.resolve(self.getWebGLUrl.call(self, src));
             } else {
 
                 if (TC.Util.detectIE()) {
@@ -2094,24 +2099,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     //      sí cuando se añaden capas estando ya en 3D. Por ello, no aplico el algoritmo de proxificación y aplico el mimso método de carga
                     //      que para el capabilities.
                     self.getWebGLUrl = self.capabilitiesUrl_;
-                    return self.capabilitiesUrl_.call(self, src);
+                    done.resolve(self.capabilitiesUrl_.call(self, src));
                 }
                 else {
-                    TC.Util.consoleRegister("No hay capa hermana.");
-
-                    // GLS: No tengo alternativa, tengo que esperar a que se resuelvan las validaciones asíncronas antes de retornar la URL, para ello: controlo con un requestAnimationFrame
-                    var done, gottenID;
-                    function gotten() {
-                        if (done !== undefined) {
-                            window.cancelAnimationFrame(gottenID);
-                            gottenID = undefined;
-
-                            return done;
-                        } else {
-                            gottenID = requestAnimationFrame(gotten);
-                        }
-                    }
-                    gottenID = requestAnimationFrame(gotten);
+                    TC.Util.consoleRegister("No hay capa hermana.");                    
 
                     var location_ = location || document.location.href;
 
@@ -2120,7 +2111,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         // Escenario mismo origen
                         TC.Util.consoleRegister("Escenario mismo origen");
                         self.getWebGLUrl = self.getByUrl_;
-                        done = self.getByUrl_(src);
+                        done.resolve(self.getByUrl_(src));
                     } else {
                         // GLS: 
                         // Escenario cross origin
@@ -2151,26 +2142,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                                 TC.Util.consoleRegister("No tiene CORS");
 
                                                 self.getWebGLUrl = self.getByProxy_;
-                                                done = self.getByProxy_(src);
+                                                done.resolve(self.getByProxy_(src));
 
                                             } else {
                                                 //GLS: modificamos la función que nos da la url de la imagen como https
                                                 TC.Util.consoleRegister("Tiene CORS");
                                                 self.getWebGLUrl = self.getBySSL_;
-                                                done = self.getBySSL_(src);
+                                                done.resolve(self.getBySSL_(src));
                                             }
                                         });
-
-                                        gottenID = requestAnimationFrame(gotten);
-
                                     }, function () {
                                         // GLS: al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos
                                         TC.Util.consoleRegister("Al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos");
                                         self.getWebGLUrl = self.getByProxy_;
-                                        done = self.getByProxy_(src);
-                                    });
-
-                                gottenID = requestAnimationFrame(gotten);
+                                        done.resolve(self.getByProxy_(src));
+                                    });                                
                             } else {
                                 TC.Util.consoleRegister("No hay contenido mixto");
                                 TC.Util.consoleRegister("Validamos si tiene CORS");
@@ -2179,42 +2165,38 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                         TC.Util.consoleRegister("No tiene CORS");
 
                                         self.getWebGLUrl = self.getByProxy_;
-                                        done = self.getByProxy_(src);
-
+                                        done.resolve(self.getByProxy_(src));
                                     } else {
                                         //GLS: modificamos la función que nos da la url de la imagen como https
                                         TC.Util.consoleRegister("Tiene CORS");
                                         self.getWebGLUrl = self.getByUrl_;
-                                        done = self.getByUrl_(src);
+                                        done.resolve(self.getByUrl_(src));
                                     }
-                                });
-
-                                gottenID = requestAnimationFrame(gotten);
+                                });                                
                             }
                         } else {
                             TC.Util.consoleRegister("No hay serviceworker");
-
                             _imageHasCORS(src).then(function (hasCORS) {
                                 if (hasCORS) {
                                     TC.Util.consoleRegister("Tiene cabeceras CORS");
 
                                     self.getWebGLUrl = self.getByUrl_;
-                                    done = self.getByUrl_(src);
+                                    done.resolve(self.getByUrl_(src));
                                 }
                                 else {
                                     TC.Util.consoleRegister("NO tiene cabeceras CORS");
 
                                     self.getWebGLUrl = self.getByProxy_;
-                                    done = self.getByProxy_(src);
+                                    done.resolve(self.getByProxy_(src));
                                 }
-                            });
-
-                            gottenID = requestAnimationFrame(gotten);
+                            });                            
                         }
                     }
                 }
             }
         }
+
+        return done;
     };
 
     layerProto.getLegendUrl = function (src, location) {
@@ -2419,6 +2401,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     if (!self.map || (self.map && !self.map.mustBeExportable)) {
                         TC.Util.consoleRegister("No hay exportación: no importa un tainted canvas, mantenemos la misma función que si no hubiese cross origin");
                         self.imageLoad_ = layerProto.imageLoad;
+
+                        self.imageLoad_.call(self, image, src);
                     } else {
                         TC.Util.consoleRegister("Hay exportación a imagen");
                         // GLS: 
@@ -2438,6 +2422,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                 TC.Util.consoleRegister("Tiene CORS");
                                 self.getUrl = self.getBySSL_;
                                 self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
+
+                                self.imageLoad_.call(self, image, src);
                             }
                         });
                     }
@@ -2455,6 +2441,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 TC.Util.consoleRegister("No hay exportación: no importa un tainted canvas, mantenemos la misma función que si no hubiese cross origin");
 
                 self.imageLoad_ = layerProto.imageLoad;
+
                 self.imageLoad_.call(self, image, src);
             } else {
 
@@ -2484,6 +2471,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                       } else {
                           TC.Util.consoleRegister("Tiene cabeceras CORS");
                           self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
+
+                          self.imageLoad_.call(self, image, src);
                       }
                   });
             }
@@ -2528,6 +2517,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                           TC.Util.consoleRegister("Tiene cabeceras CORS");
                           self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
                           // GLS: no invoco la función de imageLoad porque la validación de CORS es correcto por lo tanto ya tenemos la imagen en el mapa
+                          // flacunza: aunque ya tengamos la imagen hay que invocar la función porque hay eventos de carga y error de imagen que tienen que saltar
+                          // además, no se hace una petición extra cuando se asigna la propiedad src del un elemento img si la imagen está en memoria.
+                          self.imageLoad_.call(self, image, src);
                       }
                       else {
                           TC.Util.consoleRegister("No tiene cabeceras CORS");
@@ -2837,10 +2829,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         if (self.options.fallbackLayer) {
             var fbLayer = self.options.fallbackLayer;
             if (typeof fbLayer === 'string') {
-                var availableBaseLayers = self.map ? self.map.options.availableBaseLayers : TC.Cfg.availableBaseLayers;
-                availableBaseLayers.forEach(function (baseLayer) {
+                const ablCollection = self.map ? self.map.options.availableBaseLayers : TC.Cfg.availableBaseLayers;
+                ablCollection.forEach(function (baseLayer) {
                     if (self.options.fallbackLayer === baseLayer.id) {
-                        self.fallbackLayer = new TC.layer.Raster($.extend({}, baseLayer, { stealth: true }));
+                        self.fallbackLayer = new TC.layer.Raster($.extend({}, baseLayer, { isBase: true, stealth: true, map: self.map }));
                         self.fallbackLayer.firstOption = self;
                     }
                 });
@@ -2854,7 +2846,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     id: TC.getUID(),
                     isBase: true,
                     stealth: true,
-                    title: layer.title
+                    title: layer.title,
+                    map: self.map
                 }));
                 self.fallbackLayer.firstOption = self;
             }
