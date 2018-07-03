@@ -118,7 +118,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         if (layer.type === TC.Consts.layerType.WMTS) {
             if (layer.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
                 var suffix = '/1.0.0/WMTSCapabilities.xml';
-                if (serviceUrl.indexOf(suffix) < serviceUrl.length - suffix.length) {
+                const suffixIdx = serviceUrl.indexOf(suffix);
+                if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
                     if (serviceUrl[serviceUrl.length - 1] === '/') {
                         suffix = suffix.substr(1);
                     }
