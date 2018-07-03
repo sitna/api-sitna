@@ -191,7 +191,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                         if (!self.querying) {
                             self.filterLayer.clearFeatures();
                         }
-                    }, 50);
+                    }, 0);
                 }
             })/* // Eliminado hasta que se resuelva bug 22733
             .on(TC.Consts.event.LAYERREMOVE, function (e) {
