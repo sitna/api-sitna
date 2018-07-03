@@ -1065,17 +1065,19 @@ if (!TC.control.MapContents) {
     CameraControls.prototype.getCameraState = function () {
         var self = this;
 
-        var camera = self.parent.viewer.scene.camera;
-        var cameraPosition = camera.positionCartographic;
+        if (self.parent.viewer) {
+            var camera = self.parent.viewer.scene.camera;
+            var cameraPosition = camera.positionCartographic;
 
-        var bottomCenter = pickBottomPoint(self.parent.viewer.scene);
-        var distance = Cesium.Cartesian3.distance(camera.position, bottomCenter);
+            var bottomCenter = pickBottomPoint(self.parent.viewer.scene);
+            var distance = Cesium.Cartesian3.distance(camera.position, bottomCenter);
 
-        return {
-            cp: [cameraPosition.longitude, cameraPosition.latitude, cameraPosition.height],
-            chpr: [camera.heading, camera.pitch, camera.roll],
-            bcpd: distance
-        };
+            return {
+                cp: [cameraPosition.longitude, cameraPosition.latitude, cameraPosition.height],
+                chpr: [camera.heading, camera.pitch, camera.roll],
+                bcpd: distance
+            };
+        }
     };
     CameraControls.prototype.render = function () {
         var self = this;
@@ -2129,9 +2131,9 @@ if (!TC.control.MapContents) {
             }
 
             if (!map.waiting)
-                map.waiting = map.map.getLoadingIndicator().addWait();            
+                map.waiting = map.map.getLoadingIndicator().addWait();
 
-            setMarker(pickedPosition);            
+            setMarker(pickedPosition);
 
             $.when(getResultsPanelCtl()).then(function () {
 
@@ -3139,7 +3141,7 @@ if (!TC.control.MapContents) {
                                     showBackground: true,
                                     eyeOffset: new Cesium.Cartesian3(0, 0, -100),
                                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                                    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
                                     verticalOrigin: Cesium.VerticalOrigin.BASELINE,
                                     fillColor: Cesium.Color.WHITE
                                 }
@@ -3167,6 +3169,7 @@ if (!TC.control.MapContents) {
                                     image: pinBuilder.fromColor(feature.options.fillColor ? new Cesium.Color(feature.options.fillColor) : Cesium.Color.fromCssColorString(TC.Cfg.styles.point.fillColor), 32).toDataURL(),
                                     eyeOffset: new Cesium.Cartesian3(0, 0, -100),
                                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                                    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
                                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                                 }
                             };
@@ -3694,8 +3697,10 @@ if (!TC.control.MapContents) {
                 case !($(event.target).parent().hasClass(geolocation2D.Const.Classes.SELECTEDTRACK)):
                 case event.target.className.indexOf('stop') > -1:
 
-                    self.viewer.clock.shouldAnimate = false;
-                    self.viewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date());
+                    if (self.mapIs3D) {
+                        self.viewer.clock.shouldAnimate = false;
+                        self.viewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date());
+                    }
 
                     if (self.map3D.trackDataSource) {
                         if (self.map3D.trackDataSource.length > 0) {
@@ -3847,6 +3852,9 @@ if (!TC.control.MapContents) {
 
                 var eventHandler = new Cesium.ScreenSpaceEventHandler(self.viewer.canvas, false);
                 eventHandler.setInputAction(function (movement) {
+                    // Si estamos anclados a una entidad ignoro los click en el terreno
+                    if (self.viewer.trackedEntity) { return; }
+
                     var ray = self.viewer.camera.getPickRay(movement.position);
                     var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
                     if (position) {
@@ -3940,14 +3948,18 @@ if (!TC.control.MapContents) {
                     geolocation2D.elevationTrack = function (li, resized) {
 
                         // GLS: Apaño para poder publicar y a la espera de la refactorización del panel de resultados
-                        if (that.map3D.linked2DControls.featureInfo) {                            
+                        if (that.map3D.linked2DControls.featureInfo) {
                             that.map3D.linked2DControls.featureInfo.clear();
                         }
 
                         if (that.map3D.linked2DControls.geolocation.track.$info.hasClass(TC.Consts.classes.HIDDEN)) {
                             //that.map3D.linked2DControls.geolocation.track.$info.addClass(TC.Consts.classes.HIDDEN);
-                        }                        
+                        }
                         // Fin apaño
+
+                        if (resized) {
+                            geolocation_videoControls.call(self, { target: { className: 'stop' }, custom: true });
+                        }
 
                         geolocation2D._elevationTrack.call(geolocation2D, li, resized);
                     };
@@ -3961,6 +3973,8 @@ if (!TC.control.MapContents) {
                     geolocation2D._simulateTrack = geolocation2D.simulateTrack;
                     geolocation2D.simulateTrack = function (li) {
                         var self = this.map3D.linked2DControls.geolocation;
+
+                        self.map.toast(self.getLocaleString('threed.interactionSimulation'), { type: TC.Consts.msgType.INFO });
 
                         // tenemos una simulación activa
                         if (this.viewer.clock.shouldAnimate && this.map3D.trackDataSource) {
@@ -3984,8 +3998,6 @@ if (!TC.control.MapContents) {
 
                             if (track) {
                                 toCZML.call(this, track.geometry, track.wrap.feature.getGeometry().layout, "track", self.markerStyle, self.lineStyle, self.walkingSpeed).then(function (czml, totalDistance, coordinates2D) {
-
-                                    track.setVisibility(false);
 
                                     this.map3D.trackDataSource = new Cesium.DataSourceCollection();
                                     var dataSourceDisplay = new Cesium.DataSourceDisplay({
@@ -4027,7 +4039,6 @@ if (!TC.control.MapContents) {
 
                                         this.viewer.flyTo(trackEntity).then(function () {
 
-                                            /* provisional: revisar qué pasa al pausar */
                                             this.viewer.trackedEntity = trackEntity;
 
                                             function get2DHeightAtProgress(coordinates2D, distanceCurrent) {
@@ -4150,18 +4161,20 @@ if (!TC.control.MapContents) {
                                 self.elevationMarker = this.map3D.addNativeFeature.call(this, billboard);
                             } else {
                                 self.elevationMarker.position = Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1], camera.positionCartographic.height);
+                                this.viewer.scene.requestRender();
                             }
 
-                            var rectangle = camera.computeViewRectangle();
-                            if (elevationMarkerPosition[0] >= rectangle.west && elevationMarkerPosition[0] <= rectangle.east && elevationMarkerPosition[1] >= rectangle.south && elevationMarkerPosition[1] <= rectangle.north) { }
-                            else {
-                                var distance = Cesium.Cartesian3.distance(camera.position, Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1]));
-                                camera.setView({
-                                    destination: Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1])
-                                });
+                            // No ubicar la camara en el marker
+                            //var rectangle = camera.computeViewRectangle();
+                            //if (elevationMarkerPosition[0] >= rectangle.west && elevationMarkerPosition[0] <= rectangle.east && elevationMarkerPosition[1] >= rectangle.south && elevationMarkerPosition[1] <= rectangle.north) { }
+                            //else {
+                            //    var distance = Cesium.Cartesian3.distance(camera.position, Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1]));
+                            //    camera.setView({
+                            //        destination: Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1])
+                            //    });
 
-                                camera.moveBackward(distance);
-                            }
+                            //    camera.moveBackward(distance);
+                            //}
                         }
                     }.bind(self);
 
@@ -4179,7 +4192,7 @@ if (!TC.control.MapContents) {
 
                         self.getRenderedHtml(self.CLASS + '-tracking-toast', self.setFormatInfoNewPosition(d.pd), function (html) {
 
-                            self.track.$info.find('.prpanel-body').html(html);                            
+                            self.track.$info.find('.prpanel-body').html(html);
 
                             self.trackingActive.set(true);
 
@@ -4209,7 +4222,7 @@ if (!TC.control.MapContents) {
 
                     geolocation2D._setFormatInfoNewPosition = geolocation2D.setFormatInfoNewPosition;
                     geolocation2D.setFormatInfoNewPosition = function (newPosition) {
-                        var self = this;                        
+                        var self = this;
 
                         var data = {};
                         var locale = TC.Util.getMapLocale(self.map);
@@ -4355,418 +4368,121 @@ if (!TC.control.MapContents) {
 
                 if (!self.viewer) {
 
-                    var required = [];
-                    required.push(new $.Deferred());
                     TC.loadJS(!window.Cesium, TC.Consts.url.CESIUM, function () {
-                        required[0].resolve(Cesium.GeoJsonDataSource.load(TC.apiLocation + "/dataSource/contornoNavarra.json"));
-                    });
-                    required.push(new $.Deferred());
-                    TC.loadJS(!window.d3 || (window.d3 && !window.d3.polygonContains), TC.apiLocation + "/lib/d3c3/d3-polygon/d3-polygon.v1.min.js", function () {
-                        required[required.length - 1].resolve();
-                    });
+                        var globe = new Cesium.Globe();
+                        globe.baseColor = Cesium.Color.WHITE;
+                        globe.enableLighting = true;
 
-                    $.when.apply($, required).then(function (polygonNavarra) {
-                        polygonNavarra.then(function (boundaries) {
+                        self.viewer = self.map3D.viewer = new Cesium.Viewer(self.selectors.divThreedMap, {
+                            terrainProvider: new Cesium.CesiumTerrainProvider({
+                                url: self.Consts.TERRAIN_URL
+                            }),
+                            terrainExaggeration: 1.0,
+                            terrainShadows: Cesium.ShadowMode.DISABLED,
 
-                            var globe = new Cesium.Globe();
-                            globe.baseColor = Cesium.Color.WHITE;
-                            globe.enableLighting = true;
+                            animation: false,
+                            timeline: false,
+                            fullscreenButton: false,
+                            baseLayerPicker: false,
+                            imageryProvider: false,
+                            navigationInstructionsInitiallyVisible: false,
+                            navigationHelpButton: false,
+                            geocoder: false,
+                            homeButton: false,
+                            infoBox: false,
+                            sceneModePicker: false,
+                            selectionIndicator: false,
+                            globe: globe,
 
-                            function CustomTerrainProvider(options, fallbackUrl) {
-                                Cesium.CesiumTerrainProvider.call(this, options);
+                            requestRenderMode: true,
+                            maximumRenderTimeChange: Infinity
+                        });
 
-                                this.parent = options.parent;
+                        self.viewer.readyPromise = new $.Deferred();
 
-                                this.currentProvider = this.provider = new Cesium.CesiumTerrainProvider(options);
-                                this.provider.url = options.url;
+                        // personalización de la escena
+                        self.viewer.scene.backgroundColor = Cesium.Color.WHITE;
+                        self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
+                        self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 500000;
 
-                                if (options.boundaries) {
-                                    this.provider.boundaries = options.boundaries;
-                                }
+                        // con false las líneas se manetienen sobre el terreno
+                        self.viewer.scene.globe.depthTestAgainstTerrain = false;
 
-                                if (fallbackUrl) {
-                                    this.fallbackProvider = new Cesium.CesiumTerrainProvider($.extend({}, options, { url: fallbackUrl }));
-                                    this.fallbackProvider.url = fallbackUrl;
+                        // borramos cualquier capa que haya
+                        self.viewer.scene.imageryLayers.removeAll();
+
+                        // registramos listeners para capturar errores del terreno y del render
+                        self.viewer.terrainProvider.errorEvent.addEventListener(function (e) {
+                            var self = this;
+                            if (e.error) {
+                                switch (e.error.statusCode) {
+                                    case 403:
+                                    case 404:
+                                        console.log('es un 404 de terreno');
+                                        break;
                                 }
                             }
+                        }, self);
+                        self.viewer.scene.renderError.addEventListener(function (target, error) {
+                            var self = this;
 
-                            CustomTerrainProvider.prototype = Object.create(Cesium.CesiumTerrainProvider.prototype, {
-                                provider: {
-                                    value: null,
-                                    enumerable: true,
-                                    configurable: true,
-                                    writable: true
-                                },
-                                fallbackProvider: {
-                                    value: null,
-                                    enumerable: true,
-                                    configurable: true,
-                                    writable: true
-                                },
-                                currentProvider: {
-                                    value: null,
-                                    enumerable: true,
-                                    configurable: true,
-                                    writable: true
-                                }
-                            });
+                            if (error && error.code === 18) { // GLS: 18 - SECURITY_ERR
 
-                            CustomTerrainProvider.prototype.constructor = CustomTerrainProvider;
+                                //self.map3D.customRender.stop();
 
-                            CustomTerrainProvider.prototype.getTileDataAvailable = function (x, y, level, request) {
-
-                                var isDataAvailable = this.provider.getTileDataAvailable.call(this.provider, x, y, level, request);
-                                if (isDataAvailable) {
-                                    this.currentProvider = this.provider;
-                                } else if (this.fallbackProvider && this.fallbackProvider.ready) {
-                                    isDataAvailable = this.fallbackProvider.getTileDataAvailable.call(this.fallbackProvider, x, y, level, request);
-                                    if (isDataAvailable) {
-                                        this.currentProvider = this.fallbackProvider;
-                                    }
-                                }
-
-                                //if (isDataAvailable) {
-
-                                //    this.currentProvider = this.provider;
-
-                                //    var tileCenter = Cesium.Rectangle.center(this.provider.tilingScheme.tileXYToRectangle(x, y, level));
-
-                                //    if (!d3.polygonContains(this.provider.boundaries, Cesium.Math.toDegrees(tileCenter.longitude), Cesium.Math.toDegrees(tileCenter.latitude)) &&
-                                //        this.fallbackProvider && this.fallbackProvider.ready) {
-
-                                //        this.currentProvider = this.fallbackProvider;
-                                //    }
-                                //} else if (this.fallbackProvider && this.fallbackProvider.ready) {
-
-                                //    this.currentProvider = this.fallbackProvider;
-
-                                //    isDataAvailable = this.fallbackProvider.getTileDataAvailable.call(this.fallbackProvider, x, y, level, request);
+                                //if (!self.map3D.viewer.useDefaultRenderLoop) {
+                                //    self.map3D.viewer.useDefaultRenderLoop = true;
                                 //}
 
-                                ////if (isDataAvailable && rectanglesOverlap(this.parent.viewer.scene.camera.computeViewRectangle(), rectangleBoundaries) && this.currentProvider !== this.provider) {
-                                ////    this.currentProvider = this.provider;
-                                ////} else if (!isDataAvailable && this.fallbackProvider && this.fallbackProvider.ready) {
+                                //self.map3D.customRender.start();
 
-                                ////    isDataAvailable = this.fallbackProvider.getTileDataAvailable.call(this.fallbackProvider, x, y, level, request);
-                                ////    if (isDataAvailable) {
-                                ////        this.currentProvider = this.fallbackProvider;
-                                ////    }
-                                ////}
+                            } else {
+                                self.$divThreedMap.removeClass(self.classes.LOADING);
+                                self.map.toast(self.getLocaleString("fi.error"), { type: TC.Consts.msgType.ERROR });
 
-                                //return isDataAvailable;                                
-                            };
-
-                            CustomTerrainProvider.prototype.getLevelMaximumGeometricError = function (level) {
-                                return this.currentProvider.getLevelMaximumGeometricError.call(this.currentProvider, level);
-                            };
-
-                            CustomTerrainProvider.prototype.requestTileGeometry = function (x, y, level, request) {
-                                if (this.currentProvider.ready) {
-                                    return this.currentProvider.requestTileGeometry.call(this.currentProvider, x, y, level, request);
-                                }
-                            };
-
-                            // override para poder capturar y gestionar los 404 del terreno                        
-                            var original_processLoadStateMachine = Cesium.TileTerrain.prototype.processLoadStateMachine;
-
-                            function requestTileGeometry(tileTerrain, terrainProvider, x, y, level, priorityFunction) {
-                                function success(terrainProvider, level, terrainData) {
-
-                                    if (level > 10 && tileTerrain.request.url.indexOf(terrainProvider.provider.url) && terrainData._minimumHeight === 0) {
-                                        tileTerrain.data = undefined;
-                                        tileTerrain.state = Cesium.TerrainState.UNLOADED;
-
-                                        var currentUrl = tileTerrain.request.url.split('/').slice(tileTerrain.request.url.split('/').length - 3);
-                                        var template = terrainProvider.fallbackProvider._layers[0].tileUrlTemplates[0].split('/');
-
-                                        if (template.length === currentUrl.length) {
-                                            var urlValues = currentUrl.filter(function (part) {
-                                                return template.indexOf(part) === -1;
-                                            });
-
-                                            if (urlValues) {
-                                                var z, x, y;
-                                                template.forEach(function (part, i) {
-                                                    switch (true) {
-                                                        case part === "{z}":
-                                                            z = currentUrl[i].split(".terrain")[0];
-                                                            break;
-                                                        case part === "{x}":
-                                                            x = currentUrl[i].split(".terrain")[0];
-                                                            break;
-                                                        case part.indexOf("{y}") > -1:
-                                                            y = currentUrl[i].split(".terrain")[0];
-                                                            break;
-                                                    }
-                                                });
-
-                                                if (z && x && y) {
-                                                    tileTerrain.getting = true;
-                                                    terrainProvider.fallbackProvider.requestTileGeometry(x, y, z);
-                                                }
-                                            }
-                                        }
-
-                                        tileTerrain.request = undefined;
-                                        return;
-
-                                    } else {
-                                        tileTerrain.data = terrainData;
-                                        tileTerrain.state = Cesium.TerrainState.RECEIVED;
-                                        tileTerrain.request = undefined;
-                                    }
-                                }
-
-                                function failure() {
-                                    if (tileTerrain.request.state === Cesium.RequestState.CANCELLED) {
-                                        // Cancelled due to low priority - try again later.
-                                        tileTerrain.data = undefined;
-                                        tileTerrain.state = Cesium.TerrainState.UNLOADED;
-                                        tileTerrain.request = undefined;
-                                        return;
-                                    }
-
-
-                                    if (arguments[0].statusCode === 404 && tileTerrain.request.url.indexOf(terrainProvider.provider.url)) {
-
-                                        var currentUrl = tileTerrain.request.url.split('/').slice(tileTerrain.request.url.split('/').length - 3);
-                                        var template = terrainProvider.fallbackProvider._layers[0].tileUrlTemplates[0].split('/');
-
-                                        tileTerrain.data = undefined;
-                                        tileTerrain.state = Cesium.TerrainState.UNLOADED;
-                                        tileTerrain.request = undefined;
-                                        tileTerrain.getting = true;
-
-                                        if (template.length === currentUrl.length) {
-                                            var urlValues = currentUrl.filter(function (part) {
-                                                return template.indexOf(part) === -1;
-                                            });
-
-                                            if (urlValues) {
-                                                var z, x, y;
-                                                template.forEach(function (part, i) {
-                                                    switch (true) {
-                                                        case part === "{z}":
-                                                            z = currentUrl[i].split(".terrain")[0];
-                                                            break;
-                                                        case part === "{x}":
-                                                            x = currentUrl[i].split(".terrain")[0];
-                                                            break;
-                                                        case part.indexOf("{y}") > -1:
-                                                            y = currentUrl[i].split(".terrain")[0];
-                                                            break;
-                                                    }
-                                                });
-
-                                                if (z && x && y) {
-                                                    terrainProvider.fallbackProvider.requestTileGeometry(x, y, z);
-                                                }
-                                            }
-                                        }
-                                        return;
-                                    }
-
-                                    // Initially assume failure.  handleError may retry, in which case the state will
-                                    // change to RECEIVING or UNLOADED.
-                                    tileTerrain.state = Cesium.TerrainState.FAILED;
-                                    tileTerrain.request = undefined;
-
-                                    var message = 'Failed to obtain terrain tile X: ' + x + ' Y: ' + y + ' Level: ' + level + '.';
-                                    terrainProvider._requestError = Cesium.TileProviderError.handleError(
-                                        terrainProvider._requestError,
-                                        terrainProvider,
-                                        terrainProvider.errorEvent,
-                                        message,
-                                        x, y, level,
-                                        doRequest);
-                                }
-
-                                function doRequest() {
-                                    // Request the terrain from the terrain provider.
-                                    var request = new Cesium.Request({
-                                        throttle: true,
-                                        throttleByServer: true,
-                                        type: Cesium.RequestType.TERRAIN,
-                                        priorityFunction: priorityFunction
-                                    });
-                                    tileTerrain.request = request;
-                                    tileTerrain.data = terrainProvider.requestTileGeometry(x, y, level, request);
-
-                                    // If the request method returns undefined (instead of a promise), the request
-                                    // has been deferred.
-                                    if (tileTerrain.data) {
-                                        tileTerrain.state = Cesium.TerrainState.RECEIVING;
-                                        Cesium.when(tileTerrain.data, success.bind(this, terrainProvider, level), failure);
-                                    } else {
-                                        // Deferred - try again later.
-                                        tileTerrain.state = Cesium.TerrainState.UNLOADED;
-                                        tileTerrain.request = undefined;
-                                    }
-                                }
-
-                                doRequest();
+                                self.$button.click();
                             }
+                        }, self);
 
-                            //Cesium.TileTerrain.prototype.processLoadStateMachine = function (frameState, terrainProvider, x, y, level, priorityFunction) {
+                        // controlamos la carga de tiles para mostrar loading cuando pida tiles
+                        self.map3D.tileLoadingHandler = new Cesium.EventHelper();
+                        self.map3D.tileLoadingHandler.add(self.viewer.scene.globe.tileLoadProgressEvent, function (data) {
+                            if (!self.waiting)
+                                self.waiting = self.map.getLoadingIndicator().addWait();
 
-                            //    if (this.getting) {
-                            //        this.state = Cesium.TerrainState.FAILED;
-                            //        original_processLoadStateMachine.call(this, frameState, terrainProvider, x, y, level, priorityFunction);
-                            //    }
+                            if (data === 0) {
+                                self.map.getLoadingIndicator().removeWait(self.waiting);
+                                delete self.waiting;
 
-                            //    if (this.state === Cesium.TerrainState.UNLOADED) {
-                            //        requestTileGeometry(this, terrainProvider, x, y, level, priorityFunction);
-                            //    }
+                                self.viewer.readyPromise.resolve();
 
-                            //    if (this.state === Cesium.TerrainState.RECEIVED) {
-                            //        original_processLoadStateMachine.call(this, frameState, terrainProvider, x, y, level, priorityFunction);
-                            //    }
+                                self.$events.trigger(TC.Consts.event.TERRAINLOADED, {});
+                            } else {
+                                self.$events.trigger(TC.Consts.event.TERRAINRECEIVING, {});
+                            }
+                        }.bind(self));
 
-                            //    if (this.state === Cesium.TerrainState.TRANSFORMED) {
-                            //        original_processLoadStateMachine.call(this, frameState, terrainProvider, x, y, level, priorityFunction);
-                            //    }
-                            //};
+                        // deshabilitamos el zoom por defecto y manejamos nosotros zoom con rueda
+                        //overrideDesktopZoom.call(self);
+                        // sobrescribimos el comportamiento de lo botones + /- y la casita
+                        override2DZoom.call(self, true);
 
-                            boundaries = boundaries.entities.values[0].polygon.hierarchy.getValue().positions.map(function (cartesian) {
-                                var carto = Cesium.Cartographic.fromCartesian(cartesian);
-                                return [Cesium.Math.toDegrees(carto.longitude), Cesium.Math.toDegrees(carto.latitude)];
-                            });
+                        // eliminamos los creditos de cesium (no encuentro la manera de que no los ponga)
+                        $('.cesium-viewer-bottom').remove();
 
-                            self.viewer = self.map3D.viewer = new Cesium.Viewer(self.selectors.divThreedMap, {
-                                terrainProvider: new CustomTerrainProvider({
-                                    url: self.Consts.TERRAIN_URL,
-                                    boundaries: boundaries,
-                                    parent: self
-                                }), // , "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles/"
-                                terrainExaggeration: 1.0,
-                                terrainShadows: Cesium.ShadowMode.DISABLED,
+                        // enlazamos con los eventos del mapa 2D
+                        self.map3D._event2DHandler = event2DHandler.bind(self);
+                        self.map.on(listenTo.join(' '), self.map3D._event2DHandler);
 
-                                animation: false,
-                                timeline: false,
-                                fullscreenButton: false,
-                                baseLayerPicker: false,
-                                imageryProvider: false,
-                                navigationInstructionsInitiallyVisible: false,
-                                navigationHelpButton: false,
-                                geocoder: false,
-                                homeButton: false,
-                                infoBox: false,
-                                sceneModePicker: false,
-                                selectionIndicator: false,
-                                globe: globe,
+                        // modificamos los controles disponibles
+                        alterAllowedControls.call(self, self.direction.TO_THREE_D);
 
-                                //useDefaultRenderLoop: true, !self.options.customRender,
+                        // pintamos las features que están en el mapa 2D
+                        draw2DDrawedFeatures.call(self);
 
-                                requestRenderMode: true,
-                                maximumRenderTimeChange: Infinity
-                            });
-
-                            //self.viewer.scene.globe._surface._debug.enableDebugOutput = true;
-                            //self.viewer.scene.globe._surface._debug.wireframe = true;                            
-
-                            //if (self.options.customRender) {
-                            //    // lanzamos el nuestro render                    
-                            //    self.map3D.customRender = new CustomRender(self.map, self.viewer, self.isSlower);
-                            //    self.map3D.customRender.start(self.options.isDebug || false);
-                            //    self.map3D.customRender.parent = self;
-                            //}
-
-                            self.viewer.readyPromise = new $.Deferred();
-
-                            // personalización de la escena
-                            self.viewer.scene.backgroundColor = Cesium.Color.WHITE;
-                            self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
-                            self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 500000;
-
-                            // con false las líneas se manetienen sobre el terreno
-                            self.viewer.scene.globe.depthTestAgainstTerrain = false;
-
-                            // borramos cualquier capa que haya
-                            self.viewer.scene.imageryLayers.removeAll();
-
-                            // registramos listeners para capturar errores del terreno y del render
-                            self.viewer.terrainProvider.errorEvent.addEventListener(function (e) {
-                                var self = this;
-                                if (e) {
-                                    if (e.level && e.x && e.y) { // GLS: deducimos que es un 404¿?
-                                        if (e.provider && e.provider.fallbackProvider) {
-                                            if (e.provider.fallbackProvider.getTileDataAvailable(e.x, e.y, e.level)) {
-
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (e.error) {
-                                    switch (e.error.statusCode) {
-                                        case 403:
-                                        case 404:
-                                            console.log('es un 404 de terreno');
-                                            break;
-                                    }
-                                }
-                            }, self);
-                            self.viewer.scene.renderError.addEventListener(function (target, error) {
-                                var self = this;
-
-                                if (error && error.code === 18) { // GLS: 18 - SECURITY_ERR
-
-                                    //self.map3D.customRender.stop();
-
-                                    //if (!self.map3D.viewer.useDefaultRenderLoop) {
-                                    //    self.map3D.viewer.useDefaultRenderLoop = true;
-                                    //}
-
-                                    //self.map3D.customRender.start();
-
-                                } else {
-                                    self.$divThreedMap.removeClass(self.classes.LOADING);
-                                    self.map.toast(self.getLocaleString("fi.error"), { type: TC.Consts.msgType.ERROR });
-
-                                    self.$button.click();
-                                }
-                            }, self);
-
-                            // controlamos la carga de tiles para mostrar loading cuando pida tiles
-                            self.map3D.tileLoadingHandler = new Cesium.EventHelper();
-                            self.map3D.tileLoadingHandler.add(self.viewer.scene.globe.tileLoadProgressEvent, function (data) {
-                                if (!self.waiting)
-                                    self.waiting = self.map.getLoadingIndicator().addWait();
-
-                                if (data === 0) {
-                                    self.map.getLoadingIndicator().removeWait(self.waiting);
-                                    delete self.waiting;
-
-                                    self.viewer.readyPromise.resolve();
-
-                                    self.$events.trigger(TC.Consts.event.TERRAINLOADED, {});
-                                } else {
-                                    self.$events.trigger(TC.Consts.event.TERRAINRECEIVING, {});
-                                }
-                            }.bind(self));
-
-                            // deshabilitamos el zoom por defecto y manejamos nosotros zoom con rueda
-                            //overrideDesktopZoom.call(self);
-                            // sobrescribimos el comportamiento de lo botones + /- y la casita
-                            override2DZoom.call(self, true);
-
-                            // eliminamos los creditos de cesium (no encuentro la manera de que no los ponga)
-                            $('.cesium-viewer-bottom').remove();
-
-                            // enlazamos con los eventos del mapa 2D
-                            self.map3D._event2DHandler = event2DHandler.bind(self);
-                            self.map.on(listenTo.join(' '), self.map3D._event2DHandler);
-
-                            // modificamos los controles disponibles
-                            alterAllowedControls.call(self, self.direction.TO_THREE_D);
-
-                            // pintamos las features que están en el mapa 2D
-                            draw2DDrawedFeatures.call(self);
-
-                            done.resolve(self.viewer);
-
-                        });
+                        done.resolve(self.viewer);
                     });
+
                 } else {
                     done.resolve(self.viewer);
                 }
@@ -5204,7 +4920,7 @@ if (!TC.control.MapContents) {
                     if (csfeature) {
                         if (typeof csfeature.geometry === 'function') {
                             // estoy aquí // tengo que validar qué proveedor escoger, afecta, hay mucha diferencia de alturas, podría ir por capa?? búsquedas fijo por el de por defecto y track validar??
-                            csfeature.geometry(self.viewer.terrainProvider.provider).then(function (newGeometry) {
+                            csfeature.geometry(self.viewer.terrainProvider).then(function (newGeometry) {
                                 // es igual a cuando no es una función... a ver cómo lo gestiono
                                 if (newGeometry instanceof Array) {
                                     newGeometry.forEach(function (geom) {
