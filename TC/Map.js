@@ -954,7 +954,10 @@
                     }
 
                     if (obj.hasOwnProperty("vw3")) {
-                        if (!obj.vw3.cp || (obj.vw3.cp && obj.vw3.cp.length != 3) ||
+
+                        if (!obj.vw3) {
+                            inValidState = true;
+                        }else if (!obj.vw3.cp || (obj.vw3.cp && obj.vw3.cp.length != 3) ||
                             !obj.vw3.chpr || (obj.vw3.chpr && obj.vw3.chpr.length != 3) ||
                             !obj.vw3.bcpd) {
                             inValidState = true;
