@@ -917,9 +917,9 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     padding: 0;
 }
 
-.tc-ctl-dmm-mod button {
-    width: 20%;
-}
+    .tc-ctl-dmm-mod button {
+        width: 20%;
+    }
 
 .tc-ctl-dmm-tool {
     position: relative;
@@ -967,13 +967,13 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
             border-left: 1px solid #fff;
         }
 
-.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr:after {
-    content: '\f1f8';
-}
+        .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr:after {
+            content: '\f1f8';
+        }
 
-.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl:after {
-    content: '\f019';
-}
+    .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl:after {
+        content: '\f019';
+    }
 
 .tc-ctl-finfo {
     overflow-x: hidden;
@@ -1978,7 +1978,8 @@ label.tc-ctl-edit-btn-polygon span {
     .tc-modal .tc-modal-body {
         max-height: 80vh;
     }
-    .tc-ctl-finfo-dialog-dl,.tc-ctl-dmm-dialog-dl {
+
+    .tc-ctl-finfo-dialog-dl, .tc-ctl-dmm-dialog-dl {
         min-width: 20em;
     }
 
@@ -2015,11 +2016,15 @@ label.tc-ctl-edit-btn-polygon span {
         bottom: auto;
     }
 
-        .tc-ctl-p-results .prcollapsed {
-            position: absolute;
-            margin-left: 0;
-            top: auto;
-        }
+    .tc-threed > .tc-ctl-p-results {
+        min-width: 390px;
+    }
+
+    .tc-ctl-p-results .prcollapsed {
+        position: absolute;
+        margin-left: 0;
+        top: auto;
+    }
 
     div.tc-threed div.prpanel-group {
         top: auto;

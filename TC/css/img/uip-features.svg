@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:se="http://svg-edit.googlecode.com" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="64" height="48" style="">
+	<title>Uninterpolated features</title>
+	<!-- Created with Vector Paint - http://www.vectorpaint.yaks.com/ https://chrome.google.com/webstore/detail/hnbpdiengicdefcjecjbnjnoifekhgdo -->
+	<g class="currentLayer" style="">
+		<title>Uninterpolated features</title>
+		<path stroke="#cc0000" stroke-opacity="1" stroke-width="2" stroke-dasharray="none" stroke-linejoin="round" stroke-linecap="round" stroke-dashoffset="" fill="none" fill-rule="nonzero" opacity="1" marker-start="" marker-mid="" marker-end="" d="M22,6 L10,21 L22,25 L16,43" id="svg_1"/>
+		<path stroke="#cc0000" stroke-opacity="1" stroke-width="2" stroke-dasharray="none" stroke-linejoin="round" stroke-linecap="round" stroke-dashoffset="" fill="#cc0000" fill-opacity="0.2" fill-rule="nonzero" opacity="1" marker-start="" marker-mid="" marker-end="" id="svg_2" d="M 36 6 L 30 42 L 54 34 L 54 16 L 36 6 z"/>
+	</g>
+	<circle cx="22" cy="6" r="2.5" stroke-width="0" fill="#cc0000" />
+	<circle cx="10" cy="21" r="2.5" stroke-width="0" fill="#cc0000" />
+	<circle cx="22" cy="25" r="2.5" stroke-width="0" fill="#cc0000" />
+	<circle cx="16" cy="43" r="2.5" stroke-width="0" fill="#cc0000" />
+
+	<circle cx="36" cy="6" r="2.5" stroke-width="0" fill="#cc0000" />
+	<circle cx="30" cy="42" r="2.5" stroke-width="0" fill="#cc0000" />
+	<circle cx="54" cy="34" r="2.5" stroke-width="0" fill="#cc0000" />
+	<circle cx="54" cy="16" r="2.5" stroke-width="0" fill="#cc0000" />
+</svg>

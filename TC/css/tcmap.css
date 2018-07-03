@@ -2527,6 +2527,71 @@ label.tc-ctl-meas-btn-area span:before {
     text-indent: -0.4em;
 }
 
+.tc-ctl-dmm-dialog-ip {
+    margin-bottom: 0.5em;
+    text-align: center;
+}
+
+    .tc-ctl-dmm-dialog-ip.tc-hidden {
+        display: none;
+    }
+
+    .tc-ctl-dmm-dialog-ip input[type=radio] {
+        display: none;
+    }
+
+    .tc-ctl-dmm-dialog-ip label {
+        display: inline-block;
+        width: 6em;
+        height: 6em;
+    }
+
+        .tc-ctl-dmm-dialog-ip label input[type=radio] ~ span {
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            border: 0.3em solid transparent;
+            border-radius: 0.3em;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .tc-ctl-dmm-dialog-ip label input[type=radio]:checked ~ span {
+            border-color: #c00;
+        }
+
+        .tc-ctl-dmm-dialog-ip label input[type=radio][value="0"] ~ span {
+            background-image: url(img/uip-features.svg);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position-y: bottom;
+        }
+
+        .tc-ctl-dmm-dialog-ip label input[type=radio][value="1"] ~ span {
+            background-image: url(img/ip-features.svg);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position-y: bottom;
+        }
+
+.tc-ctl-dmm-dialog-ip-m {
+    transition: height ease 0.2s;
+    height: 2em;
+    opacity: 1;
+    padding-top: 0.5em;
+}
+
+    .tc-ctl-dmm-dialog-ip-m.tc-hidden {
+        visibility: visible;
+        height: 0;
+        opacity: 0;
+        padding-top: 0;
+    }
+
+    .tc-ctl-dmm-dialog-ip-m input[type=number] {
+        width: 3em;
+    }
+
 .tc-ctl-sctnr .tc-ctl h2 {
     display: none;
 }
@@ -3089,10 +3154,6 @@ a:hover.olButton {
 }
 
 .tc-ctl-meas .tc-hidden, .tc-ctl-dmm .tc-hidden {
-    display: none;
-}
-
-.tc-ctl-meas .tc-ctl-draw-style {
     display: none;
 }
 
@@ -5501,6 +5562,10 @@ span.tc-beta {
     min-width: 225px;
 }
 
+    .tc-threed > .tc-ctl-p-results {
+        min-width: 260px;
+    }
+
     .tc-ctl-p-results .prpanel-title span {
         margin-left: 0.5em;
     }
@@ -6739,4 +6804,18 @@ label:last-child input[type=radio] ~ span {
 
 .tc-ctl-p-results .prpanel-title span.prpanel-title-text {
     margin-left: 0;
+}
+
+/* Compartir - mostrar NOVEDAD en 3D */
+.tc-ctl-share.tc-threed h2 span.tc-beta {
+    visibility: visible;
+    opacity: 1;
+    display: inline-block;
+}
+
+/* GPS y rutas - mostrar NOVEDAD en 3D */
+.tc-ctl-geolocation.tc-threed h2 span.tc-beta {
+    visibility: visible;
+    opacity: 1;
+    display: inline-block;
 }
