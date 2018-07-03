@@ -329,7 +329,7 @@ if (!TC.control.FeatureInfoCommons) {
                 self.querying = false;
             }
         };
-        if (self.elevation) {
+        if (self.elevationRequest) {
             self.elevationRequest.then(endCallback);
         }
         else {
