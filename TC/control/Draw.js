@@ -16,9 +16,10 @@ if (!TC.Feature || !TC.feature.Polygon) {
 TC.Consts.event.DRAWSTART = 'drawstart.tc';
 TC.Consts.event.DRAWEND = 'drawend.tc';
 TC.Consts.event.DRAWCANCEL = 'drawcancel.tc';
+TC.Consts.event.DRAWUNDO = 'drawundo.tc';
+TC.Consts.event.DRAWREDO = 'drawredo.tc';
 TC.Consts.event.MEASURE = 'measure.tc';
 TC.Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
-TC.Consts.event.ELEVATION = 'elevation.tc';
 TC.Consts.event.STYLECHANGE = 'stylechange.tc';
 TC.Consts.event.CHANGE = 'change.tc';
 
@@ -45,20 +46,6 @@ TC.Consts.event.CHANGE = 'change.tc';
 
         self.history = [];
         self.historyIndex = 0;
-
-        if (self.options.displayElevation) {
-            self.elevationActive = true;
-            self.profiles = [];
-            self._profileDeferreds = [];
-            TC.loadJS(
-                !TC.tool || !TC.tool.Elevation,
-                TC.apiLocation + 'TC/tool/Elevation',
-                function () {
-                    const elevationOptions = typeof self.options.displayElevation === 'boolean' ? {} : self.options.displayElevation;
-                    self.elevation = new TC.tool.Elevation(elevationOptions);
-                }
-            );
-        }
 
         this.renderPromise().then(function () {
             self.reset = true;
@@ -101,14 +88,16 @@ TC.Consts.event.CHANGE = 'change.tc';
                 self.redo();
             });
 
-            self._$strokeColorPicker = self._$div.find(self._classSelector + '-str-c').on(TC.Consts.event.CHANGE, function(e) {
-                self.setStrokeColor(e.target.value);
-            });
+            if (self.options.styleTools) {
+                self._$strokeColorPicker = self._$div.find(self._classSelector + '-str-c').on(TC.Consts.event.CHANGE, function (e) {
+                    self.setStrokeColor(e.target.value);
+                });
 
-            self._$strokeWidthSelector = self._$div.find(self._classSelector + '-str-w').on(TC.Consts.event.CHANGE, function(e) {
-                self.setStrokeWidth(e.target.value);
-            });
-            self._$strokeWidthWatch = self._$div.find(self._classSelector + '-str-w-watch');
+                self._$strokeWidthSelector = self._$div.find(self._classSelector + '-str-w').on(TC.Consts.event.CHANGE, function (e) {
+                    self.setStrokeWidth(e.target.value);
+                });
+                self._$strokeWidthWatch = self._$div.find(self._classSelector + '-str-w-watch');
+            }
 
             self.$events.on(TC.Consts.event.DRAWSTART, function(e) {
                 self.resetValues();
@@ -122,18 +111,10 @@ TC.Consts.event.CHANGE = 'change.tc';
                 self.history[self.historyIndex++] = e.point;
 
                 setDrawState(self);
-
-                if (self.mode === TC.Consts.geom.POLYLINE) {
-                    self.updateElevationProfile();
-                }
             });
             self.$events.on(TC.Consts.event.DRAWEND, function (e) {
                 setFeatureAddReadyState(self);
-                if (self.options.displayElevation) {
-                    if (self.mode === TC.Consts.geom.POINT) {
-                        self.setPointElevation(e.feature);
-                    }
-                }
+
                 if (self.callBack) {
                     self.callBack(e.feature);
                 }
@@ -167,7 +148,7 @@ TC.Consts.event.CHANGE = 'change.tc';
         ctlProto.template = TC.apiLocation + "TC/templates/Draw.html";
     }
     else {
-        ctlProto.template = function() { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-draw-tools\"><button class=\"tc-ctl-btn tc-ctl-draw-btn-new\" title=\"").f(ctx.get(["tooltip"], false), ctx, "h").w("\">").h("i18n", ctx, {}, { "$key": "new" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-undo\" disabled title=\"").h("i18n", ctx, {}, { "$key": " undo" }).w("\">").h("i18n", ctx, {}, { "$key": "undo" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-redo\" disabled title=\"").h("i18n", ctx, {}, { "$key": " redo" }).w("\">").h("i18n", ctx, {}, { "$key": "redo" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-end\" disabled title=\"").h("i18n", ctx, {}, { "$key": " end" }).w("\">").h("i18n", ctx, {}, { "$key": "end" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-cancel\" title=\"").h("i18n", ctx, {}, { "$key": " cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div><div class=\"tc-ctl-draw-style\">").h("i18n", ctx, {}, { "$key": "strokeColor" }).x(ctx.get(["strokeColors"], false), ctx, { "else": body_1, "block": body_2 }, {}).h("i18n", ctx, {}, { "$key": "strokeWidth" }).w("<div class=\"tc-ctl-draw-str-w-watch\" style=\"border-bottom-width:").f(ctx.get(["strokeWidth"], false), ctx, "h").w("px;\"> </div><input type=\"number\" class=\"tc-ctl-draw-str-w\" value=\"").f(ctx.get(["strokeWidth"], false), ctx, "h").w("\" min=\"1\" /></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<input type=\"color\" class=\"tc-ctl-draw-str-c\" value=\"").f(ctx.get(["strokeColor"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "selectColor" }).w("\" />"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<select class=\"tc-ctl-draw-str-c\" style=\"background-color:").f(ctx.getPath(false, ["strokeColors", "0"]), ctx, "h").w(";\" title=\"").h("i18n", ctx, {}, { "$key": "selectColor" }).w("\">").s(ctx.get(["strokeColors"], false), ctx, { "block": body_3 }, {}).w("</select>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<option value=\"").f(ctx.getPath(true, []), ctx, "h").w("\" style=\"background-color:").f(ctx.getPath(true, []), ctx, "h").w("\"> </option>"); } body_3.__dustBody = !0; return body_0 };
+        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-draw-tools\"><button class=\"tc-ctl-btn tc-ctl-draw-btn-new\" title=\"").f(ctx.get(["tooltip"], false), ctx, "h").w("\">").h("i18n", ctx, {}, { "$key": "new" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-undo\" disabled title=\"").h("i18n", ctx, {}, { "$key": "undo" }).w("\">").h("i18n", ctx, {}, { "$key": "undo" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-redo\" disabled title=\"").h("i18n", ctx, {}, { "$key": "redo" }).w("\">").h("i18n", ctx, {}, { "$key": "redo" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-end\" disabled title=\"").h("i18n", ctx, {}, { "$key": "end" }).w("\">").h("i18n", ctx, {}, { "$key": "end" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-cancel\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div>").x(ctx.get(["styleTools"], false), ctx, { "block": body_1 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-draw-style\">").h("i18n", ctx, {}, { "$key": "strokeColor" }).w("<input type=\"color\" class=\"tc-ctl-col tc-ctl-draw-str-c\" value=\"").f(ctx.get(["strokeColor"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "selectColor" }).w("\" />").h("i18n", ctx, {}, { "$key": "strokeWidth" }).w("<div class=\"tc-ctl-draw-str-w-watch\" style=\"border-bottom-width:").f(ctx.get(["strokeWidth"], false), ctx, "h").w("px;\"> </div><input type=\"number\" class=\"tc-ctl-draw-str-w tc-textbox\" value=\"").f(ctx.get(["strokeWidth"], false), ctx, "h").w("\" min=\"1\" max=\"15\" /></div>"); } body_1.__dustBody = !0; return body_0 };
     }
 
     ctlProto.render = function (callback) {
@@ -192,7 +173,7 @@ TC.Consts.event.CHANGE = 'change.tc';
                 break;
             case TC.Consts.geom.POINT:
             case TC.Consts.geom.MULTIPOINT:
-                strToolTip = self.getLocaleString('draw');
+                strToolTip = self.getLocaleString('drawPoint');
                 self._$div.addClass(self._pointClass);
                 strokeColor = TC.Cfg.styles.point.strokeColor;
                 strokeWidth = TC.Cfg.styles.point.strokeWidth;
@@ -206,19 +187,21 @@ TC.Consts.event.CHANGE = 'change.tc';
         const renderObject = {
             tooltip: strToolTip,
             strokeColor: formatColor(strokeColor),
-            strokeWidth: strokeWidth
+            strokeWidth: strokeWidth,
+            styleTools: self.options.styleTools
         };
-        if (Modernizr.inputtypes.color) {
-            self.renderData(renderObject, callback);
-        }
-        else {
-            // El navegador no soporta input[type=color], cargamos polyfill
-            TC.loadJS(
-                !$.fn.spectrum,
-                TC.apiLocation + 'lib/spectrum/spectrum.min.js',
-                function () {
-                    TC.loadCSS(TC.apiLocation + 'lib/spectrum/spectrum.css');
-                    self.renderData(renderObject, function () {
+        self.renderData(renderObject, function () {
+            if (Modernizr.inputtypes.color) {
+                if ($.isFunction(callback)) {
+                    callback();
+                }
+            }
+            else {
+                // El navegador no soporta input[type=color], cargamos polyfill
+                TC.loadJS(
+                    !$.fn.spectrum,
+                    TC.apiLocation + 'lib/spectrum/spectrum.min.js',
+                    function () {
                         self._$div.find('input[type=color]').spectrum({
                             preferredFormat: 'hex',
                             showPalette: true,
@@ -231,10 +214,10 @@ TC.Consts.event.CHANGE = 'change.tc';
                         if ($.isFunction(callback)) {
                             callback();
                         }
-                    });
-                }
-            )
-        }
+                    }
+                );
+            }
+        });
     };
 
     ctlProto.register = function (map) {
@@ -298,7 +281,7 @@ TC.Consts.event.CHANGE = 'change.tc';
             if (self.historyIndex <= 0) {
                 self.resetValues();
             }
-            self.updateElevationProfile();
+            self.$events.trigger($.Event(TC.Consts.event.DRAWUNDO));
         }
 
         return result;
@@ -310,7 +293,7 @@ TC.Consts.event.CHANGE = 'change.tc';
         if (result) {
             self.historyIndex++;
             setDrawState(self);
-            self.updateElevationProfile();
+            self.$events.trigger($.Event(TC.Consts.event.DRAWREDO));
         }
         return result;
     };
@@ -433,16 +416,18 @@ TC.Consts.event.CHANGE = 'change.tc';
 
     ctlProto.setStrokeColorWatch = function (color) {
         const self = this;
-        if (color === undefined) {
-            color = self.getModeStyle().strokeColor;
-        }
-        const match = color.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
-        if (match && match.length) {
-            color = '#' + match[1] + match[1] + match[2] + match[2] + match[3] + match[3];
-        }
-        self._$strokeColorPicker.val(color);
-        if (!Modernizr.inputtypes.color) {
-            self._$strokeColorPicker.spectrum('set', color);
+        if (self.options.styleTools) {
+            if (color === undefined) {
+                color = self.getModeStyle().strokeColor;
+            }
+            const match = color.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
+            if (match && match.length) {
+                color = '#' + match[1] + match[1] + match[2] + match[2] + match[3] + match[3];
+            }
+            self._$strokeColorPicker.val(color);
+            if (!Modernizr.inputtypes.color) {
+                self._$strokeColorPicker.spectrum('set', color);
+            }
         }
         return self;
     };
@@ -466,13 +451,15 @@ TC.Consts.event.CHANGE = 'change.tc';
 
     ctlProto.setStrokeWidthWatch = function (width) {
         const self = this;
-        if (width === undefined) {
-            width = self.getModeStyle().strokeWidth;
-        }
-        width = parseInt(width, 10);
-        if (width !== Number.NaN) {
-            self._$strokeWidthSelector.val(width);
-            self._$strokeWidthWatch.css('border-bottom-width', width + 'px');
+        if (self.options.styleTools) {
+            if (width === undefined) {
+                width = self.getModeStyle().strokeWidth;
+            }
+            width = parseInt(width, 10);
+            if (width !== Number.NaN) {
+                self._$strokeWidthSelector.val(width);
+                self._$strokeWidthWatch.css('border-bottom-width', width + 'px');
+            }
         }
         return self;
     };
@@ -524,82 +511,6 @@ TC.Consts.event.CHANGE = 'change.tc';
         self.historyIndex = 0;
         setDrawState(self);
         return self;
-    };
-
-    ctlProto.setPointElevation = function (feature) {
-        const self = this;
-        if (self.elevationActive) {
-            self.elevation.getElevation({
-                crs: self.map.crs,
-                coordinates: feature.geometry
-            }).then(function (coords) {
-                if (coords.length) {
-                    const elev = coords[0][2];
-                    if (elev !== null) {
-                        feature.geometry[2] = elev;
-                        self.$events.trigger($.Event(TC.Consts.event.ELEVATION, { features: [feature] }));
-                    }
-                }
-            });
-        }
-    };
-
-    ctlProto.getElevationProfile = function (coords) {
-        const self = this;
-        if (self.options.displayElevation && self.elevationActive) {
-            const li = self.map.getLoadingIndicator();
-            const waitId = li.addWait();
-            self.elevation.getElevation({
-                crs: self.map.crs,
-                coordinates: coords
-            }).then(function (features) {
-                li.removeWait(waitId);
-                self.$events.trigger($.Event(TC.Consts.event.ELEVATION, { features: features }));
-                }, function (error) {
-                    li.removeWait(waitId);
-                });
-        }
-    };
-
-    ctlProto.updateElevationProfile = function () {
-        const self = this;
-        if (self.options.displayElevation && self.elevationActive) {
-            const idx = self.historyIndex - 1;
-            const length = Math.max(idx, 0);
-            for (var i = length, len = self._profileDeferreds.length; i < len; i++) {
-                self._profileDeferreds[i].reject();
-            }
-            if (idx >= 0) {
-                const coords = self.history.slice(0, self.historyIndex);
-                if (coords.length === 1) {
-                    coords.push(coords[0]); // Espera una línea, metemos un segundo punto
-                }
-                const li = self.map.getLoadingIndicator();
-                const waitId = li.addWait();
-                const deferred = self._profileDeferreds[length] = $.Deferred();
-                self.elevation.getElevation({
-                    crs: self.map.crs,
-                    coordinates: coords
-                }).then(
-                    function (result) {
-                        deferred.resolve(result);
-                    },
-                    function (error) {
-                        deferred.reject(error);
-                    });
-                $.when.apply(this, self._profileDeferreds.slice(0, length + 1)).then(
-                    function () {
-                        for (var i = 0, len = arguments.length; i < len; i++) {
-                            self.profiles[i] = arguments[i];
-                        }
-                        li.removeWait(waitId);
-                        self.$events.trigger($.Event(TC.Consts.event.ELEVATION, { features: self.profiles[idx] }));
-                    },
-                    function (error) {
-                        li.removeWait(waitId);
-                    });
-            }
-        }
     };
 
 })();
