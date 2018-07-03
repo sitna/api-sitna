@@ -10,5 +10,15 @@
             }
         }
         return chunk;
-    }    
+    }
+    dust.helpers.startsWith = function (chunk, context, bodies, params) {
+        params = params || {};
+        var obj = params['with'] || context.current();
+        
+        for (var k in obj.split(',')) {
+            if (context.current().toLowerCase().startsWith(k.toLowerCase()))
+                return true;
+        }
+        return false;
+    }
 })();

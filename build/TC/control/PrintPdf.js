@@ -92,26 +92,26 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
         if (url) {
             TC.loadJS(
-                    typeof QRCode === 'undefined',
-                    [TC.apiLocation + 'lib/qrcode/qrcode.min.js'],
-                    function () {
+                typeof QRCode === 'undefined',
+                [TC.apiLocation + 'lib/qrcode/qrcode.min.js'],
+                function () {
 
-                        if (url.length > QR_MAX_URL_LENGTH) {
-                            url = TC.Util.shortenUrl(url);
-                        }
+                    if (url.length > QR_MAX_URL_LENGTH) {
+                        url = TC.Util.shortenUrl(url);
+                    }
 
-                        var codeContainer = $('#qrcode');
-                        codeContainer.empty();
-                        var code = new QRCode(codeContainer.get(0), {
-                            text: url,
-                            width: options.qrCode.sideLength,
-                            height: options.qrCode.sideLength
-                        });
-                        setTimeout(function () {
-                            var imgBase64 = codeContainer.find('img').attr('src');
-                            deferred.resolve(imgBase64);
-                        }, 100);
+                    var codeContainer = $('#qrcode');
+                    codeContainer.empty();
+                    var code = new QRCode(codeContainer.get(0), {
+                        text: url,
+                        width: options.qrCode.sideLength,
+                        height: options.qrCode.sideLength
                     });
+                    setTimeout(function () {
+                        var imgBase64 = codeContainer.find('img').attr('src');
+                        deferred.resolve(imgBase64);
+                    }, 100);
+                });
         } else {
             deferred.resolve(imgBase64);
         }
@@ -122,6 +122,9 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
     ctlProto.register = function (map) {
         var self = this;
         TC.Control.prototype.register.call(self, map);
+
+        // GLS: A\u00f1ado el flag al mapa para tenerlo en cuenta cuando se establece la funci\u00f3n de carga de im\u00e1genes
+        self.map.mustBeExportable = true;
 
         self.pdfLibPromise = function () {
             var deferred = $.Deferred();
@@ -224,7 +227,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                         table: {
                             widths: [scaleWidth],
                             body: [
-                                 [{ text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
+                                [{ text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
                             ]
                         },
                         layout: {
@@ -281,10 +284,10 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                     table: {
                         widths: ['*'],
                         body: [
-                          [{
-                              image: TC.Util.toDataUrl(canvas),
-                              width: self.mapSize.width
-                          }]]
+                            [{
+                                image: TC.Util.toDataUrl(canvas),
+                                width: self.mapSize.width
+                            }]]
                     },
                     layout: {
                         paddingLeft: function (i, node) { return 0; },
@@ -368,17 +371,28 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             var src = layer.src || layer.srcBase64;
 
                             if (src) {
-                                // Si estamos en la impresi\u00f3n en IE, proxificamos las im\u00e1genes. En caso contrario se genera un "Security Error" al generar el PDF
-                                if (self.map.options.crossOrigin && TC.Util.detectIE()) {
-                                    src = TC.proxify(src);
+
+                                if (!TC.tool || !TC.tool.Proxification) {
+                                    TC.syncLoadJS(TC.apiLocation + 'TC/tool/Proxification');
                                 }
 
-                                var promise = TC.Util.imgToDataUrl(src, 'image/png');
-                                imagePromises.push(promise);
-                                promise.then(function (base64, canvas) {
-                                    layer.image = { base64: base64, canvas: canvas };
-                                }, function () { //reject
+                                imagePromises.push($.Deferred());
+                                var promise = imagePromises[imagePromises.length - 1];
+
+                                var toolProxification = new TC.tool.Proxification(TC.proxify, { allowedMixedContent: true });
+                                toolProxification.getImage(src, true).then(function (img) {
+                                    if (img.complete) {
+                                        var imageDetail = TC.Util.imgTagToDataUrl(img, 'image/png');
+                                        layer.image = { base64: imageDetail.base64, canvas: imageDetail.canvas };
+                                    } else {
+                                        imageErrorHandling(src);
+                                    }
+
+                                    promise.resolve();
+
+                                }, function (error) {
                                     imageErrorHandling(src);
+                                    promise.reject();
                                 });
                             }
                         })(i, j);
@@ -427,6 +441,11 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             for (var j = 0; j < group.layers.length; j++) {
                                 var layer = group.layers[j];
                                 indentation = indentationIncrement * layer.level;
+
+                                //Si el nombre del grupo de capas es igual al del servicio, lo obviamos
+                                if (layer.header && layer.header === group.title) {
+                                    continue;
+                                }
 
                                 if (layer.header) { // Si es un nombre de servicio o grupo de capas   
                                     docDefinition.content.push({ text: layer.header, fontSize: 10, margin: [indentation, 0, 0, 3] });
@@ -479,7 +498,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         }
 
         $.when(self.pdfLibPromise)
-            .then(createDoc)            
+            .then(createDoc)
             .then(printHeader)
             .fail(_removeWait)
             .then(printMap)
@@ -559,40 +578,40 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                             type: TC.Consts.layerType.VECTOR
                         }, function (layer) {
                             TC.loadJS(!TC.feature,
-                            [TC.apiLocation + 'TC/Feature', TC.apiLocation + 'TC/feature/Point', TC.apiLocation + 'TC/feature/Polyline',
-                            TC.apiLocation + 'TC/feature/Polygon', TC.apiLocation + 'TC/feature/MultiPolygon', TC.apiLocation + 'TC/feature/MultiPolyline',
-                            TC.apiLocation + 'TC/feature/Circle', TC.apiLocation + 'TC/feature/Marker'],
-                            function () {
-                                for (var i = 0; i < mapFeatures.length; i++) {
-                                    var feat = mapFeatures[i];
-                                    var feature;
+                                [TC.apiLocation + 'TC/Feature', TC.apiLocation + 'TC/feature/Point', TC.apiLocation + 'TC/feature/Polyline',
+                                TC.apiLocation + 'TC/feature/Polygon', TC.apiLocation + 'TC/feature/MultiPolygon', TC.apiLocation + 'TC/feature/MultiPolyline',
+                                TC.apiLocation + 'TC/feature/Circle', TC.apiLocation + 'TC/feature/Marker'],
+                                function () {
+                                    for (var i = 0; i < mapFeatures.length; i++) {
+                                        var feat = mapFeatures[i];
+                                        var feature;
 
-                                    switch (feat.CLASSNAME) {
-                                        case 'TC.feature.Point':
-                                            layer.addPoint(feat.geometry, feat.options);
-                                            break;
-                                        case 'TC.feature.Polyline':
-                                            layer.addPolyline(feat.geometry, feat.options);
-                                            break;
-                                        case 'TC.feature.Polygon':
-                                            layer.addPolygon(feat.geometry, feat.options);
-                                            break;
-                                        case 'TC.feature.MultiPolygon':
-                                            layer.addMultiPolygon(feat.geometry, feat.options);
-                                            break;
-                                        case 'TC.feature.MultiPolyline':
-                                            layer.addMultiPolyline(feat.geometry, feat.options);
-                                            break;
-                                        case 'TC.feature.Circle':
-                                            layer.addCircle(feat.geometry, feat.options);
-                                            break;
-                                        case 'TC.feature.Marker':
-                                            layer.addMarker(feat.geometry, feat.options);
-                                            break;
+                                        switch (feat.CLASSNAME) {
+                                            case 'TC.feature.Point':
+                                                layer.addPoint(feat.geometry, feat.options);
+                                                break;
+                                            case 'TC.feature.Polyline':
+                                                layer.addPolyline(feat.geometry, feat.options);
+                                                break;
+                                            case 'TC.feature.Polygon':
+                                                layer.addPolygon(feat.geometry, feat.options);
+                                                break;
+                                            case 'TC.feature.MultiPolygon':
+                                                layer.addMultiPolygon(feat.geometry, feat.options);
+                                                break;
+                                            case 'TC.feature.MultiPolyline':
+                                                layer.addMultiPolyline(feat.geometry, feat.options);
+                                                break;
+                                            case 'TC.feature.Circle':
+                                                layer.addCircle(feat.geometry, feat.options);
+                                                break;
+                                            case 'TC.feature.Marker':
+                                                layer.addMarker(feat.geometry, feat.options);
+                                                break;
+                                        }
                                     }
                                 }
-                            }
-                        );
+                            );
                         });
                     }
                 });

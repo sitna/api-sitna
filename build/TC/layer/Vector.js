@@ -119,6 +119,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 }
             }
             result.name = self.name || result.name;
+            result.customLegend = self.options.customLegend; //Atributo para pasar una plantilla HTML diferente a la por defecto (LegendNode.html)
             result.title = self.title || result.title;
             result.uid = self.id;
         }
@@ -148,17 +149,23 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 for (var i = 0, len = coordsArray.length; i < len; i++) {
                     var coords = coordsArray[i];
                     var feature;
+                    const isNative = TC.wrap.Feature.prototype.isNative(coords);
                     if (coords instanceof FeatureConstructor) {
                         feature = coords;
-                        feature.layer = layer;
                     }
                     else {
                         opts.layer = layer;
-                        feature = new FeatureConstructor(coords, opts);
+                        if (isNative) {
+                            feature = coords._wrap && coords._wrap.parent;
+                        }
+                        if (!feature) {
+                            feature = new FeatureConstructor(coords, opts);
+                        }
                     }
+                    feature.layer = layer;
                     features[i] = feature;
                     layer.features[layer.features.length] = feature;
-                    if (!feature.wrap.isNative(coords)) {
+                    if (!isNative) {
                         nativeFeatures[nativeFeatures.length] = feature.wrap.feature;
                     }
                     if (feature.options.showPopup) {
@@ -354,7 +361,16 @@ TC.inherit(TC.layer.Vector, TC.Layer);
      * @param {TC.Feature} feature 
      */
     layerProto.removeFeature = function (feature) {
-        this.wrap.removeFeature(feature);
+        const self = this;
+        if (self.map) {
+            const popups = self.map.getControlsByClass('TC.control.Popup');
+            popups.forEach(function (pu) {
+                if (pu.isVisible() && pu.currentFeature === feature) {
+                    pu.hide();
+                }
+            });
+        }
+        self.wrap.removeFeature(feature);
     };
 
     layerProto.getFeatureById = function (id) {
@@ -373,6 +389,14 @@ TC.inherit(TC.layer.Vector, TC.Layer);
     layerProto.clearFeatures = function () {
         var self = this;
         if (self.features && self.wrap) {
+            if (self.map) {
+                const popups = self.map.getControlsByClass('TC.control.Popup');
+                popups.forEach(function (pu) {
+                    if (pu.isVisible() && self.features.indexOf(pu.currentFeature) >= 0) {
+                        pu.hide();
+                    }
+                });
+            }
             self.features.length = 0;
             self.wrap.clearFeatures();
         }
@@ -511,5 +535,29 @@ TC.inherit(TC.layer.Vector, TC.Layer);
     layerProto.refresh = function () {
         var self = this;
         return this.wrap.reloadSource();
+    };
+
+    layerProto.getFeaturesInCurrentExtent = function (tolerance) {
+        var self = this;
+
+        var extent = self.map.getExtent();
+        return this.getFeaturesInExtent(extent, tolerance);
+    };
+
+    layerProto.getFeaturesInExtent = function (extent, tolerance) {
+        return this.wrap.getFeaturesInExtent(extent, tolerance);
+    };
+
+    layerProto.setProjection = function (options) {
+        const self = this;
+        self.wrap.setProjection(options);
+        if (options.crs && options.oldCrs) {
+            self.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self }));
+            self.features.forEach(function (feat) {
+                feat.wrap.setGeometry(TC.Util.reproject(feat.geometry, options.oldCrs, options.crs));
+                feat.geometry = feat.wrap.getGeometry();
+            });
+            self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self }));
+        }
     };
 })();

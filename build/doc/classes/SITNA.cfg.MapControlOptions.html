@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.3.0</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.4.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -51,6 +51,10 @@
             
                 <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
             
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterOptions.html">SITNA.cfg.ClusterOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterStyleOptions.html">SITNA.cfg.ClusterStyleOptions</a></li>
+            
                 <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
             
                 <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
@@ -67,7 +71,11 @@
             
                 <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
             
+                <li><a class="type" href="../classes/SITNA.cfg.PointStyleOptions.html">SITNA.cfg.PointStyleOptions</a></li>
+            
                 <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.SearchOptions.html">SITNA.cfg.SearchOptions</a></li>
             
                 <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
             
@@ -104,7 +112,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l1646"><code>sitna.js:1646</code></a>
+            Se define en: <a href="../files/sitna.js.html#l1852"><code>sitna.js:1852</code></a>
         </div>
     
 
@@ -308,7 +316,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1697"><code>sitna.js:1697</code></a>
+        <a href="../files/sitna.js.html#l1903"><code>sitna.js:1903</code></a>
         
         </p>
 
@@ -319,7 +327,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen atribución. La atribución es un texto superpuesto al mapa que actúa como reconocimiento de la procedencia de los datos que se muestran.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen atribución. La atribución es un texto superpuesto al mapa que actúa como reconocimiento de la procedencia de los datos que se muestran.</p>
 
         </div>
 
@@ -360,7 +368,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1691"><code>sitna.js:1691</code></a>
+        <a href="../files/sitna.js.html#l1897"><code>sitna.js:1897</code></a>
         
         </p>
 
@@ -371,7 +379,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un selector de mapas de fondo.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un selector de mapas de fondo.</p>
 
         </div>
 
@@ -412,7 +420,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1739"><code>sitna.js:1739</code></a>
+        <a href="../files/sitna.js.html#l1945"><code>sitna.js:1945</code></a>
         
         </p>
 
@@ -423,7 +431,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un control que gestiona los clics del usuario en ellos.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un control que gestiona los clics del usuario en ellos.</p>
         </div>
 
         
@@ -463,7 +471,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1709"><code>sitna.js:1709</code></a>
+        <a href="../files/sitna.js.html#l1915"><code>sitna.js:1915</code></a>
         
         </p>
 
@@ -474,7 +482,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un indicador de coordenadas y de sistema de referencia espacial.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un indicador de coordenadas y de sistema de referencia espacial.</p>
 
         </div>
 
@@ -515,7 +523,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
             
         
         
-        <a href="../files/sitna.js.html#l1751"><code>sitna.js:1751</code></a>
+        <a href="../files/sitna.js.html#l1957"><code>sitna.js:1957</code></a>
         
         </p>
 
@@ -526,7 +534,7 @@ Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas responden a los clics con un información de las capas cargadas de tipo WMS. Se usa para ello la petición <code>getFeatureInfo</code> del standard WMS.
+            <p>Si se establece a un valor <em>truthy</em>, los mapas responden a los clics con un información de las capas cargadas de tipo WMS. Se usa para ello la petición <code>getFeatureInfo</code> del standard WMS.
 Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.featureInfo.html">online</a>.</p>
 
         </div>
@@ -594,7 +602,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1715"><code>sitna.js:1715</code></a>
+        <a href="../files/sitna.js.html#l1921"><code>sitna.js:1921</code></a>
         
         </p>
 
@@ -605,7 +613,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen leyenda.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen leyenda.</p>
 
         </div>
 
@@ -646,7 +654,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1655"><code>sitna.js:1655</code></a>
+        <a href="../files/sitna.js.html#l1861"><code>sitna.js:1861</code></a>
         
         </p>
 
@@ -657,7 +665,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un indicador de espera de carga.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un indicador de espera de carga.</p>
 
         </div>
 
@@ -698,7 +706,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1733"><code>sitna.js:1733</code></a>
+        <a href="../files/sitna.js.html#l1939"><code>sitna.js:1939</code></a>
         
         </p>
 
@@ -709,7 +717,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un medidor de longitudes, áreas y perímetros.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un medidor de longitudes, áreas y perímetros.</p>
 
         </div>
 
@@ -750,7 +758,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1661"><code>sitna.js:1661</code></a>
+        <a href="../files/sitna.js.html#l1867"><code>sitna.js:1867</code></a>
         
         </p>
 
@@ -761,7 +769,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen una barra de navegación con control de zoom.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen una barra de navegación con control de zoom.</p>
 
         </div>
 
@@ -802,7 +810,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1685"><code>sitna.js:1685</code></a>
+        <a href="../files/sitna.js.html#l1891"><code>sitna.js:1891</code></a>
         
         </p>
 
@@ -813,7 +821,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un mapa de situación.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un mapa de situación.</p>
 
         </div>
 
@@ -854,7 +862,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1721"><code>sitna.js:1721</code></a>
+        <a href="../files/sitna.js.html#l1927"><code>sitna.js:1927</code></a>
         
         </p>
 
@@ -865,7 +873,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas muestran los datos asociados a los marcadores cuando se pulsa sobre ellos.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas muestran los datos asociados a los marcadores cuando se pulsa sobre ellos.</p>
 
         </div>
 
@@ -906,7 +914,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1673"><code>sitna.js:1673</code></a>
+        <a href="../files/sitna.js.html#l1879"><code>sitna.js:1879</code></a>
         
         </p>
 
@@ -917,7 +925,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un indicador numérico de escala.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un indicador numérico de escala.</p>
 
         </div>
 
@@ -958,7 +966,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1667"><code>sitna.js:1667</code></a>
+        <a href="../files/sitna.js.html#l1873"><code>sitna.js:1873</code></a>
         
         </p>
 
@@ -969,7 +977,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen una barra de escala.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen una barra de escala.</p>
 
         </div>
 
@@ -1010,7 +1018,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1679"><code>sitna.js:1679</code></a>
+        <a href="../files/sitna.js.html#l1885"><code>sitna.js:1885</code></a>
         
         </p>
 
@@ -1021,7 +1029,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un selector numérico de escala.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un selector numérico de escala.</p>
 
         </div>
 
@@ -1039,7 +1047,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             <a name="property_search" class="anchor-link"></a>
 <div class="property item">
     <h3 class="name"><code>search</code>
-    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.ControlOptions.html" class="crosslink">SITNA.cfg.ControlOptions</a> | Undefined</span>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Boolean" class="crosslink external" target="_blank">Boolean</a> | <a href="../classes/SITNA.cfg.SearchOptions.html" class="crosslink">SITNA.cfg.SearchOptions</a> | Undefined</span>
 
     
 
@@ -1062,7 +1070,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1727"><code>sitna.js:1727</code></a>
+        <a href="../files/sitna.js.html#l1933"><code>sitna.js:1933</code></a>
         
         </p>
 
@@ -1073,7 +1081,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen un buscador de entidades geográficas y localizador de coordenadas.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un buscador. El buscador localiza coordenadas y busca entidades geográficas tales como: municipios, cascos urbanos, vías, portales y parcelas catastrales de IDENA.</p>
 
         </div>
 
@@ -1114,7 +1122,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1745"><code>sitna.js:1745</code></a>
+        <a href="../files/sitna.js.html#l1951"><code>sitna.js:1951</code></a>
         
         </p>
 
@@ -1125,7 +1133,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas pueden abrir una ventana de Google StreetView.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas pueden abrir una ventana de Google StreetView.</p>
         </div>
 
         
@@ -1165,7 +1173,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
             
         
         
-        <a href="../files/sitna.js.html#l1703"><code>sitna.js:1703</code></a>
+        <a href="../files/sitna.js.html#l1909"><code>sitna.js:1909</code></a>
         
         </p>
 
@@ -1176,7 +1184,7 @@ Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.feature
 
     <div class="extended-detail">
         <div class="description">
-            <p>Los mapas tienen una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.</p>
+            <p>Si se establece a un valor <em>truthy</em>, los mapas tienen una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.</p>
 
         </div>
 

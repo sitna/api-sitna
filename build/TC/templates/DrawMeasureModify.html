@@ -1,0 +1,27 @@
+<h2>{@i18n $key="drawAndMeasure"/} <span class="tc-beta">{@i18n $key="beta"/}</span></h2>
+<div class="tc-ctl-meas-select">
+    <form>
+        <label class="tc-ctl-meas-btn-pt"><input type="radio" name="mode" value="point" /><span>{@i18n $key="points"/}</span></label>
+        <label class="tc-ctl-meas-btn-len"><input type="radio" name="mode" value="polyline" /><span>{@i18n $key="lines"/}</span></label>
+        <label class="tc-ctl-meas-btn-area"><input type="radio" name="mode" value="polygon" /><span>{@i18n $key="polygons"/}</span></label>
+    </form>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-pt tc-hidden">
+    <div class="tc-ctl-meas-point"></div>
+    <div class="tc-ctl-meas-txt">{@i18n $key="search.list.coordinates"/}: <span class="tc-ctl-meas-val-coord"></span></div>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-len tc-hidden">
+    <div class="tc-ctl-meas-line"></div>
+    <div class="tc-ctl-meas-txt">{@i18n $key="2dLength"/}: <span class="tc-ctl-meas-val-len"></span><button class="tc-ctl-meas-prof-btn tc-active" title="{@i18n $key="deactivateElevationProfile"/}">{@i18n $key="geo.trk.chart.chpe"/}</button></div>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-area tc-hidden">
+    <div class="tc-ctl-meas-polygon"></div>
+    <div class="tc-ctl-meas-txt">{@i18n $key="area"/}: <span class="tc-ctl-meas-val-area"></span>, {@i18n $key="2dPerimeter"/}: <span class="tc-ctl-meas-val-peri"></span></div>
+</div>
+<div class="tc-ctl-dmm-tool">
+    <div class="tc-ctl-dmm-mod"></div>
+    <div class="tc-ctl-dmm-cmd">
+        <button class="tc-ctl-dmm-btn-clr" disabled title="{@i18n $key="deleteAll"/}">{@i18n $key="deleteAll"/}</button>
+        <button class="tc-ctl-dmm-btn-dl" disabled title="{@i18n $key="download"/}">{@i18n $key="download"/}...</button>
+    </div>
+</div>

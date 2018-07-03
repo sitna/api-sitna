@@ -61,14 +61,34 @@ TC.inherit(TC.control.FileImport, TC.Control);
                     type: TC.Consts.layerType.VECTOR
                 }).then(function (layer) {
                     var geogCrs = 'EPSG:4326';
+                    const flatten = function (prev, cur) {
+                        return prev.concat(cur);
+                    };
                     var projectGeom = function (feature) {
                         var geom = feature.geometry;
                         if (geom) {
-                            var match = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(geom.join(' '));
-                            if (match && match.length >= 3 &&
-                                    Math.abs(match[1]) <= 180 &&
-                                    Math.abs(match[3]) <= 90) {
-
+                            var coordinates;
+                            switch (true) {
+                                case TC.feature.Point && feature instanceof TC.feature.Point:
+                                    coordinates = [geom];
+                                    break;
+                                case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
+                                case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
+                                    coordinates = geom;
+                                    break;
+                                case TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline:
+                                case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
+                                    coordinates = geom.reduce(flatten);
+                                    break;
+                                case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
+                                    coordinates = geom.reduce(flatten).reduce(flatten);
+                                    break;
+                                default:
+                                    break;
+                            }
+                            if (coordinates.every(function (coord) {
+                                return Math.abs(coord[0]) <= 180 && Math.abs(coord[1]) <= 90; // Parecen geogr\u00e1ficas
+                            })) {
                                 feature.setCoords(TC.Util.reproject(geom, geogCrs, self.map.crs));
                             }
                         }

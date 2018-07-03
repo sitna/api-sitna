@@ -53,7 +53,7 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
                     }
                     return result;
                 };
-                var lyrObj = findLayerById(layer, TC.Cfg.availableBaseLayers);
+                var lyrObj = findLayerById(layer, map.options.availableBaseLayers);
                 if (!$.isPlainObject(lyrObj)) {
                     lyrObj = findLayerById(layer, map.options.baseLayers);
                 }
@@ -72,8 +72,26 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
                     lyr = new TC.layer.Raster(layer);
                 }
             }
+
+            // GLS: Referencio el mapa en la capa. Como no se a\u00f1ade la capa al mapa, no hay referencia.
+            lyr.map = map;
+
             self.layer = lyr;
             self.wrap.register(map);
+
+            const resetOVMapProjection = function (e) {
+                const resetOptions = {};
+                self.layer.getCapabilitiesPromise().then(function () {
+                    if (!self.layer.isCompatible(map.crs) && self.layer.wrap.getCompatibleMatrixSets(map.crs).length === 0) {
+                        resetOptions.layer = self.layer.getFallbackLayer();
+                    }
+                    self.wrap.reset(resetOptions);
+                });
+            };
+
+            resetOVMapProjection({ crs: map.crs });
+
+            map.on(TC.Consts.event.PROJECTIONCHANGE, resetOVMapProjection);
         });
     };
 

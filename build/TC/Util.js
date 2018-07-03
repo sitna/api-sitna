@@ -9,6 +9,29 @@
     }
 })(TC, function () {
 
+    String.prototype.soundex = function () {
+        var a = this.toLowerCase().split('')
+        f = a.shift(),
+        r = '',
+        codes = {
+            a: '', e: '', i: '', o: '', u: '',
+            b: 1, f: 1, p: 1, v: 1,
+            c: 2, g: 2, j: 2, k: 2, q: 2, s: 2, x: 2, z: 2,
+            d: 3, t: 3,
+            l: 4,
+            m: 5, n: 5,
+            r: 6
+        };
+
+        r = f +
+            a
+            .map(function (v, i, a) { return codes[v] })
+            .filter(function (v, i, a) { return ((i === 0) ? v !== codes[f] : v !== a[i - 1]); })
+            .join('');
+
+        return (r + '000').slice(0, 4).toUpperCase();
+    }
+
     // Polyfill para IE
     Number.isInteger = Number.isInteger || function (value) {
         return typeof value === "number" &&
@@ -378,20 +401,48 @@
         reproject: function (coords, sourceCrs, targetCrs) {
             var result;
             var multipoint = true;
-            if (!$.isArray(coords) || !$.isArray(coords[0])) {
-                multipoint = false;
-                coords = [coords];
+            var multiring = true;
+            var multipoly = true;
+            if ($.isArray(coords[0])) {
+                if ($.isArray(coords[0][0])) {
+                    if (!$.isArray(coords[0][0][0])) {
+                        multipoly = false;
+                        coords = [coords];
+                    }
+                }
+                else {
+                    multiring = false;
+                    coords = [[coords]];
+                }
             }
-            TC.loadProjDef(sourceCrs, true);
-            TC.loadProjDef(targetCrs, true);
+            else {
+                multipoint = false;
+                multiring = false;
+                multipoly = false;
+                coords = [[[coords]]];
+            }
+            TC.loadProjDef({ crs: sourceCrs, sync: true });
+            TC.loadProjDef({ crs: targetCrs, sync: true });
             var sourcePrj = new Proj4js.Proj(sourceCrs);
             var targetPrj = new Proj4js.Proj(targetCrs);
             result = new Array(coords.length);
-            for (var i = 0, len = coords.length; i < len; i++) {
-                var point = Proj4js.transform(sourcePrj, targetPrj, { x: coords[i][0], y: coords[i][1] });
-                result[i] = [point.x, point.y];
-            }
+            coords.forEach(function (poly, pidx) {
+                const rp = result[pidx] = [];
+                poly.forEach(function (ring, ridx) {
+                    const rr = rp[ridx] = [];
+                    ring.forEach(function (coord, cidx) {
+                        var point = Proj4js.transform(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
+                        rr[cidx] = [point.x, point.y];
+                    });
+                });
+            });
             if (!multipoint) {
+                result = result[0][0][0];
+            }
+            else if (!multiring) {
+                result = result[0][0];
+            }
+            else if (!multipoly) {
                 result = result[0];
             }
             return result;
@@ -421,6 +472,29 @@
         },
         mod: function (n) { // modulo for negative values
             return ((n % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+        },
+
+        getCRSCode: function (crs) {
+            var result = null;
+            crs = crs.trim();
+            if (/^EPSG:\d{4,6}$/g.test(crs) || //formato EPSG
+                /^urn:ogc:def:crs:EPSG:.*:\d{4,6}/g.test(crs) || // formato URN
+                /http:\/\/www.opengis.net\/gml\/srs\/epsg.xml#\d{4,6}$/g.test(crs)) { // formato GML
+                var match = crs.trim().match(/^.+[:#](\d{4,6})$/); // devuelve la parte num\u00e9rica del c\u00f3digo
+                if (match) {
+                    result = match[1];
+                }
+            }
+            return result;
+        },
+
+        CRSCodesEqual: function (crs1, crs2) {
+            if (crs1 === crs2) {
+                return true;
+            }
+            var code1 = this.getCRSCode(crs1);
+            var code2 = this.getCRSCode(crs2);
+            return code1 !== null && code2 !== null && code1 === code2;
         },
 
         getLocaleString: function (locale, key, texts) {
@@ -590,6 +664,7 @@
         },
         detectChrome: function () {
             return window.chrome;
+
         },
         detectSafari: function () {
             return !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/);
@@ -646,6 +721,15 @@
         detectMobile: function () {
             return (TC.Util.detectAndroid() || TC.Util.detectIOS() || TC.Util.detectMobileWindows() || TC.Util.detectBlackBerry());
         },
+        getBrowser: function () {
+            if (!window.UAParser) {
+                TC.syncLoadJS(TC.apiLocation + TC.Consts.url.UA_PARSER);
+            }
+
+            var parser = new UAParser();
+            var browser = parser.getBrowser();
+            return { name: browser.name, version: browser.major };
+        },        
         getElementByNodeName: function (parentNode, nodeName) {
             var colonIndex = nodeName.indexOf(":");
             var tag = nodeName.substr(colonIndex + 1);
@@ -662,8 +746,9 @@
                 return url;
             }
             var toAdd = Object.keys(parameters).map(function (key) {
-                return encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]);
+                return encodeURIComponent(key) + '=' + (parameters[key] ? encodeURIComponent(parameters[key]) : '');
             }).join('&');
+
             var urlparts = url.split('?');
             if (urlparts.length >= 2) {
 
@@ -744,7 +829,7 @@
         },
 
         getLocaleUserChoice: function (options) {
-            var result = 'en_US';
+            var result = 'en-US';
             options = options || {};
             var cookieName = options.cookieName || 'SITNA.language';
             var paramName = options.paramName || 'lang';
@@ -760,13 +845,13 @@
 
             switch (lang) {
                 case 'eu':
-                    result = 'eu_ES';
+                    result = 'eu-ES';
                     break;
                 case 'es':
-                    result = 'es_ES';
+                    result = 'es-ES';
                     break;
                 default:
-                    result = 'en_US';
+                    result = 'en-US';
                     break;
             }
             return result;
@@ -846,6 +931,18 @@
                 result = null;
             }
             return result;
+        },
+
+        colorArrayToString: function (color) {
+            if ($.isArray(color)) {
+                color = color
+                    .slice(0, 3)
+                    .reduce(function (prev, cur) {
+                        const str = cur.toString(16);
+                        return prev + '00'.substring(0, 2 - str.length) + str;
+                    }, '#');
+            }
+            return color;
         },
 
         // Generic helper function that can be used for the three operations:        
@@ -943,11 +1040,16 @@
             img.onload = function () {
                 var canvas = createCanvas(img);
                 var dataURL;
-                dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
-                    type: outputFormat || 'image/jpeg',
-                    encoderOptions: 1.0
-                });
-                deferred.resolve(dataURL, canvas);
+
+                try {
+                    dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                        type: outputFormat || 'image/jpeg',
+                        encoderOptions: 1.0
+                    });
+                    deferred.resolve(dataURL, canvas);
+                } catch (error) {
+                    img.src = TC.proxify(src);
+                }
             };
 
             img.onerror = function (error) {
@@ -990,14 +1092,38 @@
                 xhr.send();
             };
 
-            var srcNoProtocol = src.replace(/^https?\:/i, "");
-            img.src = srcNoProtocol;
+            img.src = src;
             if (img.complete || img.complete === undefined) {
                 img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-                img.src = srcNoProtocol;
+                img.src = src;
             }
 
             return deferred.promise();
+        },
+
+        imgTagToDataUrl: function (img, outputFormat) {
+            var createCanvas = function (img) {
+                var canvas = document.createElement('CANVAS');
+                var ctx = canvas.getContext('2d');
+                canvas.height = img.height;
+                canvas.width = img.width;
+                ctx.drawImage(img, 0, 0);
+
+                return canvas;
+            };
+
+            var canvas = createCanvas(img);
+            var dataURL;
+
+            try {
+                dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                    type: outputFormat || 'image/jpeg',
+                    encoderOptions: 1.0
+                });
+                return { base64: dataURL, canvas: canvas };
+            } catch (error) {
+                return null;
+            }
         },
 
         addToCanvas: function (canvas, img, position) {
@@ -1095,7 +1221,7 @@
                 $(".tc-ctl-download-form").remove();
             }, 1000);
         },
-        WFSQueryBuilder: function (layers, feature, capabilities, outputFormat, onlyHits) {
+        WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits) {
             if (!$.isArray(layers))
                 layers = [layers];
             var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
@@ -1119,7 +1245,7 @@
 
             var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}">{filter}</wfs:Query>';
             $.each(layers, function (index, value) {
-                queryBody += queryItem.format({ typeName: value, filter: TC.Util.WFSFilterBuilder(feature, capabilities.version) });
+                queryBody += queryItem.format({ typeName: value, filter: (filter ? filter.getText(capabilities.version) : "") });
             });
             query += queryBody + '</wfs:GetFeature>'
             return query;
@@ -1220,8 +1346,76 @@
                     }
                     break;
             }
-        }
+        },
 
+        isServiceWorker: function () {
+            if (navigator.serviceWorker) {
+                if (navigator.serviceWorker.controller && navigator.serviceWorker.controller.state === "activated") {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        },
+
+        isSameOriginByLocation: function (uri, location) {
+            var result = uri.indexOf("http") !== 0 && uri.indexOf("//") !== 0;
+            var urlParts = !result && uri.match(TC.Consts.url.SPLIT_REGEX);
+            if (urlParts) {
+                var uProtocol = urlParts[1];
+                result = (uProtocol == location.protocol || uProtocol == undefined) && urlParts[3] == location.hostname;
+                var uPort = urlParts[4], lPort = location.port;
+                if (uPort != 80 && uPort !== "" || lPort != "80" && lPort !== "") {
+                    result = result && uPort == lPort;
+                }
+            }
+            return result;
+        },
+
+        isSameProtocol: function (uri, location) {
+            var protocolRegex = /^(https?:\/\/)/i;
+            var uriProtocol = uri.match(protocolRegex);
+            if (uriProtocol && uriProtocol.length > 1) {
+                var locationProtocol = location.match(protocolRegex);
+                if (locationProtocol && locationProtocol.length > 1) {
+                    return uriProtocol[0].trim() === locationProtocol[0].trim();
+                }
+            }
+
+            return false;
+        },
+
+        consoleRegister: function (msg) {
+            if (TC.isDebug) {
+                console.log(msg);
+            }
+        },
+
+        getSorterByProperty: function (propName) {
+            return function (a, b) {
+                if (a[propName] > b[propName]) {
+                    return 1;
+                }
+                if (a[propName] < b[propName]) {
+                    return -1;
+                }
+                return 0;
+            };
+        },
+
+        getSoundexDifference: function(a,b) {
+            var res = 0 
+
+            for (var i=0; i<a.length; i++) {
+                if (a.charAt(i) == b.charAt(i)) {
+                    res++;
+                }
+            }
+
+            return res;
+        }
     };
     String.prototype.format = function () {
         var str = this.toString();

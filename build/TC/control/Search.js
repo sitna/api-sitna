@@ -1,3 +1,20 @@
+(function () {
+    // Polyfill window.performance.now
+    if (!window.performance) {
+        window.performance = {
+            offset: Date.now(),
+            now: function () {
+                return Date.now() - this.offset;
+            }
+        };
+    } else if (window.performance && !window.performance.now) {
+        window.performance.offset = Date.now();
+        window.performance.now = function () {
+            return Date.now() - window.performance.offset;
+        };
+    }
+}());
+
 TC.control = TC.control || {};
 
 if (!TC.Control) {
@@ -14,7 +31,14 @@ TC.control.Search = function () {
     self.version = '1.1.0';
     self.featurePrefix = 'IDENA';
 
+    if (self.options && self.options.url) {
+        self.url = self.options.url;
+    }
+
+    // con car\u00e1cter de escape
     self._LIKE_PATTERN = '*';
+    // sin car\u00e1cter de escape
+    self._MATCH_PATTERN = '.*';
 
     self.UTMX = 'X';
     self.UTMY = 'Y';
@@ -142,8 +166,8 @@ TC.control.Search = function () {
                 }
             }
         },
-        parser: self.getAddress,
-        goTo: self.goToAddress
+        parser: self.getStringPattern.bind(this, [TC.Consts.searchType.MUNICIPALITY]),
+        goTo: self.goToStringPattern
     };
 
     self.availableSearchTypes[TC.Consts.searchType.LOCALITY] = {
@@ -201,8 +225,8 @@ TC.control.Search = function () {
                 }
             }
         },
-        parser: self.getAddress,
-        goTo: self.goToAddress
+        parser: self.getStringPattern.bind(this, [TC.Consts.searchType.LOCALITY]),
+        goTo: self.goToStringPattern
     };
 
     self.availableSearchTypes[TC.Consts.searchType.COUNCIL] = {
@@ -222,8 +246,8 @@ TC.control.Search = function () {
         outputProperties: ['MUNICIPIO', 'CONCEJO'],
         outputFormatLabel: '{1} ({0})',
         searchWeight: 2,
-        parser: self.getAddress,
-        goTo: self.goToAddress,
+        parser: self.getStringPattern.bind(this, [TC.Consts.searchType.COUNCIL]),
+        goTo: self.goToStringPattern,
         idPropertiesIdentifier: '#',
         suggestionListHead: function () {
             return {
@@ -255,6 +279,7 @@ TC.control.Search = function () {
         featureType: 'CATAST_Lin_CalleEje',
         renderFeatureType: 'CATAST_Txt_Calle',
         dataIdProperty: ['CVIA'],
+        searchWeight: 2,
         queryProperties: {
             tProperty: ['ENTINOAC', 'ENTIDADC'],
             sProperty: ['VIA', 'VIANOAC']
@@ -289,8 +314,8 @@ TC.control.Search = function () {
                 }
             }
         },
-        parser: self.getAddress,
-        goTo: self.goToAddress
+        parser: self.getStringPattern.bind(this, [TC.Consts.searchType.STREET]),
+        goTo: self.goToStringPattern
     };
 
     self.availableSearchTypes[TC.Consts.searchType.NUMBER] = {
@@ -303,6 +328,7 @@ TC.control.Search = function () {
         geometryName: 'the_geom',
         featureType: 'CATAST_Txt_Portal',
         renderFeatureType: '',
+        searchWeight: 2,
         dataIdProperty: ['CMUNICIPIO', 'CENTIDADC', 'CVIA', 'PORTAL'],
         queryProperties: {
             tProperty: ['ENTIDADC', 'ENTINOAC'],
@@ -331,8 +357,8 @@ TC.control.Search = function () {
                 }
             }
         },
-        parser: self.getAddress,
-        goTo: self.goToAddress
+        parser: self.getStringPattern.bind(this, [TC.Consts.searchType.NUMBER]),
+        goTo: self.goToStringPattern
     };
 
     self.availableSearchTypes[TC.Consts.searchType.URBAN] = {
@@ -370,8 +396,52 @@ TC.control.Search = function () {
                 }
             }
         },
-        parser: self.getAddress,
-        goTo: self.goToAddress
+        parser: self.getStringPattern.bind(this, [TC.Consts.searchType.URBAN]),
+        goTo: self.goToStringPattern
+    };
+
+    self.availableSearchTypes[TC.Consts.searchType.PLACENAME] = {
+        root: null,
+        limit: false,
+        url: self.url || '//idena.navarra.es/ogc/wfs',
+        version: self.version || '1.1.0',
+        outputFormat: TC.Consts.format.JSON,
+        featurePrefix: self.featurePrefix || 'IDENA',
+        geometryName: 'the_geom',
+        featureType: 'TOPONI_Txt_Toponimos',
+        renderFeatureType: '',
+        dataIdProperty: ['CMUNICIPIO', 'CTOPONIMO'],
+        idPropertiesIdentifier: '#',
+        queryProperties: {
+            tProperty: ['MUNICIPIO'],
+            sProperty: ['TOPONIMO']
+        },
+        suggestionListHead: function () {
+            return {
+                label: self.getLocaleString('search.list.placeName'),
+                color: { '#ff5722': self.getLocaleString('search.list.placeName') }
+            };
+        },
+        outputProperties: ['MUNICIPIO', 'TOPONIMO'],
+        outputFormatLabel: '{1} ({0})',
+        searchWeight: 3,
+        filterByMatch: true,
+        styles: {
+            TOPONI_Txt_Toponimos: {
+                point: {
+                    radius: 0,
+                    label: "CADTEXT",
+                    angle: "CADANGLE",
+                    fontColor: "#ff5722",
+                    fontSize: 14,
+                    fontWeight: "bold",
+                    labelOutlineColor: "#FFFFFF",
+                    labelOutlineWidth: 4
+                }
+            }
+        },
+        parser: self.getStringPattern.bind(this, [TC.Consts.searchType.PLACENAME]),
+        goTo: self.goToStringPattern
     };
 
     self.availableSearchTypes[TC.Consts.searchType.COMMONWEALTH] = {
@@ -390,7 +460,7 @@ TC.control.Search = function () {
         },
         outputProperties: ['MANCOMUNID'],
         outputFormatLabel: '{0}',
-        searchWeight: 1,
+        searchWeight: 3,
         styles: {
             POLUCI_Pol_MancoRSUg: {
                 polygon: {
@@ -540,10 +610,9 @@ TC.control.Search = function () {
         }
     };
 
-    self.allowedSearchTypes = self.options.allowedSearchTypes || {};
-
     if (self.options.allowedSearchTypes) {
         for (var allowed in self.options.allowedSearchTypes) {
+
             // GLS: Limitamos la b\u00fasqueda en portales y calles cuando as\u00ed se establezca en la configuraci\u00f3n de las b\u00fasquedas
             if (self.availableSearchTypes[allowed] && !$.isEmptyObject(self.options.allowedSearchTypes[allowed])) {
                 $.extend(self.availableSearchTypes[allowed], self.options.allowedSearchTypes[allowed]);
@@ -561,8 +630,15 @@ TC.control.Search = function () {
                         self.rootCfg.active.dataIdProperty;
                 }
             }
+
+            // Si esta a false lo borramos de las disponibles
+            if (!self.options.allowedSearchTypes[allowed]) {
+                delete self.options.allowedSearchTypes[allowed];
+            }
         }
     }
+
+    self.allowedSearchTypes = self.options.allowedSearchTypes || {};
 
     if (self.rootCfg.active) {
         self.rootCfg.active.getRootLabel();
@@ -584,32 +660,11 @@ TC.control.Search = function () {
     self.URBAN = TC.Consts.searchType.URBAN;
     self.ROAD = TC.Consts.searchType.ROAD;
     self.ROADPK = TC.Consts.searchType.ROADPK;
+    self.PLACENAME = TC.Consts.searchType.PLACENAME;
 
     self.wrap = new TC.wrap.control.Search(self);
 
     self.interval = 500;
-
-    self.searchTypes = {
-        CADASTRAL_SEARCH: {
-            parser: self.getCadastralRef,
-            goTo: self.goToCadastralRef
-        },
-        COORDINATES_SEARCH: {
-            parser: self.getCoordinates,
-            goTo: self.goToCoordinates
-        },
-        ADDRESS_SEARCH: {
-            types: [
-                TC.Consts.searchType.MUNICIPALITY,
-                TC.Consts.searchType.LOCALITY,
-                TC.Consts.searchType.COUNCIL,
-                TC.Consts.searchType.URBAN,
-                TC.Consts.searchType.STREET,
-                TC.Consts.searchType.NUMBER],
-            parser: self.getAddress,
-            goTo: self.goToAddress
-        }
-    };
 
     self.NORMAL_PATTERNS = {
         ROMAN_NUMBER: /M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}){1,}?\S?\./i,
@@ -668,15 +723,56 @@ TC.control.Search = function () {
                         '<Literal>' + value.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
                         '</PropertyIsEqualTo>';
             },
-            getFilterNode: function (propertyName, propertyValue) {
+            getFunctionStrMatches: function (name, value) {
+                var toEscape = /([\-\"\º\(\)\/])/g;
+                if (toEscape.test(value)) {
+                    value = value.replace(toEscape, "\\$1");
+                }
+
+                if (value.toString().indexOf(self._LIKE_PATTERN) > -1) {
+
+                    var pattern = value;
+                    pattern = pattern.replace(/a/gi, "[a\u00e1]");
+                    pattern = pattern.replace(/e/gi, "[e\u00e9]");
+                    pattern = pattern.replace(/i/gi, "[i\u00ed]");
+                    pattern = pattern.replace(/o/gi, "[o\u00f3]");
+                    pattern = pattern.replace(/u/gi, "[u\u00fa\u00fc]");
+
+                    return '<ogc:PropertyIsEqualTo> ' +
+                                '<ogc:Function name="strMatches"> ' +
+                                    '<ogc:PropertyName>' + name + '</ogc:PropertyName> ' +
+                                    '<ogc:Literal>' + '(?i)' + pattern.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</ogc:Literal> ' +
+                                '</ogc:Function> ' +
+                                '<ogc:Literal>true</ogc:Literal> ' +
+                            '</ogc:PropertyIsEqualTo>';
+                }
+                else {
+                    return '<PropertyIsEqualTo>' +
+                        '<PropertyName>' + name + '</PropertyName>' +
+                        '<Literal>' + value.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</Literal>' +
+                        '</PropertyIsEqualTo>';
+                }
+            },
+            getFilterNode: function (propertyName, propertyValue, byFNMatch) {
                 var r;
+
+                var fn = self.filter.getIsLikeNode;
+
+                if (byFNMatch) {
+
+                    fn = self.filter.getFunctionStrMatches;
+
+                    var regex = new RegExp('\\' + self._LIKE_PATTERN, 'gi');
+                    propertyValue = propertyValue.replace(regex, self._MATCH_PATTERN);
+                }
+
                 if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
                     var f = [];
                     for (var key in propertyName) {
                         if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
                             r = '<Or>';
                             for (var i = 0; i < propertyName[key].length; i++) {
-                                r += self.filter.getIsLikeNode($.trim(propertyName[key][i]), propertyValue);
+                                r += fn($.trim(propertyName[key][i]), propertyValue);
                             }
 
                             r += '</Or>';
@@ -687,7 +783,7 @@ TC.control.Search = function () {
                                 propName = propertyName[key][0];
 
                             f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
-                                '<Or>' + self.filter.getIsLikeNode($.trim(propName), propertyValue) + '</Or>' +
+                                '<Or>' + fn($.trim(propName), propertyValue) + '</Or>' +
                                 '</Filter>)');
                         }
                     }
@@ -697,12 +793,12 @@ TC.control.Search = function () {
                 } else if (propertyName instanceof Array && propertyName.length > 1) {
                     r = '<ogc:Or>';
                     for (var i = 0; i < propertyName.length; i++) {
-                        r += self.filter.getIsLikeNode($.trim(propertyName[i]), propertyValue);
+                        r += fn($.trim(propertyName[i]), propertyValue);
                     }
 
                     return r += '</ogc:Or>';
                 } else
-                    return self.filter.getIsLikeNode((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
+                    return fn((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
             },
             getFilter: function (data, dataRole) {
                 var r = {};
@@ -761,92 +857,82 @@ TC.control.Search = function () {
                     return filtersArr.concat(rootFilters);
                 };
 
-                switch (dataRole) {
-                    case self.NUMBER:
+                switch (true) {
+                    case dataRole === self.NUMBER:
                         _f = [];
                         if (!(self.rootCfg.active) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
                             var match = /(\<|\>|\<\>)/gi.exec(data.t);
                             if (match)
-                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                             else {
                                 if (self.rootCfg.active) {
                                     _f = bindRootFilterNode(_f, data.t);
                                 }
                                 else {
-                                    _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                                    _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                                 }
                             }
 
                             match = /(\<|\>|\<\>)/gi.exec(data.s);
                             if (match)
-                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                            else _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
+                            else _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                         }
                         else {
                             if (self.rootCfg.active) {
                                 _f = bindRootFilterNode(_f, data.t);
                             } else {
-                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                             }
-                            _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                            _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                         }
-                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 'p'), data.p + '*'));
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 'p'), data.p + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                         r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
                         break;
-                    case self.STREET:
+                    case dataRole === self.STREET:
                         _f = [];
 
                         if (!(self.rootCfg.active) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
                             var match = /(\<|\>|\<\>)/gi.exec(data.t);
                             if (match)
-                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN));
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                             else {
                                 if (self.rootCfg.active) {
                                     _f = bindRootFilterNode(_f, data.t);
                                 }
                                 else {
-                                    _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                                    _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                                 }
                             }
 
                             match = /(\<|\>|\<\>)/gi.exec(data.s);
                             if (match)
-                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN));
-                            else _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s.substring(0, data.s.indexOf(match[0])).trim() + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
+                            else _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                         } else {
 
                             if (self.rootCfg.active) {
                                 _f = bindRootFilterNode(_f, data.t);
                             }
                             else {
-                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
+                                _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                             }
-                            _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                            _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                         }
                         r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
                         break;
-                    case self.COUNCIL:
-                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                        break;
-                    case self.URBAN:
-                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                        break;
-                    case self.LOCALITY:
-                        r.f = self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN);
+                    case dataRole === self.LOCALITY:
+                        r.f = self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch);
                         r.multiL = true;
-                        break;
-                    case self.MUNICIPALITY: {
-                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                        break;
-                    }
-                    case self.ROAD:
-                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN) + '</ogc:Filter>';
-                        break;
-                    case self.ROADPK:
+                        break;                                            // GLS: consulta de 2 niveles (carretera con pk / top\u00f3nimo con municipio)
+                    case self.allowedSearchTypes.hasOwnProperty(dataRole) && self.availableSearchTypes[dataRole].queryProperties.hasOwnProperty('sProperty'):
                         var _f = [];
-                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN));
-                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN));
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
+                        _f.push(self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 's'), self._LIKE_PATTERN + data.s + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch));
                         r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
+                        break;
+                    default: // GLS: consulta de 1 \u00fanico nivel (municipio, casco urbano, carretera)
+                        r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + self.filter.getFilterNode(self.filter.getPropertyName(dataRole, 't'), self._LIKE_PATTERN + data.t + self._LIKE_PATTERN, self.availableSearchTypes[dataRole].filterByMatch) + '</ogc:Filter>';
                         break;
                 }
 
@@ -1016,7 +1102,7 @@ TC.inherit(TC.control.Search, TC.Control);
             return function (geomType, property, extractValue, f) {
                 var self = this;
 
-                if (!(f instanceof TC.Feature)) {
+                if (TC.Feature && !(f instanceof TC.Feature)) {
                     self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, geom: f.geom }));
                 }
 
@@ -1087,7 +1173,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
             });
 
-            $.when(self.layerPromise).then(function (layer) {
+            self.layerPromise.then(function (layer) {
                 self.layer = layer;
             });
         });
@@ -1098,6 +1184,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
         self.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "properties", "outputFormat"];
 
+        // la defino en el load porque la propiedad pattern lo requiere por el new RegExp
         self.availableSearchTypes[TC.Consts.searchType.ROAD] = {
             root: null,
             limit: false,
@@ -1141,6 +1228,7 @@ TC.inherit(TC.control.Search, TC.Control);
             pattern: new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|NA?|PA?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))$", "i")
         };
 
+        // la defino en el load porque la propiedad pattern lo requiere por el new RegExp
         self.availableSearchTypes[TC.Consts.searchType.ROADPK] = {
             root: null,
             limit: false,
@@ -1188,7 +1276,7 @@ TC.inherit(TC.control.Search, TC.Control);
         self._search = self._search || {};
 
         var _search = function () {
-            self.search(self.$text.val(), function (list) {                
+            self.search(self.$text.val(), function (list) {
                 if (list.length === 1) {
                     self.$text.val(list[0].label);
                     self.goToResult(list[0].id);
@@ -1206,11 +1294,15 @@ TC.inherit(TC.control.Search, TC.Control);
             var _research = function () {
                 self.$text.val(self.$list[0].label || self.$list.find('li:not([header]) > a > span').text());
                 self.lastPattern = self.$text.val();
-                self.goToResult(self.$list[0].id || unescape(self.$list.find('li:not([header]) > a').attr('href')).substring(1));
+                self.goToResult(self.$list[0].id || unescape(self.$list.find('li:not([header]) > a').attr('href')).substring(1), self.$list.find('li:not([header])').attr('dataRole'));
                 self.$list.hide('fast');
             };
 
             self.$text = self._$div.find('input.tc-ctl-search-txt');
+            if (self.options && self.options.placeHolder) {
+                self.$text.attr('placeHolder', self.options.placeHolder.trim());
+            }
+
             self.$list = self._$div.find('.tc-ctl-search-list');
             self.$button = self._$div.find('.tc-ctl-search-btn');
             self.$button.on(TC.Consts.event.CLICK, function () {
@@ -1225,6 +1317,10 @@ TC.inherit(TC.control.Search, TC.Control);
                     else self.$text.trigger('keyup.autocomplete');
                 });
             });
+            if (self.options.instructions) {
+                self.$text.attr('title', self.options.instructions.trim());
+                self.$button.attr('title', self.options.instructions.trim());
+            }
 
             // GLS: a\u00f1adimos la funcionalidad al mensaje de "No hay resultados", al hacer click repliega el mensaje.
             self.$list.on(TC.Consts.event.CLICK, 'a.tc-ctl-search-li-empty', function () {
@@ -1269,7 +1365,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
                     if (self.$list.find('li > a:not(.tc-ctl-search-li-loading,.tc-ctl-search-li-empty)').length === 1) {
                         _research();
-                    } else {                                                                        
+                    } else {
                         _search();
                     }
                     return false;
@@ -1324,7 +1420,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
                                         // Pendiente de afinar
                                         //if (self.lastPattern && criteria.substring(0, criteria.lastIndexOf(' ')) == self.lastPattern) {                                            
-                                                
+
                                         //    // Si el patr\u00f3n de b\u00fasqueda anterior y actual es el mismo m\u00e1s algo nuevo (t\u00edpico en la b\u00fasqueda de un portal), lo nuevo lo separo por coma
                                         //    // self.lastPattern: "Calle Catalu\u00f1a/Katalunia Kalea, Pamplona"
                                         //    // text: "Calle Catalu\u00f1a/Katalunia Kalea, Pamplona 18"
@@ -1335,7 +1431,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                         self.lastPattern = criteria;
 
                                         self.search(criteria, callback);
-                                    } else {                                        
+                                    } else {
                                         searchDelay = requestAnimationFrame(step);
                                     }
                                 }
@@ -1387,14 +1483,26 @@ TC.inherit(TC.control.Search, TC.Control);
 
                             // ordenamos por roles y alfab\u00e9ticamente
                             var data = results.results.sort(function (a, b) {
-                                if (a.dataRole > b.dataRole)
-                                    return 1;
-                                else if (a.dataRole < b.dataRole)
-                                    return -1;
-                                else {
-                                    return sortAlphaNum(a.label, b.label);
+                                if (this.ctx.availableSearchTypes[a.dataRole].searchWeight && this.ctx.availableSearchTypes[b.dataRole].searchWeight) {
+                                    if ((this.ctx.availableSearchTypes[a.dataRole].searchWeight || 0) > (this.ctx.availableSearchTypes[b.dataRole].searchWeight || 0)) {
+                                        return 1;
+                                    } else if ((this.ctx.availableSearchTypes[a.dataRole].searchWeight || 0) < (this.ctx.availableSearchTypes[b.dataRole].searchWeight || 0)) {
+                                        return -1;
+                                    }
+                                    else {
+                                        return sortAlphaNum(a.label, b.label);
+                                    }
+                                } else {
+                                    if (a.dataRole > b.dataRole) {
+                                        return 1;
+                                    }
+                                    else if (a.dataRole < b.dataRole)
+                                        return -1;
+                                    else {
+                                        return sortAlphaNum(a.label, b.label);
+                                    }
                                 }
-                            });
+                            }.bind(this));
 
                             if (self.rootCfg.active) {// si hay root, aplicamos el orden por entidades 
                                 data = data.sort(function (a, b) {
@@ -1458,11 +1566,11 @@ TC.inherit(TC.control.Search, TC.Control);
                                         if (querys[t].trim().slice(-1) == ',')
                                             querys[t] = querys[t].slice(0, -1);
                                     }
-                                }        
+                                }
 
                                 for (var q = 0; q < querys.length; q++) {
                                     if (querys[q].trim().length > 0) {
-                                        strReg.push('(' + querys[q].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                                        strReg.push('(' + querys[q].trim().replace(/\(/gi, "").replace(/\)/gi, "") + ')');
                                         var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
                                         if (match) {
                                             var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
@@ -1471,7 +1579,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                                     strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
                                             }
                                         }
-                                    }                                    
+                                    }
                                 }
 
                                 if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
@@ -1495,9 +1603,17 @@ TC.inherit(TC.control.Search, TC.Control);
                                             strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
                                         }
                                     }
-                                }                               
+                                }
 
                                 var pattern = '(' + strReg.join('|') + ')';
+
+                                pattern = pattern.replace(/\u00e1/gi, "a");
+                                pattern = pattern.replace(/\u00e9/gi, "e");
+                                pattern = pattern.replace(/\u00ed/gi, "i");
+                                pattern = pattern.replace(/\u00f3/gi, "o");
+                                pattern = pattern.replace(/\u00fa/gi, "u");
+                                pattern = pattern.replace(/\u00fc/gi, "u");
+
                                 pattern = pattern.replace(/a/gi, "[a|\u00e1]");
                                 pattern = pattern.replace(/e/gi, "[e|\u00e9]");
                                 pattern = pattern.replace(/i/gi, "[i|\u00ed]");
@@ -1520,7 +1636,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                         });
                                 } else {
                                     highlighted = label.replace(rex, "<b>$1</b>");
-                                }                               
+                                }
 
                                 html[html.length] = '<li dataRole="' + elm.dataRole + '"><a href="' + '#' + encodeURIComponent(elm.id) + '"><span hidden>' + elm.label + '</span>' + highlighted + '</a></li>';
                             }
@@ -1826,7 +1942,7 @@ TC.inherit(TC.control.Search, TC.Control);
         return deferred.promise();
     };
 
-    ctlProto.getAddress = function (pattern) {
+    ctlProto.getStringPattern = function (allowedRoles, pattern) {
         var self = this;
         var deferred = new $.Deferred();
         var results = [];
@@ -1835,17 +1951,10 @@ TC.inherit(TC.control.Search, TC.Control);
             var roles = [];
 
             for (var allowed in self.allowedSearchTypes) {
-                switch (true) {
-                    case allowed == TC.Consts.searchType.MUNICIPALITY:
-                    case allowed == TC.Consts.searchType.LOCALITY:
-                    case allowed == TC.Consts.searchType.COUNCIL:
-                    case allowed == TC.Consts.searchType.URBAN:
-                    case allowed == TC.Consts.searchType.STREET:
-                    case allowed == TC.Consts.searchType.NUMBER:
-                        if (self.availableSearchTypes[allowed] && self.availableSearchTypes[allowed].hasOwnProperty("queryProperties") && Object.keys(self.availableSearchTypes[allowed].queryProperties).length === Object.keys(data).length) {
-                            roles.push(allowed);
-                        }
-                        break;
+                if (allowedRoles.indexOf(allowed) > -1) {
+                    if (self.availableSearchTypes[allowed] && self.availableSearchTypes[allowed].hasOwnProperty("queryProperties") && Object.keys(self.availableSearchTypes[allowed].queryProperties).length === Object.keys(data).length) {
+                        roles.push(allowed);
+                    }
                 }
             }
 
@@ -1886,61 +1995,37 @@ TC.inherit(TC.control.Search, TC.Control);
 
             value = self.removePunctuation(value);
 
-            var _pattern = /(.*)\s<>\s.*/;
-            // nos quedamos con \u00fanico t\u00e9rmino en el caso de bilingues: pamplona <> iru\u00f1a, sin este paso no funcionan las querys en formato xml
-            //if (_pattern.test(value)) {
-            //    if (value.indexOf(',') > -1) {
-            //        var v = value.splitRemoveWhiteSpaces(',');
-            //        return $.trim(v[0].match(_pattern)[1]) + (v.length == 2 ? ', ' + v[1] : '');
+            //var match;
+            //if (value.indexOf('(') > -1 || value.indexOf(')') > -1) {
+            //    _pattern = /(.*)(\s<>\s.*\(.*\))/;
+            //    if (value.indexOf('<>') > -1 && _pattern.test(value)) {
+            //        match = value.match(_pattern);
+            //        if (match !== null) {
+            //            _value = value.replace(match[2], '');
+            //            _value = _value.splitRemoveWhiteSpaces(',').join(',');
+            //        }
             //    } else {
-            //        return $.trim(value.match(_pattern)[1]);
+            //        // eliminamos el municipio dejando solo la localidad
+            //        _pattern = /\(.*\)/;
+            //        if (!_pattern.test(value)) {
+            //            // no contiene () comprobamos solo (
+            //            _pattern = /\(.*/;
+            //            if (!_pattern.test(value)) {
+            //                // no contiene ( comprobamos solo )
+            //                _pattern = /.*\)/;
+            //                if (!_pattern.test(value)) {
+            //                    _pattern = /\(.*\)/;
+            //                }
+            //            }
+            //        }
+
+            //        _value = value.replace(_pattern, '');
+            //        _value = _value.splitRemoveWhiteSpaces(',').join(',');
             //    }
+
+            //    value = _value;
             //}
 
-            var match;
-            if (value.indexOf('(') > -1 || value.indexOf(')') > -1) {
-                _pattern = /(.*)(\s<>\s.*\(.*\))/;
-                if (value.indexOf('<>') > -1 && _pattern.test(value)) {
-                    match = value.match(_pattern);
-                    if (match !== null) {
-                        _value = value.replace(match[2], '');
-                        _value = _value.splitRemoveWhiteSpaces(',').join(',');
-                    }
-                } else {
-                    // eliminamos el municipio dejando solo la localidad
-                    _pattern = /\(.*\)/;
-                    if (!_pattern.test(value)) {
-                        // no contiene () comprobamos solo (
-                        _pattern = /\(.*/;
-                        if (!_pattern.test(value)) {
-                            // no contiene ( comprobamos solo )
-                            _pattern = /.*\)/;
-                            if (!_pattern.test(value)) {
-                                _pattern = /\(.*\)/;
-                            }
-                        }
-                    }
-
-                    _value = value.replace(_pattern, '');
-                    _value = _value.splitRemoveWhiteSpaces(',').join(',');
-                }
-
-                value = _value;
-            }
-
-            //// movemos el n\u00famero del portal indicado al final, seguido de la v\u00eda
-            //_pattern = /(s\/n|\d{1,3}(?:[- ]?\d{0,3}(?:bis|[a-z]))?)/;
-            //if (_pattern.test(value) && value.split(',').length == 3) {
-            //    match = value.match(_pattern);
-            //    _value = value.replace(match[1], '');
-            //    var terms = _value.splitRemoveWhiteSpaces(',');
-            //    terms[0] = terms[0] + ' ' + match[1];
-
-            //    if (terms.length == 3 && $.trim(terms[2]) === '')
-            //        terms.pop();
-
-            //    value = terms.join(',');
-            //}
 
             // elimino los caracteres especiales
             if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(value))
@@ -2066,6 +2151,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
             }.bind(self);
             var tsp = function (text, result) {
+
                 // town, street, portal - street, town, portal
                 var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
                 if (match && match[1] && match[2]) {
@@ -2089,6 +2175,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 return false;
             };
             var spt = function (text, result) {
+
                 // street, portal, town
                 var match = /^(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
                 if (match && match[6] && match[1]) {
@@ -2112,6 +2199,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 return false;
             };
             var tnsp = function (text, result) {
+
                 // town, numbers street, portal
                 var match = /^(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
 
@@ -2124,8 +2212,17 @@ TC.inherit(TC.control.Search, TC.Control);
                 return false;
             };
             var ts = function (text, result) {
+
                 // town, street
-                var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))$/i.exec(text);
+                var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc"\s*\-\.\(\)\/0-9]+))$/i.exec(text);
+
+                // top\u00f3nimo, municipio
+                if (!match && /^[^0-9]*$/i.test(text.trim())) { // si no hay n\u00fameros reviso d\u00e1ndole la vuelta, si hay n\u00fameros que lo trate la funci\u00f3n st
+                    var criteria = text.split(',').reverse();
+                    match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc"\s*\-\.\(\)\/0-9]+))$/i.exec(criteria.join(','));
+                }
+
+
                 if (match && match[1] && match[2]) {
                     // ninguno contiene n\u00famero duplicamos b\u00fasqueda
                     if (/^([^0-9]+)$/i.test(match[1].trim()) && /^([^0-9]+)$/i.test(match[2].trim())) {
@@ -2159,8 +2256,15 @@ TC.inherit(TC.control.Search, TC.Control);
                 return false;
             };
             var st = function (text, result) {
+
                 // street, town
                 var match = /^(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
+
+                if (!match) {
+                    var criteria = text.split(',').reverse();
+                    match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-z\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc"\s*\-\.\(\)\/0-9]+))$/i.exec(criteria.join(','));
+                }
+
                 if (match) { // puede generar falsos positivos cuando el portal llega seguido de la calle -> calle mayor 14, pamplona
                     var data = {};
                     var criteria = text.split(',').reverse();
@@ -2337,7 +2441,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 data.t == root &&
                                 rootLabel.filter(function (elem) {
                                     return elem.indexOf(self.removePunctuation(data.s).toLowerCase()) > -1;
-                                }).length > 0) {
+                            }).length > 0) {
                                 result.splice(iData, 1);
                                 break;
                             }
@@ -2350,7 +2454,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 deferred.resolve(result);
             }
 
-            return deferred.promise();
+            return deferred;
         };
 
         var formatItems = function (features, dataRole, properties, dataIdProperties) {
@@ -2397,8 +2501,13 @@ TC.inherit(TC.control.Search, TC.Control);
                 var text = valueToAdd.toCamelCase();
                 var intoResults = function (dataRole, text) {
                     for (var r = 0; r < results.length; r++) {
-                        if (results[r].dataRole == dataRole && results[r].text.toLowerCase().trim() == text.toLowerCase().trim())
+                        if (dataRole === TC.Consts.searchType.NUMBER) {
+                            if (results[r].dataRole == dataRole && results[r].text.toLowerCase().trim() == text.toLowerCase().trim()) {
+                                return true;
+                            }
+                        } else if (results[r].dataRole == dataRole && TC.Util.getSoundexDifference(results[r].text.trim().soundex(), text.trim().soundex()) >= 3) {
                             return true;
+                        }
                     }
 
                     return false;
@@ -2423,21 +2532,13 @@ TC.inherit(TC.control.Search, TC.Control);
             }
         }.bind(self);
 
-        pattern = normalizedCriteria(pattern);
-        $.when(getObjectsTo(pattern, self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false)
-        ).then(function (searchObjects) {
+        var getResults = function (searchObjects) {
             if (searchObjects) {
                 self._search.data = results;
 
-                if (self.request) {
-                    for (var i = 0; i < self.request.length; i++) {
-                        //console.log("getAddress promise aborted");
-                        self.request[i].abort();
-                    }
-
+                if (!self.request) {
                     self.request = [];
-
-                } else self.request = [];
+                }
 
                 function searchQuery(data, dataRole) {
                     var properties = self.filter.getPropertyValue(dataRole, 'outputProperties');
@@ -2460,7 +2561,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         if (data.statusText !== 'abort')
                             alert('error');
 
-                        //console.log('getAddress promise resuelta - data.statusText: ' + data.statusText);
+                        //console.log('getStringPattern promise resuelta - data.statusText: ' + data.statusText);
                         deferred.resolve(results);
                     });
                 }
@@ -2477,18 +2578,46 @@ TC.inherit(TC.control.Search, TC.Control);
                     }
                 });
                 $.when.apply($, self.request).then(function () {
-                    self.request = null;
-                    //console.log('getAddress promise resuelta');
+                    //self.request = [];
+                    //console.log('getStringPattern promise resuelta');
                     deferred.resolve(results);
                 });
             } else {
-                //console.log('getAddress promise resuelta - no encaja en address');
+                //console.log('getStringPattern promise resuelta - no encaja en address');
                 deferred.resolve(results);
             }
-        });
+        }
 
-        //console.log('getAddress promise');
-        return deferred.promise();
+        pattern = normalizedCriteria(pattern);
+
+        /* gestionamos:
+            Entidad de poblaci\u00f3n: Irisarri Auzoa (Igantzi)
+            Top\u00f3nimo: Aldabeko Bidea (Arbizu)
+        */
+        var combinedCriteria = /(.*)\((.*)\)/.exec(pattern);
+        if (combinedCriteria && combinedCriteria.length > 2) {
+            var bothSearchObjects = [];
+            // b\u00fasqueda de entidad de poblaci\u00f3n
+            getObjectsTo(combinedCriteria[1],
+            self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false).then(function (searchObjects) {
+
+                bothSearchObjects = searchObjects || [];
+                // b\u00fasqueda de top\u00f3nimo
+                getObjectsTo(combinedCriteria[1] + ',' + combinedCriteria[2],
+                self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false).then(function (searchObjects) {
+
+                    bothSearchObjects = bothSearchObjects.concat(searchObjects);
+
+                    getResults(bothSearchObjects);
+                });
+            });
+
+            return deferred.promise();
+        } else {
+            getObjectsTo(pattern, self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false).then(getResults);
+            //console.log('getStringPattern promise');
+            return deferred.promise();
+        }
     };
 
     ctlProto.getRoad = function (pattern) {
@@ -2519,16 +2648,6 @@ TC.inherit(TC.control.Search, TC.Control);
                     type: 'GET',
                     contentType: "application/x-www-form-urlencoded;charset=UTF-8",
                     beforeSend: function () {
-
-                        if (self.request) {
-                            for (var i = 0; i < self.request.length; i++) {
-                                self.request[i].abort();
-                            }
-
-                            self.request = [];
-
-                        } else self.request = [];
-
                         self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
                         self.$text.trigger("targetUpdated.autocomplete");
                     }
@@ -2609,16 +2728,6 @@ TC.inherit(TC.control.Search, TC.Control);
                     type: 'GET',
                     contentType: "application/x-www-form-urlencoded;charset=UTF-8",
                     beforeSend: function () {
-
-                        if (self.request) {
-                            for (var i = 0; i < self.request.length; i++) {
-                                self.request[i].abort();
-                            }
-
-                            self.request = [];
-
-                        } else self.request = [];
-
                         self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
                         self.$text.trigger("targetUpdated.autocomplete");
                     }
@@ -2668,6 +2777,16 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
         var results = [];
 
+        if (self.request) {
+
+            for (var i = 0; i < self.request.length; i++) {
+                console.log("new criteria: search promise/s aborted");
+                self.request[i].abort();
+            }
+
+            self.request = [];
+        }
+
         pattern = $.trim(pattern);
         if (pattern.length > 0) {
             pattern = pattern.toLowerCase();
@@ -2685,36 +2804,12 @@ TC.inherit(TC.control.Search, TC.Control);
 
             var addressSearched = false;
             for (var allowedType in self.allowedSearchTypes) {
-                switch (allowedType) {
-                    case TC.Consts.searchType.CADASTRAL:
-                        addWaiting(self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].parser);
-                        break;
-                    case TC.Consts.searchType.COORDINATES:
-                        addWaiting(self.availableSearchTypes[TC.Consts.searchType.COORDINATES].parser);
-                        break;
-                    case TC.Consts.searchType.ROAD:
-                        addWaiting(self.availableSearchTypes[TC.Consts.searchType.ROAD].parser);
-                        break;
-                    case TC.Consts.searchType.ROADPK:
-                        addWaiting(self.availableSearchTypes[TC.Consts.searchType.ROADPK].parser);
-                        break;
-                    case TC.Consts.searchType.MUNICIPALITY:
-                    case TC.Consts.searchType.LOCALITY:
-                    case TC.Consts.searchType.COUNCIL:
-                    case TC.Consts.searchType.URBAN:
-                    case TC.Consts.searchType.STREET:
-                    case TC.Consts.searchType.NUMBER:
-                        if (!addressSearched) {
-                            addWaiting(self.availableSearchTypes[allowedType].parser);
-                            addressSearched = true;
-                        }
-                        break;
-                    default:
-                        if (self.allowedSearchTypes[allowedType].parser)
-                            addWaiting(self.allowedSearchTypes[allowedType].parser);
-                        else
-                            console.log('Falta implementaci\u00f3n del m\u00e9todo parser');
-                        break;
+                if (self.availableSearchTypes[allowedType] && self.availableSearchTypes[allowedType].parser) {
+                    addWaiting(self.availableSearchTypes[allowedType].parser);
+                } else if (self.allowedSearchTypes[allowedType].parser) {
+                    addWaiting(self.allowedSearchTypes[allowedType].parser);
+                } else {
+                    console.log('Falta implementaci\u00f3n del m\u00e9todo parser');
                 }
             }
 
@@ -2746,7 +2841,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 if (results.length === 0) {
                     self.cleanMap();
 
-                    if (!self.layer || self.layer && self.layer.features.length === 0) {
+                    if (!self.layer || self.layer && self.layer.features.length === 0 && self.request.length > 0) {
                         self.$list.html('<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>');
                         self.$text.trigger("targetUpdated.autocomplete");
                     }
@@ -2788,58 +2883,36 @@ TC.inherit(TC.control.Search, TC.Control);
         var keepOnLooping = true;
         for (var allowedType in self.allowedSearchTypes) {
             if (keepOnLooping) {
-                switch (allowedType) {
-                    case TC.Consts.searchType.CADASTRAL:
-                        goTo = self.availableSearchTypes[TC.Consts.searchType.CADASTRAL].goTo.call(self, id);
-                        if (goTo !== null) {
-                            keepOnLooping = false;
-                        }
-                        break;
-                    case TC.Consts.searchType.COORDINATES:
-                        goTo = self.availableSearchTypes[TC.Consts.searchType.COORDINATES].goTo.call(self, id);
-                        if (goTo !== null) {
-                            keepOnLooping = false;
-                        }
-                        break;
-                    case TC.Consts.searchType.ROAD:
-                        if (dataRole === TC.Consts.searchType.ROAD) {
-                            goTo = self.availableSearchTypes[TC.Consts.searchType.ROAD].goTo.call(self, id);
-                        }
 
+                if (!self.availableSearchTypes[allowedType]) {
+
+                    if (self.allowedSearchTypes[allowedType].goTo) {
+                        customSearchType = true;
+
+                        goTo = self.allowedSearchTypes[allowedType].goTo.call(self, id);
                         if (goTo !== null) {
                             keepOnLooping = false;
                         }
-                        break;
-                    case TC.Consts.searchType.ROADPK:
-                        goTo = self.availableSearchTypes[TC.Consts.searchType.ROADPK].goTo.call(self, id);
-                        if (goTo !== null) {
-                            keepOnLooping = false;
-                        }
-                        break;
-                    case TC.Consts.searchType.MUNICIPALITY:
-                    case TC.Consts.searchType.LOCALITY:
-                    case TC.Consts.searchType.COUNCIL:
-                    case TC.Consts.searchType.URBAN:
-                    case TC.Consts.searchType.STREET:
-                    case TC.Consts.searchType.NUMBER:
-                        var dr = dataRole || self.filter.getGoToElement(id).dataRole;
-                        if (dr && dr === allowedType) {
+                    } else console.log('Falta implementaci\u00f3n del m\u00e9todo goTo');
+
+                } else {
+
+                    var dr = dataRole || self.filter.getGoToElement(id).dataRole;
+                    if (dr) {
+                        if (self.availableSearchTypes[dr].goTo) {
                             goTo = self.availableSearchTypes[dr].goTo.call(self, id, dr);
                             if (goTo !== null) {
                                 keepOnLooping = false;
                             }
-                        }
-                        break;
-                    default:
-                        if (self.allowedSearchTypes[allowedType].goTo) {
+                        } else if (self.allowedSearchTypes[dr].goTo) {
                             customSearchType = true;
 
-                            goTo = self.allowedSearchTypes[allowedType].goTo.call(self, id);
+                            goTo = self.allowedSearchTypes[dr].goTo.call(self, id, dr);
                             if (goTo !== null) {
                                 keepOnLooping = false;
                             }
                         } else console.log('Falta implementaci\u00f3n del m\u00e9todo goTo');
-                        break;
+                    }
                 }
             }
         }
@@ -2847,8 +2920,6 @@ TC.inherit(TC.control.Search, TC.Control);
         self.loading.removeWait(wait);
 
         if (goTo) {
-
-            wait = self.loading.addWait();
 
             self.getLayer().then(function (layer) {
                 switch (true) {
@@ -2862,6 +2933,8 @@ TC.inherit(TC.control.Search, TC.Control);
                         for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
                             layer[self.WFS_TYPE_ATTRS[i]] = goTo.params[self.WFS_TYPE_ATTRS[i]];
                         }
+
+                        wait = self.loading.addWait();
                         break;
                     default:
                 }
@@ -2876,7 +2949,23 @@ TC.inherit(TC.control.Search, TC.Control);
                                 if (e.layer == layer) {
                                     if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
                                         self.$list.hide('fast');
-                                        e.layer.map.setExtent(e.layer.wrap.layer.getSource().getExtent());
+                                        var bounds = e.layer.wrap.layer.getSource().getExtent();
+                                        var radius = e.layer.map.options.pointBoundsRadius;
+
+                                        if (bounds[2] - bounds[0] === 0) {
+                                            bounds[0] = bounds[0] - radius;
+                                            bounds[2] = bounds[2] + radius;
+                                        }
+                                        if (bounds[3] - bounds[1] === 0) {
+                                            bounds[1] = bounds[1] - radius;
+                                            bounds[3] = bounds[3] + radius;
+                                        }
+                                        e.layer.map.setExtent(bounds);
+
+                                        // GLS: Necesito diferenciar un zoom program\u00e1tico de un zoom del usuario para la gesti\u00f3n del zoom en 3D
+                                        self.map.$events.trigger($.Event(TC.Consts.event.ZOOMTO, {
+                                            extent: bounds, layer: e.layer
+                                        }));
                                     }
                                     else if (e.layer.features && e.layer.features.length > 0) {
                                         self.$list.hide('fast');
@@ -2896,17 +2985,6 @@ TC.inherit(TC.control.Search, TC.Control);
                                 }
                             });
 
-                            if (goTo.params.type != TC.Consts.layerType.WFS) {
-                                self.map.one(TC.Consts.event.FEATURESADD, function (e) {
-                                    if (e.layer.features && e.layer.features.length == 0) {
-                                        self.$list.html(goTo.emptyResultHTML);
-                                        self.$text.trigger("targetUpdated.autocomplete");
-
-                                        self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
-                                    }
-                                });
-                            }
-
                             if (e.layer.features && e.layer.features.length > 0) {
                                 self.$list.hide('fast');
                                 setQueryableFeatures.call(self, e.layer.features);
@@ -2919,55 +2997,64 @@ TC.inherit(TC.control.Search, TC.Control);
                                 self.$list.html(goTo.emptyResultHTML);
                                 self.$text.trigger("targetUpdated.autocomplete");
 
-                                self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
+                                if (!(e.newData && e.newData.features && e.newData.features.length > 0)) {
+                                    self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
+                                }
 
                                 self.loading.removeWait(wait);
                             }
                         }
                     });
-
-                    if (layer.features.length == 0) // GLS: Si la capa no contiene features, en el m\u00e9todo refresh no se lanzar\u00e1 el evento LAYERUPDATE, por tanto, debo lanzarlo yo misma
-                        self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: layer, id: id }));
                 });
             });
+
+
         } else if (!customSearchType) { self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY)); }
     };
 
-    var drawPoint = function (e) {
+    var drawPoint = function (id) {
         var self = this;
 
-        if (e && e.layer == self.layer) {
-            var id = e.id;
+        wait = self.loading.addWait();
 
-            var point = self.getPoint(id);
-            var delta;
-            var title;
-            var deferred;
+        var point = self.getPoint(id);
+        var delta;
+        var title;
+        var deferred;
+
+        if (point && self.insideLimit(point)) {
+            title = self.getLabel(id);
+            deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
+            delta = self.map.options.pointBoundsRadius;
+            self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+        } else {
+            var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
+            id = self.LAT + match[2] + self.LON + match[1];
+            point = self.getPoint(id);
 
             if (point && self.insideLimit(point)) {
                 title = self.getLabel(id);
                 deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
                 delta = self.map.options.pointBoundsRadius;
                 self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+
+                self.$text.val(title);
             } else {
-                var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
-                id = self.LAT + match[2] + self.LON + match[1];
-                point = self.getPoint(id);
+                self.$list.html(goTo.emptyResultHTML);
+                self.$text.trigger("targetUpdated.autocomplete");
 
-                if (point && self.insideLimit(point)) {
-                    title = self.getLabel(id);
-                    deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
-                    delta = self.map.options.pointBoundsRadius;
-                    self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+                self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
 
-                    self.$text.val(title);
-                }
+                self.loading.removeWait(wait);
             }
-
-            $.when(deferred).then(function (feat) {
-                self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: [feat] }));
-            });
         }
+
+        $.when(deferred).then(function (feat) {
+            self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: [feat] }));
+
+            self.loading.removeWait(wait);
+        });
+
     };
     ctlProto.goToCoordinates = function (id) {
         var self = this;
@@ -2985,8 +3072,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
             goTo.emptyResultHTML = '<li><a class="tc-ctl-search-li-empty">' + self.OUTBBX_LABEL + '</a></li>';
 
-            var draw = drawPoint.bind(self);
-            self.map.one(TC.Consts.event.LAYERUPDATE, draw);
+            drawPoint.call(self, id);
 
             return goTo;
         }
@@ -3075,7 +3161,7 @@ TC.inherit(TC.control.Search, TC.Control);
         return goTo;
     };
 
-    ctlProto.goToAddress = function (id, dataRole) {
+    ctlProto.goToStringPattern = function (id, dataRole) {
         var self = this;
         var goTo = {};
 
@@ -3252,7 +3338,7 @@ if (!String.prototype.tcFormat) {
             return typeof args[number] != 'undefined' ?
                 args[number]
                 : match
-                ;
+            ;
         });
     };
 }

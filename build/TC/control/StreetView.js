@@ -91,13 +91,13 @@ if (!TC.Control) {
             var xpos = ((dragRect.left + dragRect.right) / 2) - mapRect.left;
             var ypos = dragRect.bottom - mapRect.top;
             var coords = ctl.map.wrap.getCoordinateFromPixel([xpos, ypos]);
-            ctl.callback(coords);
+            ctl.callback(coords);           
         }
         else {
             reset(ctl);
         }
         return result;
-    };    
+    };
 
     ctlProto.register = function (map) {
         var self = this;
@@ -124,11 +124,11 @@ if (!TC.Control) {
         }
         if (!self.layer) {
             map.loaded(function () {
-                $.when(map.addLayer({
+                map.addLayer({
                     id: layerId,
                     stealth: true,
-                    type: TC.Consts.layerType.VECTOR                    
-                })).then(function (layer) {
+                    type: TC.Consts.layerType.VECTOR
+                }).then(function (layer) {
                     self.layer = layer;
                 });
             });
@@ -169,15 +169,17 @@ if (!TC.Control) {
                 reset(self);
                 self._sv.setVisible(false);
                 e.stopPropagation();
+                var $header = self._$div.parents('body').find('header');
+                if ($header.length > 0) $header.css('display', 'block');
 
                 if (self._previousActiveControl) {
                     self._previousActiveControl.activate();
                 }
             });
         }
-        , function (a, b, c) {
-            TC.error("Error de renderizado Streetview");
-        });
+            , function (a, b, c) {
+                TC.error("Error de renderizado Streetview");
+            });
     };
 
 
@@ -199,7 +201,7 @@ if (!TC.Control) {
                         }
                         self._templatePromise.resolve();
                     }
-                    , 300);
+                        , 300);
 
 
                     //console.log("Casi resuelto... " + out.length);
@@ -290,104 +292,107 @@ if (!TC.Control) {
 
         TC.loadJS(
             !window.google || !google.maps,
-                gMapsUrl,
-                function () {
+            gMapsUrl,
+            function () {
 
-                    if (window.google) {
+                if (window.google) {
 
-                        setMarker();
+                    setMarker();
 
-                        var $view = self._$viewDiv;
-                        var lonLat = TC.Util.reproject(coords, self.map.crs, geogCrs);
-                        var svDone = $view.hasClass(TC.Consts.classes.VISIBLE);
-                        var transitionEnd = 'transitionend.tc';
-                        $view.off(transitionEnd).on(transitionEnd, function (e) {
-                            if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
-                                if (!svDone) {
-                                    svDone = true;
-                                    google.maps.event.trigger(self._sv, 'resize');
-                                    $mapDiv.addClass(TC.Consts.classes.COLLAPSED).trigger('resize');
+                    var $view = self._$viewDiv;
+                    var lonLat = TC.Util.reproject(coords, self.map.crs, geogCrs);
+                    var svDone = $view.hasClass(TC.Consts.classes.VISIBLE);
+                    var transitionEnd = 'transitionend.tc';
+                    $view.off(transitionEnd).on(transitionEnd, function (e) {
+                        if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
+                            if (!svDone) {
+                                svDone = true;
+                                google.maps.event.trigger(self._sv, 'resize');
+                                $mapDiv.addClass(TC.Consts.classes.COLLAPSED).trigger('resize');
+                            }
+                        }
+                    });
+
+                    var svOptions = {
+                        position: new google.maps.LatLng(lonLat[1], lonLat[0]),
+                        pov: {
+                            heading: 0,
+                            pitch: 0
+                        },
+                        zoom: 1,
+                        zoomControlOptions: {
+                            position: google.maps.ControlPosition.LEFT_TOP
+                        },
+                        panControlOptions: {
+                            position: google.maps.ControlPosition.LEFT_TOP
+                        }
+                    };
+
+                    if (!self._sv) {
+                        self._sv = new google.maps.StreetViewPanorama($view[0], svOptions);
+                        google.maps.event.addListener(self._sv, 'position_changed', function () {
+                            setMarker(self._sv, $view.hasClass(TC.Consts.classes.VISIBLE));
+                        });
+                        google.maps.event.addListener(self._sv, 'pov_changed', function () {
+                            if (self.layer.features && self.layer.features.length > 0) {
+                                var pegmanMarker = self.layer.features[0];
+
+                                delete pegmanMarker.options.url;
+                                pegmanMarker.options.cssClass = 'tc-marker-sv-' + ((Math.round(16.0 * self._sv.getPov().heading / 360) + 16) % 16);
+                                pegmanMarker.setStyle(pegmanMarker.options);
+
+                                self.layer.refresh();
+                            }
+                        });
+                        google.maps.event.addListener(self._sv, 'status_changed', function () {
+                            var svStatus = self._sv.getStatus();
+                            if (li) {
+                                li.removeWait(waitId);
+                            }
+                            if (svStatus === google.maps.StreetViewStatus.OK) {
+                                if (!$view.hasClass(TC.Consts.classes.VISIBLE)) {
+                                    self._sv.setVisible(true);
+                                    setMarker(self._sv, true);
+
+                                    //apagar lo que sea que est\u00e9 encendido (probablemente featInfo)
+                                    //al cerrar con el aspa, volver\u00e1 a detonarse StreetView.deactivate()
+                                    //que, a su vez, restaurar\u00e1 el control anterior (FeatureInfo)
+                                    if (self.map.activeControl) {
+                                        self._previousActiveControl = self.map.activeControl;
+                                        self.map.activeControl.deactivate(true);
+                                    }
+
+                                    setTimeout(function () {
+                                        $view.css('left', '').css('top', '');
+                                        // triggers transitionend
+                                        $view.removeClass(TC.Consts.classes.HIDDEN).addClass(TC.Consts.classes.VISIBLE);
+                                    }, 200);
+
+                                    var $header = self._$div.parents('body').find('header');
+                                    if ($header.length > 0) $header.css('display', 'none');
+                                }
+                            }
+                            else {
+                                TC.alert(svStatus === google.maps.StreetViewStatus.ZERO_RESULTS ? self.getLocaleString('noStreetView') : self.getLocaleString('streetViewUnknownError'));
+                                if (self._startLonLat) {
+                                    self.callback(self._startLonLat);
+                                }
+                                else {
+                                    self.layer.wrap.setDraggable(false);
+                                    reset(self);
                                 }
                             }
                         });
-
-                        var svOptions = {
-                            position: new google.maps.LatLng(lonLat[1], lonLat[0]),
-                            pov: {
-                                heading: 0,
-                                pitch: 0
-                            },
-                            zoom: 1,
-                            zoomControlOptions: {
-                                position: google.maps.ControlPosition.LEFT_TOP
-                            },
-                            panControlOptions: {
-                                position: google.maps.ControlPosition.LEFT_TOP
-                            }
-                        };
-
-                        if (!self._sv) {
-                            self._sv = new google.maps.StreetViewPanorama($view[0], svOptions);
-                            google.maps.event.addListener(self._sv, 'position_changed', function () {
-                                setMarker(self._sv, $view.hasClass(TC.Consts.classes.VISIBLE));
-                            });
-                            google.maps.event.addListener(self._sv, 'pov_changed', function () {
-                                if (self.layer.features && self.layer.features.length > 0){
-                                    var pegmanMarker = self.layer.features[0];
-
-                                    delete pegmanMarker.options.url;
-                                    pegmanMarker.options.cssClass = 'tc-marker-sv-' + ((Math.round(16.0 * self._sv.getPov().heading / 360) + 16) % 16);
-                                    pegmanMarker.setStyle(pegmanMarker.options);
-
-                                    self.layer.refresh();
-                                }
-                            });
-                            google.maps.event.addListener(self._sv, 'status_changed', function () {
-                                var svStatus = self._sv.getStatus();
-                                if (li) {
-                                    li.removeWait(waitId);
-                                }
-                                if (svStatus === google.maps.StreetViewStatus.OK) {
-                                    if (!$view.hasClass(TC.Consts.classes.VISIBLE)) {
-                                        self._sv.setVisible(true);
-                                        setMarker(self._sv, true);
-
-                                        //apagar lo que sea que est\u00e9 encendido (probablemente featInfo)
-                                        //al cerrar con el aspa, volver\u00e1 a detonarse StreetView.deactivate()
-                                        //que, a su vez, restaurar\u00e1 el control anterior (FeatureInfo)
-                                        if (self.map.activeControl) {
-                                            self._previousActiveControl = self.map.activeControl;
-                                            self.map.activeControl.deactivate(true);
-                                        }
-
-                                        setTimeout(function () {
-                                            $view.css('left', '').css('top', '');
-                                            // triggers transitionend
-                                            $view.removeClass(TC.Consts.classes.HIDDEN).addClass(TC.Consts.classes.VISIBLE);
-                                        }, 200);
-                                    }
-                                }
-                                else {
-                                    TC.alert(svStatus === google.maps.StreetViewStatus.ZERO_RESULTS ? self.getLocaleString('noStreetView') : self.getLocaleString('streetViewUnknownError'));
-                                    if (self._startLonLat) {
-                                        self.callback(self._startLonLat);
-                                    }
-                                    else {
-                                        self.layer.wrap.setDraggable(false);
-                                        reset(self);
-                                    }
-                                }
-                            });
-                        }
-                        else {
-                            self._sv.setOptions(svOptions);
-                        }
-                        setMarker(self._sv);
                     }
                     else {
-                        reset(self);
+                        self._sv.setOptions(svOptions);
                     }
+                    setMarker(self._sv);
                 }
+                else {
+                    reset(self);
+                }
+            }
         );
     };
 })();

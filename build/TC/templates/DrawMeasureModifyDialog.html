@@ -1,0 +1,31 @@
+<div class="tc-ctl-dmm-dialog tc-modal">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{@i18n $key="downloadSketch"/}</h3>
+            <div class="tc-ctl-popup-close tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <div class="tc-ctl-dmm-dialog-ip">
+                <h4>{@i18n $key="interpolateCoordsFromElevProfile"/}</h4>
+                <label>
+                    <input type="radio" name="ip-coords" value="0" checked />
+                    <span>{@i18n $key="no"/}</span>
+                </label>
+                <label>
+                    <input type="radio" name="ip-coords" value="1"/>
+                    <span>{@i18n $key="yes"/}</span>
+                </label>
+                <div class="tc-ctl-dmm-dialog-ip-m tc-hidden">{@i18n $key="interpolateEveryXMeters.1"/}<input type="number" min="1" step="1" class="tc-textbox" value="{interpolationInterval}" />{@i18n $key="interpolateEveryXMeters.2"/}</div>
+            </div>
+            <div class="tc-ctl-dmm-dialog-dl">
+                <button class="tc-button tc-btn-dl tc-ctl-dmm-dl-btn-kml" data-format="KML" title="KML">KML</button>
+                <button class="tc-button tc-btn-dl tc-ctl-dmm-dl-btn-gml" data-format="GML" title="GML">GML</button>
+                <button class="tc-button tc-btn-dl tc-ctl-dmm-dl-btn-geojson" data-format="GeoJSON" title="GeoJSON">GeoJSON</button>
+                <button class="tc-button tc-btn-dl tc-ctl-dmm-dl-btn-wkt" data-format="WKT" title="WKT">WKT</button>
+                <button class="tc-button tc-btn-dl tc-ctl-dmm-dl-btn-gpx" data-format="GPX" title="GPX">GPX</button>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -381,7 +381,7 @@ if (!window.OpenLayers) {
                 // only deal with first geometry of this type
                 var srsName = nodeList[0].getAttribute('srsName');
                 if (srsName) {
-                    TC.loadProjDef(srsName, true);
+                    TC.loadProjDef({ crs: srsName, sync: true });
                     this.externalProjection = new OpenLayers.Projection('EPSG:' + srsName.substr(srsName.lastIndexOf('#') + 1));
                 }
                 // stop looking for different geometry types
@@ -1439,6 +1439,14 @@ if (!window.OpenLayers) {
         self.mapDeferred.resolve(self.map);
     };
 
+    TC.wrap.Map.prototype.getMetersPerUnit = function () {
+        TC.error('TC.wrap.Map.prototype.getMetersPerUnit no est\u00e1 soportada con OpenLayers 2');
+    };
+
+    TC.wrap.Map.prototype.setProjection = function (options) {
+        TC.error('TC.wrap.Map.prototype.setProjection no est\u00e1 soportada con OpenLayers 2');
+    };
+
     /*
      *  wrap.insertLayer: inserts OpenLayers layer at index
      *  Parameters: OpenLayers.Layer, number
@@ -1646,6 +1654,9 @@ if (!window.OpenLayers) {
         return layer instanceof OpenLayers.Layer;
     };
 
+    TC.wrap.Layer.prototype.setProjection = function (options) {
+    };
+
     TC.wrap.Layer.prototype.WmsParser = OpenLayers.Format.WMSCapabilities;
 
     TC.wrap.Layer.prototype.WmtsParser = OpenLayers.Format.WMTSCapabilities;
@@ -1766,13 +1777,20 @@ if (!window.OpenLayers) {
     };
 
     TC.wrap.layer.Raster.prototype.getAttribution = function (capabilities) {
-        var result = null;
+        var result = {};
         if (capabilities) {
-            if (capabilities.serviceIdentification) {
-                result = capabilities.serviceIdentification.title;
+            if (capabilities.serviceProvider) {
+                result.name = capabilities.serviceProvider.providerName.trim();
+                result.site = capabilities.serviceProvider.providerSite;
+                if (result.site.href) {
+                    result.site = result.site.href;
+                }
+            }
+            else if (capabilities.serviceIdentification) {
+                result.name = capabilities.serviceIdentification.title.trim();
             }
             else {
-                result = capabilities.service.title;
+                result.name = capabilities.service.title.trim();
             }
         }
         return result;
@@ -1965,6 +1983,10 @@ if (!window.OpenLayers) {
         return result;
     };
 
+    TC.wrap.layer.Raster.prototype.getCompatibleCRS = function () {
+        return [];
+    }
+
     TC.wrap.layer.Raster.prototype.getCompatibleLayers = function (crs) {
         var self = this;
         var result = [];
@@ -2001,7 +2023,7 @@ if (!window.OpenLayers) {
         return result;
     };
 
-    TC.wrap.layer.Raster.prototype.createWmsLayer = function (url, params, options) {
+    TC.wrap.layer.Raster.prototype.createWMSLayer = function (url, params, options) {
         var self = this;
         var result = new OpenLayers.Layer.WMS(
             (options && options.id) ? options.id : params.LAYERS,
@@ -2031,14 +2053,14 @@ if (!window.OpenLayers) {
         return result;
     };
 
-    TC.wrap.layer.Raster.prototype.createWmtsLayer = function (matrixSet, layerName, options) {
+    TC.wrap.layer.Raster.prototype.createWMTSLayer = function (options) {
         var result = new OpenLayers.Format.WMTSCapabilities().createLayer(
                 this.parent.capabilities,
                 {
                     isBaseLayer: (options && options.isBase) == true,
                     name: (options && options.id) ? options.id : TC.Consts.layerType.WMTS,
-                    matrixSet: matrixSet,
-                    layer: layerName,
+                    matrixSet: options.matrixSet,
+                    layer: options.layerNames,
                     requestEncoding: options.encoding === TC.Consts.WMTSEncoding.RESTFUL ? 'REST' : 'KVP'
                 });
         result._wrap = self;
@@ -2065,7 +2087,14 @@ if (!window.OpenLayers) {
         self.layer.mergeNewParams(params);
     };
 
+    TC.wrap.layer.Raster.prototype.setMatrixSet = function (matrixSet) {
+    };
+
     TC.wrap.layer.Raster.prototype.getResolutions = function () {
+        return [];
+    };
+
+    TC.wrap.layer.Raster.prototype.getCompatibleMatrixSets = function () {
         return [];
     };
 
@@ -2719,27 +2748,28 @@ if (!window.OpenLayers) {
             self.parent.crs = projection.getCode();
             self.parent.units = projection.getUnits();
             self.parent.isGeo = map.wrap.isGeo();
-
-            var _showCoords = function (e) {
-                var coords = olMap.getLonLatFromPixel(olMap.events.getMousePosition(e));
-                if (coords) {
-                    if (self.parent.isGeo) {
-                        self.parent.latLon = [coords.lat, coords.lon];
-                    }
-                    else {
-                        self.parent.xy = [coords.lon, coords.lat];
-                    }
-                    self.parent.update.apply(self.parent, arguments);
-                }
-            };
-            olMap.events.register('mousemove', self.parent, _showCoords);
-            olMap.events.register('mouseover', self.parent, _showCoords);
-            olMap.events.register('mouseout', self.parent, function () {
-                self.parent.clear.apply(self.parent, arguments);
-            });
             result.resolve();
         });
         return result;
+    };
+
+    TC.wrap.control.Coordinates.prototype.onMouseMove = function (e) {
+        var self = this;
+        $.when(self.parent.map.wrap.getMap()).then(function (olMap) {
+            var coords = olMap.getLonLatFromPixel(olMap.events.getMousePosition(e.originalEvent));
+            if (coords) {
+                if (self.parent.isGeo) {
+                    self.parent.latLon = [coords.lat, coords.lon];
+                }
+                else {
+                    self.parent.xy = [coords.lon, coords.lat];
+                }
+                self.parent.update.apply(self.parent, arguments);
+            }
+        });
+    };
+
+    TC.wrap.control.Geolocation.prototype.register = function (map) {
     };
 
     TC.wrap.Parser = function () { };
@@ -2875,6 +2905,9 @@ if (!window.OpenLayers) {
     //    }
     //};
 
+    TC.wrap.control.NavBar.prototype.setInitialExtent = function (extent) {
+    };
+
     TC.wrap.control.OverviewMap.prototype.register = function (map) {
         var self = this;
 
@@ -2902,7 +2935,7 @@ if (!window.OpenLayers) {
                     projection: map.crs,
                     displayProjection: map.crs,
                     baseLayer: olLayer,
-                    maxExtent: map.options.maxExtent,
+                    maxExtent: map.maxExtent,
                     minRatio: 24,
                     maxRatio: 48,
                     minRectSize: 30,
@@ -2936,6 +2969,10 @@ if (!window.OpenLayers) {
                 });
             });
         });
+    };
+
+    TC.wrap.control.OverviewMap.prototype.reset = function () {
+        TC.error('TC.wrap.control.OverviewMap.prototype.reset no implementado en OpenLayers 2');
     };
 
     TC.wrap.control.OverviewMap.prototype.get3DCameraLayer = function () {
@@ -3021,7 +3058,10 @@ if (!window.OpenLayers) {
                         }
                     }
                 }
-                map.$events.trigger($.Event(TC.Consts.event.BEFOREFEATUREINFO, { xy: [e.xy.x, e.xy.y], control: self.parent }));
+                var lonLat = map.wrap.map.getLonLatFromPixel(e.xy);
+                self.parent.beforeRequest({
+                    xy: [e.xy.x, e.xy.y]
+                });
             });
 
             self._gfi.events.register('getfeatureinfo', self.parent, function (e) {
@@ -3089,21 +3129,24 @@ if (!window.OpenLayers) {
                             featureInsertionPoints[i].push(feat);
                         }
                     }
-                    map.$events.trigger($.Event(TC.Consts.event.FEATUREINFO, { xy: [e.xy.x, e.xy.y], services: targetServices, featureCount: featureCount, control: self.parent }));
+                    var lonLat = map.wrap.map.getLonLatFromPixel(e.xy);
+                    self.parent.responseCallback({ coords: [lonLat.lon, lonLat.lat], resolution: self._gfi._resolution, services: targetServices, featureCount: featureCount });
                 });
 
             });
 
             self._gfi.events.register('exception', self.parent, function (e) {
-                map.$events.trigger($.Event(TC.Consts.event.FEATUREINFOERROR, { xy: [e.xy.x, e.xy.y], control: self.parent, layer: e.layer._wrap.parent }));
+                self.parent.responseError({ status: e.request.status, message: e.request.responseText });
             });
         });
     };
 
-    TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (xy) {
+    TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolution) {
         var self = this;
 
         if (self._map && self._gfi.layers.length > 0) {
+            var xy = map.wrap.map.getPixelFromLonLat({ lon: coords[0], lat: coords[1] });
+            self._gfi._resolution = resolution;
             self._gfi.getInfoForClick({ xy: { x: xy[0], y: xy[1] } });
         }
     };
@@ -3503,6 +3546,58 @@ if (!window.OpenLayers) {
         };
     };
 
+    const mapToOLCoords = function (coords) {
+        return coords.map(function (coord) {
+            return { x: coord[0], y: coord[1] };
+        })
+    };
+
+    const mapToArrayCoords = function (coords) {
+        return coords.map(function (vertex) {
+            return [vertex.x, vertex.y];
+        })
+    };
+
+    TC.wrap.Feature.prototype.getLength = function (options) {
+        const self = this;
+        options = options || {};
+
+        const geom = self.feature.geometry;
+        var coordinates;
+        if (geom instanceof OpenLayers.Geometry.Polygon) {
+            coordinates = mapToArrayCoords(geom.getVertices());
+            if (options.crs) {
+                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+            }
+            const ring = new OpenLayers.Geometry.LinearRing(mapToOLCoords(coordinates));
+            return ring.getLength();
+        }
+        else if (geom instanceof OpenLayers.Geometry.LineString) {
+            coordinates = mapToArrayCoords(geom.getVertices());
+            if (options.crs) {
+                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+            }
+            const line = new OpenLayers.Geometry.LineString(mapToOLCoords(coordinates));
+            return line.getLength();
+        }
+    };
+
+    TC.wrap.Feature.prototype.getArea = function (options) {
+        const self = this;
+        options = options || {};
+
+        const geom = self.feature.geometry;
+        var coordinates;
+        if (geom instanceof OpenLayers.Geometry.Polygon) {
+            coordinates = mapToArrayCoords(geom.getVertices());
+            if (options.crs) {
+                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+            }
+            const polygon = new OpenLayers.Geometry.Polygon([new OpenLayers.Geometry.LinearRing(mapToOLCoords(coordinates))]);
+            return polygon.getArea();
+        }
+    };
+
     TC.wrap.Feature.prototype.setStyle = function (options) {
         var self = this;
 
@@ -3711,12 +3806,10 @@ if (!window.OpenLayers) {
                             data.area = e.measure;
                             data.perimeter = self.control.getLength(e.geometry, e.units);
                         }
-                        if(self.parent.measure)
+                        if (self.parent.measure) {
                             self.parent.$events.trigger($.Event(type, data));
-                        else
-                        {                            
-                            self.parent.$events.trigger($.Event(TC.Consts.event.DRAWEND, { "geometry": new TC.feature.Polygon(e.geometry.components) }));
                         }
+                        self.parent.$events.trigger($.Event(TC.Consts.event.DRAWEND, { feature: new TC.feature.Polygon(e.geometry.components) }));
 
                     };
                     self.control = new OpenLayers.Control.Measure(handler,

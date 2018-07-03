@@ -3,6 +3,9 @@ TC.control = TC.control || {};
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
+if (!TC.filter) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
+}
 
 TC.control.Download = function (options) {
     var self = this;
@@ -30,7 +33,7 @@ TC.inherit(TC.control.Download, TC.Control);
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Download.html";
         ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/DownloadDialog.html";
     } else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "download" }).w(" <span class=\"tc-beta\">").h("i18n", ctx, {}, { "$key": "beta" }).w("</span> </h2><div class=\"tc-ctl-sctnr tc-ctl-sctnr-select\"><form><label class=\"tc-ctl-sctnr-tab tc-ctl-download-image\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"image\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.map" }).w("</span></label><label class=\"tc-ctl-sctnr-tab tc-ctl-download-data\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"data\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.vector" }).w("</span></label></form></div><div class=\"tc-ctl tc-ctl-sctnr-elm tc-ctl-sctnr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image tc-hidden\"><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format-image\" class=\"tc-combo\"><option value=\"image/png\">PNG</option><option value=\"image/jpeg\">JPEG</option></select><div class=\"tc-ctl-download-div\"><input id=\"tc-ctl-download-image-qr\" class=\"tc-hidden\" type=\"checkbox\" checked style=\"display:none;\" /><label for=\"tc-ctl-download-image-qr\" class=\"tc-ctl-download-image-qr-label\" title=\"").h("i18n", ctx, {}, { "$key": "createQrCodeToImage" }).w("\">").h("i18n", ctx, {}, { "$key": "appendQRCode" }).w("</label></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadImageFromCurrentMap" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div></div><div class=\"tc-ctl tc-ctl-sctnr-elm tc-ctl-sctnr-elm-data tc-group tc-ctl-download-cnt tc-hidden\"><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format\" class=\"tc-combo\"><option value=\"GML32\">GML</option><option value=\"application/json\">GeoJSON</option><option value=\"application/vnd.google-earth.kml+xml\">KML (Google Earth)</option><option value=\"shape-zip\">Shape (ESRI)</option></select><div class=\"tc-ctl-download-div\"><i class=\"tc-ctl-download-help icon-question-sign\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "showDownloadHelp" }).w("\"></i></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadLayersFromCurrentExtent" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div><div class=\"tc-alert alert-warning tc-hidden\"><p id=\"zoom-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures.instructions" }).w("</p><p id=\"layers-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded.instructions" }).w("</p><p id=\"url-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers.instructions" }).w("</p><p id=\"noFeatures-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noData" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noData.instructions" }).w("</p><p id=\"novalid-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noValidService" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noValidService.instructions" }).w("</p></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "download" }).w(" </h2><div class=\"tc-ctl-sctnr tc-ctl-sctnr-select\"><form><label class=\"tc-ctl-sctnr-tab tc-ctl-download-image\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"image\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.map" }).w("</span></label><label class=\"tc-ctl-sctnr-tab tc-ctl-download-data\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"data\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.vector" }).w("</span></label></form></div><div class=\"tc-ctl tc-ctl-sctnr-elm tc-ctl-sctnr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image tc-hidden\"><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format-image\" class=\"tc-combo\"><option value=\"image/png\">PNG</option><option value=\"image/jpeg\">JPEG</option></select><div class=\"tc-ctl-download-div\"><input id=\"tc-ctl-download-image-qr\" class=\"tc-hidden\" type=\"checkbox\" checked style=\"display:none;\" /><label for=\"tc-ctl-download-image-qr\" class=\"tc-ctl-download-image-qr-label\" title=\"").h("i18n", ctx, {}, { "$key": "createQrCodeToImage" }).w("\">").h("i18n", ctx, {}, { "$key": "appendQRCode" }).w("</label></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadImageFromCurrentMap" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div></div><div class=\"tc-ctl tc-ctl-sctnr-elm tc-ctl-sctnr-elm-data tc-group tc-ctl-download-cnt tc-hidden\"><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format\" class=\"tc-combo\"><option value=\"GML32\">GML</option><option value=\"application/json\">GeoJSON</option><option value=\"application/vnd.google-earth.kml+xml\">KML (Google Earth)</option><option value=\"shape-zip\">Shape (ESRI)</option></select><div class=\"tc-ctl-download-div\"><i class=\"tc-ctl-download-help icon-question-sign\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "showDownloadHelp" }).w("\"></i></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadLayersFromCurrentExtent" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div><div class=\"tc-alert alert-warning tc-hidden\"><p id=\"zoom-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures.instructions" }).w("</p><p id=\"layers-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded.instructions" }).w("</p><p id=\"url-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers.instructions" }).w("</p><p id=\"noFeatures-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noData" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noData.instructions" }).w("</p><p id=\"novalid-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noValidService" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noValidService.instructions" }).w("</p></div></div>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w(" <div class=\"tc-ctl-download-help-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "downloadData" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "dl.instructions.1|s" }).w("</p><ul><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.2|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.3|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.4|s" }).w("<ul><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.5|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.6|s" }).w("</li></ul></li></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
@@ -82,7 +85,10 @@ TC.inherit(TC.control.Download, TC.Control);
 
     ctlProto.register = function (map) {
         var self = this;
-        TC.Control.prototype.register.call(self, map);       
+        TC.Control.prototype.register.call(self, map);
+
+        // GLS: A\u00f1ado el flag al mapa para tenerlo en cuenta cuando se establece la funci\u00f3n de carga de im\u00e1genes
+        self.map.mustBeExportable = true;
 
         /**
          * Descarga las features de las capas de trabajo actualmente seleccionadas. Comprueba que el n\u00famero de features a descargar
@@ -259,30 +265,27 @@ TC.inherit(TC.control.Download, TC.Control);
                 var visibleLayers = _getVisibleLayers();
 
                 var extent = self.map.getExtent();
-                var arrPromises = TC.WFSGetFeatureBuilder(self.map, extent, format, true);
+                var coordsXY = TC.Util.reproject(extent.slice(0, 2), self.map.crs, TC.Defaults.crs);
+                var coordsXY2 = TC.Util.reproject(extent.slice(2), self.map.crs, TC.Defaults.crs);
+
+                var arrPromises = TC.WFSGetFeatureBuilder(self.map, new TC.filter.bbox([coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]]), format, true);
                 $.when.apply($, arrPromises).then(function () {                    
 
                     var responses = $.grep(arguments, function (item) { return item != null });
                     if (responses.length === 0) {
-                        _showAlertMsg({ layers: true }, wait);
+                        _showAlertMsg({ key: TC.Consts.WFSErrors.NoLayers }, wait);
                         return;
                     }
                     var arrDownloads = [];
                     for (var i = 0; i < responses.length; i++) {
-                        if (responses[i].err) {
-                            switch (responses[i].err) {
-                                case "NumMaxFeatures":
-                                    _showAlertMsg({ zoom: true, serviceName: responses[i].service.mapLayer.title }, wait);
-                                    break;
-                                case "NameResolutionFailure":
-                                    _showAlertMsg({ noValid: true, serviceName: responses[i].service.mapLayer.title }, wait);
-                                    break;
-                                default:
-                                    _showAlertMsg({ noValid: true, serviceName: responses[i].service.mapLayer.title }, wait);
-                                //TC.error(responses[i].errorThrown, TC.Consts.msgErrorMode.CONSOLE)
+                        //errores del WFS
+                        if (responses[i].errors && responses[i].errors.length) {
+                            for (var j = 0; j < responses[i].errors.length; j++) {
+                                var error = responses[i].errors[j];
+                                _showAlertMsg(error, wait);
                             }
                             continue;
-                        }
+                        }                        
                         var data = responses[i].data;
                         var url = responses[i].url;
                         if (data && url)
@@ -314,8 +317,31 @@ TC.inherit(TC.control.Download, TC.Control);
         var _showAlertMsg = function (error, wait) {
             var alert = self._$div.find(".alert-warning");
             var errorMsg;
-
-            if (error.zoom) {
+            switch (error.key) {
+                case TC.Consts.WFSErrors.NumMaxFeatures:
+                    errorMsg = alert.find("#zoom-msg").html().format({ serviceName: error.params.serviceTitle });
+                    break;
+                case TC.Consts.WFSErrors.NoLayers:
+                    errorMsg = self.getLocaleString('noLayersLoaded');
+                    break;
+                case TC.Consts.WFSErrors.GetCapabilities:
+                    errorMsg = alert.find("#novalid-msg").html().format({ serviceName: error.params.serviceTitle });
+                    break;
+                case TC.Consts.WFSErrors.NoFeatures:
+                    errorMsg = alert.find("#noFeatures-msg").html();
+                    break;
+                case TC.Consts.WFSErrors.Indeterminate:
+                    errorMsg = self.getLocaleString("wfs.IndeterminateError");
+                    self.map.toast(errorMsg, { type: TC.Consts.msgType.ERROR });
+                    TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
+                    self.map.getLoadingIndicator().removeWait(wait);
+                    return
+                    break;
+                default:
+                    errorMsg = self.getLocaleString("wfs." + error.key, error.params);
+                    break;
+            }
+            /*if (error.zoom) {
                 errorMsg = alert.find("#zoom-msg").html().format({ serviceName: error.serviceName });
             } else if (error.layers) {
                 errorMsg = self.getLocaleString('noLayersLoaded');
@@ -325,8 +351,7 @@ TC.inherit(TC.control.Download, TC.Control);
                 errorMsg = alert.find("#noFeatures-msg").html();
             } else if (error.noValid) {
                 errorMsg = alert.find("#novalid-msg").html().format({ serviceName: error.serviceName });
-            }
-
+            }*/
             self.map.toast(errorMsg, { type: TC.Consts.msgType.WARNING });
 
             self.map.getLoadingIndicator().removeWait(wait);            

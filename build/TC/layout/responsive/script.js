@@ -45,9 +45,42 @@ $(function () {
         }
     });
 
+    /**
+     * Array de condiciones para distintas resoluciones de pantalla. La estructura del array que recibe como par\u00e1metro es es:
+     *  - screenCondition (string): media query que debe evaluarse a true para que se apliquen los cambios.
+     *  - apply:
+     *      - event (string): evento que debe producirse para que se lleve a cabo la acci\u00f3n.
+     *      - elements (array o string): selectores CSS de los elementos sobre los que se debe producir el evento anterior.
+     *      - changes:
+     *          - targets (array o string): selectores CSS de los elementos a los que se aplicar\u00e1n las clases CSS siguientes
+     *          - classes (array o string): clases CSS a aplicar
+     */
+    TC.Cfg.applyChanges = function (configArray) {
+        var changes = $.isArray(configArray) ? configArray : [configArray];
+
+        if (changes) {
+            changes.forEach(function (item) {
+                var elem = item.apply;
+                var clickedElems = $.isArray(elem.elements) ? elem.elements : [elem.elements];
+
+                $(map._$div).on(elem.event, clickedElems.join(), function () {
+                    if (window.matchMedia(item.screenCondition).matches) { // si es una pantalla estrecha
+                        elem.changes.forEach(function (change) {
+                            var targets = $.isArray(change.targets) ? change.targets : [change.targets];
+                            var classes = $.isArray(change.classes) ? change.classes : [change.classes];
+
+                            $(targets.join()).toggleClass(classes.join(' '), true);
+                        });
+                    }
+                });
+            });
+        }
+    };
+
+
     if (map) {
 
-        map.loaded(function () {            
+        map.loaded(function () {
 
             ovmap = map.getControlsByClass('TC.control.OverviewMap')[0];
             if (ovmap) {
@@ -57,10 +90,30 @@ $(function () {
             }
             //mover el Multifeature info dentro del TOC
             if (TC.control.MultiFeatureInfo) {
-                    var mfi = $("." + TC.control.MultiFeatureInfo.prototype.CLASS);
+                var toc = map.getControlsByClass('TC.control.ListTOC')[0];
+                if (toc) {
+                    var mfi = $('.' + TC.control.MultiFeatureInfo.prototype.CLASS);
                     mfi.detach();
-                    $(".tc-ctl-ltoc h2").after(mfi);
+                    $('.' + toc.CLASS + '-content').prepend(mfi);
                 }
+            }
+
+            //Aplicar clases CSS cuando se haga click en elementos definidos por configuraci\u00f3n
+            TC.Cfg.applyChanges([
+                {
+                    "screenCondition": "(max-width: 42em)",
+                    "apply": {
+                        "event": "click",
+                        "elements": [".tc-ctl-bms-node > label"],
+                        "changes": [
+                            {
+                                "targets": "#tools-panel",
+                                "classes": "right-collapsed"
+                            }
+                        ]
+                    }
+                }
+            ]);
         });
 
         TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
@@ -75,39 +128,6 @@ $(function () {
             var $toolsPanel = $('.tools-panel');
             if (!$toolsPanel.hasClass('right-collapsed'))
                 $toolsPanel.addClass('right-collapsed');
-        });
-
-        // En pantalla estrecha colapsar panel de herramientas al activar una
-        map.on(TC.Consts.event.CONTROLACTIVATE, function (e) {
-            var control = e.control;
-            var measureCtls = map.getControlsByClass('TC.control.Measure');
-            for (var i = 0, len = measureCtls.length; i < len; i++) {
-                if (measureCtls[i] === control) {
-                    if (Modernizr.canvas) {
-                        // Not for IE8
-                        var $toolsPanel = $('.tools-panel');
-                        var condition = window.matchMedia ?
-                            !matchMedia('screen and (min-height: 40em) and (min-width: 42em)').matches :
-                            parseInt($(control.map.div).css('width')) <
-                            parseInt(control._$div.find('.' + control.CLASS + (control.searchType === TC.Consts.LENGTH ? '-len' : '-area')).css('width')) +
-                            parseInt($toolsPanel.css('width')) ||
-                            (TC.control.Draw && control instanceof TC.control.Draw);
-                        if (condition) {
-                            $toolsPanel.addClass('right-collapsed');
-                        }
-                    }
-                    else {
-                        // Fix bug IE8
-                        setTimeout(function () {
-                            e.control._$div.find('.tc-ctl-btn').each(function (idx, elm) {
-                                var $elm = $(elm);
-                                $elm.css('visibility', 'hidden').css('visibility', 'visible');
-                            });
-                        }, 500);
-                    }
-                    break;
-                }
-            }
         });
     }
 

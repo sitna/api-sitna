@@ -27,12 +27,12 @@
             "format": "image/jpeg",
             "isDefault": false,
             "hideTree": true,
-            "thumbnail": "layout/idena/img/relieve.jpg",
+            "thumbnail": "http://sitna.tracasa.es/api/tc/css/img/thumb-relief_bw.jpg",
             "minResolution": 2
         },
         {
             "id": "baseYOrto",
-            "title": "Mapa base/ortofoto 2014",
+            "title": "Mapa base/ortofoto",
             "type": "WMS",
             "url": "//idena.navarra.es/ogc/wms",
             "layerNames": [ "mapaBase_orto" ],
@@ -55,7 +55,7 @@
             "layerNames": "MTN",
             "matrixSet": "EPSG:25830",
             "format": "image/jpeg",
-            "thumbnail": "layout/idena/img/carto-ign.png"
+            "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-carto_ign.png"
         },
         {
             "id": "ign-base",
@@ -66,7 +66,7 @@
             "layerNames": "IGNBaseTodo",
             "matrixSet": "EPSG:25830",
             "format": "image/jpeg",
-            "thumbnail": "layout/idena/img/base-ign.png"
+            "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-basemap_ign.png"
         },
         {
             "id": "ign-mtn",
@@ -77,7 +77,7 @@
             "layerNames": "Relieve",
             "matrixSet": "EPSG:25830",
             "format": "image/jpeg",
-            "thumbnail": "layout/idena/img/relieve-ign.jpg"
+            "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-relief_ign.jpg"
         },
         {
             "id": "ign-pnoa",
@@ -88,7 +88,7 @@
             "layerNames": "OI.OrthoimageCoverage",
             "matrixSet": "EPSG:25830",
             "format": "image/jpeg",
-            "thumbnail": "layout/idena/img/ortofoto-pnoa.jpg"
+            "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-orthophoto_pnoa.jpg"
         },
         {
             "id": "ninguno",

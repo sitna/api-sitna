@@ -31,13 +31,16 @@ TC.isDebug = true;
 /**
  * <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. N\u00f3tese que el constructor es as\u00edncrono, por tanto cualquier c\u00f3digo que haga uso de este objeto deber\u00eda
  * estar dentro de una funci\u00f3n de callback pasada como par\u00e1metro al m\u00e9todo {{#crossLink "SITNA.Map/loaded:method"}}{{/crossLink}}.</p>
+ * <p>Las opciones de configuraci\u00f3n del mapa son una combinaci\u00f3n de las opciones de configuraci\u00f3n global (definidas en {{#crossLink "SITNA.Cfg"}}{{/crossLink}}), las opciones
+ * definidas por el {{#crossLink "SITNA.Cfg/layout:property"}}{{/crossLink}} que utilicemos, y las opciones pasadas como par\u00e1metro al constructor. Estas opciones est\u00e1n ordenadas de menor a mayor prevalencia,
+ * de modo que por ejemplo una opci\u00f3n pasada como par\u00e1metro del constructor siempre sobreescribir\u00e1 una opci\u00f3n de la configuraci\u00f3n global.</p>
  * <p>Puede consultar tambi\u00e9n online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
  * @class SITNA.Map
  * @constructor
  * @async
  * @param {HTMLElement|string} div Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.
  * @param {object} [options] Objeto de opciones de configuraci\u00f3n del mapa. Sus propiedades sobreescriben el objeto de configuraci\u00f3n global {{#crossLink "SITNA.Cfg"}}{{/crossLink}}.
- * @param {string} [options.crs="EPSG:25830"] C\u00f3digo EPSG del sistema de referencia espacial del mapa.
+ * @param {string} [options.crs="EPSG:25830"] C\u00f3digo EPSG del sistema de referencia espacial del mapa. Por defecto es <code>"EPSG:25830"</code>.
  * @param {array} [options.initialExtent] Extensi\u00f3n inicial del mapa definida por x m\u00ednima, y m\u00ednima, x m\u00e1xima, y m\u00e1xima. 
  * Esta opci\u00f3n es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver SITNA.Cfg.{{#crossLink "SITNA.Cfg/crs:property"}}{{/crossLink}}).
  * Para m\u00e1s informaci\u00f3n consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/initialExtent:property"}}{{/crossLink}}.
@@ -48,10 +51,12 @@ TC.isDebug = true;
  * @param {string|number} [options.defaultBaseLayer] Identificador o \u00edndice en <code>baseLayers</code> de la capa base por defecto. 
  * @param {SITNA.cfg.MapControlOptions} [options.controls] Opciones de controles de mapa.
  * @param {SITNA.cfg.StyleOptions} [options.styles] Opciones de estilo de entidades geogr\u00e1ficas.
+ * @param {string} [options.locale="es-ES"] C\u00f3digo de idioma de la interfaz de usuario. Este c\u00f3digo debe obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
+ * Los valores posibles son <code>"es-ES"</code>, <code>"eu-ES"</code> y <code>"en-US"</code>. Por defecto es <code>"es-ES"</code>.
  * @param {string} [options.crossOrigin] Valor del atributo <code>crossorigin</code> de las im\u00e1genes del mapa para <a href="https://developer.mozilla.org/es/docs/Web/HTML/Imagen_con_CORS_habilitado">habilitar CORS</a>.
  * Es necesario establecer esta opci\u00f3n para poder utilizar el m\u00e9todo SITNA.Map.{{#crossLink "SITNA.Map/exportImage:method"}}{{/crossLink}}. 
  * Los valores soportados son <code>anonymous</code> y <code>use-credentials</code>.
- * @param {boolean} [options.mouseWheelZoom] La rueda del rat\u00f3n se puede utilizar para hacer zoom en el mapa.
+ * @param {boolean} [options.mouseWheelZoom] Si se establece a <code>true</code>, la rueda del rat\u00f3n se puede utilizar para hacer zoom en el mapa.
  * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver SITNA.Cfg.{{#crossLink "SITNA.Cfg/proxy:property"}}{{/crossLink}}).
  * @example
  *     <div id="mapa"/>
@@ -84,7 +89,7 @@ TC.isDebug = true;
  *                 43.55789822064767
  *             ],
  *             baseLayers: [
- * 				SITNA.Consts.layer.IDENA_DYNBASEMAP
+ *                 SITNA.Consts.layer.IDENA_DYNBASEMAP
  *             ],
  *             defaultBaseLayer: SITNA.Consts.layer.IDENA_DYNBASEMAP,
  *             // Establecemos el mapa de situaci\u00f3n con una capa compatible con WGS 84
@@ -121,6 +126,44 @@ TC.isDebug = true;
 
 SITNA.Map = function (div, options) {
     var map = this;
+
+    // Por defecto en SITNA todas las b\u00fasquedas est\u00e1n habilitadas
+    TC.Cfg.controls.search.allowedSearchTypes = $.extend(TC.Cfg.controls.search.allowedSearchTypes, {
+        urban: {},
+        street: {},
+        number: {},
+        cadastral: {}
+    });
+
+    if (options && options.controls && options.controls.search) {
+        var searchCfg = $.extend(options.controls.search, { allowedSearchTypes: {} });
+
+        for (key in options.controls.search) {
+            if (typeof (options.controls.search[key]) === "boolean") {
+                if (options.controls.search[key]) {
+
+                    switch (true) {
+                        case (key === "postalAddress"):
+                            searchCfg.allowedSearchTypes[TC.Consts.searchType.NUMBER] = {};
+                            break;
+                        case (key === "cadastralParcel"):
+                            searchCfg.allowedSearchTypes[TC.Consts.searchType.CADASTRAL] = {};
+                            break;
+                        case (key === "town"):
+                            searchCfg.allowedSearchTypes[TC.Consts.searchType.URBAN] = {};
+                            break;
+                        default:
+                            searchCfg.allowedSearchTypes[key] = {};
+                    }                    
+                }
+
+                delete searchCfg[key];
+            }
+        }
+
+        options.controls.search = searchCfg;
+    }
+
     var tcMap = new TC.Map(div, options);
     var tcSearch;
     var tcSearchLayer;
@@ -226,7 +269,7 @@ SITNA.Map = function (div, options) {
      * @param {number} [options.height] Altura en p\u00edxeles del icono del marcador.
      * @param {array} [options.anchor] Coordenadas proporcionales (entre 0 y 1) del punto de anclaje del icono al punto del mapa. La coordenada [0, 0] es la esquina superior izquierda del icono.
      * @param {object} [options.data] Objeto de datos en pares clave/valor para mostrar cuando se pulsa sobre el marcador. Si un valor es una URL, se mostrar\u00e1 como un enlace.
-     * @param {boolean} [options.showPopup] Al a\u00f1adirse el marcador al mapa se muestra con el bocadillo de informaci\u00f3n asociada visible por defecto.
+     * @param {boolean} [options.showPopup] Si se establece a <code>true</code>, al a\u00f1adirse el marcador al mapa se muestra con el bocadillo de informaci\u00f3n asociada visible por defecto.
      * @param {string} [options.layer] Identificador de capa de tipo SITNA.consts.LayerType.{{#crossLink "SITNA.consts.LayerType/VECTOR:property"}}{{/crossLink}} en la que se a\u00f1adir\u00e1 el marcador. Si no se especifica se crear\u00e1 una capa espec\u00edfica para marcadores.
      * @example
      *     <div id="mapa"></div>
@@ -351,9 +394,9 @@ SITNA.Map = function (div, options) {
      * <p>Puede consultar tambi\u00e9n el ejemplo <a href="../../examples/Map.zoomToMarkers.html">online</a>.</p>
      * @method zoomToMarkers
      * @param {object} [options] Objeto de opciones de zoom.
-     * @param {number} [options.pointBoundsRadius=30] Radio en metros del \u00e1rea alrededor del marcador que se respetar\u00e1 al hacer zoom.
-     * @param {number} [options.extentMargin=0.2] Tama\u00f1o del margen que se aplicar\u00e1 a la extensi\u00f3n total de todas los marcadores. 
-     * El valor es la relaci\u00f3n de crecimiento en ancho y alto entre la extensi\u00f3n resultante y la original. Por ejemplo, 0,2 indica un crecimiento del 20% de la extensi\u00f3n, 10% por cada lado.
+     * @param {number} [options.pointBoundsRadius=30] Radio en metros del \u00e1rea alrededor del marcador que se respetar\u00e1 al hacer zoom. Por defecto es 30.
+     * @param {number} [options.extentMargin=0.2] Tama\u00f1o del margen que se aplicar\u00e1 a la extensi\u00f3n total de todas los marcadores.
+     * El valor es la relaci\u00f3n de crecimiento en ancho y alto entre la extensi\u00f3n resultante y la original. Por ejemplo, el valor por defecto 0,2 indica un crecimiento del 20% de la extensi\u00f3n, 10% por cada lado.
      * @async
      * @example
      *     <div class="controls">
@@ -893,24 +936,33 @@ SITNA.Map = function (div, options) {
         map.removeSearch();
 
         if (tcSearch.availableSearchTypes[searchType] && !(tcSearch.allowedSearchTypes[searchType])) {
-            tcSearch.allowedSearchTypes = { };
-            tcSearch.allowedSearchTypes[searchType] = { };
+            tcSearch.allowedSearchTypes = {};
+            tcSearch.allowedSearchTypes[searchType] = {};
 
             if (!tcSearch.availableSearchTypes[searchType].hasOwnProperty('goTo')) {
                 tcSearch.allowedSearchTypes[searchType] = {
                     goTo: function () {
-                        var styles = function (queryStyles, geomType, property) {
-                            return queryStyles[geomType][property];
-                        };
                         var getProperties = function (id) {
+
+                            if (!TC.filter) {
+                                TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
+                            }
+
                             var filter = [];
                             if (query.idPropertiesIdentifier) id = id.split(query.idPropertiesIdentifier);
                             if (!(id instanceof Array)) id = [id];
                             for (var i = 0; i < query.dataIdProperty.length; i++) {
-                                filter.push({
-                                    name: query.dataIdProperty[i], value: id[i], type: TC.Consts.comparison.EQUAL_TO
-                                });
+                                filter.push(
+                                    new TC.filter.equalTo(query.dataIdProperty[i], $.trim(id[i]))                                    
+                                );
                             }
+
+                            if (filter.length > 1) {
+                                filter = new TC.filter.and(filter);
+                            } else {
+                                filter = filter[0];
+                            }
+
                             return filter;
                         };
                         var layerOptions = {
@@ -924,17 +976,7 @@ SITNA.Map = function (div, options) {
                             featureType: query.featureType,
                             properties: getProperties(id),
                             outputFormat: TC.Consts.format.JSON,
-                            styles: {
-                                polygon: {
-                                    fillColor: styles.bind(self, query.styles[query.featureType], 'polygon', 'fillColor'),
-                                    fillOpacity: styles.bind(self, query.styles[query.featureType], 'polygon', 'fillOpacity'),
-                                },
-                                line: {
-                                    strokeColor: styles.bind(self, query.styles[query.featureType], 'line', 'strokeColor'),
-                                    strokeOpacity: styles.bind(self, query.styles[query.featureType], 'line', 'strokeOpacity'),
-                                    strokeWidth: styles.bind(self, query.styles[query.featureType], 'line', 'strokeWidth')
-                                }
-                            }
+                            styles: query.styles[query.featureType]                            
                         };
 
                         var tcSrchTypedLayer;
@@ -1071,7 +1113,7 @@ SITNA.Map = function (div, options) {
                     name: field, value: id, type: TC.Consts.comparison.EQUAL_TO
                 }]),
                 outputFormat: TC.Consts.format.JSON
-            };            
+            };
 
             var tcSrchGenericLayer;
             tcMap.addLayer(layerOptions).then(function (layer) {
@@ -1217,7 +1259,7 @@ SITNA.Map = function (div, options) {
  */
 SITNA.Consts = TC.Consts;
 /**
- * Identificadores de capas \u00fatiles de IDENA.
+ * Identificadores de capas \u00fatiles de IDENA y otros servicios de terceros.
  * @property layer
  * @type SITNA.consts.Layer
  * @final
@@ -1279,13 +1321,13 @@ SITNA.Consts = TC.Consts;
  */
 
 /**
- * Colecci\u00f3n de identificadores de capas \u00fatiles de IDENA.
+ * Colecci\u00f3n de identificadores de capas \u00fatiles de IDENA y otros servicios de terceros.
  * No se deber\u00edan modificar las propiedades de esta clase.
  * @class SITNA.consts.Layer
  * @static
  */
 /**
- * Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+ * Identificador de la capa de ortofoto de m\u00e1xima actualidad del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
  * @property IDENA_ORTHOPHOTO
  * @type string
  * @final
@@ -1309,7 +1351,7 @@ SITNA.Consts = TC.Consts;
  * @final
  */
 /**
- * Identificador de la capa de la combinaci\u00f3n de ortofoto 2014 y mapa base del WMS de IDENA.
+ * Identificador de la capa de la combinaci\u00f3n de ortofoto de m\u00e1xima actualidad y mapa base del WMS de IDENA.
  * @property IDENA_BASEMAP_ORTHOPHOTO
  * @type string
  * @final
@@ -1321,14 +1363,74 @@ SITNA.Consts = TC.Consts;
  * @final
  */
 /**
- * Identificador de la capa de mapa base del WMS de IDENA.
- * @property IDENA_DYNBASEMAP
+ * Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+ * @property IDENA_ORTHOPHOTO2014
  * @type string
  * @final
  */
 /**
  * Identificador de la capa de ortofoto 2012 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
  * @property IDENA_ORTHOPHOTO2012
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de mapa base del WMS de IDENA.
+ * @property IDENA_DYNBASEMAP
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de ortofoto de m\u00e1xima actualidad del WMS de IDENA.
+ * @property IDENA_DYNORTHOPHOTO
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de ortofoto 2014 del WMS de IDENA.
+ * @property IDENA_DYNORTHOPHOTO2014
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de ortofoto 2012 del WMS de IDENA.
+ * @property IDENA_DYNORTHOPHOTO2012
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de OpenStreetMap a trav\u00e9s del WMTS de la API SITNA.
+ * @property OSM
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Carto Voyager a trav\u00e9s del WMTS de la API SITNA.
+ * @property CARTO_VOYAGER
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Carto Light a trav\u00e9s del WMTS de la API SITNA.
+ * @property CARTO_LIGHT
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Carto Dark a trav\u00e9s del WMTS de la API SITNA.
+ * @property CARTO_DARK
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Mapbox Streets a trav\u00e9s del WMTS de la API SITNA.
+ * @property MAPBOX_STREETS
+ * @type string
+ * @final
+ */
+/**
+ * Identificador de la capa de Mapbox Satellite a trav\u00e9s del WMTS de la API SITNA.
+ * @property MAPBOX_SATELLITE
  * @type string
  * @final
  */
@@ -1463,7 +1565,7 @@ SITNA.Cfg = TC.Cfg;
  * @default [480408, 4599748, 742552, 4861892]
  */
 /**
- * <p>La rueda de scroll del rat\u00f3n se puede utilizar para hacer zoom en el mapa.</p>
+ * <p>Si se establece a <code>true</code>, la rueda de scroll del rat\u00f3n se puede utilizar para hacer zoom en el mapa.</p>
  * @property mouseWheelZoom
  * @type boolean
  * @default true
@@ -1542,28 +1644,82 @@ SITNA.Cfg = TC.Cfg;
  * <p>URL de la carpeta de maquetaci\u00f3n. Para prescindir de maquetaci\u00f3n, establecer esta propiedad a <code>null</code>.</p>
  * <p>La API busca en la carpeta de maquetaci\u00f3n los siguientes archivos:</p>
  * <ul>
- *      <li><code>markup.html</code>, con c\u00f3digo HTML que se inyectar\u00e1 en el elemento del DOM del mapa.</li>
+ *      <li><code>markup.html</code>, con la plantilla HTML que se inyectar\u00e1 en el elemento del DOM del mapa.</li>
  *      <li><code>config.json</code>, con un objeto JSON que sobreescribir\u00e1 propiedades de {{#crossLink "SITNA.Cfg"}}{{/crossLink}}.</li>
  *      <li><code>style.css</code>, para personalizar el estilo del visor y sus controles.</li>
  *      <li><code>script.js</code>, para a\u00f1adir l\u00f3gica nueva. Este es el lugar id\u00f3neo para la l\u00f3gica de la nueva interfaz definida por el marcado inyectado con <code>markup.html</code>.</li>
  *      <li><code>ie8.css</code>, para adaptar el estilo a Internet Explorer 8, dado que este navegador tiene soporte CSS3 deficiente.</li>
+ *      <li><code>resources/&#42;.json</code>, donde <code>&#42;</code> es el c\u00f3digo IETF del idioma que tendr\u00e1 la interfaz de usuario, por ejemplo <code>resources/es-ES.json</code>.
+ *      Si se van a soportar varios idiomas hay que preparar un archivo por idioma. Para saber c\u00f3mo establecer un idioma de interfaz de usuario, consultar la opci\u00f3n <code>locale</code> del constructor de {{#crossLink "SITNA.Map"}}{{/crossLink}}.
  *  </ul>
- * <p>Todos estos archivos son opcionales.</p><p>La maquetaci\u00f3n por defecto a\u00f1ade los siguientes controles al conjunto por defecto: <code>navBar</code>, <code>basemapSelector</code>, 
+ * <p>Todos estos archivos son opcionales.</p>
+ * <p>La maquetaci\u00f3n por defecto a\u00f1ade los siguientes controles al conjunto por defecto: <code>navBar</code>, <code>basemapSelector</code>,
  * <code>TOC</code>, <code>legend</code>, <code>scaleBar</code>, <code>search</code>, <code>measure</code>, <code>overviewMap</code> y <code>popup</code>. Puede <a href="../../tc/layout/responsive/responsive.zip">descargar la maquetaci\u00f3n por defecto</a>.</p>
- * <p>Puede consultar el ejemplo <a href="../../examples/Cfg.layout.html">online</a>. 
- * Sus archivos de maquetaci\u00f3n son <a href="../../examples/layout/example/markup.html">markup.html</a>, <a href="../../examples/layout/example/config.json">config.json</a> y 
- * <a href="../../examples/layout/example/style.css">style.css</a>.</p>
+ * <h4>Soporte multiidioma</h4>
+ * <p>La API soporta actualmente tres idiomas: castellano, euskera e ingl\u00e9s. Para saber c\u00f3mo establecer un idioma de interfaz de usuario, consultar la opci\u00f3n <code>locale</code> del constructor de {{#crossLink "SITNA.Map"}}{{/crossLink}}.
+ * Los textos espec\u00edficos para cada idioma se guardan en archivos <code>*.json</code>, donde <code>*</code> es el c\u00f3digo IETF del idioma de la interfaz de usuario, dentro de la subcarpeta
+ * resources en la direcci\u00f3n donde se aloja la API SITNA. Por ejemplo, los textos en castellano se guardan en <code>resources/es-ES.json</code>. Estos archivos contienen un diccionario en formato JSON de pares clave/valor, siendo la clave un identificador
+ * \u00fanico de cadena y el valor el texto en el idioma elegido.</p>
+ * <p>Para a\u00f1adir soporte multiidioma a la maquetaci\u00f3n, hay que crear un archivo de recursos de texto para cada idioma soportado y colocarlo en la subcarpeta <code>resources</code>
+ * dentro de la carpeta de maquetaci\u00f3n. Este diccionario se combinar\u00e1 con el diccionario de textos propio de la API.</p>
+ * <p>Por otro lado, la plantilla contenida en <code>markup.html</code> puede tener identificadores de cadena de texto en el siguiente formato: <code>&#123;&#123;identificador&#125;&#125;</code>. La API sustituir\u00e1 estos textos por los valores del
+ * diccionario correspondiente al idioma de la interfaz de usuario.</p>
+ * <p>Finalmente, hay que activar el soporte multiidioma a\u00f1adiendo a <code>config.json</code> una clave <code>"i18n": true</code>.</p>
+ * <p>Puede consultar el ejemplo <a href="../../examples/Cfg.layout.html">online</a>.
+ * Sus archivos de maquetaci\u00f3n son <a href="../../examples/layout/example/markup.html">markup.html</a>, <a href="../../examples/layout/example/config.json">config.json</a>, 
+ * <a href="../../examples/layout/example/style.css">style.css</a>, <a href="../../examples/layout/example/resources/es-ES.json">resources/es-ES.json</a>,
+ * <a href="../../examples/layout/example/resources/eu-ES.json">resources/eu-ES.json</a> y <a href="../../examples/layout/example/resources/en-US.json">resources/en-US.json</a>.</p>
  * @property layout
  * @type string
  * @default "//sitna.tracasa.es/api/tc/layout/responsive"
  * @example
+ *     <!-- layout/example/markup.html -->
+ *      <div id="controls">
+ *          <h1>{{stJamesWayInNavarre}}</h1>
+ *          <div id="toc" />
+ *          <div id="legend" />
+ *      </div>
+ *     <div id="languages">
+ *         <a class="lang" href="?lang=es-ES" title="{{spanish}}">ES</a>
+ *         <a class="lang" href="?lang=eu-ES" title="{{basque}}">EU</a>
+ *         <a class="lang" href="?lang=en-US" title="{{english}}">EN</a>
+ *     </div>
+ * @example
+ *     resources/es-ES.json
+ *     {
+ *         "stJamesWayInNavarre": "Camino de Santiago en Navarra",
+ *         "spanish": "castellano",
+ *         "basque": "euskera",
+ *         "english": "ingl\u00e9s"
+ *     }
+ * @example
+ *     resources/eu-ES.json
+ *     {
+ *         "stJamesWayInNavarre": "Nafarroan Donejakue bidea",
+ *         "spanish": "gaztelania",
+ *         "basque": "euskara",
+ *         "english": "ingelesa"
+ *     }
+ * @example
+ *     resources/en-US.json
+ *     {
+ *         "stJamesWayInNavarre": "St. James' Way in Navarre",
+ *         "spanish": "spanish",
+ *         "basque": "basque",
+ *         "english": "english"
+ *     }
+ * @example
  *     <div id="mapa"></div>
  *     <script>
- *         // Establecer un proxy porque se hacen peticiones a otro dominio.
- *         SITNA.Cfg.proxy = "proxy.ashx?";
+ *        // Obtener el idioma de interfaz de usuario
+ *        var selectedLocale = location.search.substr(location.search.indexOf("?lang=") + 6) || "es-ES";
+ *        // Establecer un proxy porque se hacen peticiones a otro dominio.
+ *        SITNA.Cfg.proxy = "proxy.ashx?";
  *
- *         SITNA.Cfg.layout = "layout/example";
- *         var map = new SITNA.Map("mapa");
+ *        SITNA.Cfg.layout = "layout/example";
+ *        var map = new SITNA.Map("mapa", {
+ *            locale: selectedLocale
+ *        });
  *     </script>
  */
 SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
@@ -1617,23 +1773,23 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * @type string|undefined
  */
 /**
- * La capa se muestra por defecto si forma parte de los mapas de fondo.
+ * Si se establece a <code>true</code>, la capa se muestra por defecto si forma parte de los mapas de fondo.
  * @property isDefault
  * @type boolean|undefined
  * @deprecated En lugar de esta propiedad es recomendable usar SITNA.Cfg.defaultBaseLayer.
  */
 /**
- * La capa es un mapa de fondo.
+ * Si se establece a <code>true</code>, la capa es un mapa de fondo.
  * @property isBase
  * @type boolean|undefined
  */
 /**
- * Aplicable a capas de tipo WMS y KML. La capa no muestra la jerarqu\u00eda de grupos de capas en la tabla de contenidos ni en la leyenda.
+ * Aplicable a capas de tipo WMS y KML. Si se establece a <code>true</code>, la capa no muestra la jerarqu\u00eda de grupos de capas en la tabla de contenidos ni en la leyenda.
  * @property hideTree
  * @type boolean|undefined
  */
 /**
- * La capa no aparece en la tabla de contenidos ni en la leyenda. De este modo se puede a\u00f1adir una superposici\u00f3n de capas de trabajo que el usuario la perciba como parte del mapa de fondo.
+ * Si se establece a <code>true</code>, la capa no aparece en la tabla de contenidos ni en la leyenda. De este modo se puede a\u00f1adir una superposici\u00f3n de capas de trabajo que el usuario la perciba como parte del mapa de fondo.
  * @property stealth
  * @type boolean|undefined
  */
@@ -1641,6 +1797,56 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * URL de una imagen en miniatura a mostrar en el selector de mapas de fondo.
  * @property thumbnail
  * @type string|undefined
+ */
+/**
+ * <p>La capa agrupa sus entidades puntuales cercanas entre s\u00ed en grupos (clusters). Aplicable a capas de tipo VECTOR, WFS y KML.</p>
+ * <p>Puede consultar el ejemplo <a href="../../examples/cfg.LayerOptions.cluster.html">online</a>.</p>
+ * @property cluster
+ * @type SITNA.cfg.ClusterOptions|undefined
+ * @example
+ *     <div id="mapa"></div>
+ *     <script>
+ *         // Creamos un mapa con una capa de puntos de un KML,
+ *         // clustering activado a 50 pixels y transiciones animadas.
+ *         var map = new SITNA.Map("mapa", {
+ *             workLayers: [
+ *                {
+ *                    id: "cluster",
+ *                    type: SITNA.Consts.layerType.KML,
+ *                    url: "data/PromocionesViviendas.kml",
+ *                    title: 'Clusters',
+ *                    cluster: {
+ *                        distance: 50,
+ *                        animate: true
+ *                    }
+ *                }
+ *            ]
+ *         });
+ *     </script>
+ */
+
+/**
+ * <p>Opciones de clustering de puntos de una capa, define si los puntos se tienen que agrupar cuando est\u00e1n m\u00e1s cerca entre s\u00ed que un valor umbral.
+ * Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci\u00f3n puede sobreescribir los valores por defecto de las propiedades de esta clase
+ * (consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p>
+ * <p>Esta clase no tiene constructor.</p>
+ * @class SITNA.cfg.ClusterOptions
+ * @static
+ */
+/**
+ * Distancia en p\u00edxels que tienen que tener como m\u00e1ximo los puntos entre s\u00ed para que se agrupen en un cluster.
+ * @property distance
+ * @type number
+ */
+/**
+ * Si se establece a <code>true</code>, los puntos se agrupan y desagrupan con una transici\u00f3n animada.
+ * @property animate
+ * @type boolean|undefined
+ */
+/**
+ * Opciones de estilo de los clusters.
+ * @property styles
+ * @type SITNA.cfg.ClusterStyleOptions|undefined
  */
 
 /**
@@ -1653,103 +1859,103 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * @static
  */
 /**
- * Los mapas tienen un indicador de espera de carga.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen un indicador de espera de carga.
  * @property loadingIndicator
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default true
  */
 /**
- * Los mapas tienen una barra de navegaci\u00f3n con control de zoom.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen una barra de navegaci\u00f3n con control de zoom.
  * @property navBar
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen una barra de escala.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen una barra de escala.
  * @property scaleBar
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen un indicador num\u00e9rico de escala.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen un indicador num\u00e9rico de escala.
  * @property scale
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen un selector num\u00e9rico de escala.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen un selector num\u00e9rico de escala.
  * @property scaleSelector
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen un mapa de situaci\u00f3n.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen un mapa de situaci\u00f3n.
  * @property overviewMap
  * @type boolean|SITNA.cfg.OverviewMapOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen un selector de mapas de fondo.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen un selector de mapas de fondo.
  * @property basemapSelector
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen atribuci\u00f3n. La atribuci\u00f3n es un texto superpuesto al mapa que act\u00faa como reconocimiento de la procedencia de los datos que se muestran.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen atribuci\u00f3n. La atribuci\u00f3n es un texto superpuesto al mapa que act\u00faa como reconocimiento de la procedencia de los datos que se muestran.
  * @property attribution
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default true
  */
 /**
- * Los mapas tienen una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.
  * @property TOC
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen un indicador de coordenadas y de sistema de referencia espacial.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen un indicador de coordenadas y de sistema de referencia espacial.
  * @property coordinates
  * @type boolean|SITNA.cfg.CoordinatesOptions|undefined
  * @default true
  */
 /**
- * Los mapas tienen leyenda.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen leyenda.
  * @property legend
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * Los mapas muestran los datos asociados a los marcadores cuando se pulsa sobre ellos.
+ * Si se establece a un valor <em>truthy</em>, los mapas muestran los datos asociados a los marcadores cuando se pulsa sobre ellos.
  * @property popup
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen un buscador de entidades geogr\u00e1ficas y localizador de coordenadas.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen un buscador. El buscador localiza coordenadas y busca entidades geogr\u00e1ficas tales como: municipios, cascos urbanos, v\u00edas, portales y parcelas catastrales de IDENA.
  * @property search
- * @type boolean|SITNA.cfg.ControlOptions|undefined
+ * @type boolean|SITNA.cfg.SearchOptions|undefined
  * @default false
  */
 /**
- * Los mapas tienen un medidor de longitudes, \u00e1reas y per\u00edmetros.
+ * Si se establece a un valor <em>truthy</em>, los mapas tienen un medidor de longitudes, \u00e1reas y per\u00edmetros.
  * @property measure
  * @type boolean|SITNA.cfg.ControlOptions|undefined
  * @default false
  */
 /**
- * <p>Los mapas tienen un control que gestiona los clics del usuario en ellos.</p>
+ * <p>Si se establece a un valor <em>truthy</em>, los mapas tienen un control que gestiona los clics del usuario en ellos.</p>
  * @property click
  * @type boolean|SITNA.cfg.ClickOptions|undefined
  * @default false
  */
 /**
- * <p>Los mapas pueden abrir una ventana de Google StreetView.</p>
+ * <p>Si se establece a un valor <em>truthy</em>, los mapas pueden abrir una ventana de Google StreetView.</p>
  * @property streetView
  * @type boolean|SITNA.cfg.StreetViewOptions|undefined
  * @default true
  */
 /**
- * Los mapas responden a los clics con un informaci\u00f3n de las capas cargadas de tipo WMS. Se usa para ello la petici\u00f3n <code>getFeatureInfo</code> del standard WMS.
+ * Si se establece a un valor <em>truthy</em>, los mapas responden a los clics con un informaci\u00f3n de las capas cargadas de tipo WMS. Se usa para ello la petici\u00f3n <code>getFeatureInfo</code> del standard WMS.
  * Puede consultar el ejemplo <a href="../../examples/cfg.MapControlOptions.featureInfo.html">online</a>.
  * @property featureInfo
  * @type boolean|SITNA.cfg.ClickOptions|undefined
@@ -1834,7 +2040,7 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * @static
  */
 /**
- * El control asociado est\u00e1 activo, es decir, responde a los clics hechos en el mapa desde que se carga.
+ * Si se establece a <code>true</code>, el control asociado est\u00e1 activo, es decir, responde a los clics hechos en el mapa desde que se carga.
  * @property active
  * @type boolean|undefined
  */
@@ -1884,7 +2090,7 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  *             controls: {
  *                 streetView: {
  *                     viewDiv: "sv",
- *                     googleMapsKey: "AIzaSyBLRczjnHme5fWj9d6rZDJ2jq2-ApMhxi8"
+ *                     googleMapsKey: "AIzaSyDXDQza0kXXHNHqq0UqNWulbYmGZmPY6TM"
  *                 }
  *             }
  *         });
@@ -1898,8 +2104,86 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * @type string|undefined
  */
 
+/**
+ * Opciones de control de b\u00fasquedas.
+ * Esta clase no tiene constructor.
+ * <p>Puede consultar el ejemplo <a href="../../examples/cfg.SearchOptions.html">online</a>.</p>
+ * @class SITNA.cfg.SearchOptions
+ * @extends SITNA.cfg.ControlOptions
+ * @static  
+ */
+/**
+ * <p>Esta propiedad establece el atributo "placeHolder" del cajet\u00edn del buscador del mapa.</p>
+ * @property placeHolder
+ * @type string
+ * @default Municipio, casco urbano, calle, direcci\u00f3n… 
+ */
+/**
+ * <p>Esta propiedad establece el atributo "title" del cajet\u00edn y del bot\u00f3n del buscador del mapa.</p>
+ * @property instructions
+ * @type string
+ * @default Buscar municipio, casco urbano, calle, direcci\u00f3n, referencia catastral, coordenadas UTM o latitud-longitud
+ */
+/**
+ * <p>Esta propiedad activa/desactiva la localizaci\u00f3n de coordenadas en Sistema de Referencia ETRS89, bien UTM Huso 30 Norte (EPSG:25830) o latitud-longitud (EPSG:4258, EPSG:4326 o CRS:84) en el buscador del mapa.</p>
+ * @property coordinates
+ * @type boolean
+ * @default true
+ */
+/**
+ * <p>Esta propiedad activa/desactiva la b\u00fasqueda de municipios en el buscador del mapa.</p>
+ * @property municipality
+ * @type boolean
+ * @default true
+ */
+/**
+ * <p>Esta propiedad activa/desactiva la b\u00fasqueda de cascos urbanos en el buscador del mapa.</p>
+ * @property town
+ * @type boolean
+ * @default true
+ */
+/**
+ * <p>Esta propiedad activa/desactiva la b\u00fasqueda de v\u00edas en el buscador del mapa. Formato: entidad de poblaci\u00f3n, v\u00eda</p>
+ * @property street
+ * @type boolean
+ * @default true
+ */
+/**
+ * <p>Esta propiedad activa/desactiva la b\u00fasqueda de direcciones postales en el buscador del mapa. Formato: entidad de poblaci\u00f3n, v\u00eda, portal.</p>
+ * @property postalAddress
+ * @type boolean
+ * @default true
+ */
+/**
+ * <p>Esta propiedad activa/desactiva la b\u00fasqueda de parcelas catastrales en el buscador del mapa. Formato: municipio, pol\u00edgono, parcela.</p>
+ * @property cadastralParcel
+ * @type boolean
+ * @default true
+ * @example
+ *     <div id="mapa"/> 
+ *     <script>
+ *         // Creamos un mapa con el control de b\u00fasquedas. 
+ *         // Configuramos el buscador desactivando la b\u00fasqueda de parcelas y la localizaci\u00f3n de coordenadas.
+ *         // Indicamos un placeHolder y tooltip (propiedad "instructions") acorde con las b\u00fasquedas configuradas.
+ *         var map = new SITNA.Map("mapa", {
+ *             controls: {
+ *                 search: { 
+ *                     coordinates: false,
+ *                     cadastralParcel: false,
+ *                     municipality: false,
+ *                     town: true,
+ *                     street: true,
+ *                     postalAddress: true,
+ *                     placeHolder: "Municipio, casco urbano, calle o portal",
+ *                     instructions: "Buscar municipio, casco urbano, calle o portal"
+ *                 }
+ *             }
+ *         });
+ *     </script> 
+ */
+
 ///**
-// * Opciones de control de b\u00fasqueda de entidades geogr\u00e1ficas y localizador de coordenadas.
+// * Opciones de control de b\u00fasquedas.
 // * Esta clase no tiene constructor.
 // * @class SITNA.cfg.SearchOptions
 // * @extends SITNA.cfg.ControlOptions
@@ -1997,6 +2281,12 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * @property polygon
  * @type SITNA.cfg.PolygonStyleOptions|undefined
  */
+/**
+ * Opciones de estilo de cluster de puntos. Consultar SITNA.cfg.LayerOptions.{{#crossLink "SITNA.cfg.LayerOptions/cluster:property"}}{{/crossLink}}
+ * para saber c\u00f3mo mostrar clusters.
+ * @property cluster
+ * @type SITNA.cfg.ClusterStyleOptions|undefined
+ */
 
 /**
  * <p>Opciones de estilo de marcador (punto de mapa con icono).
@@ -2040,13 +2330,13 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * Color de trazo de la l\u00ednea, representado en formato hex triplet (<code>"#RRGGBB"</code>).
  * @property strokeColor
  * @type string
- * @default "#f00"
+ * @default "#f00" en pol\u00edgonos y l\u00edneas
  */
 /**
  * Anchura de trazo en p\u00edxeles de la l\u00ednea.
  * @property width
  * @type number
- * @default 2
+ * @default 2 en pol\u00edgonos y l\u00edneas
  */
 
 /**
@@ -2060,13 +2350,104 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * Color de relleno, representado en formato hex triplet (<code>"#RRGGBB"</code>).
  * @property fillColor
  * @type string
- * @default "#000"
+ * @default "#000" en pol\u00edgonos, "#336" en clusters
  */
 /**
  * Opacidad de relleno, valor de 0 a 1.
  * @property fillOpacity
  * @type number
- * @default .3
+ * @default 0.3 en pol\u00edgonos, 0.6 en clusters
+ */
+
+/**
+ * <p>Opciones de estilo de punto. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci\u00f3n puede sobreescribir los valores por defecto de las propiedades de esta clase
+ * (consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>
+ * @class SITNA.cfg.PointStyleOptions
+ * @extends SITNA.cfg.PolygonStyleOptions
+ * @static
+ */
+/**
+ * Radio en pixels del s\u00edmbolo que representa el punto.
+ * @property radius
+ * @type number|undefined
+ * @default 6 en puntos
+ */
+/**
+ * Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (<code>"#RRGGBB"</code>).
+ * @property fontColor
+ * @type string|undefined
+ * @default "#fff" en clusters
+ */
+/**
+ * Tama\u00f1o de fuente del texto de la etiqueta descriptiva del punto.
+ * @property fontSize
+ * @type number|undefined
+ * @default 9 en clusters
+ */
+
+/**
+ * <p>Opciones de estilo de cluster de puntos. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci\u00f3n puede sobreescribir los valores por defecto de las propiedades de esta clase
+ * (consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>
+ * @class SITNA.cfg.ClusterStyleOptions
+ * @static
+ */
+/**
+ * <p>Opciones de estilo del punto que representa el cluster. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetaci\u00f3n puede sobreescribir los valores por defecto de las propiedades de esta clase
+ * (consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones).</p><p>Esta clase no tiene constructor.</p>
+ * <p>Puede consultar tambi\u00e9n el ejemplo <a href="../../examples/cfg.ClusterStyleOptions.point.html">online</a>.</p>
+ * @property point
+ * @type SITNA.cfg.PointStyleOptions|undefined
+ * @example
+ *     <div id="mapa"></div>
+ *     <script>
+ *         // Creamos un mapa con una capa vectorial,
+ *         // clustering activado a 50 pixels y estilos personalizados.
+ *         var map = new SITNA.Map("mapa", {
+ *             workLayers: [
+ *                {
+ *                    id: "cluster",
+ *                    type: SITNA.Consts.layerType.VECTOR,
+ *                    title: "Clusters",
+ *                    cluster: {
+ *                        distance: 50,
+ *                        styles: {
+ *                            point: {
+ *                                fillColor: "#f90",
+ *                                fillOpacity: 1,
+ *                                strokeColor: "#c60",
+ *                                strokeWidth: 2,
+ *                                fontColor: "#f90"
+ *                            }
+ *                        }
+ *                    }
+ *                }
+ *            ]
+ *         });
+ *
+ *        map.loaded(function () {
+ *            // A\u00f1adimos puntos aleatorios
+ *            var extent = TC.Cfg.initialExtent;
+ *            var dx = extent[2] - extent[0];
+ *            var dy = extent[3] - extent[1];
+ *
+ *            var randomPoint = function () {
+ *                var x = extent[0] + Math.random() * dx;
+ *                var y = extent[1] + Math.random() * dy;
+ *                return [x, y];
+ *            }
+ *
+ *            for (var i = 0; i < 200; i++) {
+ *                var point = randomPoint();
+ *                map.addMarker(point, {
+ *                    layer: "cluster",
+ *                    data: {
+ *                        x: point[0],
+ *                        y: point[1]
+ *                    }
+ *                });
+ *            }
+ *        });
+ *     </script>
  */
 
 /**
@@ -2105,7 +2486,7 @@ SITNA.Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
  * @type object|undefined
  */
 /**
- * Al a\u00f1adirse el marcador al mapa se muestra con el bocadillo de informaci\u00f3n asociada visible por defecto.
+ * Si se establece a <code>true</code>, al a\u00f1adirse el marcador al mapa se muestra con el bocadillo de informaci\u00f3n asociada visible por defecto.
  * @property showPopup
  * @type boolean|undefined
  */

@@ -57,6 +57,11 @@
  * @property thumbnail
  * @type string|undefined
  */
+/**
+ * Opciones de clustering de puntos.
+ * @property cluster
+ * @type TC.cfg.ClusterOptions|undefined
+ */
 
 /**
  * \u00c1rbol de elementos de capa.
@@ -138,7 +143,7 @@ TC.Layer = function (options) {
 
     if (_layer.options.hideTree === undefined) {
         _layer.options.hideTree = true;
-    }    
+    }
 
     if (_layer.options.hideTitle === undefined) {
         _layer.options.hideTitle = false;
@@ -350,14 +355,20 @@ TC.Layer.prototype.getNodeVisibility = function (id) {
 };
 
 
-TC.Layer.prototype.getResolutions = function ()
-{
-    if (this.wrap.getResolutions)
-    {
+TC.Layer.prototype.getResolutions = function () {
+    if (this.wrap.getResolutions) {
         return this.wrap.getResolutions();
     }
-    else
-    {
+    else {
         return [];
     }
+};
+
+TC.Layer.prototype.getLegendUrl = function (src) {
+    var self = this;
+
+    return src;
+};
+
+TC.Layer.prototype.setProjection = function () {
 };

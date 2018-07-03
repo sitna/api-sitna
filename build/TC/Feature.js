@@ -70,9 +70,7 @@ TC.Feature.prototype.getBounds = function () {
 };
 
 TC.Feature.prototype.setStyle = function (style) {
-    var self = this;
-    $.extend(true, self.options, style);
-    this.wrap.setStyle(self.options);
+    this.wrap.setStyle(style);
 };
 
 TC.Feature.prototype.getLegend = function () {
@@ -81,6 +79,16 @@ TC.Feature.prototype.getLegend = function () {
         self._legend = self.wrap.getLegend();
     }
     return self._legend;
+};
+
+TC.Feature.prototype.getCoords = function () {
+    return this.wrap.getGeometry();
+};
+
+TC.Feature.prototype.setCoords = function (coords) {
+    const self = this;
+    self.geometry = coords;
+    return self.wrap.setGeometry(coords);
 };
 
 TC.Feature.prototype.getData = function () {
@@ -117,6 +125,7 @@ TC.Feature.prototype.getInfo = function () {
         }
         else {
             var html = [];
+            var openText = TC.Util.getLocaleString(locale, 'open');
             for (var key in data) {
                 var value = data[key];
                 if (typeof value === 'string' || typeof value === 'number' || typeof value === 'undefined') {
@@ -128,10 +137,11 @@ TC.Feature.prototype.getInfo = function () {
                         html[html.length] = '<a href="';
                         html[html.length] = value;
                         html[html.length] = '" target="_blank">';
-                    }
-                    html[html.length] = value !== void (0) ? TC.Util.formatNumber(value, locale) : '&mdash;';
-                    if (isUrl) {
+                        html[html.length] = openText;
                         html[html.length] = '</a>';
+                    }
+                    else {
+                        html[html.length] = value !== void (0) ? TC.Util.formatNumber(value, locale) : '&mdash;';
                     }
                     html[html.length] = '</td></tr>';
                 }
@@ -153,7 +163,7 @@ TC.Feature.prototype.getInfo = function () {
         }
     }
     if (!result) {
-        result = TC.Util.getLocaleString(locale.replace('-', '_'), 'noData');
+        result = TC.Util.getLocaleString(locale, 'noData');
     }
     return result;
 };
@@ -196,13 +206,11 @@ TC.Feature.prototype.showPopup = function (control) {
         }
         ctlDeferred.then(function (ctl) {
             ctl.currentFeature = self;
-            var popups = self.layer.map.getControlsByClass(TC.control.Popup);
-            for (var i = 0, len = popups.length; i < len; i++) {
-                var p = popups[i];
-                if (p !== ctl) {
+            self.layer.map.getControlsByClass(TC.control.Popup).forEach(function (p) {
+                if (p.isVisible()) {
                     p.hide();
                 }
-            }
+            });
             self.wrap.showPopup(ctl);
             self.layer.map.$events.trigger($.Event(TC.Consts.event.POPUP, { control: ctl }));
             ctl.fitToView(true);
@@ -224,7 +232,7 @@ TC.Feature.prototype.unselect = function () {
     var self = this;
     self._selected = false;
     // Volvemos al estilo por defecto
-    self.setStyle();
+    self.setStyle(self.options);
 
     if (self.layer) {
         var idx = $.inArray(self, self.layer.selectedFeatures);

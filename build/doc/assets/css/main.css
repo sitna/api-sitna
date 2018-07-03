@@ -297,7 +297,7 @@ td {
     display: block;
 }
 
-.hide-inherited .inherited {
+.inherited .meta {
     display: none;
 }
 

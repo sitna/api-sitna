@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.3.0</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.4.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -51,6 +51,10 @@
             
                 <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
             
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterOptions.html">SITNA.cfg.ClusterOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterStyleOptions.html">SITNA.cfg.ClusterStyleOptions</a></li>
+            
                 <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
             
                 <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
@@ -67,7 +71,11 @@
             
                 <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
             
+                <li><a class="type" href="../classes/SITNA.cfg.PointStyleOptions.html">SITNA.cfg.PointStyleOptions</a></li>
+            
                 <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.SearchOptions.html">SITNA.cfg.SearchOptions</a></li>
             
                 <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
             
@@ -104,7 +112,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l1281"><code>sitna.js:1281</code></a>
+            Se define en: <a href="../files/sitna.js.html#l1323"><code>sitna.js:1323</code></a>
         </div>
     
 
@@ -116,7 +124,7 @@
 
 
 <div class="box intro">
-    <p>Colección de identificadores de capas útiles de IDENA.
+    <p>Colección de identificadores de capas útiles de IDENA y otros servicios de terceros.
 No se deberían modificar las propiedades de esta clase.</p>
 
 </div>
@@ -165,6 +173,24 @@ No se deberían modificar las propiedades de esta clase.</p>
                 </li>
             
                 <li class="index-item property">
+                    <a href="#property_CARTO_DARK">CARTO_DARK</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_CARTO_LIGHT">CARTO_LIGHT</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_CARTO_VOYAGER">CARTO_VOYAGER</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
                     <a href="#property_IDENA_BASEMAP">IDENA_BASEMAP</a>
 
                     
@@ -201,6 +227,24 @@ No se deberían modificar las propiedades de esta clase.</p>
                 </li>
             
                 <li class="index-item property">
+                    <a href="#property_IDENA_DYNORTHOPHOTO">IDENA_DYNORTHOPHOTO</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_IDENA_DYNORTHOPHOTO2012">IDENA_DYNORTHOPHOTO2012</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_IDENA_DYNORTHOPHOTO2014">IDENA_DYNORTHOPHOTO2014</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
                     <a href="#property_IDENA_ORTHOPHOTO">IDENA_ORTHOPHOTO</a>
 
                     
@@ -208,6 +252,30 @@ No se deberían modificar las propiedades de esta clase.</p>
             
                 <li class="index-item property">
                     <a href="#property_IDENA_ORTHOPHOTO2012">IDENA_ORTHOPHOTO2012</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_IDENA_ORTHOPHOTO2014">IDENA_ORTHOPHOTO2014</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_MAPBOX_SATELLITE">MAPBOX_SATELLITE</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_MAPBOX_STREETS">MAPBOX_STREETS</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_OSM">OSM</a>
 
                     
                 </li>
@@ -260,7 +328,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1335"><code>sitna.js:1335</code></a>
+        <a href="../files/sitna.js.html#l1437"><code>sitna.js:1437</code></a>
         
         </p>
 
@@ -272,6 +340,162 @@ No se deberían modificar las propiedades de esta clase.</p>
     <div class="extended-detail">
         <div class="description">
             <p>Identificador de una capa en blanco.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_CARTO_DARK" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>CARTO_DARK</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1419"><code>sitna.js:1419</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de Carto Dark a través del WMTS de la API SITNA.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_CARTO_LIGHT" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>CARTO_LIGHT</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1413"><code>sitna.js:1413</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de Carto Light a través del WMTS de la API SITNA.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_CARTO_VOYAGER" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>CARTO_VOYAGER</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1407"><code>sitna.js:1407</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de Carto Voyager a través del WMTS de la API SITNA.</p>
 
         </div>
 
@@ -312,7 +536,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1293"><code>sitna.js:1293</code></a>
+        <a href="../files/sitna.js.html#l1335"><code>sitna.js:1335</code></a>
         
         </p>
 
@@ -364,7 +588,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1311"><code>sitna.js:1311</code></a>
+        <a href="../files/sitna.js.html#l1353"><code>sitna.js:1353</code></a>
         
         </p>
 
@@ -375,7 +599,7 @@ No se deberían modificar las propiedades de esta clase.</p>
 
     <div class="extended-detail">
         <div class="description">
-            <p>Identificador de la capa de la combinación de ortofoto 2014 y mapa base del WMS de IDENA.</p>
+            <p>Identificador de la capa de la combinación de ortofoto de máxima actualidad y mapa base del WMS de IDENA.</p>
 
         </div>
 
@@ -416,7 +640,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1317"><code>sitna.js:1317</code></a>
+        <a href="../files/sitna.js.html#l1359"><code>sitna.js:1359</code></a>
         
         </p>
 
@@ -468,7 +692,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1299"><code>sitna.js:1299</code></a>
+        <a href="../files/sitna.js.html#l1341"><code>sitna.js:1341</code></a>
         
         </p>
 
@@ -520,7 +744,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1305"><code>sitna.js:1305</code></a>
+        <a href="../files/sitna.js.html#l1347"><code>sitna.js:1347</code></a>
         
         </p>
 
@@ -572,7 +796,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1323"><code>sitna.js:1323</code></a>
+        <a href="../files/sitna.js.html#l1377"><code>sitna.js:1377</code></a>
         
         </p>
 
@@ -584,6 +808,162 @@ No se deberían modificar las propiedades de esta clase.</p>
     <div class="extended-detail">
         <div class="description">
             <p>Identificador de la capa de mapa base del WMS de IDENA.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_IDENA_DYNORTHOPHOTO" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>IDENA_DYNORTHOPHOTO</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1383"><code>sitna.js:1383</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de ortofoto de máxima actualidad del WMS de IDENA.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_IDENA_DYNORTHOPHOTO2012" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>IDENA_DYNORTHOPHOTO2012</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1395"><code>sitna.js:1395</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de ortofoto 2012 del WMS de IDENA.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_IDENA_DYNORTHOPHOTO2014" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>IDENA_DYNORTHOPHOTO2014</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1389"><code>sitna.js:1389</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de ortofoto 2014 del WMS de IDENA.</p>
 
         </div>
 
@@ -624,7 +1004,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1287"><code>sitna.js:1287</code></a>
+        <a href="../files/sitna.js.html#l1329"><code>sitna.js:1329</code></a>
         
         </p>
 
@@ -635,7 +1015,7 @@ No se deberían modificar las propiedades de esta clase.</p>
 
     <div class="extended-detail">
         <div class="description">
-            <p>Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.</p>
+            <p>Identificador de la capa de ortofoto de máxima actualidad del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.</p>
 
         </div>
 
@@ -676,7 +1056,7 @@ No se deberían modificar las propiedades de esta clase.</p>
             
         
         
-        <a href="../files/sitna.js.html#l1329"><code>sitna.js:1329</code></a>
+        <a href="../files/sitna.js.html#l1371"><code>sitna.js:1371</code></a>
         
         </p>
 
@@ -688,6 +1068,214 @@ No se deberían modificar las propiedades de esta clase.</p>
     <div class="extended-detail">
         <div class="description">
             <p>Identificador de la capa de ortofoto 2012 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_IDENA_ORTHOPHOTO2014" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>IDENA_ORTHOPHOTO2014</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1365"><code>sitna.js:1365</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_MAPBOX_SATELLITE" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>MAPBOX_SATELLITE</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1431"><code>sitna.js:1431</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de Mapbox Satellite a través del WMTS de la API SITNA.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_MAPBOX_STREETS" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>MAPBOX_STREETS</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1425"><code>sitna.js:1425</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de Mapbox Streets a través del WMTS de la API SITNA.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            <a name="property_OSM" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>OSM</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+        <span class="flag final">final</span>
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l1401"><code>sitna.js:1401</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Identificador de la capa de OpenStreetMap a través del WMTS de la API SITNA.</p>
 
         </div>
 

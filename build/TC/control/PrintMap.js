@@ -39,10 +39,10 @@ TC.inherit(TC.control.PrintMap, TC.Control);
                 printParameters = '&';
             }
 
-            printParameters += "layout=print&orientation=" +
-                                  $("#print-design").val() + "&title=" +
-                                  $("input.tc-ctl-printMap-title").val() + "&size=" +
-                                  $("#print-size").val();
+            printParameters += "layout=layout/print&orientation=" +
+                $("#print-design").val() + "&title=" +
+                $("input.tc-ctl-printMap-title").val() + "&size=" +
+                $("#print-size").val();
 
             var url;
             if (window.location.hash) {
@@ -67,7 +67,6 @@ TC.inherit(TC.control.PrintMap, TC.Control);
 
                     for (var j = 0; j < features.length; j++) {
                         var feat = features[j];
-                        var options = {};
                         var styleObj = {};
 
                         if (TC.feature.Marker && feat instanceof TC.feature.Marker && feat.options.noPrint) {
@@ -75,8 +74,8 @@ TC.inherit(TC.control.PrintMap, TC.Control);
                         } else {
                             if (feat.layer.styles) {
                                 var styles = feat.layer.styles[feat.STYLETYPE] == undefined ?
-                                     feat.layer.styles[(feat.STYLETYPE === "polyline" ? "line" : feat.STYLETYPE)] :
-                                     feat.layer.styles[(feat.STYLETYPE === "multipolygon" ? "polygon" : feat.STYLETYPE)];
+                                    feat.layer.styles[(feat.STYLETYPE === "polyline" ? "line" : feat.STYLETYPE)] :
+                                    feat.layer.styles[(feat.STYLETYPE === "multipolygon" ? "polygon" : feat.STYLETYPE)];
 
                                 for (var item in styles) {
                                     styleObj[item] = typeof (styles[item]) === "function" ? styles[item](feat) : styles[item];
@@ -84,7 +83,17 @@ TC.inherit(TC.control.PrintMap, TC.Control);
                             }
                         }
 
-                        mapFeatures.push({ geometry: feat.geometry, CLASSNAME: feat.CLASSNAME, options: $.extend({}, feat.options, styleObj, feat.getStyle(), { layer: null }) });
+                        var fractionsOrPixels = function (value) { return value > 1 ? 'pixels' : 'fraction'; }
+                        var style = feat.getStyle();
+                        var options = $.isEmptyObject(style) ? feat.options : style;
+
+                        if (options.anchor && $.isArray(options.anchor)) {
+                            var units = {
+                                anchorXUnits: fractionsOrPixels(options.anchor[0]),
+                                anchorYUnits: fractionsOrPixels(options.anchor[1])
+                            }
+                        }
+                        mapFeatures.push({ geometry: feat.geometry, CLASSNAME: feat.CLASSNAME, options: $.extend({}, styleObj, options, units, { layer: null }) });
                     }
                 }
             }

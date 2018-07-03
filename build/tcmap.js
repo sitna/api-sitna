@@ -1,616 +1,14 @@
-/*! async-js descargado de https://www.npmjs.com/package/async-js en 2015-04-23 (Ver https://github.com/th507/asyncJS) */
 /**
- * Async JavaScript Loader
- * https://github.com/th507/asyncJS
- *
- * Slightly Deferent JavaScript loader and dependency manager
- *
- * @author Jingwei "John" Liu <liujingwei@gmail.com>
+ * LoadJS descargado de https://github.com/muicss/loadjs
+ * @version 3.5.2
  */
-
-(function (name, context) {
-    /*jshint plusplus:false, curly:false, bitwise:false, laxbreak:true*/
-    "use strict";
-
-    // some useful shims and variables
-    var dataURIPrefix = "data:application/javascript,";
-
-    // do not record return value for asynchronous task
-    // if handler is OMITTED
-    var OMITTED = "OMITTED";
-
-    // for better compression
-    var Document = document;
-    var Window = window;
-    var ArrayPrototype = Array.prototype;
-
-    // detect Data URI support
-    var supportDataURI = true;
-
-    // As much as I love to use a semantic way to
-    // detect Data URI support, all the detection
-    // methods I could think of are asynchronous,
-    // which makes them less reliable when calling
-    // asyncJS immediately after its instantiation
-
-    // IE 8 or below does not support Data URI.
-    // IE 8 or below returns false
-    // http://tanalin.com/en/articles/ie-version-js
-    if (Document.all && !Document.addEventListener) {
-        supportDataURI = false;
-    }
-
-    /**
-    * @private
-    * @name getCutoffLength
-    * Get cut-off length for iteration
-    *
-    * @param {Array}  arr
-    * @param {Number} cutoff
-    */
-    function getCutoffLength(arr, cutoff) {
-        //because AsyncQueue#then could add sync task at any time
-        // we must read directly from this.tasks.length
-        var length = arr.length;
-        if (~cutoff && cutoff < length) length = cutoff;
-        return length;
-    }
-
-    /**
-     * @private
-     * @name timeout
-     * Run callback in setTimeout
-     *
-     * @param {Function} fn
-     */
-    function timeout(fn, s) {
-        Window.setTimeout(fn, s || 0);
-    }
-
-    /**
-     * @private
-     * @name immediate
-     * Run callback asynchronously (almost immediately)
-     *
-     * @param {Function} fn
-     */
-    var immediate = Window.requestAnimationFrame
-                || Window.webkitRequestAnimationFrame
-                || Window.mozRequestAnimationFrame
-                || timeout;
-
-    /**
-     * @private
-     * @name throwLater
-     * Throw Error asynchronously
-     *
-     * @param {Object}  error
-     */
-    function throwLater(error) {
-        timeout(function () { throw error; });
-    }
-
-    /**
-     * @private
-     * @name isURL
-     * Check if str is a URL
-     *
-     * @param {String} str
-     */
-    function isURL(str) {
-        // supports URL starts with http://, https://, and //
-        // or a single line that ends with .js or .php
-        return (
-            /(^(https?:)?\/\/)|(\.(js|php)$)/.test(str) &&
-            !/(\n|\r)/m.test(str)
-        );
-    }
-
-    /**
-     * @private
-     * @name isFunction
-     * Check if fn is a function
-     *
-     * @param {Function} fn
-     */
-    // This is duck typing, aka. guessing
-    function isFunction(fn) {
-        return fn && fn.constructor && fn.call && fn.apply;
-    }
-
-    /**
-     * @private
-     * @name makeArray
-     * Make an array out of given object
-     *
-     * @param {Object} obj
-     */
-    function makeArray(obj) {
-        var isArray;
-        if ((isArray = Array.isArray)) {
-            return isArray(obj) ? obj : [obj];
-        }
-        return ArrayPrototype.concat(obj);
-    }
-
-    /**
-     * @private
-     * @name slice
-     * Convert array-like object to array
-     *
-     * @param {Object} arr
-     */
-    function slice(arr) {
-        return ArrayPrototype.slice.call(arr);
-    }
-
-    /**
-     * @private
-     * @name factory
-     * Factory Method producing function
-     * that receives reduced arguments
-     *
-     * @param {Function} fn
-     */
-    // http://wiki.ecmascript.org/doku.php?id=conventions:safe_meta_programming
-    var call = Function.call;
-    function factory() {
-        var defaults = slice(arguments);
-
-        return function () {
-            // keep this as simple as possible
-            return call.apply(call, defaults.concat(slice(arguments)));
-        };
-    }
-
-    // end of shims
-
-    /**
-     * @private
-     * @name resolveScriptEvent
-     * Script event handler
-     *
-     * @param {Object} resolver
-     * @param {Object} evt
-     */
-    function resolveScriptEvent(resolver, evt) {
-        /*jshint validthis:true */
-        var script = this;
-
-        // run only when ready
-        // script.readyState is completed or loaded
-        if (script.readyState &&
-            !(/^c|loade/.test(script.readyState))
-        ) return;
-
-        // never rerun callback
-        if (script.loadStatus) return;
-
-        // unbind to avoid rerun
-        script.onload = script.onreadystatechange = script.onerror = null;
-
-        script.loadStatus = true;
-
-        if (evt && evt.type === "error") {
-            var src = script.src || "Resource",
-                fails = " fails to load.";
-
-            // custom error
-            // TODO: create a more specific stack for this Error
-            var error = {
-                name: "ConnectionError",
-                source: src,
-                evt: evt,
-                stack: src + fails,
-                message: fails,
-                toString: function () {
-                    return this.source + this.message;
-                }
-            };
-            throwLater(error);
-
-            resolver.reject(error);
-            return;
-        }
-
-        resolver.resolve();
-    }
-
-    /**
-     * @private
-     * @name appendScript
-     * Append asynchronous script to DOM
-     *
-     * @param {String|Function} str
-     * @param {Object} resolver
-     */
-    function appendScript(str, resolver) {
-        var ScriptTagName = "script";
-        var script = Document.createElement(ScriptTagName);
-
-        // at least one script could be found,
-        // the one which wraps around asyncJS
-        var scripts = Document.getElementsByTagName(ScriptTagName);
-        var lastScript = scripts[scripts.length - 1];
-
-        script.async = true;
-        script.src = str;
-
-        if (!resolver) return;
-
-        // executes callback if given
-        script.loadStatus = false;
-
-        var resolveScript = factory(resolveScriptEvent, script, resolver);
-
-        // onload for all sane browsers
-        // onreadystatechange for legacy IE
-        script.onload = script.onreadystatechange = script.onerror = resolveScript;
-
-        // inline script tends to change nearby DOM elements
-        // so we append script closer to the caller
-        // this is at best a ballpark guess and
-        // might not work well with some inline script
-        var slot = lastScript;
-
-        // in case running from Console
-        // we might encounter a scriptless page
-        slot = slot || document.body.firstChild;
-
-        slot.parentNode.insertBefore(script, slot);
-    }
-
-
-    /**
-     * @private
-     * @name loadFunction
-     * Loads JS function or script string for
-     * browser that does not support Data URI
-     *
-     * @param {String|Function} js
-     * @param {Function} fn
-     */
-    function loadFunction(js, resolver) {
-        immediate(function () {
-            try {
-                js.call(null, resolver);
-            }
-            catch (e) {
-                resolver.reject(e);
-            }
-        });
-    }
-
-    /**
-     * @private
-     * @name load
-     * Loads one request or executes one chunk of code
-     *
-     * @param {String|Function} js
-     * @param {Function} resolve
-     */
-    function load(js, resolver) {
-        /*jshint newcap:false, evil:true*/
-        // js is not a function
-        if (!isFunction(js)) {
-            if (isURL(js)) {
-                appendScript(js, resolver);
-                return;
-            }
-            if (supportDataURI) {
-                // wraps up inline JavaScript into external script
-                js = dataURIPrefix + encodeURIComponent(js);
-                appendScript(js, resolver);
-                return;
-            }
-        }
-
-        var fn = isFunction(js) ? js : Function(js);
-
-        // a synchronous function is wrapped into a special function
-        // so that we could use the same logic as an asynchronous function
-        if (!resolver.async) {
-            var task = fn;
-            fn = function (resolver) {
-                try {
-                    task.call(null);
-                    resolver.resolve();
-                }
-                catch (e) {
-                    resolver.reject(e);
-                }
-            };
-        }
-
-        loadFunction(fn, resolver);
-    }
-
-    /**
-     * @public
-     * @name AsyncQueue
-     * Create a semi-Promise for asyncJS
-     * @constructor
-     *
-     * @param {Array|String|Function} tasks
-     * @param {Function} fn
-     */
-    function AsyncQueue(tasks, fn) {
-        // better compression for shrinking `this`
-        var self = this;
-
-        // TODO: exposing this is not safe
-        self.tasks = [];
-        self.callbacks = [];
-        self.errors = [];
-
-        // return values of Promise
-        self.data = {};
-
-        // resolved task index
-        self.nextTask = 0;
-
-        // resolved callback index
-        self.nextCallback = 0;
-
-        // -1 (default) means not waiting for AsyncQueue#then
-        self.until = -1;
-
-        // queue is executing callback
-        self.digest = false;
-
-        // add tasks and callbacks
-        self.add(tasks).whenDone(fn);
-    }
-
-    /**
-     * @private
-     * @name resolveCallback
-     * Resolve next asyncJS callback
-     */
-    function resolveCallback() {
-        /*jshint validthis:true*/
-        var self = this;
-
-        // if current digestion circle is still active
-        // then try again later
-        if (self.digest) {
-            timeout(factory(resolveCallback, self), 50 / 3);
-            return;
-        }
-
-        self.digest = true;
-
-        var fn, next, i = self.nextCallback;
-
-        // always update length for next iteration
-        for (; i < getCutoffLength(self.callbacks, self.until) ; i++) {
-            if (self.nextTask !== self.tasks.length) continue;
-
-            next = self.nextCallback;
-
-            fn = self.callbacks[next];
-
-            if (fn) {
-                self.nextCallback = i + 1;
-
-                // passing in current taskIndex
-                fn.call(null, self.data, self.nextTask - 1, self.errors);
-
-                // if callback is not to generated function
-                // then it would advance to the next iteration
-                if (!fn.untilThen) continue;
-
-                // reduce nextCallback count
-                self.nextCallback--;
-
-                // release iteration lock
-                self.until = -1;
-            }
-
-            // remove invalid or untilThen function
-            self.callbacks.splice(next, 1);
-        }
-
-        self.digest = false;
-    }
-
-    /**
-     * @private
-     * @name nextTick
-     * Advance to next tick in the queue
-     * For AsyncQueue#reject or AsyncQueue#resolve
-     *
-     * @param {String} handle
-     * @param {Object} data
-     */
-    function nextTick() {
-        /*jshint validthis:true*/
-        var self = this;
-
-        // never resolve when tasks are finished
-        if (self.nextTask < self.tasks.length) {
-            // if tasks are still queueing
-            // increment nextTask
-            if (++self.nextTask !== self.tasks.length) return self;
-        }
-
-        // check callbacks if all tasks are finished
-        resolveCallback.call(self);
-        return self;
-    }
-
-    /**
-     * @private
-     * @name resolve
-     * Resolve next asyncJS queue
-     * Normally, you never have to call this
-     *
-     * @param {String} handle
-     * @param {Object} data
-     */
-    AsyncQueue.prototype.resolve = function (handle, data) {
-        /*jshint validthis:true*/
-        var self = this;
-
-        // save data if available and necessary
-        if (handle && handle !== OMITTED) self.data[handle] = data;
-
-        return nextTick.call(self);
-    };
-
-    /**
-     * @private
-     * @name reject
-     * Reject and continue next asyncJS queue
-     *
-     * @param {Object} error
-     */
-    AsyncQueue.prototype.reject = function (error) {
-        /*jshint validthis:true*/
-        var self = this;
-
-        if (error) {
-            throwLater(error);
-
-            self.errors.push(error);
-        }
-
-        // keep executing other stacked tasks
-        return nextTick.call(self);
-    };
-
-    /**
-     * @public
-     * @name AsyncQueue#whenDone
-     * Attach extra callback to next asyncJS queue
-     *
-     * @param {Function} fn
-     */
-    AsyncQueue.prototype.whenDone = function (fn) {
-        // save a few bytes
-        var self = this;
-        if (!fn) return self;
-
-        // tasks undone
-        if (self.nextTask > self.tasks.length) return self;
-
-        // add callback function
-        self.callbacks.push(fn);
-
-        // try resolve
-        if (self.nextTask === self.tasks.length) self.resolve();
-
-        return self;
-    };
-
-    /**
-     * @public
-     * @name AsyncQueue#add
-     * Add tasks to next asyncJS queue
-     *
-     * @param {Array|String|Function} tasks
-     */
-    AsyncQueue.prototype.add = function (tasks, handle) {
-        var self = this;
-        if (!tasks) return self;
-
-        // warn user if returned data could overwrite
-        // existing data, without stopping further execution
-        if (handle && self[handle]) {
-            var error = new Error("Callback value name: " + handle + " is registered");
-
-            throwLater(error);
-            self.errors.push(error);
-        }
-
-        tasks = makeArray(tasks);
-
-        var resolver = {
-            resolve: factory(self.resolve, self, handle),
-            reject: self.reject,
-            async: !!handle
-        };
-
-        for (var i = 0, fn; i < tasks.length; i++) {
-            fn = tasks[i];
-            if (!fn) continue;
-
-            // this is just for future reference
-            self.tasks.push(fn);
-
-            // resolve function
-            load(fn, self);
-        }
-
-        return self;
-    };
-
-    /**
-     * @public
-     * @name AsyncQueue#then
-     * Add a SINGLE dependent task to next asyncJS queue
-     * which blocks all following callbacks
-     * until this task is finished
-     *
-     * @param {Array|String|Function} task
-     */
-    AsyncQueue.prototype.then = function (task, handle) {
-        var self = this;
-
-        if (!task) return self;
-
-        // if there are still tasks unfinished
-        // add new tasks when this function
-        // that has a `untilthen` property
-        function addDependent() {
-            // when `resolveCallback` sees the
-            // property, it will stop executing
-            // all other callbacks until it is done
-            self.until = self.nextCallback;
-
-            self.add(task, handle);
-        }
-
-        addDependent.untilThen = true;
-
-        return self.whenDone(addDependent);
-    };
-
-    /**
-     * @public
-     * @name asyncJS
-     * Loads multiple requests or executes inline code
-     *
-     * @param {String|Array} js
-     * @param {Function} fn
-     *
-     * @return {Object} asyncJS queue
-     */
-    function asyncJS(js, fn) {
-        return new AsyncQueue(js, fn);
-    }
-
-    // export asyncJS
-    /*jshint node:true*/
-    /*global define*/
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = asyncJS;
-    }
-    else if (typeof define === "function" && define.amd) {
-        define(function () { return asyncJS; });
-    }
-    else {
-        context[name] = asyncJS;
-    }
-}("asyncJS", this));
-
-
+loadjs = function () { var n = function () { }, e = {}, t = {}, r = {}; function c(n, e) { if (n) { var c = r[n]; if (t[n] = e, c) for (; c.length;)c[0](n, e), c.splice(0, 1) } } function i(e, t) { e.call && (e = { success: e }), t.length ? (e.error || n)(t) : (e.success || n)(e) } function o(e, t, r, c) { var i, s, u = document, f = r.async, a = (r.numRetries || 0) + 1, h = r.before || n; c = c || 0, /(^css!|\.css$)/.test(e) ? (i = !0, (s = u.createElement("link")).rel = "stylesheet", s.href = e.replace(/^css!/, "")) : ((s = u.createElement("script")).src = e, s.async = void 0 === f || f), s.onload = s.onerror = s.onbeforeload = function (n) { var u = n.type[0]; if (i && "hideFocus" in s) try { s.sheet.cssText.length || (u = "e") } catch (n) { u = "e" } if ("e" == u && (c += 1) < a) return o(e, t, r, c); t(e, u, n.defaultPrevented) }, !1 !== h(e, s) && u.head.appendChild(s) } function s(n, t, r) { var s, u; if (t && t.trim && (s = t), u = (s ? r : t) || {}, s) { if (s in e) throw "LoadJS"; e[s] = !0 } !function (n, e, t) { var r, c, i = (n = n.push ? n : [n]).length, s = i, u = []; for (r = function (n, t, r) { if ("e" == t && u.push(n), "b" == t) { if (!r) return; u.push(n) } --i || e(u) }, c = 0; c < s; c++)o(n[c], r, t) }(n, function (n) { i(u, n), c(s, n) }, u) } return s.ready = function (n, e) { return function (n, e) { var c, i, o, s = [], u = (n = n.push ? n : [n]).length, f = u; for (c = function (n, t) { t.length && s.push(n), --f || e(s) }; u--;)i = n[u], (o = t[i]) ? c(i, o) : (r[i] = r[i] || []).push(c) }(n, function (n) { i(e, n) }), s }, s.done = function (n) { c(n, []) }, s.reset = function () { e = {}, t = {}, r = {} }, s.isDefined = function (n) { return n in e }, s }();
 
 var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.3.0';
+TC.version = '1.4.0';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -647,7 +45,7 @@ if (!TC.Consts) {
         MODERNIZR: 'lib/modernizr.js',
         JQUERY_LEGACY: TC.apiLocation + 'lib/jquery/jquery.1.10.2.js',
         JQUERY: '//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.js',
-        OL_LEGACY: 'lib/OpenLayers/OpenLayers.debug.js',
+        OL_LEGACY: 'lib/OpenLayers/OpenLayers.sitna.js',
         OL: 'lib/ol/build/ol-custom.js',
         OL_CONNECTOR_LEGACY: 'TC/ol/ol2.js',
         OL_CONNECTOR: 'TC/ol/ol.js',
@@ -656,14 +54,15 @@ if (!TC.Consts) {
         TEMPLATING_OVERRIDES: 'lib/dust/dust.overrides.js',
         PROJ4JS_LEGACY: 'lib/proj4js/legacy/proj4js-compressed.js',
         PROJ4JS: 'lib/proj4js/proj4-src.js',
-        SPATIALREFERENCE: 'http://spatialreference.org/',
+        EPSG: 'https://epsg.io/',
         LOCALFORAGE: TC.apiLocation + 'lib/localForage/localforage.min.js',
         D3C3: TC.apiLocation + 'lib/d3c3/d3c3.min.js',
         CESIUM: TC.apiLocation + 'lib/cesium/release/Cesium.js',
         JSNLOG: 'lib/jsnlog/jsnlog.min.js',
         ERROR_LOGGER: TC.apiLocation + 'errors/logger.ashx',
         PDFMAKE: TC.apiLocation + 'lib/pdfmake/pdfmake-fonts.min.js',
-        JSONPACK: 'lib/jsonpack/jsonpack.min.js'
+        JSONPACK: 'lib/jsonpack/jsonpack.min.js',
+        UA_PARSER: 'lib/ua-parser/ua-parser.min.js'
     };
     TC.Consts.classes = {
         MAP: 'tc-map',
@@ -675,6 +74,7 @@ if (!TC.Consts) {
         CHECKED: 'tc-checked',
         DISABLED: 'tc-disabled',
         ACTIVE: 'tc-active',
+        DEFAULT: 'tc-default',
         LASTCHILD: 'tc-lastchild',
         TRANSPARENT: 'tc-transparent',
         DROP: 'tc-drop',
@@ -709,7 +109,7 @@ if (!TC.Consts) {
         LAYERUPDATE: 'layerupdate.tc',
         LAYERERROR: 'layererror.tc',
         BEFOREBASELAYERCHANGE: 'beforebaselayerchange.tc',
-        BASELAYERCHANGE: 'baselayerchange.tc',        
+        BASELAYERCHANGE: 'baselayerchange.tc',
         BEFOREUPDATE: 'beforeupdate.tc',
         UPDATE: 'update.tc',
         BEFOREZOOM: 'beforezoom.tc',
@@ -746,20 +146,34 @@ if (!TC.Consts) {
         FEATUREINFOERROR: 'featureinfoerror.tc',
         CLICK: 'click.tc',
         MOUSEUP: 'mouseup.tc',
+        MOUSEMOVE: 'mousemove.tc',
+        MOUSELEAVE: 'mouseleave.tc',
         STARTLOADING: 'startloading.tc',
         STOPLOADING: 'stoploading.tc',
         EXTERNALSERVICEADDED: 'externalserviceadded.tc',
         ZOOMTO: 'zoomto.tc',
+        PROJECTIONCHANGE: 'projectionchange.tc'
     };
     TC.Consts.layer = {
         IDENA_ORTHOPHOTO: 'ortofoto',
         IDENA_BASEMAP: 'mapabase',
         IDENA_CADASTER: 'catastro',
         IDENA_CARTO: 'cartografia',
+        IDENA_ORTHOPHOTO2014: 'ortofoto2014',
         IDENA_ORTHOPHOTO2012: 'ortofoto2012',
         IDENA_DYNBASEMAP: 'mapabase_dinamico',
+        IDENA_DYNORTHOPHOTO: 'ortofoto_dinamico',
+        IDENA_DYNORTHOPHOTO2014: 'ortofoto2014_dinamico',
+        IDENA_DYNORTHOPHOTO2012: 'ortofoto2012_dinamico',
+        IDENA_DYNCARTO: 'cartografia_dinamico',
         IDENA_BW_RELIEF: 'relieve_bn',
         IDENA_BASEMAP_ORTHOPHOTO: 'base_orto',
+        OSM: 'osm',
+        CARTO_VOYAGER: 'carto_voyager',
+        CARTO_LIGHT: 'carto_light',
+        CARTO_DARK: 'carto_dark',
+        MAPBOX_STREETS: 'mapbox_streets',
+        MAPBOX_SATELLITE: 'mapbox_satellite',
         BLANK: 'ninguno'
     };
     TC.Consts.text = {
@@ -845,17 +259,28 @@ if (!TC.Consts) {
         URBAN: 'urban',
         COMMONWEALTH: 'commonwealth',
         ROAD: 'road',
-        ROADPK: 'roadpk'
+        ROADPK: 'roadpk',
+        PLACENAME: 'placename'
     };
     TC.Consts.mapSearchType = {
-    	MUNICIPALITY: TC.Consts.searchType.MUNICIPALITY,
-    	COUNCIL: TC.Consts.searchType.COUNCIL,
-    	URBAN: TC.Consts.searchType.URBAN,
-    	COMMONWEALTH: TC.Consts.searchType.COMMONWEALTH,
-    	GENERIC: 'generic'
+        MUNICIPALITY: TC.Consts.searchType.MUNICIPALITY,
+        COUNCIL: TC.Consts.searchType.COUNCIL,
+        URBAN: TC.Consts.searchType.URBAN,
+        COMMONWEALTH: TC.Consts.searchType.COMMONWEALTH,
+        GENERIC: 'generic'
     };
     TC.Consts.comparison = {
-        EQUAL_TO: '=='
+        EQUAL_TO: '==',
+        NOT_EQUAL_TO: '!=',
+        LESS_THAN: '<',
+        GREATER_THAN: '>',
+        LESS_THAN_EQUAL_TO: '=<',
+        GREATER_THAN_EQUAL_TO: '>=',
+        LIKE: 'is'
+    };
+    TC.Consts.logicalOperator = {
+        AND: 'and',
+        OR: 'or'
     };
     TC.Consts.WMTSEncoding = {
         KVP: 'KVP',
@@ -879,7 +304,20 @@ if (!TC.Consts) {
         TOPOJSON: 'TopoJSON',
         GPX: 'GPX',
         WKT: 'WKT'
-};
+    };
+    //enumerado de errores y warninqs derivados de descargas, getfeatures
+    TC.Consts.WFSErrors = {
+        GetFeatureNotAvailable: "GetFeatureNotAvailable",
+        LayersNotAvailable: "LayersNotAvailable",
+        NoLayers: "NoLayers",
+        NoValidLayers: "noValidLayers",
+        QueryNotAvailable: "QueryNotAvailable",
+        CapabilitiesParseError: "CapabilitiesParseError",
+        NumMaxFeatures: "NumMaxFeatures",
+        GetCapabilities: "GetCapabilities",
+        Indeterminate: "Indeterminate",
+        NoFeatures: "NoFeatures"
+    }
     /**
      * Colecci\u00f3n de identificadores de estados de visibilidad.
      * No se deber\u00edan modificar las propiedades de esta clase.
@@ -926,24 +364,8 @@ if (!TC.Consts) {
             var count = feature.features.length;
             var result = clusterRadii[count];
             if (!result) {
-                result = Math.round(Math.sqrt(count) * 15);
+                result = 2 + Math.round(Math.sqrt(count) * 5);
                 clusterRadii[count] = result;
-            }
-            return result;
-        };
-
-        var clusterFillColors = {};
-        var getClusterFillColor = function (feature) {
-            var count = feature.features.length;
-            var result = clusterFillColors[count];
-            if (!result) {
-                var r = Math.round(100 + 155 * Math.min(6, count) / 6);
-                if (r > 255) r = 255;
-                var g = Math.round(255 - 155 * Math.max(0, count - 4) / 6);
-                if (g < 100) g = 100;
-                var b = 100;
-                result = '#' + r.toString(16) + g.toString(16) + b.toString(16);
-                clusterFillColors[count] = result;
             }
             return result;
         };
@@ -965,12 +387,14 @@ if (!TC.Consts) {
             attribution: '<a href="http://sitna.navarra.es/" target="_blank">SITNA</a>',
             oldBrowserAlert: true,
             notifyApplicationErrors: false,
+            loggingErrorsEnabled: true,
             maxErrorCount: 10,
 
-            locale: 'es_ES',
+            locale: 'es-ES',
 
             screenSize: 20,
-            pixelTolerance: 10,
+            pixelTolerance: 10, // Used in GFI requests
+            maxResolutionError: 0.01, // Max error ratio to consider two resolutions equivalent
 
             toastDuration: 5000,
 
@@ -988,10 +412,25 @@ if (!TC.Consts) {
                     format: 'image/png',
                     isDefault: true,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNBASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO,
+                    title: 'Ortofoto 2017',
+                    type: TC.Consts.layerType.WMTS,
+                    url: '//idena.navarra.es/ogc/wmts/',
+                    matrixSet: 'epsg25830',
+                    layerNames: 'ortofoto2017',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO
+                },
+                {
+                    id: TC.Consts.layer.IDENA_ORTHOPHOTO2014,
                     title: 'Ortofoto 2014',
                     type: TC.Consts.layerType.WMTS,
                     url: '//idena.navarra.es/ogc/wmts/',
@@ -1001,7 +440,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2014.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2014
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO2012,
@@ -1014,7 +454,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012
                 },
                 {
                     id: TC.Consts.layer.IDENA_CADASTER,
@@ -1030,13 +471,16 @@ if (!TC.Consts) {
                 {
                     id: TC.Consts.layer.IDENA_CARTO,
                     title: 'Cartograf\u00eda topogr\u00e1fica',
-                    type: TC.Consts.layerType.WMS,
-                    url: '//idena.navarra.es/ogc/wms',
-                    layerNames: 'IDENA:cartografia_topografica',
-                    format: 'image/jpeg',
+                    type: TC.Consts.layerType.WMTS,
+                    url: '//idena.navarra.es/ogc/wmts/',
+                    matrixSet: 'epsg25830',
+                    layerNames: 'mapaTopografico',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-bta.png',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNCARTO
                 },
                 {
                     id: TC.Consts.layer.IDENA_BW_RELIEF,
@@ -1051,14 +495,14 @@ if (!TC.Consts) {
                 },
                 {
                     id: TC.Consts.layer.IDENA_BASEMAP_ORTHOPHOTO,
-                    title: 'Mapa base/ortofoto 2014',
+                    title: 'Mapa base/ortofoto',
                     type: TC.Consts.layerType.WMS,
                     url: '//idena.navarra.es/ogc/wms',
                     layerNames: 'mapaBase_orto',
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-base_ortho.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-base_ortho.png'
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNBASEMAP,
@@ -1070,6 +514,128 @@ if (!TC.Consts) {
                     isDefault: false,
                     hideTree: true,
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png'
+                },
+                {
+                    id: TC.Consts.layer.IDENA_DYNORTHOPHOTO,
+                    title: 'Ortofoto',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'ortofoto_maxima_actualidad',
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg'
+                },
+                {
+                    id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2014,
+                    title: 'Ortofoto 2014',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'ortofoto_5000_2014',
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2014.jpg'
+                },
+                {
+                    id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012,
+                    title: 'Ortofoto 2012',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'ortofoto_5000_2012',
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg'
+                },
+                {
+                    id: TC.Consts.layer.IDENA_DYNCARTO,
+                    title: 'Cartograf\u00eda topogr\u00e1fica',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'MTNa5_BTA',
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-bta.png'
+                },
+                {
+                    id: TC.Consts.layer.OSM,
+                    title: 'OSM',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/osm/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'osm',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-osm.png'
+                },
+                {
+                    id: TC.Consts.layer.CARTO_VOYAGER,
+                    title: 'CARTO Voyager',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/carto/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'voyager',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-voyager.png'
+                },
+                {
+                    id: TC.Consts.layer.CARTO_LIGHT,
+                    title: 'CARTO light',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/carto/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'light_all',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-light.png'
+                },
+                {
+                    id: TC.Consts.layer.CARTO_DARK,
+                    title: 'CARTO dark',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/carto/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'dark_all',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-dark.png'
+                },
+                {
+                    id: TC.Consts.layer.MAPBOX_STREETS,
+                    title: 'Mapbox Streets',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/mapbox/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'streets',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-mapbox-streets.png'
+                },
+                {
+                    id: TC.Consts.layer.MAPBOX_SATELLITE,
+                    title: 'Mapbox Satellite',
+                    type: TC.Consts.layerType.WMTS,
+                    url: TC.apiLocation + 'wmts/mapbox/',
+                    matrixSet: 'WorldWebMercatorQuad',
+                    layerNames: 'satellite',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-mapbox-satellite.jpg'
                 },
                 {
                     id: TC.Consts.layer.BLANK,
@@ -1106,7 +672,11 @@ if (!TC.Consts) {
                     url: '//idena.navarra.es/ogc/wfs',
                     allowedSearchTypes: {
                         coordinates: {},
-                        municipality: {}
+                        municipality: {},
+                        urban: {},
+                        street: {},
+                        number: {},
+                        cadastral: {}
                     }
                 },
                 measure: false,
@@ -1118,11 +688,16 @@ if (!TC.Consts) {
 
             styles: {
                 point: {
-                    fillColor: '#f00',
-                    fillOpacity: 0.5,
+                    fillColor: '#000',
+                    fillOpacity: 0.1,
                     strokeColor: '#f00',
                     strokeWidth: 2,
-                    radius: 6
+                    radius: 6,
+                    labelOutlineWidth: 2,
+                    labelOutlineColor: '#fff',
+                    labelOffset: [0, -16],
+                    fontColor: '#000',
+                    fontSize: 10
                 },
                 marker: {
                     classes: [
@@ -1134,29 +709,39 @@ if (!TC.Consts) {
                     ],
                     anchor: [.5, 1],
                     width: 32,
-                    height: 32
+                    height: 32,
+                    labelOutlineWidth: 2,
+                    labelOutlineColor: '#fff',
+                    labelOffset: [0, -32],
+                    fontColor: '#000',
+                    fontSize: 10
                 },
                 line: {
                     strokeColor: '#f00',
-                    strokeWidth: 2
+                    strokeWidth: 2,
+                    labelOutlineWidth: 2,
+                    labelOutlineColor: '#fff',
+                    fontColor: '#000',
+                    fontSize: 10
                 },
                 polygon: {
                     strokeColor: '#f00',
                     strokeWidth: 2,
                     fillColor: '#000',
-                    fillOpacity: .3
+                    fillOpacity: 0.3,
+                    labelOutlineWidth: 2,
+                    labelOutlineColor: '#fff',
+                    fontColor: '#000',
+                    fontSize: 10
                 },
                 cluster: {
                     point: {
-                        cssClass: '',
-                        anchor: [0.5, 0.5],
-                        fillColor: getClusterFillColor,
+                        fillColor: '#336',
                         fillOpacity: 0.6,
-                        width: getClusterRadius,
-                        height: getClusterRadius,
+                        radius: getClusterRadius,
                         label: '${features.length}',
-                        fontColor: "#000",
-                        fontSize: 12
+                        fontColor: "#fff",
+                        fontSize: 9
                     }
                 },
                 selection: {
@@ -1165,17 +750,30 @@ if (!TC.Consts) {
                         fillOpacity: 0.5,
                         strokeColor: '#00f',
                         strokeWidth: 2,
-                        radius: 6
+                        radius: 6,
+                        labelOutlineWidth: 2,
+                        labelOutlineColor: '#fff',
+                        labelOffset: [0, -16],
+                        fontColor: '#000',
+                        fontSize: 10
                     },
                     line: {
                         strokeColor: '#00f',
-                        strokeWidth: 2
+                        strokeWidth: 2,
+                        labelOutlineWidth: 2,
+                        labelOutlineColor: '#fff',
+                        fontColor: '#000',
+                        fontSize: 10
                     },
                     polygon: {
                         strokeColor: '#00f',
                         strokeWidth: 2,
                         fillColor: '#000',
-                        fillOpacity: .3
+                        fillOpacity: .3,
+                        labelOutlineWidth: 2,
+                        labelOutlineColor: '#fff',
+                        fontColor: '#000',
+                        fontSize: 10
                     }
                 }
             }
@@ -1259,23 +857,61 @@ if (!TC.Consts) {
             TC.isDebug = true;
         };
 
+        var _showLoadFailedError = function (url) {
+            var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
+            TC.error(
+                TC.Util.getLocaleString(mapObj.options.locale, "urlFailedToLoad",
+                    { url: url }),
+                [TC.Consts.msgErrorMode.TOAST, TC.Consts.msgErrorMode.EMAIL],
+                "Error al cargar " + url);
+        };
+
         TC.syncLoadJS = function (url) {
+            var _sendRequest = function (url, callbackErrorFn) {
+                var req = new XMLHttpRequest();
+                req.open("GET", url, false); // 'false': synchronous.
+                var result;
+
+                req.onreadystatechange = function (e) {
+                    if (req.readyState === 4) {
+                        if (req.status === 404) {
+                            result = false;
+                        } else if (req.status !== 200) {
+                            callbackErrorFn();
+                            result = false;
+                        } else {
+                            result = req.responseText;
+                        }
+                    }
+                };
+
+                req.send(null);
+
+                return result;
+            };
+
             if (!/(\.js|\/)$/i.test(url)) { // Si pedimos un archivo sin extensi\u00f3n se la ponemos seg\u00fan el entorno
                 url = url + (TC.isDebug ? '.js' : '.min.js');
             }
-            var req = new XMLHttpRequest();
-            req.open("GET", url, false); // 'false': synchronous.
-            req.send(null);
 
-            var script = document.createElement("script");
-            script.type = "text/javascript";
-            script.text = req.responseText;
-            getHead().appendChild(script);
+            var reqResult = _sendRequest(url, function () {
+                return _sendRequest(url, function () {
+                    _showLoadFailedError(url);
+                });
+            });
+
+            if (reqResult) {
+                var script = document.createElement("script");
+                script.type = "text/javascript";
+                script.text = reqResult;
+                getHead().appendChild(script);
+            }
         };
 
-        if (!window.yepnope) {
+        if (!window.Modernizr) {
             TC.syncLoadJS(TC.apiLocation + TC.Consts.url.MODERNIZR);
         }
+        Modernizr.touch = Modernizr.touchevents; // compatibilidad hacia atr\u00e1s
 
         TC.isLegacy = TC.isLegacy || !Modernizr.canvas;
 
@@ -1319,97 +955,37 @@ if (!TC.Consts) {
         //    TC.syncLoadJS(TC.proxify(TC.apiLocation + 'lib/jQuery/jquery.xdomainrequest.min.js'));
         //}
 
-        //puede pasar que varios lleguen a pedir el mismo js antes de que se resuelva ninguno
-        //en ese caso, me guardo todos los callbacks y los disparo cuando llegue
 
-        //este contiene las URLs de los que ya se han descargado
-        TC.downloadedJSs = [];
-        //este tiene como claves las urls, y como valor la cola asyncJS que lo gestiona
-        TC.requestedJSs = {};
         TC.loadJSInOrder = function (condition, url, callback) {
             TC.loadJS(condition, url, callback, true);
-        }
+        };
+
         TC.loadJS = function (condition, url, callback, inOrder) {
-            if (arguments.length < 4) inOrder = false;
+            if (arguments.length < 4) {
+                inOrder = false;
+            }
+
             var urls = $.isArray(url) ? url : [url];
-            urls = $.map(urls, function (elm) {
-                if (!/\.js$/i.test(elm)) { // Si pedimos un archivo sin extensi\u00f3n se la ponemos seg\u00fan el entorno
+            urls = urls.map(function (elm) {
+                if (!/\.js$/i.test(elm) && elm.indexOf(TC.apiLocation) === 0) { // Si pedimos un archivo sin extensi\u00f3n y es nuestro se la ponemos seg\u00fan el entorno
                     return elm + (TC.isDebug ? '.js' : '.min.js');
                 }
                 return elm;
             });
+
             //si tiene canvas, es que es un navegador nuevo
             if (Modernizr.canvas) {
                 if (condition) {
-                    //de las que quiere, ver cu\u00e1les ya est\u00e1n descargadas, y cu\u00e1les est\u00e1n en proceso
-                    var newTasks = [];
-                    var pendingTasks = [];
-                    var curl;
-                    for (var i = 0; i < urls.length; i++) {
-                        curl = urls[i];
-                        if (!TC.downloadedJSs[curl]) {
-                            if (TC.requestedJSs[curl]) pendingTasks.push(curl);
-                            else newTasks.push(curl);
-                        }
-                    }
-
-                    
-                    //si ya est\u00e1 todo, no hay que hacer nada
-                    if (newTasks.length == 0 && pendingTasks.length == 0) {
-                        callback();
-                    }
-                    //si son todas nuevas (ninguna descargada ni en proceso), caso normal con una nueva cola
-                    else if (newTasks.length > 0 && pendingTasks.length == 0) {
-                        var q = asyncJS();
-                        for (var i = 0; i < newTasks.length; i++)        //para cada una, registro qui\u00e9n se est\u00e1 ocupando
-                        {
-                            TC.requestedJSs[newTasks[i]] = q;
-                        }
-
-                        if (inOrder) {
-                            for (var i = 0; i < newTasks.length; i++) {
-                                if (i == 0) q.add(newTasks[i]);
-                                else q.then(newTasks[i]);
-                            }
-                        }
-                        else
-                            q.add(newTasks);
-
-
-                        q.whenDone(function () {
-                            for (var i = 0; i < newTasks.length; i++) {
-                                TC.downloadedJSs.push(newTasks[i]);
-                                delete TC.requestedJSs[newTasks[i]];
-                            }
+                    loadjs(urls, {
+                        success: function () {
                             callback();
-                        });
-                    }
-                    //si est\u00e1n todas en proceso
-                    //tengo que esperar a que terminen todas las colas que est\u00e1n pendientes
-                    //y entonces lanzar el callback
-                    else if (newTasks.length == 0 && pendingTasks.length > 0) {
-                        var curTask;
-                        var n = pendingTasks.length;
-                        var done = 0;
-                        for (var i = 0; i < pendingTasks.length; i++) {
-                            var curTask = pendingTasks[i];
-                            var q = TC.requestedJSs[curTask];
-                            //no hace falta borrar de las referencias, ni a\u00f1adir a descargadas, porque ya se ocupar\u00e1 el handler anterior
-                            q.whenDone(function (a, b, c) {
-                                done++;
-                                if (done >= n)      //si es la \u00faltima
-                                {
-                                    //console.log("Callback de " + curTask);
-                                    callback();
-                                }
-                            });
-                        }
-                    }
-                    else {
-                        //horror
-                        //caso mezclado: unas est\u00e1n en proceso, y otras no
-                        console.error("Mezcla de tareas en proceso y nuevas!!");
-                    }
+                        },
+                        error: function (pathsNotFound) {
+                            _showLoadFailedError(pathsNotFound);
+                        },
+                        async: !inOrder,
+                        numRetries: 1
+                    });
                 }
                 else {
                     callback();
@@ -1444,29 +1020,57 @@ if (!TC.Consts) {
 
         TC.loadCSS = function (url) {
             if (!testCSS(url)) {
-                var link = document.createElement("link");
-                link.rel = "stylesheet";
-                link.href = url;
-                getHead().appendChild(link);
+                loadjs(url, {
+                    error: function (pathsNotFound) {
+                        _showLoadFailedError(pathsNotFound);
+                    },
+                    numRetries: 1
+                });
             }
         };
 
-        TC.loadProjDef = function (crs, syncOrCallback) {
+        var projectionDataCache = {};
+
+        TC.getProjectionData = function (options) {
+            var deferred = $.Deferred();
+            options = options || {};
+            var code = options.crs.substr(options.crs.indexOf(':') + 1);
+            var projData = projectionDataCache[code];
+            if (projData) {
+                deferred.resolve(projData);
+            }
+            else {
+                var url = TC.proxify(TC.Consts.url.EPSG + '?format=json&q=' + code);
+                var ajaxOptions = {
+                    dataType: 'json',
+                    success: function (data) {
+                        projectionDataCache[code] = data;
+                        deferred.resolve(data);
+                    },
+                    error: function (error) {
+                        deferred.reject(error);
+                    }
+                };
+                if (options.sync) {
+                    ajaxOptions.async = false;
+                }
+                $.ajax(url, ajaxOptions);
+            }
+            return deferred.promise();
+        };
+
+        TC.loadProjDef = function (options) {
+            options = options || {};
+            var crs = options.crs;
             var epsgPrefix = 'EPSG:';
             var urnPrefix = 'urn:ogc:def:crs:EPSG::';
             var gmlPrefix = 'http://www.opengis.net/gml/srs/epsg.xml#';
-            var epsgCode = epsgPrefix + '25830';
-            var urnCode = urnPrefix + '25830';
-            var gmlCode = gmlPrefix + '25830';
 
             var getDef;
             if (TC.isLegacy) {
                 if (!window[TC.Consts.PROJ4JSOBJ_LEGACY]) {
                     TC.syncLoadJS(TC.url.proj4js);
                 }
-                Proj4js.defs[epsgCode] = '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs';
-                Proj4js.defs[urnCode] = Proj4js.defs[epsgCode];
-                Proj4js.defs[gmlCode] = Proj4js.defs[epsgCode];
                 getDef = function (name) {
                     return Proj4js.defs[name];
                 };
@@ -1475,9 +1079,6 @@ if (!TC.Consts) {
                 if (!window[TC.Consts.PROJ4JSOBJ]) {
                     TC.syncLoadJS(TC.url.proj4js);
                 }
-                proj4.defs(epsgCode, '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs');
-                proj4.defs(urnCode, proj4.defs(epsgCode));
-                proj4.defs(gmlCode, proj4.defs(epsgCode));
                 getDef = function (name) {
                     return proj4.defs(name);
                 };
@@ -1489,52 +1090,79 @@ if (!TC.Consts) {
                     transform: proj4
                 };
             }
-            var loadDef = function (code) {
-                epsgCode = epsgPrefix + code;
-                urnCode = urnPrefix + code;
-                gmlCode = gmlPrefix + code;
-                Proj4js.defs[urnCode] = Proj4js.defs[epsgCode];
-                Proj4js.defs[gmlCode] = Proj4js.defs[epsgCode];
-                if (!TC.isLegacy) {
-                    proj4.defs(epsgCode, Proj4js.defs[epsgCode]);
-                    proj4.defs(urnCode, Proj4js.defs[epsgCode]);
-                    proj4.defs(gmlCode, Proj4js.defs[epsgCode]);
-                }
-            };
-            if (!getDef(crs)) {
-                var idx = crs.lastIndexOf('#');
-                if (idx < 0) {
-                    idx = crs.lastIndexOf(':');
-                }
-                var code = crs.substr(idx + 1);
-                
-                var url = TC.proxify(TC.Consts.url.SPATIALREFERENCE + 'ref/epsg/' + code + '/proj4js/');
-                if (typeof syncOrCallback === 'boolean') {
-                    if (syncOrCallback) {
-                        var req = new XMLHttpRequest();
-                        req.open("GET", url, false); // 'false': synchronous.
-                        req.send(null);
-                        var script = document.createElement("script");
-                        script.type = "text/javascript";
-                        script.text = req.responseText;
-                        getHead().appendChild(script);
-
-                        loadDef(code);
+            var loadDef = function (code, def, name/*, bbox*/) {
+                var epsgCode = epsgPrefix + code;
+                var urnCode = urnPrefix + code;
+                var gmlCode = gmlPrefix + code;
+                var axisUnawareDef;
+                if (typeof def === 'object') {
+                    axisUnawareDef = $.extend({}, def);
+                    def = $.extend({}, def);
+                    if (axisUnawareDef.axis) {
+                        delete axisUnawareDef.axis;
                     }
-                    else {
-                        TC.loadJS(true, url);
+                }
+                else if (typeof def === 'string') {
+                    axisUnawareDef = def.replace('+axis=neu', '');
+                }
+                Proj4js.defs[epsgCode] = def;
+                Proj4js.defs[urnCode] = def;
+                // Por convenci\u00f3n, los CRS definidos por URI siempre tienen orden de coordenadas X-Y.
+                Proj4js.defs[gmlCode] = axisUnawareDef;
+                if (!TC.isLegacy) {
+                    proj4.defs(epsgCode, def);
+                    proj4.defs(urnCode, proj4.defs(epsgCode));
+                    // Por convenci\u00f3n, los CRS definidos por URI siempre tienen orden de coordenadas X-Y.
+                    proj4.defs(gmlCode, axisUnawareDef);
+                }
+                getDef(epsgCode).name = name;
+                getDef(gmlCode).name = name;
+                //if (bbox) {
+                //    var newProj = ol.proj.get(epsgCode);
+                //    var fromLonLat = ol.proj.getTransform('EPSG:4326', newProj);
+                //    // very approximate calculation of projection extent
+                //    var extent = ol.extent.applyTransform(
+                //        [bbox[1], bbox[2], bbox[3], bbox[0]], fromLonLat);
+                //    newProj.setExtent(extent);
+                //    ol.proj.get(urnCode).setExtent(extent);
+                //    ol.proj.get(gmlCode).setExtent(extent);
+                //}
+            };
+            var loadDefResponse = function (data) {
+                var result = data.status === 'ok' && data.number_result === 1;
+                if (result) {
+                    var def = data.results[0];
+                    loadDef(def.code, def.proj4, def.name/*, def.bbox*/);
+                }
+                return result;
+            };
+
+            var idx = crs.lastIndexOf('#');
+            if (idx < 0) {
+                idx = crs.lastIndexOf(':');
+            }
+            var code = crs.substr(idx + 1);
+            var def = getDef(crs);
+            if (def) {
+                loadDef(code, def, options.name);
+                if ($.isFunction(options.callback)) {
+                    options.callback();
+                }
+            }
+            else {
+                if (options.def) {
+                    loadDef(code, options.def, options.name);
+                    if ($.isFunction(options.callback)) {
+                        options.callback();
                     }
                 }
                 else {
-                    TC.loadJS(true, url, function () {
-                        loadDef(code);
-                        syncOrCallback();
+                    TC.getProjectionData(options).then(function (data) {
+                        if (loadDefResponse(data) && $.isFunction(options.callback)) {
+                            options.callback();
+                        };
                     });
                 }
-            }
-            else if ($.isFunction(syncOrCallback)) {
-                loadDef(code);
-                syncOrCallback();
             }
         };
 
@@ -1556,6 +1184,16 @@ if (!TC.Consts) {
             TC.url.olConnector = TC.apiLocation + TC.Consts.url.OL_CONNECTOR;
             TC.url.proj4js = TC.apiLocation + TC.Consts.url.PROJ4JS;
         }
+
+        // Precargamos el CRS por defecto
+        TC.loadProjDef({ crs: 'EPSG:25830', name: 'ETRS89 / UTM zone 30N', def: '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs' });
+        // Precargamos los CRS de IDENA que tienen orden de ejes neu
+        TC.loadProjDef({ crs: 'EPSG:4258', name: 'ETRS89', def: '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:3040', name: 'ETRS89 / UTM zone 28N (N-E)', def: '+proj=utm +zone=28 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:3041', name: 'ETRS89 / UTM zone 29N (N-E)', def: '+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:3042', name: 'ETRS89 / UTM zone 30N (N-E)', def: '+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:3043', name: 'ETRS89 / UTM zone 31N (N-E)', def: '+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
+        TC.loadProjDef({ crs: 'EPSG:4230', name: 'ED50', def: '+proj=longlat +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +no_defs +axis=neu' });
 
         TC.Cfg = $.extend(true, {}, TC.Defaults, TC.Cfg);
 
@@ -1724,10 +1362,13 @@ if (!TC.Consts) {
                 GeometryFeatureInfo: function () { TC.wrap.Control.apply(this, arguments); },
                 Geolocation: function () { TC.wrap.Control.apply(this, arguments); },
                 Draw: function () { TC.wrap.Control.apply(this, arguments); },
+                Modify: function () { TC.wrap.Control.apply(this, arguments); },
                 CacheBuilder: function () { TC.wrap.Control.apply(this, arguments); },
-                Edit: function () { TC.wrap.Control.apply(this, arguments); }
+                Edit: function () { TC.wrap.Control.apply(this, arguments); },
+                ResultsPanel: function () { TC.wrap.Control.apply(this, arguments); }
             },
-            Feature: function () { }
+            Feature: function () { },
+            Geometry: function () { }
         };
         TC.inherit(TC.wrap.layer.Raster, TC.wrap.Layer);
         TC.inherit(TC.wrap.layer.Vector, TC.wrap.Layer);
@@ -1739,11 +1380,12 @@ if (!TC.Consts) {
         TC.inherit(TC.wrap.control.OverviewMap, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Popup, TC.wrap.Control);
         TC.inherit(TC.wrap.control.FeatureInfo, TC.wrap.control.Click);
-        TC.inherit(TC.wrap.control.GeometryFeatureInfo, TC.wrap.control.Click);        
+        TC.inherit(TC.wrap.control.GeometryFeatureInfo, TC.wrap.control.Click);
         TC.inherit(TC.wrap.control.Geolocation, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Draw, TC.wrap.Control);
         TC.inherit(TC.wrap.control.CacheBuilder, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Edit, TC.wrap.Control);
+        TC.inherit(TC.wrap.control.ResultsPanel, TC.wrap.Control);
 
         TC.loadCSS(TC.apiLocation + 'TC/css/tcmap.css');
 
@@ -1803,7 +1445,7 @@ if (!TC.Consts) {
             options = value || $.cookie.defaults || {};
             var decode = options.raw ? raw : decoded;
             var cookies = document.cookie.split('; ');
-            for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')) ; i++) {
+            for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')); i++) {
                 if (decode(parts.shift()) === key) {
                     return decode(parts.join('='));
                 }
@@ -1817,74 +1459,32 @@ if (!TC.Consts) {
 }
 
 $(function () {
-    var getBrowser = function () {
-        var nVer = navigator.appVersion;
-        var nAgt = navigator.userAgent;
-        var browserName = navigator.appName;
-        var fullVersion = '' + parseFloat(navigator.appVersion);
-        var majorVersion = parseInt(navigator.appVersion, 10);
-        var nameOffset, verOffset, ix;
 
-        // In Opera, the true version is after "Opera" or after "Version"
-        if ((verOffset = nAgt.indexOf("Opera")) != -1) {
-            browserName = "Opera";
-            fullVersion = nAgt.substring(verOffset + 6);
-            if ((verOffset = nAgt.indexOf("Version")) != -1)
-                fullVersion = nAgt.substring(verOffset + 8);
-        }
-            // In MSIE, the true version is after "MSIE" in userAgent
-        else if ((verOffset = nAgt.indexOf("MSIE")) != -1) {
-            browserName = "Microsoft Internet Explorer";
-            fullVersion = nAgt.substring(verOffset + 5);
-        }
-            // In Chrome, the true version is after "Chrome" 
-        else if ((verOffset = nAgt.indexOf("Chrome")) != -1) {
-            browserName = "Chrome";
-            fullVersion = nAgt.substring(verOffset + 7);
-        }
-            // In Safari, the true version is after "Safari" or after "Version" 
-        else if ((verOffset = nAgt.indexOf("Safari")) != -1) {
-            browserName = "Safari";
-            fullVersion = nAgt.substring(verOffset + 7);
-            if ((verOffset = nAgt.indexOf("Version")) != -1)
-                fullVersion = nAgt.substring(verOffset + 8);
-        }
-            // In Firefox, the true version is after "Firefox" 
-        else if ((verOffset = nAgt.indexOf("Firefox")) != -1) {
-            browserName = "Firefox";
-            fullVersion = nAgt.substring(verOffset + 8);
-        }
-            // In most other browsers, "name/version" is at the end of userAgent 
-        else if ((nameOffset = nAgt.lastIndexOf(' ') + 1) <
-                  (verOffset = nAgt.lastIndexOf('/'))) {
-            browserName = nAgt.substring(nameOffset, verOffset);
-            fullVersion = nAgt.substring(verOffset + 1);
-            if (browserName.toLowerCase() == browserName.toUpperCase()) {
-                browserName = navigator.appName;
+    TC.browser = TC.Util.getBrowser();
+
+    TC.loadJS(!TC.Cfg.acceptedBrowserVersions, TC.apiLocation + 'TC/config/browser-versions.js', function (result) {
+        var isSupported = true;
+        var versions = TC.Cfg.acceptedBrowserVersions;
+
+        var match = versions.filter(function (item) {
+            return item.name.toLowerCase() === TC.browser.name.toLowerCase();
+        });
+
+        if (match.length > 0 && !isNaN(match[0].version)) {
+            if (TC.browser.version < match[0].version) {
+                isSupported = false;
             }
         }
-        // trim the fullVersion string at semicolon/space if present
-        if ((ix = fullVersion.indexOf(";")) != -1)
-            fullVersion = fullVersion.substring(0, ix);
-        if ((ix = fullVersion.indexOf(" ")) != -1)
-            fullVersion = fullVersion.substring(0, ix);
 
-        majorVersion = parseInt('' + fullVersion, 10);
-        if (isNaN(majorVersion)) {
-            fullVersion = '' + parseFloat(navigator.appVersion);
-            majorVersion = parseInt(navigator.appVersion, 10);
+        if (TC.Cfg.oldBrowserAlert && !isSupported) {
+            TC.Cfg.loggingErrorsEnabled = false;
+            var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
+
+            $.when(TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale)).done(function () {
+                TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), TC.Consts.msgErrorMode.TOAST);
+            });
         }
-
-        return { name: browserName, version: majorVersion };
-    };
-    TC.browser = getBrowser();
-
-    if (TC.Cfg.oldBrowserAlert && !Modernizr.mq('only all')) {
-        if (!TC.Util.storage.getCookie(TC.Consts.OLD_BROWSER_ALERT)) {
-            alert('Con su ' + TC.browser.name + ' ' + TC.browser.version + ' la aplicaci\u00f3n no funcionar\u00e1. Le recomendamos que utilice un navegador m\u00e1s actualizado.');
-            TC.Util.storage.setCookie(TC.Consts.OLD_BROWSER_ALERT, 1);
-        }
-    }
+    });
 
     if (/ip(ad|hone|od)/i.test(navigator.userAgent)) {
         // En iOS, el primer click es un mouseover, por eso usamos touchstart como sustituto.
@@ -1900,9 +1500,10 @@ $(function () {
     window.addEventListener('error', (function () {
         var errorCount = 0;
 
-        var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
+        var mapObj;
 
         return function (e) {
+            mapObj = mapObj || $('.' + TC.Consts.classes.MAP).data('map');
             var errorMsg = e.message;
             var url = e.filename;
             var lineNumber = e.lineno;
@@ -1910,7 +1511,7 @@ $(function () {
             var errorObj = e.error;
             var apiError = url.indexOf(TC.apiLocation) > 0;
             // Si notifyApplicationErrors === false solo capturamos los errores de la API
-            if ((TC.Cfg.notifyApplicationErrors || apiError) && errorCount < TC.Cfg.maxErrorCount) {
+            if ((TC.Cfg.notifyApplicationErrors || apiError) && errorCount < TC.Cfg.maxErrorCount && TC.Cfg.loggingErrorsEnabled) {
                 // Send object with all data to server side log, using severity fatal, 
                 // from logger "onerrorLogger"
                 var msg = apiError ? TC.Consts.text.API_ERROR : TC.Consts.text.APP_ERROR;
@@ -1926,7 +1527,7 @@ $(function () {
                 }, errorObj);
                 errorCount++;
 
-               if (!TC.isDebug) {
+                if (!TC.isDebug) {
                     var DEFAULT_CONTACT_EMAIL = "webmaster@itracasa.es";
                     $.when(TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale))
                         .done(function () {

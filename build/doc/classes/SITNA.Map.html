@@ -18,7 +18,7 @@
                     <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
                 
                 
-                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.3.0</span>
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.4.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -51,6 +51,10 @@
             
                 <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
             
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterOptions.html">SITNA.cfg.ClusterOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterStyleOptions.html">SITNA.cfg.ClusterStyleOptions</a></li>
+            
                 <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
             
                 <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
@@ -67,7 +71,11 @@
             
                 <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
             
+                <li><a class="type" href="../classes/SITNA.cfg.PointStyleOptions.html">SITNA.cfg.PointStyleOptions</a></li>
+            
                 <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.SearchOptions.html">SITNA.cfg.SearchOptions</a></li>
             
                 <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
             
@@ -118,6 +126,9 @@
 <div class="box intro">
     <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
 estar dentro de una función de callback pasada como parámetro al método <a href="../classes/SITNA.Map.html#method_loaded" class="crosslink">loaded</a>.</p>
+<p>Las opciones de configuración del mapa son una combinación de las opciones de configuración global (definidas en <a href="../classes/SITNA.Cfg.html" class="crosslink">SITNA.Cfg</a>), las opciones
+definidas por el <a href="../classes/SITNA.Cfg.html#property_layout" class="crosslink">layout</a> que utilicemos, y las opciones pasadas como parámetro al constructor. Estas opciones están ordenadas de menor a mayor prevalencia,
+de modo que por ejemplo una opción pasada como parámetro del constructor siempre sobreescribirá una opción de la configuración global.</p>
 <p>Puede consultar también online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
 </div>
 
@@ -420,7 +431,7 @@ estar dentro de una función de callback pasada como parámetro al método <a hr
                                     
 
                                     <div class="param-description">
-                                        <p>Código EPSG del sistema de referencia espacial del mapa.</p>
+                                        <p>Código EPSG del sistema de referencia espacial del mapa. Por defecto es <code>&quot;EPSG:25830&quot;</code>.</p>
 
                                     </div>
 
@@ -551,6 +562,22 @@ Para más información consultar SITNA.Cfg.<a href="../classes/SITNA.Cfg.html#pr
                                 
                                 <li class="param">
                                     
+                                        <code class="param-name optional">[locale=&quot;es-ES&quot;]</code>
+                                        <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+                                        <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
+                                    
+
+                                    <div class="param-description">
+                                        <p>Código de idioma de la interfaz de usuario. Este código debe obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
+Los valores posibles son <code>&quot;es-ES&quot;</code>, <code>&quot;eu-ES&quot;</code> y <code>&quot;en-US&quot;</code>. Por defecto es <code>&quot;es-ES&quot;</code>.</p>
+
+                                    </div>
+
+                                    
+                                </li>
+                                
+                                <li class="param">
+                                    
                                         <code class="param-name optional">[crossOrigin]</code>
                                         <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
                                         <span class="flag optional" title="Este par&aacute;metro es opcional.">optional</span>
@@ -574,7 +601,7 @@ Los valores soportados son <code>anonymous</code> y <code>use-credentials</code>
                                     
 
                                     <div class="param-description">
-                                        <p>La rueda del ratón se puede utilizar para hacer zoom en el mapa.</p>
+                                        <p>Si se establece a <code>true</code>, la rueda del ratón se puede utilizar para hacer zoom en el mapa.</p>
 
                                     </div>
 
@@ -734,7 +761,7 @@ Los valores soportados son <code>anonymous</code> y <code>use-credentials</code>
             
         
         
-        <a href="../files/sitna.js.html#l128"><code>sitna.js:128</code></a>
+        <a href="../files/sitna.js.html#l171"><code>sitna.js:171</code></a>
         
         </p>
 
@@ -891,7 +918,7 @@ El tipo de la capa no puede ser <a href="../classes/SITNA.consts.LayerType.html#
             
         
         
-        <a href="../files/sitna.js.html#l212"><code>sitna.js:212</code></a>
+        <a href="../files/sitna.js.html#l255"><code>sitna.js:255</code></a>
         
         </p>
 
@@ -1062,7 +1089,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
                                     
 
                                     <div class="param-description">
-                                        <p>Al añadirse el marcador al mapa se muestra con el bocadillo de información asociada visible por defecto.</p>
+                                        <p>Si se establece a <code>true</code>, al añadirse el marcador al mapa se muestra con el bocadillo de información asociada visible por defecto.</p>
 
                                     </div>
 
@@ -1255,7 +1282,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l1175"><code>sitna.js:1175</code></a>
+        <a href="../files/sitna.js.html#l1217"><code>sitna.js:1217</code></a>
         
         </p>
 
@@ -1371,7 +1398,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l650"><code>sitna.js:650</code></a>
+        <a href="../files/sitna.js.html#l693"><code>sitna.js:693</code></a>
         
         </p>
 
@@ -1512,7 +1539,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l697"><code>sitna.js:697</code></a>
+        <a href="../files/sitna.js.html#l740"><code>sitna.js:740</code></a>
         
         </p>
 
@@ -1653,7 +1680,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l556"><code>sitna.js:556</code></a>
+        <a href="../files/sitna.js.html#l599"><code>sitna.js:599</code></a>
         
         </p>
 
@@ -1794,7 +1821,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l603"><code>sitna.js:603</code></a>
+        <a href="../files/sitna.js.html#l646"><code>sitna.js:646</code></a>
         
         </p>
 
@@ -1935,7 +1962,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l395"><code>sitna.js:395</code></a>
+        <a href="../files/sitna.js.html#l438"><code>sitna.js:438</code></a>
         
         </p>
 
@@ -2044,7 +2071,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l1108"><code>sitna.js:1108</code></a>
+        <a href="../files/sitna.js.html#l1150"><code>sitna.js:1150</code></a>
         
         </p>
 
@@ -2196,7 +2223,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l744"><code>sitna.js:744</code></a>
+        <a href="../files/sitna.js.html#l787"><code>sitna.js:787</code></a>
         
         </p>
 
@@ -2344,7 +2371,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l778"><code>sitna.js:778</code></a>
+        <a href="../files/sitna.js.html#l821"><code>sitna.js:821</code></a>
         
         </p>
 
@@ -2504,7 +2531,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l988"><code>sitna.js:988</code></a>
+        <a href="../files/sitna.js.html#l1030"><code>sitna.js:1030</code></a>
         
         </p>
 
@@ -2703,7 +2730,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l843"><code>sitna.js:843</code></a>
+        <a href="../files/sitna.js.html#l886"><code>sitna.js:886</code></a>
         
         </p>
 
@@ -2851,7 +2878,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l811"><code>sitna.js:811</code></a>
+        <a href="../files/sitna.js.html#l854"><code>sitna.js:854</code></a>
         
         </p>
 
@@ -2998,7 +3025,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l172"><code>sitna.js:172</code></a>
+        <a href="../files/sitna.js.html#l215"><code>sitna.js:215</code></a>
         
         </p>
 
@@ -3146,7 +3173,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l349"><code>sitna.js:349</code></a>
+        <a href="../files/sitna.js.html#l392"><code>sitna.js:392</code></a>
         
         </p>
 
@@ -3194,7 +3221,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
                                     
 
                                     <div class="param-description">
-                                        <p>Radio en metros del área alrededor del marcador que se respetará al hacer zoom.</p>
+                                        <p>Radio en metros del área alrededor del marcador que se respetará al hacer zoom. Por defecto es 30.</p>
 
                                     </div>
 
@@ -3209,8 +3236,8 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
                                     
 
                                     <div class="param-description">
-                                        <p>Tamaño del margen que se aplicará a la extensión total de todas los marcadores. 
-El valor es la relación de crecimiento en ancho y alto entre la extensión resultante y la original. Por ejemplo, 0,2 indica un crecimiento del 20% de la extensión, 10% por cada lado.</p>
+                                        <p>Tamaño del margen que se aplicará a la extensión total de todas los marcadores.
+El valor es la relación de crecimiento en ancho y alto entre la extensión resultante y la original. Por ejemplo, el valor por defecto 0,2 indica un crecimiento del 20% de la extensión, 10% por cada lado.</p>
 
                                     </div>
 

@@ -14,6 +14,8 @@ TC.control.ExternalWMS = function (options) {
     this._addedUrls = [];
 
     TC.Control.apply(self, arguments);
+
+    self.allowReprojection = typeof self.options.allowReprojection === 'boolean' ? self.options.allowReprojection : true;
 };
 
 TC.inherit(TC.control.ExternalWMS, TC.Control);
@@ -97,11 +99,10 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                     };
                     //URI: recorremos las opciones buscando el servicio que se va a agregar a ver si tiene parametro layerNames
                     for (var i = 0; i < self.options.suggestions.length; i++) {
-                        var _current=$.grep(self.options.suggestions[i].items, function (item, i) {
+                        var _current = $.grep(self.options.suggestions[i].items, function (item, i) {
                             return item.url === url;
                         });
-                        if (_current.length > 0 && _current[0].layerNames)
-                        {
+                        if (_current.length > 0 && _current[0].layerNames) {
                             obj["layerNames"] = _current[0].layerNames;
                             break;
                         }
@@ -116,7 +117,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                             return;
                         } else {
                             var root = cap.Capability.Layer;
-                            if (root.CRS && root.CRS.indexOf(self.map.crs) == -1) {
+                            if (root.CRS && root.CRS.indexOf(self.map.crs) == -1 && !self.allowReprojection) {
                                 //no soportado. avisar y fallar
                                 TC.alert(self.getLocaleString('serviceSrsNotCompatible'));
                                 loadingCtrl.hide();
@@ -146,11 +147,19 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
         map.on(TC.Consts.event.LAYERADD, function (e) {
             if (e.layer && !e.layer.isBase) {
                 var url = e.layer.url;
-                var $optionSelected = self._$div.find("select option").filter(function (idx, elm) {
-                    return TC.Util.addProtocol(elm.value) === TC.Util.addProtocol(url);
-                });
-                self.markServicesAsSelected($optionSelected);
-                self._addedUrls.push(url);
+
+                if (url) {
+                    self.pending_markServicesAsSelected = self.pending_markServicesAsSelected || [];
+                    if (self._$div.find("select option").length === 0 && url && self.pending_markServicesAsSelected.indexOf(url) === -1) {
+                        self.pending_markServicesAsSelected.push(url);
+                    }
+
+                    var $optionSelected = self._$div.find("select option").filter(function (idx, elm) {
+                        return TC.Util.addProtocol(elm.value) === TC.Util.addProtocol(url);
+                    });
+                    self.markServicesAsSelected($optionSelected);
+                    self._addedUrls.push(url);
+                }
             }
         });
     };
@@ -160,16 +169,28 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ExternalWMS.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () {            
+        ctlProto.template[ctlProto.CLASS] = function () {
             dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["title"], false), ctx, { "block": body_1 }, {}).w("<div><div class=\"tc-group tc-ctl-xwms-cnt\"> <select id=\"add-wms-select\" class=\"tc-combo\" title=\"WMS (Web Map Service)\"><option value=\"\">WMS</option>").s(ctx.get(["suggestions"], false), ctx, { "block": body_2 }, {}).w("</select><input type=\"text\" class=\"tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "writeAddressOrSelect" }).w("\" /></div><div class=\"tc-group tc-group tc-ctl-xwms-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "addService.title" }).w("\" name=\"agregar\">").h("i18n", ctx, {}, { "$key": "addService" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "addMaps" }).w("</h2>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.x(ctx.get(["group"], false), ctx, { "block": body_3 }, {}).s(ctx.get(["items"], false), ctx, { "block": body_4 }, {}).x(ctx.get(["group"], false), ctx, { "block": body_5 }, {}); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<optgroup label=\"").f(ctx.get(["group"], false), ctx, "h").w("\">"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<option value=\"").f(ctx.get(["url"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</option>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("\t</optgroup>"); } body_5.__dustBody = !0; return body_0
         };
     }
 
-
-
     ctlProto.render = function (callback) {
         var self = this;
-        self.renderData(self.options);
+        self.renderData(self.options, function () {
+            self.pending_markServicesAsSelected = self.pending_markServicesAsSelected || [];
+
+            self.pending_markServicesAsSelected.forEach(function (elemUrl) {
+                var $optionSelected = self._$div.find("select option").filter(function (idx, elm) {
+                    return TC.Util.addProtocol(elm.value) === TC.Util.addProtocol(elemUrl);
+                });
+
+                self.markServicesAsSelected($optionSelected);
+                self._addedUrls.push(elemUrl);
+            });
+
+            self.pending_markServicesAsSelected = [];
+        });
     };
+
 
 })();

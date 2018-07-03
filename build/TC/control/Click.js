@@ -9,9 +9,9 @@ TC.control.Click = function () {
 
     TC.Control.apply(self, arguments);
 
-    self.callback = (self.options && self.options.callback) || function (coord, point) {
-        console.log('[Click][' + coord[0] + ', ' + coord[1] + '][' + point[0] + ', ' + point[1] + ']');
-    };
+    if (self.options && self.options.callback) {
+        self.callback = self.options.callback;
+    }
 
     self.wrap = new TC.wrap.control.Click(self);
 };
@@ -41,4 +41,7 @@ TC.inherit(TC.control.Click, TC.Control);
         TC.Control.prototype.deactivate.call(self);
     };
 
+    ctlProto.callback = function (coord, point) {
+        console.log('[Click][' + coord[0] + ', ' + coord[1] + '][' + point[0] + ', ' + point[1] + ']');
+    };
 })();
