@@ -382,7 +382,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                                 var toolProxification = new TC.tool.Proxification(TC.proxify, { allowedMixedContent: true });
                                 toolProxification.getImage(src, true).then(function (img) {
                                     if (img.complete) {
-                                        var imageDetail = TC.Util.imTagToDataUrl(img, 'image/png');
+                                        var imageDetail = TC.Util.imgTagToDataUrl(img, 'image/png');
                                         layer.image = { base64: imageDetail.base64, canvas: imageDetail.canvas };
                                     } else {
                                         imageErrorHandling(src);
