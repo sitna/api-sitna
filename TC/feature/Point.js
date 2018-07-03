@@ -67,19 +67,6 @@ TC.feature.Point = function (coords, options) {
 
 TC.inherit(TC.feature.Point, TC.Feature);
 
-(function () {
-    var featProto = TC.feature.Point.prototype;
+TC.feature.Point.prototype.STYLETYPE = TC.Consts.geom.POINT;
 
-    featProto.STYLETYPE = TC.Consts.geom.POINT;
-
-    featProto.CLASSNAME = 'TC.feature.Point';
-
-    featProto.getCoords = function () {
-        return this.wrap.getGeometry();
-    };
-
-    featProto.setCoords = function (coords) {
-        return this.wrap.setGeometry(coords);
-    };
-
-})();
+TC.feature.Point.prototype.CLASSNAME = 'TC.feature.Point';
