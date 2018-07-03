@@ -237,7 +237,7 @@ TC.inherit(TC.control.ListTOC, TC.control.TOC);
                             !$.fn.drag,
                             [TC.apiLocation + 'lib/jQuery/jquery.event.drag.js'],
                             function () {
-                                var layerTitle = layer.title ? layer.title : layer.capabilities.Service.Title;
+                                var layerTitle = layer.title || layer.wrap.getServiceTitle();
                                 var layerData = {
                                     title: layer.options.hideTitle ? '' : layerTitle,
                                     hide: layer.renderOptions && layer.renderOptions.hide ? true : false,
