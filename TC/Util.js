@@ -9,6 +9,29 @@
     }
 })(TC, function () {
 
+    String.prototype.soundex = function () {
+        var a = this.toLowerCase().split('')
+        f = a.shift(),
+        r = '',
+        codes = {
+            a: '', e: '', i: '', o: '', u: '',
+            b: 1, f: 1, p: 1, v: 1,
+            c: 2, g: 2, j: 2, k: 2, q: 2, s: 2, x: 2, z: 2,
+            d: 3, t: 3,
+            l: 4,
+            m: 5, n: 5,
+            r: 6
+        };
+
+        r = f +
+            a
+            .map(function (v, i, a) { return codes[v] })
+            .filter(function (v, i, a) { return ((i === 0) ? v !== codes[f] : v !== a[i - 1]); })
+            .join('');
+
+        return (r + '000').slice(0, 4).toUpperCase();
+    }
+
     // Polyfill para IE
     Number.isInteger = Number.isInteger || function (value) {
         return typeof value === "number" &&
@@ -706,14 +729,7 @@
             var parser = new UAParser();
             var browser = parser.getBrowser();
             return { name: browser.name, version: browser.major };
-        },
-        getSupportedBrowserVersions: function () {
-            return $.getJSON(TC.apiLocation + 'TC/config/browser-versions.json', function (data) {
-                return data;
-            }).fail(function () {
-                TC.error("Error al intentar descargar el archivo de versiones aceptadas de los navegadores", TC.Consts.msgErrorMode.EMAIL, "Error de conexión");
-            });
-        },
+        },        
         getElementByNodeName: function (parentNode, nodeName) {
             var colonIndex = nodeName.indexOf(":");
             var tag = nodeName.substr(colonIndex + 1);
@@ -1085,7 +1101,7 @@
             return deferred.promise();
         },
 
-        imTagToDataUrl: function (img, outputFormat) {
+        imgTagToDataUrl: function (img, outputFormat) {
             var createCanvas = function (img) {
                 var canvas = document.createElement('CANVAS');
                 var ctx = canvas.getContext('2d');
@@ -1388,6 +1404,18 @@
                 return 0;
             };
         },
+
+        getSoundexDifference: function(a,b) {
+            var res = 0 
+
+            for (var i=0; i<a.length; i++) {
+                if (a.charAt(i) == b.charAt(i)) {
+                    res++;
+                }
+            }
+
+            return res;
+        }
     };
     String.prototype.format = function () {
         var str = this.toString();
