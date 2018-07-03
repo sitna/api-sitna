@@ -259,7 +259,8 @@ if (!TC.Consts) {
         URBAN: 'urban',
         COMMONWEALTH: 'commonwealth',
         ROAD: 'road',
-        ROADPK: 'roadpk'
+        ROADPK: 'roadpk',
+        PLACENAME: 'placename'
     };
     TC.Consts.mapSearchType = {
         MUNICIPALITY: TC.Consts.searchType.MUNICIPALITY,
@@ -1461,9 +1462,9 @@ $(function () {
 
     TC.browser = TC.Util.getBrowser();
 
-    $.when(TC.Util.getSupportedBrowserVersions()).then(function (result) {
+    TC.loadJS(!TC.Cfg.acceptedBrowserVersions, TC.apiLocation + 'TC/config/browser-versions.js', function (result) {
         var isSupported = true;
-        var versions = result.versions;
+        var versions = TC.Cfg.acceptedBrowserVersions;
 
         var match = versions.filter(function (item) {
             return item.name.toLowerCase() === TC.browser.name.toLowerCase();
@@ -1499,9 +1500,10 @@ $(function () {
     window.addEventListener('error', (function () {
         var errorCount = 0;
 
-        var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
+        var mapObj;
 
         return function (e) {
+            mapObj = mapObj || $('.' + TC.Consts.classes.MAP).data('map');
             var errorMsg = e.message;
             var url = e.filename;
             var lineNumber = e.lineno;
