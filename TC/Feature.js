@@ -81,6 +81,16 @@ TC.Feature.prototype.getLegend = function () {
     return self._legend;
 };
 
+TC.Feature.prototype.getCoords = function () {
+    return this.wrap.getGeometry();
+};
+
+TC.Feature.prototype.setCoords = function (coords) {
+    const self = this;
+    self.geometry = coords;
+    return self.wrap.setGeometry(coords);
+};
+
 TC.Feature.prototype.getData = function () {
     var result = null;
     var self = this;
@@ -196,13 +206,11 @@ TC.Feature.prototype.showPopup = function (control) {
         }
         ctlDeferred.then(function (ctl) {
             ctl.currentFeature = self;
-            var popups = self.layer.map.getControlsByClass(TC.control.Popup);
-            for (var i = 0, len = popups.length; i < len; i++) {
-                var p = popups[i];
-                if (p !== ctl) {
+            self.layer.map.getControlsByClass(TC.control.Popup).forEach(function (p) {
+                if (p.isVisible()) {
                     p.hide();
                 }
-            }
+            });
             self.wrap.showPopup(ctl);
             self.layer.map.$events.trigger($.Event(TC.Consts.event.POPUP, { control: ctl }));
             ctl.fitToView(true);
