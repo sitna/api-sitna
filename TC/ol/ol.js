@@ -139,6 +139,38 @@
         return feature;
     };
 
+    // Añadimos el atributo srsDimension para soportar 3D
+    ol.format.GML3.prototype._writePosList_ = ol.format.GML3.prototype.writePosList_;
+    ol.format.GML3.prototype.writePosList_ = function (node, value, objectStack) {
+        this._writePosList_(node, value, objectStack);
+        const point = value.getCoordinates()[0];
+        if (point && point.length > 2) {
+            node.setAttribute('srsDimension', point.length);
+        }
+    };
+
+    // Cambiamos getCoords_ para que soporte 3D
+    ol.format.GML3.prototype._getCoords_ = ol.format.GML3.prototype.getCoords_;
+    ol.format.GML3.prototype.getCoords_ = function (point, opt_srsName) {
+        var result = this._getCoords_(point, opt_srsName);
+        if (point.length > 2) {
+            result += ' ' + point[2];
+        }
+        return result;
+    };
+
+    // Cambiamos writePos_ para que soporte 3D
+    ol.format.GML3.prototype._writePos_ = ol.format.GML3.prototype.writePos_;
+    ol.format.GML3.prototype.writePos_ = function (node, value, objectStack) {
+        this._writePos_(node, value, objectStack);
+        const point = value.getCoordinates();
+        if (point.length > 2) {
+            ol.format.XSD.writeStringTextNode(node, ' ' + point[2]);
+        }
+    };
+
+
+
     // Añadido el espacio de nombres de GML 3.2 al parser
     var gmlNamespace = 'http://www.opengis.net/gml';
     var gml32Namespace = 'http://www.opengis.net/gml/3.2';
@@ -1103,7 +1135,7 @@
         var self = this;
         var layers = self.map.getLayers();
         var alreadyExists = false;
-        for (var i = 0; i < layers.getLength(); i++) {
+        for (var i = 0; i < layers.getLength() ; i++) {
             if (layers.item(i) === olLayer) {
                 alreadyExists = true;
                 break;
@@ -1594,7 +1626,7 @@
 
     TC.wrap.Map.prototype.exportFeatures = function (features, options) {
         var self = this;
-        var opts = options || {};
+        options = options || {};
         var nativeStyle = createNativeStyle({ styles: self.parent.options.styles });
         var olFeatures = features.map(function (elm) {
             var result = elm.wrap.feature;
@@ -1635,6 +1667,7 @@
                             canvas.width = diameter;
                             canvas.height = diameter;
                             const vectorContext = ol.render.toContext(canvas.getContext('2d'), { size: [diameter, diameter] });
+                            const text = style.getText();
                             style = style.clone();
                             style.setText(); // Quitamos el texto para que no salga en el canvas
                             vectorContext.setStyle(style);
@@ -1644,7 +1677,8 @@
                             newFeature.setStyle(new ol.style.Style({
                                 image: new ol.style.Icon({
                                     src: canvas.toDataURL('image/png')
-                                })
+                                }),
+                                text: text
                             }));
                             return newFeature;
                         }
@@ -1722,7 +1756,7 @@
         if (format instanceof ol.format.GMLBase) {
             //Apañamos para que el GML sea válido. Si no lo hacemos, con IE, en ol-debug.js:36514 da un error porque node.localName no existe.
             format.featureNS = "sitna";
-            format.featureType = "getFeatureInfoResult";
+            format.featureType = "feature";
             var featuresNode = format.writeFeaturesNode(olFeatures, {
                 featureProjection: self.parent.crs
             });
@@ -1738,9 +1772,15 @@
             //    'xsi:schemaLocation', this.schemaLocation);
             //return featureCollectionNode.outerHTML;
         }
-        return format.writeFeatures(olFeatures, {
+        var result = format.writeFeatures(olFeatures, {
+            dataProjection: 'EPSG:4326',
             featureProjection: self.parent.crs
         });
+        if (format instanceof ol.format.GPX) {
+            // Este formato no procesa bien las elevaciones cuando son nulas. Hemos hecho un preproceso para transformarlas en NaN y ahora hay que eliminarlas.
+            result = result.replace(/<ele>NaN<\/ele>/g, '');
+        }
+        return result;
     };
 
     var isFileDrag = function (e) {
@@ -2797,6 +2837,10 @@
                 nativeStyleOptions.image = new ol.style.Circle(circleOptions);
         }
 
+        if (styleOptions.label) {
+            nativeStyleOptions.text = createNativeTextStyle(styleOptions, feature);
+        }
+
         if (styles.marker) {
             styleOptions = styles.marker;
             var ANCHOR_DEFAULT_UNITS = 'fraction';
@@ -2809,10 +2853,6 @@
                     src: styleOptions.url
                 });
             }
-        }
-
-        if (styleOptions.label) {
-            nativeStyleOptions.text = createNativeTextStyle(styleOptions, feature);
         }
 
         return [new ol.style.Style(nativeStyleOptions)];
@@ -2892,10 +2932,16 @@
                 }
                 else {
                     result.url = image.getSrc();
-                    result.anchor = image.getAnchor();
                     var size = image.getSize();
-                    result.width = size[0];
-                    result.height = size[0];
+                    if (size) {
+                        result.width = size[0];
+                        result.height = size[1];
+                        result.anchor = image.getAnchor();
+                        if (result.anchor) {
+                            result.anchor[0] = result.anchor[0] / result.width;
+                            result.anchor[1] = result.anchor[1] / result.height;
+                        }
+                    }
                 }
             }
             else {
@@ -4222,10 +4268,10 @@
                                             self.parent.onGeolocateError.call(self.parent, error);
                                     }
                                 }, {
-                                timeout: 5000 + id,
-                                maximumAge: 10,
-                                enableHighAccuracy: true
-                            }
+                                    timeout: 5000 + id,
+                                    maximumAge: 10,
+                                    enableHighAccuracy: true
+                                }
                         );
                     }
                     getCurrentPositionInterval = setInterval(getCurrentPosition, 1000);
@@ -5008,12 +5054,13 @@
             self.elevationMarker.setPosition(coords[data[0].index]);
         }
 
-        var extent = self.map.getExtent();
-        var p = coords[data[0].index];
-        if (p[0] >= extent[0] && p[0] <= extent[2] && p[1] >= extent[1] && p[1] <= extent[3]) { }
-        else {
-            self.map.setCenter(p.slice(0, 2), { animate: true });
-        }
+        // No centrar en el marker
+        //var extent = self.map.getExtent();
+        //var p = coords[data[0].index];
+        //if (p[0] >= extent[0] && p[0] <= extent[2] && p[1] >= extent[1] && p[1] <= extent[3]) { }
+        //else {
+        //    self.map.setCenter(p.slice(0, 2), { animate: true });
+        //}
     };
 
     TC.wrap.control.ResultsPanel.prototype.hideElevationMarker = function () {
@@ -6808,11 +6855,13 @@
                 var anchor = image.getAnchor();
                 if (anchor) {
                     result.anchor = [anchor[0], anchor[1]];
-                    if (image.anchorXUnits_ === ol.style.IconAnchorUnits.PIXELS) {
-                        result.anchor[0] = result.anchor[0] / size[0];
-                    }
-                    if (image.anchorYUnits_ === ol.style.IconAnchorUnits.PIXELS) {
-                        result.anchor[1] = result.anchor[1] / size[1];
+                    if (size) {
+                        if (image.anchorXUnits_ === ol.style.IconAnchorUnits.PIXELS) {
+                            result.anchor[0] = result.anchor[0] / size[0];
+                        }
+                        if (image.anchorYUnits_ === ol.style.IconAnchorUnits.PIXELS) {
+                            result.anchor[1] = result.anchor[1] / size[1];
+                        }
                     }
                 }
             }
@@ -6959,7 +7008,7 @@
         if (geom instanceof ol.geom.Polygon) {
             coordinates = geom.getLinearRing(0).getCoordinates();
             if (options.crs) {
-                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+                coordinates = TC.Util.reproject(coordinates, self.parent.layer.map.crs, options.crs);
             }
             const polygon = new ol.geom.Polygon([coordinates]);
             const ring = polygon.getLinearRing(0);
@@ -6968,7 +7017,7 @@
         else if (geom instanceof ol.geom.LineString) {
             coordinates = geom.getCoordinates();
             if (options.crs) {
-                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+                coordinates = TC.Util.reproject(coordinates, self.parent.layer.map.crs, options.crs);
             }
             const line = new ol.geom.LineString(coordinates);
             return line.getLength();
@@ -6984,7 +7033,7 @@
         if (geom instanceof ol.geom.Polygon) {
             coordinates = geom.getLinearRing(0).getCoordinates();
             if (options.crs) {
-                coordinates = TC.Util.reproject(coordinates, self.parent.map.crs, options.crs);
+                coordinates = TC.Util.reproject(coordinates, self.parent.layer.map.crs, options.crs);
             }
             const polygon = new ol.geom.Polygon([coordinates]);
             return polygon.getArea();
@@ -7013,6 +7062,7 @@
         const geom = olFeat.getGeometry();
         var style = getFeatureStyle.call(olFeat);
         if (geom instanceof ol.geom.Point || geom instanceof ol.geom.MultiPoint) {
+
             var imageStyle;
             if (options.anchor || options.url) { // Marcador
                 imageStyle = style.getImage();
@@ -7040,6 +7090,20 @@
 
                 imageStyle = new ol.style.Icon(iconOptions);
             }
+            else if (!(style.getImage()) && style.getText()) { // Etiqueta
+
+                if (options.label !== undefined) {
+                    style = getFeatureStyle.call(olFeat);
+                    if (options.label.length) {
+                        style.setText(createNativeTextStyle(options, feature));
+                    }
+                    else {
+                        style.setText();
+                    }
+                } else {
+                    style.setText();
+                }
+            }
             else { // Punto sin icono
                 imageStyle = style.getImage();
                 const circleOptions = {
@@ -7049,9 +7113,7 @@
                 if (isNaN(circleOptions.radius)) {
                     circleOptions.radius = imageStyle.getRadius();
                 }
-                if (true || !isNaN(circleOptions.radius)) {
-                    circleOptions.stroke = imageStyle.getStroke();
-                    circleOptions.fill = imageStyle.getFill();
+                if (!isNaN(circleOptions.radius)) {
                     circleOptions.radius = imageStyle.getRadius();
                     imageStyle = new ol.style.Circle(circleOptions);
                 }
@@ -7074,9 +7136,6 @@
                     if (options.strokeWidth) {
                         circleOptions.stroke.setWidth(getStyleValue(options.strokeWidth, feature));
                     }
-                }
-                else {
-                    circleOptions.stroke = imageStyle.getStroke();
                 }
                 imageStyle = new ol.style.Circle(circleOptions);
             }
@@ -7252,16 +7311,26 @@
                         }
                     }
                     if ($.isArray(style)) {
-                        var image = style[0].getImage();
+                        const image = style[0].getImage();
                         anchor = !image || image instanceof ol.style.Icon ? [0.5, 0] : [0.5, 0.5];
                     }
                 }
-                if (anchor && options.height) {
-                    popupCtl.wrap.popup.setOffset([0, -options.height * anchor[1]]);
+                const offset = [0, 0];
+                if (anchor) {
+                    if (options.height) {
+                        offset[1] = -options.height * anchor[1];
+                    }
+                    else {
+                        var fStyle = getFeatureStyle.call(feature);
+                        if (fStyle) {
+                            const image = fStyle.getImage();
+                            if (image instanceof ol.style.Icon) {
+                                offset[1] = image.getImageSize()[1] * -image.getScale();
+                            }
+                        }
+                    }
                 }
-                else {
-                    popupCtl.wrap.popup.setOffset([0, 0]);
-                }
+                popupCtl.wrap.popup.setOffset(offset);
 
                 popupCtl.wrap.popup.setPosition(self._innerCentroid);
                 popupCtl.$popupDiv.addClass(TC.Consts.classes.VISIBLE);
