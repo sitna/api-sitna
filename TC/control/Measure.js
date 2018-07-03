@@ -101,7 +101,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                                 mode: TC.Consts.geom.POLYLINE,
                                 measure: true,
                                 persistent: self.persistentDrawControls,
-                                displayElevation: self.options.displayElevation,
+                                styleTools: self.persistentDrawControls,
                                 layer: self.layer
                             });
                             self.drawControls.push(self.drawLines);
@@ -110,27 +110,21 @@ TC.inherit(TC.control.Measure, TC.Control);
                                 mode: TC.Consts.geom.POLYGON,
                                 measure: true,
                                 persistent: self.persistentDrawControls,
-                                displayElevation: false,
+                                styleTools: self.persistentDrawControls,
                                 layer: self.layer
                             });
                             self.drawControls.push(self.drawPolygons);
 
                             $.when(map.addControl(self.drawLines), map.addControl(self.drawPolygons)).then(function () {
-                                self.drawLines.$events
-                                    .on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
-                                        self.showMeasures(e);
-                                    })
-                                    .on(TC.Consts.event.DRAWCANCEL, function (e) {
-                                        self.cancel();
-                                    });
-
-                                self.drawPolygons.$events
-                                    .on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
-                                        self.showMeasures(e);
-                                    })
-                                    .on(TC.Consts.event.DRAWCANCEL, function (e) {
-                                        self.cancel();
-                                    });
+                                [self.drawLines, self.drawPolygons].forEach(function (ctl) {
+                                    ctl.$events
+                                        .on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
+                                            self.showMeasures(e);
+                                        })
+                                        .on(TC.Consts.event.DRAWCANCEL, function (e) {
+                                            self.cancel();
+                                        });
+                                });
                             });
 
                             self.setMode(self.options.mode);
