@@ -162,6 +162,8 @@ TC.control.Geolocation = function (options) {
     self.delta = 500;
     self.walkingSpeed = 5000;
     self.gapHill = self.options.gapHill || 20;
+
+    self._trackingLayerDeferred = $.Deferred();
 };
 
 TC.inherit(TC.control.Geolocation, TC.Control);
@@ -207,176 +209,130 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         self.wrap = new TC.wrap.control.Geolocation(self);
         self.wrap.register(map);
 
-        map.loaded(function () {
-            map.addLayer({
-                id: TC.getUID(),
-                type: TC.Consts.layerType.VECTOR,
-                stealth: true,
-                title: 'Posicionar.GPS',
-            }).then(function (layer) {
-                self.layerGPS = layer;
-            });
-            map.addLayer({
-                id: TC.getUID(),
-                type: TC.Consts.layerType.VECTOR,
-                stealth: true,
-                title: 'Posicionar.Tracking',
-                styles: {
-                    point: {
-                        radius: 3,
-                        fillColor: "#00ced1",
-                        fillOpacity: function () {
-                            return this.track.renderTrack.checked ? 1 : 0;
-                        }.bind(self),
-                        strokeColor: "#ffffff",
-                        fontColor: "#00ced1",
-                        labelOutlineColor: "#ffffff",
-                        labelOutlineWidth: 1,
-                        label: function (feature) {
-                            var name = feature.getData()['name'];
-                            if (name && (name + '').trim().length > 0) {
-                                name = (name + '').trim().toLowerCase();
-                            } else {
-                                name = '';
-                            }
-
-                            return name;
-                        }
-                    },
-                    line: {
-                        strokeOpacity: function () {
-                            return this.track.renderTrack.checked ? 1 : 0;
-                        }.bind(self),
-                        strokeWidth: 2,
-                        strokeColor: "#00ced1",
-                        lineDash: [.1, 6]
-                    }
-                }
-            }).then(function (layer) {
-                self.layerTracking = layer;
-            });
-
-            var trackLayerChanged = function (e) {
-                var self = this;
-                if (e.layer == self.layerTrack) {
-                    switch (true) {
-                        case e.type + '.' + e.namespace === TC.Consts.event.LAYERREMOVE:
-                            self.wrap.deactivateSnapping();
-                            var selected = self.getSelectedTrack();
-                            if (selected) {
-                                self.clearSelectedTrack();
-                            }
-                            if (self.resultsPanelChart)
-                                self.resultsPanelChart.close();
-
-                            // GLS: limpiamos la referencia a la capa para poder gestionar las nuevas selecciones en la lista/importaciones
-                            self.layerTrack = undefined;
-                            break;
-                        case e.opacity > 0 && e.opacity < 1:
-                            return;
-                        case e.layer.getVisibility() == false:
-                            if (self.resultsPanelChart)
-                                self.resultsPanelChart.minimize();
-                        case e.opacity == 0:
-                            self.wrap.deactivateSnapping();
-                            break;
-                        case e.layer.getVisibility() == true:
-                            if (self.resultsPanelChart)
-                                self.resultsPanelChart.maximize();
-                        case e.opacity == 1:
-                            self.wrap.activateSnapping();
-                            break;
-                    }
-                }
-            }.bind(self);
-            self._trackLayerBindEvents = function (bind) {
-                var self = this;
-
-                if (bind) {
-                    map.on(TC.Consts.event.LAYERVISIBILITY + ' ' + TC.Consts.event.LAYEROPACITY + ' ' + TC.Consts.event.LAYERREMOVE, trackLayerChanged);
-                } else {
-                    map.off(TC.Consts.event.LAYERVISIBILITY + ' ' + TC.Consts.event.LAYEROPACITY + ' ' + TC.Consts.event.LAYERREMOVE, trackLayerChanged);
-                }
-            };
-
-            map.on(TC.Consts.event.FEATURESIMPORT, function (e) {
-                var self = this;
-
-                if (!self.isDisabled) {
-                    if (e.fileName && e.features && e.features.length > 0) {
-
-                        var isKML = /.kml$/g.test(e.fileName.toLowerCase()) && self.importedByMe || false;
-
-                        if (/.gpx$/g.test(e.fileName.toLowerCase()) || isKML) {
-
-                            if (self.layerTrack) {
-                                self.map.removeLayer(self.layerTrack);
-                                self.layerTrack = undefined;
-                            }
-
-                            if (isKML) { // si trata de un KML importado desde el control Ubicar borro la capa del TOC
-                                for (var i = 0; i < self.map.workLayers.slice().reverse().length; i++) {
-                                    var layer = self.map.workLayers.slice().reverse()[i];
-                                    if (layer.title && layer.title.toLowerCase().trim() === e.fileName.toLowerCase().trim()) {
-                                        self.map.removeLayer(layer);
-                                        break;
-                                    }
-                                }
-                                self.importedByMe = false;
-                            }
-
-                            // GLS: añadimos la capa para que se muestre en el TOC
-                            self.getLayer(self.Const.Layers.TRACK).then(function (layer) {
-
-                                self._trackLayerBindEvents(false);
-                                self.layerTrack.setVisibility(false);
-                                self._trackLayerBindEvents(true);
-
-                                var wait = self.getLoadingIndicator().addWait();
-                                self.importedFileName = e.fileName;
-                                for (var i = 0, len = e.features.length; i < len; i++) {
-                                    self.layerTrack.addFeature(e.features[i]);
-                                }
-                                self.wrap.processImportedFeatures(wait);
-
-                                if (self.layerTrack) { // Si tenemos capa es que todo ha ido bien y gestionamos el despliegue del control
-                                    // Desplegamos el control "ubicar" al importar mediante drag&drop
-                                    if (self.map && self.map.layout && self.map.layout.accordion) {
-                                        if (self._$div.hasClass(TC.Consts.classes.COLLAPSED)) {
-                                            for (var i = 0; i < self.map.controls.length; i++) {
-                                                if (self.map.controls[i] !== self) {
-                                                    self.map.controls[i]._$div.addClass(TC.Consts.classes.COLLAPSED);
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    if (isKML) {
-                                        if (self.layerTrack.styles) {
-                                            self.layerTrack.features.forEach(function (feature) {
-                                                if (feature instanceof TC.feature.Point && self.layerTrack.styles.point) {
-                                                    feature.setStyle(self.layerTrack.styles.point);
-                                                } else if (feature instanceof TC.feature.Polyline && self.layerTrack.styles.line) {
-                                                    feature.setStyle(self.layerTrack.styles.line);
-                                                }
-                                            });
-                                        }
-                                    }
-
-                                    self._$div.removeClass(TC.Consts.classes.COLLAPSED);
-                                    $('.' + self.CLASS + '-btn-tracks > span').click();
-
-                                    // abrimos el panel de herramientas
-                                    self.map.$events.trigger($.Event(TC.Consts.event.TOOLSOPEN), {});
-                                }
-                            });
-                        }
-                    }
-                } else if (/.gpx$/g.test(e.fileName.toLowerCase())) {
-                    self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: TC.Consts.msgType.WARNING });
-                }
-            }.bind(self));
+        map.addLayer({
+            id: self.getUID(),
+            type: TC.Consts.layerType.VECTOR,
+            stealth: true,
+            title: 'Posicionar.GPS',
+        }).then(function (layer) {
+            self.layerGPS = layer;
         });
+        map.addLayer({
+            id: self.getUID(),
+            type: TC.Consts.layerType.VECTOR,
+            stealth: true,
+            title: 'Posicionar.Tracking',
+            styles: {
+                point: {
+                    radius: 3,
+                    fillColor: "#00ced1",
+                    fillOpacity: function () {
+                        return this.track.renderTrack.checked ? 1 : 0;
+                    }.bind(self),
+                    strokeColor: "#ffffff",
+                    fontColor: "#00ced1",
+                    labelOutlineColor: "#ffffff",
+                    labelOutlineWidth: 1,
+                    label: function (feature) {
+                        var name = feature.getData()['name'];
+                        if (name && (name + '').trim().length > 0) {
+                            name = (name + '').trim().toLowerCase();
+                        } else {
+                            name = '';
+                        }
+
+                        return name;
+                    }
+                },
+                line: {
+                    strokeOpacity: function () {
+                        return this.track.renderTrack.checked ? 1 : 0;
+                    }.bind(self),
+                    strokeWidth: 2,
+                    strokeColor: "#00ced1",
+                    lineDash: [.1, 6]
+                }
+            }
+        }).then(function (layer) {
+            self.layerTracking = layer;
+            self._trackingLayerDeferred.resolve(layer);
+        });
+
+        var trackLayerChanged = function (e) {
+            var self = this;
+            if (e.layer == self.layerTrack) {
+                switch (true) {
+                    case e.type + '.' + e.namespace === TC.Consts.event.LAYERREMOVE:
+                        self.wrap.deactivateSnapping();
+                        var selected = self.getSelectedTrack();
+                        if (selected) {
+                            self.clearSelectedTrack();
+                        }
+                        if (self.resultsPanelChart)
+                            self.resultsPanelChart.close();
+
+                        // GLS: limpiamos la referencia a la capa para poder gestionar las nuevas selecciones en la lista/importaciones
+                        self.layerTrack = undefined;
+                        break;
+                    case e.opacity > 0 && e.opacity < 1:
+                        return;
+                    case e.layer.getVisibility() == false:
+                        if (self.resultsPanelChart)
+                            self.resultsPanelChart.minimize();
+                    case e.opacity == 0:
+                        self.wrap.deactivateSnapping();
+                        break;
+                    case e.layer.getVisibility() == true:
+                        if (self.resultsPanelChart)
+                            self.resultsPanelChart.maximize();
+                    case e.opacity == 1:
+                        self.wrap.activateSnapping();
+                        break;
+                }
+            }
+        }.bind(self);
+        self._trackLayerBindEvents = function (bind) {
+            var self = this;
+
+            if (bind) {
+                map.on(TC.Consts.event.LAYERVISIBILITY + ' ' + TC.Consts.event.LAYEROPACITY + ' ' + TC.Consts.event.LAYERREMOVE, trackLayerChanged);
+            } else {
+                map.off(TC.Consts.event.LAYERVISIBILITY + ' ' + TC.Consts.event.LAYEROPACITY + ' ' + TC.Consts.event.LAYERREMOVE, trackLayerChanged);
+            }
+        };
+
+        map.on(TC.Consts.event.FEATURESIMPORT, function (e) {
+            const self = this;
+            const isKML = /.kml$/g.test(e.fileName.toLowerCase()) && self.importedByMe || false;
+
+            if (/.gpx$/g.test(e.fileName.toLowerCase()) || isKML) {
+
+                if (isKML) { // si trata de un KML importado desde el control Ubicar borro la capa del TOC
+                    for (var i = 0; i < self.map.workLayers.slice().reverse().length; i++) {
+                        var layer = self.map.workLayers.slice().reverse()[i];
+                        if (layer.title && layer.title.toLowerCase().trim() === e.fileName.toLowerCase().trim()) {
+                            self.map.removeLayer(layer);
+                            break;
+                        }
+                    }
+                    self.importedByMe = false;
+                }
+
+                self.importTrack(e);
+
+                if (isKML && self.layerTrack) {
+                    if (self.layerTrack.styles) {
+                        self.layerTrack.features.forEach(function (feature) {
+                            if (feature instanceof TC.feature.Point && self.layerTrack.styles.point) {
+                                feature.setStyle(self.layerTrack.styles.point);
+                            } else if (feature instanceof TC.feature.Polyline && self.layerTrack.styles.line) {
+                                feature.setStyle(self.layerTrack.styles.line);
+                            }
+                        });
+                    }
+                }
+            }
+        }.bind(self));
     };
 
     ctlProto.render = function (callback) {
@@ -386,6 +342,59 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         }).then(function () {
             TC.Control.prototype.render.call(self, callback);
         });
+    };
+
+    ctlProto.importTrack = function (options) {
+        var self = this;
+
+        if (!self.isDisabled) {
+            if (options.fileName && options.features && options.features.length > 0) {
+
+                if (self.layerTrack) {
+                    self.map.removeLayer(self.layerTrack);
+                    self.layerTrack = undefined;
+                }
+
+                // GLS: añadimos la capa para que se muestre en el TOC
+                self.getLayer(self.Const.Layers.TRACK).then(function (layer) {
+
+                    self._trackLayerBindEvents(false);
+                    self.layerTrack.setVisibility(false);
+                    self._trackLayerBindEvents(true);
+
+                    var wait = self.getLoadingIndicator().addWait();
+                    self.importedFileName = options.fileName;
+                    for (var i = 0, len = options.features.length; i < len; i++) {
+                        self.layerTrack.addFeature(options.features[i]);
+                    }
+                    self.wrap.processImportedFeatures(wait);
+
+                    if (self.layerTrack) { // Si tenemos capa es que todo ha ido bien y gestionamos el despliegue del control
+                        // Desplegamos el control "ubicar" al importar mediante drag&drop
+                        if (self.map && self.map.layout && self.map.layout.accordion) {
+                            if (self._$div.hasClass(TC.Consts.classes.COLLAPSED)) {
+                                self.map.controls
+                                    .filter(function (ctl) {
+                                        // Todos los otros controles que no cuelgan de otro control
+                                        return ctl !== self && !ctl.containerControl;
+                                    })
+                                    .forEach(function (ctl) {
+                                        ctl._$div.addClass(TC.Consts.classes.COLLAPSED);
+                                    });
+                            }
+                        }
+
+                        self._$div.removeClass(TC.Consts.classes.COLLAPSED);
+                        $('.' + self.CLASS + '-btn-tracks > span').click();
+
+                        // abrimos el panel de herramientas
+                        self.map.$events.trigger($.Event(TC.Consts.event.TOOLSOPEN), {});
+                    }
+                });
+            }
+        } else if (/.gpx$/g.test(options.fileName.toLowerCase())) {
+            self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: TC.Consts.msgType.WARNING });
+        }
     };
 
     var visibilityTrack = true;
@@ -538,7 +547,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             self.track.$trackToolPanelOpened = self._$div.find('#tc-ctl-geolocation-track-panel-opened');
 
-            self._$div.find('.' + ctlProto.CLASS + '-track-panel-help').click(function () {
+            self._$div.find('.' + ctlProto.CLASS + '-track-panel-help').on('click', function () {
                 _showAlerMsg.call(self);
             });
 
@@ -564,7 +573,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             }
 
             if (window.File && window.FileReader && window.FileList && window.Blob) {
-                self.track.$trackImportFile.removeAttr('disabled');
+                self.track.$trackImportFile.prop('disabled', false);
                 self.track.$trackImportFile.on(TC.Consts.event.CLICK, function (e) {
                     $(this).wrap('<form>').closest('form').get(0).reset();
                     $(this).unwrap();
@@ -940,7 +949,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             // popup advertencia
             self.track.$trackAdvertisementOK.on('click', function () {
 
-                var checkbox = $(body).find('input[name*="Advertisement"]:checked');
+                var checkbox = $('body').find('input[name*="Advertisement"]:checked');
 
                 if (checkbox.length > 0) {
                     var done = new $.Deferred();
@@ -960,7 +969,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 TC.Util.closeModal();
             });
 
-            self.track.renderTrack = $('#tc-ctl-geolocation-track-render').change(function () {
+            self.track.renderTrack = $('#tc-ctl-geolocation-track-render').on('change', function () {
                 if (self.track.$activateButton.hasClass(TC.Consts.classes.HIDDEN)) {
                     self.layerTracking.setVisibility(this.checked);
                 }
@@ -993,7 +1002,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         TC.Util.closeModal();
         self.clearSelection();
         self.deactivateTracking();
-        TC.Control.prototype.deactivate.call(self);
+        //TC.Control.prototype.deactivate.call(self);
     };
 
     var _layerError = function () {
@@ -1072,7 +1081,6 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         strokeColor: "#ffffff",
                         fontColor: "#C52737",
                         fontSize: 10,
-                        fontWeight: "bold",
                         labelOutlineColor: "#ffffff",
                         labelOutlineWidth: 2,
                         label: function (feature) {
@@ -1102,7 +1110,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.layerPromise = new $.Deferred();
 
             var opt = {
-                id: TC.getUID(),
+                id: self.getUID(),
                 type: TC.Consts.layerType.VECTOR,
                 title: self.getLocaleString("geo") + ' - ' + layerType,
                 stealth: true
@@ -1590,7 +1598,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.clear(self.Const.Layers.TRACKING);
             self.clear(self.Const.Layers.GPS);
 
-            TC.Control.prototype.deactivate.call(self);
+            //TC.Control.prototype.deactivate.call(self);
 
             return true;
         };
@@ -2043,17 +2051,16 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             if (!self.resultsPanelChart) {
 
-                if (!TC.control.ResultsPanel)
-                    TC.syncLoadJS(TC.apiLocation + 'TC/control/ResultsPanel');
-
-                if (!window.c3)
+                if (!window.c3) {
                     TC.syncLoadJS(TC.Consts.url.D3C3 || TC.apiLocation + 'lib/d3c3/d3c3.min.js');
+                }
 
                 const chartPanel = self.map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
                     return ctl.options.content === 'chart';
                 })[0];
                 const $panelDiv = chartPanel ? chartPanel._$div : $('<div>').appendTo(self.map._$div);
-                self.resultsPanelChart = new TC.control.ResultsPanel({
+
+                self.map.addControl('resultsPanel', {
                     div: $panelDiv,
                     content: "chart",
                     titles: {
@@ -2067,39 +2074,39 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         onmouseout: ctlProto.removeElevationTooltip,
                         tooltip: ctlProto.getElevationTooltip
                     }
-                });
+                }).then(function (resultsPanelChart) {
+                    self.resultsPanelChart = resultsPanelChart;
+                    resultsPanelChart.render(function () {
 
-                self.map.addControl(self.resultsPanelChart);
-                self.resultsPanelChart.render(function () {
+                        resultsPanelChart.activateSnapping = function (e) {
+                            if (self.layerTrack && (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0))
+                                self.wrap.deactivateSnapping.call(self.wrap);
+                        };
+                        resultsPanelChart.deactivateSnapping = function (e) {
+                            if (self.layerTrack && self.layerTrack.getVisibility() && self.layerTrack.getOpacity() > 0)
+                                self.wrap.activateSnapping.call(self.wrap);
+                        };
 
-                    self.resultsPanelChart.activateSnapping = function (e) {
-                        if (self.layerTrack && (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0))
-                            self.wrap.deactivateSnapping.call(self.wrap);
-                    };
-                    self.resultsPanelChart.deactivateSnapping = function (e) {
-                        if (self.layerTrack && self.layerTrack.getVisibility() && self.layerTrack.getOpacity() > 0)
-                            self.wrap.activateSnapping.call(self.wrap);
-                    };
+                        resultsPanelChart._$div.on('mouseover', resultsPanelChart.deactivateSnapping);
+                        resultsPanelChart._$div.on('mouseout', resultsPanelChart.activateSnapping);
 
-                    self.resultsPanelChart._$div.on('mouseover', self.resultsPanelChart.deactivateSnapping);
-                    self.resultsPanelChart._$div.on('mouseout', self.resultsPanelChart.activateSnapping);
+                        self.map.$events
+                            .on(TC.Consts.event.RESULTSPANELMIN, function () {
+                                $(self.miDiv).hide();
+                                self.elevationActiveCollapsed.set(true);
+                            })
+                            .on(TC.Consts.event.RESULTSPANELMAX, function () {
+                                $(self.miDiv).show();
+                                self.elevationActiveCollapsed.set(false);
+                            })
+                            .on(TC.Consts.event.RESULTSPANELCLOSE, function () {
+                                $(self.miDiv).hide();
+                                self.elevationActive.set(false);
+                            });
 
-                    self.map.$events
-                        .on(TC.Consts.event.RESULTSPANELMIN, function () {
-                            $(self.miDiv).hide();
-                            self.elevationActiveCollapsed.set(true);
-                        })
-                        .on(TC.Consts.event.RESULTSPANELMAX, function () {
-                            $(self.miDiv).show();
-                            self.elevationActiveCollapsed.set(false);
-                        })
-                        .on(TC.Consts.event.RESULTSPANELCLOSE, function () {
-                            $(self.miDiv).hide();
-                            self.elevationActive.set(false);
-                        });
-
-                    self.resultsPanelChart.show();
-                    self.map.$events.trigger($.Event(self.Const.Event.DRAWTRACK), { data: data });
+                        resultsPanelChart.show();
+                        self.map.$events.trigger($.Event(self.Const.Event.DRAWTRACK), { data: data });
+                    });
                 });
             } else {
                 self.resultsPanelChart.show();
@@ -2138,7 +2145,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             self.map.$events.trigger($.Event(self.Const.Event.CLEARTRACK), {});
 
-            TC.Control.prototype.deactivate.call(self);
+            //TC.Control.prototype.deactivate.call(self);
 
         } else {
             self.getLayer(layerType).then(function (layer) {
@@ -2498,7 +2505,40 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         }
     };
 
+    ctlProto.getTrackingLayer = function () {
+        const self = this;
+        return self._trackingLayerDeferred;
+    };
+
     var _isEmpty = function (obj) {
         return !obj || obj.length === 0;
+    };
+
+    ctlProto.exportState = function () {
+        const self = this;
+        const result = {};
+        if (self.layerTrack) {
+            const layerState = self.layerTrack.exportState();
+            layerState.features = layerState.features.filter(function (f) {
+                return f.type === TC.Consts.geom.POLYLINE;
+            });
+            result.id = self.id;
+            result.track = layerState.features[0];
+            result.trackName = self.getSelectedTrack().find('span').html();
+        }
+        return result;
+    };
+
+    ctlProto.importState = function (state) {
+        const self = this;
+        if (self.map) {
+            if (state.track) {
+                self.enable();
+                const vector = new TC.layer.Vector();
+                vector.importState({ features: [state.track] }).then(function () {
+                    self.importTrack({ features: vector.features, fileName: state.trackName });
+                });
+            }
+        }
     };
 })();
