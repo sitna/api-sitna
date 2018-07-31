@@ -56,7 +56,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                     return;
                 }
                 map.addLayer({
-                    id: TC.getUID(),
+                    id: self.getUID(),
                     title: e.fileName,
                     type: TC.Consts.layerType.VECTOR
                 }).then(function (layer) {
