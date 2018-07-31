@@ -478,6 +478,8 @@
                 ol.format.XSD.writeNonNegativeIntegerTextNode)
         });
 
+    const hitTolerance = TC.Util.detectMouse() ? 3 : 10;
+
     // GLS: Obtenemos las combinaciones posibles
     var getAllCombinations = function (array) {
         var combi = [];
@@ -798,6 +800,17 @@
         }
     };
 
+    // Parche a mantener hasta que se actualize cartoteca
+    const oldImage = ol.Image;
+    ol.Image = function () {
+        if (arguments.length === 7) {
+            Array.prototype.splice.call(arguments, 3, 1);
+        }
+        return oldImage.apply(this, arguments);
+    }
+    TC.inherit(ol.Image, oldImage);
+    /////////////////////////////////////////////////////
+
     var getRGBA = function (color, opacity) {
         var result;
         if (color) {
@@ -829,7 +842,7 @@
         };
 
         if (mapWrap.parent.maxExtent) {
-            pms.extent = mapWrap.parent.initialExtent;
+            pms.extent = mapWrap.parent.maxExtent;
         }
 
         if (layer instanceof TC.layer.Raster) {
@@ -937,7 +950,7 @@
         }
         var projection = new ol.proj.Projection(projOptions);
 
-        var interactions = ol.interaction.defaults();
+        var interactions = ol.interaction.defaults({ constrainResolution: true });
 
         var viewOptions = {
             projection: projection,
@@ -980,6 +993,9 @@
         self.parent.$events.one(TC.Consts.event.MAPLOAD, updateSize);
 
         self.map.on(ol.MapBrowserEventType.SINGLECLICK, function (e) {
+            self.parent.workLayers.forEach(function (wl) {
+                delete wl._noFeatureClicked;
+            });
             var featuresInLayers = $.map(self.parent.workLayers, function () {
                 return false;
             });
@@ -996,6 +1012,9 @@
                         self.parent.$events.trigger($.Event(TC.Consts.event.FEATURECLICK, { feature: feature._wrap.parent }));
                         return feature;
                     }
+                },
+                {
+                    hitTolerance: hitTolerance
                 });
             for (var i = 0; i < featuresInLayers.length; i++) {
                 if (!featuresInLayers[i]) {
@@ -1135,7 +1154,7 @@
         var self = this;
         var layers = self.map.getLayers();
         var alreadyExists = false;
-        for (var i = 0; i < layers.getLength() ; i++) {
+        for (var i = 0; i < layers.getLength(); i++) {
             if (layers.item(i) === olLayer) {
                 alreadyExists = true;
                 break;
@@ -1257,6 +1276,14 @@
                         crs: self.parent.crs
                     });
                 }
+                //if (olLayer instanceof ol.layer.Tile) { // Si es imagen teselada
+                //    const view = self.map.getView();
+                //    const resolutions = olLayer.getSource().getResolutions();
+                //    if (resolutions) {
+                //        view.options_.resolutions = resolutions;
+                //        view.applyOptions_(view.options_);
+                //    }
+                //}
             }
             self.insertLayer(olLayer, 0);
             deferred.resolve();
@@ -1324,23 +1351,31 @@
                 if (view.constrainResolution) {
                     var constrainedResolution = view.constrainResolution(res, 0, 0);
                     if (constrainedResolution < res) {
-                        if (constrainedResolution / res < TC.Consts.EXTENT_TOLERANCE)
+                        if (constrainedResolution / res < TC.Consts.EXTENT_TOLERANCE) {
                             constrainedResolution = view.constrainResolution(
                                 constrainedResolution, -1, 0);
-                        else
-                            constrainedResolution = view.constrainResolution(res, 0, 0);
+                        }
                     }
                     res = constrainedResolution;
                 }
 
+                // flacunza: No animamos si la duración va a ser 0, porque a veces el zoom no se completa
                 // GLS: antes de resolver la promesa validamos si existe animación
                 // URI: si la animacion no existe ponemos duracion 0
                 // flacunza: en caso de que animate=undefined, se anima
-                view.animate({
-                    resolution: res,
-                    center: [((extent[0] + extent[2]) / 2), ((extent[1] + extent[3]) / 2)],
-                    duration: (opts.animate === void (0) || opts.animate) ? TC.Consts.ZOOM_ANIMATION_DURATION : 0
-                }, onpostrender);
+                const center = [((extent[0] + extent[2]) / 2), ((extent[1] + extent[3]) / 2)];
+                if (opts.animate === void (0) || opts.animate) {
+                    view.animate({
+                        resolution: res,
+                        center: center,
+                        duration: TC.Consts.ZOOM_ANIMATION_DURATION
+                    }, onpostrender);
+                }
+                else {
+                    view.setCenter(center);
+                    view.setResolution(res);
+                    onpostrender();
+                }
             };
 
             if (self.parent.baseLayer) {
@@ -1555,17 +1590,20 @@
                             if (!self.parent.activeControl || !self.parent.activeControl.isExclusive()) {
                                 var pixel = olMap.getEventPixel(e.originalEvent);
                                 hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                                    var result = true;
-                                    if (feature._wrap && !feature._wrap.parent.showsPopup && !feature._wrap.parent.options.selectable) {
-                                        result = false;
-                                    }
+                                        var result = true;
+                                        if (feature._wrap && !feature._wrap.parent.showsPopup && !feature._wrap.parent.options.selectable) {
+                                            result = false;
+                                        }
 
-                                    if (result && feature._wrap) {
-                                        self.parent.$events.trigger($.Event(TC.Consts.event.FEATUREOVER, { feature: feature._wrap.parent }));
-                                    }
+                                        if (result && feature._wrap) {
+                                            self.parent.$events.trigger($.Event(TC.Consts.event.FEATUREOVER, { feature: feature._wrap.parent }));
+                                        }
 
-                                    return result;
-                                });
+                                        return result;
+                                    },
+                                    {
+                                        hitTolerance: hitTolerance
+                                    });
                             }
                             if (hit) {
                                 mapTarget.style.cursor = 'pointer';
@@ -1603,6 +1641,7 @@
                     showPointNames: false
                 });
             case TC.Consts.layerType.GPX:
+            case TC.Consts.mimeType.GPX:
                 return new ol.format.GPX();
             case TC.Consts.layerType.GEOJSON:
             case TC.Consts.mimeType.JSON:
@@ -1620,7 +1659,7 @@
             case TC.Consts.format.WKT:
                 return new ol.format.WKT();
             default:
-                break;
+                return null;
         }
     };
 
@@ -1754,6 +1793,35 @@
         }
 
         if (format instanceof ol.format.GMLBase) {
+
+            // Quitamos los espacios en blanco de los nombres de atributo en las features: no son válidos en GML.
+            olFeatures = olFeatures.map(function (f) {
+                return f.clone();
+            });
+            olFeatures.forEach(function (f) {
+                const values = f.values_
+                const keysToChange = [];
+                for (var key in values) {
+                    if (key.indexOf(' ') >= 0) {
+                        keysToChange.push(key);
+                    }
+                }
+                keysToChange.forEach(function (key) {
+                    // Quitamos espacios en blanco y evitamos que empiece por un número
+                    var newKey = key.replace(/ /g, '_');
+                    if (/^\d/.test(newKey)) {
+                        newKey = '_' + newKey;
+                    }
+                    if (key !== newKey) {
+                        while (values[newKey] !== undefined) {
+                            newKey += '_';
+                        }
+                    }
+                    values[newKey] = values[key];
+                    delete values[key];
+                });
+            });
+
             //Apañamos para que el GML sea válido. Si no lo hacemos, con IE, en ol-debug.js:36514 da un error porque node.localName no existe.
             format.featureNS = "sitna";
             format.featureType = "feature";
@@ -1772,6 +1840,19 @@
             //    'xsi:schemaLocation', this.schemaLocation);
             //return featureCollectionNode.outerHTML;
         }
+
+        if (format instanceof ol.format.GPX) {
+            // Queremos exportar tracks en vez de routes. OpenLayers exporta LineStrings como routes y MultiLineStrings como tracks.
+            olFeatures = olFeatures.map(function (f) {
+                const geom = f.getGeometry();
+                if (geom instanceof ol.geom.LineString) {
+                    f = f.clone();
+                    f.setGeometry(new ol.geom.MultiLineString([geom.getCoordinates()]));
+                }
+                return f;
+            });
+        }
+
         var result = format.writeFeatures(olFeatures, {
             dataProjection: 'EPSG:4326',
             featureProjection: self.parent.crs
@@ -2324,7 +2405,9 @@
                             if (nodes) {
                                 for (var i = 0; i < nodes.length; i++) {
                                     var n = nodes[i];
-                                    var isIn = inCrs || $.inArray(crs, n.CRS || n.SRS) >= 0;
+                                    const itemCRS = n.CRS || n.SRS;
+                                    const crsList = Array.isArray(itemCRS) ? itemCRS : [itemCRS];
+                                    var isIn = inCrs || $.inArray(crs, crsList) >= 0;
                                     if (layer.compareNames(self.getName(n), name)) {
                                         if (isIn) {
                                             r = true;
@@ -2379,10 +2462,14 @@
                                 return layer
                                     .getNodePath(name) // array de nodos
                                     .map(function (node) {
-                                        const crsList = node.CRS || node.SRS || [];
+                                        const itemCRS = node.CRS || node.SRS || [];
+                                        const crsList = Array.isArray(itemCRS) ? itemCRS : [itemCRS];
                                         return $.isArray(crsList) ? crsList : [crsList];
                                     }) // array de arrays de crs
                                     .reduce(function (prev, cur) {
+                                        if (prev.length === 0) {
+                                            return cur;
+                                        }
                                         cur.forEach(function (elm) {
                                             if (prev.indexOf(elm) < 0) {
                                                 prev[prev.length - 1] = elm;
@@ -2392,12 +2479,16 @@
                                     });
                             });
 
-                        const otherCrsLists = crsLists.slice(1);
-                        result = crsLists[0].filter(function (elm) {
-                            return otherCrsLists.every(function (crsList) {
-                                return crsList.indexOf(elm) >= 0;
+                        if (crsLists.length === 1) {
+                            result = crsLists[0];
+                        } else {
+                            const otherCrsLists = crsLists.slice(1);
+                            result = crsLists[0].filter(function (elm) {
+                                return otherCrsLists.every(function (crsList) {
+                                    return crsList.indexOf(elm) >= 0;
+                                });
                             });
-                        });
+                        }
                     }
                 }
                 break;
@@ -2436,7 +2527,9 @@
             case TC.Consts.layerType.WMS:
                 if (layer.capabilities && layer.capabilities.Capability && layer.capabilities.Capability.Layer) {
                     var _fnrecursive = function (item, crs, inCrs) {
-                        var isIn = inCrs || $.inArray(crs, item.CRS || item.SRS) >= 0;
+                        var crsToCheck = item.CRS || item.SRS;
+                        var itemCRS = Array.isArray(crsToCheck) ? crsToCheck : [crsToCheck];
+                        var isIn = inCrs || $.inArray(crs, itemCRS) >= 0;
                         if (isIn && item.Name) result[result.length] = item.Name;
                         if (item.Layer) {
                             for (var i = 0; i < item.Layer.length; i++) {
@@ -2852,6 +2945,7 @@
                     anchorYUnits: styleOptions.anchorYUnits || ANCHOR_DEFAULT_UNITS,
                     src: styleOptions.url
                 });
+                nativeStyleOptions.text = createNativeTextStyle(styleOptions, feature);
             }
         }
 
@@ -3107,11 +3201,6 @@
             switch (url.substr(url.lastIndexOf('.') + 1).toLowerCase()) {
                 case 'kml':
                     return TC.Consts.layerType.KML;
-                case 'gpx':
-                    return TC.Consts.layerType.GPX;
-                case 'json':
-                case 'geojson':
-                    return TC.Consts.layerType.GEOJSON;
                 default:
                     return TC.Consts.layerType.VECTOR;
             }
@@ -3135,7 +3224,7 @@
                 url: TC.proxify(options.url),
                 projection: options.crs
             };
-            vectorOptions.format = getFormatFromName(getTypeFromUrl(options.url)) || getFormatFromName(options.type);
+            vectorOptions.format = getFormatFromName(options.format) || getFormatFromName(getTypeFromUrl(options.url)) || getFormatFromName(options.type);
             vectorOptions.loader = createGenericLoader(vectorOptions.url, vectorOptions.format);
             usesGenericLoader = true;
         }
@@ -3450,15 +3539,21 @@
         });
 
         source.addEventListener(ol.source.VectorEventType.ADDFEATURE, function (e) {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            if (self.parent.map) {
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            }
         });
 
         source.addEventListener(ol.source.VectorEventType.REMOVEFEATURE, function () {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            if (self.parent.map) {
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            }
         });
 
         source.addEventListener(ol.source.VectorEventType.CLEAR, function () {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESCLEAR, { layer: self.parent }));
+            if (self.parent.map) {
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESCLEAR, { layer: self.parent }));
+            }
         });
 
         var layerOptions = {
@@ -3547,6 +3642,7 @@
         var options = self.parent.options;
 
         var layerOptions = self.createVectorSource(options, self.createStyles(options));
+        layerOptions.declutter = self.parent.options.declutter || false;
         result = new ol.layer.Vector(layerOptions);
         result._wrap = self;
 
@@ -3755,12 +3851,15 @@
                         var hit = olMap.hasFeatureAtPixel(pixel);
                         if (hit) {
                             olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                                if (layer._wrap && layer._wrap.parent && layer._wrap.parent.id === self.parent.id && feature) {
-                                    olMap.getTarget().style.cursor = 'move';
-                                } else {
-                                    olMap.getTarget().style.cursor = '';
-                                }
-                            });
+                                    if (layer._wrap && layer._wrap.parent && layer._wrap.parent.id === self.parent.id && feature) {
+                                        olMap.getTarget().style.cursor = 'move';
+                                    } else {
+                                        olMap.getTarget().style.cursor = '';
+                                    }
+                                },
+                                {
+                                    hitTolerance: hitTolerance
+                                });
                         } else {
                             olMap.getTarget().style.cursor = '';
                         }
@@ -3819,6 +3918,9 @@
                     if (feature._wrap && feature._wrap.parent.showsPopup) {
                         featureCount++;
                     }
+                },
+                {
+                    hitTolerance: hitTolerance
                 });
             if (!featureCount) {
                 // GLS: lanzo el evento click, para que los controles que no pueden heredar de click y definir un callback pueda suscribirse al evento
@@ -3946,7 +4048,7 @@
     };
 
     TC.wrap.control.NavBar.prototype.setInitialExtent = function (extent) {
-        this.z2eCtl.extent_ = extent;
+        this.z2eCtl.extent = extent;
     };
 
     TC.wrap.control.Coordinates.prototype.register = function (map) {
@@ -4268,10 +4370,10 @@
                                             self.parent.onGeolocateError.call(self.parent, error);
                                     }
                                 }, {
-                                    timeout: 5000 + id,
-                                    maximumAge: 10,
-                                    enableHighAccuracy: true
-                                }
+                                timeout: 5000 + id,
+                                maximumAge: 10,
+                                enableHighAccuracy: true
+                            }
                         );
                     }
                     getCurrentPositionInterval = setInterval(getCurrentPosition, 1000);
@@ -5242,7 +5344,7 @@
                 );
             });
         }
-    };
+    };    
 
     TC.wrap.control.OverviewMap.prototype.get3DCameraLayer = function () {
         var self = this;
@@ -5301,6 +5403,16 @@
         var self = this;
         if (self.parent.layer && self.parent.layer.setVisibility) {
             self.parent.layer.setVisibility(true);
+
+            /* GLS: bug 23855: mapa de situación se muestra en blanco
+                En el resize se valida el alto y el ancho y como el div padre (id = "ovmap") tiene display: none, 
+                el ancho y el alto devuelven cero y por ello se muestra en blanco. 
+                No vale con lanzar .trigger('resize') porque no utiliza los valores actuales del div, 
+                sino los almacenados, por eso llamamos a updateSize que actualiza dichos valores.
+                https://tfsapp.tracasa.es:8088/tfs/web/wi.aspx?pcguid=4819cc6e-400e-4f70-ba7c-c18a830405aa&id=23855                
+            */
+            self.parent.wrap.ovMap.ovmap_.updateSize();
+
             // La siguiente línea es para actualizar mapa de situación
             $(self.parent.map.div).trigger('resize');
         }
@@ -6154,13 +6266,13 @@
         }
         else {
             return null;
-            //si no hay formato reconocido y parseable, metemos un iframe con la respuesta
-            //y prau
-            //para eso, creo una falsa entrada de tipo feature, con un campo especial rawUrl o rawContent
-            var l = service.layers[0];
-            l.features.push({
-                error: response.responseText
-            });
+            ////si no hay formato reconocido y parseable, metemos un iframe con la respuesta
+            ////y prau
+            ////para eso, creo una falsa entrada de tipo feature, con un campo especial rawUrl o rawContent
+            //var l = service.layers[0];
+            //l.features.push({
+            //    error: response.responseText
+            //});
         }
     };
     var featureToServiceDistributor = function (features, service) {
@@ -6438,10 +6550,10 @@
                     this._oldUpdatePixelPosition();
                 };
                 ol.events.unlisten(
-                    popup, ol.Object.getChangeEventType(ol.Overlay.Property_.OFFSET),
+                    popup, ol.Object.getChangeEventType(ol.Overlay.Property.OFFSET),
                     popup.handleOffsetChanged, popup);
                 ol.events.listen(
-                    popup, ol.Object.getChangeEventType(ol.Overlay.Property_.OFFSET),
+                    popup, ol.Object.getChangeEventType(ol.Overlay.Property.OFFSET),
                     popup._newHandleOffsetChanged, popup);
             }
             //view.on(['change:center','change:resolution'], onViewChange);
@@ -6455,10 +6567,10 @@
             }
             if (popup._newHandleOffsetChanged) {
                 ol.events.unlisten(
-                    popup, ol.Object.getChangeEventType(ol.Overlay.Property_.OFFSET),
+                    popup, ol.Object.getChangeEventType(ol.Overlay.Property.OFFSET),
                     popup._newHandleOffsetChanged, popup);
                 ol.events.listen(
-                    popup, ol.Object.getChangeEventType(ol.Overlay.Property_.OFFSET),
+                    popup, ol.Object.getChangeEventType(ol.Overlay.Property.OFFSET),
                     popup.handleOffsetChanged, popup);
                 delete popup._newHandleOffsetChanged;
             }
@@ -7040,7 +7152,7 @@
         }
     };
 
-    const getFeatureStyle = function () {
+    const getFeatureStyle = function (readonly) {
         var style = this.getStyle();
         if ($.isFunction(style)) {
             style = style.call(this);
@@ -7048,9 +7160,23 @@
         if ($.isArray(style)) {
             style = style[style.length - 1];
         }
-        if (!style) {
+        if (!style && !readonly) {
             style = new ol.style.Style();
             this.setStyle(style);
+        }
+        return style;
+    };
+
+    const getLayerStyle = function (feature) {
+        var style = this.getStyle();
+        if ($.isFunction(style)) {
+            style = style(feature);
+        }
+        if ($.isArray(style)) {
+            style = style[style.length - 1];
+        }
+        if (!style) {
+            style = new ol.style.Style();
         }
         return style;
     };
@@ -7058,17 +7184,26 @@
     TC.wrap.Feature.prototype.setStyle = function (options) {
         const self = this;
         const olFeat = self.feature;
+        if (options === null) {
+            olFeat.setStyle(null);
+            return;
+        }
         const feature = self.parent;
         const geom = olFeat.getGeometry();
         var style = getFeatureStyle.call(olFeat);
+        var layerStyle;
+        if (feature.layer) {
+            layerStyle = getLayerStyle.call(feature.layer.wrap.layer, feature.wrap.feature);
+        }
         if (geom instanceof ol.geom.Point || geom instanceof ol.geom.MultiPoint) {
 
             var imageStyle;
-            if (options.anchor || options.url) { // Marcador
+            if (options.anchor || options.url || options.cssClass) { // Marcador
                 imageStyle = style.getImage();
                 const iconOptions = {};
                 if (imageStyle instanceof ol.style.Icon) {
-                    iconOptions.src = options.url || imageStyle.getSrc();
+                    iconOptions.src = options.url || TC.Util.getBackgroundUrlFromCss(options.cssClass) || imageStyle.getSrc();
+
                     if (options.width && options.height) {
                         iconOptions.size = [getStyleValue(options.width, feature), getStyleValue(options.height, feature)];
                     }
@@ -7106,16 +7241,15 @@
             }
             else { // Punto sin icono
                 imageStyle = style.getImage();
+                if (!imageStyle) {
+                    imageStyle = new ol.style.Circle();
+                }
                 const circleOptions = {
                     radius: getStyleValue(options.radius, feature) ||
                     (getStyleValue(options.height, feature) + getStyleValue(options.width, feature)) / 4
                 };
                 if (isNaN(circleOptions.radius)) {
                     circleOptions.radius = imageStyle.getRadius();
-                }
-                if (!isNaN(circleOptions.radius)) {
-                    circleOptions.radius = imageStyle.getRadius();
-                    imageStyle = new ol.style.Circle(circleOptions);
                 }
                 if (options.fillColor) {
                     circleOptions.fill = new ol.style.Fill({
@@ -7126,6 +7260,7 @@
                     circleOptions.fill = imageStyle.getFill();
                 }
                 circleOptions.stroke = imageStyle.getStroke();
+                const layerStroke = layerStyle && layerStyle.getStroke();
                 if (options.strokeColor || options.strokeWidth) {
                     if (!circleOptions.stroke) {
                         circleOptions.stroke = new ol.style.Stroke();
@@ -7133,8 +7268,16 @@
                     if (options.strokeColor) {
                         circleOptions.stroke.setColor(getStyleValue(options.strokeColor, feature));
                     }
+                    else {
+                        const strokeColor = circleOptions.stroke.getColor() || (layerStroke && layerStroke.getColor() || TC.Cfg.styles.point.strokeColor);
+                        circleOptions.stroke.setColor(getStyleValue(strokeColor, feature));
+                    }
                     if (options.strokeWidth) {
                         circleOptions.stroke.setWidth(getStyleValue(options.strokeWidth, feature));
+                    }
+                    else {
+                        const strokeWidth = circleOptions.stroke.getWidth() || (layerStroke && layerStroke.getWidth() || TC.Cfg.styles.point.strokeWidth);
+                        circleOptions.stroke.setWidth(getStyleValue(strokeWidth, feature));
                     }
                 }
                 imageStyle = new ol.style.Circle(circleOptions);
@@ -7321,7 +7464,7 @@
                         offset[1] = -options.height * anchor[1];
                     }
                     else {
-                        var fStyle = getFeatureStyle.call(feature);
+                        var fStyle = getFeatureStyle.call(feature, true);
                         if (fStyle) {
                             const image = fStyle.getImage();
                             if (image instanceof ol.style.Icon) {
@@ -7425,16 +7568,25 @@
     };
 
     TC.wrap.control.Draw.prototype.clickHandler = function (evt) {
-        var self = evt.data;
+        const self = this;
+        if (self._mdPx) { // No operamos si el clic es consecuencia es en realidad un drag
+            const dx = self._mdPx[0] - evt.clientX;
+            const dy = self._mdPx[1] - evt.clientY;
+            if (dx * dx + dy * dy > self.interaction.squaredClickTolerance_) {
+                return;
+            }
+        }
         if (self.sketch) {
-            var output;
-            var data = {
-            };
             var coords = self.sketch.getGeometry().getCoordinates();
             self.parent.$events.trigger($.Event(TC.Consts.event.POINT, {
                 point: coords[coords.length - 1]
             }));
         }
+    };
+
+    TC.wrap.control.Draw.prototype.mousedownHandler = function (evt) {
+        const self = this;
+        self._mdPx = [evt.clientX, evt.clientY];
     };
 
     TC.wrap.control.Draw.prototype.getMeasureData = function () {
@@ -7468,6 +7620,37 @@
         return result;
     };
 
+    // Función para reproyectar el dibujo actual
+    const drawProjectionChangeHandler = function (ctl, e) {
+        if (ctl.sketch) {
+            const oldProj = e.oldValue.getProjection();
+            const newProj = e.target.get(e.key).getProjection();
+            if (oldProj.getCode() !== newProj.getCode()) {
+                const geom = ctl.sketch.getGeometry();
+                geom.transform(oldProj, newProj);
+                ctl.interaction.sketchPoint_.getGeometry().transform(oldProj, newProj);
+                const flatCoordinates = [];
+                var sketchCoords;
+                if (ctl.interaction.mode_ === ol.interaction.Draw.Mode_.POLYGON) {
+                    sketchCoords = ctl.interaction.sketchCoords_[0];
+                }
+                else {
+                    sketchCoords = ctl.interaction.sketchCoords_;
+                }
+                ol.geom.flat.deflate.coordinates(flatCoordinates, 0, sketchCoords, geom.stride);
+                const transformFn = ol.proj.getTransform(oldProj, newProj);
+                transformFn(flatCoordinates, flatCoordinates, geom.stride);
+                sketchCoords = ol.geom.flat.inflate.coordinates(flatCoordinates, 0, flatCoordinates.length, geom.stride);
+                if (ctl.interaction.mode_ === ol.interaction.Draw.Mode_.POLYGON) {
+                    ctl.interaction.sketchCoords_ = [sketchCoords];
+                }
+                else {
+                    ctl.interaction.sketchCoords_ = sketchCoords;
+                }
+            }
+        }
+    };
+
     TC.wrap.control.Draw.prototype.activate = function (mode) {
         var self = this;
 
@@ -7492,7 +7675,8 @@
                     if (self.interaction) {
                         olMap.removeInteraction(self.interaction);
                         self.$viewport
-                            .off(TC.Consts.event.CLICK, self.clickHandler)
+                            .off('mousedown.tc')
+                            .off(TC.Consts.event.CLICK)
                         if (self.parent.measure)
                             self.$viewport
                                 .off(MOUSEMOVE + '.draw', self.mouseMoveHandler)
@@ -7505,7 +7689,8 @@
 
                     if (mode) {
                         self.$viewport
-                            .on(TC.Consts.event.CLICK, self, self.clickHandler)
+                            .on('mousedown.tc', $.proxy(self.mousedownHandler, self))
+                            .on(TC.Consts.event.CLICK, self, $.proxy(self.clickHandler, self));
                         if (self.parent.measure)
                             self.$viewport
                                 .on(MOUSEMOVE + '.draw', self, self.mouseMoveHandler)
@@ -7517,12 +7702,15 @@
                             condition: function () {
                                 if (ol.events.condition.shiftKeyOnly(arguments[0])) {
                                     hole = olMap.forEachFeatureAtPixel(olMap.getPixelFromCoordinate(arguments[0].coordinate), function (feature) {
-                                        if (ol.geom.GeometryType.POLYGON == feature.getGeometry().getType() ||
-                                            ol.geom.GeometryType.MULTI_POLYGON == feature.getGeometry().getType()) {
-                                            return feature;
-                                        }
-                                        return null;
-                                    });
+                                            if (ol.geom.GeometryType.POLYGON == feature.getGeometry().getType() ||
+                                                ol.geom.GeometryType.MULTI_POLYGON == feature.getGeometry().getType()) {
+                                                return feature;
+                                            }
+                                            return null;
+                                        },
+                                        {
+                                            hitTolerance: hitTolerance
+                                        });
                                 }
                                 return true;
                             }
@@ -7574,7 +7762,7 @@
                         }, this);
 
                         self.interaction.on(ol.interaction.DrawEventType.DRAWEND, function (evt) {
-                            evt.feature.setStyle(drawOptions.style.map(function (style) {
+                            evt.feature.setStyle(evt.target.overlay_.getStyle().map(function (style) {
                                 return style.clone();
                             }));
                             if (self.parent.measure) {
@@ -7585,6 +7773,11 @@
                                 self.sketch = null;
                             });
                         }, this);
+
+                        self._projectionChangeHandler = function (e) {
+                            drawProjectionChangeHandler(self, e);
+                        };
+                        olMap.on('change:view', self._projectionChangeHandler);
 
                         olMap.addInteraction(self.interaction);
 
@@ -7612,7 +7805,9 @@
         if (self.parent.map) {
             $.when(self.parent.map.wrap.getMap(), self.parent.getLayer()).then(function (olMap, layer) {
                 if (self.$viewport) {
-                    self.$viewport.off(TC.Consts.event.CLICK, self.clickHandler);
+                    self.$viewport
+                        .off('mousedown.tc')
+                        .off(TC.Consts.event.CLICK);
                 }
                 if (layer && !self.parent.persistent) {
                     layer.clearFeatures();
@@ -7621,6 +7816,7 @@
                     olMap.removeInteraction(self.interaction);
                     self.interaction = null;
                 }
+                olMap.un('change:view', self._projectionChangeHandler);
             });
         }
     };
@@ -7783,6 +7979,15 @@
             self.interaction.finishDrawing();
     };
 
+    TC.wrap.control.Draw.prototype.setStyle = function (style) {
+        const self = this;
+        if (self.interaction) {
+            self.interaction.overlay_.setStyle(createNativeStyle({
+                styles: style
+            }));
+        }
+    };
+
     TC.wrap.control.CacheBuilder.prototype.getRequestSchemas = function (options) {
         var self = this;
         var extent = options.extent;
@@ -7942,7 +8147,8 @@
                     olMap.removeInteraction(self.selectInteraction);
                 }
                 var select = new ol.interaction.Select({
-                    layers: [olLayer]
+                    layers: [olLayer],
+                    hitTolerance: hitTolerance
                 });
                 self.selectInteraction = select;
                 olMap.addInteraction(select);
@@ -8000,11 +8206,14 @@
 
                         var pixel = olMap.getEventPixel(e.originalEvent);
                         hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                            if (layer === self.parent.layer.wrap.getLayer()) {
-                                return true;
-                            }
-                            return false;
-                        });
+                                if (layer === self.parent.layer.wrap.getLayer()) {
+                                    return true;
+                                }
+                                return false;
+                            },
+                            {
+                                hitTolerance: hitTolerance
+                            });
 
                         if (hit) {
                             mapTarget.style.cursor = 'pointer';
