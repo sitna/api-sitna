@@ -225,18 +225,20 @@
         getBackgroundUrlFromCss: function (cssClass) {
             var result = '';
 
-            if (iconUrlCache[cssClass] !== undefined) {
-                result = iconUrlCache[cssClass];
-            }
-            else {
-                var $iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
-                // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
-                var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec($iconDiv.css('background-image'));
-                if (match && match.length > 1) {
-                    result = match[match.length - 1];
+            if (cssClass) {
+                if (iconUrlCache[cssClass] !== undefined) {
+                    result = iconUrlCache[cssClass];
                 }
-                $iconDiv.remove();
-                iconUrlCache[cssClass] = result;
+                else {
+                    var $iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
+                    // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
+                    var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec($iconDiv.css('background-image'));
+                    if (match && match.length > 1) {
+                        result = match[match.length - 1];
+                    }
+                    $iconDiv.remove();
+                    iconUrlCache[cssClass] = result;
+                }
             }
             return result;
         },
@@ -433,6 +435,9 @@
                     ring.forEach(function (coord, cidx) {
                         var point = Proj4js.transform(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
                         rr[cidx] = [point.x, point.y];
+                        if (coord.length > 2) {
+                            rr[cidx][2] = coord[2];
+                        }
                     });
                 });
             });
@@ -1415,6 +1420,12 @@
             }
 
             return res;
+        },
+
+        toAbsolutePath: function(href) {
+            var link = document.createElement("a");
+            link.href = href;
+            return link.href;
         }
     };
     String.prototype.format = function () {
