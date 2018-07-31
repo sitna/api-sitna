@@ -3,6 +3,7 @@
   "addMaps": "Añadir mapas",
   "addService": "Añadir servicio",
   "addService.title": "Añadir servicio WMS (Web Map Service)",
+  "addWMS": "Añadir WMS",
   "addToBookmarks": "Guardar el mapa en marcadores",
   "approxXMb": "aprox. {quantity} MB",
   "area": "Área",
@@ -121,7 +122,7 @@
   "fi.error": "Se ha producido un error. Si persiste contacte con el administrador.",
   "fileImport.error.reasonKmz": "El archivo \"{fileName}\" no se ha podido cargar porque esta aplicación no soporta el formato KMZ. Convierta el archivo a KML para cargarlo.",
   "fileImport.error.reasonUnknown": "El archivo \"{fileName}\" no se ha podido cargar. Compruebe que tiene un formato de los soportados (KML, GPX, GML, GeoJSON, TopoJSON, WKT) y que no está dañado.",
-  "fileImport.instructions": "Puede añadir el contenido de archivos KML, GML, GPX, GeoJSON, TopoJSON o WKT desde aquí o arrastrándolos al área del mapa.",
+  "fileImport.instructions": "Puede añadir el contenido de archivos KML, GML, GeoJSON, TopoJSON o WKT desde aquí o arrastrándolos al área del mapa.",
   "finfo.featureChanged.warning": "Esta entidad geográfica ha sido actualizada en el sistema después del momento en que fue compartida. Tenga en cuenta que algunas de sus características podrían haber variado desde entonces.",
   "foi": "Entidad geográfica de interés",
   "format": "Formato",
@@ -225,6 +226,7 @@
   "mapDeleted": "Se ha borrado el mapa \"{mapName}\"",
   "mapDownloaded": "Mapa \"{mapName}\" descargado",
   "mapStateNotValid": "El mapa se ha cargado parcialmente ¿puede ser que la dirección sea incorrecta?",
+  "mapStateNotValidForIE": "El mapa se ha cargado parcialmente porque Internet Explorer no soporta direcciones largas",
   "mapTitle": "Título del mapa",
   "marker": "Marcador",
   "maxRes": "Resolución máxima",
@@ -363,7 +365,7 @@
   "title": "Título",
   "tooManyFeatures": "Demasiados elementos para el servicio \"&#123;serviceName&#125;\"",
   "tooManyFeatures.instructions": "Haga zoom sobre el mapa para seleccionar un área más pequeña o reduzca el número de capas cargadas",
-  "tooManyLayersLoaded": "<strong>Hay demasiadas capas cargadas en el visor: </strong>La URL generada es demasiado larga. Pruebe a eliminar alguna capa e intentarlo de nuevo",
+  "tooManyLayersLoaded": "<strong>Dada la cantidad de objetos en el mapa, puede no cargarse en navegadores antiguos:</strong> La URL generada puede ser demasiado larga para esos navegadores. Si quiere asegurar la compatibilidad en esos casos, pruebe a eliminar alguna capa, desactivar rutas o borrar dibujos o el resultado de búsqueda e intentarlo de nuevo.",
   "tooManySelectedLayers": "Demasiadas capas seleccionadas",
   "tooManySelectedLayers.instructions": "La consulta excede el límite de capas seleccionadas. Por favor, revise su selección",
   "tr.lst.backward": "Reducir velocidad simulación",
@@ -416,5 +418,7 @@
   "coords.currentProjection": "La proyección actual del mapa es <span class=\"tc-ctl-coords-cur-crs-name\"></span> (<span class=\"tc-ctl-coords-cur-crs-code\"></span>).",
   "coords.noCrs.warning": "El mapa de fondo actual y/o las capas cargadas no tienen más sistemas de referencia compatibles.",
   "outdatedBrowser": "Su navegador no está actualizado. Le recomendamos actualizarlo a la última versión para asegurar el correcto funcionamiento del sitio",
-  "urlFailedToLoad": "No se ha podido descargar el archivo {url} y, por tanto, no se puede asegurar el correcto funcionamiento del sitio. Por favor, recargue su navegador"
+  "urlFailedToLoad": "No se ha podido descargar el archivo {url} y, por tanto, no se puede asegurar el correcto funcionamiento del sitio. Por favor, recargue su navegador",
+  "urlTooLongForShortener": "La URL es demasiado larga para ser procesada por el servicio de acortamiento de URL. Pruebe a eliminar alguna capa, desactivar rutas o borrar dibujos o el resultado de búsqueda e intentarlo de nuevo.",
+  "urlTooLongForMailto": "La URL es muy larga para enviar al correo electrónico. Si tiene problemas, pruebe a eliminar alguna capa, desactivar rutas o borrar dibujos o el resultado de búsqueda e intentarlo de nuevo."
 }

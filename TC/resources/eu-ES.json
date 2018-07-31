@@ -3,6 +3,7 @@
   "addMaps": "Mapak gehitu",
   "addService": "Zerbitzua gehitu",
   "addService.title": "WMS (Web Map Service) Zerbitzua gehitu",
+  "addWMS": "WMS-a gehitu",
   "addToBookmarks": "Mapa gorde laster-marketan",
   "approxXMb": "Gutxi gorabehera {quantity} MB",
   "area": "Azalera",
@@ -120,7 +121,7 @@
   "fi.error": "Akatsa gertatu da. Besterik gertatuko balitz, kontaktatu administratzailearekin.",
   "fileImport.error.reasonKmz": "\"{fileName}\" artxiboa ezin izan da kargatu, aplikazio honek KMZ formatua ez duelako jasatzen. Artxiboa KML formatura bihurtu ezazu kargatzeko.",
   "fileImport.error.reasonUnknown": "\"{fileName}\" artxiboa ezin izan da kargatu. Baliaztatu formatua jasandako formatu bat dela (KML, GPX, GML, GeoJSON, TopoJSON, WKT) eta kalteturik ez dagoela.",
-  "fileImport.instructions": "KML, GML, GPX, GeoJSON, TopoJSON edo WKT artxiboen edukia gehitu ditzakezu hemendik edota maparen eremura arrastatzen.",
+  "fileImport.instructions": "KML, GML, GeoJSON, TopoJSON edo WKT artxiboen edukia gehitu ditzakezu hemendik edota maparen eremura arrastatzen.",
   "finfo.featureChanged.warning": "Entitate geografiko honek sisteman aldaketak jasan ditu partekatu izan ezkero. Momentu hartatik, kontuan izan bere ezaugarriak aldatuak izan litezkeela.",
   "foi": "Entitate geografiko interesgarria",
   "format": "Formatua",
@@ -224,6 +225,7 @@
   "mapDeleted": "\"{mapName}\" mapa ezabatu da",
   "mapDownloaded": "\"{mapName}\" mapa deskargatu da",
   "mapStateNotValid": "Mapa ez da oso-osorik kargatu, helbidea gaizki egotea izan daiteke?",
+  "mapStateNotValidForIE": "Mapa ez da oso-osorik kargatu, Internet Explorerrek ezin duelako helbide luzerik ireki",
   "mapTitle": "Maparen izenburua",
   "marker": "Marka",
   "maxRes": "Bereizmen maximoa",
@@ -360,7 +362,7 @@
   "title": "Izenburua",
   "tooManyFeatures": "\"&#123;serviceName&#125;\" zerbitzuarentzat kopuru maximoa gainditu duzu",
   "tooManyFeatures.instructions": "Eremua murrizteko mapan zooma egin edo lan-geruza kopurua murriztu",
-  "tooManyLayersLoaded": "<strong>Mapan geruza gehiegi kargatu dira: </strong>URL helbidea luzeegi da. Geruzaren bat ezabatu eta saiatu berriro",
+  "tooManyLayersLoaded": "<strong>Mapan dagoen objektu kopurua dela-eta, gertatu liteke nabigatzaile zaharretan ez kargatzea:</strong> Sortutako URL-a luzeegia izan daiteke nabigatzaile oientzat. Kasu oietan bateragarritasuna zehazteko, geruzaren bat ezabatu, ibilbidea desaktibatu edo bilaketaren emaitza edo marraziak ezabatu itzazu eta saiatu berriro.",
   "tooManySelectedLayers": "Geruza gehiegi aukeratu dituzu",
   "tooManySelectedLayers.instructions": "Kontsultak geruza kopuru muga gainditzen du. Berrikusi hautaketa, mesedez.",
   "tr.lst.backward": "Simulazioaren abiadura moteldu",
@@ -415,5 +417,7 @@
   "coords.currentProjection": "Oraingo maparen proiekzio <span class=\"tc-ctl-coords-cur-crs-name\"></span> (<span class=\"tc-ctl-coords-cur-crs-code\"></span>) da.",
   "coords.noCrs.warning": "Oinarrizko mapak edota geruza kargatuek ez dituzte erreferentzia-sistema bateragarri gehiagorik.",
   "outdatedBrowser": "Zure nabigatzailearen bertsioa ez da berriena. Webgunearen funtzionamendua ona izan dadin, bertsio berrienera eguneratzea gomendatzen dizugu",
-  "urlFailedToLoad": "Ezin izan da {url} fitxategia deskargatu, beraz, ezin dugu webgunearen funtzionamendu zuzena zehaztu. Mesedez, kargatu ezazu berriro"
+  "urlFailedToLoad": "Ezin izan da {url} fitxategia deskargatu, beraz, ezin dugu webgunearen funtzionamendu zuzena zehaztu. Mesedez, kargatu ezazu berriro",
+  "urlTooLongForShortener": "URL-a luzeegia da URL moztutze zerbitzuak prozesatzeko. Saiatu ezazu geruzaren bat ezabatzen, ibilbidea desaktibatzen edo bilaketaren emaitza edo marraziak ezabatzen eta saiatu berriro.",
+  "urlTooLongForMailto": "URL-a luzeegia da posta elektronikoz bidaltzeko. Arazoak badituzu saiatu ezazu geruzaren bat ezabatzen, ibilbidea desaktibatzen edo bilaketaren emaitza edo marraziak ezabatzen eta saiatu berriro."
 }
