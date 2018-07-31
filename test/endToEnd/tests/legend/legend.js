@@ -87,7 +87,7 @@ exports.testLegend = function (test) {
         });
 
     // Movemos la capa de arriba hacia abajo
-    const tocNodesSelector = '.tc-ctl-ltoc-content .tc-ctl-ltoc-elm';
+    const tocNodesSelector = '.tc-ctl-wlm-content .tc-ctl-wlm-elm';
     casper.waitForSelector(tocNodesSelector,
         function success() {
             //test.assertExists(tocNodesSelector);
