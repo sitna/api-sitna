@@ -1,23 +1,27 @@
-﻿(function() {
+﻿(function () {
 
-    // Arreglo del bug de actualización de la cache d
+    // Arreglo del bug de actualización de la cache
     self.addEventListener('install', function (event) {
         var cacheName = 'TC.offline.map.common';
         event.waitUntil(
-            caches.open(cacheName).then(function (cache) {
-                cache.keys().then(function (keys) {
-                    console.log("Revisando cache...");
-                    if (keys.length) {
-                        fetch(keys[0]).then(function () {
-                            // Estamos online, borramos cache
-                            caches.delete(cacheName).then(function () {
-                                console.log("Cache con bug (" + cacheName + ") borrada");
-                            });
-                        }, function (e) {
-                            console.log(e);
+            caches.has(cacheName).then(function (hasCache) {
+                if (hasCache) {
+                    caches.open(cacheName).then(function (cache) {
+                        cache.keys().then(function (keys) {
+                            console.log("Revisando cache...");
+                            if (keys.length) {
+                                fetch(keys[0]).then(function () {
+                                    // Estamos online, borramos cache
+                                    caches.delete(cacheName).then(function () {
+                                        console.log("Cache con bug (" + cacheName + ") borrada");
+                                    });
+                                }, function (e) {
+                                    console.log(e);
+                                });
+                            }
                         });
-                    }
-                });
+                    });
+                }
             })
         );
     });
