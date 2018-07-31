@@ -13,10 +13,12 @@ TC.Control = function () {
     var len = arguments.length;
 
     self.options = $.extend({}, len > 1 ? arguments[1] : arguments[0]);
+    self.id = self.options.id || TC.getUID(self.CLASS.substr(TC.Control.prototype.CLASS.length + 1) + '-');
     self.div = TC.Util.getDiv(self.options.div ? self.options.div : arguments[0]);
     self._$div = $(self.div);
     self._$div.addClass(TC.Control.prototype.CLASS).addClass(self.CLASS);
     self.template = self.options.template || self.template;
+    self.exportsState = false;
 
     //self.render();
 };
@@ -246,7 +248,7 @@ TC.Control.prototype.activate = function () {
         self.map.previousActiveControl = self.map.activeControl;
 
         /* provisional hasta que el 3D deje de ser un control */
-        if (!(self instanceof TC.control.ThreeD)) {
+        if (!(TC.control.ThreeD && self instanceof TC.control.ThreeD)) {
             self.map.activeControl.deactivate();
         }
     }
@@ -306,7 +308,7 @@ TC.Control.prototype.disable = function () {
 
 TC.Control.prototype.renderPromise = function ()
 {
-    return this._firstRender;
+    return this._firstRender.promise();
 };
 
 TC.Control.prototype.isExclusive = function () {
@@ -317,4 +319,20 @@ TC.Control.prototype.getLocaleString = function (key, texts) {
     var self = this;
     var locale = self.map ? self.map.options.locale : TC.Cfg.locale;
     return TC.Util.getLocaleString(locale, key, texts);
+};
+
+TC.Control.prototype.getUID = function () {
+    const self = this;
+    return TC.getUID(self.id + '-');
+};
+
+TC.Control.prototype.exportState = function () {
+    const self = this;
+    if (self.exportsState) {
+        return {};
+    }
+    return null;
+};
+
+TC.Control.prototype.importState = function (state) {
 };
