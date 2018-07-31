@@ -1,0 +1,43 @@
+﻿<li class="tc-ctl-wlm-elm" tabindex="-1">
+    <div class="tc-ctl-wlm-lyr">{?path}{title}{/path}</div>
+    <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}">{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}</div>
+    <div>
+        <div class="tc-ctl-wlm-btn-info" title="{@i18n $key="infoFromThisLayer"/}"></div>
+        <input type="range" value="{opacity}" title="{@i18n $key="transparencyOfThisLayer"/}" />
+        <input type="checkbox" {^hide}checked="checked"{/hide} title="{@i18n $key="visibilityOfThisLayer"/}" />
+    </div>
+        <div class="tc-ctl-wlm-info tc-hidden">
+            {?abstract}
+            <div class="tc-ctl-wlm-abstract">
+                <h4>{@i18n $key="abstract"/}</h4>
+                <div><pre>{abstract|s}</pre></div>
+            </div>
+            {/abstract}
+            {?customLegend}
+            <ul class="tc-ctl-wlm-custom-legend">
+                {customLegend|s}
+            </ul>
+            {:else}
+                {?legend}
+                <div class="tc-ctl-wlm-legend" data-tc-layer-name="{layerNames}">
+                    <h4>{@i18n $key="content"/}</h4>
+                    {#legend}
+                    <div><p>{title}</p><img data-tc-img="{src}" /></div>
+                    {/legend}
+                </div>
+                {/legend}
+            {/customLegend}
+            {?metadata}
+            <div class="tc-ctl-wlm-metadata">
+                <h4>{@i18n $key="metadata"/}</h4>
+                <ul>
+                    {#metadata}
+                    <li><a href="{url|s}" type="{format}" title="{formatDescription}" target="_blank">{formatDescription}</a></li>
+                    {/metadata}
+                </ul>
+            </div>
+            {/metadata}
+        </div>
+    <div class="tc-ctl-wlm-dd {?hide}tc-hidden{/hide}" title="{@i18n $key="dragToReorder"/}"></div>
+    <div class="tc-ctl-wlm-del {^hide}tc-hidden{/hide}" title="{@i18n $key="removeLayerFromMap"/}"></div>
+</li>
