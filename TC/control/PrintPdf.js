@@ -212,18 +212,21 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             }
 
             var resolve = function (logo) {
-                var body;
+                var container = [];
 
-                if (logo) {
-                    body = [[logo]]; //logo, si lo hay
-                }
+                //si no hay logo insertamos un elemento vacío para que se respete el posicionamiento del resto de elementos
+                var logoImage = logo || { text: '' }; 
+
+                //logo
+                container.push(logoImage);
+                
 
                 //título del documento
-                body[0].push({ text: TC.Util.getParameterByName("title"), alignment: 'center', fontSize: 11 });
+                container.push({ text: TC.Util.getParameterByName(TC.Cfg.titleURLParamName), alignment: 'center', fontSize: 11 });
 
                 //escala
                 if (scaleCtrl) {
-                    body[0].push({
+                    container.push({
                         table: {
                             widths: [scaleWidth],
                             body: [
@@ -248,7 +251,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                     },
                     layout: 'noBorders'
                 });
-                docDefinition.content[0].table.body = body;
+                docDefinition.content[0].table.body = [container];
 
                 deferred.resolve(docDefinition);
             };
@@ -520,10 +523,6 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                 self.map.loaded(function () {
 
-                    if (opener.location.hash.length === 0) {
-                        self.map.setExtent(refererMap.options.initialExtent);
-                    }
-
                     //Borramos las capas base para dejar sólo la seleccionada en el visor original
                     for (var i = 0; i < self.map.baseLayers.length; i++) {
                         self.map.removeLayer(self.map.baseLayers[i]);
@@ -574,7 +573,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                     if (mapFeatures) {
                         self.map.addLayer({
-                            id: TC.getUID(),
+                            id: self.getUID(),
                             type: TC.Consts.layerType.VECTOR
                         }, function (layer) {
                             TC.loadJS(!TC.feature,
