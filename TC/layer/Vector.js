@@ -51,7 +51,8 @@ TC.layer.Vector = function () {
      */
     self.selectedFeatures = [];
 
-    var _isKml = function (url) {
+    const getFileExtension = function (url) {
+        url = url || '';
         var idx = url.indexOf('?');
         if (idx >= 0) {
             url = url.substr(0, idx);
@@ -62,19 +63,59 @@ TC.layer.Vector = function () {
                 url = url.substr(0, idx);
             }
         }
-        return (url.substr(url.length - 4).toLowerCase() === '.kml');
+        return url.substr(url.lastIndexOf('.')).toLowerCase();
+    };
+
+    const getFormatFromExtension = function (extension) {
+        switch (extension) {
+            case '.kml':
+                return TC.Consts.format.KML;
+            case '.gpx':
+                return TC.Consts.format.GPX;
+            case '.json':
+            case '.geojson':
+                return TC.Consts.format.GEOJSON;
+            case '.gml':
+                return TC.Consts.format.GML;
+            case '.wkt':
+                return TC.Consts.format.WKT;
+            case '.topojson':
+                return TC.Consts.format.TOPOJSON;
+            default:
+                return null;
+        }
+    };
+    const getFormatFromMimeType = function (mimeType) {
+        switch (mimeType) {
+            case TC.Consts.mimeType.KML:
+                return TC.Consts.format.KML;
+            case TC.Consts.mimeType.GPX:
+                return TC.Consts.format.GPX;
+            case TC.Consts.mimeType.JSON:
+            case TC.Consts.mimeType.GEOJSON:
+                return TC.Consts.format.GEOJSON;
+            case TC.Consts.mimeType.GML:
+                return TC.Consts.format.GML;
+            default:
+                return null;
+        }
     };
     /**
      * URL del servicio o documento al que pertenenece la capa.
      * @property url
      * @type string
      */
-    if (self.url && (_isKml(self.url) || self.type === TC.Consts.layerType.KML)) {
-        self.type = TC.Consts.layerType.KML;
+    const extension = getFileExtension(self.url);
+    const format = getFormatFromMimeType(self.options.format) || getFormatFromExtension(extension);
+    if (format || self.type === TC.Consts.layerType.KML) {
+        if (format === TC.Consts.format.KML) {
+            self.type = TC.Consts.layerType.KML;
+        }
 
         var getFileName = function (url) {
+            url = url || '';
             var result = url;
-            var regexp = new RegExp('([^/]+\.kml)', 'i');
+            var regexp = new RegExp('([^/]+' + extension + ')', 'i');
             for (var i = 0; i < 3; i++) {
                 url = decodeURIComponent(url);
                 var match = regexp.exec(url);
@@ -130,7 +171,9 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         var result = new $.Deferred();
         $.when(multipleFeatureFunction.call(layer, [coord], options)).then(function (features) {
             result.resolve(features[0]);
-            layer.map.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { layer: layer, feature: features[0] }));
+            if (layer.map) {
+                layer.map.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { layer: layer, feature: features[0] }));
+            }
         });
         return result;
     };
@@ -559,5 +602,198 @@ TC.inherit(TC.layer.Vector, TC.Layer);
             });
             self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self }));
         }
+    };
+
+    const cloneMappingFunction = function (elm) {
+        var result;
+        if ($.isArray(elm)) {
+            return elm.map(cloneMappingFunction);
+        }
+        return elm;
+    };
+
+    const compactGeometry = function (geometry, precision) {
+        const origin = [Number.MAX_VALUE, Number.MAX_VALUE];
+        const newGeom = geometry.map(cloneMappingFunction);
+        const firstIterationFunction = function (elm, idx) {
+            if ($.isArray(elm)) {
+                elm.forEach(firstIterationFunction);
+            }
+            else {
+                if (idx === 0 && elm < origin[0]) {
+                    origin[0] = elm;
+                }
+                else if (idx === 1 && elm < origin[1]) {
+                    origin[1] = elm;
+                }
+            }
+        };
+        newGeom.forEach(firstIterationFunction);
+
+        const round = function (val) {
+            return Math.round(val * precision) / precision;
+        }
+        origin[0] = round(origin[0]);
+        origin[1] = round(origin[1]);
+        const secondIterationFunction = function (elm, idx, arr) {
+            if ($.isArray(elm)) {
+                elm.forEach(secondIterationFunction);
+            }
+            else {
+                if (idx === 0) {
+                    arr[0] = round(elm - origin[0]);
+                }
+                if (idx === 1) {
+                    arr[1] = round(elm - origin[1]);
+                }
+            }
+        };
+        newGeom.forEach(secondIterationFunction);
+        return {
+            origin: origin,
+            geom: newGeom
+        }
+    }
+
+    layerProto.exportState = function (options) {
+        const self = this;
+        options = options || {};
+        const lObj = {
+            id: self.id
+        };
+        if (self.map && self.map.crs !== self.map.options.crs) {
+            lObj.crs = self.map.crs;
+        }
+
+        // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
+        var precision = Math.pow(10, (self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION) + 1);
+
+        lObj.features = self.features
+            .map(function (f) {
+                const fObj = {};
+                var layerStyle;
+                switch (true) {
+                    case TC.feature.Point && f instanceof TC.feature.Point:
+                        fObj.type = TC.Consts.geom.POINT;
+                        layerStyle = self.options.styles && self.options.styles.point;
+                        break;
+                    //case TC.feature.MultiPoint && f instanceof TC.feature.MultiPoint:
+                    //    fObj.type = TC.Consts.geom.MULTIPOINT;
+                    //    break;
+                    case TC.feature.Marker && f instanceof TC.feature.Marker:
+                        fObj.type = TC.Consts.geom.POINT;
+                        layerStyle = self.options.styles && self.options.styles.marker;
+                        break;
+                    case TC.feature.Polyline && f instanceof TC.feature.Polyline:
+                        fObj.type = TC.Consts.geom.POLYLINE;
+                        layerStyle = self.options.styles && self.options.styles.line;
+                        break;
+                    case TC.feature.MultiPolyline && f instanceof TC.feature.MultiPolyline:
+                        fObj.type = TC.Consts.geom.MULTIPOLYLINE;
+                        layerStyle = self.options.styles && self.options.styles.line;
+                        break;
+                    case TC.feature.Polygon && f instanceof TC.feature.Polygon:
+                        fObj.type = TC.Consts.geom.POLYGON;
+                        layerStyle = self.options.styles && self.options.styles.polygon;
+                        break;
+                    case TC.feature.MultiPolygon && f instanceof TC.feature.MultiPolygon:
+                        fObj.type = TC.Consts.geom.MULTIPOLYGON;
+                        layerStyle = self.options.styles && self.options.styles.polygon;
+                        break;
+                    case TC.feature.Circle && f instanceof TC.feature.Circle:
+                        fObj.type = TC.Consts.geom.CIRCLE;
+                        layerStyle = self.options.styles && self.options.styles.polygon;
+                        break;
+                    default:
+                        break;
+                }
+                fObj.id = f.id;
+                fObj.geom = compactGeometry(f.geometry, precision);
+                fObj.data = f.getData();
+                fObj.showsPopup = f.showsPopup;
+                if (options.exportStyles === undefined || options.exportStyles) {
+                    layerStyle = $.extend({}, layerStyle);
+                    for (var key in layerStyle) {
+                        var val = layerStyle[key];
+                        if ($.isFunction(val)) {
+                            layerStyle[key] = val(f);
+                        }
+                    }
+                    fObj.style = $.extend(layerStyle, f.getStyle());
+                }
+                return fObj;
+            });
+        return lObj;
+    };
+
+    const explodeGeometry = function (obj) {
+        const origin = obj.origin;
+        const iterationFunction = function (elm, idx, arr) {
+            if ($.isArray(elm)) {
+                elm.forEach(iterationFunction);
+            }
+            else {
+                if (idx === 0) {
+                    arr[0] = elm + origin[0];
+                }
+                if (idx === 1) {
+                    arr[1] = elm + origin[1];
+                }
+            }
+        };
+        obj.geom.forEach(iterationFunction);
+        return obj.geom;
+    };
+
+    layerProto.importState = function (obj) {
+        const self = this;
+        const deferred = $.Deferred();
+        const deferreds = new Array(obj.features.length);
+        obj.features.forEach(function (f, idx) {
+            const featureOptions = $.extend(f.style, { data: f.data, id: f.id, showsPopup: f.showsPopup });
+            var addFn;
+            switch (f.type) {
+                case TC.Consts.geom.POLYGON:
+                    addFn = self.addPolygon;
+                    break;
+                case TC.Consts.geom.MULTIPOLYGON:
+                    addFn = self.addMultiPolygon;
+                    break;
+                case TC.Consts.geom.POLYLINE:
+                    addFn = self.addPolyline;
+                    break;
+                case TC.Consts.geom.MULTIPOLYLINE:
+                    addFn = self.addMultiPolyline;
+                    break;
+                case TC.Consts.geom.CIRCLE:
+                    addFn = self.addCircle;
+                    break;
+                case TC.Consts.geom.POINT:
+                    if (f.style && (f.style.url || f.style.className)) {
+                        addFn = self.addMarker;
+                    }
+                    else {
+                        addFn = self.addPoint;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            if (addFn) {
+                var geom = explodeGeometry(f.geom);
+                if (obj.crs && self.map.crs !== obj.crs) {
+                    geom = TC.Util.reproject(geom, obj.crs, self.map.crs);
+                }
+                deferreds[idx] = addFn.call(self, geom, featureOptions);
+            }
+        });
+        $.when.apply($, deferreds).then(
+            function () {
+                deferred.resolve();
+            },
+            function () {
+                deferred.reject();
+            });
+        return deferred.promise();
     };
 })();
