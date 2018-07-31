@@ -201,9 +201,9 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     if (layer.params && layer.params.sld_body) {
                         imgSrc = TC.Util.addURLParameters(imgSrc, { sld_body: layer.params.sld_body });
                     }
-                    $img.data(_dataKeys.img, imgSrc);
+                    $img.data(_dataKeys.img, layer.getLegendUrl(imgSrc));
                 }
-                $img.attr('src', imgSrc);
+                $img.attr('src', layer.getLegendUrl(imgSrc));
             }
         }
     };
