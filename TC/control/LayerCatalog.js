@@ -173,9 +173,9 @@ if (!TC.control.ProjectionSelector) {
          * Marca todas las capas del TOC como añadidas excepto la que se está borrando que se recibe como parámetro.
          */
         var _markWorkLayersAsAdded = function (layerRemoved) {
-            var listTocCtrl = self.map.getControlsByClass(TC.control.ListTOC)[0];
-            if (listTocCtrl) {
-                var layers = listTocCtrl.layers;
+            var wlCtrl = self.map.getControlsByClass(TC.control.WorkLayers)[0];
+            if (wlCtrl) {
+                var layers = wlCtrl.layers;
 
                 for (var i = 0; i < layers.length; i++) {
                     var layer = layers[i];
@@ -590,7 +590,7 @@ if (!TC.control.ProjectionSelector) {
                             var title = self.layers[($liParent.length == 0 ? 0 : $liParent.data(_dataKeys.SERVICEINDEX))].title;
 
                             const layer = new TC.layer.Raster({
-                                id: TC.getUID(),
+                                id: self.getUID(),
                                 url: url,
                                 title: title,
                                 hideTitle: true,
@@ -784,8 +784,9 @@ if (!TC.control.ProjectionSelector) {
     ctlProto.addLayerToMap = function (layer, layerName) {
         const self = this;
         const layerOptions = $.extend({}, layer.options);
-        layerOptions.id = TC.getUID();
+        layerOptions.id = self.getUID();
         layerOptions.layerNames = [layerName];
+        layerOptions.title = layer.title;
         const newLayer = new TC.layer.Raster(layerOptions);
         if (newLayer.isCompatible(self.map.crs)) {
             self.map.addLayer(layerOptions).then(function (layer) {
