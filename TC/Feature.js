@@ -200,9 +200,7 @@ TC.Feature.prototype.showPopup = function (control) {
             ctlDeferred.resolve(popup);
         }
         else {
-            TC.loadJS(!TC.control || !TC.control.Popup, [TC.apiLocation + 'TC/control/Popup'], function () {
-                ctlDeferred = self.layer.map.addControl(new TC.control.Popup());
-            });
+            ctlDeferred = self.layer.map.addControl('popup');
         }
         ctlDeferred.then(function (ctl) {
             ctl.currentFeature = self;
