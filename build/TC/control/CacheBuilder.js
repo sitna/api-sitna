@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.SWCacheClient) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
@@ -43,7 +43,7 @@ if (!TC.control.SWCacheClient) {
                         break;
                     case 'noupdate':
                     case 'updateready':
-                        // En este caso se est\u00e1 pidiendo un mapa que ya tenemos pedido de antes
+                        // En este caso se está pidiendo un mapa que ya tenemos pedido de antes
                         ctl.$events.trigger($.Event(TC.Consts.event.MAPCACHEERROR, { url: url, reason: ALREADY_EXISTS, status: e.status }));
                         break;
                     default:
@@ -77,24 +77,34 @@ if (!TC.control.SWCacheClient) {
                     type: 'GET',
                     dataType: 'text'
                 }).done(function (data) {
-                    var idxEnd = data.indexOf('NETWORK:');
-                    if (idxEnd >= 0) {
-                        data = data.substr(0, idxEnd);
-                    }
-                    idxEnd = data.indexOf('FALLBACK:');
-                    if (idxEnd >= 0) {
-                        data = data.substr(0, idxEnd);
-                    }
-                    idxEnd = data.indexOf('SETTINGS:');
-                    if (idxEnd >= 0) {
-                        data = data.substr(0, idxEnd);
-                    }
-                    var lines = $.grep(data.split(/[\n\r]/), function (elm) {
-                        return elm.length > 0 && elm.indexOf('#') !== 0 && elm !== 'CACHE:';
-                    });
-                    // Eliminamos la primera l\u00ednea porque siempre es CACHE MANIFEST
-                    lines.shift();
-                    result.resolve(lines);
+                    TC.loadJS(
+                        !window.hex_md5,
+                        [TC.apiLocation + TC.Consts.url.HASH],
+                        function () {
+                            var hash = hex_md5(data);
+                            var idxEnd = data.indexOf('NETWORK:');
+                            if (idxEnd >= 0) {
+                                data = data.substr(0, idxEnd);
+                            }
+                            idxEnd = data.indexOf('FALLBACK:');
+                            if (idxEnd >= 0) {
+                                data = data.substr(0, idxEnd);
+                            }
+                            idxEnd = data.indexOf('SETTINGS:');
+                            if (idxEnd >= 0) {
+                                data = data.substr(0, idxEnd);
+                            }
+                            var lines = $.grep(data.split(/[\n\r]/), function (elm) {
+                                return elm.length > 0 && elm.indexOf('#') !== 0 && elm !== 'CACHE:';
+                            });
+                            // Eliminamos la primera línea porque siempre es CACHE MANIFEST
+                            lines.shift();
+                            result.resolve({
+                                hash: hash,
+                                urls: lines
+                            });
+                        }
+                    );
                 }).fail(function () {
                     result.reject();
                 });
@@ -177,7 +187,8 @@ if (!TC.control.SWCacheClient) {
             if (window.localStorage) {
                 for (var i = 0, len = localStorage.length; i < len; i++) {
                     var key = localStorage.key(i);
-                    if (key.indexOf(self.LOCAL_STORAGE_KEY_PREFIX) === 0) {
+                    if (key.indexOf(self.LOCAL_STORAGE_KEY_PREFIX) === 0 && key !== self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash') {
+                        // Es un nombre de mapa y no es el hash de integridad de la cache root
                         var values = localStorage.getItem(key).split(" ");
                         var extent = getExtentFromString(values.shift());
                         var name = values.join(" ");
@@ -228,7 +239,7 @@ if (!TC.control.SWCacheClient) {
 
         self._loadedCount = 0;
 
-        // Actualizaci\u00f3n del enlace al modo online
+        // Actualización del enlace al modo online
         // Parche para detectar cambios en el hash. Lo usamos para actualizar los enlaces a los idiomas
         var pushState = history.pushState;
         history.pushState = function (state) {
@@ -253,7 +264,7 @@ if (!TC.control.SWCacheClient) {
             return result;
         }
 
-        // Detecci\u00f3n de estado de conexi\u00f3n
+        // Detección de estado de conexión
         var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
         var onlineHandler = function () {
             if (self._$offlinePanelDiv) {
@@ -451,7 +462,7 @@ if (!TC.control.SWCacheClient) {
         var resText, resLevel, resLeft;
         if (resolutions.length) {
             if (ctl.minResolution) {
-                // Si ya hab\u00eda resoluci\u00f3n previa y no se ha tocado el slider, se actualiza su valor
+                // Si ya había resolución previa y no se ha tocado el slider, se actualiza su valor
                 if (opts.rangeValue === undefined) {
                     for (var i = 0, len = resolutions.length; i < len; i++) {
                         if (ctl.minResolution >= resolutions[i]) {
@@ -706,11 +717,11 @@ if (!TC.control.SWCacheClient) {
                             );
                         }
                         else {
-                            // En IE por defecto el l\u00edmite de recursos por manifiesto es 1000, en Edge, 2000
+                            // En IE por defecto el límite de recursos por manifiesto es 1000, en Edge, 2000
                             var ieVersion = TC.Util.detectIE();
                             if (ieVersion) {
                                 var maxResourceCount = ieVersion < 12 ? 1000 : 2000;
-                                // Calculamos el n\u00famero de recursos del manifiesto para ver cu\u00e1ndo va a fallar una cache en IE por exceso de recursos
+                                // Calculamos el número de recursos del manifiesto para ver cuándo va a fallar una cache en IE por exceso de recursos
                                 var manifestResourceCount = 0;
                                 var confirmRequest = function () {
                                     var resourceCount = self.tileCount + manifestResourceCount;
@@ -726,8 +737,8 @@ if (!TC.control.SWCacheClient) {
                                     }
                                 };
                                 requestManifest()
-                                    .done(function (urlList) {
-                                        manifestResourceCount = urlList.length;
+                                    .done(function (obj) {
+                                        manifestResourceCount = obj.urls.length;
                                         confirmRequest();
                                     })
                                     .fail(confirmRequest);
@@ -927,7 +938,7 @@ if (!TC.control.SWCacheClient) {
             });
         });
 
-        // Control para evitar que se cancele una descarga de cache al salir de la p\u00e1gina
+        // Control para evitar que se cancele una descarga de cache al salir de la página
         window.addEventListener('beforeunload', function (e) {
             if (self.isDownloading) {
                 var msg = self.getLocaleString('cb.mapDownloading.warning');
@@ -966,29 +977,27 @@ if (!TC.control.SWCacheClient) {
             });
 
             // Cacheamos mediante service worker las URLs del manifiesto
-            var cacheManifestList = function () {
-                requestManifest().then(function (urlList) {
-                    self.cacheUrlList(urlList, { silent: true });
-                });
-            };
-            var deleteManifestCache = function () {
-                self.deleteCache(self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME, { silent: true });
-            };
-            if (appCache.status === appCache.CACHED || appCache.status === appCache.UPDATEREADY || appCache.status === appCache.UNCACHED) {
-                cacheManifestList();
-            }
-            else {
-                appCache.addEventListener('cached', cacheManifestList, false);
-                appCache.addEventListener('updateready', cacheManifestList, false);
-                appCache.addEventListener('downloading', deleteManifestCache, false);
-                appCache.addEventListener('obsolete', deleteManifestCache, false);
-            }
+            requestManifest().then(function (obj) {
+                const hashStorageKey = self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash';
+                var hash;
+                if (window.localStorage) {
+                    hash = localStorage.getItem(hashStorageKey);
+                }
+                if (hash !== obj.hash) {
+                    self.cacheUrlList(obj.urls);
+                    self.one(TC.Consts.event.MAPCACHEDOWNLOAD, function () {
+                        if (window.localStorage) {
+                            localStorage.setItem(hashStorageKey, obj.hash);
+                        }
+                    });
+                }
+            });
         }
 
         if (self.mapIsOffline) {
             map._$div.addClass(TC.Consts.classes.OFFLINE);
 
-            // Si no est\u00e1 especificado, el panel de aviso offline se cuelga del div del mapa
+            // Si no está especificado, el panel de aviso offline se cuelga del div del mapa
             self._$offlinePanelDiv = $(TC.Util.getDiv(self.options.offlinePanelDiv));
             if (!self.options.offlinePanelDiv) {
                 self._$offlinePanelDiv.appendTo(map._$div);
@@ -1011,106 +1020,110 @@ if (!TC.control.SWCacheClient) {
             });
         }
 
+        const drawId = self.getUID();
+        const layerId = self.getUID();
         self.layer = null;
-        map.addLayer({
-            id: TC.getUID(),
-            type: TC.Consts.layerType.VECTOR,
-            stealth: true
-        }).then(function (layer) {
-            self.layer = layer;
-            TC.loadJS(
-                !TC.control.Draw,
-                TC.apiLocation + 'TC/control/Draw',
-                function () {
-                    self.boxDraw = new TC.control.Draw({
-                        div: self._$div.find(self._selectors.DRAW),
-                        mode: TC.Consts.geom.RECTANGLE,
-                        layer: self.layer,
-                        persistent: false
-                    });
-                    self.boxDraw.$events
-                        .on(TC.Consts.event.DRAWSTART, function (e) {
-                            self.map.toast(self.getLocaleString('clickOnDownloadAreaOppositeCorner'), { type: TC.Consts.msgType.INFO });
-                        })
-                        .on(TC.Consts.event.DRAWEND, function (e) {
-                            var points = e.feature.geometry[0];
-                            var pStart = points[0];
-                            var pEnd = points[2];
-                            var minx = Math.min(pStart[0], pEnd[0]);
-                            var maxx = Math.max(pStart[0], pEnd[0]);
-                            var miny = Math.min(pStart[1], pEnd[1]);
-                            var maxy = Math.max(pStart[1], pEnd[1]);
-                            self.setExtent([minx, miny, maxx, maxy]);
-                            var $checkbox = self._$dialogDiv.find('input[type=checkbox]');
-                            $checkbox.each(function(idx, elm) {
-                                // Comprobamos que la extensi\u00f3n del mapa est\u00e1 disponible a resoluci\u00f3n m\u00e1xima 
-                                // (criterio arbitrario, elegido porque no nos vale el criterio de que el mapa
-                                // est\u00e9 disponible a alguna resoluci\u00f3n, dado que el mapa base de IDENA abarca
-                                // toda Espa\u00f1a)
-                                for (var i = 0, len = self.map.baseLayers.length; i < len; i++) {
-                                    var layer = self.map.baseLayers[i];
-                                    if (elm.value === layer.id) {
-                                        var $cb = $(elm);
-                                        var $li = $cb.parents('li').first();
-                                        var resolutions = layer.getResolutions();
-                                        var tml = self.wrap.getRequestSchemas({
-                                            extent: self.extent,
-                                            layers: [layer]
-                                        })[0].tileMatrixLimits;
-                                        if (!tml.length || resolutions[resolutions.length - 1] != tml[tml.length - 1].res) {
-                                            $cb.prop('checked', false);
-                                            $li.addClass(TC.Consts.classes.HIDDEN);
-                                        }
-                                        else {
-                                            $li.removeClass(TC.Consts.classes.HIDDEN);
-                                        }
-                                        break;
-                                    }
-                                }
-                            });
-                            var blListTextKey;
-                            if (self._$dialogDiv.find(self._selectors.BLLISTITEM).filter(':not(.' + TC.Consts.classes.HIDDEN + ')').length) {
-                                blListTextKey = 'selectAtLeastOne';
-                            }
-                            else {
-                                blListTextKey = 'cb.noMapsAtSelectedExtent';
-                            }
-                            self._$dialogDiv.find(self._selectors.BLLISTTEXT).html(self.getLocaleString(blListTextKey));
-
-                            updateThumbnails(self);
-                            showEstimatedMapSize(self);
-                            TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-dialog'), {
-                                openCallback: function () {
-                                    $checkbox.prop('disabled', false);
-                                    var time;
-                                    if (Date.prototype.toLocaleString) {
-                                        var opt = {};
-                                        opt.year = opt.month = opt.day = opt.hour = opt.minute = opt.second = 'numeric';
-                                        time = new Date().toLocaleString(self.map.options.locale.replace('_', '-'), opt);
+        $.when(
+            self.renderPromise(),
+            map.addControl('draw', {
+                id: drawId,
+                div: self._$div.find(self._selectors.DRAW),
+                mode: TC.Consts.geom.RECTANGLE,
+                persistent: false
+            }),
+            map.addLayer({
+                id: layerId,
+                type: TC.Consts.layerType.VECTOR,
+                stealth: true,
+                styles: {
+                    line: map.options.styles.line
+                }
+            })).then(function (render, boxDraw, layer) {
+                self.boxDraw = boxDraw;
+                self.layer = layer;
+                boxDraw.setLayer(layer);
+                boxDraw.$events
+                    .on(TC.Consts.event.DRAWSTART, function (e) {
+                        self.map.toast(self.getLocaleString('clickOnDownloadAreaOppositeCorner'), { type: TC.Consts.msgType.INFO });
+                    })
+                    .on(TC.Consts.event.DRAWEND, function (e) {
+                        var points = e.feature.geometry[0];
+                        var pStart = points[0];
+                        var pEnd = points[2];
+                        var minx = Math.min(pStart[0], pEnd[0]);
+                        var maxx = Math.max(pStart[0], pEnd[0]);
+                        var miny = Math.min(pStart[1], pEnd[1]);
+                        var maxy = Math.max(pStart[1], pEnd[1]);
+                        self.setExtent([minx, miny, maxx, maxy]);
+                        var $checkbox = self._$dialogDiv.find('input[type=checkbox]');
+                        $checkbox.each(function (idx, elm) {
+                            // Comprobamos que la extensión del mapa está disponible a resolución máxima 
+                            // (criterio arbitrario, elegido porque no nos vale el criterio de que el mapa
+                            // esté disponible a alguna resolución, dado que el mapa base de IDENA abarca
+                            // toda España)
+                            for (var i = 0, len = self.map.baseLayers.length; i < len; i++) {
+                                var layer = self.map.baseLayers[i];
+                                if (elm.value === layer.id) {
+                                    var $cb = $(elm);
+                                    var $li = $cb.parents('li').first();
+                                    var resolutions = layer.getResolutions();
+                                    var tml = self.wrap.getRequestSchemas({
+                                        extent: self.extent,
+                                        layers: [layer]
+                                    })[0].tileMatrixLimits;
+                                    if (!tml.length || resolutions[resolutions.length - 1] != tml[tml.length - 1].res) {
+                                        $cb.prop('checked', false);
+                                        $li.addClass(TC.Consts.classes.HIDDEN);
                                     }
                                     else {
-                                        time = new Date().toString();
+                                        $li.removeClass(TC.Consts.classes.HIDDEN);
                                     }
-                                    var text = self._$dialogDiv.find(self._selectors.NAMETB).val(time)[0];
-                                    checkValidity(self);
-                                },
-                                closeCallback: function () {
-                                    $checkbox.prop('disabled', true);
-                                    self.layer.clearFeatures();
+                                    break;
                                 }
-                            });
-                        });
-                    map.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
-                        if (self.boxDraw === e.control) {
-                            if (self._state === self._states.EDITING) {
-                                setReadyState(self);
                             }
+                        });
+                        var blListTextKey;
+                        if (self._$dialogDiv.find(self._selectors.BLLISTITEM).filter(':not(.' + TC.Consts.classes.HIDDEN + ')').length) {
+                            blListTextKey = 'selectAtLeastOne';
                         }
+                        else {
+                            blListTextKey = 'cb.noMapsAtSelectedExtent';
+                        }
+                        self._$dialogDiv.find(self._selectors.BLLISTTEXT).html(self.getLocaleString(blListTextKey));
+
+                        updateThumbnails(self);
+                        showEstimatedMapSize(self);
+                        TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-dialog'), {
+                            openCallback: function () {
+                                $checkbox.prop('disabled', false);
+                                var time;
+                                if (Date.prototype.toLocaleString) {
+                                    var opt = {};
+                                    opt.year = opt.month = opt.day = opt.hour = opt.minute = opt.second = 'numeric';
+                                    time = new Date().toLocaleString(self.map.options.locale.replace('_', '-'), opt);
+                                }
+                                else {
+                                    time = new Date().toString();
+                                }
+                                var text = self._$dialogDiv.find(self._selectors.NAMETB).val(time)[0];
+                                checkValidity(self);
+                            },
+                            closeCallback: function () {
+                                $checkbox.prop('disabled', true);
+                                self.layer.clearFeatures();
+                            }
+                        });
                     });
-                    map.addControl(self.boxDraw);
-                }
-            );
-        });
+
+                map.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
+                    if (boxDraw === e.control) {
+                        if (self._state === self._states.EDITING) {
+                            setReadyState(self);
+                        }
+                    }
+                });
+
+            });
 
         var addRenderedListNode = function (layer) {
             var result = false;
@@ -1185,7 +1198,7 @@ if (!TC.control.SWCacheClient) {
             if (self.mapIsOffline) {
                 var mapDef = JSON.parse(window.atob(decodeURIComponent(mapDefString)));
                 var excludedLayers = [];
-                // Obtenemos la primera capa del esquema de la cache y de paso vemos qu\u00e9 capas no van a estar disponibles
+                // Obtenemos la primera capa del esquema de la cache y de paso vemos qué capas no van a estar disponibles
                 var baseLayer = $.grep(map.baseLayers, function (layer) {
                     var result = false;
                     if (layer.type === TC.Consts.layerType.WMTS) {
@@ -1198,7 +1211,7 @@ if (!TC.control.SWCacheClient) {
                             }
                         }
                     }
-                    // Quitamos todas las capas que no est\u00e9n cacheadas y que no sean el mapa en blanco
+                    // Quitamos todas las capas que no estén cacheadas y que no sean el mapa en blanco
                     if (!result) {
                         if (layer.type !== TC.Consts.layerType.VECTOR) {
                             excludedLayers[excludedLayers.length] = layer;
@@ -1227,7 +1240,7 @@ if (!TC.control.SWCacheClient) {
                 var url = removeHash(e.url);
                 var $li = $getListElementByMapUrl(self, url);
                 if ($li.length && !self.serviceWorkerEnabled) {
-                    // Se ha descargado un mapa cuando se quer\u00eda borrar. Pasa cuando la cache ya estaba borrada pero la entrada en localStorage no.
+                    // Se ha descargado un mapa cuando se quería borrar. Pasa cuando la cache ya estaba borrada pero la entrada en localStorage no.
                     $li.removeClass(TC.Consts.classes.DISABLED);
                     $li.find(self._selectors.DELBTN).prop('disabled', false);
                     TC.alert(self.getLocaleString('cb.delete.error'));
@@ -1346,15 +1359,15 @@ if (!TC.control.SWCacheClient) {
                         rb: tml.rb
                     };
                 };
-                // Solo mantenemos los esquemas hasta el nivel de resoluci\u00f3n m\u00ednima o el inmediatamente inferior a ella si no lo tiene
+                // Solo mantenemos los esquemas hasta el nivel de resolución mínima o el inmediatamente inferior a ella si no lo tiene
                 var requestSchemas = self.requestSchemas.map(function (schema) {
                     return {
                         layerId: schema.layerId,
                         tileMatrixLimits: schema.tileMatrixLimits.filter(filterTml)
                     };
                 });
-                // Actualizamos el extent para que coincida con las teselas del \u00faltimo nivel de los esquemas
-                // Tambi\u00e9n eliminamos del esquema todo lo irrelevante para la petici\u00f3n
+                // Actualizamos el extent para que coincida con las teselas del último nivel de los esquemas
+                // También eliminamos del esquema todo lo irrelevante para la petición
                 var intersectionExtent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
                 for (var i = 0, len = requestSchemas.length; i < len; i++) {
                     var rs = requestSchemas[i];
@@ -1368,7 +1381,7 @@ if (!TC.control.SWCacheClient) {
                 }
 
 
-                // Redondeamos previamente para que por errores de redondeo no haya confusi\u00f3n al identificar un mapa
+                // Redondeamos previamente para que por errores de redondeo no haya confusión al identificar un mapa
                 var precision = Math.pow(10, self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION);
                 intersectionExtent = intersectionExtent.map(function (elm, idx) {
                     var round = (idx < 3) ? Math.ceil : Math.floor;
@@ -1377,7 +1390,7 @@ if (!TC.control.SWCacheClient) {
 
                 var mapDefinition = {
                     bBox: intersectionExtent,
-                    res: Math.floor(self.minResolution * 1000) / 1000, // Redondeamos previamente para que por errores de redondeo no haya confusi\u00f3n al identificar un mapa
+                    res: Math.floor(self.minResolution * 1000) / 1000, // Redondeamos previamente para que por errores de redondeo no haya confusión al identificar un mapa
                     url: [],
                     tms: [],
                     format: [],
@@ -1538,7 +1551,7 @@ if (!TC.control.SWCacheClient) {
         });
 
         // "Hacemos la cremallera" con los arrays de resoluciones de todas las capas
-        // y obtenemos uno que tenga todas las resoluciones dentro del rango de resoluciones com\u00fan a todas las capas
+        // y obtenemos uno que tenga todas las resoluciones dentro del rango de resoluciones común a todas las capas
 
         // Obtenemos el rango de resoluciones
         var maxRes = Number.POSITIVE_INFINITY;
@@ -1548,7 +1561,7 @@ if (!TC.control.SWCacheClient) {
             maxRes = Math.min(maxRes, ri[0]);
             minRes = Math.max(minRes, ri[ri.length - 1]);
                     }
-        // Quitamos resoluciones fuera del rango y el resto las a\u00f1adimos al array de resultados
+        // Quitamos resoluciones fuera del rango y el resto las añadimos al array de resultados
         for (var i = 0, len = allResolutions.length; i < len; i++) {
             result = result.concat(allResolutions[i].filter(function (elm) {
                 return elm <= maxRes && elm >= minRes && result.indexOf(elm) < 0;

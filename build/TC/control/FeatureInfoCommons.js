@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.Click) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/Click');
@@ -59,7 +59,7 @@ TC.control.FeatureInfoCommons.displayMode = {
             var $featureLi;
             var $layerLi;
             var $serviceLi;
-            // this puede ser o el elemento HTML de la lista correspondiente a la feature o la feature en s\u00ed
+            // this puede ser o el elemento HTML de la lista correspondiente a la feature o la feature en sí
             if (this instanceof TC.Feature) {
                 feature = this;
                 var li = ctl.getFeatureElement(feature);
@@ -101,7 +101,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                 return feature && feature.id === item.id;
             });
 
-            //Si la feature a resaltar ya est\u00e1 resaltada, no hacemos nada. As\u00ed evitamos parpadeo
+            //Si la feature a resaltar ya está resaltada, no hacemos nada. Así evitamos parpadeo
             if (featureAlreadyHighlighted.length > 0) {
                 return;
             }
@@ -144,11 +144,11 @@ TC.control.FeatureInfoCommons.displayMode = {
         TC.control.Click.prototype.register.call(self, map);
 
         var resultsLayer;
-        if (self.options.resultsLayer) { // En caso de que se haya indicado una capa por configuraci\u00f3n, la utilizamos
+        if (self.options.resultsLayer) { // En caso de que se haya indicado una capa por configuración, la utilizamos
             resultsLayer = self.options.resultsLayer;
         } else {
             resultsLayer = {
-                id: TC.getUID(),
+                id: self.getUID(),
                 title: self.CLASS + ': Results layer',
                 type: TC.Consts.layerType.VECTOR,
                 stealth: true
@@ -160,7 +160,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         }
         else {
             filterLayer = {
-                id: TC.getUID(),
+                id: self.getUID(),
                 title: self.CLASS + ': Filter layer',
                 stealth: true,
                 type: TC.Consts.layerType.VECTOR
@@ -208,7 +208,7 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.render = function (callback) {
         var self = this;
-        // Este div se usa como buffer, as\u00ed que no debe ser visible.
+        // Este div se usa como buffer, así que no debe ser visible.
         self._$div.addClass(TC.Consts.classes.HIDDEN);
         self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._$dialogDiv
@@ -292,7 +292,7 @@ TC.control.FeatureInfoCommons.displayMode = {
 
                         map.on(TC.Consts.event.POPUPHIDE, function (e) {
                             if (e.control === popup) {
-                                //restaurar el ancho autom\u00e1tico
+                                //restaurar el ancho automático
                                 self.popup.$popupDiv.css("width", "auto");
                             }
                         });
@@ -421,7 +421,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         $content.on(events, selector, function (e) {
             var $li = $(e.target).parents('li').first();
             if ($li.hasClass(TC.Consts.classes.CHECKED)) {
-                // Si no est\u00e1 en modo m\u00f3vil ocultamos la capa (si hay m\u00e1s de una)
+                // Si no está en modo móvil ocultamos la capa (si hay más de una)
                 if ($content.find('.tc-ctl-finfo-btn-next').css('display') === 'none') {                    
                     if (layerCount(self) > 1) {
                         downplayFeatures(self);
@@ -492,7 +492,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         });
 
         if (Modernizr.touch && self.displayMode === TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL) {
-            if ($content.find('.' + self.CLASS + '-btn-prev').css('display') !== 'none') { // Si los botones de anterior/siguiente est\u00e1n visibles, montamos el swipe
+            if ($content.find('.' + self.CLASS + '-btn-prev').css('display') !== 'none') { // Si los botones de anterior/siguiente están visibles, montamos el swipe
                 if (self.resultsPanel) {
                     self.resultsPanel._$div.swipe('disable');
                 }
@@ -551,7 +551,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         var self = this;
         var $div = $(self.getDisplayTarget());
         var max = 0;
-        //medir la m\u00e1xima anchura de <ul>
+        //medir la máxima anchura de <ul>
         $div.find(".tc-ctl-finfo-features li").each(function (ix, elto) {
             var x = self;
             max = Math.max(max, $(elto).position().left + $(elto).width());

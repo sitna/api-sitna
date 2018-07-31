@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.FeatureInfoCommons) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
@@ -31,10 +31,8 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.FEATURE_PARAM = 'showfeature';
 
-    var hashUrl = TC.apiLocation + 'lib/jshash/md5-min.js';
-
     var loadSharedFeature = function (ctl, featureObj) {
-        //buscamos si la feature compartida pertenece a alguna de las capas a\u00f1adidas
+        //buscamos si la feature compartida pertenece a alguna de las capas añadidas
         if (jQuery.grep(ctl.map.workLayers, function (item,i) {
             return item.type === TC.Consts.layerType.WMS && item.url === featureObj.s && item.getDisgregatedLayerNames().indexOf(featureObj.l) >= 0
         }).length === 0) {
@@ -44,12 +42,12 @@ if (!TC.control.FeatureInfoCommons) {
         ctl.sharedFeatureInfo = featureObj;
         TC.loadJS(
             !window.hex_md5,
-            [hashUrl],
+            [TC.apiLocation + TC.Consts.url.HASH],
             function () {
-                // Creamos una consulta getFeatureInfo ad-hoc, con la resoluci\u00f3n a la que estaba la consulta original.
+                // Creamos una consulta getFeatureInfo ad-hoc, con la resolución a la que estaba la consulta original.
                 const coords = [-100, -100];
-                ctl.beforeRequest({ xy: coords }); // xy negativo para que no se vea el marcador, ya que no sabemos d\u00f3nde ponerlo.
-                //aqu\u00ed se pone el puntito temporal
+                ctl.beforeRequest({ xy: coords }); // xy negativo para que no se vea el marcador, ya que no sabemos dónde ponerlo.
+                //aquí se pone el puntito temporal
                 ctl.filterLayer.clearFeatures();
                 $.when(ctl.filterLayer.addMarker(coords)).then(function (marker) {
                     ctl.filterFeature = marker;
@@ -85,7 +83,7 @@ if (!TC.control.FeatureInfoCommons) {
         var self = this;
         TC.control.FeatureInfoCommons.prototype.register.call(self, map);
 
-        // Le ponemos un padre al div. Evitamos con esto que se a\u00f1ada el div al mapa (no es necesario, ya que es un mero buffer)
+        // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
         self._$div.appendTo('<div>');
 
         map.loaded(function () {
@@ -122,11 +120,11 @@ if (!TC.control.FeatureInfoCommons) {
                 var feature = layer.features[$featureLi.index()];
                 TC.loadJS(
                     !window.hex_md5,
-                    [hashUrl],
+                    [TC.apiLocation + TC.Consts.url.HASH],
                     function () {
                         var hash = hex_md5(JSON.stringify({
                             data: feature.getData(),
-                            geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisi\u00f3n m\u00e1s fina (grado)
+                            geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
                         }));
                         shareCtl.extraParams = {};
                         shareCtl.extraParams[self.FEATURE_PARAM] = window.btoa(unescape(encodeURIComponent(JSON.stringify({
@@ -160,7 +158,7 @@ if (!TC.control.FeatureInfoCommons) {
         }
 
         if (self.map && self.filterLayer) {
-            //aqu\u00ed se pone el puntito temporal
+            //aquí se pone el puntito temporal
             var title = self.getLocaleString('featureInfo');
             var markerOptions = $.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title });
             if (self.displayMode !== TC.control.FeatureInfoCommons.POPUP) {
@@ -172,7 +170,7 @@ if (!TC.control.FeatureInfoCommons) {
                 ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
                 ////o sea
                 ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
-                ////pero en el caso raro (la primera vez), ocurre al rev\u00e9s. Entonces, ya se habr\u00e1 establecido lastFeatureCount (no ser\u00e1 null)
+                ////pero en el caso raro (la primera vez), ocurre al revés. Entonces, ya se habrá establecido lastFeatureCount (no será null)
                 //if (self.lastFeatureCount === null) {
                 //    self.map.putLayerOnTop(self.filterLayer);
                 //    self.filterFeature = marker;
@@ -235,7 +233,8 @@ if (!TC.control.FeatureInfoCommons) {
                 var locale = self.map.options.locale || TC.Cfg.locale;
                 options.isGeo = self.map.wrap.isGeo();
                 if (elevCoords.length) {
-                    options.elevation = TC.Util.formatNumber(Math.round(elevCoords[0][2]), locale);
+                    const elevationValue = elevCoords[0][2];
+                    options.elevation = elevationValue === null ? null : TC.Util.formatNumber(Math.round(elevationValue), locale);
                 }
                 if (options.coords) {
                     options.crs = self.map.crs;
@@ -243,7 +242,7 @@ if (!TC.control.FeatureInfoCommons) {
                         return TC.Util.formatNumber(value.toFixed(options.isGeo ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION), locale);
                     });
                 }
-                if ((services && services.length) || elevCoords.length) {
+                if ((services && services.length) || options.elevation !== null) {
                     self.renderData(options, function () {
                         self.insertLinks();
 
@@ -264,7 +263,7 @@ if (!TC.control.FeatureInfoCommons) {
                                                     sharedFeature = feature;
                                                     var hash = hex_md5(JSON.stringify({
                                                         data: feature.getData(),
-                                                        geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisi\u00f3n m\u00e1s fina (grado)
+                                                        geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
                                                     }));
                                                     if (featureObj.h !== hash) {
                                                         TC.alert(self.getLocaleString('finfo.featureChanged.warning'));
@@ -279,7 +278,7 @@ if (!TC.control.FeatureInfoCommons) {
                                 }
                             }
                             if (sharedFeature) {
-                                self.map.addControl(new TC.control.Popup({ div: TC.Util.getDiv(), closeButton: true })).then(function (popup) {
+                                self.map.addControl('popup', { div: TC.Util.getDiv(), closeButton: true }).then(function (popup) {
                                     sharedFeature.data = self._$div.html();
                                     popup.$popupDiv.addClass(self.CLASS + '-lite');
                                     var btnTitle = self.getLocaleString('deleteFeature');
@@ -296,7 +295,7 @@ if (!TC.control.FeatureInfoCommons) {
                                     sharedFeature.showsPopup = true;
                                     sharedFeature.popup = popup;
                                     self.map.addLayer({
-                                        id: TC.getUID(),
+                                        id: self.getUID(),
                                         type: TC.Consts.layerType.VECTOR,
                                         title: self.getLocaleString('foi'),
                                     }).then(function (layer) {

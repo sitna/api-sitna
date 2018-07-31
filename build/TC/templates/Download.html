@@ -1,11 +1,11 @@
 <h2>{@i18n $key="download"/} </h2>
-<div class="tc-ctl-sctnr tc-ctl-sctnr-select">
+<div class="tc-ctl-tctr tc-ctl-tctr-select">
     <form>
-        <label class="tc-ctl-sctnr-tab tc-ctl-download-image" style="width:calc(100%/2 - 1px)"><input type="radio" name="sctnr-sel" value="image" /><span>{@i18n $key="dl.export.map"/}</span></label>
-        <label class="tc-ctl-sctnr-tab tc-ctl-download-data" style="width:calc(100%/2 - 1px)"><input type="radio" name="sctnr-sel" value="data" /><span>{@i18n $key="dl.export.vector"/}</span></label>
+        <label class="tc-ctl-tctr-tab tc-ctl-download-image" style="width:calc(100%/2 - 1px)"><input type="radio" name="sctnr-sel" value="image" /><span>{@i18n $key="dl.export.map"/}</span></label>
+        <label class="tc-ctl-tctr-tab tc-ctl-download-data" style="width:calc(100%/2 - 1px)"><input type="radio" name="sctnr-sel" value="data" /><span>{@i18n $key="dl.export.vector"/}</span></label>
     </form>
 </div>
-<div class="tc-ctl tc-ctl-sctnr-elm tc-ctl-sctnr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image tc-hidden">
+<div class="tc-ctl tc-ctl-tctr-elm tc-ctl-tctr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image tc-hidden">
     <label>{@i18n $key="format"/}:</label>
     <select id="download-format-image" class="tc-combo">
         <option value="image/png">PNG</option>
@@ -20,7 +20,7 @@
         <button type="button" class="tc-ctl-download-btn tc-button tc-icon-button" title="{@i18n $key="downloadImageFromCurrentMap"/}" name="descargar">{@i18n $key="download"/}</button>
     </div>
 </div>
-<div class="tc-ctl tc-ctl-sctnr-elm tc-ctl-sctnr-elm-data tc-group tc-ctl-download-cnt tc-hidden">
+<div class="tc-ctl tc-ctl-tctr-elm tc-ctl-tctr-elm-data tc-group tc-ctl-download-cnt tc-hidden">
 
     <label>{@i18n $key="format"/}:</label>
     <select id="download-format" class="tc-combo">

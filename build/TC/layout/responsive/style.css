@@ -482,7 +482,7 @@ a {
     padding: 2%;
 }
 
-    .tc-ctl.tc-ctl-load, .tc-ctl.tc-ctl-ovmap, .tc-ctl.tc-ctl-nav {
+    .tc-ctl.tc-ctl-load, .tc-ctl.tc-ctl-ovmap {
         padding: 0;
     }
 
@@ -512,6 +512,10 @@ a {
         display: none;
     }
 
+.ol-zoom-extent {
+    position: static;
+}
+
 .tc-ctl-nav .tc-ctl-nav-btn-home {
     line-height: 2em;
 }
@@ -522,7 +526,7 @@ a {
     }
 
     .tc-ctl-nav .tc-ctl-nav-btn-home:after {
-        font-size: 1.5em;
+        font-size: 0.5em;
     }
 
     .tc-ctl-nav .tc-ctl-nav-btn-home:after {
@@ -540,6 +544,11 @@ a {
     display: none;
 }
 
+.tc-ctl-nav-btn-zoomout.ol-zoom-out {
+    top: auto;
+}
+
+
 .tools-panel {
     -webkit-user-select: text;
     -moz-user-select: text;
@@ -553,12 +562,12 @@ a {
         max-height: 18em;
     }
 
-    .tools-panel .tc-ctl-ltoc div.tc-ctl-ltoc-content {
+    .tools-panel .tc-ctl-wlm div.tc-ctl-wlm-content {
         max-height: none;
     }
 
         /* Esto elimina el bug de IE en que la lista cuando se vacía a veces se queda con tamaño enorme */
-        .tools-panel .tc-ctl-ltoc div.tc-ctl-ltoc-content ul:hover {
+        .tools-panel .tc-ctl-wlm div.tc-ctl-wlm-content ul:hover {
             height: auto;
         }
 
@@ -573,11 +582,11 @@ li.tc-ctl-toc-node {
         height: 1.2em;
     }
 
-.tc-ctl-ltoc .tc-ctl-ltoc-n {
+.tc-ctl-wlm .tc-ctl-wlm-n {
     visibility: hidden;
 }
 
-.tc-ctl-ltoc.tc-collapsed .tc-ctl-ltoc-n.tc-visible {
+.tc-ctl-wlm.tc-collapsed .tc-ctl-wlm-n.tc-visible {
     display: inline-block;
     cursor: default;
     text-shadow: none;
@@ -588,7 +597,7 @@ li.tc-ctl-toc-node {
     -o-animation: pop 0.2s;
 }
 
-.tc-ctl-ltoc .tc-ctl-ltoc-elm:first-child:last-child .tc-ctl-ltoc-dd {
+.tc-ctl-wlm .tc-ctl-wlm-elm:first-child:last-child .tc-ctl-wlm-dd {
     display: none;
 }
 
@@ -645,12 +654,12 @@ li.tc-ctl-toc-node {
         border-bottom-left-radius: 0.3em;
     }
 
-.tc-ctl-ltoc .tc-ctl-ltoc-type.tc-ctl-ltoc-type-grp:after {
+.tc-ctl-wlm .tc-ctl-wlm-type.tc-ctl-wlm-type-grp:after {
     font-family: 'FontAwesome';
     content: '\f114';
 }
 
-.tc-ctl-ltoc .tc-ctl-ltoc-type.tc-ctl-ltoc-type-sgl:after {
+.tc-ctl-wlm .tc-ctl-wlm-type.tc-ctl-wlm-type-sgl:after {
     font-family: 'FontAwesome';
     content: '\f016';
 }
@@ -668,6 +677,40 @@ li.tc-ctl-lcat-node {
     padding: 3px 0 2px 20px;
     /* img/node.png */
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALDwAACw8BkvkDpQAAAAd0SU1FB9YIBhQIJYVaFGwAAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAEFJREFUOE9jmDlz5n8GZgYGXPj///948agB9DAAJI8LDyIDCGFsACo+WLyATSMMo2tCxkQZAFKED48aMPAG/GcAAFySJ1PSNmZLAAAAAElFTkSuQmCC) no-repeat;
+}
+
+.tc-ctl-lcat-node .tc-incompatible:before {
+    font-family: 'FontAwesome';
+    content: '\f071';
+}
+
+.tc-ctl-lcat-info h3:before {
+    font-family: 'FontAwesome';
+    content: '\f05a';
+}
+
+.tc-ctl-lcat-info-close {
+    font-family: 'FontAwesome';
+}
+
+    .tc-ctl-lcat-info-close:after {
+        content: '\f00d';
+    }
+
+
+.tc-ctl-lcat-search li.tc-ctl-lcat-search-group > h5:before {
+    content: '\f146';
+    font-family: 'FontAwesome';
+}
+
+.tc-ctl-lcat-search li.tc-ctl-lcat-search-group.tc-collapsed > h5:before {
+    content: '\f0fe';
+}
+
+
+.tc-ctl-lcat-tree ul button:after, .tc-ctl-lcat-search ul button:after {
+    font-family: 'FontAwesome';
+    content: '\f05a';
 }
 
 li.tc-ctl-toc-leaf, li.tc-ctl-lcat-leaf {
@@ -700,7 +743,17 @@ ul.tc-ctl-toc-branch li.tc-ctl-toc-leaf:last-child, ul.tc-ctl-lcat-branch li.tc-
     background-size: auto;
 }
 
-.tc-ctl-ltoc-metadata a, .tc-ctl-lcat-metadata a {
+.tc-ctl-lcat h2 button.tc-ctl-lcat-btn-search:after {
+    font-family: 'FontAwesome';
+    content: '\f002';
+}
+
+.tc-ctl-wlm h2 button.tc-ctl-lcat-btn-del-all:after, .tc-ctl-wlm .tc-ctl-wlm-del-all:after {
+    content: '\f1f8';
+    font-family: 'FontAwesome';
+}
+
+.tc-ctl-wlm-metadata a, .tc-ctl-lcat-metadata a {
     display: inline-block;
     position: relative;
     text-indent: -1000vw;
@@ -708,11 +761,11 @@ ul.tc-ctl-toc-branch li.tc-ctl-toc-leaf:last-child, ul.tc-ctl-lcat-branch li.tc-
     height: 1.5em;
 }
 
-    .tc-ctl-ltoc-metadata a:visited, .tc-ctl-lcat-metadata a:visited {
+    .tc-ctl-wlm-metadata a:visited, .tc-ctl-lcat-metadata a:visited {
         color: #c00;
     }
 
-    .tc-ctl-ltoc-metadata a:before, .tc-ctl-lcat-metadata a:before {
+    .tc-ctl-wlm-metadata a:before, .tc-ctl-lcat-metadata a:before {
         font-family: 'FontAwesome';
         font-size: 1.4em;
         content: '\f016';
@@ -722,8 +775,8 @@ ul.tc-ctl-toc-branch li.tc-ctl-toc-leaf:last-child, ul.tc-ctl-lcat-branch li.tc-
         left: 0;
     }
 
-    .tc-ctl-ltoc-metadata a[type='text/xml']:after, .tc-ctl-lcat-metadata a[type='text/xml']:after,
-    .tc-ctl-ltoc-metadata a[type='text/html']:after, .tc-ctl-lcat-metadata a[type='text/html']:after {
+    .tc-ctl-wlm-metadata a[type='text/xml']:after, .tc-ctl-lcat-metadata a[type='text/xml']:after,
+    .tc-ctl-wlm-metadata a[type='text/html']:after, .tc-ctl-lcat-metadata a[type='text/html']:after {
         content: attr(title);
         position: absolute;
         text-indent: 0;
@@ -736,7 +789,7 @@ ul.tc-ctl-toc-branch li.tc-ctl-toc-leaf:last-child, ul.tc-ctl-lcat-branch li.tc-
         font-size: 0.6em;
     }
 
-    .tc-ctl-ltoc-metadata a[type='text/plain']:before, .tc-ctl-lcat-metadata a[type='text/plain']:before {
+    .tc-ctl-wlm-metadata a[type='text/plain']:before, .tc-ctl-lcat-metadata a[type='text/plain']:before {
         content: '\f0f6';
     }
 
@@ -750,17 +803,17 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     content: '\f021';
 }
 
-.tc-ctl-ltoc .tc-ctl-ltoc-dd:after {
+.tc-ctl-wlm .tc-ctl-wlm-dd:after {
     font-family: 'FontAwesome';
     content: '\f0c9\f07d';
 }
 
-.tc-ctl-ltoc .tc-ctl-ltoc-del:after {
+.tc-ctl-wlm .tc-ctl-wlm-del:after {
     font-family: 'FontAwesome';
     content: '\f1f8';
 }
 
-.tc-ctl-ltoc .tc-ctl-ltoc-btn-info:after {
+.tc-ctl-wlm .tc-ctl-wlm-btn-info:after {
     font-family: 'FontAwesome';
     content: '\f05a';
 }
@@ -801,8 +854,19 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     line-height: 2.5em;
 }
 
-.tc-ctl-search-btn {
+    .tc-ctl-search-list > li > span.header-color:after {
+        font-family: 'FontAwesome';
+        content: '\f0c8';
+    }
+
+.tc-ctl-search-loading::after {
+    font-family: 'FontAwesome';
+    content: '\f1ce';
+}
+
+.tc-ctl-btn.tc-ctl-search-btn {
     width: 15%;
+    background-color: #c00;
     height: 0;
     color: transparent;
     padding: 2em 0 0 0;
@@ -842,7 +906,7 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
         text-align: center;
     }
 
-.tools-panel .tc-ctl-sctnr .tc-ctl.tc-collapsed > div {
+.tools-panel .tc-ctl-tctr .tc-ctl.tc-collapsed > div {
     max-height: none;
     opacity: 1;
 }
@@ -904,6 +968,20 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     text-align: left;
     padding: 0.3em;
     box-sizing: border-box;
+}
+
+.tc-ctl-download-image input[type=checkbox] + label:before {
+    font-family: FontAwesome;
+    content: "\f096";
+}
+
+.tc-ctl-download-image input[type=checkbox]:checked + label:before {
+    content: "\f046";
+}
+
+div.tc-ctl-download .tc-ctl-download-btn:before {
+    font-family: 'FontAwesome';
+    content: "\f019";
 }
 
 .tc-ctl-dmm-cmd {
@@ -1136,6 +1214,11 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     display: none;
 }
 
+.tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-delete:before {
+    font-family: 'FontAwesome';
+    content: '\f1f8';
+}
+
 .tc-ctl-cbuild-off-panel a.tc-ctl-cbuild-link-exit {
     display: none;
     text-decoration: none;
@@ -1172,6 +1255,10 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 .tc-ctl-sv-view .tc-ctl-sv-btn-close:after {
     font-family: 'FontAwesome';
     content: '\f00d';
+}
+
+.tc-ctl-sv-btn {
+    top: 7.7em;
 }
 
 .tc-ctl-sv.tc-disabled .tc-ctl-sv-btn {
@@ -1415,8 +1502,13 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     bottom: 0;
 }
 
+.left-collapsed #legend-tab {
+    background-image: url(img/legend-icon.svg);
+    background-size: contain;
+}
+
 .left-collapsed #legend-tab:after {
-    content: '\f0ca';
+    content: none;
 }
 
 #legend-tab:after {
@@ -1909,6 +2001,16 @@ label.tc-ctl-edit-btn-polygon span {
     font-size: 1.4em;
 }
 
+label.tc-ctl-share-btn-url span:before {
+    font-family: 'FontAwesome';
+    content: '\f0c1';
+}
+
+label.tc-ctl-share-btn-iframe span:before {
+    font-family: 'FontAwesome';
+    content: '\f121';
+}
+
 @media screen and (min-width: 24em) {
     .slide-panel {
         max-width: 21em;
@@ -2214,6 +2316,10 @@ label.tc-ctl-edit-btn-polygon span {
         #legend-tab:after, #tools-tab:after, #ovmap-tab:after, .left-collapsed #legend-tab:after, .right-collapsed #tools-tab:after, .right-collapsed #ovmap-tab:after {
             content: none;
         }
+
+    .left-collapsed #legend-tab {
+        background-image: none;
+    }
 
     .tc-ctl-legend-tree {
         height: auto;
@@ -2579,6 +2685,11 @@ label.tc-ctl-edit-btn-polygon span {
         padding: 3px 0 2px 1cm;
     }
 
+    .tools-panel .tc-ctl-lcat-info h3 {
+        margin: 0em;
+        font-size: 1em;
+    }
+
     li.tc-ctl-toc-node, li.tc-ctl-lcat-node {
         margin-top: 0.5em;
         /*/TC/css/img/node.png*/
@@ -2828,7 +2939,7 @@ input[type=range][disabled] {
     opacity: 1;
 }
 
-.tc-ctl > div.tc-ctl-sctnr-elm {
+.tc-ctl > div.tc-ctl-tctr-elm {
     -webkit-transition: none;
     -moz-transition: none;
     -ie-transition: none;

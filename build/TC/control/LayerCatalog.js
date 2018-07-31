@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.ProjectionSelector) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/ProjectionSelector');
@@ -170,12 +170,12 @@ if (!TC.control.ProjectionSelector) {
         };
 
         /**
-         * Marca todas las capas del TOC como a\u00f1adidas excepto la que se est\u00e1 borrando que se recibe como par\u00e1metro.
+         * Marca todas las capas del TOC como añadidas excepto la que se está borrando que se recibe como parámetro.
          */
         var _markWorkLayersAsAdded = function (layerRemoved) {
-            var listTocCtrl = self.map.getControlsByClass(TC.control.ListTOC)[0];
-            if (listTocCtrl) {
-                var layers = listTocCtrl.layers;
+            var wlCtrl = self.map.getControlsByClass(TC.control.WorkLayers)[0];
+            if (wlCtrl) {
+                var layers = wlCtrl.layers;
 
                 for (var i = 0; i < layers.length; i++) {
                     var layer = layers[i];
@@ -198,7 +198,7 @@ if (!TC.control.ProjectionSelector) {
         }).on(TC.Consts.event.LAYERADD + ' ' + TC.Consts.event.UPDATEPARAMS, function (e) {
             var layer = e.layer;
             if (!layer.isBase && layer.type === TC.Consts.layerType.WMS) {
-                self._readyDeferred.then(function () { // Esperamos a que cargue primero las capas de la configuraci\u00f3n
+                self._readyDeferred.then(function () { // Esperamos a que cargue primero las capas de la configuración
                     var $layerNode = $(self.getLayerRootNode(layer));
                     var updateControl = function () {
                         $(self.getLayerNodes(layer)).removeClass(TC.Consts.classes.LOADING).addClass(TC.Consts.classes.CHECKED).find('span').attr(TOOLTIP_DATA_ATTR, layerAddedText);
@@ -208,7 +208,7 @@ if (!TC.control.ProjectionSelector) {
                         updateControl();
                     }
                     else {
-                        // la capa no est\u00e1 renderizada, pero podr\u00eda estar en proceso, comprobamos que no est\u00e1 en la lista de capas del control
+                        // la capa no está renderizada, pero podría estar en proceso, comprobamos que no está en la lista de capas del control
                         var layerAlreadyAdded = false;
                         for (var i = 0, len = self.layers.length; i < len; i++) {
                             var lyr = self.layers[i];
@@ -242,8 +242,8 @@ if (!TC.control.ProjectionSelector) {
             $(self.getLayerNodes(e.layer)).removeClass(TC.Consts.classes.CHECKED).find('span').attr(TOOLTIP_DATA_ATTR, clickToAddText);
             $findResultNodes(e.layer).removeClass(TC.Consts.classes.CHECKED).attr(TOOLTIP_DATA_ATTR, clickToAddText);
 
-            //Marcamos como a\u00f1adidas aquellas capas que est\u00e9n en el control de capas cargadas. Esto previene que si borramos una capa padre, todas
-            //sus hijas aparezcan como no a\u00f1adidas, a pesar que que alguna de ellas haya sido a\u00f1adida previamente de manera individual
+            //Marcamos como añadidas aquellas capas que estén en el control de capas cargadas. Esto previene que si borramos una capa padre, todas
+            //sus hijas aparezcan como no añadidas, a pesar que que alguna de ellas haya sido añadida previamente de manera individual
             _markWorkLayersAsAdded(e.layer);
 
             //refresh del searchList            
@@ -442,7 +442,7 @@ if (!TC.control.ProjectionSelector) {
                                     layerCheckedList.push($(item).data(_dataKeys.LAYERNAME).toString());
                                 });
 
-                                //con texto vac\u00edo, limpiar  y ocultar la lista de resultados
+                                //con texto vacío, limpiar  y ocultar la lista de resultados
                                 text = text.trim();
                                 if (text.length < SEARCH_MIN_LENGTH) {
                                     self.$list.html("");
@@ -489,7 +489,7 @@ if (!TC.control.ProjectionSelector) {
                                                     break;
                                                 }
                                             }
-                                            //Si la capa no tiene Name, no se puede a\u00f1adir al TOC
+                                            //Si la capa no tiene Name, no se puede añadir al TOC
                                             if (!founds[j].Name) {
                                                 founds.splice(j, 1);
                                                 j--;
@@ -514,7 +514,7 @@ if (!TC.control.ProjectionSelector) {
 
 
                 if (!self.searchInit) {
-                    //bot\u00f3n de la lupa para alternar entre b\u00fasqueda y \u00e1rbol
+                    //botón de la lupa para alternar entre búsqueda y árbol
                     self._$div.on("click", "h2 button", function () {
                         var wasCollapsed = self._$div.hasClass("tc-collapsed");
                         self._$div.removeClass("tc-collapsed");
@@ -544,7 +544,7 @@ if (!TC.control.ProjectionSelector) {
                             $(this).attr("title", self.getLocaleString('searchLayersByText'));
                             $(this).removeClass(self.CLASS + "-btn-tree");
 
-                            //Si hay resaltados en el \u00e1rbol, mostramos el panel de info
+                            //Si hay resaltados en el árbol, mostramos el panel de info
                             var selectedCount = $('.tc-ctl-lcat-tree li button.tc-checked').length;
                             if (selectedCount > 0) {
                                 infoPane.removeClass(TC.Consts.classes.HIDDEN);
@@ -568,11 +568,11 @@ if (!TC.control.ProjectionSelector) {
                         }
                     });
 
-                    //click en un resultado - a\u00f1adir capa
+                    //click en un resultado - añadir capa
                     self._$div.on("click", ".tc-ctl-lcat-search li", function (evt) {
                         evt.stopPropagation();
                         var $li = $(this);
-                        if ($li.hasClass("tc-ctl-lcat-no-results")) return; //si clicko en el li de "no hay resultados" rompo el ciclo de ejecuci\u00f3n
+                        if ($li.hasClass("tc-ctl-lcat-no-results")) return; //si clicko en el li de "no hay resultados" rompo el ciclo de ejecución
                         if ($li.hasClass("tc-ctl-lcat-search-group")) {
                             $li.toggleClass(TC.Consts.classes.COLLAPSED);
                             return;
@@ -580,7 +580,7 @@ if (!TC.control.ProjectionSelector) {
                         var layerName = $li.data(_dataKeys.LAYERNAME);
                         layerName = (layerName !== undefined) ? layerName.toString() : '';
 
-                        //si la capa ya ha sido anteriormente, no la a\u00f1adimos y mostramos un mensaje
+                        //si la capa ya ha sido anteriormente, no la añadimos y mostramos un mensaje
                         if ($(this).hasClass(TC.Consts.classes.CHECKED)) {
                             return;
                         } else {
@@ -590,7 +590,7 @@ if (!TC.control.ProjectionSelector) {
                             var title = self.layers[($liParent.length == 0 ? 0 : $liParent.data(_dataKeys.SERVICEINDEX))].title;
 
                             const layer = new TC.layer.Raster({
-                                id: TC.getUID(),
+                                id: self.getUID(),
                                 url: url,
                                 title: title,
                                 hideTitle: true,
@@ -606,7 +606,7 @@ if (!TC.control.ProjectionSelector) {
                                         layer.map.removeLayer(layer);
                                     });
                                 });
-                                //marcamos el resultado como a\u00f1adido
+                                //marcamos el resultado como añadido
                                 $(this).addClass(TC.Consts.classes.CHECKED);
                                 $(this).attr(TOOLTIP_DATA_ATTR, addedLayerText);
                             }
@@ -773,7 +773,7 @@ if (!TC.control.ProjectionSelector) {
                 layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
                 layer.title = layer.title || layer.wrap.getServiceTitle();
                 self.render(function () {
-                    result.resolve(); //ver linea 55 y por ah\u00ed
+                    result.resolve(); //ver linea 55 y por ahí
                 });
             });
         } else { result.resolve(); }
@@ -784,8 +784,9 @@ if (!TC.control.ProjectionSelector) {
     ctlProto.addLayerToMap = function (layer, layerName) {
         const self = this;
         const layerOptions = $.extend({}, layer.options);
-        layerOptions.id = TC.getUID();
+        layerOptions.id = self.getUID();
         layerOptions.layerNames = [layerName];
+        layerOptions.title = layer.title;
         const newLayer = new TC.layer.Raster(layerOptions);
         if (newLayer.isCompatible(self.map.crs)) {
             self.map.addLayer(layerOptions).then(function (layer) {

@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -97,7 +97,7 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
                     self.removeWait(TC.Consts.event.FEATUREINFO);
                 });
         if (!TC.isDebug) {
-            //Para evitar que se quede el indicador indefinidamente activo cuando hay un error en la p\u00e1gina
+            //Para evitar que se quede el indicador indefinidamente activo cuando hay un error en la página
             window.addEventListener('error', function (msg, url, line, col, error) {
                 self.reset();
                 return false;

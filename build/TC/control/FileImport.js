@@ -1,4 +1,4 @@
-if (!TC.Control) {
+﻿if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
@@ -50,13 +50,13 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
         map
             .on(TC.Consts.event.FEATURESIMPORT, function (e) {
-                // Ignoramos los GPX (se supone que los gestionar\u00e1 Geolocation)
+                // Ignoramos los GPX (se supone que los gestionará Geolocation)
                 var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
                 if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
                     return;
                 }
                 map.addLayer({
-                    id: TC.getUID(),
+                    id: self.getUID(),
                     title: e.fileName,
                     type: TC.Consts.layerType.VECTOR
                 }).then(function (layer) {
@@ -87,7 +87,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                                     break;
                             }
                             if (coordinates.every(function (coord) {
-                                return Math.abs(coord[0]) <= 180 && Math.abs(coord[1]) <= 90; // Parecen geogr\u00e1ficas
+                                return Math.abs(coord[0]) <= 180 && Math.abs(coord[1]) <= 90; // Parecen geográficas
                             })) {
                                 feature.setCoords(TC.Util.reproject(geom, geogCrs, self.map.crs));
                             }

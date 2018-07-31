@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.Scale) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/Scale');

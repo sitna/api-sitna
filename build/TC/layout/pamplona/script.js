@@ -1,4 +1,4 @@
-$(function () {
+﻿$(function () {
     TC.Cfg.notifyApplicationErrors = true;
     TC.Cfg.styles.selection.polygon.strokeColor = "#D2EA56";
     TC.Cfg.styles.selection.point.strokeColor = "#D2EA56";
@@ -63,7 +63,7 @@ $(function () {
             }
             //mover el Multifeature info dentro del TOC
             if (TC.control.MultiFeatureInfo) {
-                var toc = map.getControlsByClass('TC.control.ListTOC')[0];
+                var toc = map.getControlsByClass('TC.control.WorkLayerManager')[0];
                 if (toc) {
                     var mfi = $('.' + TC.control.MultiFeatureInfo.prototype.CLASS);
                     mfi.detach();

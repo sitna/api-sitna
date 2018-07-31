@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -73,7 +73,7 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
                 }
             }
 
-            // GLS: Referencio el mapa en la capa. Como no se a\u00f1ade la capa al mapa, no hay referencia.
+            // GLS: Referencio el mapa en la capa. Como no se añade la capa al mapa, no hay referencia.
             lyr.map = map;
 
             self.layer = lyr;

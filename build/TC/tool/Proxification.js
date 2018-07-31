@@ -1,4 +1,4 @@
-TC.tool = TC.tool || {};
+﻿TC.tool = TC.tool || {};
 
 TC.tool.Proxification = function (proxy, options) {
     var self = this;
@@ -602,7 +602,7 @@ TC.tool.Proxification = function (proxy, options) {
                                     _caching(img, self._actionDirect);
                                 }, function (error) {
                                     if ((exportable && error === self._image.ErrorType.CORS) || !self._isSecureURL(self._location)) {
-                                        // Si la imagen debe ser exportable y en la solicitud por HTTP tenemos error de CORS, deducimos que por HTTPS pasar\u00e1 lo mismo
+                                        // Si la imagen debe ser exportable y en la solicitud por HTTP tenemos error de CORS, deducimos que por HTTPS pasará lo mismo
                                         _byProxy.call(self, src, exportable, _caching, reject);
                                     } else {
                                         _currentHTTP.call(self, src, exportable, _caching, reject);
@@ -617,7 +617,7 @@ TC.tool.Proxification = function (proxy, options) {
                                 _caching(img, self._actionDirect);
                             }, function (error) {
                                 if ((exportable && error === self._image.ErrorType.CORS) || self._isServiceWorker() || (self._isSecureURL(self._location) && self.preventMixedContent)) {
-                                    // Si la imagen debe ser exportable y en la solicitud por HTTPS tenemos error de CORS, deducimos que por HTTP pasar\u00e1 lo mismo
+                                    // Si la imagen debe ser exportable y en la solicitud por HTTPS tenemos error de CORS, deducimos que por HTTP pasará lo mismo
                                     _byProxy.call(self, src, exportable, _caching, reject);
                                 } else {
                                     _currentHTTPS.call(self, src, exportable, _caching, reject);

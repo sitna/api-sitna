@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 TC.Consts = TC.Consts || {};
 TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 

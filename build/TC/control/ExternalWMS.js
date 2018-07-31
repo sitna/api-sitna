@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -26,7 +26,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
     ctlProto.CLASS = 'tc-ctl-xwms';
 
     /**
-     * Marca como seleccionadas aquellas opciones del desplegable correspondientes a servicios WMS ya a\u00f1adidos al TOC.
+     * Marca como seleccionadas aquellas opciones del desplegable correspondientes a servicios WMS ya añadidos al TOC.
      */
     ctlProto.markServicesAsSelected = function (options) {
         if (options.length > 0) {
@@ -57,10 +57,9 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
         });
 
         /**
-         * Borra par\u00e1metros no necesarios de la URL del servicio WMS.
+         * Borra parámetros no necesarios de la URL del servicio WMS.
          */
-        var _removeParamsFromUrl = function (url) {
-            var unwantedParams = ["version", "service", "request"];
+        var _removeParamsFromUrl = function (url, unwantedParams) {
             for (var i = 0; i < unwantedParams.length; i++) {
                 url = TC.Util.removeURLParameter(url, unwantedParams[i]);
             }
@@ -71,7 +70,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
         }
 
         self._$div.on("click", "button[name='agregar']", function (evt) {
-            var url = self._$div.find("input").val();
+            var url = self._$div.find("input").val().trim();
 
             if (!url) {
                 TC.alert(self.getLocaleString('typeAnAddress'));
@@ -84,9 +83,20 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                     TC.alert(self.getLocaleString('serviceAlreadyAdded'));
                 }
                 else {
-                    url = _removeParamsFromUrl(url);
                     var loadingCtrl = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
                     loadingCtrl.show();
+                    var params = TC.Util.getQueryStringParams(url);
+
+                    //Extraemos sólo los parámetros adicionales
+                    var unwantedParams = ["version", "service", "request"];
+                    var urlWithoutParams = _removeParamsFromUrl(url, Object.keys(params));
+
+                    for (var item in params) {
+                        if (unwantedParams.indexOf(item.toLowerCase()) >= 0) {
+                            delete params[item];
+                        }
+                    }
+
                     var $addButton = self._$div.find("button");
                     $addButton.attr("disabled", "true");
 
@@ -94,8 +104,9 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                         "id": "xwms" + (++self.count),
                         //"title": "Servicio externo",
                         "type": "WMS",
-                        "url": url,
-                        "hideTree": false
+                        "url": urlWithoutParams,
+                        "hideTree": false,
+                        "queryParams": params
                     };
                     //URI: recorremos las opciones buscando el servicio que se va a agregar a ver si tiene parametro layerNames
                     for (var i = 0; i < self.options.suggestions.length; i++) {
@@ -134,11 +145,11 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                             $addButton.removeAttr("disabled");
                         }
                     },
-                    function (error) {
-                        TC.alert(self.getLocaleString('serviceCouldNotBeLoaded') + ":\n" + error);
-                        loadingCtrl.hide();
-                        $addButton.removeAttr("disabled");
-                    });
+                        function (error) {
+                            TC.alert(self.getLocaleString('serviceCouldNotBeLoaded') + ":\n" + error);
+                            loadingCtrl.hide();
+                            $addButton.removeAttr("disabled");
+                        });
                 }
             }
 

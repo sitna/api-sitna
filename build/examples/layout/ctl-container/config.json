@@ -1,0 +1,11 @@
+{
+  "i18n": true,
+  "controls": {
+    "navBar": true,
+    "coordinates": false,
+    "legend": {
+      "div": "legend"
+    },
+    "popup": true
+  }
+}

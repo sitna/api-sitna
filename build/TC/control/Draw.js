@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -46,6 +46,30 @@ TC.Consts.event.CHANGE = 'change.tc';
 
         self.history = [];
         self.historyIndex = 0;
+        self.exportsState = true;
+
+        self.$events.on(TC.Consts.event.DRAWSTART, function (e) {
+            self.resetValues();
+        });
+        self.$events.on(TC.Consts.event.POINT, function (e) {
+            if (self.layer && !self.persistent && self.layer.features && self.layer.features.length > 0) {
+                self.layer.clearFeatures();
+            }
+
+            self.history.length = self.historyIndex;
+            self.history[self.historyIndex++] = e.point;
+
+            setDrawState(self);
+        });
+        self.$events.on(TC.Consts.event.DRAWEND, function (e) {
+            setFeatureAddReadyState(self);
+
+            if (self.callBack) {
+                self.callBack(e.feature);
+            }
+        });
+
+        self.layerPromise = $.Deferred();
 
         this.renderPromise().then(function () {
             self.reset = true;
@@ -98,28 +122,6 @@ TC.Consts.event.CHANGE = 'change.tc';
                 });
                 self._$strokeWidthWatch = self._$div.find(self._classSelector + '-str-w-watch');
             }
-
-            self.$events.on(TC.Consts.event.DRAWSTART, function(e) {
-                self.resetValues();
-            });
-            self.$events.on(TC.Consts.event.POINT, function (e) {
-                if (self.layer && !self.persistent && self.layer.features && self.layer.features.length > 0) {
-                    self.layer.clearFeatures();
-                }
-
-                self.history.length = self.historyIndex;
-                self.history[self.historyIndex++] = e.point;
-
-                setDrawState(self);
-            });
-            self.$events.on(TC.Consts.event.DRAWEND, function (e) {
-                setFeatureAddReadyState(self);
-
-                if (self.callBack) {
-                    self.callBack(e.feature);
-                }
-            });
-
         });
     };
 
@@ -202,6 +204,7 @@ TC.Consts.event.CHANGE = 'change.tc';
                     !$.fn.spectrum,
                     TC.apiLocation + 'lib/spectrum/spectrum.min.js',
                     function () {
+                        TC.loadCSS(TC.apiLocation + 'lib/spectrum/spectrum.css');
                         self._$div.find('input[type=color]').spectrum({
                             preferredFormat: 'hex',
                             showPalette: true,
@@ -237,24 +240,21 @@ TC.Consts.event.CHANGE = 'change.tc';
             else {
                 // Si self.options.layer === false se instancia el control sin capa asociada
                 if (typeof self.options.layer !== 'boolean') {
-                    map.loaded(function () {
-                        self.layerPromise = map.addLayer({
-                            id: TC.getUID(),
-                            title: 'DrawControl',
-                            stealth: true,
-                            type: TC.Consts.layerType.VECTOR,
-                            styles: {
-                                point: map.options.styles.point,
-                                line: map.options.styles.line,
-                                polygon: map.options.styles.polygon
-                            }
-                        });
-
-                        self.layerPromise.then(function (layer) {
-                            self.layer = layer;
-                            setStyles();
-                            map.putLayerOnTop(self.layer);
-                        });
+                    map.addLayer({
+                        id: self.getUID(),
+                        title: 'DrawControl',
+                        stealth: true,
+                        type: TC.Consts.layerType.VECTOR,
+                        styles: {
+                            point: map.options.styles.point,
+                            line: map.options.styles.line,
+                            polygon: map.options.styles.polygon
+                        }
+                    }).then(function (layer) {
+                        self.layer = layer;
+                        setStyles();
+                        map.putLayerOnTop(self.layer);
+                        self.layerPromise.resolve(layer);
                     });
                 }
             }
@@ -395,6 +395,35 @@ TC.Consts.event.CHANGE = 'change.tc';
         return self;
     };
 
+    ctlProto.setStyle = function (style) {
+        const self = this;
+        if (style) {
+            $.extend(self.style, style);
+        }
+        else {
+            switch (self.options.mode) {
+                case TC.Consts.geom.POLYLINE:
+                case TC.Consts.geom.MULTIPOLYLINE:
+                    style = { line: self.styles.line };
+                    break;
+                case TC.Consts.geom.POLYGON:
+                case TC.Consts.geom.MULTIPOLYGON:
+                    style = { polygon: self.styles.polygon };
+                    break;
+                case TC.Consts.geom.POINT:
+                case TC.Consts.geom.MULTIPOINT:
+                    style = { point: self.styles.point };
+                    break;
+                default:
+                    style = {};
+                    break;
+            }
+        }
+        if (self.isActive) {
+            self.wrap.setStyle(style);
+        }
+    };
+
     ctlProto.getModeStyle = function(mode) {
         const self = this;
         mode = mode || self.options.mode;
@@ -441,7 +470,7 @@ TC.Consts.event.CHANGE = 'change.tc';
 
         // Resetea el estilo
         if (self.isActive) {
-            self.wrap.activate(self.mode);
+            self.setStyle();
         }
 
         self.setStrokeColorWatch(color);
@@ -475,7 +504,7 @@ TC.Consts.event.CHANGE = 'change.tc';
 
             // Resetea el estilo
             if (self.isActive) {
-                self.wrap.activate(self.mode);
+                self.setStyle();
             }
 
             self.setStrokeWidthWatch(width);
@@ -502,6 +531,7 @@ TC.Consts.event.CHANGE = 'change.tc';
             else {
                 self.layer = layer;
             }
+            self.layerPromise.resolve(self.layer);
         }
     };
 
@@ -513,4 +543,21 @@ TC.Consts.event.CHANGE = 'change.tc';
         return self;
     };
 
+    ctlProto.exportState = function () {
+        const self = this;
+        if (self.exportsState) {
+            return {
+                id: self.id,
+                layer: self.layer.exportState()
+            };
+        }
+        return null;
+    };
+
+    ctlProto.importState = function (state) {
+        const self = this;
+        $.when(self.getLayer()).then(function (layer) {
+            layer.importState(state.layer);
+        });
+    };
 })();

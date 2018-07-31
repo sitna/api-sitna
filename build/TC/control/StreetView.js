@@ -1,4 +1,4 @@
-/// <reference path="../feature/Marker.js" />
+﻿/// <reference path="../feature/Marker.js" />
 /// <reference path="../feature/Point.js" />
 /// <reference path="../ol/ol3.js" />
 
@@ -71,7 +71,7 @@ if (!TC.Control) {
         $drag.addClass(TC.Consts.classes.HIDDEN);
         if (dragRect.top < btnRect.top || dragRect.top > btnRect.bottom ||
             dragRect.left < btnRect.left || dragRect.left > btnRect.right) {
-            // Hemos soltado fuera del bot\u00f3n: activar StreetView
+            // Hemos soltado fuera del botón: activar StreetView
             result = true;
             // Precarga de marcadores
             var extent = ctl.map.getExtent();
@@ -114,7 +114,7 @@ if (!TC.Control) {
         TC.Control.prototype.register.call(self, map);
 
         self.layer = null;
-        var layerId = self.CLASS + '-layer';
+        var layerId = self.getUID();
         for (var i = 0; i < map.workLayers.length; i++) {
             var layer = map.workLayers[i];
             if (layer.type === TC.Consts.layerType.VECTOR && layer.id === layerId) {
@@ -170,7 +170,7 @@ if (!TC.Control) {
                 self._sv.setVisible(false);
                 e.stopPropagation();
                 var $header = self._$div.parents('body').find('header');
-                if ($header.length > 0) $header.css('display', 'block');
+                if ($header.length > 0) $header.css('display', '');
 
                 if (self._previousActiveControl) {
                     self._previousActiveControl.activate();
@@ -190,10 +190,10 @@ if (!TC.Control) {
         TC.Control.prototype.render.call(self, function () {
             if (dust.cache[self.CLASS + '-view']) {
                 dust.render(self.CLASS + '-view', null, function (err, out) {
-                    //lo normal ser\u00eda hacer el resolve despu\u00e9s de volcar out en $viewDiv
+                    //lo normal sería hacer el resolve después de volcar out en $viewDiv
                     //pero a veces fallaba
                     //no se detonaba, sin dar error alguno
-                    //as\u00ed que lo arreglo como a m\u00ed me gusta:
+                    //así que lo arreglo como a mí me gusta:
                     setTimeout(function () {
                         self._$viewDiv.html(out);
                         if (err) {
@@ -280,7 +280,7 @@ if (!TC.Control) {
                 var setCenter = function () {
                     self.map.setCenter(xy);
                 };
-                // Esperamos a que el mapa est\u00e9 colapsado para centrarnos: ahorramos ancho de banda
+                // Esperamos a que el mapa esté colapsado para centrarnos: ahorramos ancho de banda
                 if ($mapDiv.hasClass(TC.Consts.classes.COLLAPSED)) {
                     setCenter();
                 }
@@ -354,9 +354,9 @@ if (!TC.Control) {
                                     self._sv.setVisible(true);
                                     setMarker(self._sv, true);
 
-                                    //apagar lo que sea que est\u00e9 encendido (probablemente featInfo)
-                                    //al cerrar con el aspa, volver\u00e1 a detonarse StreetView.deactivate()
-                                    //que, a su vez, restaurar\u00e1 el control anterior (FeatureInfo)
+                                    //apagar lo que sea que esté encendido (probablemente featInfo)
+                                    //al cerrar con el aspa, volverá a detonarse StreetView.deactivate()
+                                    //que, a su vez, restaurará el control anterior (FeatureInfo)
                                     if (self.map.activeControl) {
                                         self._previousActiveControl = self.map.activeControl;
                                         self.map.activeControl.deactivate(true);

@@ -1,4 +1,4 @@
-if (!window.OpenLayers) {
+﻿if (!window.OpenLayers) {
     TC.syncLoadJS(TC.url.ol);
 }
 
@@ -20,7 +20,7 @@ if (!window.OpenLayers) {
     });
 
     // IE11 tiene un comportamiento raro en su XMLSerializer nativo
-    // esto causa que meta namespaces falsos "NS1" por ah\u00ed
+    // esto causa que meta namespaces falsos "NS1" por ahí
     // este parche sale de un foro http://osgeo-org.1560.x6.nabble.com/WFS-and-IE-11-td5090636.html
     OpenLayers.Format.XML.prototype._write = OpenLayers.Format.XML.prototype.write;
     OpenLayers.Format.XML.prototype.write = function () {
@@ -1235,7 +1235,7 @@ if (!window.OpenLayers) {
                     //esto es muy lento en IE
                     //var folderName = this.parseProperty(cur, "*", "name"); 
 
-                    //el purgatorio del software est\u00e1 lleno de c\u00f3digo como lo que sigue:
+                    //el purgatorio del software está lleno de código como lo que sigue:
                     var folderName;
                     if (cur.childNodes && cur.childNodes.length && cur.childNodes.length > 0) {
                         if (cur.childNodes[0].nodeName == "name") {
@@ -1440,11 +1440,11 @@ if (!window.OpenLayers) {
     };
 
     TC.wrap.Map.prototype.getMetersPerUnit = function () {
-        TC.error('TC.wrap.Map.prototype.getMetersPerUnit no est\u00e1 soportada con OpenLayers 2');
+        TC.error('TC.wrap.Map.prototype.getMetersPerUnit no está soportada con OpenLayers 2');
     };
 
     TC.wrap.Map.prototype.setProjection = function (options) {
-        TC.error('TC.wrap.Map.prototype.setProjection no est\u00e1 soportada con OpenLayers 2');
+        TC.error('TC.wrap.Map.prototype.setProjection no está soportada con OpenLayers 2');
     };
 
     /*
@@ -1934,7 +1934,7 @@ if (!window.OpenLayers) {
         if (styles && styles.length) {
             var legend = styles[0].legend || {};
             result.src = legend.href;
-            // Eliminado porque GeoServer miente con el tama\u00f1o de sus im\u00e1genes de la leyenda
+            // Eliminado porque GeoServer miente con el tamaño de sus imágenes de la leyenda
             //if (legend.width) {
             //    result.width = legend.width;
             //    result.height = legend.height;
@@ -2395,7 +2395,7 @@ if (!window.OpenLayers) {
             vectorOptions.filter = _createFilter(filterObject);
         }
 
-        // Si hay clustering se a\u00f1ade una estrategia especial
+        // Si hay clustering se añade una estrategia especial
         if (options.cluster) {
             if (!$.isArray(vectorOptions.strategies)) {
                 vectorOptions.strategies = [];
@@ -2420,7 +2420,7 @@ if (!window.OpenLayers) {
 
             for (var i = 0; i < e.features.length; i++) {
                 var olFeat = e.features[i];
-                if (!olFeat._wrap) { // Solo actuar si no es una feature a\u00f1adida desde la API
+                if (!olFeat._wrap) { // Solo actuar si no es una feature añadida desde la API
                     if (olFeat.geometry instanceof OpenLayers.Geometry.Point) {
                         markers[markers.length] = olFeat;
                     }
@@ -2482,8 +2482,8 @@ if (!window.OpenLayers) {
             self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
         });
 
-        // En KML activar despu\u00e9s de a\u00f1adir todos los gestores de eventos. En WFS se activa con getFeature.
-        // Tambi\u00e9n definir el t\u00edtulo de la capa a partir del nombre del documento o del archivo.
+        // En KML activar después de añadir todos los gestores de eventos. En WFS se activa con getFeature.
+        // También definir el título de la capa a partir del nombre del documento o del archivo.
         if (self.parent.type === TC.Consts.layerType.KML) {
             result.events.register('added', null, function () {
                 fixedStrategy.activate();
@@ -2507,7 +2507,7 @@ if (!window.OpenLayers) {
     };
 
     TC.wrap.layer.Vector.prototype.import = function (options) {
-        TC.error('TC.wrap.layer.Vector.prototype.import no est\u00e1 soportada con OpenLayers 2');
+        TC.error('TC.wrap.layer.Vector.prototype.import no está soportada con OpenLayers 2');
     };
 
 
@@ -2643,7 +2643,7 @@ if (!window.OpenLayers) {
 
     TC.wrap.layer.Vector.prototype.sendTransaction = function (inserts, updates, deletes) {
         var result = $.Deferred();
-        TC.error('"sendTransaction" no est\u00e1 soportado por la versi\u00f3n OpenLayers 2 de la API SITNA');
+        TC.error('"sendTransaction" no está soportado por la versión OpenLayers 2 de la API SITNA');
         result.reject();
         return result;
     };
@@ -3085,7 +3085,7 @@ if (!window.OpenLayers) {
                     for (var j = 0; j < sourceService.features.length; j++) {
                         var sourceFeature = sourceService.features[j];
                         var layerName = sourceFeature.fid ? sourceFeature.fid.substr(0, sourceFeature.fid.lastIndexOf('.')) : sourceFeature.type || '';
-                        var layerTitle = targetService.mapLayer ? targetService.mapLayer.wrap.getInfo(layerName).title || layerName : '[Sin t\u00edtulo]';
+                        var layerTitle = targetService.mapLayer ? targetService.mapLayer.wrap.getInfo(layerName).title || layerName : '[Sin título]';
                         var targetLayer = null;
                         for (var k = 0; k < targetService.layers.length; k++) {
                             if (targetService.layers[k].name === layerName) {
@@ -3721,12 +3721,12 @@ if (!window.OpenLayers) {
                     // Para IE8: FramedCloud sin modificar
                     if (Modernizr.canvas) {
                         popupCtl.$popupDiv.css('overflow', '').css('border', '').css('width', '').css('height', '');
-                        // Eliminar bug de visualizaci\u00f3n de Chrome, quitando position:relative.
+                        // Eliminar bug de visualización de Chrome, quitando position:relative.
                         var $content = $(popup.contentDiv).css('position', '');
-                        // En OL2 los featureInfo en versi\u00f3n "baraja de cartas" salen sin tama\u00f1o.
+                        // En OL2 los featureInfo en versión "baraja de cartas" salen sin tamaño.
                         // Para evitar esto, la clase tc-ctl-finfo tiene ancho y alto establecidos.
-                        // Pero eso hace que en el popup salgan barras de scroll, porque contentDiv se crea demasiado peque\u00f1o.
-                        // Rehacemos el tama\u00f1o del popup para eliminarlas.
+                        // Pero eso hace que en el popup salgan barras de scroll, porque contentDiv se crea demasiado pequeño.
+                        // Rehacemos el tamaño del popup para eliminarlas.
                         popup.updateSize();
                         $content.css('width', '');
 
@@ -3875,6 +3875,10 @@ if (!window.OpenLayers) {
                 self.control.handler.layer.redraw();
             }
         }
+    };
+
+    TC.wrap.control.Draw.prototype.setStyle = function () {
+        TC.error('TC.wrap.control.Draw.prototype.setStyle no implementado en OpenLayers 2');
     };
 
     TC.wrap.control.CacheBuilder.prototype.getRequestSchema = function (extent) {

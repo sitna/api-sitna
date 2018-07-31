@@ -1,4 +1,4 @@
-
+﻿
 TC.layer = TC.layer || {};
 
 if (!TC.Layer) {
@@ -73,7 +73,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 layer._capabilitiesPromise.reject();
                 return;
             }
-            // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gesti\u00f3n de capas.
+            // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
             // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
             layer.capabilities = layer.capabilities || capabilities;
 
@@ -83,7 +83,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 //      futuras capas hermanas sin tener que gestionarlas de nuevo.
                 capabilities._capabilitiesURL = layer.capabilitiesUrl_;
             } else {
-                // GLS: Si la capa no tiene funci\u00f3n para la URL del capabilities es porque ya lo hemos gestionado para una capa hermana, 
+                // GLS: Si la capa no tiene función para la URL del capabilities es porque ya lo hemos gestionado para una capa hermana, 
                 //      por ello asigno el valor ya almacenado
                 layer.capabilitiesUrl_ = capabilities._capabilitiesURL;
             }
@@ -97,21 +97,22 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             layer._capabilitiesPromise.resolve(capabilities);
         };
 
-        if (processingCapabilities) {
-            // Ya se est\u00e1 procesando el capabilities en otra capa, no es necesario seguir
+        // En el caso de que la URL del capabilities no sea la misma que la del GetMap, no puedo reutilizar nada porque no sé con qué URL funciona al final.
+        //if (processingCapabilities) {
+        //    // Ya se está procesando el capabilities en otra capa, no es necesario seguir
 
-            capabilitiesFromUrl.then(processedCapabilities);
+        //    capabilitiesFromUrl.then(processedCapabilities);
 
-            // GLS: Buscamos en capas y mapas base cargados, una capa hermana de la cual obtener el m\u00e9todo de cargas (GFI, GetFEature...) ya gestionado.
-            var sameService = layer.getSiblingLoadedLayer.call(layer, function (elem) {
-                return $.isFunction(elem.capabilitiesUrl_);
-            });
+        //    // GLS: Buscamos en capas y mapas base cargados, una capa hermana de la cual obtener el método de cargas (GFI, GetFEature...) ya gestionado.
+        //    var sameService = layer.getSiblingLoadedLayer.call(layer, function (elem) {
+        //        return $.isFunction(elem.capabilitiesUrl_);
+        //    });
 
-            if (sameService) {
-                self.capabilitiesUrl_ = sameService.capabilitiesUrl_;
-            }
-            return;
-        }
+        //    if (sameService) {
+        //        self.capabilitiesUrl_ = sameService.capabilitiesUrl_;
+        //    }
+        //    return;
+        //}
 
         var url;
         var params = {};
@@ -142,14 +143,14 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             params.VERSION = '1.3.0';
             params.REQUEST = 'GetCapabilities';
         }
-        url = url + '?' + $.param(params);
+        url = url + '?' + $.param($.extend(params, layer.queryParams));
         TC._capabilitiesRequests = TC._capabilitiesRequests || {};
 
         // GlS: Completamos las urls para las distintas funciones de una capa (GFI, getLegend...)
-        //      adem\u00e1s del capabilities para almacenar de nuevo en localStorage
+        //      además del capabilities para almacenar de nuevo en localStorage
         var getCapabilitesUrlPromise = layer.setCapabilitiesUrl_(url, success, error);
 
-        // Obtenemos el capabilities almacenado en cach\u00e9
+        // Obtenemos el capabilities almacenado en caché
         TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
             localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + serviceUrl)
                 .then(function (value) {
@@ -167,7 +168,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             if (state === layer.capabilitiesState_.PENDING) {
                 // GLS:
                 // Durante las pruebas no hemos obtenido el capabilities, por tanto: 
-                //      1. Llamo al m\u00e9todo que hemos asignado durante las pruebas. Proporciona la URL a la cual hacer la petici\u00f3n
+                //      1. Llamo al método que hemos asignado durante las pruebas. Proporciona la URL a la cual hacer la petición
                 getRequest(layer.capabilitiesUrl_(url)).then(function (data) {
                     success(layer, data);
                 }, function (jqXHR, textStatus, errorThrown) {
@@ -182,7 +183,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         $.when(getCapabilitesUrlPromise, capabilitiesFromUrl).done(function (state, capabilities) {
             // GLS: Si el estado es done, es que durante las pruebas hemos obtenido el capabilities correctamente y 
-            //      se ha asignado el m\u00e9todo que proporciona la URL para pr\u00f3ximas peticiones (GFI, GetFeature...)
+            //      se ha asignado el método que proporciona la URL para próximas peticiones (GFI, GetFeature...)
             if (state === layer.capabilitiesState_.DONE && capabilities) {
                 processedCapabilities(capabilities);
             } else if (capabilities) {
@@ -205,8 +206,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
 
             // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
-            // As\u00ed evitamos que la operaci\u00f3n, que es bastante pesada, ocupe tiempo de carga 
-            // (con el efecto secundario de que LoadingIndicator est\u00e9 un tiempo largo apagado durante la carga)
+            // Así evitamos que la operación, que es bastante pesada, ocupe tiempo de carga 
+            // (con el efecto secundario de que LoadingIndicator esté un tiempo largo apagado durante la carga)
             var capKey = layer.CAPABILITIES_STORE_KEY_PREFIX + layer.options.url;
             var setItem = function () {
                 // GLS: antes de guardar, validamos que es un capabilities sin error
@@ -215,7 +216,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 } else {
 
                     $.when(layer._capabilitiesPromise).then(function () {
-                        // GLS: Para almacenar el capabilities en local storage elimino la propiedad que contiene la funci\u00f3n de peticiones
+                        // GLS: Para almacenar el capabilities en local storage elimino la propiedad que contiene la función de peticiones
                         var fn = capabilities._capabilitiesURL;
                         delete capabilities._capabilitiesURL;
 
@@ -302,7 +303,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         if (e.data.state === 'success') {
                             capabilities = e.data.capabilities;
 
-                            // GLS: S\u00f3lo almacenamos si el capabilities es correcto
+                            // GLS: Sólo almacenamos si el capabilities es correcto
                             storeCapabilities(layer, capabilities);
                         }
                         else {
@@ -328,7 +329,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     /*
-     *  _createLayer: Crea la capa nativa correspondiente seg\u00fan el tipo
+     *  _createLayer: Crea la capa nativa correspondiente según el tipo
      */
     var _createLayer = function (layer) {
         var ollyr;
@@ -364,12 +365,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             $.extend(params, layer.params);
         }
 
+        if (layer.queryParams) {
+            $.extend(params, layer.queryParams);
+        }
+
         var infoFormat = layer.getPreferredInfoFormat();
         if (infoFormat !== null) {
             params.INFO_FORMAT = infoFormat;
         }
 
-        return layer.wrap.createWMSLayer(layer.url, params, options);
+        return layer.wrap.createWMSLayer(layer.getGetMapUrl(), params, options);
     };
 
     var _createWMTSLayer = function (layer) {
@@ -408,7 +413,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             result = true;
         }
         else {
-            // Las capas se ordenan de arriba a abajo en el \u00e1rbol, por tanto hay que recorrer la lista del rev\u00e9s
+            // Las capas se ordenan de arriba a abajo en el árbol, por tanto hay que recorrer la lista del revés
             for (var i = treeNode.children.length - 1; i >= 0; i--) {
                 if (_getLayerNamePosition(treeNode.children[i], name, counter)) {
                     result = true;
@@ -460,7 +465,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var done = $.Deferred();
 
         // GLS:
-        // Analizar la respuesta de la petici\u00f3n para detectar un error de CORS no es posible, por tanto lo hago mediante un m\u00e9todo un tanto rudimentario.
+        // Analizar la respuesta de la petición para detectar un error de CORS no es posible, por tanto lo hago mediante un método un tanto rudimentario.
         var imgCORS = document.createElement("img");
         imgCORS.crossOrigin = "anonymous";
 
@@ -486,13 +491,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
                 if (olImage) {
                     // GLS: revisar como abstraernos de OL
-                    // GLS: en el c\u00f3digo hay set pero parece que no es accesible
+                    // GLS: en el código hay set pero parece que no es accesible
                     olImage.image_ = imgCORS;
                     olImage.state = ol.ImageState.LOADED;
                     olImage.changed();
                 }
 
-                // GLS: si la exportaci\u00f3n del canvas no da error es que el servicio cuenta con CORS.
+                // GLS: si la exportación del canvas no da error es que el servicio cuenta con CORS.
                 done.resolve(true);
             } catch (e) {
                 if (e.code === 18) { // GLS: 18 - SECURITY_ERR
@@ -503,13 +508,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
                     if (olImage) {
                         // GLS: revisar como abstraernos de OL
-                        // GLS: en el c\u00f3digo hay set pero parece que no es accesible
+                        // GLS: en el código hay set pero parece que no es accesible
                         olImage.image_ = imgCORS;
                         olImage.state = ol.ImageState.LOADED;
                         olImage.changed();
                     }
 
-                    // GLS: si el error no es una excepci\u00f3n de seguridad lo tratamos como si tuviese CORS (ya se encargar\u00e1 la gesti\u00f3n de errores de corregirlo).
+                    // GLS: si el error no es una excepción de seguridad lo tratamos como si tuviese CORS (ya se encargará la gestión de errores de corregirlo).
                     done.resolve(true);
                 }
             }
@@ -531,7 +536,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             imgCORS.onload = undefined;
             imgCORS.onerror = undefined;
 
-            // GLS: si el servicio no cuenta con CORS el atributo crossOrigin = "anonymous" provoca un error en la petici\u00f3n de la imagen.
+            // GLS: si el servicio no cuenta con CORS el atributo crossOrigin = "anonymous" provoca un error en la petición de la imagen.
             done.resolve(false);
 
             if (onerrorCallback && $.isFunction(onerrorCallback)) {
@@ -610,14 +615,14 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      * @extends TC.Layer
      * @constructor
      * @async
-     * @param {TC.cfg.LayerOptions} [options] Objeto de opciones de configuraci\u00f3n de la capa.
+     * @param {TC.cfg.LayerOptions} [options] Objeto de opciones de configuración de la capa.
      */
     TC.layer.Raster = function () {
         var self = this;
 
-        //esta promise se resolver\u00e1 cuando el capabilities est\u00e9 descargado y parseado
-        //se utiliza para saber cu\u00e1ndo est\u00e1 listo el capabilities en los casos en los que se instancia el layer pero no se a\u00f1ade al mapa
-        //porque la forma habitual de detectar esto es por los eventos del mapa (que en esos casos no saltar\u00e1n)
+        //esta promise se resolverá cuando el capabilities esté descargado y parseado
+        //se utiliza para saber cuándo está listo el capabilities en los casos en los que se instancia el layer pero no se añade al mapa
+        //porque la forma habitual de detectar esto es por los eventos del mapa (que en esos casos no saltarán)
         this._capabilitiesPromise = null;
 
         TC.Layer.apply(self, arguments);
@@ -674,8 +679,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
                 }
             } else {
-                // Si no se encuentran nombres de capas, se buscan en el par\u00e1metro sld_body. Este par\u00e1metro es utilizado
-                // cuando queremos instanciar una capa pas\u00e1ndole un SLD en la petici\u00f3n
+                // Si no se encuentran nombres de capas, se buscan en el parámetro sld_body. Este parámetro es utilizado
+                // cuando queremos instanciar una capa pasándole un SLD en la petición
                 var sldBody = self.options.params ? self.options.params.sld_body : null;
 
                 if (sldBody) {
@@ -700,7 +705,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
 
         /**
-      * \u00c1rbol del documento de capabilities del servicio.
+      * Árbol del documento de capabilities del servicio.
       * @property capabilities
       * @type object
       */
@@ -750,8 +755,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     // GLS:
     // Escenario: Visor en HTTPS + ServiceWorker 
     // Se necesita HTTPS: 
-    // Seg\u00fan https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
-    // Durante el desarrollo, podr\u00e1s usar el service worker a trav\u00e9s de localhost, pero para implementarlo en un sitio deber\u00e1s configurar HTTPS en tu servidor.     
+    // Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
+    // Durante el desarrollo, podrás usar el service worker a través de localhost, pero para implementarlo en un sitio deberás configurar HTTPS en tu servidor.     
 
     layerProto.getCapabilitiesUrl_ServiceWorker_ = function (url) {
         var self = this;
@@ -760,35 +765,35 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         // GLS:
         // Lo no compatible con CORS falla de forma predeterminada:
-        // Seg\u00fan https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
-        // De manera predeterminada, obtener un recurso de una URL de terceros no ser\u00e1 posible si esta no admite CORS.
+        // Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
+        // De manera predeterminada, obtener un recurso de una URL de terceros no será posible si esta no admite CORS.
 
         TC.Util.consoleRegister("Escenario: Visor en HTTPS + ServiceWorker");
         TC.Util.consoleRegister("Service worker nos obliga a estar en HTTPS");
 
         // GLS:
-        // Primer paso: comprobamos si el servicio a solicitar es HTTPS, si no lo es producir\u00e1 contenido mixto y el service worker no lo acepta. 
-        TC.Util.consoleRegister("Comprobamos si el servicio a solicitar es HTTPS, si no lo es producir\u00e1 contenido mixto y el service worker no lo acepta");
+        // Primer paso: comprobamos si el servicio a solicitar es HTTPS, si no lo es producirá contenido mixto y el service worker no lo acepta. 
+        TC.Util.consoleRegister("Comprobamos si el servicio a solicitar es HTTPS, si no lo es producirá contenido mixto y el service worker no lo acepta");
         if (!TC.Util.isSecureURL(layerUrl)) {
             // GLS:
-            // Segundo paso: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloquear\u00e1 la petici\u00f3n.
-            TC.Util.consoleRegister("No lo es: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloquear\u00e1 la petici\u00f3n");
+            // Segundo paso: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloqueará la petición.
+            TC.Util.consoleRegister("No lo es: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloqueará la petición");
             self.getCapabilitiesUrl_MixedContent_FromHTTPS_(layerUrl);
         } else {
             // GLS:
             // Siguiente paso: validamos si el servicio cuenta con CORS
-            TC.Util.consoleRegister("S\u00ed lo es: validamos si cuenta con CORS");
+            TC.Util.consoleRegister("Sí lo es: validamos si cuenta con CORS");
             _checkCORSSupport(layerUrl, self.capabilitiesLoad_).then(function (hasCORS) {
                 if (hasCORS) {
                     TC.Util.consoleRegister("Tiene cabeceras CORS");
-                    self.capabilitiesUrl_ = self.getByUrl_;
+                    self.capabilitiesUrl_ = self.getByUrl_;                    
                     self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
                 } else {
                     // GLS: Al no soportar CORS, proxificamos.                    
                     TC.Util.consoleRegister("NO tiene cabeceras CORS -> proxificamos:");
                     TC.Util.consoleRegister("GetCapabilities, GFI, 3D");
                     TC.Util.consoleRegister("GetMap");
-                    self.capabilitiesUrl_ = self.getByProxy_;
+                    self.capabilitiesUrl_ = self.getByProxy_;                    
                     self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
                 }
             });
@@ -808,20 +813,20 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         TC.Util.consoleRegister("Escenario: Visor en HTTPS y servicio en HTTP");
 
         // GLS:
-        // Primer  paso: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloquea la petici\u00f3n.
-        TC.Util.consoleRegister("Validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloquea la petici\u00f3n");
+        // Primer  paso: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloquea la petición.
+        TC.Util.consoleRegister("Validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloquea la petición");
         _checkSSLSupport.call(self, layerUrl, self.capabilitiesLoad_).then(function (supportSSL) {
             if (!supportSSL) {
                 TC.Util.consoleRegister("Realmente no sabemos si el error se produce por no soportar HTTPS o porque no tiene CORS, sea como sea: es necesario proxificar");
                 // GLS: Realmente no sabemos si el error se produce por no soportar HTTPS o porque no tiene CORS, sea como sea: es necesario proxificar.                    
-                self.capabilitiesUrl_ = self.getByProxy_;
+                self.capabilitiesUrl_ = self.getByProxy_;                
                 self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
             } else {
                 // GLS:
-                // Dado que estamos en un escenario de cross origin y si la petici\u00f3n/comprobaci\u00f3n de SSL ha funcionado correctamente
+                // Dado que estamos en un escenario de cross origin y si la petición/comprobación de SSL ha funcionado correctamente
                 // podemos afirmar que el servicio cuenta con cabeceras CORS
-                TC.Util.consoleRegister("Dado que estamos en un escenario de cross origin y si la petici\u00f3n/comprobaci\u00f3n de SSL ha funcionado correctamente: podemos afirmar que el servicio cuenta con cabeceras CORS");
-                self.capabilitiesUrl_ = self.getBySSL_;
+                TC.Util.consoleRegister("Dado que estamos en un escenario de cross origin y si la petición/comprobación de SSL ha funcionado correctamente: podemos afirmar que el servicio cuenta con cabeceras CORS");
+                self.capabilitiesUrl_ = self.getBySSL_;                
                 self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
             }
         });
@@ -843,7 +848,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     // GLS:
     // Escenario: El visor y el servicio a solicitar tienen distinto protocolo provocando contenido mixto
-    //            Validaremos si existe service worker instalado (es m\u00e1s restrictivo) 
+    //            Validaremos si existe service worker instalado (es más restrictivo) 
 
     layerProto.getCapabilitiesUrl_MixedContent_ = function (url, location) {
         var self = this;
@@ -854,10 +859,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         TC.Util.consoleRegister("¿Estamos en HTTPS?");
         if (TC.Util.isSecureURL(location_)) {
             // GLS:
-            // Primer paso: Al ser un sitio seguro, validamos si existe un service worker (es m\u00e1s restrictivo)
-            TC.Util.consoleRegister("Al ser un sitio seguro, validamos si existe un service worker (es m\u00e1s restrictivo)");
+            // Primer paso: Al ser un sitio seguro, validamos si existe un service worker (es más restrictivo)
+            TC.Util.consoleRegister("Al ser un sitio seguro, validamos si existe un service worker (es más restrictivo)");
             if (TC.Util.isServiceWorker()) {
-                TC.Util.consoleRegister("S\u00ed hay ServiceWorker");
+                TC.Util.consoleRegister("Sí hay ServiceWorker");
                 self.getCapabilitiesUrl_ServiceWorker_.call(self, layerUrl);
             } else {
                 TC.Util.consoleRegister("No hay ServiceWorker");
@@ -870,7 +875,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     }
 
     // GLS:
-    // Escenario: Mismo protocolo, \u00fanicamente debemos validar CORS
+    // Escenario: Mismo protocolo, únicamente debemos validar CORS
 
     layerProto.getCapabilitiesUrl_ProtocolSiblings_ = function (url, location) {
         var self = this;
@@ -879,10 +884,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var location_ = location || document.location.href;
 
         // GLS:
-        // Primer paso: Validamos si existe un service worker (es m\u00e1s restrictivo)        
-        TC.Util.consoleRegister("Validamos si estamos en HTTPS y si hay ServiceWorker (es m\u00e1s restrictivo)");
+        // Primer paso: Validamos si existe un service worker (es más restrictivo)        
+        TC.Util.consoleRegister("Validamos si estamos en HTTPS y si hay ServiceWorker (es más restrictivo)");
         if (TC.Util.isSecureURL(location_) && TC.Util.isServiceWorker()) {
-            TC.Util.consoleRegister("S\u00ed hay ServiceWorker");
+            TC.Util.consoleRegister("Sí hay ServiceWorker");
             self.getCapabilitiesUrl_ServiceWorker_.call(self, layerUrl);
         } else {
             TC.Util.consoleRegister("No hay ServiceWorker");
@@ -901,13 +906,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         _checkCORSSupport(layerUrl, self.capabilitiesLoad_).then(function (hasCORS) {
             if (hasCORS) {
                 TC.Util.consoleRegister("Cuenta con cabeceras CORS");
-                self.capabilitiesUrl_ = self.getByUrl_;
+                self.capabilitiesUrl_ = self.getByUrl_;                
                 self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
             } else {
                 // GLS: Al no soportar CORS, proxificamos.
                 TC.Util.consoleRegister("NO tiene cabeceras CORS -> proxificamos:");
                 TC.Util.consoleRegister("Capabilities");
-                self.capabilitiesUrl_ = self.getByProxy_;
+                self.capabilitiesUrl_ = self.getByProxy_;                
                 self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
             }
         });
@@ -933,39 +938,40 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             };
         }
 
-        TC.Util.consoleRegister("Buscamos en las capas de trabajo si exite alguna del mismo servicio.");
-        TC.Util.consoleRegister("Si es as\u00ed asignamos la misma funci\u00f3n para el capabilities");
-        // GLS: 
-        // Buscamos en las capas de trabajo si exite alguna del mismo servicio. 
-        // Si es as\u00ed asignamos la misma funci\u00f3n para el capabilities.        
-        var sameService = self.getSiblingLoadedLayer.call(self, function (elem) {
-            return $.isFunction(elem.capabilitiesUrl_());
-        });
+        //TC.Util.consoleRegister("Buscamos en las capas de trabajo si exite alguna del mismo servicio.");
+        //TC.Util.consoleRegister("Si es así asignamos la misma función para el capabilities");
+        //// GLS: 
+        //// Buscamos en las capas de trabajo si exite alguna del mismo servicio. 
+        //// Si es así asignamos la misma función para el capabilities.        
+        //var sameService = self.getSiblingLoadedLayer.call(self, function (elem) {
+        //    return $.isFunction(elem.capabilitiesUrl_());
+        //});
 
-        if (!self.capabilitiesUrl_ && sameService) {
-            TC.Util.consoleRegister("Hay capa hermana, no validamos nada y asignamos misma funci\u00f3n de carga");
-            self.capabilitiesUrl_ = sameService.capabilitiesUrl_();
-            self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
+        //if (!self.capabilitiesUrl_ && sameService) {
+        //    TC.Util.consoleRegister("Hay capa hermana, no validamos nada y asignamos misma función de carga");
+        //    self.capabilitiesUrl_ = sameService.capabilitiesUrl_();
+        //    self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
+        //} else {
+
+        TC.Util.consoleRegister("No hay capa hermana");
+        // GLS:
+        // Primer paso: validamos si existe cross origin
+        TC.Util.consoleRegister("Validamos si existe cross origin");
+        if (TC.Util.isSameOriginByLocation(layerUrl, location_)) {
+            TC.Util.consoleRegister("Tenemos mismo origen, cargamos directamente");
+            self.capabilitiesUrl_ = self.getByUrl_;            
+            self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
+
+        } // GLS: Estamos en cross origin
+        else if (TC.Util.isSameProtocol(layerUrl, location_)) {
+            TC.Util.consoleRegister("Hay cross origin");
+            TC.Util.consoleRegister("Sin contenido mixto");
+            self.getCapabilitiesUrl_ProtocolSiblings_.call(self, layerUrl);
         } else {
-            TC.Util.consoleRegister("No hay capa hermana");
-            // GLS:
-            // Primer paso: validamos si existe cross origin
-            TC.Util.consoleRegister("Validamos si existe cross origin");
-            if (TC.Util.isSameOriginByLocation(layerUrl, location_)) {
-                TC.Util.consoleRegister("Tenemos mismo origen, cargamos directamente");
-                self.capabilitiesUrl_ = self.getByUrl_;
-                self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
-
-            } // GLS: Estamos en cross origin
-            else if (TC.Util.isSameProtocol(layerUrl, location_)) {
-                TC.Util.consoleRegister("Hay cross origin");
-                TC.Util.consoleRegister("Sin contenido mixto");
-                self.getCapabilitiesUrl_ProtocolSiblings_.call(self, layerUrl);
-            } else {
-                TC.Util.consoleRegister("Tenemos contenido mixto");
-                self.getCapabilitiesUrl_MixedContent_.call(self, layerUrl);
-            }
+            TC.Util.consoleRegister("Tenemos contenido mixto");
+            self.getCapabilitiesUrl_MixedContent_.call(self, layerUrl);
         }
+        //}
 
         return self.getCapabilitiesUrl_promise_();
     };
@@ -1036,7 +1042,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     /*
      *  _aggregateLayerNodeNames: Agrega el array de nombres de capa WMS sustituyendo en la medida de lo posible capas por las capas de grupo que las contienen.
-     * Se parte de un nodo del \u00e1rbol de capas del capabilities
+     * Se parte de un nodo del árbol de capas del capabilities
      */
     var _aggregateLayerNodeNames = function _aggregateLayerNodeNames(layer, names, layerNode) {
         var result = false;
@@ -1079,7 +1085,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     /*
      *  _disgregateLayerNames: devuelve un array de nombres de capa WMS con solo capas hoja.
-     * Par\u00e1metros: objeto de capa, array of strings, nodo de la capa en el capabilities, booleano que dice si esta rama viene de un nodo visible
+     * Parámetros: objeto de capa, array of strings, nodo de la capa en el capabilities, booleano que dice si esta rama viene de un nodo visible
      */
     var _disgregateLayerNames = function (layer, layerNames) {
         var result = [];
@@ -1164,7 +1170,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     /**
-     * Establece los nombres de capas que deben estar visibles en un WMS. Si la lista est\u00e1 vac\u00eda, hace invisible la capa.
+     * Establece los nombres de capas que deben estar visibles en un WMS. Si la lista está vacía, hace invisible la capa.
      * @method setLayerNames
      * @param {array|string} layerNames Array de strings con los nombres de capa o string con los nombres de capa separados por comas.
      * @param {TC.cfg.LayerNameOptions} [options]
@@ -1207,7 +1213,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 };
                 layer.wrap.setParams(newParams);
                 if (opts.reset || !layer.map) {
-                    // layerNames se fija cuando se a\u00f1ade al mapa o cuando reset = true.
+                    // layerNames se fija cuando se añade al mapa o cuando reset = true.
                     layer.availableNames = layer.names;
                 }
                 if (layer.map) {
@@ -1221,7 +1227,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     /**
-     * A\u00f1ade capas por nombre a las que ya est\u00e1n visibles en el WMS
+     * Añade capas por nombre a las que ya están visibles en el WMS
      * @method addLayerNames
      * @param {array|string} layerNames Array de strings con los nombres de capa o string con los nombres de capa separados por comas.
      * @param {TC.cfg.LayerNameOptions} [options]
@@ -1253,7 +1259,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     /**
-     * Elimina capas por nombre de las que est\u00e1n visibles en el WMS
+     * Elimina capas por nombre de las que están visibles en el WMS
      * @method addLayerNames
      * @param {array|string} layerNames Array de strings con los nombres de capa o string con los nombres de capa separados por comas.
      * @param {TC.cfg.LayerNameOptions} [options]
@@ -1412,7 +1418,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             result = result
                 .map(function (crs) {
                     return TC.Util.getCRSCode(crs);
-                }) // c\u00f3digos num\u00e9ricos
+                }) // códigos numéricos
                 .filter(function (code) {
                     return code !== null;
                 })
@@ -1421,10 +1427,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         prev[prev.length] = cur;
                     }
                     return prev;
-                }, []) // c\u00f3digos num\u00e9ricos sin duplicados
+                }, []) // códigos numéricos sin duplicados
                 .map(function (code) {
                     return 'EPSG:' + code;
-                }); // c\u00f3digos normalizados
+                }); // códigos normalizados
         }
         return result;
     };
@@ -1576,7 +1582,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         var addChild = function (node, child) {
             if (self.options.inverseTree) {
-                // Versi\u00f3n r\u00e1pida de unshift
+                // Versión rápida de unshift
                 TC.Util.fastUnshift(node.children, child);
             }
             else {
@@ -1629,7 +1635,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
                     // No muestra ramas irrelevantes si hideTree = true
                     if (!forceAddition && !isRootNode) {
-                        // Eliminamos la rama hasta el nodo de inter\u00e9s
+                        // Eliminamos la rama hasta el nodo de interés
                         rootNode.children = rootNode.children.concat(r.children);
                         r = null;
                     }
@@ -1718,6 +1724,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 };
             }
             result.title = self.title || result.title;
+            result.customLegend = self.customLegend || result.customLegend;
             self.tree = result;
         }
         return result;
@@ -1843,7 +1850,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var self = this;
         var lc = looseComparison !== undefined ? looseComparison : self.ignorePrefixes
         if (!result && lc && n1 && n2) {
-            // Revisamos si tienen prefijo. Si lo tiene solo una de las dos lo obviamos para la comparaci\u00f3n
+            // Revisamos si tienen prefijo. Si lo tiene solo una de las dos lo obviamos para la comparación
             var idx1 = n1.indexOf(':');
             var idx2 = n2.indexOf(':');
             if (idx1 >= 0 && idx2 < 0) {
@@ -1864,18 +1871,18 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return this.wrap.getResolutions();
     };
 
-    //Devuelve un array de subLayers cuyo nombre o descripci\u00f3n contenga el texto indicado
+    //Devuelve un array de subLayers cuyo nombre o descripción contenga el texto indicado
     //case insensitive
     layerProto.searchSubLayers = function (text) {
         if (!this.patternFn) {
             this.patternFn = function (t) {
-                t = t.replace(/[^a-z\d\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f1]/gi, '\\' + '$&');
-                t = t.replace(/(a|\u00e1)/gi, "(a|\u00e1)");
-                t = t.replace(/(e|\u00e9)/gi, "(e|\u00e9)");
-                t = t.replace(/(i|\u00ed)/gi, "(i|\u00ed)");
-                t = t.replace(/(o|\u00f3)/gi, "(o|\u00f3)");
-                t = t.replace(/(u|\u00fa|\u00fc)/gi, "(u|\u00fa|\u00fc)");
-                t = t.replace(/n/gi, "(n|\u00f1)");
+                t = t.replace(/[^a-z\dáéíóúüñ]/gi, '\\' + '$&');
+                t = t.replace(/(a|á)/gi, "(a|á)");
+                t = t.replace(/(e|é)/gi, "(e|é)");
+                t = t.replace(/(i|í)/gi, "(i|í)");
+                t = t.replace(/(o|ó)/gi, "(o|ó)");
+                t = t.replace(/(u|ú|ü)/gi, "(u|ú|ü)");
+                t = t.replace(/n/gi, "(n|ñ)");
                 return t;
             }
         }
@@ -1883,7 +1890,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             var self = this;
             var layers = null;
             /*URI:Si la cadena a buscar contiene a la busqueda anterior, por ejemplo, antes he buscado "cat" y ahora busco "cata" porque esto escribiendo "catastro" ...
-            en vez de buscar en todas las capas del servicio busco en los resultados encotrados en la b\u00fasqueda anterior */
+            en vez de buscar en todas las capas del servicio busco en los resultados encotrados en la búsqueda anterior */
             if (this.lastPattern && text.indexOf(this.lastPattern) >= 0) {
                 layers = this.lastMatches
             }
@@ -1946,7 +1953,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             })
             .sort(function (a, b) {
                 if (b.tcScore === a.tcScore) {
-                    //si la puntuaci\u00f3n es la misma reordenamos por t\u00edtulo
+                    //si la puntuación es la misma reordenamos por título
                     var titleA = TC.Util.replaceAccent(a.Title);
                     var titleB = TC.Util.replaceAccent(b.Title);
                     if (titleA < titleB) return -1;
@@ -2015,8 +2022,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             var name = self.names[0];
             var info = self.wrap.getInfo(name);
             var xhr = new XMLHttpRequest();
-            var url = info.legend[0].src.split('?'); // Separamos los par\u00e1metros de la ra\u00edz de la URL
-            var dataEntries = url[1].split("&"); // Separamos clave/valor de cada par\u00e1metro
+            var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
+            var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
             var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
 
             for (var i = 0 ; i < dataEntries.length ; i++) {
@@ -2054,7 +2061,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             };
             xhr.send(params);
         } else {
-            deferred.reject("Funci\u00f3n window.btoa no soportada por el navegador");
+            deferred.reject("Función window.btoa no soportada por el navegador");
         }
         return deferred.promise();
     };
@@ -2065,45 +2072,46 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return src;
     };
 
-    // GLS: Seg\u00fan MDN: https://developer.mozilla.org/es/docs/Web/API/WebGL_API/Tutorial/Wtilizando_texturas_en_WebGL
-    //    Note: Es importante se\u00f1alar que la carga de texturas en WebGL sigue reglas de dominio-cruzado; 
-    //          Es decir, s\u00f3lo puede cargar texturas de sitios para los que su contenido tiene aprobaci\u00f3n de CORS.
+    // GLS: Según MDN: https://developer.mozilla.org/es/docs/Web/API/WebGL_API/Tutorial/Wtilizando_texturas_en_WebGL
+    //    Note: Es importante señalar que la carga de texturas en WebGL sigue reglas de dominio-cruzado; 
+    //          Es decir, sólo puede cargar texturas de sitios para los que su contenido tiene aprobación de CORS.
 
-    // Usamos el mismo m\u00e9todo que para el capabilities ya que la carga de texturas es igual de restrictiva.
+    // Usamos el mismo método que para el capabilities ya que la carga de texturas es igual de restrictiva.
 
     layerProto.getWebGLUrl = function (src, location) {
         var self = this;
         var done = new $.Deferred();
 
         if (self.getWebGLUrl !== layerProto.getWebGLUrl) {
-            done.resolve(self.getWebGLUrl.call(self, src));            
+            done.resolve(self.getWebGLUrl.call(self, src));
         } else {
             // GLS: 
             // Buscamos en las capas de trabajo si exite alguna del mismo servicio. 
-            // Si es as\u00ed asignamos la misma funci\u00f3n de carga de im\u00e1genes.
+            // Si es así asignamos la misma función de carga de imágenes.
 
             TC.Util.consoleRegister("Buscamos en las capas de trabajo si exite alguna del mismo servicio.");
-            TC.Util.consoleRegister("Si hay capa hermana asignamos la misma funci\u00f3n de carga de im\u00e1genes sin validar nada.");
+            TC.Util.consoleRegister("Si hay capa hermana asignamos la misma función de carga de imágenes sin validar nada.");
 
             var sameService = self.getSiblingLoadedLayer.call(self, function (elem) {
                 return elem.getWebGLUrl.toString() !== layerProto.getWebGLUrl.toString();
             });
 
             if (sameService) {
-                TC.Util.consoleRegister("Tenemos capa hermana, no validamos nada m\u00e1s.");
+                TC.Util.consoleRegister("Tenemos capa hermana, no validamos nada más.");
                 self.getWebGLUrl = sameService.getWebGLUrl;
                 done.resolve(self.getWebGLUrl.call(self, src));
             } else {
 
                 if (TC.Util.detectIE()) {
                     // GLS: Cuando tenemos capas cargadas y pasamos a 3D, en IE, no he conseguido gestionar correctamente los errores de serguridad, 
-                    //      s\u00ed cuando se a\u00f1aden capas estando ya en 3D. Por ello, no aplico el algoritmo de proxificaci\u00f3n y aplico el mimso m\u00e9todo de carga
+                    //      sí cuando se añaden capas estando ya en 3D. Por ello, no aplico el algoritmo de proxificación y aplico el mimso método de carga
                     //      que para el capabilities.
                     self.getWebGLUrl = self.capabilitiesUrl_;
-                    done.resolve(self.capabilitiesUrl_.call(self, src));
+
+                    done.resolve(self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src));
                 }
                 else {
-                    TC.Util.consoleRegister("No hay capa hermana.");                    
+                    TC.Util.consoleRegister("No hay capa hermana.");
 
                     var location_ = location || document.location.href;
 
@@ -2120,19 +2128,19 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         TC.Util.consoleRegister("Escenario cross origin");
 
                         // Primer paso: comprobamos si existe service worker ya que:                    
-                        //      Seg\u00fan https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
+                        //      Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
                         //      Lo no compatible con CORS falla de forma predeterminada:                    
-                        //          De manera predeterminada, obtener un recurso de una URL de terceros no ser\u00e1 posible si esta no admite CORS.
+                        //          De manera predeterminada, obtener un recurso de una URL de terceros no será posible si esta no admite CORS.
                         TC.Util.consoleRegister("Comprobamos si existe service worker");
                         if (TC.Util.isSecureURL(location_) && TC.Util.isServiceWorker()) {
 
                             TC.Util.consoleRegister("Hay serviceworker");
                             // GLS:
-                            //  comprobar si tenemos contenido mixto, ya que en la comprobaci\u00f3n de CORS el service worker bloquear\u00e1 la petici\u00f3n si lo tenemos.
-                            TC.Util.consoleRegister("Comprobar si tenemos contenido mixto, ya que en la comprobaci\u00f3n de CORS el service worker bloquear\u00e1 la petici\u00f3n si tenemos contenido mixto");
+                            //  comprobar si tenemos contenido mixto, ya que en la comprobación de CORS el service worker bloqueará la petición si lo tenemos.
+                            TC.Util.consoleRegister("Comprobar si tenemos contenido mixto, ya que en la comprobación de CORS el service worker bloqueará la petición si tenemos contenido mixto");
                             if (!TC.Util.isSameProtocol(src, location_)) {
-                                // GLS: comprobamos si soporta SSL: si no, habr\u00e1 que proxificar
-                                TC.Util.consoleRegister("Comprobamos si soporta SSL: si no, habr\u00e1 que proxificar");
+                                // GLS: comprobamos si soporta SSL: si no, habrá que proxificar
+                                TC.Util.consoleRegister("Comprobamos si soporta SSL: si no, habrá que proxificar");
                                 _checkSSLSupport.call(self, src,
                                     function () {
                                         // GLS: 
@@ -2146,18 +2154,18 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                                 done.resolve(self.getByProxy_(src));
 
                                             } else {
-                                                //GLS: modificamos la funci\u00f3n que nos da la url de la imagen como https
+                                                //GLS: modificamos la función que nos da la url de la imagen como https
                                                 TC.Util.consoleRegister("Tiene CORS");
                                                 self.getWebGLUrl = self.getBySSL_;
                                                 done.resolve(self.getBySSL_(src));
                                             }
                                         });
                                     }, function () {
-                                        // GLS: al no soportar SSL tenemos contenido mixto, que bloquear\u00e1 el service worker: proxificamos
-                                        TC.Util.consoleRegister("Al no soportar SSL tenemos contenido mixto, que bloquear\u00e1 el service worker: proxificamos");
+                                        // GLS: al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos
+                                        TC.Util.consoleRegister("Al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos");
                                         self.getWebGLUrl = self.getByProxy_;
                                         done.resolve(self.getByProxy_(src));
-                                    });                                
+                                    });
                             } else {
                                 TC.Util.consoleRegister("No hay contenido mixto");
                                 TC.Util.consoleRegister("Validamos si tiene CORS");
@@ -2168,12 +2176,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                         self.getWebGLUrl = self.getByProxy_;
                                         done.resolve(self.getByProxy_(src));
                                     } else {
-                                        //GLS: modificamos la funci\u00f3n que nos da la url de la imagen como https
+                                        //GLS: modificamos la función que nos da la url de la imagen como https
                                         TC.Util.consoleRegister("Tiene CORS");
                                         self.getWebGLUrl = self.getByUrl_;
                                         done.resolve(self.getByUrl_(src));
                                     }
-                                });                                
+                                });
                             }
                         } else {
                             TC.Util.consoleRegister("No hay serviceworker");
@@ -2190,7 +2198,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                     self.getWebGLUrl = self.getByProxy_;
                                     done.resolve(self.getByProxy_(src));
                                 }
-                            });                            
+                            });
                         }
                     }
                 }
@@ -2220,7 +2228,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         return src;
                     }
                 } else {
-                    // Si queremos mantener la seguridad de la p\u00e1gina tenemos que proxificar: return self.capabilitiesUrl_(src);                
+                    // Si queremos mantener la seguridad de la página tenemos que proxificar: return self.capabilitiesUrl_(src);                
                     return src;
                 }
             }
@@ -2247,18 +2255,18 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     layerProto.getFeatureInfoUrl = function (url) {
         var self = this;
 
-        return self.capabilitiesUrl_.call(self, url);
+        return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);
     };
 
     layerProto.getFeatureUrl = function (url) {
         var self = this;
 
-        return self.capabilitiesUrl_.call(self, url);
+        return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);
     };
 
     // GLS:
     // Busca en capas cargadas la 1º capa que tenga la misma instancia de capabilities. 
-    // Recibe una funci\u00f3n como par\u00e1metro opcional, la cual es invocada para a\u00f1adir m\u00e1s condiciones en la b\u00fasqueda de una capa hermana.
+    // Recibe una función como parámetro opcional, la cual es invocada para añadir más condiciones en la búsqueda de una capa hermana.
     layerProto.getSiblingLoadedLayer = function (dynamicStatement) {
         var self = this;
 
@@ -2267,19 +2275,19 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         } else {
             var layers = self.map.baseLayers.slice(0).concat(self.map.workLayers.slice(0));
 
-            var sameService = layers.findIndex(function (elem) {
+            const matchingLayer = layers.filter(function (elem) {
                 return (elem.type === TC.Consts.layerType.WMS ||
                         elem.type === TC.Consts.layerType.WMTS) &&
                         (elem.capabilities === self.capabilities || elem.url === self.url) &&
                         (dynamicStatement && $.isFunction(dynamicStatement) ? dynamicStatement(elem) : true);
-            });
+            })[0];
 
-            return (sameService > -1) ? layers[sameService] : null;
+            return matchingLayer || null;
         }
     };
 
     // GLS:
-    // Asigna la funci\u00f3n de carga de imagen para una capa raster en base a:
+    // Asigna la función de carga de imagen para una capa raster en base a:
     //    1. ¿Existe alguna capa en capas de trabajo del mismo servicio?
     //    2. ¿Existe cross origin?
     //    3. ¿Debemos mantener el canvas exportable?
@@ -2297,10 +2305,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
             // GLS: 
             // Buscamos en las capas de trabajo si exite alguna del mismo servicio. 
-            // Si es as\u00ed asignamos la misma funci\u00f3n de carga de im\u00e1genes.
+            // Si es así asignamos la misma función de carga de imágenes.
 
             TC.Util.consoleRegister("Buscamos en las capas de trabajo si exite alguna del mismo servicio.");
-            TC.Util.consoleRegister("Si hay capa hermana asignamos la misma funci\u00f3n de carga de im\u00e1genes sin validar nada.");
+            TC.Util.consoleRegister("Si hay capa hermana asignamos la misma función de carga de imágenes sin validar nada.");
 
             var sameService = self.getSiblingLoadedLayer.call(self, function (elem) {
                 return $.isFunction(elem.imageLoad_);
@@ -2308,7 +2316,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
             if (!isPOST && sameService) {
 
-                TC.Util.consoleRegister("Hay capa hermana cargada, asignamos mismo m\u00e9todo de carga");
+                TC.Util.consoleRegister("Hay capa hermana cargada, asignamos mismo método de carga");
                 self.imageLoad_ = sameService.imageLoad_;
                 self.getUrl = sameService.getUrl;
                 self.imageLoad_.call(self, image, src);
@@ -2336,9 +2344,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
 
                     // Primer paso: comprobamos si existe service worker ya que:                    
-                    //      Seg\u00fan https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
+                    //      Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
                     //      Lo no compatible con CORS falla de forma predeterminada:                    
-                    //          De manera predeterminada, obtener un recurso de una URL de terceros no ser\u00e1 posible si esta no admite CORS.
+                    //          De manera predeterminada, obtener un recurso de una URL de terceros no será posible si esta no admite CORS.
                     TC.Util.consoleRegister("Comprobamos si existe service worker");
                     if (TC.Util.isSecureURL(location_) && TC.Util.isServiceWorker()) {
                         self.imageLoad_ServiceWorkerCrossOrigin.call(self, image, src);
@@ -2348,8 +2356,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         TC.Util.consoleRegister("Siguiente paso: valoramos si el canvas debe mantenerse exportable");
                         if (!self.map || (self.map && !self.map.mustBeExportable)) {
                             // GLS: 
-                            // Si no importa un tainted canvas mantenemos la misma funci\u00f3n que si no hubiese cross origin
-                            TC.Util.consoleRegister("No hay exportaci\u00f3n: no importa un tainted canvas, mantenemos la misma funci\u00f3n que si no hubiese cross origin");
+                            // Si no importa un tainted canvas mantenemos la misma función que si no hubiese cross origin
+                            TC.Util.consoleRegister("No hay exportación: no importa un tainted canvas, mantenemos la misma función que si no hubiese cross origin");
                             self.imageLoad_ = layerProto.imageLoad;
                             self.imageLoad_.call(self, image, src);
 
@@ -2369,17 +2377,17 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     layerProto.imageLoad_POST = function (image, src) {
         var self = this;
 
-        // GLS: indicamos la misma funci\u00f3n que para el capabilities ya que tambi\u00e9n se hace la solicitud por xmlHttpRequest
+        // GLS: indicamos la misma función que para el capabilities ya que también se hace la solicitud por xmlHttpRequest
         self.getUrl = self.capabilitiesUrl_;
 
-        self.imageLoadHttpRequest_.call(self, image, src);
+        self.imageLoadHttpRequest_.call(self, image, !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src): src);
     };
 
     // GLS:
     // Escenario cross origin + service worker:
     // 1. ¿Existe contenido mixto?
     // 2. ¿El servicio cuenta con cabeceras CORS?
-    // Aunque la carga de im\u00e1genes mediante <img src> es m\u00e1s laxa -contenido mixto y/o CORS-, 
+    // Aunque la carga de imágenes mediante <img src> es más laxa -contenido mixto y/o CORS-, 
     // si tenemos un service worker, pasa a ser igual de resctrictiva que mediante XMLHttpRequest.
 
     layerProto.imageLoad_ServiceWorkerCrossOrigin = function (image, src, location) {
@@ -2390,27 +2398,28 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         TC.Util.consoleRegister("Hay serviceworker");
 
         // GLS:
-        // Primer paso: comprobar si tenemos contenido mixto, ya que en la comprobaci\u00f3n de CORS el service worker bloquear\u00e1 la petici\u00f3n si lo tenemos.
-        TC.Util.consoleRegister("Comprobar si tenemos contenido mixto, ya que en la comprobaci\u00f3n de CORS el service worker bloquear\u00e1 la petici\u00f3n si tenemos contenido mixto");
+        // Primer paso: comprobar si tenemos contenido mixto, ya que en la comprobación de CORS el service worker bloqueará la petición si lo tenemos.
+        TC.Util.consoleRegister("Comprobar si tenemos contenido mixto, ya que en la comprobación de CORS el service worker bloqueará la petición si tenemos contenido mixto");
         if (!TC.Util.isSameProtocol(src, location_)) {
-            // GLS: comprobamos si soporta SSL: si no, habr\u00e1 que proxificar
-            TC.Util.consoleRegister("Comprobamos si soporta SSL: si no, habr\u00e1 que proxificar");
+            // GLS: comprobamos si soporta SSL: si no, habrá que proxificar
+            TC.Util.consoleRegister("Comprobamos si soporta SSL: si no, habrá que proxificar");
             _checkSSLSupport.call(self, src,
                 function () {
+
                     TC.Util.consoleRegister("Validamos si debemos mantener un canvas limpio");
 
                     if (!self.map || (self.map && !self.map.mustBeExportable)) {
-                        TC.Util.consoleRegister("No hay exportaci\u00f3n: no importa un tainted canvas, mantenemos la misma funci\u00f3n que si no hubiese cross origin");
+                        TC.Util.consoleRegister("No hay exportación: no importa un tainted canvas, mantenemos la misma función que si no hubiese cross origin");
                         self.imageLoad_ = layerProto.imageLoad;
 
                         self.imageLoad_.call(self, image, src);
                     } else {
-                        TC.Util.consoleRegister("Hay exportaci\u00f3n a imagen");
+                        TC.Util.consoleRegister("Hay exportación a imagen");
                         // GLS: 
                         // Siguiente paso: validar si tiene CORS
                         TC.Util.consoleRegister("Validamos si tiene CORS");
                         $.when(_imageHasCORS(self.names.length ?
-                                   self.getUrl(src) :
+                                   self.getBySSL_(src) :
                                    TC.Consts.BLANK_IMAGE, image)
                         ).then(function (hasCORS) {
                             if (!hasCORS) {
@@ -2419,7 +2428,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
                                 self.imageLoad_.call(self, image, src);
                             } else {
-                                //GLS: modificamos la funci\u00f3n que nos da la url de la imagen como https
+                                //GLS: modificamos la función que nos da la url de la imagen como https
                                 TC.Util.consoleRegister("Tiene CORS");
                                 self.getUrl = self.getBySSL_;
                                 self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
@@ -2429,8 +2438,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         });
                     }
                 }, function () {
-                    // GLS: al no soportar SSL tenemos contenido mixto, que bloquear\u00e1 el service worker: proxificamos
-                    TC.Util.consoleRegister("Al no soportar SSL tenemos contenido mixto, que bloquear\u00e1 el service worker: proxificamos");
+                    // GLS: al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos
+                    TC.Util.consoleRegister("Al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos");
                     self.imageLoad_ = layerProto.imageLoad_CrossOriginNoCORS;
                     self.imageLoad_.call(self, image, src);
                 });
@@ -2439,25 +2448,25 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             TC.Util.consoleRegister("Valoramos si el canvas debe mantenerse exportable");
 
             if (!self.map || (self.map && !self.map.mustBeExportable)) {
-                TC.Util.consoleRegister("No hay exportaci\u00f3n: no importa un tainted canvas, mantenemos la misma funci\u00f3n que si no hubiese cross origin");
+                TC.Util.consoleRegister("No hay exportación: no importa un tainted canvas, mantenemos la misma función que si no hubiese cross origin");
 
                 self.imageLoad_ = layerProto.imageLoad;
 
                 self.imageLoad_.call(self, image, src);
             } else {
 
-                TC.Util.consoleRegister("Hay exportaci\u00f3n a imagen");
+                TC.Util.consoleRegister("Hay exportación a imagen");
                 TC.Util.consoleRegister("Validamos si tiene CORS");
                 // GLS:
                 // Siguiente paso: ¿el servicio tiene cabeceras CORS?            
-                //      Seg\u00fan: https://www.w3.org/TR/cors/#handling-a-response-to-a-cross-origin-request
+                //      Según: https://www.w3.org/TR/cors/#handling-a-response-to-a-cross-origin-request
                 //          7.1.1 Handling a Response to a Cross-Origin Request
                 //              User agents must filter out all response headers other than those that are a simple response header or of which 
                 //              the field name is an ASCII case-insensitive match for one of the values of the Access-Control-Expose-Headers headers (if any), 
                 //              before exposing response headers to APIs defined in CORS API specifications.
                 //                  NOTE: The getResponseHeader() method of XMLHttpRequest will therefore not expose any header not indicated above.
                 //
-                //      Analizar la respuesta de la petici\u00f3n para detectar un error de CORS no es posible, por tanto lo hago mediante un m\u00e9todo un tanto rudimentario.
+                //      Analizar la respuesta de la petición para detectar un error de CORS no es posible, por tanto lo hago mediante un método un tanto rudimentario.
 
 
                 $.when(_imageHasCORS(self.names.length ?
@@ -2482,16 +2491,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     // GLS: 
     // Escenario Cross origin y mapa exportable:
-    // Aunque la petici\u00f3n de im\u00e1genes por src funcione haya cross origin y/o contemos con CORS, 
-    // al tener que mantener un canvas limpio la petici\u00f3n de las im\u00e1genes se vuelve m\u00e1s restrictiva.
+    // Aunque la petición de imágenes por src funcione haya cross origin y/o contemos con CORS, 
+    // al tener que mantener un canvas limpio la petición de las imágenes se vuelve más restrictiva.
 
     layerProto.imageLoad_ExportableCrossOrigin = function (image, src) {
         var self = this;
 
         TC.Util.consoleRegister("El canvas debe manternerse exportable");
         // GLS: 
-        // Primer paso: validamos si navegamos mediante InternetExplorer. IE es m\u00e1s restrictivo en cuanto a la exportaci\u00f3n en casos de cross origin.
-        TC.Util.consoleRegister("Primer paso: validamos si navegamos mediante InternetExplorer. IE es m\u00e1s restrictivo en cuanto a la exportaci\u00f3n en casos de cross origin");
+        // Primer paso: validamos si navegamos mediante InternetExplorer. IE es más restrictivo en cuanto a la exportación en casos de cross origin.
+        TC.Util.consoleRegister("Primer paso: validamos si navegamos mediante InternetExplorer. IE es más restrictivo en cuanto a la exportación en casos de cross origin");
         if (!TC.Util.detectIE()) {
             TC.Util.consoleRegister("No es IE");
             self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
@@ -2501,14 +2510,14 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             TC.Util.consoleRegister("Segundo paso: al navegar mediante IE y haber crossOrigin comprobamos si el servicio cuenta con cabeceras CORS o no");
             // GLS: 
             // Segundo paso: al navegar mediante IE y haber crossOrigin comprobamos si el servicio cuenta con cabeceras CORS o no.
-            //      Seg\u00fan: https://www.w3.org/TR/cors/#handling-a-response-to-a-cross-origin-request
+            //      Según: https://www.w3.org/TR/cors/#handling-a-response-to-a-cross-origin-request
             //          7.1.1 Handling a Response to a Cross-Origin Request
             //              User agents must filter out all response headers other than those that are a simple response header or of which 
             //              the field name is an ASCII case-insensitive match for one of the values of the Access-Control-Expose-Headers headers (if any), 
             //              before exposing response headers to APIs defined in CORS API specifications.
             //                  NOTE: The getResponseHeader() method of XMLHttpRequest will therefore not expose any header not indicated above.
             //
-            //      Analizar la respuesta de la petici\u00f3n para detectar un error de CORS no es posible, por tanto lo hago mediante un m\u00e9todo un tanto rudimentario.
+            //      Analizar la respuesta de la petición para detectar un error de CORS no es posible, por tanto lo hago mediante un método un tanto rudimentario.
 
             $.when(_imageHasCORS(self.names.length ?
                                    self.getUrl(src) :
@@ -2517,15 +2526,15 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                       if (hasCORS) {
                           TC.Util.consoleRegister("Tiene cabeceras CORS");
                           self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
-                          // GLS: no invoco la funci\u00f3n de imageLoad porque la validaci\u00f3n de CORS es correcto por lo tanto ya tenemos la imagen en el mapa
-                          // flacunza: aunque ya tengamos la imagen hay que invocar la funci\u00f3n porque hay eventos de carga y error de imagen que tienen que saltar
-                          // adem\u00e1s, no se hace una petici\u00f3n extra cuando se asigna la propiedad src del un elemento img si la imagen est\u00e1 en memoria.
+                          // GLS: no invoco la función de imageLoad porque la validación de CORS es correcto por lo tanto ya tenemos la imagen en el mapa
+                          // flacunza: aunque ya tengamos la imagen hay que invocar la función porque hay eventos de carga y error de imagen que tienen que saltar
+                          // además, no se hace una petición extra cuando se asigna la propiedad src del un elemento img si la imagen está en memoria.
                           self.imageLoad_.call(self, image, src);
                       }
                       else {
                           TC.Util.consoleRegister("No tiene cabeceras CORS");
                           self.imageLoad_ = layerProto.imageLoad_IE_CrossOriginNoCORS;
-                          // GLS: invoco la funci\u00f3n de imageLoad porque ha fallado la validaci\u00f3n
+                          // GLS: invoco la función de imageLoad porque ha fallado la validación
                           self.imageLoad_.call(self, image, src);
                       }
                   });
@@ -2534,17 +2543,17 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     // GLS: 
     // Escenario Cross origin sin CORS:         
-    //      Si el servicio no cuenta con cabeceras CORS, la petici\u00f3n de la imagen por src funcionar\u00e1 correctamente
-    //      pero al asignar el atributo crossOrigin = "anonymous" para que el canvas se mantenga exportable, provocar\u00e1
-    //      un error en la petici\u00f3n de la de imagen. Por tanto:
-    //      1. No es suficiente con proxificar el src de la imagen puesto que tendremos un tainted canvas y no ser\u00e1 exportable.
-    //      2. Es necesario proxificar la petici\u00f3n y cargar la imagen como Blob. 
+    //      Si el servicio no cuenta con cabeceras CORS, la petición de la imagen por src funcionará correctamente
+    //      pero al asignar el atributo crossOrigin = "anonymous" para que el canvas se mantenga exportable, provocará
+    //      un error en la petición de la de imagen. Por tanto:
+    //      1. No es suficiente con proxificar el src de la imagen puesto que tendremos un tainted canvas y no será exportable.
+    //      2. Es necesario proxificar la petición y cargar la imagen como Blob. 
 
     layerProto.imageLoad_CrossOriginNoCORS = function (image, src) {
         var self = this;
 
-        // GLS: Proxificamos la url de la imagen para esta petici\u00f3n y las siguientes.
-        TC.Util.consoleRegister("Proxificamos la url de la imagen para esta petici\u00f3n y las siguientes.");
+        // GLS: Proxificamos la url de la imagen para esta petición y las siguientes.
+        TC.Util.consoleRegister("Proxificamos la url de la imagen para esta petición y las siguientes.");
         self.getUrl = self.getByProxy_;
 
         self.imageLoadHttpRequest_.call(self, image, src);
@@ -2554,7 +2563,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     // Escenario Cross origin sin CORS desde IE: 
     //      Si no hay necesidad de exportar el canvas, no es necesario cargar la imagen como Blob y por tanto tampoco proxificar.
     //      Al contrario que en Chrome, en IE, no saltamos el escollo de tainted canvas con el atributo crossOrigin: anonymous.
-    //      Por tanto es necesario cargar la imagen como Blob y ello lleva consigo la proxificaci\u00f3n.
+    //      Por tanto es necesario cargar la imagen como Blob y ello lleva consigo la proxificación.
 
     layerProto.imageLoad_IE_CrossOriginNoCORS = function (image, src) {
         var self = this;
@@ -2564,8 +2573,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     // GLS: 
     // Escenario Cross origin con CORS: 
-    //      La petici\u00f3n de una imagen por src funciona correctamente y con el  
-    //      atributo crossOrigin = "anonymous" salvaguardamos el canvas para que pueda ser exportado, sin ello dar\u00e1 un error de seguridad.
+    //      La petición de una imagen por src funciona correctamente y con el  
+    //      atributo crossOrigin = "anonymous" salvaguardamos el canvas para que pueda ser exportado, sin ello dará un error de seguridad.
 
     layerProto.imageLoad_CrossOrigin = function (image, src) {
         var self = this;
@@ -2573,25 +2582,25 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         img.crossOrigin = "anonymous";
         img.onerror = function () {
-            // GLS: si el servicio no cuenta con CORS el atributo crossOrigin = "anonymous" provoca un error en la petici\u00f3n de la imagen.
-            // GLS: tambi\u00e9n puede ser que el error sea un 404
+            // GLS: si el servicio no cuenta con CORS el atributo crossOrigin = "anonymous" provoca un error en la petición de la imagen.
+            // GLS: también puede ser que el error sea un 404
             // GLS: tengo que repetir la llamada por ajax para poder conocer el status del error, por src no es accesible el error.
 
-            TC.Util.consoleRegister("La carga de imagen ha dado un error, verificamos si se trata de un 404 u otro tipo de error, tenemos que repetir la petici\u00f3n por ajax para poder conocer el status del error, la carga por src no muestra el tipo de error");
+            TC.Util.consoleRegister("La carga de imagen ha dado un error, verificamos si se trata de un 404 u otro tipo de error, tenemos que repetir la petición por ajax para poder conocer el status del error, la carga por src no muestra el tipo de error");
             $.when(_checkIs404(src, function (data) {
-                // Habr\u00e1 sido algo moment\u00e1neo, no hago nada.
-                TC.Util.consoleRegister("Habr\u00e1 sido algo moment\u00e1neo, no hago nada");
+                // Habrá sido algo momentáneo, no hago nada.
+                TC.Util.consoleRegister("Habrá sido algo momentáneo, no hago nada");
             }, function (error) {
-                // GLS: Si se trata de un 404 no proxifico, \u00fanicamente cargo una imagen en blanco.
+                // GLS: Si se trata de un 404 no proxifico, únicamente cargo una imagen en blanco.
                 if (error && error.status === 404) {
-                    TC.Util.consoleRegister("Se trata de un 404, cargo imagen en blanco y nada m\u00e1s.");
+                    TC.Util.consoleRegister("Se trata de un 404, cargo imagen en blanco y nada más.");
                     self.imageLoad_blank_.call(self, image);
                 } else if (error.status === 400) {
 
                 } else {
                     TC.Util.consoleRegister("No es un 404");
 
-                    // GLS: Proxificamos la url de la imagen para esta petici\u00f3n y las siguientes.
+                    // GLS: Proxificamos la url de la imagen para esta petición y las siguientes.
                     self.getUrl = self.getByProxy_;
 
                     img.onerror = self.imageLoadingError_.bind(self, image, 'blob', self.imageLoadedBlob_);
@@ -2605,7 +2614,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     // GLS: 
     // Escenario no hay cross origin: 
-    //      La petici\u00f3n de una imagen por src funciona correctamente y el canvas puede ser exportado.
+    //      La petición de una imagen por src funciona correctamente y el canvas puede ser exportado.
 
     layerProto.imageLoad = function (image, src) {
         var self = this;
@@ -2640,7 +2649,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             for (var i = 0; i < dataEntries.length; i++) {
                 var chunks = dataEntries[i].split('=');
 
-                if (chunks && chunks.length > 1 && chunks[1] && chunks[0] !== "LAYERS") { //Quitamos el par\u00e1metro LAYERS de la petici\u00f3n
+                if (chunks && chunks.length > 1 && chunks[1] && chunks[0] !== "LAYERS") { //Quitamos el parámetro LAYERS de la petición
                     params += "&" + dataEntries[i];
                 }
             }
@@ -2678,16 +2687,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         img.onerror = undefined;
 
-        TC.Util.consoleRegister("Se ha producido un error en la petici\u00f3n de imagen. Proxificamos la url de la imagen para esta petici\u00f3n y las siguientes.");
-        // GLS: Proxificamos la url de la imagen para esta petici\u00f3n y las siguientes.
+        TC.Util.consoleRegister("Se ha producido un error en la petición de imagen. Proxificamos la url de la imagen para esta petición y las siguientes.");
+        // GLS: Proxificamos la url de la imagen para esta petición y las siguientes.
         self.getUrl = self.getByProxy_;
 
         var xhr = new XMLHttpRequest();
         xhr.open('GET', self.getUrl(image.getImage().getAttribute('src') || image.src_));
         xhr.responseType = responseType;
 
-        TC.Util.consoleRegister("Si en la gesti\u00f3n del error vuelve a dar error, no intentamos nada m\u00e1s, cargamos una imagen en blanco y lanzamos el evento de error.");
-        xhr.onerror = function () { // GLS: si en la gesti\u00f3n del error vuelve a dar error, no intentamos nada m\u00e1s y lanzamos el evento de error.
+        TC.Util.consoleRegister("Si en la gestión del error vuelve a dar error, no intentamos nada más, cargamos una imagen en blanco y lanzamos el evento de error.");
+        xhr.onerror = function () { // GLS: si en la gestión del error vuelve a dar error, no intentamos nada más y lanzamos el evento de error.
             _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
             self.imageLoad_blank_.call(self, image);
         }
@@ -2700,8 +2709,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var self = this;
 
         if (self.imageLoad_ !== layerProto.imageLoadHttpRequest_) {
-            // GLS: Si hemos llegado hasta aqu\u00ed y el m\u00e9todo de carga no es \u00e9ste, es que hemos gestionado un error, por tanto: asignamos como m\u00e9todo \u00e9ste mismo
-            TC.Util.consoleRegister("Si hemos llegado hasta aqu\u00ed es que hemos gestionado un error, por lo tanto: modificamos el m\u00e9todo de carga layerProto.imageLoadHttpRequest_");
+            // GLS: Si hemos llegado hasta aquí y el método de carga no es éste, es que hemos gestionado un error, por tanto: asignamos como método éste mismo
+            TC.Util.consoleRegister("Si hemos llegado hasta aquí es que hemos gestionado un error, por lo tanto: modificamos el método de carga layerProto.imageLoadHttpRequest_");
 
             self.imageLoad_ = layerProto.imageLoadHttpRequest_;
         }
@@ -2798,29 +2807,6 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         });
         return defer;
     };
-
-    if (!Array.prototype.findIndex) {
-        Array.prototype.findIndex = function (predicate) {
-            if (this === null) {
-                throw new TypeError('Array.prototype.findIndex called on null or undefined');
-            }
-            if (typeof predicate !== 'function') {
-                throw new TypeError('predicate must be a function');
-            }
-            var list = Object(this);
-            var length = list.length >>> 0;
-            var thisArg = arguments[1];
-            var value;
-
-            for (var i = 0; i < length; i++) {
-                value = list[i];
-                if (predicate.call(thisArg, value, i, list)) {
-                    return i;
-                }
-            }
-            return -1;
-        };
-    }
 
     layerProto.getFallbackLayer = function () {
         const self = this;

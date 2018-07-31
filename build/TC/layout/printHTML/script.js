@@ -1,4 +1,4 @@
-$(function () {
+﻿$(function () {
 
     var size = TC.Util.getParameterByName("size");
     var orientation = TC.Util.getParameterByName("orientation");
@@ -25,7 +25,7 @@ $(function () {
 
             });
 
-    //Cuando se cierre el alert, se lanza la impresi\u00f3n
+    //Cuando se cierre el alert, se lanza la impresión
     $(".tc-button").on("click", function () {
         var iev = TC.Util.detectIE();
         if (iev) {

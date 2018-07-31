@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.FeatureInfoCommons) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
@@ -92,15 +92,15 @@ if (!TC.control.FeatureInfoCommons) {
                 var changeEvent = function () {
                     switch (this.value) {
                         case TC.Consts.geom.POLYLINE:
-                            //modo l\u00ednea
-                            console.log("seleccion por l\u00ednea");
+                            //modo línea
+                            console.log("seleccion por línea");
                             if (self.map.activeControl === self.fInfoCtrl || self.map.activeControl === self.polygonFInfoCtrl)
                                 self.lineFInfoCtrl.activate();
                             self.lastCtrlActive = self.lineFInfoCtrl;
                             break;
                         case TC.Consts.geom.POLYGON:
                             //modo poligono
-                            console.log("seleccion por pol\u00edgono");
+                            console.log("seleccion por polígono");
                             if (self.map.activeControl === self.fInfoCtrl || self.map.activeControl === self.lineFInfoCtrl)
                                 self.polygonFInfoCtrl.activate();
                             self.lastCtrlActive = self.polygonFInfoCtrl;

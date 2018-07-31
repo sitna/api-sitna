@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.Measure) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/Measure');
@@ -128,7 +128,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                     const interpolateCoords = self._$dialogDiv.find('input[type=radio][name=ip-coords]:checked').val() === "1";
                     const elevOptionsTemplate = {
                         crs: self.map.crs,
-                        sampleNumber: 0 // No queremos limitar el n\u00famero de muestras
+                        sampleNumber: 0 // No queremos limitar el número de muestras
                     };
                     if (interpolateCoords) {
                         elevOptionsTemplate.resolution = self._$dialogDiv.find('.' + self.CLASS + '-dialog-ip-m input[type=number]').val() || self.options.displayElevation.resolution;
@@ -137,7 +137,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                         elevOptionsTemplate.resolution = 0;
                     }
                     if (elevOptionsTemplate.resolution) {
-                        // Validador de n\u00famero de coordenadas m\u00e1ximo
+                        // Validador de número de coordenadas máximo
                         const totalLength = self.layer.features.reduce(function (acc, feat) {
                             switch (true) {
                                 case TC.feature.Polyline && feat instanceof TC.feature.Polyline:
@@ -166,7 +166,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                             self.elevation.getElevation(elevOptions).then(
                                 function (points) {
                                     // Eliminamos las elevaciones nulas
-                                    // En GPX hay un bug con los valores cero, que hace que se tome el valor de elevaci\u00f3n del punto previo, por eso ponemos NaN.
+                                    // En GPX hay un bug con los valores cero, que hace que se tome el valor de elevación del punto previo, por eso ponemos NaN.
                                     const elevSubst = exportOptions.format === TC.Consts.format.GPX ? Number.NaN : 0;
                                     points.forEach(function (point) {
                                         if (point[2] === null) {
@@ -229,210 +229,220 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
     ctlProto.register = function (map) {
         const self = this;
         TC.control.Measure.prototype.register.call(self, map);
+        const drawPointsId = self.getUID();
+        const modifyId = self.getUID();
 
-        self.renderPromise().then(function () {
-            map.loaded(function () {
-                self.layerPromise.then(function (layer) {
-                    TC.loadJS(
-                        !TC.control.Modify,
-                        TC.apiLocation + 'TC/control/Modify',
-                        function () {
-                            self.modify = new TC.control.Modify({
-                                div: self._$div.find('.' + self.CLASS + '-mod'),
-                                layer: self.layer
-                            });
-                            map.addControl(self.modify).then(function () {
-                                self.modify
-                                    .on(TC.Consts.event.FEATURESSELECT, function (e) {
-                                        const feature = e.features[e.features.length - 1];
-                                        if (feature) {
-                                            self.showMeasures(self.getFeatureMeasureData(feature));
-                                            const style = feature._originalStyle || feature.getStyle();
-                                            switch (true) {
-                                                case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-                                                    self.displayMode(TC.Consts.geom.POLYGON);
-                                                    self.drawPolygons
-                                                        .setStrokeColorWatch(style.strokeColor)
-                                                        .setStrokeWidthWatch(style.strokeWidth);
-                                                    break;
-                                                case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
-                                                    self.displayMode(TC.Consts.geom.POLYLINE);
-                                                    self.drawLines
-                                                        .setStrokeColorWatch(style.strokeColor)
-                                                        .setStrokeWidthWatch(style.strokeWidth);
-                                                    const profile = getElevationProfileFromCache(feature);
-                                                    if (profile) {
-                                                        self.renderElevationChart(profile.data);
-                                                    }
-                                                    break;
-                                                case TC.feature.Point && feature instanceof TC.feature.Point:
-                                                    self.displayMode(TC.Consts.geom.POINT);
-                                                    self.drawPoints
-                                                        .setStrokeColorWatch(style.strokeColor)
-                                                        .setStrokeWidthWatch(style.strokeWidth);
-                                                    break;
-                                                default:
-                                                    break;
-                                            }
-                                            self.modify
-                                                .setFontColorWatch(style.fontColor)
-                                                .setFontSizeWatch(style.fontSize);
-                                        }
-                                    })
-                                    .on(TC.Consts.event.FEATURESUNSELECT, function (e) {
-                                        const features = self.modify.getSelectedFeatures();
-                                        if (!features.length) {
-                                            self.resetDrawWatches();
-                                        }
-                                        self.resetElevationProfile();
-                                        if (self.resultsPanelChart) {
-                                            self.resultsPanelChart.hide();
-                                        }
-                                    })
-                                    .on(TC.Consts.event.FEATUREMODIFY, function (e) {
-                                        if (e.layer === self.layer) {
-                                            removeElevationProfileFromCache(e.feature);
-                                            const setMeasures = function (feature) {
-                                                const measureData = self.getFeatureMeasureData(feature);
-                                                self.showMeasures(measureData);
-                                                self.setFeatureMeasureData(feature);
-                                            };
-                                            setMeasures(e.feature);
+        $.when(self.layerPromise, self.renderPromise()).then(function (layer) {
+            self._modifyPromise = map.addControl('modify', {
+                id: modifyId,
+                div: self._$div.find('.' + self.CLASS + '-mod'),
+                layer: layer
+            });
+            
+            self._modifyPromise.then(function (modify) {
 
-                                            if (self.options.displayElevation) {
-                                                self.elevation.setGeometry({
-                                                    feature: e.feature,
-                                                    crs: self.map.crs
-                                                }).then(setMeasures);
-                                            }
-
-                                            const popups = self.map.getControlsByClass('TC.control.Popup');
-                                            popups.forEach(function (pu) {
-                                                if (pu.isVisible() && pu.currentFeature === e.feature) {
-                                                    pu.hide();
-                                                }
-                                            });
-                                        }
-                                    });
-                            });
-                            map
-                                .on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
-                                    if (e.control === self.modify) {
-                                        self.resetDrawWatches();
-                                        self.resetElevationProfile();
-                                        if (self.resultsPanelChart) {
-                                            self.resultsPanelChart.hide();
-                                        }
+                self.modify = modify;
+                modify
+                    .on(TC.Consts.event.FEATURESSELECT, function (e) {
+                        const feature = e.features[e.features.length - 1];
+                        if (feature) {
+                            self.showMeasures(self.getFeatureMeasureData(feature));
+                            const style = feature._originalStyle || feature.getStyle();
+                            switch (true) {
+                                case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
+                                    self.displayMode(TC.Consts.geom.POLYGON);
+                                    self.drawPolygons
+                                        .setStrokeColorWatch(style.strokeColor)
+                                        .setStrokeWidthWatch(style.strokeWidth);
+                                    break;
+                                case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
+                                    self.displayMode(TC.Consts.geom.POLYLINE);
+                                    self.drawLines
+                                        .setStrokeColorWatch(style.strokeColor)
+                                        .setStrokeWidthWatch(style.strokeWidth);
+                                    const profile = getElevationProfileFromCache(feature);
+                                    if (profile) {
+                                        self.renderElevationChart(profile.data);
                                     }
-                                    else if (e.control === self.drawLines) {
-                                        self.resetElevationProfile();
-                                        if (self.resultsPanelChart) {
-                                            self.resultsPanelChart.hide();
-                                        }
-                                    }
-                                })
-                                .on(TC.Consts.event.FEATURECLICK, function (e) {
-                                    if (TC.feature.Polyline && e.feature instanceof TC.feature.Polyline && self.layer.features.indexOf(e.feature) >= 0) {
-                                        const profile = getElevationProfileFromCache(e.feature);
-                                        if (profile) {
-                                            self.renderElevationChart(profile.data);
-                                        }
-                                        else {
-                                            self.displayElevationProfile(e.feature.geometry);
-                                        }
-                                        if (self.elevationProfileActive) {
-                                            map.getControlsByClass('TC.control.Popup').forEach(function (ctl) {
-                                                if (ctl.currentFeature === e.feature) {
-                                                    ctl.hide();
-                                                }
-                                            });
-                                        }
-                                    }
-                                });
-                        }
-                    );
-
-                    self.drawLines.$events
-                        .on(TC.Consts.event.DRAWSTART, function () {
-                            //self.resetElevationProfile();
-                            self.resetValues();
-                        })
-                        .on(TC.Consts.event.DRAWUNDO + ' ' + TC.Consts.event.DRAWREDO, function () {
-                            self.displayElevationProfile(self.drawLines.history.slice(0, self.drawLines.historyIndex));
-                        })
-                        .on(TC.Consts.event.POINT, function (e) {
-                            const coords = self.drawLines.history.slice(0, self.drawLines.historyIndex);
-                            const lastCoord = coords[coords.length - 1];
-                            if (lastCoord[0] !== e.point[0] || lastCoord[1] !== e.point[1]) {
-                                coords.push(e.point);
+                                    break;
+                                case TC.feature.Point && feature instanceof TC.feature.Point:
+                                    self.displayMode(TC.Consts.geom.POINT);
+                                    self.drawPoints
+                                        .setStrokeColorWatch(style.strokeColor)
+                                        .setStrokeWidthWatch(style.strokeWidth);
+                                    break;
+                                default:
+                                    break;
                             }
-                            self.displayElevationProfile(coords);
-                        })
-                        .on(TC.Consts.event.STYLECHANGE, function (e) {
-                            self.onStyleChange(e);
-                        });
+                            self.modify
+                                .setFontColorWatch(style.fontColor)
+                                .setFontSizeWatch(style.fontSize);
+                        }
+                    })
+                    .on(TC.Consts.event.FEATURESUNSELECT, function (e) {
+                        const features = self.modify.getSelectedFeatures();
+                        if (!features.length) {
+                            self.resetDrawWatches();
+                        }
+                        self.resetElevationProfile();
+                        if (self.resultsPanelChart) {
+                            self.resultsPanelChart.hide();
+                        }
+                    })
+                    .on(TC.Consts.event.FEATUREMODIFY, function (e) {
+                        if (e.layer === self.layer) {
+                            removeElevationProfileFromCache(e.feature);
+                            const setMeasures = function (feature) {
+                                const measureData = self.getFeatureMeasureData(feature);
+                                self.showMeasures(measureData);
+                                self.setFeatureMeasureData(feature);
+                            };
+                            setMeasures(e.feature);
 
-                    self.drawPolygons.$events
-                        .on(TC.Consts.event.DRAWSTART, function () {
-                        self.resetValues();
-                        })
-                        .on(TC.Consts.event.DRAWEND, function (e) {
                             if (self.options.displayElevation) {
                                 self.elevation.setGeometry({
                                     feature: e.feature,
                                     crs: self.map.crs
+                                }).then(setMeasures);
+                            }
+
+                            const popups = self.map.getControlsByClass('TC.control.Popup');
+                            popups.forEach(function (pu) {
+                                if (pu.isVisible() && pu.currentFeature === e.feature) {
+                                    pu.hide();
+                                }
+                            });
+                        }
+                    });
+
+                map
+                    .on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
+                        if (e.control === self.modify) {
+                            self.resetDrawWatches();
+                            self.resetElevationProfile();
+                            if (self.resultsPanelChart) {
+                                self.resultsPanelChart.hide();
+                            }
+                        }
+                        else if (e.control === self.drawLines) {
+                            self.resetElevationProfile();
+                            if (self.resultsPanelChart) {
+                                self.resultsPanelChart.hide();
+                            }
+                        }
+                    })
+                    .on(TC.Consts.event.FEATURECLICK, function (e) {
+                        if (TC.feature.Polyline && e.feature instanceof TC.feature.Polyline && self.layer.features.indexOf(e.feature) >= 0) {
+                            const profile = getElevationProfileFromCache(e.feature);
+                            if (profile) {
+                                self.renderElevationChart(profile.data);
+                            }
+                            else {
+                                self.displayElevationProfile(e.feature.geometry);
+                            }
+                            if (self.elevationProfileActive) {
+                                map.getControlsByClass('TC.control.Popup').forEach(function (ctl) {
+                                    if (ctl.currentFeature === e.feature) {
+                                        ctl.hide();
+                                    }
                                 });
                             }
-                        })
-                        .on(TC.Consts.event.STYLECHANGE, function (e) {
-                            self.onStyleChange(e);
-                        });
-
-                    self.drawPoints = new TC.control.Draw({
-                        div: self._$div.find('.' + TC.control.Measure.prototype.CLASS + '-point'),
-                        mode: TC.Consts.geom.POINT,
-                        persistent: self.persistentDrawControls,
-                        styleTools: true,
-                        layer: self.layer
+                        }
                     });
-                    self.drawControls.push(self.drawPoints);
-
-                    map.addControl(self.drawPoints).then(function () {
-
-                        self.resetValues();
-
-                        self.drawPoints.$events
-                            .on(TC.Consts.event.DRAWEND, function (e) {
-                                const updateChanges = function (feat) {
-                                    self.showMeasures({ coords: feat.geometry, units: map.wrap.isGeo() ? 'degrees' : 'm' });
-                                    self.setFeatureMeasureData(feat);
-                                };
-                                updateChanges(e.feature);
-                                if (self.options.displayElevation) {
-                                    self.elevation.setGeometry({
-                                        feature: e.feature,
-                                        crs: self.map.crs
-                                    }).then(updateChanges)
-                                }
-
-                            })
-                            .on(TC.Consts.event.DRAWCANCEL, function (e) {
-                                self.cancel();
-                            })
-                            .on(TC.Consts.event.STYLECHANGE, function (e) {
-                                self.onStyleChange(e);
-                            });
-                    });
-
-                    self.setMode(self.options.mode);
-                });
             });
+
+            self._drawLinesPromise.then(function (drawLines) {
+                drawLines.$events
+                    .on(TC.Consts.event.DRAWSTART, function () {
+                        //self.resetElevationProfile();
+                        self.resetValues();
+                    })
+                    .on(TC.Consts.event.DRAWUNDO + ' ' + TC.Consts.event.DRAWREDO, function () {
+                        const drawLines = this;
+                        self.displayElevationProfile(drawLines.history.slice(0, drawLines.historyIndex));
+                    })
+                    .on(TC.Consts.event.POINT, function (e) {
+                        const drawLines = this;
+                        const coords = drawLines.history.slice(0, drawLines.historyIndex);
+                        const lastCoord = coords[coords.length - 1];
+                        if (lastCoord[0] !== e.point[0] || lastCoord[1] !== e.point[1]) {
+                            coords.push(e.point);
+                        }
+                        self.displayElevationProfile(coords);
+                    })
+                    .on(TC.Consts.event.STYLECHANGE, function (e) {
+                        self.onStyleChange(e);
+                    });
+            });
+
+            self._drawPolygonsPromise.then(function (drawPolygons) {
+                drawPolygons.$events
+                    .on(TC.Consts.event.DRAWSTART, function () {
+                        self.resetValues();
+                    })
+                    .on(TC.Consts.event.DRAWEND, function (e) {
+                        if (self.options.displayElevation) {
+                            self.elevation.setGeometry({
+                                feature: e.feature,
+                                crs: self.map.crs
+                            });
+                        }
+                    })
+                    .on(TC.Consts.event.STYLECHANGE, function (e) {
+                        self.onStyleChange(e);
+                    });
+            });
+
+            self._drawPointsPromise = map.addControl('draw', {
+                id: drawPointsId,
+                div: self._$div.find('.' + TC.control.Measure.prototype.CLASS + '-point'),
+                mode: TC.Consts.geom.POINT,
+                persistent: self.persistentDrawControls,
+                styleTools: true,
+                layer: self.layer
+            });
+
+            self._drawPointsPromise.then(function (drawPoints) {
+
+                drawPoints.containerControl = self;
+                self.drawControls.push(drawPoints);
+                self.drawPoints = drawPoints;
+
+                self.resetValues();
+
+                drawPoints.$events
+                    .on(TC.Consts.event.DRAWEND, function (e) {
+                        const updateChanges = function (feat) {
+                            self.showMeasures({ coords: feat.geometry, units: map.wrap.isGeo() ? 'degrees' : 'm' });
+                            self.setFeatureMeasureData(feat);
+                        };
+                        updateChanges(e.feature);
+                        if (self.options.displayElevation) {
+                            self.elevation.setGeometry({
+                                feature: e.feature,
+                                crs: self.map.crs
+                            }).then(updateChanges)
+                        }
+                    })
+                    .on(TC.Consts.event.DRAWCANCEL, function (e) {
+                        self.cancel();
+                    })
+                    .on(TC.Consts.event.STYLECHANGE, function (e) {
+                        self.onStyleChange(e);
+                    });
+                // Desactivamos el método exportState que ya se encarga el control padre de ello
+                drawPoints.exportsState = false;
+            });
+
+            self.setMode(self.options.mode);
 
             map
                 .on(TC.Consts.event.FEATUREADD, function (e) {
                     if (e.layer === self.layer) {
                         self.setFeatureMeasureData(e.feature);
-                        self.modify.displayLabelText(e.feature.getStyle().label);
+                        self._modifyPromise.then(function (modify) {
+                            modify.displayLabelText(e.feature.getStyle().label);
+                        });
                         self._$clearBtn.prop('disabled', false);
                         self._$downloadBtn.prop('disabled', false);
                     }
@@ -590,7 +600,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
         const $dialog = self._$dialogDiv.find('.' + self.CLASS + '-dialog');
 
-        // Si no hay l\u00edneas o pol\u00edgonos, no es necesario preguntar si descargarmos las coordenadas del perfil
+        // Si no hay líneas o polígonos, no es necesario preguntar si descargarmos las coordenadas del perfil
         $dialog.find('.' + self.CLASS + '-dialog-ip').toggleClass(TC.Consts.classes.HIDDEN, !self.layer.features.some(function (feature) {
             return (TC.feature.Polyline && feature instanceof TC.feature.Polyline) || (TC.feature.Polygon && feature instanceof TC.feature.Polygon);
         }));
@@ -634,7 +644,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
     ctlProto.displayElevationProfile = function (coords) {
         const self = this;
         if (coords.length === 1) {
-             // Espera una l\u00ednea, metemos un segundo punto
+             // Espera una línea, metemos un segundo punto
             coords = coords.slice();
             coords.push(coords[0]);
         }
@@ -699,39 +709,34 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                     cacheElevationProfile(matchingFeature, self.elevationProfileData);
                 }
 
-                TC.loadJS(
-                    !TC.control.ResultsPanel,
-                    TC.apiLocation + 'TC/control/ResultsPanel',
-                    function () {
-
-                        if (self.resultsPanelChart) {
+                if (self.resultsPanelChart) {
+                    self.renderElevationChart();
+                }
+                else {
+                    const chartPanel = self.map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
+                        return ctl.options.content === 'chart';
+                    })[0];
+                    const $panelDiv = chartPanel ? chartPanel._$div : $('<div>').appendTo(self.map._$div);
+                    self.map.addControl('resultsPanel', {
+                        id: self.getUID(),
+                        div: $panelDiv,
+                        content: "chart",
+                        titles: {
+                            main: self.getLocaleString("geo.trk.chart.chpe"),
+                            max: self.getLocaleString("geo.trk.chart.chpe")
+                        },
+                        chart: {
+                            ctx: self,
+                            onmouseout: ctlProto.removeElevationTooltip,
+                            tooltip: ctlProto.getElevationTooltip
+                        }
+                    }).then(function (resultsPanelChart) {
+                        self.resultsPanelChart = resultsPanelChart;
+                        self.resultsPanelChart.render(function () {
                             self.renderElevationChart();
-                        }
-                        else {
-                            const chartPanel = self.map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
-                                return ctl.options.content === 'chart';
-                            })[0];
-                            const $panelDiv = chartPanel ? chartPanel._$div : $('<div>').appendTo(self.map._$div);
-                            self.resultsPanelChart = new TC.control.ResultsPanel({
-                                div: $panelDiv,
-                                content: "chart",
-                                titles: {
-                                    main: self.getLocaleString("geo.trk.chart.chpe"),
-                                    max: self.getLocaleString("geo.trk.chart.chpe")
-                                },
-                                chart: {
-                                    ctx: self,
-                                    onmouseout: ctlProto.removeElevationTooltip,
-                                    tooltip: ctlProto.getElevationTooltip
-                                }
-                            });
-                            self.map.addControl(self.resultsPanelChart);
-                            self.resultsPanelChart.render(function () {
-                                self.renderElevationChart();
-                            });
-                        }
-                    }
-                );
+                        });
+                    });
+                }
             },
             function (error) {
                 self.resetElevationProfile();

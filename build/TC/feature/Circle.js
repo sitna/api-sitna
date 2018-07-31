@@ -1,4 +1,4 @@
-TC.feature = TC.feature || {};
+﻿TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Feature');

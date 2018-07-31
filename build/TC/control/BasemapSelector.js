@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
@@ -161,7 +161,7 @@ if (!TC.control.MapContents) {
                         }
                         else {
                             $newLi.data(_dataKeys.LAYER, layer);
-                            // Insertamos elemento en el lugar correcto, seg\u00fan indica la colecci\u00f3n baseLayers
+                            // Insertamos elemento en el lugar correcto, según indica la colección baseLayers
                             const idx = self.map.baseLayers.reduce(function (prev, cur, idx) {
                                 if (self.map.baseLayers[idx].id === layer.id) {
                                     return idx;

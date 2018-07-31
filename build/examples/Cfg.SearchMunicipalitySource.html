@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Cfg.SearchMunicipalitySource</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.SearchMunicipalitySource.html">SITNA.Cfg.SearchMunicipalitySource</a>.</p>
+        <p>Establecer configuración de un origen de datos distinto en la búsqueda de municipios.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Municipio',
+                    instructions: 'Buscar municipio',
+                    cadastralParcel: false,
+                    municipality: {
+                        url: '//idena.navarra.es/ogc/wfs',
+                        featurePrefix: 'IDENA',
+                        geometryName: 'the_geom',
+                        featureType: 'CATAST_Pol_Municipio',
+                        dataIdProperty: ['CMUNICIPIO'],
+                        queryProperties: {
+                            firstQueryWord: ['MUNINOAC', 'MUNICIPIO']
+                        },
+                        suggestionListHead: {
+                            label: "search.list.municipality",
+                            color: "strokeColor"
+                        },
+                        outputProperties: ['MUNICIPIO'],
+                        outputFormatLabel: '{0}',
+                        styles: [
+                            {
+                                polygon: {
+                                    fillColor: '#000000',
+                                    fillOpacity: 0.1,
+                                    strokeColor: '#fe06a5',
+                                    strokeWidth: 2,
+                                    strokeOpacity: 1
+                                }
+                            }
+                        ]
+                    },
+                    town: false,
+                    street: false,
+                    postalAddress: false
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

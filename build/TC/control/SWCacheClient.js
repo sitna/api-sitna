@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -24,7 +24,7 @@ if (!TC.control.MapContents) {
 
         TC.Control.prototype.register.call(self, map);
 
-        // Si el navegador es compatible, a\u00f1adimos el service worker.
+        // Si el navegador es compatible, añadimos el service worker.
         if (navigator.serviceWorker) {
 
             navigator.serviceWorker.register('tc-cb-service-worker.js', {

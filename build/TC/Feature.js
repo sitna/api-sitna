@@ -1,4 +1,4 @@
-TC.feature = TC.feature || {};
+﻿TC.feature = TC.feature || {};
 TC.Feature = function (coords, options) {
     var self = this;
 
@@ -117,8 +117,8 @@ TC.Feature.prototype.getInfo = function () {
     if (typeof data === 'object') {
         var template = self.wrap.getTemplate();
         if (template) {
-            // GLS: Contemplo en la expresi\u00f3n regular la opci\u00f3n de que el nombre del campo se componga de $[aaa/abc/loQueMeInteresa] 
-            // (la expresi\u00f3n no est\u00e1 limitada a 2 niveles), hasta ahora se manejaba $[loQueMeInteresa]
+            // GLS: Contemplo en la expresión regular la opción de que el nombre del campo se componga de $[aaa/abc/loQueMeInteresa] 
+            // (la expresión no está limitada a 2 niveles), hasta ahora se manejaba $[loQueMeInteresa]
             result = template.replace(/\$\[?(?:\w+\/)*(\w+)\]/g, function (match, p1) {
                 return data[p1];
             });
@@ -185,7 +185,7 @@ TC.Feature.prototype.showPopup = function (control) {
         var ctlDeferred;
         var popup = control || self.popup;
         if (!popup) {
-            // Buscamos un popup existente que no est\u00e9 asociado a un control.
+            // Buscamos un popup existente que no esté asociado a un control.
             var popups = self.layer.map.getControlsByClass('TC.control.Popup');
             for (var i = 0, len = popups.length; i < len; i++) {
                 var p = popups[i];
@@ -200,9 +200,7 @@ TC.Feature.prototype.showPopup = function (control) {
             ctlDeferred.resolve(popup);
         }
         else {
-            TC.loadJS(!TC.control || !TC.control.Popup, [TC.apiLocation + 'TC/control/Popup'], function () {
-                ctlDeferred = self.layer.map.addControl(new TC.control.Popup());
-            });
+            ctlDeferred = self.layer.map.addControl('popup');
         }
         ctlDeferred.then(function (ctl) {
             ctl.currentFeature = self;

@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.SWCacheClient) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
@@ -203,8 +203,8 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         //self.feature = self.options.feature ? self.options.feature : null;
         self.callback = (arguments[2] && $.isFunction(arguments[2])) ? arguments[2] : (self.options.callback ? self.options.callback : null);
         self.multi = self.options.multi ? self.options.multi : false;
-        self.eraseActionConfirmTxt = self.options.eraseText ? self.options.eraseText : "¿Est\u00e1 seguro de eliminar esta(s) geometr\u00eda(s)?";
-        self.cancelActionConfirmTxt = self.options.cancelText ? self.options.eraseText : "Si continua todos los cambios se perder\u00e1n. ¿Desea continuar?";
+        self.eraseActionConfirmTxt = self.options.eraseText ? self.options.eraseText : "¿Está seguro de eliminar esta(s) geometría(s)?";
+        self.cancelActionConfirmTxt = self.options.cancelText ? self.options.eraseText : "Si continua todos los cambios se perderán. ¿Desea continuar?";
         self.styles = self.options.styles;
         self.features = {};
         self.attributeEditor = null;
@@ -227,9 +227,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 changesLayer.addFeature(feat);
                 storeFeature(getAddedStoragePrefix(self) + feat.provId, feat).then(function () {
                     setChangedState(self, true);
-                    TC.toast("Adici\u00f3n guardada");
+                    TC.toast("Adición guardada");
                 }, function () {
-                    TC.error("Fallo al guardar adici\u00f3n");
+                    TC.error("Fallo al guardar adición");
                 });
             })
             .on(TC.Consts.event.FEATUREREMOVE, function (e) {
@@ -237,10 +237,10 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 var fid = feat.provId || feat.id;
                 var storeSuccess = function () {
                     setChangedState(self);
-                    TC.toast("Eliminaci\u00f3n guardada");
+                    TC.toast("Eliminación guardada");
                 };
                 var storeFailure = function () {
-                    TC.error("Fallo al guardar eliminaci\u00f3n");
+                    TC.error("Fallo al guardar eliminación");
                 };
                 var changesLayer = self._changesLayers[self.layer.id];
                 var features = self.features[self.layer.id];
@@ -276,10 +276,10 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 var fid = feat.provId || feat.id;
                 var storeSuccess = function () {
                     setChangedState(self, true);
-                    TC.toast("Modificaci\u00f3n guardada");
+                    TC.toast("Modificación guardada");
                 };
                 var storeFailure = function () {
-                    TC.error("Fallo al guardar modificaci\u00f3n");
+                    TC.error("Fallo al guardar modificación");
                 };
                 var changesLayer = self._changesLayers[self.layer.id];
                 var features = self.features[self.layer.id];
@@ -371,11 +371,15 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         };
     }
 
-    /* Extendemos el m\u00e9todo register. 
-       La l\u00f3gica del control suele definirse aqu\u00ed. */
+    /* Extendemos el método register. 
+       La lógica del control suele definirse aquí. */
     ctlProto.register = function (map) {
         var self = this;
         TC.control.SWCacheClient.prototype.register.call(self, map);
+
+        const drawPointsId = self.getUID();
+        const drawLinesId = self.getUID();
+        const drawPolygonsId = self.getUID();
 
         map.addControl('popup', { closeButton: true }).then(function (ctl) {
             self.attributeEditor = ctl;
@@ -628,16 +632,19 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 var DRAW = 'draw';
                 $.when.apply(self, [
                     map.addControl(DRAW, {
+                        id: drawPointsId,
                         div: self._$div.find('.' + self.CLASS + '-point'),
                         mode: TC.Consts.geom.POINT,
                         layer: false
                     }),
                     map.addControl(DRAW, {
+                        id: drawLinesId,
                         div: self._$div.find('.' + self.CLASS + '-line'),
                         mode: TC.Consts.geom.POLYLINE,
                         layer: false
                     }),
                     map.addControl(DRAW, {
+                        id: drawPolygonsId,
                         div: self._$div.find('.' + self.CLASS + '-polygon'),
                         mode: TC.Consts.geom.POLYGON,
                         layer: false
@@ -763,7 +770,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
             self._$discardBtn = self._$div.find(self._classSelector + '-btn-discard').on('click', function () {
                 self.discardEdits();
             });
-            //control de renderizado enfunci\u00f3n del modo de edicion        
+            //control de renderizado enfunción del modo de edicion        
             if (self.options.modes && $.isArray(self.options.modes) && self.options.modes.length > 0) {
                 for (var m in TC.Consts.editMode)
                     if (typeof m == "string" && self.options.modes.indexOf(TC.Consts.editMode[m]) < 0) {
@@ -804,7 +811,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
             });
 
             self.layer.describeFeatureType().then(function (attributes) {
-                // recogemos los atributos no geom\u00e9tricos y definimos la geometr\u00eda
+                // recogemos los atributos no geométricos y definimos la geometría
                 self.attributes = attributes.filter(function (elm) {
                     switch (elm.type) {
                         case 'gml:LinearRingPropertyType':
@@ -1079,9 +1086,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         if (self.layer) {
             var features = self.features[self.layer.id];
             self.layer.applyEdits(features.added, features.modified, features.removed).then(function () {
-                // Las acciones a realizar a partir de este punto son las mismas que al descartar una edici\u00f3n
+                // Las acciones a realizar a partir de este punto son las mismas que al descartar una edición
                 self.discardEdits();
-                self.map.toast('Cambios sincronizados con \u00e9xito con el servidor');
+                self.map.toast('Cambios sincronizados con éxito con el servidor');
             },
             function (obj) {
                 TC.error("Error [" + obj.code + "] al guardar cambios: " + obj.reason);

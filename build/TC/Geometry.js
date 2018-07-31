@@ -1,4 +1,4 @@
-var TC = TC || {};
+﻿var TC = TC || {};
 
 TC.Geometry = TC.Geometry || {
     isPoint: function (geometry) {
@@ -33,11 +33,11 @@ TC.Geometry = TC.Geometry || {
                 }
             }
             else if (TC.Geometry.isRingCollection(ring) && ring.length > 0) {
-                // pol\u00edgono con agujeros
-                // miramos si est\u00e1 en el pol\u00edgono exterior
+                // polígono con agujeros
+                // miramos si está en el polígono exterior
                 if (isInside(point, ring[0])) {
                     var insideHole = false;
-                    // miramos si est\u00e1 en un agujero
+                    // miramos si está en un agujero
                     for (var i = 1; i < ring.length; i++) {
                         if (isInside(point, ring[i])) {
                             insideHole = true;
@@ -50,8 +50,8 @@ TC.Geometry = TC.Geometry || {
                 }
             }
             else if (TC.Geometry.isMultiRingCollection(ring) && ring.length > 0) {
-                // multipol\u00edgono
-                // miramos si est\u00e1 en alguno de los pol\u00edgonos
+                // multipolígono
+                // miramos si está en alguno de los polígonos
                 for (var i = 0, len = ring.length; i < len; i++) {
                     if (isInside(point, ring[i])) {
                         result = true;

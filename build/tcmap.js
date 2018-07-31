@@ -1,14 +1,14 @@
-/**
+﻿/**
  * LoadJS descargado de https://github.com/muicss/loadjs
  * @version 3.5.2
  */
-loadjs = function () { var n = function () { }, e = {}, t = {}, r = {}; function c(n, e) { if (n) { var c = r[n]; if (t[n] = e, c) for (; c.length;)c[0](n, e), c.splice(0, 1) } } function i(e, t) { e.call && (e = { success: e }), t.length ? (e.error || n)(t) : (e.success || n)(e) } function o(e, t, r, c) { var i, s, u = document, f = r.async, a = (r.numRetries || 0) + 1, h = r.before || n; c = c || 0, /(^css!|\.css$)/.test(e) ? (i = !0, (s = u.createElement("link")).rel = "stylesheet", s.href = e.replace(/^css!/, "")) : ((s = u.createElement("script")).src = e, s.async = void 0 === f || f), s.onload = s.onerror = s.onbeforeload = function (n) { var u = n.type[0]; if (i && "hideFocus" in s) try { s.sheet.cssText.length || (u = "e") } catch (n) { u = "e" } if ("e" == u && (c += 1) < a) return o(e, t, r, c); t(e, u, n.defaultPrevented) }, !1 !== h(e, s) && u.head.appendChild(s) } function s(n, t, r) { var s, u; if (t && t.trim && (s = t), u = (s ? r : t) || {}, s) { if (s in e) throw "LoadJS"; e[s] = !0 } !function (n, e, t) { var r, c, i = (n = n.push ? n : [n]).length, s = i, u = []; for (r = function (n, t, r) { if ("e" == t && u.push(n), "b" == t) { if (!r) return; u.push(n) } --i || e(u) }, c = 0; c < s; c++)o(n[c], r, t) }(n, function (n) { i(u, n), c(s, n) }, u) } return s.ready = function (n, e) { return function (n, e) { var c, i, o, s = [], u = (n = n.push ? n : [n]).length, f = u; for (c = function (n, t) { t.length && s.push(n), --f || e(s) }; u--;)i = n[u], (o = t[i]) ? c(i, o) : (r[i] = r[i] || []).push(c) }(n, function (n) { i(e, n) }), s }, s.done = function (n) { c(n, []) }, s.reset = function () { e = {}, t = {}, r = {} }, s.isDefined = function (n) { return n in e }, s }();
+loadjs = function () { var n = function () { }, e = {}, t = {}, r = {}; function c(n, e) { if (n) { var c = r[n]; if (t[n] = e, c) for (; c.length;) c[0](n, e), c.splice(0, 1) } } function i(e, t) { e.call && (e = { success: e }), t.length ? (e.error || n)(t) : (e.success || n)(e) } function o(e, t, r, c) { var i, s, u = document, f = r.async, a = (r.numRetries || 0) + 1, h = r.before || n; c = c || 0, /(^css!|\.css$)/.test(e) ? (i = !0, (s = u.createElement("link")).rel = "stylesheet", s.href = e.replace(/^css!/, "")) : ((s = u.createElement("script")).src = e, s.async = void 0 === f || f), s.onload = s.onerror = s.onbeforeload = function (n) { var u = n.type[0]; if (i && "hideFocus" in s) try { s.sheet.cssText.length || (u = "e") } catch (n) { u = "e" } if ("e" == u && (c += 1) < a) return o(e, t, r, c); t(e, u, n.defaultPrevented) }, !1 !== h(e, s) && u.head.appendChild(s) } function s(n, t, r) { var s, u; if (t && t.trim && (s = t), u = (s ? r : t) || {}, s) { if (s in e) throw "LoadJS"; e[s] = !0 } !function (n, e, t) { var r, c, i = (n = n.push ? n : [n]).length, s = i, u = []; for (r = function (n, t, r) { if ("e" == t && u.push(n), "b" == t) { if (!r) return; u.push(n) } --i || e(u) }, c = 0; c < s; c++) o(n[c], r, t) }(n, function (n) { i(u, n), c(s, n) }, u) } return s.ready = function (n, e) { return function (n, e) { var c, i, o, s = [], u = (n = n.push ? n : [n]).length, f = u; for (c = function (n, t) { t.length && s.push(n), --f || e(s) }; u--;) i = n[u], (o = t[i]) ? c(i, o) : (r[i] = r[i] || []).push(c) }(n, function (n) { i(e, n) }), s }, s.done = function (n) { c(n, []) }, s.reset = function () { e = {}, t = {}, r = {} }, s.isDefined = function (n) { return n in e }, s }();
 
 var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.4.0';
+TC.version = '1.5.0';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -39,7 +39,7 @@ if (!TC.Consts) {
     TC.Consts.URL_MAX_LENGTH = 2048;
     TC.Consts.METER_PRECISION = 0;
     TC.Consts.DEGREE_PRECISION = 5;
-    TC.Consts.EXTENT_TOLERANCE = 0.9998;/*URI: debido al redondeo del extente en el hash se obtiene un nivel de resoluci\u00f3n mayor al debido. Con este valor definimos una tolerancia para que use una resoluci\u00f3n si es muy muy muy pr\u00f3xima*/
+    TC.Consts.EXTENT_TOLERANCE = 0.9998;/*URI: debido al redondeo del extente en el hash se obtiene un nivel de resolución mayor al debido. Con este valor definimos una tolerancia para que use una resolución si es muy muy muy próxima*/
     TC.Consts.url = {
         SPLIT_REGEX: /([^:]*:)?\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
         MODERNIZR: 'lib/modernizr.js',
@@ -62,7 +62,9 @@ if (!TC.Consts) {
         ERROR_LOGGER: TC.apiLocation + 'errors/logger.ashx',
         PDFMAKE: TC.apiLocation + 'lib/pdfmake/pdfmake-fonts.min.js',
         JSONPACK: 'lib/jsonpack/jsonpack.min.js',
-        UA_PARSER: 'lib/ua-parser/ua-parser.min.js'
+        UA_PARSER: 'lib/ua-parser/ua-parser.min.js',
+        HASH: 'lib/jshash/md5-min.js',
+        URL_POLYFILL: 'lib/polyfill/url.js'
     };
     TC.Consts.classes = {
         MAP: 'tc-map',
@@ -178,11 +180,11 @@ if (!TC.Consts) {
     };
     TC.Consts.text = {
         API_ERROR: 'Error API SITNA',
-        APP_ERROR: 'Error de aplicaci\u00f3n'
+        APP_ERROR: 'Error de aplicación'
     };
     /**
-     * Colecci\u00f3n de identificadores de tipo de capa.
-     * No se deber\u00edan modificar las propiedades de esta clase.
+     * Colección de identificadores de tipo de capa.
+     * No se deberían modificar las propiedades de esta clase.
      * @class TC.consts.LayerType
      * @static
      */
@@ -235,6 +237,7 @@ if (!TC.Consts) {
         VECTOR: 'vector',
         KML: 'KML',
         GPX: 'GPX',
+        GML: 'GML',
         GEOJSON: 'GeoJSON',
         GROUP: 'group'
     };
@@ -260,7 +263,8 @@ if (!TC.Consts) {
         COMMONWEALTH: 'commonwealth',
         ROAD: 'road',
         ROADPK: 'roadpk',
-        PLACENAME: 'placename'
+        PLACENAME: 'placename',
+        PLACENAMEMUNICIPALITY: 'placenamemunicipality'
     };
     TC.Consts.mapSearchType = {
         MUNICIPALITY: TC.Consts.searchType.MUNICIPALITY,
@@ -290,8 +294,10 @@ if (!TC.Consts) {
         PNG: 'image/png',
         JPEG: 'image/jpeg',
         JSON: 'application/json',
+        GEOJSON: 'application/vnd.geo+json',
         KML: 'application/vnd.google-earth.kml+xml',
         GML: 'application/gml+xml',
+        GPX: 'application/gpx+xml',
         XML: 'application/xml'
     };
     TC.Consts.format = {
@@ -319,8 +325,8 @@ if (!TC.Consts) {
         NoFeatures: "NoFeatures"
     }
     /**
-     * Colecci\u00f3n de identificadores de estados de visibilidad.
-     * No se deber\u00edan modificar las propiedades de esta clase.
+     * Colección de identificadores de estados de visibilidad.
+     * No se deberían modificar las propiedades de esta clase.
      * @class TC.consts.Visibility
      * @static
      */
@@ -331,7 +337,7 @@ if (!TC.Consts) {
      * @final
      */
     /**
-     * Identificador de nodo no visible a la resoluci\u00f3n actual.
+     * Identificador de nodo no visible a la resolución actual.
      * @property NOT_VISIBLE_AT_RESOLUTION
      * @type number
      * @final
@@ -378,7 +384,7 @@ if (!TC.Consts) {
             utmCrs: 'EPSG:25830',
             geoCrs: 'EPSG:4326',
             initialExtent: [541084.221, 4640788.225, 685574.4632, 4796618.764],
-            maxExtent: [480408, 4599748, 742552, 4861892],
+            maxExtent: false,
             baselayerExtent: [480408, 4599748, 742552, 4861892],
             resolutions: [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, .5, .25],
             pointBoundsRadius: 30,
@@ -389,6 +395,8 @@ if (!TC.Consts) {
             notifyApplicationErrors: false,
             loggingErrorsEnabled: true,
             maxErrorCount: 10,
+            layoutURLParamName: 'layout', // Parámetro donde leer en la URL de la aplicación para cargar un layout.
+            titleURLParamName: 'title', // Parámetro donde leer en la URL de la aplicación para cargar un título de mapa, p. e. al imprimir.
 
             locale: 'es-ES',
 
@@ -470,7 +478,7 @@ if (!TC.Consts) {
                 },
                 {
                     id: TC.Consts.layer.IDENA_CARTO,
-                    title: 'Cartograf\u00eda topogr\u00e1fica',
+                    title: 'Cartografía topográfica',
                     type: TC.Consts.layerType.WMTS,
                     url: '//idena.navarra.es/ogc/wmts/',
                     matrixSet: 'epsg25830',
@@ -550,7 +558,7 @@ if (!TC.Consts) {
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNCARTO,
-                    title: 'Cartograf\u00eda topogr\u00e1fica',
+                    title: 'Cartografía topográfica',
                     type: TC.Consts.layerType.WMS,
                     url: '//idena.navarra.es/ogc/wms',
                     layerNames: 'MTNa5_BTA',
@@ -890,7 +898,7 @@ if (!TC.Consts) {
                 return result;
             };
 
-            if (!/(\.js|\/)$/i.test(url)) { // Si pedimos un archivo sin extensi\u00f3n se la ponemos seg\u00fan el entorno
+            if (!/(\.js|\/)$/i.test(url)) { // Si pedimos un archivo sin extensión se la ponemos según el entorno
                 url = url + (TC.isDebug ? '.js' : '.min.js');
             }
 
@@ -911,7 +919,7 @@ if (!TC.Consts) {
         if (!window.Modernizr) {
             TC.syncLoadJS(TC.apiLocation + TC.Consts.url.MODERNIZR);
         }
-        Modernizr.touch = Modernizr.touchevents; // compatibilidad hacia atr\u00e1s
+        Modernizr.touch = Modernizr.touchevents; // compatibilidad hacia atrás
 
         TC.isLegacy = TC.isLegacy || !Modernizr.canvas;
 
@@ -924,7 +932,7 @@ if (!TC.Consts) {
             }
         }
 
-        // Completamos los datos de versi\u00f3n
+        // Completamos los datos de versión
         $(document).ready(function () {
             var build;
             var mapLibrary = 'Unknown library';
@@ -967,7 +975,7 @@ if (!TC.Consts) {
 
             var urls = $.isArray(url) ? url : [url];
             urls = urls.map(function (elm) {
-                if (!/\.js$/i.test(elm) && elm.indexOf(TC.apiLocation) === 0) { // Si pedimos un archivo sin extensi\u00f3n y es nuestro se la ponemos seg\u00fan el entorno
+                if (!/\.js$/i.test(elm) && elm.indexOf(TC.apiLocation) === 0) { // Si pedimos un archivo sin extensión y es nuestro se la ponemos según el entorno
                     return elm + (TC.isDebug ? '.js' : '.min.js');
                 }
                 return elm;
@@ -1035,12 +1043,16 @@ if (!TC.Consts) {
             var deferred = $.Deferred();
             options = options || {};
             var code = options.crs.substr(options.crs.indexOf(':') + 1);
+            if (parseInt(code) === Number.NaN) {
+                // El CRS no está en modo urn o EPSG
+                code = options.crs.substr(options.crs.lastIndexOf('/') + 1);
+            }
             var projData = projectionDataCache[code];
             if (projData) {
                 deferred.resolve(projData);
             }
             else {
-                var url = TC.proxify(TC.Consts.url.EPSG + '?format=json&q=' + code);
+                var url = TC.Consts.url.EPSG + '?format=json&q=' + code;
                 var ajaxOptions = {
                     dataType: 'json',
                     success: function (data) {
@@ -1061,10 +1073,10 @@ if (!TC.Consts) {
 
         TC.loadProjDef = function (options) {
             options = options || {};
-            var crs = options.crs;
-            var epsgPrefix = 'EPSG:';
-            var urnPrefix = 'urn:ogc:def:crs:EPSG::';
-            var gmlPrefix = 'http://www.opengis.net/gml/srs/epsg.xml#';
+            const crs = options.crs;
+            const epsgPrefix = 'EPSG:';
+            const urnPrefix = 'urn:ogc:def:crs:EPSG::';
+            const gmlPrefix = 'http://www.opengis.net/gml/srs/epsg.xml#';
 
             var getDef;
             if (TC.isLegacy) {
@@ -1090,10 +1102,16 @@ if (!TC.Consts) {
                     transform: proj4
                 };
             }
-            var loadDef = function (code, def, name/*, bbox*/) {
-                var epsgCode = epsgPrefix + code;
-                var urnCode = urnPrefix + code;
-                var gmlCode = gmlPrefix + code;
+            const loadProj4Def = function (code, def) {
+                Proj4js.defs[code] = def;
+                if (!TC.isLegacy) {
+                    proj4.defs(code, def);
+                }
+            };
+            const loadDef = function (code, def, name) {
+                const epsgCode = epsgPrefix + code;
+                const urnCode = urnPrefix + code;
+                const gmlCode = gmlPrefix + code;
                 var axisUnawareDef;
                 if (typeof def === 'object') {
                     axisUnawareDef = $.extend({}, def);
@@ -1105,39 +1123,31 @@ if (!TC.Consts) {
                 else if (typeof def === 'string') {
                     axisUnawareDef = def.replace('+axis=neu', '');
                 }
-                Proj4js.defs[epsgCode] = def;
-                Proj4js.defs[urnCode] = def;
-                // Por convenci\u00f3n, los CRS definidos por URI siempre tienen orden de coordenadas X-Y.
-                Proj4js.defs[gmlCode] = axisUnawareDef;
-                if (!TC.isLegacy) {
-                    proj4.defs(epsgCode, def);
-                    proj4.defs(urnCode, proj4.defs(epsgCode));
-                    // Por convenci\u00f3n, los CRS definidos por URI siempre tienen orden de coordenadas X-Y.
-                    proj4.defs(gmlCode, axisUnawareDef);
+                loadProj4Def(epsgCode, def);
+                loadProj4Def(urnCode, def);
+                // Por convención, los CRS definidos por URI siempre tienen orden de coordenadas X-Y.
+                loadProj4Def(gmlCode, axisUnawareDef);
+                if (crs.indexOf('http') === 0) {
+                    // El CRS es tipo URI, usado seguramente en un GML.
+                    loadProj4Def(crs, axisUnawareDef);
+                    getDef(crs).name = name;
                 }
                 getDef(epsgCode).name = name;
                 getDef(gmlCode).name = name;
-                //if (bbox) {
-                //    var newProj = ol.proj.get(epsgCode);
-                //    var fromLonLat = ol.proj.getTransform('EPSG:4326', newProj);
-                //    // very approximate calculation of projection extent
-                //    var extent = ol.extent.applyTransform(
-                //        [bbox[1], bbox[2], bbox[3], bbox[0]], fromLonLat);
-                //    newProj.setExtent(extent);
-                //    ol.proj.get(urnCode).setExtent(extent);
-                //    ol.proj.get(gmlCode).setExtent(extent);
-                //}
             };
-            var loadDefResponse = function (data) {
+            const loadDefResponse = function (data) {
                 var result = data.status === 'ok' && data.number_result === 1;
                 if (result) {
                     var def = data.results[0];
-                    loadDef(def.code, def.proj4, def.name/*, def.bbox*/);
+                    loadDef(def.code, def.proj4, def.name);
                 }
                 return result;
             };
 
             var idx = crs.lastIndexOf('#');
+            if (idx < 0) {
+                idx = crs.lastIndexOf('/');
+            }
             if (idx < 0) {
                 idx = crs.lastIndexOf(':');
             }
@@ -1252,8 +1262,8 @@ if (!TC.Consts) {
             var obj = this;
             /**
              * <p>Propiedad que lanza los eventos en el objeto. Para suscribirse a un evento, utilizar los mecanismos de jQuery.</p>
-             * <p>Los m\u00e9todos {{#crossLink "TC.Object/on:method"}}{{/crossLink}}, {{#crossLink "TC.Object/one:method"}}{{/crossLink}} y {{#crossLink "TC.Object/off:method"}}{{/crossLink}}
-             * de <code>TC.Map</code> se mapean a los m\u00e9todos hom\u00f3nimos de este objeto.
+             * <p>Los métodos {{#crossLink "TC.Object/on:method"}}{{/crossLink}}, {{#crossLink "TC.Object/one:method"}}{{/crossLink}} y {{#crossLink "TC.Object/off:method"}}{{/crossLink}}
+             * de <code>TC.Map</code> se mapean a los métodos homónimos de este objeto.
              * @property $events
              * @type jQuery
              */
@@ -1265,7 +1275,7 @@ if (!TC.Consts) {
          * @method on
          * @chainable
          * @param {string} events Nombre de evento o nombres de evento separados por espacios.
-         * @param {function} callback Funci\u00f3n a ejecutar.
+         * @param {function} callback Función a ejecutar.
          * @return {TC.Object}
          */
         TC.Object.prototype.on = function (events, callback) {
@@ -1275,11 +1285,11 @@ if (!TC.Consts) {
         };
 
         /**
-         * Asigna un callback a uno o varios eventos. Este se ejecutar\u00e1 a lo sumo una vez por evento.
+         * Asigna un callback a uno o varios eventos. Este se ejecutará a lo sumo una vez por evento.
          * @method one
          * @chainable
          * @param {string} events Nombre de evento o nombres de evento separados por espacios.
-         * @param {function} callback Funci\u00f3n a ejecutar.
+         * @param {function} callback Función a ejecutar.
          * @return {TC.Object}
          */
         TC.Object.prototype.one = function (events, callback) {
@@ -1293,7 +1303,7 @@ if (!TC.Consts) {
          * @method off
          * @chainable
          * @param {string} events Nombre de evento o nombres de evento separados por espacios.
-         * @param {function} [callback] Funci\u00f3n a desasignar.
+         * @param {function} [callback] Función a desasignar.
          * @return {TC.Object}
          */
         TC.Object.prototype.off = function (events, callback) {
@@ -1396,10 +1406,17 @@ if (!TC.Consts) {
             TC.syncLoadJS(TC.apiLocation + 'TC/Util');
         }
 
-        var uid = 1;
-        TC.getUID = function () {
-            var result = uid.toString();
-            uid = uid + 1;
+        TC.loadJS(!Modernizr.urlparser, TC.apiLocation + TC.Consts.url.URL_POLYFILL, function () { });
+
+        var uids = {};
+        TC.getUID = function (prefix) {
+            prefix = prefix || '';
+            var value = uids[prefix];
+            if (!value) {
+                value = uids[prefix] = 1;
+            }
+            var result = prefix + value;
+            uids[prefix] = value + 1;
             return result;
         };
 
@@ -1445,7 +1462,7 @@ if (!TC.Consts) {
             options = value || $.cookie.defaults || {};
             var decode = options.raw ? raw : decoded;
             var cookies = document.cookie.split('; ');
-            for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')); i++) {
+            for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')) ; i++) {
                 if (decode(parts.shift()) === key) {
                     return decode(parts.join('='));
                 }
@@ -1491,7 +1508,7 @@ $(function () {
         TC.Consts.event.CLICK = "touchstart.tc";
     }
 
-    // Gesti\u00f3n de errores
+    // Gestión de errores
     if (!window.JL) {
         TC.syncLoadJS(TC.apiLocation + TC.Consts.url.JSNLOG);
     }

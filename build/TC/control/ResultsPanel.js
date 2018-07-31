@@ -1,4 +1,4 @@
-
+﻿
 TC.control = TC.control || {};
 
 if (!TC.Control) {
@@ -158,7 +158,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     ctlProto.minimize = function () {
         var self = this;
 
-        if (self._$div.find(self.content.collapsedClass + ':visible').length == 0) { // ya est\u00e1 minimizado
+        if (self._$div.find(self.content.collapsedClass + ':visible').length == 0) { // ya está minimizado
             if (!self._$div.find(self.content.collapsedClass).hasClass(self.classes.FA))
                 self._$div.find(self.content.collapsedClass).addClass(self.classes.FA);
 
@@ -176,7 +176,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     ctlProto.maximize = function () {
         var self = this;
 
-        if (self._$div.find(self.content.collapsedClass + ':hidden').length == 0) { // ya est\u00e1 maximizado
+        if (self._$div.find(self.content.collapsedClass + ':hidden').length == 0) { // ya está maximizado
             self._$div.find(self.content.collapsedClass).attr('hidden', 'hidden');
 
             self._$div.find('.prsidebar-body').toggle('slide');
@@ -295,7 +295,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     if (window.c3) {
 
                         if (!c3._isOverriden) {
-                            // GLS: Override de la funci\u00f3n generateDrawLine y generateDrawArea para establecer otro tipo de interpolaci\u00f3n en la l\u00ednea
+                            // GLS: Override de la función generateDrawLine y generateDrawArea para establecer otro tipo de interpolación en la línea
                             window.c3.chart.internal.fn.generateDrawLine = function (lineIndices, isSub) {
                                 var $$ = this, config = $$.config,
                                     line = $$.d3.svg.line(),
@@ -392,7 +392,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             var columns = data.columns, data = data.data;
 
             if (data && data.length > 0) {
-                //Si no recibe columnas, las extrae de las claves del primer objeto de la colecci\u00f3n de datos
+                //Si no recibe columnas, las extrae de las claves del primer objeto de la colección de datos
                 if (!columns) {
                     columns = [];
                     for (var k in data[0]) {
@@ -460,7 +460,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             }
         }
 
-        // si est\u00e1 minimizado
+        // si está minimizado
         if (self._$div.find(self.content.collapsedClass + ':visible').length == 1) {
             self.maximize();
         }

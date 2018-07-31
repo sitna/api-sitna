@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,20 +7,20 @@
     <link rel="stylesheet" href="examples.css" />
     <style type="text/css">
         .municipality {
-            top: 115px;
+            top: 135px;
         }
     </style>
 </head>
 <body>
     <div class="instructions">
         <p>Ejemplo de uso de <a href="../doc/classes/SITNA.Map.html#method_setQueryType">SITNA.Map.setQueryType</a>.</p>
-        <p>Opciones del método.</p>
+        <p>Opciones del mÃ©todo.</p>
     </div>
     <script src="../"></script>
     <script type="text/javascript" src="examples.js"></script>
 
     <div class="instructions municipality">
-        <div><button id="municipalityBtn">Filtrar por municipio: Valle de Egüés <> Eguesibar</button></div>
+        <div><button id="municipalityBtn">Filtrar por municipio: Valle de EgÃ¼Ã©s <> Eguesibar</button></div>
         <div><button id="urbanBtn">Filtrar por casco urbano: Sarriguren</button></div>
     </div>
     <div id="mapa"></div>
@@ -33,13 +33,13 @@
             document.getElementById("urbanBtn").addEventListener("click", addUrbanFilter);
         });
 
-        // Establecer como filtro del mapa el municipio Valle de Egüés
+        // Establecer como filtro del mapa el municipio Valle de EgÃ¼Ã©s
         var addMunicipalityFilter = function () {
             map.removeSearch();
 
             map.setQueryType(SITNA.Consts.mapSearchType.MUNICIPALITY, "86", function (idQuery) {
                 if (idQuery == null) {
-                    alert("No se ha encontrado el municipio con código 86.");
+                    alert("No se ha encontrado el municipio con cÃ³digo 86.");
                 }
             });
         };
@@ -50,7 +50,7 @@
 
             map.searchTyped(SITNA.Consts.mapSearchType.URBAN, "86#16", function (idQuery) {
                 if (idQuery == null) {
-                    alert("No se ha encontrado el casco urbano con código 86#16 de Sarriguren.");
+                    alert("No se ha encontrado el casco urbano con cÃ³digo 86#16 de Sarriguren.");
                 }
             });
         };

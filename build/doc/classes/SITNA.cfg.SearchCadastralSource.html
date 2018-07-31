@@ -1,0 +1,806 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>SITNA.cfg.SearchCadastralSource - API SITNA</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <a href="../"><img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA"></a>
+                
+                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.5.0</span>
+                
+                
+                    <p class="description">API de mapas del Gobierno de Navarra</p>
+                
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">&iacute;ndice</a></li>
+                <li><a href="#top" class="top-jump-link">inicio</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            ﻿<div id="api-list">
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-modules">Secciones</a></li>
+            <li><a href="#api-classes">Clases</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Escriba para filtrar la API">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-modules" class="apis modules">
+            
+                <li><a class="module" href="../modules/1. Direcciones de la API.html">1. Direcciones de la API</a></li>
+            
+                <li><a class="module" href="../modules/2. Configuración.html">2. Configuración</a></li>
+            
+                <li><a class="module" href="../modules/2.1. Parámetros del constructor.html">2.1. Parámetros del constructor</a></li>
+            
+                <li><a class="module" href="../modules/2.2. Maquetación.html">2.2. Maquetación</a></li>
+            
+                <li><a class="module" href="../modules/2.3. Objeto de configuración global.html">2.3. Objeto de configuración global</a></li>
+            
+                <li><a class="module" href="../modules/2.3.1. Objeto de configuración de opciones del buscador.html">2.3.1. Objeto de configuración de opciones del buscador</a></li>
+            
+                <li><a class="module" href="../modules/3. Clases CSS.html">3. Clases CSS</a></li>
+            
+                <li><a class="module" href="../modules/3.1. layerCatalog.html">3.1. layerCatalog</a></li>
+            
+                <li><a class="module" href="../modules/4. Historial de cambios.html">4. Historial de cambios</a></li>
+            
+            </ul>
+
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a title="SITNA.Cfg" class="type" href="../classes/SITNA.Cfg.html">SITNA.Cfg</a></li>
+            
+                <li><a title="SITNA.cfg.ClickOptions" class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
+            
+                <li><a title="SITNA.cfg.ClusterOptions" class="type" href="../classes/SITNA.cfg.ClusterOptions.html">SITNA.cfg.ClusterOptions</a></li>
+            
+                <li><a title="SITNA.cfg.ClusterStyleOptions" class="type" href="../classes/SITNA.cfg.ClusterStyleOptions.html">SITNA.cfg.ClusterStyleOptions</a></li>
+            
+                <li><a title="SITNA.cfg.ControlOptions" class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
+            
+                <li><a title="SITNA.cfg.CoordinatesOptions" class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
+            
+                <li><a title="SITNA.cfg.DataLoaderOptions" class="type" href="../classes/SITNA.cfg.DataLoaderOptions.html">SITNA.cfg.DataLoaderOptions</a></li>
+            
+                <li><a title="SITNA.cfg.LayerCatalogOptions" class="type" href="../classes/SITNA.cfg.LayerCatalogOptions.html">SITNA.cfg.LayerCatalogOptions</a></li>
+            
+                <li><a title="SITNA.cfg.LayerOptions" class="type" href="../classes/SITNA.cfg.LayerOptions.html">SITNA.cfg.LayerOptions</a></li>
+            
+                <li><a title="SITNA.cfg.LineStyleOptions" class="type" href="../classes/SITNA.cfg.LineStyleOptions.html">SITNA.cfg.LineStyleOptions</a></li>
+            
+                <li><a title="SITNA.cfg.MapControlOptions" class="type" href="../classes/SITNA.cfg.MapControlOptions.html">SITNA.cfg.MapControlOptions</a></li>
+            
+                <li><a title="SITNA.cfg.MarkerOptions" class="type" href="../classes/SITNA.cfg.MarkerOptions.html">SITNA.cfg.MarkerOptions</a></li>
+            
+                <li><a title="SITNA.cfg.MarkerStyleOptions" class="type" href="../classes/SITNA.cfg.MarkerStyleOptions.html">SITNA.cfg.MarkerStyleOptions</a></li>
+            
+                <li><a title="SITNA.cfg.OverviewMapOptions" class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
+            
+                <li><a title="SITNA.cfg.PointStyleOptions" class="type" href="../classes/SITNA.cfg.PointStyleOptions.html">SITNA.cfg.PointStyleOptions</a></li>
+            
+                <li><a title="SITNA.cfg.PolygonStyleOptions" class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a title="SITNA.cfg.SearchCadastralSource" class="type" href="../classes/SITNA.cfg.SearchCadastralSource.html">SITNA.cfg.SearchCadastralSource</a></li>
+            
+                <li><a title="SITNA.cfg.SearchCadastralSourceExt" class="type" href="../classes/SITNA.cfg.SearchCadastralSourceExt.html">SITNA.cfg.SearchCadastralSourceExt</a></li>
+            
+                <li><a title="SITNA.cfg.SearchMunicipalitySource" class="type" href="../classes/SITNA.cfg.SearchMunicipalitySource.html">SITNA.cfg.SearchMunicipalitySource</a></li>
+            
+                <li><a title="SITNA.cfg.SearchOptions" class="type" href="../classes/SITNA.cfg.SearchOptions.html">SITNA.cfg.SearchOptions</a></li>
+            
+                <li><a title="SITNA.cfg.SearchPostalAddressSource" class="type" href="../classes/SITNA.cfg.SearchPostalAddressSource.html">SITNA.cfg.SearchPostalAddressSource</a></li>
+            
+                <li><a title="SITNA.cfg.SearchQueryProperties" class="type" href="../classes/SITNA.cfg.SearchQueryProperties.html">SITNA.cfg.SearchQueryProperties</a></li>
+            
+                <li><a title="SITNA.cfg.SearchStreetSource" class="type" href="../classes/SITNA.cfg.SearchStreetSource.html">SITNA.cfg.SearchStreetSource</a></li>
+            
+                <li><a title="SITNA.cfg.SearchSuggestionListColor" class="type" href="../classes/SITNA.cfg.SearchSuggestionListColor.html">SITNA.cfg.SearchSuggestionListColor</a></li>
+            
+                <li><a title="SITNA.cfg.SearchSuggestionListColorByFeatureType" class="type" href="../classes/SITNA.cfg.SearchSuggestionListColorByFeatureType.html">SITNA.cfg.SearchSuggestionListColorByFeatureType</a></li>
+            
+                <li><a title="SITNA.cfg.SearchSuggestionListProperties" class="type" href="../classes/SITNA.cfg.SearchSuggestionListProperties.html">SITNA.cfg.SearchSuggestionListProperties</a></li>
+            
+                <li><a title="SITNA.cfg.SearchTownSource" class="type" href="../classes/SITNA.cfg.SearchTownSource.html">SITNA.cfg.SearchTownSource</a></li>
+            
+                <li><a title="SITNA.cfg.StreetViewOptions" class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
+            
+                <li><a title="SITNA.cfg.StyleOptions" class="type" href="../classes/SITNA.cfg.StyleOptions.html">SITNA.cfg.StyleOptions</a></li>
+            
+                <li><a title="SITNA.cfg.WMSGroupOptions" class="type" href="../classes/SITNA.cfg.WMSGroupOptions.html">SITNA.cfg.WMSGroupOptions</a></li>
+            
+                <li><a title="SITNA.cfg.WMSOptions" class="type" href="../classes/SITNA.cfg.WMSOptions.html">SITNA.cfg.WMSOptions</a></li>
+            
+                <li><a title="SITNA.Consts" class="type" href="../classes/SITNA.Consts.html">SITNA.Consts</a></li>
+            
+                <li><a title="SITNA.consts.Geom" class="type" href="../classes/SITNA.consts.Geom.html">SITNA.consts.Geom</a></li>
+            
+                <li><a title="SITNA.consts.Layer" class="type" href="../classes/SITNA.consts.Layer.html">SITNA.consts.Layer</a></li>
+            
+                <li><a title="SITNA.consts.LayerType" class="type" href="../classes/SITNA.consts.LayerType.html">SITNA.consts.LayerType</a></li>
+            
+                <li><a title="SITNA.consts.MimeType" class="type" href="../classes/SITNA.consts.MimeType.html">SITNA.consts.MimeType</a></li>
+            
+                <li><a title="SITNA.Map" class="type" href="../classes/SITNA.Map.html">SITNA.Map</a></li>
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                ﻿<h1>Clase SITNA.cfg.SearchCadastralSource</h1>
+<div class="box meta">
+    
+
+    
+
+    
+        <div class="foundat" style="display:none">
+            Se define en: <a href="../files/sitna.js.html#l403"><code>sitna.js:403</code></a>
+        </div>
+    
+
+    
+        
+            Sección relacionada: <a href="../modules/2.3.1. Objeto de configuración de opciones del buscador.html">2.3.1. Objeto de configuración de opciones del buscador</a><br>
+            Sección principal: <a href="../modules/2.3. Objeto de configuración global.html">2.3. Objeto de configuración global</a>
+        
+    
+
+    
+</div>
+
+
+
+<div class="box intro">
+    <p>Opciones de configuración del origen de datos de la búsqueda de parcelas catastrales.</p>
+<p>Esta clase no tiene constructor.</p>
+<p>Puede consultar el ejemplo <a href="../../examples/Cfg.SearchCadastralSource.html">online</a>. </p>
+<h4 id="ejemplo-">Ejemplo:</h4>
+<pre class="code prettyprint"><code class="lang-javascript">{   
+  url:&#39;//idena.navarra.es/ogc/wfs&#39;,                
+      featurePrefix: &#39;IDENA&#39;,
+      geometryName: &#39;the_geom&#39;,        
+      featureType: [&#39;CATAST_Pol_ParcelaUrba&#39;, &#39;CATAST_Pol_ParcelaRusti&#39;, &#39;CATAST_Pol_ParcelaMixta&#39;],
+      municipality: {
+          featureType: &#39;CATAST_Pol_Municipio&#39;,
+          labelProperty: &#39;MUNICIPIO&#39;,
+          idProperty: &#39;CMUNICIPIO&#39;
+      },
+      queryProperties: {
+          firstQueryWord: &#39;CMUNICIPIO&#39;,
+          secondQueryWord: &#39;POLIGONO&#39;,
+          thirdQueryWord: &#39;PARCELA&#39;
+      },
+      suggestionListHead: {
+          label: &quot;search.list.cadastral&quot;,
+          color: [
+              {
+                  CATAST_Pol_ParcelaUrba: {
+                      title: &quot;search.list.cadastral.urban&quot;,
+                      color: {
+                          geomType: &quot;polygon&quot;,
+                          css: &quot;strokeColor&quot;
+                      }
+                  }
+              },
+              {
+                  CATAST_Pol_ParcelaRusti: {
+                      title: &quot;search.list.cadastral.rustic&quot;,
+                      color: {
+                          geomType: &quot;polygon&quot;,
+                          css: &quot;strokeColor&quot;
+                      }
+                  }
+              },
+              {
+                  CATAST_Pol_ParcelaMixta: {
+                      title: &quot;search.list.cadastral.mixed&quot;,
+                      color: {
+                          geomType: &quot;polygon&quot;,
+                          css: &quot;strokeColor&quot;
+                      }
+                  }
+              }
+          ]
+      },
+      styles: [
+          {
+              polygon: {
+                  fillColor: &#39;#000000&#39;,
+                  fillOpacity: 0.1,
+                  strokeColor: &#39;#136278&#39;,
+                  strokeWidth: 2,
+                  strokeOpacity: 1
+              }
+          },
+          {
+              polygon: {
+                  fillColor: &#39;#000000&#39;,
+                  fillOpacity: 0.1,
+                  strokeColor: &#39;#0c8b3d&#39;,
+                  strokeWidth: 2,
+                  strokeOpacity: 1
+              }
+          },
+          {
+              polygon: {
+                  fillColor: &#39;#000000&#39;,
+                  fillOpacity: 0.1,
+                  strokeColor: &#39;#e5475f&#39;,
+                  strokeWidth: 2,
+                  strokeOpacity: 1
+              },
+          }
+      ]
+}</code></pre>
+
+</div>
+
+<!-- Class member index -->
+
+<a name="index" class="anchor-link"></a>
+<div class="index">
+<h2>Índice</h2>
+
+﻿    <div id="api-options" style="display:none">
+        Mostrar:
+        <label for="api-show-inherited">
+            <input type="checkbox" id="api-show-inherited">
+            Inherited
+        </label>
+
+        <label for="api-show-protected">
+            <input type="checkbox" id="api-show-protected">
+            Protected
+        </label>
+
+        <label for="api-show-private">
+            <input type="checkbox" id="api-show-private">
+            Private
+        </label>
+        <label for="api-show-deprecated">
+            <input type="checkbox" id="api-show-deprecated">
+            Deprecated
+        </label>
+
+    </div>
+
+
+
+
+    <div class="index-section properties">
+        <h3>Propiedades</h3>
+
+        <ul class="index-list properties">
+            
+                <li class="index-item property">
+                    <a href="#property_featurePrefix">featurePrefix</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_featureType">featureType</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_geometryName">geometryName</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_municipality">municipality</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_queryProperties">queryProperties</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_styles">styles</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_suggestionListHead">suggestionListHead</a>
+
+                    
+                </li>
+            
+                <li class="index-item property">
+                    <a href="#property_url">url</a>
+
+                    
+                </li>
+            
+        </ul>
+    </div>
+
+
+
+
+
+
+
+
+</div>
+
+
+<div class="class-detail">
+
+
+    <div class="properties-detail">
+        <h2>Propiedades</h2>
+
+        
+            ﻿<a name="property_featurePrefix" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>featurePrefix</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l507"><code>sitna.js:507</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Prefijo del nombre de la capa o capas a definir en la propiedad <a href="../classes/SITNA.cfg.SearchCadastralSource.html#property_featureType" class="crosslink">featureType</a>. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            ﻿<a name="property_featureType" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>featureType</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l513"><code>sitna.js:513</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Colección con el nombre de la capa o capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en <a href="../classes/SITNA.cfg.SearchCadastralSource.html#property_queryProperties" class="crosslink">queryProperties</a>.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            ﻿<a name="property_geometryName" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>geometryName</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l528"><code>sitna.js:528</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Nombre del campo de la geometría de la parcela catastral.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            ﻿<a name="property_municipality" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>municipality</code>
+    <span class="type"><a href="../classes/SITNA.cfg.SearchCadastralSourceExt.html" class="crosslink">SITNA.cfg.SearchCadastralSourceExt</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l494"><code>sitna.js:494</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Definición de la fuente de datos para la búsqueda de parcela por nombre de municipio en lugar de por código del mismo.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            ﻿<a name="property_queryProperties" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>queryProperties</code>
+    <span class="type"><a href="../classes/SITNA.cfg.SearchQueryProperties.html" class="crosslink">SITNA.cfg.SearchQueryProperties</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l519"><code>sitna.js:519</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Definición de los campos por los que filtrar la búsqueda de parcelas. </p>
+<pre><strong>Requerido</strong> <a href="../classes/SITNA.cfg.SearchQueryProperties.html#property_firstQueryWord" class="crosslink">firstQueryWord</a>: se indicará el campo o campos en los que buscar el código de municipio.</pre>
+<pre><strong>Requerido</strong> <a href="../classes/SITNA.cfg.SearchQueryProperties.html#property_secondQueryWord" class="crosslink">secondQueryWord</a>: se indicará el campo o campos en los que buscar el polígono.</pre>
+<pre><strong>Requerido</strong> <a href="../classes/SITNA.cfg.SearchQueryProperties.html#property_thirdQueryWord" class="crosslink">thirdQueryWord</a>: se indicará el campo o campos en los que buscar la parcela. </pre>
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            ﻿<a name="property_styles" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>styles</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array" class="crosslink external" target="_blank">Array</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l534"><code>sitna.js:534</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Colección de instancias <a href="../classes/SITNA.cfg.StyleOptions.html" class="crosslink">SITNA.cfg.StyleOptions</a>.</p>
+<p>La relación entre capa y estilo se hace mediante el índice en la colección en <a href="../classes/SITNA.cfg.SearchCadastralSource.html#property_featureType" class="crosslink">featureType</a> y en <a href="../classes/SITNA.cfg.SearchCadastralSource.html#property_styles" class="crosslink">styles</a>, por tanto, deberá haber tantas instancias como capas definidas en <a href="../classes/SITNA.cfg.SearchCadastralSource.html#property_featureType" class="crosslink">featureType</a>.  </p>
+<p>No está disponible <a href="../classes/SITNA.cfg.StyleOptions.html#property_cluster" class="crosslink">cluster</a>.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            ﻿<a name="property_suggestionListHead" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>suggestionListHead</code>
+    <span class="type"><a href="../classes/SITNA.cfg.SearchSuggestionListProperties.html" class="crosslink">SITNA.cfg.SearchSuggestionListProperties</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l544"><code>sitna.js:544</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+            ﻿<a name="property_url" class="anchor-link"></a>
+<div class="property item">
+    <h3 class="name"><code>url</code>
+    <span class="type"><a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String" class="crosslink external" target="_blank">String</a></span>
+
+    
+
+    
+
+    
+
+    
+
+    </h3>
+
+    <div class="meta">
+        
+            
+                
+                <p style="display:none">
+                
+                Se define en
+                
+            
+        
+        
+        <a href="../files/sitna.js.html#l501"><code>sitna.js:501</code></a>
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="extended-detail">
+        <div class="description">
+            <p>Dirección del servicio WFS (las búsquedas en el API SITNA están implementadas sobre el estándar <a href="http://www.opengeospatial.org/standards/wfs&quot;">OGC Web Feature Service</a>.</p>
+
+        </div>
+
+        
+
+        
+
+        
+    </div>
+</div>
+
+        
+
+        <div class="no-visible-items-message">
+            <p>No hay propiedades que cumplan la configuración actual de filtro. Puede cambiar la configuración de filtro en la sección "Índice" de esta página. <a href="#index" class="index-jump-link">índice</a></p>
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+</div>
+
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

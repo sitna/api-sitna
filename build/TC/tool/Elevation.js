@@ -1,4 +1,4 @@
-TC.tool = TC.tool || {};
+﻿TC.tool = TC.tool || {};
 
 TC.tool.Elevation = function (options) {
     const self = this;
@@ -199,7 +199,7 @@ TC.tool.Elevation = function (options) {
             }).then(
                 function (coords) {
                     if (coords.length) {
-                        if (coords.some(function (c) { // Hay datos de elevaci\u00f3n
+                        if (coords.some(function (c) { // Hay datos de elevación
                             return c[2] !== null;
                         })) {
                             setFeatureCoords(feature, coords);
@@ -244,18 +244,18 @@ TC.tool.Elevation.getElevationGain = function (options) {
                     sectorMaxHeight = height;
                 }
 
-                sectorMinHeight = Math.min(sectorMinHeight, height); //--actualizar m\u00ednimo y m\u00e1ximo del sector
+                sectorMinHeight = Math.min(sectorMinHeight, height); //--actualizar mínimo y máximo del sector
                 sectorMaxHeight = Math.max(sectorMaxHeight, height);
 
                 var delta = height - previousHeight; //--calcular desnivel del punto respecto al anterior
                 // hillDeltaThreshold: altura de los dientes a despreciar
-                if (delta > hillDeltaThreshold || (delta > 0 && c == coords.length - 1)) //--Si se sube m\u00e1s del filtro (o se acaba el segmento subiendo)
+                if (delta > hillDeltaThreshold || (delta > 0 && c == coords.length - 1)) //--Si se sube más del filtro (o se acaba el segmento subiendo)
                 {
-                    if (previousUphill) //--Si en el segmento anterior tambi\u00e9n se sub\u00eda, incrementamos el desnivel positivo acumulado
+                    if (previousUphill) //--Si en el segmento anterior también se subía, incrementamos el desnivel positivo acumulado
                     {
                         uphill += delta;
                     }
-                    else //--Si en el segmento anterior se bajaba, incrementamos los desniveles acumulados que no hab\u00edamos contabilizado desde el \u00faltimo salto del filtro (sector) 
+                    else //--Si en el segmento anterior se bajaba, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
                     {
                         downhill -= sectorMinHeight - previousHeight;
                         uphill += height - sectorMinHeight;
@@ -265,13 +265,13 @@ TC.tool.Elevation.getElevationGain = function (options) {
                     sectorMinHeight = height;
                     sectorMaxHeight = height;
                 }
-                else if (delta < -hillDeltaThreshold || (delta < 0 && c == coords.length - 1)) //--Si se baja m\u00e1s del filtro (o se acaba el segmento bajando)
+                else if (delta < -hillDeltaThreshold || (delta < 0 && c == coords.length - 1)) //--Si se baja más del filtro (o se acaba el segmento bajando)
                 {
-                    if (!previousUphill) //--Si en el segmento anterior tambi\u00e9n se bajaba, incrementamos el desnivel negativo acumulado
+                    if (!previousUphill) //--Si en el segmento anterior también se bajaba, incrementamos el desnivel negativo acumulado
                     {
                         downhill -= delta;
                     }
-                    else //--Si en el segmento anterior se sub\u00eda, incrementamos los desniveles acumulados que no hab\u00edamos contabilizado desde el \u00faltimo salto del filtro (sector) 
+                    else //--Si en el segmento anterior se subía, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
                     {
                         uphill += sectorMaxHeight - previousHeight;
                         downhill -= height - sectorMaxHeight;

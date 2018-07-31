@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 TC.Consts.classes.PRINTABLE = 'tc-printable';
 

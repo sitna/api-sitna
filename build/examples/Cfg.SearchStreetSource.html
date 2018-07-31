@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Cfg.SearchStreetSource</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.SearchStreetSource.html">SITNA.Cfg.SearchStreetSource</a>.</p>
+        <p>Establecer configuración de un origen de datos distinto en la búsqueda de vías.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Vía',
+                    instructions: 'Buscar vía',
+                    cadastralParcel: false,
+                    municipality: false,
+                    town: false,
+                    street: {
+                        url: '//idena.navarra.es/ogc/wfs',
+                        featurePrefix: 'IDENA',
+                        geometryName: 'the_geom',
+                        renderFeatureType: 'CATAST_Txt_Calle',
+                        featureType: 'CATAST_Lin_CalleEje',
+                        dataIdProperty: ['CVIA'],
+                        queryProperties: {
+                            firstQueryWord: ['ENTINOAC', 'ENTIDADC'],
+                            secondQueryWord: ['VIA', 'VIANOAC']
+                        },
+                        suggestionListHead: {
+                            label: "search.list.street",
+                            color: "strokeColor"
+                        },
+                        outputProperties: ['ENTIDADC', 'VIA', 'CVIA', 'CENTIDADC', 'CMUNICIPIO'],
+                        outputFormatLabel: '{1}, {0}',
+                        styles: [
+                            {
+                                line: {
+                                    strokeColor: "#CB0000",
+                                    strokeOpacity: 1,
+                                    strokeWidth: 2,
+                                    strokeLinecap: "round",
+                                    strokeDashstyle: "solid"
+                                }
+                            },
+                            {
+                                point: {
+                                    label: "VIA",
+                                    angle: "CADANGLE",
+                                    fontColor: "#000000",
+                                    fontSize: 7,
+                                    labelOutlineColor: "#ffffff",
+                                    labelOutlineWidth: 2
+                                }
+                            }
+                        ]
+                    },
+                    postalAddress: false
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

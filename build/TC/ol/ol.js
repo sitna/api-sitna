@@ -1,4 +1,4 @@
-; (function (root, factory) {
+﻿; (function (root, factory) {
 
     if (typeof define === 'function' && define.amd) {
         define(['../../lib/ol/build/ol-debug'], factory);
@@ -56,14 +56,14 @@
     cssUrl = cssUrl.substr(0, cssUrl.lastIndexOf('/') + 1) + 'css/ol.css';
     //TC.loadCSS(cssUrl);
 
-    // OpenLayers usa para las proyecciones geogr\u00e1ficas un valor ol.proj.METERS_PER_UNIT[ol.proj.Units.DEGREES], calculado con una esfera, salvo
+    // OpenLayers usa para las proyecciones geográficas un valor ol.proj.METERS_PER_UNIT[ol.proj.Units.DEGREES], calculado con una esfera, salvo
     // EPSG:4326, en la que usa ol.proj.EPSG4326.METERS_PER_UNIT, calculado con el geoide. Esto hace que las proyecciones en EPSG:4258 salgan desplazadas,
     // pese a que para todos los efectos son iguales a las EPSG:4326. Para evitar eso, introducimos en las 4258 el valor ol.proj.EPSG4326.METERS_PER_UNIT.
     ol.proj.get('EPSG:4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
     ol.proj.get('urn:ogc:def:crs:EPSG::4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
     ol.proj.get('http://www.opengis.net/gml/srs/epsg.xml#4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
 
-    // Reescribimos la obtenci\u00f3n de proyecci\u00f3n para que soporte c\u00f3digos tipo EPSG:X, urn:ogc:def:crs:EPSG::X y http://www.opengis.net/gml/srs/epsg.xml#X
+    // Reescribimos la obtención de proyección para que soporte códigos tipo EPSG:X, urn:ogc:def:crs:EPSG::X y http://www.opengis.net/gml/srs/epsg.xml#X
     ol.proj.oldGet = ol.proj.get;
     ol.proj.get = function (projectionLike) {
         if (typeof projectionLike === 'string') {
@@ -73,7 +73,7 @@
         return ol.proj.oldGet.call(this, projectionLike);
     };
 
-    // Reescritura de c\u00f3digo para transformar las geometr\u00edas de getFeatureInfo que est\u00e1n en un CRS distinto
+    // Reescritura de código para transformar las geometrías de getFeatureInfo que están en un CRS distinto
     ol.format.GMLBase.prototype.readGeometryElement = function (node, objectStack) {
         var context = /** @type {Object} */ (objectStack[0]);
         context['srsName'] = node.firstElementChild.getAttribute('srsName');
@@ -99,8 +99,8 @@
         }
     };
 
-    // Reescritura de c\u00f3digo para hacerlo compatible con GML generado por inspire:
-    // No se puede considerar geometr\u00eda cualquier cosa que tenga elementos anidados.
+    // Reescritura de código para hacerlo compatible con GML generado por inspire:
+    // No se puede considerar geometría cualquier cosa que tenga elementos anidados.
     ol.format.GMLBase.prototype.readFeatureElement = function (node, objectStack) {
         var n;
         var fid = node.getAttribute('fid') ||
@@ -139,7 +139,7 @@
         return feature;
     };
 
-    // A\u00f1adimos el atributo srsDimension para soportar 3D
+    // Añadimos el atributo srsDimension para soportar 3D
     ol.format.GML3.prototype._writePosList_ = ol.format.GML3.prototype.writePosList_;
     ol.format.GML3.prototype.writePosList_ = function (node, value, objectStack) {
         this._writePosList_(node, value, objectStack);
@@ -171,7 +171,7 @@
 
 
 
-    // A\u00f1adido el espacio de nombres de GML 3.2 al parser
+    // Añadido el espacio de nombres de GML 3.2 al parser
     var gmlNamespace = 'http://www.opengis.net/gml';
     var gml32Namespace = 'http://www.opengis.net/gml/3.2';
     ol.format.GMLBase.prototype.MULTIPOINT_PARSERS_[gml32Namespace] = ol.format.GMLBase.prototype.MULTIPOINT_PARSERS_[gmlNamespace];
@@ -194,7 +194,7 @@
     ol.format.GML3.prototype.PATCHES_PARSERS_[gml32Namespace] = ol.format.GML3.prototype.PATCHES_PARSERS_[gmlNamespace];
     ol.format.GML3.prototype.SEGMENTS_PARSERS_[gml32Namespace] = ol.format.GML3.prototype.SEGMENTS_PARSERS_[gmlNamespace];
 
-    // Rehacemos los estilos por defecto de KML para que se adec\u00faen al de la API
+    // Rehacemos los estilos por defecto de KML para que se adecúen al de la API
     ol.format.KML._createStyleDefaults_ = ol.format.KML.createStyleDefaults_;
     ol.format.KML.createStyleDefaults_ = function () {
         ol.format.KML._createStyleDefaults_();
@@ -210,7 +210,7 @@
     };
 
 
-    // Reescritura de c\u00f3digo para leer las carpetas del KML
+    // Reescritura de código para leer las carpetas del KML
     ol.format.KML.prototype._readDocumentOrFolder_ = ol.format.KML.prototype.readDocumentOrFolder_;
     ol.format.KML.prototype.readDocumentOrFolder_ = function (node, objectStack) {
         var result = ol.format.KML.prototype._readDocumentOrFolder_.apply(this, arguments);
@@ -223,7 +223,7 @@
                 var nameElm = node.getElementsByTagName('name')[0];
                 if (nameElm) {
                     //feature._folders.unshift(nameElm.innerHTML || nameElm.textContent);
-                    // Versi\u00f3n r\u00e1pida de unshift
+                    // Versión rápida de unshift
                     TC.Util.fastUnshift(feature._folders, nameElm.innerHTML || nameElm.textContent);
                 }
             }
@@ -268,7 +268,7 @@
         parser['BalloonStyle'] = ol.format.KML.BalloonStyleParser_;
     }
 
-    // Parche a esta funci\u00f3n para meter la lectura de balloonStyle
+    // Parche a esta función para meter la lectura de balloonStyle
     ol.format.KML.readStyle_ = function (node, objectStack) {
         var styleObject = ol.xml.pushParseAndPop(
             {}, ol.format.KML.STYLE_PARSERS_, node, objectStack);
@@ -313,7 +313,7 @@
         return [style];
     };
 
-    // flacunza: Parche para evitar peticiones HTTP desde una p\u00e1gina HTTPS
+    // flacunza: Parche para evitar peticiones HTTP desde una página HTTPS
     ol.format.KML._readURI_ = ol.format.KML.readURI_;
     ol.format.KML.readURI_ = function (node) {
         var result = ol.format.KML._readURI_(node);
@@ -326,7 +326,7 @@
         ol.format.KML.ICON_PARSERS_[key].href = ol.xml.makeObjectPropertySetter(ol.format.KML.readURI_);
     }
 
-    // GLS: La expresi\u00f3n regular que valida el formato de fecha ISO no contempla que la fecha contenga fracci\u00f3n de segundo, seg\u00fan https://www.w3.org/TR/NOTE-datetime 
+    // GLS: La expresión regular que valida el formato de fecha ISO no contempla que la fecha contenga fracción de segundo, según https://www.w3.org/TR/NOTE-datetime 
     ol.format.KML.whenParser_ = function (a, b) {
         ol.asserts.assert(a.nodeType == Node.ELEMENT_NODE, "node.nodeType should be ELEMENT");
         ol.asserts.assert("when" == a.localName, "localName should be when");
@@ -393,7 +393,7 @@
         return ol.format.XMLFeature.prototype.readFeatures.call(this, source, opt_options);
     };
 
-    // GLS: La expresi\u00f3n regular que valida el formato de fecha ISO no contempla que la fecha contenga fracci\u00f3n de segundo, seg\u00fan https://www.w3.org/TR/NOTE-datetime 
+    // GLS: La expresión regular que valida el formato de fecha ISO no contempla que la fecha contenga fracción de segundo, según https://www.w3.org/TR/NOTE-datetime 
     ol.format.XSD.readDateTime = function (a) {
         a = ol.xml.getAllTextContent(a, !1);
         if (a = /^\s*(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(Z|(?:([+\-])(\d{2})(?::(\d{2}))?))\s*$/.exec(a)) {
@@ -478,6 +478,8 @@
                 ol.format.XSD.writeNonNegativeIntegerTextNode)
         });
 
+    const hitTolerance = TC.Util.detectMouse() ? 3 : 10;
+
     // GLS: Obtenemos las combinaciones posibles
     var getAllCombinations = function (array) {
         var combi = [];
@@ -557,7 +559,7 @@
     var customKMLNameSpaceURIS = getAllCombinations(ol.format.KML.NAMESPACE_URIS_.slice().slice(1));
     // GLS: Nos quedamos con las combinaciones nuevas
     cleanCombinationsByFormat(customKMLNameSpaceURIS, ol.format.KML.NAMESPACE_URIS_);
-    // GLS: A\u00f1adimos los nuevos URIS al KML
+    // GLS: Añadimos los nuevos URIS al KML
     ol.format.KML.NAMESPACE_URIS_ = ol.format.KML.NAMESPACE_URIS_.concat(customKMLNameSpaceURIS);
     // GLS: Establecemos los parsers del KML para los nuevos URIS
     setNewParsersByFormat(KML_PARSERS, customKMLNameSpaceURIS);
@@ -588,15 +590,15 @@
     var customGPXNameSpaceURIS = getAllCombinations(ol.format.GPX.NAMESPACE_URIS_.slice().slice(1));
     // GLS: Nos quedamos con las combinaciones nuevas
     cleanCombinationsByFormat(customGPXNameSpaceURIS, ol.format.GPX.NAMESPACE_URIS_);
-    // GLS: A\u00f1adimos los nuevos URIS al GPX
+    // GLS: Añadimos los nuevos URIS al GPX
     ol.format.GPX.NAMESPACE_URIS_ = ol.format.GPX.NAMESPACE_URIS_.concat(customGPXNameSpaceURIS);
     // GLS: Establecemos los parsers del GPX para los nuevos URIS
     setNewParsersByFormat(GPX_PARSERS, customGPXNameSpaceURIS);
 
-    // Bug de OpenLayers hasta 4.1.0 como m\u00ednimo:
-    // ol.format.GMLBase no lee varias features dentro de featureCollection, se queda solo con la \u00faltima.
+    // Bug de OpenLayers hasta 4.1.0 como mínimo:
+    // ol.format.GMLBase no lee varias features dentro de featureCollection, se queda solo con la última.
     // Esto es porque utiliza ol.xml.makeReplacer en vez de ol.xml.makeArrayPusher para leerlas.
-    // Curiosamente en ol.format.GML2 est\u00e1 corregido, pero no en ol.format.GML3.
+    // Curiosamente en ol.format.GML2 está corregido, pero no en ol.format.GML3.
     // El siguiente constructor parchea ese bug
     ol.format.GML3Patched = function (options) {
         var result = new ol.format.GML(options);
@@ -606,12 +608,12 @@
         return result;
     };
 
-    // Bug de OpenLayers hasta 3.5.0 como m\u00ednimo:
+    // Bug de OpenLayers hasta 3.5.0 como mínimo:
     // El parser de GML2 no lee las siguientes features del GML si tienen un featureType distinto del primero.
     // Esto pasa porque genera el objeto de featureTypes con la primera y en las siguientes iteraciones si el objeto existe no se regenera.
     // Entre comentarios /* */ se elimina lo que sobra.
     //
-    // M\u00e1s: se a\u00f1ade para FeatureCollection un parser por cada namespaceURI del nodo. 
+    // Más: se añade para FeatureCollection un parser por cada namespaceURI del nodo. 
     // Esto es porque QGIS genera GML cuyo nodo FeatureCollection tiene namespace = http://ogr.maptools.org/.
     ol.format.GMLBase.prototype.readFeaturesInternal = function (node, objectStack) {
         ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
@@ -619,8 +621,8 @@
         var localName = node.localName;
         var features = null;
         if (localName == 'FeatureCollection') {
-            // \u00d1apa para leer GML de https://catastro.navarra.es/ref_catastral/gml.ashx?C=217&PO=5&PA=626
-            // y dem\u00e1s GMLs obtenidos de un WFS de GeoServer.
+            // Ñapa para leer GML de https://catastro.navarra.es/ref_catastral/gml.ashx?C=217&PO=5&PA=626
+            // y demás GMLs obtenidos de un WFS de GeoServer.
             var gmlnsCollectionParser = this.FEATURE_COLLECTION_PARSERS[ol.format.GMLBase.GMLNS];
             if (!gmlnsCollectionParser['member']) {
                 gmlnsCollectionParser['member'] = ol.xml.makeArrayPusher(
@@ -697,18 +699,18 @@
             }
             if (localName == 'featureMember' || localName == 'member') { // Elemento solo
                 features = ol.xml.pushParseAndPop(undefined, parsersNS, node, objectStack);
-            } else { // Colecci\u00f3n de elementos
+            } else { // Colección de elementos
                 features = ol.xml.pushParseAndPop([], parsersNS, node, objectStack);
             }
         }
         if (features === null) {
             features = [];
         }
-        // Revisamos que todas las features tienen geometr\u00eda v\u00e1lida o no tienen geometr\u00eda definida. Evitamos as\u00ed que cuele un GML 2 parseado con el parser GML 3.
+        // Revisamos que todas las features tienen geometría válida o no tienen geometría definida. Evitamos así que cuele un GML 2 parseado con el parser GML 3.
         var checkFeatureGeometry = function (feat) {
             var geom = feat.getGeometry();
             if (feat.getProperties()[feat.getGeometryName()] && (!geom || !geom.flatCoordinates.length)) {
-                throw 'Geometr\u00eda no v\u00e1lida. ¿Posible versi\u00f3n incorrecta de GML?';
+                throw 'Geometría no válida. ¿Posible versión incorrecta de GML?';
             }
         };
         if (features instanceof ol.Feature) {
@@ -755,7 +757,7 @@
             });
     };
 
-    // Modificaci\u00f3n para cambiar el comportamiento de ol.control.OverviewMap:
+    // Modificación para cambiar el comportamiento de ol.control.OverviewMap:
     // Mantener la caja del extent siempre centrada.
     ol.control.OverviewMap.prototype._validateExtent_ = ol.control.OverviewMap.prototype.validateExtent_;
     ol.control.OverviewMap.prototype.validateExtent_ = function () {
@@ -766,7 +768,7 @@
         }
     };
 
-    // En modo 3D, cambiar la l\u00f3gica de la escala para que siempre muestre \u00e1rea de visi\u00f3n.
+    // En modo 3D, cambiar la lógica de la escala para que siempre muestre área de visión.
     ol.control.OverviewMap.prototype._resetExtent_ = ol.control.OverviewMap.prototype.resetExtent_;
     ol.control.OverviewMap.prototype.resetExtent_ = function () {
         var self = this;
@@ -797,6 +799,17 @@
             }
         }
     };
+
+    // Parche a mantener hasta que se actualize cartoteca
+    const oldImage = ol.Image;
+    ol.Image = function () {
+        if (arguments.length === 7) {
+            Array.prototype.splice.call(arguments, 3, 1);
+        }
+        return oldImage.apply(this, arguments);
+    }
+    TC.inherit(ol.Image, oldImage);
+    /////////////////////////////////////////////////////
 
     var getRGBA = function (color, opacity) {
         var result;
@@ -829,7 +842,7 @@
         };
 
         if (mapWrap.parent.maxExtent) {
-            pms.extent = mapWrap.parent.initialExtent;
+            pms.extent = mapWrap.parent.maxExtent;
         }
 
         if (layer instanceof TC.layer.Raster) {
@@ -876,7 +889,7 @@
 
         var proj4Obj = proj4(self.parent.crs);
         var addEquivalentProjections = function () {
-            // A\u00f1adimos proyecciones equivalentes y transformaciones necesarias.
+            // Añadimos proyecciones equivalentes y transformaciones necesarias.
             var crsCode = self.parent.crs.substr(self.parent.crs.lastIndexOf(':') + 1);
 
             var projOptions = {
@@ -937,7 +950,7 @@
         }
         var projection = new ol.proj.Projection(projOptions);
 
-        var interactions = ol.interaction.defaults();
+        var interactions = ol.interaction.defaults({ constrainResolution: true });
 
         var viewOptions = {
             projection: projection,
@@ -980,6 +993,9 @@
         self.parent.$events.one(TC.Consts.event.MAPLOAD, updateSize);
 
         self.map.on(ol.MapBrowserEventType.SINGLECLICK, function (e) {
+            self.parent.workLayers.forEach(function (wl) {
+                delete wl._noFeatureClicked;
+            });
             var featuresInLayers = $.map(self.parent.workLayers, function () {
                 return false;
             });
@@ -996,6 +1012,9 @@
                         self.parent.$events.trigger($.Event(TC.Consts.event.FEATURECLICK, { feature: feature._wrap.parent }));
                         return feature;
                     }
+                },
+                {
+                    hitTolerance: hitTolerance
                 });
             for (var i = 0; i < featuresInLayers.length; i++) {
                 if (!featuresInLayers[i]) {
@@ -1135,7 +1154,7 @@
         var self = this;
         var layers = self.map.getLayers();
         var alreadyExists = false;
-        for (var i = 0; i < layers.getLength() ; i++) {
+        for (var i = 0; i < layers.getLength(); i++) {
             if (layers.item(i) === olLayer) {
                 alreadyExists = true;
                 break;
@@ -1162,7 +1181,7 @@
                 }
             }
             else {
-                // Cambiamos los l\u00edmites de resoluci\u00f3n de la capa a los de la vista. Esto lo hacemos porque su resoluci\u00f3n est\u00e1 en otro CRS.
+                // Cambiamos los límites de resolución de la capa a los de la vista. Esto lo hacemos porque su resolución está en otro CRS.
                 if (olLayer instanceof ol.layer.Tile) {
                     olLayer.setMaxResolution(view.getMaxResolution());
                     olLayer.setMinResolution(view.getMinResolution());
@@ -1235,7 +1254,7 @@
             //layers.setAt(index, olLayer);
         }
         else {
-            //no est\u00e1 el layer, as\u00ed que no hago nada
+            //no está el layer, así que no hago nada
         }
 
     };
@@ -1257,19 +1276,27 @@
                         crs: self.parent.crs
                     });
                 }
+                //if (olLayer instanceof ol.layer.Tile) { // Si es imagen teselada
+                //    const view = self.map.getView();
+                //    const resolutions = olLayer.getSource().getResolutions();
+                //    if (resolutions) {
+                //        view.options_.resolutions = resolutions;
+                //        view.applyOptions_(view.options_);
+                //    }
+                //}
             }
             self.insertLayer(olLayer, 0);
             deferred.resolve();
         };
 
-        // Toda esta l\u00f3gica antes de llamar a setLayer() es para hacer un zoom a la nueva resoluci\u00f3n
-        // cuando la nueva capa no llega a la resoluci\u00f3n actual
+        // Toda esta lógica antes de llamar a setLayer() es para hacer un zoom a la nueva resolución
+        // cuando la nueva capa no llega a la resolución actual
         var viewOptions = getResolutionOptions(self, olLayer._wrap.parent);
         var view = self.map.getView();
         var currentResolution = view.getResolution();
         // Solo se limitan las resoluciones cuando estamos en un CRS por defecto, donde no se repixelan teselas
         if (self.parent.crs === self.parent.options.crs && viewOptions.resolutions) {
-            //buscamos la nueva resoluci\u00f3n: o una que sea similar a la actual dentro de los m\u00e1rgenes admitidos, o la inmediata superior
+            //buscamos la nueva resolución: o una que sea similar a la actual dentro de los márgenes admitidos, o la inmediata superior
             var newRes = viewOptions.resolutions
                 .sort(function (a, b) { return a - b })
                 .reduce(function (prev, elm) {
@@ -1320,32 +1347,40 @@
 
             var applyExtent = function () {
                 var res = view.getResolutionForExtent(extent, mapSize);
-                // URI: Esta logica est\u00e1 fusilada de la funci\u00f3n fit de un objeto view de OL3
+                // URI: Esta logica está fusilada de la función fit de un objeto view de OL3
                 if (view.constrainResolution) {
                     var constrainedResolution = view.constrainResolution(res, 0, 0);
                     if (constrainedResolution < res) {
-                        if (constrainedResolution / res < TC.Consts.EXTENT_TOLERANCE)
+                        if (constrainedResolution / res < TC.Consts.EXTENT_TOLERANCE) {
                             constrainedResolution = view.constrainResolution(
                                 constrainedResolution, -1, 0);
-                        else
-                            constrainedResolution = view.constrainResolution(res, 0, 0);
+                        }
                     }
                     res = constrainedResolution;
                 }
 
-                // GLS: antes de resolver la promesa validamos si existe animaci\u00f3n
+                // flacunza: No animamos si la duración va a ser 0, porque a veces el zoom no se completa
+                // GLS: antes de resolver la promesa validamos si existe animación
                 // URI: si la animacion no existe ponemos duracion 0
                 // flacunza: en caso de que animate=undefined, se anima
-                view.animate({
-                    resolution: res,
-                    center: [((extent[0] + extent[2]) / 2), ((extent[1] + extent[3]) / 2)],
-                    duration: (opts.animate === void (0) || opts.animate) ? TC.Consts.ZOOM_ANIMATION_DURATION : 0
-                }, onpostrender);
+                const center = [((extent[0] + extent[2]) / 2), ((extent[1] + extent[3]) / 2)];
+                if (opts.animate === void (0) || opts.animate) {
+                    view.animate({
+                        resolution: res,
+                        center: center,
+                        duration: TC.Consts.ZOOM_ANIMATION_DURATION
+                    }, onpostrender);
+                }
+                else {
+                    view.setCenter(center);
+                    view.setResolution(res);
+                    onpostrender();
+                }
             };
 
             if (self.parent.baseLayer) {
                 $.when(self.parent.baseLayer.wrap.getLayer()).then(function (olLayer) {
-                    // Todo esto para evitar que haga m\u00e1s zoom que el admisible por la capa base
+                    // Todo esto para evitar que haga más zoom que el admisible por la capa base
                     var olSource = olLayer.getSource();
                     if (olSource.getResolutions != goog.abstractMethod) {
                         var res = view.getResolutionForExtent(extent, mapSize);
@@ -1532,7 +1567,7 @@
                                     popupCtl._previousContainerPosition = [parseInt($container.css('left')), parseInt($container.css('bottom'))];
                                 })
                                 .drag(function (ev, dd) {
-                                    if (!ev.buttons && !Modernizr.touch) { // Evitamos que se mantenga el drag si no hay bot\u00f3n pulsado (p.e. en IE pulsando una scrollbar)
+                                    if (!ev.buttons && !Modernizr.touch) { // Evitamos que se mantenga el drag si no hay botón pulsado (p.e. en IE pulsando una scrollbar)
                                         return false;
                                     }
                                     popup.setOffset([popupCtl._currentOffset[0] + dd.deltaX, popupCtl._currentOffset[1] + dd.deltaY]);
@@ -1555,17 +1590,20 @@
                             if (!self.parent.activeControl || !self.parent.activeControl.isExclusive()) {
                                 var pixel = olMap.getEventPixel(e.originalEvent);
                                 hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                                    var result = true;
-                                    if (feature._wrap && !feature._wrap.parent.showsPopup && !feature._wrap.parent.options.selectable) {
-                                        result = false;
-                                    }
+                                        var result = true;
+                                        if (feature._wrap && !feature._wrap.parent.showsPopup && !feature._wrap.parent.options.selectable) {
+                                            result = false;
+                                        }
 
-                                    if (result && feature._wrap) {
-                                        self.parent.$events.trigger($.Event(TC.Consts.event.FEATUREOVER, { feature: feature._wrap.parent }));
-                                    }
+                                        if (result && feature._wrap) {
+                                            self.parent.$events.trigger($.Event(TC.Consts.event.FEATUREOVER, { feature: feature._wrap.parent }));
+                                        }
 
-                                    return result;
-                                });
+                                        return result;
+                                    },
+                                    {
+                                        hitTolerance: hitTolerance
+                                    });
                             }
                             if (hit) {
                                 mapTarget.style.cursor = 'pointer';
@@ -1603,6 +1641,7 @@
                     showPointNames: false
                 });
             case TC.Consts.layerType.GPX:
+            case TC.Consts.mimeType.GPX:
                 return new ol.format.GPX();
             case TC.Consts.layerType.GEOJSON:
             case TC.Consts.mimeType.JSON:
@@ -1620,7 +1659,7 @@
             case TC.Consts.format.WKT:
                 return new ol.format.WKT();
             default:
-                break;
+                return null;
         }
     };
 
@@ -1635,7 +1674,7 @@
                 result.setStyle(nativeStyle);
             }
             // Miramos si tiene texto, en cuyo caso la features se clona para no contaminar la feature orignal 
-            // y al clon se le a\u00f1ade el texto como atributo (necesario para exportar etiquetas en KML y GPX)
+            // y al clon se le añade el texto como atributo (necesario para exportar etiquetas en KML y GPX)
             const text = getFeatureStyle.call(result).getText();
             if (text) {
                 result = result.clone();
@@ -1685,7 +1724,7 @@
                     }
                     return feature;
                 });
-            // KML no pone etiquetas a l\u00edneas y pol\u00edgonos. En esos casos ponemos un punto con la etiqueta.
+            // KML no pone etiquetas a líneas y polígonos. En esos casos ponemos un punto con la etiqueta.
             const pointsToAdd = [];
             olFeatures.forEach(function (feature) {
                 var style = getFeatureStyle.call(feature);
@@ -1701,7 +1740,7 @@
                             point = geometry.getInteriorPoint();
                             break;
                         case geometry instanceof ol.geom.MultiLineString:
-                            // Seleccionamos la l\u00ednea m\u00e1s larga
+                            // Seleccionamos la línea más larga
                             const lineStrings = geometry.getLineStrings();
                             var maxLength = -1;
                             point = new ol.geom.Point(lineStrings[lineStrings
@@ -1717,7 +1756,7 @@
                                 }, -1)].getCoordinateAt(0.5));
                             break;
                         case geometry instanceof ol.geom.MultiPolygon:
-                            // Seleccionamos el pol\u00edgono m\u00e1s grande
+                            // Seleccionamos el polígono más grande
                             const polygons = geometry.getPolygons();
                             var maxArea = -1;
                             point = polygons[polygons
@@ -1754,7 +1793,36 @@
         }
 
         if (format instanceof ol.format.GMLBase) {
-            //Apa\u00f1amos para que el GML sea v\u00e1lido. Si no lo hacemos, con IE, en ol-debug.js:36514 da un error porque node.localName no existe.
+
+            // Quitamos los espacios en blanco de los nombres de atributo en las features: no son válidos en GML.
+            olFeatures = olFeatures.map(function (f) {
+                return f.clone();
+            });
+            olFeatures.forEach(function (f) {
+                const values = f.values_
+                const keysToChange = [];
+                for (var key in values) {
+                    if (key.indexOf(' ') >= 0) {
+                        keysToChange.push(key);
+                    }
+                }
+                keysToChange.forEach(function (key) {
+                    // Quitamos espacios en blanco y evitamos que empiece por un número
+                    var newKey = key.replace(/ /g, '_');
+                    if (/^\d/.test(newKey)) {
+                        newKey = '_' + newKey;
+                    }
+                    if (key !== newKey) {
+                        while (values[newKey] !== undefined) {
+                            newKey += '_';
+                        }
+                    }
+                    values[newKey] = values[key];
+                    delete values[key];
+                });
+            });
+
+            //Apañamos para que el GML sea válido. Si no lo hacemos, con IE, en ol-debug.js:36514 da un error porque node.localName no existe.
             format.featureNS = "sitna";
             format.featureType = "feature";
             var featuresNode = format.writeFeaturesNode(olFeatures, {
@@ -1772,6 +1840,19 @@
             //    'xsi:schemaLocation', this.schemaLocation);
             //return featureCollectionNode.outerHTML;
         }
+
+        if (format instanceof ol.format.GPX) {
+            // Queremos exportar tracks en vez de routes. OpenLayers exporta LineStrings como routes y MultiLineStrings como tracks.
+            olFeatures = olFeatures.map(function (f) {
+                const geom = f.getGeometry();
+                if (geom instanceof ol.geom.LineString) {
+                    f = f.clone();
+                    f.setGeometry(new ol.geom.MultiLineString([geom.getCoordinates()]));
+                }
+                return f;
+            });
+        }
+
         var result = format.writeFeatures(olFeatures, {
             dataProjection: 'EPSG:4326',
             featureProjection: self.parent.crs
@@ -1794,7 +1875,7 @@
 
     var handleDragEnter = function (e) {
         var self = this;
-        if (isFileDrag(e)) { // Solo hay gesti\u00f3n si lo que se arrastra es un archivo
+        if (isFileDrag(e)) { // Solo hay gestión si lo que se arrastra es un archivo
             self.getMap()._wrap.parent._$div.addClass(TC.Consts.classes.DROP);
             e.preventDefault();
             e.stopPropagation();
@@ -1803,7 +1884,7 @@
 
     var handleDragExit = function (e) {
         var self = this;
-        if (isFileDrag(e)) { // Solo hay gesti\u00f3n si lo que se arrastra es un archivo
+        if (isFileDrag(e)) { // Solo hay gestión si lo que se arrastra es un archivo
             var map = self.getMap()._wrap.parent;
             if (e.target === self.target) {
                 map._$div.removeClass(TC.Consts.classes.DROP);
@@ -1861,9 +1942,9 @@
         else {
             self.map.addInteraction(ddInteraction);
             var dropArea = ddInteraction.target ? ddInteraction.target : self.map.getViewport();
-            // A\u00f1adidos gestores de eventos para mostrar el indicador visual de drop.
+            // Añadidos gestores de eventos para mostrar el indicador visual de drop.
             var handleDrop = function (e) {
-                if (isFileDrag(e)) { // Solo hay gesti\u00f3n si lo que se arrastra es un archivo
+                if (isFileDrag(e)) { // Solo hay gestión si lo que se arrastra es un archivo
                     var map = self.parent;
                     if (ddInteraction.target === e.target) {
                         var li = map.getLoadingIndicator();
@@ -2103,7 +2184,7 @@
                 result = [node.MaxScaleDenominator, node.MinScaleDenominator];
             }
         }
-        // Contemplamos el caso de una capa sin nombre: sus escalas v\u00e1lidas ser\u00e1n las de sus hijas.
+        // Contemplamos el caso de una capa sin nombre: sus escalas válidas serán las de sus hijas.
         if (!result.length && !self.getName(node)) {
             var children = self.getLayerNodes(node);
             var max = -Infinity, min = Infinity;
@@ -2170,7 +2251,7 @@
                     var _traverse = function (o, func) {
                         if (o.Layer && o.Layer.length > 0) {
                             for (var i in o.Layer) {
-                                //bajar un nivel en el \u00e1rbol
+                                //bajar un nivel en el árbol
                                 _traverse(o.Layer[i], func);
                             }
                         } else {
@@ -2300,7 +2381,7 @@
             if (styles.length && styles[0].LegendURL && styles[0].LegendURL.length) {
                 var legend = styles[0].LegendURL[0];
                 result.src = $('<textarea />').html(legend.OnlineResource).text();
-                // Eliminado porque GeoServer miente con el tama\u00f1o de sus im\u00e1genes de la leyenda
+                // Eliminado porque GeoServer miente con el tamaño de sus imágenes de la leyenda
                 //if (legend.size) {
                 //    result.width = legend.size[0];
                 //    result.height = legend.size[1];
@@ -2324,7 +2405,9 @@
                             if (nodes) {
                                 for (var i = 0; i < nodes.length; i++) {
                                     var n = nodes[i];
-                                    var isIn = inCrs || $.inArray(crs, n.CRS || n.SRS) >= 0;
+                                    const itemCRS = n.CRS || n.SRS;
+                                    const crsList = Array.isArray(itemCRS) ? itemCRS : [itemCRS];
+                                    var isIn = inCrs || $.inArray(crs, crsList) >= 0;
                                     if (layer.compareNames(self.getName(n), name)) {
                                         if (isIn) {
                                             r = true;
@@ -2379,10 +2462,14 @@
                                 return layer
                                     .getNodePath(name) // array de nodos
                                     .map(function (node) {
-                                        const crsList = node.CRS || node.SRS || [];
+                                        const itemCRS = node.CRS || node.SRS || [];
+                                        const crsList = Array.isArray(itemCRS) ? itemCRS : [itemCRS];
                                         return $.isArray(crsList) ? crsList : [crsList];
                                     }) // array de arrays de crs
                                     .reduce(function (prev, cur) {
+                                        if (prev.length === 0) {
+                                            return cur;
+                                        }
                                         cur.forEach(function (elm) {
                                             if (prev.indexOf(elm) < 0) {
                                                 prev[prev.length - 1] = elm;
@@ -2392,12 +2479,16 @@
                                     });
                             });
 
-                        const otherCrsLists = crsLists.slice(1);
-                        result = crsLists[0].filter(function (elm) {
-                            return otherCrsLists.every(function (crsList) {
-                                return crsList.indexOf(elm) >= 0;
+                        if (crsLists.length === 1) {
+                            result = crsLists[0];
+                        } else {
+                            const otherCrsLists = crsLists.slice(1);
+                            result = crsLists[0].filter(function (elm) {
+                                return otherCrsLists.every(function (crsList) {
+                                    return crsList.indexOf(elm) >= 0;
+                                });
                             });
-                        });
+                        }
                     }
                 }
                 break;
@@ -2406,7 +2497,7 @@
                     layer.capabilities.Contents.Layer
                         .filter(function (l) {
                             return l.Identifier === layer.layerNames;
-                        })  // La capa de inter\u00e9s
+                        })  // La capa de interés
                         .forEach(function (l) {
                             const tileMatrixSets = l.TileMatrixSetLink
                                 .map(function (tmsl) {
@@ -2415,7 +2506,7 @@
                             result = layer.capabilities.Contents.TileMatrixSet
                                 .filter(function (tms) {
                                     return tileMatrixSets.indexOf(tms.Identifier) >= 0;
-                                }) // TileMatrixSets asociados a la capa de inter\u00e9s
+                                }) // TileMatrixSets asociados a la capa de interés
                                 .map(function (tms) {
                                     return tms.SupportedCRS;
                                 });
@@ -2436,7 +2527,9 @@
             case TC.Consts.layerType.WMS:
                 if (layer.capabilities && layer.capabilities.Capability && layer.capabilities.Capability.Layer) {
                     var _fnrecursive = function (item, crs, inCrs) {
-                        var isIn = inCrs || $.inArray(crs, item.CRS || item.SRS) >= 0;
+                        var crsToCheck = item.CRS || item.SRS;
+                        var itemCRS = Array.isArray(crsToCheck) ? crsToCheck : [crsToCheck];
+                        var isIn = inCrs || $.inArray(crs, itemCRS) >= 0;
                         if (isIn && item.Name) result[result.length] = item.Name;
                         if (item.Layer) {
                             for (var i = 0; i < item.Layer.length; i++) {
@@ -2540,7 +2633,7 @@
 
 
         var layerOptions = {
-            visible: !!params.LAYERS.length || (options && options.method && options.method === 'POST'), //Las capas de tem\u00e1ticos cargadas por POST no tienen el atributo LAYERS
+            visible: !!params.LAYERS.length || (options && options.method && options.method === 'POST'), //Las capas de temáticos cargadas por POST no tienen el atributo LAYERS
             source: source
         };
 
@@ -2595,7 +2688,7 @@
         result.getResolutions = function () {
             var resolutions = prevFn();
             var matrix = self.parent.getLimitedMatrixSet();
-            //esto est\u00e1 mal, porque matrix podr\u00eda empezar m\u00e1s abajo (tener recortado por ambos lados)
+            //esto está mal, porque matrix podría empezar más abajo (tener recortado por ambos lados)
             if (matrix && matrix.length) {
                 var ix = matrix[0].matrixIndex;
                 resolutions = resolutions.slice(ix, matrix.length + ix);
@@ -2630,7 +2723,7 @@
         self.addCommonEvents(result);
 
         var resolutions = source.getResolutions();
-        //Este +1 tan chungo es porque, en el caso en que la resoluci\u00f3n del mapa es igual a la m\u00e1xima del layer, openLayers lo oculta
+        //Este +1 tan chungo es porque, en el caso en que la resolución del mapa es igual a la máxima del layer, openLayers lo oculta
         result.setMaxResolution(resolutions[0] + 1);
         result.setMinResolution(resolutions[resolutions.length - 1]);
 
@@ -2692,7 +2785,7 @@
         }
     };
 
-    // En OL3 la imagen tiene el tama\u00f1o original. Escalamos si hace falta.
+    // En OL3 la imagen tiene el tamaño original. Escalamos si hace falta.
     var setScaleFunction = function (imageStyle, iconWidth, olFeat) {
         if (imageStyle) {
             var setScaleForWidth = function (imgWidth) {
@@ -2758,7 +2851,7 @@
         return result;
     };
 
-    // Transformaci\u00f3n de opciones de estilo en un estilo nativo OL3.
+    // Transformación de opciones de estilo en un estilo nativo OL3.
     var createNativeStyle = function (options, olFeat) {
         var nativeStyleOptions = {};
 
@@ -2773,7 +2866,7 @@
 
 
                 feature = {
-                    id: TC.wrap.Feature.prototype.getId.call({ feature: olFeat }), // GLS a\u00f1ado el id de la feature para poder filtrar por la capa a la cual pertenece                    
+                    id: TC.wrap.Feature.prototype.getId.call({ feature: olFeat }), // GLS añado el id de la feature para poder filtrar por la capa a la cual pertenece                    
                     features: olFeat.get('features'),
                     getData: function () {
                         return TC.wrap.Feature.prototype.getData.call({ feature: olFeat });
@@ -2852,6 +2945,7 @@
                     anchorYUnits: styleOptions.anchorYUnits || ANCHOR_DEFAULT_UNITS,
                     src: styleOptions.url
                 });
+                nativeStyleOptions.text = createNativeTextStyle(styleOptions, feature);
             }
         }
 
@@ -3026,7 +3120,7 @@
 
     const createFeatureFromNative = function (olFeat) {
         const deferred = $.Deferred();
-        if (olFeat._wrapDeferred) { // Ya se ha llamado antes a esta funci\u00f3n para esta feature
+        if (olFeat._wrapDeferred) { // Ya se ha llamado antes a esta función para esta feature
             olFeat._wrapDeferred.then(function (wrap) {
                 deferred.resolve(wrap.parent);
             });
@@ -3107,11 +3201,6 @@
             switch (url.substr(url.lastIndexOf('.') + 1).toLowerCase()) {
                 case 'kml':
                     return TC.Consts.layerType.KML;
-                case 'gpx':
-                    return TC.Consts.layerType.GPX;
-                case 'json':
-                case 'geojson':
-                    return TC.Consts.layerType.GEOJSON;
                 default:
                     return TC.Consts.layerType.VECTOR;
             }
@@ -3135,7 +3224,7 @@
                 url: TC.proxify(options.url),
                 projection: options.crs
             };
-            vectorOptions.format = getFormatFromName(getTypeFromUrl(options.url)) || getFormatFromName(options.type);
+            vectorOptions.format = getFormatFromName(options.format) || getFormatFromName(getTypeFromUrl(options.url)) || getFormatFromName(options.type);
             vectorOptions.loader = createGenericLoader(vectorOptions.url, vectorOptions.format);
             usesGenericLoader = true;
         }
@@ -3307,7 +3396,7 @@
                 source: source
             });
 
-            // Animaci\u00f3n
+            // Animación
             if (options.cluster.animate) {
                 var getCurrentCoordinates = function (fromCoords, toCoords, duration, start) {
                     var fraction = Math.min((Date.now() - start) / duration, 1);
@@ -3374,7 +3463,7 @@
         do {
             s.addEventListener(ol.source.VectorEventType.ADDFEATURE, function (e) {
                 var olFeat = e.feature;
-                // OL3 dibuja el tama\u00f1o original del icono del marcador, lo escalamos si es necesario:
+                // OL3 dibuja el tamaño original del icono del marcador, lo escalamos si es necesario:
                 var style = getNativeStyle(olFeat);
                 if (style) {
                     setScaleFunction(style.getImage(), markerStyle.width, olFeat);
@@ -3433,7 +3522,7 @@
                 }
             };
 
-            if (!olFeat._wrap || !olFeat._wrap.parent.layer) { // Solo actuar si no es una feature a\u00f1adida desde la API
+            if (!olFeat._wrap || !olFeat._wrap.parent.layer) { // Solo actuar si no es una feature añadida desde la API
                 createFeatureFromNative(olFeat).then(addFeatureToLayer);
             }
         });
@@ -3450,15 +3539,21 @@
         });
 
         source.addEventListener(ol.source.VectorEventType.ADDFEATURE, function (e) {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            if (self.parent.map) {
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            }
         });
 
         source.addEventListener(ol.source.VectorEventType.REMOVEFEATURE, function () {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            if (self.parent.map) {
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            }
         });
 
         source.addEventListener(ol.source.VectorEventType.CLEAR, function () {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESCLEAR, { layer: self.parent }));
+            if (self.parent.map) {
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESCLEAR, { layer: self.parent }));
+            }
         });
 
         var layerOptions = {
@@ -3472,8 +3567,8 @@
             layerOptions.maxResolution = options.maxResolution;
         }
 
-        // En KML conservamos el estilo que viene con el archivo, as\u00ed que no entramos aqu\u00ed.
-        // A no ser que tenga clusters, porque OL no soporta por defecto la combinaci\u00f3n de estilo KML con clusters.
+        // En KML conservamos el estilo que viene con el archivo, así que no entramos aquí.
+        // A no ser que tenga clusters, porque OL no soporta por defecto la combinación de estilo KML con clusters.
         if (!(vectorOptions && vectorOptions.format instanceof ol.format.KML) || options.cluster) {
             layerOptions.style = nativeStyle || options.styles;
         }
@@ -3547,6 +3642,7 @@
         var options = self.parent.options;
 
         var layerOptions = self.createVectorSource(options, self.createStyles(options));
+        layerOptions.declutter = self.parent.options.declutter || false;
         result = new ol.layer.Vector(layerOptions);
         result._wrap = self;
 
@@ -3643,7 +3739,7 @@
     };
 
     TC.wrap.layer.Vector.prototype.findFeature = function (values) {
-        // TODO: a\u00f1adir ol.animation.zoom
+        // TODO: añadir ol.animation.zoom
     };
 
     TC.wrap.layer.Vector.prototype.getGetFeatureUrl = function () {
@@ -3719,7 +3815,7 @@
     TC.wrap.layer.Vector.prototype.setDraggable = function (draggable, onend, onstart) {
         var self = this;
 
-        //tiene que estar a nivel de control para poder retirarla despu\u00e9s
+        //tiene que estar a nivel de control para poder retirarla después
         //var interaction;
         $.when(self.parent.map.wrap.getMap(), self.getLayer()).then(function (olMap, olLayer) {
             if (draggable) {
@@ -3755,12 +3851,15 @@
                         var hit = olMap.hasFeatureAtPixel(pixel);
                         if (hit) {
                             olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                                if (layer._wrap && layer._wrap.parent && layer._wrap.parent.id === self.parent.id && feature) {
-                                    olMap.getTarget().style.cursor = 'move';
-                                } else {
-                                    olMap.getTarget().style.cursor = '';
-                                }
-                            });
+                                    if (layer._wrap && layer._wrap.parent && layer._wrap.parent.id === self.parent.id && feature) {
+                                        olMap.getTarget().style.cursor = 'move';
+                                    } else {
+                                        olMap.getTarget().style.cursor = '';
+                                    }
+                                },
+                                {
+                                    hitTolerance: hitTolerance
+                                });
                         } else {
                             olMap.getTarget().style.cursor = '';
                         }
@@ -3819,6 +3918,9 @@
                     if (feature._wrap && feature._wrap.parent.showsPopup) {
                         featureCount++;
                     }
+                },
+                {
+                    hitTolerance: hitTolerance
                 });
             if (!featureCount) {
                 // GLS: lanzo el evento click, para que los controles que no pueden heredar de click y definir un callback pueda suscribirse al evento
@@ -3868,7 +3970,7 @@
         $.when(map.wrap.getMap()).then(function (olMap) {
             var div = self.parent.div;
             self.zCtl = new ol.control.Zoom({ target: div });
-            // Ponemos para render una funci\u00f3n modificada, para evitar que en los pinch zoom haya errores de este tipo:
+            // Ponemos para render una función modificada, para evitar que en los pinch zoom haya errores de este tipo:
             // AssertionError: Assertion failed: calculated value (1.002067782531452) ouside allowed range (0-1)
             self.zsCtl = new ol.control.ZoomSlider({
                 target: div,
@@ -3932,7 +4034,7 @@
         */
         var self = this;
         var map = self.parent.map.wrap.map;
-        // Puede ser que se llame a refresh antes de que est\u00e9 inicializado ol.control.ZoomSlider. En ese caso llamamos a render que lo inicializa.
+        // Puede ser que se llame a refresh antes de que esté inicializado ol.control.ZoomSlider. En ese caso llamamos a render que lo inicializa.
         // Como render necesita un ol.MapEvent, esperamos al evento POSTRENDER.
         if (self.zsCtl.sliderInitialized_) {
             var res = map.getView().getResolution();
@@ -3946,7 +4048,7 @@
     };
 
     TC.wrap.control.NavBar.prototype.setInitialExtent = function (extent) {
-        this.z2eCtl.extent_ = extent;
+        this.z2eCtl.extent = extent;
     };
 
     TC.wrap.control.Coordinates.prototype.register = function (map) {
@@ -4268,10 +4370,10 @@
                                             self.parent.onGeolocateError.call(self.parent, error);
                                     }
                                 }, {
-                                    timeout: 5000 + id,
-                                    maximumAge: 10,
-                                    enableHighAccuracy: true
-                                }
+                                timeout: 5000 + id,
+                                maximumAge: 10,
+                                enableHighAccuracy: true
+                            }
                         );
                     }
                     getCurrentPositionInterval = setInterval(getCurrentPosition, 1000);
@@ -4374,7 +4476,7 @@
                 else self.snapLine.wrap.feature.getGeometry().setCoordinates(coordinates);
 
 
-                // informaci\u00f3n del punto
+                // información del punto
                 if (!self.snapInfoElement)
                     self.snapInfoElement = document.getElementsByClassName('tc-ctl-geolocation-track-snap-info')[0];
 
@@ -4610,7 +4712,7 @@
                 maybeRemove.push(feature);
             }
             else if (feature.getGeometry() instanceof ol.geom.LineString) {
-                // GLS: 31/01/2018 Routes (<rte>) are converted into LineString geometries, and tracks (<trk>) into MultiLineString, por tanto, las l\u00edneas las cargamos como N Rutas, no las unimos como hasta ahora: // segments.push(feature.getGeometry());                
+                // GLS: 31/01/2018 Routes (<rte>) are converted into LineString geometries, and tracks (<trk>) into MultiLineString, por tanto, las líneas las cargamos como N Rutas, no las unimos como hasta ahora: // segments.push(feature.getGeometry());                
                 getName(feature);
                 toAdd.push(new ol.Feature({ geometry: new ol.geom.LineString(feature.getGeometry().getCoordinates(), feature.getGeometry().getLayout()) }));
                 toRemove.push(feature);
@@ -5047,7 +5149,7 @@
             });
         }
 
-        // GLS: si la capa del track est\u00e1 visible mostramos marcamos punto del gr\u00e1fico en el mapa
+        // GLS: si la capa del track está visible mostramos marcamos punto del gráfico en el mapa
         if (layer.getVisibility() && layer.getOpacity() > 0) {
             $(self.elevationMarker.getElement()).show();
             self.olMap.addOverlay(self.elevationMarker);
@@ -5124,7 +5226,7 @@
             });
             self.ovMap._wrap = self;
 
-            // Quitamos el drag&drop a\u00f1adido en OL 4.1.0 machacando el overlay
+            // Quitamos el drag&drop añadido en OL 4.1.0 machacando el overlay
             self.ovMap.ovmap_.removeOverlay(self.ovMap.boxOverlay_);
             var box = document.createElement('DIV');
             box.className = 'ol-overviewmap-box';
@@ -5201,7 +5303,7 @@
 
             $.when(map.wrap.getMap()).then(function (olMap) {
 
-                // Modificamos mapa para que tenga la proyecci\u00f3n correcta
+                // Modificamos mapa para que tenga la proyección correcta
                 self.reset();
 
                 var $load = $(self.parent.div).find('.' + self.parent.CLASS + '-load');
@@ -5242,7 +5344,7 @@
                 );
             });
         }
-    };
+    };    
 
     TC.wrap.control.OverviewMap.prototype.get3DCameraLayer = function () {
         var self = this;
@@ -5257,7 +5359,7 @@
         if (!result) {
             var ovMap = self.ovMap.getOverviewMap();
             var fovStyle = createNativeStyle({});
-            // Ponemos los cuadril\u00e1teros de fov sin relleno (por legibilidad)
+            // Ponemos los cuadriláteros de fov sin relleno (por legibilidad)
             fovStyle[0].getFill().setColor([0, 0, 0, 0]);
             result = new ol.layer.Vector({
                 id: camLayerId,
@@ -5301,7 +5403,17 @@
         var self = this;
         if (self.parent.layer && self.parent.layer.setVisibility) {
             self.parent.layer.setVisibility(true);
-            // La siguiente l\u00ednea es para actualizar mapa de situaci\u00f3n
+
+            /* GLS: bug 23855: mapa de situación se muestra en blanco
+                En el resize se valida el alto y el ancho y como el div padre (id = "ovmap") tiene display: none, 
+                el ancho y el alto devuelven cero y por ello se muestra en blanco. 
+                No vale con lanzar .trigger('resize') porque no utiliza los valores actuales del div, 
+                sino los almacenados, por eso llamamos a updateSize que actualiza dichos valores.
+                https://tfsapp.tracasa.es:8088/tfs/web/wi.aspx?pcguid=4819cc6e-400e-4f70-ba7c-c18a830405aa&id=23855                
+            */
+            self.parent.wrap.ovMap.ovmap_.updateSize();
+
+            // La siguiente línea es para actualizar mapa de situación
             $(self.parent.map.div).trigger('resize');
         }
     };
@@ -5397,7 +5509,7 @@
                 var source = olLayer.getSource();
 
                 //console.log("Source: " + layer.layerNames.join(","));
-                //Por qu\u00e9 en workLayers est\u00e1n el vectorial de medici\u00f3n, y cosas as\u00ed?
+                //Por qué en workLayers están el vectorial de medición, y cosas así?
                 if (source.getGetFeatureInfoUrl && $.inArray(layer, map.workLayers) >= 0 && layer.names.length > 0
                     && (!opts.serviceUrl || opts.serviceUrl === layer.url)) { // Mirar si en las opciones pone que solo busque en un servicio
 
@@ -5437,7 +5549,7 @@
                                 addLayerToService(targetService, layer, name);
                             }
                             else {
-                                TC.Util.consoleRegister('Capa "' + disgregatedNames[i] + '" no queryable, la eliminamos de la petici\u00f3n GFI');
+                                TC.Util.consoleRegister('Capa "' + disgregatedNames[i] + '" no queryable, la eliminamos de la petición GFI');
                                 disgregatedNames.splice(i, 1);
                                 i = i - 1;
                             }
@@ -5471,7 +5583,7 @@
                     'buffer': map.options.pixelTolerance
                 });
 
-                gfiURL = gfiURL.replace(/sld_body=[a-zA-Z%0-9._]*/); // Quitamos el par\u00e1metro sld_body
+                gfiURL = gfiURL.replace(/sld_body=[a-zA-Z%0-9._]*/); // Quitamos el parámetro sld_body
 
 
                 var expUrl = gfiURL;
@@ -5588,10 +5700,10 @@
                                                 }
                                             }
 
-                                            //si llegamos aqu\u00ed y no he encontrado su layer, es que no cuadraba el prefijo del fid con el id del layer
+                                            //si llegamos aquí y no he encontrado su layer, es que no cuadraba el prefijo del fid con el id del layer
                                             //esto pasa, p.ej, en cartociudad
                                             if (!found) {
-                                                //as\u00ed que creo un layer de palo para la respuesta del featInfo
+                                                //así que creo un layer de palo para la respuesta del featInfo
                                                 var fakeLayer;
                                                 if (fakeLayers[layerName]) fakeLayer = fakeLayers[layerName];
                                                 else {
@@ -5608,7 +5720,7 @@
                                                 }
                                             }
                                         }
-                                    }//iteraci\u00f3n sobre las features de esta respuesta
+                                    }//iteración sobre las features de esta respuesta
 
 
                                 }
@@ -5631,15 +5743,15 @@
                             else { // iFormat !== featureInfo.requestedFormat
 
                                 // GLS:
-                                TC.Util.consoleRegister("Respuesta GFI: lo m\u00e1s probable es que el servidor est\u00e9 devolviendo una excepci\u00f3n");
+                                TC.Util.consoleRegister("Respuesta GFI: lo más probable es que el servidor esté devolviendo una excepción");
                                 TC.Util.consoleRegister("Lanzamos los eventos que corresponde y mostramos tostada");
 
-                                // En este caso lo m\u00e1s probable es que el servidor est\u00e9 devolviendo una excepci\u00f3n
+                                // En este caso lo más probable es que el servidor esté devolviendo una excepción
                                 self.parent.responseError({
                                     message: featureInfo.responseText,
                                     status: featureInfo.status
                                 });
-                                // GLS: misma gesti\u00f3n de error que en ol.js - > function (a, b, c) { // error...
+                                // GLS: misma gestión de error que en ol.js - > function (a, b, c) { // error...
                                 map.toast(self.parent.getLocaleString('featureInfo.error'), {
                                     type: TC.Consts.msgType.ERROR
                                 });
@@ -5657,7 +5769,7 @@
                         if (featurePromises.length) {
                             var geometryPromise = $.Deferred();
                             finfoPromises = finfoPromises.concat(geometryPromise);
-                            // Si hay features cargamos el m\u00f3dulo de geometria para encontrar una que se interseque con el punto
+                            // Si hay features cargamos el módulo de geometria para encontrar una que se interseque con el punto
                             TC.loadJS(
                                 !TC.Geometry,
                                 TC.apiLocation + 'TC/Geometry',
@@ -5726,7 +5838,7 @@
                     });
                 }
 
-                // GLS: nos suscribimos TC.Consts.event.BEFOREFEATUREINFO y lanzamos el mismo evento de zero resultados ya que puede darse que la resoluci\u00f3n se lance antes del before.
+                // GLS: nos suscribimos TC.Consts.event.BEFOREFEATUREINFO y lanzamos el mismo evento de zero resultados ya que puede darse que la resolución se lance antes del before.
                 map.$events.on(TC.Consts.event.BEFOREFEATUREINFO, function () {
                     self.parent.responseCallback({
                         coords: coords, resolution: resolution, services: targetServices, featureCount: 0
@@ -5768,7 +5880,7 @@
             olMap.getLayers().forEach(function (olLayer) {
                 var layer = olLayer._wrap.parent;
                 var source = olLayer.getSource();
-                //Por qu\u00e9 en workLayers est\u00e1n el vectorial de medici\u00f3n, y cosas as\u00ed?
+                //Por qué en workLayers están el vectorial de medición, y cosas así?
                 if (source.getGetFeatureInfoUrl && $.inArray(layer, map.workLayers) >= 0) {
                     ret = true;
                     return false;   //break del foreach
@@ -5816,10 +5928,10 @@
                     }
                 });
                 self.drawCtrl.handleEvent = function (event) {
-                    //esta \u00f1apa para solucionar cuando haces un primer punto y acontinuaci\u00f3n otro muy r\u00e1pido
+                    //esta ñapa para solucionar cuando haces un primer punto y acontinuación otro muy rápido
                     if (event.type == ol.MapBrowserEventType.SINGLECLICK) {
                         var points = olGeometryType === ol.geom.GeometryType.POLYGON ? this.sketchCoords_[0] : this.sketchCoords_;
-                        if (semaforo && points.length == 2 && this.sketchFeature_ !== null) {// GLS: A\u00f1ado la misma validaci\u00f3n (this.sketchFeature_ !== null) que tiene el c\u00f3digo de OL antes de invocar addToDrawing_ 
+                        if (semaforo && points.length == 2 && this.sketchFeature_ !== null) {// GLS: Añado la misma validación (this.sketchFeature_ !== null) que tiene el código de OL antes de invocar addToDrawing_ 
                             this.addToDrawing_(event);
                         }
                         else {
@@ -6154,13 +6266,13 @@
         }
         else {
             return null;
-            //si no hay formato reconocido y parseable, metemos un iframe con la respuesta
-            //y prau
-            //para eso, creo una falsa entrada de tipo feature, con un campo especial rawUrl o rawContent
-            var l = service.layers[0];
-            l.features.push({
-                error: response.responseText
-            });
+            ////si no hay formato reconocido y parseable, metemos un iframe con la respuesta
+            ////y prau
+            ////para eso, creo una falsa entrada de tipo feature, con un campo especial rawUrl o rawContent
+            //var l = service.layers[0];
+            //l.features.push({
+            //    error: response.responseText
+            //});
         }
     };
     var featureToServiceDistributor = function (features, service) {
@@ -6438,10 +6550,10 @@
                     this._oldUpdatePixelPosition();
                 };
                 ol.events.unlisten(
-                    popup, ol.Object.getChangeEventType(ol.Overlay.Property_.OFFSET),
+                    popup, ol.Object.getChangeEventType(ol.Overlay.Property.OFFSET),
                     popup.handleOffsetChanged, popup);
                 ol.events.listen(
-                    popup, ol.Object.getChangeEventType(ol.Overlay.Property_.OFFSET),
+                    popup, ol.Object.getChangeEventType(ol.Overlay.Property.OFFSET),
                     popup._newHandleOffsetChanged, popup);
             }
             //view.on(['change:center','change:resolution'], onViewChange);
@@ -6455,10 +6567,10 @@
             }
             if (popup._newHandleOffsetChanged) {
                 ol.events.unlisten(
-                    popup, ol.Object.getChangeEventType(ol.Overlay.Property_.OFFSET),
+                    popup, ol.Object.getChangeEventType(ol.Overlay.Property.OFFSET),
                     popup._newHandleOffsetChanged, popup);
                 ol.events.listen(
-                    popup, ol.Object.getChangeEventType(ol.Overlay.Property_.OFFSET),
+                    popup, ol.Object.getChangeEventType(ol.Overlay.Property.OFFSET),
                     popup.handleOffsetChanged, popup);
                 delete popup._newHandleOffsetChanged;
             }
@@ -6638,7 +6750,7 @@
                 if ($.isArray(plnCoords) && plnCoords.length) {
                     var pointCoord = plnCoords[0];
                     if (!$.isArray(pointCoord)) {
-                        // polil\u00ednea sola, la metemos dentro de un array de polil\u00edneas
+                        // polilínea sola, la metemos dentro de un array de polilíneas
                         coords = [coords];
                     }
                     self.parent.geometry = coords;
@@ -6668,12 +6780,12 @@
                     if ($.isArray(ringCoords) && ringCoords.length) {
                         var pointCoord = ringCoords[0];
                         if (!$.isArray(pointCoord)) {
-                            // pol\u00edgono solo, lo metemos dentro de un array de pol\u00edgonos
+                            // polígono solo, lo metemos dentro de un array de polígonos
                             coords = [coords];
                         }
                     }
                     else {
-                        // anillo solo, lo metemos de un array de anillos y este en un array de pol\u00edgonos
+                        // anillo solo, lo metemos de un array de anillos y este en un array de polígonos
                         coords = [[coords]];
                     }
                     // Close rings
@@ -6751,7 +6863,7 @@
             id: olFeat.getId()
         };
 
-        // geometr\u00eda
+        // geometría
         var geomStr;
         switch (true) {
             case olGeometry instanceof ol.geom.Point:
@@ -6926,10 +7038,10 @@
                 isMultiPolygon,
                 isPolygonOrLineString,
                 isLineString;
-            // punto: array de n\u00fameros
-            // l\u00ednea o anillo: array de puntos
-            // multil\u00ednea o pol\u00edgono: array de l\u00edneas o anillos
-            // multipol\u00edgono: array de pol\u00edgonos
+            // punto: array de números
+            // línea o anillo: array de puntos
+            // multilínea o polígono: array de líneas o anillos
+            // multipolígono: array de polígonos
             // Por tanto podemos recorrer los tipos en un switch sin breaks
             switch (true) {
                 case (geom instanceof ol.geom.MultiPolygon):
@@ -7040,7 +7152,7 @@
         }
     };
 
-    const getFeatureStyle = function () {
+    const getFeatureStyle = function (readonly) {
         var style = this.getStyle();
         if ($.isFunction(style)) {
             style = style.call(this);
@@ -7048,9 +7160,23 @@
         if ($.isArray(style)) {
             style = style[style.length - 1];
         }
-        if (!style) {
+        if (!style && !readonly) {
             style = new ol.style.Style();
             this.setStyle(style);
+        }
+        return style;
+    };
+
+    const getLayerStyle = function (feature) {
+        var style = this.getStyle();
+        if ($.isFunction(style)) {
+            style = style(feature);
+        }
+        if ($.isArray(style)) {
+            style = style[style.length - 1];
+        }
+        if (!style) {
+            style = new ol.style.Style();
         }
         return style;
     };
@@ -7058,17 +7184,26 @@
     TC.wrap.Feature.prototype.setStyle = function (options) {
         const self = this;
         const olFeat = self.feature;
+        if (options === null) {
+            olFeat.setStyle(null);
+            return;
+        }
         const feature = self.parent;
         const geom = olFeat.getGeometry();
         var style = getFeatureStyle.call(olFeat);
+        var layerStyle;
+        if (feature.layer) {
+            layerStyle = getLayerStyle.call(feature.layer.wrap.layer, feature.wrap.feature);
+        }
         if (geom instanceof ol.geom.Point || geom instanceof ol.geom.MultiPoint) {
 
             var imageStyle;
-            if (options.anchor || options.url) { // Marcador
+            if (options.anchor || options.url || options.cssClass) { // Marcador
                 imageStyle = style.getImage();
                 const iconOptions = {};
                 if (imageStyle instanceof ol.style.Icon) {
-                    iconOptions.src = options.url || imageStyle.getSrc();
+                    iconOptions.src = options.url || TC.Util.getBackgroundUrlFromCss(options.cssClass) || imageStyle.getSrc();
+
                     if (options.width && options.height) {
                         iconOptions.size = [getStyleValue(options.width, feature), getStyleValue(options.height, feature)];
                     }
@@ -7106,16 +7241,15 @@
             }
             else { // Punto sin icono
                 imageStyle = style.getImage();
+                if (!imageStyle) {
+                    imageStyle = new ol.style.Circle();
+                }
                 const circleOptions = {
                     radius: getStyleValue(options.radius, feature) ||
                     (getStyleValue(options.height, feature) + getStyleValue(options.width, feature)) / 4
                 };
                 if (isNaN(circleOptions.radius)) {
                     circleOptions.radius = imageStyle.getRadius();
-                }
-                if (!isNaN(circleOptions.radius)) {
-                    circleOptions.radius = imageStyle.getRadius();
-                    imageStyle = new ol.style.Circle(circleOptions);
                 }
                 if (options.fillColor) {
                     circleOptions.fill = new ol.style.Fill({
@@ -7126,6 +7260,7 @@
                     circleOptions.fill = imageStyle.getFill();
                 }
                 circleOptions.stroke = imageStyle.getStroke();
+                const layerStroke = layerStyle && layerStyle.getStroke();
                 if (options.strokeColor || options.strokeWidth) {
                     if (!circleOptions.stroke) {
                         circleOptions.stroke = new ol.style.Stroke();
@@ -7133,8 +7268,16 @@
                     if (options.strokeColor) {
                         circleOptions.stroke.setColor(getStyleValue(options.strokeColor, feature));
                     }
+                    else {
+                        const strokeColor = circleOptions.stroke.getColor() || (layerStroke && layerStroke.getColor() || TC.Cfg.styles.point.strokeColor);
+                        circleOptions.stroke.setColor(getStyleValue(strokeColor, feature));
+                    }
                     if (options.strokeWidth) {
                         circleOptions.stroke.setWidth(getStyleValue(options.strokeWidth, feature));
+                    }
+                    else {
+                        const strokeWidth = circleOptions.stroke.getWidth() || (layerStroke && layerStroke.getWidth() || TC.Cfg.styles.point.strokeWidth);
+                        circleOptions.stroke.setWidth(getStyleValue(strokeWidth, feature));
                     }
                 }
                 imageStyle = new ol.style.Circle(circleOptions);
@@ -7189,7 +7332,7 @@
     TC.wrap.Feature.prototype.getInnerPoint = function (options) {
         var result;
         var opts = options || {};
-        // Funciones para hacer clipping con el extent actual. As\u00ed nos aseguramos de que el popup sale en un punto visible actualmente.
+        // Funciones para hacer clipping con el extent actual. Así nos aseguramos de que el popup sale en un punto visible actualmente.
         var feature = this.feature;
         var geometry = feature.getGeometry();
 
@@ -7234,7 +7377,7 @@
                 geometry = new ol.geom.Polygon(coords);
                 result = geometry.getInteriorPoint().getCoordinates();
                 var rings = geometry.getLinearRings();
-                // Miramos si el punto est\u00e1 dentro de un agujero
+                // Miramos si el punto está dentro de un agujero
                 for (var i = 1; i < rings.length; i++) {
                     if (isInsideRing(result, rings[i].getCoordinates())) {
                         result = geometry.getClosestPoint(result);
@@ -7284,10 +7427,10 @@
                             popupCtl.hide();
                         });
                         popupCtl.$contentDiv.addClass(popupCtl.CLASS + '-has-btn');
-                        // En OL2 los featureInfo en versi\u00f3n "baraja de cartas" salen sin tama\u00f1o.
+                        // En OL2 los featureInfo en versión "baraja de cartas" salen sin tamaño.
                         // Para evitar esto, la clase tc-ctl-finfo tiene ancho y alto establecidos.
-                        // Pero eso hace que en el popup salgan barras de scroll, porque contentDiv se crea demasiado peque\u00f1o.
-                        // Rehacemos el tama\u00f1o de tc-ctl-finfo para eliminarlas.
+                        // Pero eso hace que en el popup salgan barras de scroll, porque contentDiv se crea demasiado pequeño.
+                        // Rehacemos el tamaño de tc-ctl-finfo para eliminarlas.
                         popupCtl.$contentDiv.find('.tc-ctl-finfo').css('width', 'auto').css('height', 'auto');
                     }
                 }
@@ -7321,7 +7464,7 @@
                         offset[1] = -options.height * anchor[1];
                     }
                     else {
-                        var fStyle = getFeatureStyle.call(feature);
+                        var fStyle = getFeatureStyle.call(feature, true);
                         if (fStyle) {
                             const image = fStyle.getImage();
                             if (image instanceof ol.style.Icon) {
@@ -7425,16 +7568,25 @@
     };
 
     TC.wrap.control.Draw.prototype.clickHandler = function (evt) {
-        var self = evt.data;
+        const self = this;
+        if (self._mdPx) { // No operamos si el clic es consecuencia es en realidad un drag
+            const dx = self._mdPx[0] - evt.clientX;
+            const dy = self._mdPx[1] - evt.clientY;
+            if (dx * dx + dy * dy > self.interaction.squaredClickTolerance_) {
+                return;
+            }
+        }
         if (self.sketch) {
-            var output;
-            var data = {
-            };
             var coords = self.sketch.getGeometry().getCoordinates();
             self.parent.$events.trigger($.Event(TC.Consts.event.POINT, {
                 point: coords[coords.length - 1]
             }));
         }
+    };
+
+    TC.wrap.control.Draw.prototype.mousedownHandler = function (evt) {
+        const self = this;
+        self._mdPx = [evt.clientX, evt.clientY];
     };
 
     TC.wrap.control.Draw.prototype.getMeasureData = function () {
@@ -7468,6 +7620,37 @@
         return result;
     };
 
+    // Función para reproyectar el dibujo actual
+    const drawProjectionChangeHandler = function (ctl, e) {
+        if (ctl.sketch) {
+            const oldProj = e.oldValue.getProjection();
+            const newProj = e.target.get(e.key).getProjection();
+            if (oldProj.getCode() !== newProj.getCode()) {
+                const geom = ctl.sketch.getGeometry();
+                geom.transform(oldProj, newProj);
+                ctl.interaction.sketchPoint_.getGeometry().transform(oldProj, newProj);
+                const flatCoordinates = [];
+                var sketchCoords;
+                if (ctl.interaction.mode_ === ol.interaction.Draw.Mode_.POLYGON) {
+                    sketchCoords = ctl.interaction.sketchCoords_[0];
+                }
+                else {
+                    sketchCoords = ctl.interaction.sketchCoords_;
+                }
+                ol.geom.flat.deflate.coordinates(flatCoordinates, 0, sketchCoords, geom.stride);
+                const transformFn = ol.proj.getTransform(oldProj, newProj);
+                transformFn(flatCoordinates, flatCoordinates, geom.stride);
+                sketchCoords = ol.geom.flat.inflate.coordinates(flatCoordinates, 0, flatCoordinates.length, geom.stride);
+                if (ctl.interaction.mode_ === ol.interaction.Draw.Mode_.POLYGON) {
+                    ctl.interaction.sketchCoords_ = [sketchCoords];
+                }
+                else {
+                    ctl.interaction.sketchCoords_ = sketchCoords;
+                }
+            }
+        }
+    };
+
     TC.wrap.control.Draw.prototype.activate = function (mode) {
         var self = this;
 
@@ -7492,7 +7675,8 @@
                     if (self.interaction) {
                         olMap.removeInteraction(self.interaction);
                         self.$viewport
-                            .off(TC.Consts.event.CLICK, self.clickHandler)
+                            .off('mousedown.tc')
+                            .off(TC.Consts.event.CLICK)
                         if (self.parent.measure)
                             self.$viewport
                                 .off(MOUSEMOVE + '.draw', self.mouseMoveHandler)
@@ -7505,7 +7689,8 @@
 
                     if (mode) {
                         self.$viewport
-                            .on(TC.Consts.event.CLICK, self, self.clickHandler)
+                            .on('mousedown.tc', $.proxy(self.mousedownHandler, self))
+                            .on(TC.Consts.event.CLICK, self, $.proxy(self.clickHandler, self));
                         if (self.parent.measure)
                             self.$viewport
                                 .on(MOUSEMOVE + '.draw', self, self.mouseMoveHandler)
@@ -7517,12 +7702,15 @@
                             condition: function () {
                                 if (ol.events.condition.shiftKeyOnly(arguments[0])) {
                                     hole = olMap.forEachFeatureAtPixel(olMap.getPixelFromCoordinate(arguments[0].coordinate), function (feature) {
-                                        if (ol.geom.GeometryType.POLYGON == feature.getGeometry().getType() ||
-                                            ol.geom.GeometryType.MULTI_POLYGON == feature.getGeometry().getType()) {
-                                            return feature;
-                                        }
-                                        return null;
-                                    });
+                                            if (ol.geom.GeometryType.POLYGON == feature.getGeometry().getType() ||
+                                                ol.geom.GeometryType.MULTI_POLYGON == feature.getGeometry().getType()) {
+                                                return feature;
+                                            }
+                                            return null;
+                                        },
+                                        {
+                                            hitTolerance: hitTolerance
+                                        });
                                 }
                                 return true;
                             }
@@ -7574,7 +7762,7 @@
                         }, this);
 
                         self.interaction.on(ol.interaction.DrawEventType.DRAWEND, function (evt) {
-                            evt.feature.setStyle(drawOptions.style.map(function (style) {
+                            evt.feature.setStyle(evt.target.overlay_.getStyle().map(function (style) {
                                 return style.clone();
                             }));
                             if (self.parent.measure) {
@@ -7585,6 +7773,11 @@
                                 self.sketch = null;
                             });
                         }, this);
+
+                        self._projectionChangeHandler = function (e) {
+                            drawProjectionChangeHandler(self, e);
+                        };
+                        olMap.on('change:view', self._projectionChangeHandler);
 
                         olMap.addInteraction(self.interaction);
 
@@ -7612,7 +7805,9 @@
         if (self.parent.map) {
             $.when(self.parent.map.wrap.getMap(), self.parent.getLayer()).then(function (olMap, layer) {
                 if (self.$viewport) {
-                    self.$viewport.off(TC.Consts.event.CLICK, self.clickHandler);
+                    self.$viewport
+                        .off('mousedown.tc')
+                        .off(TC.Consts.event.CLICK);
                 }
                 if (layer && !self.parent.persistent) {
                     layer.clearFeatures();
@@ -7621,6 +7816,7 @@
                     olMap.removeInteraction(self.interaction);
                     self.interaction = null;
                 }
+                olMap.un('change:view', self._projectionChangeHandler);
             });
         }
     };
@@ -7651,9 +7847,9 @@
                         puntos = self.interaction.sketchCoords_;
 
                     /*
-                    Al menos con linestring, no necesariamente hay que quitar el \u00faltimo
-                    Porque OL mete en coordinates del sketchFeature_ tanto el \u00faltimo marcado como el que flota detr\u00e1s del cursor
-                    Para comprobar que realmente es \u00e9se, podemos contrastarlo con self.interaction.sketchPoint_.getGeometry().getCoordinates()
+                    Al menos con linestring, no necesariamente hay que quitar el último
+                    Porque OL mete en coordinates del sketchFeature_ tanto el último marcado como el que flota detrás del cursor
+                    Para comprobar que realmente es ése, podemos contrastarlo con self.interaction.sketchPoint_.getGeometry().getCoordinates()
                     */
                     var flyingPointContained = false;
                     if (self.interaction.sketchPoint_) {
@@ -7781,6 +7977,15 @@
         var self = this;
         if (self.interaction && self.interaction.sketchFeature_)
             self.interaction.finishDrawing();
+    };
+
+    TC.wrap.control.Draw.prototype.setStyle = function (style) {
+        const self = this;
+        if (self.interaction) {
+            self.interaction.overlay_.setStyle(createNativeStyle({
+                styles: style
+            }));
+        }
     };
 
     TC.wrap.control.CacheBuilder.prototype.getRequestSchemas = function (options) {
@@ -7942,7 +8147,8 @@
                     olMap.removeInteraction(self.selectInteraction);
                 }
                 var select = new ol.interaction.Select({
-                    layers: [olLayer]
+                    layers: [olLayer],
+                    hitTolerance: hitTolerance
                 });
                 self.selectInteraction = select;
                 olMap.addInteraction(select);
@@ -8000,11 +8206,14 @@
 
                         var pixel = olMap.getEventPixel(e.originalEvent);
                         hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                            if (layer === self.parent.layer.wrap.getLayer()) {
-                                return true;
-                            }
-                            return false;
-                        });
+                                if (layer === self.parent.layer.wrap.getLayer()) {
+                                    return true;
+                                }
+                                return false;
+                            },
+                            {
+                                hitTolerance: hitTolerance
+                            });
 
                         if (hit) {
                             mapTarget.style.cursor = 'pointer';

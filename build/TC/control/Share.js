@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -26,10 +26,11 @@ TC.inherit(TC.control.Share, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-share';
     ctlProto.QR_MAX_LENGTH = 150;
+    ctlProto.MAILTO_MAX_LENGTH = 256;
     ctlProto.IFRAME_WIDTH = '600px';
     ctlProto.IFRAME_HEIGHT = '450px';
 
-    ctlProto.MOBILEFAV = 'Siga las instrucciones del navegador del dispositivo m\u00f3vil para a\u00f1adir como favorito. Se guardar\u00e1 el estado actual del mapa.';
+    ctlProto.MOBILEFAV = 'Siga las instrucciones del navegador del dispositivo móvil para añadir como favorito. Se guardará el estado actual del mapa.';
     ctlProto.NAVALERT = ' +D para guardar en marcadores.';
 
 
@@ -39,14 +40,14 @@ TC.inherit(TC.control.Share, TC.Control);
             self._$dialogDiv.html(html);
         }).then(function () {
             TC.Control.prototype.render.call(self, function () {
-                //Si el navegador no soporta copiar al portapapeles, ocultamos el bot\u00f3n de copiar
+                //Si el navegador no soporta copiar al portapapeles, ocultamos el botón de copiar
                 if (TC.Util.detectChrome() || TC.Util.detectIE() >= 10 || TC.Util.detectFirefox() >= 41) {
                     self._$div.find("button").removeClass("hide");
                     var input = self._$div.find("input[type=text]");
                     input.removeAttr("data-original-title");
                 }
 
-                // Si el SO no es m\u00f3vil, ocultamos el bot\u00f3n de compartir a WhatsApp
+                // Si el SO no es móvil, ocultamos el botón de compartir a WhatsApp
                 if (!TC.Util.detectMobile()) {
                     self._$div.find(".share-whatsapp").addClass(TC.Consts.classes.HIDDEN);
                 }
@@ -90,7 +91,7 @@ TC.inherit(TC.control.Share, TC.Control);
         }
 
         if (self.extraParams) {
-            // Hacemos merge de par\u00e1metros de URL
+            // Hacemos merge de parámetros de URL
             var params = TC.Util.getQueryStringParams(currentUrl);
             $.extend(params, self.extraParams);
             var qsPosition = currentUrl.indexOf('?');
@@ -100,28 +101,25 @@ TC.inherit(TC.control.Share, TC.Control);
             currentUrl = currentUrl.concat('?', $.param(params));
         }
 
-        // eliminamos el par\u00e1metro del idioma, si no lo arrastramos al compartir
+        // eliminamos el parámetro del idioma, si no lo arrastramos al compartir
         if (TC.Util.getParameterByName('lang').length > 0) {
-            if (currentUrl.indexOf('&') > -1) { // tenemos m\u00e1s par\u00e1metros en la url
+            if (currentUrl.indexOf('&') > -1) { // tenemos más parámetros en la url
                 currentUrl = currentUrl.replace("lang" + "=" + TC.Util.getParameterByName('lang') + '&', '');
             } else {
                 currentUrl = currentUrl.replace('?' + "lang" + "=" + TC.Util.getParameterByName('lang'), '');
             }
         }
 
-        var hashState = self.map.getMapState();
+        const controlStates = self.exportControlStates();
+        const extraStates = controlStates.length ? { ctl: controlStates } : undefined;
+
+        var hashState = self.map.getMapState(extraStates);
 
 
         var url = currentUrl.concat("#", hashState);
-
-        //Si la URL sobrepasa el tama\u00f1o m\u00e1ximo deshabilitamos el control
-        if (url.length > TC.Consts.URL_MAX_LENGTH) {
-            self.disableButtons();
-            return;
-        } else {
-            self.enableButtons(url);
-            return url;
-        }
+        //Si la URL sobrepasa el tamaño máximo avisamos que puede fallar en IE
+        self._$div.find('.' + self.CLASS + '-alert').toggleClass(TC.Consts.classes.HIDDEN, url.length <= TC.Consts.URL_MAX_LENGTH);
+        return url;
     };
 
     ctlProto.generateIframe = function (url) {
@@ -132,7 +130,32 @@ TC.inherit(TC.control.Share, TC.Control);
         }
     }
 
+    ctlProto.exportControlStates = function () {
+        const self = this;
+        if (self.map) {
+            return self.map.controls
+                .map(function (ctl) {
+                    return ctl.exportState();
+                })
+                .filter(function (state) {
+                    // Quitamos los estados nulos
+                    return state;
+                });
+        }
+        return [];
+    };
 
+    ctlProto.importControlStates = function (stateArray) {
+        const self = this;
+        if (self.map) {
+            stateArray.forEach(function (state) {
+                const ctl = self.map.getControlById(state.id);
+                if (ctl) {
+                    ctl.importState(state);
+                }
+            });
+        }
+    };
 
     ctlProto.register = function (map) {
         var self = this;
@@ -176,7 +199,7 @@ TC.inherit(TC.control.Share, TC.Control);
             selectInputField(evt.target);
         });
 
-        //Deshabilitar el click de rat\u00f3n en los enlaces de compartir cuando est\u00e1n deshabilitados
+        //Deshabilitar el click de ratón en los enlaces de compartir cuando están deshabilitados
         self._$div.on("click", ".ga-share-icon.disabled", function (evt) {
             evt.stopImmediatePropagation();
             evt.preventDefault()
@@ -189,12 +212,16 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                window.location.href = 'mailto:?body=' + encodeURIComponent(url + "\n");
+                const body = encodeURIComponent(url + "\n");
+                if (body.length > self.MAILTO_MAX_LENGTH) {
+                    map.toast(self.getLocaleString('urlTooLongForMailto'), { type: TC.Consts.msgType.WARNING });
+                }
+                window.location.href = 'mailto:?body=' + body;
             }
         });
 
-        //Generar c\u00f3digo QR
-        //Desde localhost no funciona para URLs de m\u00e1s de 300 caracteres, ya que hay que acortarla y bitly no soporta URLs a localhost
+        //Generar código QR
+        //Desde localhost no funciona para URLs de más de 300 caracteres, ya que hay que acortarla y bitly no soporta URLs a localhost
         self._$div.on("click", "a.qr-generator", function (evt) {
             evt.preventDefault();
             var url = self.generateLink();
@@ -209,10 +236,15 @@ TC.inherit(TC.control.Share, TC.Control);
                             url = TC.Util.shortenUrl(url);
                         }
 
-                        TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-qr-dialog'));
-                        var $qrContainer = self._$dialogDiv.find(".qrcode");
-                        $qrContainer.empty();
-                        new QRCode($qrContainer[0], url);
+                        if (url !== undefined) {
+                            TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-qr-dialog'));
+                            var $qrContainer = self._$dialogDiv.find(".qrcode");
+                            $qrContainer.empty();
+                            new QRCode($qrContainer[0], url);
+                        }
+                        else {
+                            TC.error(self.getLocaleString('urlTooLongForShortener'));
+                        }
                     });
             }
         });
@@ -223,7 +255,13 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url));
+                var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducción de url
+
+                if (shortUrl !== undefined) {
+                    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(shortUrl));
+                } else {
+                    TC.error(self.getLocaleString('urlTooLongForShortener'));
+                }
                 return false;
             }
         });
@@ -234,15 +272,15 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducci\u00f3n de url
+                var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducción de url
 
                 if (shortUrl !== undefined) {
                     var titulo = encodeURIComponent(window.document.title ? window.document.title : "Visor API SITNA");
                     window.open("https://twitter.com/intent/tweet?text=" + titulo + "&amp;url=" + encodeURIComponent(shortUrl));
-                    return false;
                 } else {
-                    TC.error("La URL " + url + " no ha podido ser acortada por ser no v\u00e1lida");
+                    TC.error(self.getLocaleString('urlTooLongForShortener'));
                 }
+                return false;
             }
         });
 
@@ -253,7 +291,7 @@ TC.inherit(TC.control.Share, TC.Control);
                 var url = self.generateLink();
 
                 if (url) {
-                    var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducci\u00f3n de url
+                    var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducción de url
 
                     var waText = 'whatsapp://send?text=';
                     if (shortUrl !== undefined) {
@@ -297,51 +335,19 @@ TC.inherit(TC.control.Share, TC.Control);
             return false;
         });
 
-        //Cuando se a\u00f1ada o borre una capa, comprobamos de nuevo si la URL cumple los requisitos de longitud para habilitar el control
+        //Cuando se añada o borre una capa, comprobamos de nuevo si la URL cumple los requisitos de longitud para habilitar el control
         //map.on(TC.Consts.event.MAPLOAD, function () {
         //    map.on(TC.Consts.event.LAYERREMOVE + ' ' + TC.Consts.event.LAYERADD, function (e) {
         //        self.generateLink();
         //    });
         //});
-    };
 
-    ctlProto.enableButtons = function (url) {
-        var self = this;
-
-        TC.Control.prototype.enable.call(self);
-
-        var $alert = self._$div.find('.' + self.CLASS + '-alert');
-        var $copyBtn = self._$div.find('.tc-button');
-        var $shareBtns = self._$div.find('.ga-share-icon');
-        var $input = self._$div.find('.tc-textbox');
-
-        $alert.toggleClass(TC.Consts.classes.HIDDEN, true);
-        $copyBtn.toggleClass('disabled', false);
-        $copyBtn.removeAttr('disabled');
-        $.each($shareBtns, function (index, item) {
-            $(item).toggleClass('disabled', false);
+        map.loaded(function () {
+            const controlStates = map.state && map.state.ctl;
+            if (controlStates) {
+                self.importControlStates(controlStates);
+            }
         });
-        $input.filter('.tc-url').val(url);
-        $input.filter('.tc-iframe').val(self.generateIframe(url));
-    };
-
-    ctlProto.disableButtons = function () {
-        var self = this;
-
-        TC.Control.prototype.disable.call(self);
-
-        var $alert = self._$div.find('.' + self.CLASS + '-alert');
-        var $copyBtn = self._$div.find('.tc-button');
-        var $shareBtns = self._$div.find('.ga-share-icon');
-        var $input = self._$div.find('.tc-textbox');
-
-        $alert.toggleClass(TC.Consts.classes.HIDDEN, false);
-        $copyBtn.toggleClass('disabled', true);
-        $copyBtn.attr('disabled', 'disabled');
-        $.each($shareBtns, function (index, item) {
-            $(item).toggleClass('disabled', true);
-        });
-        $input.val();
     };
 
     ctlProto.template = {};

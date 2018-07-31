@@ -1,4 +1,4 @@
-$(function () {
+﻿$(function () {
     var $ovPanel = $('.ovmap-panel');
     var map = $ovPanel.parent().data('map');
     var ovmap;
@@ -46,13 +46,13 @@ $(function () {
     });
 
     /**
-     * Array de condiciones para distintas resoluciones de pantalla. La estructura del array que recibe como par\u00e1metro es es:
+     * Array de condiciones para distintas resoluciones de pantalla. La estructura del array que recibe como parámetro es es:
      *  - screenCondition (string): media query que debe evaluarse a true para que se apliquen los cambios.
      *  - apply:
-     *      - event (string): evento que debe producirse para que se lleve a cabo la acci\u00f3n.
+     *      - event (string): evento que debe producirse para que se lleve a cabo la acción.
      *      - elements (array o string): selectores CSS de los elementos sobre los que se debe producir el evento anterior.
      *      - changes:
-     *          - targets (array o string): selectores CSS de los elementos a los que se aplicar\u00e1n las clases CSS siguientes
+     *          - targets (array o string): selectores CSS de los elementos a los que se aplicarán las clases CSS siguientes
      *          - classes (array o string): clases CSS a aplicar
      */
     TC.Cfg.applyChanges = function (configArray) {
@@ -90,7 +90,7 @@ $(function () {
             }
             //mover el Multifeature info dentro del TOC
             if (TC.control.MultiFeatureInfo) {
-                var toc = map.getControlsByClass('TC.control.ListTOC')[0];
+                var toc = map.getControlsByClass('TC.control.WorkLayerManager')[0];
                 if (toc) {
                     var mfi = $('.' + TC.control.MultiFeatureInfo.prototype.CLASS);
                     mfi.detach();
@@ -98,7 +98,7 @@ $(function () {
                 }
             }
 
-            //Aplicar clases CSS cuando se haga click en elementos definidos por configuraci\u00f3n
+            //Aplicar clases CSS cuando se haga click en elementos definidos por configuración
             TC.Cfg.applyChanges([
                 {
                     "screenCondition": "(max-width: 42em)",

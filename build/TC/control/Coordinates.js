@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.control.ProjectionSelector) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/ProjectionSelector');
@@ -66,7 +66,7 @@ if (!TC.control.ProjectionSelector) {
 
 
         map.loaded(function () {
-            // Se espera antes de registrar el control a que se cargue el mapa para evitar que muestre valores extra\u00f1os
+            // Se espera antes de registrar el control a que se cargue el mapa para evitar que muestre valores extraños
             self.wrap.register(map).then(function () {
                 self.render(function () {
                     //self.update();
@@ -75,14 +75,7 @@ if (!TC.control.ProjectionSelector) {
             });
 
             if (TC.Util.detectMobile()) {
-                $.when(map.addLayer({
-                    id: TC.getUID(),
-                    type: TC.Consts.layerType.VECTOR,
-                    stealth: true,
-                    title: 'Coordenadas',
-                })).then(function (layer) {
-                    self.layer = layer;
-                });
+                self.getLayer();
 
                 self.activateCoords();
             }
@@ -220,9 +213,8 @@ if (!TC.control.ProjectionSelector) {
         self._$div.css("visibility", "hidden");
 
         delete self.currentCoordsMarker;
-        $.when(self.getLayer()).then(function (layer) {
-            if (layer)
-                layer.clearFeatures();
+        self.getLayer().then(function (layer) {
+            layer.clearFeatures();
         });
     };
 
@@ -243,7 +235,7 @@ if (!TC.control.ProjectionSelector) {
 
     ctlProto.getCoords = function () {
         var self = this;
-        // si hay visible un popup, establecemos la posici\u00f3n de la cruz en el punto en el cual se ha abierto el popup
+        // si hay visible un popup, establecemos la posición de la cruz en el punto en el cual se ha abierto el popup
         var popup = self.map.getControlsByClass(TC.control.Popup);
         if (popup && popup.length > 0 && popup[0].isVisible()) {
             self.coordsToPopup(popup[0]);
@@ -290,12 +282,12 @@ if (!TC.control.ProjectionSelector) {
         }
     };
 
-    // Establece la posici\u00f3n de la cruz en la posici\u00f3n recibida
+    // Establece la posición de la cruz en la posición recibida
     var animationTimeout;
     ctlProto.coordsToClick = function (e) {
         var self = this;
 
-        // Si streetView est\u00e1 activo, no responde al click
+        // Si streetView está activo, no responde al click
         if (!$(self.map._$div).hasClass('tc-ctl-sv-active ' + TC.Consts.classes.COLLAPSED)) {
 
             var coordsBounding = self._$div[0].getBoundingClientRect();
@@ -332,13 +324,11 @@ if (!TC.control.ProjectionSelector) {
         var self = this;
 
         if (!self.currentCoordsMarker) {
-            $.when(self.getLayer()).then(function (layer) {
-                if (layer) {
-                    $.when(layer.addMarker(position, { title: 'Coord', showsPopup: false, cssClass: cssClass || TC.Consts.classes.POINT, anchor: [0.5, 0.5] }))
-                        .then(function (marker) {
-                            self.currentCoordsMarker = marker;
-                        });
-                }
+            self.getLayer().then(function (layer) {
+                $.when(layer.addMarker(position, { title: 'Coord', showsPopup: false, cssClass: cssClass || TC.Consts.classes.POINT, anchor: [0.5, 0.5] }))
+                    .then(function (marker) {
+                        self.currentCoordsMarker = marker;
+                    });
             });
         } else {
             self.currentCoordsMarker.setCoords(position);
@@ -349,12 +339,12 @@ if (!TC.control.ProjectionSelector) {
         var self = this;
         var done = new $.Deferred();
         if (self.layer == undefined) {
-            $.when(self.map.addLayer({
-                id: TC.getUID(),
+            self.map.addLayer({
+                id: self.getUID(),
                 type: TC.Consts.layerType.VECTOR,
                 stealth: true,
                 title: 'Coordenadas',
-            })).then(function (layer) {
+            }).then(function (layer) {
                 self.layer = layer;
                 self.layer.map.putLayerOnTop(self.layer);
                 done.resolve(self.layer);

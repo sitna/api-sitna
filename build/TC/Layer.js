@@ -1,28 +1,28 @@
-/**
+﻿/**
  * Opciones de capa.
  * Esta clase no tiene constructor.
  * @class TC.cfg.LayerOptions
  * @static
  */
 /**
- * Identificador \u00fanico de capa.
+ * Identificador único de capa.
  * @property id
  * @type string|undefined
  */
 /**
- * T\u00edtulo de capa. Este valor se mostrar\u00e1 en la tabla de contenidos y la leyenda.
+ * Título de capa. Este valor se mostrará en la tabla de contenidos y la leyenda.
  * @property title
  * @type string|undefined
  */
 /**
- * Tipo de capa. Si no se especifica se considera que la capa es WMS. La lista de valores posibles est\u00e1 definida en {{#crossLink "TC.consts.LayerType"}}{{/crossLink}}.
+ * Tipo de capa. Si no se especifica se considera que la capa es WMS. La lista de valores posibles está definida en {{#crossLink "TC.consts.LayerType"}}{{/crossLink}}.
  * @property type
  * @type string|undefined
  */
 /**
- * Tipo MIME del formato de archivo de imagen a obtener del servicio. Si esta propiedad no est\u00e1 definida, se comprobar\u00e1 si la capa es un mapa de fondo 
- * (consultar propiedad {{#crossLink "TC.cfg.LayerOptions/isBase:property"}}{{/crossLink}}). En caso afirmativo, el formato elegido ser\u00e1 <code>"image/jpeg"</code>, 
- * de lo contrario el formato ser\u00e1 <code>"image/png"</code>.
+ * Tipo MIME del formato de archivo de imagen a obtener del servicio. Si esta propiedad no está definida, se comprobará si la capa es un mapa de fondo 
+ * (consultar propiedad {{#crossLink "TC.cfg.LayerOptions/isBase:property"}}{{/crossLink}}). En caso afirmativo, el formato elegido será <code>"image/jpeg"</code>, 
+ * de lo contrario el formato será <code>"image/png"</code>.
  * @property format
  * @type string|undefined
  */
@@ -37,18 +37,18 @@
  * @type boolean|undefined
  */
 /**
- * Aplicable a capas de tipo WMS y KML. La capa no muestra la jerarqu\u00eda de grupos de capas en la tabla de contenidos ni en la leyenda.
+ * Aplicable a capas de tipo WMS y KML. La capa no muestra la jerarquía de grupos de capas en la tabla de contenidos ni en la leyenda.
  * @property hideTree
  * @type boolean|undefined
  */
 /**
- * La capa no muestra su t\u00edtulo cuando es a\u00f1adida al control de capas de trabajo.
+ * La capa no muestra su título cuando es añadida al control de capas de trabajo.
  * @property hideTitle
  * @type boolean|undefined
  * @default false
  */
 /**
- * La capa no aparece en la tabla de contenidos ni en la leyenda. De este modo se puede a\u00f1adir una superposici\u00f3n de capas de trabajo que el usuario la perciba como parte del mapa de fondo.
+ * La capa no aparece en la tabla de contenidos ni en la leyenda. De este modo se puede añadir una superposición de capas de trabajo que el usuario la perciba como parte del mapa de fondo.
  * @property stealth
  * @type boolean|undefined
  */
@@ -64,7 +64,7 @@
  */
 
 /**
- * \u00c1rbol de elementos de capa.
+ * Árbol de elementos de capa.
  * Esta clase no tiene constructor.
  * @class TC.layer.LayerTree
  * @static
@@ -75,12 +75,12 @@
  * @type string|undefined
  */
 /**
- * T\u00edtulo de capa. Es un texto descriptivo para el usuario.
+ * Título de capa. Es un texto descriptivo para el usuario.
  * @property title
  * @type string|undefined
  */
 /**
- * Identificador \u00fanico de la capa.
+ * Identificador único de la capa.
  * @property uid
  * @type string|undefined
  */
@@ -96,11 +96,11 @@
  */
 
 /**
- * Capa de mapa. Esta clase no deber\u00eda instanciarse directamente, sino mediante alguna de las clases que heredan de ella.
+ * Capa de mapa. Esta clase no debería instanciarse directamente, sino mediante alguna de las clases que heredan de ella.
  * @class TC.Layer
  * @constructor
  * @async
- * @param {TC.cfg.LayerOptions} [options] Objeto de opciones de configuraci\u00f3n de la capa.
+ * @param {TC.cfg.LayerOptions} [options] Objeto de opciones de configuración de la capa.
  */
 TC.Layer = function (options) {
     ///<summary>
@@ -120,7 +120,7 @@ TC.Layer = function (options) {
     $.extend(_layer, _layer.options);
 
     /**
-     * Identificador de capa, debe ser \u00fanico en el mapa. Si no se asigna en las opciones del constructor, se genera uno autom\u00e1ticamente.
+     * Identificador de capa, debe ser único en el mapa. Si no se asigna en las opciones del constructor, se genera uno automáticamente.
      * @property id
      * @type string
      */
@@ -138,6 +138,13 @@ TC.Layer = function (options) {
      * @type TC.consts.LayerType
      */
     _layer.type = _layer.options.type || TC.Consts.layerType.WMS;
+
+    /**
+     * Fragmento HTML para utilizar como leyenda.
+     * @property customLegend
+     * @type string
+     */
+    _layer.customLegend = _layer.options.customLegend; 
     var defaultFormat = _layer.options.isBase ? TC.Consts.mimeType.JPEG : TC.Consts.mimeType.PNG;
     _layer.options.format = _layer.options.format || defaultFormat;
 
@@ -154,7 +161,7 @@ TC.Layer = function (options) {
     };
 
     /**
-     * \u00c1rbol de los componentes de la capa. Estos componentes son distintos seg\u00fan el tipo de capa: as\u00ed, en una capa WMS son las distintas capas del servicio, 
+     * Árbol de los componentes de la capa. Estos componentes son distintos según el tipo de capa: así, en una capa WMS son las distintas capas del servicio, 
      * en una capa KML son carpetas.
      * @property tree
      * @type TC.layer.LayerTree|null
@@ -186,7 +193,7 @@ TC.Layer.prototype.setVisibility = function (visible) {
 /**
  * Obtiene la visibilidad actual de la capa en el mapa.
  * @method getVisibility
- * @return {boolean} <code>true</code> si la capa est\u00e1 visible, <code>false</code> si est\u00e1 oculta.
+ * @return {boolean} <code>true</code> si la capa está visible, <code>false</code> si está oculta.
  */
 TC.Layer.prototype.getVisibility = function () {
     var layer = this;
@@ -218,7 +225,7 @@ TC.Layer.prototype.getOpacity = function () {
 
 /**
  * Establece la opacidad de la capa en el mapa. Hay que tener en cuenta que establecer opacidad 0 a una capa no es 
- * equivalente que llamar a TC.Layer.{{#crossLink "TC.Layer/setVisibility:method"}}{{/crossLink}} con el valor del par\u00e1metro <code>false</code>.
+ * equivalente que llamar a TC.Layer.{{#crossLink "TC.Layer/setVisibility:method"}}{{/crossLink}} con el valor del parámetro <code>false</code>.
  * @method setOpacity
  * @param {number} opacity Valor entre <code>0</code> (capa transparente) y <code>1</code> (capa opaca).
  * @param {boolean} mute Indica si al establecer opacidad no se lanza evento LAYEROPACITY.
@@ -244,7 +251,7 @@ TC.Layer.prototype.isCompatible = function (crs) {
 };
 
 /**
- * Determina si la capa tiene nombres v\u00e1lidos.
+ * Determina si la capa tiene nombres válidos.
  * @method isValidFromNames
  * @return {boolean}
  */
@@ -274,7 +281,7 @@ TC.Layer.prototype.isRaster = function () {
 };
 
 /**
- * Determina si la capa es visible a la resoluci\u00f3n actual. Para ello consulta el documento de capabilities en los casos en que exista.
+ * Determina si la capa es visible a la resolución actual. Para ello consulta el documento de capabilities en los casos en que exista.
  * @method isVisibleByScale
  * @return {boolean}
  */
@@ -284,7 +291,7 @@ TC.Layer.prototype.isVisibleByScale = function (name) {
 
 
 /**
- * Determina si una capa del servicio est\u00e1 establecida en el mapa como visible.
+ * Determina si una capa del servicio está establecida en el mapa como visible.
  * @method isVisibleByName
  * @return {boolean}
  */
@@ -293,11 +300,11 @@ TC.Layer.prototype.isVisibleByName = function (name) {
 };
 
 /**
- * <p>Devuelve un \u00e1rbol de informaci\u00f3n de la capa. Como m\u00ednimo devuelve un nodo ra\u00edz con el t\u00edtulo de la capa.</p>
- * <p>En capas de servicios WMS es la jerarqu\u00eda de capas obtenida del documento capabilities. Dependiendo del valor de la propiedad TC.cfg.LayerOptions.{{#crossLink "TC.cfg.LayerOptions/hideTree:property"}}{{/crossLink}}, 
- * puede mostrar un \u00e1rbol de todas las capas del servicio o solo un \u00e1rbol de las capas visibles inicialmente.</p>
+ * <p>Devuelve un árbol de información de la capa. Como mínimo devuelve un nodo raíz con el título de la capa.</p>
+ * <p>En capas de servicios WMS es la jerarquía de capas obtenida del documento capabilities. Dependiendo del valor de la propiedad TC.cfg.LayerOptions.{{#crossLink "TC.cfg.LayerOptions/hideTree:property"}}{{/crossLink}}, 
+ * puede mostrar un árbol de todas las capas del servicio o solo un árbol de las capas visibles inicialmente.</p>
  * <p>En capas de documentos KML cada nodo es una carpeta del documento.</p>
- * <p>Si la propiedad TC.cfg.LayerOptions.{{#crossLink "TC.cfg.LayerOptions/stealth:property"}}{{/crossLink}} est\u00e1 establecida a <code>true</code>, este m\u00e9todo devuelve <code>null</code>.</p>
+ * <p>Si la propiedad TC.cfg.LayerOptions.{{#crossLink "TC.cfg.LayerOptions/stealth:property"}}{{/crossLink}} está establecida a <code>true</code>, este método devuelve <code>null</code>.</p>
  * @method getTree
  * @return {TC.layer.LayerTree}
  */
@@ -308,11 +315,11 @@ TC.Layer.prototype.getTree = function () {
 };
 
 /**
- * Devuelve un nodo del \u00e1rbol de informaci\u00f3n de la capa.
+ * Devuelve un nodo del árbol de información de la capa.
  * @method findNode
  * @param {string} id Identificador del nodo.
- * @param {TC.layer.LayerTree} parent Nodo desde el que se comienza la b\u00fasqueda.
- * @return {TC.layer.LayerTree} Si no se encuentra el nodo el m\u00e9todo devuelve <code>null</code>.
+ * @param {TC.layer.LayerTree} parent Nodo desde el que se comienza la búsqueda.
+ * @return {TC.layer.LayerTree} Si no se encuentra el nodo el método devuelve <code>null</code>.
  */
 TC.Layer.prototype.findNode = function findNode(id, parent) {
     var result = null;
@@ -333,8 +340,8 @@ TC.Layer.prototype.findNode = function findNode(id, parent) {
 
 
 /**
- * Establece la visibilidad en el mapa de un elemento asociado a un nodo de \u00e1rbol de la capa. Dependiendo del tipo de capa este elemento 
- * es una entidad u otra, as\u00ed, en capas de tipo WMS son capas de servicio, en KML son carpetas y en capas vectoriales gen\u00e9ricas son grupos de marcadores.
+ * Establece la visibilidad en el mapa de un elemento asociado a un nodo de árbol de la capa. Dependiendo del tipo de capa este elemento 
+ * es una entidad u otra, así, en capas de tipo WMS son capas de servicio, en KML son carpetas y en capas vectoriales genéricas son grupos de marcadores.
  * @method setNodeVisibility
  * @param {string} id Identificador del nodo.
  * @param {boolean} visible <code>true</code> si se quiere mostrar el elemento, <code>false</code> si se quiere ocultar.
@@ -344,8 +351,8 @@ TC.Layer.prototype.setNodeVisibility = function (id, visible) {
 };
 
 /**
- * Obtiene la visibilidad en el mapa de un elemento asociado a un nodo de \u00e1rbol de la capa. Dependiendo del tipo de capa este elemento 
- * es una entidad u otra, as\u00ed, en capas de tipo WMS son capas de servicio, en KML son carpetas y en capas vectoriales gen\u00e9ricas son grupos de marcadores.
+ * Obtiene la visibilidad en el mapa de un elemento asociado a un nodo de árbol de la capa. Dependiendo del tipo de capa este elemento 
+ * es una entidad u otra, así, en capas de tipo WMS son capas de servicio, en KML son carpetas y en capas vectoriales genéricas son grupos de marcadores.
  * @method getNodeVisibility
  * @param {string} id Identificador del nodo.
  * @return {TC.consts.Visibility}

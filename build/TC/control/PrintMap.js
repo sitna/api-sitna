@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -34,7 +34,7 @@ TC.inherit(TC.control.PrintMap, TC.Control);
         var _print = function () {
             var printParameters = '?';
 
-            //Si ya hay par\u00e1metros en la URL, cambiamos el primer car\u00e1cter por & para que estos se a\u00f1adan a la URL
+            //Si ya hay parámetros en la URL, cambiamos el primer carácter por & para que estos se añadan a la URL
             if (!$.isEmptyObject(TC.Util.getQueryStringParams(window.location.href))) {
                 printParameters = '&';
             }

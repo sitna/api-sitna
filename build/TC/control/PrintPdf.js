@@ -1,4 +1,4 @@
-
+﻿
 TC.control = TC.control || {};
 
 if (!TC.Control) {
@@ -74,7 +74,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var start = url.indexOf('?');
         var end = url.indexOf('#');
 
-        //Borramos los par\u00e1metros de la URL y dejamos s\u00f3lo el hash
+        //Borramos los parámetros de la URL y dejamos sólo el hash
         if (start > 0) {
             if (start < end) {
                 url = url.replace(url.substring(start, end), '');
@@ -123,7 +123,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
         var self = this;
         TC.Control.prototype.register.call(self, map);
 
-        // GLS: A\u00f1ado el flag al mapa para tenerlo en cuenta cuando se establece la funci\u00f3n de carga de im\u00e1genes
+        // GLS: Añado el flag al mapa para tenerlo en cuenta cuando se establece la función de carga de imágenes
         self.map.mustBeExportable = true;
 
         self.pdfLibPromise = function () {
@@ -161,7 +161,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             printBtn.removeAttr('disabled');
         });
 
-        //Obtenemos las capas de trabajo del mapa original y las a\u00f1adimos al mapa de impresi\u00f3n
+        //Obtenemos las capas de trabajo del mapa original y las añadimos al mapa de impresión
         self.getLayersFromOpener();
 
         if (self.options.qrCode) {
@@ -197,7 +197,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
         var imageErrorHandling = function (imageUrl) {
             TC.error(self.getLocaleString('print.error'));
-            TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, TC.Consts.msgErrorMode.EMAIL, 'Error en la impresi\u00f3n'); //Correo de error
+            TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, TC.Consts.msgErrorMode.EMAIL, 'Error en la impresión'); //Correo de error
         };
 
         var printHeader = function (docDefinition) {
@@ -212,18 +212,21 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
             }
 
             var resolve = function (logo) {
-                var body;
+                var container = [];
 
-                if (logo) {
-                    body = [[logo]]; //logo, si lo hay
-                }
+                //si no hay logo insertamos un elemento vacío para que se respete el posicionamiento del resto de elementos
+                var logoImage = logo || { text: '' }; 
 
-                //t\u00edtulo del documento
-                body[0].push({ text: TC.Util.getParameterByName("title"), alignment: 'center', fontSize: 11 });
+                //logo
+                container.push(logoImage);
+                
+
+                //título del documento
+                container.push({ text: TC.Util.getParameterByName(TC.Cfg.titleURLParamName), alignment: 'center', fontSize: 11 });
 
                 //escala
                 if (scaleCtrl) {
-                    body[0].push({
+                    container.push({
                         table: {
                             widths: [scaleWidth],
                             body: [
@@ -248,14 +251,14 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                     },
                     layout: 'noBorders'
                 });
-                docDefinition.content[0].table.body = body;
+                docDefinition.content[0].table.body = [container];
 
                 deferred.resolve(docDefinition);
             };
 
             if (self.options.logo) {
                 $.when(TC.Util.imgToDataUrl(self.options.logo, 'image/png')).then(function (dataUrl, canvas) {
-                    //Si el logo es m\u00e1s ancho que la escala, lo reducimos
+                    //Si el logo es más ancho que la escala, lo reducimos
                     var logoHeight = options.headerHeight;
                     var logoWidth = canvas.width * options.headerHeight / canvas.height;
 
@@ -327,7 +330,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
                     var src,
                         srcBase64;
 
-                    //Para las capas cargadas por POST (por ejemplo la b\u00fasquedas de Comercio Pamplona)
+                    //Para las capas cargadas por POST (por ejemplo la búsquedas de Comercio Pamplona)
                     if (parentLayer.options && parentLayer.options.params && parentLayer.options.params.base64LegendSrc) {
                         srcBase64 = parentLayer.options.params.base64LegendSrc;
                     }
@@ -428,7 +431,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                     $.when.apply($, _getLegendImages()).then(function () {
 
-                        //Si hay leyenda insertamos un texto vac\u00edo para poder meter el salto de p\u00e1gina y el cambio de orientaci\u00f3n
+                        //Si hay leyenda insertamos un texto vacío para poder meter el salto de página y el cambio de orientación
                         if (legendByGroup.length > 0) {
                             docDefinition.content.push({ text: ' ', pageBreak: 'before', pageOrientation: legendOrientation });
                         }
@@ -520,17 +523,13 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                 self.map.loaded(function () {
 
-                    if (opener.location.hash.length === 0) {
-                        self.map.setExtent(refererMap.options.initialExtent);
-                    }
-
-                    //Borramos las capas base para dejar s\u00f3lo la seleccionada en el visor original
+                    //Borramos las capas base para dejar sólo la seleccionada en el visor original
                     for (var i = 0; i < self.map.baseLayers.length; i++) {
                         self.map.removeLayer(self.map.baseLayers[i]);
                     }
 
                     var refererBaseLayer = refererMap.getBaseLayer();
-                    //A\u00f1adimos la capa base                       
+                    //Añadimos la capa base                       
                     self.map.addLayer({
                         "id": refererBaseLayer.id,
                         "title": refererBaseLayer.title,
@@ -574,7 +573,7 @@ TC.inherit(TC.control.PrintPdf, TC.Control);
 
                     if (mapFeatures) {
                         self.map.addLayer({
-                            id: TC.getUID(),
+                            id: self.getUID(),
                             type: TC.Consts.layerType.VECTOR
                         }, function (layer) {
                             TC.loadJS(!TC.feature,

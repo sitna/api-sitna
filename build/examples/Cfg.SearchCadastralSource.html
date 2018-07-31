@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Cfg.SearchCadastralSource</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.SearchCadastralSource.html">SITNA.Cfg.SearchCadastralSource</a>.</p>
+        <p>Establecer configuración de un origen de datos distinto en la búsqueda de parcelas catastrales.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Parcela catastral',
+                    instructions: 'Buscar parcela catastral',
+                    cadastralParcel: {
+                        url: '//idena.navarra.es/ogc/wfs',
+                        featurePrefix: 'IDENA',
+                        geometryName: 'the_geom',
+                        featureType: ['CATAST_Pol_ParcelaUrba', 'CATAST_Pol_ParcelaRusti', 'CATAST_Pol_ParcelaMixta'],
+                        municipality: {
+                            featureType: 'CATAST_Pol_Municipio',
+                            labelProperty: 'MUNICIPIO',
+                            idProperty: 'CMUNICIPIO'
+                        },
+                        queryProperties: {
+                            firstQueryWord: 'CMUNICIPIO',
+                            secondQueryWord: 'POLIGONO',
+                            thirdQueryWord: 'PARCELA'
+                        },
+                        suggestionListHead: {
+                            label: "search.list.cadastral",
+                            color: [
+                                {
+                                    CATAST_Pol_ParcelaUrba: {
+                                        title: "search.list.cadastral.urban",
+                                        color: {
+                                            geomType: "polygon",
+                                            css: "strokeColor"
+                                        }
+                                    }
+                                },
+                                {
+                                    CATAST_Pol_ParcelaRusti: {
+                                        title: "search.list.cadastral.rustic",
+                                        color: {
+                                            geomType: "polygon",
+                                            css: "strokeColor"
+                                        }
+                                    }
+                                },
+                                {
+                                    CATAST_Pol_ParcelaMixta: {
+                                        title: "search.list.cadastral.mixed",
+                                        color: {
+                                            geomType: "polygon",
+                                            css: "strokeColor"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        styles: [
+                            {
+                                polygon: {
+                                    fillColor: '#000000',
+                                    fillOpacity: 0.1,
+                                    strokeColor: '#136278',
+                                    strokeWidth: 2,
+                                    strokeOpacity: 1
+                                }
+                            },
+                            {
+                                polygon: {
+                                    fillColor: '#000000',
+                                    fillOpacity: 0.1,
+                                    strokeColor: '#0c8b3d',
+                                    strokeWidth: 2,
+                                    strokeOpacity: 1
+                                }
+                            },
+                            {
+                                polygon: {
+                                    fillColor: '#000000',
+                                    fillOpacity: 0.1,
+                                    strokeColor: '#e5475f',
+                                    strokeWidth: 2,
+                                    strokeOpacity: 1
+                                },
+                            }
+                        ]
+                    },                    
+                    municipality: false,
+                    town: false,
+                    street: false,
+                    postalAddress: false
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

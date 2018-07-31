@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:400,700');
+
 body {
-    font-family: Helvetica, sans-serif;
+    font-family: Lato, sans-serif;
     font-size: 15px;
     line-height: 1.7;
     color: #333;
@@ -11,6 +13,20 @@ body {
 
 pre, code {
     font-family: Consolas, Menlo, "Courier New", monospace;
+}
+
+p > code, li > code {
+    color: #c00;
+    border: none;
+    padding: 5px;
+    background: #fafafa;
+    line-height: 1.2;
+    border-radius: 0.2em;
+}
+
+td > code {
+    color: #c00;
+    white-space: nowrap;
 }
 
 a {
@@ -56,7 +72,7 @@ dd p:first-child, td p:first-child { margin-top: 0; }
 /* -- Headings -------------------------------------------------------------- */
 h1, h2, h3, h4, h5, h6 {
     color: #000000;/*was #f80*/
-    font-family: Helvectica, sans-serif;
+    font-family: Lato, sans-serif;
     margin:1em 0 15px;
   padding:0;
   font-weight:bold;
@@ -141,6 +157,10 @@ td {
     border: none;
     padding-right: 8px;
 }
+
+    .main-header h1.project-name a {
+        color: #fff;
+    }
 
 .main-header img.logo {
     max-height: 64px;
@@ -399,8 +419,8 @@ td {
     margin: 0;
     padding: 10px 10px 9px 10px;
     color: #555;
-    background-image: linear-gradient(#fafafa, #eaeaea);
-    background-repeat: repeat-x;
+    /*background-image: linear-gradient(#fafafa, #eaeaea);*/
+    /*background-repeat: repeat-x;*/
 }
 
 .method.item h3 .type {
@@ -526,7 +546,7 @@ ul.apis {
     list-style: none;
     padding: 0;
     margin: 0;
-    background-color: #fff;
+    /*background-color: #fff;*/
     line-height: 1.5;
     font-size: 13px;
 }
@@ -539,6 +559,8 @@ ul.apis li {
     border-top: 1px solid #e5e5e5;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .apis .type {
@@ -639,9 +661,10 @@ ul.index-list {
 /*---- YUI component style overrides ----*/
 
 .tabs {
-    background-image: linear-gradient(#fafafa, #eaeaea);
+    /*background-image: linear-gradient(#fafafa, #eaeaea);*/
     border: 1px solid #e5e5e5;
-    border-bottom: 1px solid #e0e0e0;
+    /*border-bottom: 1px solid #e0e0e0;*/
+    border-bottom: 0;
     border-radius: 4px 4px 0 0;
 }
 
@@ -657,17 +680,22 @@ ul.index-list {
     width: 200px;
 }
 
+.yui3-tab a {
+    border-bottom: 2px solid transparent;
+}
+
 .yui3-tab-selected a {
     font-weight: bold;
     color: #333;
     text-decoration: none;
     position: relative;
+    border-bottom-color: #c00;
 }
 
-.yui3-tab-selected a:before,
+/*.yui3-tab-selected a:before,
 .yui3-tab-selected a:after {
     border: 8px solid transparent;
-    border-style: outset outset solid outset; /* fixes FF bug */
+    border-style: outset outset solid outset; / * fixes FF bug * /
     border-bottom-color: #ccc;
     bottom: 0;
     content: "";
@@ -682,5 +710,11 @@ ul.index-list {
     background: transparent;
     border-bottom-color: #fafafa;
     bottom: -1px;
-}
+}*/
 
+/* Estilos añadidos para SITNA */
+iframe.example {
+    border: solid 1px #ccc;
+    width: 100%;
+    height: 20em;
+}

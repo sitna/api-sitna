@@ -1,28 +1,28 @@
-var TC = TC || {};
+﻿var TC = TC || {};
 
 (function () {
 
     /**
-     * <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. N\u00f3tese que el constructor es as\u00edncrono, por tanto cualquier c\u00f3digo que haga uso de este objeto deber\u00eda
-     * estar dentro de una funci\u00f3n de callback pasada como par\u00e1metro al m\u00e9todo {{#crossLink "TC.Map/loaded:method"}}{{/crossLink}}.</p>
-     * <p>Puede consultar tambi\u00e9n online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
+     * <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
+     * estar dentro de una función de callback pasada como parámetro al método {{#crossLink "TC.Map/loaded:method"}}{{/crossLink}}.</p>
+     * <p>Puede consultar también online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
      * @class TC.Map
      * @extends TC.Object
      * @constructor
      * @async
      * @param {HTMLElement|string} div Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.
-     * @param {object} [options] Objeto de opciones de configuraci\u00f3n del mapa. Sus propiedades sobreescriben el objeto de configuraci\u00f3n global {{#crossLink "TC.Cfg"}}{{/crossLink}}.
-     * @param {string} [options.crs="EPSG:25830"] C\u00f3digo EPSG del sistema de referencia espacial del mapa.
-     * @param {array} [options.initialExtent] Extensi\u00f3n inicial del mapa definida por x m\u00ednima, y m\u00ednima, x m\u00e1xima, y m\u00e1xima. 
-     * Esta opci\u00f3n es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver TC.Cfg.{{#crossLink "TC.Cfg/crs:property"}}{{/crossLink}}).
-     * Para m\u00e1s informaci\u00f3n consultar TC.Cfg.{{#crossLink "TC.Cfg/initialExtent:property"}}{{/crossLink}}.
-     * @param {array} [options.maxExtent] Extensi\u00f3n m\u00e1xima del mapa definida por x m\u00ednima, y m\u00ednima, x m\u00e1xima, y m\u00e1xima. Para m\u00e1s informaci\u00f3n consultar TC.Cfg.{{#crossLink "TC.Cfg/maxExtent:property"}}{{/crossLink}}.
-     * @param {string} [options.layout] URL de una carpeta de maquetaci\u00f3n. Consultar TC.Cfg.{{#crossLink "TC.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones.
+     * @param {object} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global {{#crossLink "TC.Cfg"}}{{/crossLink}}.
+     * @param {string} [options.crs="EPSG:25830"] Código EPSG del sistema de referencia espacial del mapa.
+     * @param {array} [options.initialExtent] Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima. 
+     * Esta opción es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver TC.Cfg.{{#crossLink "TC.Cfg/crs:property"}}{{/crossLink}}).
+     * Para más información consultar TC.Cfg.{{#crossLink "TC.Cfg/initialExtent:property"}}{{/crossLink}}.
+     * @param {array} [options.maxExtent] Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima. Para más información consultar TC.Cfg.{{#crossLink "TC.Cfg/maxExtent:property"}}{{/crossLink}}.
+     * @param {string} [options.layout] URL de una carpeta de maquetación. Consultar TC.Cfg.{{#crossLink "TC.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones.
      * @param {array} [options.baseLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como mapas de fondo. 
      * @param {array} [options.workLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como contenido del mapa. 
      * @param {TC.cfg.MapControlOptions} [options.controls] Opciones de controles de mapa.
-     * @param {TC.cfg.StyleOptions} [options.styles] Opciones de estilo de entidades geogr\u00e1ficas.
-     * @param {string} [options.locale="es-ES"] C\u00f3digo de idioma de la interfaz de usuario. Este c\u00f3digo debe ser obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
+     * @param {TC.cfg.StyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
+     * @param {string} [options.locale="es-ES"] Código de idioma de la interfaz de usuario. Este código debe ser obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
      * Los valores posibles son <code>es-ES</code>, <code>eu-ES</code> y <code>en-US</code>.
      * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver TC.Cfg.{{#crossLink "TC.Cfg/proxy:property"}}{{/crossLink}}).
      * @example
@@ -57,12 +57,12 @@ var TC = TC || {};
      * @example
      *     <div id="mapa"></div>
      *     <script>
-     *         // Crear un mapa que tenga como contenido las capas de toponimia y mallas cartogr\u00e1ficas del WMS de IDENA.
+     *         // Crear un mapa que tenga como contenido las capas de toponimia y mallas cartográficas del WMS de IDENA.
      *         var map = new TC.Map("mapa", {
      *             workLayers: [
      *                 {
      *                     id: "topo_mallas",
-     *                     title: "Toponimia y mallas cartogr\u00e1ficas",
+     *                     title: "Toponimia y mallas cartográficas",
      *                     type: TC.Consts.layerType.WMS,
      *                     url: "//idena.navarra.es/ogc/wms",
      *                     layerNames: "IDENA:toponimia,IDENA:mallas"
@@ -196,11 +196,11 @@ var TC = TC || {};
         ///Constructor
         ///</summary>
         ///<param name="div" type="HTMLElement|string">Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.</param>
-        ///<param name="options" type="object" optional="true">Objeto de opciones de configuraci\u00f3n del mapa. Sus propiedades sobreescriben el objeto de configuraci\u00f3n global TC.Cfg.</param>
+        ///<param name="options" type="object" optional="true">Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global TC.Cfg.</param>
         ///<returns type="TC.Map"></returns>
-        ///<field name='isReady' type='boolean'>Indica si todos los controles del mapa est\u00e1n cargados.</field>
-        ///<field name='isLoaded' type='boolean' default='false'>Indica si todos los controles y todas las capas del mapa est\u00e1n cargados.</field>
-        ///<field name='activeControl' type='TC.Control'>Control que est\u00e1 activo en el mapa, y que por tanto responder\u00e1 a los eventos de rat\u00f3n en su \u00e1rea de visualizaci\u00f3n.</field>
+        ///<field name='isReady' type='boolean'>Indica si todos los controles del mapa están cargados.</field>
+        ///<field name='isLoaded' type='boolean' default='false'>Indica si todos los controles y todas las capas del mapa están cargados.</field>
+        ///<field name='activeControl' type='TC.Control'>Control que está activo en el mapa, y que por tanto responderá a los eventos de ratón en su área de visualización.</field>
         ///<field name='layers' type='array' elementType='TC.Layer'>Lista de todas las capas base cargadas en el mapa.</field>
         ///<field name='controls' type='array' elementType='TC.Control'>Lista de todos los controles del mapa.</field>
         var self = this;
@@ -209,7 +209,7 @@ var TC = TC || {};
         //TC.Object.apply(self, arguments);
 
         /**
-         * Indica si todos los controles del mapa est\u00e1n cargados.
+         * Indica si todos los controles del mapa están cargados.
          * @property isReady
          * @type boolean
          * @default false
@@ -217,7 +217,7 @@ var TC = TC || {};
         self.isReady = false;
 
         /**
-         * Indica si todos los controles y todas las capas del mapa est\u00e1n cargados.
+         * Indica si todos los controles y todas las capas del mapa están cargados.
          * @property isLoaded
          * @type boolean
          * @default false
@@ -233,7 +233,7 @@ var TC = TC || {};
         self.controls = [];
 
         /**
-         * Control que est\u00e1 activo en el mapa, y que por tanto responder\u00e1 a los eventos de rat\u00f3n en su \u00e1rea de visualizaci\u00f3n.
+         * Control que está activo en el mapa, y que por tanto responderá a los eventos de ratón en su área de visualización.
          * @property activeControl
          * @type TC.Control
          * @default null
@@ -272,7 +272,7 @@ var TC = TC || {};
         self.baseLayer = null;
 
         /**
-         * Capa donde se dibujan las entidades geogr\u00e1ficas si no se especifica la capa expl\u00edcitamente. Se instancia en el momento de a\u00f1adir la primera entidad.
+         * Capa donde se dibujan las entidades geográficas si no se especifica la capa explícitamente. Se instancia en el momento de añadir la primera entidad.
          * @property vectors
          * @type TC.layer.Vector
          * @default null
@@ -292,18 +292,18 @@ var TC = TC || {};
          * @event MAPLOAD
          */
         /**
-         * El mapa ha cargado todos sus controles, pero no hay garant\u00eda de que est\u00e9n cargadas las capas
+         * El mapa ha cargado todos sus controles, pero no hay garantía de que estén cargadas las capas
          * @event MAPREADY
          */
         /**
-         * Se va a a\u00f1adir una capa al mapa.
+         * Se va a añadir una capa al mapa.
          * @event BEFORELAYERADD
-         * @param {TC.Layer} layer Capa que se va a a\u00f1adir.
+         * @param {TC.Layer} layer Capa que se va a añadir.
          */
         /**
-         * Se ha a\u00f1adido una capa al mapa.
+         * Se ha añadido una capa al mapa.
          * @event LAYERADD
-         * @param {TC.Layer} layer Capa que se ha a\u00f1adido.
+         * @param {TC.Layer} layer Capa que se ha añadido.
          */
         /**
          * Se ha eliminado una capa del mapa.
@@ -311,11 +311,11 @@ var TC = TC || {};
          * @param {TC.Layer} layer Capa que se ha eliminado.
          */
         /**
-         * Se ha cambiado de posici\u00f3n una capa en la lista de capas del mapa.
+         * Se ha cambiado de posición una capa en la lista de capas del mapa.
          * @event LAYERORDER
          * @param {TC.Layer} layer Capa que se ha eliminado.
-         * @param {number} oldIndex \u00cdndice de la posici\u00f3n antes del cambio.
-         * @param {number} newIndex \u00cdndice de la posici\u00f3n despu\u00e9s del cambio.
+         * @param {number} oldIndex Índice de la posición antes del cambio.
+         * @param {number} newIndex Índice de la posición después del cambio.
          */
         /**
          * Se va a actualizar una capa del mapa: se van a modificar sus entidades o se va solicitar una nueva imagen.
@@ -354,7 +354,7 @@ var TC = TC || {};
             TC.ready = true;
         }
 
-        // GLS: mergeOptions es inclusivo, para poder sobrescribir los tipos de b\u00fasqueda, a\u00f1ado con valor a false las que el usuario no haya configurado.
+        // GLS: mergeOptions es inclusivo, para poder sobrescribir los tipos de búsqueda, añado con valor a false las que el usuario no haya configurado.
         if (options && options.controls && options.controls.search && options.controls.search.allowedSearchTypes) {
             for (var allowed in TC.Cfg.controls.search.allowedSearchTypes) {
                 if (!options.controls.search.allowedSearchTypes.hasOwnProperty(allowed)) {
@@ -363,7 +363,7 @@ var TC = TC || {};
             }
         }
 
-        // A\u00f1ado las capas disponibles a la configuraci\u00f3n general
+        // Añado las capas disponibles a la configuración general
 
         /**
          * Objeto de opciones del constructor.
@@ -374,228 +374,215 @@ var TC = TC || {};
         mergeOptions.call(self, options);
 
         var init = function () {
-            if (self.options.stateful) {
-                _setupStateControl();
-                self.state = self.checkLocation();
-            }
-
-            if (self.options.layout) {
-                self.$events.trigger($.Event(TC.Consts.event.LAYOUTLOAD, { map: self }));
-            }
-
-            if (options && options.workLayers !== undefined) {
-                self.options.workLayers = options.workLayers;
-            }
-            if (options && options.baseLayers !== undefined) {
-                self.options.baseLayers = options.baseLayers;
-            }
-
-            if (self.options.zoomToFeatures) {
-                // zoom a features solo cuando se cargue el mapa
-                var handleFeaturesAdd = function handleFeaturesAdd(e) {
-                    clearTimeout(self._zoomToFeaturesTimeout);
-
-                    self._zoomToFeaturesTimeout = setTimeout(function () {
-                        self.zoomToFeatures(e.layer.features, { animate: false });
-                        self.off(TC.Consts.event.FEATURESADD, handleFeaturesAdd);
-                    }, 100);
-                };
-                self.on(TC.Consts.event.FEATURESADD, handleFeaturesAdd);
-            }
-            else {
-                var _handleLayerAdd = function _handleLayerAdd(e) {
-                    if (e.layer.isBase && e.layer === self.baseLayer) {
-                        if (typeof self.state !== "undefined") {
-                            if (self.state.crs) {
-                                self.loaded(function () {
-                                    self.setProjection({
-                                        crs: self.state.crs,
-                                        extent: self.state.ext
-                                    });
-                                });
-                            }
-                            else {
-                                self.setExtent(self.state.ext);
-                            }
-                        }
-                        self.off(TC.Consts.event.LAYERADD, _handleLayerAdd);
-                    }
-                };
-                self.on(TC.Consts.event.LAYERADD, _handleLayerAdd);
-            }
-
-            if (self.state && self.state.vw3) { // GLS: aplico el estado 3d una vez que est\u00e9 todo cargado
-                self.loaded(function () {
-                    // accedo desde el control hasta que el 3d sea parte del mapa
-                    var control = self.getControlsByClass(TC.control.ThreeD)[0];
-                    control.setMapState(self.state.vw3);
-                });
-            }
-
-            /**
-             * Well-known ID (WKID) del CRS del mapa.
-             * @property crs
-             * @type string
-             */
-            self.crs = self.options.crs;
-            self.initialExtent = self.options.initialExtent;
-            self.maxExtent = self.options.maxExtent;
-
-            self.wrap = new TC.wrap.Map(self);
 
             TC.loadJS(
-                !(TC.isLegacy ? window[TC.Consts.PROJ4JSOBJ_LEGACY] : window[TC.Consts.PROJ4JSOBJ]),
-                [
-                    TC.url.proj4js
-                ],
+                self.options.stateful && !window.jsonpack,
+                [TC.apiLocation + TC.Consts.url.JSONPACK],
                 function () {
-                    TC.loadJSInOrder(
-                        !(TC.isLegacy ? window[TC.Consts.OLNS_LEGACY] : window[TC.Consts.OLNS]),
+                    if (self.options.stateful) {
+                        _setupStateControl();
+                        self.state = self.checkLocation();
+                    }
+
+                    if (self.options.layout) {
+                        self.$events.trigger($.Event(TC.Consts.event.LAYOUTLOAD, { map: self }));
+                    }
+
+                    if (options && options.workLayers !== undefined) {
+                        self.options.workLayers = options.workLayers;
+                    }
+                    if (options && options.baseLayers !== undefined) {
+                        self.options.baseLayers = options.baseLayers;
+                    }
+
+                    if (self.options.zoomToFeatures) {
+                        // zoom a features solo cuando se cargue el mapa
+                        var handleFeaturesAdd = function handleFeaturesAdd(e) {
+                            clearTimeout(self._zoomToFeaturesTimeout);
+
+                            self._zoomToFeaturesTimeout = setTimeout(function () {
+                                self.zoomToFeatures(e.layer.features, { animate: false });
+                                self.off(TC.Consts.event.FEATURESADD, handleFeaturesAdd);
+                            }, 100);
+                        };
+                        self.on(TC.Consts.event.FEATURESADD, handleFeaturesAdd);
+                    }
+                    else {
+                        var _handleLayerAdd = function _handleLayerAdd(e) {
+                            if (e.layer.isBase && e.layer === self.baseLayer) {
+                                if (typeof self.state !== "undefined") {
+                                    if (self.state.crs) {
+                                        self.loaded(function () {
+                                            self.setProjection({
+                                                crs: self.state.crs,
+                                                extent: self.state.ext
+                                            });
+                                        });
+                                    }
+                                    else {
+                                        self.setExtent(self.state.ext, { animate: false });
+                                    }
+                                }
+                                self.off(TC.Consts.event.LAYERADD, _handleLayerAdd);
+                            }
+                        };
+                        self.on(TC.Consts.event.LAYERADD, _handleLayerAdd);
+                    }
+
+                    if (self.state && self.state.vw3) { // GLS: aplico el estado 3d una vez que esté todo cargado
+                        self.loaded(function () {
+                            // accedo desde el control hasta que el 3d sea parte del mapa
+                            var control = self.getControlsByClass(TC.control.ThreeD)[0];
+                            control.setMapState(self.state.vw3);
+                        });
+                    }
+
+                    /**
+                     * Well-known ID (WKID) del CRS del mapa.
+                     * @property crs
+                     * @type string
+                     */
+                    self.crs = self.options.crs;
+                    self.initialExtent = self.options.initialExtent;
+                    self.maxExtent = self.options.maxExtent;
+
+                    self.wrap = new TC.wrap.Map(self);
+
+                    TC.loadJS(
+                        !(TC.isLegacy ? window[TC.Consts.PROJ4JSOBJ_LEGACY] : window[TC.Consts.PROJ4JSOBJ]),
                         [
-                            TC.url.ol,
-                            TC.url.olConnector
+                            TC.url.proj4js
                         ],
                         function () {
-                            TC.loadProjDef({
-                                crs: self.options.crs,
-                                callback: function () {
-                                    self.wrap.setMap();
-                                    for (var name in self.options.controls) {
-                                        if (self.options.controls[name]) {
-
-                                            if (typeof self.options.controls[name] === 'boolean') {
-                                                self.addControl(name);
-                                            }
-                                            else {
-                                                var options = self.options.controls[name];
-                                                name = name.substr(0, 1).toUpperCase() + name.substr(1);
-                                                self.addControl(name, options);
-                                            }
-                                        }
-                                    }
-
-                                    self.on(TC.Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
-                                    self.on(TC.Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
-
-                                    var i;
-                                    var j;
-                                    var lyrCfg;
-                                    for (i = 0; i < self.options.baseLayers.length; i++) {
-                                        lyrCfg = self.options.baseLayers[i];
-                                        if (typeof lyrCfg === 'string') {
-                                            lyrCfg = getAvailableBaseLayer.call(self, lyrCfg);
-                                        }
-                                        self.addLayer($.extend({}, lyrCfg, { isBase: true, map: self }));
-                                    }
-
-                                    var setVisibility = function (layer) {
-                                        if (layer.isRaster() && !layer.names) {
-                                            layer.setVisibility(false);
-                                        }
-                                    };
-                                    const workLayersNotInState = self.options.workLayers
-                                        .map(function (workLayer) {
-                                            return $.extend({}, workLayer, { map: self });
-                                        })
-                                        .filter(function (workLayer) {
-                                            if (!self.state || !self.state.layers) {
-                                                return true;
-                                            }
-                                            return !self.state.layers.some(function (stateLayer) {
-                                                const result = stateLayer.u === workLayer.url && workLayer.layerNames.indexOf(stateLayer.n) >= 0;
-                                                if (result) {
-                                                    stateLayer.id = workLayer.id; // Hemos identificado la capa, le damos el id que le corresponde
+                            TC.loadJSInOrder(
+                                !(TC.isLegacy ? window[TC.Consts.OLNS_LEGACY] : window[TC.Consts.OLNS]),
+                                [
+                                    TC.url.ol,
+                                    TC.url.olConnector
+                                ],
+                                function () {
+                                    TC.loadProjDef({
+                                        crs: self.options.crs,
+                                        callback: function () {
+                                            self.wrap.setMap();
+                                            for (var name in self.options.controls) {
+                                                const ctlOptions = self.options.controls[name];
+                                                if (ctlOptions) {
+                                                    self.addControl(name, typeof ctlOptions === 'boolean' ? {} : ctlOptions);
                                                 }
-                                                return result;
-                                            });
-                                        });
-                                    workLayersNotInState.forEach(function (workLayer) {
-                                        self.addLayer(workLayer).then(setVisibility);
-                                    });
+                                            }
 
-                                    if (self.state && self.state.layers) {
-                                        self.state.layers.forEach(function (stateLayer) {
+                                            self.on(TC.Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
+                                            self.on(TC.Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
 
-                                            var op = stateLayer.o;
-                                            var visibility = stateLayer.v;
-
-                                            // a\u00f1ado como promesa cada una de las capas que se a\u00f1aden
-                                            self.addLayer({
-                                                id: stateLayer.id || TC.getUID(),
-                                                url: TC.Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u,
-                                                hideTitle: stateLayer.h,
-                                                layerNames: stateLayer.n ? stateLayer.n.split(',') : "",
-                                                renderOptions: {
-                                                    opacity: stateLayer.o,
-                                                    hide: !stateLayer.v
+                                            var i;
+                                            var j;
+                                            var lyrCfg;
+                                            for (i = 0; i < self.options.baseLayers.length; i++) {
+                                                lyrCfg = self.options.baseLayers[i];
+                                                if (typeof lyrCfg === 'string') {
+                                                    lyrCfg = getAvailableBaseLayer.call(self, lyrCfg);
                                                 }
-                                            }).then(function (layer) {
-                                                layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
-                                                    var layer = this.parent;
-                                                    if (event.error.code === 401 || event.error.code === 403)
-                                                        layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
-                                                    layer.map.removeLayer(layer);
+                                                self.addLayer($.extend({}, lyrCfg, { isBase: true, map: self }));
+                                            }
+
+                                            var setVisibility = function (layer) {
+                                                if (layer.isRaster() && !layer.names) {
+                                                    layer.setVisibility(false);
+                                                }
+                                            };
+                                            const workLayersNotInState = self.options.workLayers
+                                                .map(function (workLayer) {
+                                                    return $.extend({}, workLayer, { map: self });
+                                                })
+                                                .filter(function (workLayer) {
+                                                    if (!self.state || !self.state.layers) {
+                                                        return true;
+                                                    }
+                                                    return !self.state.layers.some(function (stateLayer) {
+                                                        const result = stateLayer.u === workLayer.url && workLayer.layerNames.indexOf(stateLayer.n) >= 0;
+                                                        if (result) {
+                                                            stateLayer.id = workLayer.id; // Hemos identificado la capa, le damos el id que le corresponde
+                                                        }
+                                                        return result;
+                                                    });
                                                 });
-                                                var rootNode = layer.wrap.getRootLayerNode();
-                                                layer.title = rootNode.Title || rootNode.title;
-                                                layer.setOpacity(op);
-                                                layer.setVisibility(visibility);
+                                            workLayersNotInState.forEach(function (workLayer) {
+                                                self.addLayer(workLayer).then(setVisibility);
                                             });
-                                        });
-                                    }
-                                    self.isReady = true;
-                                    self.$events.trigger($.Event(TC.Consts.event.MAPREADY));
-                                    setHeightFix(self._$div);
+
+                                            if (self.state && self.state.layers) {
+                                                self.state.layers.forEach(function (stateLayer) {
+
+                                                    var op = stateLayer.o;
+                                                    var visibility = stateLayer.v;
+
+                                                    // añado como promesa cada una de las capas que se añaden
+                                                    self.addLayer({
+                                                        id: stateLayer.id || TC.getUID(),
+                                                        url: TC.Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u,
+                                                        hideTitle: stateLayer.h,
+                                                        layerNames: stateLayer.n ? stateLayer.n.split(',') : "",
+                                                        renderOptions: {
+                                                            opacity: stateLayer.o,
+                                                            hide: !stateLayer.v
+                                                        }
+                                                    }).then(function (layer) {
+                                                        layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
+                                                            var layer = this.parent;
+                                                            if (event.error.code === 401 || event.error.code === 403)
+                                                                layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
+                                                            layer.map.removeLayer(layer);
+                                                        });
+                                                        var rootNode = layer.wrap.getRootLayerNode();
+                                                        layer.title = rootNode.Title || rootNode.title;
+                                                        layer.setOpacity(op);
+                                                        layer.setVisibility(visibility);
+                                                    });
+                                                });
+                                            }
+                                            self.isReady = true;
+                                            self.$events.trigger($.Event(TC.Consts.event.MAPREADY));
+                                            setHeightFix(self._$div);
 
 
+                                        }
+                                    });
                                 }
-                            });
+                            );
                         }
                     );
+
+                    self.on(TC.Consts.event.FEATURECLICK, function (e) {
+                        if (!self.activeControl || !self.activeControl.isExclusive()) {
+                            e.feature.showPopup();
+                        }
+                    });
+
+                    self.on(TC.Consts.event.NOFEATURECLICK, function (e) {
+                        e.layer._noFeatureClicked = true;
+                        var allLayersClicked = true;
+                        for (var i = 0, len = self.workLayers.length; i < len; i++) {
+                            if (!self.workLayers[i]._noFeatureClicked) {
+                                allLayersClicked = false;
+                                break;
+                            }
+                        }
+                        if (allLayersClicked) {
+                            self.workLayers.forEach(function (wl) {
+                                delete wl._noFeatureClicked;
+                            });
+                            self.getControlsByClass(TC.control.Popup).forEach(function (p) {
+                                p.hide();
+                            });
+                        }
+                    });
                 }
             );
-
-            self.on(TC.Consts.event.FEATURECLICK, function (e) {
-                if (!self.activeControl || !self.activeControl.isExclusive()) {
-                    e.feature.showPopup();
-                }
-            });
-
-            self.on(TC.Consts.event.NOFEATURECLICK, function (e) {
-                e.layer._noFeatureClicked = true;
-                var allLayersClicked = true;
-                var i;
-                var layer;
-                for (i = 0; i < self.workLayers.length; i++) {
-                    layer = self.workLayers[i];
-                    if (layer instanceof TC.layer.Vector) {
-                        if (!layer._noFeatureClicked) {
-                            allLayersClicked = false;
-                            break;
-                        }
-                    }
-                }
-                if (allLayersClicked) {
-                    for (i = 0; i < self.workLayers.length; i++) {
-                        layer = self.workLayers[i];
-                        if (layer instanceof TC.layer.Vector) {
-                            delete layer._noFeatureClicked;
-                        }
-                    }
-                    var popups = self.getControlsByClass(TC.control.Popup);
-                    for (var i = 0, len = popups.length; i < len; i++) {
-                        popups[i].hide();
-                    }
-                }
-            });
         };
 
         var _setupStateControl = function () {
             var MIN_TIMEOUT_VALUE = 4;
-
-            if (!window.jsonpack) {
-                TC.syncLoadJS(TC.apiLocation + TC.Consts.url.JSONPACK);
-            }
 
             // eventos a los que estamos suscritos para obtener el estado
             var events = [
@@ -607,7 +594,7 @@ var TC = TC || {};
                 TC.Consts.event.ZOOM,
                 TC.Consts.event.BASELAYERCHANGE].join(' ');
 
-            // gesti\u00f3n siguiente - anterior
+            // gestión siguiente - anterior
             self.on(TC.Consts.event.MAPLOAD, function () {
 
                 self.loaded(function () {
@@ -619,7 +606,7 @@ var TC = TC || {};
                     // nos suscribimos a los eventos para registrar el estado en cada uno de ellos
                     self.on(events, $.proxy(_addToHistory, self));
 
-                    // a la gesti\u00f3n del evento de opacidad le metemos un retardo, para evitar que haya un exceso de actualizaciones de estado.
+                    // a la gestión del evento de opacidad le metemos un retardo, para evitar que haya un exceso de actualizaciones de estado.
                     var layerOpacityHandlerTimeout;
                     self.on(TC.Consts.event.LAYEROPACITY, function (e) {
                         clearTimeout(layerOpacityHandlerTimeout);
@@ -628,7 +615,7 @@ var TC = TC || {};
                         }, 500);
                     });
 
-                    // gesti\u00f3n siguiente - anterior
+                    // gestión siguiente - anterior
                     window.addEventListener('popstate', function (e) {
                         var wait;
                         wait = self.loadingCtrl && self.loadingCtrl.addWait();
@@ -636,10 +623,10 @@ var TC = TC || {};
                             if (e && e.state != null) {
                                 //self.registerState = false;
 
-                                // eliminamos la suscripci\u00f3n para no registrar el cambio de estado que vamos a provocar
+                                // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
                                 self.off(events, $.proxy(_addToHistory, self));
 
-                                // gestionamos la actualizaci\u00f3n para volver a suscribirnos a los eventos del mapa                        
+                                // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
                                 $.when(_loadIntoMap(e.state)).then(function () {
                                     setTimeout(function () {
                                         self.on(events, $.proxy(_addToHistory, self));
@@ -698,7 +685,7 @@ var TC = TC || {};
             }
         };
 
-        var _getMapState = function () {
+        var _getMapState = function (extraStates) {
             var state = {};
 
             if (self.crs !== self.options.crs) {
@@ -747,6 +734,11 @@ var TC = TC || {};
             if (!window.jsonpack) {
                 TC.syncLoadJS(TC.apiLocation + TC.Consts.url.JSONPACK);
             }
+
+            if (extraStates) {
+                $.extend(state, extraStates);
+            }
+
             return jsonpack.pack(state);
         };
 
@@ -766,7 +758,7 @@ var TC = TC || {};
 
         var _loadIntoMap = function (stringOrJson) {
 
-            var done = new $.Deferred(); // GLS lo a\u00f1ado para poder gestionar el final de la actualizaci\u00f3n de estado y volver a suscribirme a los eventos del mapa
+            var done = new $.Deferred(); // GLS lo añado para poder gestionar el final de la actualización de estado y volver a suscribirme a los eventos del mapa
             var promises = [];
 
             if (!self.loadingctrl) {
@@ -830,7 +822,7 @@ var TC = TC || {};
 
                     //extent
                     if (obj.ext) {
-                        promises.push(self.setExtent(obj.ext));
+                        promises.push(self.setExtent(obj.ext, { animate: false }));
                     }
                 }
 
@@ -875,7 +867,7 @@ var TC = TC || {};
                                 layer.title = rootNode.Title || rootNode.title;
                                 /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
                                 esto es porque en el loadstate al establecer la opacidad dedido a un timeout pasados X segundos se lanzaba 
-                                este evento y produc\u00eda un push en el state innecesario*/
+                                este evento y producía un push en el state innecesario*/
                                 layer.setOpacity(op, true);
                                 layer.setVisibility(visibility);
                             }));
@@ -891,8 +883,8 @@ var TC = TC || {};
             return done;
         };
 
-        mapProto.getMapState = function () {
-            var state = _getMapState();
+        mapProto.getMapState = function (extraStates) {
+            var state = _getMapState(extraStates);
             return TC.Util.utf8ToBase64(state);
         };
 
@@ -918,6 +910,10 @@ var TC = TC || {};
                         TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), TC.Consts.msgErrorMode.TOAST);
                         return;
                     }
+                }
+
+                if (TC.Util.detectIE() && window.location.href.length === 2047) {
+                    TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValidForIE'), TC.Consts.msgErrorMode.TOAST);
                 }
 
                 if (obj) {
@@ -1005,7 +1001,7 @@ var TC = TC || {};
                 var tryGetFile = function (url, resource) {
                     var defer = $.Deferred();
 
-                    //Comprobamos si existe el fichero enviando una petici\u00f3n HEAD
+                    //Comprobamos si existe el fichero enviando una petición HEAD
                     $.ajax({
                         type: 'HEAD',
                         url: url,
@@ -1031,7 +1027,7 @@ var TC = TC || {};
                         apiTcUrl + 'layout/responsive' + '/' + fileName
                     ];
 
-                    // flacunza: si la URL tiene pinta de ser absoluta es ella sola la m\u00e1s probable, as\u00ed que la ponemos la primera
+                    // flacunza: si la URL tiene pinta de ser absoluta es ella sola la más probable, así que la ponemos la primera
                     if (isAbsoluteUrl) {
                         urlsToQuery.unshift(layoutPath + '/' + fileName);
                     }
@@ -1062,7 +1058,7 @@ var TC = TC || {};
                     return layout;
                 };
 
-                //buscamos el par\u00e1metro layout en la url del navegador
+                //buscamos el parámetro layout en la url del navegador
                 var apiTcUrl = TC.apiLocation + 'TC/';
                 //var defaultLayout = 'idena';
                 var layout = {};
@@ -1088,7 +1084,7 @@ var TC = TC || {};
 
 
         TC.i18n = TC.i18n || {};
-        // i18n: carga de recursos si no est\u00e1 cargados previamente
+        // i18n: carga de recursos si no está cargados previamente
         TC.i18n.loadResources = TC.i18n.loadResources || function (condition, path, locale) {
             var result;
             if (condition) {
@@ -1135,8 +1131,10 @@ var TC = TC || {};
 
         $.when.apply(this, i18nDeferreds).always(function () {
 
-            if (self.options.layout) {
-                buildLayout(self.options.layout).done(function (layout) {
+            // Prevalece el layout que recibamos por parámetro en la aplicación. Si no lo hay, entonces usamos el de las opciones.
+            const mapLayout = TC.Util.getParameterByName(TC.Cfg.layoutURLParamName) || self.options.layout;
+            if (mapLayout) {
+                buildLayout(mapLayout).done(function (layout) {
                     self.$events.trigger($.Event(TC.Consts.event.BEFORELAYOUTLOAD, { map: self }));
 
                     var layoutURLs;
@@ -1194,6 +1192,15 @@ var TC = TC || {};
                         i18LayoutDeferred.resolve(false);
                     }
 
+                    if (layoutURLs.style) {
+                        // Añadimos una clase para hacer más fáciles las reglas del layout
+                        self._$div.addClass('tc-lo');
+                        TC.loadCSS(layoutURLs.style);
+                    }
+                    if (!Modernizr.canvas && layoutURLs.ie8Style) {
+                        TC.loadCSS(layoutURLs.ie8Style);
+                    }
+
                     if (layoutURLs.markup) {
                         var markupDeferred;
                         if (locale) {
@@ -1241,12 +1248,6 @@ var TC = TC || {};
                             layoutURLs.script,
                             function () {
                                 setHeightFix(self._$div);
-                                if (layoutURLs.style) {
-                                    TC.loadCSS(layoutURLs.style);
-                                }
-                                if (!Modernizr.canvas && layoutURLs.ie8Style) {
-                                    TC.loadCSS(layoutURLs.ie8Style);
-                                }
                                 init();
                             });
                     });
@@ -1257,7 +1258,7 @@ var TC = TC || {};
             }
         });
 
-        // Borramos \u00e1rboles de capas cacheados
+        // Borramos árboles de capas cacheados
         self.$events.on(TC.Consts.event.UPDATEPARAMS, function (e) {
             deleteTreeCache(e.layer);
         });
@@ -1267,7 +1268,7 @@ var TC = TC || {};
             }
         });
 
-        // Redefinimos TC.error para a\u00f1adir un aviso en el mapa
+        // Redefinimos TC.error para añadir un aviso en el mapa
         /*var oldError = TC.error;
         TC.error = function (text) {
             oldError(text);
@@ -1275,6 +1276,9 @@ var TC = TC || {};
         };*/
         var oldError = TC.error;
         TC.error = function (text, options, subject) {
+            if (TC.isDebug && console.trace) {
+                console.trace();
+            }
             if (!options) {
                 oldError(text);
                 self.toast(text, { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
@@ -1319,8 +1323,8 @@ var TC = TC || {};
     };
 
     /**
-     * Funci\u00f3n que mezcla opciones de mapa relativos a capa, teniendo cuidado de que puede haber objetos de opciones de capa o identificadores de capa.
-     * En este \u00faltimo caso, si no son la opci\u00f3n prioritaria, hay que sustituirlos por los objetos de definiciones de capa.
+     * Función que mezcla opciones de mapa relativos a capa, teniendo cuidado de que puede haber objetos de opciones de capa o identificadores de capa.
+     * En este último caso, si no son la opción prioritaria, hay que sustituirlos por los objetos de definiciones de capa.
      */
     var mergeLayerOptions = function (optionsArray, propertyName) {
         // lista de opciones de capa de los argumentos
@@ -1332,7 +1336,7 @@ var TC = TC || {};
             return result;
         });
         if (propertyName === 'availableBaseLayers') console.log("layerOptions", layerOptions);
-        // a\u00f1adimos las opciones de capa de la configuraci\u00f3n general
+        // añadimos las opciones de capa de la configuración general
         var layerOption = {};
         layerOption[propertyName] = TC.Cfg[propertyName];
         layerOptions.unshift(layerOption);
@@ -1382,11 +1386,11 @@ var TC = TC || {};
     };
 
     /**
-     * A\u00f1ade una capa al mapa.
+     * Añade una capa al mapa.
      * @method addLayer
      * @async
      * @param {TC.Layer|TC.cfg.LayerOptions|string} layer Objeto de capa, objeto de opciones del constructor de la capa, o identificador de capa.
-     * @param {function} [callback] Funci\u00f3n de callback.
+     * @param {function} [callback] Función de callback.
      * @return {jQuery.Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
      */
     mapProto.addLayer = function (layer, callback) {
@@ -1751,10 +1755,10 @@ var TC = TC || {};
     };
 
     /**
-     * Asigna un callback que se ejecutar\u00e1 cuando los controles del mapa se hayan cargado.
+     * Asigna un callback que se ejecutará cuando los controles del mapa se hayan cargado.
      * @method ready
      * @async
-     * @param {function} [callback] Funci\u00f3n a ejecutar.
+     * @param {function} [callback] Función a ejecutar.
      */
     mapProto.ready = function (callback) {
         var self = this;
@@ -1769,10 +1773,10 @@ var TC = TC || {};
     };
 
     /**
-     * Asigna un callback que se ejecutar\u00e1 cuando los controles y las capas iniciales del mapa se hayan cargado.
+     * Asigna un callback que se ejecutará cuando los controles y las capas iniciales del mapa se hayan cargado.
      * @method loaded
      * @async
-     * @param {function} [callback] Funci\u00f3n a ejecutar.
+     * @param {function} [callback] Función a ejecutar.
      */
     mapProto.loaded = function (callback) {
         var self = this;
@@ -1789,7 +1793,7 @@ var TC = TC || {};
 
 
     /**
-     * Devuelve un \u00e1rbol de capas del mapa.
+     * Devuelve un árbol de capas del mapa.
      * @method getLayerTree
      * @return {TC.LayerTree}
      */
@@ -1799,7 +1803,7 @@ var TC = TC || {};
         var _traverse = function (o, func) {
             for (var i in o.children) {
                 if (o.children && o.children.length > 0) {
-                    //bajar un nivel en el \u00e1rbol
+                    //bajar un nivel en el árbol
                     _traverse(o.children[i], func);
                 }
 
@@ -1825,11 +1829,11 @@ var TC = TC || {};
     };
 
     /**
-     * A\u00f1ade un control al mapa.
+     * Añade un control al mapa.
      * @method addControl
      * @async
-     * @param {TC.Control|string} control Control a a\u00f1adir o nombre del control
-     * @param {object} [options] Objeto de opciones de configuraci\u00f3n del control. Consultar el par\u00e1metro de opciones del constructor del control.
+     * @param {TC.Control|string} control Control a añadir o nombre del control
+     * @param {object} [options] Objeto de opciones de configuración del control. Consultar el parámetro de opciones del constructor del control.
      * @return {jQuery.Promise} Promesa de objeto {{#crossLink "TC.Control"}}{{/crossLink}}
      */
     mapProto.addControl = function (control, options) {
@@ -1867,7 +1871,7 @@ var TC = TC || {};
     /**
      * Devuelve la lista de controles que son de la clase especificada.
      * @method getControlsByClass
-     * @param {function|string} classObj Nombre de la clase o funci\u00f3n constructora de la clase.
+     * @param {function|string} classObj Nombre de la clase o función constructora de la clase.
      * @return {array}
      */
     mapProto.getControlsByClass = function (classObj) {
@@ -1896,6 +1900,17 @@ var TC = TC || {};
         return result;
     };
 
+    mapProto.getControlById = function (id) {
+        const self = this;
+        for (var i = 0, len = self.controls.length; i < len; i++) {
+            const ctl = self.controls[i];
+            if (ctl.id === id) {
+                return ctl;
+            }
+        }
+        return null;
+    };
+
     mapProto.getDefaultControl = function () {
         var candidate = this.getControlsByClass("TC.control.FeatureInfo");
         if (candidate && candidate.length)
@@ -1919,11 +1934,11 @@ var TC = TC || {};
     };
 
     /**
-     * Establece la extensi\u00f3n del mapa.
+     * Establece la extensión del mapa.
      * @method setExtent
-     * @param {array} extent Array de cuatro n\u00fameros que representan las coordenadas x m\u00ednima, y m\u00ednima, x m\u00e1xima e y m\u00e1xima respectivamente.
+     * @param {array} extent Array de cuatro números que representan las coordenadas x mínima, y mínima, x máxima e y máxima respectivamente.
      * @param {object} [options] Objeto de opciones.
-     * @param {boolean} [options.animate=true] Establece si se realiza una animaci\u00f3n al cambiar la extensi\u00f3n.
+     * @param {boolean} [options.animate=true] Establece si se realiza una animación al cambiar la extensión.
      * La unidad de las coordenadas es la correspondiente al CRS del mapa.
      */
     mapProto.setExtent = function (extent, options) {
@@ -1931,9 +1946,9 @@ var TC = TC || {};
     };
 
     /**
-     * Obtiene la extensi\u00f3n actual del mapa.
+     * Obtiene la extensión actual del mapa.
      * @method getExtent
-     * @return {array} Array de cuatro n\u00fameros que representan las coordenadas x m\u00ednima, y m\u00ednima, x m\u00e1xima e y m\u00e1xima respectivamente.
+     * @return {array} Array de cuatro números que representan las coordenadas x mínima, y mínima, x máxima e y máxima respectivamente.
      * La unidad de las coordenadas es la correspondiente al CRS del mapa.
      */
     mapProto.getExtent = function () {
@@ -1943,9 +1958,9 @@ var TC = TC || {};
     /**
      * Establece el centro del mapa.
      * @method setCenter
-     * @param {array} coord Array de dos n\u00fameros que representan la coordenada del punto en las unidades correspondientes al CRS del mapa.
+     * @param {array} coord Array de dos números que representan la coordenada del punto en las unidades correspondientes al CRS del mapa.
      * @param {object} [options] Objeto de opciones.
-     * @param {boolean} [options.animate=true] Establece si se realiza una animaci\u00f3n al centrar.
+     * @param {boolean} [options.animate=true] Establece si se realiza una animación al centrar.
      */
     mapProto.setCenter = function (coord, options) {
         return this.wrap.setCenter(coord, options);
@@ -2039,7 +2054,7 @@ var TC = TC || {};
                 baseLayer = options.baseLayer;
             }
             else if (options.allowFallbackLayer) {
-                // Cambiamos de capa de fondo si es mejor o no hay m\u00e1s remedio
+                // Cambiamos de capa de fondo si es mejor o no hay más remedio
                 if (!self.baseLayer.isCompatible(options.crs) &&
                     self.baseLayer.wrap.getCompatibleMatrixSets(options.crs).length === 0) {
                     if (self.baseLayer.options.fallbackLayer) {
@@ -2055,7 +2070,7 @@ var TC = TC || {};
                 baseLayer = self.baseLayer;
             }
             if (self.baseLayers.indexOf(baseLayer) < 0) {
-                // Si hemos cambiado de capa de fondo la a\u00f1adimos a la colecci\u00f3n
+                // Si hemos cambiado de capa de fondo la añadimos a la colección
                 self.baseLayers.push(baseLayer);
                 const insertIdx = self.layers.reduce(getReduceByBooleanFunction('isBase'), -1) + 1;
                 self.layers.splice(insertIdx, 0, baseLayer);
@@ -2106,34 +2121,34 @@ var TC = TC || {};
     };
 
     /**
-     * Obtiene una coordenada a partir de una posici\u00f3n del \u00e1rea de visualizaci\u00f3n del mapa en p\u00edxeles.
+     * Obtiene una coordenada a partir de una posición del área de visualización del mapa en píxeles.
      * @method getCoordinateFromPixel
-     * @param {array} xy Coordenada en p\u00edxeles de la posici\u00f3n en el \u00e1rea de visualizaci\u00f3n.
-     * @return {array} Array de dos n\u00fameros que representa las coordenada del punto en las unidades correspondientes al CRS del mapa.
+     * @param {array} xy Coordenada en píxeles de la posición en el área de visualización.
+     * @return {array} Array de dos números que representa las coordenada del punto en las unidades correspondientes al CRS del mapa.
      */
     mapProto.getCoordinateFromPixel = function (xy) {
         return this.wrap.getCoordinateFromPixel(xy);
     };
 
     /**
-     * Obtiene una posici\u00f3n en el \u00e1rea de visualizaci\u00f3n a partir de una coordenada.
+     * Obtiene una posición en el área de visualización a partir de una coordenada.
      * @method getCoordinateFromPixel
      * @param {array} coord Coordenada en el mapa.
-     * @return {array} Array de dos n\u00fameros que representa las posici\u00f3n del punto en p\u00edxeles.
+     * @return {array} Array de dos números que representa las posición del punto en píxeles.
      */
     mapProto.getPixelFromCoordinate = function (coord) {
         return this.wrap.getPixelFromCoordinate(coord);
     };
 
     /**
-     * Establece la extensi\u00f3n del mapa de forma que abarque todas las entidades geogr\u00e1ficas pasadas por par\u00e1metro.
+     * Establece la extensión del mapa de forma que abarque todas las entidades geográficas pasadas por parámetro.
      * @method zoomToFeatures
-     * @param {array} features Array de entidades geogr\u00e1ficas. Si est\u00e1 vac\u00edo este m\u00e9todo no hace nada.
+     * @param {array} features Array de entidades geográficas. Si está vacío este método no hace nada.
      * @param {object} [options] Objeto de opciones de zoom.
-     * @param {number} [options.pointBoundsRadius=30] Radio en metros del \u00e1rea alrededor del punto que se respetar\u00e1 al hacer zoom.
-     * @param {number} [options.extentMargin=0.2] Tama\u00f1o del margen que se aplicar\u00e1 a la extensi\u00f3n total de todas las entidades. 
-     * @param {boolean} [options.animate=false] Realizar animaci\u00f3n al hacer el zoom. 
-     * El valor es la relaci\u00f3n resultante de la diferencia de dimensiones entre la extensi\u00f3n ampliada y la original relativa a la original.
+     * @param {number} [options.pointBoundsRadius=30] Radio en metros del área alrededor del punto que se respetará al hacer zoom.
+     * @param {number} [options.extentMargin=0.2] Tamaño del margen que se aplicará a la extensión total de todas las entidades. 
+     * @param {boolean} [options.animate=false] Realizar animación al hacer el zoom. 
+     * El valor es la relación resultante de la diferencia de dimensiones entre la extensión ampliada y la original relativa a la original.
      */
     mapProto.zoomToFeatures = function (features, options) {
         var self = this;
@@ -2179,14 +2194,14 @@ var TC = TC || {};
             }
             self.wrap.setExtent(bounds, opts);
 
-            // GLS: Necesito diferenciar un zoom program\u00e1tico de un zoom del usuario para la gesti\u00f3n del zoom en 3D
+            // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
             self.$events.trigger($.Event(TC.Consts.event.ZOOMTO, { extent: bounds }));
         }
     };
 
     /**
-     * Establece la extensi\u00f3n del mapa de forma que abarque todas los marcadores que existen en \u00e9l.
-     * El m\u00e9todo espera a todos los marcadores pendientes de incluir, dado que el m\u00e9todo {{#crossLink "TC.Map/addMarker:method"}}{{/crossLink}} es as\u00edncrono.
+     * Establece la extensión del mapa de forma que abarque todas los marcadores que existen en él.
+     * El método espera a todos los marcadores pendientes de incluir, dado que el método {{#crossLink "TC.Map/addMarker:method"}}{{/crossLink}} es asíncrono.
      * @method zoomToMarkers
      */
     mapProto.zoomToMarkers = function (options) {
@@ -2204,7 +2219,7 @@ var TC = TC || {};
                     }
                 }
             }
-            // Miramos los marcadores de la capa vectores que puede no estar todav\u00eda en workLayers.
+            // Miramos los marcadores de la capa vectores que puede no estar todavía en workLayers.
             for (var i = 0; i < arguments.length; i++) {
                 markers[markers.length] = arguments[i];
             }
@@ -2254,11 +2269,11 @@ var TC = TC || {};
     };
 
     /**
-     * A\u00f1ade un punto al mapa. Si no se especifica una capa en el par\u00e1metro de opciones se a\u00f1adir\u00e1 a una capa vectorial destinada a a\u00f1adir entidades geogr\u00e1ficas.
-     * Esta capa se crea al a\u00f1adir por primera vez una entidad sin especificar capa.
+     * Añade un punto al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
+     * Esta capa se crea al añadir por primera vez una entidad sin especificar capa.
      * @method addPoint
      * @async
-     * @param {array} coord Array de dos n\u00fameros representando la coordenada del punto en las unidades del CRS del mapa.
+     * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
      * @param {TC.cfg.PointStyleOptions} [options] Opciones del punto.
      */
     mapProto.addPoint = function (coord, options) {
@@ -2277,11 +2292,11 @@ var TC = TC || {};
     };
 
     /**
-     * A\u00f1ade un marcador puntual al mapa. Si no se especifica una capa en el par\u00e1metro de opciones se a\u00f1adir\u00e1 a una capa vectorial destinada a a\u00f1adir entidades geogr\u00e1ficas.
-     * Esta capa se crea al a\u00f1adir por primera vez una entidad sin especificar capa.
+     * Añade un marcador puntual al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
+     * Esta capa se crea al añadir por primera vez una entidad sin especificar capa.
      * @method addMarker
      * @async
-     * @param {array} coord Array de dos n\u00fameros representando la coordenada del punto en las unidades del CRS del mapa.
+     * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
      * @param {TC.cfg.MarkerStyleOptions} [options] Opciones del marcador.
      */
     mapProto.addMarker = function (coord, options) {
@@ -2294,7 +2309,7 @@ var TC = TC || {};
             }
         }
         else {
-            // Se a\u00f1ade un deferred m\u00e1s para evitar que zoomToMarkers salte antes de poblarse el array _markerDeferreds.
+            // Se añade un deferred más para evitar que zoomToMarkers salte antes de poblarse el array _markerDeferreds.
             var vectorsAndMarkerDeferred = new $.Deferred();
             self._markerDeferreds.push(vectorsAndMarkerDeferred);
             $.when(_getVectors(self)).then(function (vectors) {
@@ -2306,12 +2321,12 @@ var TC = TC || {};
     };
 
     /**
-     * A\u00f1ade una polil\u00ednea al mapa. Si no se especifica una capa en el par\u00e1metro de opciones se a\u00f1adir\u00e1 a una capa vectorial destinada a a\u00f1adir entidades geogr\u00e1ficas.
-     * Esta capa se crea al a\u00f1adir por primera vez una entidad sin especificar capa.
+     * Añade una polilínea al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
+     * Esta capa se crea al añadir por primera vez una entidad sin especificar capa.
      * @method addPolyline
      * @async
-     * @param {array} coords Array de arrays de dos n\u00fameros representando las coordenadas de los v\u00e9rtices en las unidades del CRS del mapa.
-     * @param {object} [options] Opciones de la polil\u00ednea.
+     * @param {array} coords Array de arrays de dos números representando las coordenadas de los vértices en las unidades del CRS del mapa.
+     * @param {object} [options] Opciones de la polilínea.
      */
     mapProto.addPolyline = function (coords, options) {
         var self = this;
@@ -2329,13 +2344,13 @@ var TC = TC || {};
     };
 
     /**
-     * A\u00f1ade un pol\u00edgono al mapa. Si no se especifica una capa en el par\u00e1metro de opciones se a\u00f1adir\u00e1 a una capa vectorial destinada a a\u00f1adir entidades geogr\u00e1ficas.
-     * Esta capa se crea al a\u00f1adir por primera vez una entidad sin especificar capa.
+     * Añade un polígono al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
+     * Esta capa se crea al añadir por primera vez una entidad sin especificar capa.
      * @method addPolygon
      * @async
-     * @param {array} coords Array que contiene anillos. Estos a su vez son arrays de arrays de dos n\u00fameros representando las coordenadas de los v\u00e9rtices en las unidades del CRS del mapa.
-     * El primer anillo es el exterior y el resto son islas. No es necesario cerrar los anillos (poner el mismo v\u00e9rtice al principio y al final).
-     * @param {object} [options] Opciones del pol\u00edgono.
+     * @param {array} coords Array que contiene anillos. Estos a su vez son arrays de arrays de dos números representando las coordenadas de los vértices en las unidades del CRS del mapa.
+     * El primer anillo es el exterior y el resto son islas. No es necesario cerrar los anillos (poner el mismo vértice al principio y al final).
+     * @param {object} [options] Opciones del polígono.
      */
     mapProto.addPolygon = function (coords, options) {
         var self = this;
@@ -2476,7 +2491,7 @@ var TC = TC || {};
     mapProto.exportImage = function () {
         var self = this;
         var result = null;
-        var errorMsg = 'El mapa actual no es compatible con la exportaci\u00f3n de im\u00e1genes';
+        var errorMsg = 'El mapa actual no es compatible con la exportación de imágenes';
         var canvas = self.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
         if (canvas && self.options.crossOrigin) {
             try {
@@ -2494,18 +2509,18 @@ var TC = TC || {};
 })();
 
 /**
- * \u00c1rbol de capas del mapa.
+ * Árbol de capas del mapa.
  * Esta clase no tiene constructor.
  * @class TC.LayerTree
  * @static
  */
 /**
- * Lista de \u00e1rboles de (objetos de la clase {{#crossLink "TC.layer.LayerTree"}}{{/crossLink}}) de todas las capas base del mapa.
+ * Lista de árboles de (objetos de la clase {{#crossLink "TC.layer.LayerTree"}}{{/crossLink}}) de todas las capas base del mapa.
  * @property baseLayers
  * @type array
  */
 /**
- * Lista de \u00e1rboles de (objetos de la clase {{#crossLink "TC.layer.LayerTree"}}{{/crossLink}}) de todas las capas de trabajo del mapa.
+ * Lista de árboles de (objetos de la clase {{#crossLink "TC.layer.LayerTree"}}{{/crossLink}}) de todas las capas de trabajo del mapa.
  * @property workLayers
  * @type array
  */

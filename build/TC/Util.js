@@ -1,4 +1,4 @@
-; var TC = TC || {};
+﻿; var TC = TC || {};
 (function (root, factory) {
     if (typeof exports === "object") { // CommonJS
         module.exports = factory();
@@ -39,7 +39,7 @@
             Math.floor(value) === value;
     };
 
-    // GLS: Parche: Chrome no formatea correctamente los n\u00fameros en euskera, establece como separador de decimales el (.)
+    // GLS: Parche: Chrome no formatea correctamente los números en euskera, establece como separador de decimales el (.)
     var toLocaleString = Number.prototype.toLocaleString;
     Number.prototype.toLocaleString = function (locale, options) {
         if (locale == "eu-ES" && !TC.Util.detectIE()) {
@@ -225,18 +225,20 @@
         getBackgroundUrlFromCss: function (cssClass) {
             var result = '';
 
-            if (iconUrlCache[cssClass] !== undefined) {
-                result = iconUrlCache[cssClass];
-            }
-            else {
-                var $iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
-                // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
-                var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec($iconDiv.css('background-image'));
-                if (match && match.length > 1) {
-                    result = match[match.length - 1];
+            if (cssClass) {
+                if (iconUrlCache[cssClass] !== undefined) {
+                    result = iconUrlCache[cssClass];
                 }
-                $iconDiv.remove();
-                iconUrlCache[cssClass] = result;
+                else {
+                    var $iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
+                    // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
+                    var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec($iconDiv.css('background-image'));
+                    if (match && match.length > 1) {
+                        result = match[match.length - 1];
+                    }
+                    $iconDiv.remove();
+                    iconUrlCache[cssClass] = result;
+                }
             }
             return result;
         },
@@ -275,9 +277,9 @@
         },
 
         /* 
-        * addPathToTree: a\u00f1ade a un array a un \u00e1rbol, cada elemento en un nivel anidado
-        * Parameters: array, nodo de \u00e1rbol, [\u00edndice]
-        * Returns: \u00faltimo nodo insertado, null si ya exist\u00eda la ruta
+        * addPathToTree: añade a un array a un árbol, cada elemento en un nivel anidado
+        * Parameters: array, nodo de árbol, [índice]
+        * Returns: último nodo insertado, null si ya existía la ruta
         */
         addArrayToTree: function addArrayToTree(path, treeNode, index) {
             var result = null;
@@ -433,6 +435,9 @@
                     ring.forEach(function (coord, cidx) {
                         var point = Proj4js.transform(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
                         rr[cidx] = [point.x, point.y];
+                        if (coord.length > 2) {
+                            rr[cidx][2] = coord[2];
+                        }
                     });
                 });
             });
@@ -480,7 +485,7 @@
             if (/^EPSG:\d{4,6}$/g.test(crs) || //formato EPSG
                 /^urn:ogc:def:crs:EPSG:.*:\d{4,6}/g.test(crs) || // formato URN
                 /http:\/\/www.opengis.net\/gml\/srs\/epsg.xml#\d{4,6}$/g.test(crs)) { // formato GML
-                var match = crs.trim().match(/^.+[:#](\d{4,6})$/); // devuelve la parte num\u00e9rica del c\u00f3digo
+                var match = crs.trim().match(/^.+[:#](\d{4,6})$/); // devuelve la parte numérica del código
                 if (match) {
                     result = match[1];
                 }
@@ -1174,13 +1179,13 @@
 
         replaceAccent: function (t) {
             var translate = {
-                "ä": "a", "ö": "o", "\u00fc": "u",
-                "Ä": "A", "Ö": "O", "\u00dc": "U",
-                "\u00e1": "a", "\u00e9": "e", "i": "i", "\u00f3": "o", "\u00fa": "u",
-                "\u00c1": "A", "\u00c9": "E", "\u00cd": "I", "\u00d3": "O", "\u00da": "U",
-                "\u00f1": "n", "\u00d1": "N"
+                "ä": "a", "ö": "o", "ü": "u",
+                "Ä": "A", "Ö": "O", "Ü": "U",
+                "á": "a", "é": "e", "i": "i", "ó": "o", "ú": "u",
+                "Á": "A", "É": "E", "Í": "I", "Ó": "O", "Ú": "U",
+                "ñ": "n", "Ñ": "N"
             };
-            return t.replace(/[öä\u00fcÖÄ\u00dc\u00e1\u00e9\u00ed\u00f3\u00fa\u00c1\u00c9\u00cd\u00d3\u00da\u00f1\u00d1]/g, function (match) {
+            return t.replace(/[öäüÖÄÜáéíóúÁÉÍÓÚñÑ]/g, function (match) {
                 return translate[match];
             });
         },
@@ -1415,6 +1420,12 @@
             }
 
             return res;
+        },
+
+        toAbsolutePath: function(href) {
+            var link = document.createElement("a");
+            link.href = href;
+            return link.href;
         }
     };
     String.prototype.format = function () {

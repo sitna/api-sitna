@@ -1,4 +1,4 @@
-// ==ClosureCompiler==
+﻿// ==ClosureCompiler==
 // @output_file_name default.js
 // @compilation_level SIMPLE_OPTIMIZATIONS
 // ==/ClosureCompiler==
@@ -633,7 +633,7 @@ console.log("MILLISECONDS",end2-start2);
                 }
             }
             result[i] = {
-                Constraint : verb.Constraint,
+                Constraint: verb.Constraint,
                 href: verb['href']
             };
         }
@@ -658,7 +658,7 @@ console.log("MILLISECONDS",end2-start2);
     };
 
     var postprocessWMS = function (xml) {
-        var capabilities = xml['?xml'] && (xml['?xml']['WMS_Capabilities'] || xml['?xml']['WMT_MS_Capabilities']);
+        var capabilities = xml['WMS_Capabilities'] || (xml['?xml'] && (xml['?xml']['WMS_Capabilities'] || xml['?xml']['WMT_MS_Capabilities']));
         if (capabilities) {
             processWMSLayer(capabilities.Capability.Layer);
             var request = capabilities.Capability.Request;

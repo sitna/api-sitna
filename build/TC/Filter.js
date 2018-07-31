@@ -1,4 +1,4 @@
-TC.filter = {};
+﻿TC.filter = {};
 
 TC.filter.Filter = function (tagName) {
     this.tagName_ = tagName;

@@ -1,4 +1,4 @@
-TC.control = TC.control || {};
+﻿TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -78,7 +78,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 }
                 self._updateLayerTreeTimeout = setTimeout(function () {
                     if (self.map.workLayers.indexOf(e.layer) > -1) {
-                        // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no est\u00e1n
+                        // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
                         self.updateLayerTree(e.layer);
                         delete self._updateLayerTreeTimeout;
                     }
@@ -144,7 +144,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
 
     /**
      * Carga y le da estilo a la imagen de la leyenda.
-     * @param {string} requestMethod Si queremos pedir la imagen de la leyenda por POST, podemos especificarlo utilizando el par\u00e1metro requestMethod.
+     * @param {string} requestMethod Si queremos pedir la imagen de la leyenda por POST, podemos especificarlo utilizando el parámetro requestMethod.
      */
     ctlProto.styleLegendImage = function ($img, layer) {
         if (!$img.attr('src')) {
@@ -201,9 +201,9 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     if (layer.params && layer.params.sld_body) {
                         imgSrc = TC.Util.addURLParameters(imgSrc, { sld_body: layer.params.sld_body });
                     }
-                    $img.data(_dataKeys.img, imgSrc);
+                    $img.data(_dataKeys.img, layer.getLegendUrl(imgSrc));
                 }
-                $img.attr('src', imgSrc);
+                $img.attr('src', layer.getLegendUrl(imgSrc));
             }
         }
     };

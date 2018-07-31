@@ -1,4 +1,4 @@
-TC.Util.ExcelExport = function () {
+﻿TC.Util.ExcelExport = function () {
 
     var EOL = '\r\n';
     var BOM = "\ufeff";
@@ -126,7 +126,7 @@ TC.Util.ExcelExport = function () {
 
         dataString += '<tbody>';
 
-        //detectamos separador de miles y de coma en funci\u00f3n de la confugraci\u00f3n regional de la m\u00e1quina
+        //detectamos separador de miles y de coma en función de la confugración regional de la máquina
         var ds = (1.1).toLocaleString(navigator.language).substring(1, 2);
         var ms = (1000).toLocaleString(navigator.language).substring(1, 2);
 

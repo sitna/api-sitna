@@ -1,4 +1,4 @@
-TC.Cfg.acceptedBrowserVersions = [
+﻿TC.Cfg.acceptedBrowserVersions = [
   {
     "name": "Chrome",
     "version": 63
