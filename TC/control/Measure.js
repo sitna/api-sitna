@@ -74,63 +74,64 @@ TC.inherit(TC.control.Measure, TC.Control);
         const self = this;
         TC.Control.prototype.register.call(self, map);
 
-        self.renderPromise().then(function () {
-            map.loaded(function () {
-                self.layerPromise = map.addLayer({
-                    id: TC.getUID(),
-                    title: self.getLocaleString('measure'),
-                    stealth: true,
-                    type: TC.Consts.layerType.VECTOR,
-                    styles: {
-                        point: map.options.styles.point,
-                        line: map.options.styles.line,
-                        polygon: map.options.styles.polygon
-                    }
-                });
+        const layerId = self.getUID();
+        const drawLinesId = self.getUID();
+        const drawPolygonsId = self.getUID();
 
-                self.layerPromise.then(function (layer) {
-                    self.layer = layer;
-                    self.layer.map.putLayerOnTop(self.layer);
+        self.layerPromise = map.addLayer({
+            id: layerId,
+            title: self.getLocaleString('measure'),
+            stealth: true,
+            type: TC.Consts.layerType.VECTOR,
+            styles: {
+                point: map.options.styles.point,
+                line: map.options.styles.line,
+                polygon: map.options.styles.polygon
+            }
+        });
 
-                    TC.loadJS(
-                        !TC.control.Draw,
-                        TC.apiLocation + 'TC/control/Draw',
-                        function () {
-                            self.drawLines = new TC.control.Draw({
-                                div: self._$div.find('.tc-ctl-meas-line'),
-                                mode: TC.Consts.geom.POLYLINE,
-                                measure: true,
-                                persistent: self.persistentDrawControls,
-                                styleTools: self.persistentDrawControls,
-                                layer: self.layer
-                            });
-                            self.drawControls.push(self.drawLines);
-                            self.drawPolygons = new TC.control.Draw({
-                                div: self._$div.find('.tc-ctl-meas-polygon'),
-                                mode: TC.Consts.geom.POLYGON,
-                                measure: true,
-                                persistent: self.persistentDrawControls,
-                                styleTools: self.persistentDrawControls,
-                                layer: self.layer
-                            });
-                            self.drawControls.push(self.drawPolygons);
+        $.when(self.layerPromise, self.renderPromise()).then(function (layer) {
 
-                            $.when(map.addControl(self.drawLines), map.addControl(self.drawPolygons)).then(function () {
-                                [self.drawLines, self.drawPolygons].forEach(function (ctl) {
-                                    ctl.$events
-                                        .on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
-                                            self.showMeasures(e);
-                                        })
-                                        .on(TC.Consts.event.DRAWCANCEL, function (e) {
-                                            self.cancel();
-                                        });
-                                });
-                            });
+            self.layer = layer;
+            self.layer.map.putLayerOnTop(self.layer);
 
-                            self.setMode(self.options.mode);
+            self._drawLinesPromise = map.addControl('draw', {
+                id: drawLinesId,
+                div: self._$div.find('.tc-ctl-meas-line'),
+                mode: TC.Consts.geom.POLYLINE,
+                measure: true,
+                persistent: self.persistentDrawControls,
+                styleTools: self.persistentDrawControls,
+                layer: self.layer
+            });
+            self._drawPolygonsPromise = map.addControl('draw', {
+                id: drawPolygonsId,
+                div: self._$div.find('.tc-ctl-meas-polygon'),
+                mode: TC.Consts.geom.POLYGON,
+                measure: true,
+                persistent: self.persistentDrawControls,
+                styleTools: self.persistentDrawControls,
+                layer: self.layer
+            });
+
+            $.when(self._drawLinesPromise, self._drawPolygonsPromise).then(function (drawLines, drawPolygons) {
+                self.drawLines = drawLines;
+                self.drawPolygons = drawPolygons;
+                [drawLines, drawPolygons].forEach(function (ctl) {
+                    ctl.containerControl = self;
+                    self.drawControls.push(ctl);
+                    ctl.$events
+                        .on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
+                            self.showMeasures(e);
+                        })
+                        .on(TC.Consts.event.DRAWCANCEL, function (e) {
+                            self.cancel();
                         });
-
+                    // Desactivamos el método exportState que ya se encarga el control padre de ello
+                    ctl.exportsState = false;
                 });
+
+                self.setMode(self.options.mode);
             });
         });
     };
@@ -260,6 +261,25 @@ TC.inherit(TC.control.Measure, TC.Control);
             self._$peri.text(self.NOMEASURE);
         }
         return self;
+    };
+
+    ctlProto.getDrawLines = function () {
+
+    };
+
+    ctlProto.exportState = function () {
+        const self = this;
+        return {
+            id: self.id,
+            layer: self.layer.exportState()
+        };
+    };
+
+    ctlProto.importState = function (state) {
+        const self = this;
+        self.layerPromise.then(function (layer) {
+            layer.importState(state.layer);
+        });
     };
 
 })();
