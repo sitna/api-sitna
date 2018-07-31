@@ -114,7 +114,7 @@ if (!TC.Control) {
         TC.Control.prototype.register.call(self, map);
 
         self.layer = null;
-        var layerId = self.CLASS + '-layer';
+        var layerId = self.getUID();
         for (var i = 0; i < map.workLayers.length; i++) {
             var layer = map.workLayers[i];
             if (layer.type === TC.Consts.layerType.VECTOR && layer.id === layerId) {
@@ -170,7 +170,7 @@ if (!TC.Control) {
                 self._sv.setVisible(false);
                 e.stopPropagation();
                 var $header = self._$div.parents('body').find('header');
-                if ($header.length > 0) $header.css('display', 'block');
+                if ($header.length > 0) $header.css('display', '');
 
                 if (self._previousActiveControl) {
                     self._previousActiveControl.activate();
