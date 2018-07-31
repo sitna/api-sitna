@@ -13,7 +13,11 @@
     mocha = require('gulp-mocha'),
     mochaPhantomJS = require('gulp-mocha-phantomjs'),
     casperJs = require('gulp-casperjs'),
-    merge = require('merge-stream');
+    merge = require('merge-stream'),
+    exec = require('gulp-exec'),
+    header = require('gulp-header'),
+    fs = require('fs');
+var execSync = require('child_process').execSync;
 
 
 ////////// Gestión de errores ////////
@@ -67,13 +71,14 @@ var sitnaBuild = {
         'TC/Filter.js',
         'TC/control/MapContents.js',
         'TC/control/TOC.js',
-        'TC/control/ListTOC.js',
+        'TC/control/WorkLayerManager.js',
         'TC/control/Click.js',
         'TC/control/FeatureInfoCommons.js',
         'TC/control/Scale.js',
         'TC/control/SWCacheClient.js',
         'TC/control/Measure.js',
         'TC/control/ProjectionSelector.js',
+        'TC/control/TabContainer.js',
         'TC/ol/**/*.js',
         'TC/control/**/*.js',
         'TC/layer/**/*.js',
@@ -86,21 +91,21 @@ var sitnaBuild = {
     ],
 
     replaceStrings: function (stream) {
-        var s = stream
-            .pipe(replace("á", "\\u00e1"))
-            .pipe(replace("é", "\\u00e9"))
-            .pipe(replace("í", "\\u00ed"))
-            .pipe(replace("ó", "\\u00f3"))
-            .pipe(replace("ú", "\\u00fa"))
-            .pipe(replace("Á", "\\u00c1"))
-            .pipe(replace("É", "\\u00c9"))
-            .pipe(replace("Í", "\\u00cd"))
-            .pipe(replace("Ó", "\\u00d3"))
-            .pipe(replace("Ú", "\\u00da"))
-            .pipe(replace("Ñ", "\\u00d1"))
-            .pipe(replace("ñ", "\\u00f1"))
-            .pipe(replace("ü", "\\u00fc"))
-            .pipe(replace("Ü", "\\u00dc"));
+        var s = stream;
+            //.pipe(replace("á", "\\u00e1"))
+            //.pipe(replace("é", "\\u00e9"))
+            //.pipe(replace("í", "\\u00ed"))
+            //.pipe(replace("ó", "\\u00f3"))
+            //.pipe(replace("ú", "\\u00fa"))
+            //.pipe(replace("Á", "\\u00c1"))
+            //.pipe(replace("É", "\\u00c9"))
+            //.pipe(replace("Í", "\\u00cd"))
+            //.pipe(replace("Ó", "\\u00d3"))
+            //.pipe(replace("Ú", "\\u00da"))
+            //.pipe(replace("Ñ", "\\u00d1"))
+            //.pipe(replace("ñ", "\\u00f1"))
+            //.pipe(replace("ü", "\\u00fc"))
+            //.pipe(replace("Ü", "\\u00dc"));
         if (this.isLegacy !== undefined) {
             s = s.pipe(replace(/TC\.isLegacy = .*;/g, "TC.isLegacy = " + this.isLegacy + ";"));
         }
@@ -115,25 +120,25 @@ var sitnaBuild = {
         return gulp.src([
             'examples/**/*.html'
         ])
-            .pipe(convertEncoding({ to: 'ISO-8859-1' }))
-            .pipe(gulp.dest(this.fullTargetPath + 'examples/'));
-    },
-
-    releasePageTask: function () {
-        return gulp.src([
-            'batch/releases.html'
-        ])
-            .pipe(gulp.dest(this.fullTargetPath + 'doc/'));
+            .pipe(header('\ufeff')) // Repone el BOM que gulp quita
+            //.pipe(convertEncoding({ to: 'ISO-8859-1' }))
+            .pipe(gulp.dest(this.targetPath + 'examples/'));
     },
 
     cssTask: function () {
-        return gulp.src([
-            'TC/**/*.css'
+        gulp.src([
+            'TC/**/style.css'
         ])
-            //.pipe(cleanCSS({
-            //    level: 0
-            //}))
-            .pipe(gulp.dest(this.fullTargetPath + 'TC/'));
+            .pipe(gulp.dest(this.targetPath + 'TC/'));
+        return gulp.src([
+            'TC/**/*.css',
+            '!TC/css/control/**/*',
+            '!TC/**/style.css'
+        ])
+            .pipe(cleanCSS({
+                level: 0
+            }))
+            .pipe(gulp.dest(this.targetPath + 'TC/'));
     },
 
     jsonValidateTask: function () {
@@ -149,6 +154,7 @@ var sitnaBuild = {
             '!App_Start/**/*',
             '!batch/**/*',
             '!build/**/*',
+            '!doc/**/*',
             '!examples/**/*.html',
             '!kml/**/*',
             '!images/**/*',
@@ -166,7 +172,7 @@ var sitnaBuild = {
             '!bin/*.dll.config',
             '!bin/*.xml'
         ])
-            .pipe(gulp.dest(this.fullTargetPath));
+            .pipe(gulp.dest(this.targetPath));
     },
 
     zipTask: function () {
@@ -174,7 +180,7 @@ var sitnaBuild = {
             'TC/layout/responsive/**/*'
         ])
             .pipe(zip('responsive.zip'))
-            .pipe(gulp.dest(this.fullTargetPath + 'TC/layout/responsive/'));
+            .pipe(gulp.dest(this.targetPath + 'TC/layout/responsive/'));
     },
 
     compiledTask: function (depSrc1, depSrc2, depSrc3) {
@@ -187,13 +193,14 @@ var sitnaBuild = {
         else {
             targetName = this.tcmapTargetName;
         }
-        var stream = gulp.src(src);
+        var stream = gulp.src(src)
+            .pipe(header('\ufeff')); // Repone el BOM que gulp quita
         stream = sitnaBuild.replaceStrings(stream)
             //.pipe(jshint())
             //.pipe(jshint.reporter('default'))
             .pipe(concat(targetName))
             .pipe(rename(targetName + '.' + this.maps + '.debug.js'))
-            .pipe(gulp.dest(this.fullTargetPath));
+            .pipe(gulp.dest(this.targetPath));
         return sitnaBuild.unsetDebug(stream)
             .pipe(minify({
                 ext: {
@@ -204,11 +211,12 @@ var sitnaBuild = {
                 output: { ascii_only: true }
             })) // sequences = false para evitar error "Maximum call stack size exceeded"
             //.pipe(rename(targetName + '.' + this.maps + '.min.js'))
-            .pipe(gulp.dest(this.fullTargetPath));
+            .pipe(gulp.dest(this.targetPath));
     },
 
     onDemandTask: function (src, dest) {
-        var stream = gulp.src(src);
+        var stream = gulp.src(src)
+            .pipe(header('\ufeff')); // Repone el BOM que gulp quita
         stream = sitnaBuild.replaceStrings(stream)
             .pipe(gulp.dest(dest));
         return sitnaBuild.unsetDebug(stream)
@@ -252,12 +260,11 @@ var sitnaBuild = {
         sitnaBuild.zipTask();
         sitnaBuild.cssTask();
         sitnaBuild.examplesTask();
-        sitnaBuild.releasePageTask();
 
         sitnaBuild.maps = '';
-        sitnaBuild.onDemandTask(['sitna.js'], sitnaBuild.fullTargetPath);
-        sitnaBuild.onDemandTask(['tcmap.js'], sitnaBuild.fullTargetPath);
-        sitnaBuild.onDemandTask(['TC/**/*.js'], sitnaBuild.fullTargetPath + 'TC/');
+        sitnaBuild.onDemandTask(['sitna.js'], sitnaBuild.targetPath);
+        sitnaBuild.onDemandTask(['tcmap.js'], sitnaBuild.targetPath);
+        sitnaBuild.onDemandTask(['TC/**/*.js'], sitnaBuild.targetPath + 'TC/');
 
         sitnaBuild.maps = 'ol2';
         sitnaBuild.isLegacy = true;
@@ -269,13 +276,11 @@ var sitnaBuild = {
     }
 };
 
-gulp.task('default', ['unitTests', 'e2eTests', 'rasterJSTest'], function () {
-    sitnaBuild.fullTargetPath = sitnaBuild.targetPath + '/';
+gulp.task('default', ['unitTests', 'e2eTests', 'rasterJSTest', 'doc'], function () {
     sitnaBuild.fullTask();
 });
 
 gulp.task('noTests', function () {
-    sitnaBuild.fullTargetPath = sitnaBuild.targetPath + '/';
     sitnaBuild.fullTask();
 });
 
@@ -342,4 +347,16 @@ gulp.task('rasterJSTest', function () {
         return browserStream;
 
     });
+});
+
+gulp.task('doc', function () {
+    var buildDir = 'build';
+    if (!fs.existsSync(buildDir)) {
+        fs.mkdirSync(buildDir);
+    }
+    execSync('yuidoc -c ./batch/yuidoc.json --theme sitna --themedir ./batch/yuidoc-theme/sitna --outdir build/doc --exclude tcmap.js,build,examples,lib,test,TC .');
+});
+
+gulp.task('css', function () {
+    sitnaBuild.cssTask();
 });
