@@ -117,8 +117,8 @@ if (!TC.control.MapContents) {
         "search",
         "attribution",
         "basemapSelector",
-        "listTOC",
-        "selectContainer",
+        "workLayerManager",
+        "tabContainer",
         "externalWMS",
         "fileImport",
         "layerCatalog",
@@ -930,7 +930,8 @@ if (!TC.control.MapContents) {
                 cssRotate(self.$tiltIndicator, camera.pitch);
                 cssRotate(self.$rotateIndicator, -camera.heading);
 
-                self.disableTilt(5);
+                self.disableRotate();
+                self.disableTilt(5);                
 
                 self._coordsXY = TC.Util.reproject([Cesium.Math.toDegrees(position.longitude), Cesium.Math.toDegrees(position.latitude)], ctl.map3D.crs, ctl.map.crs);
                 ctl.mapView.setCenter(self._coordsXY);
@@ -1006,6 +1007,9 @@ if (!TC.control.MapContents) {
             downArrow: '-down',
             upArrow: '-up'
         };
+
+        self.MIN_TILT = Cesium.Math.toRadians(-89);
+        self.MAX_TILT = Cesium.Math.toRadians(-1);
 
         self.render();
     };
@@ -1327,14 +1331,12 @@ if (!TC.control.MapContents) {
     };
     CameraControls.prototype.disableTilt = function (angle) {
         var self = this;
+               
+        var theta = Cesium.Math.toRadians(angle);
+        var tilt = self.getCamera().pitch;
 
-        var _angle = Cesium.Math.toRadians(Math.abs(angle));
-
-        if (pickBottomPoint(self.parent.viewer.scene) == undefined)
-            self.isTiltUpDisabled = true;
-        else self.isTiltUpDisabled = self.getCamera().pitch + _angle >= Cesium.Math.PI_OVER_TWO;
-
-        self.isTiltDownDisabled = self.getCamera().pitch - _angle <= -Cesium.Math.PI_OVER_TWO;
+        self.isTiltDownDisabled = (tilt + -theta) < self.MIN_TILT;
+        self.isTiltUpDisabled = (tilt + theta) > self.MAX_TILT;
 
         // left
         self.$tiltUp.attr('disabled', self.isTiltUpDisabled);
@@ -1359,6 +1361,54 @@ if (!TC.control.MapContents) {
             self.$tiltDown.attr('class', self.$tiltDown.attr('class').replace(' ' + self.parent.classes.CAMERACTRARROWDISABLED, ''));
         }
 
+    };
+    CameraControls.prototype.disableRotate = function () {
+        var self = this;
+
+        var isDisable = true;
+
+        var scene = self.parent.viewer.scene;
+        var canvas = scene.canvas;
+        var bottomLeft = new Cesium.Cartesian2(0, canvas.clientHeight - 1);
+        var bottomRight = new Cesium.Cartesian2(canvas.clientWidth - 1, canvas.clientHeight - 1);
+        var fovCoords = [bottomLeft, bottomRight, new Cesium.Cartesian2(canvas.clientWidth - 1, 0), new Cesium.Cartesian2(0, 0)]
+                        .map(function (elm) {
+                            return pickMapCoords.call(this, elm);
+                        }.bind(self.parent))
+                        .filter(function (elm) {
+                            return elm !== null;
+                        });
+
+        if (fovCoords.length && fovCoords.length >= 2) {
+            isDisable = false;
+        }
+
+        // reset
+        self.$rotateIndicatorInner.attr('disabled', isDisable);
+
+        // left
+        self.$rotateLeft.attr('disabled', isDisable);
+        if (isDisable) {
+            if (self.$rotateLeft.attr('class').indexOf(self.parent.classes.CAMERACTRARROWDISABLED) == -1) {
+                self.$rotateLeft.attr('class', self.$rotateLeft.attr('class') + ' ' + self.parent.classes.CAMERACTRARROWDISABLED);
+            }
+        }
+        else {
+            self.$rotateLeft.attr('class', self.$rotateLeft.attr('class').replace(' ' + self.parent.classes.CAMERACTRARROWDISABLED, ''));
+        }
+
+        // right
+        self.$rotateRight.attr('disabled', isDisable);
+        if (isDisable) {
+            if (self.$rotateRight.attr('class').indexOf(self.parent.classes.CAMERACTRARROWDISABLED) == -1) {
+                self.$rotateRight.attr('class', self.$rotateRight.attr('class') + ' ' + self.parent.classes.CAMERACTRARROWDISABLED);
+            }
+        }
+        else {
+            self.$rotateRight.attr('class', self.$rotateRight.attr('class').replace(' ' + self.parent.classes.CAMERACTRARROWDISABLED, ''));
+        }
+
+        return isDisable;
     };
     CameraControls.prototype.tilt = function (angle) {
         var self = this;
@@ -1414,88 +1464,74 @@ if (!TC.control.MapContents) {
         document.removeEventListener('mousemove', self.tiltMouseMoveFunction, false);
         document.removeEventListener('mouseup', self.tiltMouseUpFunction, false);
 
-        if (self.tiltTickFunction) {
-            self.parent.viewer.clock.onTick.removeEventListener(self.tiltTickFunction);
-        }
-
         self.tiltMouseMoveFunction = undefined;
         self.tiltMouseUpFunction = undefined;
-        self.tiltTickFunction = undefined;
 
         self.isTilting = true;
-        self.tiltLastTimestamp = performance.now();
 
         var scene = self.parent.viewer.scene;
         var camera = scene.camera;
 
         var pivot = pickCenterPoint(scene);
         if (!pivot) {
-            self.tiltFrame = Cesium.Transforms.eastNorthUpToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
+            self.tiltFrame = Cesium.Transforms.northUpEastToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
             self.tiltIsLook = true;
         } else {
-            self.tiltFrame = Cesium.Transforms.eastNorthUpToFixedFrame(pivot, Cesium.Ellipsoid.WGS84, newTransformScratch);
+            self.tiltFrame = Cesium.Transforms.northUpEastToFixedFrame(pivot, Cesium.Ellipsoid.WGS84, newTransformScratch);
             self.tiltIsLook = false;
         }
 
-        var angle = Math.atan2(-cursorVector.y, cursorVector.x);
-        self.tiltInitialCursorAngle = Cesium.Math.zeroToTwoPi(angle - Cesium.Math.PI_OVER_TWO);
-        self.tiltInitialCameraAngle = Math.atan2(camera.position.y, camera.position.x);
+        self.startCursorAngle = Math.atan2(-cursorVector.y, cursorVector.x);
 
-        self.tiltTickFunction = function (e) {
+        var oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+        camera.lookAtTransform(self.tiltFrame);
+
+        self.initialCameraAngle = Math.atan2(camera.position.y, camera.position.x);
+
+        camera.lookAtTransform(oldTransform);
+
+        self.tiltMouseMoveFunction = function (e) {
             var self = this;
-
-            var timestamp = performance.now();
-            var deltaT = timestamp - self.tiltLastTimestamp;
-
-            var pivot = pickCenterPoint(scene);
-            if (pivot && !self.tiltLastPivot)
-                self.tiltLastPivot = pivot;
-
-            if (!pivot && self.tiltLastPivot) {
-                pivot = self.tiltLastPivot;
-            } else if (!self.tiltLastPivot) {
-                return;
-            }
-
-            var angleDifference;
-            if (self.parent.viewer.trackedEntity !== undefined) {
-                angleDifference = self.tiltCursorAngle - self.tiltInitialCursorAngle;
-            } else {
-                var angle = self.tiltCursorAngle + Cesium.Math.PI_OVER_TWO;
-                angleDifference = angle - self.tiltInitialCursorAngle;
-            }
 
             scene = self.parent.viewer.scene;
             camera = scene.camera;
 
-            var oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
-            camera.lookAtTransform(self.tiltFrame);
-
-            var newCameraAngle = Cesium.Math.zeroToTwoPi(self.tiltInitialCameraAngle - angleDifference);
-            var currentCameraAngle = Math.atan2(camera.position.y, camera.position.x);
-
-            var y = Math.sin(newCameraAngle - currentCameraAngle) * 0.02;
-
-            if (self.tiltIsLook) {
-                camera.look(camera.right, -y);
-            } else {
-                camera.rotateUp(y);
-            }
-
-            camera.lookAtTransform(oldTransform);
-
-            self.tiltLastTimestamp = timestamp;
-        }.bind(self);
-
-        self.tiltMouseMoveFunction = function (e) {
-            var self = this;
             var tiltRectangle = tiltElement.getBoundingClientRect();
             center = new Cesium.Cartesian2((tiltRectangle.right - tiltRectangle.left) / 2.0, (tiltRectangle.bottom - tiltRectangle.top) / 2.0);
             var clickLocation = new Cesium.Cartesian2(e.clientX - tiltRectangle.left, e.clientY - tiltRectangle.top);
             var vector = Cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
 
+            console.log('Entra: ' + vector.toString());
+
             var angle = Math.atan2(-vector.y, vector.x);
-            self.tiltCursorAngle = Cesium.Math.zeroToTwoPi(angle - Cesium.Math.PI_OVER_TWO);
+            var angleDifference = angle - self.startCursorAngle;
+            var newCameraAngle = Cesium.Math.zeroToTwoPi(self.initialCameraAngle - angleDifference);
+
+            try {
+                oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+                camera.lookAtTransform(self.tiltFrame);
+                var currentCameraAngle = Math.atan2(camera.position.y, camera.position.x);
+                var theta = newCameraAngle - currentCameraAngle;                
+
+                var tilt = camera.pitch;
+                tilt += theta;
+
+                if (tilt < self.MIN_TILT) {                    
+                    camera.rotate(camera.right, camera.pitch - self.MIN_TILT);
+                } else if (tilt > self.MAX_TILT) {
+                    camera.rotate(camera.right, camera.pitch - self.MAX_TILT);
+                } else {
+                    camera.rotate(camera.right, -theta);
+                }
+
+                self.disableTilt(5);
+                camera.lookAtTransform(oldTransform);
+
+            } catch (e) {
+                self.tiltMouseUpFunction();
+            }
+
+
         }.bind(self);
 
         self.tiltMouseUpFunction = function (e) {
@@ -1505,67 +1541,21 @@ if (!TC.control.MapContents) {
             document.removeEventListener('mousemove', self.tiltMouseMoveFunction, false);
             document.removeEventListener('mouseup', self.tiltMouseUpFunction, false);
 
-            if (self.tiltTickFunction !== undefined) {
-                self.parent.viewer.clock.onTick.removeEventListener(self.tiltTickFunction);
-            }
-
             self.tiltMouseMoveFunction = undefined;
             self.tiltMouseUpFunction = undefined;
-            self.tiltTickFunction = undefined;
         };
 
         document.addEventListener('mousemove', self.tiltMouseMoveFunction, false);
         document.addEventListener('mouseup', self.tiltMouseUpFunction, false);
-        self._unsubscribeFromClockTick = self.parent.viewer.clock.onTick.addEventListener(self.tiltTickFunction);
-
-        var angle = Math.atan2(-cursorVector.y, cursorVector.x);
-        self.tiltCursorAngle = Cesium.Math.zeroToTwoPi(angle - Cesium.Math.PI_OVER_TWO);
     };
     CameraControls.prototype.draggingRotate = function (rotateElement, cursorVector) {
         var self = this;
-
-        self.$rotateIndicatorOuterCircle.attr('class', self.$rotateIndicatorOuterCircle.attr('class') + ' ' + self.parent.classes.HIGHLIGHTED);
-
-        var oldTransformScratch = new Cesium.Matrix4();
-        var newTransformScratch = new Cesium.Matrix4();
-        var vectorScratch = new Cesium.Cartesian2();
 
         document.removeEventListener('mousemove', self.rotateMouseMoveFunction, false);
         document.removeEventListener('mouseup', self.rotateMouseUpFunction, false);
 
         self.rotateMouseMoveFunction = undefined;
         self.rotateMouseUpFunction = undefined;
-
-        self.isRotating = true;
-        self.rotateInitialCursorAngle = Math.atan2(-cursorVector.y, cursorVector.x);
-
-        var scene = self.parent.viewer.scene;
-        var camera = scene.camera;
-
-        var viewCenter = pickCenterPoint(self.parent.viewer.scene);
-        if (viewCenter == null || viewCenter == undefined) {
-            viewCenter = pickBottomPoint(self.parent.viewer.scene);
-            if (viewCenter == null || viewCenter == undefined) {
-                self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
-                self.rotateIsLook = true;
-            } else {
-                self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, Cesium.Ellipsoid.WGS84, newTransformScratch);
-                self.rotateIsLook = false;
-            }
-        } else {
-            self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, Cesium.Ellipsoid.WGS84, newTransformScratch);
-            self.rotateIsLook = false;
-        }
-
-        try {
-            var oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
-            camera.lookAtTransform(self.rotateFrame);
-            self.rotateInitialCameraAngle = Math.atan2(camera.position.y, camera.position.x);
-            self.rotateInitialCameraDistance = Cesium.Cartesian3.magnitude(new Cesium.Cartesian3(camera.position.x, camera.position.y, 0.0));
-            camera.lookAtTransform(oldTransform);
-        } catch (e) {
-            self.rotateMouseUpFunction();
-        }
 
         self.rotateMouseMoveFunction = function (e) {
             var rotateRectangle = rotateElement.getBoundingClientRect();
@@ -1601,6 +1591,48 @@ if (!TC.control.MapContents) {
             self.rotateMouseMoveFunction = undefined;
             self.rotateMouseUpFunction = undefined;
         };
+
+        if (self.disableRotate()) {
+            self.rotateMouseUpFunction();
+            return;
+        }
+
+        self.$rotateIndicatorOuterCircle.attr('class', self.$rotateIndicatorOuterCircle.attr('class') + ' ' + self.parent.classes.HIGHLIGHTED);
+
+        var oldTransformScratch = new Cesium.Matrix4();
+        var newTransformScratch = new Cesium.Matrix4();
+        var vectorScratch = new Cesium.Cartesian2();
+
+        self.isRotating = true;
+        self.rotateInitialCursorAngle = Math.atan2(-cursorVector.y, cursorVector.x);
+
+        var scene = self.parent.viewer.scene;
+        var camera = scene.camera;
+
+        var viewCenter = pickCenterPoint(self.parent.viewer.scene);
+        if (viewCenter == null || viewCenter == undefined) {
+            viewCenter = pickBottomPoint(self.parent.viewer.scene);
+            if (viewCenter == null || viewCenter == undefined) {
+                self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
+                self.rotateIsLook = true;
+            } else {
+                self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, Cesium.Ellipsoid.WGS84, newTransformScratch);
+                self.rotateIsLook = false;
+            }
+        } else {
+            self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, Cesium.Ellipsoid.WGS84, newTransformScratch);
+            self.rotateIsLook = false;
+        }
+
+        try {
+            var oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+            camera.lookAtTransform(self.rotateFrame);
+            self.rotateInitialCameraAngle = Math.atan2(camera.position.y, camera.position.x);
+            self.rotateInitialCameraDistance = Cesium.Cartesian3.magnitude(new Cesium.Cartesian3(camera.position.x, camera.position.y, 0.0));
+            camera.lookAtTransform(oldTransform);
+        } catch (e) {
+            self.rotateMouseUpFunction();
+        }
 
         document.addEventListener('mousemove', self.rotateMouseMoveFunction, false);
         document.addEventListener('mouseup', self.rotateMouseUpFunction, false);
@@ -3524,7 +3556,7 @@ if (!TC.control.MapContents) {
             TC.Consts.event.BEFOREBASELAYERCHANGE, TC.Consts.event.BASELAYERCHANGE,
             TC.Consts.event.LAYERADD, TC.Consts.event.LAYERREMOVE, TC.Consts.event.LAYERVISIBILITY, TC.Consts.event.LAYEROPACITY, TC.Consts.event.LAYERORDER,
             TC.Consts.event.FEATUREADD, TC.Consts.event.FEATUREREMOVE, TC.Consts.event.FEATURESCLEAR
-            , TC.Consts.event.ZOOM, TC.Consts.event.ZOOMTO];
+            /*, TC.Consts.event.ZOOM no encuentro en qué casos debemos escuchar el evento ZOOM de 2D, solo trae problemas */, TC.Consts.event.ZOOMTO];
 
         var event2DHandler = function (e) {
             var self = this;
@@ -3610,6 +3642,33 @@ if (!TC.control.MapContents) {
                 }
                 case eventType == TC.Consts.event.ZOOM: {
                     if (self.map3D.cameraControls && !self.map3D.cameraControls.moving) {
+
+                        var width = self.map3D.viewer.scene.canvas.clientWidth;
+                        var height = self.map3D.viewer.scene.canvas.clientHeight;
+
+
+                        /* Si hemos llegado aquí y hay un cambio en el tamaño del canvas, 
+                           viene el evento del resize canvas del mapa de 2D así que paso y no hago nada */
+                        if (!self.map3D._canvasClientHeight ||
+                            !self.map3D._canvasClientWidth ||
+
+                            width !== self.map3D._canvasClientWidth ||
+                            height !== self.map3D._canvasClientHeight) {
+
+                            if (!self.map3D._canvasClientWidth) {
+                                self.map3D._canvasClientWidth = self.map3D.viewer.scene.canvas.clientWidth;
+                            }
+
+                            if (!self.map3D._canvasClientHeight) {
+                                self.map3D._canvasClientHeight = self.map3D.viewer.scene.canvas.clientHeight;
+                            }
+
+                            self.map3D._canvasClientWidth = width;
+                            self.map3D._canvasClientHeight = height;
+
+                            return;
+                        }
+
                         self.map3D.flyToMapCoordinates.call(self, self.mapView.getCenter());
                     }
                     break;
@@ -4373,6 +4432,12 @@ if (!TC.control.MapContents) {
                         globe.baseColor = Cesium.Color.WHITE;
                         globe.enableLighting = true;
 
+                        /* carga más rápido pero consume a RAM a cascoporro */
+                        globe.tileCacheSize = 1000;
+
+                        /* por defecto 2, a mayor número mayor rendimiento y peor calidad visual */
+                        globe.maximumScreenSpaceError = 5;
+
                         self.viewer = self.map3D.viewer = new Cesium.Viewer(self.selectors.divThreedMap, {
                             terrainProvider: new Cesium.CesiumTerrainProvider({
                                 url: self.Consts.TERRAIN_URL
@@ -4403,7 +4468,7 @@ if (!TC.control.MapContents) {
                         // personalización de la escena
                         self.viewer.scene.backgroundColor = Cesium.Color.WHITE;
                         self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
-                        self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 500000;
+                        self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 1000000;
 
                         // con false las líneas se manetienen sobre el terreno
                         self.viewer.scene.globe.depthTestAgainstTerrain = false;
@@ -4450,7 +4515,7 @@ if (!TC.control.MapContents) {
                             if (!self.waiting)
                                 self.waiting = self.map.getLoadingIndicator().addWait();
 
-                            if (data === 0) {
+                            if (self.viewer.scene.terrainProvider.ready && data === 0) {
                                 self.map.getLoadingIndicator().removeWait(self.waiting);
                                 delete self.waiting;
 
@@ -4673,8 +4738,7 @@ if (!TC.control.MapContents) {
                 var self = this;
 
                 var lonlat = TC.Util.reproject(coords, self.map.crs, self.map3D.crs);
-                var height = self.viewer.camera.positionCartographic.height;
-                var destination = Cesium.Cartesian3.fromDegrees(lonlat[0], lonlat[1], 500);
+                var destination = Cesium.Cartesian3.fromDegrees(lonlat[0], lonlat[1], self.viewer.camera.positionCartographic.height);
 
                 var camera = self.viewer.camera;
                 camera.flyTo({
