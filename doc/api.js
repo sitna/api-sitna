@@ -9,6 +9,8 @@ YUI.add("yuidoc-meta", function(Y) {
         "SITNA.cfg.ClusterStyleOptions",
         "SITNA.cfg.ControlOptions",
         "SITNA.cfg.CoordinatesOptions",
+        "SITNA.cfg.DataLoaderOptions",
+        "SITNA.cfg.LayerCatalogOptions",
         "SITNA.cfg.LayerOptions",
         "SITNA.cfg.LineStyleOptions",
         "SITNA.cfg.MapControlOptions",
@@ -20,6 +22,8 @@ YUI.add("yuidoc-meta", function(Y) {
         "SITNA.cfg.SearchOptions",
         "SITNA.cfg.StreetViewOptions",
         "SITNA.cfg.StyleOptions",
+        "SITNA.cfg.WMSGroupOptions",
+        "SITNA.cfg.WMSOptions",
         "SITNA.consts.Layer",
         "SITNA.consts.LayerType",
         "SITNA.consts.MimeType"

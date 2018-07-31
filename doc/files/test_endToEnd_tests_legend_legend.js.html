@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>test\endToEnd\tests\legend\legend.js - API SITNA</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                
+                    <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
+                
+                
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.4.0</span>
+                
+                
+                    <p class="description">API de mapas del Gobierno de Navarra</p>
+                
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">&iacute;ndice</a></li>
+                <li><a href="#top" class="top-jump-link">inicio</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Clases</a></li>
+            <li style="display:none"><a href="#api-modules">M&oacute;dulos</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Escriba para filtrar la API">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a class="type" href="../classes/SITNA.Cfg.html">SITNA.Cfg</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterOptions.html">SITNA.cfg.ClusterOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterStyleOptions.html">SITNA.cfg.ClusterStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LayerOptions.html">SITNA.cfg.LayerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LineStyleOptions.html">SITNA.cfg.LineStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MapControlOptions.html">SITNA.cfg.MapControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerOptions.html">SITNA.cfg.MarkerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerStyleOptions.html">SITNA.cfg.MarkerStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.PointStyleOptions.html">SITNA.cfg.PointStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.SearchOptions.html">SITNA.cfg.SearchOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StyleOptions.html">SITNA.cfg.StyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Consts.html">SITNA.Consts</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.Layer.html">SITNA.consts.Layer</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.LayerType.html">SITNA.consts.LayerType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.MimeType.html">SITNA.consts.MimeType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Map.html">SITNA.Map</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">Archivo: test\endToEnd\tests\legend\legend.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+﻿/**
+ * Probamos si se muestra el código QR correctamente.
+ */
+exports.testLegend = function (test) {
+
+    return; // flacunza: de momento deshabilito este test porque no consigo hacerlo funcionar
+
+    //// Añadimos dos capas, las cambiamos de orden arrastrándolas en el control
+    var layerIdsBefore, layerIdsAfter;
+
+    // Pinchamos en &quot;herramientas&quot;
+    const toolsTabSelector = &quot;#tools-tab&quot;;
+    casper.waitForSelector(toolsTabSelector,
+          function success() {
+              //test.assertExists(toolsTabSelector);
+              this.click(toolsTabSelector);
+          },
+          function fail() {
+              test.assertExists(toolsTabSelector);
+          });
+
+    // Pinchamos en &quot;capas disponibles&quot;
+    const catalogSelector = &quot;#catalog &gt; h2&quot;;
+    casper.waitForSelector(catalogSelector,
+        function success() {
+            //test.assertExists(catalogSelector);
+            this.click(catalogSelector);
+        },
+        function fail() {
+            test.assertExists(catalogSelector);
+        });
+
+    // Desplegamos &quot;IDENA&quot;
+    const rootNodeSelector = &quot;.tc-ctl-lcat-tree &gt; .tc-ctl-lcat-branch &gt; .tc-ctl-lcat-node:nth-child(1)&quot;;
+    casper.waitForSelector(rootNodeSelector,
+        function success() {
+            //test.assertExists(rootNodeSelector);
+            this.click(rootNodeSelector);
+        },
+        function fail() {
+            test.assertExists(rootNodeSelector);
+        });
+
+    // Pinchamos en &quot;Catastro&quot;
+    const cadasterNodeSelector = &#x27;.tc-ctl-lcat-node[data-tc-layer-name=&quot;IDENA:catastro&quot;] &gt; span&#x27;;
+    casper.waitForSelector(cadasterNodeSelector,
+        function success() {
+            //test.assertExists(cadasterNodeSelector);
+            this.click(cadasterNodeSelector);
+        },
+        function fail() {
+            test.assertExists(cadasterNodeSelector);
+        });
+
+    // Pinchamos en &quot;Catastro Minero&quot;
+    const mineryCadasterNodeSelector = &#x27;.tc-ctl-lcat-node[data-tc-layer-name=&quot;IDENA:catastroMinero&quot;] &gt; span&#x27;;
+    casper.waitForSelector(mineryCadasterNodeSelector,
+        function success() {
+            //test.assertExists(mineryCadasterNodeSelector);
+            this.click(mineryCadasterNodeSelector);
+        },
+        function fail() {
+            test.assertExists(mineryCadasterNodeSelector);
+        });
+
+    // Pinchamos en &quot;capas disponibles&quot;
+    const tocSelector = &quot;#toc h2&quot;;
+    casper.waitForSelector(tocSelector,
+            function success() {
+                //test.assertExists(tocSelector);
+                this.click(tocSelector);
+            },
+            function fail() {
+                test.assertExists(tocSelector);
+            });
+
+    // Esperamos a que la leyenda se cargue
+    const legendTreeSelector = &#x27;.tc-ctl-legend-tree &gt; .tc-ctl-legend-branch&#x27;;
+    const legendNodesSelector = legendTreeSelector + &#x27; &gt; .tc-ctl-legend-node&#x27;;
+    casper.waitForSelector(legendNodesSelector,
+        function success() {
+            //test.assertExists(legendNodesSelector);
+            layerIdsBefore = this.getElementsAttribute(legendNodesSelector, &#x27;data-tc-layer-uid&#x27;);
+        },
+        function fail() {
+            test.assertExists(legendNodesSelector);
+        });
+
+    // Movemos la capa de arriba hacia abajo
+    const tocNodesSelector = &#x27;.tc-ctl-ltoc-content .tc-ctl-ltoc-elm&#x27;;
+    casper.waitForSelector(tocNodesSelector,
+        function success() {
+            //test.assertExists(tocNodesSelector);
+            var firstNodeSelector = tocNodesSelector + &#x27;:first-child&#x27;;
+            this.captureSelector(&#x27;images/toc1.png&#x27;, &#x27;#tools-panel&#x27;);
+            this.click(firstNodeSelector);
+            this.page.sendEvent(&#x27;keydown&#x27;, this.page.event.key.Down);
+            this.wait(10000, function () {
+                this.captureSelector(&#x27;images/toc2.png&#x27;, &#x27;#tools-panel&#x27;);
+                // Esperamos a que la leyenda cambie
+                const firstLegendNodeSelector = legendNodesSelector + &#x27;[data-tc-layer-uid=&#x27; + layerIdsBefore[1] + &#x27;]:first-child&#x27;;
+                casper.waitForSelector(firstLegendNodeSelector,
+                    function success() {
+                        console.log(&quot;before: &quot;, layerIdsBefore)
+                        //test.assertExists(firstLegendNodeSelector);
+                        layerIdsAfter = this.getElementsAttribute(legendNodesSelector, &#x27;data-tc-layer-uid&#x27;);
+                        console.log(&quot;after: &quot;, layerIdsAfter)
+                        test.assert(layerIdsBefore[0] === layerIdsAfter[1] &amp;&amp; layerIdsBefore[1] === layerIdsAfter[0],
+                            &#x27;Los ID de capa de los elementos de la leyenda han cambiado de orden&#x27;);
+                    },
+                    function fail() {
+                        console.log(&quot;before: &quot;, layerIdsBefore)
+                        test.assertExists(firstLegendNodeSelector);
+                    });
+            });
+        },
+        function fail() {
+            test.assertExists(tocNodesSelector);
+        });
+
+};
+    </pre>
+</div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

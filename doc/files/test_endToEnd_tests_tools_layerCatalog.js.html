@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>test\endToEnd\tests\tools\layerCatalog.js - API SITNA</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                
+                    <img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA">
+                
+                
+                    <h1 class="project-name">API SITNA</h1> <span class="project-version">1.4.0</span>
+                
+                
+                    <p class="description">API de mapas del Gobierno de Navarra</p>
+                
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">&iacute;ndice</a></li>
+                <li><a href="#top" class="top-jump-link">inicio</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+    <div id="api-tabview" class="tabview">
+        <ul class="tabs">
+            <li><a href="#api-classes">Clases</a></li>
+            <li style="display:none"><a href="#api-modules">M&oacute;dulos</a></li>
+        </ul>
+
+        <div id="api-tabview-filter">
+            <input type="search" id="api-filter" placeholder="Escriba para filtrar la API">
+        </div>
+
+        <div id="api-tabview-panel">
+            <ul id="api-classes" class="apis classes">
+            
+                <li><a class="type" href="../classes/SITNA.Cfg.html">SITNA.Cfg</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClickOptions.html">SITNA.cfg.ClickOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterOptions.html">SITNA.cfg.ClusterOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ClusterStyleOptions.html">SITNA.cfg.ClusterStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.ControlOptions.html">SITNA.cfg.ControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.CoordinatesOptions.html">SITNA.cfg.CoordinatesOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LayerOptions.html">SITNA.cfg.LayerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.LineStyleOptions.html">SITNA.cfg.LineStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MapControlOptions.html">SITNA.cfg.MapControlOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerOptions.html">SITNA.cfg.MarkerOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.MarkerStyleOptions.html">SITNA.cfg.MarkerStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.OverviewMapOptions.html">SITNA.cfg.OverviewMapOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.PointStyleOptions.html">SITNA.cfg.PointStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.PolygonStyleOptions.html">SITNA.cfg.PolygonStyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.SearchOptions.html">SITNA.cfg.SearchOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StreetViewOptions.html">SITNA.cfg.StreetViewOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.cfg.StyleOptions.html">SITNA.cfg.StyleOptions</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Consts.html">SITNA.Consts</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.Layer.html">SITNA.consts.Layer</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.LayerType.html">SITNA.consts.LayerType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.consts.MimeType.html">SITNA.consts.MimeType</a></li>
+            
+                <li><a class="type" href="../classes/SITNA.Map.html">SITNA.Map</a></li>
+            
+            </ul>
+
+            <ul id="api-modules" class="apis modules">
+            
+            </ul>
+        </div>
+    </div>
+</div>
+
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">Archivo: test\endToEnd\tests\tools\layerCatalog.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+﻿var capture = require(&#x27;./../../utils&#x27;).capture;
+
+/**
+ * Probamos si al pulsar el botón &quot;i&quot; en un resultado del buscador de capas se muestra el mismo panel que en el árbol.
+ */
+exports.testCatalogSearchMoreInfoBtn = function (test) {
+    const suggestionsSelector = &#x27;.tc-ctl-search-list&#x27;;
+
+    casper.then(function () {
+        const catalogSearchBtnSelector = &#x27;.tc-ctl-lcat .tc-ctl-lcat-btn-search&#x27;;
+        const catalogSearchInputSelector = &#x27;.tc-ctl-lcat-input&#x27;;
+        const catalogResultsListSelector = &#x27;.tc-ctl-lcat-search &gt; ul .tc-ctl-lcat-search-btn-info&#x27;;
+        const catalogAbstractContainerSelector = &#x27;.tc-ctl-lcat-info&#x27;;
+
+        casper.waitForSelector(catalogSearchBtnSelector, function () {
+            this.click(catalogSearchBtnSelector);
+            casper.waitForSelector(catalogSearchInputSelector, function () {
+                this.sendKeys(catalogSearchInputSelector, &quot;cat&quot;);
+
+                casper.waitForSelector(catalogResultsListSelector, function () {
+                    capture(&#x27;layer-catalog-search-info&#x27;);
+                    this.click(catalogResultsListSelector + &#x27;:first-of-type&#x27;);
+                    casper.wait(500, function () {
+                        test.assert(
+                            casper.getElementAttribute(catalogAbstractContainerSelector, &#x27;class&#x27;).indexOf(&#x27;tc-hidden&#x27;) &lt; 0,
+                            &#x27;El boton i del buscador de capas muestra el mismo panel de resultados que el arbol&#x27;);
+                    });
+                });
+            });
+        });
+    });
+};
+    </pre>
+</div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>
