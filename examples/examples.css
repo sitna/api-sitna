@@ -11,30 +11,79 @@
     -moz-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
 }
+
 .instructions {
     top: 60px;
-    cursor: pointer;
+    max-width: 50%;
+    padding-right: 2em;
 }
 
 .instructions p {
     margin: 0.2em 0 0.2em 0;
 }
+
 .instructions a {
     color:#c00;
 }
+
 .instructions a:visited {
     color:#700;
 }
+
 .instructions a:hover { 
     color:#f00;
     text-decoration:none;
 }
+
 .controls {
     top: 120px;
 }
+
 .controls div {
     margin: 0.2em;
 }
+
 .controls input[type=number] {
     width: 4em;
+}
+
+.close-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    border: 0;
+    background-color: transparent;
+}
+
+.view-source-link {
+    font-style: italic;
+    display: inline-block;
+    margin-top: 0.5em;
+}
+
+body > pre.prettyprint {
+    position: absolute;
+    left: 2vw;
+    top: 2vh;
+    right: 2vw;
+    bottom: 2vh;
+    margin: 0;
+    overflow: auto;
+    background-color: white;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+}
+
+#view-source {
+    display: none;
+    position: absolute;
+    z-index: 10010;
+}
+
+#hide-source-link {
+    position: absolute;
+    display: none;
+    font-style: italic;
+    top: 3vh;
+    right: 6vw;
+    z-index: 10011;
 }
