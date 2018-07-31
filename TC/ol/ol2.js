@@ -3877,6 +3877,10 @@
         }
     };
 
+    TC.wrap.control.Draw.prototype.setStyle = function () {
+        TC.error('TC.wrap.control.Draw.prototype.setStyle no implementado en OpenLayers 2');
+    };
+
     TC.wrap.control.CacheBuilder.prototype.getRequestSchema = function (extent) {
         return {};
     }
