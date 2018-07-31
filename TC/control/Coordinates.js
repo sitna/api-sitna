@@ -75,14 +75,7 @@ if (!TC.control.ProjectionSelector) {
             });
 
             if (TC.Util.detectMobile()) {
-                $.when(map.addLayer({
-                    id: TC.getUID(),
-                    type: TC.Consts.layerType.VECTOR,
-                    stealth: true,
-                    title: 'Coordenadas',
-                })).then(function (layer) {
-                    self.layer = layer;
-                });
+                self.getLayer();
 
                 self.activateCoords();
             }
@@ -220,9 +213,8 @@ if (!TC.control.ProjectionSelector) {
         self._$div.css("visibility", "hidden");
 
         delete self.currentCoordsMarker;
-        $.when(self.getLayer()).then(function (layer) {
-            if (layer)
-                layer.clearFeatures();
+        self.getLayer().then(function (layer) {
+            layer.clearFeatures();
         });
     };
 
@@ -332,13 +324,11 @@ if (!TC.control.ProjectionSelector) {
         var self = this;
 
         if (!self.currentCoordsMarker) {
-            $.when(self.getLayer()).then(function (layer) {
-                if (layer) {
-                    $.when(layer.addMarker(position, { title: 'Coord', showsPopup: false, cssClass: cssClass || TC.Consts.classes.POINT, anchor: [0.5, 0.5] }))
-                        .then(function (marker) {
-                            self.currentCoordsMarker = marker;
-                        });
-                }
+            self.getLayer().then(function (layer) {
+                $.when(layer.addMarker(position, { title: 'Coord', showsPopup: false, cssClass: cssClass || TC.Consts.classes.POINT, anchor: [0.5, 0.5] }))
+                    .then(function (marker) {
+                        self.currentCoordsMarker = marker;
+                    });
             });
         } else {
             self.currentCoordsMarker.setCoords(position);
@@ -349,12 +339,12 @@ if (!TC.control.ProjectionSelector) {
         var self = this;
         var done = new $.Deferred();
         if (self.layer == undefined) {
-            $.when(self.map.addLayer({
-                id: TC.getUID(),
+            self.map.addLayer({
+                id: self.getUID(),
                 type: TC.Consts.layerType.VECTOR,
                 stealth: true,
                 title: 'Coordenadas',
-            })).then(function (layer) {
+            }).then(function (layer) {
                 self.layer = layer;
                 self.layer.map.putLayerOnTop(self.layer);
                 done.resolve(self.layer);
