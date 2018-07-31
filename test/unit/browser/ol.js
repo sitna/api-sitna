@@ -103,16 +103,16 @@ describe('Tests de ol.js', function () {
         });
     });
 
-    describe('ol.format.KML.readURI_', function () {
-        it('un nodo con texto debe devolver ese texto', function () {
-            var text = 'texto demo';
-            var node = ol.xml.DOCUMENT.createElement('nodo');
-            var textNode = ol.xml.DOCUMENT.createTextNode(text);
-            node.appendChild(textNode);
-            var result = ol.format.KML.readStyle_(node, [{}]);
-            chai.expect(ol.format.KML.readURI_(node)).to.equal(text);
-        });
-    });
+    //describe('ol.format.KML.readURI_', function () {
+    //    it('un nodo con una URL debe devolver esa URL', function () {
+    //        var text = 'http://example.com';
+    //        var node = ol.xml.DOCUMENT.createElement('nodo');
+    //        var textNode = ol.xml.DOCUMENT.createTextNode(text);
+    //        node.appendChild(textNode);
+    //        var result = ol.format.KML.readStyle_(node, [{}]);
+    //        chai.expect(ol.format.KML.readURI_(node)).to.equal(text);
+    //    });
+    //});
 
     describe('ol.format.KML.whenParser_', function () {
         it('un nodo "when" debe ejecutarse', function () {
@@ -238,7 +238,7 @@ describe('Tests de ol.js', function () {
         };
         var feature = {
             wrap: {
-                feature: new ol.Feature(new ol.geom.Point([0, 0]))
+                feature: new ol.Feature({ geometry: new ol.geom.Point([0, 0]), '3D length': 23 })
             }
         };
         var options = {
@@ -247,6 +247,21 @@ describe('Tests de ol.js', function () {
         };
         it('debe poder generar GML', function () {
             chai.expect(TC.wrap.Map.prototype.exportFeatures.call(self, [feature], options)).to.be.a('string');
+        });
+    });
+
+    describe('ol.Map.prototype.updateSize', function () {
+        it('se debe poder ejecutar', function () {
+            chai.expect(ol.Map).to.respondTo('updateSize');
+        });
+    });
+
+    describe('Enumeraciones, propiedades y funciones internas de OL que usamos siguen disponibles', function () {
+        it("Propiedad extent sigue disponible", function (done) {
+            
+            expect(new ol.control.ZoomToExtent().hasOwnProperty('extent')).to.be.true;
+
+            done();
         });
     });
 });
