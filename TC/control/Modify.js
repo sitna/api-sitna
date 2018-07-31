@@ -17,6 +17,8 @@ TC.Consts.event.CHANGE = 'change.tc';
 
         TC.Control.apply(self, arguments);
 
+        self.__firstRender = $.Deferred();
+
         self.styles = $.extend(true, TC.Cfg.styles.selection, self.options.styles);
         self.styles.text = self.styles.text || {
             fontSize: self.styles.line.fontSize,
@@ -28,6 +30,8 @@ TC.Consts.event.CHANGE = 'change.tc';
         self._classSelector = '.' + self.CLASS;
 
         self.wrap = new TC.wrap.control.Modify(self);
+
+        self._layerPromise = $.Deferred();
     };
 
     TC.inherit(TC.control.Modify, TC.Control);
@@ -117,32 +121,35 @@ TC.Consts.event.CHANGE = 'change.tc';
         var self = this;
         TC.Control.prototype.register.call(self, map);
         if (self.options.layer) {
-            map.loaded(function () {
-                self.setLayer(self.options.layer);
-            });
+
+            self.setLayer(self.options.layer);
 
             map
-                .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATUREADD, function (e) {
-                    if (e.layer === self.layer) {
-                        self._$selectBtn.prop('disabled', false);
-                        self._$textBtn.prop('disabled', false);
-                    }
+                .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
+                    $.when(self.getLayer(), self.renderPromise()).then(function (layer) {
+                        if (e.layer === layer) {
+                            self._$selectBtn.prop('disabled', false);
+                            self._$textBtn.prop('disabled', false);
+                        }
+                    });
                 })
                 .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
-                    if (e.layer === self.layer) {
-                        if (e.feature) {
-                            self.unselectFeatures([e.feature]);
+                    $.when(self.getLayer(), self.renderPromise()).then(function (layer) {
+                        if (e.layer === layer) {
+                            if (e.feature) {
+                                self.unselectFeatures([e.feature]);
+                            }
+                            else {
+                                self.unselectFeatures();
+                            }
+                            setFeatureSelectedState(self, self.getSelectedFeatures());
+                            if (self.layer.features.length === 0) {
+                                self._$selectBtn.prop('disabled', true);
+                                self.setTextMode(false);
+                                self._$textBtn.prop('disabled', true);
+                            }
                         }
-                        else {
-                            self.unselectFeatures();
-                        }
-                        setFeatureSelectedState(self, self.getSelectedFeatures());
-                        if (self.layer.features.length === 0) {
-                            self._$selectBtn.prop('disabled', true);
-                            self.setTextMode(false);
-                            self._$textBtn.prop('disabled', true);
-                        }
-                    }
+                    });
                 });
 
             self
@@ -200,6 +207,8 @@ TC.Consts.event.CHANGE = 'change.tc';
                     self.setFontSize(e.target.value);
                 });
 
+            self.__firstRender.resolve();
+
             if ($.isFunction(callback)) {
                 callback();
             }
@@ -238,6 +247,10 @@ TC.Consts.event.CHANGE = 'change.tc';
                 }
             )
         }
+    };
+
+    ctlProto.renderPromise = function () {
+        return this.__firstRender.promise();
     };
 
     ctlProto.activate = function () {
@@ -310,17 +323,21 @@ TC.Consts.event.CHANGE = 'change.tc';
         if (self.options && typeof self.options.layer === 'boolean' && !self.options.layer) {
             return null;
         }
-        return self.layer ? self.layer : self.layerPromise;
+        return self.layer ? self.layer : self._layerPromise;
     };
 
     ctlProto.setLayer = function (layer) {
         var self = this;
         if (self.map) {
             if (typeof (layer) === "string") {
-                self.layer = self.map.getLayer(layer);
+                self.map.loaded(function () {
+                    self.layer = self.map.getLayer(layer);
+                    self._layerPromise.resolve(self.layer);
+                });
             }
             else {
                 self.layer = layer;
+                self._layerPromise.resolve(self.layer);
             }
         }
     };
@@ -407,12 +424,14 @@ TC.Consts.event.CHANGE = 'change.tc';
         }
         color = TC.Util.colorArrayToString(color);
         outlineColor = outlineColor || self.getLabelOutlineColor(color);
-        self._$fontColorPicker.val(color);
-        if (!Modernizr.inputtypes.color) {
-            self._$fontColorPicker.spectrum('set', color);
-        }
-        self._$text.css('color', color);
-        self._$text.css('text-shadow', '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor);
+        self.renderPromise().then(function () {
+            self._$fontColorPicker.val(color);
+            if (!Modernizr.inputtypes.color) {
+                self._$fontColorPicker.spectrum('set', color);
+            }
+            self._$text.css('color', color);
+            self._$text.css('text-shadow', '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor);
+        });
         return self;
     };
 
@@ -438,8 +457,10 @@ TC.Consts.event.CHANGE = 'change.tc';
         }
         const sizeValue = parseInt(size);
         if (sizeValue !== Number.NaN) {
-            self._$fontSizeSelector.val(sizeValue);
-            self._$text.css('font-size', sizeValue + 'pt');
+            self.renderPromise().then(function () {
+                self._$fontSizeSelector.val(sizeValue);
+                self._$text.css('font-size', sizeValue + 'pt');
+            });
         }
         return self;
     };
@@ -496,10 +517,12 @@ TC.Consts.event.CHANGE = 'change.tc';
             color = self.styles.text.fontColor;
             size = self.styles.text.fontSize;
         }
-        self
-            .setFontSizeWatch(size)
-            .setFontColorWatch(color)
-            ._$text.val(text);
+        self.renderPromise().then(function () {
+            self
+                .setFontSizeWatch(size)
+                .setFontColorWatch(color)
+                ._$text.val(text);
+        });
         return self;
     };
 
