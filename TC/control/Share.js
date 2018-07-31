@@ -26,6 +26,7 @@ TC.inherit(TC.control.Share, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-share';
     ctlProto.QR_MAX_LENGTH = 150;
+    ctlProto.MAILTO_MAX_LENGTH = 256;
     ctlProto.IFRAME_WIDTH = '600px';
     ctlProto.IFRAME_HEIGHT = '450px';
 
@@ -109,19 +110,16 @@ TC.inherit(TC.control.Share, TC.Control);
             }
         }
 
-        var hashState = self.map.getMapState();
+        const controlStates = self.exportControlStates();
+        const extraStates = controlStates.length ? { ctl: controlStates } : undefined;
+
+        var hashState = self.map.getMapState(extraStates);
 
 
         var url = currentUrl.concat("#", hashState);
-
-        //Si la URL sobrepasa el tamaño máximo deshabilitamos el control
-        if (url.length > TC.Consts.URL_MAX_LENGTH) {
-            self.disableButtons();
-            return;
-        } else {
-            self.enableButtons(url);
-            return url;
-        }
+        //Si la URL sobrepasa el tamaño máximo avisamos que puede fallar en IE
+        self._$div.find('.' + self.CLASS + '-alert').toggleClass(TC.Consts.classes.HIDDEN, url.length <= TC.Consts.URL_MAX_LENGTH);
+        return url;
     };
 
     ctlProto.generateIframe = function (url) {
@@ -132,7 +130,32 @@ TC.inherit(TC.control.Share, TC.Control);
         }
     }
 
+    ctlProto.exportControlStates = function () {
+        const self = this;
+        if (self.map) {
+            return self.map.controls
+                .map(function (ctl) {
+                    return ctl.exportState();
+                })
+                .filter(function (state) {
+                    // Quitamos los estados nulos
+                    return state;
+                });
+        }
+        return [];
+    };
 
+    ctlProto.importControlStates = function (stateArray) {
+        const self = this;
+        if (self.map) {
+            stateArray.forEach(function (state) {
+                const ctl = self.map.getControlById(state.id);
+                if (ctl) {
+                    ctl.importState(state);
+                }
+            });
+        }
+    };
 
     ctlProto.register = function (map) {
         var self = this;
@@ -189,7 +212,11 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                window.location.href = 'mailto:?body=' + encodeURIComponent(url + "\n");
+                const body = encodeURIComponent(url + "\n");
+                if (body.length > self.MAILTO_MAX_LENGTH) {
+                    map.toast(self.getLocaleString('urlTooLongForMailto'), { type: TC.Consts.msgType.WARNING });
+                }
+                window.location.href = 'mailto:?body=' + body;
             }
         });
 
@@ -209,10 +236,15 @@ TC.inherit(TC.control.Share, TC.Control);
                             url = TC.Util.shortenUrl(url);
                         }
 
-                        TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-qr-dialog'));
-                        var $qrContainer = self._$dialogDiv.find(".qrcode");
-                        $qrContainer.empty();
-                        new QRCode($qrContainer[0], url);
+                        if (url !== undefined) {
+                            TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-qr-dialog'));
+                            var $qrContainer = self._$dialogDiv.find(".qrcode");
+                            $qrContainer.empty();
+                            new QRCode($qrContainer[0], url);
+                        }
+                        else {
+                            TC.error(self.getLocaleString('urlTooLongForShortener'));
+                        }
                     });
             }
         });
@@ -223,7 +255,13 @@ TC.inherit(TC.control.Share, TC.Control);
             var url = self.generateLink();
 
             if (url) {
-                window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url));
+                var shortUrl = TC.Util.shortenUrl(url); // desde localhost no funciona la reducción de url
+
+                if (shortUrl !== undefined) {
+                    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(shortUrl));
+                } else {
+                    TC.error(self.getLocaleString('urlTooLongForShortener'));
+                }
                 return false;
             }
         });
@@ -239,10 +277,10 @@ TC.inherit(TC.control.Share, TC.Control);
                 if (shortUrl !== undefined) {
                     var titulo = encodeURIComponent(window.document.title ? window.document.title : "Visor API SITNA");
                     window.open("https://twitter.com/intent/tweet?text=" + titulo + "&amp;url=" + encodeURIComponent(shortUrl));
-                    return false;
                 } else {
-                    TC.error("La URL " + url + " no ha podido ser acortada por ser no válida");
+                    TC.error(self.getLocaleString('urlTooLongForShortener'));
                 }
+                return false;
             }
         });
 
@@ -303,45 +341,13 @@ TC.inherit(TC.control.Share, TC.Control);
         //        self.generateLink();
         //    });
         //});
-    };
 
-    ctlProto.enableButtons = function (url) {
-        var self = this;
-
-        TC.Control.prototype.enable.call(self);
-
-        var $alert = self._$div.find('.' + self.CLASS + '-alert');
-        var $copyBtn = self._$div.find('.tc-button');
-        var $shareBtns = self._$div.find('.ga-share-icon');
-        var $input = self._$div.find('.tc-textbox');
-
-        $alert.toggleClass(TC.Consts.classes.HIDDEN, true);
-        $copyBtn.toggleClass('disabled', false);
-        $copyBtn.removeAttr('disabled');
-        $.each($shareBtns, function (index, item) {
-            $(item).toggleClass('disabled', false);
+        map.loaded(function () {
+            const controlStates = map.state && map.state.ctl;
+            if (controlStates) {
+                self.importControlStates(controlStates);
+            }
         });
-        $input.filter('.tc-url').val(url);
-        $input.filter('.tc-iframe').val(self.generateIframe(url));
-    };
-
-    ctlProto.disableButtons = function () {
-        var self = this;
-
-        TC.Control.prototype.disable.call(self);
-
-        var $alert = self._$div.find('.' + self.CLASS + '-alert');
-        var $copyBtn = self._$div.find('.tc-button');
-        var $shareBtns = self._$div.find('.ga-share-icon');
-        var $input = self._$div.find('.tc-textbox');
-
-        $alert.toggleClass(TC.Consts.classes.HIDDEN, false);
-        $copyBtn.toggleClass('disabled', true);
-        $copyBtn.attr('disabled', 'disabled');
-        $.each($shareBtns, function (index, item) {
-            $(item).toggleClass('disabled', true);
-        });
-        $input.val();
     };
 
     ctlProto.template = {};
