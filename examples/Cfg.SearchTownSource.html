@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Cfg.SearchTownSource</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.SearchTownSource.html">SITNA.Cfg.SearchTownSource</a>.</p>
+        <p>Establecer configuración de un origen de datos distinto en la búsqueda de cascos urbanos.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Casco urbano',
+                    instructions: 'Buscar casco urbano',
+                    cadastralParcel: false,
+                    municipality: false,
+                    town: {
+                        url: '//idena.navarra.es/ogc/wfs',
+                        featurePrefix: 'IDENA',
+                        geometryName: 'the_geom',
+                        featureType: 'ESTADI_Pol_EntidadPob',                        
+                        dataIdProperty: ['CMUNICIPIO', 'CENTIDAD'],
+                        idPropertiesIdentifier: '#',
+                        queryProperties: {
+                            firstQueryWord: ['ENTINOAC', 'ENTIDAD']
+                        },
+                        suggestionListHead: {
+                            label: "search.list.urban",
+                            color: "strokeColor"
+                        },
+                        outputProperties: ['MUNICIPIO', 'ENTIDAD'],
+                        outputFormatLabel: '{1} ({0})',
+                        styles: [
+                            {
+                                polygon: {
+                                    fillColor: '#000000',
+                                    fillOpacity: 0.1,
+                                    strokeColor: '#feba1e',
+                                    strokeWidth: 2,
+                                    strokeOpacity: 1
+                                }
+                            }
+                        ]
+                    },
+                    street: false,
+                    postalAddress: false
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

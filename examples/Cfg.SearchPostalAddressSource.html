@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Cfg.SearchPostalAddressSource</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.SearchPostalAddressSource.html">SITNA.Cfg.SearchPostalAddressSource</a>.</p>
+        <p>Establecer configuración de un origen de datos distinto en la búsqueda de direcciones postales.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Dirección postal',
+                    instructions: 'Buscar dirección postal',
+                    cadastralParcel: false,
+                    municipality: false,
+                    town: false,
+                    street: false,
+                    postalAddress: {
+                        url: '//idena.navarra.es/ogc/wfs',
+                        featurePrefix: 'IDENA',
+                        geometryName: 'the_geom',
+                        featureType: 'CATAST_Txt_Portal',                        
+                        dataIdProperty: ['CMUNICIPIO', 'CENTIDADC', 'CVIA', 'PORTAL'],
+                        queryProperties: {
+                            firstQueryWord: ['ENTIDADC', 'ENTINOAC'],
+                            secondQueryWord: ['VIA', 'VIANOAC'],
+                            thirdQueryWord: ['PORTAL']
+                        },
+                        suggestionListHead: {
+                            label: "search.list.number",
+                            color: "fontColor"
+                        },
+                        outputProperties: ['ENTIDADC', 'VIA', 'PORTAL', 'CVIA', 'CENTIDADC', 'CMUNICIPIO'],
+                        outputFormatLabel: '{1} {2}, {0}',
+                        styles: [
+                            {
+                                point: {
+                                    radius: 0,
+                                    label: "PORTAL",
+                                    angle: "CADANGLE",
+                                    fontColor: "#CB0000",
+                                    fontSize: 14,
+                                    labelOutlineColor: "#FFFFFF",
+                                    labelOutlineWidth: 4
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
