@@ -90,7 +90,7 @@
             }
             //mover el Multifeature info dentro del TOC
             if (TC.control.MultiFeatureInfo) {
-                var toc = map.getControlsByClass('TC.control.ListTOC')[0];
+                var toc = map.getControlsByClass('TC.control.WorkLayerManager')[0];
                 if (toc) {
                     var mfi = $('.' + TC.control.MultiFeatureInfo.prototype.CLASS);
                     mfi.detach();
