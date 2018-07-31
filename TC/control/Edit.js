@@ -377,6 +377,10 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         var self = this;
         TC.control.SWCacheClient.prototype.register.call(self, map);
 
+        const drawPointsId = self.getUID();
+        const drawLinesId = self.getUID();
+        const drawPolygonsId = self.getUID();
+
         map.addControl('popup', { closeButton: true }).then(function (ctl) {
             self.attributeEditor = ctl;
         });
@@ -628,16 +632,19 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 var DRAW = 'draw';
                 $.when.apply(self, [
                     map.addControl(DRAW, {
+                        id: drawPointsId,
                         div: self._$div.find('.' + self.CLASS + '-point'),
                         mode: TC.Consts.geom.POINT,
                         layer: false
                     }),
                     map.addControl(DRAW, {
+                        id: drawLinesId,
                         div: self._$div.find('.' + self.CLASS + '-line'),
                         mode: TC.Consts.geom.POLYLINE,
                         layer: false
                     }),
                     map.addControl(DRAW, {
+                        id: drawPolygonsId,
                         div: self._$div.find('.' + self.CLASS + '-polygon'),
                         mode: TC.Consts.geom.POLYGON,
                         layer: false
