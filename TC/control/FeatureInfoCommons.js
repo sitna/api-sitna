@@ -148,7 +148,7 @@ TC.control.FeatureInfoCommons.displayMode = {
             resultsLayer = self.options.resultsLayer;
         } else {
             resultsLayer = {
-                id: TC.getUID(),
+                id: self.getUID(),
                 title: self.CLASS + ': Results layer',
                 type: TC.Consts.layerType.VECTOR,
                 stealth: true
@@ -160,7 +160,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         }
         else {
             filterLayer = {
-                id: TC.getUID(),
+                id: self.getUID(),
                 title: self.CLASS + ': Filter layer',
                 stealth: true,
                 type: TC.Consts.layerType.VECTOR
