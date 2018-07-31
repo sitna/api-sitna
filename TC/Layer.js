@@ -138,6 +138,13 @@ TC.Layer = function (options) {
      * @type TC.consts.LayerType
      */
     _layer.type = _layer.options.type || TC.Consts.layerType.WMS;
+
+    /**
+     * Fragmento HTML para utilizar como leyenda.
+     * @property customLegend
+     * @type string
+     */
+    _layer.customLegend = _layer.options.customLegend; 
     var defaultFormat = _layer.options.isBase ? TC.Consts.mimeType.JPEG : TC.Consts.mimeType.PNG;
     _layer.options.format = _layer.options.format || defaultFormat;
 
