@@ -1,0 +1,48 @@
+﻿.tc-ctl-sb, .tc-ctl-scl, .tc-ctl-ss {
+    position: absolute;
+    top: 1.875em;
+    left: 4em;
+    z-index: 10002;
+    color: #333;
+    background-color: #ccc;
+    border: 1px solid #ccc;
+    border-radius: 0.3em;
+    opacity: 0.5;
+    font-size: 0.8em;
+}
+
+    .tc-ctl-sb .ol-scale-line {
+        position: static;
+        bottom: auto;
+        left: auto;
+        color: #333;
+        background-color: transparent;
+        border-radius: 0;
+        padding: 0;
+    }
+
+        .tc-ctl-sb .ol-scale-line .ol-scale-line-inner {
+            border: solid 2px #000;
+            border-top: 0;
+            text-align: center;
+            color: inherit;
+        }
+
+    .tc-ctl-ss select {
+        direction: rtl;
+    }
+
+    .tc-ctl-scl input, .tc-ctl-ss input {
+        background: #fff;
+        border: 1px #333 solid;
+        color: #333;
+        font-size: 0.8em;
+        display: inline;
+        vertical-align: top;
+        line-height: 1.5em;
+        cursor: pointer;
+    }
+
+.tc-map.tc-collapsed .tc-ctl-sb, .tc-map.tc-collapsed .tc-ctl-scl, .tc-map.tc-collapsed .tc-ctl-ss {
+    display: none;
+}

@@ -1,0 +1,159 @@
+﻿
+.tc-ctl-dmm .tc-hidden {
+    display: none;
+}
+
+.tc-ctl-dmm .tc-ctl-meas-select label {
+    width: calc(33.33% - 1px);
+}
+
+.tc-ctl-dmm-tool button {
+    width: 50%;
+    border-radius: 0;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
+    background-color: #666;
+}
+
+    .tc-ctl-dmm-tool button:disabled {
+        background-color: rgba(234, 234, 227, 1);
+    }
+
+    .tc-ctl-dmm-tool button:first-child {
+        border-top-left-radius: 0.3em;
+        border-bottom-left-radius: 0.3em;
+    }
+
+    .tc-ctl-dmm-tool button:last-child {
+        border-top-right-radius: 0.3em;
+        border-bottom-right-radius: 0.3em;
+    }
+
+    .tc-ctl-dmm-tool button:first-child:disabled {
+        border-left-color: rgba(234, 234, 227, 1);
+    }
+
+    .tc-ctl-dmm-tool button:last-child:disabled {
+        border-right-color: rgba(234, 234, 227, 1);
+    }
+
+
+.tc-ctl-dmm-mod > button {
+    width: 50%;
+}
+
+.tc-ctl-dmm .tc-ctl-mod-btn-delete {
+    border-top-right-radius: 0.3em;
+    border-bottom-right-radius: 0.3em;
+    border-right: 1px solid #c00;
+}
+
+    .tc-ctl-dmm .tc-ctl-mod-btn-delete:disabled {
+        border-right-color: rgba(234, 234, 227, 1);
+    }
+
+.tc-ctl-dmm .tc-ctl-mod-btn-join, .tc-ctl-dmm .tc-ctl-mod-btn-split {
+    display: none;
+}
+
+.tc-ctl-dmm-dialog-dl button.tc-ctl-dmm-dl-btn-geojson {
+    text-indent: -0.4em;
+}
+
+.tc-ctl-dmm-dialog-ip {
+    margin-bottom: 0.5em;
+    text-align: center;
+}
+
+    .tc-ctl-dmm-dialog-ip.tc-hidden {
+        display: none;
+    }
+
+    .tc-ctl-dmm-dialog-ip input[type=radio] {
+        display: none;
+    }
+
+    .tc-ctl-dmm-dialog-ip label {
+        display: inline-block;
+        width: 6em;
+        height: 6em;
+    }
+
+        .tc-ctl-dmm-dialog-ip label input[type=radio] ~ span {
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            border: 0.3em solid transparent;
+            border-radius: 0.3em;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .tc-ctl-dmm-dialog-ip label input[type=radio]:checked ~ span {
+            border-color: #c00;
+        }
+
+        .tc-ctl-dmm-dialog-ip label input[type=radio][value="0"] ~ span {
+            background-image: url(../img/uip-features.svg);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position-y: bottom;
+        }
+
+        .tc-ctl-dmm-dialog-ip label input[type=radio][value="1"] ~ span {
+            background-image: url(../img/ip-features.svg);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position-y: bottom;
+        }
+
+.tc-ctl-dmm-dialog-ip-m {
+    transition: height ease 0.2s;
+    height: 2em;
+    opacity: 1;
+    padding-top: 0.5em;
+}
+
+    .tc-ctl-dmm-dialog-ip-m.tc-hidden {
+        visibility: visible;
+        height: 0;
+        opacity: 0;
+        padding-top: 0;
+    }
+
+    .tc-ctl-dmm-dialog-ip-m input[type=number] {
+        width: 3em;
+    }
+
+.tc-ctl-dmm .tc-ctl-mod > button {
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
+}
+
+.tc-ctl-dmm .tc-ctl-mod .tc-ctl-btn:last-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.tc-ctl-dmm-dialog-dl button {
+    width: 25%;
+    border: 0;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
+    border-radius: 0;
+    margin: 0.5em 0 0.5em 0;
+}
+
+.tc-ctl-dmm-tool button {
+    position: relative;
+    flex-grow: 1;
+    display: inline-block;
+    border: 0;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
+    height: 2em;
+    margin: 0;
+    vertical-align: top;
+    text-align: center;
+    color: #fff;
+}

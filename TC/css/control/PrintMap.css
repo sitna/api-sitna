@@ -1,0 +1,35 @@
+﻿
+div.tc-ctl-printMap-txt {
+    margin-top: 5px;
+}
+
+div.tc-ctl-printMap-cnt {
+    width: 97%;
+}
+
+    div.tc-ctl-printMap-cnt label {
+        width: 25%;
+    }
+
+    div.tc-ctl-printMap-cnt input[type="text"], div.tc-ctl-printMap-cnt select.tc-combo {
+        width: 75%;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+div.tc-ctl-printMap-txt label {
+    line-height: 2em;
+}
+
+div.tc-ctl-printMap .tc-ctl-printMap-btn {
+    float: right;
+    height: 2em;
+    margin-bottom: 0.5em;
+}
+
+    div.tc-ctl-printMap .tc-ctl-printMap-btn:before {
+        font-family: 'FontAwesome';
+        content: '\f02f';
+        margin-right: 0.5em;
+    }

@@ -1,0 +1,86 @@
+﻿.tc-ctl-ovmap {
+    bottom: 0;
+    right: 0;
+    width: 15%;
+    height: 15%;
+    padding: 0;
+}
+
+    .tc-ctl-ovmap.ol-overviewmap.ol-uncollapsible button {
+        display: none;
+    }
+
+    .tc-ctl-ovmap.ol-overviewmap .ol-overviewmap-map {
+        width: 100%;
+        height: 100%;
+    }
+
+    .tc-ctl-ovmap.tc-threed .ol-overviewmap-box {
+        border: none;
+    }
+
+        .tc-ctl-ovmap.tc-threed .ol-overviewmap-box:after {
+            position: absolute;
+            color: #f00;
+            content: '\e0c0';
+            width: 2vmin;
+            height: 2vmin;
+            font-family: mapskin;
+            font-size: 2vmin;
+            top: 50%;
+            left: 50%;
+            margin-top: -1vmin;
+            margin-left: -1vmin;
+            text-align: center;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+    .tc-ctl-ovmap.tc-threed .tc-active .ol-overviewmap-box:after {
+        color: #666;
+    }
+
+.ol-overviewmap-box {
+    border-width: 2px;
+    border-style: solid outset outset solid;
+    border-color: #f00;
+    cursor: move;
+}
+
+.tc-active .ol-overviewmap-box {
+    border-color: #666;
+}
+
+.tc-ctl-ovmap-load {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 1em;
+    height: 1em;
+    background-color: #c00;
+    z-index: 10000;
+    -moz-animation-name: bounce_fading_bar;
+    -moz-animation-duration: 1.3s;
+    -moz-animation-iteration-count: infinite;
+    -moz-animation-direction: normal;
+    -moz-transform: scale(.3);
+    -webkit-animation-name: bounce_fading_bar;
+    -webkit-animation-duration: 1.3s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-direction: normal;
+    -webkit-transform: scale(.3);
+    -ms-animation-name: bounce_fading_bar;
+    -ms-animation-duration: 1.3s;
+    -ms-animation-iteration-count: infinite;
+    -ms-animation-direction: linear;
+    -ms-transform: scale(.3);
+    -o-animation-name: bounce_fading_bar;
+    -o-animation-duration: 1.3s;
+    -o-animation-iteration-count: infinite;
+    -o-animation-direction: normal;
+    -o-transform: scale(.3);
+    animation-name: bounce_fading_bar;
+    animation-duration: 1.3s;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    transform: scale(.3);
+}

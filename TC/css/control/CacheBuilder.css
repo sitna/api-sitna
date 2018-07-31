@@ -1,0 +1,363 @@
+﻿
+.tc-ctl-cbuild {
+    clear: both;
+}
+
+ul.tc-ctl-cbuild-bl-list {
+    list-style-type: none;
+    margin: 0.5em 0 0 0;
+    padding: 0;
+}
+
+.tc-ctl-cbuild-bl-node label {
+    position: relative;
+    display: inline-block;
+    margin: 0;
+    cursor: pointer;
+    border: 0.3em solid #ccc;
+    border-radius: 0.3em;
+}
+
+.tc-ctl-cbuild-bl-node label {
+    width: 9em;
+    height: 9em;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-new, .tc-ctl-cbuild .tc-ctl-cbuild-drawing {
+    height: 2.5em;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-progress {
+    height: 6em;
+}
+
+.tc-ctl-cbuild-off-panel {
+    position: absolute;
+    z-index: 10008;
+    bottom: 1em;
+    right: 1em;
+    background-color: #ccc;
+    opacity: 0.5;
+    border-radius: 0.3em;
+    padding: 0.3em;
+    font-size: 0.8em;
+    font-weight: bold;
+    max-width: 6em;
+}
+
+    .tc-ctl-cbuild-off-panel span, .tc-ctl-cbuild-off-panel a {
+        display: inline-block;
+        text-align: center;
+    }
+
+.tc-ctl-cbuild-bl-node label span {
+    position: absolute;
+    display: block;
+    margin: 0;
+    padding-top: 1em;
+    top: -0.3em;
+    left: -0.3em;
+    text-shadow: 0.1em 0.1em 0 #fff, 0.1em -0.1em 0 #fff, -0.1em 0.1em 0 #fff, -0.1em -0.1em 0 #fff;
+}
+
+.tc-ctl-cbuild-bl-node label span {
+    width: 9em;
+    height: 8em;
+}
+
+.tc-ctl-cbuild-bl-node input[type=checkbox] ~ span {
+    border: 0.3em solid #ccc;
+    border-radius: 0.3em;
+}
+
+.tc-ctl-cbuild-bl-node input[type=checkbox]:checked ~ span {
+    border-color: #c00;
+}
+
+ul.tc-ctl-cbuild-bl-list > li {
+    display: inline-block;
+    font-size: 0.8em;
+    margin: 0.2em;
+    vertical-align: top;
+    text-align: center;
+}
+
+    ul.tc-ctl-cbuild-bl-list > li.tc-hidden {
+        display: none;
+    }
+
+ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
+    display: none;
+}
+
+    ul.tc-ctl-cbuild-bl-list input[type=checkbox]:checked + div {
+        background-color: #c00;
+        border: 1px solid #c00;
+    }
+
+
+.tc-ctl-cbuild .tc-hidden {
+    display: none;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list:empty {
+    border: 0;
+    margin: 0.3em;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-active {
+    background: rgba(102, 0, 0, 0.1);
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-disabled {
+    animation: pulsation 2s infinite;
+    -moz-animation: pulsation 2s infinite; /* Firefox */
+    -webkit-animation: pulsation 2s infinite; /* Safari and Chrome */
+    -o-animation: pulsation 2s infinite; /* Opera */
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list li button {
+    width: 7.5%;
+    height: 2em;
+    background-color: transparent;
+    color: transparent;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
+    font-size: 1em;
+    border: 0;
+    padding: 0;
+    margin-right: 1%;
+    outline: none;
+}
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list li button:before {
+        display: inline-block;
+        position: relative;
+        color: #666;
+        font-family: Mapskin;
+        width: 100%;
+        height: 2em;
+        line-height: 2em;
+    }
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-active:before {
+        color: #c00;
+    }
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-edit:before {
+        content: '\e01a';
+    }
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-view:before {
+        content: '\e008';
+    }
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-delete:before {
+        font-family: initial;
+        content: '\2716';
+    }
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-save:before {
+        font-family: initial;
+        content: "\2714";
+        width: auto;
+        height: auto;
+    }
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-cancel:before {
+        font-family: FontAwesome;
+        content: "\f00d";
+        width: auto;
+        height: auto;
+    }
+
+.tc-ctl-cbuild .tc-ctl-cbuild-btn-new, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl {
+    position: relative;
+    float: right;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
+    height: 2em;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw {
+    background-color: #630101;
+    border-color: #630101;
+}
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
+        font-family: 'FontAwesome';
+        color: #fff;
+        height: 2em;
+        margin-right: 0.5em;
+    }
+
+.tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before {
+    content: '\f067';
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
+    content: '\f00d';
+}
+
+.tc-ctl-cbuild-dialog .tc-modal-body {
+    max-height: 50vh;
+    overflow: auto;
+}
+
+.tc-ctl-cbuild-dialog .tc-ctl-cbuild-txt-name {
+    width: 97%;
+    height: 2em;
+    padding: 0 0 0 0.2em;
+    border: 1px solid #ccc;
+    border-radius: 0.3em;
+    margin: 0 0 0.6em 0;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-tile-cmd {
+    float: right;
+}
+
+.tc-ctl-cbuild-dialog .tc-ctl-cbuild-btn-cancel {
+    display: inline-block;
+    margin: 0 0 1em 0.5em;
+    margin: 0 0 1em 0.5em;
+}
+
+.tc-ctl-cbuild-dialog .tc-ctl-cbuild-tile-count {
+    font-size: 0.9em;
+    height: 1em;
+    margin-top: 2em;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-progress-count {
+    white-space: nowrap;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-progress-bar {
+    width: 100%;
+    height: 0.8em;
+    border: 0.1em solid #999;
+    padding: 0.1em;
+    margin-bottom: 0.5em;
+    border-radius: 0.3em;
+    box-sizing: border-box;
+}
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-progress-bar .tc-ctl-cbuild-progress-ratio {
+        height: 100%;
+        background-color: #c00;
+        border-radius: 0.3em;
+    }
+
+.tc-ctl-cbuild-dialog .tc-ctl-cbuild-res-panel {
+    position: relative;
+}
+
+    .tc-ctl-cbuild-dialog .tc-ctl-cbuild-res-panel h4 {
+        margin-bottom: 0.5em;
+    }
+
+.tc-ctl-cbuild-dialog .tc-ctl-cbuild-res {
+    position: absolute;
+    width: 3em;
+    font-size: 0.667em;
+    text-align: center;
+    margin: 2em 0 0 -1.5em;
+}
+
+.tc-ctl-cbuild-dialog .tc-ctl-cbuild-rng-maxres {
+    padding: 0;
+}
+
+.tc-ctl-cbuild.tc-collapsed i.tc-ctl-cbuild-map-search-icon {
+    display: none;
+}
+
+.tc-ctl-cbuild-list input {
+    box-sizing: border-box;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 8em;
+    height: auto;
+    border-radius: 0.3em;
+    border: 1px solid #CCC;
+    padding: 0;
+    list-style: none;
+    margin-top: 0.5em;
+    box-sizing: border-box;
+}
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list > li > span {
+        width: 74%;
+        float: left;
+        -ms-text-overflow: ellipsis;
+        -o-text-overflow: ellipsis;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        height: 2em;
+    }
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list > li.tc-ctl-cbuild-map-available-empty > span {
+        text-decoration: none;
+        color: inherit;
+        cursor: auto;
+    }
+
+    .tc-ctl-cbuild .tc-ctl-cbuild-list > li > button.tc-btn-save, .tc-ctl-cbuild .tc-ctl-cbuild-list > li > button.tc-btn-cancel {
+        position: relative;
+        background-color: transparent;
+        border: 0;
+        padding: 0;
+        width: 7.5%;
+        margin-right: 1%;
+        outline: none;
+    }
+
+        .tc-ctl-cbuild .tc-ctl-cbuild-list > li > button.tc-btn-save:before, .tc-ctl-cbuild .tc-ctl-cbuild-list > li > button.tc-btn-cancel:before {
+            width: auto;
+            height: auto;
+            padding: 0 0.3em;
+            line-height: normal;
+        }
+
+.tc-ctl-cbuild-map-available-srch {
+    width: 100%;
+    height: 2em;
+}
+
+.tc-ctl-cbuild-map-search-icon {
+    position: relative;
+    margin-top: 4px;
+    right: 21px;
+    color: #ccc;
+    font-style: normal;
+    width: 1em;
+    float: right;
+    top: 20px;
+}
+
+    .tc-ctl-cbuild-map-search-icon:before {
+        font-family: FontAwesome;
+        content: "\f002";
+    }
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list > li {
+    padding: 0.25em 0 0.2em 0.5%;
+    border-bottom: 0.1em solid rgba(0,0,0,0.1);
+    overflow: hidden;
+    line-height: 2em;
+    box-sizing: content-box;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-list li .tc-textbox {
+    margin-right: 1%;
+    padding-left: 0.5em;
+    width: 81.5%;
+    float: left;
+}

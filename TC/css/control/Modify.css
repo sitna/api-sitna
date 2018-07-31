@@ -1,0 +1,41 @@
+﻿
+.tc-ctl-mod {
+    display: flex;
+}
+
+.tc-ctl-mod-style {
+    text-align: center;
+}
+
+.tc-ctl-mod .tc-ctl-mod-txt {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    font-family: sans-serif;
+}
+
+.tc-ctl-mod > button {
+    display: inline-block;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
+    height: 2em;
+    margin: 0;
+    vertical-align: top;
+    cursor: pointer;
+    flex-grow: 1;
+    border: 0;
+    text-align: center;
+    color: #fff;
+    width: 33.33%;
+}
+
+.tc-ctl-mod .tc-ctl-btn:first-child {
+    border-top-left-radius: 0.3em;
+    border-bottom-left-radius: 0.3em;
+}
+
+.tc-ctl-mod .tc-ctl-btn:last-child {
+    border-top-right-radius: 0.3em;
+    border-bottom-right-radius: 0.3em;
+}

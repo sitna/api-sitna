@@ -1,0 +1,158 @@
+﻿
+.tc-map.tc-collapsed .tc-ctl-sv-btn {
+    display: none;
+}
+
+.tc-map.tc-ctl-sv-active {
+    cursor: move;
+}
+
+.tc-ctl-sv-btn {
+    position: absolute;
+    left: 0.7em;
+    top: 18.05em;
+    width: 2em;
+    height: 2em;
+    padding: 0;
+    margin-top: 0.2em;
+    border: 0;
+    border-radius: 0.2em;
+    cursor: move;
+    z-index: 10002;
+    background-color: rgba(0, 0, 0, 0.66);
+}
+
+    .tc-ctl-sv-btn.tc-checked {
+        background: url(../img/pegman-silouette.png) no-repeat #000 center;
+        cursor: move;
+    }
+
+    .tc-ctl-sv-btn:focus {
+        outline: none;
+    }
+
+
+.tc-ctl-sv-drag {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url(../img/pegman.png) no-repeat transparent center;
+}
+
+.tc-ctl-sv-view {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 10011;
+    background-color: #ccc;
+    -webkit-transition: all .2s ease;
+    -moz-transition: all .2s ease;
+    -ie-transition: all .2s ease;
+    -o-transition: all .2s ease;
+    transition: all .2s ease;
+}
+
+    .tc-ctl-sv-view.tc-hidden {
+        width: 1px; /* con ancho y alto 0 Google Maps API da errores */
+        height: 1px;
+        opacity: 0;
+        visibility: visible;
+    }
+
+    .tc-ctl-sv-view.tc-visible {
+        top: 0;
+        left: 0;
+    }
+
+    .tc-ctl-sv-view .tc-ctl-sv-btn-close {
+        position: absolute;
+        top: 0;
+        right: 0.5em;
+        width: 1em;
+        height: 1em;
+        text-align: center;
+        line-height: 1em;
+        font-size: 2em;
+        z-index: 10012;
+        cursor: pointer;
+        padding-top: 0.15em; /* Para tapar botón de pantalla completa */
+        background-color: #fff;
+        border-bottom-left-radius: 0.3em;
+        border-bottom-right-radius: 0.3em;
+        box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+    }
+
+        .tc-ctl-sv-view .tc-ctl-sv-btn-close:after {
+            color: #000;
+            content: '\2716';
+        }
+
+.tc-threed div.tc-ctl-sv-btn {
+    display: none;
+}
+
+.tc-marker-sv-0 {
+    background-image: url(../img/pegman0.png);
+}
+
+.tc-marker-sv-1 {
+    background-image: url(../img/pegman23.png);
+}
+
+.tc-marker-sv-2 {
+    background-image: url(../img/pegman45.png);
+}
+
+.tc-marker-sv-3 {
+    background-image: url(../img/pegman68.png);
+}
+
+.tc-marker-sv-4 {
+    background-image: url(../img/pegman90.png);
+}
+
+.tc-marker-sv-5 {
+    background-image: url(../img/pegman113.png);
+}
+
+.tc-marker-sv-6 {
+    background-image: url(../img/pegman135.png);
+}
+
+.tc-marker-sv-7 {
+    background-image: url(../img/pegman158.png);
+}
+
+.tc-marker-sv-8 {
+    background-image: url(../img/pegman180.png);
+}
+
+.tc-marker-sv-9 {
+    background-image: url(../img/pegman203.png);
+}
+
+.tc-marker-sv-10 {
+    background-image: url(../img/pegman225.png);
+}
+
+.tc-marker-sv-11 {
+    background-image: url(../img/pegman248.png);
+}
+
+.tc-marker-sv-12 {
+    background-image: url(../img/pegman270.png);
+}
+
+.tc-marker-sv-13 {
+    background-image: url(../img/pegman293.png);
+}
+
+.tc-marker-sv-14 {
+    background-image: url(../img/pegman315.png);
+}
+
+.tc-marker-sv-15 {
+    background-image: url(../img/pegman338.png);
+}

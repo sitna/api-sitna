@@ -1,0 +1,77 @@
+﻿
+.tc-ctl-draw-btn-new {
+    border-top-left-radius: 0.3em;
+    border-bottom-left-radius: 0.3em;
+}
+
+.tc-ctl-btn.tc-ctl-draw-btn-new.tc-active {
+    background-color: #c00;
+}
+
+.tc-ctl-draw-btn-cancel {
+    border-top-right-radius: 0.3em;
+    border-bottom-right-radius: 0.3em;
+}
+
+.tc-ctl-draw-point .tc-ctl-draw-tools .tc-ctl-btn {
+    display: none;
+}
+
+.tc-ctl-draw-point .tc-ctl-draw-tools .tc-ctl-draw-btn-new, .tc-ctl-draw-point .tc-ctl-draw-tools .tc-ctl-draw-btn-cancel {
+    display: inline-block;
+}
+
+.tc-ctl-draw-style {
+    margin-top: 0.3em;
+    width: 100%;
+    text-align: center;
+}
+
+.tc-ctl-draw-str-w, .tc-ctl-mod-fnt-s {
+    margin-left: 0.5em;
+    padding-left: 0.2em;
+    width: 2.5em;
+}
+
+.tc-ctl-draw-str-w-watch {
+    display: inline-block;
+    height: 0.3em;
+    width: 2em;
+    border-style: solid;
+    border-width: 0;
+    margin-left: 0.2em;
+    transform: rotate(-20deg);
+    transform-origin: 20% 50%;
+}
+
+.tc-ctl-draw .tc-ctl-draw-tools > button {
+    display: inline-block;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
+    height: 2em;
+    margin: 0;
+    vertical-align: top;
+    cursor: pointer;
+}
+
+#map > .tc-ctl-draw {
+    display: none;
+}
+
+.tc-ctl-draw-tools {
+    display: flex;
+}
+
+    .tc-ctl-draw-tools > button {
+        position: relative;
+        flex-grow: 1;
+        display: inline-block;
+        border: 0;
+        border-left: 1px solid #fff;
+        border-right: 1px solid #fff;
+        height: 2em;
+        margin: 0;
+        vertical-align: top;
+        text-align: center;
+        color: #fff;
+    }

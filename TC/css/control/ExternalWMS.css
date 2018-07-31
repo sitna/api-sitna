@@ -1,0 +1,45 @@
+﻿
+.tc-ctl-xwms-cnt {
+    width: 97%;
+}
+
+    .tc-ctl-xwms-cnt > select.tc-combo, .tc-ctl-xwms-cnt > input[type="text"] {
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .tc-ctl-xwms-cnt > button {
+        height: 2em;
+    }
+
+        .tc-ctl-xwms-cnt > button:before {
+            font-family: 'FontAwesome';
+            content: '\f067';
+            margin-right: 0.5em;
+        }
+
+.tc-ctl-xwms select {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    width: 20%;
+    border-right: none;
+    float: left;
+}
+
+.tc-ctl-xwms input {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    width: 80%;
+    display: inline-block;
+    padding-left: 15px;
+}
+
+.tc-collapsed.tc-ctl-xwms .input-group {
+    margin: 0;
+}
+
+.tc-ctl-xwms-option-selected {
+    font-style: italic;
+    color: #600;
+}

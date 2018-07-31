@@ -1,0 +1,127 @@
+﻿
+.tc-ctl-download-cnt {
+    width: 97%;
+    margin-top: 0;
+}
+
+.tc-ctl-download-seldisabled {
+    background-color: #e0e0e0;
+    color: #666666;
+}
+
+.tc-ctl-download-cnt > span {
+    width: 100%;
+    display: block;
+    line-height: 2em;
+    color: #333;
+    font-weight: bold;
+    font-size: 104.5%;
+}
+
+div.tc-ctl-download-cnt > label {
+    width: 25%;
+}
+
+.tc-ctl-download-cnt > select.tc-combo {
+    width: 75%;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.tc-ctl-download-div > label.tc-ctl-download-image-qr-label {
+    float: left;
+    line-height: 3em;
+    width: 50%;
+    font-weight: normal;
+}
+
+.tc-ctl-download-image input[type=checkbox]:checked + label:before {
+    content: "\2611";
+}
+
+.tc-ctl-download-image input[type=checkbox] + label:before {
+    font-size: 15px;
+    display: inline-block;
+    content: "\2610";
+    width: 18px;
+}
+
+.tc-ctl-download-help {
+    color: #AAA;
+    cursor: help;
+    float: left;
+    position: absolute;
+    left: 52%;
+    line-height: 1.55em;
+}
+
+.tc-ctl.tc-collapsed .tc-ctl-download-help {
+    display: none;
+}
+
+.tc-ctl-download .tc-ctl-download-btn {
+    height: 2em;
+}
+
+div.tc-ctl-download .tc-ctl-download-btn:before {
+    font-family: 'Mapskin';
+    content: "\e02c";
+    margin-right: 0.5em;
+}
+
+div.tc-ctl-download .tc-alert {
+    clear: both;
+    padding: 10px;
+    margin: 40px 10px 10px 10px;
+}
+
+    div.tc-ctl-download .tc-alert p {
+        margin: 0;
+    }
+
+.tc-ctl-download-div i.icon-question-sign {
+    font-family: Mapskin;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 2em;
+}
+
+    .tc-ctl-download-div i.icon-question-sign:before {
+        content: '\e02c';
+    }
+
+    .tc-ctl-download-select {
+    clear: both;
+    width: 100%;
+    display: inline-block;
+}
+
+div.tc-ctl-download-help-dialog.tc-modal {
+    overflow-y: auto;
+}
+
+div.tc-ctl-download .tc-ctl-download-help-dialog li {
+    margin-bottom: 5px;
+}
+
+div.tc-ctl-download .tc-ctl-download-help-dialog ul ul {
+    margin-top: 3px;
+}
+
+div.tc-ctl-download .tc-ctl-download-help-dialog li li {
+    margin-bottom: 3px;
+}
+
+/*div.tc-ctl-download-div i {
+    color: #666;
+}*/
+
+@media screen and (min-width: 22cm) and (min-height: 22cm) {
+
+    .tc-ctl-download-div i.icon-question-sign {
+        font-size: 17px;
+        line-height: 2.45em;
+    }
+
+}

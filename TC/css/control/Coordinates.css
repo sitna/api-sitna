@@ -1,0 +1,134 @@
+﻿
+.tc-ctl-coords {
+    position: absolute;
+    padding: 0;
+    left: 0;
+    top: 0;
+    overflow: hidden;
+    background-color: #fff;
+    z-index: 9999;
+    font-family: Arial, helvetica, sans-serif;
+    font-size: 0.6em;
+    padding: 0.5em;
+    color: #999;
+    width: intrinsic; /* Safari/WebKit uses a non-standard name */
+    width: -moz-max-content; /* Firefox/Gecko */
+    width: -webkit-max-content;
+}
+
+    .tc-ctl-coords.tc-hidden {
+        visibility: hidden;
+    }
+
+.tc-map.tc-collapsed .tc-ctl-coords {
+    display: none;
+}
+
+.tc-ctl-coords div {
+    padding: 0;
+    display: inline-block;
+}
+
+div.tc-ctl-coords-xy {
+    padding: 0 0 0 0.5em;
+}
+
+.tc-ctl-coords-crs, .tc-ctl-coords-geocrs, .tc-ctl-coords-x, .tc-ctl-coords-y, .tc-ctl-coords-lat, .tc-ctl-coords-lon, .tc-ctl-coords-elevation {
+    color: #333;
+    font-size: 1em;
+}
+
+.tc-ctl-coords span.close {
+    color: #000;
+    height: 2em;
+    margin: 0 0.3em 0 0.5em;
+}
+
+    .tc-ctl-coords span.close:after {
+        content: '\2716';
+    }
+
+button.tc-ctl-coords-crs {
+    border: 0.1em solid #666;
+    border-radius: 0.2em;
+    background-color: transparent;
+    padding: 0.1em 0.2em;
+    margin-right: 0.5em;
+}
+
+.tc-ctl-coords span.tc-ctl-coords-crs {
+    display: none;
+}
+
+.tc-ctl-coords.tc-threed span.tc-ctl-coords-crs {
+    display: inline;
+}
+
+.tc-ctl-coords.tc-threed button.tc-ctl-coords-crs {
+    display: none;
+}
+
+button.tc-ctl-coords-crs:before {
+    font-family: mapskin;
+    content: '\e01a';
+    margin-right: 0.3em;
+}
+
+.tc-ctl-coords-alt {
+    margin-left: 0.5em;
+}
+
+    .tc-ctl-coords-alt:before {
+        content: '\2022';
+        margin-right: 0.5em;
+    }
+
+.tc-ctl-coords-x, .tc-ctl-coords-y {
+    width: 4.8em;
+    display: inline-block;
+}
+
+.tc-ctl-coords-lat, .tc-ctl-coords-lon {
+    width: 4.8em;
+    display: inline-block;
+}
+
+.tc-ctl-coords-elevation {
+    width: 3.8em;
+    display: inline-block;
+}
+
+.tc-ctl-coords-threed {
+    background-image: url(../img/marker2_32.png);
+}
+
+.tc-ctl-coords-cur-crs-name, .tc-ctl-coords-cur-crs-code {
+    font-weight: bold;
+}
+
+.tc-ctl-coords-change p.tc-msg-warning {
+    font-style: italic;
+    transition: all .3s ease;
+}
+
+    .tc-ctl-coords-change p.tc-msg-warning.tc-hidden {
+        opacity: 0;
+        height: 0;
+    }
+
+.tc-ctl-coords-change span.tc-msg-warning:after {
+    font-family: mapskin;
+    font-style: normal;
+    color: #999;
+    content: '\e0a4';
+    margin-left: 0.5em;
+}
+
+.tc-ctl-coords-icon-cross {
+    left: 50%;
+    top: 50%;
+    height: 15px;
+    width: 15px;
+    position: absolute;
+    background-image: url(../img/crosshair.png);
+}

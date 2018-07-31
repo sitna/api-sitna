@@ -1,0 +1,45 @@
+﻿.tc-ctl.tc-ctl-attrib {
+    position: absolute;
+    font-family: Arial, helvetica, sans-serif;
+    font-size: 0.8em;
+    bottom: 0;
+    left: 50%;
+    z-index: 10002;
+    padding: 0;
+}
+
+.tc-ctl-attrib-cmd {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.tc-ctl-attrib-other.tc-collapsed {
+    display: none;
+}
+
+.tc-ctl-attrib > div {
+    position: relative;
+    left: -50%;
+    width: 100%;
+    bottom: 0;
+    color: #999;
+    text-align: center;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    border-top-left-radius: 0.3em;
+    border-top-right-radius: 0.3em;
+    padding: 0.1em;
+}
+
+.tc-ctl-attrib div span, .tc-ctl-attrib div span a:link, .tc-ctl-attrib div span a:visited {
+    color: #000;
+}
+
+    .tc-ctl-attrib div span.tc-ctl-attrib-cmd {
+        color: #999;
+    }
+
+.tc-map.tc-collapsed .tc-ctl-attrib {
+    display: none;
+}
