@@ -53,15 +53,6 @@ if (!TC.control.SWCacheClient) {
         };
     }
 
-    var sendAppCacheEvent = (function () {
-        var mustSendCacheEvents = window.parent !== window && document.referrer && TC.Util.isSameOrigin(document.referrer) && parent.TC && parent.TC._appCacheUpdater;
-        return function (e) {
-            if (mustSendCacheEvents) {
-            parent.TC._appCacheUpdater(e, location.href);
-        }
-        }
-    })();
-
     var manifestUrlList;
     var requestManifest = function () {
         var result = $.Deferred();
@@ -116,32 +107,43 @@ if (!TC.control.SWCacheClient) {
         return result;
     };
 
-    // Fired after the first cache of the manifest.
-    appCache.addEventListener('cached', sendAppCacheEvent, false);
+    if (appCache) {
+        const sendAppCacheEvent = (function () {
+            var mustSendCacheEvents = window.parent !== window && document.referrer && TC.Util.isSameOrigin(document.referrer) && parent.TC && parent.TC._appCacheUpdater;
+            return function (e) {
+                if (mustSendCacheEvents) {
+                    parent.TC._appCacheUpdater(e, location.href);
+                }
+            }
+        })();
 
-    //// Checking for an update. Always the first event fired in the sequence.
-    //appCache.addEventListener('checking', handleCacheEvent, false);
+        // Fired after the first cache of the manifest.
+        appCache.addEventListener('cached', sendAppCacheEvent, false);
+
+        //// Checking for an update. Always the first event fired in the sequence.
+        //appCache.addEventListener('checking', handleCacheEvent, false);
 
 
-    //// An update was found. The browser is fetching resources.
-    //appCache.addEventListener('downloading', handleCacheEvent, false);
+        //// An update was found. The browser is fetching resources.
+        //appCache.addEventListener('downloading', handleCacheEvent, false);
 
-    // The manifest returns 404 or 410, the download failed,
-    // or the manifest changed while the download was in progress.
-    appCache.addEventListener('error', sendAppCacheEvent, false);
+        // The manifest returns 404 or 410, the download failed,
+        // or the manifest changed while the download was in progress.
+        appCache.addEventListener('error', sendAppCacheEvent, false);
 
-    // Fired after the first download of the manifest.
-    appCache.addEventListener('noupdate', sendAppCacheEvent, false);
+        // Fired after the first download of the manifest.
+        appCache.addEventListener('noupdate', sendAppCacheEvent, false);
 
-    // Fired if the manifest file returns a 404 or 410.
-    // This results in the application cache being deleted.
-    appCache.addEventListener('obsolete', sendAppCacheEvent, false);
+        // Fired if the manifest file returns a 404 or 410.
+        // This results in the application cache being deleted.
+        appCache.addEventListener('obsolete', sendAppCacheEvent, false);
 
-    // Fired for each resource listed in the manifest as it is being fetched.
-    appCache.addEventListener('progress', sendAppCacheEvent, false);
+        // Fired for each resource listed in the manifest as it is being fetched.
+        appCache.addEventListener('progress', sendAppCacheEvent, false);
 
-    // Fired when the manifest resources have been newly redownloaded.
-    appCache.addEventListener('updateready', sendAppCacheEvent, false);
+        // Fired when the manifest resources have been newly redownloaded.
+        appCache.addEventListener('updateready', sendAppCacheEvent, false);
+    }
 
     TC.control.CacheBuilder = function () {
         var self = this;
