@@ -345,7 +345,7 @@
   "text/xml": "XML",
   "textToSearchInLayers": "Texto para buscar en las capas",
   "threed.apply3DState": "Aplicando estado 3D",
-  "threed.baseLayerNoCompatible": "Mapa de fondo \"{name}\" no es compatible con el sistema de referencia necesario para 3D.",
+    "threed.baseLayerNoCompatible": "Mapa de fondo \"{name}\" no es compatible con el sistema de referencia actual del mapa.",
   "threed.baseMap.confirm": "¿Prefiere cargar mapa de fondo WMTS del IGN?",
   "threed.crsNoCompatible": "Seleccione otro mapa de fondo. Mapa \"{name}\" no es compatible con el sistema de referencia necesario para 3D.",
   "threed.not.supported": "3D no soportado por el navegador. Por favor, pruebe con otro navegador.",
@@ -362,6 +362,7 @@
   "threed.tip": "Ver 3D",
   "threed.two.tip": "Ver 2D",
   "threed.interactionSimulation": "Durante la simulación cambiará la interacción sobre la escena",
+    "threed.terrainAdvice": "El terreno fuera de Navarra es de menor resolución",
   "title": "Título",
   "tooManyFeatures": "Demasiados elementos para el servicio \"&#123;serviceName&#125;\"",
   "tooManyFeatures.instructions": "Haga zoom sobre el mapa para seleccionar un área más pequeña o reduzca el número de capas cargadas",
@@ -419,6 +420,8 @@
   "coords.noCrs.warning": "El mapa de fondo actual y/o las capas cargadas no tienen más sistemas de referencia compatibles.",
   "outdatedBrowser": "Su navegador no está actualizado. Le recomendamos actualizarlo a la última versión para asegurar el correcto funcionamiento del sitio",
   "urlFailedToLoad": "No se ha podido descargar el archivo {url} y, por tanto, no se puede asegurar el correcto funcionamiento del sitio. Por favor, recargue su navegador",
-  "urlTooLongForShortener": "La URL es demasiado larga para ser procesada por el servicio de acortamiento de URL. Pruebe a eliminar alguna capa, desactivar rutas o borrar dibujos o el resultado de búsqueda e intentarlo de nuevo.",
-  "urlTooLongForMailto": "La URL es muy larga para enviar al correo electrónico. Si tiene problemas, pruebe a eliminar alguna capa, desactivar rutas o borrar dibujos o el resultado de búsqueda e intentarlo de nuevo."
+    "urlTooLongForShortener": "La URL es demasiado larga para ser procesada por el servicio de acortamiento de URL. Pruebe a eliminar alguna capa, desactivar rutas o borrar dibujos o el resultado de búsqueda e intentarlo de nuevo.",
+    "urlTooLongForMailto": "La URL es muy larga para enviar al correo electrónico. Si tiene problemas, pruebe a eliminar alguna capa, desactivar rutas o borrar dibujos o el resultado de búsqueda e intentarlo de nuevo.",    
+    "notAvailableTo3D": "No disponible en vista 3D",
+    "moreBackgroundMaps": "Más mapas de fondo"
 }
