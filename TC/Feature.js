@@ -147,7 +147,7 @@ TC.Feature.prototype.getInfo = function () {
                 }
             }
             if (html.length > 0) {
-                html.unshift('<table>');
+                html.unshift('<table class="tc-attr">');
                 html[html.length] = '</table>';
                 result = html.join('');
             }
