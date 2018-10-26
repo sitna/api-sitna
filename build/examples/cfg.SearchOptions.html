@@ -16,19 +16,20 @@
 
     <div id="mapa"></div>    
     <script>
-        // Creamos un mapa con el control de búsquedas.
+        // Creamos un mapa con el control de búsquedas. 
         // Configuramos el buscador desactivando la búsqueda de parcelas y la localización de coordenadas.
+        // Indicamos un placeHolder y tooltip (propiedad "instructions") acorde con las búsquedas configuradas.
         var map = new SITNA.Map("mapa", {
             controls: {
                 search: {
                     coordinates: false,
                     cadastralParcel: false,
-                    municipality: false,
+                    municipality: true,
                     town: true,
                     street: true,
                     postalAddress: true,
-                    placeHolder: "Indique dirección postal",
-                    instructions: "Buscar dirección postal: casco urbano, calle, portal"
+                    placeHolder: "Municipio, casco urbano, calle o portal",
+                    instructions: "Buscar municipio, casco urbano, calle o portal"
                 }
             }
         });

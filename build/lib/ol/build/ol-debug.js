@@ -33585,7 +33585,7 @@ ol.control.ScaleLine.prototype.updateElement_ = function() {
     ol.proj.Units.METERS;
   var pointResolution =
       ol.proj.getPointResolution(projection, viewState.resolution, center, pointResolutionUnits);
-  if (units != ol.control.ScaleLineUnits.DEGREES) {
+  if (units != ol.control.ScaleLineUnits.METRIC) {
     pointResolution *= projection.getMetersPerUnit();
   }
 

@@ -5,6 +5,14 @@
             {#baseLayers}
             {>tc-ctl-bms-node:./}
             {/baseLayers}
+            {#dialogMore}
+            <li class="tc-ctl-bms-node">
+                <label class="tc-ctl-bms-more-node" title="{@i18n $key="moreBackgroundMaps"/}">
+                <input type="radio" name="bms" value="moreLayers" />
+                <span></span>
+                </label>
+            </li>
+            {/dialogMore}
         </ul>
     </form>
 </div>

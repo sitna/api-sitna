@@ -8,7 +8,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.5.0';
+TC.version = '1.5.1';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -154,7 +154,10 @@ if (!TC.Consts) {
         STOPLOADING: 'stoploading.tc',
         EXTERNALSERVICEADDED: 'externalserviceadded.tc',
         ZOOMTO: 'zoomto.tc',
-        PROJECTIONCHANGE: 'projectionchange.tc'
+        PROJECTIONCHANGE: 'projectionchange.tc',
+        VIEWCHANGE: 'viewchange.tc',
+        TERRAINPROVIDERADD: 'terrainprovideradd.tc',
+        TERRAINPROVIDERREMOVE: 'terrainproviderremove.tc'
     };
     TC.Consts.layer = {
         IDENA_ORTHOPHOTO: 'ortofoto',
@@ -169,7 +172,28 @@ if (!TC.Consts) {
         IDENA_DYNORTHOPHOTO2012: 'ortofoto2012_dinamico',
         IDENA_DYNCARTO: 'cartografia_dinamico',
         IDENA_BW_RELIEF: 'relieve_bn',
-        IDENA_BASEMAP_ORTHOPHOTO: 'base_orto',
+        IDENA_BASEMAP_ORTHOPHOTO: 'base_orto',        
+
+        IGN_ES_CARTO: "ign-raster",
+        IGN_ES_BASEMAP: "ign-base",
+        IGN_ES_RELIEF: "ign-mtn",
+        IGN_ES_ORTHOPHOTO: "ign-pnoa",
+
+        IGN_ES_DYNCARTO: "ign-raster-dyn",
+        IGN_ES_DYNBASEMAP: "ign-base-dyn",
+        IGN_ES_DYNRELIEF: "ign-mtn-dyn",
+        IGN_ES_DYNORTHOPHOTO: "ign-pnoa-dyn",
+
+        IGN_FR_CARTO: "ign-fr-cartes",
+        IGN_FR_BASEMAP: "ign-fr-base",
+        IGN_FR_RELIEF: "ign-fr-estompage",
+        IGN_FR_ORTHOPHOTO: "ign-fr-orto",
+
+        IGN_FR_DYNCARTO: "ign-fr-cartes-dyn",
+        IGN_FR_DYNBASEMAP: "ign-fr-base-dyn",
+        IGN_FR_DYNRELIEF: "ign-fr-estompage-dyn",
+        IGN_FR_DYNORTHOPHOTO: "ign-fr-orto-dyn",
+
         OSM: 'osm',
         CARTO_VOYAGER: 'carto_voyager',
         CARTO_LIGHT: 'carto_light',
@@ -421,7 +445,8 @@ if (!TC.Consts) {
                     isDefault: true,
                     hideTree: true,
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png',
-                    fallbackLayer: TC.Consts.layer.IDENA_DYNBASEMAP
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNBASEMAP,
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO,
@@ -435,7 +460,8 @@ if (!TC.Consts) {
                     isDefault: false,
                     hideTree: true,
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
-                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO,
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO2014,
@@ -449,7 +475,8 @@ if (!TC.Consts) {
                     isDefault: false,
                     hideTree: true,
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2014.jpg',
-                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2014
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2014,
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO2012,
@@ -463,19 +490,9 @@ if (!TC.Consts) {
                     isDefault: false,
                     hideTree: true,
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg',
-                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012
-                },
-                {
-                    id: TC.Consts.layer.IDENA_CADASTER,
-                    title: 'Catastro',
-                    type: TC.Consts.layerType.WMS,
-                    url: '//idena.navarra.es/ogc/wms',
-                    layerNames: 'catastro,regionesFronterizas',
-                    format: 'image/png',
-                    isDefault: false,
-                    hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-cadaster.png'
-                },
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012,
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
+                },                
                 {
                     id: TC.Consts.layer.IDENA_CARTO,
                     title: 'Cartografía topográfica',
@@ -488,7 +505,20 @@ if (!TC.Consts) {
                     isDefault: false,
                     hideTree: true,
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-bta.png',
-                    fallbackLayer: TC.Consts.layer.IDENA_DYNCARTO
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNCARTO,
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IDENA_CADASTER,
+                    title: 'Catastro',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'catastro,regionesFronterizas',
+                    format: 'image/png',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-cadaster.png',
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_BW_RELIEF,
@@ -499,7 +529,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_bw.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_bw.jpg',
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_BASEMAP_ORTHOPHOTO,
@@ -510,7 +541,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-base_ortho.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-base_ortho.png',
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNBASEMAP,
@@ -521,7 +553,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png',
+                    overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNORTHOPHOTO,
@@ -532,7 +565,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
+                    overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2014,
@@ -543,7 +577,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2014.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2014.jpg',
+                    overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012,
@@ -554,7 +589,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg',
+                    overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
                 },
                 {
                     id: TC.Consts.layer.IDENA_DYNCARTO,
@@ -565,7 +601,192 @@ if (!TC.Consts) {
                     format: 'image/png',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-bta.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-bta.png',
+                    overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_CARTO,
+                    type: TC.Consts.layerType.WMTS,
+                    title: "Cartografía raster \r\n (IGN ES)",
+                    url: "//www.ign.es/wmts/mapa-raster",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "MTN",
+                    matrixSet: "EPSG:25830",
+                    format: "image/jpeg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-carto_ign.png",
+                    fallbackLayer: TC.Consts.layer.IGN_ES_DYNCARTO,
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_BASEMAP,
+                    title: "Mapa base \r\n (IGN ES)",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "//www.ign.es/wmts/ign-base",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "IGNBaseTodo",
+                    matrixSet: "EPSG:25830",
+                    format: "image/jpeg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-basemap_ign.png",
+                    fallbackLayer: TC.Consts.layer.IGN_ES_DYNBASEMAP,
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_RELIEF,
+                    title: "Relieve \r\n (IGN ES)",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "//servicios.idee.es/wmts/mdt",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "Relieve",
+                    matrixSet: "EPSG:25830",
+                    format: "image/jpeg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-relief_ign.jpg",
+                    fallbackLayer: TC.Consts.layer.IGN_ES_DYNRELIEF,
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_ORTHOPHOTO,
+                    title: "Ortofoto PNOA",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "//www.ign.es/wmts/pnoa-ma",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "OI.OrthoimageCoverage",
+                    matrixSet: "EPSG:25830",
+                    format: "image/jpeg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-orthophoto_pnoa.jpg",
+                    fallbackLayer: TC.Consts.layer.IGN_ES_DYNORTHOPHOTO,
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_DYNBASEMAP,
+                    title: 'Mapa base \r\n (IGN ES)',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//www.ign.es/wms-inspire/ign-base',
+                    layerNames: 'IGNBaseTodo',
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap_ign.png',
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_DYNORTHOPHOTO,
+                    title: 'Ortofoto \r\n (IGN ES)',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//www.ign.es/wms-inspire/pnoa-ma',
+                    layerNames: 'OI.OrthoimageCoverage',
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto_pnoa.jpg',
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+				{
+				    id: TC.Consts.layer.IGN_ES_DYNCARTO,
+				    title: 'Cartografía topográfica \r\n (IGN ES)',
+				    type: TC.Consts.layerType.WMS,
+				    url: '//www.ign.es/wms-inspire/mapa-raster',
+				    layerNames: 'mtn_rasterizado',
+				    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto_ign.png',
+				    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+				},
+				{
+				    id: TC.Consts.layer.IGN_ES_DYNRELIEF,
+				    title: 'Relieve \r\n (IGN ES)',
+				    type: TC.Consts.layerType.WMS,
+				    url: '//servicios.idee.es/wms-inspire/mdt',
+				    layerNames: 'relieve',
+				    thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_ign.jpg',
+				    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+				},
+                {
+                    id: TC.Consts.layer.IGN_FR_CARTO,
+                    title: "Cartografía raster \r\n (IGN FR)",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/wmts",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "GEOGRAPHICALGRIDSYSTEMS.MAPS",
+                    matrixSet: "PM",
+                    format: "image/jpeg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-carto-fr-ign.png",
+                    fallbackLayer: TC.Consts.layer.IGN_FR_DYNCARTO,
+                    ignoreProxification: true,
+                    overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_FR_BASEMAP,
+                    title: "Mapa base \r\n (IGN FR)",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/wmts",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGN",
+                    matrixSet: "PM",
+                    format: "image/jpeg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.jpg",
+                    fallbackLayer: TC.Consts.layer.IGN_FR_DYNBASEMAP,
+                    ignoreProxification: true,
+                    overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_FR_RELIEF,
+                    title: "Relieve \r\n (IGN FR)",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/wmts",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW",
+                    matrixSet: "PM",
+                    format: "image/png",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-estom-fr-ign.png",
+                    fallbackLayer: TC.Consts.layer.IGN_FR_DYNRELIEF,
+                    ignoreProxification: true,
+                    overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_FR_ORTHOPHOTO,
+                    title: "Ortofoto \r\n (IGN FR)",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/wmts",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "ORTHOIMAGERY.ORTHOPHOTOS",
+                    matrixSet: "PM",
+                    format: "image/jpeg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-ortho-fr-ign.jpg",
+                    fallbackLayer: TC.Consts.layer.IGN_FR_DYNORTHOPHOTO,
+                    ignoreProxification: true,
+                    overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_FR_DYNCARTO,
+                    title: 'Cartografía raster \r\n (IGN FR)',
+                    type: TC.Consts.layerType.WMS,
+                    url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/geoportail/r/wms",
+                    layerNames: "GEOGRAPHICALGRIDSYSTEMS.MAPS",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-carto-fr-ign.png",
+                    ignoreProxification: true,
+                    overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP,
+                },
+                {
+                    id: TC.Consts.layer.IGN_FR_DYNBASEMAP,
+                    title: 'Mapa base \r\n (IGN FR)',
+                    type: TC.Consts.layerType.WMS,
+                    url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/geoportail/r/wms",
+                    layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGN",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.jpg",
+                    ignoreProxification: true,
+                    overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_FR_DYNRELIEF,
+                    title: 'Relieve \r\n (IGN FR)',
+                    type: TC.Consts.layerType.WMS,
+                    url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/geoportail/r/wms",
+                    layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-estom-fr-ign.png",
+                    ignoreProxification: true,
+                    overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_FR_DYNORTHOPHOTO,
+                    title: 'Ortofoto \r\n (IGN FR)',
+                    type: TC.Consts.layerType.WMS,
+                    url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/geoportail/r/wms",
+                    layerNames: "HR.ORTHOIMAGERY.ORTHOPHOTOS",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-ortho-fr-ign.jpg",
+                    ignoreProxification: true,
+                    overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
                 },
                 {
                     id: TC.Consts.layer.OSM,
@@ -578,7 +799,8 @@ if (!TC.Consts) {
                     format: 'image/png',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-osm.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-osm.png',
+                    overviewMapLayer: TC.Consts.layer.OSM
                 },
                 {
                     id: TC.Consts.layer.CARTO_VOYAGER,
@@ -591,7 +813,8 @@ if (!TC.Consts) {
                     format: 'image/png',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-voyager.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-voyager.png',
+                    overviewMapLayer: TC.Consts.layer.CARTO_VOYAGER
                 },
                 {
                     id: TC.Consts.layer.CARTO_LIGHT,
@@ -604,7 +827,8 @@ if (!TC.Consts) {
                     format: 'image/png',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-light.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-light.png',
+                    overviewMapLayer: TC.Consts.layer.CARTO_VOYAGER
                 },
                 {
                     id: TC.Consts.layer.CARTO_DARK,
@@ -617,7 +841,8 @@ if (!TC.Consts) {
                     format: 'image/png',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-dark.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-dark.png',
+                    overviewMapLayer: TC.Consts.layer.CARTO_VOYAGER
                 },
                 {
                     id: TC.Consts.layer.MAPBOX_STREETS,
@@ -630,7 +855,8 @@ if (!TC.Consts) {
                     format: 'image/png',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-mapbox-streets.png'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-mapbox-streets.png',
+                    overviewMapLayer: TC.Consts.layer.MAPBOX_STREETS
                 },
                 {
                     id: TC.Consts.layer.MAPBOX_SATELLITE,
@@ -643,7 +869,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-mapbox-satellite.jpg'
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-mapbox-satellite.jpg',
+                    overviewMapLayer: TC.Consts.layer.MAPBOX_STREETS
                 },
                 {
                     id: TC.Consts.layer.BLANK,
@@ -884,6 +1111,7 @@ if (!TC.Consts) {
                     if (req.readyState === 4) {
                         if (req.status === 404) {
                             result = false;
+                            callbackErrorFn(true);
                         } else if (req.status !== 200) {
                             callbackErrorFn();
                             result = false;
@@ -893,7 +1121,12 @@ if (!TC.Consts) {
                     }
                 };
 
-                req.send(null);
+                try {
+                    req.send(null);
+                } catch (error) {
+                    result = false;
+                    callbackErrorFn();
+                }
 
                 return result;
             };
@@ -902,10 +1135,15 @@ if (!TC.Consts) {
                 url = url + (TC.isDebug ? '.js' : '.min.js');
             }
 
-            var reqResult = _sendRequest(url, function () {
-                return _sendRequest(url, function () {
+            var reqResult = _sendRequest(url, function (is404) {
+                if (is404) {
                     _showLoadFailedError(url);
-                });
+                    return false;
+                } else {
+                    return _sendRequest(url, function () {
+                        _showLoadFailedError(url);
+                    });
+                }
             });
 
             if (reqResult) {

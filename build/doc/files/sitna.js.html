@@ -16,7 +16,7 @@
             <div class="project-title">
                     <a href="../"><img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA"></a>
                 
-                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.5.0</span>
+                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.5.1</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -267,6 +267,10 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
  */
 
 /**
+### 1.5.1
+
+- Corrección de errores.
+
 ### 1.5.0
 
 - Añadido el control de catálogo de capas.
@@ -2496,8 +2500,7 @@ Puede obtener más información en el [sitio para desarrolladores de Google](htt
 
   Puede consultar el ejemplo [online](../../examples/cfg.SearchOptions.html). 
 #### Ejemplo:
-  &#x60;&#x60;&#x60;javascript
-      &lt;div id=&quot;mapa&quot;/&gt; 
+  &#x60;&#x60;&#x60;javascript      
         &lt;script&gt;
           // Creamos un mapa con el control de búsquedas. 
           // Configuramos el buscador desactivando la búsqueda de parcelas y la localización de coordenadas.
@@ -3018,14 +3021,16 @@ constructor. Estas opciones están ordenadas de menor a mayor prevalencia, de mo
 siempre sobreescribirá una opción de la configuración global.
 
 Puede consultar también online el [ejemplo 1](../../examples/Map.1.html), el [ejemplo 2](../../examples/Map.2.html) y el [ejemplo 3](../../examples/Map.3.html).
-#### Ejemplo:
+  #### Ejemplo 1:
 &#x60;&#x60;&#x60;javascript
   &lt;div id=&quot;mapa&quot;/&gt;
   &lt;script&gt;
     // Crear un mapa con las opciones por defecto.
     var map = new SITNA.Map(&quot;mapa&quot;);
   &lt;/script&gt;
-
+&#x60;&#x60;&#x60;
+  #### Ejemplo 2:
+&#x60;&#x60;&#x60;javascript
   &lt;div id=&quot;mapa&quot;/&gt;
   &lt;script&gt;
     // Crear un mapa en el sistema de referencia WGS 84 con el de mapa de fondo.
@@ -3062,6 +3067,7 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.1.html), el [e
     });
   &lt;/script&gt;
 &#x60;&#x60;&#x60;
+  #### Ejemplo 3:
 &#x60;&#x60;&#x60;javascript
   &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
   &lt;script&gt;
@@ -3167,7 +3173,7 @@ SITNA.Map = function (div, options) {
 El tipo de la capa no puede ser {{#crossLink &quot;SITNA.consts.LayerType/WFS:property&quot;}}{{/crossLink}}.
   
     Puede consultar también online el [ejemplo 1](../../examples/Map.addLayer.1.html) y el [ejemplo 2](../../examples/Map.addLayer.2.html). 
-  #### Ejemplo:
+  #### Ejemplo 1:
 &#x60;&#x60;&#x60;javascript
       &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
       &lt;script&gt;
@@ -3180,6 +3186,7 @@ El tipo de la capa no puede ser {{#crossLink &quot;SITNA.consts.LayerType/WFS:pr
         });
       &lt;/script&gt;
 &#x60;&#x60;&#x60;
+  #### Ejemplo 2:
     &#x60;&#x60;&#x60;javascript
       &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
       &lt;script&gt;
@@ -3212,7 +3219,7 @@ El tipo de la capa no puede ser {{#crossLink &quot;SITNA.consts.LayerType/WFS:pr
     Hace visible una capa como mapa de fondo. Esta capa debe existir previamente en la lista de mapas de fondo del mapa.
   
     Puede consultar también online el [ejemplo 1](../../examples/Map.setBaseLayer.1.html) y el [ejemplo 2](../../examples/Map.setBaseLayer.2.html).
-#### Ejemplo:
+#### Ejemplo 1:
 
 &#x60;&#x60;&#x60;javascript
       &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
@@ -3225,6 +3232,7 @@ El tipo de la capa no puede ser {{#crossLink &quot;SITNA.consts.LayerType/WFS:pr
         });
       &lt;/script&gt;
 &#x60;&#x60;&#x60;
+#### Ejemplo 2:
     &#x60;&#x60;&#x60;javascript
       &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
       &lt;script&gt;
@@ -3259,6 +3267,104 @@ El tipo de la capa no puede ser {{#crossLink &quot;SITNA.consts.LayerType/WFS:pr
   
     Puede consultar también online el [ejemplo 1](../../examples/Map.addMarker.1.html), el [ejemplo 2](../../examples/Map.addMarker.2.html),
     el [ejemplo 3](../../examples/Map.addMarker.3.html) y el [ejemplo 4](../../examples/Map.addMarker.4.html).
+
+    #### Ejemplo 1:
+    &#x60;&#x60;&#x60;
+    &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+    &lt;script&gt;
+        // Crear mapa.
+        var map = new SITNA.Map(&quot;mapa&quot;);
+
+        // Cuando esté todo cargado proceder a trabajar con el mapa.
+        map.loaded(function () {
+            // Añadir un marcador.
+            map.addMarker([610749, 4741648]);
+            // Centrar el mapa en el marcador.
+            map.zoomToMarkers();
+        });
+    &lt;/script&gt;
+    &#x60;&#x60;&#x60;
+    #### Ejemplo 2:
+    &#x60;&#x60;&#x60;
+    &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+    &lt;script&gt;
+        // Crear mapa.
+        var map = new SITNA.Map(&quot;mapa&quot;);
+
+        // Cuando esté todo cargado proceder a trabajar con el mapa.
+        map.loaded(function () {
+            // Añadir marcadores al grupo &quot;Marcadores colgantes&quot;
+            // cuyo icono se ancle al punto en el centro hacia abajo.
+            // Establecer un icono adecuado.
+            var markerOptions = {
+                group: &quot;Marcadores colgantes&quot;,
+                url: &quot;data/colgante.png&quot;,
+                anchor: [0.5, 0]
+            };
+            map.addMarker([610887, 4741244], markerOptions);
+            map.addMarker([615364, 4657556], markerOptions);
+            // Centrar el mapa en los marcadores.
+            map.zoomToMarkers();
+        });
+    &lt;/script&gt;
+    &#x60;&#x60;&#x60;
+    #### Ejemplo 3:
+    &#x60;&#x60;&#x60;
+    &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+    &lt;script&gt;
+        // Crear un mapa con una capa vectorial, centrado en la Ciudadela de Pamplona.
+        var map = new SITNA.Map(&quot;mapa&quot;, {
+            initialExtent: [
+                609627,
+                4740225,
+                611191,
+                4741395
+            ],
+            workLayers: [{
+                id: &quot;markers&quot;,
+                title: &quot;Marcadores geográficos&quot;,
+                type: SITNA.Consts.layerType.VECTOR
+            }]
+        });
+        // Cuando esté todo cargado proceder a trabajar con el mapa.
+        map.loaded(function () {
+            // Añadir un marcador en la capa &quot;markers&quot;,
+            // asignarle un grupo para que salga en tabla de contenidos y leyenda.
+            map.addMarker([610431, 4740837], {
+                layer: &quot;markers&quot;,
+                group: &quot;Ciudadela&quot;
+            });
+        });
+    &lt;/script&gt;
+    &#x60;&#x60;&#x60;
+    #### Ejemplo 4:
+    &#x60;&#x60;&#x60;
+    &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+    &lt;script&gt;
+        // Añadir información emergente al mapa.
+        SITNA.Cfg.controls.popup = true;
+
+        // Crear un mapa.
+        var map = new SITNA.Map(&quot;mapa&quot;);
+        // Cuando esté todo cargado proceder a trabajar con el mapa.
+        map.loaded(function () {
+            // Añadir un marcador con un icono de 40x40 píxeles definido por la clase CSS kiosko.
+            // Asignarle unos datos asociados que se muestren por defecto.
+            map.addMarker([615366, 4657426], {
+                cssClass: &quot;kiosko&quot;,
+                width: 40,
+                height: 40,
+                data: {
+                    &quot;Nombre&quot;: &quot;Plaza de la Constitución, Tudela&quot;,
+                    &quot;Sitio web&quot;: &quot;http://www.tudela.es/&quot;
+                },
+                showPopup: true
+            });
+            // Centrar el mapa en el marcador.
+            map.zoomToMarkers();
+        });
+    &lt;/script&gt;
+    &#x60;&#x60;&#x60;
     @method addMarker
     @async
     @param {array} coords Coordenadas x e y del punto en las unidades del sistema de referencia del mapa.
@@ -4169,7 +4275,7 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.removeSearch.h
     /**
       Exporta el mapa a una imagen PNG. Para poder utilizar este método hay que establecer la opción &#x60;crossOrigin&#x60; al instanciar {{#crossLink &quot;SITNA.Map&quot;}}{{/crossLink}}. 
       
-Puede consultar también el ejemplo [online](../../examples/Map.exportImage.html).0    
+Puede consultar también el ejemplo [online](../../examples/Map.exportImage.html).
 #### Ejemplo:    
 &#x60;&#x60;&#x60;javascript
                 &lt;div id=&quot;controls&quot; class=&quot;controls&quot;&gt;

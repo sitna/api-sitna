@@ -17,6 +17,8 @@ TC.control.FeatureInfoCommons = function () {
     self.filterFeature = null;
     self.info = null;
     self.popup = null;
+    // Popup propio de las features resaltadas
+    self.highlightPopup = null;
     self.resultsPanel = null;
     self.lastFeatureCount = null;
     self.tools = [];
@@ -143,6 +145,10 @@ TC.control.FeatureInfoCommons.displayMode = {
         var self = this;
         TC.control.Click.prototype.register.call(self, map);
 
+        self._addHighlightPopup().then(function (popup) {
+            self.highlightPopup = popup;
+        });
+
         var resultsLayer;
         if (self.options.resultsLayer) { // En caso de que se haya indicado una capa por configuración, la utilizamos
             resultsLayer = self.options.resultsLayer;
@@ -185,13 +191,31 @@ TC.control.FeatureInfoCommons.displayMode = {
         map
             .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
                 if (e.control === self.getDisplayControl() && self.resultsLayer) {
-                    self.resultsLayer.clearFeatures();
+                    // Eliminamos los resultados si no tienen un popup abierto
+                    const popups = map.getControlsByClass('TC.control.Popup');
+                    self.resultsLayer.features
+                        .filter(function (feat) {
+                            return !popups.some(function (popup) {
+                                return popup.currentFeature === feat;
+                            });
+                        })
+                        .forEach(function (feat) {
+                            self.resultsLayer.removeFeature(feat);
+                        });
                     clearTimeout(self._removeFilterFeatureTimeout);
                     self._removeFilterFeatureTimeout = setTimeout(function () {
                         if (!self.querying) {
                             self.filterLayer.clearFeatures();
                         }
                     }, 0);
+                }
+            })
+            .on(TC.Consts.event.POPUP, function (e) {
+                const popup = e.control;
+                if (self.resultsLayer && self.resultsLayer.features.indexOf(popup.currentFeature) >= 0) {
+                    // Es un popup de una feature resaltada. Le añadimos un comando para quitarla del mapa.
+                    // Esto se ha añadido a raíz de work item 24857: el comportamiento de las features resaltadas ha cambiado, ahora son pulsables.
+                    self._processHighlightPopup(popup);
                 }
             })/* // Eliminado hasta que se resuelva bug 22733
             .on(TC.Consts.event.LAYERREMOVE, function (e) {
@@ -228,6 +252,16 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.responseCallback = function (options) {
         const self = this;
         self.querying = false;
+        if (options && options.services) { /* bug desde merge de DEV, validación provisional */
+            options.services.forEach(function (service) {
+                service.layers.forEach(function (layer) {
+                    layer.features.forEach(function (feature) {
+                        feature.popup = self.highlightPopup;
+                    });
+                });
+            });
+        }        
+        
         if (!options.featureCount) {
             self.map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, { control: self }));
             self.lastFeatureCount = 0;
@@ -443,7 +477,8 @@ TC.control.FeatureInfoCommons.displayMode = {
 
             if (!self._shareCtl) {
                 self.map.addControl('share', {
-                    div: self._$dialogDiv.find('.tc-modal-body .tc-ctl-finfo-dialog-share')
+                    div: self._$dialogDiv.find('.tc-modal-body .tc-ctl-finfo-dialog-share'),
+                    includeControls: false // Establecemos el control para que no exporte estados de controles, así no se comparte la feature dos veces
                 }).then(function (ctl) {
                     self._shareCtl = ctl;
                     done.resolve();
@@ -471,9 +506,11 @@ TC.control.FeatureInfoCommons.displayMode = {
             }
         }
 
-        $content.find('table').on("click", function (e) {
-            if ($(this).parent().hasClass(TC.Consts.classes.DISABLED))
+        $content.find('table').on(TC.Consts.event.CLICK, function (e) {
+            const $li = $(this).parent();
+            if ($li.hasClass(TC.Consts.classes.DISABLED)) {
                 return;
+            }
             if (self.resultsLayer.features[0]) {
                 // Proceso para desactivar highlightFeature mientras hacemos zoom
                 var zoomHandler = function zoomHandler() {
@@ -643,4 +680,67 @@ TC.control.FeatureInfoCommons.displayMode = {
         TC.Control.prototype.deactivate.call(self, stopChain);
     };
 
+    ctlProto.exportState = function () {
+        const self = this;
+        if (self.exportsState) {
+            return {
+                id: self.id,
+                layer: self.resultsLayer.exportState()
+            };
+        }
+        return null;
+    };
+    ctlProto.importState = function (state) {
+        const self = this;
+        self._layersDeferred.then(function () {
+            self.resultsLayer.importState(state.layer);
+        });
+    };
+
+    ctlProto._addHighlightPopup = function () {
+        const self = this;
+        const result = self.map.addControl('popup', { div: TC.Util.getDiv(), closeButton: true });
+        result.then(function (popup) {            
+            if (popup.$popupDiv) { /* bug desde merge de DEV, validación provisional */
+                popup.$popupDiv.addClass(self.CLASS + '-lite');
+            }
+        });
+        return result;
+    };
+
+    ctlProto._processHighlightPopup = function (popup) {
+        const self = this;
+        const feature = popup.currentFeature;
+        // Añadimos título de servicio y de capa
+        var serviceTitle, layerTitle;
+        var found = false;
+        for (var i = 0, ii = self.info.services.length; !found && i < ii; i++) {
+            const service = self.info.services[i];
+            for (var j = 0, jj = service.layers.length; !found && j < jj; j++) {
+                const layer = service.layers[j];
+                for (var k = 0, kk = layer.features.length; !found && k < kk; k++) {
+                    if (layer.features[k] === feature) {
+                        serviceTitle = service.title;
+                        layerTitle = layer.path.join(' &bull; ');
+                        found = true;
+                    }
+                }
+            }
+        }
+        $('<h4>')
+            .html(layerTitle)
+            .prependTo(popup.$contentDiv);
+        $('<h3>')
+            .html(serviceTitle)
+            .prependTo(popup.$contentDiv);
+        // Añadimos un botón para borrar la feature
+        self.getRenderedHtml(self.CLASS + '-del-btn', null, function (html) {
+            popup.$popupDiv.append(html);
+            popup.$popupDiv.find('.' + self.CLASS + '-del-btn')
+                .on(TC.Consts.event.CLICK, function (e) {
+                    self.resultsLayer.removeFeature(feature);
+                    popup.hide();
+                });
+        });
+    };
 })();

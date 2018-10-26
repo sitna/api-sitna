@@ -169,6 +169,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
         var $li = findLayerElement(self, layer);
         if ($li) {
             var visible = layer.getVisibility();
+            $li.find('input[type="checkbox"]').prop('checked', visible);
             $li.find('.' + self.CLASS + '-del').toggleClass(TC.Consts.classes.HIDDEN, visible);
 
             if ($li.find('.' + self.CLASS + '-info').hasClass(TC.Consts.classes.HIDDEN)) {

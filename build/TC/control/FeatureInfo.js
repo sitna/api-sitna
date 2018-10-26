@@ -278,10 +278,8 @@ if (!TC.control.FeatureInfoCommons) {
                                 }
                             }
                             if (sharedFeature) {
-                                self.map.addControl('popup', { div: TC.Util.getDiv(), closeButton: true }).then(function (popup) {
+                                self._addHighlightPopup().then(function (popup) {
                                     sharedFeature.data = self._$div.html();
-                                    popup.$popupDiv.addClass(self.CLASS + '-lite');
-                                    var btnTitle = self.getLocaleString('deleteFeature');
                                     self.getRenderedHtml(self.CLASS + '-del-btn', null, function (html) {
                                         popup.$popupDiv.append(html);
                                         popup.$popupDiv.find('.' + self.CLASS + '-del-btn')

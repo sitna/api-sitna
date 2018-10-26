@@ -92,7 +92,12 @@
             "layer": "mapabase"
         },
         "popup": true,
-        "attribution": true,
-        "scaleBar": true
+        "scaleBar": {
+            "div": "scalebar"
+        },
+        "attribution": {
+            "div": "attribution"
+        },
+		"FullScreen":true
     }
 }
