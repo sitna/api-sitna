@@ -1782,7 +1782,7 @@
             if (capabilities.serviceProvider) {
                 result.name = capabilities.serviceProvider.providerName.trim();
                 result.site = capabilities.serviceProvider.providerSite;
-                if (result.site.href) {
+                if (result.site.href && result.site.href.trim().length > 0) {
                     result.site = result.site.href;
                 }
             }
