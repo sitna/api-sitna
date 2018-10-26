@@ -37,10 +37,10 @@ TC.inherit(TC.control.Attribution, TC.Control);
 
         self.apiAttribution = self.map.options.attribution || self.apiAttribution;
 
-        var addData = function (layer) {
-            if (layer) {
+        var addData = function (obj) {
+            if (obj) {
                 // TODO: sanitizer
-                var attr = layer.wrap.getAttribution(TC.capabilities[layer.url]);
+                var attr = obj.getAttribution();
                 if (attr) {
                     if (/IDENA/.test(attr.name)) {
                         self.mainDataAttribution = {
@@ -64,14 +64,14 @@ TC.inherit(TC.control.Attribution, TC.Control);
             }
         };
 
-        var removeData = function (layer) {
-            if (layer) {
+        var removeData = function (obj) {
+            if (obj) {
 
                 var checkRemoveData = function () {
-                    if (layer.map.workLayers.length > 0) {
-                        var _wl = layer.map.workLayers.slice().reverse();
+                    if (obj.map.workLayers.length > 0) {
+                        var _wl = obj.map.workLayers.slice().reverse();
                         for (var i = 0; i < _wl.length; i++) {
-                            if (_wl[i].url == layer.url && _wl[i].getVisibility())
+                            if (_wl[i].url == obj.url && _wl[i].getVisibility())
                                 return false;
                         }
 
@@ -79,11 +79,11 @@ TC.inherit(TC.control.Attribution, TC.Control);
                     }
 
                     return true;
-                };
+                };                
 
-                if (checkRemoveData()) {
+                if (obj instanceof TC.Layer ? checkRemoveData() : true) {
                     // TODO: sanitizer
-                    var attr = layer.wrap.getAttribution(TC.capabilities[layer.url]);
+                    var attr = obj.getAttribution();
 
                     if (attr) {
                         var index = self.dataAttributions.reduce(function (prev, cur, idx) {
@@ -104,22 +104,38 @@ TC.inherit(TC.control.Attribution, TC.Control);
 
         map.on(TC.Consts.event.LAYERADD, function (e) {
             if (e.layer.wrap.getAttribution) {
-                addData(e.layer);
+                addData(e.layer.wrap);
                 self.render();
             }
-        });
+        });        
+
         map.on(TC.Consts.event.LAYERREMOVE, function (e) {
             if (e.layer.wrap.getAttribution) {
-                removeData(e.layer);
+                removeData(e.layer.wrap);
                 self.render();
             }
         });
+
+        map.on(TC.Consts.event.TERRAINPROVIDERADD, function (e) {
+            if (e.terrainProvider.getAttribution) {
+                addData(e.terrainProvider);
+                self.render();
+            }
+        });
+
+        map.on(TC.Consts.event.TERRAINPROVIDERREMOVE, function (e) {
+            if (e.terrainProvider.getAttribution) {
+                removeData(e.terrainProvider);
+                self.render();
+            }
+        });
+
         map.on(TC.Consts.event.LAYERVISIBILITY, function (e) {
             if (e.layer.wrap.getAttribution) {
                 if (e.layer.getVisibility()) {
-                    addData(e.layer);
+                    addData(e.layer.wrap);
                 } else {
-                    removeData(e.layer);
+                    removeData(e.layer.wrap);
                 }
                 self.render();
             }
