@@ -91,14 +91,10 @@ div.tc-ctl-download .tc-alert {
         content: '\e02c';
     }
 
-    .tc-ctl-download-select {
+.tc-ctl-download-select {
     clear: both;
     width: 100%;
     display: inline-block;
-}
-
-div.tc-ctl-download-help-dialog.tc-modal {
-    overflow-y: auto;
 }
 
 div.tc-ctl-download .tc-ctl-download-help-dialog li {
@@ -123,5 +119,4 @@ div.tc-ctl-download .tc-ctl-download-help-dialog li li {
         font-size: 17px;
         line-height: 2.45em;
     }
-
 }

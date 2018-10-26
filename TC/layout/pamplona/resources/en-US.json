@@ -1,0 +1,12 @@
+﻿{
+	"viewerTitle":"City viewer",
+    "legend": "Legend",
+	"overviewMap": "Overview map",
+	"overviewMap.tooltip": "Overview map",
+	"tools": "Tools",
+	"viewHelp": "Help",
+	"viewHelp.tooltip":"User's guide",	
+    "search.placeholder": "Street, address, parcel or coordinates",
+    "search.instructions": "Search street, address, cadastral reference, UTM or latitude-longitude coordinates",
+	"featuresAt":"Features at [{x} {y}] - {crs}"
+}

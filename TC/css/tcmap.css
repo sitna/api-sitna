@@ -21,6 +21,8 @@
 @import url(control/Modify.css);
 @import url(control/PrintMap.css);
 @import url(control/Download.css);
+@import url(control/ResultsPanel.css);
+@import url(control/Print.css);
 
 /*! normalize.css v1.0.0 | MIT License | git.io/normalize */
 article, aside, details, figcaption, figure, footer, header, hgroup, nav, section, summary {
@@ -871,8 +873,8 @@ button.tc-msg-warning:after {
     padding: 0;
     bottom: 0;
     right: 0;
-    margin-right: 15px;
-    margin-bottom: 15px;
+    margin-right: 0.5em;
+    margin-bottom: 0.5em;
     width: 1.5em;
     height: 1.5em;
     line-height: 1.5em;
@@ -905,39 +907,39 @@ button.tc-msg-warning:after {
         width: calc(50% - 1px);
     }
 
-.tc-ctl-geolocation-select input[type=radio],
-.tc-ctl-tctr-select input[type=radio] {
-    display: none;
-}
-
-    .tc-ctl-geolocation-select input[type=radio] ~ span,
-    .tc-ctl-tctr-select input[type=radio] ~ span {
-        position: absolute;
-        display: block;
-        width: 100%;
-        height: 100%;
-        line-height: 2em;
-        text-align: center;
-        border: 1px solid #666;
-        background-color: #fff;
-        color: #666;
-        cursor: pointer;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    .tc-ctl-geolocation-select input[type=radio],
+    .tc-ctl-tctr-select input[type=radio] {
+        display: none;
     }
 
-.tc-ctl-geolocation-select label:first-child input[type=radio]:checked ~ span,
-.tc-ctl-tctr-select label.tc-ctl-tctr-tab:first-child input[type=radio]:checked ~ span {
-    border-bottom-left-radius: 0;
-    border-bottom-color: transparent;
-}
+        .tc-ctl-geolocation-select input[type=radio] ~ span,
+        .tc-ctl-tctr-select input[type=radio] ~ span {
+            position: absolute;
+            display: block;
+            width: 100%;
+            height: 100%;
+            line-height: 2em;
+            text-align: center;
+            border: 1px solid #666;
+            background-color: #fff;
+            color: #666;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
-.tc-ctl-geolocation-select label:last-child input[type=radio]:checked ~ span,
-.tc-ctl-tctr-select label.tc-ctl-tctr-tab:last-child input[type=radio]:checked ~ span {
-    border-bottom-right-radius: 0;
-    border-bottom-color: transparent;
-}
+    .tc-ctl-geolocation-select label:first-child input[type=radio]:checked ~ span,
+    .tc-ctl-tctr-select label.tc-ctl-tctr-tab:first-child input[type=radio]:checked ~ span {
+        border-bottom-left-radius: 0;
+        border-bottom-color: transparent;
+    }
+
+    .tc-ctl-geolocation-select label:last-child input[type=radio]:checked ~ span,
+    .tc-ctl-tctr-select label.tc-ctl-tctr-tab:last-child input[type=radio]:checked ~ span {
+        border-bottom-right-radius: 0;
+        border-bottom-color: transparent;
+    }
 
 .tc-ctl-tctr .tc-ctl h2 {
     display: none;
@@ -1020,6 +1022,10 @@ label.tc-ctl-geolocation-btn-track {
 .tc-ctl-geolocation-select input[type=radio]:checked ~ span,
 .tc-ctl-tctr-select input[type=radio]:checked ~ span {
     border-bottom-color: #fff;
+}
+
+table.tc-attr a[target=_blank]:after, .tc-ctl-finfo-val a[target=_blank]:after {
+    content: ' \21aa';
 }
 
 .tc-ctl.tc-ctl-finfo {
@@ -1201,10 +1207,6 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
 /* Para hacer sitio al botón de herramientas */
 .tc-ctl-finfo-features tr:nth-child(1) td.tc-ctl-finfo-val {
     padding-right: 2.1em;
-}
-
-.tc-ctl-finfo-val a:after {
-    content: ' \21aa';
 }
 
 .tc-ctl-finfo-counter {
@@ -1634,14 +1636,14 @@ label.tc-ctl-geolocation-track-available-label {
     height: 2em;
 }
 
-.tc-ctl-geolocation-track-available-lst > li > span.tc-selectable {
-    cursor: pointer;
-    color: #600;
-}
-
-    .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable:hover {
-        color: #c00;
+    .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable {
+        cursor: pointer;
+        color: #600;
     }
+
+        .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable:hover {
+            color: #c00;
+        }
 
 ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-available-empty > span {
     text-decoration: none;
@@ -1705,28 +1707,28 @@ ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-not > sp
         content: "\f0c7";
     }
 
-.tc-ctl-geolocation-track-available-lst > li > button.tc-btn-cancel:before {
-    font-family: FontAwesome;
-    content: "\f00d";
-}
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-cancel:before {
+        font-family: FontAwesome;
+        content: "\f00d";
+    }
 
-.tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx:before {
-    font-family: Arial;
-    font-size: 70%;
-    font-weight: bold;
-    content: "GPX";
-}
-
-.tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml, .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx {
-    padding-top: 0.25em;
-}
-
-    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml:before {
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx:before {
         font-family: Arial;
         font-size: 70%;
         font-weight: bold;
-        content: "KML";
+        content: "GPX";
     }
+
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml, .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx {
+        padding-top: 0.25em;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml:before {
+            font-family: Arial;
+            font-size: 70%;
+            font-weight: bold;
+            content: "KML";
+        }
 
 
 input#tc-ctl-geolocation-track-available-srch {
@@ -2534,8 +2536,9 @@ body .tc-map .tc-modal .tc-modal-background {
 }
 
 .tc-modal .tc-modal-header {
-    padding: 15px 25px;
+    padding: 15px 13px;
     border-bottom: 1px solid #EEE;
+    display: flex;
 }
 
     .tc-modal .tc-modal-header h3 {
@@ -2544,13 +2547,24 @@ body .tc-map .tc-modal .tc-modal-background {
         font-size: 16px;
         color: #666;
         font-weight: normal;
+        flex: 2;
     }
 
-    .tc-modal .tc-modal-header .tc-ctl-popup-close {
-        top: 14px;
-        right: 20px;
+    .tc-modal .tc-modal-header .tc-modal-close {
         cursor: pointer;
+        padding: 0;
+        margin: 0;
+        margin-left: 0.3em;
+        color: #000;
     }
+
+        .tc-modal .tc-modal-header .tc-modal-close:after {
+            font-family: mapskin;
+            content: '\e001';
+            transform: rotate(45deg);
+            display: block;
+            font-size: 1.2em;
+        }
 
 
 .tc-modal .tc-modal-body {
@@ -2563,6 +2577,7 @@ body .tc-map .tc-modal .tc-modal-background {
 
     .tc-modal .tc-modal-body.tc-loading {
         transform: scale(0.5);
+        min-height: 10em;
     }
 
 .tc-modal .tc-modal-footer {
@@ -2573,6 +2588,7 @@ body .tc-map .tc-modal .tc-modal-background {
     padding: 15px 20px;
     border-top: 1px solid #EEE;
     text-align: right;
+    position: relative;
 }
 
 .tc-modal h4 {
@@ -2700,29 +2716,29 @@ span.tc-beta {
     min-width: 225px;
 }
 
-    .tc-threed > .tc-ctl-p-results {
-        min-width: 260px;
-    }
+.tc-threed > .tc-ctl-p-results {
+    min-width: 260px;
+}
 
-    .tc-ctl-p-results .prpanel-title span {
-        margin-left: 0.5em;
-    }
+.tc-ctl-p-results .prpanel-title span {
+    margin-left: 0.5em;
+}
 
-    .tc-ctl-p-results h4 .prcollapsed-slide-submenu:hover {
-        cursor: pointer;
-    }
+.tc-ctl-p-results h4 .prcollapsed-slide-submenu:hover {
+    cursor: pointer;
+}
 
-    .tc-ctl-p-results #results {
-        font-size: 12px;
-    }
+.tc-ctl-p-results #results {
+    font-size: 12px;
+}
 
-    .tc-ctl-p-results .prpanel-default {
-        box-shadow: 1px 1px 5px #ddd;
-    }
+.tc-ctl-p-results .prpanel-default {
+    box-shadow: 1px 1px 5px #ddd;
+}
 
-    .tc-ctl-p-results .prpanel {
-        background-color: rgba(255,255,255,0);
-    }
+.tc-ctl-p-results .prpanel {
+    background-color: rgba(255,255,255,0);
+}
 
 .prpanel-group .prpanel {
     border: 0;
@@ -3757,52 +3773,6 @@ label.tc-ctl-edit-btn-select, label.tc-ctl-edit-btn-point, label.tc-ctl-edit-btn
     max-width: 100%;
     padding: 0.4em;
     opacity: 0.9;
-}
-
-.tc-ctl-p-results-table .tc-ctl-finfo {
-    width: 100%;
-}
-
-.tc-ctl-p-results-table {
-    width: 100%;
-    overflow-x: hidden;
-}
-
-.tc-ctl-p-results .tc-ctl-finfo-coords {
-    margin-bottom: 1em;
-    font-size: 0.887em;
-}
-
-.tc-ctl-p-results-table a.tc-ctl-print-btn {
-    top: 2em;
-    right: 0.3em;
-    font-size: 1.5em;
-}
-
-    .tc-ctl-p-results-table a.tc-ctl-print-btn:before {
-        margin-right: 0;
-    }
-
-.tc-ctl-p-results-table table {
-    font-size: 1em;
-    border-collapse: collapse;
-}
-
-.tc-ctl-p-results-table tr:nth-child(odd) {
-    background: #eee;
-}
-
-.tc-ctl-p-results-table tr:nth-child(even) {
-    background: #fff;
-}
-
-.tc-ctl-p-results-table th, .tc-ctl-p-results-table td {
-    text-align: left;
-    padding: 0.3em;
-}
-
-.tc-ctl-p-results-table .tc-ctl-finfo h4 {
-    font-size: 1.2em;
 }
 
 .tc-ctl.tc-ctl-m-finfo {
