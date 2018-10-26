@@ -162,7 +162,21 @@ if (!TC.Control) {
 
             var $view = self._$viewDiv;
             $view.find('.' + self.CLASS + '-btn-close').on('mouseup', function (e) {
-                $(self.map.div).removeClass(TC.Consts.classes.COLLAPSED).trigger('resize');
+                const $mapDiv = $(self.map.div);
+                const endProcess = function () {
+                    if ($mapDiv.hasClass(TC.Consts.classes.COLLAPSED)) {
+                        $mapDiv.removeClass(TC.Consts.classes.COLLAPSED).trigger('resize'); // Para evitar que salga borroso el mapa tras cerrar SV.
+                    }
+                };
+                var transitionEnd = 'transitionend.tc';
+                $view.off(transitionEnd).on(transitionEnd, function (e) {
+                    if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
+                        $view.off(transitionEnd);
+                        endProcess();
+                    }
+                });
+                setTimeout(endProcess, 1000); // backup por si falla la transición.
+
                 $view.addClass(TC.Consts.classes.HIDDEN).removeClass(TC.Consts.classes.VISIBLE);
                 self._$div.find('.' + self.CLASS + '-drag').removeClass(TC.Consts.classes.HIDDEN);
                 self.layer.wrap.setDraggable(false);
@@ -302,16 +316,6 @@ if (!TC.Control) {
                     var $view = self._$viewDiv;
                     var lonLat = TC.Util.reproject(coords, self.map.crs, geogCrs);
                     var svDone = $view.hasClass(TC.Consts.classes.VISIBLE);
-                    var transitionEnd = 'transitionend.tc';
-                    $view.off(transitionEnd).on(transitionEnd, function (e) {
-                        if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
-                            if (!svDone) {
-                                svDone = true;
-                                google.maps.event.trigger(self._sv, 'resize');
-                                $mapDiv.addClass(TC.Consts.classes.COLLAPSED).trigger('resize');
-                            }
-                        }
-                    });
 
                     var svOptions = {
                         position: new google.maps.LatLng(lonLat[1], lonLat[0]),
@@ -350,6 +354,25 @@ if (!TC.Control) {
                                 li.removeWait(waitId);
                             }
                             if (svStatus === google.maps.StreetViewStatus.OK) {
+
+                                $mapDiv.addClass(TC.Consts.classes.COLLAPSED).trigger('resize');
+
+                                const endProcess = function () {
+                                    google.maps.event.trigger(self._sv, 'resize');
+                                };
+                                var transitionEnd = 'transitionend.tc';
+                                $view.off(transitionEnd).on(transitionEnd, function (e) {
+                                    if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
+                                        if (!svDone) {
+                                            svDone = true;
+                                            $view.off(transitionEnd);
+                                            endProcess();
+                                        }
+                                    }
+                                });
+
+                                setTimeout(endProcess, 1000); // Backup por si no salta el transitionend.
+
                                 if (!$view.hasClass(TC.Consts.classes.VISIBLE)) {
                                     self._sv.setVisible(true);
                                     setMarker(self._sv, true);
@@ -392,7 +415,6 @@ if (!TC.Control) {
                 else {
                     reset(self);
                 }
-            }
-        );
+            }, false, true);
     };
 })();
