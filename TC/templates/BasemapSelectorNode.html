@@ -1,5 +1,5 @@
-﻿<li class="tc-ctl-bms-node" data-tc-layer-name="{name}" data-tc-layer-uid="{uid}">
-    <label{?legend} style="background-image: url({legend.src})"{/legend}>
+﻿<li class="tc-ctl-bms-node" data-tc-layer-name="{name}" data-tc-layer-uid="{uid}" >
+    <label{?legend} style="background-image: url({legend.src})"{/legend}{?thumbnail} style="background-image: url({thumbnail})"{/thumbnail}>
         <input type="radio" name="bms" value="{name}"{?mustReproject} class="tc-disabled"{/mustReproject} />
         <span>{title}</span>
     </label>
