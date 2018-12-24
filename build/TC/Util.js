@@ -807,7 +807,7 @@
             $modal.fadeIn(250, function () {
                 $modal.on('click', ".tc-modal-close", function (e) {
                     e.stopPropagation();
-                    return TC.Util.closeModal(options.closeCallback);
+                    return TC.Util.closeModal(options.closeCallback, $(e.target));
                 });
                 if ($.isFunction(options.openCallback)) {
                     options.openCallback();
@@ -815,8 +815,15 @@
             });
         },
 
-        closeModal: function (callback) {
-            $(".tc-modal").hide().find(".tc-modal-window").removeAttr("style").off();
+        closeModal: function (callback, $target) {
+            var $modal;
+            if ($target) {
+                $modal = $target.closest('.tc-modal');
+            } else {
+                $modal = $(".tc-modal");
+            }
+
+            $modal.hide().find(".tc-modal-window").removeAttr("style").off();
 
             if (callback)
                 callback();
@@ -1380,6 +1387,9 @@
         },
 
         isSameProtocol: function (uri, location) {
+            if (uri.match(/^(\/\/)/i)) {
+                return true;
+            }
             var protocolRegex = /^(https?:\/\/)/i;
             var uriProtocol = uri.match(protocolRegex);
             if (uriProtocol && uriProtocol.length > 1) {
@@ -1410,10 +1420,10 @@
             };
         },
 
-        getSoundexDifference: function(a,b) {
+        getSoundexDifference: function (a, b) {
             var res = 0 
 
-            for (var i=0; i<a.length; i++) {
+            for (var i = 0; i < a.length; i++) {
                 if (a.charAt(i) == b.charAt(i)) {
                     res++;
                 }
@@ -1422,7 +1432,7 @@
             return res;
         },
 
-        toAbsolutePath: function(href) {
+        toAbsolutePath: function (href) {
             var link = document.createElement("a");
             link.href = href;
             return link.href;

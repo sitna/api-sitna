@@ -34,25 +34,25 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
     ctlProto.register = function (map) {
         var self = this;
 
-        var layer = self.options.layer;
-
         TC.Control.prototype.register.call(self, map);
 
-        map.loaded(function () {
+        const instanceLayer = function (layer) {
             var lyr;
-            if (typeof layer === 'string') {
-                var findLayerById = function (id, layers) {
-                    var result = null;
-                    for (var i = 0; i < layers.length; i++) {
-                        var lyr = layers[i];
-                        var l = lyr.id || lyr;
-                        if (l === id) {
-                            result = lyr;
-                            break;
-                        }
+
+            var findLayerById = function (id, layers) {
+                var result = null;
+                for (var i = 0; i < layers.length; i++) {
+                    var lyr = layers[i];
+                    var l = lyr.id || lyr;
+                    if (l === id) {
+                        result = lyr;
+                        break;
                     }
-                    return result;
-                };
+                }
+                return result;
+            };
+
+            if (typeof layer === 'string') {
                 var lyrObj = findLayerById(layer, map.options.availableBaseLayers);
                 if (!$.isPlainObject(lyrObj)) {
                     lyrObj = findLayerById(layer, map.options.baseLayers);
@@ -73,10 +73,20 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
                 }
             }
 
-            // GLS: Referencio el mapa en la capa. Como no se añade la capa al mapa, no hay referencia.
-            lyr.map = map;
+            return lyr;
+        };
 
-            self.layer = lyr;
+        const registerLayer = function (layer) {
+            var lyr;
+            
+            lyr = instanceLayer(layer);            
+
+            return lyr;
+        };
+
+        map.loaded(function () {
+            self.defaultLayer = registerLayer(self.options.layer);
+            self.layer = registerLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.options.availableBaseLayers[0]);
             self.wrap.register(map);
 
             const resetOVMapProjection = function (e) {
@@ -91,7 +101,29 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
 
             resetOVMapProjection({ crs: map.crs });
 
-            map.on(TC.Consts.event.PROJECTIONCHANGE, resetOVMapProjection);
+            const changeBaseLayer = function (e) {
+                const self = this;
+
+                if (self.map.baseLayer.type === TC.Consts.layerType.WMS || self.map.baseLayer.type === TC.Consts.layerType.WMTS) {                    
+                    var newLayer = self.map.baseLayer.overviewMapLayer || self.options.layer;
+                    if (self.layer.id !== newLayer) {
+                        var overviewMapLayer = registerLayer(newLayer);
+                        self.wrap.reset({
+                            layer: overviewMapLayer
+                        }).then(function (layer) {
+                            self.layer = layer;
+                        });
+                    } else if (TC.Consts.event.PROJECTIONCHANGE.indexOf(e.type) > -1) {
+                        self.wrap.reset({
+                            layer: self.layer
+                        }).then(function (layer) {
+                            self.layer = layer;
+                        });
+                    }
+                }                
+            };
+            
+            map.on(TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.BASELAYERCHANGE, changeBaseLayer.bind(self));            
         });
     };
 

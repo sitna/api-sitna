@@ -8,6 +8,19 @@ ul.tc-ctl-bms-branch {
     padding: 0;
 }
 
+.tc-ctl-bms-more-dialog div.tc-modal-body {
+    min-width: 14em;
+    min-height: 12em;
+}
+
+.tc-ctl-bms-more-dialog ul.tc-ctl-bms-branch > li {
+    width: 4.8rem;
+}
+
+.tc-ctl-bms-more-dialog h2 {
+    display: none;
+}
+
 .tc-ctl-bms-node label {
     position: relative;
     display: inline-block;
@@ -15,8 +28,8 @@ ul.tc-ctl-bms-branch {
     cursor: pointer;
     border: 0.3em solid #ccc;
     border-radius: 0.3em;
-    width: 6.25em;
-    height: 6.25em;
+    height: 4rem;
+    width: 4rem;
     background-size: 100% 100%;
     background-repeat: no-repeat;
 }
@@ -25,13 +38,17 @@ ul.tc-ctl-bms-branch {
         position: absolute;
         display: block;
         margin: 0;
-        padding-top: 1em;
+        padding-top: 0.6rem;
         top: -0.3em;
         left: -0.3em;
         text-shadow: 0.1em 0.1em 0 #fff, 0.1em -0.1em 0 #fff, -0.1em 0.1em 0 #fff, -0.1em -0.1em 0 #fff;
-        width: 6.25em;
-        height: 5.25em;
+        height: 3.36rem;
+        width: 4rem;
     }
+
+.tc-ctl-bms-more-dialog .tc-ctl-bms-node label span {
+    text-shadow: #fff -0.06rem 0, #fff 0rem 0.08rem, #fff 0.08rem 0, #fff 0rem -0.06rem, #fff 0.06rem 0.08rem;
+}
 
 .tc-ctl-bms-node input[type=radio] ~ span {
     border: 0.3em solid #ccc;
@@ -59,14 +76,48 @@ ul.tc-ctl-bms-branch {
     border-top-left-radius: 0.2em;
 }
 
+.tc-ctl-bms-more-dialog ul.tc-ctl-bms-branch {
+    max-width: calc(4.8rem * 8);
+    text-align: left;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.tc-ctl-bms-more-node:after {
+    content: "\f0fe";
+    font-family: 'FontAwesome';
+    position: absolute;
+    color: #666666;
+    font-size: 3em;
+    top: 50%;
+    left: 52%;
+    transform: translate(-50%,-50%);
+}
+
+.tc-modal.tc-threed li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span:after,
+.tc-ctl-bms.tc-threed li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span:after {
+    font-family: 'Segoe UI Symbol'; /* Requerido por FF */
+    content: '\01F6AB';
+    font-weight: bold;
+}
+
+.tc-modal.tc-threed li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span,
+.tc-ctl-bms.tc-threed li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span {
+    cursor: default;
+}
+
 ul.tc-ctl-bms-branch > li {
     display: inline-block;
-    font-size: 0.8em;
+    font-size: 0.63rem;
     width: 25%;
     margin: 0;
     vertical-align: top;
     text-align: center;
     padding: 0.5em 0 0 0;
+}
+
+li.tc-ctl-bms-node.tc-hidden {
+    display: none;
 }
 
 .tc-ctl-bms-name {
@@ -82,3 +133,8 @@ ul.tc-ctl-bms-branch input[type=radio] {
         border: 1px solid #c00;
     }
 
+@media screen and (min-width: 42em) {
+    div.tc-modal-window.tc-ctl-bms-more-dialog {
+        max-width: none;
+    }
+}

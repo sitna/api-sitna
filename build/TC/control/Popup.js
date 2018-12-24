@@ -37,25 +37,33 @@ TC.inherit(TC.control.Popup, TC.Control);
 
             map.on(TC.Consts.event.LAYERVISIBILITY, function (e) {
                 if (self.currentFeature && self.currentFeature.layer === e.layer && !e.layer.getVisibility()) {
-                    self.hide();
+                    if (self.isVisible()) {
+                        self.hide();
+                    }
                 }
             });
 
             map.on(TC.Consts.event.LAYERREMOVE, function (e) {
                 if (self.currentFeature && self.currentFeature.layer === e.layer) {
-                    self.hide();
+                    if (self.isVisible()) {
+                        self.hide();
+                    }
                 }
             });
 
             map.on(TC.Consts.event.UPDATE, function () {
                 if (!self.currentFeature || self.currentFeature._visibilityState === TC.Consts.visibility.NOT_VISIBLE) {
-                    self.hide();
+                    if (self.isVisible()) {
+                        self.hide();
+                    }
                 }
             });
 
             map.on(TC.Consts.event.FEATUREREMOVE, function (e) {
                 if (self.currentFeature === e.feature) {
-                    self.hide();
+                    if (self.isVisible()) {
+                        self.hide();
+                    }
                 }
             });
         });

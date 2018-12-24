@@ -3,13 +3,39 @@
 TC.tool.Elevation = function (options) {
     const self = this;
     self.options = options || {};
-    self.url = self.options.url || '//idena.navarra.es/ogc/wps';
-    self.process = self.options.process || 'gs:ExtractRasterPoints';
-    self.minimumElevation = self.options.minimumElevation || -9998;
+    self._servicePromises = [];
+    const serviceOptions = self.options.services || [
+        'elevationServiceIDENA',
+        //'elevationServiceIGNEs',
+        'elevationServiceIGNFr'
+    ];
+    serviceOptions.forEach(function (srv, idx) {
+        const deferred = $.Deferred();
+        self._servicePromises[idx] = deferred.promise();
+        var ctorName = 'ElevationService';
+        var path = TC.apiLocation + 'TC/tool/ElevationService';
+        var srvOptions = srv;
+        if (typeof srv === 'string') {
+            ctorName = srv.substr(0, 1).toUpperCase() + srv.substr(1);
+            path = TC.apiLocation + 'TC/tool/' + ctorName;
+            srvOptions = {};
+        }
+        TC.loadJS(
+            !TC.tool[ctorName],
+            [path],
+            function () {
+                deferred.resolve(new TC.tool[ctorName](srvOptions));
+            }
+        );
+    });
 };
 
 (function () {
     const toolProto = TC.tool.Elevation.prototype;
+
+    toolProto.getService = function (idx) {
+        return this._servicePromises[idx];
+    };
 
     toolProto.getElevation = function (options) {
         const self = this;
@@ -21,133 +47,90 @@ TC.tool.Elevation = function (options) {
             options.sampleNumber = self.options.sampleNumber;
         }
         const deferred = $.Deferred();
+        const onError = function (error) {
+            deferred.reject(error);
+        };
 
         TC.loadJS(
             !TC.Geometry,
             TC.apiLocation + 'TC/Geometry',
             function () {
-                self
-                    .request(options)
-                    .then(
-                    function (response) {
-                        deferred.resolve((options.responseCallback || self.parseResponse).call(self, response));
-                    },
-                    function (error) {
-                        deferred.reject(error);
+                $.when.apply(this, self._servicePromises).then(function () {
+                    const services = Array.prototype.map.call(arguments, function (arg) {
+                        return arg;
+                    });
+                    // Creamos un array de promesas que se resuelven falle o no la petición
+                    const alwaysPromises = new Array(services.length);
+                    for (var i = 0, ii = alwaysPromises.length; i < ii; i++) {
+                        alwaysPromises[i] = $.Deferred();
                     }
+                    services
+                        .map(function (srv) {
+                            return srv.request(options);
+                        })
+                        .forEach(function (dfrd, idx) {
+                            const rp = alwaysPromises[idx];
+                            dfrd.then(
+                                function (response) {
+                                    rp.resolve(response);
+                                },
+                                function () {
+                                    rp.resolve(null);
+                                }
+                            );
+                        });
+                    $.when.apply(this, alwaysPromises).then(
+                        function () {
+                            const args = arguments;
+                            const responses =
+                                services
+                                    .map(function (srv, idx) { // Parseamos las respuestas que haya
+                                        const arg = args[idx];
+                                        if (!arg) {
+                                            return null;
+                                        }
+                                        return srv.parseResponse(arg, options);
+                                    })
+                                    .filter(function (r) { // Eliminamos los servicios sin respuesta
+                                        return r !== null;
+                                    });
+
+                            var numPoints = responses.length ? responses[0].length : 0;
+                            var elevation = new Array(numPoints);
+                            if (numPoints) {
+
+                                const reduceFnFactory = function (idx) {
+                                    return function (prev, cur, arr) {
+                                        const point = cur[idx];
+                                        const result = prev;
+                                        if (prev[0] === null) {
+                                            result[0] = point[0];
+                                        }
+                                        if (prev[1] === null) {
+                                            result[1] = point[1];
+                                        }
+                                        if (prev[2] === null) {
+                                            result[2] = point[2];
+                                        }
+                                        return result;
+                                    };
+                                };
+
+                                //const firstResponse = responses[0];
+                                for (var i = 0; i < numPoints; i++) {
+                                    var fn = reduceFnFactory(i);
+                                    elevation[i] = responses.reduce(fn, [null, null, null]);
+                                }
+                            }
+                            deferred.resolve(elevation);
+                        }, onError
                     );
+                }, onError);
             }
         );
         
         return deferred.promise();
     }
-
-    toolProto.request = function (options) {
-        const self = this;
-        options = options || {};
-        const deferred = $.Deferred();
-        if (options.coordinates) {
-            TC.loadJS(
-                !TC.format || !TC.format.WPS,
-                TC.apiLocation + 'TC/format/WPS',
-                function () {
-                    const geometryOptions = {
-                        coordinates: options.coordinates
-                    };
-                    var coordinateListArray;
-                    switch (true) {
-                        case TC.Geometry.isPoint(options.coordinates):
-                            geometryOptions.type = TC.Consts.geom.POINT;
-                            coordinateListArray = [[options.coordinates]];
-                            break;
-                        case TC.Geometry.isRing(options.coordinates):
-                            geometryOptions.type = TC.Consts.geom.POLYLINE;
-                            coordinateListArray = [options.coordinates];
-                            break;
-                        case TC.Geometry.isRingCollection(options.coordinates):
-                            geometryOptions.type = TC.Consts.geom.POLYGON;
-                            coordinateListArray = options.coordinates;
-                            break;
-                        default:
-                            break;
-                    }
-                    const data = {
-                        process: self.process,
-                        dataInputs: {
-                            coverageClass: options.coverageClass,
-                            geometry: {
-                                mimeType: TC.Consts.mimeType.JSON,
-                                value: TC.wrap.Geometry.toGeoJSON(geometryOptions)
-                            }
-                        },
-                        responseType: TC.Consts.mimeType.JSON
-                    };
-                    if (options.crs) {
-                        var idx = options.crs.lastIndexOf(':');
-                        if (idx < 0) {
-                            idx = options.crs.lastIndexOf('#');
-                        }
-                        data.dataInputs.srid = options.crs.substr(idx + 1);
-                    }
-                    if (options.sampleNumber) {
-                        const getDistance = function (p1, p2) {
-                            const dx = p2[0] - p1[0];
-                            const dy = p2[1] - p1[1];
-                            return Math.sqrt(dx * dx + dy * dy);
-                        };
-                        var totalDistance = 0;
-                        coordinateListArray.forEach(function (coordList) {
-                            totalDistance += coordList
-                                .map(function (coord, i, arr) {
-                                    const prev = arr[i - 1];
-                                    if (prev) {
-                                        return getDistance(prev, coord);
-                                    }
-                                    return 0;
-                                })
-                                .reduce(function (prev, curr) {
-                                    return prev + curr;
-                                }, 0);
-                            if (geometryOptions.type === TC.Consts.geom.POLYGON) {
-                                totalDistance += getDistance(coordList[coordList.length - 1], coordList[0]);
-                            }
-                        });
-                            
-                        data.dataInputs.splitDistance = totalDistance / options.sampleNumber;
-                    }
-                    else if (options.resolution) {
-                        data.dataInputs.splitDistance = options.resolution;
-                    }
-                    $.ajax({
-                        url: self.url,
-                        type: 'POST',
-                        contentType: TC.Consts.mimeType.XML,
-                        data: TC.format.WPS.buildExecuteQuery(data)
-                    }).then(function (response) {
-                        deferred.resolve(response);
-                    }, function (error) {
-                        deferred.reject(error);
-                    });
-                }
-            );
-        }
-        else {
-            deferred.reject();
-        }
-        return deferred.promise();
-    };
-
-    toolProto.parseResponse = function (response) {
-        var self = this;
-        if (response.coordinates) {
-            response.coordinates.forEach(function (coords) {
-                if (coords[2] < self.minimumElevation) {
-                    coords[2] = null;
-                }
-            });
-        }
-        return response.coordinates || [];
-    };
 
     toolProto.setGeometry = function (options) {
         const self = this;

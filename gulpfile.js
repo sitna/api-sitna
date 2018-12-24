@@ -92,20 +92,20 @@ var sitnaBuild = {
 
     replaceStrings: function (stream) {
         var s = stream;
-            //.pipe(replace("á", "\\u00e1"))
-            //.pipe(replace("é", "\\u00e9"))
-            //.pipe(replace("í", "\\u00ed"))
-            //.pipe(replace("ó", "\\u00f3"))
-            //.pipe(replace("ú", "\\u00fa"))
-            //.pipe(replace("Á", "\\u00c1"))
-            //.pipe(replace("É", "\\u00c9"))
-            //.pipe(replace("Í", "\\u00cd"))
-            //.pipe(replace("Ó", "\\u00d3"))
-            //.pipe(replace("Ú", "\\u00da"))
-            //.pipe(replace("Ñ", "\\u00d1"))
-            //.pipe(replace("ñ", "\\u00f1"))
-            //.pipe(replace("ü", "\\u00fc"))
-            //.pipe(replace("Ü", "\\u00dc"));
+        //.pipe(replace("á", "\\u00e1"))
+        //.pipe(replace("é", "\\u00e9"))
+        //.pipe(replace("í", "\\u00ed"))
+        //.pipe(replace("ó", "\\u00f3"))
+        //.pipe(replace("ú", "\\u00fa"))
+        //.pipe(replace("Á", "\\u00c1"))
+        //.pipe(replace("É", "\\u00c9"))
+        //.pipe(replace("Í", "\\u00cd"))
+        //.pipe(replace("Ó", "\\u00d3"))
+        //.pipe(replace("Ú", "\\u00da"))
+        //.pipe(replace("Ñ", "\\u00d1"))
+        //.pipe(replace("ñ", "\\u00f1"))
+        //.pipe(replace("ü", "\\u00fc"))
+        //.pipe(replace("Ü", "\\u00dc"));
         if (this.isLegacy !== undefined) {
             s = s.pipe(replace(/TC\.isLegacy = .*;/g, "TC.isLegacy = " + this.isLegacy + ";"));
         }
@@ -276,7 +276,7 @@ var sitnaBuild = {
     }
 };
 
-gulp.task('default', ['unitTests', 'e2eTests', 'rasterJSTest', 'doc'], function () {
+gulp.task('default', ['unitTests', 'e2eTests', 'doc'], function () {
     sitnaBuild.fullTask();
 });
 
@@ -359,4 +359,23 @@ gulp.task('doc', function () {
 
 gulp.task('css', function () {
     sitnaBuild.cssTask();
+});
+
+gulp.task('bundleCesiumDebugMergeTerrain', function () {
+    return gulp.src(['lib/cesium/debug/CesiumSrc.js', 'TC/cesium/mergeTerrainProvider/MergeTerrainProvider.js'])
+        .pipe(concat('Cesium.js'))
+        .pipe(gulp.dest('lib/cesium/debug'));
+});
+
+gulp.task('bundleCesiumReleaseMergeTerrain', function () {
+    gulp.src(['TC/cesium/mergeTerrainProvider/MergeTerrainProvider.js'])
+        .pipe(minify({
+            compress: { sequences: false },
+            output: { ascii_only: true }
+        }))
+        .pipe(gulp.dest('TC/cesium/mergeTerrainProvider'));
+
+    return gulp.src(['lib/cesium/release/CesiumSrc.js', 'TC/cesium/mergeTerrainProvider/MergeTerrainProvider-min.js'])
+        .pipe(concat('Cesium.js'))
+        .pipe(gulp.dest('lib/cesium/release'));
 });

@@ -1,0 +1,19 @@
+﻿.tc-ctl-print-btn {
+    display: inline-block;
+    font-size: 1.2em;
+    width: 1em;
+    height: 1em;
+    line-height: 1em;
+    padding: 0;
+    text-align: right;
+    font-size: 1em;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+    .tc-ctl-print-btn:before {
+        color: #000;
+        font-family: 'mapskin';
+        content: '\e0ce';
+        margin-right: 0.2em;
+    }

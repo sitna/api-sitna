@@ -163,6 +163,12 @@ TC.control.Geolocation = function (options) {
     self.walkingSpeed = 5000;
     self.gapHill = self.options.gapHill || 20;
 
+    self.snappingTolerance = self.options.snappingTolerance || 50;
+
+    self.exportsState = true;
+
+    self.storageCRS = 'EPSG:4326';
+
     self._trackingLayerDeferred = $.Deferred();
 };
 
@@ -180,7 +186,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         MIN_WIDTH: 215,
         MEDIUM_WIDTH: 310,
         MAX_WIDTH: 445
-    };
+    };     
 
     TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
     TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
@@ -197,7 +203,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "geo" }).w(" <span class=\"tc-beta tc-hidden\">").h("i18n", ctx, {}, { "$key": "beta" }).w("</span></h2><div class=\"tc-ctl-geolocation-content\"> <div class=\"tc-ctl-geolocation-track\"><div class=\"tc-ctl-geolocation-track-snap-info\"></div><div class=\"tc-ctl-geolocation-info-tracking tc-hidden\"><div class=\"tc-ctl-p-results\"><div class=\"prpanel-group prsidebar-body \"><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><label>").h("i18n", ctx, {}, { "$key": "geo.mylocation" }).w("</label> <span id=\"trackingInfoClose\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span id=\"trackingInfoMin\" class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span> </h4></div><div id=\"results\" class=\"prpanel-collapse\"><div class=\"prpanel-body list-group\"> </div> </div></div></div><div id=\"trackingInfoMax\" class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("\"><i class=\"fa fa-list-alt tracking\"></i></div></div></div><!-- img se insertan en el div del mapa--> <div id=\"tc-ctl-geolocation-track-elevation-marker\" class=\"tc-ctl-geolocation-trackMarker elevation\" style=\"display: none;\" /> <div class=\"tc-ctl-geolocation-track-panel-block\" ><input id=\"tc-ctl-geolocation-track-panel-opened\" type=\"checkbox\" checked/><label for=\"tc-ctl-geolocation-track-panel-opened\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.1" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.2" }).w("</label><i class=\"tc-ctl-geolocation-track-panel-help icon-question-sign\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.3" }).w("\"></i></div><div class=\"tc-ctl-geolocation-track-mng\"><div class=\"tc-ctl-geolocation-select\"><form> <label class=\"tc-ctl-geolocation-btn-track\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.title" }).w("\"><input type=\"radio\" name=\"mode\" checked value=\"tracks\" /><span>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</span></label><label class=\"tc-ctl-geolocation-btn-tracks\" title=\"").h("i18n", ctx, {}, { "$key": "geo.tracks.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"track-available\" /><span>").h("i18n", ctx, {}, { "$key": "geo.tracks" }).w("</span></label> </form></div> <div class=\"tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden\"><i class=\"tc-ctl-geolocation-track-search-icon\"></i><input id=\"tc-ctl-geolocation-track-available-srch\" type=\"search\" list=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.filter.plhr" }).w("\" maxlength=\"200\" /> <ol id=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-lst\"><li class=\"tc-ctl-geolocation-track-available-empty\"><span>").h("i18n", ctx, {}, { "$key": "geo.noTracks" }).w("</span></li><li class=\"tc-ctl-geolocation-track-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li></ol><div class=\"tc-ctl-geolocation-track-cnt\"><input name=\"uploaded-file\" id=\"uploaded-file\" type=\"file\" class=\"tc-ctl-geolocation-track-import tc-button\" accept=\".gpx,.kml\" disabled /><label class=\"tc-button tc-icon-button\" for=\"uploaded-file\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.import.upload" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.import.lbl" }).w("</label></div></div><div class=\"tc-ctl-geolocation-tracks tc-ctl-geolocation-panel\"> <div class=\"tc-alert alert-warning tc-hidden\" ><p id=\"panel-msg\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.1" }).w(" <ul><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.2" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.4" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.5" }).w("</li></ul></p></div> <div class=\"tc-ctl-geolocation-track-ui\"> <div class=\"tc-ctl-geolocation-track-render\"><input id=\"tc-ctl-geolocation-track-render\" type=\"checkbox\" hidden checked /><label for=\"tc-ctl-geolocation-track-render\" class=\"tc-ctl-geolocation-track-render\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("</label></div><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.activate" }).w("</button><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.deactivate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.deactivate" }).w("</button></div><div class=\"tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt\"><input type=\"text\" class=\"tc-ctl-geolocation-track-title tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.save" }).w("\"></button><input type=\"text\" class=\"tc-ctl-geolocation-track-waypoint tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.save" }).w("\"></button></div></div></div></div></div><!--se inserta en el div del mapa--><div class=\"tc-ctl-geolocation-track-center tc-hidden\"> <button class=\"tc-ctl-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.center" }).w("\"></button></div>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-track-node'] = function () { dust.register(ctlProto.CLASS + '-track-node', body_0); function body_0(chk, ctx) { return chk.w("<li data-id=\"").f(ctx.get(["id"], false), ctx, "h").w("\" data-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span class=\"tc-draw tc-selectable\" title=\"").f(ctx.get(["name"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</span><input class=\"tc-textbox tc-hidden\" type=\"text\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\" /> <button class=\"tc-btn-simulate\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.simulate" }).w("\"></button><button hidden class=\"tc-btn-stop\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.stop" }).w("\"></button><button class=\"tc-btn-edit\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.edit" }).w("\"></button><button hidden class=\"tc-btn-pause\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.pause" }).w("\"></button> <button hidden class=\"tc-btn-backward\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.backward" }).w("\"></button><label hidden class=\"tc-spn-speed\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.velocity" }).w("\"></label><button hidden class=\"tc-btn-forward\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.forward" }).w("\"></button> <button class=\"tc-btn-save tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "save" }).w("\"></button><button class=\"tc-btn-cancel tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.cancel" }).w("\"></button><button class=\"tc-btn-delete\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.delete" }).w("\"></button><button class=\"tc-btn-export-gpx\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportGPX" }).w("\"></button><button class=\"tc-btn-export-kml\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportKML" }).w("\"></button> </li>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = function () { dust.register(ctlProto.CLASS + '-track-snapping-node', body_0); function body_0(chk, ctx) { return chk.w("<ul>").x(ctx.get(["n"], false), ctx, { "block": body_1 }, {}).w("<li> <span>X:</span> ").f(ctx.get(["x"], false), ctx, "h").w(" </li><li> <span>Y:</span> ").f(ctx.get(["y"], false), ctx, "h").w(" </li>").x(ctx.get(["z"], false), ctx, { "block": body_2 }, {}).x(ctx.get(["m"], false), ctx, { "block": body_4 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li> <span>").h("i18n", ctx, {}, { "$key": "geo.trk.snapping.name" }).w(":</span> ").f(ctx.get(["n"], false), ctx, "h").w(" </li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.h("ne", ctx, { "block": body_3 }, { "key": ctx.get(["z"], false), "value": 0 }).w(" "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li> <span>Z:</span> ").f(ctx.get(["z"], false), ctx, "h").w(" </li>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<li> ").f(ctx.get(["m"], false), ctx, "h").w(" </li>"); } body_4.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = function () { dust.register(ctlProto.CLASS + '-track-snapping-node', body_0); function body_0(chk, ctx) { return chk.w("<ul>").x(ctx.get(["n"], false), ctx, { "block": body_1 }, {}).w("<li> <span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(":</span> ").f(ctx.get(["x"], false), ctx, "h").w("</li><li> <span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_4, "block": body_5 }, {}).w(":</span> ").f(ctx.get(["y"], false), ctx, "h").w(" </li>").x(ctx.get(["z"], false), ctx, { "block": body_6 }, {}).x(ctx.get(["m"], false), ctx, { "block": body_8 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li><span>").h("i18n", ctx, {}, { "$key": "geo.trk.snapping.name" }).w(":</span> ").f(ctx.get(["n"], false), ctx, "h").w("</li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("X"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lon" }); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("Y"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.h("ne", ctx, { "block": body_7 }, { "key": ctx.get(["z"], false), "value": 0 }); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w("<li> <span>Z:</span> ").f(ctx.get(["z"], false), ctx, "h").w(" </li>"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("<li> ").f(ctx.get(["m"], false), ctx, "h").w(" </li>"); } body_8.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-geolocation-continue-track-dialog tc-modal\" ><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><button class=\"tc-button tc-ctl-geolocation-track-continue\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cnt" }).w(" </button><button class=\"tc-button tc-ctl-geolocation-track-new\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.new" }).w(" </button> <button class=\"tc-button tc-modal-close\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cancel" }).w(" </button></div></div></div><div class=\"tc-ctl-geolocation-track-advert-dialog tc-modal\" ><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p id=\"pageBlurMsg\">").h("i18n", ctx, {}, { "$key": "geo.trk.page.blur" }).w("</p><p class=\"tc-ctl-geolocation-track-advertisement p\"> <label> <input type=\"checkbox\" name=\"checkbox\" id=\"advertisement\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.advertisement" }).w(" </label> </p></div><div class=\"tc-modal-footer\"><button class=\"tc-button tc-ctl-geolocation-track-advert-ok\"> ").h("i18n", ctx, {}, { "$key": "ok" }).w(" </button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-tracking-toast'] = function () { dust.register(ctlProto.CLASS + '-tracking-toast', body_0); function body_0(chk, ctx) { return chk.w("<ul><li><span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(":</span> ").f(ctx.get(["x"], false), ctx, "h").w("<br /><span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_3, "block": body_4 }, {}).w(":</span> ").f(ctx.get(["y"], false), ctx, "h").w("<br />").x(ctx.get(["z"], false), ctx, { "block": body_5 }, {}).w("</li><li>").x(ctx.get(["accuracy"], false), ctx, { "block": body_8 }, {}).x(ctx.get(["speed"], false), ctx, { "block": body_9 }, {}).x(ctx.get(["mdt"], false), ctx, { "block": body_10 }, {}).w("</li></ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("X"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lon" }); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("Y"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_6, "block": body_7 }, {}).w(":</span> ").f(ctx.get(["z"], false), ctx, "h").w(" m<br />"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("Z"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "ele" }); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("<span>").h("i18n", ctx, {}, { "$key": "geo.trk.accuracy" }).w(":</span> ").f(ctx.get(["accuracy"], false), ctx, "h").w(" m<br />"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("<span>").h("i18n", ctx, {}, { "$key": "geo.trk.speed" }).w(":</span> ").f(ctx.get(["speed"], false), ctx, "h").w(" km/h<br />"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("<span title=\"").h("i18n", ctx, {}, { "$key": "mdt.title" }).w("\">").h("i18n", ctx, {}, { "$key": "ele" }).w(" (").h("i18n", ctx, {}, { "$key": "mdt" }).w("):</span> ").f(ctx.get(["mdt"], false), ctx, "h").w(" m<br />"); } body_10.__dustBody = !0; return body_0 };
     }
@@ -1825,11 +1831,21 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
     ctlProto._getTime = function (timeFrom, timeTo) {
         var diff = timeTo - timeFrom;
-        var d = {
-            s: Math.floor((diff / 1000) % 60),
-            m: Math.floor(((diff / (1000 * 60)) % 60)),
-            h: Math.floor(((diff / (1000 * 60 * 60)) % 24))
-        };
+        var d = {};
+        var daysDifference = Math.floor(diff / 1000 / 60 / 60 / 24);
+        diff -= daysDifference * 1000 * 60 * 60 * 24;
+
+        var hoursDifference = Math.floor(diff / 1000 / 60 / 60);
+        diff -= hoursDifference * 1000 * 60 * 60;
+
+        d.h = hoursDifference + (daysDifference * 24);
+
+        var minutesDifference = Math.floor(diff / 1000 / 60);
+        diff -= minutesDifference * 1000 * 60;
+
+        d.m = minutesDifference;
+
+        d.s = Math.floor(diff / 1000);
 
         return $.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
     };
@@ -1904,7 +1920,13 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                             var getDistance = function () {
                                 if (geom.getLayout() == ol.geom.GeometryLayout.XYZ ||
                                     geom.getLayout() == ol.geom.GeometryLayout.XYZM) {
-                                    var distance = geom.getLength();
+                                    var distance = 0;
+                                    if (self.map.crs !== self.map.options.utmCrs) {
+                                        line = new ol.geom.LineString(TC.Util.reproject(geom.getCoordinates(), self.map.crs, self.map.options.utmCrs));
+                                        distance = line.getLength();
+                                    } else {
+                                        distance = geom.getLength();
+                                    }
                                     return parseFloat((distance / 1000).toFixed(2));
                                 }
 
@@ -1927,15 +1949,21 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                             var addX = function (x) {
                                 if (self.chart.coordinates.length > 0) {
                                     var distance = 0;
-                                    x.push(distance);
+                                    self.chart.coordinates
+                                        .forEach(function (point, idx, arr) {
+                                            var prev = idx === 0 ? point : arr[idx - 1];
 
-                                    for (var i = 1; i <= self.chart.coordinates.length - 1; i++) {
-                                        var p = self.chart.coordinates[i];
-                                        var prevP = self.chart.coordinates[i - 1];
+                                            if (self.map.crs !== self.map.options.utmCrs) {
+                                                point = TC.Util.reproject(point, self.map.crs, self.map.options.utmCrs);
+                                                prev = TC.Util.reproject(prev, self.map.crs, self.map.options.utmCrs);
+                                            }
 
-                                        distance += Math.hypot(p[0] - prevP[0], p[1] - prevP[1]);
-                                        x.push(parseFloat(distance.toFixed(2)));
-                                    }
+                                            const dx = point[0] - prev[0];
+                                            const dy = point[1] - prev[1];
+                                            distance += Math.sqrt(dx * dx + dy * dy);
+
+                                            x.push(parseFloat(distance.toFixed(2)));
+                                        });
                                 }
                             };
 
@@ -2047,7 +2075,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             data.minWidth = self.CHART_SIZE.MIN_WIDTH;
             data.mediumWidth = self.CHART_SIZE.MEDIUM_WIDTH;
-            data.maxWidth = self.CHART_SIZE.MAX_WIDTH;            
+            data.maxWidth = self.CHART_SIZE.MAX_WIDTH;
 
             if (!self.resultsPanelChart) {
 
@@ -2055,13 +2083,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     TC.syncLoadJS(TC.Consts.url.D3C3 || TC.apiLocation + 'lib/d3c3/d3c3.min.js');
                 }
 
-                const chartPanel = self.map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
-                    return ctl.options.content === 'chart';
-                })[0];
-                const $panelDiv = chartPanel ? chartPanel._$div : $('<div>').appendTo(self.map._$div);
-
                 self.map.addControl('resultsPanel', {
-                    div: $panelDiv,
+                    div: $('<div>').appendTo(self.map._$div),
                     content: "chart",
                     titles: {
                         main: self.getLocaleString("geo.trk.chart.chpe"),
@@ -2076,7 +2099,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     }
                 }).then(function (resultsPanelChart) {
                     self.resultsPanelChart = resultsPanelChart;
-                    resultsPanelChart.render(function () {
+                    resultsPanelChart.renderPromise().then(function () {
 
                         resultsPanelChart.activateSnapping = function (e) {
                             if (self.layerTrack && (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0))
@@ -2178,7 +2201,8 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     name: trackName,
                     data: formatted.features,
                     layout: formatted.layout,
-                    uid: parseInt(uid)
+                    uid: parseInt(uid),
+                    crs: self.storageCRS
                 });
                 tracks = _orderTracks(tracks);
 
@@ -2359,7 +2383,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.resultsPanelChart.close();
         }
 
-        self.clear(self.Const.Layers.TRACK);        
+        self.clear(self.Const.Layers.TRACK);
     };
 
     ctlProto.drawTrackingData = function (li) {
@@ -2421,7 +2445,13 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             if (tracks) {
                 var dataId = $(_li).attr('data-id');
                 if (tracks[dataId]) {
-                    return done.resolve({ data: tracks[dataId].data, layout: tracks[dataId].layout });
+                    var track = tracks[dataId].data;
+
+                    // GLS: tengo que transformar de 4326 al crs del mapa en el momento de pintar, porque si lo hacemos al cargar la lista
+                    // y después hay cambio de crs, en el momento de pintar no sé desde qué crs debo tranformar
+                    track = self.wrap.formattedFromStorage(track);
+
+                    return done.resolve({ data: track, layout: tracks[dataId].layout });
                 }
             }
 
@@ -2474,8 +2504,15 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         if (navigator.geolocation) {
             if (self.currentPosition)
                 navigator.geolocation.clearWatch(self.currentPosition);
-            if (self.currentPositionTrk)
-                navigator.geolocation.clearWatch(self.currentPositionTrk);
+            if (self.currentPositionTrk) {
+                self.currentPositionTrk = self.currentPositionTrk instanceof Array ? self.currentPositionTrk : [self.currentPositionTrk];
+
+                self.currentPositionTrk.forEach(function (watch) {
+                    navigator.geolocation.clearWatch(watch);
+                });
+
+                self.currentPositionTrk = [];
+            }
         }
 
         if (self.currentPositionWaiting)
@@ -2516,26 +2553,26 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
     ctlProto.exportState = function () {
         const self = this;
-        const result = {};
-        if (self.layerTrack) {
-            const layerState = self.layerTrack.exportState();
-            layerState.features = layerState.features.filter(function (f) {
-                return f.type === TC.Consts.geom.POLYLINE;
-            });
-            result.id = self.id;
-            result.track = layerState.features[0];
-            result.trackName = self.getSelectedTrack().find('span').html();
+        if (self.exportsState) {
+            const state = {};
+            if (self.layerTrack) {
+                const layerState = self.layerTrack.exportState();
+                state.id = self.id;
+                state.features = layerState.features;
+                state.trackName = self.getSelectedTrack().find('span').html();
+            }
+            return state;
         }
-        return result;
+        return null;
     };
 
     ctlProto.importState = function (state) {
         const self = this;
         if (self.map) {
-            if (state.track) {
+            if (state.features.length) {
                 self.enable();
                 const vector = new TC.layer.Vector();
-                vector.importState({ features: [state.track] }).then(function () {
+                vector.importState({ features: state.features }).then(function () {
                     self.importTrack({ features: vector.features, fileName: state.trackName });
                 });
             }

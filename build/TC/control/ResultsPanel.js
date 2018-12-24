@@ -700,12 +700,16 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
     const getTime = function (timeFrom, timeTo) {
         var diff = timeTo - timeFrom;
-        var d = {
-            s: Math.floor((diff / 1000) % 60),
-            m: Math.floor(((diff / (1000 * 60)) % 60)),
-            h: Math.floor(((diff / (1000 * 60 * 60)) % 24))
-        };
-
+        var d = {};
+        var daysDifference = Math.floor(diff / 1000 / 60 / 60 / 24);
+        diff -= daysDifference * 1000 * 60 * 60 * 24;
+        var hoursDifference = Math.floor(diff / 1000 / 60 / 60);
+        diff -= hoursDifference * 1000 * 60 * 60;
+        d.h = hoursDifference + (daysDifference * 24);
+        var minutesDifference = Math.floor(diff / 1000 / 60);
+        diff -= minutesDifference * 1000 * 60;
+        d.m = minutesDifference;
+        d.s = Math.floor(diff / 1000);
         return $.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
     };
 

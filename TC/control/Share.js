@@ -16,6 +16,8 @@ TC.control.Share = function (options) {
         self._$dialogDiv.appendTo('body');
     }
 
+    self.includeControls = self.options.includeControls === undefined || self.options.includeControls;
+
     self.render();
 };
 
@@ -110,7 +112,7 @@ TC.inherit(TC.control.Share, TC.Control);
             }
         }
 
-        const controlStates = self.exportControlStates();
+        const controlStates = self.includeControls ? self.exportControlStates() : [];
         const extraStates = controlStates.length ? { ctl: controlStates } : undefined;
 
         var hashState = self.map.getMapState(extraStates);

@@ -21,6 +21,8 @@ TC.control.FileImport = function () {
         ];
     }
 
+    self.layers = [];
+
     self.apiAttribution = '';
     self.mainDataAttribution = '';
     self.dataAttributions = [];
@@ -60,6 +62,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                     title: e.fileName,
                     type: TC.Consts.layerType.VECTOR
                 }).then(function (layer) {
+                    self.layers.push(layer);
                     var geogCrs = 'EPSG:4326';
                     const flatten = function (prev, cur) {
                         return prev.concat(cur);
@@ -119,9 +122,15 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
                 var reader = new FileReader();
                 reader.onload = function (event) {
-                    TC.error("Nombre del archivo: " + fileName + " \n Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL,"Error en la subida de un archivo");
+                    TC.error("Nombre del archivo: " + fileName + " \n Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL, "Error en la subida de un archivo");
                 };
-                reader.readAsText(e.file);                
+                reader.readAsText(e.file);
+            })
+            .on(TC.Consts.event.LAYERREMOVE, function (e) {
+                const idx = self.layers.indexOf(e.layer);
+                if (idx >= 0) {
+                    self.layers.splice(idx, 1);
+                }
             });
     };
 
@@ -141,6 +150,41 @@ TC.inherit(TC.control.FileImport, TC.Control);
                     }
                 });
         });
+    };
+
+    ctlProto.exportState = function () {
+        const self = this;
+        return {
+            id: self.id,
+            layers: self.layers.map(function (layer) {
+                return {
+                    title: layer.title,
+                    state: layer.exportState()
+                };
+            })
+        };
+    };
+
+    ctlProto.importState = function (state) {
+        const self = this;
+        if (self.map) {
+            const layerPromises = [];
+            state.layers.forEach(function (layerData) {
+                layerPromises.push(self.map.addLayer({
+                    id: self.getUID(),
+                    title: layerData.title,
+                    type: TC.Consts.layerType.VECTOR
+                }));
+            });
+
+            $.when.apply($, layerPromises).then(function () {
+                for (var i = 0, len = arguments.length; i < len; i++) {
+                    const layer = arguments[i];
+                    layer.importState(state.layers[i].state);
+                    self.layers.push(layer);
+                }
+            });
+        }
     };
 
 })();

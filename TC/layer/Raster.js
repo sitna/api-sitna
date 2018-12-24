@@ -786,14 +786,14 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             _checkCORSSupport(layerUrl, self.capabilitiesLoad_).then(function (hasCORS) {
                 if (hasCORS) {
                     TC.Util.consoleRegister("Tiene cabeceras CORS");
-                    self.capabilitiesUrl_ = self.getByUrl_;                    
+                    self.capabilitiesUrl_ = self.getByUrl_;
                     self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
                 } else {
                     // GLS: Al no soportar CORS, proxificamos.                    
                     TC.Util.consoleRegister("NO tiene cabeceras CORS -> proxificamos:");
                     TC.Util.consoleRegister("GetCapabilities, GFI, 3D");
                     TC.Util.consoleRegister("GetMap");
-                    self.capabilitiesUrl_ = self.getByProxy_;                    
+                    self.capabilitiesUrl_ = self.getByProxy_;
                     self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
                 }
             });
@@ -819,14 +819,14 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             if (!supportSSL) {
                 TC.Util.consoleRegister("Realmente no sabemos si el error se produce por no soportar HTTPS o porque no tiene CORS, sea como sea: es necesario proxificar");
                 // GLS: Realmente no sabemos si el error se produce por no soportar HTTPS o porque no tiene CORS, sea como sea: es necesario proxificar.                    
-                self.capabilitiesUrl_ = self.getByProxy_;                
+                self.capabilitiesUrl_ = self.getByProxy_;
                 self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
             } else {
                 // GLS:
                 // Dado que estamos en un escenario de cross origin y si la petición/comprobación de SSL ha funcionado correctamente
                 // podemos afirmar que el servicio cuenta con cabeceras CORS
                 TC.Util.consoleRegister("Dado que estamos en un escenario de cross origin y si la petición/comprobación de SSL ha funcionado correctamente: podemos afirmar que el servicio cuenta con cabeceras CORS");
-                self.capabilitiesUrl_ = self.getBySSL_;                
+                self.capabilitiesUrl_ = self.getBySSL_;
                 self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
             }
         });
@@ -906,13 +906,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         _checkCORSSupport(layerUrl, self.capabilitiesLoad_).then(function (hasCORS) {
             if (hasCORS) {
                 TC.Util.consoleRegister("Cuenta con cabeceras CORS");
-                self.capabilitiesUrl_ = self.getByUrl_;                
+                self.capabilitiesUrl_ = self.getByUrl_;
                 self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
             } else {
                 // GLS: Al no soportar CORS, proxificamos.
                 TC.Util.consoleRegister("NO tiene cabeceras CORS -> proxificamos:");
                 TC.Util.consoleRegister("Capabilities");
-                self.capabilitiesUrl_ = self.getByProxy_;                
+                self.capabilitiesUrl_ = self.getByProxy_;
                 self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
             }
         });
@@ -959,7 +959,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         TC.Util.consoleRegister("Validamos si existe cross origin");
         if (TC.Util.isSameOriginByLocation(layerUrl, location_)) {
             TC.Util.consoleRegister("Tenemos mismo origen, cargamos directamente");
-            self.capabilitiesUrl_ = self.getByUrl_;            
+            self.capabilitiesUrl_ = self.getByUrl_;
             self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
 
         } // GLS: Estamos en cross origin
@@ -1433,6 +1433,17 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 }); // códigos normalizados
         }
         return result;
+    };
+
+    layerProto.getProjection = function () {
+        var self = this;
+
+        switch (self.type) {
+            case TC.Consts.layerType.WMTS:
+                return self.wrap.layer.getSource().getProjection().getCode();
+            case TC.Consts.layerType.WMS:
+                return self.map.crs;
+        }
     };
 
     layerProto.setProjection = function (options) {
@@ -2072,6 +2083,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return src;
     };
 
+    // método que nos ayuda a gestionar los posibles errores HTTP que quedan enmascarados en errores por CORS
+    layerProto._onQuarantine = function (src) {
+        var self = this;
+
+        return src;
+    };
+
     // GLS: Según MDN: https://developer.mozilla.org/es/docs/Web/API/WebGL_API/Tutorial/Wtilizando_texturas_en_WebGL
     //    Note: Es importante señalar que la carga de texturas en WebGL sigue reglas de dominio-cruzado; 
     //          Es decir, sólo puede cargar texturas de sitios para los que su contenido tiene aprobación de CORS.
@@ -2124,8 +2142,36 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     } else {
                         // GLS: 
                         // Escenario cross origin
-
                         TC.Util.consoleRegister("Escenario cross origin");
+
+                        var quarantine = function () {
+                            if (self.geoBBox && self.geoBBox.length > 0) { // Se completa al crear la capa de Cesium geoBBox										
+                                // validamos si el bbox de la petición casa con la cobertura de la capa para detectar (sin código de servidor no es posible) si puede ser un error 400 enmascarado con un error de CORS
+                                var requestBBoxValues = decodeURIComponent(src.split('&').filter(function (elm) {
+                                    return elm.indexOf('bbox') > -1
+                                })[0]).replace('bbox=', '').split(',').map(function (elm) {
+                                    return parseInt(elm);
+                                });
+                                var layerBBoxValues = self.geoBBox[0];
+
+                                if (layerBBoxValues && !(requestBBoxValues[0] >= layerBBoxValues[0] &&
+                                     requestBBoxValues[2] <= layerBBoxValues[2] &&
+
+                                     requestBBoxValues[1] >= layerBBoxValues[1] &&
+                                     requestBBoxValues[3] <= layerBBoxValues[3])) {
+                                    // lo ponemos en cuarentena porque el bbox de la petición es mayor que lo indicado en el capabilities y podría tartase de un error HTTP 400 Bad request
+                                    self.getWebGLUrl = self._onQuarantine;
+                                    done.resolve(self._onQuarantine(src));
+                                } else {
+                                    // si el bbox encaja con puede ser que sea otro error, pero no tenemos info para contrastarlo.
+                                    self.getWebGLUrl = self.getByProxy_;
+                                    done.resolve(self.getByProxy_(src));
+                                }
+                            } else {
+                                self.getWebGLUrl = self.getByProxy_;
+                                done.resolve(self.getByProxy_(src));
+                            }
+                        };
 
                         // Primer paso: comprobamos si existe service worker ya que:                    
                         //      Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
@@ -2172,9 +2218,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                 _imageHasCORS(src).then(function (hasCORS) {
                                     if (!hasCORS) {
                                         TC.Util.consoleRegister("No tiene CORS");
+                                        // Con service worker y una respuesta de un error 400 sin CORS, enmascara el problema como de CORS, gestionamos en cuarentena										
+                                        quarantine();
 
-                                        self.getWebGLUrl = self.getByProxy_;
-                                        done.resolve(self.getByProxy_(src));
                                     } else {
                                         //GLS: modificamos la función que nos da la url de la imagen como https
                                         TC.Util.consoleRegister("Tiene CORS");
@@ -2194,9 +2240,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                 }
                                 else {
                                     TC.Util.consoleRegister("NO tiene cabeceras CORS");
-
-                                    self.getWebGLUrl = self.getByProxy_;
-                                    done.resolve(self.getByProxy_(src));
+                                    quarantine();
                                 }
                             });
                         }
@@ -2299,6 +2343,54 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var location_ = location || document.location.href;
         var isPOST = (self.options.method === "POST");
 
+        // comprobamos z/x/y contra el matrixset del capabilities para evitar peticiones 404
+        if (self.type === TC.Consts.layerType.WMTS) {
+            var z, x, y;
+            if (self.encoding != "KVP") {
+                var _src = src.replace('.' + self.format.split('/')[1], '');
+                var parts = _src.split('/').slice(_src.split('/').length - 3).map(function (elm) { return parseInt(elm); });
+                z = parts[0];
+                x = parts[1];
+                y = parts[2];
+            } else {
+                var parts = /.*TileMatrix=(\d*)&TileCol=(\d*)&TileRow=(\d*)/i.exec(src);
+                if (parts && parts.length == 4) {
+                    parts = parts.slice(1).map(function (elm) { return parseInt(elm); });
+                    z = parts[0];
+                    x = parts[2];
+                    y = parts[1];
+                }
+            }
+
+            if (z && x && y) {
+                var wmtsOptions = self.wrap.getWMTSLayer();
+                if (wmtsOptions) {
+                    var matrixSet = wmtsOptions.TileMatrixSetLink.filter(function (elm) { return elm.TileMatrixSet === self.matrixSet; });
+                    if (matrixSet.length > 0) {
+
+                        if (matrixSet[0].TileMatrixSetLimits.length > 0) {
+                            var matrixSetLimits = matrixSet[0].TileMatrixSetLimits.sort(function (a, b) {
+                                if (parseInt(a.TileMatrix) > parseInt(b.TileMatrix))
+                                    return 1;
+                                else if (parseInt(a.TileMatrix) < parseInt(b.TileMatrix))
+                                    return -1;
+                                else return 0;
+                            });
+
+                            var level = matrixSetLimits[z];
+                            if (level && self.map && self.map.on3DView) {
+                                if (!(level.MinTileRow <= x && level.MaxTileRow >= x && level.MinTileCol <= y && level.MaxTileCol >= y)) {
+                                    console.log('Prevenimos petición fuera de matrix set, cargamos imagen en blanco');
+                                    self.imageLoad_blank_.call(self, image);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (self.imageLoad_) {
             self.imageLoad_.call(self, image, src);
         } else {
@@ -2380,7 +2472,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         // GLS: indicamos la misma función que para el capabilities ya que también se hace la solicitud por xmlHttpRequest
         self.getUrl = self.capabilitiesUrl_;
 
-        self.imageLoadHttpRequest_.call(self, image, !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src): src);
+        self.imageLoadHttpRequest_.call(self, image, !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src);
     };
 
     // GLS:
@@ -2582,6 +2674,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         img.crossOrigin = "anonymous";
         img.onerror = function () {
+
+            // IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
+            if (self.ignoreProxification) {
+                self.imageLoad_blank_.call(self, image);
+                return;
+            }
+
             // GLS: si el servicio no cuenta con CORS el atributo crossOrigin = "anonymous" provoca un error en la petición de la imagen.
             // GLS: también puede ser que el error sea un 404
             // GLS: tengo que repetir la llamada por ajax para poder conocer el status del error, por src no es accesible el error.
@@ -2686,6 +2785,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var img = image.getImage();
 
         img.onerror = undefined;
+
+        // IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
+        if (self.ignoreProxification) {
+            self.imageLoad_blank_.call(self, image);
+            return;
+        }
 
         TC.Util.consoleRegister("Se ha producido un error en la petición de imagen. Proxificamos la url de la imagen para esta petición y las siguientes.");
         // GLS: Proxificamos la url de la imagen para esta petición y las siguientes.

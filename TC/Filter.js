@@ -265,14 +265,15 @@ TC.filter.ComparisonBinary = function (
 TC.inherit(TC.filter.ComparisonBinary, TC.filter.Comparison);
 
 TC.filter.ComparisonBinary.prototype.write = function () {
-    return '<{prefix}:{tag}{matchCase}><{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}><{prefix}:Literal>{value}</{prefix}:Literal></{prefix}:{tag}>'.format({
+    var _str = '<{prefix}:{tag}{matchCase}>' + (this.propertyName instanceof TC.filter.Filter ? '{name}' : '<{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>') + '<{prefix}:Literal>{value}</{prefix}:Literal></{prefix}:{tag}>';
+    return _str.format({
         prefix: this._defaultPrefixNS,
         tag: this.getTagName(),
         matchCase: (typeof (this.matchCase) !== "undefined" ? " matchCase=\"" + this.matchCase + "\"" : ""),
         //escape:(typeof(this.escapeChar)!=="undefined"? " escape=\"" + this.escapeChar+ "\"":""),
         //singleChar:(typeof(this.singleChar)!=="undefined"? " singleChar=\"" + this.singleChar+ "\"":""),
         //wildCard:(typeof(this.wildCard)!=="undefined"? " wildCard=\"" + this.wildCard+ "\"":""),
-        name: this.propertyName,
+        name: this.propertyName instanceof TC.filter.Filter ? this.propertyName.write() : this.propertyName,
         value: this.expression,
         fieldTitle: this._fieldTitle
     });
@@ -343,24 +344,37 @@ TC.inherit(TC.filter.Function, TC.filter.Filter);
 
 TC.filter.Function.prototype.write = function () {
     var values = '';
-    if (this.params)
+    if (this.params) {
+        var _paramsToText = function (param, prefix) {
+            if (typeof (param) === "string") {
+                return '<{prefix}:Literal>{value}</{prefix}:Literal>'.format({ prefix: prefix, value: param });
+            }
+            if (typeof (param) === "object") {
+                var _text = '';
+                for (var attr in param) {
+                    _text = _text + '<{prefix}:{key}>{value}</{prefix}:{key}>'.format({ prefix: prefix, value: param[attr], key: attr })
+                }
+                return _text;
+            }
+        }
         if ($.isArray(this.params)) {
             var prefix = this._defaultPrefixNS;
             values = this.params.reduce(function (a, b, i) {
-                var fmt = function (text) {
-                    return '<{prefix}:Literal>{value}</{prefix}:Literal>'.format({ prefix: prefix, value: text });
+                var fmt = function (param) {
+                    return _paramsToText(param, prefix);
                 }
-                return (i > 1 ? a : fmt(a)) + fmt(b);                
+                return (i > 1 ? a : fmt(a)) + fmt(b);
             });
-        }   
+        }
         else
-            values = '<{prefix}:Literal>{value}</{prefix}:Literal>'.format({ prefix: this._defaultPrefixNS, value: this.params });
+            values = _paramsToText(this.params, this._defaultPrefixNS);
+    }
     return '<{prefix}:Function name="{tag}">{inner}</{prefix}:Function>'.format({
         prefix: this._defaultPrefixNS,
         tag: this.getTagName(),
         inner: values
     });
-}
+};
 
 TC.filter.Spatial = function (tagName, geometryName, geometry, opt_srsName) {
     TC.filter.Filter.call(this, tagName);

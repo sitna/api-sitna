@@ -24,10 +24,10 @@ TC.inherit(TC.control.MapContents, TC.Control);
         img: 'tcImg'
     };
 
-    ctlProto.render = function (callback) {
+    ctlProto.render = function (callback, options) {
         var self = this;
         if (self.map) {
-            self.renderData(self.map.getLayerTree(), callback);
+            self.renderData(options ? $.extend(self.map.getLayerTree(), options) : self.map.getLayerTree(), callback);
         }
     };
 
@@ -101,13 +101,16 @@ TC.inherit(TC.control.MapContents, TC.Control);
         this.layerTrees[layer.id] = layer.getTree();
     };
 
-    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx, collection) {
         var self = this;
         if (oldIdx >= 0 && oldIdx !== newIdx) {
             var $currentElm, $previousElm;
             var $elms = self.getLayerUIElements();
-            for (var i = self.map.workLayers.length - 1; i >= 0; i--) {
-                var l = self.map.workLayers[i];
+
+            collection = collection || self.map.workLayers;       
+
+            for (var i = collection.length - 1; i >= 0; i--) {
+                var l = collection[i];
                 $previousElm = $currentElm;
                 $elms.each(function (idx, elm) {
                     var $elm = $(elm);

@@ -1,4 +1,5 @@
 (function () {
+    TC.Cfg.notifyApplicationErrors = true;
 
     const $pre = $('<pre>')
         .addClass('prettyprint')

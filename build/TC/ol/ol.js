@@ -845,7 +845,7 @@
             pms.extent = mapWrap.parent.maxExtent;
         }
 
-        if (layer instanceof TC.layer.Raster) {
+        if (layer.type === TC.Consts.layerType.WMS || layer.type === TC.Consts.layerType.WMTS) {
             var res = layer.getResolutions();
             var maxRes;
             var minRes;
@@ -898,13 +898,14 @@
             };
 
             var equivalentProjections = [];
-            projOptions.code = 'EPSG:' + crsCode;
-            equivalentProjections.push(new ol.proj.Projection(projOptions));
-            projOptions.code = 'urn:ogc:def:crs:EPSG::' + crsCode;
-            equivalentProjections.push(new ol.proj.Projection(projOptions));
+            if (crsCode !== '4326') { // Este código ya está metido, no lo machacamos
+                projOptions.code = 'EPSG:' + crsCode;
+                equivalentProjections.push(new ol.proj.Projection(projOptions));
+                projOptions.code = 'urn:ogc:def:crs:EPSG::' + crsCode;
+                equivalentProjections.push(new ol.proj.Projection(projOptions));
 
-            ol.proj.addEquivalentProjections(equivalentProjections);
-
+                ol.proj.addEquivalentProjections(equivalentProjections);
+            }
             var doTransform = function (fn, input, opt_output, opt_dimension) {
                 var result = [];
                 var dimension = opt_dimension || 2;
@@ -1051,7 +1052,7 @@
 
         self.parent.$events.on(TC.Consts.event.BASELAYERCHANGE, function (e) {
             // Solo se limitan las resoluciones cuando estamos en un CRS por defecto, donde no se repixelan teselas
-            if (self.parent.crs === self.parent.options.crs) {
+            if (self.parent.crs === self.parent.options.crs && !self.parent.on3DView) {
                 limitZoomLevels(e.layer);
             }
         });
@@ -1137,6 +1138,10 @@
                 viewOptions.maxResolution = maxResolution;
             }
         }
+
+        // GLS: transformamos trambién el centro
+        viewOptions.center = ol.proj.transformExtent(self.getCenter(), self.parent.crs, options.crs);
+
         var newView = new ol.View(viewOptions);
         self.map.setView(newView);
         self.parent.initialExtent = unitRatio !== 1 ? ol.proj.transformExtent(self.parent.initialExtent, self.parent.crs, options.crs) : self.parent.options.initialExtent;
@@ -1263,8 +1268,10 @@
         var self = this;
         var deferred = new $.Deferred();
 
-        var setLayer = function () {
-            var curBl = self.parent.getBaseLayer();
+        var setLayer = function (curBl) {
+            // GLS: si se llega después de una animación el valor de self.parent.getBaseLayer() ya es el definitivo y no el actual lo que provoca efectos indeseados. 
+            // ir a línea 1313: paso como parámetro el baseLayer actual en el caso de animación.
+            var curBl = curBl || self.parent.getBaseLayer();
             if (curBl) {
                 self.map.removeLayer(curBl.wrap.getLayer());
                 if (olLayer instanceof ol.layer.Image) { // Si es imagen no teselada
@@ -1276,6 +1283,15 @@
                         crs: self.parent.crs
                     });
                 }
+
+                if (olLayer._wrap.parent.type === TC.Consts.layerType.WMTS) {
+                    var layerProjectionOptions = { crs: self.parent.crs, oldCrs: olLayer.getSource().getProjection().getCode() };
+
+                    if (layerProjectionOptions.oldCrs !== layerProjectionOptions.crs) {
+                        olLayer._wrap.parent.setProjection(layerProjectionOptions);
+                    }
+                }
+
                 //if (olLayer instanceof ol.layer.Tile) { // Si es imagen teselada
                 //    const view = self.map.getView();
                 //    const resolutions = olLayer.getSource().getResolutions();
@@ -1308,7 +1324,7 @@
                 }, 0);
             if (newRes !== currentResolution) {
                 if (self.parent.isLoaded) {
-                    view.animate({ resolution: newRes, duration: TC.Consts.ZOOM_ANIMATION_DURATION }, setLayer);
+                    view.animate({ resolution: newRes, duration: TC.Consts.ZOOM_ANIMATION_DURATION }, setLayer.bind(self, self.parent.getBaseLayer()));
                 }
                 else { // Primera carga, no animamos
                     view.setResolution(newRes);
@@ -1429,7 +1445,9 @@
         var view = self.map.getView();
 
         if (opts.animate) {
-            view.animate({ center: coords, duration: TC.Consts.ZOOM_ANIMATION_DURATION }, callback);
+            view.animate({
+                center: coords, duration: TC.Consts.ZOOM_ANIMATION_DURATION
+            }, callback);
         }
         else {
             view.setCenter(coords);
@@ -1477,7 +1495,8 @@
 
     TC.wrap.Map.prototype.getViewport = function (options) {
         var self = this;
-        var opts = options || {};
+        var opts = options || {
+        };
         if (opts.synchronous) {
             result = self.map.getViewport();
         }
@@ -1516,6 +1535,7 @@
                             .addClass(TC.control.Popup.prototype.CLASS)
                             .appendTo(self.parent.div);
                         popupCtl.$contentDiv = $(TC.Util.getDiv()).addClass(TC.control.Popup.prototype.CLASS + '-content').appendTo(popupCtl.$popupDiv);
+                        popupCtl.$menuDiv = $(TC.Util.getDiv()).addClass(TC.control.Popup.prototype.CLASS + '-menu').appendTo(popupCtl.$popupDiv);
 
                         var popup = new ol.Overlay({
                             element: elm,
@@ -1523,6 +1543,9 @@
                         });
                         olMap.addOverlay(popup);
                         popupCtl.wrap.popup = popup;
+
+                        popupCtl._firstRender.resolve();
+                        popupCtl.$events.trigger($.Event(TC.Consts.event.CONTROLRENDER));
 
                         var $olMapViewport = $(olMap.getViewport());
                         if (draggable) {
@@ -1590,17 +1613,19 @@
                             if (!self.parent.activeControl || !self.parent.activeControl.isExclusive()) {
                                 var pixel = olMap.getEventPixel(e.originalEvent);
                                 hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                                        var result = true;
-                                        if (feature._wrap && !feature._wrap.parent.showsPopup && !feature._wrap.parent.options.selectable) {
-                                            result = false;
-                                        }
+                                    var result = true;
+                                    if (feature._wrap && !feature._wrap.parent.showsPopup && !feature._wrap.parent.options.selectable) {
+                                        result = false;
+                                    }
 
-                                        if (result && feature._wrap) {
-                                            self.parent.$events.trigger($.Event(TC.Consts.event.FEATUREOVER, { feature: feature._wrap.parent }));
-                                        }
+                                    if (result && feature._wrap) {
+                                        self.parent.$events.trigger($.Event(TC.Consts.event.FEATUREOVER, {
+                                            feature: feature._wrap.parent
+                                        }));
+                                    }
 
-                                        return result;
-                                    },
+                                    return result;
+                                },
                                     {
                                         hitTolerance: hitTolerance
                                     });
@@ -1644,6 +1669,7 @@
             case TC.Consts.mimeType.GPX:
                 return new ol.format.GPX();
             case TC.Consts.layerType.GEOJSON:
+            case TC.Consts.mimeType.GEOJSON:
             case TC.Consts.mimeType.JSON:
             case TC.Consts.format.JSON:
                 return new ol.format.GeoJSON();
@@ -1666,7 +1692,9 @@
     TC.wrap.Map.prototype.exportFeatures = function (features, options) {
         var self = this;
         options = options || {};
-        var nativeStyle = createNativeStyle({ styles: self.parent.options.styles });
+        var nativeStyle = createNativeStyle({
+            styles: self.parent.options.styles
+        });
         var olFeatures = features.map(function (elm) {
             var result = elm.wrap.feature;
             // Si la feature no tiene estilo propio le ponemos el definido por la API
@@ -1705,7 +1733,9 @@
                             const canvas = document.createElement('canvas');
                             canvas.width = diameter;
                             canvas.height = diameter;
-                            const vectorContext = ol.render.toContext(canvas.getContext('2d'), { size: [diameter, diameter] });
+                            const vectorContext = ol.render.toContext(canvas.getContext('2d'), {
+                                size: [diameter, diameter]
+                            });
                             const text = style.getText();
                             style = style.clone();
                             style.setText(); // Quitamos el texto para que no salga en el canvas
@@ -1904,7 +1934,11 @@
                 ol.format.GML3Patched,
                 ol.format.GML2,
                 ol.format.GeoJSON,
-                function () { return new ol.format.WKT({ splitCollection: true }); },
+                function () {
+                    return new ol.format.WKT({
+                        splitCollection: true
+                    });
+                },
                 ol.format.TopoJSON
             ]
         };
@@ -1929,10 +1963,14 @@
                     for (var i = 0, len = features.length; i < len; i++) {
                         features[i] = arguments[i];
                     }
-                    self.parent.$events.trigger($.Event(TC.Consts.event.FEATURESIMPORT, { features: features, fileName: e.file.name }));
+                    self.parent.$events.trigger($.Event(TC.Consts.event.FEATURESIMPORT, {
+                        features: features, fileName: e.file.name
+                    }));
                 }
                 else {
-                    self.parent.$events.trigger($.Event(TC.Consts.event.FEATURESIMPORTERROR, { file: e.file }));
+                    self.parent.$events.trigger($.Event(TC.Consts.event.FEATURESIMPORTERROR, {
+                        file: e.file
+                    }));
                 }
             });
         });
@@ -2016,13 +2054,19 @@
             });
         }
         else {
-            ddInteraction = self.enableDragAndDrop({ once: true });
+            ddInteraction = self.enableDragAndDrop({
+                once: true
+            });
         }
         var li = self.parent.getLoadingIndicator();
         if (li) {
             self._featureImportWaitId = li.addWait();
         }
-        ol.interaction.DragAndDrop.handleDrop_.call(ddInteraction, { dataTransfer: { files: files } });
+        ol.interaction.DragAndDrop.handleDrop_.call(ddInteraction, {
+            dataTransfer: {
+                files: files
+            }
+        });
     };
 
     /*
@@ -2092,7 +2136,9 @@
         var self = this;
         layer.on('change:visible', function () {
             if (self.parent.map) {
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERVISIBILITY, { layer: self.parent }));
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERVISIBILITY, {
+                    layer: self.parent
+                }));
             }
         }, self.parent.map);
     };
@@ -2204,13 +2250,16 @@
         return result;
     };
 
-    TC.wrap.layer.Raster.prototype.getAttribution = function (capabilities) {
+    TC.wrap.layer.Raster.prototype.getAttribution = function () {
+        const self = this;
         const result = {};
+        const capabilities = TC.capabilities[self.parent.url];
+
         if (capabilities) {
             if (capabilities.ServiceProvider) {
                 result.name = capabilities.ServiceProvider.ProviderName.trim();
                 result.site = capabilities.ServiceProvider.ProviderSite;
-                if (result.site.href) {
+                if (result.site.href && result.site.href.trim().length > 0) {
                     result.site = result.site.href;
                 }
             }
@@ -2245,7 +2294,9 @@
                         var legend = this.getLegend(value);
 
                         if (legend.src)
-                            result.legend.push({ src: legend.src, title: value.Title });
+                            result.legend.push({
+                                src: legend.src, title: value.Title
+                            });
                     };
 
                     var _traverse = function (o, func) {
@@ -2266,7 +2317,9 @@
                         result.metadata = [];
                         for (var j = 0; j < l.MetadataURL.length; j++) {
                             var md = l.MetadataURL[j];
-                            result.metadata.push({ format: md.Format, type: md.type, url: md.OnlineResource });
+                            result.metadata.push({
+                                format: md.Format, type: md.type, url: md.OnlineResource
+                            });
                         }
                     }
                     result.queryable = l.queryable;
@@ -2570,7 +2623,9 @@
     TC.wrap.layer.Raster.prototype.getCompatibleMatrixSets = function (crs) {
         var self = this;
         var result = [];
-        normalizeProjection({ crs: crs });
+        normalizeProjection({
+            crs: crs
+        });
         var layer = self.parent;
         if (self.getServiceType() === TC.Consts.layerType.WMTS) {
             var layerList = layer.capabilities.Contents.Layer;
@@ -2622,13 +2677,19 @@
         });
 
         source.on(ol.source.Image.EventType_.IMAGELOADSTART, function (e) {
-            self.$events.trigger($.Event(TC.Consts.event.BEFORETILELOAD, { tile: e.image.getImage() }));
+            self.$events.trigger($.Event(TC.Consts.event.BEFORETILELOAD, {
+                tile: e.image.getImage()
+            }));
         });
         source.on(ol.source.Image.EventType_.IMAGELOADEND, function (e) {
-            self.$events.trigger($.Event(TC.Consts.event.TILELOAD, { tile: e.image.getImage() }));
+            self.$events.trigger($.Event(TC.Consts.event.TILELOAD, {
+                tile: e.image.getImage()
+            }));
         });
         source.on(ol.source.Image.EventType_.IMAGELOADERROR, function (e) {
-            self.$events.trigger($.Event(TC.Consts.event.TILELOAD, { tile: e.image.getImage() }));
+            self.$events.trigger($.Event(TC.Consts.event.TILELOAD, {
+                tile: e.image.getImage()
+            }));
         });
 
 
@@ -2675,13 +2736,19 @@
         result.setTileLoadFunction($.proxy(self.parent.getImageLoad, self.parent));
 
         result.on(ol.source.TileEventType.TILELOADSTART, function (e) {
-            self.$events.trigger($.Event(TC.Consts.event.BEFORETILELOAD, { tile: e.tile.getImage() }));
+            self.$events.trigger($.Event(TC.Consts.event.BEFORETILELOAD, {
+                tile: e.tile.getImage()
+            }));
         });
         result.on(ol.source.TileEventType.TILELOADEND, function (e) {
-            self.$events.trigger($.Event(TC.Consts.event.TILELOAD, { tile: e.tile.getImage() }));
+            self.$events.trigger($.Event(TC.Consts.event.TILELOAD, {
+                tile: e.tile.getImage()
+            }));
         });
         result.on(ol.source.TileEventType.TILELOADERROR, function (e) {
-            self.$events.trigger($.Event(TC.Consts.event.TILELOAD, { tile: e.tile.getImage() }));
+            self.$events.trigger($.Event(TC.Consts.event.TILELOAD, {
+                tile: e.tile.getImage()
+            }));
         });
 
         var prevFn = $.proxy(result.getResolutions, result);
@@ -2853,7 +2920,8 @@
 
     // Transformación de opciones de estilo en un estilo nativo OL3.
     var createNativeStyle = function (options, olFeat) {
-        var nativeStyleOptions = {};
+        var nativeStyleOptions = {
+        };
 
         var feature;
         if (olFeat) {
@@ -2866,10 +2934,14 @@
 
 
                 feature = {
-                    id: TC.wrap.Feature.prototype.getId.call({ feature: olFeat }), // GLS añado el id de la feature para poder filtrar por la capa a la cual pertenece                    
+                    id: TC.wrap.Feature.prototype.getId.call({
+                        feature: olFeat
+                    }), // GLS añado el id de la feature para poder filtrar por la capa a la cual pertenece                    
                     features: olFeat.get('features'),
                     getData: function () {
-                        return TC.wrap.Feature.prototype.getData.call({ feature: olFeat });
+                        return TC.wrap.Feature.prototype.getData.call({
+                            feature: olFeat
+                        });
                     }
                 };
 
@@ -2997,7 +3069,8 @@
     };
 
     var getStyleFromNative = function (olStyle, olFeat) {
-        var result = {};
+        var result = {
+        };
         if ($.isFunction(olStyle)) {
             if (olFeat) {
                 olStyle = olStyle(olFeat);
@@ -3093,7 +3166,8 @@
 
     TC.wrap.layer.Vector.prototype.import = function (options) {
         var self = this;
-        var opts = $.extend({}, options);
+        var opts = $.extend({
+        }, options);
         opts.type = options.format;
 
         var oldFeatures = self.layer.getSource().getFeatures();
@@ -3177,7 +3251,9 @@
             return function (extent, resolution, projection) {
                 self.parent.state = TC.Layer.state.LOADING;
                 if (self.parent.map) {
-                    self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self.parent }));
+                    self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, {
+                        layer: self.parent
+                    }));
                 }
                 internalLoader.call(this, extent, resolution, projection);
             };
@@ -3187,7 +3263,7 @@
         var source;
         var vectorOptions;
 
-        var getTypeFromUrl = function (url) {
+        var getMimeTypeFromUrl = function (url) {
             var idx = url.indexOf('?');
             if (idx >= 0) {
                 url = url.substr(0, idx);
@@ -3200,9 +3276,16 @@
             }
             switch (url.substr(url.lastIndexOf('.') + 1).toLowerCase()) {
                 case 'kml':
-                    return TC.Consts.layerType.KML;
+                    return TC.Consts.mimeType.KML;
+                case 'json':
+                case 'geojson':
+                    return TC.Consts.mimeType.GEOJSON;
+                case 'gml':
+                    return TC.Consts.mimeType.GML;
+                case 'gpx':
+                    return TC.Consts.mimeType.GPX;
                 default:
-                    return TC.Consts.layerType.VECTOR;
+                    return null;
             }
         };
 
@@ -3224,7 +3307,7 @@
                 url: TC.proxify(options.url),
                 projection: options.crs
             };
-            vectorOptions.format = getFormatFromName(options.format) || getFormatFromName(getTypeFromUrl(options.url)) || getFormatFromName(options.type);
+            vectorOptions.format = getFormatFromName(options.format) || getFormatFromName(getMimeTypeFromUrl(options.url)) || getFormatFromName(options.type);
             vectorOptions.loader = createGenericLoader(vectorOptions.url, vectorOptions.format);
             usesGenericLoader = true;
         }
@@ -3234,21 +3317,29 @@
                 loader: function (extent, resolution, projection) {
                     self.parent.state = TC.Layer.state.LOADING;
                     if (self.parent.map) {
-                        self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self.parent }));
+                        self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, {
+                            layer: self.parent
+                        }));
                     }
                     var format = this.getFormat();
                     try {
-                        var fs = format.readFeatures(options.data, { featureProjection: projection });
+                        var fs = format.readFeatures(options.data, {
+                            featureProjection: projection
+                        });
                         this.addFeatures(fs);
                         self.parent.state = TC.Layer.state.IDLE;
                         if (self.parent.map) {
-                            self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self.parent, newData: data }));
+                            self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, {
+                                layer: self.parent, newData: data
+                            }));
                         }
                     }
                     catch (e) {
                         self.parent.state = TC.Layer.state.IDLE;
                         if (self.parent.map) {
-                            self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: self.parent, reason: e.message }));
+                            self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, {
+                                layer: self.parent, reason: e.message
+                            }));
                         }
                     }
                 }
@@ -3281,7 +3372,9 @@
                     var serviceUrl = options.url;
                     if (serviceUrl) {
                         self.parent.state = TC.Layer.state.LOADING;
-                        self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self.parent }));
+                        self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, {
+                            layer: self.parent
+                        }));
                         var ajaxOptions = {};
                         var crs = projection.getCode();
                         var version = options.version || '1.1.0';
@@ -3350,6 +3443,15 @@
                                 gml[gml.length] = '" srsName="';
                                 gml[gml.length] = crs;
                                 gml[gml.length] = '">';
+                                if (options.propertynames) {
+                                    var pPrefix = version === '1.1.0' ? 'wfs' : 'ogc';
+                                    var _arrProperties = typeof (options.propertynames) === "string" ? options.propertynames.split(",") : options.propertynames
+                                    if (options.geometryName)
+                                        _arrProperties.push(options.geometryName)
+                                    for (var i; i < _arrProperties.length; i++) {
+                                        gml[gml.length] = '<' + pPrefix + ':PropertyName>' + _arrProperties[i].trim() + '</' + pPrefix + ':PropertyName>';
+                                    }
+                                }
                                 gml[gml.length] = options.properties.getText();
                                 gml[gml.length] = '</wfs:Query>';
                             }
@@ -3362,7 +3464,9 @@
                         $.ajax(ajaxOptions).done(function (data) {
                             sOrigin.addFeatures(outputFormat.readFeatures(data));
                             self.parent.state = TC.Layer.state.IDLE;
-                            self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self.parent, newData: data }));
+                            self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, {
+                                layer: self.parent, newData: data
+                            }));
                         });
                     }
                 },
@@ -3376,7 +3480,9 @@
         if (usesGenericLoader) {
             source.on(ol.events.EventType.CHANGE, function (e) {
                 if (self.parent.map) {
-                    self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self.parent }));
+                    self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, {
+                        layer: self.parent
+                    }));
                 }
             });
         }
@@ -3385,7 +3491,9 @@
 
         var markerStyle = options.style && options.style.marker ? options.style.marker : TC.Cfg.styles.marker;
         if (!options.style || !options.style.marker) {
-            markerStyle = $.extend({}, markerStyle, { anchor: TC.Cfg.styles.point.anchor });
+            markerStyle = $.extend({}, markerStyle, {
+                anchor: TC.Cfg.styles.point.anchor
+            });
         }
 
         // Si habilitamos el clustering la fuente es especial
@@ -3516,7 +3624,9 @@
                         // Timeout porque OL3 no tiene evento featuresadded. El timeout evita ejecuciones a lo tonto.
                         clearTimeout(_timeout);
                         _timeout = setTimeout(function () {
-                            self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.parent, features: [f] }));
+                            self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, {
+                                layer: self.parent, features: [f]
+                            }));
                         }, 50);
                     });
                 }
@@ -3533,26 +3643,34 @@
                 var idx = $.inArray(olFeat._wrap.parent, self.parent.features);
                 if (idx > -1) {
                     self.parent.features.splice(idx, 1);
-                    self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { layer: self.parent, feature: olFeat._wrap.parent }));
+                    self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, {
+                        layer: self.parent, feature: olFeat._wrap.parent
+                    }));
                 }
             }
         });
 
         source.addEventListener(ol.source.VectorEventType.ADDFEATURE, function (e) {
             if (self.parent.map) {
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, {
+                    layer: self.parent
+                }));
             }
         });
 
         source.addEventListener(ol.source.VectorEventType.REMOVEFEATURE, function () {
             if (self.parent.map) {
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, {
+                    layer: self.parent
+                }));
             }
         });
 
         source.addEventListener(ol.source.VectorEventType.CLEAR, function () {
             if (self.parent.map) {
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESCLEAR, { layer: self.parent }));
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESCLEAR, {
+                    layer: self.parent
+                }));
             }
         });
 
@@ -3729,7 +3847,9 @@
                 olFeat.setStyle(displayNoneStyle);
             }
             $.when(self.getLayer()).then(function (olLayer) {
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, {
+                    layer: self.parent
+                }));
             });
         }
     };
@@ -3785,7 +3905,9 @@
                 };
                 $.ajax(ajaxOptions).done(function (data) {
                     var er = data.getElementsByTagName('ExceptionReport')[0];
-                    var errorObj = { reason: '' };
+                    var errorObj = {
+                        reason: ''
+                    };
                     if (er) {
                         var e = er.getElementsByTagName('Exception')[0];
                         if (e) {
@@ -3802,7 +3924,9 @@
                         result.resolve(response);
                     }
                 }).fail(function () {
-                    result.reject({ code: '', reason: 'unknown' });
+                    result.reject({
+                        code: '', reason: 'unknown'
+                    });
                 });
             });
         }
@@ -3851,12 +3975,12 @@
                         var hit = olMap.hasFeatureAtPixel(pixel);
                         if (hit) {
                             olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                                    if (layer._wrap && layer._wrap.parent && layer._wrap.parent.id === self.parent.id && feature) {
-                                        olMap.getTarget().style.cursor = 'move';
-                                    } else {
-                                        olMap.getTarget().style.cursor = '';
-                                    }
-                                },
+                                if (layer._wrap && layer._wrap.parent && layer._wrap.parent.id === self.parent.id && feature) {
+                                    olMap.getTarget().style.cursor = 'move';
+                                } else {
+                                    olMap.getTarget().style.cursor = '';
+                                }
+                            },
                                 {
                                     hitTolerance: hitTolerance
                                 });
@@ -3924,7 +4048,9 @@
                 });
             if (!featureCount) {
                 // GLS: lanzo el evento click, para que los controles que no pueden heredar de click y definir un callback pueda suscribirse al evento
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.CLICK, { coordinate: e.coordinate, pixel: e.pixel }));
+                self.parent.map.$events.trigger($.Event(TC.Consts.event.CLICK, {
+                    coordinate: e.coordinate, pixel: e.pixel
+                }));
                 self.parent.callback(e.coordinate, e.pixel);
             }
             // Seguimos adelante si no se han pinchado featuers
@@ -3951,7 +4077,9 @@
     TC.wrap.control.ScaleBar.prototype.render = function () {
         var self = this;
         if (!self.ctl) {
-            self.ctl = new ol.control.ScaleLine({ target: self.parent.div });
+            self.ctl = new ol.control.ScaleLine({
+                target: self.parent.div
+            });
         }
         else {
             self.ctl.updateElement_();
@@ -3969,7 +4097,9 @@
         var self = this;
         $.when(map.wrap.getMap()).then(function (olMap) {
             var div = self.parent.div;
-            self.zCtl = new ol.control.Zoom({ target: div });
+            self.zCtl = new ol.control.Zoom({
+                target: div
+            });
             // Ponemos para render una función modificada, para evitar que en los pinch zoom haya errores de este tipo:
             // AssertionError: Assertion failed: calculated value (1.002067782531452) ouside allowed range (0-1)
             self.zsCtl = new ol.control.ZoomSlider({
@@ -3996,7 +4126,9 @@
                     }
                 }
             });
-            self.z2eCtl = new ol.control.ZoomToExtent({ target: div, extent: map.initialExtent, tipLabel: '' });
+            self.z2eCtl = new ol.control.ZoomToExtent({
+                target: div, extent: map.initialExtent, tipLabel: ''
+            });
 
             olMap.addControl(self.zCtl);
             olMap.addControl(self.zsCtl);
@@ -4098,7 +4230,7 @@
             if (e.dragging)
                 return;
 
-            self.initSnap(self.olMap.getEventCoordinate(e.originalEvent));
+            self.initSnap(self.olMap.getEventCoordinate(e.originalEvent), e.pixel);
         };
 
         self._postcomposeTrigger = function (e) {
@@ -4165,11 +4297,12 @@
         var x = Math.round(position[0]);
         var y = Math.round(position[1]);
 
-        if (self.parent.layerTracking.features) {
-            var last = getTrackingLine.call(this).geometry.length > 0 && getTrackingLine.call(this).geometry[getTrackingLine.call(this).geometry.length - 1];
+        var line = getTrackingLine.call(this);
+        if (self.parent.layerTracking.features && line) {
+            var last = line.geometry.length > 0 && line.geometry[line.geometry.length - 1];
             if (last && last.length == 0) {
                 self.parent.layerTracking.features[0].geometry.push([x, y, altitude, m]);
-                getTrackingLine.call(this).wrap.feature.getGeometry().appendCoordinate([x, y, altitude, m]);
+                line.wrap.feature.getGeometry().appendCoordinate([x, y, altitude, m]);
             }
             else {
                 var lx = Math.round(last[0]);
@@ -4177,7 +4310,7 @@
 
                 if (x != lx || y != ly) {
                     self.parent.layerTracking.features[0].geometry.push([x, y, altitude, m]);
-                    getTrackingLine.call(this).wrap.feature.getGeometry().appendCoordinate([x, y, altitude, m]);
+                    line.wrap.feature.getGeometry().appendCoordinate([x, y, altitude, m]);
                 }
             }
 
@@ -4193,6 +4326,10 @@
         var self = this;
         var deferred = $.Deferred();
         var accuracy, heading, speed, altitude, altitudeAccuracy;
+
+        if (!getTrackingLine.call(this)) {
+            self.parent.setTracking(false);
+        }
 
         if (geoposition && geoposition.coords) {
             self.parent.layerGPS.clearFeatures();
@@ -4262,11 +4399,15 @@
                         self.parent.layerGPS.map.zoomToFeatures(self.parent.layerGPS.features);
                     }
 
-                    deferred.resolve({ marker: marker, accuracy: accuracyCircle });
+                    deferred.resolve({
+                        marker: marker, accuracy: accuracyCircle
+                    });
                 });
 
             } else { deferred.resolve(null); }
-        } else { deferred.resolve(null); }
+        } else {
+            deferred.resolve(null);
+        }
 
         return deferred.promise();
     };
@@ -4284,6 +4425,13 @@
 
                 var JSONParser = new TC.wrap.parser.JSON();
                 var features = JSONParser.parser.readFeatures(self.parent.sessionTracking);
+                if (features && self.parent.storageCRS !== self.parent.map.crs) {
+                    features = features.map(function (feature) {
+                        var clone = feature.clone();
+                        clone.getGeometry().transform(self.parent.storageCRS, self.parent.map.crs);
+                        return clone;
+                    });
+                }
 
                 var coordinates = features.filter(function (feature) {
                     var type = feature.getGeometry().getType().toLowerCase();
@@ -4327,11 +4475,17 @@
 
                     self.parent.currentPositionWaiting = self.parent.getLoadingIndicator().addWait();
 
+                    if (!self.currentPositionTrk) {
+                        self.currentPositionTrk = [];
+                    }
+
                     var getCurrentPositionInterval;
                     var getCurrentPositionRequest = 0;
                     var errorTimeout = 0;
                     var toast = false;
-                    var options = { enableHighAccuracy: true, timeout: 600000 };
+                    var options = {
+                        enableHighAccuracy: true, timeout: 600000
+                    };
 
                     function getCurrentPosition(errorCallback) {
                         var id = getCurrentPositionRequest++;
@@ -4341,9 +4495,7 @@
                                 self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
                                 self.positionChangehandler(data).then(function (obj) {
                                     if (self.parent.geopositionTracking == true && obj && obj.marker && obj.accuracy) {
-                                        self.currentPositionTrk = navigator.geolocation.watchPosition(
-                                            self.positionChangehandler.bind(self),
-                                            self.parent.onGeolocateError.bind(self.parent), options);
+                                        self.currentPositionTrk.push(navigator.geolocation.watchPosition(self.positionChangehandler.bind(self), self.parent.onGeolocateError.bind(self.parent), options));
                                     }
                                 });
                             },
@@ -4383,7 +4535,9 @@
                             clearInterval(getCurrentPositionInterval);
 
                             self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
-                            self.map.toast(self.parent.getLocaleString("geo.error.permission_denied"), { type: TC.Consts.msgType.WARNING });
+                            self.map.toast(self.parent.getLocaleString("geo.error.permission_denied"), {
+                                type: TC.Consts.msgType.WARNING
+                            });
                             self.parent.track.$activateButton.toggleClass(TC.Consts.classes.HIDDEN, false);
                             self.parent.track.$deactivateButton.toggleClass(TC.Consts.classes.HIDDEN, true);
                         }
@@ -4393,7 +4547,16 @@
             }
         } else {
             self.parent.firstPosition = false;
-            window.navigator.geolocation.clearWatch(self.currentPositionTrk);
+
+            if (self.currentPositionTrk) {
+                self.currentPositionTrk = self.currentPositionTrk instanceof Array ? self.currentPositionTrk : [self.currentPositionTrk];
+
+                self.currentPositionTrk.forEach(function (watch) {
+                    navigator.geolocation.clearWatch(watch);
+                });
+
+                self.currentPositionTrk = [];
+            }
 
             if (self.parent.$centerDiv)
                 self.parent.$centerDiv.toggleClass(TC.Consts.classes.HIDDEN, true);
@@ -4460,7 +4623,25 @@
         }
     };
 
-    TC.wrap.control.Geolocation.prototype.initSnap = function (coordinate) {
+    TC.wrap.control.Geolocation.prototype.endSnap = function () {
+        var self = this;
+
+        $.when(self.parent.map.wrap.getMap()).then(function (olMap) {
+            /* cartel */
+            if (self.snapInfo) {
+                olMap.removeOverlay(self.snapInfo);
+            }
+            if (self.snapInfoElement) {
+                self.snapInfoElement.style.display = 'none';
+            }
+            /* línea */
+            if (self.snapLine) {
+                delete self.snapLine;
+            }
+        });
+    };
+
+    TC.wrap.control.Geolocation.prototype.initSnap = function (coordinate, eventPixel) {
         var self = this;
 
         if (self.parent.layerTrack) {
@@ -4471,67 +4652,79 @@
                 var geometry = closestFeature.getGeometry();
                 var closestPoint = geometry.getClosestPoint(coordinate);
 
-                var coordinates = [coordinate, [closestPoint[0], closestPoint[1]]];
-                if (!self.snapLine) self.snapLine = new TC.feature.Polyline(coordinates);
-                else self.snapLine.wrap.feature.getGeometry().setCoordinates(coordinates);
+                const pixel = self.parent.map.getPixelFromCoordinate(closestPoint);
+                const distance = Math.sqrt(
+                    Math.pow(eventPixel[0] - pixel[0], 2) +
+                    Math.pow(eventPixel[1] - pixel[1], 2));
 
+                if (distance > self.parent.snappingTolerance) {
+                    self.endSnap();
+                } else {
+                    var coordinates = [coordinate, [closestPoint[0], closestPoint[1]]];
 
-                // información del punto
-                if (!self.snapInfoElement)
-                    self.snapInfoElement = document.getElementsByClassName('tc-ctl-geolocation-track-snap-info')[0];
+                    if (!self.snapLine) self.snapLine = new TC.feature.Polyline(coordinates);
+                    else self.snapLine.wrap.feature.getGeometry().setCoordinates(coordinates);
 
+                    // información del punto
+                    if (!self.snapInfoElement)
+                        self.snapInfoElement = document.getElementsByClassName('tc-ctl-geolocation-track-snap-info')[0];
 
-                self.snapInfoElement.style.display = 'block';
+                    self.snapInfoElement.style.display = 'block';
 
-                if (!self.snapInfo) {
-                    self.snapInfo = new ol.Overlay({
-                        element: self.snapInfoElement,
-                        offset: [5, 18]
-                    });
+                    if (!self.snapInfo) {
+                        self.snapInfo = new ol.Overlay({
+                            element: self.snapInfoElement,
+                            offset: [5, 18]
+                        });
 
-                    self.olMap.addOverlay(self.snapInfo);
-                }
+                        self.olMap.addOverlay(self.snapInfo);
+                    }
 
-                if (self.snapInfo.getMap() == undefined)
-                    self.snapInfo.setMap(self.olMap);
+                    if (self.snapInfo.getMap() == undefined)
+                        self.snapInfo.setMap(self.olMap);
 
-                self.snapInfo.setPosition(coordinate);
+                    self.snapInfo.setPosition(coordinate);
 
-                var data = {};
-                if (closestFeature.getGeometry().getType() != "LineString") {
-                    if (closestFeature.getKeys().indexOf('name') > -1)
-                        data.n = closestFeature.get('name');
-                }
+                    var data = {};
+                    if (closestFeature.getGeometry().getType() != "LineString") {
+                        if (closestFeature.getKeys().indexOf('name') > -1)
+                            data.n = closestFeature.get('name');
+                    }
 
-                var locale = self.parent.map.options.locale && self.parent.map.options.locale.replace('_', '-') || undefined;
-                data.x = Math.round(closestPoint[0]).toLocaleString(locale);
-                data.y = Math.round(closestPoint[1]).toLocaleString(locale);
+                    var locale = self.parent.map.options.locale && self.parent.map.options.locale.replace('_', '-') || undefined;
+                    data.x = self.map.wrap.isGeo() ? closestPoint[0].toLocaleString(locale, { minimumFractionDigits: 5 }) : Math.round(closestPoint[0]).toLocaleString(locale);
+                    data.y = self.map.wrap.isGeo() ? closestPoint[1].toLocaleString(locale, { minimumFractionDigits: 5 }) : Math.round(closestPoint[1]).toLocaleString(locale);
 
-                var getZ = function (position) {
-                    return closestPoint[position] ? (Math.round(closestPoint[position] * 100) / 100).toLocaleString(locale) : undefined;
-                };
-                var getM = function (position) {
-                    return closestPoint[position] > 0 ? new Date(closestPoint[position]).toLocaleString(locale) : undefined;
-                };
+                    if (self.map.wrap.isGeo()) {
+                        data.isGeo = true;
+                    }
 
-                if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYZM) {
-                    data.z = getZ(2);
-                    data.m = getM(3);
-                } else if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYZ) {
-                    data.z = getZ(2);
-                } else if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYM) {
-                    data.m = getM(2);
-                }
+                    var getZ = function (position) {
+                        return closestPoint[position] ? (Math.round(closestPoint[position] * 100) / 100).toLocaleString(locale) : undefined;
+                    };
+                    var getM = function (position) {
+                        return closestPoint[position] > 0 ? new Date(closestPoint[position]).toLocaleString(locale) : undefined;
+                    };
 
-                if (data) {
-                    self.parent.getRenderedHtml(self.parent.CLASS + '-track-snapping-node', data, function (html) {
-                        self.snapInfoElement.innerHTML = html;
-                    });
+                    if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYZM) {
+                        data.z = getZ(2);
+                        data.m = getM(3);
+                    } else if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYZ) {
+                        data.z = getZ(2);
+                    } else if (closestFeature.getGeometry().getLayout() === ol.geom.GeometryLayout.XYM) {
+                        data.m = getM(2);
+                    }
+
+                    if (data) {
+                        self.parent.getRenderedHtml(self.parent.CLASS + '-track-snapping-node', data, function (html) {
+                            self.snapInfoElement.innerHTML = html;
+                        });
+                    }
                 }
             }
-
-            self.olMap.render();
         }
+
+        self.olMap.render();
     };
 
     TC.wrap.control.Geolocation.prototype.drawTrackingData = function (track) {
@@ -4569,6 +4762,24 @@
         return deferred.promise();
     };
 
+    TC.wrap.control.Geolocation.prototype.formattedFromStorage = function (storageData) {
+        const self = this;
+
+        if (self.parent.storageCRS !== self.parent.map.crs) {
+            var features = new ol.format.GeoJSON().readFeatures(storageData);
+            if (features) {
+                features = features.map(function (feature) {
+                    var clone = feature.clone();
+                    clone.getGeometry().transform(self.parent.storageCRS, self.parent.map.crs);
+                    return clone;
+                });
+
+                return new ol.format.GeoJSON().writeFeatures(features);
+            }
+        }
+
+        return storageData;
+    };
     TC.wrap.control.Geolocation.prototype.formattedToStorage = function (layer, setTrackingProperty) {
         var self = this;
 
@@ -4577,13 +4788,24 @@
 
         var features = layer.wrap.layer.getSource().getFeatures();
         var layout;
-        features.map(function (feature) {
+        features = features.map(function (feature) {
             if (feature.getGeometry() instanceof ol.geom.LineString) {
                 layout = feature.getGeometry().getLayout();
             }
+
+            if (self.parent.map.crs !== self.parent.storageCRS) {
+                var clone = feature.clone();
+                clone.getGeometry().transform(self.parent.map.crs, self.parent.storageCRS);
+
+                return clone;
+            }
+
+            return feature;
         });
 
-        return { features: parser.writeFeatures(features), layout: layout };
+        return {
+            features: parser.writeFeatures(features), layout: layout
+        };
     };
 
     TC.wrap.control.Geolocation.prototype.export = function (type, li) {
@@ -4714,7 +4936,9 @@
             else if (feature.getGeometry() instanceof ol.geom.LineString) {
                 // GLS: 31/01/2018 Routes (<rte>) are converted into LineString geometries, and tracks (<trk>) into MultiLineString, por tanto, las líneas las cargamos como N Rutas, no las unimos como hasta ahora: // segments.push(feature.getGeometry());                
                 getName(feature);
-                toAdd.push(new ol.Feature({ geometry: new ol.geom.LineString(feature.getGeometry().getCoordinates(), feature.getGeometry().getLayout()) }));
+                toAdd.push(new ol.Feature({
+                    geometry: new ol.geom.LineString(feature.getGeometry().getCoordinates(), feature.getGeometry().getLayout())
+                }));
                 toRemove.push(feature);
             }
             else if (feature.getGeometry() instanceof ol.geom.MultiLineString) {
@@ -4724,7 +4948,9 @@
                 var ls = clone.getGeometry().getLineStrings();
 
                 var coords = segmentsUnion(ls);
-                toAdd.push(new ol.Feature({ geometry: new ol.geom.LineString(coords, feature.getGeometry().getLayout()) }));
+                toAdd.push(new ol.Feature({
+                    geometry: new ol.geom.LineString(coords, feature.getGeometry().getLayout())
+                }));
                 toRemove.push(feature);
             }
         }
@@ -4921,6 +5147,14 @@
                     var fraction;
                     var hasTime = false;
 
+                    const toLength = function (coords) {
+                        if (self.parent.map.crs !== self.parent.map.options.utmCrs) {
+                            return TC.Util.reproject(coords, self.parent.map.crs, self.parent.map.options.utmCrs);
+                        }
+
+                        return coords;
+                    };
+
                     if (self.parent.hasElevation) {
                         self.parent.chartProgressInit();
                     }
@@ -4937,10 +5171,11 @@
                             var done;
                             arCoordinates[i][3] = 0;
 
-                            if (i + 1 < arCoordinates.length)
-                                done = new ol.geom.LineString(arCoordinates.slice(i - 1, i + 1)).getLength();
-                            else
-                                done = new ol.geom.LineString(arCoordinates.slice(i - 1)).getLength();
+                            if (i + 1 < arCoordinates.length) {
+                                done = new ol.geom.LineString(toLength(arCoordinates.slice(i - 1, i + 1))).getLength();
+                            } else {
+                                done = new ol.geom.LineString(toLength(arCoordinates.slice(i - 1))).getLength();
+                            }
 
                             arCoordinates[i][3] = arCoordinates[i - 1][3] + (3600000 * done / self.parent.walkingSpeed);
                         }
@@ -4951,13 +5186,20 @@
 
                     var trackFilm = new ol.geom.LineString(arCoordinates);
                     var timestamp = start;
-                    var distance = trackFilm.getLength();
+                    var distance = 0;
+
+                    if (self.parent.map.crs !== self.parent.map.options.utmCrs) {
+                        distance = new ol.geom.LineString(toLength(JSON.parse(JSON.stringify(arCoordinates)))).getLength();
+                    } else {
+                        distance = trackFilm.getLength();
+                    }
+
                     var done = 0;
                     var getDoneAtM = function (m) {
                         for (var i = 0; i < arCoordinates.length; i++) {
                             if (arCoordinates[i][3] > m)
                                 return {
-                                    d: new ol.geom.LineString(arCoordinates.slice(0, i)).getLength(),
+                                    d: new ol.geom.LineString(toLength(arCoordinates.slice(0, i))).getLength(),
                                     p: arCoordinates[i - 1].slice(0, 2)
                                 };
                         }
@@ -5111,7 +5353,9 @@
                 new ol.style.Fill({
                     color: 'rgba(0, 0, 0, 0.1)'
                 }),
-                new ol.style.Stroke({ color: 'rgba(255, 0, 0, .8)', width: 1 })
+                new ol.style.Stroke({
+                    color: 'rgba(255, 0, 0, .8)', width: 1
+                })
             );
             vectorContext.drawCircleGeometry(f);
 
@@ -5324,38 +5568,107 @@
 
     TC.wrap.control.OverviewMap.prototype.reset = function (options) {
         var self = this;
-        options = options || {};
-        var layer = options.layer || self.parent.layer;
-        if (self.parent.map && layer) {
-            var olMap = self.ovMap.ovmap_;
+        const deferred = new $.Deferred();
+
+        const setLayer = function (layer, crs) {
+            if (layer.type === TC.Consts.layerType.WMTS) {
+                var layerProjectionOptions = { crs: crs || self.parent.map.crs, oldCrs: layer.wrap.layer.getSource().getProjection().getCode() }; // , allowFallbackLayer: true
+
+                if (layerProjectionOptions.oldCrs !== layerProjectionOptions.crs) {
+                    layer.setProjection(layerProjectionOptions);
+                }
+            }
+
             $.when(layer.wrap.getLayer()).then(function (olLayer) {
+
+                var olView = new ol.View(getResolutionOptions(self.parent.map.wrap, olLayer._wrap.parent));
+
+                if (olView.getResolutions()) {
+                    olView.setResolution(olView.getResolutions().filter(function (res) {
+                        return res > olView.getResolutionForExtent(self.parent.map.getExtent(), olMap.getSize())
+                    }).reverse()[0]);
+
+                    olMap.setView(olView);
+                } else if (olView.getProjection().getCode() !== olMap.getView().getProjection().getCode()) {
+                    olMap.setView(olView);
+                }
+
+                // para controlar el mapa en blanco en IE en la carga inicial
+                olLayer._wrap.$events.one(TC.Consts.event.TILELOAD, function () {
+                    olMap.getLayers().getArray()[0].getSource().refresh();
+                });
+
                 if (layer !== self.parent.layer) {
+
                     olMap.getLayers().forEach(function (l) {
                         if (l instanceof ol.layer.Image || l instanceof ol.layer.Tile) {
                             olMap.removeLayer(l);
                         }
                     });
-                    olMap.addLayer(olLayer);
+
+                    var $load = $(self.parent.div).find('.' + self.parent.CLASS + '-load');
+                    olLayer._wrap.$events.on(TC.Consts.event.BEFORETILELOAD, function () {
+                        $load.removeClass(TC.Consts.classes.HIDDEN).addClass(TC.Consts.classes.VISIBLE);
+                    });
+                    olLayer._wrap.$events.on(TC.Consts.event.TILELOAD, function () {
+                        $load.removeClass(TC.Consts.classes.VISIBLE).addClass(TC.Consts.classes.HIDDEN);
+                    });
+
+                    olMap.getLayers().insertAt(0, olLayer); // GLS: no usamos .addLayer(olLayer) para asegurar que la capa a añadir quede como fondo.
                 }
-                olMap.setView(
-                    new ol.View(
-                        getResolutionOptions(self.parent.map.wrap, layer)
-                    )
-                );
+
+                deferred.resolve(layer);
+            });
+        };
+
+        options = options || {};
+        var layer = options.layer || self.parent.layer;
+        if (self.parent.map && layer && self.ovMap) {
+            var olMap = self.ovMap.ovmap_;
+
+            layer.getCapabilitiesPromise().then(function () {
+
+                var originalLayer = layer;
+
+                if (!layer.isCompatible(self.parent.map.crs) && layer.wrap.getCompatibleMatrixSets(self.parent.map.crs).length === 0) {
+                    layer = layer.getFallbackLayer() || self.parent.defaultLayer;
+
+                    layer.getCapabilitiesPromise().then(function () {
+                        if (self.parent.map.on3DView && !layer.isCompatible(self.parent.map.crs)) {
+                            self.parent.map.loadProjections({
+                                crsList: originalLayer.getCompatibleCRS(),
+                                orderBy: 'name'
+                            }).then(function (projList) {
+                                setLayer(originalLayer, projList[0].code);
+                            });
+                        } else if (layer.isCompatible(self.parent.map.crs)) {
+                            setLayer(layer);
+                        }
+                    });
+                } else {
+                    setLayer(layer);
+                }
             });
         }
-    };    
+
+        return deferred;
+    };
 
     TC.wrap.control.OverviewMap.prototype.get3DCameraLayer = function () {
         var self = this;
         var result = null;
         var camLayerId = '3DCamera';
-        var ovMap = self.ovMap.getOverviewMap();
-        ovMap.getLayers().forEach(function (elm) {
-            if (elm.get('id') === camLayerId) {
-                result = elm;
-            }
-        });
+        var ovMap;
+
+        if (self.ovMap) {
+            ovMap = self.ovMap.getOverviewMap();
+            ovMap.getLayers().forEach(function (elm) {
+                if (elm.get('id') === camLayerId) {
+                    result = elm;
+                }
+            });
+        }
+
         if (!result) {
             var ovMap = self.ovMap.getOverviewMap();
             var fovStyle = createNativeStyle({});
@@ -5377,7 +5690,8 @@
         var camLayer = self.get3DCameraLayer();
         if (camLayer) {
             var feature;
-            options = options || {};
+            options = options || {
+            };
             var fov = options.fov;
             var source = camLayer.getSource();
             if (!fov || !fov.length) { // no vemos terreno o no estamos en vista 3D
@@ -5431,9 +5745,11 @@
             TC.wrap.control.Click.prototype.register.call(self, map);
             var _clickTrigger = self._trigger;
             self._trigger = function (e) {
-                self.parent.beforeRequest({ xy: e.pixel });
                 var result = _clickTrigger.call(self, e);
-                if (!result) {
+                if (result) {
+                    self.parent.beforeRequest({ xy: e.pixel });
+                }
+                else {
                     map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, { control: self.parent }));
                 }
                 return result;
@@ -5496,6 +5812,7 @@
             var auxInfo = {};
             var requestDeferreds = [];
             var featurePromises = [];
+            var services = [];
 
             //var infoFormats = [];
             var layers = olMap.getLayers().getArray();
@@ -5564,6 +5881,7 @@
             }
 
             for (var serviceUrl in targetServices) {
+                services.push(targetServices[serviceUrl]);
                 var targetService = targetServices[serviceUrl];
                 var source = auxInfo[serviceUrl].source;
                 var layers = auxInfo[serviceUrl].layers;
@@ -5678,8 +5996,7 @@
                                         return result;
                                     };
 
-                                    var fakeLayers = {
-                                    };
+                                    var fakeLayers = {};
 
                                     for (var j = 0; j < features.length; j++) {
                                         var feature = features[j];
@@ -5721,8 +6038,6 @@
                                             }
                                         }
                                     }//iteración sobre las features de esta respuesta
-
-
                                 }
                                 else {
                                     //si no hay formato reconocido y parseable, metemos un iframe con la respuesta
@@ -5794,8 +6109,6 @@
                                                 });
                                             }
                                         }
-                                        // Esta feature es solo para ver, no debe reaccionar a clics
-                                        feat.showsPopup = false;
                                         if (!defaultFeature && TC.Geometry.isInside(coords, feat.geometry)) {
                                             defaultFeature = feat;
                                         }
@@ -5838,15 +6151,21 @@
                     });
                 }
 
+                if (services && services.length == 0) {
+                    for (var serviceUrl in targetServices) {
+                        services.push(targetServices[serviceUrl]);
+                    }
+                }
+
                 // GLS: nos suscribimos TC.Consts.event.BEFOREFEATUREINFO y lanzamos el mismo evento de zero resultados ya que puede darse que la resolución se lance antes del before.
                 map.$events.on(TC.Consts.event.BEFOREFEATUREINFO, function () {
                     self.parent.responseCallback({
-                        coords: coords, resolution: resolution, services: targetServices, featureCount: 0
+                        coords: coords, resolution: resolution, services: services, featureCount: 0
                     });
                 });
 
                 self.parent.responseCallback({
-                    coords: coords, resolution: resolution, services: targetServices, featureCount: 0
+                    coords: coords, resolution: resolution, services: services, featureCount: 0
                 });
             }
         });
@@ -6128,7 +6447,7 @@
                                     }]
                                 });
                             }
-                            else if (download)
+                            else if (download) {
                                 defer.resolve({
                                     url: url,
                                     data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
@@ -6136,6 +6455,7 @@
                                     numFeatures: featFounds,
                                     errors: errors
                                 });
+                            }
 
                         }
                             , function (xhr, textStatus, errorThrown) {
@@ -6963,17 +7283,19 @@
             const image = olStyle.getImage();
             if (image instanceof ol.style.Icon) {
                 result.url = image.getSrc();
-                var size = image.getSize();
+                const size = image.getSize();
+                const scale = image.getScale() || 1;
+                if (size) {
+                    result.width = size[0] * scale;
+                    result.height = size[1] * scale;
+                }
                 var anchor = image.getAnchor();
                 if (anchor) {
-                    result.anchor = [anchor[0], anchor[1]];
+                    result.anchor = [anchor[0] * scale, anchor[1] * scale];
                     if (size) {
-                        if (image.anchorXUnits_ === ol.style.IconAnchorUnits.PIXELS) {
-                            result.anchor[0] = result.anchor[0] / size[0];
-                        }
-                        if (image.anchorYUnits_ === ol.style.IconAnchorUnits.PIXELS) {
-                            result.anchor[1] = result.anchor[1] / size[1];
-                        }
+                        // getAnchor devuelve los valores en pixels, hay que transformar a fracción
+                        result.anchor[0] = result.anchor[0] / size[0];
+                        result.anchor[1] = result.anchor[1] / size[1];
                     }
                 }
             }
@@ -7359,7 +7681,13 @@
         result = geometry.getFirstCoordinate();
         switch (geometry.getType()) {
             case ol.geom.GeometryType.MULTI_POLYGON:
-                geometry = geometry.getPolygon(0);
+                var area = 0;
+                geometry = geometry.getPolygons().reduce(function (prev, cur) {
+                    const curArea = cur.getArea();
+                    const result = curArea > area ? cur : prev;
+                    area = curArea;
+                    return result;
+                });
             case ol.geom.GeometryType.POLYGON:
                 var isInsideRing = function (point, ring) {
                     var result = false;
@@ -7386,7 +7714,13 @@
                 }
                 break;
             case ol.geom.GeometryType.MULTI_LINE_STRING:
-                geometry = geometry.getLineString(0);
+                var length = 0;
+                geometry = geometry.getLineStrings().reduce(function (prev, cur) {
+                    const curLength = cur.getLength();
+                    const result = curLength > length ? cur : prev;
+                    length = curLength;
+                    return result;
+                });
             case ol.geom.GeometryType.LINE_STRING:
                 var centroid = [0, 0];
                 var coords = geometry.getCoordinates();
@@ -7419,20 +7753,21 @@
                 self._innerCentroid = self.getInnerPoint({ clipBox: currentExtent });
 
                 popupCtl.$contentDiv.html(self.parent.getInfo());
+                popupCtl.$menuDiv.empty();
                 if (popupCtl.options.closeButton || popupCtl.options.closeButton === undefined) {
-                    var n = popupCtl.$popupDiv.find("." + popupCtl.CLASS + '-close').length;
-                    if (n == 0) {
-                        var $btn = $('<div>').addClass(popupCtl.CLASS + '-close').attr('title', popupCtl.getLocaleString('close')).appendTo(popupCtl.$popupDiv);
-                        $btn.on(TC.Consts.event.CLICK, function () {
-                            popupCtl.hide();
-                        });
-                        popupCtl.$contentDiv.addClass(popupCtl.CLASS + '-has-btn');
-                        // En OL2 los featureInfo en versión "baraja de cartas" salen sin tamaño.
-                        // Para evitar esto, la clase tc-ctl-finfo tiene ancho y alto establecidos.
-                        // Pero eso hace que en el popup salgan barras de scroll, porque contentDiv se crea demasiado pequeño.
-                        // Rehacemos el tamaño de tc-ctl-finfo para eliminarlas.
-                        popupCtl.$contentDiv.find('.tc-ctl-finfo').css('width', 'auto').css('height', 'auto');
-                    }
+                    var $btn = $('<div>')
+                        .addClass(popupCtl.CLASS + '-close')
+                        .attr('title', popupCtl.getLocaleString('close'))
+                        .appendTo(popupCtl.$menuDiv);
+                    $btn.on(TC.Consts.event.CLICK, function () {
+                        popupCtl.hide();
+                    });
+                    popupCtl.$contentDiv.addClass(popupCtl.CLASS + '-has-btn');
+                    // En OL2 los featureInfo en versión "baraja de cartas" salen sin tamaño.
+                    // Para evitar esto, la clase tc-ctl-finfo tiene ancho y alto establecidos.
+                    // Pero eso hace que en el popup salgan barras de scroll, porque contentDiv se crea demasiado pequeño.
+                    // Rehacemos el tamaño de tc-ctl-finfo para eliminarlas.
+                    popupCtl.$contentDiv.find('.tc-ctl-finfo').css('width', 'auto').css('height', 'auto');
                 }
 
                 var options = self.parent.options;
@@ -7550,6 +7885,16 @@
 
     TC.wrap.Feature.prototype.setData = function (data) {
         this.feature.setProperties(data);
+    };
+
+    TC.wrap.Feature.prototype.clearData = function () {
+        const feature = this.feature;
+        const geometryName = feature.getGeometryName();
+        feature.getKeys().forEach(function (key) {
+            if (key !== geometryName) {
+                feature.unset(key);
+            }
+        });
     };
 
     TC.wrap.control.Draw.prototype.mouseMoveHandler = function (evt) {
@@ -7702,12 +8047,12 @@
                             condition: function () {
                                 if (ol.events.condition.shiftKeyOnly(arguments[0])) {
                                     hole = olMap.forEachFeatureAtPixel(olMap.getPixelFromCoordinate(arguments[0].coordinate), function (feature) {
-                                            if (ol.geom.GeometryType.POLYGON == feature.getGeometry().getType() ||
-                                                ol.geom.GeometryType.MULTI_POLYGON == feature.getGeometry().getType()) {
-                                                return feature;
-                                            }
-                                            return null;
-                                        },
+                                        if (ol.geom.GeometryType.POLYGON == feature.getGeometry().getType() ||
+                                            ol.geom.GeometryType.MULTI_POLYGON == feature.getGeometry().getType()) {
+                                            return feature;
+                                        }
+                                        return null;
+                                    },
                                         {
                                             hitTolerance: hitTolerance
                                         });
@@ -8206,11 +8551,11 @@
 
                         var pixel = olMap.getEventPixel(e.originalEvent);
                         hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                                if (layer === self.parent.layer.wrap.getLayer()) {
-                                    return true;
-                                }
-                                return false;
-                            },
+                            if (layer === self.parent.layer.wrap.getLayer()) {
+                                return true;
+                            }
+                            return false;
+                        },
                             {
                                 hitTolerance: hitTolerance
                             });

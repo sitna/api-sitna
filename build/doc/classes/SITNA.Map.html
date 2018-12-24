@@ -16,7 +16,7 @@
             <div class="project-title">
                     <a href="../"><img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA"></a>
                 
-                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.5.0</span>
+                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.5.1</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -158,7 +158,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l2855"><code>sitna.js:2855</code></a>
+            Se define en: <a href="../files/sitna.js.html#l2858"><code>sitna.js:2858</code></a>
         </div>
     
 
@@ -182,14 +182,14 @@ las opciones definidas por el <a href="../classes/SITNA.Cfg.html#property_layout
 constructor. Estas opciones están ordenadas de menor a mayor prevalencia, de modo que por ejemplo una opción pasada como parámetro del constructor
 siempre sobreescribirá una opción de la configuración global.</p>
 <p>Puede consultar también online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
-<h4 id="ejemplo-">Ejemplo:</h4>
+<h4 id="ejemplo-1-">Ejemplo 1:</h4>
 <pre class="code prettyprint"><code class="lang-javascript">  &lt;div id="mapa"/&gt;
   &lt;script&gt;
     // Crear un mapa con las opciones por defecto.
     var map = new SITNA.Map("mapa");
-  &lt;/script&gt;
-
-  &lt;div id="mapa"/&gt;
+  &lt;/script&gt;</code></pre>
+<h4 id="ejemplo-2-">Ejemplo 2:</h4>
+<pre class="code prettyprint"><code class="lang-javascript">  &lt;div id="mapa"/&gt;
   &lt;script&gt;
     // Crear un mapa en el sistema de referencia WGS 84 con el de mapa de fondo.
     var map = new SITNA.Map("mapa", {
@@ -224,6 +224,7 @@ siempre sobreescribirá una opción de la configuración global.</p>
       }
     });
   &lt;/script&gt;</code></pre>
+<h4 id="ejemplo-3-">Ejemplo 3:</h4>
 <pre class="code prettyprint"><code class="lang-javascript">  &lt;div id="mapa"&gt;&lt;/div&gt;
   &lt;script&gt;
     // Crear un mapa que tenga como contenido las capas de toponimia y mallas cartográficas del WMS de IDENA.
@@ -478,7 +479,7 @@ siempre sobreescribirá una opción de la configuración global.</p>
             
         
         
-        <a href="../files/sitna.js.html#l2855"><code>sitna.js:2855</code></a>
+        <a href="../files/sitna.js.html#l2858"><code>sitna.js:2858</code></a>
         
         </p>
 
@@ -810,7 +811,7 @@ Es necesario establecer esta opción para poder utilizar el método SITNA.Map.<a
             
         
         
-        <a href="../files/sitna.js.html#l3006"><code>sitna.js:3006</code></a>
+        <a href="../files/sitna.js.html#l3012"><code>sitna.js:3012</code></a>
         
         </p>
 
@@ -828,7 +829,7 @@ y tiene definida la propiedad SITNA.cfg.LayerOptions.<a href="../classes/SITNA.c
 el tipo de capa a <a href="../classes/SITNA.consts.LayerType.html#property_KML" class="crosslink">KML</a> si la URL acaba en ".kml".</p>
 <p>El tipo de la capa no puede ser <a href="../classes/SITNA.consts.LayerType.html#property_WFS" class="crosslink">WFS</a>.</p>
 <p>Puede consultar también online el <a href="../../examples/Map.addLayer.1.html">ejemplo 1</a> y el <a href="../../examples/Map.addLayer.2.html">ejemplo 2</a>. </p>
-<h4 id="ejemplo-">Ejemplo:</h4>
+<h4 id="ejemplo-1-">Ejemplo 1:</h4>
 <pre class="code prettyprint"><code class="lang-javascript">  &lt;div id="mapa"&gt;&lt;/div&gt;
   &lt;script&gt;
     // Crear un mapa con las opciones por defecto.
@@ -839,6 +840,7 @@ el tipo de capa a <a href="../classes/SITNA.consts.LayerType.html#property_KML" 
       map.addLayer(SITNA.Consts.layer.IDENA_CARTO);
     });
   &lt;/script&gt;</code></pre>
+<h4 id="ejemplo-2-">Ejemplo 2:</h4>
 <pre class="code prettyprint"><code class="lang-javascript">  &lt;div id="mapa"&gt;&lt;/div&gt;
   &lt;script&gt;
     // Crear un mapa con las opciones por defecto.
@@ -963,7 +965,7 @@ el tipo de capa a <a href="../classes/SITNA.consts.LayerType.html#property_KML" 
             
         
         
-        <a href="../files/sitna.js.html#l3101"><code>sitna.js:3101</code></a>
+        <a href="../files/sitna.js.html#l3109"><code>sitna.js:3109</code></a>
         
         </p>
 
@@ -979,6 +981,95 @@ el tipo de capa a <a href="../classes/SITNA.consts.LayerType.html#property_KML" 
             <p>Añade un marcador (un punto asociado a un icono) al mapa.</p>
 <p>Puede consultar también online el <a href="../../examples/Map.addMarker.1.html">ejemplo 1</a>, el <a href="../../examples/Map.addMarker.2.html">ejemplo 2</a>,
 el <a href="../../examples/Map.addMarker.3.html">ejemplo 3</a> y el <a href="../../examples/Map.addMarker.4.html">ejemplo 4</a>.</p>
+<h4 id="ejemplo-1-">Ejemplo 1:</h4>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador.
+        map.addMarker([610749, 4741648]);
+        // Centrar el mapa en el marcador.
+        map.zoomToMarkers();
+    });
+&lt;/script&gt;</code></pre>
+<h4 id="ejemplo-2-">Ejemplo 2:</h4>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir marcadores al grupo &quot;Marcadores colgantes&quot;
+        // cuyo icono se ancle al punto en el centro hacia abajo.
+        // Establecer un icono adecuado.
+        var markerOptions = {
+            group: &quot;Marcadores colgantes&quot;,
+            url: &quot;data/colgante.png&quot;,
+            anchor: [0.5, 0]
+        };
+        map.addMarker([610887, 4741244], markerOptions);
+        map.addMarker([615364, 4657556], markerOptions);
+        // Centrar el mapa en los marcadores.
+        map.zoomToMarkers();
+    });
+&lt;/script&gt;</code></pre>
+<h4 id="ejemplo-3-">Ejemplo 3:</h4>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Crear un mapa con una capa vectorial, centrado en la Ciudadela de Pamplona.
+    var map = new SITNA.Map(&quot;mapa&quot;, {
+        initialExtent: [
+            609627,
+            4740225,
+            611191,
+            4741395
+        ],
+        workLayers: [{
+            id: &quot;markers&quot;,
+            title: &quot;Marcadores geográficos&quot;,
+            type: SITNA.Consts.layerType.VECTOR
+        }]
+    });
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador en la capa &quot;markers&quot;,
+        // asignarle un grupo para que salga en tabla de contenidos y leyenda.
+        map.addMarker([610431, 4740837], {
+            layer: &quot;markers&quot;,
+            group: &quot;Ciudadela&quot;
+        });
+    });
+&lt;/script&gt;</code></pre>
+<h4 id="ejemplo-4-">Ejemplo 4:</h4>
+<pre class="code prettyprint"><code>&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+    // Añadir información emergente al mapa.
+    SITNA.Cfg.controls.popup = true;
+
+    // Crear un mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un icono de 40x40 píxeles definido por la clase CSS kiosko.
+        // Asignarle unos datos asociados que se muestren por defecto.
+        map.addMarker([615366, 4657426], {
+            cssClass: &quot;kiosko&quot;,
+            width: 40,
+            height: 40,
+            data: {
+                &quot;Nombre&quot;: &quot;Plaza de la Constitución, Tudela&quot;,
+                &quot;Sitio web&quot;: &quot;http://www.tudela.es/&quot;
+            },
+            showPopup: true
+        });
+        // Centrar el mapa en el marcador.
+        map.zoomToMarkers();
+    });
+&lt;/script&gt;</code></pre>
 
         </div>
 
@@ -1214,7 +1305,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l4013"><code>sitna.js:4013</code></a>
+        <a href="../files/sitna.js.html#l4119"><code>sitna.js:4119</code></a>
         
         </p>
 
@@ -1228,7 +1319,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
 
         <div class="description">
             <p>Exporta el mapa a una imagen PNG. Para poder utilizar este método hay que establecer la opción <code>crossOrigin</code> al instanciar <a href="../classes/SITNA.Map.html" class="crosslink">SITNA.Map</a>. </p>
-<p>Puede consultar también el ejemplo <a href="../../examples/Map.exportImage.html">online</a>.0    </p>
+<p>Puede consultar también el ejemplo <a href="../../examples/Map.exportImage.html">online</a>.</p>
 <h4 id="ejemplo-">Ejemplo:</h4>
 <pre class="code prettyprint"><code class="lang-javascript">          &lt;div id="controls" class="controls"&gt;
              &lt;button id="imageBtn"&gt;Exportar imagen&lt;/button&gt;
@@ -1325,7 +1416,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3450"><code>sitna.js:3450</code></a>
+        <a href="../files/sitna.js.html#l3556"><code>sitna.js:3556</code></a>
         
         </p>
 
@@ -1462,7 +1553,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3501"><code>sitna.js:3501</code></a>
+        <a href="../files/sitna.js.html#l3607"><code>sitna.js:3607</code></a>
         
         </p>
 
@@ -1599,7 +1690,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3348"><code>sitna.js:3348</code></a>
+        <a href="../files/sitna.js.html#l3454"><code>sitna.js:3454</code></a>
         
         </p>
 
@@ -1736,7 +1827,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3399"><code>sitna.js:3399</code></a>
+        <a href="../files/sitna.js.html#l3505"><code>sitna.js:3505</code></a>
         
         </p>
 
@@ -1873,7 +1964,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3179"><code>sitna.js:3179</code></a>
+        <a href="../files/sitna.js.html#l3285"><code>sitna.js:3285</code></a>
         
         </p>
 
@@ -1977,7 +2068,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3942"><code>sitna.js:3942</code></a>
+        <a href="../files/sitna.js.html#l4048"><code>sitna.js:4048</code></a>
         
         </p>
 
@@ -2125,7 +2216,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3552"><code>sitna.js:3552</code></a>
+        <a href="../files/sitna.js.html#l3658"><code>sitna.js:3658</code></a>
         
         </p>
 
@@ -2269,7 +2360,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3590"><code>sitna.js:3590</code></a>
+        <a href="../files/sitna.js.html#l3696"><code>sitna.js:3696</code></a>
         
         </p>
 
@@ -2425,7 +2516,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3790"><code>sitna.js:3790</code></a>
+        <a href="../files/sitna.js.html#l3896"><code>sitna.js:3896</code></a>
         
         </p>
 
@@ -2620,7 +2711,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3663"><code>sitna.js:3663</code></a>
+        <a href="../files/sitna.js.html#l3769"><code>sitna.js:3769</code></a>
         
         </p>
 
@@ -2764,7 +2855,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3627"><code>sitna.js:3627</code></a>
+        <a href="../files/sitna.js.html#l3733"><code>sitna.js:3733</code></a>
         
         </p>
 
@@ -2907,7 +2998,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3055"><code>sitna.js:3055</code></a>
+        <a href="../files/sitna.js.html#l3062"><code>sitna.js:3062</code></a>
         
         </p>
 
@@ -2922,7 +3013,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
         <div class="description">
             <p>Hace visible una capa como mapa de fondo. Esta capa debe existir previamente en la lista de mapas de fondo del mapa.</p>
 <p>Puede consultar también online el <a href="../../examples/Map.setBaseLayer.1.html">ejemplo 1</a> y el <a href="../../examples/Map.setBaseLayer.2.html">ejemplo 2</a>.</p>
-<h4 id="ejemplo-">Ejemplo:</h4>
+<h4 id="ejemplo-1-">Ejemplo 1:</h4>
 <pre class="code prettyprint"><code class="lang-javascript">  &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
   &lt;script&gt;
     // Crear mapa con opciones por defecto. Esto incluye la capa del catastro de Navarra entre los mapas de fondo.
@@ -2932,6 +3023,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
       map.setBaseLayer(SITNA.Consts.layer.IDENA_CADASTER);
     });
   &lt;/script&gt;</code></pre>
+<h4 id="ejemplo-2-">Ejemplo 2:</h4>
 <pre class="code prettyprint"><code class="lang-javascript">  &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
   &lt;script&gt;
     // Crear mapa con opciones por defecto.
@@ -3051,7 +3143,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3128"><code>sitna.js:3128</code></a>
+        <a href="../files/sitna.js.html#l3234"><code>sitna.js:3234</code></a>
         
         </p>
 

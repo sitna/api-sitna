@@ -55,8 +55,9 @@
 }
 
     .tc-ctl-sv-view.tc-hidden {
-        width: 1px; /* con ancho y alto 0 Google Maps API da errores */
-        height: 1px;
+        position: fixed; /* corregimos el scroll */
+        width: 1px; /* No puede ser cero, si no, peta StreetView */
+        height: 0;
         opacity: 0;
         visibility: visible;
     }
@@ -66,7 +67,7 @@
         left: 0;
     }
 
-    .tc-ctl-sv-view .tc-ctl-sv-btn-close {
+    .tc-ctl-sv-view .tc-ctl-sv-btn-close {        
         position: absolute;
         top: 0;
         right: 0.5em;

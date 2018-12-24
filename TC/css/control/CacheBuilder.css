@@ -201,11 +201,6 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     content: '\f00d';
 }
 
-.tc-ctl-cbuild-dialog .tc-modal-body {
-    max-height: 50vh;
-    overflow: auto;
-}
-
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-txt-name {
     width: 97%;
     height: 2em;

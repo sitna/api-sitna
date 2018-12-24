@@ -165,6 +165,8 @@
                         map.isLoaded = true;
                         map.$events.trigger($.Event(TC.Consts.event.MAPLOAD));
                         map._$div.removeClass(TC.Consts.classes.LOADING);
+
+                        delete self.state;
                     }
                 };
                 // Gestionamos el final de la carga del mapa
@@ -172,13 +174,27 @@
                     throwMapLoad();
                 }
                 else {
-                    // Si no hay capa base cargada cargamos la primera compatible
-                    const lastResortBaseLayer = map.baseLayers.filter(function (layer) {
-                        return !layer.mustReproject;
-                    })[0];
-                    map.wrap.setBaseLayer(lastResortBaseLayer.wrap.getLayer());
-                    map.baseLayer = lastResortBaseLayer;
-                    throwMapLoad();
+                    //GLS: Si no hay mapa de fondo cargado es posible que se haya añadido desde diálogo modal, lo comprobamos en todos los mapas de fondo disponibles del API
+                    const onAvailables = TC.Cfg.availableBaseLayers.filter(function (l) { return l.id === map.state.base });
+                    if (onAvailables.length > 0) {
+
+                        onAvailables[0].isBase = true;
+                        map.addLayer(onAvailables[0]).then(function (layer) {
+                            map.wrap.setBaseLayer(layer.wrap.getLayer());
+                            map.baseLayer = layer;
+                            throwMapLoad();
+                        });
+
+                    }
+                    else {
+                        // Si no hay capa base cargada cargamos la primera compatible
+                        const lastResortBaseLayer = map.baseLayers.filter(function (layer) {
+                            return !layer.mustReproject;
+                        })[0];
+                        map.wrap.setBaseLayer(lastResortBaseLayer.wrap.getLayer());
+                        map.baseLayer = lastResortBaseLayer;
+                        throwMapLoad();
+                    }
                 }
             }
         }
@@ -430,10 +446,13 @@
                     }
 
                     if (self.state && self.state.vw3) { // GLS: aplico el estado 3d una vez que esté todo cargado
+
+                        var view3D = self.state.vw3;
+
                         self.loaded(function () {
                             // accedo desde el control hasta que el 3d sea parte del mapa
                             var control = self.getControlsByClass(TC.control.ThreeD)[0];
-                            control.setMapState(self.state.vw3);
+                            control.setMapState(view3D);
                         });
                     }
 
@@ -512,6 +531,7 @@
                                             });
 
                                             if (self.state && self.state.layers) {
+
                                                 self.state.layers.forEach(function (stateLayer) {
 
                                                     var op = stateLayer.o;
@@ -539,7 +559,7 @@
                                                         layer.setOpacity(op);
                                                         layer.setVisibility(visibility);
                                                     });
-                                                });
+                                                });                                                
                                             }
                                             self.isReady = true;
                                             self.$events.trigger($.Event(TC.Consts.event.MAPREADY));
@@ -584,7 +604,7 @@
         var _setupStateControl = function () {
             var MIN_TIMEOUT_VALUE = 4;
 
-            // eventos a los que estamos suscritos para obtener el estado
+            // eventos a los que estamos suscritos para obtener el estado            
             var events = [
                 TC.Consts.event.LAYERADD,
                 TC.Consts.event.LAYERORDER,
@@ -670,7 +690,7 @@
 
                 if (e) {
                     switch (true) {
-                        case (e.type == TC.Consts.event.BASELAYERCHANGE.replace(CUSTOMEVENT, '')):                        
+                        case (e.type == TC.Consts.event.BASELAYERCHANGE.replace(CUSTOMEVENT, '')):
                         case (e.type == TC.Consts.event.LAYERORDER.replace(CUSTOMEVENT, '')):
                         case (e.type == TC.Consts.event.ZOOM.replace(CUSTOMEVENT, '')):
                             saveState();
@@ -697,7 +717,7 @@
                 if (Math.abs(ext[i]) > 180)
                     ext[i] = Math.floor(ext[i] * 1000) / 1000;
             }
-            state.ext = ext;            
+            state.ext = ext;
 
             //determinar capa base
             state.base = self.getBaseLayer().id;
@@ -723,11 +743,17 @@
                 }
             }
 
-            /* GLS: de momento lo trato por el control hasta que el 3d sea parte del mapa */
             var control3D = self.getControlsByClass(TC.control.ThreeD);
-            if (control3D.length > 0) {                
+            if (control3D.length > 0) {
                 if (control3D[0].mapIs3D && control3D[0].map3D.cameraControls) {
+
                     state.vw3 = control3D[0].map3D.cameraControls.getCameraState();
+
+                    // GLS: para gestionar mapas de fondo que no se sirven en 25830
+                    state.crs = control3D[0].map3D.crs;
+                    if (state.ext && state.ext.length == 4) {
+                        state.ext = TC.Util.reproject(state.ext.slice().splice(0, 2), self.crs, state.crs).concat(TC.Util.reproject(state.ext.slice().splice(2, 2), self.crs, state.crs));
+                    }
                 }
             }
 
@@ -953,11 +979,11 @@
 
                         if (!obj.vw3) {
                             inValidState = true;
-                        }else if (!obj.vw3.cp || (obj.vw3.cp && obj.vw3.cp.length != 3) ||
+                        } else if (!obj.vw3.cp || (obj.vw3.cp && obj.vw3.cp.length != 3) ||
                             !obj.vw3.chpr || (obj.vw3.chpr && obj.vw3.chpr.length != 3) ||
                             !obj.vw3.bcpd) {
                             inValidState = true;
-                        }                        
+                        }
                     }
 
                     if (inValidState)
@@ -1385,6 +1411,16 @@
         map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: layer, reason: reason }));
     };
 
+    mapProto.getCRS = function () {
+        const self = this;
+
+        if (!self.on3DView) {
+            return self.crs;
+        } else {
+            return self.view3D.crs;
+        }
+    };
+
     /**
      * Añade una capa al mapa.
      * @method addLayer
@@ -1414,6 +1450,7 @@
         if (typeof layer === 'object' && !layer.id) {
             layer.id = TC.getUID();
         }
+
         layerBuffer.add(layer.id || layer, layerDeferred, isLayerRaster, layer.isBase);
 
         const fitToExtent = function (fit) {
@@ -1492,7 +1529,7 @@
                         idx = self.wrap.getLayerCount();
                     }
 
-                    const currentCrs = self.state ? self.state.crs || self.crs : self.crs;
+                    const currentCrs = self.state && self.state.crs ? self.state.crs : self.getCRS();
                     const isCompatible = lyr.isCompatible(currentCrs);
                     if (lyr.isBase) {
                         if (!isCompatible) {
@@ -1502,7 +1539,7 @@
                             else {
                                 const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
                                 if (compatibleMatrixSet) {
-                                    lyr.wrap.setMatrixSet(compatibleMatrixSet);
+                                    lyr.wrap.setMatrixSet(compatibleMatrixSet);                                    
                                 }
                                 else {
                                     lyr.mustReproject = true;
@@ -1524,7 +1561,8 @@
                         }
                         if (lyr.isDefault) {
 
-                            if (lyr.mustReproject) {
+                            if (lyr.mustReproject && !lyr.type === TC.Consts.layerType.WMTS ||
+                                lyr.mustReproject && lyr.type === TC.Consts.layerType.WMTS && !lyr.wrap.getCompatibleMatrixSets(currentCrs)[0]) {
                                 if (lyr.options.fallbackLayer && lyr.getFallbackLayer) {
 
                                     var fit = self.baseLayer === null;
@@ -1538,8 +1576,7 @@
 
                                         layerDeferred.resolve(lyr);
                                     });
-                                }
-                                else {
+                                } else {
                                     crsLayerError(self, lyr);
                                     layerDeferred.reject(layer);
                                 }
@@ -1704,7 +1741,15 @@
             if ($.inArray(layer, self.layers) < 0) {
                 layer.isDefault = true;
                 layer.map = self;
-                self.addLayer(layer);
+                self.addLayer(layer).then(function () {
+                    self.$events.trigger($.Event(TC.Consts.event.BASELAYERCHANGE, { layer: layer }));
+                    if ($.isFunction(callback)) {
+                        callback();
+                    }
+                });
+
+                //result = layer;
+                //return result;
             }
             found = true;
         }
@@ -1712,7 +1757,7 @@
             TC.error('Base layer is not available');
         }
         else {
-            if (layer.mustReproject) {
+            if (!layer.isCompatible(self.getCRS()) && (!layer.fallbackLayer || layer.fallbackLayer && !layer.fallbackLayer.isCompatible(self.getCRS()))) {
                 TC.error('Base layer must be reprojected');
             }
             else {
@@ -2070,10 +2115,7 @@
                 baseLayer = self.baseLayer;
             }
             if (self.baseLayers.indexOf(baseLayer) < 0) {
-                // Si hemos cambiado de capa de fondo la añadimos a la colección
-                self.baseLayers.push(baseLayer);
-                const insertIdx = self.layers.reduce(getReduceByBooleanFunction('isBase'), -1) + 1;
-                self.layers.splice(insertIdx, 0, baseLayer);
+                self.addLayer(baseLayer);
             }
             TC.loadProjDef({
                 crs: options.crs,
@@ -2432,7 +2474,7 @@
         if (!$container.length) {
             $container = $('<div>')
                 .addClass(toastContainerClass)
-                .appendTo(self._$div);
+                .appendTo(opts.container ? opts.container : self._$div);
         }
         toastInfo = toasts[text] = {
             $toast: $('<div>')

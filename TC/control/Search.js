@@ -177,7 +177,7 @@ var SearchType = function (type, options, parent) {
                             return true;
                         }
                     } else {
-                        if (TC.Util.getSoundexDifference(a.trim().soundex(), b.trim().soundex()) >= 3) {
+                        if (a.trim() === b.trim()) {
                             return true;
                         }
                     }
@@ -295,12 +295,77 @@ var SearchType = function (type, options, parent) {
 
     self.filter = (function (self) {
 
+        const bindRootFilterNode = function (filtersArr, dataT) {
+            var rootFilters = [];
+
+            if (dataT != self.parent.rootCfg.active.root) {
+                // GLS: Si llego aquí, significa que el usuario está indicando la población
+                if (dataT.indexOf('#') === -1 && !self.parent.rootCfg.active.limit) { // si no está limitada la búsqueda, indico la población
+
+                    var filterNode = self.parent.rootCfg.active.queryProperties.firstQueryWord.map(function (queryWord, index) {
+                        return self.filter.getFilterNode(queryWord, self.parent._LIKE_PATTERN + dataT + self.parent._LIKE_PATTERN);
+                    });
+
+                    if (filterNode.length > 1) {
+                        rootFilters.push('<ogc:And>');
+                        rootFilters = rootFilters.concat(filterNode);
+                        rootFilters.push('</ogc:And>');
+                    } else {
+                        rootFilters = rootFilters.concat(filterNode);
+                    }
+
+                } else { // por tanto no añado todas las raíces posibles, añado la población que ha indicado (validando antes contra rootLabel)                     
+                    var item = dataT.split('#');
+
+                    for (var j = 0; j < self.parent.rootCfg.active.dataIdProperty.length; j++) {
+
+                        if (j == 0 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
+                            rootFilters.push('<ogc:And>');
+                        }
+
+                        rootFilters.push(self.filter.getFilterNode(self.parent.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
+
+                        if (j == self.parent.rootCfg.active.dataIdProperty.length - 1 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
+                            rootFilters.push('</ogc:And>');
+                        }
+                    }
+                }
+            } else {
+                for (var i = 0; i < self.parent.rootCfg.active.root.length; i++) {
+                    var item = self.parent.rootCfg.active.root[i];
+
+                    if (i == 0 && self.parent.rootCfg.active.root.length > 1) {
+                        rootFilters.push('<ogc:Or>');
+                    }
+
+                    for (var j = 0; j < self.parent.rootCfg.active.dataIdProperty.length; j++) {
+
+                        if (j == 0 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
+                            rootFilters.push('<ogc:And>');
+                        }
+
+                        rootFilters.push(self.filter.getFilterNode(self.parent.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
+
+                        if (j == self.parent.rootCfg.active.dataIdProperty.length - 1 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
+                            rootFilters.push('</ogc:And>');
+                        }
+                    }
+                }
+
+                if (self.parent.rootCfg.active.root.length > 1) {
+                    rootFilters.push('</ogc:Or>');
+                }
+            }
+
+            return filtersArr.concat(rootFilters);
+        };
+
         return {
             getPropertyValue: function (role, propertyName) {
                 return self.getSearchTypeByRole(role)[propertyName];
             },
             getIsLikeNode: function (name, value) {
-                var toEscape = /([\-\"\.\º\(\)\/])/g;
+                var toEscape = /([\-\"\.\xba\(\)\/])/g;
                 if (toEscape.test(value)) {
                     value = value.replace(toEscape, "\\$1");
                 }
@@ -321,7 +386,7 @@ var SearchType = function (type, options, parent) {
                         '</PropertyIsEqualTo>';
             },
             getFunctionStrMatches: function (name, value) {
-                var toEscape = /([\-\"\º\(\)\/])/g;
+                var toEscape = /([\-\"\xba\(\)\/])/g;
                 if (toEscape.test(value)) {
                     value = value.replace(toEscape, "\\$1");
                 }
@@ -336,12 +401,12 @@ var SearchType = function (type, options, parent) {
                     pattern = pattern.replace(/u/gi, "[uúüù]");
 
                     return '<ogc:PropertyIsEqualTo> ' +
-                                '<ogc:Function name="strMatches"> ' +
-                                    '<ogc:PropertyName>' + name + '</ogc:PropertyName> ' +
-                                    '<ogc:Literal>' + '(?i)' + pattern.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</ogc:Literal> ' +
-                                '</ogc:Function> ' +
-                                '<ogc:Literal>true</ogc:Literal> ' +
-                            '</ogc:PropertyIsEqualTo>';
+                        '<ogc:Function name="strMatches"> ' +
+                        '<ogc:PropertyName>' + name + '</ogc:PropertyName> ' +
+                        '<ogc:Literal>' + '(?i)' + pattern.replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;") + '</ogc:Literal> ' +
+                        '</ogc:Function> ' +
+                        '<ogc:Literal>true</ogc:Literal> ' +
+                        '</ogc:PropertyIsEqualTo>';
                 }
                 else {
                     return '<PropertyIsEqualTo>' +
@@ -360,7 +425,7 @@ var SearchType = function (type, options, parent) {
                     fn = self.filter.getFunctionStrMatches;
 
                     var regex = new RegExp('\\' + self.parent._LIKE_PATTERN, 'gi');
-                    propertyValue = propertyValue.replace(regex, self._MATCH_PATTERN);
+                    propertyValue = propertyValue.replace(regex, self.parent._MATCH_PATTERN);
                 }
 
                 if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
@@ -403,56 +468,6 @@ var SearchType = function (type, options, parent) {
                 r.f = '';
 
                 var _f;
-
-                var bindRootFilterNode = function (filtersArr, dataT) {
-                    var rootFilters = [];
-
-                    if (dataT != self.parent.rootCfg.active.root) {
-                        // GLS: Si llego aquí, significa que el usuario está indicando la población, 
-                        // por tanto no añado todas las raíces posibles, añado la población que ha indicado (validando antes contra rootLabel)                     
-                        var item = dataT.split('#');
-
-                        for (var j = 0; j < self.parent.rootCfg.active.dataIdProperty.length; j++) {
-
-                            if (j == 0 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
-                                rootFilters.push('<ogc:And>');
-                            }
-
-                            rootFilters.push(self.filter.getFilterNode(self.parent.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
-
-                            if (j == self.parent.rootCfg.active.dataIdProperty.length - 1 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
-                                rootFilters.push('</ogc:And>');
-                            }
-                        }
-                    } else {
-                        for (var i = 0; i < self.parent.rootCfg.active.root.length; i++) {
-                            var item = self.parent.rootCfg.active.root[i];
-
-                            if (i == 0 && self.parent.rootCfg.active.root.length > 1) {
-                                rootFilters.push('<ogc:Or>');
-                            }
-
-                            for (var j = 0; j < self.parent.rootCfg.active.dataIdProperty.length; j++) {
-
-                                if (j == 0 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
-                                    rootFilters.push('<ogc:And>');
-                                }
-
-                                rootFilters.push(self.filter.getFilterNode(self.parent.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
-
-                                if (j == self.parent.rootCfg.active.dataIdProperty.length - 1 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
-                                    rootFilters.push('</ogc:And>');
-                                }
-                            }
-                        }
-
-                        if (self.parent.rootCfg.active.root.length > 1) {
-                            rootFilters.push('</ogc:Or>');
-                        }
-                    }
-
-                    return filtersArr.concat(rootFilters);
-                };
 
                 switch (true) {
                     case self.typeName === TC.Consts.searchType.NUMBER:
@@ -678,6 +693,8 @@ TC.control.Search = function () {
     var self = this;
     TC.Control.apply(self, arguments);
 
+    self.exportsState = true;
+
     TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
 
     self.url = '//idena.navarra.es/ogc/wfs';
@@ -851,6 +868,7 @@ TC.control.Search = function () {
             }
         ],
         parser: self.getStringPattern.bind(this, [TC.Consts.searchType.MUNICIPALITY]),
+        stringPatternToCheck: self.stringPatternsValidators.s_or_t,
         goTo: self.goToStringPattern
     };
 
@@ -929,6 +947,7 @@ TC.control.Search = function () {
         outputFormatLabel: '{1} ({0})',
         searchWeight: 4,
         parser: self.getStringPattern.bind(this, [TC.Consts.searchType.COUNCIL]),
+        stringPatternToCheck: self.stringPatternsValidators.s_or_t,
         goTo: self.goToStringPattern,
         idPropertiesIdentifier: '#',
         suggestionListHead: {
@@ -1070,6 +1089,7 @@ TC.control.Search = function () {
             }
         ],
         parser: self.getStringPattern.bind(this, [TC.Consts.searchType.URBAN]),
+        stringPatternToCheck: self.stringPatternsValidators.s_or_t,
         goTo: self.goToStringPattern
     };
 
@@ -1095,7 +1115,7 @@ TC.control.Search = function () {
         outputProperties: ['MUNICIPIO', 'TOPONIMO', 'CMUNICIPIO', 'CTOPONIMO'],
         outputFormatLabel: '{1} ({0})',
         searchWeight: 7,
-        /*filterByMatch: true, si queremos que filtre por expresión regular */
+        /*filterByMatch: true, // si queremos que filtre por expresión regular */
         styles: [
             {
                 point: {
@@ -1110,6 +1130,7 @@ TC.control.Search = function () {
             }
         ],
         parser: self.getStringPattern.bind(this, [TC.Consts.searchType.PLACENAME]),
+        stringPatternToCheck: self.stringPatternsValidators.s_or_t,
         goTo: self.goToStringPattern
     };
 
@@ -2082,6 +2103,8 @@ TC.inherit(TC.control.Search, TC.Control);
     };
 
     ctlProto.getElementOnSuggestionList = function (id, dataRole) {
+        const self = this;
+
         for (var i = 0; i < self.parent._search.data.length; i++) {
             if (self.parent._search.data[i].id == id && (!dataRole || (dataRole && self.parent._search.data[i].dataRole === dataRole)))
                 return self.parent._search.data[i];
@@ -2120,7 +2143,7 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
 
         TC.cache.search = TC.cache.search || {};
-        if (!TC.cache.search.municipalities) {
+        if (!TC.cache.search.municipalities && !self._municipalitiesDeferred) {
             self._municipalitiesDeferred = new $.Deferred();
 
             var type = self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL);
@@ -2182,7 +2205,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 throw new Error("Error en la configuración de la búsqueda: " + type.typeName + ". Error en el objeto municipality");
             }
         }
-        return TC.cache.search.municipalities || self._municipalitiesDeferred.promise();
+        return TC.cache.search.municipalities ? self._municipalitiesDeferred.resolve(TC.cache.search.municipalities) : self._municipalitiesDeferred.promise();
     };
 
     ctlProto.getCoordinates = function (pattern) {
@@ -2342,560 +2365,544 @@ TC.inherit(TC.control.Search, TC.Control);
         return deferred.promise();
     };
 
-    ctlProto.getStringPattern = function (allowedRoles, pattern) {
-        var self = this;
-        var deferred = new $.Deferred();
-        var results = [];
+    ctlProto.stringPatternsValidators = {
+        tsp: function (text, result, root, limit) {
+            // town, street, portal - street, town, portal
+            var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
+            if (match && match[1] && match[2]) {
 
-        var getDataRoles = function (data) {
-            return allowedRoles.map(function (elm) {
-                var type = self.getSearchTypeByRole(elm);
-                if (Object.keys(type.queryProperties).length === Object.keys(data).length) {
-                    return type.typeName;
-                }
-            });
-        };
-
-        var normalizedCriteria = function (value) {
-            var _value = '';
-
-            value = self.removePunctuation(value);
-
-            //var match;
-            //if (value.indexOf('(') > -1 || value.indexOf(')') > -1) {
-            //    _pattern = /(.*)(\s<>\s.*\(.*\))/;
-            //    if (value.indexOf('<>') > -1 && _pattern.test(value)) {
-            //        match = value.match(_pattern);
-            //        if (match !== null) {
-            //            _value = value.replace(match[2], '');
-            //            _value = _value.splitRemoveWhiteSpaces(',').join(',');
-            //        }
-            //    } else {
-            //        // eliminamos el municipio dejando solo la localidad
-            //        _pattern = /\(.*\)/;
-            //        if (!_pattern.test(value)) {
-            //            // no contiene () comprobamos solo (
-            //            _pattern = /\(.*/;
-            //            if (!_pattern.test(value)) {
-            //                // no contiene ( comprobamos solo )
-            //                _pattern = /.*\)/;
-            //                if (!_pattern.test(value)) {
-            //                    _pattern = /\(.*\)/;
-            //                }
-            //            }
-            //        }
-
-            //        _value = value.replace(_pattern, '');
-            //        _value = _value.splitRemoveWhiteSpaces(',').join(',');
-            //    }
-
-            //    value = _value;
-            //}
-
-
-            // elimino los caracteres especiales
-            if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(value))
-                value = value.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
-            else
-                value = value.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
-            return value.toLowerCase();
-        };
-
-        var _formatStreetNumber = function (value) {
-            var result = value;
-
-            var is_nc_c = function (value) {
-                return /^(\d{1,3})\s?\-?\s?([a-z]{0,4})\s?\-?\s?([a-z]{0,4})$/i.test(value);
-            }
-            var nc_c = function (value) {
-                var f = [];
-                var m = /^(\d{1,3})\s?\-?\s?([a-z]{0,4})\s?\-?\s?([a-z]{0,4})$/i.exec(value);
-                if (m) {
-                    for (var i = 1; i < m.length; i++) {
-                        if (m[i].trim().length > 0)
-                            f.push(m[i].trim());
-                    }
-
-                    return f.join(self._LIKE_PATTERN);
-                }
-                return value;
-            };
-
-            var is_cn = function (value) {
-                return /^([a-z]{1,4})\s?\-?\s?(\d{1,3})$/i.test(value);
-            };
-            var cn = function (value) {
-                var f = [];
-                var m = /^([a-z]{1,4})\s?\-?\s?(\d{1,3})$/i.exec(value);
-                if (m) {
-                    for (var i = 1; i < m.length; i++) {
-                        if (m[i].trim().length > 0)
-                            f.push(m[i].trim());
-                    }
-
-                    return f.join(self._LIKE_PATTERN);
-                }
-                return value;
-            };
-
-            var is_sn = function (value) {
-                return /^(sn|S\/N|s\/n|s\-n)$/i.test(value);
-            };
-            var sn = function (value) {
-                var m = /^(sn|S\/N|s\/n|s\-n)$/i.exec(value);
-                if (m) {
-                    return 's*n';
-                }
-                return value;
-            };
-
-
-            var is_cmc = function (value) {
-                return /^([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.test(value);
-            };
-            var cmc = function (value) {
-                var m = /^([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(value);
-                if (m) {
-                    return value;
-                }
-                return value;
-            };
-
-            var isCheck = [is_nc_c, is_cn, is_sn, is_cmc];
-            var check = [nc_c, cn, sn, cmc];
-            var ch = 0;
-            while (ch < check.length && !isCheck[ch].call(self, value)) {
-                ch++;
-            }
-
-            if (ch < check.length)
-                return check[ch].call(self, value);
-            else return value;
-        };
-
-        var getObjectsTo = function (text, root, limit) {
-            var deferred = new $.Deferred();
-
-            // eliminamos espacios en blanco
-            text = text.trim();
-
-            // comprobamos si acaba con coma, si es así, la eliminamos
-            if (text.charAt(text.length - 1) == ',')
-                text = text.substring(0, text.length - 1);
-
-            var result = [];
-
-            var bindRoot = function (result) {
-                if (root) {
-
-                    var i = result.length;
-                    while (i--) {
-                        if (limit) {
-                            if (result[i].t) {
-                                var indicatedRoot = this.rootCfg.active.rootLabel.filter(function (elem) {
-                                    return elem.label.indexOf(this.removePunctuation(result[i].t).toLowerCase()) > -1;
-                                }.bind(this));
-
-                                if (indicatedRoot.length == 1) {
-                                    result[i].t = indicatedRoot[0].id;
-                                } else if (indicatedRoot.length > 1) {
-
-                                    indicatedRoot.map(function (elem) {
-                                        var newResult = $.extend({
-                                        }, result[i]);
-                                        newResult.t = elem.id;
-
-                                        result.push(newResult);
-                                    });
-
-                                } else if (indicatedRoot.length == 0) {
-                                    result.splice(i, 1);
-                                }
-                            }
-                        }
-                        else result.push($.extend({
-                        }, result[i], {
-                            t: root
-                        }));
-                    }
-                }
-            }.bind(self);
-            var tsp = function (text, result) {
-
-                // town, street, portal - street, town, portal
-                var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
-                if (match && match[1] && match[2]) {
-
-                    var getPortal = function () {
-                        return _formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim());
-                    };
-                    // ninguno contiene número duplicamos búsqueda
-                    if (/^([^0-9]+)$/i.test(match[1].trim()) && /^([^0-9]+)$/i.test(match[2].trim())) {
-                        result.push({
-                            t: match[1].trim(), s: match[2].trim(), p: getPortal()
-                        });
-                        result.push({
-                            t: match[2].trim(), s: match[1].trim(), p: getPortal()
-                        });
-                    }
-                    else {  // indicamos como calle el criterio que contiene números, ya que no existen municipios con números pero sí calles
-                        if (/^([^0-9]+)$/i.test(match[1].trim())) result.push({
-                            t: match[1].trim(), s: match[2].trim(), p: getPortal()
-                        });
-                        else result.push({
-                            s: match[1].trim(), t: match[2].trim(), p: getPortal()
-                        });
-                    }
-                    bindRoot(result);
-                    return true;
-                }
-
-                return false;
-            };
-            var spt = function (text, result) {
-
-                // street, portal, town
-                var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
-                if (match && match[6] && match[1]) {
-
-                    var getPortal = function () {
-                        return _formatStreetNumber((match[2] || match[3] || match[4] || match[5]).trim());
-                    };
-                    // ninguno contiene número duplicamos búsqueda
-                    if (/^([^0-9]+)$/i.test(match[6].trim()) && /^([^0-9]+)$/i.test(match[1].trim())) {
-                        result.push({
-                            t: match[6].trim(), s: match[1].trim(), p: getPortal()
-                        });
-                        result.push({
-                            t: match[1].trim(), s: match[6].trim(), p: getPortal()
-                        });
-                    }
-                    else {  // indicamos como calle el criterio que contiene números, ya que no existen municipios con números pero sí calles
-                        if (/^([^0-9]+)$/i.test(match[6].trim())) result.push({
-                            t: match[6].trim(), s: match[1].trim(), p: getPortal()
-                        });
-                        else result.push({
-                            s: match[6].trim(), t: match[1].trim(), p: getPortal()
-                        });
-                    }
-                    bindRoot(result);
-                    return true;
-                }
-
-                return false;
-            };
-            var tnsp = function (text, result) {
-
-                // town, numbers street, portal
-                var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
-
-                if (match && match[1] && match[2]) {
+                var getPortal = function () {
+                    return formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim());
+                };
+                // ninguno contiene número duplicamos búsqueda
+                if (/^([^0-9]+)$/i.test(match[1].trim()) && /^([^0-9]+)$/i.test(match[2].trim())) {
                     result.push({
-                        t: match[2].trim(), s: match[1].trim(), p: _formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim())
+                        t: match[1].trim(), s: match[2].trim(), p: getPortal()
                     });
-                    bindRoot(result);
-                    return true;
+                    result.push({
+                        t: match[2].trim(), s: match[1].trim(), p: getPortal()
+                    });
                 }
-
-                return false;
-            };
-            var ts = function (text, result) {
-
-                // town, street
-                var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù"\s*\-\.\(\)\/0-9]+))$/i.exec(text);
-
-                // topónimo, municipio
-                if (!match && /^[^0-9]*$/i.test(text.trim())) { // si no hay números reviso dándole la vuelta, si hay números que lo trate la función st
-                    var criteria = text.split(',').reverse();
-                    match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù"\s*\-\.\(\)\/0-9]+))$/i.exec(criteria.join(','));
-                }
-
-
-                if (match && match[1] && match[2]) {
-                    // ninguno contiene número duplicamos búsqueda
-                    if (/^([^0-9]+)$/i.test(match[1].trim()) && /^([^0-9]+)$/i.test(match[2].trim())) {
-                        result.push({
-                            t: match[1].trim(), s: match[2].trim()
-                        });
-                        result.push({
-                            s: match[1].trim(), t: match[2].trim()
-                        });
-                    }
-                    else {  // indicamos como calle el criterio que contiene números, ya que no existen municipios con números pero sí calles
-
-                        var getStreet = function (s) {
-                            var revS = s.split(' ').reverse();
-                            // validamos si el criterio es compuesto 
-                            var fs = [];
-                            for (var si = 0; si < revS.length; si++) {
-                                if (revS[si].length == 1) {
-                                    fs.push(revS[si]);
-                                    revS[si] = '';
-                                }
-                            }
-
-                            return fs.length > 0 ? revS.reverse().join(' ').trim() + self._LIKE_PATTERN + fs.reverse().join(self._LIKE_PATTERN) : revS.reverse().join(' ').trim();
-                        };
-
-                        if (/^([^0-9]+)$/i.test(match[1].trim()))
-                            result.push({
-                                t: match[1].trim(), s: getStreet(match[2].trim())
-                            });
-                        else result.push({
-                            s: getStreet(match[1].trim()), t: match[2].trim()
-                        });
-                    }
-                    bindRoot(result);
-                    return true;
-                }
-
-                return false;
-            };
-            var st = function (text, result) {
-
-                // street, town
-                var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
-
-                if (!match) {
-                    var criteria = text.split(',').reverse();
-                    match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù"\s*\-\.\(\)\/0-9]+))$/i.exec(criteria.join(','));
-                }
-
-                if (match) { // puede generar falsos positivos cuando el portal llega seguido de la calle -> calle mayor 14, pamplona
-                    var data = {
-                    };
-                    var criteria = text.split(',').reverse();
-                    for (var i = 0; i < criteria.length; i++) {
-                        if (/^([^0-9\,]+)$/i.test(criteria[i].trim())) { // si no hay números se trata de municipio
-                            data.t = criteria[i].trim();
-                        }
-                        else if (/(\s*\d+)/i.test(criteria[i].trim())) { // si contiene número, puede ser calle o calle + portal
-                            if (criteria[i].trim().indexOf(' ') == -1) { // si no contiene espacios se trata de calle compuesta por números
-                                data.s = criteria[i].trim();
-                            } else { // si contiene espacio puede contener calle + portal
-                                var _criteria = criteria[i].trim().split(' ').reverse();
-
-                                var isPortal = function (c) {
-                                    var m = /^(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(c.trim());
-                                    if (m) {
-                                        data.p = _formatStreetNumber(c.trim());
-                                        return true;
-                                    }
-                                    return false;
-                                };
-
-                                var x = 0;
-                                var p = _criteria[x].trim();
-                                while (x < _criteria.length && !isPortal(p)) {
-                                    x++;
-                                    if (x < _criteria.length)
-                                        p = p + _criteria[x];
-
-                                }
-
-                                if (data.p) {
-                                    var _cr = _criteria;
-                                    for (var h = 0; h < _cr.length; h++) {
-                                        // validamos que lo que hemos deducido como portal, está en portal para no añadirlo a calle
-                                        var inPortal = false;
-                                        for (var c = 0; c < _cr[h].split('').length; c++) {
-                                            if (data.p.indexOf(_cr[h][c]) > -1)
-                                                inPortal = true;
-                                        }
-
-                                        if (inPortal) {
-                                            var _p = _cr[h];
-
-                                            _cr[h] = '';
-                                            if (data.p == _formatStreetNumber(p))
-                                                break;
-                                        }
-                                    }
-
-                                    if (/^([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+)$/i.test(_criteria.reverse().join(' ').trim())) {
-                                        var fs = [];
-                                        var criteriaRev = _criteria.reverse();
-                                        for (var chs = 0; chs < criteriaRev.length; chs++) {
-                                            if (criteriaRev[chs].trim().length == 1) {
-                                                fs.push(criteriaRev[chs].trim());
-                                                criteriaRev[chs] = '';
-                                            }
-                                        }
-
-                                        data.s = fs.length > 0 ? criteriaRev.reverse().join(' ').trim() + self._LIKE_PATTERN + fs.reverse().join(self._LIKE_PATTERN) : criteriaRev.reverse().join(' ').trim();
-                                    }
-
-
-                                    // nombre_de_calle = 137, 1, 20...
-                                    // duplico la búsqueda para el caso de [Calle nombre_de_calle], municipio
-                                    result.push({
-                                        t: data.t,
-                                        s: data.s + ' ' + data.p
-                                    });
-                                } else {
-                                    data.s = criteria[i].trim();
-                                }
-                            }
-                        }
-                    }
-
-                    result.push(data);
-                    bindRoot(result);
-                    return true;
-                }
-
-                return false;
-            };
-            var s_or_t = function (text, result) {
-                var match = /^([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9\<\>]+)$/i.exec(text);
-                if (match && match[1]) {
-                    if (root) {
-                        result.push({
-                            t: match[1].trim()
-                        });
-
-                        result.push({
-                            t: root,
-                            s: match[1].trim()
-                        });
-                    }
+                else {  // indicamos como calle el criterio que contiene números, ya que no existen municipios con números pero sí calles
+                    if (/^([^0-9]+)$/i.test(match[1].trim())) result.push({
+                        t: match[1].trim(), s: match[2].trim(), p: getPortal()
+                    });
                     else result.push({
-                        t: match[1].trim()
+                        s: match[1].trim(), t: match[2].trim(), p: getPortal()
                     });
-                    return true;
                 }
+                bindRoot.call(this, result, root, limit);
+                return true;
+            }
 
-                return false;
-            };
-            var sp = function (text, result) { // calle sin números con portal (cuando exista un municipio root establecido)
-                var match = /^([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/]+)\s*\,?\s*((\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
-                if (match && match[1] && match[2]) { // && text.indexOf(',') > -1 && text.split(',').length < 3) {
-                    if (root)
-                        result.push({
-                            t: root,
-                            s: match[1].trim(),
-                            p: _formatStreetNumber(match[2].trim())
-                        });
-                    else
-                        result.push({
-                            t: match[1].trim(),
-                            s: match[2].trim()
-                        });
+            return false;
+        },
+        spt: function (text, result, root, limit) {
+            // street, portal, town
+            var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
+            if (match && match[6] && match[1]) {
 
-                    return true;
-                }
-
-                return false;
-            };
-            var snp = function (text, result) { // calle puede contener números con portal (cuando exista un municipio root establecido)
-                var match = /^([^\,][0-9\s*\-\.\(\)\/]+)\s*\,?\s*(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(text);
-                if (match && match[1] && match[2] && root) {
+                var getPortal = function () {
+                    return formatStreetNumber((match[2] || match[3] || match[4] || match[5]).trim());
+                };
+                // ninguno contiene número duplicamos búsqueda
+                if (/^([^0-9]+)$/i.test(match[6].trim()) && /^([^0-9]+)$/i.test(match[1].trim())) {
                     result.push({
-                        t: root,
-                        s: match[1].trim(),
-                        p: _formatStreetNumber(match[2].trim())
+                        t: match[6].trim(), s: match[1].trim(), p: getPortal()
                     });
-                    return true;
+                    result.push({
+                        t: match[1].trim(), s: match[6].trim(), p: getPortal()
+                    });
                 }
+                else {  // indicamos como calle el criterio que contiene números, ya que no existen municipios con números pero sí calles
+                    if (/^([^0-9]+)$/i.test(match[6].trim())) result.push({
+                        t: match[6].trim(), s: match[1].trim(), p: getPortal()
+                    });
+                    else result.push({
+                        s: match[6].trim(), t: match[1].trim(), p: getPortal()
+                    });
+                }
+                bindRoot.call(this, result, root, limit);
+                return true;
+            }
 
-                return false;
-            };
+            return false;
+        },
+        tnsp: function (text, result, root, limit) {
+            // town, numbers street, portal
+            var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
 
-            var test = function () {
-                var tests = [function (text) {
-                    return text.length >= 3;
-                },
-                function (text) {
-                    return /^\d+$/.test(text) ? false : (/^\d+\,\s*\d+$/.test(text) ? false : true);
-                }];
+            if (match && match[1] && match[2]) {
+                result.push({
+                    t: match[2].trim(), s: match[1].trim(), p: formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim())
+                });
+                bindRoot.call(this, result, root, limit);
+                return true;
+            }
 
-                for (var i = 0; i < tests.length; i++) {
-                    if (!tests[i].call(self, text))
-                        return false;
+            return false;
+        },
+        ts: function (text, result, root, limit) {
+            // town, street
+            var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù"\s*\-\.\(\)\/0-9]+))$/i.exec(text);
+
+            // topónimo, municipio
+            if (!match && /^[^0-9]*$/i.test(text.trim())) { // si no hay números reviso dándole la vuelta, si hay números que lo trate la función st
+                var criteria = text.split(',').reverse();
+                match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù"\s*\-\.\(\)\/0-9]+))$/i.exec(criteria.join(','));
+            }
+
+            if (match && match[1] && match[2]) {
+                // ninguno contiene número duplicamos búsqueda
+                if (/^([^0-9]+)$/i.test(match[1].trim()) && /^([^0-9]+)$/i.test(match[2].trim())) {
+                    result.push({
+                        t: match[1].trim(), s: match[2].trim()
+                    });
+                    result.push({
+                        s: match[1].trim(), t: match[2].trim()
+                    });
+
+                    bindRoot.call(this, result, root, limit);
+                }
+                else {  // indicamos como calle el criterio que contiene números, ya que no existen municipios con números pero sí calles
+
+                    var getStreet = function (s) {
+                        var revS = s.split(' ').reverse();
+                        // validamos si el criterio es compuesto 
+                        var fs = [];
+                        for (var si = 0; si < revS.length; si++) {
+                            if (revS[si].length == 1) {
+                                fs.push(revS[si]);
+                                revS[si] = '';
+                            }
+                        }
+
+                        return fs.length > 0 ? revS.reverse().join(' ').trim() + self._LIKE_PATTERN + fs.reverse().join(self._LIKE_PATTERN) : revS.reverse().join(' ').trim();
+                    };
+
+                    if (/^([^0-9]+)$/i.test(match[1].trim()))
+                        result.push({
+                            t: match[1].trim(), s: getStreet(match[2].trim())
+                        });
+                    else result.push({
+                        s: getStreet(match[1].trim()), t: match[2].trim()
+                    });
+
+                    bindRoot.call(this, result, root, limit, true);
                 }
 
                 return true;
-            };
-
-
-            if (test(text)) {
-                var check = [tsp, spt, tnsp, ts, st];
-                if (root && text.split(',').length < 3)
-                    check = [sp, snp, s_or_t].concat(check);
-                else check = check.concat([sp, snp, s_or_t]);
-
-                var ch = 0;
-                try {
-                    while (ch < check.length && !check[ch].call(self, text, result)) {
-                        ch++;
-                    }
-                }
-                catch (ex) {
-                    TC.error("Error según el patrón: " + text, TC.Consts.msgErrorMode.EMAIL, "Error en la búsqueda del callejero");
-                }
             }
 
-            deferred.resolve(result);
+            return false;
+        },
+        st: function (text, result, root, limit) {
+            // street, town
+            var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
 
-            return deferred;
-        };
+            if (!match) {
+                var criteria = text.split(',').reverse();
+                match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù"\s*\-\.\(\)\/0-9]+))$/i.exec(criteria.join(','));
+            }
 
-        var getResults = function (searchObjects) {
-            if (searchObjects) {
-                self._search.data = results;
+            if (match) { // puede generar falsos positivos cuando el portal llega seguido de la calle -> calle mayor 14, pamplona
+                var data = {
+                };
+                var criteria = text.split(',').reverse();
+                for (var i = 0; i < criteria.length; i++) {
+                    if (/^([^0-9\,]+)$/i.test(criteria[i].trim())) { // si no hay números se trata de municipio
+                        data.t = criteria[i].trim();
+                    }
+                    else if (/(\s*\d+)/i.test(criteria[i].trim())) { // si contiene número, puede ser calle o calle + portal
+                        if (criteria[i].trim().indexOf(' ') == -1) { // si no contiene espacios se trata de calle compuesta por números
+                            data.s = criteria[i].trim();
+                        } else { // si contiene espacio puede contener calle + portal
+                            var _criteria = criteria[i].trim().split(' ').reverse();
 
-                if (!self.request) {
-                    self.request = [];
+                            var isPortal = function (c) {
+                                var m = /^(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(c.trim());
+                                if (m) {
+                                    data.p = formatStreetNumber(c.trim());
+                                    return true;
+                                }
+                                return false;
+                            };
+
+                            var x = 0;
+                            var p = _criteria[x].trim();
+                            while (x < _criteria.length && !isPortal(p)) {
+                                x++;
+                                if (x < _criteria.length)
+                                    p = p + _criteria[x];
+
+                            }
+
+                            if (data.p) {
+                                var _cr = _criteria;
+                                for (var h = 0; h < _cr.length; h++) {
+                                    // validamos que lo que hemos deducido como portal, está en portal para no añadirlo a calle
+                                    var inPortal = false;
+                                    for (var c = 0; c < _cr[h].split('').length; c++) {
+                                        if (data.p.indexOf(_cr[h][c]) > -1)
+                                            inPortal = true;
+                                    }
+
+                                    if (inPortal) {
+                                        var _p = _cr[h];
+
+                                        _cr[h] = '';
+                                        if (data.p == formatStreetNumber(p))
+                                            break;
+                                    }
+                                }
+
+                                if (/^([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+)$/i.test(_criteria.reverse().join(' ').trim())) {
+                                    var fs = [];
+                                    var criteriaRev = _criteria.reverse();
+                                    for (var chs = 0; chs < criteriaRev.length; chs++) {
+                                        if (criteriaRev[chs].trim().length == 1) {
+                                            fs.push(criteriaRev[chs].trim());
+                                            criteriaRev[chs] = '';
+                                        }
+                                    }
+
+                                    data.s = fs.length > 0 ? criteriaRev.reverse().join(' ').trim() + self._LIKE_PATTERN + fs.reverse().join(self._LIKE_PATTERN) : criteriaRev.reverse().join(' ').trim();
+                                }
+
+
+                                // nombre_de_calle = 137, 1, 20...
+                                // duplico la búsqueda para el caso de [Calle nombre_de_calle], municipio
+                                result.push({
+                                    t: data.t,
+                                    s: data.s + ' ' + data.p
+                                });
+                            } else {
+                                data.s = criteria[i].trim();
+                            }
+                        }
+                    }
                 }
 
-                function searchQuery(data, dataRole) {
+                result.push(data);
+                bindRoot.call(this, result, root, limit);
+                return true;
+            }
 
-                    var type = self.getSearchTypeByRole(dataRole);
+            return false;
+        },
+        s_or_t: function (text, result, root, limit) {
+            var match = /^([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9\<\>]+)$/i.exec(text);
+            if (match && match[1]) {
+                if (root) {
+                    result.push({
+                        t: match[1].trim()
+                    });
 
-                    return $.ajax({
-                        url: type.url,
-                        type: 'POST',
-                        contentType: "application/x-www-form-urlencoded;charset=UTF-8",
-                        dataType: 'text',
-                        data: type.filter.getParams(data),
-                        beforeSend: function () {
-                            self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
-                            self.$text.trigger("targetUpdated.autocomplete");
-                        }
-                    }).done(function (data) {
-                        results = results.concat(type.getSuggestionListElements(data));
-                    }).fail(function (data) {
-                        if (data.statusText !== 'abort')
-                            alert('error');
-
-                        //console.log('getStringPattern promise resuelta - data.statusText: ' + data.statusText);
-                        deferred.resolve(results);
+                    result.push({
+                        t: root,
+                        s: match[1].trim()
                     });
                 }
-
-                $.map(searchObjects, function (data, i) {
-                    var dataRoles = getDataRoles(data);
-
-                    for (var i = 0; i < dataRoles.length; i++) {
-                        var dataRole = dataRoles[i];
-
-                        if (dataRole && self.getSearchTypeByRole(dataRole)) {
-                            self.request.push(searchQuery(data, dataRole));
-                        }
-                    }
+                else result.push({
+                    t: match[1].trim()
                 });
-                $.when.apply($, self.request).then(function () {
-                    //self.request = [];
-                    //console.log('getStringPattern promise resuelta');
-                    deferred.resolve(results);
-                });
-            } else {
-                //console.log('getStringPattern promise resuelta - no encaja en address');
-                deferred.resolve(results);
+                return true;
             }
+
+            return false;
+        },
+        sp: function (text, result, root, limit) {
+            var match = /^([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/]+)\s*\,?\s*((\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
+            if (match && match[1] && match[2]) { // && text.indexOf(',') > -1 && text.split(',').length < 3) {
+                if (root)
+                    result.push({
+                        t: root,
+                        s: match[1].trim(),
+                        p: formatStreetNumber(match[2].trim())
+                    });
+                else
+                    result.push({
+                        t: match[1].trim(),
+                        s: match[2].trim()
+                    });
+
+                return true;
+            }
+
+            return false;
+        },
+        snp: function (text, result, root, limit) { // calle puede contener números con portal (cuando exista un municipio root establecido)
+            var match = /^([^\,][0-9\s*\-\.\(\)\/]+)\s*\,?\s*(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(text);
+            if (match && match[1] && match[2] && root) {
+                result.push({
+                    t: root,
+                    s: match[1].trim(),
+                    p: formatStreetNumber(match[2].trim())
+                });
+                return true;
+            }
+
+            return false;
+        }
+    };
+
+    /* métodos auxiliares de getStringPattern */
+
+    const normalizedCriteria = function (value) {
+        const self = this;
+
+        var _value = '';
+
+        value = self.removePunctuation(value);
+
+        // elimino los caracteres especiales
+        if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(value))
+            value = value.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
+        else
+            value = value.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
+        return value.toLowerCase();
+    };
+
+    const formatStreetNumber = function (value) {
+        var result = value;
+
+        var is_nc_c = function (value) {
+            return /^(\d{1,3})\s?\-?\s?([a-z]{0,4})\s?\-?\s?([a-z]{0,4})$/i.test(value);
+        }
+        var nc_c = function (value) {
+            var f = [];
+            var m = /^(\d{1,3})\s?\-?\s?([a-z]{0,4})\s?\-?\s?([a-z]{0,4})$/i.exec(value);
+            if (m) {
+                for (var i = 1; i < m.length; i++) {
+                    if (m[i].trim().length > 0)
+                        f.push(m[i].trim());
+                }
+
+                return f.join(self._LIKE_PATTERN);
+            }
+            return value;
+        };
+
+        var is_cn = function (value) {
+            return /^([a-z]{1,4})\s?\-?\s?(\d{1,3})$/i.test(value);
+        };
+        var cn = function (value) {
+            var f = [];
+            var m = /^([a-z]{1,4})\s?\-?\s?(\d{1,3})$/i.exec(value);
+            if (m) {
+                for (var i = 1; i < m.length; i++) {
+                    if (m[i].trim().length > 0)
+                        f.push(m[i].trim());
+                }
+
+                return f.join(self._LIKE_PATTERN);
+            }
+            return value;
+        };
+
+        var is_sn = function (value) {
+            return /^(sn|S\/N|s\/n|s\-n)$/i.test(value);
+        };
+        var sn = function (value) {
+            var m = /^(sn|S\/N|s\/n|s\-n)$/i.exec(value);
+            if (m) {
+                return 's*n';
+            }
+            return value;
+        };
+
+
+        var is_cmc = function (value) {
+            return /^([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.test(value);
+        };
+        var cmc = function (value) {
+            var m = /^([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(value);
+            if (m) {
+                return value;
+            }
+            return value;
+        };
+
+        var isCheck = [is_nc_c, is_cn, is_sn, is_cmc];
+        var check = [nc_c, cn, sn, cmc];
+        var ch = 0;
+        while (ch < check.length && !isCheck[ch].call(self, value)) {
+            ch++;
         }
 
-        pattern = normalizedCriteria(pattern);
+        if (ch < check.length)
+            return check[ch].call(self, value);
+        else return value;
+    };
+
+    const bindRoot = function (result, root, limit, addRoot) {
+        const self = this;
+
+        if (root) {
+            var i = result.length;
+            while (i--) {
+                if (!addRoot) {
+                    if (result[i].t) {
+                        var indicatedRoot = self.rootCfg.active.rootLabel.filter(function (elem) {
+                            return elem.label.indexOf(self.removePunctuation(result[i].t).toLowerCase()) > -1;
+                        }.bind(self));
+
+                        if (indicatedRoot.length == 1) {
+                            result[i].t = indicatedRoot[0].id;
+                        } else if (indicatedRoot.length > 1) {
+
+                            indicatedRoot.map(function (elem) {
+                                var newResult = $.extend({
+                                }, result[i]);
+                                newResult.t = elem.id;
+
+                                result.push(newResult);
+                            });
+
+                        } else if (indicatedRoot.length == 0 && limit) {
+                            result.splice(i, 1);
+                        }
+                    }
+                }
+                else {
+                    result.push($.extend({}, result[i], { t: root }));
+                };
+            }
+        }
+    };
+
+    const getObjectsFromStringToQuery = function (allowedRoles, text) {
+        const self = this;
+        const root = self.rootCfg.active && self.rootCfg.active.root || '';
+        const limit = self.rootCfg.active && self.rootCfg.active.limit || false;
+
+        var result = [];
+
+        const test = function () {
+            var tests = [function (text) {
+                return text.length >= 3;
+            },
+            function (text) {
+                return /^\d+$/.test(text) ? false : (/^\d+\,\s*\d+$/.test(text) ? false : true);
+            }];
+
+            for (var i = 0; i < tests.length; i++) {
+                if (!tests[i].call(self, text))
+                    return false;
+            }
+
+            return true;
+        };
+
+        // eliminamos espacios en blanco
+        text = text.trim();
+
+        // comprobamos si acaba con coma, si es así, la eliminamos
+        if (text.charAt(text.length - 1) == ',') {
+            text = text.substring(0, text.length - 1);
+        }
+
+        if (test(text)) {
+            var check = [];
+
+            check = allowedRoles.map(function (dataRole) {
+                return self.getSearchTypeByRole(dataRole);
+            }).filter(function (searchType) {
+                return searchType.stringPatternToCheck;
+            }).map(function (searchType) {
+                return searchType.stringPatternToCheck;
+            });
+
+            if (check.length === 0) {
+                check = [self.stringPatternsValidators.tsp, self.stringPatternsValidators.spt, self.stringPatternsValidators.tnsp, self.stringPatternsValidators.ts, self.stringPatternsValidators.st];
+                if (root && text.split(',').length < 3) {
+                    check = [self.stringPatternsValidators.sp, self.stringPatternsValidators.snp, self.stringPatternsValidators.s_or_t].concat(check);
+                }
+                else {
+                    check = check.concat([self.stringPatternsValidators.sp, self.stringPatternsValidators.snp, self.stringPatternsValidators.s_or_t]);
+                }
+            }
+
+            var ch = 0;
+            try {
+                while (ch < check.length && !check[ch].call(self, text, result, root, limit)) {
+                    ch++;
+                }
+            }
+            catch (ex) {
+                TC.error("Error según el patrón: " + text, TC.Consts.msgErrorMode.EMAIL, "Error en la búsqueda del callejero");
+            }
+
+            return result;
+        }
+
+        return null;
+    };
+
+    const requestToWFS = function (type, doneCallback, data) {
+        const self = this;
+
+        return $.ajax({
+            url: type.url,
+            type: 'POST',
+            contentType: "application/x-www-form-urlencoded;charset=UTF-8",
+            dataType: 'text',
+            data: type.filter.getParams(data),
+            beforeSend: function () {
+                self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
+                self.$text.trigger("targetUpdated.autocomplete");
+            }
+        })
+            .done(doneCallback)
+            .fail(function (data) {
+                if (data.statusText !== 'abort')
+                    alert('error');
+
+                //console.log('getStringPattern promise resuelta - data.statusText: ' + data.statusText);
+            });
+    };
+
+    const getResultsFromWFS = function (allowedRoles, deferred, objectsToQuery) {
+        const self = this;
+
+        if (objectsToQuery) {
+            var results = [];
+
+            self._search.data = results;
+
+            if (!self.request) {
+                self.request = [];
+            }
+
+            objectsToQuery.forEach(function (data, i) {
+
+                allowedRoles.filter(function (elm) {
+                    var type = self.getSearchTypeByRole(elm);
+                    return Object.keys(type.queryProperties).length === Object.keys(data).length;
+                }).map(function (dataRole) {
+                    var type = self.getSearchTypeByRole(dataRole);
+                    self.request.push(requestToWFS.call(self, type, function (data) {
+                        results = results.concat(type.getSuggestionListElements(data));
+                    }, data));
+                });
+            });
+
+            $.when.apply($, self.request).then(function () {
+                //self.request = [];
+                //console.log('getStringPattern promise resuelta');
+                deferred.resolve(results);
+            });
+        } else {
+            //console.log('getStringPattern promise resuelta - no encaja en address');
+            deferred.resolve([]);
+        }
+    };    
+
+    ctlProto.getStringPattern = function (allowedRoles, pattern) {
+        var self = this;
+        var deferred = new $.Deferred();
+
+        pattern = normalizedCriteria.call(self, pattern);
 
         /* gestionamos:
             Entidad de población: Irisarri Auzoa (Igantzi)
@@ -2903,27 +2910,25 @@ TC.inherit(TC.control.Search, TC.Control);
         */
         var combinedCriteria = /(.*)\((.*)\)/.exec(pattern);
         if (combinedCriteria && combinedCriteria.length > 2) {
-            var bothSearchObjects = [];
+
             // búsqueda de entidad de población
-            getObjectsTo(combinedCriteria[1],
-                self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false).then(function (searchObjects) {
+            var objectsToQuery = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1]);
 
-                    bothSearchObjects = searchObjects || [];
-                    // búsqueda de topónimo
-                    getObjectsTo(combinedCriteria[1] + ',' + combinedCriteria[2],
-                        self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false).then(function (searchObjects) {
+            // búsqueda de topónimo
+            var bothSearchObjects = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1] + ',' + combinedCriteria[2]);
 
-                            bothSearchObjects = bothSearchObjects.concat(searchObjects);
+            bothSearchObjects = (bothSearchObjects || []).concat(objectsToQuery || []);
 
-                            getResults(bothSearchObjects);
-                        });
-                });
+            getResultsFromWFS.call(self, allowedRoles, deferred, bothSearchObjects);
 
-            return deferred.promise();
+            return deferred;
         } else {
-            getObjectsTo(pattern, self.rootCfg.active && self.rootCfg.active.root || '', self.rootCfg.active && self.rootCfg.active.limit || false).then(getResults);
+            var objectsToQuery = getObjectsFromStringToQuery.call(self, allowedRoles, pattern);
+
+            getResultsFromWFS.call(self, allowedRoles, deferred, objectsToQuery);
+
             //console.log('getStringPattern promise');
-            return deferred.promise();
+            return deferred;
         }
     };
 
@@ -3074,7 +3079,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
     ctlProto.search = function (pattern, callback) {
         var self = this;
-        var results = [];        
+        var results = [];
 
         if (self.request) {
 
@@ -3139,7 +3144,8 @@ TC.inherit(TC.control.Search, TC.Control);
                 if (results.length === 0) {
                     self.cleanMap();
 
-                    if (!self.layer || self.layer && self.layer.features.length === 0 && self.request && self.request.length > 0 || self.request.length == 0 || !self.request) {
+                    if (!self.layer ||
+                        (self.layer && self.layer.features.length === 0)) {
                         self.$list.html('<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>');
                         self.$text.trigger("targetUpdated.autocomplete");
                     }
@@ -3199,7 +3205,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
                 } else {
 
-                    var dr = dataRole || self.getElementOnSuggestionList(id).dataRole;
+                    var dr = dataRole || self.getElementOnSuggestionList.call(self, id).dataRole;
                     if (dr) {
 
                         var searchType = self.getSearchTypeByRole(dr);
@@ -3637,13 +3643,16 @@ TC.inherit(TC.control.Search, TC.Control);
 
     ctlProto.exportState = function () {
         const self = this;
-        return {
-            id: self.id,
-            searchText: self.$text.val(),
-            layer: self.layer.exportState({
-                exportStyles: false
-            })
-        };
+        if (self.exportsState) {
+            return {
+                id: self.id,
+                searchText: self.$text.val(),
+                layer: self.layer.exportState({
+                    exportStyles: false
+                })
+            };
+        }
+        return null;
     };
 
     ctlProto.importState = function (state) {
@@ -3666,7 +3675,7 @@ if (!String.prototype.tcFormat) {
             return typeof args[number] != 'undefined' ?
                 args[number]
                 : match
-            ;
+                ;
         });
     };
 }
@@ -3691,7 +3700,7 @@ if (!String.prototype.toCamelCase) {
         var match = this.toLowerCase().match(/[^A-ZÁÉÍÓÚÜÀÈÌÒÙáéíóúüàèìòùa-z0-9_]+(.)/g);
         if (match) {
             for (var i = 0; i < match.length; i++) {
-                if (/[;:.<>\{\}\[\]\/\s()]/g.test(match[i]))
+                if (/[-;:.<>\{\}\[\]\/\s()]/g.test(match[i]))
                     _value = _value.replace(match[i], match[i].toUpperCase());
             }
         }

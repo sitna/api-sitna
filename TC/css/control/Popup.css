@@ -65,6 +65,8 @@
 }
 
 .tc-ctl-popup.tc-visible {
+    display: flex;
+    align-items: flex-start;
     width: auto;
     height: auto;
     animation: fadein 0.3s;
@@ -86,23 +88,36 @@
     padding: 0.2em;
 }
 
+.tc-ctl-popup-content.tc-ctl-popup-has-btn {
+    margin-right: 1.2em;
+}
+
+.tc-ctl-popup-content, .tc-ctl-popup-menu {
+    display: inline-block;
+}
+
+.tc-ctl-popup h3 {
+    font-size: 1em;
+    border-bottom: 1px solid #ccc;
+    margin: 0 0 0.5em 0;
+}
+
+.tc-ctl-popup h4 {
+    font-size: 0.9em;
+    margin: 0 0 0.5em 0;
+    color: #666;
+    text-shadow: 0 0 0.3em #fff;
+}
+
+.tc-ctl-popup-menu {
+    width: 1.5em;
+}
+
 .ol-overlaycontainer-stopevent .tc-ctl-popup {
     bottom: 10px;
 }
 
-.ol-overlaycontainer-stopevent .tc-ctl-popup-content.tc-ctl-popup-has-btn {
-    margin-right: 1.2em;
-}
-
-.ol-overlaycontainer-stopevent .tc-ctl-popup-close {
-    margin: 0.5em 0.5em 0 0;
-    cursor: pointer;
-    width: 1.5em;
-    height: 1.5em;
-}
-
 .tc-ctl-popup table {
-    max-width: 20vw;
     font-size: 0.8em;
     border-collapse: collapse;
     cursor: default;
@@ -134,16 +149,12 @@
 }
 
 .tc-ctl-popup-close {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 1em;
-    height: 1em;
-    font-size: 1.5em;
+    display: inline-block;
+    cursor: pointer;
     line-height: 1em;
     padding: 0;
     margin: 0;
-    text-align: right;
+    text-align: center;
     color: #999;
 }
 
