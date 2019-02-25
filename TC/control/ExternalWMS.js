@@ -42,8 +42,8 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
             return;
         }
 
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
 
         self._$div.on("change", "select", function (evt) {
             if (this.value != "") {
@@ -173,6 +173,8 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                 }
             }
         });
+
+        return result;
     };
 
     ctlProto.template = {};
