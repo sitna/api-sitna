@@ -31,8 +31,20 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.control.MapContents.prototype.register.call(self, map);
+        const self = this;
+
+        map.on(TC.Consts.event.VIEWCHANGE, function (e) {
+
+            const onLayerAdd = self.loadGraphics.bind(self);
+
+            if (e.view === TC.Consts.view.THREED) {                
+                map.on(TC.Consts.event.LAYERADD, onLayerAdd);
+            } else if (e.view === TC.Consts.view.DEFAULT) {
+                map.off(TC.Consts.event.LAYERADD, onLayerAdd);
+            }
+        });
+
+        return TC.control.MapContents.prototype.register.call(self, map);
     };
 
     ctlProto.loadGraphics = function () {
