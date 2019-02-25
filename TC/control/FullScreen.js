@@ -27,8 +27,8 @@ TC.inherit(TC.control.FullScreen, TC.Control);
     }
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
 
         self.renderPromise().then(function () {
             var $btn = self._$div.find('.' + self.CLASS + '-btn');
@@ -44,6 +44,8 @@ TC.inherit(TC.control.FullScreen, TC.Control);
             });
             } else { $btn.addClass(TC.Consts.classes.HIDDEN); }
         });
+
+        return result;
     };
 
     ctlProto.requestFullScreen = function () {
