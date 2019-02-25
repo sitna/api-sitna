@@ -23,8 +23,8 @@ TC.inherit(TC.control.NavBar, TC.Control);
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         self.wrap.register(map);
 
         //esta chama es para que la primera vez se ajuste la barrita de escala (debido a otra chama con el maxResolution, que es culpa de OL)
@@ -37,6 +37,8 @@ TC.inherit(TC.control.NavBar, TC.Control);
             var topRight = TC.Util.reproject([map.options.initialExtent[2], map.options.initialExtent[3]], map.options.crs, e.crs);
             self.wrap.setInitialExtent([bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]]);
         });
+
+        return result;
     };
 
 })();
