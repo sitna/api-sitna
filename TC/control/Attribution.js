@@ -5,7 +5,7 @@ if (!TC.Control) {
 }
 
 TC.control.Attribution = function () {
-    var self = this;
+    const self = this;
 
     TC.Control.apply(self, arguments);
 
@@ -32,8 +32,8 @@ TC.inherit(TC.control.Attribution, TC.Control);
     }
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
 
         self.apiAttribution = self.map.options.attribution || self.apiAttribution;
 
@@ -140,6 +140,8 @@ TC.inherit(TC.control.Attribution, TC.Control);
                 self.render();
             }
         });
+
+        return result;
     };
 
     ctlProto.render = function (callback) {
