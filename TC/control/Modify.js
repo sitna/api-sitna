@@ -6,8 +6,8 @@ if (!TC.Control) {
 
 TC.Consts.event.BEFOREFEATUREMODIFY = "beforefeaturemodify.tc";
 TC.Consts.event.FEATUREMODIFY = "featuremodify.tc";
-TC.Consts.event.FEATURESSELECT = "featureselect.tc";
-TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
+TC.Consts.event.FEATURESSELECT = "featuresselect.tc";
+TC.Consts.event.FEATURESUNSELECT = "featuresunselect.tc";
 TC.Consts.event.CHANGE = 'change.tc';
 
 (function () {
@@ -16,6 +16,11 @@ TC.Consts.event.CHANGE = 'change.tc';
         var self = this;
 
         TC.Control.apply(self, arguments);
+
+        if (!Modernizr.inputtypes.color && !$.fn.spectrum) {
+            TC.syncLoadJS(TC.apiLocation + 'lib/spectrum/spectrum.min.js');
+            TC.loadCSS(TC.apiLocation + 'lib/spectrum/spectrum.css');
+        }
 
         self.__firstRender = $.Deferred();
 
@@ -118,8 +123,8 @@ TC.Consts.event.CHANGE = 'change.tc';
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         if (self.options.layer) {
 
             self.setLayer(self.options.layer);
@@ -152,21 +157,25 @@ TC.Consts.event.CHANGE = 'change.tc';
                     });
                 });
 
-            self
-                .on(TC.Consts.event.FEATURESSELECT, function (e) {
-                    const selectedFeatures = self.getSelectedFeatures();
-                    setFeatureSelectedState(self, selectedFeatures);
-                    //setFeatureUnselectedStyle(self, self.layer.features.filter(function (feature) {
-                    //    return selectedFeatures.indexOf(feature) < 0;
-                    //}));
-                    //setFeatureSelectedStyle(self, e.features);
-
-                })
-                .on(TC.Consts.event.FEATURESUNSELECT, function (e) {
-                    setFeatureSelectedState(self, self.getSelectedFeatures());
-                    //setFeatureUnselectedStyle(self, e.features);
+            const featureSelectUpdater = function () {
+                const selectedFeatures = self.getSelectedFeatures();
+                setFeatureSelectedState(self, selectedFeatures);
+                const unselectedFeatures = self.layer.features.filter(function (feature) {
+                    return selectedFeatures.indexOf(feature) < 0;
                 });
+                unselectedFeatures.forEach(function (feature) {
+                    feature.toggleSelectedStyle(false);
+                });
+                selectedFeatures.forEach(function (feature) {
+                    feature.toggleSelectedStyle(true);
+                });
+            };
+            self
+                .on(TC.Consts.event.FEATURESSELECT, featureSelectUpdater)
+                .on(TC.Consts.event.FEATURESUNSELECT, featureSelectUpdater);
         }
+
+        return result;
     };
 
     ctlProto.render = function (callback) {
@@ -225,27 +234,20 @@ TC.Consts.event.CHANGE = 'change.tc';
             self.renderData(renderObject, renderCallback);
         }
         else {
-            // El navegador no soporta input[type=color], cargamos polyfill
-            TC.loadJS(
-                !$.fn.spectrum,
-                TC.apiLocation + 'lib/spectrum/spectrum.min.js',
-                function () {
-                    TC.loadCSS(TC.apiLocation + 'lib/spectrum/spectrum.css');
-                    self.renderData(renderObject, function () {
-                        self._$div.find('input[type=color]').spectrum({
-                            preferredFormat: 'hex',
-                            showPalette: true,
-                            palette: [],
-                            selectionPalette: [],
-                            cancelText: self.getLocaleString('cancel'),
-                            chooseText: self.getLocaleString('ok'),
-                            replacerClassName: self.CLASS + '-str-c'
-                        });
+            // El navegador no soporta input[type=color], usamos polyfill
+            self.renderData(renderObject, function () {
+                self._$div.find('input[type=color]').spectrum({
+                    preferredFormat: 'hex',
+                    showPalette: true,
+                    palette: [],
+                    selectionPalette: [],
+                    cancelText: self.getLocaleString('cancel'),
+                    chooseText: self.getLocaleString('ok'),
+                    replacerClassName: self.CLASS + '-str-c'
+                });
 
-                        renderCallback();
-                    });
-                }
-            )
+                renderCallback();
+            });
         }
     };
 
@@ -254,18 +256,14 @@ TC.Consts.event.CHANGE = 'change.tc';
     };
 
     ctlProto.activate = function () {
-        var self = this;
+        const self = this;
         self._$selectBtn.addClass(TC.Consts.classes.ACTIVE);
         TC.Control.prototype.activate.call(self);
         self.wrap.activate(self.mode);
     };
 
     ctlProto.deactivate = function () {
-        var self = this;
-        if (self._$selectBtn) {
-            self._$selectBtn.removeClass(TC.Consts.classes.ACTIVE);
-            //setFeatureUnselectedStyle(self, self.getSelectedFeatures());
-        }
+        const self = this;
         TC.Control.prototype.deactivate.call(self);
         if (self._$selectBtn) {
             setFeatureSelectedState(self, []);
@@ -274,6 +272,13 @@ TC.Consts.event.CHANGE = 'change.tc';
             self.wrap.deactivate();
         }
         //self.$events.trigger($.Event(TC.Consts.event.DRAWCANCEL, { ctrl: self }));
+        if (self._$selectBtn) {
+            self._$selectBtn.removeClass(TC.Consts.classes.ACTIVE);
+            self.layer.features.forEach(function (feature) {
+                feature.toggleSelectedStyle(false);
+            });
+            //setFeatureUnselectedStyle(self, self.getSelectedFeatures());
+        }
     };
 
     ctlProto.clear = function () {
@@ -308,11 +313,6 @@ TC.Consts.event.CHANGE = 'change.tc';
         }
         else {
             self.deactivate();
-        }
-
-        var event = activate ? TC.Consts.event.CONTROLACTIVATE : TC.Consts.event.CONTROLDEACTIVATE;
-        if (self.map) {
-            self.map.$events.trigger($.Event(event, { control: self }));
         }
         return self;
     };
