@@ -394,8 +394,7 @@ TC.filter.Spatial.prototype.write = function () {
         prefix: this._defaultPrefixNS,
         tag: this.getTagName(),
         name: this.geometryName,
-        srsName: (typeof (this.srsName) !== "undefined" ? " srsName=\"" + this.srsName + "\"" : ""),
-        geometry: (this.geometry instanceof TC.filter.Function ? this.writeInnerCondition_(this.geometry) : this.geometry.wrap.toGML()),
+        geometry: (this.geometry instanceof TC.filter.Function ? this.writeInnerCondition_(this.geometry) : this.geometry.wrap.toGML(undefined, this.srsName)),
         fieldTitle: this._fieldTitle
     });
 };
