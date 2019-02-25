@@ -24,9 +24,10 @@ TC.inherit(TC.control.ScaleBar, TC.Control);
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         map.wrap.getMap().addControl(self.wrap.ctl);
+        return result;
     };
 
     ctlProto.getText = function () {
