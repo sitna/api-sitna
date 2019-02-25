@@ -234,6 +234,7 @@ TC.Layer.prototype.setOpacity = function (opacity, mute) {
     var layer = this;
     $.when(this.wrap.getLayer()).then(function (olLayer) {
         olLayer.setOpacity(opacity);
+        layer.opacity = opacity;
         if (layer.map && !mute) {
             layer.map.$events.trigger($.Event(TC.Consts.event.LAYEROPACITY, { layer: layer, opacity: opacity }));
         }
@@ -369,12 +370,6 @@ TC.Layer.prototype.getResolutions = function () {
     else {
         return [];
     }
-};
-
-TC.Layer.prototype.getLegendUrl = function (src) {
-    var self = this;
-
-    return src;
 };
 
 TC.Layer.prototype.setProjection = function () {
