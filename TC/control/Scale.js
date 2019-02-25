@@ -41,8 +41,8 @@ TC.inherit(TC.control.Scale, TC.Control);
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         var screenSize = TC.Util.storage.getLocalValue(TC.Consts.SCREEN_SIZE_KEY);
         if (screenSize) {
             TC.Cfg.screenSize = screenSize;
@@ -53,6 +53,8 @@ TC.inherit(TC.control.Scale, TC.Control);
                 self.update();
             });
         });
+
+        return result;
     };
 
     ctlProto.update = function () {
