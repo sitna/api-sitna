@@ -32,9 +32,9 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
     }
 
     ctlProto.register = function (map) {
-        var self = this;
+        const self = this;
 
-        TC.Control.prototype.register.call(self, map);
+        const result = TC.Control.prototype.register.call(self, map);
 
         const instanceLayer = function (layer) {
             var lyr;
@@ -125,6 +125,8 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
             
             map.on(TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.BASELAYERCHANGE, changeBaseLayer.bind(self));            
         });
+
+        return result;
     };
 
     ctlProto.loaded = function (callback) {
