@@ -20,9 +20,9 @@ if (!TC.control.MapContents) {
     ctlProto.CLASS = 'tc-ctl-swcc';
 
     ctlProto.register = function (map) {
-        var self = this;
+        const self = this;
 
-        TC.Control.prototype.register.call(self, map);
+        const result = TC.Control.prototype.register.call(self, map);
 
         // Si el navegador es compatible, añadimos el service worker.
         if (navigator.serviceWorker) {
@@ -51,6 +51,8 @@ if (!TC.control.MapContents) {
         else {
             self._serviceWorkerDeferred.reject();
         }
+
+        return result;
     };
 
     ctlProto.getServiceWorker = function () {
