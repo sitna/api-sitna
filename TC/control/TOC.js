@@ -38,8 +38,8 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
     var CLICKEVENT = 'click.tc';
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.control.MapContents.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.control.MapContents.prototype.register.call(self, map);
         self._addBrowserEventHandlers();
 
         map.on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
@@ -49,6 +49,8 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
                 self.updateLayerTree(e.layer);
             }
         });
+
+        return result;
     };
 
     ctlProto._addBrowserEventHandlers = function () {
