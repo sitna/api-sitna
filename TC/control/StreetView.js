@@ -100,7 +100,7 @@ if (!TC.Control) {
     };
 
     ctlProto.register = function (map) {
-        var self = this;
+        const self = this;
 
         if (!self._$viewDiv) {
             self.viewDiv = TC.Util.getDiv(self.options.viewDiv);
@@ -111,7 +111,7 @@ if (!TC.Control) {
             }
         }
 
-        TC.Control.prototype.register.call(self, map);
+        const result = TC.Control.prototype.register.call(self, map);
 
         self.layer = null;
         var layerId = self.getUID();
@@ -194,6 +194,8 @@ if (!TC.Control) {
             , function (a, b, c) {
                 TC.error("Error de renderizado Streetview");
             });
+
+        return result;
     };
 
 
@@ -324,6 +326,7 @@ if (!TC.Control) {
                             pitch: 0
                         },
                         zoom: 1,
+                        fullscreenControl: false,
                         zoomControlOptions: {
                             position: google.maps.ControlPosition.LEFT_TOP
                         },
