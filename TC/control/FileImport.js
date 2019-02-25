@@ -26,6 +26,8 @@ TC.control.FileImport = function () {
     self.apiAttribution = '';
     self.mainDataAttribution = '';
     self.dataAttributions = [];
+
+    self.exportsState = true;
 };
 
 TC.inherit(TC.control.FileImport, TC.Control);
@@ -44,7 +46,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
     ctlProto.register = function (map) {
         var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const result = TC.Control.prototype.register.call(self, map);
 
         if (self.options.enableDragAndDrop) {
             map.wrap.enableDragAndDrop(self.options);
@@ -53,10 +55,11 @@ TC.inherit(TC.control.FileImport, TC.Control);
         map
             .on(TC.Consts.event.FEATURESIMPORT, function (e) {
                 // Ignoramos los GPX (se supone que los gestionará Geolocation)
-                var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
-                if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
+                var gpxPattern = '.' + TC.Consts.format.GPX.toLowerCase();
+                if (e.fileName.toLowerCase().indexOf(gpxPattern) === e.fileName.length - gpxPattern.length || e.target !== self.map.div && e.target !== self) {
                     return;
                 }
+                
                 map.addLayer({
                     id: self.getUID(),
                     title: e.fileName,
@@ -126,12 +129,22 @@ TC.inherit(TC.control.FileImport, TC.Control);
                 };
                 reader.readAsText(e.file);
             })
+            .on(TC.Consts.event.FEATUREREMOVE, function (e) {
+                // Eliminamos la capa cuando ya no quedan features en ella
+                if (self.layers.indexOf(e.layer) >= 0) {
+                    if (!e.layer.features.length) {
+                        self.map.removeLayer(e.layer);
+                    }
+                }
+            })
             .on(TC.Consts.event.LAYERREMOVE, function (e) {
                 const idx = self.layers.indexOf(e.layer);
                 if (idx >= 0) {
                     self.layers.splice(idx, 1);
                 }
             });
+
+        return result;
     };
 
     ctlProto.render = function () {
@@ -146,7 +159,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                 .on('change', function (e) {
                     if (self.map) {
                         console.log('salta el change');
-                        self.map.wrap.loadFiles(e.target.files);
+                        self.map.wrap.loadFiles(e.target.files, { control: self });
                     }
                 });
         });
@@ -154,15 +167,18 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
     ctlProto.exportState = function () {
         const self = this;
-        return {
-            id: self.id,
-            layers: self.layers.map(function (layer) {
-                return {
-                    title: layer.title,
-                    state: layer.exportState()
-                };
-            })
-        };
+        if (self.exportsState) {
+            return {
+                id: self.id,
+                layers: self.layers.map(function (layer) {
+                    return {
+                        title: layer.title,
+                        state: layer.exportState()
+                    };
+                })
+            };
+        }
+        return null;
     };
 
     ctlProto.importState = function (state) {
