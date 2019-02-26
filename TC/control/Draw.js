@@ -36,7 +36,12 @@ TC.Consts.event.CHANGE = 'change.tc';
     TC.control.Draw = function () {
         var self = this;
 
-        TC.Control.apply(self, arguments);
+        TC.Control.apply(self, arguments);        
+
+        if (!Modernizr.inputtypes.color && !$.fn.spectrum) {
+            TC.syncLoadJS(TC.apiLocation + 'lib/spectrum/spectrum.min.js');
+            TC.loadCSS(TC.apiLocation + 'lib/spectrum/spectrum.css');
+        }
 
         self._classSelector = '.' + self.CLASS;
 
@@ -63,6 +68,8 @@ TC.Consts.event.CHANGE = 'change.tc';
         });
         self.$events.on(TC.Consts.event.DRAWEND, function (e) {
             setFeatureAddReadyState(self);
+
+            e.feature.setId(TC.getUID(self.getLocaleString('sketch') + '.'));
 
             if (self.callBack) {
                 self.callBack(e.feature);
@@ -193,39 +200,36 @@ TC.Consts.event.CHANGE = 'change.tc';
             styleTools: self.options.styleTools
         };
         self.renderData(renderObject, function () {
-            if (Modernizr.inputtypes.color) {
-                if ($.isFunction(callback)) {
-                    callback();
-                }
+            if (!Modernizr.inputtypes.color) {
+                // El navegador no soporta input[type=color], usamos polyfill
+                self._$div.find('input[type=color]').spectrum({
+                    preferredFormat: 'hex',
+                    showPalette: true,
+                    palette: [],
+                    selectionPalette: [],
+                    cancelText: self.getLocaleString('cancel'),
+                    chooseText: self.getLocaleString('ok'),
+                    replacerClassName: self.CLASS + '-str-c'
+                });
             }
-            else {
-                // El navegador no soporta input[type=color], cargamos polyfill
-                TC.loadJS(
-                    !$.fn.spectrum,
-                    TC.apiLocation + 'lib/spectrum/spectrum.min.js',
-                    function () {
-                        TC.loadCSS(TC.apiLocation + 'lib/spectrum/spectrum.css');
-                        self._$div.find('input[type=color]').spectrum({
-                            preferredFormat: 'hex',
-                            showPalette: true,
-                            palette: [],
-                            selectionPalette: [],
-                            cancelText: self.getLocaleString('cancel'),
-                            chooseText: self.getLocaleString('ok'),
-                            replacerClassName: self.CLASS + '-str-c'
-                        });
-                        if ($.isFunction(callback)) {
-                            callback();
-                        }
-                    }
-                );
+            if ($.isFunction(callback)) {
+                callback();
             }
         });
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
+
+        self.map.on(TC.Consts.event.VIEWCHANGE, function () {
+            if (self.map.view === TC.Consts.view.PRINTING) {
+                self.end();
+
+                // No lanzo el evento porque da error al no llegar una feature
+                // self.$events.trigger($.Event(TC.Consts.event.DRAWEND));
+            }
+        });
 
         const setStyles = function () {
             self.styles = {};
@@ -259,6 +263,8 @@ TC.Consts.event.CHANGE = 'change.tc';
                 }
             }
         });
+
+        return result;
     };
 
     ctlProto.new = function () {
@@ -386,11 +392,6 @@ TC.Consts.event.CHANGE = 'change.tc';
         }
         else {
             self.deactivate();
-        }
-
-        var event = activate ? TC.Consts.event.CONTROLACTIVATE : TC.Consts.event.CONTROLDEACTIVATE;
-        if (self.map) {
-            self.map.$events.trigger($.Event(event, { control: self }));
         }
         return self;
     };
