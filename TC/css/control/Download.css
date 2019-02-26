@@ -9,7 +9,7 @@
     color: #666666;
 }
 
-.tc-ctl-download-cnt > span {
+.tc-ctl-download-cnt span {
     width: 100%;
     display: block;
     line-height: 2em;
@@ -18,18 +18,18 @@
     font-size: 104.5%;
 }
 
-div.tc-ctl-download-cnt > label {
+div.tc-ctl-download-cnt label {
     width: 25%;
 }
 
-.tc-ctl-download-cnt > select.tc-combo {
+.tc-ctl-download-cnt select.tc-combo {
     width: 75%;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
 }
 
-.tc-ctl-download-div > label.tc-ctl-download-image-qr-label {
+.tc-ctl-download-div label.tc-ctl-download-image-qr-label {
     float: left;
     line-height: 3em;
     width: 50%;
@@ -70,7 +70,7 @@ div.tc-ctl-download .tc-ctl-download-btn:before {
     margin-right: 0.5em;
 }
 
-div.tc-ctl-download .tc-alert {
+/*div.tc-ctl-download .tc-alert {
     clear: both;
     padding: 10px;
     margin: 40px 10px 10px 10px;
@@ -78,7 +78,7 @@ div.tc-ctl-download .tc-alert {
 
     div.tc-ctl-download .tc-alert p {
         margin: 0;
-    }
+    }*/
 
 .tc-ctl-download-div i.icon-question-sign {
     font-family: Mapskin;
@@ -109,11 +109,37 @@ div.tc-ctl-download .tc-ctl-download-help-dialog li li {
     margin-bottom: 3px;
 }
 
+.tc-ctl-download-cnt.tc-group {
+    display: block;
+}
+
+    .tc-ctl-download-cnt.tc-group.tc-collapsed {
+        display: none;
+    }
+
+.tc-ctl-share-qr-dialog .tc-modal-body {
+    display: flex;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -webkit-flexbox;
+    justify-content: center;
+    align-items: center;    
+}
+
+    .tc-ctl-share-qr-dialog .tc-modal-body .tc-ctl-share-qr-alert {
+        text-align: justify;
+        -webkit-align-self: flex-start;
+        -ms-flex-item-align: start;
+        align-self: start;
+    }
+
 /*div.tc-ctl-download-div i {
     color: #666;
 }*/
-
 @media screen and (min-width: 22cm) and (min-height: 22cm) {
+    .tc-ctl-share-qr-dialog .tc-modal-body {
+        max-width: 256px; /* tamaño del QR */
+    }        
 
     .tc-ctl-download-div i.icon-question-sign {
         font-size: 17px;

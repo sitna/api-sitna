@@ -1,0 +1,769 @@
+﻿
+.tc-ctl-geolocation h2 {
+    text-transform: none;
+}
+
+.tc-ctl-geolocation-content {
+    /*padding: 0.8em 0.5em 0 0.5em;*/
+}
+
+.tc-ctl-geolocation-track-marker-icon {
+    background-image: url(../img/track-marker-icon.png);
+}
+
+.tc-ctl-geolocation-track-marker-icon-end {
+    background-image: url(../img/track-marker-icon-end.png);
+}
+
+.tc-ctl-geolocation-locate {
+    float: right;
+    margin-left: 0.5em;
+}
+
+    .tc-ctl-geolocation-locate label {
+        vertical-align: bottom;
+        line-height: 2em;
+        margin-right: 0.3em;
+    }
+
+    .tc-ctl-geolocation-locate button {
+        height: 2em;
+        width: 13em;
+    }
+
+        .tc-ctl-geolocation-locate button:before {
+            font-family: FontAwesome;
+            content: "\f041";
+            margin-right: 0.5em;
+        }
+
+    .tc-ctl-geolocation-locate .tc-ctl-geolocation-locate-hide {
+        background-color: #630101;
+        border-color: #630101;
+    }
+
+.tc-map.tc-collapsed .tc-ctl-geolocation-info-tracking {
+    display: none;
+}
+
+.tc-ctl-geolocation-select {
+    padding-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+    .tc-ctl-geolocation-select label {
+        position: relative;
+        display: inline-block;
+        height: 2em;
+        margin: 0.2em 0;
+        width: calc(50% - 1px);
+    }
+
+    .tc-ctl-geolocation-select input[type=radio] {
+        display: none;
+    }
+
+        .tc-ctl-geolocation-select input[type=radio] ~ span {
+            position: absolute;
+            display: block;
+            width: 100%;
+            height: 100%;
+            line-height: 2em;
+            text-align: center;
+            border: 1px solid #666;
+            background-color: #fff;
+            color: #666;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tc-ctl-geolocation-select input[type=radio]:checked ~ span {
+            border-color: #c00;
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+            border-bottom-color: #fff;
+            color: #c00;
+            z-index: 10007;
+        }
+
+    .tc-ctl-geolocation-select label:first-child input[type=radio] ~ span {
+        border-top-left-radius: 0.3em;
+        border-bottom-left-radius: 0.3em;
+    }
+
+    .tc-ctl-geolocation-select label:first-child input[type=radio]:checked ~ span {
+        border-bottom-left-radius: 0;
+        border-bottom-color: transparent;
+    }
+
+    .tc-ctl-geolocation-select label:last-child input[type=radio] ~ span {
+        border-top-right-radius: 0.3em;
+        border-bottom-right-radius: 0.3em;
+    }
+
+    .tc-ctl-geolocation-select label:last-child input[type=radio]:checked ~ span {
+        border-bottom-right-radius: 0;
+        border-bottom-color: transparent;
+    }
+
+label.tc-ctl-geolocation-btn-tracks {
+    margin-right: 0;
+}
+
+label.tc-ctl-geolocation-btn-track {
+    margin-left: 0;
+}
+
+.tc-ctl-geolocation-track-center {
+    position: absolute;
+    left: 0.7em;
+    top: 29.35em;
+    width: 2em;
+    height: 2em;
+    margin-top: 0.3em;
+    z-index: 10002;
+}
+
+    .tc-ctl-geolocation-track-center button {
+        border-radius: 0.2em;
+        border: 0;
+        background-color: rgba(0, 0, 0, 0.66);
+        width: 100%;
+        height: 100%;
+        padding: 0;
+    }
+
+        .tc-ctl-geolocation-track-center button:before {
+            font-family: mapskin;
+            content: "\e029";
+        }
+
+i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
+    font-family: FontAwesome;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 2em;
+}
+
+.tc-ctl-geolocation-track {
+    max-height: 28em;
+    clear: both;
+}
+
+.tc-ctl-geolocation-track-cnt {
+    box-sizing: border-box;
+    margin: 6px 0 0 0;
+    text-align: right;
+}
+
+.tc-ctl-geolocation-track-available {
+    margin-top: -15px;
+    text-align: left;
+}
+
+.tc-ctl-geolocation.tc-collapsed i.tc-ctl-geolocation-track-search-icon {
+    display: none;
+}
+
+.tc-ctl-geolocation-track-ui {
+    text-align: right;
+}
+
+    .tc-ctl-geolocation-track-ui button {
+        background-image: url(../img/geo-track.png);
+        background-repeat: no-repeat;
+        background-position: 1.2em 0.2em;
+        height: 2em;
+        padding-left: 2.5em;
+        width: 9em;
+    }
+
+        .tc-ctl-geolocation-track-ui button.tc-ctl-geolocation-track-ui-deactivate {
+            background-color: #630101;
+            border-color: #630101;
+        }
+
+
+.tc-ctl-geolocation-info-tracking div.tc-ctl-p-results {
+    -webkit-transition: all 0.5s linear;
+    -moz-transition: all 0.5s linear;
+    -o-transition: all 0.5s linear;
+    -ms-transition: all 0.5s linear;
+    transition: all 0.5s linear;
+    min-width: inherit;
+}
+
+.tc-threed .tc-ctl-geolocation-info-tracking .tc-ctl-p-results {
+    z-index: 1;
+}
+
+.tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop33 {
+    top: 1.5em;
+}
+
+.tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop57 {
+    top: 3.55em;
+}
+
+.tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop159 {
+    top: 15.9em;
+}
+
+.tc-ctl-geolocation-info-tracking div#results {
+    height: 5em;
+}
+
+.tc-ctl-geolocation-info-tracking div.tc-ctl-p-results ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: rgba(69, 69, 69, 0.9);
+}
+
+    .tc-ctl-geolocation-info-tracking div.tc-ctl-p-results ul li {
+        float: left;
+    }
+
+        .tc-ctl-geolocation-info-tracking div.tc-ctl-p-results ul li span {
+            font-weight: bold;
+        }
+
+        .tc-ctl-geolocation-info-tracking div.tc-ctl-p-results ul li:last-child {
+            margin-left: 0.4em;
+        }
+
+button.tc-ctl-geolocation-active {
+    border-color: #630101;
+    background-color: #630101;
+}
+
+.tc-ctl-geolocation-track-save, .tc-ctl-geolocation-track-add-wpt {
+    /*width: 20%;
+    padding-bottom: 0.4em;*/
+}
+
+    .tc-ctl-geolocation-track-save:before {
+        font-family: mapskin;
+        content: "\e038";
+    }
+
+label.tc-ctl-geolocation-track-available-label {
+    width: 100%;
+}
+
+.tc-ctl-geolocation-track-mng input {
+    box-sizing: border-box;
+}
+
+    .tc-ctl-geolocation-track-mng input[type="file"] {
+        display: none;
+    }
+
+        .tc-ctl-geolocation-track-mng input[type="file"] + label {
+            color: white;
+            display: inline-block;
+            cursor: pointer; /* "hand" cursor */
+            border: 1px solid #C00;
+            border-radius: 0.3em;
+            background-color: #C00;
+            height: 2em;
+            padding: 0 18px;
+            box-sizing: border-box;
+            line-height: 2em;
+        }
+
+            .tc-ctl-geolocation-track-mng input[type="file"] + label:before {
+                font-family: mapskin;
+                content: "\e036";
+                padding-right: 1em;
+            }
+
+.tc-ctl-geolocation-track-available-lst {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 8em;
+    height: auto;
+    border-radius: 0.3em;
+    border: 1px solid #CCC;
+    padding: 0;
+    list-style: none;
+    margin-top: 0.5em;
+    box-sizing: border-box;
+}
+
+    .tc-ctl-geolocation-track-available-lst > li > span {
+        width: 58%;
+        float: left;
+        -ms-text-overflow: ellipsis;
+        -o-text-overflow: ellipsis;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        height: 2em;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable {
+            cursor: pointer;
+            color: #600;
+        }
+
+            .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable:hover {
+                color: #c00;
+            }
+
+ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-available-empty > span {
+    text-decoration: none;
+    color: inherit;
+    cursor: auto;
+}
+
+ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-not > span {
+    text-decoration: none;
+    color: inherit;
+    cursor: auto;
+}
+
+.tc-ctl-geolocation-track-available-lst > li > button {
+    background-color: transparent;
+    border: 0;
+    padding: 0;
+    width: 7.5%;
+    margin-right: 1%;
+    outline: none;
+}
+
+    .tc-ctl-geolocation-track-available-lst > li > button:before {
+        display: block;
+        position: relative;
+        color: #666;
+        font-family: 'FontAwesome';
+        padding: 0 0.3em;
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > button:disabled:before {
+        color: #ccc;
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-simulate:before {
+        font-family: FontAwesome;
+        content: "\f008";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > button#elevation:before {
+        font-family: FontAwesome;
+        content: "\f1fe";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete {
+        margin-left: -8px;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete:before {
+            font-family: FontAwesome;
+            content: "\f1f8";
+        }
+
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-edit:before {
+        font-family: FontAwesome;
+        content: "\f040";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-save:before {
+        font-family: FontAwesome;
+        content: "\f0c7";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-cancel:before {
+        font-family: FontAwesome;
+        content: "\f00d";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx:before {
+        font-family: Arial;
+        font-size: 70%;
+        font-weight: bold;
+        content: "GPX";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml, .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx {
+        padding-top: 0.25em;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml:before {
+            font-family: Arial;
+            font-size: 70%;
+            font-weight: bold;
+            content: "KML";
+        }
+
+
+input#tc-ctl-geolocation-track-available-srch {
+    width: 100%;
+    height: 2em;
+}
+
+.tc-ctl-geolocation-track-search-icon {
+    position: relative;
+    margin-top: 4px;
+    right: 21px;
+    color: #ccc;
+    font-style: normal;
+    width: 1em;
+    float: right;
+    top: 20px;
+}
+
+    .tc-ctl-geolocation-track-search-icon:before {
+        font-family: FontAwesome;
+        content: "\f002";
+    }
+
+.tc-ctl-geolocation-track-title, .tc-ctl-geolocation-track-waypoint {
+    width: 81.6%;
+    margin-right: 2.4%;
+    margin-bottom: 0.5em;
+}
+
+.tc-ctl-geolocation-track-current .tc-icon-button {
+    width: 16%;
+}
+
+.tc-ctl-geolocation-track-add-wpt:before {
+    font-family: FontAwesome;
+    content: "\f08d";
+}
+
+.tc-ctl-geolocation-track-import > input[type="file"] {
+    width: 100%;
+}
+
+.tc-ctl-geolocation-track-mng > h4 {
+    color: #595959;
+    margin: 1em 0;
+    margin-bottom: 0.1em;
+    clear: right;
+}
+
+div.tc-ctl-geolocation-continue-track-dialog > div > div > button.tc-button {
+    margin: 0.3em;
+}
+
+i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
+    cursor: pointer;
+    vertical-align: top;
+    color: #AAA;
+    margin-left: 4px;
+}
+
+.tc-ctl-geolocation-track-panel-block input[type=checkbox] {
+    display: none;
+}
+    /* to hide the checkbox itself */
+    .tc-ctl-geolocation-track-panel-block input[type=checkbox] + label:before {
+        font-family: FontAwesome;
+        font-size: 15px;
+        display: inline-block;
+        content: "\f096";
+        width: 18px;
+    }
+
+    .tc-ctl-geolocation-track-panel-block input[type=checkbox]:checked + label:before {
+        content: "\f046";
+    }
+
+div.tc-ctl-geolocation-track-render {
+    padding-top: 0.3em;
+    text-align: left;
+    float: left;
+    padding-bottom: 0.3em;
+}
+
+    div.tc-ctl-geolocation-track-render label {
+        width: 100%;
+        text-align: left;
+        float: left;
+        padding-bottom: 0.3em;
+    }
+
+/* to hide the checkbox itself */
+.tc-ctl-geolocation-track-render input[type=checkbox] + label:before {
+    font-family: FontAwesome;
+    font-size: 15px;
+    display: inline-block;
+    content: "\f096";
+    width: 18px;
+}
+
+.tc-ctl-geolocation-track-render input[type=checkbox]:checked + label:before {
+    content: "\f046";
+}
+
+.tc-ctl-geolocation-track-panel-block {
+    margin: 1em 0 0 0;
+}
+
+.tc-ctl-geolocation-track-panel-span {
+    padding: 0 0.5em;
+}
+
+.tc-ctl-geolocation-track-panel {
+    color: #AA0000;
+    font-style: normal;
+    font-size: 1.58em;
+    font-weight: bold;
+    vertical-align: middle;
+    margin-left: 0.1em;
+    cursor: pointer;
+}
+
+.tc-ctl-geolocation-track-panel-opened:after {
+    font-family: FontAwesome;
+    content: "\f205";
+}
+
+.tc-ctl-geolocation-track-panel-opened.closed:after {
+    font-family: FontAwesome;
+    content: "\f204";
+}
+
+.tc-ctl-geolocation-track-available-lst > li.selectedTrack {
+    /*background: repeating-linear-gradient( -45deg, rgba(224, 224, 224, 0.3), rgba(255, 217, 217, 0.7) 1px, #fff 0px, #fff 5px );*/
+    /*background: repeating-linear-gradient( -45deg, #F0EFEF, #F0EFEF 1px, #fff 1px, #fff 10px );*/
+    background: rgba(102, 0, 0, 0.1);
+}
+
+.tc-ctl-geolocation-trackMarker {
+    background-position: center;
+    background-size: 70%;
+    background-repeat: no-repeat;
+    height: 2em;
+    width: 2em;
+    visibility: visible;
+}
+
+    .tc-ctl-geolocation-trackMarker.elevation {
+        background-image: url('../img/geo-elevationArrow.png');
+    }
+
+    .tc-ctl-geolocation-trackMarker.tracking {
+        height: 1em;
+        width: 1em;
+        background-image: url('../img/marker-tracking.png');
+    }
+
+.tc-ctl-geolocation-track-advertisement.p {
+    text-align: center;
+}
+
+    .tc-ctl-geolocation-track-advertisement.p > label > input[type="checkbox"] {
+        vertical-align: middle;
+        margin-bottom: 0.1em;
+    }
+
+    .tc-ctl-geolocation-track-advertisement.p > label {
+        vertical-align: middle;
+        padding-left: 0.2em;
+    }
+
+/*
+#track-chart {
+    min-width: 1em;
+    padding-right: 1em;
+    background-color: rgba(255,255,255, 0.6);
+    border: 1px solid #CCC;
+    border-radius: 5px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.5);
+    position: absolute;
+    bottom: 0;
+    right: 1.8em;
+    display: none;
+}
+
+.track-chart-collapse {
+    height: 2em;
+    width: 100%;
+    position: absolute;
+    cursor: pointer;
+}
+
+    .track-chart-collapse > span {
+        display: block;
+        margin-left: 50%;
+        color: rgba(69, 69, 69, 0.9);
+    }
+
+        .track-chart-collapse > span:before {
+            font-family: FontAwesome;
+            content: "\f0d7";
+        }
+        */
+
+.tc-ctl-geolocation-track-snap-info {
+    display: none;
+    visibility: visible;
+    background-color: rgba(256, 256, 256, .7);
+    color: rgba(69, 69, 69, 0.9);
+    padding: 0.3em;
+    border: 0.1em solid #DFDFDF;
+    border-radius: 0.3em;
+    font-size: 11px;
+}
+
+    .tc-ctl-geolocation-track-snap-info p {
+        margin: 0.2em;
+    }
+
+    .tc-ctl-geolocation-track-snap-info ul {
+        margin: 0;
+        padding: 0 0.8em 0 0.8em;
+        list-style-type: none;
+    }
+
+        .tc-ctl-geolocation-track-snap-info ul li {
+            padding: 0.2em 0em 0.2em 0em;
+            text-transform: uppercase;
+        }
+
+            .tc-ctl-geolocation-track-snap-info ul li span {
+                font-weight: bold;
+            }
+
+.tc-ctl-geolocation-track-available-lst > li, .tc-modal .tc-crs-list > li {
+    padding: 0.25em 0 0.2em 0.5%;
+    border-bottom: 0.1em solid rgba(0,0,0,0.1);
+    overflow: hidden;
+    line-height: 2em;
+    box-sizing: content-box;
+}
+
+    .tc-ctl-geolocation-track-available-lst > li > input {
+        margin-right: 1%;
+        padding-left: 0.5em;
+        width: 81.5%;
+        float: left;
+    }
+
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-simulate:before {
+        font-family: FontAwesome;
+        content: "\f008";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop {
+        padding-left: 0.15em;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop:before {
+            font-family: FontAwesome;
+            content: "\f04d";
+        }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause:before {
+        padding-left: 0.25em;
+        font-family: FontAwesome;
+        content: "\f04c";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause {
+        width: 18px;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause.play:before {
+            font-family: FontAwesome;
+            content: "\f04b";
+        }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-forward {
+        margin-right: 0%;
+        padding-left: 0.15em;
+        float: right;
+        margin-top: 0.48em;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-forward:before {
+            font-family: FontAwesome;
+            content: "\f04e";
+        }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-backward {
+        padding-left: 0.15em;
+        margin-left: -8px;
+    }
+
+        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-backward:before {
+            font-family: FontAwesome;
+            content: "\f04a";
+        }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-spn-speed {
+        width: 15%;
+        float: none;
+        font-weight: bold;
+        font-family: Arial;
+        font-size: 85%;
+        color: #666;
+        text-decoration: none;
+        cursor: auto;
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > select.tc-sel-speed {
+        width: 20%;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > #elevation:before {
+        font-family: FontAwesome;
+        content: "\f1fe";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-edit:before {
+        font-family: FontAwesome;
+        content: "\f040";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-save:before {
+        font-family: FontAwesome;
+        content: "\f0c7";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-cancel:before {
+        font-family: FontAwesome;
+        content: "\f00d";
+    }
+
+.tc-ctl-geolocation-track-elevation-chart-progress {
+    border-right: 1px solid rgba(0,0,0,.4);
+}
+
+    .tc-ctl-geolocation-track-elevation-chart-progress.text {
+        color: rgba(0,0,0,1);
+        font-family: arial;
+        font-size: 0.65em;
+        margin-left: 1em;
+        border: none;
+    }
+
+        .tc-ctl-geolocation-track-elevation-chart-progress.text > div span:first-child {
+            color: #c52737;
+            font-weight: bold;
+        }
+
+        .tc-ctl-geolocation-track-elevation-chart-progress.text > div span:last-child {
+            color: #000;
+            font-weight: bold;
+        }
+
+@media screen and (min-width: 22cm) and (min-height: 22cm) {
+
+    i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
+        font-size: 17px;
+    }
+
+    i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
+        line-height: 1em;
+    }
+}

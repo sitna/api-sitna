@@ -206,9 +206,6 @@ div.tc-ctl-share-url-box {
     margin: auto;
 }
 
-/* Compartir - mostrar NOVEDAD en 3D */
-.tc-ctl-share.tc-threed h2 span.tc-beta {
-    visibility: visible;
-    opacity: 1;
-    display: inline-block;
+div.tc-ctl-share-qr-dialog.tc-modal .qrcode img {
+    display: initial !important; /* no hay más remedio que indicar el important, es un estilo en línea que añade la librería de QR*/
 }

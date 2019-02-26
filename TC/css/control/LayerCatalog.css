@@ -367,10 +367,10 @@ div.tc-ctl-lcat-legend {
 .tc-ctl-lcat-search ul {
     list-style-type: none;
     font-size: 15px;
-    padding: 1.2em 0 0 0;
+    padding: 0 0 0 0;
     margin: 0;
     color: #333;
-    max-height: 260px;
+    max-height: 195.4px;
     overflow: auto;
     overflow-x: hidden;
     overflow-y: auto;

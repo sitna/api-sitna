@@ -166,8 +166,9 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-cancel:before {
-        font-family: FontAwesome;
-        content: "\f00d";
+        font-family: mapskin;
+        content: "\e001";
+        transform: rotate(45deg);
         width: auto;
         height: auto;
     }
@@ -187,22 +188,26 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
-        font-family: 'FontAwesome';
+        font-family: mapskin;
         color: #fff;
         height: 2em;
         margin-right: 0.5em;
     }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before {
-    content: '\f067';
+    content: "\e001";
 }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
-    content: '\f00d';
+    display: inline-block;
+    font-family: mapskin;
+    content: "\e001";
+    transform: rotate(45deg);
 }
 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-txt-name {
-    width: 97%;
+    width: 100%;
+    box-sizing: border-box;
     height: 2em;
     padding: 0 0 0 0.2em;
     border: 1px solid #ccc;
@@ -216,8 +221,7 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-btn-cancel {
     display: inline-block;
-    margin: 0 0 1em 0.5em;
-    margin: 0 0 1em 0.5em;
+    margin-left: 0.5em;
 }
 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-tile-count {

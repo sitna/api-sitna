@@ -28,10 +28,12 @@ body.tc-ctl-print-page td a:after {
 body.tc-ctl-print-page .tc-ctl-print-btn,
 body.tc-ctl-print-page .tc-ctl-btn,
 body.tc-ctl-print-page .tc-ctl-finfo-counter,
-body.tc-ctl-print-page .tc-ctl-finfo-tools,
+body.tc-ctl-print-page .tc-ctl-ftools,
 body.tc-ctl-print-page .tc-ctl-finfo-coords-x,
 body.tc-ctl-print-page .tc-ctl-finfo-coords-y,
+body.tc-ctl-print-page .tc-ctl-finfo-coords-crs,
 body.tc-ctl-print-page .tc-ctl-finfo-coords-lon,
-body.tc-ctl-print-page .tc-ctl-finfo-coords-lat {
+body.tc-ctl-print-page .tc-ctl-finfo-coords-lat,
+body.tc-ctl-print-page .tc-ctl-finfo-layer-n {
     display: none;
 }

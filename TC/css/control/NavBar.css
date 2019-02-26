@@ -126,3 +126,7 @@
 .tc-threed div.tc-ctl-nav-bar {
     display: none;
 }
+
+.tc-ctl-printMap-printing div.tc-ctl-nav-bar {
+    display: none;
+}
