@@ -29,3 +29,16 @@ TC.inherit(TC.feature.MultiPolyline, TC.Feature);
 TC.feature.MultiPolyline.prototype.STYLETYPE = "line";
 
 TC.feature.MultiPolyline.prototype.CLASSNAME = 'TC.feature.MultiPolyline';
+
+TC.feature.MultiPolyline.prototype.getCoords = function (options) {
+    options = options || {};
+    const coords = TC.Feature.prototype.getCoords.call(this, options);
+    if (options.pointArray) {
+        return [].concat.apply([], coords);
+    }
+    return coords;
+};
+
+TC.feature.MultiPolyline.prototype.getLength = function (options) {
+    return this.wrap.getLength(options);
+};

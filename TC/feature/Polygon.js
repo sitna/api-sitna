@@ -30,6 +30,15 @@ TC.feature.Polygon.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
 
 TC.feature.Polygon.prototype.CLASSNAME = 'TC.feature.Polygon';
 
+TC.feature.Polygon.prototype.getCoords = function (options) {
+    options = options || {};
+    const coords = TC.Feature.prototype.getCoords.call(this, options);
+    if (options.pointArray) {
+        return [].concat.apply([], coords);
+    }
+    return coords;
+};
+
 TC.feature.Polygon.prototype.getLength = function (options) {
     return this.wrap.getLength(options);
 };
