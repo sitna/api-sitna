@@ -38,7 +38,11 @@ TC.control.ResultsPanel = function () {
 
     self.content = self.contentType.TABLE;
 
-    if (self.options) {
+    if ($.isEmptyObject(self.options)) {
+        self.options = { content: "table" };
+    }    
+
+    if (self.options || { content: "table" }) {
         if (self.options.content)
             self.content = self.contentType[self.options.content.toUpperCase()];
 
@@ -68,7 +72,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         MIN_WIDTH: 215,
         MEDIUM_WIDTH: 310,
-        MAX_WIDTH: 445        
+        MAX_WIDTH: 445
     };
 
     if (TC.isDebug) {
@@ -76,15 +80,14 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         ctlProto.template[ctlProto.CLASS + '-table'] = TC.apiLocation + "TC/templates/ResultsPanelTable.html";
         ctlProto.template[ctlProto.CLASS + '-chart'] = TC.apiLocation + "TC/templates/ResultsPanelChart.html";
     } else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"prpanel-group prsidebar-body \" style=\"display: none\" data-no-cb><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><span class=\"prpanel-title-text\"></span> <span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-csv\" hidden title=\"").h("i18n", ctx, {}, { "$key": "export.excel" }).w("\"><i class=\"fa fa-file-excel-o\"></i></span></h4></div><div id=\"results\" class=\"prpanel-collapse collapse in\"><div class=\"prpanel-body list-group tc-ctl-p-results-table\"> </div><div class=\"prpanel-body list-group tc-ctl-p-results-chart\"></div></div></div></div><div class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\" data-no-cb><i class=\"fa-list-alt\" hidden></i><i class=\"fa-area-chart\" hidden></i></div>"); } body_0.__dustBody = !0; return body_0; };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"prpanel-group prsidebar-body \" style=\"display: none\" data-no-cb><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><span class=\"prpanel-title-text\"></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-csv\" hidden title=\"").h("i18n", ctx, {}, { "$key": "export.excel" }).w("\"><i class=\"fa fa-file-excel-o\"></i></span></h4></div><div id=\"results\" class=\"prpanel-collapse collapse in\"><div class=\"tc-ctl-p-results-menu\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-info\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-table\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-chart\"></div></div></div></div><div class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\" data-no-cb><i class=\"fa-list-alt\" hidden></i><i class=\"fa-area-chart\" hidden></i></div>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-table'] = function () { dust.register(ctlProto.CLASS + '-table', body_0); function body_0(chk, ctx) { return chk.w("<table class=\"table\" style=\"display:none;\"><thead>").s(ctx.get(["columns"], false), ctx, { "block": body_1 }, {}).w("</thead><tbody>").s(ctx.get(["results"], false), ctx, { "block": body_2 }, {}).w("</tbody></table>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<th>").f(ctx.getPath(true, []), ctx, "h").w("</th>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<tr>").h("iterate", ctx, { "block": body_3 }, { "on": ctx.getPath(true, []) }).w("</tr>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<td>").f(ctx.get(["value"], false), ctx, "h").w("</td>"); } body_3.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-chart'] = function () { dust.register(ctlProto.CLASS + '-chart', body_0); function body_0(chk, ctx) { return chk.w("<div id=\"track-chart\">").x(ctx.get(["msg"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<span id=\"elevationGain\" >").h("i18n", ctx, {}, { "$key": "geo.trk.chart.elevationGain" }).w(": +").f(ctx.get(["upHill"], false), ctx, "h").w("m, -").f(ctx.get(["downHill"], false), ctx, "h").w("m</span><div id=\"chart\"></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["msg"], false), ctx, "h"); } body_2.__dustBody = !0; return body_0 };
     }
 
     ctlProto.isVisible = function () {
         var self = this;
-
-        self._$div.find('.prsidebar-body').is(':visible') || self._$div.find('.prcollapsed-max').is(':visible');
+        return self._$div.find('.prsidebar-body').is(':visible') || self._$div.find('.prcollapsed-max').is(':visible');
     };
 
     ctlProto.render = function (callback) {
@@ -117,8 +120,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 self.$save.removeAttr("hidden");
             }
 
-
-
             if (self.content) {
                 self.content = self.content;
 
@@ -132,13 +133,18 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     if (self.options.titles.max) {
                         self.$maximize.attr('title', self.options.titles.max);
                     }
+                } else {
+                    self.$mainTitle.attr('title', self.getLocaleString("rsp.title"));
+                    self.$mainTitle.html(self.getLocaleString("rsp.title"));
                 }
             }
 
             self._$div.find(self.content.collapsedClass).removeAttr('hidden').addClass(self.classes.FA);
 
+            self.$divInfo = self._$div.find('.' + self.CLASS + '-info');
             self.$divTable = self._$div.find('.' + self.CLASS + '-table');
             self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
+            self.$divMenu = self._$div.find('.' + self.CLASS + '-menu');
 
             TC.loadJS(Modernizr.touch, TC.apiLocation + 'lib/jQuery/jquery.touchSwipe.min.js', function () {
                 if (Modernizr.touch) {
@@ -194,19 +200,31 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     ctlProto.close = function () {
         var self = this;
 
-        self._$div.find('.prsidebar-body').fadeOut('slide');
-        self._$div.find('.prcollapsed-max').hide();
-        self._$div.find(self.content.collapsedClass).attr('hidden', 'hidden').removeClass(self.classes.FA);
+        self._$div.find('.prsidebar-body').hide();
 
         if (self.chart && self.chart.chart) {
             self.chart.chart = self.chart.chart.destroy();
         }
+
+        self._$div.find('.prcollapsed-max').hide();
+        self._$div.find(self.content.collapsedClass).attr('hidden', 'hidden').removeClass(self.classes.FA);
 
         self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELCLOSE, { control: self }));
     };
 
     ctlProto.openChart = function (data) {
         const self = this;
+        // Cerramos el resto de los perfiles
+        self.map.getControlsByClass(TC.control.ResultsPanel)
+            .filter(function (ctl) {
+                return ctl !== self;
+            })
+            .filter(function (ctl) {
+                return ctl.options.content === 'chart';
+            })
+            .forEach(function (ctl) {
+                ctl.close();
+            });
 
         if (data) {
 
@@ -368,6 +386,21 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         );
     };
 
+    const closeOpenedTableResultsPanel = function () {
+        const self = this;
+
+        self.map.getControlsByClass(TC.control.ResultsPanel)
+            .filter(function (ctl) {
+                return ctl !== self && ctl.isVisible();
+            })
+            .filter(function (ctl) {
+                return ctl.options.content !== self.contentType.CHART;
+            })
+            .forEach(function (ctl) {
+                ctl.close();
+            });
+    };
+
     ctlProto.openTable = function () {
         var self = this;
 
@@ -416,9 +449,15 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     parent.append(table);
                     if (self.tableData.callback)
                         self.tableData.callback(table);
+
+                    closeOpenedTableResultsPanel.call(self);
+
+                    self.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE, { control: self }));
                 });
 
                 self._$div.find('.' + self.CLASS + '-chart').hide();
+                self._$div.find('.' + self.CLASS + '-info').hide();
+
                 self._$div.find('.prsidebar-body').fadeIn('slide');
             }
         }
@@ -427,26 +466,38 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
     };
 
-    ctlProto.open = function (html) {
+    ctlProto.open = function (html, container) {
         var self = this;
 
-        var toCheck = self._$div.find('.' + self.CLASS + '-table');
+        var toCheck = container ? [container] : self._$div.find('.' + self.CLASS + '-table');
         var checkIsRendered = function () {
             var clientRect = toCheck[0].getBoundingClientRect();
             if (clientRect && clientRect.width > 100) {
                 window.cancelAnimationFrame(this.requestIsRendered);
 
-                this.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE), {});
+                //closeOpenedTableResultsPanel.call(self);
+                this.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE, { control: self }));
             }
         };
 
         self.requestIsRendered = window.requestAnimationFrame(checkIsRendered.bind(self));
 
-        if (html) {
-            self._$div.find('.' + self.CLASS + '-table').html(html);
-            self._$div.find('.' + self.CLASS + '-table').show();
-        }
         self._$div.find('.' + self.CLASS + '-chart').hide();
+        self._$div.find('.' + self.CLASS + '-table').hide();
+        self._$div.find('.' + self.CLASS + '-info').hide();
+
+        if (html) {
+            if (container) {
+                self.getTableContainer = function () {
+                    return $(container);
+                };
+                $(container).html(html);
+                $(container).show();
+            } else {
+                self._$div.find('.' + self.CLASS + '-table').html(html);
+                self._$div.find('.' + self.CLASS + '-table').show();
+            }
+        }
 
         if (self.options.titles) {
 
@@ -684,8 +735,9 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             self._$div.find('.prsidebar-body').fadeIn('slide');
                         }
 
-                        self._$div.find('.' + self.CLASS + '-table').hide();
 
+                        self._$div.find('.' + self.CLASS + '-table').hide();
+                        self._$div.find('.' + self.CLASS + '-info').hide();
                     }
                 }
                 else {
@@ -703,13 +755,19 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         var d = {};
         var daysDifference = Math.floor(diff / 1000 / 60 / 60 / 24);
         diff -= daysDifference * 1000 * 60 * 60 * 24;
+
         var hoursDifference = Math.floor(diff / 1000 / 60 / 60);
         diff -= hoursDifference * 1000 * 60 * 60;
+
         d.h = hoursDifference + (daysDifference * 24);
+
         var minutesDifference = Math.floor(diff / 1000 / 60);
         diff -= minutesDifference * 1000 * 60;
+
         d.m = minutesDifference;
+
         d.s = Math.floor(diff / 1000);
+
         return $.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
     };
 
@@ -740,10 +798,28 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         return '<div class="track-elevation-tooltip"><div><span>' + ele + ' m </span><br><span>' + dist + measure + ' </span></div>' + (doneTime ? '<span>' + doneTime.toString + '</span><div/>' : '');
     };
 
-    ctlProto.register = function (map) {
-        var self = this;
+    ctlProto.getTableContainer = function () {
+        if (this.$divTable) {
+            return this.$divTable.get(0);
+        }
+    };
 
-        TC.Control.prototype.register.call(self, map);
+    ctlProto.getInfoContainer = function () {
+        if (this.$divInfo) {
+            return this.$divInfo.get(0);
+        }
+    };
+
+    ctlProto.getMenuElement = function () {
+        if (this.$divMenu) {
+            return this.$divMenu.get(0);
+        }
+    };
+
+    ctlProto.register = function (map) {
+        const self = this;
+
+        const result = TC.Control.prototype.register.call(self, map);
 
         self.wrap.register(map);
 
@@ -770,6 +846,17 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 self.close();
             });
         }
+
+        map.on(TC.Consts.event.VIEWCHANGE, function () {
+
+            map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
+                return ctl.options.content !== "chart" && ($(ctl.div).find('.' + ctl.CLASS + '-info:visible').length === 1 || $(ctl.div).find('.' + ctl.CLASS + '-table:visible').length === 1);
+            }).forEach(function (ctl) {
+                ctl.close();
+            });
+        });
+
+        return result;
     };
 
     ctlProto.exportToExcel = function () {
