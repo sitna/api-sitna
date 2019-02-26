@@ -8,7 +8,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.5.1';
+TC.version = '1.6.0';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -84,7 +84,8 @@ if (!TC.Consts) {
         IPAD_IOS7_FIX: 'tc-ipad-ios7-fix',
         INFO: 'tc-msg-info',
         WARNING: 'tc-msg-warning',
-        ERROR: 'tc-msg-error'
+        ERROR: 'tc-msg-error',
+        THREED: 'tc-threed'
     };
     TC.Consts.msgType = {
         INFO: 'info',
@@ -172,7 +173,7 @@ if (!TC.Consts) {
         IDENA_DYNORTHOPHOTO2012: 'ortofoto2012_dinamico',
         IDENA_DYNCARTO: 'cartografia_dinamico',
         IDENA_BW_RELIEF: 'relieve_bn',
-        IDENA_BASEMAP_ORTHOPHOTO: 'base_orto',        
+        IDENA_BASEMAP_ORTHOPHOTO: 'base_orto',
 
         IGN_ES_CARTO: "ign-raster",
         IGN_ES_BASEMAP: "ign-base",
@@ -200,6 +201,7 @@ if (!TC.Consts) {
         CARTO_DARK: 'carto_dark',
         MAPBOX_STREETS: 'mapbox_streets',
         MAPBOX_SATELLITE: 'mapbox_satellite',
+
         BLANK: 'ninguno'
     };
     TC.Consts.text = {
@@ -385,6 +387,17 @@ if (!TC.Consts) {
         VISIBLE: 4
     };
 
+    TC.Consts.view = {
+        DEFAULT: 0,
+        THREED: 1,
+        PRINTING: 2
+    };
+
+    TC.Consts.units = {
+        DEGREES: "degrees",
+        METERS: "m"
+    };
+
     TC.Consts.MARKER = 'marker';
 
     TC.Defaults = (function () {
@@ -423,6 +436,8 @@ if (!TC.Consts) {
             titleURLParamName: 'title', // Parámetro donde leer en la URL de la aplicación para cargar un título de mapa, p. e. al imprimir.
 
             locale: 'es-ES',
+
+            view: TC.Consts.view.DEFAULT,
 
             screenSize: 20,
             pixelTolerance: 10, // Used in GFI requests
@@ -492,7 +507,7 @@ if (!TC.Consts) {
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg',
                     fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012,
                     overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
-                },                
+                },
                 {
                     id: TC.Consts.layer.IDENA_CARTO,
                     title: 'Cartografía topográfica',
@@ -634,7 +649,7 @@ if (!TC.Consts) {
                     id: TC.Consts.layer.IGN_ES_RELIEF,
                     title: "Relieve \r\n (IGN ES)",
                     type: TC.Consts.layerType.WMTS,
-                    url: "//servicios.idee.es/wmts/mdt",
+                    url: "//www.ign.es/wmts/mdt",
                     encoding: TC.Consts.WMTSEncoding.KVP,
                     layerNames: "Relieve",
                     matrixSet: "EPSG:25830",
@@ -674,24 +689,24 @@ if (!TC.Consts) {
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto_pnoa.jpg',
                     overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
                 },
-				{
-				    id: TC.Consts.layer.IGN_ES_DYNCARTO,
-				    title: 'Cartografía topográfica \r\n (IGN ES)',
-				    type: TC.Consts.layerType.WMS,
-				    url: '//www.ign.es/wms-inspire/mapa-raster',
-				    layerNames: 'mtn_rasterizado',
-				    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto_ign.png',
-				    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
-				},
-				{
-				    id: TC.Consts.layer.IGN_ES_DYNRELIEF,
-				    title: 'Relieve \r\n (IGN ES)',
-				    type: TC.Consts.layerType.WMS,
-				    url: '//servicios.idee.es/wms-inspire/mdt',
-				    layerNames: 'relieve',
-				    thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_ign.jpg',
-				    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
-				},
+                {
+                    id: TC.Consts.layer.IGN_ES_DYNCARTO,
+                    title: 'Cartografía topográfica \r\n (IGN ES)',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//www.ign.es/wms-inspire/mapa-raster',
+                    layerNames: 'mtn_rasterizado',
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto_ign.png',
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_DYNRELIEF,
+                    title: 'Relieve \r\n (IGN ES)',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//www.ign.es/wms-inspire/mdt',
+                    layerNames: 'relieve',
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_ign.jpg',
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
                 {
                     id: TC.Consts.layer.IGN_FR_CARTO,
                     title: "Cartografía raster \r\n (IGN FR)",
@@ -715,7 +730,7 @@ if (!TC.Consts) {
                     layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGN",
                     matrixSet: "PM",
                     format: "image/jpeg",
-                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.jpg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.png",
                     fallbackLayer: TC.Consts.layer.IGN_FR_DYNBASEMAP,
                     ignoreProxification: true,
                     overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
@@ -764,7 +779,7 @@ if (!TC.Consts) {
                     type: TC.Consts.layerType.WMS,
                     url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/geoportail/r/wms",
                     layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGN",
-                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.jpg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.png",
                     ignoreProxification: true,
                     overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
                 },
@@ -773,7 +788,7 @@ if (!TC.Consts) {
                     title: 'Relieve \r\n (IGN FR)',
                     type: TC.Consts.layerType.WMS,
                     url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/geoportail/r/wms",
-                    layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW",
+                    layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE",
                     thumbnail: TC.apiLocation + "tc/css/img/thumb-estom-fr-ign.png",
                     ignoreProxification: true,
                     overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
@@ -916,7 +931,8 @@ if (!TC.Consts) {
                 },
                 measure: false,
                 streetView: true,
-                featureInfo: true
+                featureInfo: true,
+                featureTools: true
             },
 
             layout: null,
@@ -1121,6 +1137,7 @@ if (!TC.Consts) {
                     }
                 };
 
+
                 try {
                     req.send(null);
                 } catch (error) {
@@ -1206,7 +1223,13 @@ if (!TC.Consts) {
             TC.loadJS(condition, url, callback, true);
         };
 
-        TC.loadJS = function (condition, url, callback, inOrder) {
+        const addCrossOriginAttr = function (path, scriptEl) {
+            if (!TC.Util.isSameOrigin(path)) {
+                scriptEl.crossOrigin = "anonymous";
+            }
+        };
+
+        TC.loadJS = function (condition, url, callback, inOrder, notCrossOrigin) {
             if (arguments.length < 4) {
                 inOrder = false;
             }
@@ -1222,16 +1245,57 @@ if (!TC.Consts) {
             //si tiene canvas, es que es un navegador nuevo
             if (Modernizr.canvas) {
                 if (condition) {
-                    loadjs(urls, {
-                        success: function () {
-                            callback();
-                        },
-                        error: function (pathsNotFound) {
-                            _showLoadFailedError(pathsNotFound);
-                        },
-                        async: !inOrder,
-                        numRetries: 1
-                    });
+                    urls = urls instanceof Array ? urls : [urls];                    
+
+                    var name = "";
+                    const getName = function (path) {
+                        return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
+                    };
+                    if (urls.length > 1) {
+                        var toReduce = urls.slice(0).filter(function (path, index) {
+                            if (loadjs.isDefined(getName(path))) {
+                                urls.splice(index, 1);
+                                loadjs.ready(getName(path), callback);
+                                return false;
+                            } else {
+                                return true;
+                            }
+                        });
+                        if (toReduce.length === 1) {
+                            name = getName(toReduce[0]);
+                        } else if (toReduce.length > 0) {
+                            name = toReduce.reduce(function (prev, curr) {
+                                return getName(prev) + "_" + getName(curr);
+                            });
+                        }
+                    } else {
+                        name = getName(urls[0]);
+                    }
+
+                    if (name.length > 0) {
+                        if (!loadjs.isDefined(name)) {
+                            var options = {
+                                async: !inOrder,
+                                numRetries: 1
+                            };
+
+                            if (!notCrossOrigin && !TC.Util.detectIE()) {
+                                options.before = addCrossOriginAttr;
+                            }
+
+                            loadjs(urls, name, options);
+                            loadjs.ready(name, {
+                                success: function () {
+                                    callback();
+                                },
+                                error: function (pathsNotFound) {
+                                    _showLoadFailedError(pathsNotFound);
+                                }
+                            });
+                        } else {
+                            loadjs.ready(name, callback);
+                        }
+                    }
                 }
                 else {
                     callback();
@@ -1291,20 +1355,13 @@ if (!TC.Consts) {
             }
             else {
                 var url = TC.Consts.url.EPSG + '?format=json&q=' + code;
-                var ajaxOptions = {
-                    dataType: 'json',
-                    success: function (data) {
-                        projectionDataCache[code] = data;
-                        deferred.resolve(data);
-                    },
-                    error: function (error) {
-                        deferred.reject(error);
-                    }
-                };
-                if (options.sync) {
-                    ajaxOptions.async = false;
-                }
-                $.ajax(url, ajaxOptions);
+                const toolProxification = new TC.tool.Proxification(TC.proxify);
+                toolProxification.fetchJSON(url, options).then(function (data) {
+                    projectionDataCache[code] = data;
+                    deferred.resolve(data);
+                }).catch(function (error) {
+                    deferred.reject(error);
+                });
             }
             return deferred.promise();
         };
@@ -1700,7 +1757,7 @@ if (!TC.Consts) {
             options = value || $.cookie.defaults || {};
             var decode = options.raw ? raw : decoded;
             var cookies = document.cookie.split('; ');
-            for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')) ; i++) {
+            for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')); i++) {
                 if (decode(parts.shift()) === key) {
                     return decode(parts.join('='));
                 }
