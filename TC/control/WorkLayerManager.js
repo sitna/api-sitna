@@ -62,9 +62,9 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
     };
 
     ctlProto.register = function (map) {
-        var self = this;
+        const self = this;
 
-        TC.control.TOC.prototype.register.call(self, map);
+        const result = TC.control.TOC.prototype.register.call(self, map);
 
         // Este control no tiene que aceptar servicios externos directamente
         map.off(TC.Consts.event.EXTERNALSERVICEADDED);
@@ -106,6 +106,8 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                     });
                 }
             });
+
+        return result;
     };
 
     ctlProto._addBrowserEventHandlers = function () {
@@ -275,9 +277,8 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
 
                                 getLegendImgByPost(layer).done(function (src) {
                                     if (src) {
-                                        legend.src = layer.getLegendUrl(src);
+                                        legend.src = src; // ya se ha validado en getLegendImgByPost
                                     }
-
 
                                     dust.render(template, layerData, function (err, out) {
                                         var $li = $(out);
