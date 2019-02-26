@@ -32,8 +32,8 @@ TC.inherit(TC.control.MapContents, TC.Control);
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         self.render(function () {
 
             for (var i = 0, len = map.layers.length; i < len; i++) {
@@ -89,6 +89,8 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 self.updateLayerOrder(e.layer, e.oldIndex, e.newIndex);
             });
         });
+
+        return result;
     };
 
     ctlProto.updateScale = function () {
@@ -107,7 +109,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
             var $currentElm, $previousElm;
             var $elms = self.getLayerUIElements();
 
-            collection = collection || self.map.workLayers;       
+            collection = collection || self.map.workLayers;
 
             for (var i = collection.length - 1; i >= 0; i--) {
                 var l = collection[i];
@@ -153,28 +155,15 @@ TC.inherit(TC.control.MapContents, TC.Control);
         if (!$img.attr('src')) {
             var imgSrc = $img.data(_dataKeys.img);
 
-            var ERROR = 'error.tc';
-            $img.off(ERROR).on(ERROR, function () {
-                var imgSRC_protocol = $img.attr('src');
-                // GLS: hemos modificado el protocolo?¿
-                if (imgSRC_protocol.indexOf(layer.url) === -1) {
-                    var protocolRegex = /^(https?:\/\/)/i;
-                    if (protocolRegex.test(imgSRC_protocol) && protocolRegex.test(layer.url)) {
-                        imgSRC_protocol = imgSRC_protocol.replace(imgSRC_protocol.match(protocolRegex)[1], layer.url.match(protocolRegex)[1]);
-                    }
-                }
-
-                $img.off('error.tc');
-
-                $img.attr('src', layer instanceof TC.layer.Raster ? layer.getByProxy_(imgSRC_protocol) : TC.proxify(imgSRC_protocol));
-            }.bind(layer));
+            const toolProxification = new TC.tool.Proxification(TC.proxify);
 
             if (layer && layer.options.method && layer.options.method === "POST") {
                 layer.getLegendGraphicImage()
-                .done(function (src) {
-                    $img.attr('src', layer.getLegendUrl(src));
-                })
-                .fail(function (err) { TC.error(err); });
+                    .done(function (src) {
+                        $img.attr('src', src); // ya se ha validado en getLegendGraphicImage
+                    }).fail(function (err) {
+                        TC.error(err);
+                    });
             } else {
                 if (isGetLegendGraphic(imgSrc)) {
                     var $watch = $img.parent();
@@ -204,9 +193,19 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     if (layer.params && layer.params.sld_body) {
                         imgSrc = TC.Util.addURLParameters(imgSrc, { sld_body: layer.params.sld_body });
                     }
-                    $img.data(_dataKeys.img, layer.getLegendUrl(imgSrc));
+
+                    toolProxification.fetchImage(imgSrc).then(function (img) {
+                        $img.data(_dataKeys.img, img.src);
+                    }).catch(function (err) {
+                        TC.error(err);
+                    });
                 }
-                $img.attr('src', layer.getLegendUrl(imgSrc));
+
+                toolProxification.fetchImage(imgSrc).then(function (img) {
+                    $img.attr('src', img.src);
+                }).catch(function (err) {
+                    TC.error(err.statusText);
+                });                
             }
         }
     };
