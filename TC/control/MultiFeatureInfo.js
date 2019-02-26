@@ -20,6 +20,7 @@ if (!TC.control.FeatureInfoCommons) {
         self.polygonFInfoCtrl = null;
         self.lastCtrlActive = null;
         self.popup = null;
+        self.exportsState = false; // Los controles que exportan estado son los hijos
     };
 
     TC.inherit(TC.control.MultiFeatureInfo, TC.control.FeatureInfoCommons);
@@ -35,43 +36,56 @@ if (!TC.control.FeatureInfoCommons) {
         ctlProto.template = function () { dust.register(ctlProto.CLASS,body_0);function body_0(chk,ctx){return chk.w("<div class=\"tc-ctl-m-finfo-select\"><form><span>").h("i18n",ctx,{},{"$key":"selection"}).w("</span>").x(ctx.get(["pointSelectValue"], false),ctx,{"block":body_1},{}).x(ctx.get(["lineSelectValue"], false),ctx,{"block":body_2},{}).x(ctx.get(["polygonSelectValue"], false),ctx,{"block":body_3},{}).w("</form></div>");}body_0.__dustBody=!0;function body_1(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-point\" title=\"").h("i18n",ctx,{},{"$key":"selectionByPoint"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["pointSelectValue"], false),ctx,"h").w("\" checked /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byPoint"}).w("</span></label>");}body_1.__dustBody=!0;function body_2(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-line\" title=\"").h("i18n",ctx,{},{"$key":"selectionByLine"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["lineSelectValue"], false),ctx,"h").w("\" /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byLine"}).w("</span></label>");}body_2.__dustBody=!0;function body_3(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-polygon\" title=\"").h("i18n",ctx,{},{"$key":"selectionByPrecinct"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["polygonSelectValue"], false),ctx,"h").w("\" /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byPrecinct"}).w("</span></label>");}body_3.__dustBody=!0;return body_0};
     }
 
+    const mergeOptions = function (opt1, opt2) {
+        if (opt1 === true) {
+            opt1 = {};
+            return $.extend(opt1, opt2);
+        }
+        return opt1;
+    };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
-        map.loaded(function () {
-            var ctlDeferreds = [];
-            if (self.modes[TC.Consts.geom.POINT]) {
-                var finfoDeferred = $.Deferred();
-                ctlDeferreds.push(finfoDeferred);
-                $.when(map.addControl("featureInfo", { displayMode: self.options.displayMode })).then(function (control) {
-                    self.fInfoCtrl = control;
-                    finfoDeferred.resolve();
-                });
-            }
-            if (self.modes[TC.Consts.geom.POLYLINE]) {
-                var lfinfoDeferred = $.Deferred();
-                ctlDeferreds.push(lfinfoDeferred);
-                $.when(map.addControl("lineFeatureInfo", { displayMode: self.options.displayMode, lineColor: self.lineColor })).then(function (control) {
-                    self.lineFInfoCtrl = control;
-                    lfinfoDeferred.resolve();
-                });
-            }
-            if (self.modes[TC.Consts.geom.POLYGON]) {
-                var pfinfoDeferred = $.Deferred();
-                ctlDeferreds.push(pfinfoDeferred);
-                $.when(map.addControl("polygonFeatureInfo", { displayMode: self.options.displayMode, lineColor: self.lineColor })).then(function (control) {
-                    self.polygonFInfoCtrl = control;
-                    pfinfoDeferred.resolve();
-                });
-            }
-            $.when.apply(this, ctlDeferreds).then(function () {
-                if (self.fInfoCtrl) {
-                    self.fInfoCtrl.activate();
-                    self.lastCtrlActive = self.fInfoCtrl;
-                }
+        const self = this;
+        const ctlPromise = TC.Control.prototype.register.call(self, map);
+        const deferred = $.Deferred();
+
+        const ctlDeferreds = [ctlPromise];
+        if (self.modes[TC.Consts.geom.POINT]) {
+            var finfoDeferred = $.Deferred();
+            ctlDeferreds.push(finfoDeferred);
+            $.when(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
+                { displayMode: self.options.displayMode }))).then(function (control) {
+                self.fInfoCtrl = control;
+                finfoDeferred.resolve();
             });
+        }
+        if (self.modes[TC.Consts.geom.POLYLINE]) {
+            var lfinfoDeferred = $.Deferred();
+            ctlDeferreds.push(lfinfoDeferred);
+            $.when(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
+                { displayMode: self.options.displayMode, lineColor: self.lineColor }))).then(function (control) {
+                self.lineFInfoCtrl = control;
+                lfinfoDeferred.resolve();
+            });
+        }
+        if (self.modes[TC.Consts.geom.POLYGON]) {
+            var pfinfoDeferred = $.Deferred();
+            ctlDeferreds.push(pfinfoDeferred);
+            $.when(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
+                { displayMode: self.options.displayMode, lineColor: self.lineColor }))).then(function (control) {
+                self.polygonFInfoCtrl = control;
+                pfinfoDeferred.resolve();
+            });
+        }
+        $.when.apply(this, ctlDeferreds).then(function () {
+            if (self.fInfoCtrl) {
+                self.fInfoCtrl.activate();
+                self.lastCtrlActive = self.fInfoCtrl;
+                deferred.resolve(self);
+            }
         });
+
+        return deferred.promise();
     };
 
     ctlProto.render = function (callback) {
