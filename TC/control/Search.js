@@ -1507,8 +1507,8 @@ TC.inherit(TC.control.Search, TC.Control);
     }
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
 
         self._search = {
             data: []
@@ -1617,6 +1617,8 @@ TC.inherit(TC.control.Search, TC.Control);
         self.OUTBBX_LABEL = self.getLocaleString('outsideOfLimits');
 
         self.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "properties", "outputFormat"];
+
+        return result;
     };
 
     ctlProto.renderData = function (data, callback) {
@@ -2127,8 +2129,8 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
 
         self.getLayer().then(function (l) {
-            var features = l.features;
-            l.clearFeatures();
+            var features = l.features.slice();
+            l.clearFeatures();        
 
             self.map.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { layer: l, feature: features }));
 
@@ -3252,6 +3254,12 @@ TC.inherit(TC.control.Search, TC.Control);
 
                 layer.type = goTo.params.type;
 
+                self.map.$events.on(TC.Consts.event.FEATURESADD, function (e) {
+                    if (e.layer === self.layer) {
+                        setQueryableFeatures(e.features);
+                    }
+                });
+
                 layer.refresh().then(function () {
                     self.map.one(TC.Consts.event.LAYERUPDATE, function (e) {
                         if (e.layer == layer) {
@@ -3279,8 +3287,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                         }));
                                     }
                                     else if (e.layer.features && e.layer.features.length > 0) {
-                                        self.$list.hide('fast');
-                                        setQueryableFeatures.call(self, e.layer.features);
+                                        self.$list.hide('fast');                                                                
                                         self.layer.map.zoomToFeatures(e.layer.features);
 
                                         self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features }));
@@ -3297,8 +3304,7 @@ TC.inherit(TC.control.Search, TC.Control);
                             });
 
                             if (e.layer.features && e.layer.features.length > 0) {
-                                self.$list.hide('fast');
-                                setQueryableFeatures.call(self, e.layer.features);
+                                self.$list.hide('fast');                                 
                                 self.layer.map.zoomToFeatures(self.layer.features);
 
                                 self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features }));
@@ -3356,9 +3362,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
         if (point) {
             title = self.getLabel(id);
-            deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
-            delta = self.map.options.pointBoundsRadius;
-            self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+            deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));            
         } else {
             var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
             id = self.LAT + match[2] + self.LON + match[1];
@@ -3366,9 +3370,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
             if (point) {
                 title = self.getLabel(id);
-                deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
-                delta = self.map.options.pointBoundsRadius;
-                self.map.setExtent([point[0] - delta, point[1] - delta, point[0] + delta, point[1] + delta]);
+                deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));               
 
                 self.$text.val(title);
             }
@@ -3378,6 +3380,8 @@ TC.inherit(TC.control.Search, TC.Control);
             self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, {
                 layer: self.layer, features: [feat]
             }));
+
+            self.map.zoomToFeatures([feat]);
 
             self.loading.removeWait(wait);
         });
