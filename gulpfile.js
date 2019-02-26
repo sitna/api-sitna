@@ -16,6 +16,7 @@
     merge = require('merge-stream'),
     exec = require('gulp-exec'),
     header = require('gulp-header'),
+    sourcemaps = require('gulp-sourcemaps'),
     fs = require('fs');
 var execSync = require('child_process').execSync;
 
@@ -70,6 +71,7 @@ var sitnaBuild = {
         'TC/feature/**/*.js',
         'TC/Filter.js',
         'TC/control/MapContents.js',
+        'TC/control/MapInfo.js',
         'TC/control/TOC.js',
         'TC/control/WorkLayerManager.js',
         'TC/control/Click.js',
@@ -164,6 +166,8 @@ var sitnaBuild = {
             '!Properties/**/*',
             '!pruebas/**/*',
             '!TC/**/*.js',
+            '!lib/cesium/debug/CesiumSrc.js',
+            '!lib/cesium/release/CesiumSrc.js',
             '!TC/**/*.css',
             '!test/**/*',
             '!**/*.cs',
@@ -194,6 +198,7 @@ var sitnaBuild = {
             targetName = this.tcmapTargetName;
         }
         var stream = gulp.src(src)
+            .pipe(sourcemaps.init())
             .pipe(header('\ufeff')); // Repone el BOM que gulp quita
         stream = sitnaBuild.replaceStrings(stream)
             //.pipe(jshint())
@@ -211,11 +216,13 @@ var sitnaBuild = {
                 output: { ascii_only: true }
             })) // sequences = false para evitar error "Maximum call stack size exceeded"
             //.pipe(rename(targetName + '.' + this.maps + '.min.js'))
+            .pipe(sourcemaps.write('./maps'))
             .pipe(gulp.dest(this.targetPath));
     },
 
     onDemandTask: function (src, dest) {
         var stream = gulp.src(src)
+            .pipe(sourcemaps.init())
             .pipe(header('\ufeff')); // Repone el BOM que gulp quita
         stream = sitnaBuild.replaceStrings(stream)
             .pipe(gulp.dest(dest));
@@ -229,6 +236,7 @@ var sitnaBuild = {
                 output: { ascii_only: true }
             }))
             //.pipe(rename({ extname: '.min.js' }))
+            .pipe(sourcemaps.write('./maps'))
             .pipe(gulp.dest(dest));
     },
 
