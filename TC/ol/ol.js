@@ -120,12 +120,11 @@
                 }
                 values[localName] = value;
             } else {
-                if (values[localName] = this.readGeometryElement(n, objectStack)) {
-                    // boundedBy is an extent and must not be considered as a geometry
-                    // Tampoco referencePoint
-                    if (localName !== 'boundedBy' && localName !== 'referencePoint') {
-                        geometryName = localName;
-                    }
+                values[localName] = this.readGeometryElement(n, objectStack);
+                // boundedBy is an extent and must not be considered as a geometry
+                // Tampoco referencePoint
+                if (localName !== 'boundedBy' && localName !== 'referencePoint') {
+                    geometryName = localName;
                 }
             }
         }
@@ -709,7 +708,7 @@
         // Revisamos que todas las features tienen geometría válida o no tienen geometría definida. Evitamos así que cuele un GML 2 parseado con el parser GML 3.
         var checkFeatureGeometry = function (feat) {
             var geom = feat.getGeometry();
-            if (feat.getProperties()[feat.getGeometryName()] && (!geom || !geom.flatCoordinates.length)) {
+            if (feat.getProperties().hasOwnProperty(feat.getGeometryName()) && (!geom || !geom.flatCoordinates.length)) {
                 throw 'Geometría no válida. ¿Posible versión incorrecta de GML?';
             }
         };
@@ -986,6 +985,9 @@
 
         self.map._wrap = self;
 
+        // mantenemos el ancho y alto del canvas en números enteros
+        self.manageSize.call(self.map);
+
         // Para evitar estiramientos en canvas
         var updateSize = function () {
             self.map.updateSize();
@@ -994,6 +996,11 @@
         self.parent.$events.one(TC.Consts.event.MAPLOAD, updateSize);
 
         self.map.on(ol.MapBrowserEventType.SINGLECLICK, function (e) {
+
+            if (self.parent.view === TC.Consts.view.PRINTING) {
+                return;
+            }
+
             self.parent.workLayers.forEach(function (wl) {
                 delete wl._noFeatureClicked;
             });
@@ -1139,8 +1146,8 @@
             }
         }
 
-        // GLS: transformamos trambién el centro
-        viewOptions.center = ol.proj.transformExtent(self.getCenter(), self.parent.crs, options.crs);
+        // GLS: transformamos trambién el centro     
+        viewOptions.center = ol.proj.transform(self.getCenter(), self.parent.crs, options.crs);
 
         var newView = new ol.View(viewOptions);
         self.map.setView(newView);
@@ -1611,6 +1618,11 @@
                             var feature;
 
                             if (!self.parent.activeControl || !self.parent.activeControl.isExclusive()) {
+
+                                if (self.parent.view === TC.Consts.view.PRINTING) {
+                                    return;
+                                }
+
                                 var pixel = olMap.getEventPixel(e.originalEvent);
                                 hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
                                     var result = true;
@@ -1656,6 +1668,37 @@
         if (popupCtl.$popupDiv) {
             popupCtl.$popupDiv.removeClass(TC.Consts.classes.VISIBLE);
         }
+    };
+
+    TC.wrap.Map.prototype.manageSize = function () {
+        const self = this;
+
+        // Para controlar que el mapa no se vea borroso porque no encajan el width y height con los width y height de CSS
+        const manageSize = function (event) {
+            var canvas = event.context.canvas;
+
+            if (canvas && (canvas.width || canvas.height)) {
+                var bounding = canvas.getBoundingClientRect();
+
+                if (!Number.isInteger(bounding.width)) {
+                    canvas.width = Math.round(bounding.width);
+                    canvas.style.removeProperty('width');
+                }
+
+                if (!Number.isInteger(bounding.height)) {
+                    canvas.height = Math.round(bounding.height);
+                    canvas.style.removeProperty('height');
+                }
+
+                if (!canvas.style.width && !canvas.style.height) {
+                    // GLS: lo que provoca el error es el 100% que se asigna al instanciar el mapa y el width que se añade en el resize, por tanto, después de borrar el 100% no se va a dar el problema más
+                    self.un(ol.render.EventType.POSTCOMPOSE, manageSize);
+                }
+            }
+
+        };
+
+        self.on(ol.render.EventType.POSTCOMPOSE, manageSize);
     };
 
     var getFormatFromName = function (name) {
@@ -1964,7 +2007,7 @@
                         features[i] = arguments[i];
                     }
                     self.parent.$events.trigger($.Event(TC.Consts.event.FEATURESIMPORT, {
-                        features: features, fileName: e.file.name
+                        features: features, fileName: e.file.name, target: e.target.target
                     }));
                 }
                 else {
@@ -2043,7 +2086,7 @@
         return ddInteraction;
     };
 
-    TC.wrap.Map.prototype.loadFiles = function (files) {
+    TC.wrap.Map.prototype.loadFiles = function (files, options) {
         var self = this;
         var ddInteraction;
         if (self.ddEnabled) {
@@ -2058,6 +2101,18 @@
                 once: true
             });
         }
+
+        if (ddInteraction && options) {
+            var currentTarget = ddInteraction.target;
+            ddInteraction.target = options.control;
+            const undoTarget = function (e) {
+                ddInteraction.target = currentTarget;
+
+                self.parent.off(TC.Consts.event.FEATURESIMPORT, undoTarget);
+            };
+            self.parent.on(TC.Consts.event.FEATURESIMPORT, undoTarget);
+        }
+
         var li = self.parent.getLoadingIndicator();
         if (li) {
             self._featureImportWaitId = li.addWait();
@@ -2930,9 +2985,6 @@
             }
             else {
                 // Si la API SITNA no ha completado su feature, creamos un mock-up para que no fallen las funciones de estilo
-
-
-
                 feature = {
                     id: TC.wrap.Feature.prototype.getId.call({
                         feature: olFeat
@@ -3024,14 +3076,18 @@
         return [new ol.style.Style(nativeStyleOptions)];
     };
 
-    var createNativeTextStyle = function (styleObj, feature) {
+    const createNativeTextStyle = function (styleObj, feature) {
         if (!styleObj || !styleObj.label) {
             return;
         }
 
-        var textOptions = {
+        const textOptions = {
             text: '' + getStyleValue(styleObj.label, feature),
         };
+        //const olGeom = feature.wrap.feature.getGeometry();
+        //if (olGeom instanceof ol.geom.LineString || olGeom instanceof ol.geom.MultiLineString) {
+        //    textOptions.placement = ol.style.TextPlacement.LINE;
+        //}
         if (styleObj.fontSize) {
             textOptions.font = getStyleValue(styleObj.fontSize, feature) + 'pt sans-serif';
         }
@@ -4036,6 +4092,9 @@
         var self = this;
 
         self._trigger = function (e) {
+            if (map.view === TC.Consts.view.PRINTING) {
+                return;
+            }
             var featureCount = 0;
             map.wrap.map.forEachFeatureAtPixel(e.pixel,
                 function (feature, layer) {
@@ -4194,9 +4253,16 @@
 
         $.when(map.wrap.getMap()).then(function (olMap) {
             self.olMap = olMap;
-            var projection = olMap.getView().getProjection();
-            self.parent.crs = projection.getCode();
-            self.parent.units = projection.getUnits();
+
+            if (!self.parent.map.on3DView) {
+                var projection = olMap.getView().getProjection();
+                self.parent.crs = projection.getCode();
+                self.parent.units = projection.getUnits();                
+            } else {
+                self.parent.crs = self.parent.map.view3D.crs;
+                self.parent.units = TC.Consts.units.DEGREES;                
+            }
+
             self.parent.isGeo = self.parent.units === ol.proj.Units.DEGREES;
 
             $(olMap.getViewport()).add(self.parent.div);
@@ -5482,6 +5548,9 @@
             });
             self.ovMap.ovmap_.addOverlay(self.ovMap.boxOverlay_);
 
+            // mantenemos el ancho y alto del canvas en números enteros
+            self.manageSize.call(self.ovMap.ovmap_);
+
             self._$boxElm = $(self.ovMap.boxOverlay_.getElement()).parents('.ol-overlay-container').first();
 
             TC.loadJS(
@@ -5598,7 +5667,7 @@
                     olMap.getLayers().getArray()[0].getSource().refresh();
                 });
 
-                if (layer !== self.parent.layer) {
+                if (layer !== self.parent.layer || olMap.getLayers().getArray().indexOf(layer) === -1) {
 
                     olMap.getLayers().forEach(function (l) {
                         if (l instanceof ol.layer.Image || l instanceof ol.layer.Tile) {
@@ -5686,30 +5755,33 @@
 
     TC.wrap.control.OverviewMap.prototype.draw3DCamera = function (options) {
         var self = this;
-        self.is3D = !!options;
-        var camLayer = self.get3DCameraLayer();
-        if (camLayer) {
-            var feature;
-            options = options || {
-            };
-            var fov = options.fov;
-            var source = camLayer.getSource();
-            if (!fov || !fov.length) { // no vemos terreno o no estamos en vista 3D
-                source.clear();
-            }
-            else {
-                var features = source.getFeatures();
-                if (!features.length) {
-                    feature = new ol.Feature();
-                    source.addFeature(feature);
+
+        if (this.parent.map.isLoaded) {
+            self.is3D = !!options;
+            var camLayer = self.get3DCameraLayer();
+            if (camLayer) {
+                var feature;
+                options = options || {
+                };
+                var fov = options.fov;
+                var source = camLayer.getSource();
+                if (!fov || !fov.length) { // no vemos terreno o no estamos en vista 3D
+                    source.clear();
                 }
                 else {
-                    feature = features[0];
+                    var features = source.getFeatures();
+                    if (!features.length) {
+                        feature = new ol.Feature();
+                        source.addFeature(feature);
+                    }
+                    else {
+                        feature = features[0];
+                    }
+                    feature.setGeometry(new ol.geom.Polygon([fov]));
                 }
-                feature.setGeometry(new ol.geom.Polygon([fov]));
+                var heading = (typeof options.heading === 'number') ? options.heading : 0;
+                self._$boxElm.css('transform', 'rotate(' + heading + 'rad)');
             }
-            var heading = (typeof options.heading === 'number') ? options.heading : 0;
-            self._$boxElm.css('transform', 'rotate(' + heading + 'rad)');
         }
     };
 
@@ -5738,6 +5810,14 @@
             self.parent.layer.setVisibility(false);
         }
     };
+
+    TC.wrap.control.OverviewMap.prototype.manageSize = function () {
+        const self = this;
+
+        TC.wrap.Map.prototype.manageSize.call(self);
+    };
+
+    TC.wrap.Map.prototype.manageSize
 
     TC.wrap.control.FeatureInfo.prototype.register = function (map) {
         var self = this;
@@ -5831,11 +5911,11 @@
                     && (!opts.serviceUrl || opts.serviceUrl === layer.url)) { // Mirar si en las opciones pone que solo busque en un servicio
 
                     //
-                    var targetService = {};
-                    if (!targetServices[layer.url] || targetServices[layer.url].title !== layer.title) {
+                    var targetService;
+                    if (!targetServices[layer.url]) {
                         targetService = {
                             layers: [],
-                            mapLayer: layer,
+                            mapLayers: [],
                             title: layer.title,
                             request: null
                         };
@@ -5848,9 +5928,10 @@
                     else {
                         targetService = targetServices[layer.url];
                     }
+                    targetService.mapLayers.push(layer);
 
                     //var targetService = {
-                    //    layers: [], mapLayer: layer
+                    //    layers: [], mapLayers: [layer]
                     //};
                     var disgregatedNames = layer.getDisgregatedLayerNames();
                     if (opts.layerName) { // Mirar si en las opciones pone que solo busque en una capa
@@ -5905,15 +5986,20 @@
 
 
                 var expUrl = gfiURL;
-                gfiURL = targetService.mapLayer.getFeatureInfoUrl(gfiURL);
-
-                var def = $.ajax({
-                    url: gfiURL
-                });
-                def.originalUrl = gfiURL;
+                var def = new $.Deferred;
                 def.serviceUrl = serviceUrl;
                 def.requestedFormat = params.INFO_FORMAT;
                 def.expandUrl = expUrl;
+
+                const mapLayer = targetService.mapLayers[0];
+                mapLayer.toolProxification.fetch(gfiURL).then(function (data) {
+                    mapLayer.toolProxification.cacheHost.getAction(this.expandUrl).then(function (cache) {
+                        this.originalUrl = cache.action.call(mapLayer.toolProxification, this.expandUrl);
+                        this.resolve($.extend({}, data, this));
+                    }.bind(this));
+                }.bind(def)).catch(function (error) {
+                    this.reject($.extend({}, error, this));
+                }.bind(def));
 
                 TC.Util.consoleRegister("Lanzamos GFI");
 
@@ -5922,162 +6008,157 @@
 
             if (requestDeferreds.length > 0) {
                 $.when.apply(self, requestDeferreds).then(function () {
-                    var responses = requestDeferreds.length > 1 ? arguments : [arguments];
+                    var responses = Array.prototype.slice.call(arguments);
                     var someSuccess = false;
                     var featureCount = 0;
                     var featureInsertionPoints = [];
                     for (var i = 0; i < responses.length; i++) {
-                        var response = responses[i];
+                        var featureInfo = responses[i];
                         var service = targetServices[requestDeferreds[i].serviceUrl];
-                        var featureInfo = response[2];
-                        if (response[1] === 'success') {
-                            someSuccess = true;
-                            service.text = featureInfo.responseText;
-                            var format;
-                            var iFormat = featureInfo.getResponseHeader("Content-type");
-                            if (iFormat && iFormat.indexOf(";") > -1)
-                                iFormat = iFormat.substr(0, iFormat.indexOf(";")).trim();
+                        someSuccess = true;
+                        service.text = featureInfo.responseText;
+                        var format;
+                        var iFormat = featureInfo.contentType;
+                        if (iFormat && iFormat.indexOf(";") > -1)
+                            iFormat = iFormat.substr(0, iFormat.indexOf(";")).trim();
 
-                            if (!iFormat) iFormat = featureInfo.requestedFormat;
+                        if (!iFormat) iFormat = featureInfo.requestedFormat;
 
-                            if (iFormat === featureInfo.requestedFormat) {
-                                switch (iFormat) {
-                                    case 'application/json':
-                                        format = new ol.format.GeoJSON();
-                                        break;
-                                    case 'application/vnd.ogc.gml':
-                                        if (featureInfo.responseText.indexOf("FeatureCollection") > -1) {
-                                            format = new ol.format.WFS({
-                                                gmlFormat: new ol.format.GML2({
-                                                    srsName: map.crs
-                                                })
-                                            });
-                                        }
-                                        else {
-                                            format = new ol.format.WMSGetFeatureInfo();
-                                        }
-                                        break;
-                                    case 'application/vnd.ogc.gml/3.1.1':
-                                        format = new ol.format.GML3Patched({
-                                            srsName: map.crs
+                        if (iFormat === featureInfo.requestedFormat) {
+                            switch (iFormat) {
+                                case 'application/json':
+                                    format = new ol.format.GeoJSON();
+                                    break;
+                                case 'application/vnd.ogc.gml':
+                                    if (featureInfo.responseText.indexOf("FeatureCollection") > -1) {
+                                        format = new ol.format.WFS({
+                                            gmlFormat: new ol.format.GML2({
+                                                srsName: map.crs
+                                            })
                                         });
-                                        break;
-                                    case 'application/vnd.esri.wms_featureinfo_xml':
-                                        format = esriXmlParser;
-                                        break;
-                                    default:
-                                        format = null;
-                                        break;
-                                }
-
-                                if (format) {
-                                    var features = format.readFeatures(featureInfo.responseText, {
-                                        featureProjection: ol.proj.get(map.crs)
+                                    }
+                                    else {
+                                        format = new ol.format.WMSGetFeatureInfo();
+                                    }
+                                    break;
+                                case 'application/vnd.ogc.gml/3.1.1':
+                                    format = new ol.format.GML3Patched({
+                                        srsName: map.crs
                                     });
-                                    featureCount = featureCount + features.length;
-                                    var isParentOrSame = function (layer, na, nb) {
-                                        var result = false;
-                                        if (na === nb) {
+                                    break;
+                                case 'application/vnd.esri.wms_featureinfo_xml':
+                                    format = esriXmlParser;
+                                    break;
+                                default:
+                                    format = null;
+                                    break;
+                            }
+
+                            if (format) {
+                                var features = format.readFeatures(featureInfo.responseText, {
+                                    featureProjection: ol.proj.get(map.crs)
+                                });
+                                featureCount = featureCount + features.length;
+                                var isParentOrSame = function (layer, na, nb) {
+                                    var result = false;
+                                    if (na === nb) {
+                                        result = true;
+                                    }
+                                    else {
+                                        var pa = layer.getNodePath(na);
+                                        var pb = layer.getNodePath(nb);
+                                        if (pa.length > 0 && pb.length >= pa.length) {
                                             result = true;
-                                        }
-                                        else {
-                                            var pa = layer.getNodePath(na);
-                                            var pb = layer.getNodePath(nb);
-                                            if (pa.length > 0 && pb.length >= pa.length) {
-                                                result = true;
-                                                for (var i = 0; i < pa.length; i++) {
-                                                    if (layer.wrap.getName(pa[i]) !== layer.wrap.getName(pb[i])) {
-                                                        result = false;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        return result;
-                                    };
-
-                                    var fakeLayers = {};
-
-                                    for (var j = 0; j < features.length; j++) {
-                                        var feature = features[j];
-                                        if (feature instanceof ol.Feature) {
-                                            var fid = feature.getId() || TC.getUID();
-                                            var found = false;
-                                            var layerName = fid.substr(0, fid.lastIndexOf('.'));
-                                            for (var k = 0; k < service.layers.length; k++) {
-                                                var l = service.layers[k];
-                                                var lName = l.name.substr(l.name.indexOf(':') + 1);
-                                                if (isParentOrSame(service.mapLayer, lName, layerName)) {
-                                                    found = true;
-                                                    if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
-                                                        featurePromises.push(TC.wrap.Feature.createFeature(feature));
-                                                        featureInsertionPoints.push(l.features);
-                                                    }
+                                            for (var i = 0; i < pa.length; i++) {
+                                                if (layer.wrap.getName(pa[i]) !== layer.wrap.getName(pb[i])) {
+                                                    result = false;
                                                     break;
                                                 }
                                             }
+                                        }
+                                    }
+                                    return result;
+                                };
 
-                                            //si llegamos aquí y no he encontrado su layer, es que no cuadraba el prefijo del fid con el id del layer
-                                            //esto pasa, p.ej, en cartociudad
-                                            if (!found) {
-                                                //así que creo un layer de palo para la respuesta del featInfo
-                                                var fakeLayer;
-                                                if (fakeLayers[layerName]) fakeLayer = fakeLayers[layerName];
-                                                else {
-                                                    fakeLayer = {
-                                                        name: layerName, title: layerName, path: [layerName], features: []
-                                                    };
-                                                    fakeLayers[layerName] = fakeLayer;
-                                                    service.layers.push(fakeLayer);
-                                                }
+                                var fakeLayers = {
+                                };
 
+                                for (var j = 0; j < features.length; j++) {
+                                    var feature = features[j];
+                                    if (feature instanceof ol.Feature) {
+                                        var fid = feature.getId() || TC.getUID();
+                                        var found = false;
+                                        var layerName = fid.substr(0, fid.lastIndexOf('.'));
+                                        for (var k = 0; k < service.layers.length; k++) {
+                                            var l = service.layers[k];
+                                            var lName = l.name.substr(l.name.indexOf(':') + 1);
+                                            if (service.mapLayers.some(function (mapLayer) { return isParentOrSame(mapLayer, lName, layerName) })) {
+                                                found = true;
                                                 if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
-                                                    featurePromises.push(TC.wrap.Feature.createFeature(feature));
-                                                    featureInsertionPoints.push(fakeLayer.features);
+                                                    featurePromises.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
+                                                    featureInsertionPoints.push(l.features);
                                                 }
+                                                break;
                                             }
                                         }
-                                    }//iteración sobre las features de esta respuesta
-                                }
-                                else {
-                                    //si no hay formato reconocido y parseable, metemos un iframe con la respuesta
-                                    //y prau
-                                    //para eso, creo una falsa entrada de tipo feature, con un campo especial rawUrl o rawContent
 
-                                    var compoundLayer = {
-                                        name: 'layer' + TC.getUID(), title: 'Datos en el punto', features: []
-                                    };
+                                        //si llegamos aquí y no he encontrado su layer, es que no cuadraba el prefijo del fid con el id del layer
+                                        //esto pasa, p.ej, en cartociudad
+                                        if (!found) {
+                                            //así que creo un layer de palo para la respuesta del featInfo
+                                            var fakeLayer;
+                                            if (fakeLayers[layerName]) fakeLayer = fakeLayers[layerName];
+                                            else {
+                                                fakeLayer = {
+                                                    name: layerName, title: layerName, path: [layerName], features: []
+                                                };
+                                                fakeLayers[layerName] = fakeLayer;
+                                                service.layers.push(fakeLayer);
+                                            }
 
-                                    service.layers[service.layers.length] = compoundLayer;
-                                    compoundLayer.features[0] = {
-                                        rawUrl: featureInfo.originalUrl, expandUrl: featureInfo.expandUrl, rawContent: featureInfo.responseText, rawFormat: iFormat
-                                    };
-                                    featureCount = featureCount + 1;
-                                }
+                                            if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
+                                                featurePromises.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
+                                                featureInsertionPoints.push(fakeLayer.features);
+                                            }
+                                        }
+                                    }
+                                }//iteración sobre las features de esta respuesta
+
+
                             }
-                            else { // iFormat !== featureInfo.requestedFormat
+                            else {
+                                //si no hay formato reconocido y parseable, metemos un iframe con la respuesta
+                                //y prau
+                                //para eso, creo una falsa entrada de tipo feature, con un campo especial rawUrl o rawContent
 
-                                // GLS:
-                                TC.Util.consoleRegister("Respuesta GFI: lo más probable es que el servidor esté devolviendo una excepción");
-                                TC.Util.consoleRegister("Lanzamos los eventos que corresponde y mostramos tostada");
+                                var compoundLayer = {
+                                    name: 'layer' + TC.getUID(), title: 'Datos en el punto', features: []
+                                };
 
-                                // En este caso lo más probable es que el servidor esté devolviendo una excepción
-                                self.parent.responseError({
-                                    message: featureInfo.responseText,
-                                    status: featureInfo.status
-                                });
-                                // GLS: misma gestión de error que en ol.js - > function (a, b, c) { // error...
-                                map.toast(self.parent.getLocaleString('featureInfo.error'), {
-                                    type: TC.Consts.msgType.ERROR
-                                });
+                                service.layers[service.layers.length] = compoundLayer;
+                                compoundLayer.features[0] = {
+                                    rawUrl: featureInfo.originalUrl, expandUrl: featureInfo.expandUrl, rawContent: featureInfo.responseText, rawFormat: iFormat
+                                };
+                                featureCount = featureCount + 1;
                             }
                         }
-                        else {
+                        else { // iFormat !== featureInfo.requestedFormat
+
+                            // GLS:
+                            TC.Util.consoleRegister("Respuesta GFI: lo más probable es que el servidor esté devolviendo una excepción");
+                            TC.Util.consoleRegister("Lanzamos los eventos que corresponde y mostramos tostada");
+
+                            // En este caso lo más probable es que el servidor esté devolviendo una excepción
                             self.parent.responseError({
                                 message: featureInfo.responseText,
                                 status: featureInfo.status
                             });
+                            // GLS: misma gestión de error que en ol.js - > function (a, b, c) { // error...
+                            map.toast(self.parent.getLocaleString('featureInfo.error'), {
+                                type: TC.Consts.msgType.ERROR
+                            });
                         }
+
                     }
                     if (someSuccess) {
                         var finfoPromises = featurePromises;
@@ -6135,7 +6216,15 @@
                     }
                 },
                     function (a, b, c) { // error
-                        self.parent.responseCallback({});
+                        if (services && services.length == 0) {
+                            for (var serviceUrl in targetServices) {
+                                services.push(targetServices[serviceUrl]);
+                            }
+                        }
+
+                        self.parent.responseCallback({
+                            coords: coords, resolution: resolution, services: services, featureCount: 0
+                        });
                         map.toast(self.parent.getLocaleString('featureInfo.error'), {
                             type: TC.Consts.msgType.ERROR
                         });
@@ -6322,7 +6411,10 @@
         var arrPromises = [];
         var services = {};
         var _getServiceTitle = function (service) {
-            return service.mapLayer.title || (service.mapLayer.tree && service.mapLayer.tree.title) || service.mapLayer.capabilities.Service.Title
+            const mapLayer = service.mapLayers[0];
+            return service.title || service.mapLayers.reduce(function (prev, cur) {
+                return prev || cur.title;
+            }, '') || (mapLayer.tree && mapLayer.tree.title) || mapLayer.capabilities.Service.Title;
         };
         $.when(map.wrap.getMap()).then(function (olMap) {
             olMap.getLayers().forEach(function (olLayer) {
@@ -6332,7 +6424,7 @@
                 var availableLayers = layer.getDisgregatedLayerNames() || layer.availableNames;
                 if (!services[layer.url.toLowerCase()])
                     services[layer.url.toLowerCase()] = {
-                        layers: [], mapLayer: layer, layerNames: []
+                        layers: [], mapLayers: [layer], layerNames: []
                     };
                 for (var i = 0; i < availableLayers.length; i++) {
                     var name = availableLayers[i];
@@ -6382,7 +6474,7 @@
                             layer = layer.substring(0, layer.lastIndexOf("_"));
                         }
                         if (!capabilities.FeatureTypes.hasOwnProperty(layer)) {
-                            var titles = service.mapLayer.getPath(layer);
+                            var titles = service.mapLayers[0].getPath(layer);
                             errors.push({ key: TC.Consts.WFSErrors.LayersNotAvailable, params: { serviceTitle: _getServiceTitle(service), "layerName": titles[titles.length - 1] } });
                             continue;
                         }
@@ -6407,94 +6499,17 @@
                         return;
                     }
                     var url = (capabilities.Operations.GetFeature.DCPType ? capabilities.Operations.GetFeature.DCPType[1].HTTP.Post.onlineResource : capabilities.Operations.GetFeature.DCP.HTTP.Post["xlink:href"]);
-                    var url2 = service.mapLayer.getFeatureUrl(url);
 
-                    if (_numMaxFeatures) {
-                        jQuery.ajax({
-                            url: url2,
-                            data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, true),
-                            cache: false,
-                            contentType: "application/xml",
-                            type: "POST",
-                        }).then(function () {
-                            if (arguments[0] instanceof XMLDocument) {
-                                var responseAsJSON = xml2json(arguments[0]);
-                                if (responseAsJSON.Exception) {
-                                    defer.resolve({
-                                        errors: [{
-                                            key: TC.Consts.WFSErrors.Indeterminate,
-                                            params: {
-                                                err: responseAsJSON.Exception.exceptionCode, errorThrown: responseAsJSON.Exception.ExceptionText, serviceTitle: service.mapLayer.title
-                                            }
-                                        }]
-                                    })
-                                    return;
-                                }
-                            }
-                            var featFounds = parseInt(responseAsJSON.numberMatched || responseAsJSON.numberOfFeatures, 10)
-                            if (isNaN(featFounds) || featFounds > parseInt(_numMaxFeatures, 10)) {
-                                defer.resolve({
-                                    errors: [{
-                                        key: TC.Consts.WFSErrors.NumMaxFeatures, params: { limit: _numMaxFeatures, serviceTitle: _getServiceTitle(service) }
-                                    }]
-                                });
-                                return;
-                            }
-                            else if (featFounds === 0) {
-                                defer.resolve({
-                                    errors: [{
-                                        key: TC.Consts.WFSErrors.NoFeatures, params: { serviceTitle: _getServiceTitle(service) }
-                                    }]
-                                });
-                            }
-                            else if (download) {
-                                defer.resolve({
-                                    url: url,
-                                    data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
-                                    service: service,
-                                    numFeatures: featFounds,
-                                    errors: errors
-                                });
-                            }
-
-                        }
-                            , function (xhr, textStatus, errorThrown) {
-                                defer.resolve({
-                                    errors: [{
-                                        key: TC.Consts.WFSErrors.Indeterminate,
-                                        params: { err: textStatus, errorThrown: errorThrown, serviceTitle: _getServiceTitle(service) }
-                                    }]
-                                });
-                                return;
-                            });
-                    }
-                    else {
-                        if (!download) {
-                            defer.resolve({
+                    // var url2 = service.mapLayers[0].getFeatureUrl(url);
+                    service.mapLayers[0].getFeatureUrl(url).then(function (url2) {
+                        if (_numMaxFeatures) {
+                            jQuery.ajax({
                                 url: url2,
-                                data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
-                                service: service,
-                                errors: errors
-                            });
-                        }
-                    }
-                    if (download && !_numMaxFeatures) {
-                        defer.resolve({
-                            url: url,
-                            data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
-                            service: service,
-                            errors: errors
-                        });
-                    }
-                    if (!download) {
-                        jQuery.ajax({
-                            url: url2,
-                            data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
-                            cache: false,
-                            contentType: "application/xml",
-                            type: "POST",
-                        }).then(function () {
-                            if (arguments[1] == "success") {
+                                data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, true),
+                                cache: false,
+                                contentType: "application/xml",
+                                type: "POST",
+                            }).then(function () {
                                 if (arguments[0] instanceof XMLDocument) {
                                     var responseAsJSON = xml2json(arguments[0]);
                                     if (responseAsJSON.Exception) {
@@ -6502,30 +6517,113 @@
                                             errors: [{
                                                 key: TC.Consts.WFSErrors.Indeterminate,
                                                 params: {
-                                                    err: responseAsJSON.Exception.exceptionCode, errorThrown: responseAsJSON.Exception.ExceptionText, serviceTitle: service.mapLayer.title
+                                                    err: responseAsJSON.Exception.exceptionCode, errorThrown: responseAsJSON.Exception.ExceptionText, serviceTitle: service.mapLayers.reduce(function (prev, cur) {
+                                                        return prev || cur.title;
+                                                    }, '')
                                                 }
                                             }]
                                         })
                                         return;
                                     }
                                 }
-                                defer.resolve({ service: service, response: arguments, errors: errors });
+                                var featFounds = parseInt(responseAsJSON.numberMatched || responseAsJSON.numberOfFeatures, 10)
+                                if (isNaN(featFounds) || featFounds > parseInt(_numMaxFeatures, 10)) {
+                                    defer.resolve({
+                                        errors: [{
+                                            key: TC.Consts.WFSErrors.NumMaxFeatures, params: { limit: _numMaxFeatures, serviceTitle: _getServiceTitle(service) }
+                                        }]
+                                    });
+                                    return;
+                                }
+                                else if (featFounds === 0) {
+                                    defer.resolve({
+                                        errors: [{
+                                            key: TC.Consts.WFSErrors.NoFeatures, params: { serviceTitle: _getServiceTitle(service) }
+                                        }]
+                                    });
+                                }
+                                else if (download) {
+                                    defer.resolve({
+                                        url: url,
+                                        data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
+                                        service: service,
+                                        numFeatures: featFounds,
+                                        errors: errors
+                                    });
+                                }
+
                             }
-                            else {
-                                defer.reject(arguments);
-                                return;
-                            }
-                        },
-                            function (xhr, textStatus, errorThrown) {
-                                defer.resolve({
-                                    errors: [{
-                                        key: TC.Consts.WFSErrors.Indeterminate,
-                                        params: { err: textStatus, errorThrown: errorThrown, serviceTitle: _getServiceTitle(service) }
-                                    }]
+                                , function (xhr, textStatus, errorThrown) {
+                                    defer.resolve({
+                                        errors: [{
+                                            key: TC.Consts.WFSErrors.Indeterminate,
+                                            params: { err: textStatus, errorThrown: errorThrown, serviceTitle: _getServiceTitle(service) }
+                                        }]
+                                    });
+                                    return;
                                 });
-                                return;
+                        }
+                        else {
+                            if (!download) {
+                                defer.resolve({
+                                    url: url2,
+                                    data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
+                                    service: service,
+                                    errors: errors
+                                });
+                            }
+                        }
+                        if (download && !_numMaxFeatures) {
+                            defer.resolve({
+                                url: url,
+                                data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
+                                service: service,
+                                errors: errors
                             });
-                    }
+                        }
+                        if (!download) {
+                            jQuery.ajax({
+                                url: url2,
+                                data: TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, false),
+                                cache: false,
+                                contentType: "application/xml",
+                                type: "POST",
+                            }).then(function () {
+                                if (arguments[1] == "success") {
+                                    if (arguments[0] instanceof XMLDocument) {
+                                        var responseAsJSON = xml2json(arguments[0]);
+                                        if (responseAsJSON.Exception) {
+                                            defer.resolve({
+                                                errors: [{
+                                                    key: TC.Consts.WFSErrors.Indeterminate,
+                                                    params: {
+                                                        err: responseAsJSON.Exception.exceptionCode, errorThrown: responseAsJSON.Exception.ExceptionText, serviceTitle: service.mapLayers.reduce(function (prev, cur) {
+                                                            return prev || cur.title;
+                                                        }, '')
+                                                    }
+                                                }]
+                                            })
+                                            return;
+                                        }
+                                    }
+                                    defer.resolve({ service: service, response: arguments, errors: errors });
+                                }
+                                else {
+                                    defer.reject(arguments);
+                                    return;
+                                }
+                            },
+                                function (xhr, textStatus, errorThrown) {
+                                    defer.resolve({
+                                        errors: [{
+                                            key: TC.Consts.WFSErrors.Indeterminate,
+                                            params: { err: textStatus, errorThrown: errorThrown, serviceTitle: _getServiceTitle(service) }
+                                        }]
+                                    });
+                                    return;
+                                });
+                        }
+                    });
                 }, function (jqXHR, textStatus, errorThrown) {
                     var service = null;
                     for (var title in services)
@@ -6628,7 +6726,7 @@
                 for (var k = 0; k < service.layers.length; k++) {
                     var l = service.layers[k];
                     var lName = l.name.substr(l.name.indexOf(':') + 1);
-                    if (isParentOrSame(service.mapLayer, lName, layerName)) {
+                    if (service.mapLayers.some(function (mapLayer) { return isParentOrSame(mapLayer, lName, layerName) })) {
                         found = true;
                         featurePromises.push(TC.wrap.Feature.createFeature(feature));
 
@@ -6663,7 +6761,7 @@
                 for (var i = 0; i < arguments.length; i++) {
                     var feat = arguments[i];
                     feat.attributes = [];
-                    feat.showsPopup = false;
+                    //feat.showsPopup = false;
                     for (var key in feat.data) {
                         var value = feat.data[key];
                         if (typeof value !== 'object') {
@@ -6707,7 +6805,7 @@
 
             self.parent.beforeRequest({ xy: xy });
 
-            var arrPromises = WFSGetFeatureBuilder(map, new TC.filter.intersects(feature), "JSON");
+            var arrPromises = WFSGetFeatureBuilder(map, new TC.filter.intersects(feature, map.crs !== map.options.crs ? map.crs : undefined), "JSON");
 
             var featureInsertionPoints = {
             };
@@ -7176,12 +7274,11 @@
         self.setData(self.parent.data);
     };
 
-    TC.wrap.Feature.createFeature = function (olFeat, opts) {
+    TC.wrap.Feature.createFeature = function (olFeat, options) {
         var result = new $.Deferred();
         var olGeometry = olFeat.getGeometry();
-        var options = {
-            id: olFeat.getId()
-        };
+        options = options || {};
+        options.id = olFeat.getId();
 
         // geometría
         var geomStr;
@@ -7294,8 +7391,8 @@
                     result.anchor = [anchor[0] * scale, anchor[1] * scale];
                     if (size) {
                         // getAnchor devuelve los valores en pixels, hay que transformar a fracción
-                        result.anchor[0] = result.anchor[0] / size[0];
-                        result.anchor[1] = result.anchor[1] / size[1];
+                        result.anchor[0] = result.anchor[0] / result.width;
+                        result.anchor[1] = result.anchor[1] / result.height;
                     }
                 }
             }
@@ -7433,29 +7530,58 @@
         };
     };
 
+    const getPolygonLength = function (polygon, options) {
+        const self = this;
+        var result = 0;
+        polygon.getLinearRings().forEach(function (ring) {
+            coordinates = ring.getCoordinates();
+            if (options.crs) {
+                coordinates = TC.Util.reproject(coordinates, self.parent.layer.map.crs, options.crs);
+                const polygon = new ol.geom.Polygon([coordinates]);
+                const newRing = polygon.getLinearRing(0);
+                result = result + ol.geom.flat.length.linearRing(newRing.flatCoordinates, 0, newRing.flatCoordinates.length, newRing.stride);
+            }
+        });
+        return result;
+    };
+
+    const getLineStringLength = function (lineString, options) {
+        const self = this;
+        coordinates = lineString.getCoordinates();
+        if (options.crs) {
+            coordinates = TC.Util.reproject(coordinates, self.parent.layer.map.crs, options.crs);
+        }
+        const line = new ol.geom.LineString(coordinates);
+        return line.getLength();
+    };
+
     TC.wrap.Feature.prototype.getLength = function (options) {
         const self = this;
         options = options || {};
+        var result = 0;
 
         const geom = self.feature.getGeometry();
         var coordinates;
-        if (geom instanceof ol.geom.Polygon) {
-            coordinates = geom.getLinearRing(0).getCoordinates();
-            if (options.crs) {
-                coordinates = TC.Util.reproject(coordinates, self.parent.layer.map.crs, options.crs);
-            }
-            const polygon = new ol.geom.Polygon([coordinates]);
-            const ring = polygon.getLinearRing(0);
-            return ol.geom.flat.length.linearRing(ring.flatCoordinates, 0, ring.flatCoordinates.length, ring.stride);
+        switch (true) {
+            case geom instanceof ol.geom.Polygon:
+                result = getPolygonLength.call(self, geom, options);
+                break;
+            case geom instanceof ol.geom.LineString:
+                result = getLineStringLength.call(self, geom, options);
+                break;
+            case geom instanceof ol.geom.MultiPolygon:
+                geom.getPolygons().forEach(function (polygon) {
+                    result = result + getPolygonLength.call(self, polygon, options);
+                });
+                break;
+            case geom instanceof ol.geom.MultiPolygon:
+                geom.getLineStrings().forEach(function (lineString) {
+                    result = result + getLineStringLength.call(self, lineString, options);
+                });
+                break;
         }
-        else if (geom instanceof ol.geom.LineString) {
-            coordinates = geom.getCoordinates();
-            if (options.crs) {
-                coordinates = TC.Util.reproject(coordinates, self.parent.layer.map.crs, options.crs);
-            }
-            const line = new ol.geom.LineString(coordinates);
-            return line.getLength();
-        }
+
+        return result;
     };
 
     TC.wrap.Feature.prototype.getArea = function (options) {
@@ -7651,6 +7777,18 @@
         olFeat.changed();
     };
 
+    TC.wrap.Feature.prototype.toggleSelectedStyle = function (condition) {
+        const self = this;
+        const feature = self.feature;
+        const setStyle = condition === undefined ? !feature._originalStyle : condition;
+        if (setStyle) {
+            setSelectedStyle(feature);
+        }
+        else {
+            removeSelectedStyle(feature);
+        }
+    };
+
     TC.wrap.Feature.prototype.getInnerPoint = function (options) {
         var result;
         var opts = options || {};
@@ -7752,7 +7890,7 @@
 
                 self._innerCentroid = self.getInnerPoint({ clipBox: currentExtent });
 
-                popupCtl.$contentDiv.html(self.parent.getInfo());
+                popupCtl.$contentDiv.html(self.parent.getInfo({ locale: map.options.locale }));
                 popupCtl.$menuDiv.empty();
                 if (popupCtl.options.closeButton || popupCtl.options.closeButton === undefined) {
                     var $btn = $('<div>')
@@ -7914,6 +8052,9 @@
 
     TC.wrap.control.Draw.prototype.clickHandler = function (evt) {
         const self = this;
+        if (self.parent.map.view === TC.Consts.view.PRINTING) {
+            return;
+        }
         if (self._mdPx) { // No operamos si el clic es consecuencia es en realidad un drag
             const dx = self._mdPx[0] - evt.clientX;
             const dy = self._mdPx[1] - evt.clientY;
@@ -8057,6 +8198,11 @@
                                             hitTolerance: hitTolerance
                                         });
                                 }
+
+                                if (self.parent.map.view === TC.Consts.view.PRINTING) {
+                                    return null;
+                                }
+
                                 return true;
                             }
                         };
@@ -8429,42 +8575,48 @@
     };
 
     const addHaloToStyle = function (style) {
+        if (style === undefined) {
+            style = [];
+        }
         if (style instanceof ol.style.Style) {
             style = [style];
         }
         style = style.slice();
         const mainStyle = style[0];
-        const image = mainStyle.getImage();
-        var strokeWidth;
-        if (image instanceof ol.style.RegularShape) {
-            strokeWidth = image.getStroke().getWidth();
-            const radius = image.getRadius();
-            const haloPart1 = mainStyle.clone();
-            haloPart1.setImage(new ol.style.Circle({
-                radius: radius,
-                stroke: createHaloStroke1(strokeWidth)
-            }));
-            style.unshift(haloPart1);
-            const haloPart2 = mainStyle.clone();
-            haloPart2.setImage(new ol.style.Circle({
-                radius: radius,
-                stroke: createHaloStroke2(strokeWidth)
-            }));
-            style.unshift(haloPart2);
+        if (mainStyle) {
+            const image = mainStyle.getImage();
+            var strokeWidth;
+            if (image instanceof ol.style.RegularShape) {
+                strokeWidth = image.getStroke().getWidth();
+                const radius = image.getRadius();
+                const haloPart1 = mainStyle.clone();
+                haloPart1.setImage(new ol.style.Circle({
+                    radius: radius,
+                    stroke: createHaloStroke1(strokeWidth)
+                }));
+                style.unshift(haloPart1);
+                const haloPart2 = mainStyle.clone();
+                haloPart2.setImage(new ol.style.Circle({
+                    radius: radius,
+                    stroke: createHaloStroke2(strokeWidth)
+                }));
+                style.unshift(haloPart2);
+            }
+            else {
+                strokeWidth = mainStyle.getStroke().getWidth();
+                style.unshift(new ol.style.Style({
+                    stroke: createHaloStroke1(strokeWidth)
+                }));
+                style.unshift(new ol.style.Style({
+                    stroke: createHaloStroke2(strokeWidth)
+                }));
+            }
+            return style;
         }
-        else {
-            strokeWidth = mainStyle.getStroke().getWidth();
-            style.unshift(new ol.style.Style({
-                stroke: createHaloStroke1(strokeWidth)
-            }));
-            style.unshift(new ol.style.Style({
-                stroke: createHaloStroke2(strokeWidth)
-            }));
-        }
-        return style;
+        return null;
     };
 
-    const setSelectedStyle = function (feat) {
+    const createSelectedStyle = function (feat) {
         feat._originalStyle = feat._originalStyle || feat.getStyle();
         if ($.isFunction(feat._originalStyle)) {
             return function (f, r) {
@@ -8474,13 +8626,23 @@
         return addHaloToStyle(feat._originalStyle);
     };
 
+    const setSelectedStyle = function (feat) {
+        updateSelectedStyle.call(feat);
+        feat.changed();
+        ol.events.listen(feat, ol.events.EventType.CHANGE, updateSelectedStyle, feat);
+    };
+
     const removeSelectedStyle = function (feat) {
-        feat.setStyle(feat._originalStyle);
+        ol.events.unlisten(feat, ol.events.EventType.CHANGE, updateSelectedStyle, feat);
+        if (feat._originalStyle) {
+            feat.setStyle(null);
+            feat.setStyle(feat._originalStyle);
+        }
         feat._originalStyle = null;
     };
 
     const updateSelectedStyle = function () {
-        this.style_ = setSelectedStyle(this);
+        this.style_ = createSelectedStyle(this);
         this.styleFunction_ = !this.style_ ? undefined : ol.Feature.createStyleFunction(this.style_);
     };
 
@@ -8502,17 +8664,9 @@
                 };
                 select.on('select', function (event) {
                     if (event.selected.length > 0) {
-                        event.selected.forEach(function (feat) {
-                            feat.setStyle(setSelectedStyle(feat));
-                            ol.events.listen(feat, ol.events.EventType.CHANGE, updateSelectedStyle, feat);
-                        });
                         self.parent.$events.trigger($.Event(TC.Consts.event.FEATURESSELECT, { ctrl: self, features: event.selected.map(getWrapperFeature) }));
                     }
                     if (event.deselected.length > 0) {
-                        event.deselected.forEach(function (feat) {
-                            ol.events.unlisten(feat, ol.events.EventType.CHANGE, updateSelectedStyle, feat);
-                            removeSelectedStyle(feat);
-                        });
                         if (event.selected.length == 0) {
                             self.parent.$events.trigger($.Event(TC.Consts.event.FEATURESUNSELECT, { ctrl: self.parent, features: event.deselected.map(getWrapperFeature) }));
                         }
@@ -8577,10 +8731,6 @@
     TC.wrap.control.Modify.prototype.deactivate = function () {
         const self = this;
         if (self.modifyInteraction) {
-            self.selectInteraction.getFeatures().forEach(function (feat) {
-                ol.events.unlisten(feat, ol.events.EventType.CHANGE, updateSelectedStyle, feat);
-                removeSelectedStyle(feat);
-            });
             self.modifyInteraction.setActive(false);
             self.selectInteraction.setActive(false);
             $.when(self.parent.map.wrap.getMap()).then(function (olMap) {
@@ -8748,7 +8898,9 @@
 
     TC.wrap.Feature.prototype.toGML = function (version, srsName) {
         var parser = new ol.format.GML();
-        var xml = parser.writeGeometryNode(this.feature.getGeometry());
+        var xml = parser.writeGeometryNode(this.feature.getGeometry(), {
+            dataProjection: srsName
+        });
         //reemplazo todos los <loquesea por <gml:loquesea y </loquesea por </gml:loquesea
         return new XMLSerializer().serializeToString(xml.firstChild).replace(/\<\/?\w/gm, function (str) { var pos = str.indexOf("/") > 0 ? str.indexOf("/") + 1 : 1; return str.substring(0, pos) + "gml:" + str.substring(pos) })
         //return new XMLSerializer().serializeToString(xml.firstChild).replace(/\</gm, "<gml:");
