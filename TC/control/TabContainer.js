@@ -40,8 +40,9 @@ TC.inherit(TC.control.TabContainer, TC.Control);
     }
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const ctlPromise = TC.Control.prototype.register.call(self, map);
+        const deferred = $.Deferred();
 
         const uids = new Array(self.controlOptions.length);
         uids.forEach(function (elm, idx, arr) {
@@ -52,13 +53,17 @@ TC.inherit(TC.control.TabContainer, TC.Control);
             self.title = self.title || self.getLocaleString(self.options.title || 'moreControls');
             self._$div.find('h2').first().html(self.title);
 
-            var bufferDeferreds = new Array(self.controlOptions.length);
             for (var i = 0, len = self.controlOptions.length; i < len; i++) {
-                var ctl = self.controlOptions[i];
-                bufferDeferreds[i] = map.addControl(ctl.name, $.extend({
-                    id: uids[i],
-                    div: self._$div.find('.' + self.CLASS + '-elm-' + i)
-                }, ctl.options));
+                const idx = i;
+                var ctl = self.controlOptions[idx];
+                map
+                    .addControl(ctl.name, $.extend({
+                        id: uids[idx],
+                        div: self._$div.find('.' + self.CLASS + '-elm-' + i)
+                    }, ctl.options))
+                    .then(function (c) {
+                        self._ctlDeferreds[idx].resolve(c);
+                    });
             }
             var writeTitle = function (ctl, idx) {
                 ctl.renderPromise().then(function () {
@@ -70,15 +75,17 @@ TC.inherit(TC.control.TabContainer, TC.Control);
                         .html(title);
                 });
             };
-            $.when.apply(self, bufferDeferreds).then(function () {
+            $.when.apply(self, self._ctlDeferreds).then(function () {
                 for (var i = 0, len = arguments.length; i < len; i++) {
                     var ctl = arguments[i];
                     ctl.containerControl = self;
                     writeTitle(ctl, i);
-                    self._ctlDeferreds[i].resolve(ctl);
                 }
+                deferred.resolve(self);
             });
         });
+
+        return deferred.promise();
     };
 
     ctlProto.render = function (callback) {
