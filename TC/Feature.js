@@ -73,6 +73,10 @@ TC.Feature.prototype.setStyle = function (style) {
     this.wrap.setStyle(style);
 };
 
+TC.Feature.prototype.toggleSelectedStyle = function (condition) {
+    this.wrap.toggleSelectedStyle(condition);
+};
+
 TC.Feature.prototype.getLegend = function () {
     var self = this;
     if (!self._legend) {
@@ -82,8 +86,41 @@ TC.Feature.prototype.getLegend = function () {
 };
 
 TC.Feature.prototype.getCoords = function () {
-    return this.wrap.getGeometry();
+    const self = this;
+    self.geometry = self.wrap.getGeometry();
+    return self.geometry;
 };
+
+TC.Feature.prototype.getCoordsArray = function () {
+    const self = this;
+    const isPoint = function (elm) {
+        return $.isArray(elm) && elm.length >= 2 && typeof elm[0] === 'number' && typeof elm[1] === 'number';
+    };
+    const flattenFn = function (val) {
+        return isPoint(val) ? [val] : val.reduce(reduceFn, []);
+    }
+    const reduceFn = function (acc, elm) {
+        if (isPoint(elm)) {
+            acc[acc.length] = elm;
+        }
+        else {
+            acc = acc.concat(flattenFn(elm));
+        }
+        return acc;
+    };
+    return flattenFn(this.getCoords());
+};
+
+TC.Feature.prototype.getGeometryStride = function () {
+    const self = this;
+    const coordsArray = self.getCoordsArray();
+    const firstCoord = coordsArray[0];
+    if (firstCoord) {
+        return firstCoord.length;
+    }
+    return 0;
+}
+
 
 TC.Feature.prototype.setCoords = function (coords) {
     const self = this;
@@ -109,10 +146,17 @@ TC.Feature.prototype.setData = function (data) {
     self.wrap.setData(data);
 };
 
-TC.Feature.prototype.getInfo = function () {
+TC.Feature.prototype.clearData = function () {
+    var self = this;
+    self.data = {};
+    self.wrap.clearData();
+};
+
+TC.Feature.prototype.getInfo = function (options) {
     var result = null;
     var self = this;
-    var locale = self.layer && self.layer.map && TC.Util.getMapLocale(self.layer.map);
+    options = options || {};
+    var locale = options.locale || (self.layer && self.layer.map && TC.Util.getMapLocale(self.layer.map));
     var data = self.getData();
     if (typeof data === 'object') {
         var template = self.wrap.getTemplate();
@@ -125,26 +169,45 @@ TC.Feature.prototype.getInfo = function () {
         }
         else {
             var html = [];
+            const hSlots = [];
             var openText = TC.Util.getLocaleString(locale, 'open');
             for (var key in data) {
-                var value = data[key];
-                if (typeof value === 'string' || typeof value === 'number' || typeof value === 'undefined') {
-                    html[html.length] = '<tr><th>';
-                    html[html.length] = key;
-                    html[html.length] = '</th><td>';
-                    var isUrl = TC.Util.isURL(value);
-                    if (isUrl) {
-                        html[html.length] = '<a href="';
-                        html[html.length] = value;
-                        html[html.length] = '" target="_blank">';
-                        html[html.length] = openText;
-                        html[html.length] = '</a>';
-                    }
-                    else {
-                        html[html.length] = value !== void (0) ? TC.Util.formatNumber(value, locale) : '&mdash;';
-                    }
-                    html[html.length] = '</td></tr>';
+                const value = data[key];
+                const match = key.match(/^h(\d)_/i);
+                if (match) {
+                    hSlots[match[1]] = value;
                 }
+                else {
+                    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'undefined') {
+                        html[html.length] = '<tr><th>';
+                        html[html.length] = key;
+                        html[html.length] = '</th><td>';
+                        var isUrl = TC.Util.isURL(value);
+                        if (isUrl) {
+                            html[html.length] = '<a href="';
+                            html[html.length] = value;
+                            html[html.length] = '" target="_blank">';
+                            html[html.length] = openText;
+                            html[html.length] = '</a>';
+                        }
+                        else {
+                            html[html.length] = value !== undefined ? TC.Util.formatNumber(value, locale) : '&mdash;';
+                        }
+                        html[html.length] = '</td></tr>';
+                    }
+                }
+            }
+            const headers = hSlots
+                .map(function (val, idx) {
+                    if (val) {
+                        return '<h' + idx + '>' + val + '</h' + idx + '>';
+                    }
+                })
+                .filter(function (val) {
+                    return val;
+                });
+            if (headers.length) {
+                html = headers.concat(html);
             }
             if (html.length > 0) {
                 html.unshift('<table class="tc-attr">');
@@ -180,13 +243,14 @@ TC.Feature.prototype.getStyle = function () {
 };
 
 TC.Feature.prototype.showPopup = function (control) {
-    var self = this;
-    if (self.layer && self.layer.map) {
+    const self = this;
+    const map = (self.layer && self.layer.map) || (control && control.map);
+    if (map) {
         var ctlDeferred;
         var popup = control || self.popup;
         if (!popup) {
             // Buscamos un popup existente que no esté asociado a un control.
-            var popups = self.layer.map.getControlsByClass('TC.control.Popup');
+            var popups = map.getControlsByClass('TC.control.Popup');
             for (var i = 0, len = popups.length; i < len; i++) {
                 var p = popups[i];
                 if (!p.caller) {
@@ -196,25 +260,71 @@ TC.Feature.prototype.showPopup = function (control) {
             }
         }
         if (popup) {
+            popup.currentFeature = self;
             ctlDeferred = $.Deferred();
             ctlDeferred.resolve(popup);
         }
         else {
-            ctlDeferred = self.layer.map.addControl('popup');
+            ctlDeferred = map.addControl('popup');
         }
         ctlDeferred.then(function (ctl) {
             ctl.currentFeature = self;
-            self.layer.map.getControlsByClass(TC.control.Popup).forEach(function (p) {
+            map.getControlsByClass(TC.control.Popup).forEach(function (p) {
                 if (p.isVisible()) {
                     p.hide();
                 }
             });
             self.wrap.showPopup(ctl);
-            self.layer.map.$events.trigger($.Event(TC.Consts.event.POPUP, { control: ctl }));
+            // Ajustamos el ancho del título al de la tabla de atributos
+            const $attrTable = ctl.$contentDiv.find("table.tc-attr");
+            const $h = ctl.$contentDiv.find("h1,h2,h3,h4,h5");
+            if ($attrTable.length && $h.length) {
+                $h.css('max-width', $attrTable.width());
+            }
+            map.$events.trigger($.Event(TC.Consts.event.POPUP, { control: ctl }));
             ctl.fitToView(true);
         });
     }
 };
+
+TC.Feature.prototype.showResultsPanel = function (control) {
+    const self = this;
+    const map = (self.layer && self.layer.map) || (control && control.map);
+
+    if (map) {
+        var ctlDeferred;
+        var panel = control;
+        if (!panel) {
+            // Buscamos un resultsPanel existente que no esté asociado a un control.
+            var resultsPanels = map.getControlsByClass('TC.control.ResultsPanel').filter(function (ctrl) { return ctrl.options.content === "table" });
+            for (var i = 0, len = resultsPanels.length; i < len; i++) {
+                var p = resultsPanels[i];
+                if (!p.caller) {
+                    panel = p;
+                    break;
+                }
+            }
+        }
+        if (panel) {
+            panel.currentFeature = self;
+            ctlDeferred = $.Deferred();
+            ctlDeferred.resolve(panel);
+        }
+        else {
+            ctlDeferred = map.addControl('ResultsPanel');
+        }
+        ctlDeferred.then(function (ctl) {
+            ctl.currentFeature = self;
+            map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctrl) { return ctrl.options.content === "table" }).forEach(function (p) {
+                p.close();
+            });            
+
+            ctl.open(self.getInfo({ locale: map.options.locale }), ctl.getInfoContainer());
+            map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE, { control: ctl }));
+        });
+    }
+};
+
 
 TC.Feature.prototype.select = function () {
     var self = this;
@@ -244,8 +354,8 @@ TC.Feature.prototype.isSelected = function () {
     return this._selected;
 };
 
-TC.Feature.prototype.toGML = function (version,srsName) {
-    return this.wrap.toGML(version,srsName);
+TC.Feature.prototype.toGML = function (version, srsName) {
+    return this.wrap.toGML(version, srsName);
 };
 
 
