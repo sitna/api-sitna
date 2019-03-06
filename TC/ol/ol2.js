@@ -3076,16 +3076,16 @@
 
                 for (var i = 0; i < e.features.length; i++) {
                     var sourceService = e.features[i];
-                    targetService = { layers: [], text: e.text };
+                    targetService = { layers: [], text: e.text, mapLayers: [] };
                     var layer = gfiLayers[sourceService.url];
                     if (layer) {
-                        targetService.mapLayer = layer;
+                        targetService.mapLayers.push(layer);
                         delete gfiLayers[sourceService.url];
                     }
                     for (var j = 0; j < sourceService.features.length; j++) {
                         var sourceFeature = sourceService.features[j];
                         var layerName = sourceFeature.fid ? sourceFeature.fid.substr(0, sourceFeature.fid.lastIndexOf('.')) : sourceFeature.type || '';
-                        var layerTitle = targetService.mapLayer ? targetService.mapLayer.wrap.getInfo(layerName).title || layerName : '[Sin título]';
+                        var layerTitle = targetService.mapLayers.length ? targetService.mapLayers[0].wrap.getInfo(layerName).title || layerName : '[Sin título]';
                         var targetLayer = null;
                         for (var k = 0; k < targetService.layers.length; k++) {
                             if (targetService.layers[k].name === layerName) {
@@ -3653,6 +3653,9 @@
         }
     };
 
+    TC.wrap.Feature.prototype.toggleSelectedStyle = function (condition) {
+    };
+
     TC.wrap.Feature.prototype.getInnerPoint = function (options) {
         var feature = this.feature;
         var point = feature.geometry.getCentroid(true);
@@ -3717,6 +3720,8 @@
                     popupCtl.wrap.popup = popup;
                     map.popup = popupCtl;
                     olMap.addPopup(popup);
+                    popupCtl._firstRender.resolve();
+                    popupCtl.$events.trigger($.Event(TC.Consts.event.CONTROLRENDER));
 
                     // Para IE8: FramedCloud sin modificar
                     if (Modernizr.canvas) {
@@ -3785,6 +3790,21 @@
         return result;
     };
 
+    TC.wrap.Feature.prototype.setData = function (data) {
+        const attributes = this.feature.attributes;
+        for (var key in data) {
+            if (attributes[key].value) {
+                attributes[key].value = data[key];
+            }
+            else {
+                attributes[key] = data[key];
+            }
+        }
+    };
+
+    TC.wrap.Feature.prototype.clearData = function () {
+        this.feature.attributes = {};
+    };
 
     TC.wrap.control.Draw.prototype.activate = function (mode) {
         var self = this;

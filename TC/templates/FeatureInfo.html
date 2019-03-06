@@ -13,7 +13,15 @@
 <ul class="tc-ctl-finfo-services">
     {#services}
     <li>
-        <h3>{?title}{title}{:else}{?mapLayer.title}{mapLayer.title}{:else}{mapLayer.id}{/mapLayer.title}{/title}</h3>
+        <h3>{?title}
+                {title}
+            {:else}
+                {?layers[0].title}
+                    {layers[0].title}
+                {:else}
+                    {layer.name}
+                {/layers[0].title}
+        {/title}</h3>
         <div class="tc-ctl-finfo-service-content">
             {#hasLimits}
             <span class="tc-ctl-finfo-errors">{hasLimits}</span>
@@ -21,8 +29,7 @@
         <ul class="tc-ctl-finfo-layers">
             {#layers}
             <li>
-                    <h4><span class="tc-ctl-finfo-layer-n">{features.length}</span> {#path}{.}{@sep} &bull; {/sep}{/path}                         
-                    </h4>                                            
+                    <h4><span class="tc-ctl-finfo-layer-n">{features.length}</span> {#path}{.}{@sep} &bull; {/sep}{/path}</h4>                                            
                     <div class="tc-ctl-finfo-layer-content">
                 <ul class="tc-ctl-finfo-features">
                     {#features}
@@ -48,7 +55,7 @@
                         <span class="tc-ctl-finfo-errors">{@i18n $key="fi.error"/}<span class="tc-ctl-finfo-error-text">{error}</span></span>
                         {:else}
                         <h5>{id}</h5>
-                        <table{?geometry} title="{@i18n $key="clickToCenter"/}"{/geometry}>
+                        <table{?geometry} title="{@i18n $key="clickToShowOnMap"/}"{/geometry}>
                             <tbody>
                                 {#attributes}
                                 <tr>
@@ -58,11 +65,6 @@
                                 {/attributes}
                             </tbody>
                         </table>
-                        {?geometry}
-                            <div class="tc-ctl-finfo-tools">
-                                <button class="tc-ctl-finfo-tools-btn" title="{@i18n $key="download"/}/{@i18n $key="share"/}">{@i18n $key="download"/}/{@i18n $key="share"/}</button>
-                            </div>
-                        {/geometry}
                         {/error}
                         {/rawContent}
                     </li>

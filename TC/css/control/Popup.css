@@ -88,12 +88,20 @@
     padding: 0.2em;
 }
 
-.tc-ctl-popup-content.tc-ctl-popup-has-btn {
-    margin-right: 1.2em;
+.tc-ctl-popup-content {
+    display: inline-block;
 }
 
-.tc-ctl-popup-content, .tc-ctl-popup-menu {
+.tc-ctl-popup-menu {
     display: inline-block;
+    text-align: right;
+    width: 1.5em;
+    min-width: 1.5em;
+    padding-bottom: 0.2em;
+}
+
+.tc-ctl-popup-menu .tc-ctl-ftools {
+    margin-top: 1.2em;
 }
 
 .tc-ctl-popup h3 {
@@ -107,10 +115,6 @@
     margin: 0 0 0.5em 0;
     color: #666;
     text-shadow: 0 0 0.3em #fff;
-}
-
-.tc-ctl-popup-menu {
-    width: 1.5em;
 }
 
 .ol-overlaycontainer-stopevent .tc-ctl-popup {
@@ -149,6 +153,9 @@
 }
 
 .tc-ctl-popup-close {
+    position: absolute;
+    top: 0.5em;
+    right: 0.5em;
     display: inline-block;
     cursor: pointer;
     line-height: 1em;

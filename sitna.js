@@ -111,8 +111,17 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
  */
 
 /**
+### 1.6.0
+
+- Añadida capacidad de compartir entidades vectoriales.
+- Cambiada interfaz de usuario del control de información del mapa.
+- Añadido control de dibujo y medida.
+- Añadido control con herramientas para aplicar a una entidad geográfica: zoom, compartir, descargar, borrar.
+- Corrección de errores.
+
 ### 1.5.1
 
+- Cambiada la interfaz de usuario del control de mapas de fondo para mostrar una preselección de mapas.
 - Corrección de errores.
 
 ### 1.5.0
@@ -1215,7 +1224,7 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
-  Identificador de la capa de cartografía topográfica del WMS de IDENA.
+  Identificador de la capa de cartografía topográfica del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
   @property IDENA_CARTO
   @type string
   @final
@@ -1251,6 +1260,12 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
+  Identificador de la capa de cartografía topográfica del WMS de IDENA.
+  @property IDENA_DYNCARTO
+  @type string
+  @final
+ */
+/**
   Identificador de la capa de ortofoto de máxima actualidad del WMS de IDENA.
   @property IDENA_DYNORTHOPHOTO
   @type string
@@ -1269,37 +1284,85 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
-  Identificador de la capa de OpenStreetMap a través del WMTS de la API SITNA.
+  Identificador de la capa de cartografía raster del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_CARTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del mapa base del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_BASEMAP
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de relieve del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_RELIEF
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del PNOA del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_ORTHOPHOTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de cartografía raster del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNCARTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del mapa base del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNBASEMAP
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de relieve del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNRELIEF
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del PNOA del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNORTHOPHOTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de OpenStreetMap a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property OSM
   @type string
   @final
  */
 /**
-  Identificador de la capa de Carto Voyager a través del WMTS de la API SITNA.
+  Identificador de la capa de Carto Voyager a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property CARTO_VOYAGER
   @type string
   @final
  */
 /**
-  Identificador de la capa de Carto Light a través del WMTS de la API SITNA.
+  Identificador de la capa de Carto Light a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property CARTO_LIGHT
   @type string
   @final
  */
 /**
-  Identificador de la capa de Carto Dark a través del WMTS de la API SITNA.
+  Identificador de la capa de Carto Dark a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property CARTO_DARK
   @type string
   @final
  */
 /**
-  Identificador de la capa de Mapbox Streets a través del WMTS de la API SITNA.
+  Identificador de la capa de Mapbox Streets a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property MAPBOX_STREETS
   @type string
   @final
  */
 /**
-  Identificador de la capa de Mapbox Satellite a través del WMTS de la API SITNA.
+  Identificador de la capa de Mapbox Satellite a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property MAPBOX_SATELLITE
   @type string
   @final
@@ -2314,12 +2377,12 @@ Esta clase no tiene constructor.
     <script>
       // Creamos un mapa con el control de StreetView.
       // La vista de StreetView se debe dibujar en el elemento con identificador "sv".
-      // Se utilizará la clave de Google Maps para IDENA.
+      // Se utilizará la clave de Google Maps para el SITNA.
       var map = new SITNA.Map("mapa", {
         controls: {
           streetView: {
             viewDiv: "sv",
-            googleMapsKey: "AIzaSyDXDQza0kXXHNHqq0UqNWulbYmGZmPY6TM"
+            googleMapsKey: "AIzaSyDyXgqllcajbMjx8yQxEX28VgA9nQOhtCM"
           }
         }
       });
@@ -2354,7 +2417,7 @@ Puede obtener más información en el [sitio para desarrolladores de Google](htt
               search: { 
                 coordinates: false,
                 cadastralParcel: false,
-                municipality: false,
+                municipality: true,
                 town: true,
                 street: true,
                 postalAddress: true,
@@ -3785,7 +3848,7 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.searchMunicipa
      
               var search = function () {
                  map.removeSearch();
-                 map.searchCouncil("27", function (idQuery) {
+                 map.searchMunicipality("27", function (idQuery) {
                   if (idQuery == null) {
                     alert("No se ha encontrado el municipio con código 27.");
                   }

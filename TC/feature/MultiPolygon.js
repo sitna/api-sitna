@@ -28,3 +28,16 @@ TC.inherit(TC.feature.MultiPolygon, TC.Feature);
 TC.feature.MultiPolygon.prototype.STYLETYPE = TC.Consts.geom.POLYGON;
 
 TC.feature.MultiPolygon.prototype.CLASSNAME = 'TC.feature.MultiPolygon';
+
+TC.feature.MultiPolygon.prototype.getCoords = function (options) {
+    options = options || {};
+    const coords = TC.Feature.prototype.getCoords.call(this, options);
+    if (options.pointArray) {
+        return [].concat.apply([], [].concat.apply([], coords));
+    }
+    return coords;
+};
+
+TC.feature.MultiPolygon.prototype.getLength = function (options) {
+    return this.wrap.getLength(options);
+};

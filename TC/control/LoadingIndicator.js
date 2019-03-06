@@ -79,8 +79,8 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         map
             .on(TC.Consts.event.BEFORELAYERADD + ' ' +
                 TC.Consts.event.BEFORELAYERUPDATE + ' ' +
@@ -107,6 +107,8 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
                 self.reset();
             });
         }
+
+        return result;
     };
 
     ctlProto.addWait = function (uid) {

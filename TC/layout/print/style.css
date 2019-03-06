@@ -128,7 +128,7 @@ header h1 {
     border-radius: 0;
 }
 
-.tc-ctl-popup-close.tc-modal-close:after {
+.tc-modal-header .tc-modal-close:after {
     font-family: 'FontAwesome';
     content: '\f00d';
     font-size: 0.7em;

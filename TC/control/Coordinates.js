@@ -4,39 +4,41 @@ if (!TC.control.ProjectionSelector) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/ProjectionSelector');
 }
 
+TC.control.Coordinates = function () {
+    var self = this;
+
+    TC.Control.apply(self, arguments);
+
+    self.crs = '';
+    self.xy = [0, 0, 0];
+    self.latLon = [0, 0, 0];
+    self.x = 0;
+    self.y = 0;
+    self.lat = 0;
+    self.lon = 0;
+    self.units = TC.Consts.units.METERS;
+    self.isGeo = false;
+
+    TC.control.ProjectionSelector.apply(self, arguments);
+
+    $.extend(self._cssClasses, {
+        CRS: self.CLASS + '-crs',
+        GEOCRS: self.CLASS + '-geocrs',
+        X: self.CLASS + '-x',
+        Y: self.CLASS + '-y',
+        LAT: self.CLASS + '-lat',
+        LON: self.CLASS + '-lon',
+        ELEVATION: self.CLASS + '-elevation',
+        THREEDMARKER: self.CLASS + '-threed'
+    });
+
+    self.geoCrs = self.options.geoCrs || TC.Cfg.geoCrs;
+    self.wrap = new TC.wrap.control.Coordinates(self);
+};
+
+TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
+
 (function () {
-    TC.control.Coordinates = function (options) {
-        var self = this;
-        options = options || {};
-
-        self.crs = '';
-        self.xy = [0, 0, 0];
-        self.latLon = [0, 0, 0];
-        self.x = 0;
-        self.y = 0;
-        self.lat = 0;
-        self.lon = 0;
-        self.units = 'm';
-        self.isGeo = false;
-
-        TC.control.ProjectionSelector.apply(self, arguments);
-
-        $.extend(self._cssClasses, {
-            CRS: self.CLASS + '-crs',
-            GEOCRS: self.CLASS + '-geocrs',
-            X: self.CLASS + '-x',
-            Y: self.CLASS + '-y',
-            LAT: self.CLASS + '-lat',
-            LON: self.CLASS + '-lon',
-            ELEVATION: self.CLASS + '-elevation'
-        });
-
-        self.geoCrs = self.options.geoCrs || TC.Cfg.geoCrs;
-        self.wrap = new TC.wrap.control.Coordinates(self);
-    };
-
-    TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
-
     var ctlProto = TC.control.Coordinates.prototype;
 
     ctlProto.CLASS = 'tc-ctl-coords';
@@ -53,17 +55,71 @@ if (!TC.control.ProjectionSelector) {
     }
     else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div>CRS: <span class=\"tc-ctl-coords-crs\">").f(ctx.get(["crs"], false), ctx, "h").w("</span><button class=\"tc-ctl-coords-crs\" title=\"").h("i18n", ctx, {}, { "$key": "changeCRS" }).w("\">").f(ctx.get(["crs"], false), ctx, "h").w("</button></div><div class=\"tc-ctl-coords-xy\">").x(ctx.get(["isGeo"], false), ctx, { "else": body_1, "block": body_3 }, {}).w("</div>").x(ctx.get(["showGeo"], false), ctx, { "block": body_5 }, {}).w("<span class=\"close\"></span>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("x: <span class=\"tc-ctl-coords-x\">").f(ctx.get(["x"], false), ctx, "h").w("</span> y: <span class=\"tc-ctl-coords-y\">").f(ctx.get(["y"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" z: <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-coords-lat\">").f(ctx.get(["lat"], false), ctx, "h").w("</span> ").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-coords-lon\">").f(ctx.get(["lon"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_4 }, {}); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" ").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-alt\">CRS: <span class=\"tc-ctl-coords-geocrs\">").f(ctx.get(["geoCrs"], false), ctx, "h").w("</span></div><div class=\"tc-ctl-coords-xy\">").h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-coords-lat\">").f(ctx.get(["lat"], false), ctx, "h").w("</span> ").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-coords-lon\">").f(ctx.get(["lon"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_6 }, {}).w(" </div>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w(" ").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_6.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-crs-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "changeCRS" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "coords.currentProjection|h" }).w("</p><p class=\"tc-ctl-coords-no-change\">").h("i18n", ctx, {}, { "$key": "coords.noCrs.warning|s" }).w("</p><div class=\"tc-ctl-coords-change\"><p>").h("i18n", ctx, {}, { "$key": "coords.instructions|s" }).w("</p><p class=\"tc-msg-warning tc-hidden\">").h("i18n", ctx, {}, { "$key": "coords.instructions.warning|s" }).w("</p></div><ul class=\"tc-ctl-coords-crs-list tc-crs-list\"></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-crs-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "changeCRS" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "coords.currentProjection|h" }).w("</p><p class=\"tc-ctl-coords-no-change\">").h("i18n", ctx, {}, { "$key": "coords.noCrs.warning|s" }).w("</p><div class=\"tc-ctl-coords-change\"><p>").h("i18n", ctx, {}, { "$key": "coords.instructions|s" }).w("</p><p class=\"tc-msg-warning tc-hidden\">").h("i18n", ctx, {}, { "$key": "coords.instructions.warning|s" }).w("</p></div><ul class=\"tc-ctl-coords-crs-list tc-crs-list\"></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
     ctlProto.register = function (map) {
         var self = this;
-        TC.control.ProjectionSelector.prototype.register.call(self, map);
+        const result = TC.control.ProjectionSelector.prototype.register.call(self, map);
 
         self.crs = self.map.crs;
 
         self.clear();
 
+        map.on(TC.Consts.event.VIEWCHANGE, function (e) {
+
+            if (e.view === TC.Consts.view.PRINTING) {
+                return;
+            }
+
+            if (e.view === TC.Consts.view.THREED) {
+                self.isGeo = true;
+                self.units = TC.Consts.units.DEGREES;
+                self.crs = self.map.view3D.crs;
+
+                self.map.view3D.container.on('mouseout.tc', function (e) {
+                    if (!self.isPointerOver(e)) {
+                        self.clear();
+                    }
+                });
+
+                /* provisional: faltaría el off cuando pasemos a default*/
+                self.map.view3D.on(TC.Consts.event.MOUSEMOVE, function (coords) {
+                    if (coords) {
+                        if (TC.Util.detectMobile()) { // si estamos en móvil añadimos marcador al mapa 3D                            
+
+                            self.clear();
+
+                            self.coordsToClick({ coordinate: [coords.lon, coords.lat, coords.ele], cssClass: self._cssClasses.THREEDMARKER });
+                        }
+
+                        self.latLon = [coords.lat, coords.lon];
+                        if (coords.ele > 0) {
+                            var locale = TC.Util.getMapLocale(self.map);
+                            self.latLon.push(coords.ele.toLocaleString(locale) + " m");
+                        }
+
+                        self.update();
+                    } else {
+                        self.clear();
+                    }
+                });
+
+            } else if (e.view === TC.Consts.view.DEFAULT) {
+                self.isGeo = self.map.wrap.isGeo();
+                self.units = TC.Consts.units.METERS;
+                self.crs = self.map.crs;
+
+                if (self.map.view3D) {
+                    self.map.view3D.container.off('mouseout.tc');
+                }                
+            }
+
+            if (self.map.view3D) {
+                self.geoCrs = self.map.view3D.crs;
+                self.render();
+            }            
+        });
 
         map.loaded(function () {
             // Se espera antes de registrar el control a que se cargue el mapa para evitar que muestre valores extraños
@@ -81,14 +137,20 @@ if (!TC.control.ProjectionSelector) {
             }
 
             map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
-                self.isGeo = map.wrap.isGeo();
-                self.crs = e.crs;
-                self.render();
+                if (!map.on3DView) {
+                    self.isGeo = map.wrap.isGeo();
+                    self.crs = e.crs;
+                    self.render();
+                }                
             });
 
             $.when(self.map.wrap.getViewport()).then(function (viewport) {
                 $(viewport)
                     .on(TC.Consts.event.MOUSEMOVE + '.coords', function (e) {
+                        if (self.map.on3DView) {
+                            return;
+                        }
+
                         self.onMouseMove(e);
                     })
                     .on(TC.Consts.event.MOUSELEAVE + '.coords', function (e) {
@@ -96,6 +158,8 @@ if (!TC.control.ProjectionSelector) {
                     });
             });
         });
+
+        return result;
     };
 
     ctlProto.render = function (callback) {
@@ -304,7 +368,10 @@ if (!TC.control.ProjectionSelector) {
                 clearTimeout(animationTimeout);
 
             self.updateCoordsCtrl(e.coordinate);
-            self.coordsMarkerAdd(e.coordinate, e.cssClass);
+
+            if (!self.map.on3DView) {
+                self.coordsMarkerAdd(e.coordinate, e.cssClass);
+            }
 
             self._$div.removeClass(TC.Consts.classes.HIDDEN);
             self._$div.css("visibility", "visible");

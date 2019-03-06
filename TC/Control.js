@@ -1,7 +1,7 @@
 ﻿TC.control = TC.control || {};
 TC.Control = function () {
     var self = this;
-    
+
     //TC.Object.apply(self, arguments);
     self.$events = $(self);
 
@@ -71,22 +71,19 @@ TC.Control.prototype.renderData = function (data, callback) {
         !window.dust,
         TC.url.templating,
         function () {
-            var processTemplates = function (templates)
-            {
+            var processTemplates = function (templates) {
                 var ret = $.Deferred();
                 var htmDefs = [];
-                for (var key in templates)
-                {
+                for (var key in templates) {
                     var template = templates[key];
-                    if (typeof template === 'string')
-                    {
+                    if (typeof template === 'string') {
                         if (dust.cache[self.CLASS]) {
                             dust.render(self.CLASS, data, function (err, out) {
                                 self._$div.html(out);
                                 if (err) {
                                     TC.error(err);
                                 }
-                            });                            
+                            });
                         } else {
                             var def = $.ajax({
                                 url: template,
@@ -96,32 +93,27 @@ TC.Control.prototype.renderData = function (data, callback) {
                             def.templateKey = key;
 
                             htmDefs.push(def);
-                        }                        
+                        }
                     }
-                    else if ($.isFunction(template))
-                    {
+                    else if ($.isFunction(template)) {
                         template();
                     }
                 }
 
                 //si defs está vacío, resolver inmediatamente
                 if (htmDefs.length == 0) ret.resolve();
-                else
-                {                    
+                else {
                     $.when.apply($, htmDefs).then(function ()   //args tiene los htms
                     {
                         //si sólo había un deferred, args es arguments
-                        if (arguments.length==3 && !$.isArray(arguments[0]))
-                        {
+                        if (arguments.length == 3 && !$.isArray(arguments[0])) {
                             var htm = arguments[0];
                             var key = arguments[2].templateKey;
                             var tpl = dust.compile(htm, key);
                             dust.loadSource(tpl);
                         }
-                        else
-                        {
-                            for (var i = 0; i < arguments.length; i++)
-                            {
+                        else {
+                            for (var i = 0; i < arguments.length; i++) {
                                 var args = arguments[i];
                                 var htm = args[0];
                                 var key = args[2].templateKey;
@@ -130,11 +122,10 @@ TC.Control.prototype.renderData = function (data, callback) {
                             }
                         }
 
-                        
+
                         ret.resolve();
-                    }, 
-                    function (a,b,c)
-                    {
+                    },
+                    function (a, b, c) {
                         console.error("Deferred fallido");
                     });
                 }
@@ -151,21 +142,17 @@ TC.Control.prototype.renderData = function (data, callback) {
             else {
                 var templates = {};
 
-                if(self.template) templates[self.CLASS] = self.template;
-                
+                if (self.template) templates[self.CLASS] = self.template;
+
 
                 tplDef = processTemplates(templates);
             }
 
-            tplDef.then(function ()
-            {
-                if (dust.cache[self.CLASS])
-                {
-                    dust.render(self.CLASS, data, function (err, out)
-                    {
+            tplDef.then(function () {
+                if (dust.cache[self.CLASS]) {
+                    dust.render(self.CLASS, data, function (err, out) {
                         self._$div.html(out);
-                        if (err)
-                        {
+                        if (err) {
                             TC.error(err);
                         }
                     });
@@ -173,8 +160,7 @@ TC.Control.prototype.renderData = function (data, callback) {
 
                 self._firstRender.resolve();
                 self.$events.trigger($.Event(TC.Consts.event.CONTROLRENDER));
-                if ($.isFunction(callback))
-                {
+                if ($.isFunction(callback)) {
                     callback();
                 }
             });
@@ -233,24 +219,22 @@ TC.Control.prototype.getRenderedHtml = function (templateId, data, callback) {
 };
 
 TC.Control.prototype.register = function (map) {
-    var self = this;
+    const self = this;
+    const deferred = $.Deferred();
     self.map = map;
     self.render();
     if (self.options.active) {
         self.activate();
     }
+    deferred.resolve(self);
+    return deferred.promise();
 };
 
 TC.Control.prototype.activate = function () {
     var self = this;
-    if (self.map && self.map.activeControl && self.map.activeControl != self)
-    {
+    if (self.map && self.map.activeControl && self.map.activeControl != self) {
         self.map.previousActiveControl = self.map.activeControl;
-
-        /* provisional hasta que el 3D deje de ser un control */
-        if (!(TC.control.ThreeD && self instanceof TC.control.ThreeD)) {
-            self.map.activeControl.deactivate();
-        }
+        self.map.activeControl.deactivate();
     }
     self.isActive = true;
     if (self.map) {
@@ -260,25 +244,22 @@ TC.Control.prototype.activate = function () {
     }
 };
 
-TC.Control.prototype.deactivate = function (stopChain)
-{
+TC.Control.prototype.deactivate = function (stopChain) {
     if (arguments.length == 0) stopChain = false;
 
     var self = this;
     self.isActive = false;
-    if (self.map)
-    {
+    if (self.map) {
         self.map.activeControl = null;
 
-        if (!stopChain)
-        {
+        if (!stopChain) {
             //determinar cuál es el control predeterminado para reactivarlo
             //salvo que sea yo mismo, claro
             var nextControl = self.map.getDefaultControl();
             if (nextControl == self) nextControl = null;
-            else if(self.map.previousActiveControl == self) // GLS: Validamos antes de activar que el control activo anterior sea distinto al control actual
+            else if (self.map.previousActiveControl == self) // GLS: Validamos antes de activar que el control activo anterior sea distinto al control actual
                 nextControl = null;
-            else if (!nextControl) { 
+            else if (!nextControl) {
                 nextControl = self.map.previousActiveControl;
             }
 
@@ -306,8 +287,7 @@ TC.Control.prototype.disable = function () {
     }
 };
 
-TC.Control.prototype.renderPromise = function ()
-{
+TC.Control.prototype.renderPromise = function () {
     return this._firstRender.promise();
 };
 

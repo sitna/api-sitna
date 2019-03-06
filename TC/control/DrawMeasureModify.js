@@ -9,10 +9,20 @@ TC.control.DrawMeasureModify = function () {
 
     TC.control.Measure.apply(self, arguments);
 
+    const cs = self._classSelector = '.' + self.CLASS;
+    self._selectors = {
+        ELEVATION_CHECKBOX: cs + '-dialog-elev input[type=checkbox]'
+    };
+
     self.persistentDrawControls = true;
 
     self.renderPromise().then(function () {
-        self._$coord = self._$div.find('.tc-ctl-meas-val-coord');
+        self._$1stCoordText = self._$div.find('.tc-ctl-meas-val-coord-1-t');
+        self._$2ndCoordText = self._$div.find('.tc-ctl-meas-val-coord-2-t');
+        self._$1stCoordValue = self._$div.find('.tc-ctl-meas-val-coord-1-v');
+        self._$2ndCoordValue = self._$div.find('.tc-ctl-meas-val-coord-2-v');
+        self._$elevationText = self._$div.find('.tc-ctl-meas-val-coord-ele-t');
+        self._$elevationValue = self._$div.find('.tc-ctl-meas-val-coord-ele-v');
     });
 
     self._$dialogDiv = $(TC.Util.getDiv(self.options.dialogDiv));
@@ -41,7 +51,13 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
     ctlProto.CLASS = 'tc-ctl-dmm';
 
-    TC.Consts.event.DRAWCHART = TC.Consts.event.DRAWCHART || 'drawchart.tc';
+    var _dataKeys = {
+        VALUE: 'tcValue'
+    };
+
+
+    TC.Consts.event.RESULTSPANELCLOSE = TC.Consts.event.RESULTSPANELCLOSE || 'resultspanelclose.tc';
+    TC.Consts.event.FEATURESSELECT = TC.Consts.event.FEATURESSELECT || "featuresselect.tc";
 
     const elevationProfileCache = [];
 
@@ -85,8 +101,8 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/DrawMeasureModifyDialog.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "drawAndMeasure" }).w(" <span class=\"tc-beta\">").h("i18n", ctx, {}, { "$key": "beta" }).w("</span></h2><div class=\"tc-ctl-meas-select\"><form><label class=\"tc-ctl-meas-btn-pt\"><input type=\"radio\" name=\"mode\" value=\"point\" /><span>").h("i18n", ctx, {}, { "$key": "points" }).w("</span></label><label class=\"tc-ctl-meas-btn-len\"><input type=\"radio\" name=\"mode\" value=\"polyline\" /><span>").h("i18n", ctx, {}, { "$key": "lines" }).w("</span></label><label class=\"tc-ctl-meas-btn-area\"><input type=\"radio\" name=\"mode\" value=\"polygon\" /><span>").h("i18n", ctx, {}, { "$key": "polygons" }).w("</span></label></form></div><div class=\"tc-ctl-meas-mode tc-ctl-meas-pt tc-hidden\"><div class=\"tc-ctl-meas-point\"></div><div class=\"tc-ctl-meas-txt\">").h("i18n", ctx, {}, { "$key": "search.list.coordinates" }).w(": <span class=\"tc-ctl-meas-val-coord\"></span></div></div><div class=\"tc-ctl-meas-mode tc-ctl-meas-len tc-hidden\"><div class=\"tc-ctl-meas-line\"></div><div class=\"tc-ctl-meas-txt\">").h("i18n", ctx, {}, { "$key": "2dLength" }).w(": <span class=\"tc-ctl-meas-val-len\"></span><button class=\"tc-ctl-meas-prof-btn tc-active\" title=\"").h("i18n", ctx, {}, { "$key": "deactivateElevationProfile" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.chart.chpe" }).w("</button></div></div><div class=\"tc-ctl-meas-mode tc-ctl-meas-area tc-hidden\"><div class=\"tc-ctl-meas-polygon\"></div><div class=\"tc-ctl-meas-txt\">").h("i18n", ctx, {}, { "$key": "area" }).w(": <span class=\"tc-ctl-meas-val-area\"></span>, ").h("i18n", ctx, {}, { "$key": "2dPerimeter" }).w(": <span class=\"tc-ctl-meas-val-peri\"></span></div></div><div class=\"tc-ctl-dmm-tool\"><div class=\"tc-ctl-dmm-mod\"></div><div class=\"tc-ctl-dmm-cmd\"><button class=\"tc-ctl-dmm-btn-clr\" disabled title=\"").h("i18n", ctx, {}, { "$key": "deleteAll" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteAll" }).w("</button><button class=\"tc-ctl-dmm-btn-dl\" disabled title=\"").h("i18n", ctx, {}, { "$key": "download" }).w("\">").h("i18n", ctx, {}, { "$key": "download" }).w("...</button></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-dmm-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "downloadSketch" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><div class=\"tc-ctl-dmm-dialog-ip\"><h4>").h("i18n", ctx, {}, { "$key": "interpolateCoordsFromElevProfile" }).w("</h4><label><input type=\"radio\" name=\"ip-coords\" value=\"0\" checked /><span>").h("i18n", ctx, {}, { "$key": "no" }).w("</span></label><label><input type=\"radio\" name=\"ip-coords\" value=\"1\"/><span>").h("i18n", ctx, {}, { "$key": "yes" }).w("</span></label><div class=\"tc-ctl-dmm-dialog-ip-m tc-hidden\">").h("i18n", ctx, {}, { "$key": "interpolateEveryXMeters.1" }).w("<input type=\"number\" min=\"1\" step=\"1\" class=\"tc-textbox\" value=\"").f(ctx.get(["interpolationInterval"], false), ctx, "h").w("\" />").h("i18n", ctx, {}, { "$key": "interpolateEveryXMeters.2" }).w("</div></div><div class=\"tc-ctl-dmm-dialog-dl\"><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-kml\" data-format=\"KML\" title=\"KML\">KML</button><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-gml\" data-format=\"GML\" title=\"GML\">GML</button><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-geojson\" data-format=\"GeoJSON\" title=\"GeoJSON\">GeoJSON</button><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-wkt\" data-format=\"WKT\" title=\"WKT\">WKT</button><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-gpx\" data-format=\"GPX\" title=\"GPX\">GPX</button></div></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "drawAndMeasure" }).w("</h2><div class=\"tc-ctl-meas-select\"><form><label class=\"tc-ctl-meas-btn-pt\"><input type=\"radio\" name=\"mode\" value=\"point\" /><span>").h("i18n", ctx, {}, { "$key": "points" }).w("</span></label><label class=\"tc-ctl-meas-btn-len\"><input type=\"radio\" name=\"mode\" value=\"polyline\" /><span>").h("i18n", ctx, {}, { "$key": "lines" }).w("</span></label><label class=\"tc-ctl-meas-btn-area\"><input type=\"radio\" name=\"mode\" value=\"polygon\" /><span>").h("i18n", ctx, {}, { "$key": "polygons" }).w("</span></label></form></div><div class=\"tc-ctl-meas-mode tc-ctl-meas-pt tc-hidden\"><div class=\"tc-ctl-meas-point\"></div><div class=\"tc-ctl-meas-txt\">").h("i18n", ctx, {}, { "$key": "search.list.coordinates" }).w(" <span class=\"tc-ctl-meas-val-coord\"><span class=\"tc-ctl-meas-val-coord-1-t\"></span> <span class=\"tc-ctl-meas-val-coord-1-v\"></span> <span class=\"tc-ctl-meas-val-coord-2-t\"></span> <span class=\"tc-ctl-meas-val-coord-2-v\"></span> <span class=\"tc-ctl-meas-val-coord-ele-t\"></span> <span class=\"tc-ctl-meas-val-coord-ele-v\"></span></span></div></div><div class=\"tc-ctl-meas-mode tc-ctl-meas-len tc-hidden\"><div class=\"tc-ctl-meas-line\"></div><div class=\"tc-ctl-meas-txt\">").h("i18n", ctx, {}, { "$key": "2dLength" }).w(": <span class=\"tc-ctl-meas-val-len\"></span><button class=\"tc-ctl-meas-prof-btn tc-active\" title=\"").h("i18n", ctx, {}, { "$key": "deactivateElevationProfile" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.chart.chpe" }).w("</button></div></div><div class=\"tc-ctl-meas-mode tc-ctl-meas-area tc-hidden\"><div class=\"tc-ctl-meas-polygon\"></div><div class=\"tc-ctl-meas-txt\">").h("i18n", ctx, {}, { "$key": "area" }).w(": <span class=\"tc-ctl-meas-val-area\"></span>, ").h("i18n", ctx, {}, { "$key": "2dPerimeter" }).w(": <span class=\"tc-ctl-meas-val-peri\"></span></div></div><div class=\"tc-ctl-dmm-tool\"><div class=\"tc-ctl-dmm-mod\"></div><div class=\"tc-ctl-dmm-cmd\"><button class=\"tc-ctl-dmm-btn-clr\" disabled title=\"").h("i18n", ctx, {}, { "$key": "deleteAll" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteAll" }).w("</button><button class=\"tc-ctl-dmm-btn-dl\" disabled title=\"").h("i18n", ctx, {}, { "$key": "download" }).w("\">").h("i18n", ctx, {}, { "$key": "download" }).w("...</button></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-dmm-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "downloadSketch" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\">").s(ctx.get(["elevation"], false), ctx, { "block": body_1 }, {}).w("<div class=\"tc-ctl-dmm-dialog-dl\"><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-kml\" data-format=\"KML\" title=\"KML\">KML</button><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-gml\" data-format=\"GML\" title=\"GML\">GML</button><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-geojson\" data-format=\"GeoJSON\" title=\"GeoJSON\">GeoJSON</button><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-wkt\" data-format=\"WKT\" title=\"WKT\">WKT</button><button class=\"tc-button tc-btn-dl tc-ctl-dmm-dl-btn-gpx\" data-format=\"GPX\" title=\"GPX\">GPX</button></div></div></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-dmm-dialog-elev\"><input id=\"").f(ctx.get(["checkboxId"], false), ctx, "h").w("\" type=\"checkbox\" checked /><label for=\"").f(ctx.get(["checkboxId"], false), ctx, "h").w("\" class=\"tc-ctl-ftools-dialog-elev-label\">").h("i18n", ctx, {}, { "$key": "includeElevations" }).w("</label></div>").x(ctx.get(["resolution"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<div class=\"tc-ctl-dmm-dialog-ip\"><h4>").h("i18n", ctx, {}, { "$key": "interpolateCoordsFromElevProfile" }).w("</h4><label><input type=\"radio\" name=\"ip-coords\" value=\"0\" checked /><span>").h("i18n", ctx, {}, { "$key": "no" }).w("</span></label><label><input type=\"radio\" name=\"ip-coords\" value=\"1\"/><span>").h("i18n", ctx, {}, { "$key": "yes" }).w("</span></label><div class=\"tc-ctl-dmm-dialog-ip-m tc-hidden\">").h("i18n", ctx, {}, { "$key": "interpolateEveryXMeters.1" }).w("<input type=\"number\" min=\"1\" step=\"1\" class=\"tc-textbox\" value=\"").f(ctx.get(["resolution"], false), ctx, "h").w("\" />").h("i18n", ctx, {}, { "$key": "interpolateEveryXMeters.2" }).w("</div></div>"); } body_2.__dustBody = !0; return body_0 };
     }
 
     ctlProto.render = function (callback) {
@@ -114,94 +130,91 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
             }
         });
 
-        const renderOptions = {};
-        if (self.options.displayElevation) {
-            renderOptions.interpolationInterval = self.options.displayElevation.resolution;
-        }
+        const renderOptions = {
+            checkboxId: self.getUID(),
+            elevation: self.options.displayElevation
+        };
         self.getRenderedHtml(self.CLASS + '-dialog', renderOptions, function(html) {
             const endExport = function (format) {
+                TC.Util.closeModal();
                 const exportOptions = {
                     fileName: self.getLocaleString('sketch').toLowerCase().replace(' ', '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true),
                     format: format
                 };
-                if (self.options.displayElevation) {
+                const includeElevation = self._$dialogDiv.find(self._selectors.ELEVATION_CHECKBOX).prop('checked');
+                if (includeElevation) {
                     const interpolateCoords = self._$dialogDiv.find('input[type=radio][name=ip-coords]:checked').val() === "1";
-                    const elevOptionsTemplate = {
-                        crs: self.map.crs,
-                        sampleNumber: 0 // No queremos limitar el número de muestras
-                    };
-                    if (interpolateCoords) {
-                        elevOptionsTemplate.resolution = self._$dialogDiv.find('.' + self.CLASS + '-dialog-ip-m input[type=number]').val() || self.options.displayElevation.resolution;
-                    }
-                    else {
-                        elevOptionsTemplate.resolution = 0;
-                    }
-                    if (elevOptionsTemplate.resolution) {
-                        // Validador de número de coordenadas máximo
-                        const totalLength = self.layer.features.reduce(function (acc, feat) {
-                            switch (true) {
-                                case TC.feature.Polyline && feat instanceof TC.feature.Polyline:
-                                case TC.feature.Polygon && feat instanceof TC.feature.Polygon:
-                                    return acc + feat.getLength();
-                                    break;
-                                default:
-                                    return acc;
-                                    break;
-                            }
-                        }, 0);
-                        if (totalLength / elevOptionsTemplate.resolution > self.options.displayElevation.maxCoordLength) {
-                            TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
-                            return;
-                        }
-                    }
-                    TC.Util.closeModal();
                     const li = self.map.getLoadingIndicator();
                     const waitId = li && li.addWait();
-                    $.when.apply(this, self.layer.features.map(function (feature) {
-                        const isPolygon = TC.feature.Polygon && feature instanceof TC.feature.Polygon;
-                        if (isPolygon || (TC.feature.Polyline && feature instanceof TC.feature.Polyline)) {
-                            const deferred = $.Deferred();
-                            const data = feature.getData();
-                            const elevOptions = $.extend({ coordinates: feature.geometry }, elevOptionsTemplate);
-                            self.elevation.getElevation(elevOptions).then(
-                                function (points) {
-                                    // Eliminamos las elevaciones nulas
-                                    // En GPX hay un bug con los valores cero, que hace que se tome el valor de elevación del punto previo, por eso ponemos NaN.
-                                    const elevSubst = exportOptions.format === TC.Consts.format.GPX ? Number.NaN : 0;
-                                    points.forEach(function (point) {
-                                        if (point[2] === null) {
-                                            point[2] = elevSubst;
-                                        }
-                                    });
-                                    const newFeat = isPolygon ? new TC.feature.Polygon([points], feature.options) : new TC.feature.Polyline(points, feature.options);
-                                    newFeat.setData(data);
-                                    newFeat.setStyle(feature.getStyle());
-                                    deferred.resolve(newFeat);
-                                },
-                                function (error) {
-                                    deferred.reject(error);
+
+                    const elevOptions = {
+                        crs: self.map.crs,
+                        features: self.layer.features.map(function (feat) {
+                            // Solo mantenemos las features de las que hay que obtener elevación:
+                            // - Las que no tienen elevación
+                            // - Cuando hay interpolación, todas las líneas y los polígonos
+                            if (feat.getGeometryStride() >= 3) {
+                                if (!interpolateCoords || (TC.feature.Point && feat instanceof TC.feature.Point)) {
+                                    return null;
                                 }
-                                );
-                            return deferred.promise();
-                        }
-                        return feature;
-                    })).then(
-                        function () {
-                            li && li.removeWait(waitId);
-                            self.map.exportFeatures(Array.prototype.slice.call(arguments), exportOptions);
+                            }
+                            return feat.clone();
+                        }),
+                        maxCoordQuantity: self.options.displayElevation.maxCoordQuantity,
+                        sampleNumber: 0 // No queremos determinar el número de muestras
+                    };
+                    if (interpolateCoords) {
+                        elevOptions.resolution = parseFloat(self._$dialogDiv.find('.' + self.CLASS + '-dialog-ip-m input[type=number]').val()) || self.options.displayElevation.resolution;
+                    }
+                    self.elevation.setGeometry(elevOptions)
+                        .then(
+                        function (features) {
+                            // Volvemos a añadir las features de las que no hemos pedido elevación
+                            features.forEach(function (feat, idx) {
+                                if (!feat) {
+                                    features[idx] = self.layer.features[idx];
+                                }
+                            });
+                            self.map.exportFeatures(features, exportOptions);
                         },
-                        function (error) {
-                            li && li.removeWait(waitId);
+                        function (msg, type) {
+                            if (type === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                                TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
+                                return;
+                            }
                             TC.error(self.getLocaleString('elevation.error'));
+                        }
+                        )
+                        .always(function () {
+                            li && li.removeWait(waitId);
                         });
                 }
                 else {
-                    TC.Util.closeModal();
-                    self.map.exportFeatures(self.layer.features, exportOptions);
+                    var features;
+                    if (self.options.displayElevation && !includeElevation) { // Hay que quitar elevaciones
+                        features = self.layer.features
+                            .map(function (feat) {
+                                var f = feat.clone();
+                                if (f.getGeometryStride() > 2) {
+                                    f.getCoordsArray().forEach(function (coord) {
+                                        coord.length = 2;
+                                    });
+                                    f.setCoords(f.geometry);
+                                }
+                                return f;
+                            });
+                    }
+                    else {
+                        features = self.layer.features;
+                    }
+                    self.map.exportFeatures(features, exportOptions);
                 }
             };
             self._$dialogDiv
                 .html(html)
+                .on('change', self._selectors.ELEVATION_CHECKBOX, function (e) {
+                    self.showSketchDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
+                })
                 .on('change', 'input[type=radio][name=ip-coords]', function (e) {
                     self._$dialogDiv.find('.' + self.CLASS + '-dialog-ip-m').toggleClass(TC.Consts.classes.HIDDEN, e.target.value === '0');
                 })
@@ -228,11 +241,14 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
     ctlProto.register = function (map) {
         const self = this;
-        TC.control.Measure.prototype.register.call(self, map);
+        const result = TC.control.Measure.prototype.register.call(self, map);
         const drawPointsId = self.getUID();
         const modifyId = self.getUID();
 
         $.when(self.layerPromise, self.renderPromise()).then(function (layer) {
+
+            layer.title = self.getLocaleString('sketch');
+
             self._modifyPromise = map.addControl('modify', {
                 id: modifyId,
                 div: self._$div.find('.' + self.CLASS + '-mod'),
@@ -244,6 +260,11 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 self.modify = modify;
                 modify
                     .on(TC.Consts.event.FEATURESSELECT, function (e) {
+                        if (self.resultsPanelChart && !e.features.some(function (feature) {
+                            return self.resultsPanelChart.currentFeature === feature;
+                        })) {
+                            self.resultsPanelChart.setCurrentFeature(null);
+                        }
                         const feature = e.features[e.features.length - 1];
                         if (feature) {
                             self.showMeasures(self.getFeatureMeasureData(feature));
@@ -262,6 +283,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                         .setStrokeWidthWatch(style.strokeWidth);
                                     const profile = getElevationProfileFromCache(feature);
                                     if (profile) {
+                                        self.resultsPanelChart.setCurrentFeature(feature);
                                         self.renderElevationChart(profile.data);
                                     }
                                     break;
@@ -286,7 +308,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                         }
                         self.resetElevationProfile();
                         if (self.resultsPanelChart) {
-                            self.resultsPanelChart.hide();
+                            self.resultsPanelChart.close();
                         }
                     })
                     .on(TC.Consts.event.FEATUREMODIFY, function (e) {
@@ -299,11 +321,14 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                             };
                             setMeasures(e.feature);
 
-                            if (self.options.displayElevation) {
+                            // Si es un punto metemos la elevación en la geometría (porque la mostramos en las medidas)
+                            if (self.options.displayElevation && TC.feature.Point && e.feature instanceof TC.feature.Point) {
                                 self.elevation.setGeometry({
-                                    feature: e.feature,
+                                    features: [e.feature],
                                     crs: self.map.crs
-                                }).then(setMeasures);
+                                }).then(function (features) {
+                                    setMeasures(features[0]);
+                                });
                             }
 
                             const popups = self.map.getControlsByClass('TC.control.Popup');
@@ -321,31 +346,41 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                             self.resetDrawWatches();
                             self.resetElevationProfile();
                             if (self.resultsPanelChart) {
-                                self.resultsPanelChart.hide();
+                                self.resultsPanelChart.setCurrentFeature(null);
+                                self.resultsPanelChart.close();
                             }
                         }
                         else if (e.control === self.drawLines) {
                             self.resetElevationProfile();
                             if (self.resultsPanelChart) {
-                                self.resultsPanelChart.hide();
+                                self.resultsPanelChart.close();
                             }
                         }
                     })
                     .on(TC.Consts.event.FEATURECLICK, function (e) {
-                        if (TC.feature.Polyline && e.feature instanceof TC.feature.Polyline && self.layer.features.indexOf(e.feature) >= 0) {
-                            const profile = getElevationProfileFromCache(e.feature);
-                            if (profile) {
-                                self.renderElevationChart(profile.data);
-                            }
-                            else {
-                                self.displayElevationProfile(e.feature.geometry);
-                            }
-                            if (self.elevationProfileActive) {
-                                map.getControlsByClass('TC.control.Popup').forEach(function (ctl) {
-                                    if (ctl.currentFeature === e.feature) {
-                                        ctl.hide();
+                        // No queremos que se muestre el perfil de la feature ya dibujada si estamos dibujando o seleccionando otra
+                        if (!(map.activeControl instanceof TC.control.Draw || map.activeControl instanceof TC.control.Modify)) {
+                            if (TC.feature.Polyline && e.feature instanceof TC.feature.Polyline && self.layer.features.indexOf(e.feature) >= 0) {
+                                if (self.elevationProfileActive) {
+                                    if (self.resultsPanelChart) {
+                                        self.resultsPanelChart.setCurrentFeature(e.feature);
                                     }
-                                });
+                                    map.getControlsByClass('TC.control.Popup').forEach(function (ctl) {
+                                        if (ctl.currentFeature === e.feature) {
+                                            ctl.hide();
+                                        }
+                                    });
+                                }
+                                const profile = getElevationProfileFromCache(e.feature);
+                                if (self.resultsPanelChart && self.resultsPanelChart.isMinimized()) {
+                                    self.resultsPanelChart.maximize();
+                                }
+                                if (profile) {
+                                    self.renderElevationChart(profile.data);
+                                }
+                                else {
+                                    self.displayElevationProfile(e.feature.geometry);
+                                }
                             }
                         }
                     });
@@ -355,11 +390,19 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 drawLines.$events
                     .on(TC.Consts.event.DRAWSTART, function () {
                         //self.resetElevationProfile();
+                        if (self.resultsPanelChart && self.resultsPanelChart.currentFeature) {
+                            self.resultsPanelChart.setCurrentFeature(null);
+                        }
                         self.resetValues();
                     })
                     .on(TC.Consts.event.DRAWUNDO + ' ' + TC.Consts.event.DRAWREDO, function () {
                         const drawLines = this;
                         self.displayElevationProfile(drawLines.history.slice(0, drawLines.historyIndex));
+                    })
+                    .on(TC.Consts.event.DRAWEND, function (e) {
+                        if (self.resultsPanelChart) {
+                            self.resultsPanelChart.currentFeature = e.feature;
+                        }
                     })
                     .on(TC.Consts.event.POINT, function (e) {
                         const drawLines = this;
@@ -380,14 +423,14 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                     .on(TC.Consts.event.DRAWSTART, function () {
                         self.resetValues();
                     })
-                    .on(TC.Consts.event.DRAWEND, function (e) {
-                        if (self.options.displayElevation) {
-                            self.elevation.setGeometry({
-                                feature: e.feature,
-                                crs: self.map.crs
-                            });
-                        }
-                    })
+                    //.on(TC.Consts.event.DRAWEND, function (e) {
+                    //    if (self.options.displayElevation) {
+                    //        self.elevation.setGeometry({
+                    //            features: [e.feature],
+                    //            crs: self.map.crs
+                    //        });
+                    //    }
+                    //})
                     .on(TC.Consts.event.STYLECHANGE, function (e) {
                         self.onStyleChange(e);
                     });
@@ -419,9 +462,11 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                         updateChanges(e.feature);
                         if (self.options.displayElevation) {
                             self.elevation.setGeometry({
-                                feature: e.feature,
+                                features: [e.feature],
                                 crs: self.map.crs
-                            }).then(updateChanges)
+                            }).then(function (features) {
+                                updateChanges(features[0]);
+                            })
                         }
                     })
                     .on(TC.Consts.event.DRAWCANCEL, function (e) {
@@ -459,8 +504,15 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                             removeElevationProfileFromCache(e.feature);
                         }
                     }
+                })
+                .on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
+                    if (e.control.setCurrentFeature) {
+                        e.control.setCurrentFeature(null);
+                    }                    
                 });
         });
+
+        return result;
     };
 
     ctlProto.displayMode = function (mode) {
@@ -487,7 +539,15 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         const data = {};
         switch (true) {
             case TC.feature.Point && feature instanceof TC.feature.Point:
-                data[self.getLocaleString('search.list.coordinates')] = self._$coord.html();
+                const firstCoordText = self._$1stCoordText.html();
+                const secondCoordText = self._$2ndCoordText.html();
+                const elevationText = self._$elevationText.html();
+                data.CRS = self.map.crs;
+                data[firstCoordText.substr(0, firstCoordText.indexOf(':'))] = self._$1stCoordValue.data(_dataKeys.VALUE);
+                data[secondCoordText.substr(0, secondCoordText.indexOf(':'))] = self._$2ndCoordValue.data(_dataKeys.VALUE);
+                if (elevationText) {
+                    data[self.getLocaleString('ele')] = self._$elevationValue.data(_dataKeys.VALUE);
+                }
                 feature.setData(data);
                 break;
             case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
@@ -545,15 +605,37 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         var units = options.units;
         const locale = self.map.options.locale || TC.Cfg.locale
         if (options.coords) {
-            var html = options.units === 'm' ?
-                'x: ' + TC.Util.formatNumber(options.coords[0].toFixed(TC.Consts.METER_PRECISION), locale) +
-                ', y: ' + TC.Util.formatNumber(options.coords[1].toFixed(TC.Consts.METER_PRECISION), locale) :
-                TC.Util.formatNumber(options.coords[1].toFixed(TC.Consts.DEGREE_PRECISION), locale) + ', ' +
-                TC.Util.formatNumber(options.coords[0].toFixed(TC.Consts.DEGREE_PRECISION), locale);
-            if (options.coords.length > 2) {
-                html += ', ' + self.getLocaleString('ele') + ': ' + TC.Util.formatNumber(options.coords[2].toFixed(TC.Consts.METER_PRECISION));
+            var precision;
+            var coord1, coord2;
+            if (options.units === 'm') {
+                precision = TC.Consts.METER_PRECISION;
+                coord1 = options.coords[0];
+                coord2 = options.coords[1];
+                self._$1stCoordText.html('x: ');
+                self._$2ndCoordText.html('y: ');
             }
-            self._$coord.html(html);
+            else {
+                precision = TC.Consts.DEGREE_PRECISION;
+                coord1 = options.coords[1];
+                coord2 = options.coords[0];
+                self._$1stCoordText.html('lat: ');
+                self._$2ndCoordText.html('lon: ');
+            }
+            const factor = Math.pow(10, precision);
+            const round = function (val) {
+                return Math.round(val * factor) / factor;
+            }
+            self._$1stCoordValue.html(TC.Util.formatNumber(coord1.toFixed(precision), locale)).data(_dataKeys.VALUE, round(coord1));
+            self._$2ndCoordValue.html(TC.Util.formatNumber(coord2.toFixed(precision), locale)).data(_dataKeys.VALUE, round(coord2));
+            if (options.coords.length > 2) {
+                const elevation = Math.round(options.coords[2]);
+                self._$elevationText.html(self.getLocaleString('ele').toLowerCase() + ': ');
+                self._$elevationValue.html(TC.Util.formatNumber(elevation.toFixed(TC.Consts.METER_PRECISION), locale) + ' m').data(_dataKeys.VALUE, elevation);
+            }
+            else {
+                self._$elevationText.html('');
+                self._$elevationValue.html('').data(_dataKeys.VALUE, null);
+            }
         }
         return self;
     };
@@ -562,8 +644,13 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         const self = this;
         TC.control.Measure.prototype.resetValues.call(self);
 
-        if (self._$coord) {
-            self._$coord.text(self.NOMEASURE);
+        if (self._$1stCoordText) {
+            self._$1stCoordText.html(self.NOMEASURE);
+            self._$2ndCoordText.html('');
+            self._$1stCoordValue.html('').data(_dataKeys.VALUE, null);
+            self._$2ndCoordValue.html('').data(_dataKeys.VALUE, null);
+            self._$elevationText.html('');
+            self._$elevationValue.html('').data(_dataKeys.VALUE, null);
         }
         return self;
     };
@@ -587,7 +674,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         if (self.options.displayElevation) {
             self.resetElevationProfile();
             if (self.resultsPanelChart) {
-                self.resultsPanelChart.hide();
+                self.resultsPanelChart.close();
             }
         }
         self._$clearBtn.prop('disabled', true);
@@ -599,11 +686,25 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         const self = this;
 
         const $dialog = self._$dialogDiv.find('.' + self.CLASS + '-dialog');
+        const hasPoints = self.layer.features.some(function (feature) {
+            return (TC.feature.Point && feature instanceof TC.feature.Point) ||
+                (TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint);
+        });
+        const hasLines = self.layer.features.some(function (feature) {
+            return (TC.feature.Polyline && feature instanceof TC.feature.Polyline) ||
+                (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline);
+        });
+        const hasPolygons = self.layer.features.some(function (feature) {
+            return (TC.feature.Polygon && feature instanceof TC.feature.Polygon) ||
+                (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon);
+        });
 
-        // Si no hay líneas o polígonos, no es necesario preguntar si descargarmos las coordenadas del perfil
-        $dialog.find('.' + self.CLASS + '-dialog-ip').toggleClass(TC.Consts.classes.HIDDEN, !self.layer.features.some(function (feature) {
-            return (TC.feature.Polyline && feature instanceof TC.feature.Polyline) || (TC.feature.Polygon && feature instanceof TC.feature.Polygon);
-        }));
+        // Si no hay líneas o polígonos, no es necesario preguntar si queremos interpolar
+        $dialog.find('.' + self.CLASS + '-dialog-ip').toggleClass(TC.Consts.classes.HIDDEN,
+            !self._$dialogDiv.find(self._selectors.ELEVATION_CHECKBOX).prop('checked') || (!hasLines && !hasPolygons));
+
+        // Si no hay líneas o puntos, no es necesario mostrar el botón de GPX
+        $dialog.find('button[data-format=GPX]').toggleClass(TC.Consts.classes.HIDDEN, !hasLines && !hasPoints);
 
         TC.Util.showModal($dialog, options);
         return self;
@@ -713,26 +814,8 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                     self.renderElevationChart();
                 }
                 else {
-                    const chartPanel = self.map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
-                        return ctl.options.content === 'chart';
-                    })[0];
-                    const $panelDiv = chartPanel ? chartPanel._$div : $('<div>').appendTo(self.map._$div);
-                    self.map.addControl('resultsPanel', {
-                        id: self.getUID(),
-                        div: $panelDiv,
-                        content: "chart",
-                        titles: {
-                            main: self.getLocaleString("geo.trk.chart.chpe"),
-                            max: self.getLocaleString("geo.trk.chart.chpe")
-                        },
-                        chart: {
-                            ctx: self,
-                            onmouseout: ctlProto.removeElevationTooltip,
-                            tooltip: ctlProto.getElevationTooltip
-                        }
-                    }).then(function (resultsPanelChart) {
-                        self.resultsPanelChart = resultsPanelChart;
-                        self.resultsPanelChart.render(function () {
+                    self.createChartPanel().then(function (resultsPanelChart) {
+                        self.resultsPanelChart.renderPromise().then(function () {
                             self.renderElevationChart();
                         });
                     });
@@ -743,6 +826,45 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 li && li.removeWait(waitId);
             });
 
+    };
+
+    ctlProto.createChartPanel = function () {
+        const self = this;
+        const deferred = $.Deferred();
+        self.map.addControl('resultsPanel', {
+            id: self.getUID(),
+            div: $('<div>').appendTo(self.map._$div),
+            content: "chart",
+            titles: {
+                main: self.getLocaleString("geo.trk.chart.chpe"),
+                max: self.getLocaleString("geo.trk.chart.chpe")
+            },
+            chart: {
+                ctx: self,
+                onmouseout: ctlProto.removeElevationTooltip,
+                tooltip: ctlProto.getElevationTooltip
+            }
+        }).then(function (resultsPanelChart) {
+            resultsPanelChart.caller = self;
+            self.resultsPanelChart = resultsPanelChart;
+            self._decorateChartPanel();
+            deferred.resolve(resultsPanelChart);
+        });
+        return deferred.promise();
+    };
+
+    ctlProto._decorateChartPanel = function () {
+        const self = this;
+        self.resultsPanelChart.setCurrentFeature = function (feature) {
+            const that = this;
+            if (that.currentFeature) {
+                that.currentFeature.toggleSelectedStyle(false);
+            }
+            that.currentFeature = feature;
+            if (feature) {
+                feature.toggleSelectedStyle(true);
+            }
+        };
     };
 
     ctlProto.renderElevationChart = function (profileData) {
@@ -809,13 +931,13 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
             .attr('title', self.getLocaleString('activateElevationProfile'));
         self.resetElevationProfile();
         if (self.resultsPanelChart) {
-            self.resultsPanelChart.hide();
+            self.resultsPanelChart.close();
         }
     };
 
     ctlProto.resetElevationProfile = function () {
         const self = this;
-        if (self.options.displayElevation) {
+        if (self.options.displayElevation && self.resultsPanelChart) {
             self.elevationProfileData = {
                 x: [0],
                 ele: [0],
@@ -823,9 +945,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 upHill: 0,
                 downHill: 0
             };
-            if (self.resultsPanelChart) {
-                self.renderElevationChart();
-            }
+            self.resultsPanelChart.openChart(self.elevationProfileData);
         }
     };
 

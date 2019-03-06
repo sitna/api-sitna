@@ -56,7 +56,7 @@
 
     .tc-ctl-sv-view.tc-hidden {
         position: fixed; /* corregimos el scroll */
-        width: 1px; /* No puede ser cero, si no, peta StreetView */
+        width: 1px; /* no puede ser cero porque StreetView falla en la carga */
         height: 0;
         opacity: 0;
         visibility: visible;

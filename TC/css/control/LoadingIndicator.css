@@ -8,6 +8,11 @@
     z-index: 10007;
 }
 
+.tc-map.tc-ctl-printMap-printing .tc-ctl-load {
+    position: fixed;
+    z-index: 100110;
+}
+
 .tc-ctl-load-bar {
     position: relative;
     left: -100%;

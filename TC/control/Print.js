@@ -44,7 +44,7 @@ TC.control.Print = function (options)
         };
         dust.render(self.CLASS, null, function (err, out)
         {
-            $target.append(out);
+            $target.prepend(out);
             $target.find('.' + self.CLASS + '-btn').on('click', renderPage);
         });
     }

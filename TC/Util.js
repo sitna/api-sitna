@@ -12,22 +12,22 @@
     String.prototype.soundex = function () {
         var a = this.toLowerCase().split('')
         f = a.shift(),
-        r = '',
-        codes = {
-            a: '', e: '', i: '', o: '', u: '',
-            b: 1, f: 1, p: 1, v: 1,
-            c: 2, g: 2, j: 2, k: 2, q: 2, s: 2, x: 2, z: 2,
-            d: 3, t: 3,
-            l: 4,
-            m: 5, n: 5,
-            r: 6
-        };
+            r = '',
+            codes = {
+                a: '', e: '', i: '', o: '', u: '',
+                b: 1, f: 1, p: 1, v: 1,
+                c: 2, g: 2, j: 2, k: 2, q: 2, s: 2, x: 2, z: 2,
+                d: 3, t: 3,
+                l: 4,
+                m: 5, n: 5,
+                r: 6
+            };
 
         r = f +
             a
-            .map(function (v, i, a) { return codes[v] })
-            .filter(function (v, i, a) { return ((i === 0) ? v !== codes[f] : v !== a[i - 1]); })
-            .join('');
+                .map(function (v, i, a) { return codes[v] })
+                .filter(function (v, i, a) { return ((i === 0) ? v !== codes[f] : v !== a[i - 1]); })
+                .join('');
 
         return (r + '000').slice(0, 4).toUpperCase();
     }
@@ -734,7 +734,7 @@
             var parser = new UAParser();
             var browser = parser.getBrowser();
             return { name: browser.name, version: browser.major };
-        },        
+        },
         getElementByNodeName: function (parentNode, nodeName) {
             var colonIndex = nodeName.indexOf(":");
             var tag = nodeName.substr(colonIndex + 1);
@@ -807,7 +807,7 @@
             $modal.fadeIn(250, function () {
                 $modal.on('click', ".tc-modal-close", function (e) {
                     e.stopPropagation();
-                    return TC.Util.closeModal(options.closeCallback, $(e.target));
+                    return TC.Util.closeModal(options.closeCallback, e.target);
                 });
                 if ($.isFunction(options.openCallback)) {
                     options.openCallback();
@@ -815,10 +815,10 @@
             });
         },
 
-        closeModal: function (callback, $target) {
+        closeModal: function (callback, target) {
             var $modal;
-            if ($target) {
-                $modal = $target.closest('.tc-modal');
+            if (target) {
+                $modal = $(target).closest('.tc-modal');
             } else {
                 $modal = $(".tc-modal");
             }
@@ -869,12 +869,16 @@
             return result;
         },
 
+        getValidFilename: function (filename) {
+            return (filename || '').replace(/[/\\?%*:|"<>]/g, '-');
+        },
+
         downloadBlob: function (filename, blob) {
             var link = document.createElement("a");
             if (link.download !== undefined) {
                 var url = URL.createObjectURL(blob);
                 link.setAttribute("href", url);
-                link.setAttribute("download", filename);
+                link.setAttribute("download", TC.Util.getValidFilename(filename));
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
@@ -884,6 +888,7 @@
 
         downloadFile: function (filename, type, data) {
             var blob = new Blob([data], { type: type });
+            filename = TC.Util.getValidFilename(filename);
             if (navigator.msSaveBlob) { // IE 10+
                 navigator.msSaveBlob(blob, filename);
             } else {
@@ -900,6 +905,7 @@
             }
             var blob = new Blob([new Uint8Array(array)], { type: type });
 
+            filename = TC.Util.getValidFilename(filename);
             if (navigator.msSaveBlob) { // IE 10+
                 navigator.msSaveBlob(blob, filename);
             } else {
@@ -911,17 +917,14 @@
          * Acorta una URL utilizando el servicio de Bit.ly. No funciona para URLs locales.
          */
         shortenUrl: function (url) {
-            var shortUrl;
-
-            $.ajax({
+            return $.ajax({
                 url: "https://api-ssl.bitly.com/v3/shorten",
                 data: { access_token: "6c466047309f44bd8173d83e81491648b243ee3d", longUrl: url },
-                async: false
             }).done(function (response) {
-                shortUrl = response.data.url;
+                return response;
+            }).fail(function (error) {
+                return error;
             });
-
-            return shortUrl;
         },
 
         /**
@@ -1138,7 +1141,7 @@
             }
         },
 
-        addToCanvas: function (canvas, img, position) {
+        addToCanvas: function (canvas, img, position, size) {
             var newCanvas = TC.Util.cloneCanvas(canvas);
             var deferred = $.Deferred();
             var context = newCanvas.getContext('2d');
@@ -1147,7 +1150,11 @@
             img.crossOrigin = 'anonymous';
             newImage.src = img;
             newImage.onload = function () {
-                context.drawImage(newImage, position.x || 0, position.y || 0);
+                if (size) {
+                    context.drawImage(newImage, position.x || 0, position.y || 0, size.width, size.height);
+                } else {
+                    context.drawImage(newImage, position.x || 0, position.y || 0);
+                }
                 deferred.resolve(newCanvas);
             }
 
@@ -1200,7 +1207,7 @@
         downloadFileForm: function (url, data) {
 
             var download = function (url, data) {
-                var form = $("<form/>", { "class": "tc-ctl-download-form", "method": "post", "enctype": "text/plain", "action": (TC.Util.detectIE() ? TC.proxify(url) : url) });
+                var form = $("<form/>", { "class": "tc-ctl-download-form", "method": "post", "enctype": "text/plain", "action": (TC.Util.detectIE() !== false && TC.Util.detectIE() <= 11 ? TC.proxify(url) : url) });
                 var input = $("<input/>", { "class": "tc-ctl-download-query", "name": data.substring(0, data.indexOf("=")) });
                 form.append(input);
                 var iframe = $("iframe").filter(function (i, item) { return $(item).data("url-download") === url });
@@ -1421,7 +1428,7 @@
         },
 
         getSoundexDifference: function (a, b) {
-            var res = 0 
+            var res = 0
 
             for (var i = 0; i < a.length; i++) {
                 if (a.charAt(i) == b.charAt(i)) {

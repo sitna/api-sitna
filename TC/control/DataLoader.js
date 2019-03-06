@@ -38,7 +38,7 @@ TC.inherit(TC.control.DataLoader, TC.control.TabContainer);
     ctlProto.register = function (map) {
         const self = this;
         self.title = self.getLocaleString('addMaps');
-        TC.control.TabContainer.prototype.register.call(self, map);
+        return TC.control.TabContainer.prototype.register.call(self, map);
     };
 
 })();

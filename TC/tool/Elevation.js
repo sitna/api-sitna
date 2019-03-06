@@ -47,8 +47,8 @@ TC.tool.Elevation = function (options) {
             options.sampleNumber = self.options.sampleNumber;
         }
         const deferred = $.Deferred();
-        const onError = function (error) {
-            deferred.reject(error);
+        const onError = function (msg, type) {
+            deferred.reject(msg, type);
         };
 
         TC.loadJS(
@@ -116,7 +116,6 @@ TC.tool.Elevation = function (options) {
                                     };
                                 };
 
-                                //const firstResponse = responses[0];
                                 for (var i = 0; i < numPoints; i++) {
                                     var fn = reduceFnFactory(i);
                                     elevation[i] = responses.reduce(fn, [null, null, null]);
@@ -136,72 +135,142 @@ TC.tool.Elevation = function (options) {
         const self = this;
         options = options || {};
         const deferred = $.Deferred();
-        const feature = options.feature;
-        if (feature) {
-            var getFeatureCoords;
-            var setFeatureCoords;
-            switch (true) {
-                case TC.feature && TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-                    getFeatureCoords = function (feat) {
-                        const arr = [];
-                        return arr.concat.apply(arr, feat.geometry);
+        const features = options.features || [];
+
+        if (features.length) {
+
+            if (options.maxCoordQuantity) {
+                if (options.resolution) {
+                    const getDistance = function (p1, p2) {
+                        const dx = p2[0] - p1[0];
+                        const dy = p2[1] - p1[1];
+                        return Math.sqrt(dx * dx + dy * dy);
                     };
-                    setFeatureCoords = function (feat, coords) {
-                        var idx = 0;
-                        feat.geometry.forEach(function (ring) {
-                            ring.forEach(function (coord, i) {
-                                ring[i] = coords[idx++];
-                            });
-                        });
-                        feat.setCoords(feat.geometry);
-                    };
-                    break;
-                case TC.feature && TC.feature.Polyline && feature instanceof TC.feature.Polyline:
-                    getFeatureCoords = function (feat) {
-                        return feat.geometry;
-                    };
-                    setFeatureCoords = function (feat, coords) {
-                        feat.geometry = coords;
-                        feat.setCoords(feat.geometry);
-                    };
-                    break;
-                default:
-                    getFeatureCoords = function (feat) {
-                        return feat.geometry;
-                    };
-                    setFeatureCoords = function (feat, coords) {
-                        feat.setCoords(coords[0]);
-                    };
-                    break;
-            }
-            self.getElevation({
-                crs: options.crs,
-                coordinates: getFeatureCoords(feature),
-                resolution: 0,
-                sampleNumber: 0
-            }).then(
-                function (coords) {
-                    if (coords.length) {
-                        if (coords.some(function (c) { // Hay datos de elevación
-                            return c[2] !== null;
-                        })) {
-                            setFeatureCoords(feature, coords);
+                    // Validador de número de coordenadas máximo
+                    const numPoints = features.reduce(function (acc, feat) {
+                        if (feat) {
+                            acc = acc + feat.getCoords({ pointArray: true }).length;
+                            switch (true) {
+                                case TC.feature.Polyline && feat instanceof TC.feature.Polyline:
+                                case TC.feature.Polygon && feat instanceof TC.feature.Polygon:
+                                case TC.feature.MultiPolyline && feat instanceof TC.feature.MultiPolyline:
+                                case TC.feature.MultiPolygon && feat instanceof TC.feature.MultiPolygon:
+                                    acc = acc + Math.floor(feat.getLength() / options.resolution);
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
+                        return acc;
+                    }, 0);
+                    if (numPoints > options.maxCoordQuantity) {
+                        deferred.reject('Maximum count of coordinates exceeded', TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED);
+                        return deferred;
                     }
-                    deferred.resolve(feature);
+                }
+            }
+
+            const conditionDeferredToPromises = function (deferred, promises) {
+                $.when.apply($, promises).then(
+                    function () {
+                        deferred.resolve(Array.prototype.slice.call(arguments));
+                    },
+                    function (error) {
+                        deferred.reject(error);
+                    }
+                );
+            };
+            const resolution = options.resolution || 0;
+            const getElevOptions = function (coords) {
+                return {
+                    crs: options.crs,
+                    coordinates: coords,
+                    resolution: resolution,
+                    sampleNumber: 0
+                };
+            };
+            const getRingElevPromises = function (ring) {
+                return self.getElevation(getElevOptions(ring));
+            }
+            const coordPromises = features.map(function (feature) {
+                const coordDef = $.Deferred();
+                switch (true) {
+                    case !feature:
+                        coordDef.resolve(null);
+                        break;
+                    case TC.feature && TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
+                        const polPromises = feature
+                            .getCoords()
+                            .map(function (polygon) {
+                                const polDef = $.Deferred();
+                                const ringPromises = polygon.map(getRingElevPromises);
+                                conditionDeferredToPromises(polDef, ringPromises);
+                                return polDef.promise();
+                            });
+                        conditionDeferredToPromises(coordDef, polPromises);
+                        break;
+                    case TC.feature && TC.feature.Polygon && feature instanceof TC.feature.Polygon:
+                    case TC.feature && TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline:
+                        const ringPromises = feature
+                            .getCoords()
+                            .map(getRingElevPromises);
+                        conditionDeferredToPromises(coordDef, ringPromises);
+                        break;
+                    case TC.feature && TC.feature.Polyline && feature instanceof TC.feature.Polyline:
+                        self.getElevation(getElevOptions(feature.getCoords())).then(
+                            function (coords) {
+                                coordDef.resolve(coords);
+                            },
+                            function (error) {
+                                coordDef.reject(error);
+                            }
+                        );
+                        break;
+                    case TC.feature && TC.feature.Point && feature instanceof TC.feature.Point:
+                        self.getElevation(getElevOptions(feature.getCoords())).then(
+                            function (coords) {
+                                coordDef.resolve(coords[0]);
+                            },
+                            function (error) {
+                                coordDef.reject(error);
+                            }
+                        );
+                        break;
+                    default:
+                        coordDef.reject("Geometry not supported");
+                        break;
+                }
+                return coordDef.promise();
+            });
+
+            $.when.apply($, coordPromises).then(
+                function () {
+                    Array.prototype.slice.call(arguments).forEach(function (coords, idx) {
+                        const feat = features[idx];
+                        if (feat) {
+                            console.log("Estableciendo elevaciones a geometría de tipo " + feat.CLASSNAME);
+                            features[idx].setCoords(coords);
+                        }
+                    });
+                    deferred.resolve(features);
                 },
                 function (error) {
                     deferred.reject(error);
                 }
-                );
+            );
         }
         else {
-            deferred.resolve(null);
+            deferred.resolve([]);
         }
         return deferred.promise();
     };
 
 })();
+
+TC.tool.Elevation.errors = {
+    MAX_COORD_QUANTITY_EXCEEDED: 'max_coord_quantity_exceeded',
+    UNDEFINED: 'undefined'
+};
 
 TC.tool.Elevation.getElevationGain = function (options) {
     options = options || {};

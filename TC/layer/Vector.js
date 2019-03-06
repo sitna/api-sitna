@@ -193,7 +193,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                     var coords = coordsArray[i];
                     var feature;
                     const isNative = TC.wrap.Feature.prototype.isNative(coords);
-                    if (coords instanceof FeatureConstructor) {
+                    if (coords instanceof FeatureConstructor || "TC.feature." + constructorName === coords.CLASSNAME) {
                         feature = coords;
                     }
                     else {
@@ -376,22 +376,22 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         var layer = this;
         var result;
         if (TC.feature) {
-            if (TC.feature.Point && feature instanceof TC.feature.Point) {
+            if (TC.feature.Point && feature instanceof TC.feature.Point || feature.CLASSNAME === "TC.feature.Point") {
                 result = layer.addPoint(feature);
             }
-            else if (TC.feature.Polyline && feature instanceof TC.feature.Polyline) {
+            else if (TC.feature.Polyline && feature instanceof TC.feature.Polyline || feature.CLASSNAME === "TC.feature.Polyline") {
                 result = layer.addPolyline(feature);
             }
-            else if (TC.feature.Polygon && feature instanceof TC.feature.Polygon) {
+            else if (TC.feature.Polygon && feature instanceof TC.feature.Polygon || feature.CLASSNAME === "TC.feature.Polygon") {
                 result = layer.addPolygon(feature);
             }
-            else if (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon) {
+            else if (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon || feature.CLASSNAME === "TC.feature.MultiPolygon") {
                 result = layer.addMultiPolygon(feature);
             }
-            else if (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline) {
+            else if (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline || feature.CLASSNAME === "TC.feature.MultiPolyline") {
                 result = layer.addMultiPolyline(feature);
             }
-            else if (TC.feature.Circle && feature instanceof TC.feature.Circle) {
+            else if (TC.feature.Circle && feature instanceof TC.feature.Circle || feature.CLASSNAME === "TC.feature.Circle") {
                 result = layer.addCircle(feature);
             }
         }
@@ -405,15 +405,18 @@ TC.inherit(TC.layer.Vector, TC.Layer);
      */
     layerProto.removeFeature = function (feature) {
         const self = this;
-        if (self.map) {
-            const popups = self.map.getControlsByClass('TC.control.Popup');
-            popups.forEach(function (pu) {
-                if (pu.isVisible() && pu.currentFeature === feature) {
-                    pu.hide();
-                }
-            });
+        if (feature.layer && self.features.indexOf(feature) >= 0) {
+            if (self.map) {
+                const popups = self.map.getControlsByClass('TC.control.Popup');
+                popups.forEach(function (pu) {
+                    if (pu.isVisible() && pu.currentFeature === feature) {
+                        pu.hide();
+                    }
+                });
+            }
+            self.wrap.removeFeature(feature);
+            feature.layer = null;
         }
-        self.wrap.removeFeature(feature);
     };
 
     layerProto.getFeatureById = function (id) {
@@ -668,11 +671,16 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
         var precision = Math.pow(10, (self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION) + 1);
 
-        lObj.features = self.features
+        const features = options.features || self.features;
+        lObj.features = features
             .map(function (f) {
                 const fObj = {};
                 var layerStyle;
                 switch (true) {
+                    case TC.feature.Marker && f instanceof TC.feature.Marker:
+                        fObj.type = TC.Consts.geom.POINT;
+                        layerStyle = self.options.styles && self.options.styles.marker;
+                        break;
                     case TC.feature.Point && f instanceof TC.feature.Point:
                         fObj.type = TC.Consts.geom.POINT;
                         layerStyle = self.options.styles && self.options.styles.point;
@@ -680,10 +688,6 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                     //case TC.feature.MultiPoint && f instanceof TC.feature.MultiPoint:
                     //    fObj.type = TC.Consts.geom.MULTIPOINT;
                     //    break;
-                    case TC.feature.Marker && f instanceof TC.feature.Marker:
-                        fObj.type = TC.Consts.geom.POINT;
-                        layerStyle = self.options.styles && self.options.styles.marker;
-                        break;
                     case TC.feature.Polyline && f instanceof TC.feature.Polyline:
                         fObj.type = TC.Consts.geom.POLYLINE;
                         layerStyle = self.options.styles && self.options.styles.line;
@@ -782,9 +786,22 @@ TC.inherit(TC.layer.Vector, TC.Layer);
             if (addFn) {
                 var geom = explodeGeometry(f.geom);
                 if (obj.crs && self.map.crs !== obj.crs) {
-                    geom = TC.Util.reproject(geom, obj.crs, self.map.crs);
+                    const def = $.Deferred();
+                    self.map.one(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+                        addFn.call(self, geom, featureOptions).then(
+                            function () {
+                                def.resolve();
+                            },
+                            function () {
+                                def.reject();
+                            }
+                        );
+                    });
+                    deferreds[idx] = def;
                 }
-                deferreds[idx] = addFn.call(self, geom, featureOptions);
+                else {
+                    deferreds[idx] = addFn.call(self, geom, featureOptions);
+                }
             }
         });
         $.when.apply($, deferreds).then(

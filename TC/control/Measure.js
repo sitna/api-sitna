@@ -15,6 +15,8 @@ TC.control.Measure = function () {
     self.persistentDrawControls = false;
     self.NOMEASURE = '-';
 
+    self.exportsState = true;
+
     this.renderPromise().then(function () {
         self.measureMode = self.options.mode;
 
@@ -72,7 +74,13 @@ TC.inherit(TC.control.Measure, TC.Control);
 
     ctlProto.register = function (map) {
         const self = this;
-        TC.Control.prototype.register.call(self, map);
+        const result = TC.Control.prototype.register.call(self, map);
+
+        self.map.on(TC.Consts.event.VIEWCHANGE, function () {
+            if (self.map.view === TC.Consts.view.PRINTING) {
+                self.$events.trigger($.Event(TC.Consts.event.DRAWEND));
+            }
+        });
 
         const layerId = self.getUID();
         const drawLinesId = self.getUID();
@@ -134,6 +142,8 @@ TC.inherit(TC.control.Measure, TC.Control);
                 self.setMode(self.options.mode);
             });
         });
+
+        return result;
     };
 
     ctlProto.displayMode = function (mode) {
@@ -269,10 +279,13 @@ TC.inherit(TC.control.Measure, TC.Control);
 
     ctlProto.exportState = function () {
         const self = this;
-        return {
-            id: self.id,
-            layer: self.layer.exportState()
-        };
+        if (self.exportsState) {
+            return {
+                id: self.id,
+                layer: self.layer.exportState()
+            };
+        }
+        return null;
     };
 
     ctlProto.importState = function (state) {

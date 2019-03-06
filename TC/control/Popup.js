@@ -4,8 +4,8 @@ if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
-TC.Consts.event.POPUP = 'popup.tc';
-TC.Consts.event.POPUPHIDE = 'popuphide.tc';
+TC.Consts.event.POPUP = TC.Consts.event.POPUP || 'popup.tc';
+TC.Consts.event.POPUPHIDE = TC.Consts.event.POPUPHIDE || 'popuphide.tc';
 TC.Consts.classes.DRAG = TC.Consts.classes.DRAG || 'tc-drag';
 TC.Consts.classes.DRAGGED = TC.Consts.classes.DRAGGED || 'tc-dragged';
 TC.Consts.classes.DRAGGABLE = TC.Consts.classes.DRAGGABLE || 'tc-draggable';
@@ -30,10 +30,19 @@ TC.inherit(TC.control.Popup, TC.Control);
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
+        const deferred = $.Deferred();
 
-        $.when(map.wrap.addPopup(self)).then(function () {
+        $.when(result, map.wrap.addPopup(self)).then(function () {
+
+            map.on(TC.Consts.event.VIEWCHANGE, function () {
+                if (map.view === TC.Consts.view.PRINTING) {
+                    if (self.isVisible()) {
+                        self.hide();
+                    }
+                }
+            });
 
             map.on(TC.Consts.event.LAYERVISIBILITY, function (e) {
                 if (self.currentFeature && self.currentFeature.layer === e.layer && !e.layer.getVisibility()) {
@@ -66,7 +75,11 @@ TC.inherit(TC.control.Popup, TC.Control);
                     }
                 }
             });
+
+            deferred.resolve(self);
         });
+
+        return deferred.promise();
     };
 
     ctlProto.fitToView = function (delayed) {
@@ -88,6 +101,14 @@ TC.inherit(TC.control.Popup, TC.Control);
             self.setDragged(false);
             self.map.$events.trigger($.Event(TC.Consts.event.POPUPHIDE, { control: self }));
         }
+    };
+
+    ctlProto.getContainerElement = function () {
+        return this.$contentDiv ? this.$contentDiv.get(0) : null;
+    };
+
+    ctlProto.getMenuElement = function () {
+        return this.$menuDiv ? this.$menuDiv.get(0) : null;
     };
 
     ctlProto.setDragged = function (dragged) {

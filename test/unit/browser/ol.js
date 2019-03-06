@@ -263,5 +263,9 @@ describe('Tests de ol.js', function () {
 
             done();
         });
-    });
+        it("Propiedad target de la interacción Drag&Drop sigue disponible", function (done) {
+            expect(new ol.interaction.DragAndDrop().hasOwnProperty('target')).to.be.true;
+            done();
+        });
+    });    
 });

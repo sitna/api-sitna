@@ -23,13 +23,160 @@ div.tc-ctl-printMap-txt label {
 }
 
 div.tc-ctl-printMap .tc-ctl-printMap-btn {
-    float: right;
-    height: 2em;
-    margin-bottom: 0.5em;
+    /*float: right;*/
 }
 
-    div.tc-ctl-printMap .tc-ctl-printMap-btn:before {
-        font-family: 'FontAwesome';
-        content: '\f02f';
-        margin-right: 0.5em;
+.tc-ctl-printMap-view {
+    top: 0;
+    left: 0;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 10011;
+    background-color: #525659;
+    -webkit-transition: all .2s ease;
+    -moz-transition: all .2s ease;
+    -ie-transition: all .2s ease;
+    -o-transition: all .2s ease;
+    transition: all .2s ease;
+    overflow-x: auto;
+}
+
+.tc-ctl-printMap-printing .tc-ctl-printMap-tools {
+    position: fixed;
+    top: 0;
+    right: 0.5em;
+    width: 2em;
+    height: 1em;
+    text-align: right;
+    padding-right: 0.1em;
+    line-height: 1em;
+    font-size: 2em;
+    z-index: 100000;
+    cursor: pointer;
+    padding-top: 0.15em;
+    background-color: #fff;
+    border-bottom-left-radius: 0.3em;
+    border-bottom-right-radius: 0.3em;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+}
+
+.tc-ctl-printMap-btn-close {
+}
+
+.tc-ctl-printMap-printing .tc-ctl-printMap-btn-close:after {
+    font-family: 'FontAwesome';
+    content: '\f00d';
+}
+
+div.tc-map.tc-ctl-printMap-printing {
+    z-index: 100000;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    border: 1px solid;
+    box-sizing: content-box;
+}
+
+    div.tc-map.tc-ctl-printMap-printing.tc-ctl-printMap-portrait-a4 {
+        /* ya hemos restado los márgenes y demás */
+        width: 712px;
+        height: 1034px;
+
+        /*width: 535, -> 534pt 712px 
+          height: 753.5 -> 753pt - >775.5 1034px*/
     }
+
+    div.tc-map.tc-ctl-printMap-printing.tc-ctl-printMap-landscape-a4 {
+        /* ya hemos restado los márgenes y demás */
+        width: 1040px;
+        height: 704px;
+
+        /*width: 780pt -> 1,040px 
+          height: 528pt -> 704px */
+    }
+
+    div.tc-map.tc-ctl-printMap-printing.tc-ctl-printMap-portrait-a3 {
+        /* ya hemos restado los márgenes y demás */
+        width: 1040px;
+        height: 1500px;
+        /*width: 780pt -> 1,040px 
+          height: 1125pt -> 1500px */
+    }
+
+    div.tc-map.tc-ctl-printMap-printing.tc-ctl-printMap-landscape-a3 {
+        /* ya hemos restado los márgenes y demás */
+        width: 1508px;
+        height: 1044px;
+        /*width: 1131pt -> 1508px 
+          height: 783pt -> 1044px */
+    }    
+
+.tc-map.tc-ctl-printMap-printing .ol-viewport {
+    z-index: 100000;
+}
+
+
+.tc-map.tc-ctl-printMap-printing .tc-ctl-printMap-qrcode {
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    z-index: 100000;
+}
+
+    .tc-map.tc-ctl-printMap-printing .tc-ctl-printMap-qrcode > canvas {
+        display: none !important;
+    }
+
+.tc-ctl-printMap-btn-pdf {
+    position: absolute;
+    width: 1em;
+}
+
+    .tc-ctl-printMap-btn-pdf:before {
+        font-family: 'FontAwesome';
+        content: '\f019';
+        font-size: 0.9em;
+    }
+
+.tc-ctl-printMap-btn:before {
+    color: #fff;
+    font-size: 1em;
+    font-family: mapskin;
+    content: '\e0ce';
+    margin-right: 0.5em;
+}
+
+
+.tc-ctl-printMap-cnt-btn {
+    text-align: right;
+}
+
+.tc-ctl-printMap-cnt > label.tc-ctl-printMap-image-qr-label {
+    line-height: 2em;
+    font-weight: normal;
+    text-align: left;
+    width: 50%;
+    float: left;
+}
+
+.tc-ctl-printMap-cnt input[type=checkbox]:checked + label:before {
+    content: "\2611";
+}
+
+.tc-ctl-printMap-cnt input[type=checkbox] + label:before {
+    font-size: 15px;
+    display: inline-block;
+    content: "\2610";
+    width: 18px;
+}
+
+.tc-ctl-printMap-cnt input[type=checkbox] + label:before {
+    font-family: FontAwesome;
+    content: "\f096";
+}
+
+.tc-ctl-printMap-cnt input[type=checkbox]:checked + label:before {
+    content: "\f046";
+}

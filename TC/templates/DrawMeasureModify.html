@@ -1,4 +1,4 @@
-﻿<h2>{@i18n $key="drawAndMeasure"/} <span class="tc-beta">{@i18n $key="beta"/}</span></h2>
+﻿<h2>{@i18n $key="drawAndMeasure"/}</h2>
 <div class="tc-ctl-meas-select">
     <form>
         <label class="tc-ctl-meas-btn-pt"><input type="radio" name="mode" value="point" /><span>{@i18n $key="points"/}</span></label>
@@ -8,7 +8,10 @@
 </div>
 <div class="tc-ctl-meas-mode tc-ctl-meas-pt tc-hidden">
     <div class="tc-ctl-meas-point"></div>
-    <div class="tc-ctl-meas-txt">{@i18n $key="search.list.coordinates"/}: <span class="tc-ctl-meas-val-coord"></span></div>
+    <div class="tc-ctl-meas-txt">{@i18n $key="search.list.coordinates"/} <span class="tc-ctl-meas-val-coord">
+           <span class="tc-ctl-meas-val-coord-1-t"></span> <span class="tc-ctl-meas-val-coord-1-v"></span> <span class="tc-ctl-meas-val-coord-2-t"></span> <span class="tc-ctl-meas-val-coord-2-v"></span> <span class="tc-ctl-meas-val-coord-ele-t"></span> <span class="tc-ctl-meas-val-coord-ele-v"></span>
+        </span>
+    </div>
 </div>
 <div class="tc-ctl-meas-mode tc-ctl-meas-len tc-hidden">
     <div class="tc-ctl-meas-line"></div>
