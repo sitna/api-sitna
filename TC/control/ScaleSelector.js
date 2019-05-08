@@ -28,38 +28,43 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
 
     ctlProto.render = function (callback) {
         var self = this;
-        if (self.map) {
-            if (!self.scales && self.map.options.resolutions) {
-                self.scales = self.map.options.resolutions.map(self.getScale, self);
-            }
-            var render = function () {
-                self.scales = self.map.wrap.getResolutions().map(self.getScale, self);
-                $('input[type=button]', self._$div).off();
-                $('select', self._$div).off();
-                self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize, scales: self.scales }, function () {
+        return self._set1stRenderPromise(new Promise(function (resolve, reject) {
+            if (self.map) {
+                if (!self.scales && self.map.options.resolutions) {
+                    self.scales = self.map.options.resolutions.map(self.getScale, self);
+                }
+                var render = function () {
+                    self.scales = self.map.wrap.getResolutions().map(self.getScale, self);
+                    self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize, scales: self.scales }, function () {
 
-                    self._$div.find('option').each(function (idx, elm) {
-                        $elm = $(elm);
-                        $elm.text('1:' + self.format($elm.text().substr(2)));
+                        self.div.querySelectorAll('option').forEach(function (option) {
+                            option.textContent = '1:' + self.format(option.textContent.substr(2));
+                        });
+
+                        self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () { self.setScreenSize(); });
+
+                        self.div.querySelector('select').addEventListener('change', function () {
+                            self.setScale($(this).val());
+                        });
+                        if ($.isFunction(callback)) {
+                            callback();
+                        }
+                        resolve();
+                    }).catch(function (err) {
+                        reject(err instanceof Error ? err : Error(err));
                     });
-
-                    self._$div.find('input[type="button"]').on(TC.Consts.event.CLICK, function () { self.setScreenSize.call(self); });
-
-                    $('select', self._$div).on('change', function () {
-                        self.setScale($(this).val());
-                    });
-                    if ($.isFunction(callback)) {
-                        callback();
-                    }
-                });
-            }
-            if (self.scales) {
-                render();
+                };
+                if (self.scales) {
+                    render();
+                }
+                else {
+                    self.map.wrap.getMap().then(render);
+                }
             }
             else {
-                $.when(self.map.wrap.getMap()).then(render);
+                reject(Error('ScaleSelector no registrado'));
             }
-        }
+        }));
     };
 
     /*
