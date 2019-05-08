@@ -242,14 +242,14 @@ TC.Util.ExcelExport.prototype.Save = function (filename, rows, title) {
         var base64 = function (s) { return window.btoa(unescape(encodeURIComponent(s))) };
         csvFile = uri + base64(csvFile);
 
-        var downloadLink = $('<a></a>');
-        downloadLink.attr('href', csvFile);
-        downloadLink.attr('download', filename);
+        var downloadLink = document.createElement('a');
+        downloadLink.setAttribute('href', csvFile);
+        downloadLink.setAttribute('download', filename);
 
-        $('body').append(downloadLink);
+        document.body.appendChild(downloadLink);
         window.setTimeout(function () {
-            downloadLink[0].click();
-            downloadLink.remove();
-        }, null);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }, 0);
     }
 };
