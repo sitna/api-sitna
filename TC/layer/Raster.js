@@ -11,149 +11,214 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     var capabilitiesPromises = {};
 
-    var isWebWorkerEnabled = !TC.isLegacy && window.hasOwnProperty('Worker');
-    var wwDeferred = $.Deferred();
-    if (isWebWorkerEnabled) {
-        // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
-        var wwLocation = TC.apiLocation + 'TC/workers/tc-caps-web-worker.js';
-        if (TC.Util.isSameOrigin(TC.apiLocation)) {
-            wwDeferred.resolve(wwLocation);
+    const isWebWorkerEnabled = !TC.isLegacy && window.hasOwnProperty('Worker');
+    const wwPromise = new Promise(function (resolve, reject) {
+        if (isWebWorkerEnabled) {
+            // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
+            var wwLocation = TC.apiLocation + 'TC/workers/tc-caps-web-worker.js';
+            if (TC.Util.isSameOrigin(TC.apiLocation)) {
+                resolve(wwLocation);
+            }
+            else {
+                TC.ajax({
+                    url: wwLocation,
+                    method: 'GET',
+                    responseType: 'text'
+                }).then(
+                    function (data) {
+                        var blob = new Blob([data], { type: "text/javascript" });
+                        var url = window.URL.createObjectURL(blob);
+                        resolve(url);
+                    },
+                    function (e) {
+                        reject(Error(e));
+                    }
+                    );
+            }
+        }
+    });
+
+    const parseCapabilities = function (layer, data) {
+        var capabilities;
+
+        if (data.documentElement) {
+
+            const serviceException = data.getElementsByTagName('ServiceException')[0];
+            if (serviceException) {
+                capabilities = { error: serviceException.textContent };
+            }
+            else {
+                var format = (layer.type === TC.Consts.layerType.WMTS) ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
+                capabilities = format.read(data);
+
+                //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
+                if (layer.type === TC.Consts.layerType.WMTS) {
+                    if (capabilities.Contents && capabilities.Contents.Layer) {
+                        const layerCollection = data.getElementsByTagName('Layer');
+                        for (var i = 0, len = layerCollection.length; i < len; i++) {
+                            const curXmlLy = layerCollection[i];
+                            var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
+                            var id = nd.firstChild.data;
+
+                            var capLy = capabilities.Contents.Layer.filter(function (ly) {
+                                return ly.Identifier == id;
+                            });
+
+                            if (capLy.length) {
+                                capLy = capLy[0];
+                                for (var j = 0; j < capLy.TileMatrixSetLink.length; j++) {
+                                    var capLink = capLy.TileMatrixSetLink[j];
+                                    matrixId = capLink.TileMatrixSet;
+
+                                    xmlLink = curXmlLy.getElementsByTagName('TileMatrixSetLink').each(function (ix, curLink) {
+                                        return $(curLink).find("TileMatrixSet:first").text() == matrixId;
+                                    });
+
+                                    if (xmlLink.length) {
+                                        xmlLink = xmlLink[0];
+                                        capLink.TileMatrixSetLimits = [];
+                                        const tmlCollection = xmlLink.getElementsByTagName('TileMatrixLimits');
+                                        for (var k = 0, kk = tmlCollection.length; k < kk; k++) {
+                                            const lim = tmlCollection[k];
+                                            capLink.TileMatrixSetLimits.push({
+                                                TileMatrix: lim.getElementsByTagName('TileMatrix')[0].textContent,
+                                                MinTileRow: parseInt(lim.getElementsByTagName('MinTileRow')[0].textContent),
+                                                MinTileCol: parseInt(lim.getElementsByTagName('MinTileCol')[0].textContent),
+                                                MaxTileRow: parseInt(lim.getElementsByTagName('MaxTileRow')[0].textContent),
+                                                MaxTileCol: parseInt(lim.getElementsByTagName('MaxTileCol')[0].textContent)
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            storeCapabilities(layer, capabilities);
+            return Promise.resolve(capabilities);
         }
         else {
-            $.ajax({
-                url: wwLocation,
-                type: 'GET',
-                dataType: 'text'
-            }).then(
-                function (data) {
-                    var blob = new Blob([data], { type: "text/javascript" });
-                    var url = window.URL.createObjectURL(blob);
-                    wwDeferred.resolve(url);
-                },
-                function (e) {
-                    wwDeferred.reject();
+            return new Promise(function (resolve, reject) {
+                if (isWebWorkerEnabled && typeof data === 'string') {
+                    wwPromise.then(function (wwUrl) {
+                        var worker = new Worker(wwUrl);
+                        worker.onmessage = function (e) {
+                            if (e.data.state === 'success') {
+                                capabilities = e.data.capabilities;
+
+                                // GLS: Sólo almacenamos si el capabilities es correcto
+                                storeCapabilities(layer, capabilities);
+                            }
+                            else {
+                                capabilities = {
+                                    error: 'Web worker error'
+                                }
+                                reject(capabilities.error);
+                            }
+
+                            resolve(capabilities);
+                            worker.terminate();
+                        };
+                        worker.postMessage({
+                            type: layer.type,
+                            text: data
+                        });
+                    })
                 }
-                );
+                else {
+                    capabilities = data;
+                    resolve(capabilities);
+                }
+            });
         }
-    }
-
-    var getRequest = function (url, retry) {
-        TC._capabilitiesRequests = TC._capabilitiesRequests || [];
-
-        var result = TC._capabilitiesRequests[url] = (!retry && TC._capabilitiesRequests[url]) || $.ajax({
-            url: retry ? TC.proxify(url) : url,
-            type: 'GET',
-            dataType: isWebWorkerEnabled ? 'text' : 'xml'
-        });
-        return result;
     };
 
-    /*
-     *  getCapabilities: Obtiene el capabilities de la capa layer, y llama a los callback correspondientes
-     */
-    var getCapabilities = function (layer, success, error) {
-        var serviceUrl = layer.url;
-
-        var processingCapabilities = false;
-
-        // GLS: se resuelve cuando terminemos de procesar el capabilities
-        layer._capabilitiesPromise = $.Deferred();
-
-        var capabilitiesFromUrl = capabilitiesPromises[serviceUrl];
-        if (capabilitiesFromUrl) {
-            processingCapabilities = true;
+    const capabilitiesError = function (layer, reason) {
+        const msg = 'No se pudo obtener el documento de capacidades del servicio ' + layer.url + ': [' + reason + ']';
+        TC.error(msg);
+        if (layer.map) {
+            layer.map.trigger(TC.Consts.event.LAYERERROR, { layer: layer, reason: 'couldNotGetCapabilities' });
         }
-        else {
-            capabilitiesFromUrl = capabilitiesPromises[serviceUrl] = $.Deferred();
-        }
+        layer.wrap.setLayer(null);
+        return msg;
+    };
 
-        var processedCapabilities = function (capabilities) {
-            if (capabilities.error) {
-                capabilitiesError(layer, capabilities.error);
-                //layer.wrap.layerDeferred.reject();
-                layer._capabilitiesPromise.reject();
-                return;
-            }
-            // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
-            // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
-            layer.capabilities = layer.capabilities || capabilities;
-
-            var actualUrl = layer.getGetMapUrl();
-            TC.capabilities[layer.options.url] = TC.capabilities[layer.options.url] || capabilities;
-            TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
-
-            _createLayer(layer);
-
-            layer._capabilitiesPromise.resolve(capabilities);
-        };
-
-        var url;
-        var params = {};
-        if (layer.type === TC.Consts.layerType.WMTS) {
-            if (layer.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
-                var suffix = '/1.0.0/WMTSCapabilities.xml';
-                const suffixIdx = serviceUrl.indexOf(suffix);
-                if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
-                    if (serviceUrl[serviceUrl.length - 1] === '/') {
-                        suffix = suffix.substr(1);
+    const getCapabilitiesOnline = function (layer) {
+        const serviceUrl = layer.url;
+        return new Promise(function (resolve, reject) {
+            var url;
+            const params = {};
+            if (layer.type === TC.Consts.layerType.WMTS) {
+                if (layer.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
+                    var suffix = '/1.0.0/WMTSCapabilities.xml';
+                    const suffixIdx = serviceUrl.indexOf(suffix);
+                    if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
+                        if (serviceUrl[serviceUrl.length - 1] === '/') {
+                            suffix = suffix.substr(1);
+                        }
+                        url = serviceUrl + suffix;
                     }
-                    url = serviceUrl + suffix;
+                    else {
+                        url = serviceUrl;
+                    }
                 }
                 else {
                     url = serviceUrl;
+                    params.SERVICE = 'WMTS';
+                    params.VERSION = '1.0.0';
+                    params.REQUEST = 'GetCapabilities';
                 }
             }
             else {
                 url = serviceUrl;
-                params.SERVICE = 'WMTS';
-                params.VERSION = '1.0.0';
+                params.SERVICE = 'WMS';
+                params.VERSION = '1.3.0';
                 params.REQUEST = 'GetCapabilities';
             }
-        }
-        else {
-            url = serviceUrl;
-            params.SERVICE = 'WMS';
-            params.VERSION = '1.3.0';
-            params.REQUEST = 'GetCapabilities';
-        }
-        url = url + '?' + $.param($.extend(params, layer.queryParams));
-        TC._capabilitiesRequests = TC._capabilitiesRequests || {};
+            url = url + '?' + $.param($.extend(params, layer.queryParams));
 
-        if (!processingCapabilities) {
             layer.toolProxification.fetch(url, { retryAttempts: 2 }).then(function (data) {
-                success(layer, data.responseText);
+                parseCapabilities(layer, data.responseText)
+                    .then(function (capabilities) {
+                        if (capabilities.error) {
+                            reject(Error(capabilitiesError(layer, capabilities.error)));
+                            return;
+                        }
+                        resolve(capabilities);
+                    })
+                    .catch(function (error) {
+                        reject(Error(error));
+                    });
             }).catch(function (dataError) {
-                layer._capabilitiesPromise.reject();
-                error(layer, dataError);
+                reject(Error(capabilitiesError(layer, dataError)));
             });
-        }
 
-        // Obtenemos el capabilities almacenado en caché
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + serviceUrl)
-                .then(function (value) {
-                    if (value) {
-                        capabilitiesPromises[layer.url].then(processedCapabilities);
-                    }
-                });
-        });
-
-        capabilitiesFromUrl.then(function (capabilities) {
-            processedCapabilities(capabilities);
         });
     };
 
-    var capabilitiesError = function (layer, reason) {
-        var msg = 'No se pudo obtener el documento de capacidades de servicio ' + layer.url + ': [' + reason + ']';
-        layer._capabilitiesPromise.reject(msg);
-        TC.error(msg);
-        if (layer.map) {
-            layer.map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: layer, reason: 'couldNotGetCapabilities' }));
-        }
-        layer.wrap.setLayer(null);
+    const getCapabilitiesFromStorage = function (layer) {
+        return new Promise(function (resolve, reject) {
+            // Obtenemos el capabilities almacenado en caché
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + layer.url)
+                    .then(function (value) {
+                        if (value) {
+                            resolve(value);
+                        }
+                        else {
+                            reject('Capabilities not in storage');
+                        }
+                    })
+                    .catch(function () {
+                        reject('Undefined storage error');
+                    });
+            });
+        });
     };
 
-    var storeCapabilities = function (layer, capabilities) {
+    const storeCapabilities = function (layer, capabilities) {
         TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
 
             // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
@@ -166,7 +231,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     return;
                 } else {
 
-                    $.when(layer._capabilitiesPromise).then(function () {
+                    layer.getCapabilitiesPromise().then(function () {
                         localforage.setItem(capKey, capabilities).then(function () { }).catch(function (err) {
                             console.log(err);
                         });
@@ -182,118 +247,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         });
     };
 
-    var parseCapabilities = function (layer, data) {
-        var capabilities;
-
-        if (data.documentElement) {
-
-            if ($(data).find("ServiceException").length > 0) {
-                capabilities = { error: $(data).find("ServiceException").text() };
-            }
-            else {
-                var format = (layer.type === TC.Consts.layerType.WMTS) ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
-                capabilities = format.read(data);
-
-                //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
-                if (layer.type === TC.Consts.layerType.WMTS) {
-                    if (capabilities.Contents && capabilities.Contents.Layer) {
-                        $("Layer", data).each(function (ix, curXmlLy) {
-                            var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
-                            var id = nd.firstChild.data;
-                            var xmlLy = $(curXmlLy);
-
-                            var capLy = capabilities.Contents.Layer.filter(function (ly) {
-                                return ly.Identifier == id;
-                            });
-
-                            if (capLy.length) {
-                                capLy = capLy[0];
-                                for (var i = 0; i < capLy.TileMatrixSetLink.length; i++) {
-                                    var capLink = capLy.TileMatrixSetLink[i];
-                                    matrixId = capLink.TileMatrixSet;
-
-                                    xmlLink = xmlLy.find("TileMatrixSetLink").each(function (ix, curLink) {
-                                        return $(curLink).find("TileMatrixSet:first").text() == matrixId;
-                                    });
-
-                                    if (xmlLink.length) {
-                                        xmlLink = xmlLink[0];
-                                        capLink.TileMatrixSetLimits = [];
-                                        $(xmlLink).find("TileMatrixLimits").each(function (ix, curLim) {
-                                            var lim = $(curLim);
-                                            capLink.TileMatrixSetLimits.push({
-                                                TileMatrix: lim.find("TileMatrix").text(),
-                                                MinTileRow: parseInt(lim.find("MinTileRow").text()),
-                                                MinTileCol: parseInt(lim.find("MinTileCol").text()),
-                                                MaxTileRow: parseInt(lim.find("MaxTileRow").text()),
-                                                MaxTileCol: parseInt(lim.find("MaxTileCol").text())
-                                            });
-                                        });
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
-            }
-
-            capabilitiesPromises[layer.url].resolve(capabilities);
-            storeCapabilities(layer, capabilities);
-        }
-        else {
-            if (isWebWorkerEnabled && typeof data === 'string') {
-                wwDeferred.then(function (wwUrl) {
-                    var worker = new Worker(wwUrl);
-                    worker.onmessage = function (e) {
-                        if (e.data.state === 'success') {
-                            capabilities = e.data.capabilities;
-
-                            // GLS: Sólo almacenamos si el capabilities es correcto
-                            storeCapabilities(layer, capabilities);
-                        }
-                        else {
-                            capabilities = {
-                                error: 'Web worker error'
-                            }
-                        }
-
-                        capabilitiesPromises[layer.url].resolve(capabilities);
-                        worker.terminate();
-                    };
-                    worker.postMessage({
-                        type: layer.type,
-                        text: data
-                    });
-                })
-            }
-            else {
-                capabilities = data;
-                capabilitiesPromises[layer.url].resolve(capabilities);
-            }
-        }
-    };
-
-    /*
-     *  _createLayer: Crea la capa nativa correspondiente según el tipo
-     */
-    var _createLayer = function (layer) {
-        var ollyr;
-        if (!layer.wrap.layer) {
-            switch (layer.type) {
-                case TC.Consts.layerType.GROUP:
-                    break;
-                case TC.Consts.layerType.WMTS:
-                    ollyr = _createWMTSLayer(layer);
-                    break;
-                default:
-                    ollyr = _createWMSLayer(layer);
-                    break;
-            }
-            layer.wrap.setLayer(ollyr);
-        }
-    };
-
-    var _createWMSLayer = function (layer) {
+    const _createWMSLayer = function (layer) {
 
         var layerNames = $.isArray(layer.names) ? layer.names.join(',') : layer.names;
         var format = layer.options.format;
@@ -322,12 +276,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return layer.wrap.createWMSLayer(layer.getGetMapUrl(), params, options);
     };
 
-    var _createWMTSLayer = function (layer) {
+    const _createWMTSLayer = function (layer) {
         return layer.wrap.createWMTSLayer(layer.options);
     };
 
-
-    var _getLayerNodeIndex = function _getLayerNodeIndex(layer, treeNode) {
+    const _getLayerNodeIndex = function _getLayerNodeIndex(layer, treeNode) {
 
         var result = $.inArray(treeNode.name, layer.availableNames);
         if (result === -1) {
@@ -341,7 +294,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return result;
     }
 
-    var _sortTree = function _sortTree(layer, treeNode) {
+    const _sortTree = function _sortTree(layer, treeNode) {
         var _sortFunction = function (n1, n2) {
             return _getLayerNodeIndex(layer, n2) - _getLayerNodeIndex(layer, n1);
         }
@@ -351,7 +304,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
     };
 
-    var _getLayerNamePosition = function _getLayerNamePosition(treeNode, name, counter) {
+    const _getLayerNamePosition = function _getLayerNamePosition(treeNode, name, counter) {
         var result = false;
         counter.count = counter.count + 1;
         if (treeNode.name === name) {
@@ -367,7 +320,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             }
         }
         return result;
-    }
+    };
 
     /**
      * Opciones de nombre de capa.
@@ -469,6 +422,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
          * @type string
          */
         self.url = self.options.url;
+        self.capabilities = TC.capabilities[self.url];
 
         self.params = self.options.params;
         /**
@@ -516,7 +470,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         var names = TC.Util.getElementByNodeName(namedLayerElm[0], 'sld:Name');
 
                         if (names && names.length > 0) {
-                            var name = $(names[0]).text();
+                            var name = names[0].textContent;
                             self.names.push(name);
                             self.availableNames.push(name);
                         }
@@ -529,13 +483,88 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         self._capabilitiesNodes = {};
 
-
         /**
       * Árbol del documento de capabilities del servicio.
       * @property capabilities
       * @type object
       */
-        getCapabilities(self, parseCapabilities, capabilitiesError);
+        self.wrap._promise = new Promise(function (resolve, reject) {
+            /*
+             *  _createOLLayer: Crea la capa nativa correspondiente según el tipo
+             */
+            var _createOLLayer = function () {
+                var ollyr;
+                if (!self.wrap.layer) {
+                    switch (self.type) {
+                        case TC.Consts.layerType.GROUP:
+                            break;
+                        case TC.Consts.layerType.WMTS:
+                            ollyr = _createWMTSLayer(self);
+                            break;
+                        default:
+                            ollyr = _createWMSLayer(self);
+                            break;
+                    }
+                    self.wrap.setLayer(ollyr);
+                    resolve(ollyr);
+                }
+            };
+
+            const processedCapabilities = function (capabilities) {
+                // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
+                // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
+                self.capabilities = self.capabilities || capabilities;
+
+                var actualUrl = self.getGetMapUrl();
+                TC.capabilities[self.options.url] = TC.capabilities[self.options.url] || capabilities;
+                TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
+
+                _createOLLayer();
+            };
+
+            if (self.capabilities) {
+                processedCapabilities(self.capabilities);
+                self._capabilitiesPromise = Promise.resolve(self.capabilities);
+                return;
+            }
+
+            const cachePromise = capabilitiesPromises[self.url];
+            capabilitiesPromises[self.url] = self._capabilitiesPromise = cachePromise || new Promise(function (res, rej) {
+                var onlineFail = false;
+                var storageFail = false;
+                const onlinePromise = getCapabilitiesOnline(self);
+                const storagePromise = getCapabilitiesFromStorage(self);
+
+                onlinePromise
+                    .then(function (capabilities) {
+                        res(capabilities);
+                    })
+                    .catch(function (error) {
+                        onlineFail = true;
+                        if (storageFail) {
+                            rej(Error(error));
+                        }
+                    });
+                storagePromise
+                    .then(function (capabilities) {
+                        res(capabilities);
+                    })
+                    .catch(function (error) {
+                        storageFail = true;
+                        if (onlineFail) {
+                            rej(Error(error));
+                        }
+                    });
+            });
+
+            self.getCapabilitiesPromise()
+                .then(function (capabilities) {
+                    processedCapabilities(capabilities);
+                })
+                .catch(function (error) {
+                    reject(Error(error));
+                });
+        });
 
         self._disgregatedLayerNames = null;
 
@@ -776,47 +805,45 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      */
     layerProto.setLayerNames = function (layerNames, options) {
         var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var ln = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            layer.names = ln;
-            var opts = _extendLayerNameOptions(options);
-            if (opts.aggregate) {
-                ln = _aggregateLayerNames(layer, ln);
-            }
-            layer._disgregatedLayerNames = null;
-            var newParams = {
-                LAYERS: ln.join(','), TRANSPARENT: true
-            };
-            // Si no hay capas ocultamos la capa de servicio
-            if (!ln.length) {
-                layer.setVisibility(false);
-            }
-            if (opts.lazy) {
-                var params = layer._newParams || layer.wrap.getParams();
-                layer._newParams = $.extend(params, newParams);
-            }
-            else {
-                if (layer.map) {
-                    layer.map.$events.trigger($.Event(TC.Consts.event.BEFOREUPDATEPARAMS, { layer: layer }));
+        return new Promise(function (resolve, reject) {
+            layer.wrap.getLayer().then(function () {
+                var ln = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                layer.names = ln;
+                var opts = _extendLayerNameOptions(options);
+                if (opts.aggregate) {
+                    ln = _aggregateLayerNames(layer, ln);
                 }
-                layer.tree = null;
-                layer._cache.visibilityStates = {
+                layer._disgregatedLayerNames = null;
+                var newParams = {
+                    LAYERS: ln.join(','), TRANSPARENT: true
                 };
-                layer.wrap.setParams(newParams);
-                if (opts.reset || !layer.map) {
-                    // layerNames se fija cuando se añade al mapa o cuando reset = true.
-                    layer.availableNames = layer.names;
+                // Si no hay capas ocultamos la capa de servicio
+                if (!ln.length) {
+                    layer.setVisibility(false);
                 }
-                if (layer.map) {
-                    layer.map.$events.trigger($.Event(TC.Consts.event.UPDATEPARAMS, { layer: layer }));
+                if (opts.lazy) {
+                    var params = layer._newParams || layer.wrap.getParams();
+                    layer._newParams = $.extend(params, newParams);
                 }
-            }
-            result.resolve(layer.names);
+                else {
+                    if (layer.map) {
+                        layer.map.trigger(TC.Consts.event.BEFOREUPDATEPARAMS, { layer: layer });
+                    }
+                    layer.tree = null;
+                    layer._cache.visibilityStates = {
+                    };
+                    layer.wrap.setParams(newParams);
+                    if (opts.reset || !layer.map) {
+                        // layerNames se fija cuando se añade al mapa o cuando reset = true.
+                        layer.availableNames = layer.names;
+                    }
+                    if (layer.map) {
+                        layer.map.trigger(TC.Consts.event.UPDATEPARAMS, { layer: layer });
+                    }
+                }
+                resolve(layer.names);
+            });
         });
-
-        return result;
     };
 
     /**
@@ -832,23 +859,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.addLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2a = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var ln = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2a = _disgregateLayerNames(layer, ln2a);
-                ln = layer.getDisgregatedLayerNames();
-            }
-            $.when(layer.setLayerNames(_sortLayerNames(layer, _combineArray(ln, ln2a, null)), options)).then(function (names) {
-                result.resolve(names);
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2a = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2a = _disgregateLayerNames(self, ln2a);
+                    ln = self.getDisgregatedLayerNames();
+                }
+                self.setLayerNames(_sortLayerNames(self, _combineArray(ln, ln2a, null)), options).then(function (names) {
+                    resolve(names);
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -864,23 +889,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.removeLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2r = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var ln = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2r = _disgregateLayerNames(layer, ln2r);
-                ln = layer.getDisgregatedLayerNames();
-            }
-            $.when(layer.setLayerNames(_sortLayerNames(layer, _combineArray(ln, null, ln2r)), options)).then(function (names) {
-                result.resolve(names);
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2r = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2r = _disgregateLayerNames(self, ln2r);
+                    ln = self.getDisgregatedLayerNames();
+                }
+                self.setLayerNames(_sortLayerNames(self, _combineArray(ln, null, ln2r)), options).then(function (names) {
+                    resolve(names);
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -896,51 +919,51 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.toggleLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2t = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var currentLayerNames = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2t = _disgregateLayerNames(layer, ln2t);
-                currentLayerNames = layer.getDisgregatedLayerNames();
-            }
-            var ln2a = [];
-            var ln2r = [];
-            for (var i = 0; i < ln2t.length; i++) {
-                var l = ln2t[i];
-                if ($.inArray(l, currentLayerNames) < 0) {
-                    ln2a[ln2a.length] = l;
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2t = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var currentLayerNames = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2t = _disgregateLayerNames(self, ln2t);
+                    currentLayerNames = self.getDisgregatedLayerNames();
                 }
-                else {
-                    ln2r[ln2r.length] = l;
-                }
-            }
-            var deferreds = [];
-            if (ln2a.length > 0) {
-                deferreds.push(layer.addLayerNames(ln2a, opts));
-            }
-            if (ln2r.length > 0) {
-                deferreds.push(layer.removeLayerNames(ln2r, opts));
-            }
-            $.when.apply(this, deferreds).then(function (a1, a2) {
-                if (a1) {
-                    if (a2) {
-                        result.resolve(a1.concat(a2));
+                var ln2a = [];
+                var ln2r = [];
+                for (var i = 0; i < ln2t.length; i++) {
+                    var l = ln2t[i];
+                    if ($.inArray(l, currentLayerNames) < 0) {
+                        ln2a[ln2a.length] = l;
                     }
                     else {
-                        result.resolve(a1);
+                        ln2r[ln2r.length] = l;
                     }
                 }
-                else {
-                    result.resolve([]);
+                var promises = [];
+                if (ln2a.length > 0) {
+                    promises.push(self.addLayerNames(ln2a, opts));
                 }
+                if (ln2r.length > 0) {
+                    promises.push(self.removeLayerNames(ln2r, opts));
+                }
+                Promise.all(promises).then(function (arrays) {
+                    const a1 = arrays[0];
+                    const a2 = arrays[1];
+                    if (a1) {
+                        if (a2) {
+                            resolve(a1.concat(a2));
+                        }
+                        else {
+                            resolve(a1);
+                        }
+                    }
+                    else {
+                        resolve([]);
+                    }
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -957,7 +980,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         ///</summary>
         ///<returns type="array" elementType="string"></returns>
         var self = this;
-        var olLayer = self.wrap.getLayer();
+        var olLayer = self.wrap.layer;
         if (self.wrap.isNative(olLayer) && self.type === TC.Consts.layerType.WMS) {
             if (!self._disgregatedLayerNames) {
                 var layerNames = self.wrap.getParams().LAYERS;
@@ -1094,7 +1117,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
                 }
                 break;
-            case TC.Consts.layerType.WMS:
+            case TC.Consts.layerType.WMS:                
                 result = true;
                 var layers = self.wrap.getAllLayerNodes();
                 if (layers.length > 0) {
@@ -1115,6 +1138,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     if (node) {
                         var scaleDenominators = self.wrap.getScaleDenominators(node);
                         result = !(parseFloat(scaleDenominators[1]) > currentScale || parseFloat(scaleDenominators[0]) < currentScale);
+
+                        // GLS: si no es visible miramos si tiene capas hijas y si tiene comprobamos si alguna de ellas es visible a la escala actual.
+                        if (!result) {
+                            if (node.Layer && node.Layer.length > 0) {
+                                return node.Layer.some(function (nodeLayer) {
+                                    var scaleDenominators = self.wrap.getScaleDenominators(nodeLayer);
+                                    return !(parseFloat(scaleDenominators[1]) > currentScale || parseFloat(scaleDenominators[0]) < currentScale)
+                                });
+                            }
+                        }
                     }
                 }
                 break;
@@ -1601,11 +1634,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var result = null;
 
         var infoFormats = layer.wrap.getInfoFormats();
-        for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
-            var format = TC.wrap.layer.Raster.infoFormatPreference[i];
-            if ($.inArray(format, infoFormats) >= 0) {
-                result = format;
-                break;
+        if (infoFormats) {
+            for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
+                var format = TC.wrap.layer.Raster.infoFormatPreference[i];
+                if ($.inArray(format, infoFormats) >= 0) {
+                    result = format;
+                    break;
+                }
             }
         }
         return result;
@@ -1615,61 +1650,59 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      * Carga la imagen de leyenda de una capa por POST.
      */
     layerProto.getLegendGraphicImage = function () {
-        var self = this;
-        var deferred = $.Deferred();
-
-
-        //Si ya hemos hecho esta consulta previamente, retornamos la respuesta
-        if (self.options.params.base64LegendSrc) {
-            return deferred.resolve(self.options.params.base64LegendSrc);
-        }
-
-        if (typeof window.btoa === 'function') {
-            var name = self.names[0];
-            var info = self.wrap.getInfo(name);
-            var xhr = new XMLHttpRequest();
-            var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
-            var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
-            var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
-
-            for (var i = 0; i < dataEntries.length; i++) {
-                var chunks = dataEntries[i].split('=');
-
-                if (chunks && chunks.length > 1 && chunks[1]) {
-                    params += "&" + dataEntries[i];
-                }
-            }
-            if (self.options.params.env) {
-                params += "&" + self.options.params.env;
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            //Si ya hemos hecho esta consulta previamente, retornamos la respuesta
+            if (self.options.params.base64LegendSrc) {
+                return resolve(self.options.params.base64LegendSrc);
             }
 
-            xhr.open('POST', url[0], true);
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            if (typeof window.btoa === 'function') {
+                var name = self.names[0];
+                var info = self.wrap.getInfo(name);
+                var xhr = new XMLHttpRequest();
+                var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
+                var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
+                var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
 
-            xhr.responseType = 'arraybuffer';
-            xhr.onload = function (e) {
-                if (this.status === 200) {
-                    var uInt8Array = new Uint8Array(this.response);
-                    var i = uInt8Array.length;
-                    var binaryString = new Array(i);
-                    while (i--) {
-                        binaryString[i] = String.fromCharCode(uInt8Array[i]);
-                    }
-                    var data = binaryString.join('');
-                    var type = xhr.getResponseHeader('content-type');
-                    if (type.indexOf('image') === 0) {
-                        var imageSrc;
-                        imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
-                        self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
-                        deferred.resolve(imageSrc);
+                for (var i = 0; i < dataEntries.length; i++) {
+                    var chunks = dataEntries[i].split('=');
+
+                    if (chunks && chunks.length > 1 && chunks[1]) {
+                        params += "&" + dataEntries[i];
                     }
                 }
-            };
-            xhr.send(params);
-        } else {
-            deferred.reject("Función window.btoa no soportada por el navegador");
-        }
-        return deferred.promise();
+                if (self.options.params.env) {
+                    params += "&" + self.options.params.env;
+                }
+
+                xhr.open('POST', url[0], true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                xhr.responseType = 'arraybuffer';
+                xhr.onload = function (e) {
+                    if (this.status === 200) {
+                        var uInt8Array = new Uint8Array(this.response);
+                        var i = uInt8Array.length;
+                        var binaryString = new Array(i);
+                        while (i--) {
+                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                        }
+                        var data = binaryString.join('');
+                        var type = xhr.getResponseHeader('content-type');
+                        if (type.indexOf('image') === 0) {
+                            var imageSrc;
+                            imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
+                            self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
+                            resolve(imageSrc);
+                        }
+                    }
+                };
+                xhr.send(params);
+            } else {
+                reject(Error("Función window.btoa no soportada por el navegador"));
+            }
+        });
     };
 
     layerProto.getUrl = function (src) {
@@ -1684,39 +1717,38 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     // Usamos el mismo método que para el capabilities ya que la carga de texturas es igual de restrictiva.
     layerProto.getWebGLUrl = function (src, location) {
-        var self = this;
-        var done = new $.Deferred();
+        const self = this;
+        return new Promise(function (resolve, reject) {
 
-        var _src = !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src;
+            var _src = !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src;
 
-        if (self.ignoreProxification) {
-            done.resolve(_src);
-        } else {
-            const options = {
-                exportable: true,
-                ignoreProxification: self.ignoreProxification
-            };
+            if (self.ignoreProxification) {
+                resolve(_src);
+            } else {
+                const options = {
+                    exportable: true,
+                    ignoreProxification: self.ignoreProxification
+                };
 
-            self.toolProxification.fetchImage(_src, options).then(function () {
-                self.toolProxification.cacheHost.getAction(_src, options).then(function (cache) {
-                    if (cache && cache.action) {
-                        done.resolve(cache.action.call(self.toolProxification, _src));
-                    }
+                self.toolProxification.fetchImage(_src, options).then(function () {
+                    self.toolProxification.cacheHost.getAction(_src, options).then(function (cache) {
+                        if (cache && cache.action) {
+                            resolve(cache.action.call(self.toolProxification, _src));
+                        }
+                    });
+                }).catch(function (e) {
+                    reject(Error(e));
                 });
-            }).catch(function (e) {
-                done.reject(e);
-            }); 
-        }        
+            }
 
-        //// IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
-        //if (self.ignoreProxification) {
-        //    setSRC({ src: TC.Consts.BLANK_IMAGE });
-        //    return;
-        //}
+            //// IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
+            //if (self.ignoreProxification) {
+            //    setSRC({ src: TC.Consts.BLANK_IMAGE });
+            //    return;
+            //}
 
-        //return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);        
-
-        return done;
+            //return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);        
+        });
     };
 
     layerProto.getFeatureUrl = function (url) {
@@ -1750,7 +1782,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     layerProto.getImageLoad = function (image, src, location) {
-        var self = this;
+        const self = this;
 
         // Viene sin nombre desde el control TOC, si es así lo ignoramos.
         if (self.names && self.names.length > 0) {
@@ -1758,18 +1790,20 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             const setSRC = function (data) {
                 var olImg = image.getImage();
 
-                if (!self.map || (self.map && self.map.mustBeExportable)) {
-                    olImg.crossOrigin = data.crossOrigin ? data.crossOrigin : "anonymous";
+                if (!TC.Util.isSameOrigin(data.src)) {
+                    if (!self.map || (self.map && self.map.mustBeExportable)) {
+                        olImg.crossOrigin = data.crossOrigin !== null ? data.crossOrigin : "anonymous";
+                    }
                 }
 
                 // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
                 olImg.setAttribute("src", data.src);
 
-                _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
+                _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
             };
 
             const error = function (error) {
-                _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } }));
+                _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
                 setSRC({ src: TC.Consts.BLANK_IMAGE });
             };
 
@@ -1821,7 +1855,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 }
             }
 
-            _get$events.call(self).trigger($.Event(TC.Consts.event.BEFORETILELOAD, { tile: image }));
+            _get$events.call(self).trigger(TC.Consts.event.BEFORETILELOAD, { tile: image });
 
             var params = "";
             var isPOST = self.options.method === "POST";
@@ -1855,16 +1889,18 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     setSRC({ src: src });
                     var img = image.getImage();
 
-                    if (!self.map || (self.map && self.map.mustBeExportable)) {
-                        img.crossOrigin = "anonymous";
-                    }
+                    if (!TC.Util.isSameOrigin(src)) {
+                        if (!self.map || (self.map && self.map.mustBeExportable)) {
+                            img.crossOrigin = "anonymous";
+                        }
+                    }                    
 
                     img.onload = function () {
-                        _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
+                        _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
                     };
                     img.onerror = function (error) {                        
                         img.src = TC.Consts.BLANK_IMAGE;
-                        _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } }));
+                        _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
                     };
 
                     img.src = self.names.length ? src : TC.Consts.BLANK_IMAGE;
@@ -1872,74 +1908,90 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             }
         } else {
             // lanzamos el evento para gestionar el loading
-            _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
+            _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
         }
     };
 
     var _get$events = function () {
-        var self = this;
-
-        return self.wrap && self.wrap.$events ? self.wrap.$events : $(self);
+        const self = this;
+        if (self.wrap && self.wrap.$events) {
+            return self.wrap.$events;
+        }
+        return null;
     };
 
     layerProto.getWFSCapabilitiesPromise = function () {
-        var self = this;
+        const self = this;
+
         if (typeof (WFSCapabilities) === "undefined") {
             TC.syncLoadJS(TC.apiLocation + 'TC/layer/WFSCapabilitiesParser');
         }
         var url = this.options.url.replace(/service=wms/i, "service=wfs").replace(/\/wms(\/|\?|\b)/i, "$'/wfs/")
-        var defer = $.Deferred();
+        var _src = !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(url)) ? self.getBySSL_(url) : url;
         var basicUrl = url.substring(url.indexOf("://") < 0 ? 0 : url.indexOf("://") + 3);
         if (TC.WFScapabilities[basicUrl]) {
-            setTimeout(function () {
-                defer.resolve(TC.WFScapabilities[basicUrl]);
-            }, 100);
-            return defer;
-        }
-        var params = {
-        }
-        params.SERVICE = 'WFS';
-        params.VERSION = '2.0.0';
-        params.REQUEST = 'GetCapabilities';
-        $.ajax({
-            url: this.getUrl(url + '?' + $.param(params)),
-            type: 'GET'
-        }).then(function () {
-            var capabilities
-            var xmlDoc;
-            if (jQuery.isXMLDoc(arguments[0]))
-                xmlDoc = arguments[0];
+            if (TC.WFScapabilities[basicUrl] instanceof Promise)
+                return TC.WFScapabilities[basicUrl];
             else
-                xmlDoc = (new DOMParser()).parseFromString(arguments[0], 'text/xml');
-            //comprueba si el servidor ha devuelto una excepcion
+                return new Promise(function (resolve, reject) {
+                    setTimeout(function () {
+                        resolve(TC.WFScapabilities[basicUrl]);
+                    }, 100);
+                });
+        }
+        TC.WFScapabilities[basicUrl] = new Promise(function (resolve, reject) {
+            var params = {
+            }
+            params.SERVICE = 'WFS';
+            params.VERSION = '2.0.0';
+            params.REQUEST = 'GetCapabilities';
 
-            var errorNode = $(xmlDoc).find("ServiceException");
-            if (errorNode.length === 0)
-                errorNode = $(xmlDoc).find("ExceptionText");
-            if (errorNode.length > 0) {
-                defer.reject(null, "error", errorNode.html());
-                return;
-            }
-            try {
-                capabilities = WFSCapabilities.Parse(xmlDoc);
-            }
-            catch (err) {
-                defer.reject(err);
-                return;
-            }
+            var url = self.getUrl(_src + '?' + TC.Util.getParamString(params));
 
-            if (!capabilities.Operations) {
-                defer.reject(null);
-                return;
-            }
-            var _url = (capabilities.Operations.GetCapabilities.DCP && capabilities.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"]) || capabilities.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource
-            TC.WFScapabilities[_url] = capabilities;
-            TC.WFScapabilities[basicUrl] = capabilities;
-            defer.resolve(capabilities);
-        }, function (jqXHR, textStatus, errorThrown) {
-            defer.reject(jqXHR, textStatus, errorThrown);
+            self.toolProxification.fetch(url, { retryAttempts: 2 }).then(function (data) {
+
+                var capabilities
+                var xmlDoc;
+                const documentElement = data.responseText && (data.responseText.ownerDocument || data.responseText).documentElement;
+                const isXMLDoc = documentElement ? documentElement.nodeName !== 'HTML' : false;
+                if (isXMLDoc) {
+                    xmlDoc = data.responseText;
+                }
+                else {
+                    xmlDoc = (new DOMParser()).parseFromString(data.responseText, 'text/xml');
+                }
+                //comprueba si el servidor ha devuelto una excepcion
+
+                var errorNode = xmlDoc.getElementsByTagName('ServiceException')[0];
+                if (!errorNode) {
+                    errorNode = xmlDoc.getElementsByTagName('ExceptionText')[0];
+                }
+                if (errorNode) {
+                    reject(Error(errorNode.innerHTML));
+                    return;
+                }
+                try {
+                    capabilities = WFSCapabilities.Parse(xmlDoc);
+                }
+                catch (err) {
+                    reject(err instanceof Error ? err : Error(err));
+                    return;
+                }
+
+                if (!capabilities.Operations) {
+                    reject(null);
+                    return;
+                }
+                var _url = (capabilities.Operations.GetCapabilities.DCP && capabilities.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"]) || capabilities.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource
+                TC.WFScapabilities[_url] = capabilities;
+                TC.WFScapabilities[basicUrl] = capabilities;
+                resolve(capabilities);
+            }).catch(function (error) {
+                //reject(Error(capabilitiesError(layer, dataError)));
+                reject(error instanceof Error ? error : Error(error));
+            });
         });
-        return defer;
+        return TC.WFScapabilities[basicUrl];
     };
 
     layerProto.getFallbackLayer = function () {
