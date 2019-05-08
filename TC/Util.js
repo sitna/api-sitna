@@ -69,7 +69,22 @@
         }
     };
 
+    const swipeHandlers = new WeakMap();
+    const modalCloseHandlers = new WeakMap();
+
     var Util = {
+
+        isPlainObject: function (obj) {
+            return Object.prototype.toString.call(obj) === '[object Object]';
+        },
+
+        isEmptyObject: function (obj) {
+            var name;
+            for (name in obj) {
+                return false;
+            }
+            return true;
+        },
 
         getMapLocale: function (map) {
             return map.options && map.options.locale && map.options.locale.replace('_', '-') || "es-ES";
@@ -192,8 +207,11 @@
             if (typeof div === 'string') {
                 result = document.getElementById(div);
             }
-            else if ($(div).length == 1) {
+            else if (div instanceof HTMLElement) {
                 result = div;
+            }
+            else if ('$' in window && div instanceof $ && div.length) {
+                result = div[0];
             }
             else {
                 result = document.createElement('div');
@@ -230,13 +248,16 @@
                     result = iconUrlCache[cssClass];
                 }
                 else {
-                    var $iconDiv = $('<div style="display:none">').addClass(cssClass).appendTo('body');
+                    const iconDiv = document.createElement('div');
+                    iconDiv.style.display = 'none';
+                    iconDiv.classList.add(cssClass);                    
+                    document.body.appendChild(iconDiv);                    
                     // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
-                    var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec($iconDiv.css('background-image'));
+                    var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec(window.getComputedStyle(iconDiv, null).backgroundImage);
                     if (match && match.length > 1) {
                         result = match[match.length - 1];
                     }
-                    $iconDiv.remove();
+                    iconDiv.parentElement.removeChild(iconDiv);
                     iconUrlCache[cssClass] = result;
                 }
             }
@@ -555,6 +576,14 @@
             return result;
         },
 
+        getParamString: function (obj) {
+            const arr = [];
+            for (var key in obj) {
+                arr[arr.length] = encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]);
+            }
+            return arr.join('&').replace(/%20/g, '+');
+        },
+
         fastUnshift: function (a, elm) {
             var len = a.length;
             while (len) {
@@ -658,6 +687,8 @@
                 return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
             }
 
+            // GLS: 13/02/2019. Comento lo que respecta a Edge, no tiene sentido meterlo en el mismo saco que un navegador obsoleto.
+            // No lo comento porque en la mesa no hay quorum.
             var edge = ua.indexOf('Edge/');
             if (edge > 0) {
                 // IE 12 => return version number
@@ -798,39 +829,167 @@
         },
 
         showModal: function (contentNode, options) {
-            var $modal = $(contentNode);
-            var options = options || {};
+            options = options || {};
 
-            $modal
-                .off('click')
-                .removeAttr("hidden");
-            $modal.fadeIn(250, function () {
-                $modal.on('click', ".tc-modal-close", function (e) {
-                    e.stopPropagation();
-                    return TC.Util.closeModal(options.closeCallback, e.target);
-                });
-                if ($.isFunction(options.openCallback)) {
-                    options.openCallback();
+            contentNode.hidden = false;
+            $(contentNode).fadeIn(250, function () {
+                if (window.$ && contentNode instanceof $) {
+                    contentNode = contentNode.get(0);
+                }
+                const closeButton = contentNode.querySelectorAll('.tc-modal-close');
+                if (closeButton && closeButton.length > 0) {
+                    for (var i = 0; i < closeButton.length; i++) {
+                        var closeCallback = modalCloseHandlers.get(closeButton[i]);
+                        if (closeCallback) {
+                            modalCloseHandlers.delete(closeButton[i]);
+                        }
+                        else {
+                            closeCallback = function (e) {
+                                e.stopPropagation();
+                                return TC.Util.closeModal(options.closeCallback, e.target);
+                            };
+                            modalCloseHandlers.set(closeButton[i], closeCallback);
+                        }
+                        modalCloseHandlers.set(closeButton[i], closeCallback);
+                        closeButton[i].addEventListener('click', closeCallback);
+                        if ($.isFunction(options.openCallback)) {
+                            options.openCallback();
+                        }
+                    }
                 }
             });
         },
 
         closeModal: function (callback, target) {
-            var $modal;
+
+            const hide = function (modal) {
+                modal.style.display = 'none';
+                modal.querySelector('.tc-modal-window').removeAttribute('style');
+            };
+
+            var modal;
             if (target) {
-                $modal = $(target).closest('.tc-modal');
+                modal = target;
+                while (modal && !modal.matches('.tc-modal')) {
+                    modal = modal.parentElement;
+                }
+
+                hide(modal);
             } else {
-                $modal = $(".tc-modal");
+                Array.prototype.forEach.call(document.querySelectorAll('.tc-modal'), function (modal) {
+                    hide(modal);
+                });
             }
 
-            $modal.hide().find(".tc-modal-window").removeAttr("style").off();
-
-            if (callback)
+            if (callback) {
                 callback();
+            }
         },
 
         closeAlert: function (btn) {
-            $(btn).parents(".tc-alert").hide();
+            var elm = btn;
+            do {
+                elm = elm.parentElement;
+                if (elm.matches('.tc-alert')) {
+                    elm.style.display = 'none';
+                }
+            }
+            while (elm);
+        },
+
+        swipe: function (target, options) {
+            const addListeners = function (handlers) {
+                target.addEventListener('mousedown', handlers.start);
+                target.addEventListener('touchstart', handlers.start);
+                target.addEventListener('mouseup', handlers.end);
+                target.addEventListener('touchend', handlers.end);
+            };
+
+            if (options === 'disable') {
+                const handlers = swipeHandlers.get(target);
+                if (handlers) {
+                    target.removeEventListener('mousedown', handlers.start);
+                    target.removeEventListener('touchstart', handlers.start);
+                    target.removeEventListener('mouseup', handlers.end);
+                    target.removeEventListener('touchend', handlers.end);
+                }
+                return;
+            }
+            else if (options === 'enable') {
+                const handlers = swipeHandlers.get(target);
+                if (handlers) {
+                    addListeners(handlers);
+                }
+                return;
+            }
+
+            options = options || {};
+            const minDistance = options.minDistance || 30;
+            const maxCrossDistance = options.maxCrossDistance || 30;
+            const maxAllowedTime = options.maxAllowedTime || 1000;
+            var touchStartCoords = { 'x': -1, 'y': -1 }, // X and Y coordinates on mousedown or touchstart events.
+                touchEndCoords = { 'x': -1, 'y': -1 },// X and Y coordinates on mouseup or touchend events.
+                startTime = 0,// Time on swipeStart
+                elapsedTime = 0;// Elapsed time between swipeStart and swipeEnd
+
+            const getDirection = function (startCoords, endCoords) {
+                const dx = endCoords.x - startCoords.x;
+                const dy = endCoords.y - startCoords.y;
+                const adx = Math.abs(dx);
+                const ady = Math.abs(dy);
+                if (adx > ady && adx > minDistance && ady <= maxCrossDistance) {
+                    return dx < 0 ? 'left' : 'right';
+                }
+                if (ady > adx && ady > minDistance && adx <= maxCrossDistance) {
+                    return dy < 0 ? 'up' : 'down';
+                }
+                return 'none';
+            };
+
+            const mustSwipe = function (e) {
+                if (options.noSwipe) {
+                    var elm = e.target;
+                    while (elm && elm !== target) {
+                        if (elm.matches && elm.matches(options.noSwipe)) {
+                            return false;
+                        }
+                        elm = elm.parentNode;
+                    }
+                }
+                return true;
+            };
+
+            const swipeStart = function (e) {
+                if (mustSwipe(e)) {
+                    e = 'changedTouches' in e ? e.changedTouches[0] : e;
+                    touchStartCoords.x = e.pageX;
+                    touchStartCoords.y = e.pageY;
+                    startTime = new Date().getTime();
+                }
+            };
+
+            const swipeEnd = function (e) {
+                if (startTime) {
+                    e = 'changedTouches' in e ? e.changedTouches[0] : e;
+                    touchEndCoords.x = e.pageX;
+                    touchEndCoords.y = e.pageY;
+                    elapsedTime = new Date().getTime() - startTime;
+                    if (elapsedTime <= maxAllowedTime) {
+                        const callback = options[getDirection(touchStartCoords, touchEndCoords)];
+                        if (callback) {
+                            callback.call(target);
+                        }
+                    }
+                    startTime = 0;
+                }
+            };
+
+            const handlers = {
+                start: swipeStart,
+                end: swipeEnd
+            };
+            swipeHandlers.set(target, handlers);
+            addListeners(handlers);
         },
 
         getParameterByName: function (name) {
@@ -917,13 +1076,9 @@
          * Acorta una URL utilizando el servicio de Bit.ly. No funciona para URLs locales.
          */
         shortenUrl: function (url) {
-            return $.ajax({
+            return TC.ajax({
                 url: "https://api-ssl.bitly.com/v3/shorten",
                 data: { access_token: "6c466047309f44bd8173d83e81491648b243ee3d", longUrl: url },
-            }).done(function (response) {
-                return response;
-            }).fail(function (error) {
-                return error;
             });
         },
 
@@ -1048,72 +1203,70 @@
                 return canvas;
             };
 
-            var deferred = $.Deferred();
+            return new Promise(function (resolve, reject) {
+                var img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function () {
+                    var canvas = createCanvas(img);
+                    var dataURL;
 
-            var img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = function () {
-                var canvas = createCanvas(img);
-                var dataURL;
+                    try {
+                        dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                            type: outputFormat || 'image/jpeg',
+                            encoderOptions: 1.0
+                        });
+                        resolve({ dataUrl: dataURL, canvas: canvas });
+                    } catch (error) {
+                        img.src = TC.proxify(src);
+                    }
+                };
 
-                try {
-                    dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
-                        type: outputFormat || 'image/jpeg',
-                        encoderOptions: 1.0
-                    });
-                    deferred.resolve(dataURL, canvas);
-                } catch (error) {
-                    img.src = TC.proxify(src);
-                }
-            };
+                img.onerror = function (error) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', TC.proxify(src), true);
+                    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-            img.onerror = function (error) {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', TC.proxify(src), true);
-                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-                xhr.responseType = 'arraybuffer';
-                xhr.onload = function (e) {
-                    if (this.status === 200) {
-                        var uInt8Array = new Uint8Array(this.response);
-                        var i = uInt8Array.length;
-                        var binaryString = new Array(i);
-                        while (i--) {
-                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
-                        }
-                        var data = binaryString.join('');
-                        var type = xhr.getResponseHeader('content-type');
-                        if (type.indexOf('image') === 0) {
-                            img.src = 'data:' + type + ';base64,' + window.btoa(data);
-                            img.onload = function () {
-                                var canvas = createCanvas(img);
-                                dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
-                                    type: outputFormat || 'image/jpeg',
-                                    encoderOptions: 1.0
-                                });
-                                deferred.resolve(dataURL, canvas);
+                    xhr.responseType = 'arraybuffer';
+                    xhr.onload = function (e) {
+                        if (this.status === 200) {
+                            var uInt8Array = new Uint8Array(this.response);
+                            var i = uInt8Array.length;
+                            var binaryString = new Array(i);
+                            while (i--) {
+                                binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                            }
+                            var data = binaryString.join('');
+                            var type = xhr.getResponseHeader('content-type');
+                            if (type.indexOf('image') === 0) {
+                                img.src = 'data:' + type + ';base64,' + window.btoa(data);
+                                img.onload = function () {
+                                    var canvas = createCanvas(img);
+                                    dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                                        type: outputFormat || 'image/jpeg',
+                                        encoderOptions: 1.0
+                                    });
+                                    resolve({ dataUrl: dataURL, canvas: canvas });
+                                }
                             }
                         }
-                    }
-                };
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status !== 200) {
-                            deferred.reject();
+                    };
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status !== 200) {
+                                reject();
+                            }
                         }
-                    }
+                    };
+
+                    xhr.send();
                 };
 
-                xhr.send();
-            };
-
-            img.src = src;
-            if (img.complete || img.complete === undefined) {
-                img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
                 img.src = src;
-            }
-
-            return deferred.promise();
+                if (img.complete || img.complete === undefined) {
+                    img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+                    img.src = src;
+                }
+            });
         },
 
         imgTagToDataUrl: function (img, outputFormat) {
@@ -1143,22 +1296,21 @@
 
         addToCanvas: function (canvas, img, position, size) {
             var newCanvas = TC.Util.cloneCanvas(canvas);
-            var deferred = $.Deferred();
             var context = newCanvas.getContext('2d');
 
-            var newImage = new Image();
-            img.crossOrigin = 'anonymous';
-            newImage.src = img;
-            newImage.onload = function () {
-                if (size) {
-                    context.drawImage(newImage, position.x || 0, position.y || 0, size.width, size.height);
-                } else {
-                    context.drawImage(newImage, position.x || 0, position.y || 0);
+            return new Promise(function (resolve, reject) {
+                var newImage = new Image();
+                img.crossOrigin = 'anonymous';
+                newImage.src = img;
+                newImage.onload = function () {
+                    if (size) {
+                        context.drawImage(newImage, position.x || 0, position.y || 0, size.width, size.height);
+                    } else {
+                        context.drawImage(newImage, position.x || 0, position.y || 0);
+                    }
+                    resolve(newCanvas);
                 }
-                deferred.resolve(newCanvas);
-            }
-
-            return deferred.promise();
+            });
         },
 
         cloneCanvas: function (oldCanvas) {
@@ -1207,39 +1359,63 @@
         downloadFileForm: function (url, data) {
 
             var download = function (url, data) {
-                var form = $("<form/>", { "class": "tc-ctl-download-form", "method": "post", "enctype": "text/plain", "action": (TC.Util.detectIE() !== false && TC.Util.detectIE() <= 11 ? TC.proxify(url) : url) });
-                var input = $("<input/>", { "class": "tc-ctl-download-query", "name": data.substring(0, data.indexOf("=")) });
-                form.append(input);
-                var iframe = $("iframe").filter(function (i, item) { return $(item).data("url-download") === url });
-                if (iframe.length > 0)
-                    iframe = iframe.first();
-                else {
-                    iframe = $('<iframe style="visibility: hidden; display:none;"></iframe>');
-                    iframe.data("url-download", url);
-                    $('body').append(iframe);
+                const fragment = document.createDocumentFragment();
+                var form = document.createElement('form');
+                form.classList.add('tc-ctl-download-form');
+                form.setAttribute('method', 'post');
+                form.setAttribute('enctype', 'text/plain');
+                form.setAttribute('action', TC.Util.detectIE() !== false && TC.Util.detectIE() <= 11 ? TC.proxify(url) : url);
+                const input = document.createElement('input');
+                input.classList.add('tc-ctl-download-query');
+                input.setAttribute('name', data.substring(0, data.indexOf("=")));
+                form.appendChild(input);
+                fragment.appendChild(form);
+                const iframes = document.querySelectorAll('iframe');
+                var iframe;
+                for (var i = 0, len = iframes.length; i < len; i++) {
+                    const currentIframe = iframes[i];
+                    if (currentIframe.dataset.downloadUrl === url) {
+                        iframe = currentIframe;
+                        break;
+                    }
                 }
-                var content = iframe[0].contentDocument;
+                if (!iframe) {
+                    iframe = document.createElement('iframe');
+                    iframe.style.visibility = 'hidden';
+                    iframe.style.display = 'none';
+                    iframe.dataset.downloadUrl = url;
+                    document.body.appendChild(iframe);
+                }
+
+                const content = iframe.contentDocument;
                 content.open();
-                content.write(form[0].outerHTML);
+                content.write(form.outerHTML);
                 content.close();
-                $('input', content).val(data.substring(data.indexOf("=") + 1));
-                form = $('form', content);
+                content.querySelector('input').value = data.substring(data.indexOf("=") + 1);
+                form = content.querySelector('form');
                 return form;
             };
-            var jqObj = [];
-            if (jQuery.isArray(url)) {
+
+            var htmlObj = [];
+            if ($.isArray(url)) {
                 var arrDownloads = url;
                 for (var i = 0; i < arrDownloads.length; i++) {
-                    jqObj.push(download(arrDownloads[i].url, arrDownloads[i].data));
+                    htmlObj.push(download(arrDownloads[i].url, arrDownloads[i].data));
                 }
             }
-            else
-                jqObj.push(download(url, data));
-            $(jqObj).submit();
+            else {
+                htmlObj.push(download(url, data));
+            }
+            htmlObj.forEach(function (form) {
+                form.submit();
+            });
             setTimeout(function () {
-                $(".tc-ctl-download-form").remove();
+                document.querySelectorAll('.tc-ctl-download-form').forEach(function (form) {
+                    form.parentElement.removeChild(form);
+                });
             }, 1000);
         },
+
         WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits) {
             if (!$.isArray(layers))
                 layers = [layers];
@@ -1269,6 +1445,7 @@
             query += queryBody + '</wfs:GetFeature>'
             return query;
         },
+
         WFSFilterBuilder: function (feature, version) {
             var filter = '';
             if (jQuery.isPlainObject(feature)) {
@@ -1314,6 +1491,7 @@
 
             return filter;
         },
+
         writeGMLGeometry: function (feature, gmlVersion) {
 
             var getGmlCoordinates = function (coords) {
@@ -1443,6 +1621,126 @@
             var link = document.createElement("a");
             link.href = href;
             return link.href;
+        },
+
+        getRenderedHtml: function (templateId, template, data, callback) {
+            return new Promise(function (resolve, reject) {
+                var render = function () {
+                    if (dust.cache[templateId]) {
+                        dust.render(templateId, data, function (err, out) {
+                            if (err) {
+                                TC.error(err);
+                                reject(Error(err));
+                            }
+                            else {
+                                if ($.isFunction(callback)) {
+                                    callback(out);
+                                }
+                                resolve(out);
+                            }
+                        });
+                    }
+                };
+                TC.loadJSInOrder(
+                    !window.dust,
+                    TC.url.templating,
+                    function () {
+                        if (!dust.cache[templateId]) {
+                            if (typeof template === 'string') {
+                                TC.ajax({
+                                    url: template,
+                                    method: "GET",
+                                    responseType: 'text'
+                                })
+                                    .then(function (html) {
+                                        var tpl = dust.compile(html, templateId);
+                                        dust.loadSource(tpl);
+                                        render();
+                                    })
+                                    .catch(function (err) {
+                                        console.log("Error fetching template: " + err)
+                                    });
+                            }
+                            else if ($.isFunction(template)) {
+                                template();
+                                render();
+                            }
+                        }
+                        else {
+                            render();
+                        }
+                    }
+                );
+            });
+        },
+
+        explodeGeometry: function (obj) {
+            const origin = obj.origin;
+            const iterationFunction = function (elm, idx, arr) {
+                if ($.isArray(elm)) {
+                    elm.forEach(iterationFunction);
+                }
+                else {
+                    if (idx === 0) {
+                        arr[0] = elm + origin[0];
+                    }
+                    if (idx === 1) {
+                        arr[1] = elm + origin[1];
+                    }
+                }
+            };
+            obj.geom.forEach(iterationFunction);
+            return obj.geom;
+        },
+
+        cloneMappingFunction: function (elm) {
+            if ($.isArray(elm)) {
+                return elm.map(TC.Util.cloneMappingFunction);
+            }
+            return elm;
+        },
+
+        compactGeometry: function (geometry, precision) {
+            const origin = [Number.MAX_VALUE, Number.MAX_VALUE];
+            const newGeom = geometry.map(TC.Util.cloneMappingFunction);
+            const firstIterationFunction = function (elm, idx) {
+                if ($.isArray(elm)) {
+                    elm.forEach(firstIterationFunction);
+                }
+                else {
+                    if (idx === 0 && elm < origin[0]) {
+                        origin[0] = elm;
+                    }
+                    else if (idx === 1 && elm < origin[1]) {
+                        origin[1] = elm;
+                    }
+                }
+            };
+            newGeom.forEach(firstIterationFunction);
+
+            const round = function (val) {
+                return Math.round(val * precision) / precision;
+            }
+            origin[0] = round(origin[0]);
+            origin[1] = round(origin[1]);
+            const secondIterationFunction = function (elm, idx, arr) {
+                if ($.isArray(elm)) {
+                    elm.forEach(secondIterationFunction);
+                }
+                else {
+                    if (idx === 0) {
+                        arr[0] = round(elm - origin[0]);
+                    }
+                    if (idx === 1) {
+                        arr[1] = round(elm - origin[1]);
+                    }
+                }
+            };
+            newGeom.forEach(secondIterationFunction);
+            return {
+                origin: origin,
+                geom: newGeom
+            }
         }
     };
     String.prototype.format = function () {
@@ -1454,6 +1752,39 @@
         for (arg in args)
             str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), args[arg]);
         return str;
+    };
+    var fncOvelaps = function (elem1, elem2,comparisonFnc) {        
+        return comparisonFnc(elem1.getBoundingClientRect(), elem2.getBoundingClientRect());
+    }
+    HTMLElement.prototype.colliding = function (other) {
+        return fncOvelaps(this, other, function (rect1, rect2) {
+            return !(
+                rect1.top > rect2.bottom ||
+                rect1.right < rect2.left ||
+                rect1.bottom < rect2.top ||
+                rect1.left > rect2.right
+            );
+        });        
+    };
+    HTMLElement.prototype.containing = function (other) {
+        fncOvelaps(this, other, function (rect1, rect2) {
+            return !(
+                rect1.left <= rect2.left &&
+                rect2.left < rect1.width &&
+                rect1.top <= rect2.top &&
+                rect2.top < rect1.height
+            );
+        });
+    };
+    HTMLElement.prototype.inside = function (other) {
+        return fncOvelaps(this, other, function (rect1, rect2) {
+            return (
+                ((rect2.top <= rect1.top) && (rect1.top <= rect2.bottom)) &&
+                ((rect2.top <= rect1.bottom) && (rect1.bottom <= rect2.bottom)) &&
+                ((rect2.left <= rect1.left) && (rect1.left <= rect2.right)) &&
+                ((rect2.left <= rect1.right) && (rect1.right <= rect2.right))
+            );
+        });        
     };
     return Util;
 });
