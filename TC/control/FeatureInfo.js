@@ -52,7 +52,7 @@ if (!TC.control.FeatureInfoCommons) {
         const result = TC.control.FeatureInfoCommons.prototype.register.call(self, map);
 
         // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
-        self._$div.appendTo('<div>');
+        document.createElement('div').appendChild(self.div);
 
         return result;
     };
@@ -74,8 +74,7 @@ if (!TC.control.FeatureInfoCommons) {
             var title = self.getLocaleString('featureInfo');
             var markerOptions = $.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title, showsPopup: false });
             self.filterLayer.clearFeatures();
-            $.when(self.filterLayer.addMarker(coords, markerOptions)
-            ).then(function (marker) {
+            self.filterLayer.addMarker(coords, markerOptions).then(function (marker) {
                 ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
                 ////o sea
                 ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
@@ -159,8 +158,9 @@ if (!TC.control.FeatureInfoCommons) {
                         self.insertLinks();
 
                         if (self.sharedFeatureInfo) {
-                            self._$div.find('ul.' + self.CLASS + '-services li')
-                                .addClass(TC.Consts.classes.CHECKED);
+                            self.div.querySelectorAll('ul.' + self.CLASS + '-services li').forEach(function (li) {
+                                li.classList.add(TC.Consts.classes.CHECKED);
+                            })
                             var sharedFeature;
                             var featureObj = self.sharedFeatureInfo;
                             for (var i = 0, ii = self.info.services.length; i < ii; i++) {
@@ -246,7 +246,7 @@ if (!TC.control.FeatureInfoCommons) {
                     self.beforeRequest({ xy: coords }); // xy negativo para que no se vea el marcador, ya que no sabemos dónde ponerlo.
                     //aquí se pone el puntito temporal
                     self.filterLayer.clearFeatures();
-                    $.when(self.filterLayer.addMarker(coords)).then(function (marker) {
+                    self.filterLayer.addMarker(coords).then(function (marker) {
                         self.filterFeature = marker;
                         self.wrap.getFeatureInfo(featureObj.xy, featureObj.r, {
                             serviceUrl: featureObj.s,

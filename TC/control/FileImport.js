@@ -54,15 +54,18 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
         map
             .on(TC.Consts.event.FEATURESIMPORT, function (e) {
+                const fileName = e.fileName;
+                const target = e.dropTarget;
+                const features = e.features;
                 // Ignoramos los GPX (se supone que los gestionará Geolocation)
                 var gpxPattern = '.' + TC.Consts.format.GPX.toLowerCase();
-                if (e.fileName.toLowerCase().indexOf(gpxPattern) === e.fileName.length - gpxPattern.length || e.target !== self.map.div && e.target !== self) {
+                if (fileName.toLowerCase().indexOf(gpxPattern) === fileName.length - gpxPattern.length || target !== self.map.div && target !== self) {
                     return;
                 }
                 
                 map.addLayer({
                     id: self.getUID(),
-                    title: e.fileName,
+                    title: fileName,
                     type: TC.Consts.layerType.VECTOR
                 }).then(function (layer) {
                     self.layers.push(layer);
@@ -102,8 +105,8 @@ TC.inherit(TC.control.FileImport, TC.Control);
                         return feature;
                     };
 
-                    for (var i = 0, len = e.features.length; i < len; i++) {
-                        var projectedFeature = projectGeom(e.features[i]);
+                    for (var i = 0, len = features.length; i < len; i++) {
+                        var projectedFeature = projectGeom(features[i]);
                         layer.addFeature(projectedFeature);
                     }
                     setTimeout(function () {
@@ -131,9 +134,10 @@ TC.inherit(TC.control.FileImport, TC.Control);
             })
             .on(TC.Consts.event.FEATUREREMOVE, function (e) {
                 // Eliminamos la capa cuando ya no quedan features en ella
-                if (self.layers.indexOf(e.layer) >= 0) {
-                    if (!e.layer.features.length) {
-                        self.map.removeLayer(e.layer);
+                const layer = e.layer;
+                if (self.layers.indexOf(layer) >= 0) {
+                    if (!layer.features.length) {
+                        self.map.removeLayer(layer);
                     }
                 }
             })
@@ -148,21 +152,29 @@ TC.inherit(TC.control.FileImport, TC.Control);
     };
 
     ctlProto.render = function () {
-        var self = this;
-        self.renderData({ formats: self.formats }, function () {            
-            self._$div.find('input[type=file]')
-                // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
-                .on(TC.Consts.event.CLICK, function (e) {
-                    $(this).wrap('<form>').closest('form').get(0).reset();
-                    $(this).unwrap();
-                })
-                .on('change', function (e) {
-                    if (self.map) {
-                        console.log('salta el change');
-                        self.map.wrap.loadFiles(e.target.files, { control: self });
-                    }
-                });
-        });
+        const self = this;
+        return self._set1stRenderPromise(self.renderData({ formats: self.formats }, function () {            
+            const fileInput = self.div.querySelector('input[type=file]');
+            // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
+            fileInput.addEventListener(TC.Consts.event.CLICK, function (e) {
+                const input = this;
+                // Envolvemos el input en un form
+                const form = document.createElement('form');
+                const parent = input.parentElement;
+                parent.insertBefore(form, input);
+                form.appendChild(input);
+                form.reset();
+                // Desenvolvemos el input del form
+                form.insertAdjacentElement('afterend', input);
+                parent.removeChild(form);
+            });
+            fileInput.addEventListener('change', function (e) {
+                if (self.map) {
+                    console.log('salta el change');
+                    self.map.wrap.loadFiles(e.target.files, { control: self });
+                }
+            });
+        }));
     };
 
     ctlProto.exportState = function () {
@@ -193,9 +205,9 @@ TC.inherit(TC.control.FileImport, TC.Control);
                 }));
             });
 
-            $.when.apply($, layerPromises).then(function () {
-                for (var i = 0, len = arguments.length; i < len; i++) {
-                    const layer = arguments[i];
+            Promise.all(layerPromises).then(function (layers) {
+                for (var i = 0, len = layers.length; i < len; i++) {
+                    const layer = layers[i];
                     layer.importState(state.layers[i].state);
                     self.layers.push(layer);
                 }
