@@ -134,6 +134,7 @@ TC.layer.Vector = function () {
 
     var ollyr = self.wrap.createVectorLayer();
     self.wrap.setLayer(ollyr);
+    self.wrap._promise = Promise.resolve(ollyr);
 };
 
 TC.inherit(TC.layer.Vector, TC.Layer);
@@ -168,25 +169,23 @@ TC.inherit(TC.layer.Vector, TC.Layer);
     };
 
     var addFeatureInternal = function (layer, multipleFeatureFunction, coord, options) {
-        var result = new $.Deferred();
-        $.when(multipleFeatureFunction.call(layer, [coord], options)).then(function (features) {
-            result.resolve(features[0]);
-            if (layer.map) {
-                layer.map.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { layer: layer, feature: features[0] }));
-            }
+        return new Promise(function (resolve, reject) {
+            multipleFeatureFunction.call(layer, [coord], options).then(function (features) {
+                resolve(features[0]);
+                if (layer.map) {
+                    layer.map.trigger(TC.Consts.event.FEATUREADD, { layer: layer, feature: features[0] });
+                }
+            });
         });
-        return result;
     };
 
     var addFeaturesInternal = function (layer, coordsArray, constructorName, styleType, options) {
-        var deferred = new $.Deferred();
         var style = (layer.options.styles && layer.options.styles[styleType]) || TC.Cfg.styles[styleType];
         var opts = $.extend(true, {}, style, options);
-        TC.loadJS(
-            !TC.feature || (TC.feature && !TC.feature[constructorName]),
-            [TC.apiLocation + 'TC/feature/' + constructorName],
-            function () {
-                var FeatureConstructor = TC.feature[constructorName]
+        return new Promise(function (resolve, reject) {
+            var FeatureConstructor;
+            const endFn = function () {
+                FeatureConstructor = FeatureConstructor || TC.feature[constructorName];
                 var features = new Array(coordsArray.length);
                 var nativeFeatures = [];
                 for (var i = 0, len = coordsArray.length; i < len; i++) {
@@ -215,15 +214,25 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                         feature.showPopup();
                     }
                     // Este evento mata el rendimiento
-                    //self.map.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { layer: self, feature: marker }));
+                    //self.map.trigger(TC.Consts.event.FEATUREADD, { layer: self, feature: marker });
                 }
                 if (nativeFeatures.length) {
                     layer.wrap.addFeatures(nativeFeatures);
                 }
-                deferred.resolve(features);
+                resolve(features);
+            };
+            if (constructorName) {
+                TC.loadJS(
+                    !TC.feature || (TC.feature && !TC.feature[constructorName]),
+                    [TC.apiLocation + 'TC/feature/' + constructorName],
+                    endFn
+                );
             }
-        );
-        return deferred;
+            else {
+                FeatureConstructor = TC.Feature;
+                endFn();
+            }
+        });
     };
 
     /**
@@ -373,26 +382,29 @@ TC.inherit(TC.layer.Vector, TC.Layer);
      * @return {jQuery promise} La promesa al resolverse devuelve un objeto de la clase TC.Feature
      */
     layerProto.addFeature = function (feature) {
-        var layer = this;
+        const self = this;
         var result;
         if (TC.feature) {
             if (TC.feature.Point && feature instanceof TC.feature.Point || feature.CLASSNAME === "TC.feature.Point") {
-                result = layer.addPoint(feature);
+                result = self.addPoint(feature);
             }
             else if (TC.feature.Polyline && feature instanceof TC.feature.Polyline || feature.CLASSNAME === "TC.feature.Polyline") {
-                result = layer.addPolyline(feature);
+                result = self.addPolyline(feature);
             }
             else if (TC.feature.Polygon && feature instanceof TC.feature.Polygon || feature.CLASSNAME === "TC.feature.Polygon") {
-                result = layer.addPolygon(feature);
+                result = self.addPolygon(feature);
             }
             else if (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon || feature.CLASSNAME === "TC.feature.MultiPolygon") {
-                result = layer.addMultiPolygon(feature);
+                result = self.addMultiPolygon(feature);
             }
             else if (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline || feature.CLASSNAME === "TC.feature.MultiPolyline") {
-                result = layer.addMultiPolyline(feature);
+                result = self.addMultiPolyline(feature);
             }
             else if (TC.feature.Circle && feature instanceof TC.feature.Circle || feature.CLASSNAME === "TC.feature.Circle") {
-                result = layer.addCircle(feature);
+                result = self.addCircle(feature);
+            }
+            else {
+                result = addFeaturesInternal(self, [feature])
             }
         }
         return result;
@@ -411,6 +423,13 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 popups.forEach(function (pu) {
                     if (pu.isVisible() && pu.currentFeature === feature) {
                         pu.hide();
+                    }
+                });
+
+                const panels = self.map.getControlsByClass('TC.control.ResultsPanel');
+                panels.forEach(function (p) {
+                    if (p.isVisible() && p.currentFeature === feature) {
+                        p.close();
                     }
                 });
             }
@@ -449,41 +468,43 @@ TC.inherit(TC.layer.Vector, TC.Layer);
     };
 
     layerProto.describeFeatureType = function (callback, error) {
-        var self = this;
-        var deferred = $.Deferred();
-        $.ajax({
-            url: self.wrap.getDescribeFeatureTypeUrl(),
-            type: 'GET',
-            dataType: 'xml'
-        }).then(function (data) {
-            var ns = 'http://www.w3.org/2001/XMLSchema';
-            var complexType = data.getElementsByTagNameNS(ns, 'complexType')[0];
-            if (complexType) {
-                var elements = complexType.getElementsByTagNameNS(ns, 'element');
-                var result = new Array(elements.length);
-                for (var i = 0, len = elements.length; i < len; i++) {
-                    var element = elements[i];
-                    result[i] = {
-                        name: element.getAttribute('name'),
-                        type: element.getAttribute('type'),
-                        nillable: element.getAttribute('nillable') === 'true' ? true : false,
-                        minOccurs: parseInt(element.getAttribute('minOccurs')),
-                        maxOccurs: parseInt(element.getAttribute('maxOccurs'))
+        const self = this;
+        const promise = new Promise(function (resolve, reject) {
+            TC.ajax({
+                url: self.wrap.getDescribeFeatureTypeUrl(),
+                method: 'GET',
+                responseType: TC.Consts.mimeType.XML
+            })
+                .then(function (data) {
+                    var ns = 'http://www.w3.org/2001/XMLSchema';
+                    var complexType = data.getElementsByTagNameNS(ns, 'complexType')[0];
+                    if (complexType) {
+                        var elements = complexType.getElementsByTagNameNS(ns, 'element');
+                        var result = new Array(elements.length);
+                        for (var i = 0, len = elements.length; i < len; i++) {
+                            var element = elements[i];
+                            result[i] = {
+                                name: element.getAttribute('name'),
+                                type: element.getAttribute('type'),
+                                nillable: element.getAttribute('nillable') === 'true' ? true : false,
+                                minOccurs: parseInt(element.getAttribute('minOccurs')),
+                                maxOccurs: parseInt(element.getAttribute('maxOccurs'))
+                            }
+                        }
+                        resolve(result);
                     }
-                }
-                deferred.resolve(result);
-            }
-            else {
-                var exception = data.getElementsByTagName('Exception')[0];
-                if (exception) {
-                    deferred.reject(exception.getElementsByTagName('ExceptionText')[0].innerHTML);
-                }
-            }
-        },
-        function (jqXHR, textStatus, errorThrown) {
-            deferred.reject(errorThrown);
+                    else {
+                        var exception = data.getElementsByTagName('Exception')[0];
+                        if (exception) {
+                            reject(exception.getElementsByTagName('ExceptionText')[0].innerHTML);
+                        }
+                    }
+                })
+                .catch(function (jqXHR, textStatus, errorThrown) {
+                    reject(Error(errorThrown));
+                });
         });
-        deferred.then(
+        promise.then(
             function (data) {
                 if ($.isFunction(callback)) {
                     callback(data);
@@ -495,7 +516,6 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 }
             }
         );
-        return deferred.promise();
     };
 
     layerProto.import = function (options) {
@@ -506,8 +526,8 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         var self = this;
 
         self.state = TC.Layer.state.LOADING;
-        self.map.$events.trigger($.Event(TC.Consts.event.BEFOREUPDATE));
-        self.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self }));
+        self.map.trigger(TC.Consts.event.BEFOREUPDATE);
+        self.map.trigger(TC.Consts.event.BEFORELAYERUPDATE, { layer: self });
 
         if (!self.tree) {
             self.tree = self.getTree();
@@ -545,8 +565,8 @@ TC.inherit(TC.layer.Vector, TC.Layer);
             }
         }
         self.state = TC.Layer.state.IDLE;
-        self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self }));
-        self.map.$events.trigger($.Event(TC.Consts.event.UPDATE));
+        self.map.trigger(TC.Consts.event.LAYERUPDATE, { layer: self });
+        self.map.trigger(TC.Consts.event.UPDATE);
     };
 
     layerProto.getNodeVisibility = function (id) {
@@ -598,65 +618,17 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         const self = this;
         self.wrap.setProjection(options);
         if (options.crs && options.oldCrs) {
-            self.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self }));
+            self.map.trigger(TC.Consts.event.BEFORELAYERUPDATE, { layer: self });
             self.features.forEach(function (feat) {
                 feat.wrap.setGeometry(TC.Util.reproject(feat.geometry, options.oldCrs, options.crs));
                 feat.geometry = feat.wrap.getGeometry();
             });
-            self.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self }));
+            self.map.trigger(TC.Consts.event.LAYERUPDATE, { layer: self });
         }
     };
+   
 
-    const cloneMappingFunction = function (elm) {
-        var result;
-        if ($.isArray(elm)) {
-            return elm.map(cloneMappingFunction);
-        }
-        return elm;
-    };
-
-    const compactGeometry = function (geometry, precision) {
-        const origin = [Number.MAX_VALUE, Number.MAX_VALUE];
-        const newGeom = geometry.map(cloneMappingFunction);
-        const firstIterationFunction = function (elm, idx) {
-            if ($.isArray(elm)) {
-                elm.forEach(firstIterationFunction);
-            }
-            else {
-                if (idx === 0 && elm < origin[0]) {
-                    origin[0] = elm;
-                }
-                else if (idx === 1 && elm < origin[1]) {
-                    origin[1] = elm;
-                }
-            }
-        };
-        newGeom.forEach(firstIterationFunction);
-
-        const round = function (val) {
-            return Math.round(val * precision) / precision;
-        }
-        origin[0] = round(origin[0]);
-        origin[1] = round(origin[1]);
-        const secondIterationFunction = function (elm, idx, arr) {
-            if ($.isArray(elm)) {
-                elm.forEach(secondIterationFunction);
-            }
-            else {
-                if (idx === 0) {
-                    arr[0] = round(elm - origin[0]);
-                }
-                if (idx === 1) {
-                    arr[1] = round(elm - origin[1]);
-                }
-            }
-        };
-        newGeom.forEach(secondIterationFunction);
-        return {
-            origin: origin,
-            geom: newGeom
-        }
-    }
+    
 
     layerProto.exportState = function (options) {
         const self = this;
@@ -712,7 +684,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                         break;
                 }
                 fObj.id = f.id;
-                fObj.geom = compactGeometry(f.geometry, precision);
+                fObj.geom = TC.Util.compactGeometry(f.geometry, precision);
                 fObj.data = f.getData();
                 fObj.showsPopup = f.showsPopup;
                 if (options.exportStyles === undefined || options.exportStyles) {
@@ -729,88 +701,70 @@ TC.inherit(TC.layer.Vector, TC.Layer);
             });
         return lObj;
     };
-
-    const explodeGeometry = function (obj) {
-        const origin = obj.origin;
-        const iterationFunction = function (elm, idx, arr) {
-            if ($.isArray(elm)) {
-                elm.forEach(iterationFunction);
-            }
-            else {
-                if (idx === 0) {
-                    arr[0] = elm + origin[0];
-                }
-                if (idx === 1) {
-                    arr[1] = elm + origin[1];
-                }
-            }
-        };
-        obj.geom.forEach(iterationFunction);
-        return obj.geom;
-    };
+    
 
     layerProto.importState = function (obj) {
         const self = this;
-        const deferred = $.Deferred();
-        const deferreds = new Array(obj.features.length);
-        obj.features.forEach(function (f, idx) {
-            const featureOptions = $.extend(f.style, { data: f.data, id: f.id, showsPopup: f.showsPopup });
-            var addFn;
-            switch (f.type) {
-                case TC.Consts.geom.POLYGON:
-                    addFn = self.addPolygon;
-                    break;
-                case TC.Consts.geom.MULTIPOLYGON:
-                    addFn = self.addMultiPolygon;
-                    break;
-                case TC.Consts.geom.POLYLINE:
-                    addFn = self.addPolyline;
-                    break;
-                case TC.Consts.geom.MULTIPOLYLINE:
-                    addFn = self.addMultiPolyline;
-                    break;
-                case TC.Consts.geom.CIRCLE:
-                    addFn = self.addCircle;
-                    break;
-                case TC.Consts.geom.POINT:
-                    if (f.style && (f.style.url || f.style.className)) {
-                        addFn = self.addMarker;
+        return new Promise(function (resolve, reject) {
+            const promises = new Array(obj.features.length);
+            obj.features.forEach(function (f, idx) {
+                const featureOptions = $.extend(f.style, { data: f.data, id: f.id, showsPopup: f.showsPopup });
+                var addFn;
+                switch (f.type) {
+                    case TC.Consts.geom.POLYGON:
+                        addFn = self.addPolygon;
+                        break;
+                    case TC.Consts.geom.MULTIPOLYGON:
+                        addFn = self.addMultiPolygon;
+                        break;
+                    case TC.Consts.geom.POLYLINE:
+                        addFn = self.addPolyline;
+                        break;
+                    case TC.Consts.geom.MULTIPOLYLINE:
+                        addFn = self.addMultiPolyline;
+                        break;
+                    case TC.Consts.geom.CIRCLE:
+                        addFn = self.addCircle;
+                        break;
+                    case TC.Consts.geom.POINT:
+                        if (f.style && (f.style.url || f.style.className)) {
+                            addFn = self.addMarker;
+                        }
+                        else {
+                            addFn = self.addPoint;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                if (addFn) {
+                    var geom = TC.Util.explodeGeometry(f.geom);
+                    if (obj.crs && self.map.crs !== obj.crs) {
+                        promises[idx] = new Promise(function (res, rej) {
+                            self.map.one(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+                                addFn.call(self, geom, featureOptions).then(
+                                    function () {
+                                        res();
+                                    },
+                                    function () {
+                                        rej();
+                                    }
+                                );
+                            });
+                        });
                     }
                     else {
-                        addFn = self.addPoint;
+                        promises[idx] = addFn.call(self, geom, featureOptions);
                     }
-                    break;
-                default:
-                    break;
-            }
-            if (addFn) {
-                var geom = explodeGeometry(f.geom);
-                if (obj.crs && self.map.crs !== obj.crs) {
-                    const def = $.Deferred();
-                    self.map.one(TC.Consts.event.PROJECTIONCHANGE, function (e) {
-                        addFn.call(self, geom, featureOptions).then(
-                            function () {
-                                def.resolve();
-                            },
-                            function () {
-                                def.reject();
-                            }
-                        );
-                    });
-                    deferreds[idx] = def;
                 }
-                else {
-                    deferreds[idx] = addFn.call(self, geom, featureOptions);
-                }
-            }
-        });
-        $.when.apply($, deferreds).then(
-            function () {
-                deferred.resolve();
-            },
-            function () {
-                deferred.reject();
             });
-        return deferred.promise();
+            Promise.all(promises).then(
+                function () {
+                    resolve();
+                },
+                function (err) {
+                    reject(err instanceof Error ? err : Error(err));
+                });
+        });
     };
 })();
