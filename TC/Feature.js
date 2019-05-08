@@ -53,6 +53,18 @@ TC.Feature.prototype.getPath = function () {
 
 TC.Feature.prototype.setVisibility = function (visible) {
     var self = this;
+
+    // Ocultamos el posible popup
+    if (!visible && self.showsPopup && self.layer) {
+        var popup = self.layer.map.getControlsByClass(TC.control.Popup).filter(function (popup) {
+            return popup.currentFeature === self
+        });
+
+        if (popup.length > 0) {
+            popup[0].hide();
+        }
+    }
+
     if ((visible && self._visibilityState === TC.Consts.visibility.NOT_VISIBLE) || (!visible && self._visibilityState === TC.Consts.visibility.VISIBLE)) {
         self._visibilityState = visible ? TC.Consts.visibility.VISIBLE : TC.Consts.visibility.NOT_VISIBLE;
         self.layer.wrap.setFeatureVisibility(self, visible);
@@ -246,7 +258,7 @@ TC.Feature.prototype.showPopup = function (control) {
     const self = this;
     const map = (self.layer && self.layer.map) || (control && control.map);
     if (map) {
-        var ctlDeferred;
+        var ctlPromise;
         var popup = control || self.popup;
         if (!popup) {
             // Buscamos un popup existente que no esté asociado a un control.
@@ -261,13 +273,12 @@ TC.Feature.prototype.showPopup = function (control) {
         }
         if (popup) {
             popup.currentFeature = self;
-            ctlDeferred = $.Deferred();
-            ctlDeferred.resolve(popup);
+            ctlPromise = Promise.resolve(popup);
         }
         else {
-            ctlDeferred = map.addControl('popup');
+            ctlPromise = map.addControl('popup');
         }
-        ctlDeferred.then(function (ctl) {
+        ctlPromise.then(function (ctl) {            
             ctl.currentFeature = self;
             map.getControlsByClass(TC.control.Popup).forEach(function (p) {
                 if (p.isVisible()) {
@@ -276,12 +287,15 @@ TC.Feature.prototype.showPopup = function (control) {
             });
             self.wrap.showPopup(ctl);
             // Ajustamos el ancho del título al de la tabla de atributos
-            const $attrTable = ctl.$contentDiv.find("table.tc-attr");
-            const $h = ctl.$contentDiv.find("h1,h2,h3,h4,h5");
-            if ($attrTable.length && $h.length) {
-                $h.css('max-width', $attrTable.width());
+            const attrTable = ctl.contentDiv.querySelector("table.tc-attr");
+            const headers = ctl.contentDiv.querySelectorAll("h1,h2,h3,h4,h5");
+            if (attrTable && headers.length) {
+                const maxWidth = attrTable.getBoundingClientRect().width + 'px';
+                headers.forEach(function (h) {
+                    h.style.maxWidth = maxWidth;
+                });
             }
-            map.$events.trigger($.Event(TC.Consts.event.POPUP, { control: ctl }));
+            map.trigger(TC.Consts.event.POPUP, { control: ctl });
             ctl.fitToView(true);
         });
     }
@@ -290,9 +304,8 @@ TC.Feature.prototype.showPopup = function (control) {
 TC.Feature.prototype.showResultsPanel = function (control) {
     const self = this;
     const map = (self.layer && self.layer.map) || (control && control.map);
-
     if (map) {
-        var ctlDeferred;
+        var ctlPromise;
         var panel = control;
         if (!panel) {
             // Buscamos un resultsPanel existente que no esté asociado a un control.
@@ -307,20 +320,52 @@ TC.Feature.prototype.showResultsPanel = function (control) {
         }
         if (panel) {
             panel.currentFeature = self;
-            ctlDeferred = $.Deferred();
-            ctlDeferred.resolve(panel);
+            ctlPromise = Promise.resolve(panel);
         }
         else {
-            ctlDeferred = map.addControl('ResultsPanel');
+            var resultsPanelOptions = {
+                content: "table"
+            };            
+            var controlContainer = map.getControlsByClass('TC.control.ControlContainer')[0];
+            if (controlContainer) {
+                resultsPanelOptions.side = controlContainer.SIDE.RIGHT;
+                ctlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
+            } else {
+                resultsPanelOptions.div = document.createElement('div');
+                map.div.appendChild(resultsPanelOptions.div);
+                ctlPromise = map.addControl('resultsPanel', resultsPanelOptions);
+            }
         }
-        ctlDeferred.then(function (ctl) {
+        ctlPromise.then(function (ctl) {            
             ctl.currentFeature = self;
-            map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctrl) { return ctrl.options.content === "table" }).forEach(function (p) {
-                p.close();
-            });            
 
-            ctl.open(self.getInfo({ locale: map.options.locale }), ctl.getInfoContainer());
-            map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE, { control: ctl }));
+            // GLS: si contamos con el contenedor de controles no es necesario cerra el resto de paneles ya que no habrá solape excepto los paneles
+            if (map.getControlsByClass(TC.control.ControlContainer).length === 0) {
+                map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctrl) { return ctrl.options.content === "table" }).forEach(function (p) {
+                    p.close();
+                });
+            }
+
+            // cerramos los paneles con feature asociada
+            const panels = map.getControlsByClass('TC.control.ResultsPanel');
+            panels.forEach(function (p) {
+                if (p.currentFeature) {
+                    p.close();
+                }
+            });
+
+            if (ctl.div.querySelector('.tc-ctl-print-btn')) {
+                ctl.div.querySelector('.tc-ctl-print-btn').remove();
+            }
+            ctl.menuDiv.innerHTML = '';
+            ctl.open(self.getInfo({ locale: map.options.locale }), ctl.getInfoContainer());            
+
+            var onViewChange = function (e) {
+                map.off(TC.Consts.event.VIEWCHANGE, onViewChange);
+
+                ctl.close();
+            };
+            map.on(TC.Consts.event.VIEWCHANGE, onViewChange);
         });
     }
 };
