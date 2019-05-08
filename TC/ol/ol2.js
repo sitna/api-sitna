@@ -1362,19 +1362,31 @@
     OpenLayers.Control.PanZoomBar.prototype.draw = function (centered) {
         var self = this;
         var result = OpenLayers.Control.PanZoomBar.prototype._draw.call(self, centered);
-        $(self.div).removeAttr('style').addClass('tc-ctl-nav');
-        var $zoomin = $(self.buttons[0]);
-        var height = $zoomin.height();
-        $zoomin.removeAttr('style').addClass('tc-ctl-nav-btn tc-ctl-nav-btn-zoomin');
-        var offset = $zoomin.height() - height;
-        var $zoombarDiv = $(self.zoombarDiv);
-        var height = $zoombarDiv.css('height');
-        $zoombarDiv.removeAttr('style').addClass('tc-ctl-nav-bar').css('height', height);
-        var $slider = $(self.slider);
-        height = $slider.css('height');
-        $slider.removeAttr('style').addClass('tc-ctl-nav-slider').css('height', height);
-        $(self.buttons[1]).removeAttr('style').addClass('tc-ctl-nav-btn tc-ctl-nav-btn-zoomout');
-        $(self.buttons[2]).removeAttr('style').addClass('tc-ctl-nav-btn tc-ctl-nav-btn-home');
+        self.div.removeAttribute('style');
+        self.div.classList.add('tc-ctl-nav');
+        const zoomin = self.buttons[0];
+        var height = zoomin.getBoundingClientRect().height;
+        zoomin.removeAttribute('style');
+        zoomin.classList.add('tc-ctl-nav-btn');
+        zoomin.classList.add('tc-ctl-nav-btn-zoomin');
+        const zoombarDiv = self.zoombarDiv;
+        height = zoombarDiv.style.height;
+        zoombarDiv.removeAttribute('style');
+        zoombarDiv.classList.add('tc-ctl-nav-bar');
+        zoombarDiv.style.height = height;
+        const slider = self.slider;
+        height = slider.style.height;
+        slider.removeAttribute('style');
+        slider.classList.add('tc-ctl-nav-slider');
+        slider.style.height = height;
+        const zoomout = self.buttons[1];
+        zoomout.removeAttribute('style');
+        zoomout.classList.add('tc-ctl-nav-btn');
+        zoomout.classList.add('tc-ctl-nav-btn-zoomout');
+        const home = self.buttons[2];
+        home.removeAttribute('style');
+        home.classList.add('tc-ctl-nav-btn');
+        home.classList.add('tc-ctl-nav-btn-home');
         return result;
     };
 
@@ -1389,8 +1401,8 @@
         self.map = new OpenLayers.Map(self.parent.div, {
             projection: options.crs,
             extent: options.initialExtent,
-            maxExtent: options.maxExtent,
-            restrictedExtent: options.maxExtent,
+            maxExtent: options.maxExtent ? options.maxExtent : null,
+            restrictedExtent: options.maxExtent ? options.maxExtent : null,
             controls: [
                     new OpenLayers.Control.Navigation({
                         dragPanOptions: {
@@ -1406,16 +1418,16 @@
         });
 
         self.map.events.register('zoomstart', self.parent, function () {
-            self.parent.$events.trigger($.Event(TC.Consts.event.BEFOREZOOM));
+            self.parent.trigger(TC.Consts.event.BEFOREZOOM);
         });
 
         self.map.events.register('zoomend', self.parent, function () {
-            self.parent.$events.trigger($.Event(TC.Consts.event.ZOOM));
+            self.parent.trigger(TC.Consts.event.ZOOM);
         });
 
         self.map.events.register('featureclick', self.parent, function (e) {
             if (e.feature && e.feature._wrap) {
-                self.parent.$events.trigger($.Event(TC.Consts.event.FEATURECLICK, { feature: e.feature._wrap.parent }));
+                self.parent.trigger(TC.Consts.event.FEATURECLICK, { feature: e.feature._wrap.parent });
             }
         });
 
@@ -1423,20 +1435,20 @@
             for (var i = 0; i < self.parent.workLayers.length; i++) {
                 var layer = self.parent.workLayers[i];
                 if (layer.wrap.layer === e.layer) {
-                    self.parent.$events.trigger($.Event(TC.Consts.event.NOFEATURECLICK, { layer: layer }));
+                    self.parent.trigger(TC.Consts.event.NOFEATURECLICK, { layer: layer });
                 }
             }
         });
 
         var resizeTimeout;
-        $(self.parent.div).on('resize', function () {
+        self.parent.div.addEventListener('resize', function () {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(function () {
                 self.map.updateSize();
             }, 200);
         });
 
-        self.mapDeferred.resolve(self.map);
+        self._promise = Promise.resolve(self.map);
     };
 
     TC.wrap.Map.prototype.getMetersPerUnit = function () {
@@ -1497,15 +1509,15 @@
 
 
     TC.wrap.Map.prototype.setBaseLayer = function (olLayer) {
-        var self = this;
-        var result = new $.Deferred();
-        self.map.addLayer(olLayer);
-        self.map.setBaseLayer(olLayer);
-        if (self.parent.baseLayer) {
-            self.map.removeLayer(self.parent.baseLayer.wrap.getLayer());
-        }
-        result.resolve();
-        return result;
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            self.map.addLayer(olLayer);
+            self.map.setBaseLayer(olLayer);
+            if (self.parent.baseLayer) {
+                self.map.removeLayer(self.parent.baseLayer.wrap.layer);
+            }
+            resolve();
+        });
     };
 
     TC.wrap.Map.prototype.setExtent = function (extent) {
@@ -1531,7 +1543,7 @@
     };
 
     TC.wrap.Map.prototype.setResolution = function (resolution) {
-        $.when(this.getMap()).then(function (olMap) {
+        this.getMap().then(function (olMap) {
             olMap.zoomTo(olMap.getZoomForResolution(resolution));
         });
     };
@@ -1566,15 +1578,16 @@
     };
 
     TC.wrap.Map.prototype.getViewport = function (options) {
-        var self = this;
+        const self = this;
         var opts = options || {};
         if (opts.synchronous) {
             result = self.map.getViewport();
         }
         else {
-            var result = new $.Deferred();
-            $.when(this.getMap()).then(function (olMap) {
+            result = new Promise(function (resolve, reject) {
+            self.getMap().then(function (olMap) {
                 result.resolve(olMap.getViewport());
+                });
             });
         }
         return result;
@@ -1596,14 +1609,15 @@
 
     TC.wrap.Map.prototype.addPopup = function (popupCtl) {
         // Cargamos provisionalmente un div para que no se rompan ciertas funciones si se llaman antes de TC.wrap.Map.showPopup
-        popupCtl.$popupDiv = $('<div>');
+        popupCtl.popupDiv = document.createElement('div');
+        return Promise.resolve();
     };
 
     TC.wrap.Map.prototype.hidePopup = function (popupCtl) {
         var self = this;
         var map = self.parent;
         if (popupCtl) {
-            $.when(map.wrap.getMap()).then(function (olMap) {
+            map.wrap.getMap().then(function (olMap) {
                 if (popupCtl.wrap.popup && map.popup === popupCtl) {
                     olMap.removePopup(popupCtl.wrap.popup);
                     popupCtl.wrap.popup.destroy();
@@ -1645,7 +1659,7 @@
      */
     TC.wrap.Layer.prototype.setVisibility = function (visible) {
         var self = this;
-        $.when(self.getLayer()).then(function (layer) {
+        self.getLayer().then(function (layer) {
             layer.setVisibility(visible);
         });
     };
@@ -1666,18 +1680,18 @@
         layer.events.register('loadstart', self.parent.map, function () {
             self.parent.state = TC.Layer.state.LOADING;
             if (self.parent.map) {
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFORELAYERUPDATE, { layer: self.parent }));
+                self.parent.map.trigger(TC.Consts.event.BEFORELAYERUPDATE, { layer: self.parent });
             }
         });
         layer.events.register('loadend', self.parent.map, function () {
             self.parent.state = TC.Layer.state.IDLE;
             if (self.parent.map) {
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERUPDATE, { layer: self.parent }));
+                self.parent.map.trigger(TC.Consts.event.LAYERUPDATE, { layer: self.parent });
             }
         });
         layer.events.register('visibilitychanged', self.parent.map, function () {
             if (self.parent.map) {
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.LAYERVISIBILITY, { layer: self.parent }));
+                self.parent.map.trigger(TC.Consts.event.LAYERVISIBILITY, { layer: self.parent });
             }
         });
     };
@@ -2410,7 +2424,7 @@
         this.addCommonEvents(result);
 
         result.events.register('beforefeaturesadded', null, function () {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.BEFOREFEATURESADD, { layer: self.parent }));
+            self.parent.map.trigger(TC.Consts.event.BEFOREFEATURESADD, { layer: self.parent });
         });
 
         result.events.register('featuresadded', null, function (e) {
@@ -2435,17 +2449,17 @@
                 }
             }
 
-            var deferreds = [];
+            var promises = [];
             if (markers.length > 0) {
-                deferreds.push(self.parent.addMarkers(markers));
+                promises.push(self.parent.addMarkers(markers));
             }
             if (polylines.length > 0) {
-                deferreds.push(self.parent.addPolylines(polylines));
+                promises.push(self.parent.addPolylines(polylines));
             }
             if (polygons.length > 0) {
-                deferreds.push(self.parent.addPolygons(polygons));
+                promises.push(self.parent.addPolygons(polygons));
             }
-            $.when.apply(self, deferreds).then(function () {
+            Promise.all(promises).then(function () {
                 var features = [];
                 if (arguments.length) {
                     for (var i = 0; i < arguments[0].length; i++) {
@@ -2457,7 +2471,7 @@
                         }
                     }
                 }
-                self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.parent, features: features }));
+                self.parent.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.parent, features: features });
             });
         });
 
@@ -2467,19 +2481,17 @@
                 var idx = $.inArray(olFeat._wrap.parent, self.parent.features);
                 if (idx > -1) {
                     self.parent.features.splice(idx, 1);
-                    self.parent.map.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { layer: self.parent, feature: olFeat._wrap.parent }));
+                    self.parent.map.trigger(TC.Consts.event.FEATUREREMOVE, { layer: self.parent, feature: olFeat._wrap.parent });
                 }
             }
         });
 
-        var $map = $(self.parent.map);
-
         result.events.register('featuresadded', null, function () {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            self.parent.map.trigger(TC.Consts.event.VECTORUPDATE, { layer: self.parent });
         });
 
         result.events.register('featuresremoved', null, function () {
-            self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+            self.parent.map.trigger(TC.Consts.event.VECTORUPDATE, { layer: self.parent });
         });
 
         // En KML activar después de añadir todos los gestores de eventos. En WFS se activa con getFeature.
@@ -2512,13 +2524,13 @@
 
 
     TC.wrap.layer.Vector.prototype.addFeatures = function (features) {
-        $.when(this.getLayer()).then(function (olLayer) {
+        this.getLayer().then(function (olLayer) {
             olLayer.addFeatures(features);
         });
     };
 
     TC.wrap.layer.Vector.prototype.getFeatures = function () {
-        var olLayer = this.getLayer();
+        var olLayer = this.layer;
         if (olLayer instanceof OpenLayers.Layer) {
             if (olLayer.strategies) {
                 for (var i = 0; i < olLayer.strategies.length; i++) {
@@ -2536,7 +2548,7 @@
     };
 
     TC.wrap.layer.Vector.prototype.getFeatureById = function (id) {
-        var olLayer = this.getLayer();
+        var olLayer = this.layer;
         if (olLayer instanceof OpenLayers.Layer) {
             if (olLayer.strategies) {
                 for (var i = 0; i < olLayer.strategies.length; i++) {
@@ -2554,13 +2566,13 @@
     };
 
     TC.wrap.layer.Vector.prototype.removeFeature = function (feature) {
-        $.when(this.getLayer()).then(function (olLayer) {
+        this.getLayer().then(function (olLayer) {
             olLayer.removeFeatures([feature.wrap.feature]);
         });
     };
 
     TC.wrap.layer.Vector.prototype.clearFeatures = function () {
-        $.when(this.getLayer()).then(function (olLayer) {
+        this.getLayer().then(function (olLayer) {
             olLayer.removeAllFeatures();
         });
     };
@@ -2581,9 +2593,9 @@
                 clearTimeout(self._redrawTimeout);
             }
             self._redrawTimeout = setTimeout(function () {
-                $.when(self.getLayer()).then(function (olLayer) {
+                self.getLayer().then(function (olLayer) {
                     olLayer.redraw();
-                    self.parent.map.$events.trigger($.Event(TC.Consts.event.VECTORUPDATE, { layer: self.parent }));
+                    self.parent.map.trigger(TC.Consts.event.VECTORUPDATE, { layer: self.parent });
                 });
                 delete self._redrawTimeout;
             }, 100);
@@ -2613,7 +2625,7 @@
     TC.wrap.layer.Vector.prototype.findFeature = function (values) {
         var self = this;
 
-        $.when(self.getLayer()).then(function (olLayer) {
+        self.getLayer().then(function (olLayer) {
             var filter = olLayer.filter;
             if (filter) {
                 if (filter.filters && filter.filters.length <= values.length) {
@@ -2642,15 +2654,15 @@
     };
 
     TC.wrap.layer.Vector.prototype.sendTransaction = function (inserts, updates, deletes) {
-        var result = $.Deferred();
         TC.error('"sendTransaction" no está soportado por la versión OpenLayers 2 de la API SITNA');
-        result.reject();
-        return result;
+        return Promise.reject();
     };
 
     TC.wrap.layer.Vector.prototype.setDraggable = function (draggable, onend, onstart) {
         var self = this;
-        $.when(self.parent.map.wrap.getMap(), self.getLayer()).then(function (olMap, olLayer) {
+        Promise.all([self.parent.map.wrap.getMap(), self.getLayer()]).then(function (olObjects) {
+            var olMap = olObjects[0];
+            var olLayer = olObjects[1];
             if (draggable) {
                 if (!self._ctl) {
                     var options = {};
@@ -2679,7 +2691,7 @@
         var self = this;
         self._ctl = new OpenLayers.Control();
 
-        $.when(map.wrap.getMap()).then(function (olMap) {
+        map.wrap.getMap().then(function (olMap) {
             var trigger = function (e) {
                 var lonlat = olMap.getLonLatFromPixel(e.xy);
                 self.parent.callback([lonlat.lon, lonlat.lat], [e.xy.x, e.xy.y]);
@@ -2723,7 +2735,7 @@
 
     TC.wrap.control.NavBar.prototype.register = function (map) {
         var self = this;
-        $.when(map.wrap.getMap()).then(function (olMap) {
+        map.wrap.getMap().then(function (olMap) {
             self.zsCtl = new OpenLayers.Control.PanZoomBar({ panIcons: false, zoomWorldIcon: true });
             olMap.addControl(self.zsCtl);
 
@@ -2738,24 +2750,24 @@
     };
 
     TC.wrap.control.Coordinates.prototype.register = function (map) {
-        var self = this;
-        var result = new $.Deferred();
-        $.when(map.wrap.getMap()).then(function (olMap) {
-            var projection = olMap.getProjectionObject();
-            if (projection === null) {
-                projection = new OpenLayers.Projection(olMap.projection);
-            }
-            self.parent.crs = projection.getCode();
-            self.parent.units = projection.getUnits();
-            self.parent.isGeo = map.wrap.isGeo();
-            result.resolve();
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            map.wrap.getMap().then(function (olMap) {
+                var projection = olMap.getProjectionObject();
+                if (projection === null) {
+                    projection = new OpenLayers.Projection(olMap.projection);
+                }
+                self.parent.crs = projection.getCode();
+                self.parent.units = projection.getUnits();
+                self.parent.isGeo = map.wrap.isGeo();
+                resolve();
+            });
         });
-        return result;
     };
 
     TC.wrap.control.Coordinates.prototype.onMouseMove = function (e) {
         var self = this;
-        $.when(self.parent.map.wrap.getMap()).then(function (olMap) {
+        self.parent.map.wrap.getMap().then(function (olMap) {
             var coords = olMap.getLonLatFromPixel(olMap.events.getMousePosition(e.originalEvent));
             if (coords) {
                 if (self.parent.isGeo) {
@@ -2801,7 +2813,7 @@
 
     TC.wrap.control.Search.prototype.addEvents = function () {
         var self = this;
-        $.when(self.parent.layer.wrap.getLayer()).then(function (olLayer) {
+        self.parent.layer.wrap.getLayer().then(function (olLayer) {
             var map = self.parent.layer.map;
             var radius = map.wrap.isGeo() ? map.options.pointBoundsRadius / TC.Util.getMetersPerDegree(map.getExtent()) : map.options.pointBoundsRadius;
             olLayer.events.register('featuresadded', olLayer, function (e) {
@@ -2826,7 +2838,7 @@
     //    var self = this;
     //    var handler = mode === TC.Consts.geom.POLYGON ? OpenLayers.Handler.Polygon : OpenLayers.Handler.Path;
     //    if (self.parent.map) {
-    //        $.when(self.parent.map.wrap.getMap()).then(function (olMap) {
+    //        self.parent.map.wrap.getMap().then(function (olMap) {
     //            if (self.control) {
     //                self.control.deactivate();
     //                olMap.removeControl(self.control);
@@ -2842,7 +2854,7 @@
     //                        data.area = e.measure;
     //                        data.perimeter = self.control.getLength(e.geometry, e.units);
     //                    }
-    //                    self.parent.$events.trigger($.Event(type, data));
+    //                    self.parent.trigger(type, data);
     //                };
     //                self.control = new OpenLayers.Control.Measure(handler,
     //                    {
@@ -2853,7 +2865,7 @@
     //                );
 
     //                self.control.handler.callbacks.point = function (point) {
-    //                    self.parent.$events.trigger($.Event(TC.Consts.event.POINT, { point: [point.x, point.y] }));
+    //                    self.parent.trigger(TC.Consts.event.POINT, { point: [point.x, point.y] });
     //                };
     //                self.control.events.on({
     //                    "measure": measureHandler,
@@ -2905,6 +2917,10 @@
     //    }
     //};
 
+    TC.wrap.control.NavBar.prototype.getInitialExtent = function () {
+        return [];
+    };
+
     TC.wrap.control.NavBar.prototype.setInitialExtent = function (extent) {
     };
 
@@ -2912,7 +2928,8 @@
         var self = this;
 
         var getSize = function () {
-            var result = new OpenLayers.Size(self.parent._$div.width(), self.parent._$div.height());
+            const rect = self.parent.div.getBoundingClientRect();
+            var result = new OpenLayers.Size(rect.width, rect.height);
             if (result.w === 0) {
                 result.w = 100;
             }
@@ -2922,7 +2939,7 @@
             return result;
         };
         var size = getSize();
-        $.when(self.parent.layer.wrap.getLayer()).then(function (olLayer) {
+        self.parent.layer.wrap.getLayer().then(function (olLayer) {
             self.ovMap = new OpenLayers.Control.OverviewMap({
                 div: self.parent.div,
                 size: size,
@@ -2944,25 +2961,28 @@
                 maximized: true
             });
 
-            var $load = $(self.parent.div).find('.' + self.parent.CLASS + '-load');
+            const load = self.parent.div.querySelector('.' + self.parent.CLASS + '-load');
             olLayer.events.register('loadstart', self.parent.layer, function () {
-                $load.removeClass(TC.Consts.classes.HIDDEN).addClass(TC.Consts.classes.VISIBLE);
+                load.classList.remove(TC.Consts.classes.HIDDEN);
+                load.classList.add(TC.Consts.classes.VISIBLE);
             });
             olLayer.events.register('loadend', self.parent.layer, function () {
-                $load.removeClass(TC.Consts.classes.VISIBLE).addClass(TC.Consts.classes.HIDDEN);
+                load.classList.remove(TC.Consts.classes.VISIBLE);
+                load.classList.add(TC.Consts.classes.HIDDEN);
             });
 
-            $.when(map.wrap.getMap()).then(function (olMap) {
+            map.wrap.getMap().then(function (olMap) {
                 olMap.addControl(self.ovMap);
 
                 self.parent.isLoaded = true;
-                self.parent.$events.trigger($.Event(TC.Consts.event.MAPLOAD));
+                self.parent.trigger(TC.Consts.event.MAPLOAD);
 
                 olMap.events.register('updatesize', self.parent, function () {
                     var size = getSize();
                     if (self.ovMap.ovmap) {
-                        $ovmap = $(self.ovMap.ovmap.div);
-                        $ovmap.css('width', self.parent._$div.css('width')).css('height', self.parent._$div.css('height'));
+                        const ovmapDiv = self.ovMap.ovmap.div;
+                        ovmapDiv.style.width = self.parent.div.style.width;
+                        ovmapDiv.style.height = self.parent.div.style.height;
                         self.ovMap.ovmap.updateSize();
                         self.ovMap.updateRectToMap();
                     }
@@ -2998,7 +3018,7 @@
 
         self._map = map;
 
-        $.when(map.wrap.getMap()).then(function (olMap) {
+        map.wrap.getMap().then(function (olMap) {
 
             TC.wrap.control.Click.prototype.register.call(self, map);
 
@@ -3006,7 +3026,7 @@
 
             var isSuitableLayer = function (layer) {
                 var result = false;
-                if (layer instanceof TC.layer.Raster && !layer.isBase) {
+                if (TC.layer.Raster && layer instanceof TC.layer.Raster && !layer.isBase) {
                     if (layer.wrap.getInfoFormats()) {
                         result = true;
                     }
@@ -3118,16 +3138,14 @@
                     targetServices.push(targetService);
                 }
 
-                $.when.apply(this, featurePromises).then(function () {
-                    if (arguments.length) {
-                        for (var i = 0; i < arguments.length; i++) {
-                            var feat = arguments[i];
-                            feat.attributes = [];
-                            for (var key in feat.data) {
-                                feat.attributes.push({ name: key, value: feat.data[key] });
-                            }
-                            featureInsertionPoints[i].push(feat);
+                Promise.all(featurePromises).then(function (features) {
+                    for (var i = 0; i < features.length; i++) {
+                        var feat = features[i];
+                        feat.attributes = [];
+                        for (var key in feat.data) {
+                            feat.attributes.push({ name: key, value: feat.data[key] });
                         }
+                        featureInsertionPoints[i].push(feat);
                     }
                     var lonLat = map.wrap.map.getLonLatFromPixel(e.xy);
                     self.parent.responseCallback({ coords: [lonLat.lon, lonLat.lat], resolution: self._gfi._resolution, services: targetServices, featureCount: featureCount });
@@ -3371,76 +3389,76 @@
     };
 
     TC.wrap.Feature.createFeature = function (olFeat) {
-        var result = new $.Deferred();
-        var constructor;
-        var condition;
-        var options = {
-            id: olFeat.fid,
-            data: olFeat.attributes
-        };
-        if (olFeat.geometry instanceof OpenLayers.Geometry.Point) {
-            TC.loadJS(
-                !TC.feature || (TC.feature && !TC.feature.Point),
-                [TC.apiLocation + 'TC/feature/Point'],
-                function () {
-                    result.resolve(new TC.feature.Point(olFeat, options));
-                }
-            );
-        }
-        else {
-            if (olFeat.geometry instanceof OpenLayers.Geometry.LineString) {
+        return new Promise(function (resolve, reject) {
+            var constructor;
+            var condition;
+            var options = {
+                id: olFeat.fid,
+                data: olFeat.attributes
+            };
+            if (olFeat.geometry instanceof OpenLayers.Geometry.Point) {
                 TC.loadJS(
-                    !TC.feature || (TC.feature && !TC.feature.Polyline),
-                    [TC.apiLocation + 'TC/feature/Polyline'],
+                    !TC.feature || (TC.feature && !TC.feature.Point),
+                    [TC.apiLocation + 'TC/feature/Point'],
                     function () {
-                        result.resolve(new TC.feature.Polyline(olFeat, options));
+                        resolve(new TC.feature.Point(olFeat, options));
                     }
                 );
             }
             else {
-                if (olFeat.geometry instanceof OpenLayers.Geometry.MultiLineString) {
+                if (olFeat.geometry instanceof OpenLayers.Geometry.LineString) {
                     TC.loadJS(
-                        !TC.feature || (TC.feature && !TC.feature.MultiPolyline),
-                        [TC.apiLocation + 'TC/feature/MultiPolyline'],
+                        !TC.feature || (TC.feature && !TC.feature.Polyline),
+                        [TC.apiLocation + 'TC/feature/Polyline'],
                         function () {
-                            result.resolve(new TC.feature.MultiPolyline(olFeat, options));
+                            resolve(new TC.feature.Polyline(olFeat, options));
                         }
                     );
                 }
                 else {
-                    if (olFeat.geometry instanceof OpenLayers.Geometry.Polygon) {
-                    TC.loadJS(
-                        !TC.feature || (TC.feature && !TC.feature.Polygon),
-                        [TC.apiLocation + 'TC/feature/Polygon'],
-                        function () {
-                            result.resolve(new TC.feature.Polygon(olFeat, options));
-                        }
-                    );
-                }
-                else {
-                        if (olFeat.geometry instanceof OpenLayers.Geometry.MultiPolygon) {
-                    TC.loadJS(
-                                !TC.feature || (TC.feature && !TC.feature.MultiPolygon),
-                                [TC.apiLocation + 'TC/feature/MultiPolygon'],
+                    if (olFeat.geometry instanceof OpenLayers.Geometry.MultiLineString) {
+                        TC.loadJS(
+                            !TC.feature || (TC.feature && !TC.feature.MultiPolyline),
+                            [TC.apiLocation + 'TC/feature/MultiPolyline'],
+                            function () {
+                                resolve(new TC.feature.MultiPolyline(olFeat, options));
+                            }
+                        );
+                    }
+                    else {
+                        if (olFeat.geometry instanceof OpenLayers.Geometry.Polygon) {
+                            TC.loadJS(
+                                !TC.feature || (TC.feature && !TC.feature.Polygon),
+                                [TC.apiLocation + 'TC/feature/Polygon'],
                                 function () {
-                                    result.resolve(new TC.feature.MultiPolygon(olFeat, options));
+                                    resolve(new TC.feature.Polygon(olFeat, options));
                                 }
                             );
                         }
                         else {
-                            TC.loadJS(
-                        !TC.Feature,
-                        [TC.apiLocation + 'TC/Feature'],
-                        function () {
-                            result.resolve(new TC.Feature(olFeat, options));
+                            if (olFeat.geometry instanceof OpenLayers.Geometry.MultiPolygon) {
+                                TC.loadJS(
+                                    !TC.feature || (TC.feature && !TC.feature.MultiPolygon),
+                                    [TC.apiLocation + 'TC/feature/MultiPolygon'],
+                                    function () {
+                                        resolve(new TC.feature.MultiPolygon(olFeat, options));
+                                    }
+                                );
+                            }
+                            else {
+                                TC.loadJS(
+                                    !TC.Feature,
+                                    [TC.apiLocation + 'TC/Feature'],
+                                    function () {
+                                        resolve(new TC.Feature(olFeat, options));
+                                    }
+                                );
+                            }
                         }
-                    );
+                    }
                 }
             }
-        }
-            }
-        }
-        return result;
+        });
     };
 
     TC.wrap.Feature.prototype.cloneFeature = function () {
@@ -3682,7 +3700,7 @@
         popupCtl.currentFeature = self.parent;
         var map = popupCtl.map;
         if (map) {
-            $.when(map.wrap.getMap()).then(function (olMap) {
+            map.wrap.getMap().then(function (olMap) {
                 if (map.popup) {
                     olMap.removePopup(map.popup.wrap.popup);
                     map.popup.wrap.popup.destroy();
@@ -3709,35 +3727,41 @@
                                     function (e) {
                                         this.hide();
                                         OpenLayers.Event.stop(e);
-                                        map.$events.trigger($.Event(TC.Consts.event.POPUPHIDE, { control: popupCtl }));
+                                        map.trigger(TC.Consts.event.POPUPHIDE, { control: popupCtl });
                                     });
                     popup.autoSize = true;
                     popup.panMapIfOutOfView = true;
                     popup.keepInMap = true;
                     popup.maxSize = new OpenLayers.Size(olMap.size.w / 2, olMap.size.h / 2);
 
-                    popupCtl.$popupDiv = $(popup.div);
+                    popupCtl.popupDiv = popup.div;
                     popupCtl.wrap.popup = popup;
                     map.popup = popupCtl;
                     olMap.addPopup(popup);
-                    popupCtl._firstRender.resolve();
-                    popupCtl.$events.trigger($.Event(TC.Consts.event.CONTROLRENDER));
+                    popupCtl.trigger(TC.Consts.event.CONTROLRENDER);
 
                     // Para IE8: FramedCloud sin modificar
                     if (Modernizr.canvas) {
-                        popupCtl.$popupDiv.css('overflow', '').css('border', '').css('width', '').css('height', '');
+                        popupCtl.popupDiv.style.overflow = '';
+                        popupCtl.popupDiv.style.border = '';
+                        popupCtl.popupDiv.style.width = '';
+                        popupCtl.popupDiv.style.height = '';
                         // Eliminar bug de visualización de Chrome, quitando position:relative.
-                        var $content = $(popup.contentDiv).css('position', '');
+                        const content = popup.contentDiv;
+                        content.style.position = '';
                         // En OL2 los featureInfo en versión "baraja de cartas" salen sin tamaño.
                         // Para evitar esto, la clase tc-ctl-finfo tiene ancho y alto establecidos.
                         // Pero eso hace que en el popup salgan barras de scroll, porque contentDiv se crea demasiado pequeño.
                         // Rehacemos el tamaño del popup para eliminarlas.
                         popup.updateSize();
-                        $content.css('width', '');
+                        content.style.width = '';
 
-                        var $closeBtn = $(popup.groupDiv).find('.olPopupCloseBox').attr('style', '').addClass(popupCtl.CLASS + '-close').attr('title', popupCtl.getLocaleString('close'));
-                        if ($closeBtn.length) {
-                            $content.css('margin-right', $closeBtn.width());
+                        const closeBtn = popup.groupDiv.querySelector('.olPopupCloseBox');
+                        if (closeBtn) {
+                            closeBtn.removeAttribute('style');
+                            closeBtn.classList.add(popupCtl.CLASS + '-close');
+                            closeBtn.setAttribute('title', popupCtl.getLocaleString('close'));
+                            content.style.marginRight = closeBtn.getBoundingClientRect().width + 'px';
                         }
                     }
                 }
@@ -3810,7 +3834,7 @@
         var self = this;
         var handler = mode === TC.Consts.geom.POLYGON ? OpenLayers.Handler.Polygon : OpenLayers.Handler.Path;
         if (self.parent.map) {
-            $.when(self.parent.map.wrap.getMap()).then(function (olMap) {
+            self.parent.map.wrap.getMap().then(function (olMap) {
                 if (self.control) {
                     self.control.deactivate();
                     olMap.removeControl(self.control);
@@ -3827,9 +3851,9 @@
                             data.perimeter = self.control.getLength(e.geometry, e.units);
                         }
                         if (self.parent.measure) {
-                            self.parent.$events.trigger($.Event(type, data));
+                            self.parent.trigger(type, data);
                         }
-                        self.parent.$events.trigger($.Event(TC.Consts.event.DRAWEND, { feature: new TC.feature.Polygon(e.geometry.components) }));
+                        self.parent.trigger(TC.Consts.event.DRAWEND, { feature: new TC.feature.Polygon(e.geometry.components) });
 
                     };
                     self.control = new OpenLayers.Control.Measure(handler,
@@ -3841,7 +3865,7 @@
                     );
 
                     self.control.handler.callbacks.point = function (point) {
-                        self.parent.$events.trigger($.Event(TC.Consts.event.POINT, { point: [point.x, point.y] }));
+                        self.parent.trigger(TC.Consts.event.POINT, { point: [point.x, point.y] });
                     };
                     if (self.parent.measure)
                         self.control.events.on({
