@@ -30,19 +30,31 @@ TC.inherit(TC.control.FullScreen, TC.Control);
         const self = this;
         const result = TC.Control.prototype.register.call(self, map);
 
-        self.renderPromise().then(function () {
-            var $btn = self._$div.find('.' + self.CLASS + '-btn');
+        result.then(function () {
+            const btn = self.div.querySelector('.' + self.CLASS + '-btn');
 
             if (self.enabledFullScreen()) {
-                $btn.on('click', function () {
+                btn.addEventListener(TC.Consts.event.CLICK, function () {
                     self.toggleFullScreen();                    
                 });
 
-                $(document).on('fullscreenchange mozfullscreenchange webkitfullscreenchange MSFullscreenChange', function () {
-                    $btn.toggleClass(TC.Consts.classes.ACTIVE, self.isFullScreen());
-                    $btn.attr('title', self.isFullScreen() ? self.getLocaleString("fscreen.tip.return") : self.getLocaleString("fscreen.tip"));
-            });
-            } else { $btn.addClass(TC.Consts.classes.HIDDEN); }
+                const fullscreenchangeListener = function () {
+                    if (self.isFullScreen()) {
+                        btn.classList.add(TC.Consts.classes.ACTIVE);
+                    }
+                    else {
+                        btn.classList.remove(TC.Consts.classes.ACTIVE);
+                    }
+                    btn.setAttribute('title', self.isFullScreen() ? self.getLocaleString("fscreen.tip.return") : self.getLocaleString("fscreen.tip"));
+                };
+                document.addEventListener('fullscreenchange', fullscreenchangeListener);
+                document.addEventListener('mozfullscreenchange', fullscreenchangeListener);
+                document.addEventListener('webkitfullscreenchange', fullscreenchangeListener);
+                document.addEventListener('MSFullscreenChange', fullscreenchangeListener);
+            } else {
+                // GLS: 19/02/2019 en lugar de ocultar el botón, deshabilitamos el control para que no quede espacio de más entre los botones
+                self.disable();                
+            }
         });
 
         return result;
