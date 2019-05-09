@@ -14,10 +14,13 @@ TC.control.Download = function (options) {
 
     TC.Control.apply(self, arguments);
 
+    self._hiddenElms = [];
+
     var opts = options || {};
-    self._$dialogDiv = $(TC.Util.getDiv(opts.dialogDiv));
+    self._dialogDiv = TC.Util.getDiv(opts.dialogDiv);
+    self._$dialogDiv = $(self._dialogDiv);
     if (!opts.dialogDiv) {
-        self._$dialogDiv.appendTo('body');
+        document.body.appendChild(self._dialogDiv);
     }    
 };
 
@@ -39,47 +42,66 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
     }
 
     ctlProto.render = function (callback) {
-        var self = this;
-        self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
-            self._$dialogDiv.html(html);
+        const self = this;
+        return self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+            self._dialogDiv.innerHTML = html;
         }).then(function () {
-            TC.Control.prototype.render.call(self, function () {
-                var selDisabledCLASS = self.CLASS + '-seldisabled';
+            return TC.Control.prototype.render.call(self, function () {
 
-                var cs = '.tc-ctl-tctr';
+                const cs = '.tc-ctl-tctr';
                 self._selectors = {
                     TAB: cs + '-tab',
                     RADIOBUTTON: 'input[type=radio][name=sctnr-sel]',
                     ELEMENT: cs + '-elm'
                 };
 
-                var clickHandler = function (e) {
-                    var $cb = $(this).closest(self._selectors.TAB).find(self._selectors.RADIOBUTTON);
-                    var newValue = $cb.val();
-                    var $elms = self._$div.find(self._selectors.ELEMENT);
-                    if (self._oldValue === newValue && self.options.deselectable) {
-                        setTimeout(function () {
-                            $cb.prop("checked", false);
-                        }, 0);
-                        self._oldValue = null;
-                        $active = $();
-                        $hidden = $elms;
+                const clickHandler = function (e) {
+                    var tab = this;
+                    while (tab && !tab.matches(self._selectors.TAB)) {
+                        tab = tab.parentElement;
                     }
-                    else {
-                        $active = $elms.filter(self._selectors.ELEMENT + '-' + newValue);
-                        $hidden = $elms.not($active);
-                        self._oldValue = newValue;
-                    }
+                    if (tab) {
+                        const checkbox = tab.querySelector(self._selectors.RADIOBUTTON);
+                        const newValue = checkbox.value;
+                        const elms = self.div.querySelectorAll(self._selectors.ELEMENT);
+                        if (self._oldValue === newValue && self.options.deselectable) {
+                            setTimeout(function () {
+                                checkbox.checked = false;
+                            }, 0);
+                            self._oldValue = null;
+                            self._activeElm = null;
+                            elms.forEach(function (elm) {
+                                self._hiddenElms.push(elm);
+                            });
+                        }
+                        else {
+                            elms.forEach(function (elm) {
+                                if (elm.matches(self._selectors.ELEMENT + '-' + newValue)) {
+                                    self._activeElm = elm;
+                                }
+                                else {
+                                    self._hiddenElms.push(elm);
+                                }
+                            });
+                            self._oldValue = newValue;
+                        }
 
-                    $active.removeClass(TC.Consts.classes.COLLAPSED);
-                    $hidden.addClass(TC.Consts.classes.COLLAPSED);
-                    $cb.prop("checked", true);
+                        self._hiddenElms.forEach(function (elm) {
+                            elm.classList.add(TC.Consts.classes.COLLAPSED);
+                        });
+                        if (self._activeElm) {
+                            self._activeElm.classList.remove(TC.Consts.classes.COLLAPSED);
+                        }
+                        checkbox.checked = true;
+                    }
                 };
 
-                self._$div.find('span').on(TC.Consts.event.CLICK, clickHandler);
-
-                if (callback)
+                self.div.querySelectorAll('span').forEach(function (span) {
+                    span.addEventListener(TC.Consts.event.CLICK, clickHandler);
+                });
+                if (callback) {
                     callback();
+                }
             });
         });
     };
@@ -99,51 +121,59 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
         var _download = function () {
             var wait = self.map.getLoadingIndicator().addWait();
 
-            var format = $active.find('select').val();
-            if ($active.find('select').val().indexOf('image') > -1) {
-                var doneQR = $.Deferred();
-                var canvas = self.map.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
-                var newCanvas = TC.Util.cloneCanvas(canvas);
-                var result;
+            var format = '';
+            if (self._activeElm) {
+                format = self._activeElm.querySelector('select').value;
+            }
+            if (format.indexOf('image') > -1) {
+                const doneQR = new Promise(function (resolve, reject) {
+                    var canvas = self.map.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
+                    var newCanvas = TC.Util.cloneCanvas(canvas);
 
-                var sb = self.map.getControlsByClass(TC.control.ScaleBar);
-                if (sb) {
-                    self.drawScaleBarIntoCanvas({ canvas: newCanvas, fill: true });
-                }
-
-                if ($active.find('#' + self.CLASS + '-image-qr:checked').length > 0) {
-                    var $codeContainer = $('#qrcode');
-                    if ($codeContainer.length === 0) {
-                        $('body').append('<div id="qrcode"></div>');
-                        $codeContainer = $('#qrcode');                        
-                    } else {
-                        $codeContainer.empty();
+                    var sb = self.map.getControlsByClass(TC.control.ScaleBar);
+                    if (sb) {
+                        self.drawScaleBarIntoCanvas({ canvas: newCanvas, fill: true });
                     }
 
-                    $codeContainer.css({ top: -200, left: -200, position: 'absolute' });
-
-                    self.makeQRCode($codeContainer, 87, 87).then(function (qrCodeBase64) {                        
-                        if (qrCodeBase64) {
-                            var ctx = newCanvas.getContext("2d");
-                            ctx.fillStyle = "#ffffff";
-                            ctx.fillRect(newCanvas.width - 91, newCanvas.height - 91, 91, 91);
-
-                            $.when(TC.Util.addToCanvas(newCanvas, qrCodeBase64, { x: newCanvas.width - 88, y: newCanvas.height - 88 })).then(function (mapCanvas) {
-                                doneQR.resolve(mapCanvas);
-                            });
-                        } else {
-                            TC.error(self.getLocaleString('dl.export.map.error') + ': ' + 'QR');
-                            self.map.getLoadingIndicator().removeWait(wait);
+                    if (self._activeElm.querySelector('#' + self.CLASS + '-image-qr:checked')) {
+                        const codeContainerId = 'qrcode';
+                        var codeContainer = document.getElementById(codeContainerId);
+                        if (codeContainer) {
+                            codeContainer.innerHTML = '';
                         }
-                    });                    
-                } else {
-                    doneQR.resolve(newCanvas);
-                }
+                        else {
+                            codeContainer = document.createElement('div');
+                            codeContainer.setAttribute('id', codeContainerId);
+                            document.body.appendChild(codeContainer);
+                        }
 
-                $.when(doneQR).then(function (_canvas) {
+                        codeContainer.style.top = '-200px';
+                        codeContainer.style.left = '-200px';
+                        codeContainer.style.position = 'absolute';
+
+                        self.makeQRCode(codeContainer, 87, 87).then(function (qrCodeBase64) {
+                            if (qrCodeBase64) {
+                                var ctx = newCanvas.getContext("2d");
+                                ctx.fillStyle = "#ffffff";
+                                ctx.fillRect(newCanvas.width - 91, newCanvas.height - 91, 91, 91);
+
+                                TC.Util.addToCanvas(newCanvas, qrCodeBase64, { x: newCanvas.width - 88, y: newCanvas.height - 88 }).then(function (mapCanvas) {
+                                    resolve(mapCanvas);
+                                });
+                            } else {
+                                TC.error(self.getLocaleString('dl.export.map.error') + ': ' + 'QR');
+                                self.map.getLoadingIndicator().removeWait(wait);
+                            }
+                        });
+                    } else {
+                        resolve(newCanvas);
+                    }
+                });
+
+                doneQR.then(function (_canvas) {
                     try {
-                        result = _canvas.toDataURL(format);
-                        TC.Util.downloadDataURI(window.location.hostname + '_' + TC.Util.getFormattedDate(new Date().toString(), true) + '.' + format.split('/')[1], format, result);
+                        const res = _canvas.toDataURL(format);
+                        TC.Util.downloadDataURI(window.location.hostname + '_' + TC.Util.getFormattedDate(new Date().toString(), true) + '.' + format.split('/')[1], format, res);
                     } catch (e) {
                         TC.error(self.getLocaleString('dl.export.map.error') + ': ' + e.message);
                     }
@@ -152,16 +182,14 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                 });
             }
             else {
-                var visibleLayers = _getVisibleLayers();
-
                 var extent = self.map.getExtent();
                 var coordsXY = TC.Util.reproject(extent.slice(0, 2), self.map.crs, TC.Defaults.crs);
                 var coordsXY2 = TC.Util.reproject(extent.slice(2), self.map.crs, TC.Defaults.crs);
 
                 var arrPromises = TC.WFSGetFeatureBuilder(self.map, new TC.filter.bbox([coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]]), format, true);
-                $.when.apply($, arrPromises).then(function () {
+                Promise.all(arrPromises).then(function (responseArray) {
 
-                    var responses = $.grep(arguments, function (item) { return item != null });
+                    var responses = $.grep(responseArray, function (item) { return item != null });
                     if (responses.length === 0) {
                         _showAlertMsg({ key: TC.Consts.WFSErrors.NoLayers }, wait);
                         return;
@@ -205,20 +233,20 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
         };
 
         var _showAlertMsg = function (error, wait) {
-            var alert = self._$div.find(".alert-warning");
+            const alert = self.div.querySelector('.alert-warning:not(.' + self.CLASS + '-alert)');
             var errorMsg;
             switch (error.key) {
                 case TC.Consts.WFSErrors.NumMaxFeatures:
-                    errorMsg = alert.find("#zoom-msg").html().format({ serviceName: error.params.serviceTitle });
+                    errorMsg = alert.querySelector("#zoom-msg").innerHTML.format({ serviceName: error.params.serviceTitle });
                     break;
                 case TC.Consts.WFSErrors.NoLayers:
                     errorMsg = self.getLocaleString('noLayersLoaded');
                     break;
                 case TC.Consts.WFSErrors.GetCapabilities:
-                    errorMsg = alert.find("#novalid-msg").html().format({ serviceName: error.params.serviceTitle });
+                    errorMsg = alert.querySelector("#novalid-msg").innerHTML.format({ serviceName: error.params.serviceTitle });
                     break;
                 case TC.Consts.WFSErrors.NoFeatures:
-                    errorMsg = alert.find("#noFeatures-msg").html();
+                    errorMsg = alert.querySelector("#noFeatures-msg").innerHTML;
                     break;
                 case TC.Consts.WFSErrors.Indeterminate:
                     errorMsg = self.getLocaleString("wfs.IndeterminateError");
@@ -231,17 +259,6 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                     errorMsg = self.getLocaleString("wfs." + error.key, error.params);
                     break;
             }
-            /*if (error.zoom) {
-                errorMsg = alert.find("#zoom-msg").html().format({ serviceName: error.serviceName });
-            } else if (error.layers) {
-                errorMsg = self.getLocaleString('noLayersLoaded');
-            } else if (error.url) {
-                errorMsg = self.getLocaleString('tooManySelectedLayers');
-            } else if (error.noFeatures) {
-                errorMsg = alert.find("#noFeatures-msg").html();
-            } else if (error.noValid) {
-                errorMsg = alert.find("#novalid-msg").html().format({ serviceName: error.serviceName });
-            }*/
             self.map.toast(errorMsg, { type: TC.Consts.msgType.WARNING });
 
             self.map.getLoadingIndicator().removeWait(wait);
@@ -249,39 +266,39 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
 
         var _showHelp = function (evt) {
             evt.stopPropagation();
-            TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-help-dialog'));
+            TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-help-dialog'));
         };
 
-        self._$div.on(TC.Consts.event.CLICK, '.tc-ctl-download-btn', _download);
-        self._$div.on(TC.Consts.event.CLICK, '.tc-ctl-download-help', _showHelp);        
+        self.div.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-btn', _download));
+        self.div.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', _showHelp));
 
-        self._$div.on("click", "#" + self.CLASS + "-image-qr", function (evt) {
-            if ($(this).prop('checked')) {
+        self.div.addEventListener('change', TC.EventTarget.listenerBySelector("#" + self.CLASS + "-image-qr", function (e) {
+            if (e.target.checked) {
                 self.generateLink();
             } else {
-                self._$div.find('.' + self.CLASS + '-alert').addClass(TC.Consts.classes.HIDDEN);
+                self.div.querySelector('.' + self.CLASS + '-alert').classList.add(TC.Consts.classes.HIDDEN);
             }
-        });
+        }));
 
-        self._$div.on("click", "h2", function (evt) {            
+        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (evt) {            
             self.generateLink();
             self.registerListeners();
-        });
+        }));
 
         return result;
     };
 
     ctlProto.manageMaxLengthExceed = function (maxLengthExceed) {
         const self = this;
-
-        if ($("#" + self.CLASS + "-image-qr").prop('checked')) {
+        const alert = self.div.querySelector('.' + self.CLASS + '-alert');
+        if (document.getElementById(self.CLASS + '-image-qr').checked) {
             if (maxLengthExceed.qr) {
-                self._$div.find('.' + self.CLASS + '-alert').removeClass(TC.Consts.classes.HIDDEN);
+                alert.classList.remove(TC.Consts.classes.HIDDEN);
             } else if (!maxLengthExceed.qr) {
-                self._$div.find('.' + self.CLASS + '-alert').addClass(TC.Consts.classes.HIDDEN);
+                alert.classList.add(TC.Consts.classes.HIDDEN);
             }
         } else {
-            self._$div.find('.' + self.CLASS + '-alert').addClass(TC.Consts.classes.HIDDEN);
+            alert.classList.add(TC.Consts.classes.HIDDEN);
         }
     };
 
