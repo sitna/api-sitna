@@ -25,72 +25,89 @@ TC.inherit(TC.control.MapContents, TC.Control);
     };
 
     ctlProto.render = function (callback, options) {
-        var self = this;
-        if (self.map) {
-            self.renderData(options ? $.extend(self.map.getLayerTree(), options) : self.map.getLayerTree(), callback);
-        }
+        const self = this;
+        return self._set1stRenderPromise(self.map ? self.renderData(options ? $.extend(self.map.getLayerTree(), options) : self.map.getLayerTree(), function () {
+            self.addUIEventListeners();
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }) : Promise.reject());
     };
 
     ctlProto.register = function (map) {
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
-        self.render(function () {
+        return new Promise(function (resolve, reject) {
+            Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]).then(function () {
+                for (var i = 0, len = map.layers.length; i < len; i++) {
+                    self.updateLayerTree(map.layers[i]);
+                }
 
-            for (var i = 0, len = map.layers.length; i < len; i++) {
-                self.updateLayerTree(map.layers[i]);
-            }
-
-            map.on(TC.Consts.event.ZOOM + ' ' + TC.Consts.event.PROJECTIONCHANGE, function () {
-                self.updateScale();
-            }).on(TC.Consts.event.UPDATEPARAMS, function (e) {
-                var names = e.layer.names;
-                var containsName = function containsName(node) {
-                    var result = false;
-                    if (node) {
-                        if ($.inArray(node.name, names) >= 0) {
-                            result = true;
-                        }
-                        else {
-                            for (var i = 0; i < node.children.length; i++) {
-                                if (containsName(node.children[i])) {
+                map
+                    .on(TC.Consts.event.ZOOM + ' ' + TC.Consts.event.PROJECTIONCHANGE, function () {
+                        self.updateScale();
+                    })
+                    .on(TC.Consts.event.UPDATEPARAMS, function (e) {
+                        const layer = e.layer;
+                        var names = layer.names;
+                        var containsName = function containsName(node) {
+                            var result = false;
+                            if (node) {
+                                if ($.inArray(node.name, names) >= 0) {
                                     result = true;
-                                    break;
+                                }
+                                else {
+                                    for (var i = 0; i < node.children.length; i++) {
+                                        if (containsName(node.children[i])) {
+                                            result = true;
+                                            break;
+                                        }
+                                    }
                                 }
                             }
+                            return result;
+                        };
+                        if (containsName(self.layerTrees[layer.id]) || names.length === 0) {
+                            self.update();
                         }
-                    }
-                    return result;
-                };
-                if (containsName(self.layerTrees[e.layer.id]) || names.length === 0) {
-                    self.update();
-                }
-                else {
-                    self.updateLayerTree(e.layer);
-                }
-            }).on(TC.Consts.event.LAYERVISIBILITY, function (e) {
-                self.updateLayerVisibility(e.layer);
-            }).on(TC.Consts.event.LAYERADD, function (e) {
-                self.updateLayerTree(e.layer);
-            }).on(TC.Consts.event.VECTORUPDATE + ' ' + TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
-                // Se introduce un timeout porque pueden venir muchos eventos de este tipo seguidos y no tiene sentido actualizar con cada uno
-                if (self._updateLayerTreeTimeout) {
-                    clearTimeout(self._updateLayerTreeTimeout);
-                }
-                self._updateLayerTreeTimeout = setTimeout(function () {
-                    if (self.map.workLayers.indexOf(e.layer) > -1) {
-                        // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
+                        else {
+                            self.updateLayerTree(layer);
+                        }
+                    })
+                    .on(TC.Consts.event.LAYERVISIBILITY, function (e) {
+                        self.updateLayerVisibility(e.layer);
+                    })
+                    .on(TC.Consts.event.LAYERADD, function (e) {
                         self.updateLayerTree(e.layer);
-                        delete self._updateLayerTreeTimeout;
-                    }
-                }, 100);
-            }).on(TC.Consts.event.LAYERREMOVE, function (e) {
-                self.removeLayer(e.layer);
-            }).on(TC.Consts.event.LAYERORDER, function (e) {
-                self.updateLayerOrder(e.layer, e.oldIndex, e.newIndex);
+                    })
+                    .on(TC.Consts.event.VECTORUPDATE + ' ' + TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
+                        const layer = e.layer;
+                        // Se introduce un timeout porque pueden venir muchos eventos de este tipo seguidos y no tiene sentido actualizar con cada uno
+                        if (self._updateLayerTreeTimeout) {
+                            clearTimeout(self._updateLayerTreeTimeout);
+                        }
+                        self._updateLayerTreeTimeout = setTimeout(function () {
+                            if (self.map.workLayers.indexOf(layer) > -1) {
+                                // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
+                                self.updateLayerTree(layer);
+                                delete self._updateLayerTreeTimeout;
+                            }
+                        }, 100);
+                    })
+                    .on(TC.Consts.event.LAYERREMOVE, function (e) {
+                        self.removeLayer(e.layer);
+                    })
+                    .on(TC.Consts.event.LAYERORDER, function (e) {
+                        self.updateLayerOrder(e.layer, e.oldIndex, e.newIndex);
+                    })
+                    .on(TC.Consts.event.LAYERERROR, function (e) {
+                        self.onErrorLayer(e.layer);                                                    
+                    });
+
+                resolve(self);
+            }).catch(function (err) {
+                reject(err instanceof Error ? err : Error(err));
             });
         });
-
-        return result;
     };
 
     ctlProto.updateScale = function () {
@@ -104,29 +121,29 @@ TC.inherit(TC.control.MapContents, TC.Control);
     };
 
     ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx, collection) {
-        var self = this;
+        const self = this;
         if (oldIdx >= 0 && oldIdx !== newIdx) {
-            var $currentElm, $previousElm;
-            var $elms = self.getLayerUIElements();
+            var currentElm, previousElm;
+            const elms = self.getLayerUIElements();
 
             collection = collection || self.map.workLayers;
 
             for (var i = collection.length - 1; i >= 0; i--) {
-                var l = collection[i];
-                $previousElm = $currentElm;
-                $elms.each(function (idx, elm) {
-                    var $elm = $(elm);
-                    if ($elm.data(_dataKeys.layer) === l) {
-                        $currentElm = $elm;
-                        return false;
+                const l = collection[i];
+                previousElm = currentElm;
+                for (var j = 0, jj = elms.length; j < jj; j++) {
+                    const elm = elms[j];
+                    if ($(elm).data(_dataKeys.layer) === l) {
+                        currentElm = elm;
+                        break;
                     }
-                });
+                }
                 if (l === layer) {
-                    if ($previousElm) {
-                        $previousElm.after($currentElm);
+                    if (previousElm) {
+                        previousElm.insertAdjacentElement('afterend', currentElm);
                     }
                     else {
-                        $elms.parent().prepend($currentElm);
+                        currentElm.parentElement.firstChild.insertAdjacentElement('beforebegin', currentElm);
                     }
                     break;
                 }
@@ -135,12 +152,24 @@ TC.inherit(TC.control.MapContents, TC.Control);
     };
 
     ctlProto.removeLayer = function (layer) {
-        this.update();
+        const self = this;
+        const liCollection = self.getLayerUIElements();
+        for (var i = 0, len = liCollection.length; i < len; i++) {
+            const li = liCollection[i];
+            if ($(li).data(_dataKeys.layer) === layer) {
+                li.parentElement.removeChild(li);
+                break;
+            }
+        }
+        if (self.getLayerUIElements().length === 0) {
+            self.div.querySelector('.' + self.CLASS + '-empty').classList.remove(TC.Consts.classes.HIDDEN);
+        }
     };
 
+    ctlProto.onErrorLayer = function (layer) { };
+
     ctlProto.getLayerUIElements = function () {
-        var self = this;
-        return self._$div.find('ul').first().children();
+        return this.div.querySelector('ul').children;
     };
 
     var isGetLegendGraphic = function (url) {
@@ -151,24 +180,24 @@ TC.inherit(TC.control.MapContents, TC.Control);
      * Carga y le da estilo a la imagen de la leyenda.
      * @param {string} requestMethod Si queremos pedir la imagen de la leyenda por POST, podemos especificarlo utilizando el parámetro requestMethod.
      */
-    ctlProto.styleLegendImage = function ($img, layer) {
-        if (!$img.attr('src')) {
-            var imgSrc = $img.data(_dataKeys.img);
+    ctlProto.styleLegendImage = function (img, layer) {
+        if (!img.getAttribute('src')) {
+            var imgSrc = $(img).data(_dataKeys.img);
 
             const toolProxification = new TC.tool.Proxification(TC.proxify);
 
             if (layer && layer.options.method && layer.options.method === "POST") {
                 layer.getLegendGraphicImage()
-                    .done(function (src) {
-                        $img.attr('src', src); // ya se ha validado en getLegendGraphicImage
-                    }).fail(function (err) {
+                    .then(function (src) {
+                        img.src = src; // ya se ha validado en getLegendGraphicImage
+                    }).catch(function (err) {
                         TC.error(err);
                     });
             } else {
                 if (isGetLegendGraphic(imgSrc)) {
-                    var $watch = $img.parent();
+                    const watch = img.parentElement;
                     // A\u00f1adimos el par\u00e1metro que define el estilo de los textos en la imagen
-                    var colorStr = $watch.css('color');
+                    var colorStr = watch.style.color;
                     // Convertimos el color de formato rgb(r,g,b) a 0xRRGGBB
                     var openIdx = colorStr.indexOf('(');
                     var closeIdx = colorStr.indexOf(')');
@@ -186,8 +215,8 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     else {
                         colorStr.replace('#', '0x');
                     }
-                    imgSrc += '&LEGEND_OPTIONS=fontName:' + $watch.css('font-family') +
-                        ';fontSize:' + parseInt($watch.css('font-size')) +
+                    imgSrc += '&LEGEND_OPTIONS=fontName:' + watch.style.fontFamily +
+                        ';fontSize:' + parseInt(watch.style.fontSize) +
                         ';fontColor:' + colorStr +
                         ';fontAntiAliasing:true';
                     if (layer.params && layer.params.sld_body) {
@@ -195,14 +224,14 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     }
 
                     toolProxification.fetchImage(imgSrc).then(function (img) {
-                        $img.data(_dataKeys.img, img.src);
+                        $(img).data(_dataKeys.img, img.src);
                     }).catch(function (err) {
                         TC.error(err);
                     });
                 }
 
-                toolProxification.fetchImage(imgSrc).then(function (img) {
-                    $img.attr('src', img.src);
+                toolProxification.fetchImage(imgSrc).then(function (i) {
+                    img.src = i.src;
                 }).catch(function (err) {
                     TC.error(err.statusText);
                 });                
