@@ -1,0 +1,32 @@
+﻿
+.tc-ctl.tc-ctl-fscreen {
+    top: calc(1.5em + 2em + 10em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em); /* margen antes del +, el +, el alto de la barra, el - y el margen inferior, la casita, el margen inferior, btn streetView, el margen inferior */
+    position: absolute;
+    left: 0.7em;
+    padding: 0;
+}
+
+.tc-ctl-fscreen {
+    width: 2em;
+    height: 2em;
+}
+
+    .tc-ctl-fscreen button {
+        position: absolute;
+        width: 2em;
+        height: 2em;
+        z-index: 10002;
+        color: #fff;
+        border-radius: 0.2em;
+        border: 0;
+        background-color: rgba(0, 0, 0, 0.66);
+        padding: 0;
+    }
+
+        .tc-ctl-fscreen button:after {
+            content: 'Pantalla completa';
+        }
+
+        .tc-ctl-fscreen button:focus {
+            outline: none;
+        }

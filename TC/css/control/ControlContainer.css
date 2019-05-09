@@ -1,0 +1,89 @@
+﻿
+div.tc-map div.tc-ctl-cctr {
+    top: calc(1em + 2em + 10em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em); /* margen antes del +, el +, el alto de la barra, el - y el margen inferior, la casita, el margen inferior, btn streetView, el margen inferior, btn fullScreen, el margen inferior, btn 3D, el margen inferior */
+    position: absolute;
+    left: 0.7em;
+}
+
+div.tc-map div.tc-ctl-cctr {
+    position: absolute;
+    top: 1.5em;
+    left: 0.7em;
+    padding: 0;
+    display: -webkit-inline-box;
+    display: -moz-inline-box;
+    display: -webkit-inline-flex;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    pointer-events: none;
+    /* para que el contenedor sea transparente */
+    opacity: 0.99;
+}
+
+    div.tc-map div.tc-ctl-cctr > ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+
+        div.tc-map div.tc-ctl-cctr > ul:first-child {
+            left: 0;            
+        }
+
+        div.tc-map div.tc-ctl-cctr > ul:last-child {
+            left: calc(2em + 0.5em);
+        }
+
+    div.tc-map div.tc-ctl-cctr li > div.tc-ctl {
+        margin-bottom: 0.25em;
+    }
+
+        div.tc-map div.tc-ctl-cctr li > div.tc-ctl {
+            position: static; /* initial no funciona en IE */
+            top: auto;
+            left: auto;
+            pointer-events: initial;
+            pointer-events: auto; /* initial no funciona en IE */            
+        }
+
+        div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-hidden, .tc-ctl-cctr li > div.tc-ctl.tc-disabled {
+            margin: 0;
+            padding: 0;
+        }
+
+    div.tc-map div.tc-ctl-cctr > .tc-ctl-cctr-elm {
+        padding: 0;
+    }
+
+    div.tc-map div.tc-ctl-cctr div.tc-ctl-cctr-elm:last-child {
+        margin-bottom: 0em;
+    }
+
+div.tc-map.tc-ctl-sv-active.tc-collapsed .tc-ctl-cctr {
+    display: none;
+}
+
+div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results {
+    min-width: -moz-fit-content;
+    min-width: -webkit-fit-content;
+    min-width: fit-content;
+    max-width: -moz-fit-content;
+    max-width: -webkit-fit-content;
+    max-width: fit-content;
+    display: table;
+    overflow: hidden;
+}
+
+    div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .prsidebar-body {
+        display: inline-block;
+    }
+
+    div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .prcollapsed {
+        position: static; /* sin esto en IE no respeta el alto del botón y se montan */
+    }
+
+    div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results #results {
+        height: auto;
+    }
