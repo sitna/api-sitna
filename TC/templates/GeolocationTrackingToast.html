@@ -1,20 +1,28 @@
-﻿<ul>
-    <li>
-        <span>{?isGeo}{@i18n $key="lon"/}{:else}X{/isGeo}:</span> {x}<br />
-        <span>{?isGeo}{@i18n $key="lat"/}{:else}Y{/isGeo}:</span> {y}<br />
-        {?z}
-        <span>{?isGeo}{@i18n $key="ele"/}{:else}Z{/isGeo}:</span> {z} m<br />
-        {/z}
-    </li>
-    <li>
+﻿<table class="tc-ctl-geolocation-info-tracking">
+    <tr>
+        <th>{?isGeo}{@i18n $key="lon"/}{:else}X{/isGeo}:</th>
+        <td> {x} </td>
         {?accuracy}
-        <span>{@i18n $key="geo.trk.accuracy"/}:</span> {accuracy} m<br />
+        <th>{@i18n $key="geo.trk.accuracy"/}:</th>
+        <td> {accuracy} m </td>
         {/accuracy}
+    </tr>
+    <tr>
+        <th>{?isGeo}{@i18n $key="lat"/}{:else}Y{/isGeo}:</th>
+        <td> {y} </td>
         {?speed}
-        <span>{@i18n $key="geo.trk.speed"/}:</span> {speed}  km/h<br />
+        <th>{@i18n $key="geo.trk.speed"/}:</th>
+        <td>{speed} km/h</td>
         {/speed}
+    </tr>
+    <tr>
+        {?z}
+        <th>{?isGeo}{@i18n $key="ele"/}{:else}Z{/isGeo}:</th>
+        <td> {z} m </td>
+        {/z}
         {?mdt}
-        <span title="{@i18n $key="mdt.title"/}">{@i18n $key="ele"/} ({@i18n $key="mdt"/}):</span> {mdt} m<br />
+        <th title="{@i18n $key=" mdt.title"/}">{@i18n $key="ele"/} ({@i18n $key="mdt"/}):</th>
+        <td>{mdt} m </td>
         {/mdt }
-    </li>
-</ul>
+    </tr>    
+</table>

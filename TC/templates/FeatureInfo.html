@@ -26,58 +26,58 @@
             {#hasLimits}
             <span class="tc-ctl-finfo-errors">{hasLimits}</span>
             {:else}
-        <ul class="tc-ctl-finfo-layers">
-            {#layers}
-            <li>
-                    <h4><span class="tc-ctl-finfo-layer-n">{features.length}</span> {#path}{.}{@sep} &bull; {/sep}{/path}</h4>                                            
-                    <div class="tc-ctl-finfo-layer-content">
-                <ul class="tc-ctl-finfo-features">
-                    {#features}
+                <ul class="tc-ctl-finfo-layers">
+                    {#layers}
                     <li>
-                        {?rawContent}
-                        <h5>{@i18n $key="feature"/}</h5>
-                            {@eq key=rawFormat value="text/html"}                                
-                                {?expandUrl}
-                                    {@ne key=expandUrl value=""}
-                                        <div class="tc-ctl-finfo-features-iframe-cnt">
-                                            <iframe src="{rawUrl}" />
-                                            <a class="tc-ctl-finfo-open" onclick="window.open('{expandUrl}', '_blank')" title="{@i18n $key="expand"/}"></a>
-                                        </div>
+                        <h4><span class="tc-ctl-finfo-layer-n">{features.length}</span> {#path}{.}{@sep} &bull; {/sep}{/path}</h4>                                            
+                        <div class="tc-ctl-finfo-layer-content">
+                            <ul class="tc-ctl-finfo-features">
+                                {#features}
+                                <li>
+                                    {?rawContent}
+                                        <h5>{@i18n $key="feature"/}</h5>
+                                            {@eq key=rawFormat value="text/html"}                                
+                                                {?expandUrl}
+                                                    {@ne key=expandUrl value=""}
+                                                        <div class="tc-ctl-finfo-features-iframe-cnt">
+                                                            <iframe src="{rawUrl}"></iframe>
+                                                            <a class="tc-ctl-finfo-open" onclick="window.open('{expandUrl}', '_blank')" title="{@i18n $key="expand"/}"></a>
+                                                        </div>
+                                                    {:else}
+                                                        <iframe src="{rawUrl}"></iframe>
+                                                    {/ne}
+                                                {/expandUrl}
+                                            {:else}
+                                                <pre>{rawContent}</pre>
+                                            {/eq}
                                     {:else}
-                                        <iframe src="{rawUrl}" />
-                                    {/ne}
-                                {/expandUrl}
-                            {:else}
-                                <pre>{rawContent}</pre>
-                            {/eq}
-                        {:else}
-                        {?error}
-                        <span class="tc-ctl-finfo-errors">{@i18n $key="fi.error"/}<span class="tc-ctl-finfo-error-text">{error}</span></span>
-                        {:else}
-                        <h5>{id}</h5>
-                        <table{?geometry} title="{@i18n $key="clickToShowOnMap"/}"{/geometry}>
-                            <tbody>
-                                {#attributes}
-                                <tr>
-                                    <th class="tc-ctl-finfo-attr">{name}</th>
-                                    <td class="tc-ctl-finfo-val">{value}</td>
-                                </tr>
-                                {/attributes}
-                            </tbody>
-                        </table>
-                        {/error}
-                        {/rawContent}
+                                        {?error}
+                                            <span class="tc-ctl-finfo-errors">{@i18n $key="fi.error"/}<span class="tc-ctl-finfo-error-text">{error}</span></span>
+                                        {:else}
+                                            <h5>{id}</h5>
+                                                <table{?geometry} title="{@i18n $key="clickToShowOnMap"/}"{/geometry}>
+                                                    <tbody>
+                                                        {#attributes}
+                                                        <tr>
+                                                            <th class="tc-ctl-finfo-attr">{name}</th>
+                                                            <td class="tc-ctl-finfo-val">{value}</td>
+                                                        </tr>
+                                                        {/attributes}
+                                                    </tbody>
+                                                </table>
+                                        {/error}
+                                    {/rawContent}
+                                </li>
+                                {:else}
+                                    <li class="tc-ctl-finfo-empty">{@i18n $key="noDataInThisLayer"/}</li>
+                                {/features}
+                            </ul>
+                        </div>
                     </li>
                     {:else}
-                    <li class="tc-ctl-finfo-empty">{@i18n $key="noDataInThisLayer"/}</li>
-                    {/features}
+                        <li class="tc-ctl-finfo-empty">{@i18n $key="noDataAtThisService"/}</li>
+                    {/layers}
                 </ul>
-                    </div>
-            </li>
-            {:else}
-            <li class="tc-ctl-finfo-empty">{@i18n $key="noDataAtThisService"/}</li>
-            {/layers}
-        </ul>
             {/hasLimits}
         </div>
     </li>

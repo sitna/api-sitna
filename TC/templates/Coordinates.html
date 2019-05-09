@@ -1,15 +1,15 @@
 ﻿<div>CRS: <span class="tc-ctl-coords-crs">{crs}</span><button class="tc-ctl-coords-crs" title="{@i18n $key="changeCRS"/}">{crs}</button></div>
 <div class="tc-ctl-coords-xy">
     {?isGeo}
-    {@i18n $key="lat"/}: <span class="tc-ctl-coords-lat">{lat}</span> {@i18n $key="lon"/}: <span class="tc-ctl-coords-lon">{lon}</span> {?ele} {@i18n $key="ele"/}: <span class="tc-ctl-coords-elevation">{ele}</span> {/ele}
+    {@i18n $key="lat"/}: <span class="tc-ctl-coords-lat">{lat}</span> {@i18n $key="lon"/}: <span class="tc-ctl-coords-lon">{lon}</span> {?ele}{@i18n $key="ele"/}: <span class="tc-ctl-coords-elevation">{ele}</span> {/ele}
     {:else}
-    x: <span class="tc-ctl-coords-x">{x}</span> y: <span class="tc-ctl-coords-y">{y}</span> {?ele} z: <span class="tc-ctl-coords-elevation">{ele}</span> {/ele}
+    x: <span class="tc-ctl-coords-x">{x}</span> y: <span class="tc-ctl-coords-y">{y}</span> {?ele}z: <span class="tc-ctl-coords-elevation">{ele}</span> {/ele}
     {/isGeo}
 </div>
 {?showGeo}
 <div class="tc-ctl-coords-alt">
     <div class="tc-ctl-coords-xy">
-        {@i18n $key="lat"/}: <span class="tc-ctl-coords-lat">{lat}</span> {@i18n $key="lon"/}: <span class="tc-ctl-coords-lon">{lon}</span> {?ele} {@i18n $key="ele"/}: <span class="tc-ctl-coords-elevation">{ele}</span> {/ele}
+        {@i18n $key="lat"/}: <span class="tc-ctl-coords-lat">{lat}</span> {@i18n $key="lon"/}: <span class="tc-ctl-coords-lon">{lon}</span> {?ele}{@i18n $key="ele"/}: <span class="tc-ctl-coords-elevation">{ele}</span> {/ele}
     </div>
 </div>
 {/showGeo}
