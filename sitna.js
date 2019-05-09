@@ -246,7 +246,6 @@ TC.isDebug = true;
 
 (function () {
     if (!window.TC || !window.TC.Cfg) {
-        var src;
         var script;
         if (document.currentScript) {
             script = document.currentScript;
@@ -263,7 +262,7 @@ TC.isDebug = true;
         req.send(null);
 
         var head = document.getElementsByTagName("head")[0];
-        var script = document.createElement("script");
+        script = document.createElement("script");
         script.type = "text/javascript";
         script.text = req.responseText;
         head.appendChild(script);
@@ -1242,6 +1241,18 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
+  Identificador de la capa de ortofoto 2018 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+  @property IDENA_ORTHOPHOTO2018
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de ortofoto 2017 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+  @property IDENA_ORTHOPHOTO2017
+  @type string
+  @final
+ */
+/**
   Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
   @property IDENA_ORTHOPHOTO2014
   @type string
@@ -1272,6 +1283,18 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
+  Identificador de la capa de ortofoto 2018 del WMS de IDENA.
+  @property IDENA_DYNORTHOPHOTO2018
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de ortofoto 2017 del WMS de IDENA.
+  @property IDENA_DYNORTHOPHOTO2017
+  @type string
+  @final
+ */
+/**
   Identificador de la capa de ortofoto 2014 del WMS de IDENA.
   @property IDENA_DYNORTHOPHOTO2014
   @type string
@@ -1290,8 +1313,14 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
-  Identificador de la capa del mapa base del WMTS del Instituto Geográfico Nacional.
+  Identificador de la capa del callejero del WMTS del Instituto Geográfico Nacional.
   @property IGN_ES_BASEMAP
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del callejero en gris del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_BASEMAP_GREY
   @type string
   @final
  */
@@ -1314,8 +1343,14 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
-  Identificador de la capa del mapa base del WMS del Instituto Geográfico Nacional.
+  Identificador de la capa del callejero del WMS del Instituto Geográfico Nacional.
   @property IGN_ES_DYNBASEMAP
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del callejero en gris del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNBASEMAP_GREY
   @type string
   @final
  */
@@ -2032,18 +2067,16 @@ Esta clase no tiene constructor.
 ```javascript
     <div id="mapa"></div>
     <script>
-      // Activamos el proxy para poder acceder a servicios de otro dominio.
-      SITNA.Cfg.proxy = "proxy.ashx?";
       // Añadimos el control featureInfo.
       SITNA.Cfg.controls.featureInfo = true;
       // Añadimos una capa WMS sobre la que hacer las consultas.
       SITNA.Cfg.workLayers = [
         {
-          id: "ocupacionSuelo",
-          title: "Ocupación del suelo",
+          id: "terremotos",
+          title: "Terremotos últimos 365 días",
           type: SITNA.Consts.layerType.WMS,
-          url: "http://www.ign.es/wms-inspire/ocupacion-suelo",
-          layerNames: ["LC.LandCoverSurfaces"]
+          url: "https://www.ign.es/wms-inspire/geofisica",
+          layerNames: ["Ultimos365dias"]
         }
       ];
       var map = new SITNA.Map("mapa");
@@ -3443,9 +3476,10 @@ El tipo de la capa no puede ser {{#crossLink "SITNA.consts.LayerType/WFS:propert
             };
 
             var url = queryable.url + '?' + $.param(params);
-            $.ajax({
-                url: url
-            }).done(function (data) {
+            TC.ajax({
+                url: url,
+                responseType: TC.Consts.mimeType.JSON
+            }).then(function (data) {
                 queryable.queryableData = [];
 
                 if (data.features) {
@@ -4086,25 +4120,28 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.searchFeature.
             });
 
             tcMap.on(TC.Consts.event.FEATURESADD, function (e) {
-                if (e.layer == tcSrchGenericLayer && e.layer.features && e.layer.features.length > 0) {
+                const layer = e.layer;
+                if (layer == tcSrchGenericLayer && layer.features && layer.features.length > 0) {
 
-                    for (var i = 0; i < e.layer.features.length; i++) {
-                        if (e.layer.features[i].showsPopup != tcSearch.queryableFeatures)
-                            e.layer.features[i].showsPopup = tcSearch.queryableFeatures;
+                    for (var i = 0; i < layer.features.length; i++) {
+                        if (layer.features[i].showsPopup != tcSearch.queryableFeatures)
+                            layer.features[i].showsPopup = tcSearch.queryableFeatures;
                     }
 
-                    tcMap.zoomToFeatures(e.layer.features);
+                    tcMap.zoomToFeatures(layer.features);
                 }
             });
 
             tcMap.on(TC.Consts.event.LAYERUPDATE, function (e) {
-                if (e.layer == tcSrchGenericLayer && e.newData && e.newData.features && e.newData.features.length == 0)
+                const layer = e.layer;
+                const newData = e.newData;
+                if (layer == tcSrchGenericLayer && newData && newData.features && newData.features.length == 0)
                     tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
                         type: TC.Consts.msgType.INFO, duration: 5000
                     });
 
                 if (callback)
-                    callback(e.layer == tcSrchGenericLayer && e.newData && e.newData.features && e.newData.features.length == 0 ? null : idQuery);
+                    callback(layer == tcSrchGenericLayer && newData && newData.features && newData.features.length == 0 ? null : idQuery);
             });
         }
     };
@@ -4241,8 +4278,8 @@ El valor de esa opción es una ruta a una carpeta, donde se encontrarán todos o
 La maquetación por defecto añade los siguientes controles al conjunto por defecto: {{#crossLink "SITNA.cfg.MapControlOptions/navBar:property"}}{{/crossLink}},
 {{#crossLink "SITNA.cfg.MapControlOptions/basemapSelector:property"}}{{/crossLink}}, {{#crossLink "SITNA.cfg.MapControlOptions/TOC:property"}}{{/crossLink}},
 {{#crossLink "SITNA.cfg.MapControlOptions/legend:property"}}{{/crossLink}}, {{#crossLink "SITNA.cfg.MapControlOptions/scaleBar:property"}}{{/crossLink}},
-{{#crossLink "SITNA.cfg.MapControlOptions/search:property"}}{{/crossLink}}, {{#crossLink "SITNA.cfg.MapControlOptions/measure:property"}}{{/crossLink}},
-{{#crossLink "SITNA.cfg.MapControlOptions/overviewMap:property"}}{{/crossLink}} y {{#crossLink "SITNA.cfg.MapControlOptions/popup:property"}}{{/crossLink}}.
+{{#crossLink "SITNA.cfg.MapControlOptions/search:property"}}{{/crossLink}}, {{#crossLink "SITNA.cfg.MapControlOptions/streetView:property"}}{{/crossLink}}
+, {{#crossLink "SITNA.cfg.MapControlOptions/measure:property"}}{{/crossLink}}, {{#crossLink "SITNA.cfg.MapControlOptions/overviewMap:property"}}{{/crossLink}} y {{#crossLink "SITNA.cfg.MapControlOptions/popup:property"}}{{/crossLink}}.
 Puede [descargar la maquetación por defecto](../../tc/layout/responsive/responsive.zip).
 
 ### Soporte multiidioma
