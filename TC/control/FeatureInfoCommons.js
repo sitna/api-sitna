@@ -21,7 +21,7 @@ TC.control.FeatureInfoCommons = function () {
 
     self.resultsLayer = null;
     self.filterLayer = null;
-    self._layersDeferred = $.Deferred();
+    self._layersPromise = null;
     self.filterFeature = null;
     self.info = null;
     self.popup = null;
@@ -36,6 +36,83 @@ TC.control.FeatureInfoCommons.displayMode = {
 };
 
 (function () {
+
+    if (!Array.from) {
+        Array.from = (function () {
+            var toStr = Object.prototype.toString;
+            var isCallable = function (fn) {
+                return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+            };
+            var toInteger = function (value) {
+                var number = Number(value);
+                if (isNaN(number)) { return 0; }
+                if (number === 0 || !isFinite(number)) { return number; }
+                return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+            };
+            var maxSafeInteger = Math.pow(2, 53) - 1;
+            var toLength = function (value) {
+                var len = toInteger(value);
+                return Math.min(Math.max(len, 0), maxSafeInteger);
+            };
+
+            // La propiedad length del método from es 1.
+            return function from(arrayLike/*, mapFn, thisArg */) {
+                // 1. Deje a C ser el este valor.
+                var C = this;
+
+                // 2. Deje que los elementos sean ToObject(arrayLike).
+                var items = Object(arrayLike);
+
+                // 3. Retornar IfAbrupt(items).
+                if (arrayLike == null) {
+                    throw new TypeError("Array.from requiere un objeto array-like - not null or undefined");
+                }
+
+                // 4. Si mapfn no está definida, entonces deja que sea false.
+                var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+                var T;
+                if (typeof mapFn !== 'undefined') {
+                    // 5. si no
+                    // 5. a If IsCallable(mapfn) es false, lanza una excepción TypeError.
+                    if (!isCallable(mapFn)) {
+                        throw new TypeError('Array.from: si hay mapFn, el segundo argumento debe ser una función');
+                    }
+
+                    // 5. b. Si thisArg se suministró, deje que T sea thisArg; si no, deje que T esté indefinido.
+                    if (arguments.length > 2) {
+                        T = arguments[2];
+                    }
+                }
+
+                // 10. Let lenValue be Get(items, "length").
+                // 11. Let len be ToLength(lenValue).
+                var len = toLength(items.length);
+
+                // 13. If IsConstructor(C) is true, then
+                // 13. a. Let A be the result of calling the [[Construct]] internal method of C with an argument list containing the single item len.
+                // 14. a. Else, Let A be ArrayCreate(len).
+                var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+
+                // 16. Let k be 0.
+                var k = 0;
+                // 17. Repeat, while k < len… (also steps a - h)
+                var kValue;
+                while (k < len) {
+                    kValue = items[k];
+                    if (mapFn) {
+                        A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                    } else {
+                        A[k] = kValue;
+                    }
+                    k += 1;
+                }
+                // 18. Let putStatus be Put(A, "length", len, true).
+                A.length = len;
+                // 20. Return A.
+                return A;
+            };
+        }());
+    }
 
     var layerCount = function (ctl) {
         return ctl.info.services ?
@@ -58,12 +135,11 @@ TC.control.FeatureInfoCommons.displayMode = {
         ctlProto.template = TC.apiLocation + "TC/templates/FeatureInfo.html";
     }
     else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["elevation"], false), ctx, { "block": body_1 }, {}).w("<ul class=\"tc-ctl-finfo-services\">").s(ctx.get(["services"], false), ctx, { "else": body_4, "block": body_6 }, {}).w("</ul>").x(ctx.get(["featureCount"], false), ctx, { "block": body_30 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-coords\"><span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-crs\">CRS: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.get(["crs"], false), ctx, "h").w("</span></span> ").x(ctx.get(["isGeo"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" <span class=\"tc-ctl-finfo-coords-pair\">").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.get(["elevation"], false), ctx, "h").w(" m</span></span></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x\">x: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "0"]), ctx, "h").w("</span></span> <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x\">y: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "1"]), ctx, "h").w("</span></span> "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lat\">").h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "1"]), ctx, "h").w("</span></span> <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lon\">").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "0"]), ctx, "h").w("</span></span> "); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.nx(ctx.get(["elevation"], false), ctx, { "block": body_5 }, {}); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</li>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<li><h3>").x(ctx.get(["title"], false), ctx, { "else": body_7, "block": body_10 }, {}).w("</h3><div class=\"tc-ctl-finfo-service-content\">").s(ctx.get(["hasLimits"], false), ctx, { "else": body_11, "block": body_29 }, {}).w("</div></li>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.x(ctx.getPath(false, ["layers", "0", "title"]), ctx, { "else": body_8, "block": body_9 }, {}); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.f(ctx.getPath(false, ["layer", "name"]), ctx, "h"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.f(ctx.getPath(false, ["layers", "0", "title"]), ctx, "h"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-layers\">").s(ctx.get(["layers"], false), ctx, { "else": body_12, "block": body_13 }, {}).w("</ul>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataAtThisService" }).w("</li>"); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<li><h4><span class=\"tc-ctl-finfo-layer-n\">").f(ctx.getPath(false, ["features", "length"]), ctx, "h").w("</span> ").s(ctx.get(["path"], false), ctx, { "block": body_14 }, {}).w("</h4> <div class=\"tc-ctl-finfo-layer-content\"><ul class=\"tc-ctl-finfo-features\">").s(ctx.get(["features"], false), ctx, { "else": body_16, "block": body_17 }, {}).w("</ul></div></li>"); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_15 }, {}); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w(" &bull; "); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataInThisLayer" }).w("</li>"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("<li>").x(ctx.get(["rawContent"], false), ctx, { "else": body_18, "block": body_23 }, {}).w("</li>"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.x(ctx.get(["error"], false), ctx, { "else": body_19, "block": body_22 }, {}); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("<h5>").f(ctx.get(["id"], false), ctx, "h").w("</h5><table").x(ctx.get(["geometry"], false), ctx, { "block": body_20 }, {}).w("><tbody>").s(ctx.get(["attributes"], false), ctx, { "block": body_21 }, {}).w("</tbody></table>"); } body_19.__dustBody = !0; function body_20(chk, ctx) { return chk.w(" title=\"").h("i18n", ctx, {}, { "$key": "clickToShowOnMap" }).w("\""); } body_20.__dustBody = !0; function body_21(chk, ctx) { return chk.w("<tr><th class=\"tc-ctl-finfo-attr\">").f(ctx.get(["name"], false), ctx, "h").w("</th><td class=\"tc-ctl-finfo-val\">").f(ctx.get(["value"], false), ctx, "h").w("</td></tr>"); } body_21.__dustBody = !0; function body_22(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").h("i18n", ctx, {}, { "$key": "fi.error" }).w("<span class=\"tc-ctl-finfo-error-text\">").f(ctx.get(["error"], false), ctx, "h").w("</span></span>"); } body_22.__dustBody = !0; function body_23(chk, ctx) { return chk.w("<h5>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h5>").h("eq", ctx, { "else": body_24, "block": body_25 }, { "key": ctx.get(["rawFormat"], false), "value": "text/html" }); } body_23.__dustBody = !0; function body_24(chk, ctx) { return chk.w("<pre>").f(ctx.get(["rawContent"], false), ctx, "h").w("</pre>"); } body_24.__dustBody = !0; function body_25(chk, ctx) { return chk.w(" ").x(ctx.get(["expandUrl"], false), ctx, { "block": body_26 }, {}); } body_25.__dustBody = !0; function body_26(chk, ctx) { return chk.h("ne", ctx, { "else": body_27, "block": body_28 }, { "key": ctx.get(["expandUrl"], false), "value": "" }); } body_26.__dustBody = !0; function body_27(chk, ctx) { return chk.w("<iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" />"); } body_27.__dustBody = !0; function body_28(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-features-iframe-cnt\"><iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" /><a class=\"tc-ctl-finfo-open\" onclick=\"window.open('").f(ctx.get(["expandUrl"], false), ctx, "h").w("', '_blank')\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\"></a></div>"); } body_28.__dustBody = !0; function body_29(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").f(ctx.get(["hasLimits"], false), ctx, "h").w("</span>"); } body_29.__dustBody = !0; function body_30(chk, ctx) { return chk.h("gt", ctx, { "block": body_31 }, { "key": ctx.get(["featureCount"], false), "value": "1", "type": "number" }); } body_30.__dustBody = !0; function body_31(chk, ctx) { return chk.w("<a class=\"tc-ctl-btn tc-ctl-finfo-btn-prev\">").h("i18n", ctx, {}, { "$key": "previous" }).w("</a><div class=\"tc-ctl-finfo-counter\"><span class=\"tc-ctl-finfo-counter-current\"></span>/").f(ctx.get(["featureCount"], false), ctx, "h").w("</div><a class=\"tc-ctl-btn tc-ctl-finfo-btn-next\">").h("i18n", ctx, {}, { "$key": "next" }).w("</a>"); } body_31.__dustBody = !0; return body_0 };
+        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["elevation"], false), ctx, { "block": body_1 }, {}).w("<ul class=\"tc-ctl-finfo-services\">").s(ctx.get(["services"], false), ctx, { "else": body_4, "block": body_6 }, {}).w("</ul>").x(ctx.get(["featureCount"], false), ctx, { "block": body_30 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-coords\"><span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-crs\">CRS: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.get(["crs"], false), ctx, "h").w("</span></span> ").x(ctx.get(["isGeo"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" <span class=\"tc-ctl-finfo-coords-pair\">").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.get(["elevation"], false), ctx, "h").w(" m</span></span></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x\">x: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "0"]), ctx, "h").w("</span></span> <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x\">y: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "1"]), ctx, "h").w("</span></span> "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lat\">").h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "1"]), ctx, "h").w("</span></span> <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lon\">").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "0"]), ctx, "h").w("</span></span> "); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.nx(ctx.get(["elevation"], false), ctx, { "block": body_5 }, {}); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</li>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<li><h3>").x(ctx.get(["title"], false), ctx, { "else": body_7, "block": body_10 }, {}).w("</h3><div class=\"tc-ctl-finfo-service-content\">").s(ctx.get(["hasLimits"], false), ctx, { "else": body_11, "block": body_29 }, {}).w("</div></li>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.x(ctx.getPath(false, ["layers", "0", "title"]), ctx, { "else": body_8, "block": body_9 }, {}); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.f(ctx.getPath(false, ["layer", "name"]), ctx, "h"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.f(ctx.getPath(false, ["layers", "0", "title"]), ctx, "h"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-layers\">").s(ctx.get(["layers"], false), ctx, { "else": body_12, "block": body_13 }, {}).w("</ul>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataAtThisService" }).w("</li>"); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<li><h4><span class=\"tc-ctl-finfo-layer-n\">").f(ctx.getPath(false, ["features", "length"]), ctx, "h").w("</span> ").s(ctx.get(["path"], false), ctx, { "block": body_14 }, {}).w("</h4> <div class=\"tc-ctl-finfo-layer-content\"><ul class=\"tc-ctl-finfo-features\">").s(ctx.get(["features"], false), ctx, { "else": body_16, "block": body_17 }, {}).w("</ul></div></li>"); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_15 }, {}); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w(" &bull; "); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataInThisLayer" }).w("</li>"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("<li>").x(ctx.get(["rawContent"], false), ctx, { "else": body_18, "block": body_23 }, {}).w("</li>"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.x(ctx.get(["error"], false), ctx, { "else": body_19, "block": body_22 }, {}); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("<h5>").f(ctx.get(["id"], false), ctx, "h").w("</h5><table").x(ctx.get(["geometry"], false), ctx, { "block": body_20 }, {}).w("><tbody>").s(ctx.get(["attributes"], false), ctx, { "block": body_21 }, {}).w("</tbody></table>"); } body_19.__dustBody = !0; function body_20(chk, ctx) { return chk.w(" title=\"").h("i18n", ctx, {}, { "$key": "clickToShowOnMap" }).w("\""); } body_20.__dustBody = !0; function body_21(chk, ctx) { return chk.w("<tr><th class=\"tc-ctl-finfo-attr\">").f(ctx.get(["name"], false), ctx, "h").w("</th><td class=\"tc-ctl-finfo-val\">").f(ctx.get(["value"], false), ctx, "h").w("</td></tr>"); } body_21.__dustBody = !0; function body_22(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").h("i18n", ctx, {}, { "$key": "fi.error" }).w("<span class=\"tc-ctl-finfo-error-text\">").f(ctx.get(["error"], false), ctx, "h").w("</span></span>"); } body_22.__dustBody = !0; function body_23(chk, ctx) { return chk.w("<h5>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h5>").h("eq", ctx, { "else": body_24, "block": body_25 }, { "key": ctx.get(["rawFormat"], false), "value": "text/html" }); } body_23.__dustBody = !0; function body_24(chk, ctx) { return chk.w("<pre>").f(ctx.get(["rawContent"], false), ctx, "h").w("</pre>"); } body_24.__dustBody = !0; function body_25(chk, ctx) { return chk.w(" ").x(ctx.get(["expandUrl"], false), ctx, { "block": body_26 }, {}); } body_25.__dustBody = !0; function body_26(chk, ctx) { return chk.h("ne", ctx, { "else": body_27, "block": body_28 }, { "key": ctx.get(["expandUrl"], false), "value": "" }); } body_26.__dustBody = !0; function body_27(chk, ctx) { return chk.w("<iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\"></iframe>"); } body_27.__dustBody = !0; function body_28(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-features-iframe-cnt\"><iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\"></iframe><a class=\"tc-ctl-finfo-open\" onclick=\"window.open('").f(ctx.get(["expandUrl"], false), ctx, "h").w("', '_blank')\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\"></a></div>"); } body_28.__dustBody = !0; function body_29(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").f(ctx.get(["hasLimits"], false), ctx, "h").w("</span>"); } body_29.__dustBody = !0; function body_30(chk, ctx) { return chk.h("gt", ctx, { "block": body_31 }, { "key": ctx.get(["featureCount"], false), "value": "1", "type": "number" }); } body_30.__dustBody = !0; function body_31(chk, ctx) { return chk.w("<a class=\"tc-ctl-btn tc-ctl-finfo-btn-prev\">").h("i18n", ctx, {}, { "$key": "previous" }).w("</a><div class=\"tc-ctl-finfo-counter\"><span class=\"tc-ctl-finfo-counter-current\"></span>/").f(ctx.get(["featureCount"], false), ctx, "h").w("</div><a class=\"tc-ctl-btn tc-ctl-finfo-btn-next\">").h("i18n", ctx, {}, { "$key": "next" }).w("</a>"); } body_31.__dustBody = !0; return body_0 };
     }
 
     ctlProto.register = function (map) {
         const self = this;
-        const deferred = $.Deferred();
 
         const result = TC.control.Click.prototype.register.call(self, map);
 
@@ -95,17 +171,22 @@ TC.control.FeatureInfoCommons.displayMode = {
                 self.highlightedFeature = null;
             })
             .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE + ' ' + TC.Consts.event.DRAWCHART, function (e) {
-                if (e.control.currentFeature !== self.filterFeature) {
-                    self.highlightedFeature = e.control.currentFeature;
+                const control = e.control;
+                if (control.currentFeature !== self.filterFeature) {
+                    self.highlightedFeature = control.currentFeature;
                 }
-                self._decorateDisplay(e.control);
+
+                // GLS: si la feature es resultado de GFI decoramos
+                if (e.control.currentFeature && e.control.currentFeature.layer && [self.filterLayer.id, self.resultsLayer.id].indexOf(e.control.currentFeature.layer.id) > -1) {
+                    self._decorateDisplay(control);
+                }
             })
             .on(TC.Consts.event.DRAWCHART, function (e) {
                 setTimeout(function () {
                     self.highlightedFeature = e.control.currentFeature;
                 }, 50);
             })
-            .on(TC.Consts.event.LAYERREMOVE, function (e) {
+            .on(TC.Consts.event.LAYERREMOVE, function () {
                 if (self.info && self.info.services) {
                     const services = {};
                     self.map.workLayers
@@ -134,19 +215,18 @@ TC.control.FeatureInfoCommons.displayMode = {
                     }
                 }
             })
-            .on(TC.Consts.event.VIEWCHANGE, function () {
-                if (map.view === TC.Consts.view.PRINTING) {
-                    self.closeResults();
-                }
+            .on(TC.Consts.event.VIEWCHANGE, function (e) {                
+                self.closeResults();
             });
 
         return result;
     };
 
-    ctlProto.render = function (callback) {
+    ctlProto.render = function () {
         const self = this;
         // Este div se usa como buffer, así que no debe ser visible.
-        self._$div.addClass(TC.Consts.classes.HIDDEN);
+        self.div.classList.add(TC.Consts.classes.HIDDEN);
+        return self._set1stRenderPromise(Promise.resolve());
     };
 
     ctlProto.responseCallback = function (options) {
@@ -159,13 +239,13 @@ TC.control.FeatureInfoCommons.displayMode = {
 
         if (!options.featureCount) {
             self.lastFeatureCount = 0;
-            self.map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, { control: self }));
+            self.map.trigger(TC.Consts.event.NOFEATUREINFO, { control: self });
             self.closeResults();
         }
         else {
             self._addSourceAttributes();
             self.lastFeatureCount = options.featureCount;
-            self.map.$events.trigger($.Event(TC.Consts.event.FEATUREINFO, $.extend({ control: self }, options)));
+            self.map.trigger(TC.Consts.event.FEATUREINFO, $.extend({ control: self }, options));
         }
     };
 
@@ -199,9 +279,10 @@ TC.control.FeatureInfoCommons.displayMode = {
                     }
                     else {
                         var setResultsPanel = function setResultsPanel(e) {
-                            if (TC.control.ResultsPanel && e.control instanceof TC.control.ResultsPanel) {
-                                self.resultsPanel = e.control;
-                                e.control.caller = self;
+                            const control = e.control;
+                            if (TC.control.ResultsPanel && control instanceof TC.control.ResultsPanel) {
+                                self.resultsPanel = control;
+                                control.caller = self;
                                 map.off(TC.Consts.event.CONTROLADD, setResultsPanel);
                             }
                         };
@@ -212,10 +293,10 @@ TC.control.FeatureInfoCommons.displayMode = {
             default:
                 self.displayMode = TC.control.FeatureInfoCommons.displayMode.POPUP;
                 if (!self.popup) {
-                    $.when(map.addControl('popup', {
+                    map.addControl('popup', {
                         closeButton: true,
                         draggable: self.options.draggable
-                    })).then(function (popup) {
+                    }).then(function (popup) {
                         self.popup = popup;
                         popup.caller = self;
                         map.on(TC.Consts.event.POPUP, function (e) {
@@ -277,26 +358,37 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.displayResults = function () {
         var self = this;
-        self.filterFeature.data = $('<div>').append(self._$div.clone().removeClass(TC.Consts.classes.HIDDEN)).html();
+        const clone = self.div.cloneNode(true);
+        clone.classList.remove(TC.Consts.classes.HIDDEN);
+        self.filterFeature.data = clone.outerHTML;
         switch (self.displayMode) {
             case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
-                if (self.resultsPanel) {                    
+                if (self.resultsPanel) {
 
-                    self.map.getControlsByClass(TC.control.ResultsPanel).forEach(function (p) {
-                        if (p.isVisible()) {
-                            p.close();
-                        }
-                    });
+                    // GLS: si contamos con el control de controles no es necesario cerrar los paneles visibles ya que no habría solape
+                    if (self.map.getControlsByClass(TC.control.ControlContainer).length === 0) {
+                        self.map.getControlsByClass(TC.control.ResultsPanel).forEach(function (p) {
+                            if (p.isVisible()) {
+                                p.close();
+                            }
+                        });
+                    } else {
+                        // cerramos los paneles con feature asociada
+                        const panels = self.map.getControlsByClass('TC.control.ResultsPanel');
+                        panels.forEach(function (p) {
+                            if (p !== self.resultsPanel && p.currentFeature) {
+                                p.close();
+                            }
+                        });
+                    }
 
                     self.resultsPanel.currentFeature = self.filterFeature;
                     self.resultsPanel.open(self.filterFeature.data, self.resultsPanel.getInfoContainer());
+                    
 
-                    // GLS: lanzo el evento drawTable para que el control featureTools guarde referencia a highlightedFeature, si no lo lanzo, el orden de los eventos hace que no obtenga la referencia y al cerrar el panel borra la feature resaltada
-                    self.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE, { control: self.resultsPanel }));
-
-                    self.displayResultsCallback();                
+                    self.displayResultsCallback();
                 }
-                
+
                 break;
             default:
                 if (self.popup) {
@@ -306,28 +398,47 @@ TC.control.FeatureInfoCommons.displayMode = {
         }
     };
 
+    const getElementIndex = function (elm) {
+        return Array.from(elm.parentElement.childNodes).indexOf(elm);
+    };
+
+    const getParentElement = function (elm, tagName) {
+        var result = elm;
+        do {
+            result = result.parentElement;
+        }
+        while (result && result.tagName !== tagName);
+        return result;
+    };
+
     ctlProto.getFeatureElement = function (feature) {
-        var self = this;
-        var $featureLi;
-        $(self.getDisplayTarget()).find(self._selectors.LIST_ITEM).each(function (idx, li) {
-            var $currentFeatureLi = $(li);
-            var $currentLayerLi = $currentFeatureLi.parents('li').first();
-            var $currentServiceLi = $currentLayerLi.parents('li').first();
-            var feat = self.getFeature($currentServiceLi.index(), $currentLayerLi.index(), $currentFeatureLi.index());
+        const self = this;
+        var result;
+        const getIndex = function (elm) {
+            return Array.from(elm.parentElement.childNodes).getIndex(elm);
+        };
+        self.getDisplayTarget().querySelectorAll(self._selectors.LIST_ITEM).forEach(function (li) {
+            const currentFeatureLi = li;
+            const currentLayerLi = getParentElement(li, 'LI');
+            const currentServiceLi = getParentElement(currentLayerLi, 'LI');
+            var feat = self.getFeature(getElementIndex(currentServiceLi), getElementIndex(currentLayerLi), getElementIndex(currentFeatureLi));
             if (feat === feature) {
-                $featureLi = $currentFeatureLi;
+                result = currentFeatureLi;
             }
         });
-        return $featureLi && $featureLi.get(0);
+        return result;
     };
 
     ctlProto.getNextFeatureElement = function (delta) {
-        var self = this;
-        var $lis = $(self.getDisplayTarget()).find('ul.' + self.CLASS + '-features > li');
-        var length = $lis.length;
-        var $checkedLi = $lis.filter('.' + TC.Consts.classes.CHECKED);
-        var checkedIdx = $lis.index($checkedLi.get(0));
-        return $lis.get((checkedIdx + delta + length) % length);
+        const self = this;
+        const lis = self.getDisplayTarget().querySelectorAll('ul.' + self.CLASS + '-features > li');
+        const length = lis.length;
+        for (var i = 0; i < length; i++) {
+            if (lis[i].matches('.' + TC.Consts.classes.CHECKED)) {
+                return lis[(i + delta + length) % length]
+            }
+        }
+        return null;
     };
 
     ctlProto.getFeaturePath = function (feature) {
@@ -371,112 +482,115 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.displayResultsCallback = function () {
         var self = this;
-        var $content = $(self.getDisplayTarget()).find('.' + self.CLASS).first();
+        const content = self.getDisplayTarget().querySelector('.' + self.CLASS);
 
         var selector;
         // Evento para resaltar una feature
-        var events = 'click'; // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
-        $content.on(events, self._selectors.LIST_ITEM, function (e) {
-            self.highlightFeature(this);
-        });
+        var eventType = 'click'; // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
+        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(self._selectors.LIST_ITEM, function (e) {
+            self.highlightFeature(e.target);
+        }));
 
         // Evento para ir a la siguiente feature
-        events = TC.Consts.event.CLICK;
+        eventType = TC.Consts.event.CLICK;
         selector = '.' + self.CLASS + '-btn-next';
-        $content.on(events, selector, function (e) {
+        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
             self.highlightFeature(self.getNextFeatureElement(1), 1);
             return false;
-        });
+        }));
 
         // Evento para ir a la feature anterior
         selector = '.' + self.CLASS + '-btn-prev';
-        $content.on(events, selector, function (e) {
+        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
             self.highlightFeature(self.getNextFeatureElement(-1), -1);
             return false;
-        });
+        }));
 
         // Evento para desplegar/replegar features de capa
         selector = 'ul.' + self.CLASS + '-layers h4';
 
-        $content.on(events, selector, function (e) {
-            var $li = $(e.target).parents('li').first();
-            if ($li.hasClass(TC.Consts.classes.CHECKED)) {
+        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
+            const li = getParentElement(e.target, 'LI');
+            if (li.classList.contains(TC.Consts.classes.CHECKED)) {
                 // Si no está en modo móvil ocultamos la capa (si hay más de una)
-                if ($content.find('.tc-ctl-finfo-btn-next').css('display') === 'none') {
+                if (content.querySelector('.tc-ctl-finfo-btn-next') && content.querySelector('.tc-ctl-finfo-btn-next').style.display === 'none') {
                     if (layerCount(self) > 1) {
                         self.downplayFeatures();
                     }
                 }
             }
             else {
-                self.highlightFeature($li.find(self._selectors.LIST_ITEM).first()[0]);
+                self.highlightFeature(li.querySelector(self._selectors.LIST_ITEM));
                 if (self.displayMode === TC.control.FeatureInfoCommons.displayMode.POPUP) {
                     self.popup.fitToView(true);
                 }
             }
-        });
+        }));
 
         // Evento para borrar la feature resaltada
         selector = '.' + self.CLASS + '-del-btn';
-        $content.on(events, selector, function (e) {
+        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
             self.downplayFeatures();
             self.closeResults();
-        });
+        }));
 
         if (self.info) {
-            if (self.info.defaultFeature) {
-                $(self.getFeatureElement(self.info.defaultFeature)).addClass(TC.Consts.classes.DEFAULT);
+            if (self.info.defaultFeature && self.getFeatureElement(self.info.defaultFeature)) {
+                self.getFeatureElement(self.info.defaultFeature).classList.add(TC.Consts.classes.DEFAULT);
                 self.highlightFeature(self.info.defaultFeature);
             }
-            else {
-                self.highlightFeature($content.find(self._selectors.LIST_ITEM).first()[0]);
+            else if (content.querySelector(self._selectors.LIST_ITEM)) {
+                self.highlightFeature(content.querySelector(self._selectors.LIST_ITEM));
             }
         }
 
-        $content.find('table').on(TC.Consts.event.CLICK, function (e) {
-            const $li = $(this).parent();
-            if ($li.hasClass(TC.Consts.classes.DISABLED)) {
-                return;
-            }
-            if ($li.hasClass(TC.Consts.classes.CHECKED)) {
-                // Si ya está seleccionada hacemos zoom
-                if (self.resultsLayer.features[0]) {
-                    // Proceso para desactivar highlightFeature mientras hacemos zoom
-                    var zoomHandler = function zoomHandler() {
-                        self._zooming = false;
-                        self.map.off(TC.Consts.event.ZOOM, zoomHandler);
-                    }
-                    self.map.on(TC.Consts.event.ZOOM, zoomHandler);
-                    self._zooming = true;
-                    ///////
-                    self.map.zoomToFeatures([self.resultsLayer.features[0]], { animate: true });
+        content.querySelectorAll('table').forEach(function (table) {
+            table.addEventListener(TC.Consts.event.CLICK, function (e) {                
+                const li = this.parentElement;
+                if (li.classList.contains(TC.Consts.classes.DISABLED)) {
+                    return;
                 }
-            }
-            else {
-                // Si no está seleccionada la seleccionamos
-                self.highlightFeature($li);
-            }
-            e.stopPropagation();
+                if (li.classList.contains(TC.Consts.classes.CHECKED)) {
+                    // Si ya está seleccionada hacemos zoom
+                    if (self.resultsLayer.features[0] && window.getSelection() && window.getSelection().toString().trim().length === 0) {
+                        // Proceso para desactivar highlightFeature mientras hacemos zoom
+                        var zoomHandler = function zoomHandler() {
+                            self._zooming = false;
+                            self.map.off(TC.Consts.event.ZOOM, zoomHandler);
+                        };
+                        self.map.on(TC.Consts.event.ZOOM, zoomHandler);
+                        self._zooming = true;
+                        ///////
+                        
+                        self.map.zoomToFeatures([self.resultsLayer.features[0]], { animate: true });
+                    }
+                }
+                else {
+                    // Si no está seleccionada la seleccionamos
+                    self.highlightFeature(li);
+                }
+                e.stopPropagation();
+            });
         });
-        $content.find('table a').on("click", function (e) {
-            e.stopPropagation();
+        content.querySelectorAll('table a').forEach(function (a) {
+            a.addEventListener("click", function (e) {
+                e.stopPropagation();
+            });
         });
 
         if (Modernizr.touch && self.displayMode === TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL) {
-            if ($content.find('.' + self.CLASS + '-btn-prev').css('display') !== 'none') { // Si los botones de anterior/siguiente están visibles, montamos el swipe
+            if (content.querySelector('.' + self.CLASS + '-btn-prev') && content.querySelector('.' + self.CLASS + '-btn-prev').style.display !== 'none') { // Si los botones de anterior/siguiente están visibles, montamos el swipe
                 if (self.resultsPanel) {
-                    self.resultsPanel._$div.swipe('disable');
+                    TC.Util.swipe(self.resultsPanel.div, 'disable');
                 }
 
                 if (layerCount(self) > 1) {
-                    $content.swipe({
-                        swipeLeft: function (e) {
+                    TC.Util.swipe(content, {
+                        left: function () {
                             self.highlightFeature(self.getNextFeatureElement(1), 1);
-                            e.stopPropagation();
                         },
-                        swipeRight: function (e) {
+                        right: function () {
                             self.highlightFeature(self.getNextFeatureElement(-1), -1);
-                            e.stopPropagation();
                         }
                     });
                 }
@@ -505,11 +619,10 @@ TC.control.FeatureInfoCommons.displayMode = {
         var self = this;
         const linkText = self.getLocaleString('open');
         const titleText = self.getLocaleString('linkInNewWindow');
-        self._$div.find('td.' + self.CLASS + '-val').each(function (idx, elm) {
-            const $td = $(elm);
-            const text = $td.text();
+        self.div.querySelectorAll('td.' + self.CLASS + '-val').forEach(function (td) {
+            const text = td.textContent;
             if (TC.Util.isURL(text)) {
-                $td.html('<a href="' + text + '" target="_blank" title="' + titleText + '">' + linkText + '</a>');
+                td.innerHTML = '<a href="' + text + '" target="_blank" title="' + titleText + '">' + linkText + '</a>';
             }
         });
     };
@@ -518,52 +631,50 @@ TC.control.FeatureInfoCommons.displayMode = {
         const self = this;
         var feature;
         if (!self._zooming) {
-            var $featureLi;
-            var $layerLi;
-            var $serviceLi;
+            var featureLi;
             // this puede ser o el elemento HTML de la lista correspondiente a la feature o la feature en sí
             if (featureOrElement instanceof TC.Feature) {
                 feature = featureOrElement;
-                var li = self.getFeatureElement(feature);
-                if (li) {
-                    $featureLi = $(li);
-                }
+                featureLi = self.getFeatureElement(feature);
             }
             else {
-                $featureLi = $(featureOrElement);
+                featureLi = featureOrElement;
+                while (featureLi && featureLi.tagName !== 'LI') {
+                    featureLi = featureLi.parentElement;
+                }
             }
-            $layerLi = $featureLi.parents('li').first();
-            $serviceLi = $layerLi.parents('li').first();
+            const layerLi = getParentElement(featureLi, 'LI');
+            const serviceLi = getParentElement(layerLi, 'LI');
 
-            const serviceIdx = $serviceLi.index();
-            const layerIdx = $layerLi.index();
-            const featureIdx = $featureLi.index();
+            const serviceIdx = getElementIndex(serviceLi);
+            const layerIdx = getElementIndex(layerLi);
+            const featureIdx = getElementIndex(featureLi);
             feature = feature || self.getFeature(serviceIdx, layerIdx, featureIdx);
 
             self.downplayFeatures({ exception: feature });
-            $featureLi.addClass(TC.Consts.classes.CHECKED);
-            $layerLi.addClass(TC.Consts.classes.CHECKED);
-            $serviceLi.addClass(TC.Consts.classes.CHECKED);
+            featureLi.classList.add(TC.Consts.classes.CHECKED);
+            layerLi.classList.add(TC.Consts.classes.CHECKED);
+            serviceLi.classList.add(TC.Consts.classes.CHECKED);
             if (delta > 0) {
-                $featureLi.addClass(TC.Consts.classes.FROMLEFT);
-                $layerLi.addClass(TC.Consts.classes.FROMLEFT);
-                $serviceLi.addClass(TC.Consts.classes.FROMLEFT);
+                featureLi.classList.add(TC.Consts.classes.FROMLEFT);
+                layerLi.classList.add(TC.Consts.classes.FROMLEFT);
+                serviceLi.classList.add(TC.Consts.classes.FROMLEFT);
             }
             else if (delta < 0) {
-                $featureLi.addClass(TC.Consts.classes.FROMRIGHT);
-                $layerLi.addClass(TC.Consts.classes.FROMRIGHT);
-                $serviceLi.addClass(TC.Consts.classes.FROMRIGHT);
+                featureLi.classList.add(TC.Consts.classes.FROMRIGHT);
+                layerLi.classList.add(TC.Consts.classes.FROMRIGHT);
+                serviceLi.classList.add(TC.Consts.classes.FROMRIGHT);
             }
-            $featureLi
-                .find('table')
-                .attr('title', self.getLocaleString('clickToCenter'));
+
+            if (featureLi.querySelector('table')) {
+                featureLi.querySelector('table').setAttribute('title', self.getLocaleString('clickToCenter'));
+            }
 
             self.highlightedFeature = feature;
 
-            $(self.getDisplayTarget())
-                .find('.' + self.CLASS + '-counter-current')
-                .html(self.getFeatureIndex(serviceIdx, layerIdx, featureIdx) + 1);
-
+            if (self.getDisplayTarget().querySelector('.' + self.CLASS + '-counter-current')) {
+                self.getDisplayTarget().querySelector('.' + self.CLASS + '-counter-current').innerHTML = self.getFeatureIndex(serviceIdx, layerIdx, featureIdx) + 1;
+            }
 
 
             var features = self.resultsLayer.features.slice();
@@ -586,7 +697,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                 self.resultsLayer.addFeature(feature);
             }
             else {
-                $featureLi.addClass(TC.Consts.classes.DISABLED);
+                featureLi.classList.add(TC.Consts.classes.DISABLED);
             }
         }
     };
@@ -597,47 +708,48 @@ TC.control.FeatureInfoCommons.displayMode = {
         if (self.highlightedFeature !== options.exception) {
             self.highlightedFeature = null;
         }
-        const $exceptionFLi = $(options.exception ? self.getFeatureElement(options.exception) : undefined);
-        const $exceptionLLi = $exceptionFLi.parents('li').first();
-        const $exceptionSLi = $exceptionLLi.parents('li').first();
+        const exceptionFLi = options.exception ? self.getFeatureElement(options.exception) : undefined;
+        var exceptionLLi, exceptionSLi;
+        if (exceptionFLi) {
+            exceptionLLi = getParentElement(exceptionFLi, 'LI');
+            exceptionSLi = getParentElement(exceptionLLi, 'LI');
+        }
 
         self.resultsLayer.clearFeatures();
-        $target = $(self.getDisplayTarget());
-        $target
-            .find('ul.' + self.CLASS + '-services li')
-            .not($exceptionFLi)
-            .not($exceptionLLi)
-            .not($exceptionSLi)
-            .removeClass(TC.Consts.classes.CHECKED)
-            .removeClass(TC.Consts.classes.DISABLED)
-            .removeClass(TC.Consts.classes.FROMLEFT)
-            .removeClass(TC.Consts.classes.FROMRIGHT);
-        $target
-            .find('.' + self.CLASS + '-features table')
-            .attr('title', self.getLocaleString('clickToShowOnMap'));
-        $(self.getMenuTarget())
-            .find('.' + self.CLASS + '-tools')
-            .removeClass(TC.Consts.classes.ACTIVE);
+        const target = self.getDisplayTarget();
+        Array.from(target.querySelectorAll('ul.' + self.CLASS + '-services li'))
+            .filter(function (li) {
+                return li !== exceptionFLi && li !== exceptionLLi && li !== exceptionSLi;
+            })
+            .forEach(function (li) {
+                li.classList.remove(TC.Consts.classes.CHECKED);
+                li.classList.remove(TC.Consts.classes.DISABLED);
+                li.classList.remove(TC.Consts.classes.FROMLEFT);
+                li.classList.remove(TC.Consts.classes.FROMRIGHT);
+            })
+        target.querySelectorAll('.' + self.CLASS + '-features table').forEach(function (table) {
+            table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
+        });
     };
 
     ctlProto._fitSize = function () {
         const self = this;
-        const $div = $(self.getDisplayTarget());
+        const target = self.getDisplayTarget();
         var max = 0;
         //medir la máxima anchura de <ul>
-        $div.find(".tc-ctl-finfo-features li").each(function (ix, elto) {
-            var x = self;
-            max = Math.max(max, $(elto).position().left + $(elto).width());
+        target.querySelectorAll(".tc-ctl-finfo-features li").forEach(function (elm) {
+            max = Math.max(max, elm.offsetLeft + elm.offsetWidth);
         });
 
         //alert("max=" + max);
-        if (max) $div.css('width', max + 50);
+        if (max) {
+            target.style.width = max + 50 + 'px';
+        }
     };
 
     ctlProto._resetSize = function () {
         const self = this;
-        const $div = $(self.getDisplayTarget());
-        $div.css('width', '');
+        self.getDisplayTarget().style.removeProperty('width');
     };
 
     ctlProto.getFeature = function (serviceIdx, layerIdx, featureIdx) {
@@ -679,10 +791,10 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.beforeRequest = function (options) {
         var self = this;
         self.querying = true;
-        self.map.$events.trigger($.Event(TC.Consts.event.BEFOREFEATUREINFO, {
+        self.map.trigger(TC.Consts.event.BEFOREFEATUREINFO, {
             xy: options.xy,
             control: self
-        }));
+        });
         self.closeResults();
         if (self.map && self.resultsLayer) {
             self.lastFeatureCount = null;
@@ -728,7 +840,7 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.importState = function (state) {
         const self = this;
-        self._layersDeferred.then(function () {
+        self._layersPromise.then(function () {
             self.resultsLayer.importState(state.layer);
         });
     };
@@ -765,32 +877,30 @@ TC.control.FeatureInfoCommons.displayMode = {
         }
 
         const map = self.map;
-        map.loaded(function () {
-            $.when(map.addLayer(resultsLayer), map.addLayer(filterLayer)).then(function (rl, fl) {
-                self.resultsLayer = rl;
-                self.filterLayer = fl;
-                self._layersDeferred.resolve();
+        self._layersPromise = new Promise(function (resolve, reject) {
+            map.loaded(function () {
+                Promise.all([map.addLayer(resultsLayer), map.addLayer(filterLayer)]).then(function (layers) {
+                    self.resultsLayer = layers[0];
+                    self.filterLayer = layers[1];
+                    resolve();
+                });
             });
         });
 
-        return self._layersDeferred.promise();
+        return self._layersPromise;
     };
 
     ctlProto._decorateDisplay = function (ctl) {
-        const self = this;
-        const $resultsContainer = $(self.getDisplayTarget({ control: ctl }));
+        const self = this;        
 
-        // Añadimos un zoom a la feature al pulsar en la tabla
-        $resultsContainer.find('table.tc-attr').on(TC.Consts.event.CLICK, function (e) {
-            self.map.zoomToFeatures([self.highlightedFeature]);
-        });
+        const resultsContainer = self.getDisplayTarget({ control: ctl });
 
         // Añadimos botón de imprimir
         TC.loadJS(
             !TC.control.Print,
             [TC.apiLocation + 'TC/control/Print'],
             function () {
-                if (!$resultsContainer.find('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
+                if (!resultsContainer.querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
                     var printTitle = self.getLocaleString("feature");
                     if (ctl === self.getDisplayControl()) {
                         if (TC.feature.Point && self.filterFeature instanceof TC.feature.Point) {
@@ -811,7 +921,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                     // Si hay datos porque el popup es de un GFI con éxito o es de una feature resaltada damos la opción de imprimirlos
                     if (self.lastFeatureCount || (ctl.currentFeature && ctl.currentFeature.showsPopup === true)) {
                         new TC.control.Print({
-                            target: $resultsContainer,
+                            target: resultsContainer,
                             title: printTitle
                         });
                     }
@@ -829,14 +939,18 @@ TC.control.FeatureInfoCommons.displayMode = {
             self.info.services.forEach(function (service) {
                 service.layers.forEach(function (layer) {
                     layer.features.forEach(function (feature) {
-                        const path = self.getFeaturePath(feature);
-                        if (path) {
-                            const newData = {};
-                            newData[serviceAttrName] = path.service;
-                            newData[layerAttrName] = path.layer.join(self.TITLE_SEPARATOR);
-                            const allData = $.extend(newData, feature.getData());
-                            feature.clearData();
-                            feature.setData(allData);
+                        if (feature instanceof TC.Feature) {
+                            const path = self.getFeaturePath(feature);
+                            if (path) {
+                                const newData = {};
+                                newData[serviceAttrName] = path.service;
+                                if (path.layer) {
+                                    newData[layerAttrName] = path.layer.join(self.TITLE_SEPARATOR);
+                                }
+                                const allData = $.extend(newData, feature.getData());
+                                feature.clearData();
+                                feature.setData(allData);
+                            }
                         }
                     });
                 });
