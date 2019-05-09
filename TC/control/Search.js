@@ -434,7 +434,7 @@ var SearchType = function (type, options, parent) {
                         if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
                             r = '<Or>';
                             for (var i = 0; i < propertyName[key].length; i++) {
-                                r += fn($.trim(propertyName[key][i]), propertyValue);
+                                r += fn(propertyName[key][i].trim(), propertyValue);
                             }
 
                             r += '</Or>';
@@ -445,7 +445,7 @@ var SearchType = function (type, options, parent) {
                                 propName = propertyName[key][0];
 
                             f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
-                                '<Or>' + fn($.trim(propName), propertyValue) + '</Or>' +
+                                '<Or>' + fn(propName.trim(), propertyValue) + '</Or>' +
                                 '</Filter>)');
                         }
                     }
@@ -455,12 +455,12 @@ var SearchType = function (type, options, parent) {
                 } else if (propertyName instanceof Array && propertyName.length > 1) {
                     r = '<ogc:Or>';
                     for (var i = 0; i < propertyName.length; i++) {
-                        r += fn($.trim(propertyName[i]), propertyValue);
+                        r += fn(propertyName[i].trim(), propertyValue);
                     }
 
                     return r += '</ogc:Or>';
                 } else
-                    return fn((propertyName instanceof Array && propertyName.length === 1 ? $.trim(propertyName[0]) : $.trim(propertyName)), propertyValue);
+                    return fn((propertyName instanceof Array && propertyName.length === 1 ? propertyName[0].trim() : propertyName.trim()), propertyValue);
             },
             getFilter: function (data) {
                 var r = {};
@@ -567,13 +567,13 @@ var SearchType = function (type, options, parent) {
 
                 var featureTypes = self.getFeatureTypes(true);
                 if (!(featureTypes instanceof Array))
-                    params.TYPENAME = self.featurePrefix ? self.featurePrefix + ':' + $.trim(featureTypes) : $.trim(featureTypes);
+                    params.TYPENAME = self.featurePrefix ? self.featurePrefix + ':' + featureTypes.trim() : featureTypes.trim();
                 else {
                     var ft = [];
                     for (var i = 0; i < featureTypes.length; i++) {
                         ft.push(self.featurePrefix ?
-                            self.featurePrefix + ':' + $.trim(featureTypes[i]) :
-                            $.trim(featureTypes[i]));
+                            self.featurePrefix + ':' + featureTypes[i].trim() :
+                            featureTypes[i].trim());
                     }
 
                     params.TYPENAME = ft.join(',');
@@ -700,8 +700,6 @@ TC.control.Search = function () {
     self.url = '//idena.navarra.es/ogc/wfs';
     self.version = '1.1.0';
     self.featurePrefix = 'IDENA';
-
-    self.layerPromise = $.Deferred();
 
     if (self.options && self.options.url) {
         self.url = self.options.url;
@@ -1304,55 +1302,56 @@ TC.control.Search = function () {
         outputProperties: ['MUNICIPIO'],
         outputFormatLabel: '{0}',
         getRootLabel: function () {
-            var done = new $.Deferred();
-            if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel) {
+            return new Promise(function (resolve, reject) {
 
-                var params = {};
-                params.SERVICE = 'WFS';
-                params.VERSION = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].version;
-                params.REQUEST = 'GetFeature';
-                params.TYPENAME = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].featurePrefix + ':' + self.rootCfg[TC.Consts.searchType.MUNICIPALITY].featureType;
-                params.OUTPUTFORMAT = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputFormat;
-                params.PROPERTYNAME = ['CMUNICIPIO'].concat(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputProperties).join(',');
+                if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel) {
 
-                params.CQL_FILTER = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].root.map(function (elem) {
-                    return ['CMUNICIPIO'].map(function (id, index) {
-                        return id + '=' + elem[index];
-                    }).join(' AND ');
-                });
+                    var params = {};
+                    params.SERVICE = 'WFS';
+                    params.VERSION = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].version;
+                    params.REQUEST = 'GetFeature';
+                    params.TYPENAME = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].featurePrefix + ':' + self.rootCfg[TC.Consts.searchType.MUNICIPALITY].featureType;
+                    params.OUTPUTFORMAT = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputFormat;
+                    params.PROPERTYNAME = ['CMUNICIPIO'].concat(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputProperties).join(',');
 
-                params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
+                    params.CQL_FILTER = self.rootCfg[TC.Consts.searchType.MUNICIPALITY].root.map(function (elem) {
+                        return ['CMUNICIPIO'].map(function (id, index) {
+                            return id + '=' + elem[index];
+                        }).join(' AND ');
+                    });
 
-                $.ajax({
-                    url: self.rootCfg[TC.Consts.searchType.MUNICIPALITY].url + '?' + $.param(params),
-                    type: 'GET'
-                }).done(function (data) {
-                    if (data.totalFeatures > 0) {
+                    params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
 
-                        self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = data.features.map(function (feature) {
-                            return {
-                                id: ['CMUNICIPIO'].map(function (elem) {
-                                    return feature.properties[elem];
-                                }).join('#'),
-                                label: feature.properties[self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputProperties[0]].toLowerCase()
-                            };
-                        });
+                    TC.ajax({
+                        url: self.rootCfg[TC.Consts.searchType.MUNICIPALITY].url + '?' + $.param(params),
+                        method: 'GET',
+                        responseType: TC.Consts.mimeType.JSON
+                    }).then(function (data) {
+                        if (data.totalFeatures > 0) {
 
-                        done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+                            self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = data.features.map(function (feature) {
+                                return {
+                                    id: ['CMUNICIPIO'].map(function (elem) {
+                                        return feature.properties[elem];
+                                    }).join('#'),
+                                    label: feature.properties[self.rootCfg[TC.Consts.searchType.MUNICIPALITY].outputProperties[0]].toLowerCase()
+                                };
+                            });
 
-                    } else {
-                        self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = [];
-                        done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
-                    }
-                }).fail(function () {
-                    done.resolve([]);
-                });
-            }
-            else {
-                done.resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
-            }
+                            resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
 
-            return done;
+                        } else {
+                            self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = [];
+                            resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+                        }
+                    }).catch(function () {
+                        resolve([]);
+                    });
+                }
+                else {
+                    resolve(self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel);
+                }
+            });
         }
     };
     self.rootCfg[TC.Consts.searchType.LOCALITY] = {
@@ -1371,54 +1370,55 @@ TC.control.Search = function () {
         },
         outputProperties: ['ENTINOAC'],
         getRootLabel: function () {
-            var done = new $.Deferred();
-            if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel) {
+            return new Promise(function (resolve, reject) {
+                if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel) {
 
-                var params = {};
-                params.SERVICE = 'WFS';
-                params.VERSION = self.rootCfg[TC.Consts.searchType.LOCALITY].version;
-                params.REQUEST = 'GetFeature';
-                params.TYPENAME = self.rootCfg[TC.Consts.searchType.LOCALITY].featurePrefix + ':' + self.rootCfg[TC.Consts.searchType.LOCALITY].featureType;
-                params.OUTPUTFORMAT = self.rootCfg[TC.Consts.searchType.LOCALITY].outputFormat;
-                params.PROPERTYNAME = ['CMUNICIPIO', 'CENTIDAD'].concat(self.rootCfg[TC.Consts.searchType.LOCALITY].outputProperties).join(',');
+                    var params = {};
+                    params.SERVICE = 'WFS';
+                    params.VERSION = self.rootCfg[TC.Consts.searchType.LOCALITY].version;
+                    params.REQUEST = 'GetFeature';
+                    params.TYPENAME = self.rootCfg[TC.Consts.searchType.LOCALITY].featurePrefix + ':' + self.rootCfg[TC.Consts.searchType.LOCALITY].featureType;
+                    params.OUTPUTFORMAT = self.rootCfg[TC.Consts.searchType.LOCALITY].outputFormat;
+                    params.PROPERTYNAME = ['CMUNICIPIO', 'CENTIDAD'].concat(self.rootCfg[TC.Consts.searchType.LOCALITY].outputProperties).join(',');
 
-                params.CQL_FILTER = self.rootCfg[TC.Consts.searchType.LOCALITY].root.map(function (elem) {
-                    return ['CMUNICIPIO', 'CENTIDAD'].map(function (id, index) {
-                        return id + '=' + elem[index];
-                    }).join(' AND ');
-                });
+                    params.CQL_FILTER = self.rootCfg[TC.Consts.searchType.LOCALITY].root.map(function (elem) {
+                        return ['CMUNICIPIO', 'CENTIDAD'].map(function (id, index) {
+                            return id + '=' + elem[index];
+                        }).join(' AND ');
+                    });
 
-                params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
+                    params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
 
-                $.ajax({
-                    url: self.rootCfg[TC.Consts.searchType.LOCALITY].url + '?' + $.param(params),
-                    type: 'GET'
-                }).done(function (data) {
-                    if (data.totalFeatures > 0) {
+                    TC.ajax({
+                        url: self.rootCfg[TC.Consts.searchType.LOCALITY].url + '?' + $.param(params),
+                        method: 'GET',
+                        responseType: TC.Consts.mimeType.JSON
+                    }).then(function (data) {
+                        if (data.totalFeatures > 0) {
 
-                        self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = data.features.map(function (feature) {
-                            return {
-                                id: ['CMUNICIPIO', 'CENTIDAD'].map(function (elem) {
-                                    return feature.properties[elem];
-                                }).join('#'),
-                                label: feature.properties[self.rootCfg[TC.Consts.searchType.LOCALITY].outputProperties[0]].toLowerCase()
-                            };
-                        });
+                            self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = data.features.map(function (feature) {
+                                return {
+                                    id: ['CMUNICIPIO', 'CENTIDAD'].map(function (elem) {
+                                        return feature.properties[elem];
+                                    }).join('#'),
+                                    label: feature.properties[self.rootCfg[TC.Consts.searchType.LOCALITY].outputProperties[0]].toLowerCase()
+                                };
+                            });
 
-                        done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+                            resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
 
-                    } else {
-                        self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = [];
-                        done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
-                    }
-                }).fail(function () {
-                    done.resolve([]);
-                });
-            }
-            else {
-                done.resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
-            }
-
+                        } else {
+                            self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = [];
+                            resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+                        }
+                    }).catch(function () {
+                        resolve([]);
+                    });
+                }
+                else {
+                    resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
+                }
+            });
             return done;
         }
     };
@@ -1502,7 +1502,7 @@ TC.inherit(TC.control.Search, TC.Control);
     }
     else {
         ctlProto.template = function () {
-            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "search.1" }).w("</h2><div class=\"tc-ctl-search-content\"><input type=\"search\" class=\"tc-ctl-search-txt\" placeholder=\"").h("i18n", ctx, {}, { "$key": "search.placeholder" }).w("\" title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" /><a title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" class=\"tc-ctl-btn tc-ctl-search-btn\">").h("i18n", ctx, {}, { "$key": "search.2" }).w("</a><ul class=\"tc-ctl-search-list\"></ul></div>"); } body_0.__dustBody = !0; return body_0
+            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "search.1" }).w("</h2><div class=\"tc-ctl-search-content\"><input type=\"search\" class=\"tc-ctl-search-txt\" placeholder=\"").h("i18n", ctx, {}, { "$key": "search.placeholder" }).w("\" title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" /><a title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" class=\"tc-ctl-btn tc-ctl-search-btn\">").h("i18n", ctx, {}, { "$key": "search.2" }).w("</a><ul class=\"tc-ctl-search-list tc-hidden\"></ul></div>"); } body_0.__dustBody = !0; return body_0
         };
     }
 
@@ -1536,7 +1536,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 var self = this;
 
                 if (TC.Feature && !(f instanceof TC.Feature)) {
-                    self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, geom: f.geom }));
+                    self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, geom: f.geom });
                 }
 
                 var prop = getStyle(property, geomType, getFeatureType(f.id));
@@ -1563,7 +1563,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
         var styleFN = self.layerStyleFN;
 
-        map.addLayer({
+        self.layerPromise = map.addLayer({
             id: self.getUID(),
             title: 'Búsquedas',
             stealth: true,
@@ -1603,14 +1603,11 @@ TC.inherit(TC.control.Search, TC.Control);
                     angle: styleFN.bind(self, 'point', 'angle', true)
                 }
             }
-        }).then(function (layer) {
-            self.layer = layer;
-            self.layerPromise.resolve(layer);
-        },
-            function (error) {
-                self.layerPromise.reject(error);
-            }
-            );
+        })
+            .then(function (layer) {
+                self.layer = layer;
+                return layer;
+            });
 
         self.EMPTY_RESULTS_LABEL = self.getLocaleString('noResults');
         self.EMPTY_RESULTS_TITLE = self.getLocaleString('checkCriterion');
@@ -1627,65 +1624,68 @@ TC.inherit(TC.control.Search, TC.Control);
         self._search = self._search || {};
 
         var _search = function () {
-            self.search(self.$text.val(), function (list) {
+            self.search(self.textInput.value, function (list) {
                 if (list.length === 1) {
-                    self.$text.val(list[0].label);
-                    self._goToResult(list[0].id, self.$list.find('li:not([header])').attr('dataRole'));
-                    self.$list.hide('fast');
+                    self.textInput.value = list[0].label;
+                    self._goToResult(list[0].id, self.resultsList.querySelector('li:not([header])').getAttribute('dataRole'));
+                    self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
                 }
                 else if (list.length === 0) {
-                    self.$list.hide('fast');
+                    self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
                 }
             });
         };
 
-        TC.Control.prototype.renderData.call(self, data, function () {
+        return TC.Control.prototype.renderData.call(self, data, function () {
 
             // desde keypress y desde la lupa
             var _research = function () {
-                self.$text.val(self.$list[0].label || self.$list.find('li:not([header]) > a > span').text());
-                self.lastPattern = self.$text.val();
-                self._goToResult(self.$list[0].id || unescape(self.$list.find('li:not([header]) > a').attr('href')).substring(1), self.$list.find('li:not([header])').attr('dataRole'));
-                self.$list.hide('fast');
+                self.textInput.value = self.resultsList.label || self.resultsList.querySelector('li:not([header]) > a > span').textContent;
+                self.lastPattern = self.textInput.value;
+                self._goToResult(self.resultsList.id || unescape(self.resultsList.querySelector('li:not([header]) > a').getAttribute('href')).substring(1), self.resultsList.querySelector('li:not([header])').getAttribute('dataRole'));
+                self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
             };
 
-            self.$text = self._$div.find('input.tc-ctl-search-txt');
+            self.textInput = self.div.querySelector('input.tc-ctl-search-txt');
             if (self.options && self.options.placeHolder) {
-                self.$text.attr('placeHolder', self.options.placeHolder.trim());
+                self.textInput.setAttribute('placeHolder', self.options.placeHolder.trim());
             }
 
-            self.$list = self._$div.find('.tc-ctl-search-list');
-            self.$button = self._$div.find('.tc-ctl-search-btn');
-            self.$button.on(TC.Consts.event.CLICK, function () {
+            self.resultsList = self.div.querySelector('.tc-ctl-search-list');
+            self.$list = $(self.resultsList);
+            self.button = self.div.querySelector('.tc-ctl-search-btn');
+            self.button.addEventListener(TC.Consts.event.CLICK, function () {
                 self.getLayer().then(function (l) {
-                    if (self.$list.find('li > a:not(.tc-ctl-search-li-loading,.tc-ctl-search-li-empty)').length > 1) { }
+                    if (self.resultsList.querySelectorAll('li > a:not(.tc-ctl-search-li-loading):not(.tc-ctl-search-li-empty)').length > 1) { }
                     else if (l.features.length > 0) {
                         l.map.zoomToFeatures(l.features);
                     }
-                    else if (self.$list.find('li > a:not(.tc-ctl-search-li-loading,.tc-ctl-search-li-empty)').length === 1) {
+                    else if (self.resultsList.querySelectorAll('li > a:not(.tc-ctl-search-li-loading):not(.tc-ctl-search-li-empty)').length === 1) {
                         _research();
                     }
-                    else self.$text.trigger('keyup.autocomplete');
+                    else {
+                        self.textInput.dispatchEvent(new Event("keyup"));
+                    }
                 });
             });
             if (self.options.instructions) {
-                self.$text.attr('title', self.options.instructions.trim());
-                self.$button.attr('title', self.options.instructions.trim());
+                self.textInput.setAttribute('title', self.options.instructions.trim());
+                self.button.setAttribute('title', self.options.instructions.trim());
             }
 
             // GLS: añadimos la funcionalidad al mensaje de "No hay resultados", al hacer click repliega el mensaje.
-            self.$list.on(TC.Consts.event.CLICK, 'a.tc-ctl-search-li-empty', function () {
-                self.$list.hide('fast');
-                self.$text.focus();
-            });
+            self.resultsList.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('a.tc-ctl-search-li-empty', function () {
+                self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+                self.textInput.focus();
+            }));
 
 
             // IE10 polyfill
             try {
-                if (self.$text.has($('::-ms-clear'))) {
+                if (self.textInput.classList.contains('::-ms-clear')) {
                     var oldValue;
-                    self.$text.on('mouseup', function (e) {
-                        oldValue = self.$text.val();
+                    self.textInput.addEventListener('mouseup', function (e) {
+                        oldValue = self.textInput.value;
 
                         if (oldValue === '') {
                             return;
@@ -1694,10 +1694,10 @@ TC.inherit(TC.control.Search, TC.Control);
                         // When this event is fired after clicking on the clear button
                         // the value is not cleared yet. We have to wait for it.
                         setTimeout(function () {
-                            var newValue = self.$text.val();
+                            var newValue = self.textInput.value;
 
                             if (newValue === '') {
-                                self.$list.hide('fast');
+                                self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
                                 // Gotcha
                                 _search();
                             }
@@ -1707,373 +1707,431 @@ TC.inherit(TC.control.Search, TC.Control);
             }
             catch (e) { }
 
-            self.$text.on('keypress', function (e) {
+            self.textInput.addEventListener('keypress', function (e) {
                 if (e.which == 13) {
                     e.preventDefault();
                     e.stopPropagation();
 
                     self.lastPattern = "";
 
-                    if (self.$list.find('li > a:not(.tc-ctl-search-li-loading,.tc-ctl-search-li-empty)').length === 1) {
+                    if (self.resultsList.querySelectorAll('li > a:not(.tc-ctl-search-li-loading):not(.tc-ctl-search-li-empty)').length === 1) {
                         _research();
                     } else {
                         _search();
                     }
                     return false;
                 }
-            }).on("search", function () {
-                if (self.$text.val().length === 0) {
-                    self.$list.hide('fast');
+            });
+            self.textInput.addEventListener("search", function () {
+                if (self.textInput.value.length === 0) {
+                    self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
                     _search();
                 }
-            }).on("input", function () {
-                if (self.$text.val().length === 0) {
-                    self.$list.hide('fast');
+            });
+            self.textInput.addEventListener("input", function () {
+                if (self.textInput.value.length === 0) {
+                    self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
                     _search();
                 }
-            }).on("targetCleared.autocomplete", function () {
-                self.$list.hide('fast');
-            }).on("targetUpdated.autocomplete", function () {
-                if (self.$list.find('li').length > 0) {
-                    self.$list.show('fast');
+            });
+            self.textInput.addEventListener("targetCleared.autocomplete", function () {
+                self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+            })
+            self.textInput.addEventListener("targetUpdated.autocomplete", function () {
+                if (self.resultsList.querySelectorAll('li').length > 0) {
+                    self.resultsList.classList.remove(TC.Consts.classes.HIDDEN);
                 }
             });
 
             self.lastPattern = '';
             self.retryTimeout = null;
             TC.loadJS(
-                !self.$text.autocomplete,
-                [TC.apiLocation + 'lib/jQuery/autocomplete.js'],
+                !TC.UI || !TC.UI.autocomplete,
+                [TC.apiLocation + 'TC/ui/autocomplete.js'],
                 function () {
                     var searchDelay;
 
-                    self.$text = self._$div.find('input.tc-ctl-search-txt');
-                    self.$text.autocomplete({
-                        link: '#',
-                        target: self.$list,
-                        minLength: 2,
-                        ctx: self,
-                        source: function (text, callback) {
-                            self.lastpress = performance.now();
+                    const source = function (text, callback) {
+                        self.lastpress = performance.now();
 
-                            if (!searchDelay) {
-                                function step() {
-                                    var criteria = self.$text.val().trim();
+                        if (!searchDelay) {
+                            function step() {
+                                var criteria = self.textInput.value.trim();
 
-                                    if (criteria.length > 0 &&
-                                        (!self.lastPattern || criteria != self.lastPattern) &&
-                                        performance.now() - self.lastpress > self.interval) {
+                                if (criteria.length > 0 &&
+                                    (!self.lastPattern || criteria != self.lastPattern) &&
+                                    performance.now() - self.lastpress > self.interval) {
 
-                                        window.cancelAnimationFrame(searchDelay);
-                                        searchDelay = undefined;
+                                    window.cancelAnimationFrame(searchDelay);
+                                    searchDelay = undefined;
 
-                                        self.$list.hide('fast');
+                                    self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
 
-                                        // Pendiente de afinar
-                                        //if (self.lastPattern && criteria.substring(0, criteria.lastIndexOf(' ')) == self.lastPattern) {                                            
+                                    // Pendiente de afinar
+                                    //if (self.lastPattern && criteria.substring(0, criteria.lastIndexOf(' ')) == self.lastPattern) {                                            
 
-                                        //    // Si el patrón de búsqueda anterior y actual es el mismo más algo nuevo (típico en la búsqueda de un portal), lo nuevo lo separo por coma
-                                        //    // self.lastPattern: "Calle Cataluña/Katalunia Kalea, Pamplona"
-                                        //    // text: "Calle Cataluña/Katalunia Kalea, Pamplona 18"
+                                    //    // Si el patrón de búsqueda anterior y actual es el mismo más algo nuevo (típico en la búsqueda de un portal), lo nuevo lo separo por coma
+                                    //    // self.lastPattern: "Calle Cataluña/Katalunia Kalea, Pamplona"
+                                    //    // text: "Calle Cataluña/Katalunia Kalea, Pamplona 18"
 
-                                        //    criteria = criteria.substring(0, criteria.lastIndexOf(' ')) + (self.lastPattern.trim().endsWith(',') ? "" : ",") + criteria.substring(criteria.lastIndexOf(' '));
-                                        //}
+                                    //    criteria = criteria.substring(0, criteria.lastIndexOf(' ')) + (self.lastPattern.trim().endsWith(',') ? "" : ",") + criteria.substring(criteria.lastIndexOf(' '));
+                                    //}
 
-                                        self.lastPattern = criteria;
+                                    self.lastPattern = criteria;
 
-                                        self.search(criteria, callback);
-                                    } else {
-                                        searchDelay = requestAnimationFrame(step);
-                                    }
+                                    self.search(criteria, callback);
+                                } else {
+                                    searchDelay = requestAnimationFrame(step);
                                 }
-
-                                searchDelay = requestAnimationFrame(step);
                             }
-                        },
-                        callback: function (e) {
-                            var _target = $(e.target);
 
-                            if (!$(e.target).is('a'))
-                                _target = $(e.target).closest('a');
-
-                            self.$text.val($(_target).find('span[hidden]').text());
-                            self.lastPattern = self.$text.val();
-                            self._goToResult(unescape($(_target).attr('href')).substring(1), $(_target).parent().attr('dataRole'));
-                            self.$text.autocomplete('clear');;
+                            searchDelay = requestAnimationFrame(step);
                         }
-                        ,
-                        buildHTML: function (results) {
+                    };
 
-                            var html = [];
-                            var dataRoles = [];
+                    var closest = function (el, selector) {
+                        const matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector || el.msMatchesSelector;
 
-                            var reA = /[^a-zA-Z]/g;
-                            var reN = /[^0-9]/g;
-                            function sortAlphaNum(a, b) {
-                                var AInt = parseInt(a, 10);
-                                var BInt = parseInt(b, 10);
+                        while (el) {
+                            if (matchesSelector.call(el, selector)) {
+                                return el;
+                            } else {
+                                el = el.parentElement;
+                            }
+                        }
+                        return null;
+                    };
 
-                                if (isNaN(AInt) && isNaN(BInt)) {
-                                    var aA = a.replace(reA, "");
-                                    var bA = b.replace(reA, "");
-                                    if (aA === bA) {
-                                        var aN = parseInt(a.replace(reN, ""), 10);
-                                        var bN = parseInt(b.replace(reN, ""), 10);
-                                        return aN === bN ? 0 : aN > bN ? 1 : -1;
+                    const callback = function (e) {
+                        var _target = e.target;
+
+                        if (e.target.tagName.toLowerCase() !== 'a') {
+                            _target = closest(e.target, 'a');
+                        }
+
+                        if (_target.querySelector('span[hidden]')) {
+                            self.textInput.value = _target.querySelector('span[hidden]').textContent;
+                            self.lastPattern = self.textInput.value;
+                            self._goToResult(unescape(_target.getAttribute('href')).substring(1), _target.parentNode.getAttribute('dataRole'));
+                            TC.UI.autocomplete.call(self.textInput, 'clear');
+                        }
+                    };
+
+                    const buildHTML = function (results) {
+
+                        var html = [];
+                        var dataRoles = [];
+
+                        var reA = /[^a-zA-Z]/g;
+                        var reN = /[^0-9]/g;
+                        function sortAlphaNum(a, b) {
+                            var AInt = parseInt(a, 10);
+                            var BInt = parseInt(b, 10);
+
+                            if (isNaN(AInt) && isNaN(BInt)) {
+                                var aA = a.replace(reA, "");
+                                var bA = b.replace(reA, "");
+                                if (aA === bA) {
+                                    var aN = parseInt(a.replace(reN, ""), 10);
+                                    var bN = parseInt(b.replace(reN, ""), 10);
+                                    return aN === bN ? 0 : aN > bN ? 1 : -1;
+                                } else {
+                                    return aA > bA ? 1 : -1;
+                                }
+                            } else if (isNaN(AInt)) {//A is not an Int
+                                return 1;//to make alphanumeric sort first return -1 here
+                            } else if (isNaN(BInt)) {//B is not an Int
+                                return -1;//to make alphanumeric sort first return 1 here
+                            } else {
+                                return AInt > BInt ? 1 : -1;
+                            }
+                        };
+
+                        // ordenamos por roles y alfabéticamente
+                        var data = results.results.sort(function (a, b) {
+                            if (this.ctx.getSearchTypeByRole(a.dataRole).searchWeight && this.ctx.getSearchTypeByRole(b.dataRole).searchWeight) {
+                                if ((this.ctx.getSearchTypeByRole(a.dataRole).searchWeight || 0) > (this.ctx.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
+                                    return 1;
+                                } else if ((this.ctx.getSearchTypeByRole(a.dataRole).searchWeight || 0) < (this.ctx.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
+                                    return -1;
+                                }
+                                else {
+                                    return sortAlphaNum(a.label, b.label);
+                                }
+                            } else {
+                                if (a.dataRole > b.dataRole) {
+                                    return 1;
+                                }
+                                else if (a.dataRole < b.dataRole)
+                                    return -1;
+                                else {
+                                    return sortAlphaNum(a.label, b.label);
+                                }
+                            }
+                        }.bind(this));
+
+                        if (self.rootCfg.active) {// si hay root, aplicamos el orden por entidades 
+                            data = data.sort(function (a, b) {
+
+                                const sort_ = function () {
+                                    var first = this.rootCfg.active.root[0] instanceof Array ? this.rootCfg.active.root[0].join('-') : this.rootCfg.active.root[0];
+
+                                    var aRoot, bRoot;
+                                    if (a.properties && a.properties.length > 0 && b.properties && b.properties.length > 0) {
+                                        aRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return a.properties[elem].toString(); }).join('-');
+                                        bRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return b.properties[elem].toString(); }).join('-');
                                     } else {
-                                        return aA > bA ? 1 : -1;
+                                        aRoot = a.id;
+                                        bRoot = b.id;
                                     }
-                                } else if (isNaN(AInt)) {//A is not an Int
-                                    return 1;//to make alphanumeric sort first return -1 here
-                                } else if (isNaN(BInt)) {//B is not an Int
-                                    return -1;//to make alphanumeric sort first return 1 here
-                                } else {
-                                    return AInt > BInt ? 1 : -1;
-                                }
-                            };
 
-                            // ordenamos por roles y alfabéticamente
-                            var data = results.results.sort(function (a, b) {
-                                if (this.ctx.getSearchTypeByRole(a.dataRole).searchWeight && this.ctx.getSearchTypeByRole(b.dataRole).searchWeight) {
-                                    if ((this.ctx.getSearchTypeByRole(a.dataRole).searchWeight || 0) > (this.ctx.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
+                                    if (aRoot !== first && bRoot === first) {
                                         return 1;
-                                    } else if ((this.ctx.getSearchTypeByRole(a.dataRole).searchWeight || 0) < (this.ctx.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
+                                    } else if (aRoot === first && bRoot !== first) {
                                         return -1;
-                                    }
-                                    else {
+                                    } else {
                                         return sortAlphaNum(a.label, b.label);
                                     }
-                                } else {
-                                    if (a.dataRole > b.dataRole) {
+                                }.bind(this);
+
+                                if (this.getSearchTypeByRole(a.dataRole).searchWeight && this.getSearchTypeByRole(b.dataRole).searchWeight) {
+                                    if ((this.getSearchTypeByRole(a.dataRole).searchWeight || 0) > (this.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
                                         return 1;
-                                    }
-                                    else if (a.dataRole < b.dataRole)
+                                    } else if ((this.getSearchTypeByRole(a.dataRole).searchWeight || 0) < (this.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
                                         return -1;
-                                    else {
-                                        return sortAlphaNum(a.label, b.label);
-                                    }
-                                }
-                            }.bind(this));
-
-                            if (self.rootCfg.active) {// si hay root, aplicamos el orden por entidades 
-                                data = data.sort(function (a, b) {
-
-                                    const sort_ = function () {
-                                        var first = this.rootCfg.active.root[0] instanceof Array ? this.rootCfg.active.root[0].join('-') : this.rootCfg.active.root[0];
-
-                                        var aRoot, bRoot;
-                                        if (a.properties && a.properties.length > 0 && b.properties && b.properties.length > 0) {
-                                            aRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return a.properties[elem].toString(); }).join('-');
-                                            bRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return b.properties[elem].toString(); }).join('-');
-                                        } else {
-                                            aRoot = a.id;
-                                            bRoot = b.id;
-                                        }
-
-                                        if (aRoot !== first && bRoot === first) {
-                                            return 1;
-                                        } else if (aRoot === first && bRoot !== first) {
-                                            return -1;
-                                        } else {
-                                            return sortAlphaNum(a.label, b.label);
-                                        }
-                                    }.bind(this);
-
-                                    if (this.getSearchTypeByRole(a.dataRole).searchWeight && this.getSearchTypeByRole(b.dataRole).searchWeight) {
-                                        if ((this.getSearchTypeByRole(a.dataRole).searchWeight || 0) > (this.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
-                                            return 1;
-                                        } else if ((this.getSearchTypeByRole(a.dataRole).searchWeight || 0) < (this.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
-                                            return -1;
-                                        }
-                                        else {
-                                            return sort_();
-                                        }
                                     }
                                     else {
                                         return sort_();
                                     }
-
-                                }.bind(self));
-                            }
-
-                            for (var i = 0; i < data.length; i++) {
-                                var elm = data[i];
-
-                                if (dataRoles.indexOf(elm.dataRole) == -1) {
-
-                                    var type = this.ctx.getSearchTypeByRole(elm.dataRole);
-
-                                    html[html.length] = type.getSuggestionListHead();
-
-                                    dataRoles.push(elm.dataRole);
+                                }
+                                else {
+                                    return sort_();
                                 }
 
-                                const highlighting = function () {
-                                    var highlighted = elm.label;
-                                    var strReg = [];
+                            }.bind(self));
+                        }
 
-                                    // eliminamos caracteres extraños del patrón ya analizado
-                                    var normalizedLastPattern = this.ctx.lastPattern;
-                                    if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(normalizedLastPattern))
-                                        normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
-                                    else
-                                        normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
+                        for (var i = 0; i < data.length; i++) {
+                            var elm = data[i];
 
+                            if (dataRoles.indexOf(elm.dataRole) == -1) {
 
-                                    var querys = [];
-                                    var separatorChar = ',';
-                                    if (normalizedLastPattern.indexOf(separatorChar) == -1) {
-                                        separatorChar = ' ';
-                                    }
+                                var type = this.ctx.getSearchTypeByRole(elm.dataRole);
 
-                                    querys = normalizedLastPattern.trim().split(separatorChar);
+                                html[html.length] = type.getSuggestionListHead();
 
-                                    // si estamos tratando con coordenadas el separador es el espacio, no la coma
-                                    if ((elm.label.indexOf(this.ctx.LAT_LABEL) > -1 && elm.label.indexOf(this.ctx.LON_LABEL) > -1) ||
-                                        (elm.label.indexOf(this.ctx.UTMX_LABEL) > -1 && elm.label.indexOf(this.ctx.UTMY_LABEL) > -1)) {
-                                        querys = this.ctx.lastPattern.split(' ');
-
-                                        for (var t = 0; t < querys.length; t++) {
-                                            if (querys[t].trim().slice(-1) == ',')
-                                                querys[t] = querys[t].slice(0, -1);
-                                        }
-                                    }
-
-                                    for (var q = 0; q < querys.length; q++) {
-                                        if (querys[q].trim().length > 0) {
-                                            strReg.push('(' + querys[q].trim().replace(/\(/gi, "").replace(/\)/gi, "") + ')');
-                                            var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
-                                            if (match) {
-                                                var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
-                                                for (var st = 0; st < _strReg.length; st++) {
-                                                    if (_strReg[st].trim().length > 0)
-                                                        strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
-                                        var rPattern = self.getSearchTypeByRole(elm.dataRole).getPattern();
-                                        var match = rPattern.exec(this.ctx.lastPattern);
-
-                                        if (match) {
-                                            strReg = [];
-
-                                            if (match[2] && match[3] && match[4]) {
-                                                strReg.push('(' + match[2] + "-" + match[3] + "-" + match[4] + ')');
-                                            } else if (match[2] && match[3]) {
-                                                strReg.push('(' + match[2] + "-" + match[3] + ')');
-                                            } else if (match[3] && match[4]) {
-                                                strReg.push('(' + match[3] + "-" + match[4] + ')');
-                                            } else if (match[2] || match[3]) {
-                                                strReg.push('(' + (match[2] || match[3]) + ')');
-                                            }
-
-                                            if (match[5]) {
-                                                strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
-                                            }
-                                        } else if (match && match[5]) {
-                                            strReg = [];
-
-                                            strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
-                                        }
-                                    }
-
-                                    var pattern = '(' + strReg.join('|') + ')';
-
-                                    pattern = pattern.replace(/á|à/gi, "a");
-                                    pattern = pattern.replace(/é|è/gi, "e");
-                                    pattern = pattern.replace(/í|ì/gi, "i");
-                                    pattern = pattern.replace(/ó|ò/gi, "o");
-                                    pattern = pattern.replace(/ú|ù/gi, "u");
-                                    pattern = pattern.replace(/ü/gi, "u");
-
-                                    pattern = pattern.replace(/a/gi, "[a|á|à]");
-                                    pattern = pattern.replace(/e/gi, "[e|é|è]");
-                                    pattern = pattern.replace(/i/gi, "[i|í|ì]");
-                                    pattern = pattern.replace(/o/gi, "[o|ó|ò]");
-                                    pattern = pattern.replace(/u/gi, "[u|ú|ü|ù]");
-                                    var rex = new RegExp(pattern, "gi");
-
-                                    var label = elm.label;
-
-                                    if (elm.dataRole !== TC.Consts.searchType.ROAD || elm.dataRole !== TC.Consts.searchType.ROADPK) {
-                                        highlighted = label.replace(rex,
-                                            function () {
-                                                var params = Array.prototype.slice.call(arguments, 0);
-
-                                                if (params[params.length - 3]) {
-                                                    return params[0].replace(params[params.length - 3], "<b>" + params[params.length - 3] + "</b>");
-                                                } else {
-                                                    return "<b>" + params[0] + "</b>";
-                                                }
-                                            });
-                                    } else {
-                                        highlighted = label.replace(rex, "<b>$1</b>");
-                                    }
-
-                                    return highlighted;
-                                }.bind(this);
-
-                                html[html.length] = '<li dataRole="' + elm.dataRole + '"><a href="' + '#' + encodeURIComponent(elm.id) + '"><span hidden>' + elm.label + '</span>' + highlighting() + '</a></li>';
+                                dataRoles.push(elm.dataRole);
                             }
 
+                            const highlighting = function () {
+                                var highlighted = elm.label;
+                                var strReg = [];
+
+                                // eliminamos caracteres extraños del patrón ya analizado
+
+                                if (this.ctx.lastPattern.trim().length === 0 && self.textInput.value.trim().length > 0) {
+                                    this.ctx.lastPattern = self.textInput.value.trim();                                    
+                                }
+
+                                var normalizedLastPattern = this.ctx.lastPattern;
+                                if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(normalizedLastPattern))
+                                    normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
+                                else
+                                    normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
 
 
-                            return html.join('');
+                                var querys = [];
+                                var separatorChar = ',';
+                                if (normalizedLastPattern.indexOf(separatorChar) == -1) {
+                                    separatorChar = ' ';
+                                }
+
+                                querys = normalizedLastPattern.trim().split(separatorChar);                                
+
+                                // si estamos tratando con coordenadas el separador es el espacio, no la coma
+                                if ((elm.label.indexOf(this.ctx.LAT_LABEL) > -1 && elm.label.indexOf(this.ctx.LON_LABEL) > -1) ||
+                                    (elm.label.indexOf(this.ctx.UTMX_LABEL) > -1 && elm.label.indexOf(this.ctx.UTMY_LABEL) > -1)) {
+                                    querys = this.ctx.lastPattern.split(' ');
+
+                                    for (var t = 0; t < querys.length; t++) {
+                                        if (querys[t].trim().slice(-1) == ',')
+                                            querys[t] = querys[t].slice(0, -1);
+                                    }
+                                }
+
+                                for (var q = 0; q < querys.length; q++) {
+                                    if (querys[q].trim().length > 0) {
+                                        strReg.push('(' + querys[q].trim().replace(/\(/gi, "").replace(/\)/gi, "") + ')');
+                                        var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
+                                        if (match) {
+                                            var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
+                                            for (var st = 0; st < _strReg.length; st++) {
+                                                if (_strReg[st].trim().length > 0)
+                                                    strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
+                                    var rPattern = self.getSearchTypeByRole(elm.dataRole).getPattern();
+                                    var match = rPattern.exec(this.ctx.lastPattern);
+
+                                    if (match) {
+                                        strReg = [];
+
+                                        if (match[2] && match[3] && match[4]) {
+                                            strReg.push('(' + match[2] + "-" + match[3] + "-" + match[4] + ')');
+                                        } else if (match[2] && match[3]) {
+                                            strReg.push('(' + match[2] + "-" + match[3] + ')');
+                                        } else if (match[3] && match[4]) {
+                                            strReg.push('(' + match[3] + "-" + match[4] + ')');
+                                        } else if (match[2] || match[3]) {
+                                            strReg.push('(' + (match[2] || match[3]) + ')');
+                                        }
+
+                                        if (match[5]) {
+                                            strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
+                                        }
+                                    } else if (match && match[5]) {
+                                        strReg = [];
+
+                                        strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
+                                    }
+                                }
+
+                                var pattern = '(' + strReg.join('|') + ')';
+
+                                pattern = pattern.replace(/á|à/gi, "a");
+                                pattern = pattern.replace(/é|è/gi, "e");
+                                pattern = pattern.replace(/í|ì/gi, "i");
+                                pattern = pattern.replace(/ó|ò/gi, "o");
+                                pattern = pattern.replace(/ú|ù/gi, "u");
+                                pattern = pattern.replace(/ü/gi, "u");
+
+                                pattern = pattern.replace(/a/gi, "[a|á|à]");
+                                pattern = pattern.replace(/e/gi, "[e|é|è]");
+                                pattern = pattern.replace(/i/gi, "[i|í|ì]");
+                                pattern = pattern.replace(/o/gi, "[o|ó|ò]");
+                                pattern = pattern.replace(/u/gi, "[u|ú|ü|ù]");
+                                var rex = new RegExp(pattern, "gi");
+
+                                var label = elm.label;
+
+                                if (elm.dataRole !== TC.Consts.searchType.ROAD || elm.dataRole !== TC.Consts.searchType.ROADPK) {
+                                    highlighted = label.replace(rex,
+                                        function () {
+                                            var params = Array.prototype.slice.call(arguments, 0);                                            
+
+                                            if (params[params.length - 3]) {
+                                                return params[0].replace(params[params.length - 3], "<b>" + params[params.length - 3] + "</b>");
+                                            } else {
+                                                return "<b>" + params[0] + "</b>";
+                                            }
+                                        });
+                                } else {
+                                    highlighted = label.replace(rex, "<b>$1</b>");
+                                }
+
+                                return highlighted;
+                            }.bind(this);
+
+                            html[html.length] = '<li dataRole="' + elm.dataRole + '"><a href="' + '#' + encodeURIComponent(elm.id) + '"><span hidden>' + elm.label + '</span>' + highlighting() + '</a></li>';
                         }
-                    });
+
+
+
+                        return html.join('');
+                    };
+
+                    TC.UI.autocomplete.call(self.textInput, {
+                        link: '#',
+                        target: self.resultsList,
+                        minLength: 2,
+                        ctx: self,
+                        source: source,
+                        callback: callback,
+                        buildHTML: buildHTML
+                    });                    
+
+                    var getNextSibling = function (elem, selector) {
+
+                        // Get the next sibling element
+                        var sibling = elem.nextElementSibling;
+
+                        // If there's no selector, return the first sibling
+                        if (!selector) return sibling;
+
+                        // If the sibling matches our selector, use it
+                        // If not, jump to the next sibling and continue the loop
+                        while (sibling) {
+                            if (sibling.matches(selector)) return sibling;
+                            sibling = sibling.nextElementSibling
+                        }
+
+                    };
+
+                    var getPreviousSibling = function (elem, selector) {
+
+                        // Get the next sibling element
+                        var sibling = elem.previousElementSibling;
+
+                        // If there's no selector, return the first sibling
+                        if (!selector) return sibling;
+
+                        // If the sibling matches our selector, use it
+                        // If not, jump to the next sibling and continue the loop
+                        while (sibling) {
+                            if (sibling.matches(selector)) return sibling;
+                            sibling = sibling.previousElementSibling;
+                        }
+
+                    };
 
                     // Detect up/down arrow
-                    self.$text.add(self.$list).on('keydown', function (e) {
+                    const onKeydown = function (e) {
                         if (!e.ctrlKey && !e.altKey && !e.shiftKey) {
                             if (e.keyCode === 40) { // down arrow
-                                if (self.$text[0] == document.activeElement) {
+                                if (self.textInput == document.activeElement && self.resultsList.querySelector('li:not([header]) a')) {
                                     // Scenario 1: We're focused on the search input; move down to the first li
-                                    self.$list.find('li:not([header]):first a').focus();
-                                } else if (self.$list.find('li:not([header]):last a').is(':focus')) {
+                                    self.resultsList.querySelector('li:not([header]) a').focus();
+                                } else if (self.resultsList.querySelector('li:not([header]):last-child a') === document.activeElement) { //} else if (self.resultsList.querySelector('li:not([header]):last a').is(':focus')) {
                                     // Scenario 2: We're focused on the last li; move up to search input
-                                    self.$text.focus();
+                                    self.textInput.focus();
                                 } else {
                                     // Scenario 3: We're in the list but not on the last element, simply move down
-                                    self.$list
-                                        .find('li:not([header])')
-                                        .find('a:focus')
-                                        .parent('li:not([header])')
-                                        .nextAll('li:not([header]):first')
-                                        .find('a').focus();
+                                    getNextSibling(document.activeElement.parentElement, 'li:not([header])')
+                                        .querySelector('a').focus();                                    
                                 }
                                 e.preventDefault(); // Stop page from scrolling
                                 e.stopPropagation();
                             } else if (e.keyCode === 38) { // up arrow
-                                if (self.$text[0] == document.activeElement) {
+                                if (self.textInput == document.activeElement) {
                                     // Scenario 1: We're focused on the search input; move down to the last li
-                                    self.$list.find('li:not([header]):last a').focus();
-                                } else if (document.activeElement == self.$list.find('li:not([header]):first a').get(0)) {
-                                    self.$list.find('li:not([header]):last a').focus();
+                                    self.resultsList.querySelector('li:not([header]):last-child a').focus();
+                                } else if (document.activeElement == self.resultsList.querySelector('li:not([header]) a')) {
+                                    self.resultsList.querySelector('li:not([header]):last-child a').focus();
                                 } else {
                                     // Scenario 3: We're in the list but not on the first element, simply move up
-                                    self.$list
-                                        .find('li:not([header])')
-                                        .find('a:focus')
-                                        .parent('li:not([header])')
-                                        .prevAll('li:not([header]):first')
-                                        .find('a').focus();
+                                    getPreviousSibling(document.activeElement.parentElement, 'li:not([header])')
+                                        .querySelector('a').focus();                                    
                                 }
                                 e.preventDefault(); // Stop page from scrolling
                                 e.stopPropagation();
                             }
                         }
                         e.stopPropagation();
-                    });
+                    };
+
+                    self.textInput.addEventListener('keydown', onKeydown);
+                    self.resultsList.addEventListener('keydown', onKeydown);
                 }
             );
-        });
 
-        if ($.isFunction(callback)) {
-            callback();
-        }
+            if ($.isFunction(callback)) {
+                callback();
+            }
+        });
     };
 
     ctlProto.addAllowedSearchType = function (name, options) {
@@ -2107,9 +2165,9 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.getElementOnSuggestionList = function (id, dataRole) {
         const self = this;
 
-        for (var i = 0; i < self.parent._search.data.length; i++) {
-            if (self.parent._search.data[i].id == id && (!dataRole || (dataRole && self.parent._search.data[i].dataRole === dataRole)))
-                return self.parent._search.data[i];
+        for (var i = 0; i < self._search.data.length; i++) {
+            if (self._search.data[i].id == id && (!dataRole || (dataRole && self._search.data[i].dataRole === dataRole)))
+                return self._search.data[i];
         }
     };
 
@@ -2130,9 +2188,9 @@ TC.inherit(TC.control.Search, TC.Control);
 
         self.getLayer().then(function (l) {
             var features = l.features.slice();
-            l.clearFeatures();        
+            l.clearFeatures();
 
-            self.map.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { layer: l, feature: features }));
+            self.map.trigger(TC.Consts.event.FEATUREREMOVE, { layer: l, feature: features });
 
             for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
                 if (l.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
@@ -2145,226 +2203,223 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
 
         TC.cache.search = TC.cache.search || {};
-        if (!TC.cache.search.municipalities && !self._municipalitiesDeferred) {
-            self._municipalitiesDeferred = new $.Deferred();
+        self._municipalitiesPromise = new Promise(function (resolve, reject) {
+            if (TC.cache.search.municipalities) {
+                resolve(TC.cache.search.municipalities);
+            }
+            else {
+                var type = self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL);
 
-            var type = self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL);
-
-            if (type.municipality && type.municipality.featureType && type.municipality.labelProperty && type.municipality.idProperty) {
-                var params = {
-                    REQUEST: 'GetFeature',
-                    SERVICE: 'WFS',
-                    TYPENAME: type.municipality.featureType,
-                    VERSION: type.version,
-                    PROPERTYNAME: type.municipality.labelProperty + "," + type.municipality.idProperty,
-                    OUTPUTFORMAT: type.outputFormat
-                };
-                if (type.featurePrefix) {
-                    params.TYPENAME = type.featurePrefix + ':' + params.TYPENAME;
-                }
-                var url = type.url + '?' + $.param(params);
-                $.ajax({
-                    url: url,
-                    type: 'GET',
-                    dataType: 'text'
-                }).done(function (data) {
-                    var parser;
-                    if (type.outputFormat === TC.Consts.format.JSON) {
-                        parser = new TC.wrap.parser.JSON();
+                if (type.municipality && type.municipality.featureType && type.municipality.labelProperty && type.municipality.idProperty) {
+                    var params = {
+                        REQUEST: 'GetFeature',
+                        SERVICE: 'WFS',
+                        TYPENAME: type.municipality.featureType,
+                        VERSION: type.version,
+                        PROPERTYNAME: type.municipality.labelProperty + "," + type.municipality.idProperty,
+                        OUTPUTFORMAT: type.outputFormat
+                    };
+                    if (type.featurePrefix) {
+                        params.TYPENAME = type.featurePrefix + ':' + params.TYPENAME;
                     }
-                    else {
-                        parser = new TC.wrap.parser.WFS({
-                            featureNS: type.municipality.featurePrefix,
-                            featureType: type.municipality.featureType
-                        });
-                    }
-                    var features = parser.read(data);
-                    TC.cache.search.municipalities = [];
-                    for (var i = 0; i < features.length; i++) {
-                        var feature = features[i];
-                        TC.cache.search.municipalities.push({ label: feature.data[type.municipality.labelProperty], id: feature.data[type.municipality.idProperty] });
-                    }
-
-                    TC.cache.search.municipalities.sort(function (a, b) {
-                        var result;
-                        if (a.label < b.label) {
-                            result = -1;
-                        }
-                        else if (a.label > b.label) {
-                            result = 1;
+                    var url = type.url + '?' + $.param(params);
+                    TC.ajax({
+                        url: url,
+                        method: 'GET',
+                        responseType: 'text'
+                    }).then(function (data) {
+                        var parser;
+                        if (type.outputFormat === TC.Consts.format.JSON) {
+                            parser = new TC.wrap.parser.JSON();
                         }
                         else {
-                            result = 0;
+                            parser = new TC.wrap.parser.WFS({
+                                featureNS: type.municipality.featurePrefix,
+                                featureType: type.municipality.featureType
+                            });
                         }
-                        return result;
-                    });
+                        var features = parser.read(data);
+                        TC.cache.search.municipalities = [];
+                        for (var i = 0; i < features.length; i++) {
+                            var feature = features[i];
+                            TC.cache.search.municipalities.push({ label: feature.data[type.municipality.labelProperty], id: feature.data[type.municipality.idProperty] });
+                        }
 
-                    self._municipalitiesDeferred.resolve(TC.cache.search.municipalities);
-                }).fail(function () {
-                    self._municipalitiesDeferred.resolve();
-                });
-            } else {
-                throw new Error("Error en la configuración de la búsqueda: " + type.typeName + ". Error en el objeto municipality");
+                        TC.cache.search.municipalities.sort(function (a, b) {
+                            var result;
+                            if (a.label < b.label) {
+                                result = -1;
+                            }
+                            else if (a.label > b.label) {
+                                result = 1;
+                            }
+                            else {
+                                result = 0;
+                            }
+                            return result;
+                        });
+
+                        resolve(TC.cache.search.municipalities);
+                    }).catch(function () {
+                        resolve();
+                    });
+                } else {
+                    throw new Error("Error en la configuración de la búsqueda: " + type.typeName + ". Error en el objeto municipality");
+                }
             }
-        }
-        return TC.cache.search.municipalities ? self._municipalitiesDeferred.resolve(TC.cache.search.municipalities) : self._municipalitiesDeferred.promise();
+        });
+        return self._municipalitiesPromise;
     };
 
     ctlProto.getCoordinates = function (pattern) {
-        var self = this;
-        var deferred = new $.Deferred();
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            var match = pattern.match(new RegExp('^' + $.trim(self.UTMX_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + $.trim(self.UTMY_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
+            if (match) {
+                pattern = match[1] + ' ' + match[2];
+            }
 
-        var match = pattern.match(new RegExp('^' + $.trim(self.UTMX_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + $.trim(self.UTMY_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
-        if (match) {
-            pattern = match[1] + ' ' + match[2];
-        }
-
-        match = pattern.match(new RegExp('^' + $.trim(self.LAT_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LON_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
-        if (match) {
-            pattern = match[1] + ' ' + match[3];
-        }
-
-        if (/\d/.test(pattern) && (new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').test(pattern) || /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.test(pattern))) {
-            match = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(pattern);
-            if (match && (match[1].indexOf(',') > -1 || match[3].indexOf(',') > -1)) {
-                match[1] = match[1].replace(',', '.');
-                match[3] = match[3].replace(',', '.');
-
+            match = pattern.match(new RegExp('^' + $.trim(self.LAT_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LON_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
+            if (match) {
                 pattern = match[1] + ' ' + match[3];
             }
 
-            if (!match || match && ((match[1].indexOf(',') > -1 ? match[1].replace(',', '.') : match[1]) <= 180) && ((match[3].indexOf(',') > -1 ? match[3].replace(',', '.') : match[3]) <= 90)) {
-
-                match = new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').exec(pattern);
-                if (match && (match[1].indexOf(',') > -1 || match[2].indexOf(',') > -1)) {
+            if (/\d/.test(pattern) && (new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').test(pattern) || /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.test(pattern))) {
+                match = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(pattern);
+                if (match && (match[1].indexOf(',') > -1 || match[3].indexOf(',') > -1)) {
                     match[1] = match[1].replace(',', '.');
-                    match[2] = match[2].replace(',', '.');
+                    match[3] = match[3].replace(',', '.');
 
-                    pattern = match[1] + ' ' + match[2];
+                    pattern = match[1] + ' ' + match[3];
                 }
 
-                // parse coordinates
-                pattern = pattern.replace(self.UTMX_LABEL, '').replace(self.UTMY_LABEL, '').replace(self.LON_LABEL, '').replace(self.LAT_LABEL, '');
-                var coords = TC.Util.parseCoords(pattern);
-                if (coords) {
-                    var xValue = coords[0].value;
-                    var yValue = coords[1].value;
-                    var xLabel = (coords[0].type === TC.Consts.UTM) ? self.UTMX : self.LAT;
-                    var yLabel = (coords[1].type === TC.Consts.UTM) ? self.UTMY : self.LON;
-                    var id = xLabel + xValue + yLabel + yValue;
+                if (!match || match && ((match[1].indexOf(',') > -1 ? match[1].replace(',', '.') : match[1]) <= 180) && ((match[3].indexOf(',') > -1 ? match[3].replace(',', '.') : match[3]) <= 90)) {
 
-                    var point = self.getPoint(id);
-                    if (point && !self.insideLimit(point)) {
-                        xValue = coords[1].value;
-                        yValue = coords[0].value;
-                        xLabel = (coords[1].type === TC.Consts.UTM) ? self.UTMX : self.LAT;
-                        yLabel = (coords[0].type === TC.Consts.UTM) ? self.UTMY : self.LON;
-                        id = xLabel + xValue + yLabel + yValue;
-                        point = self.getPoint(id);
+                    match = new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').exec(pattern);
+                    if (match && (match[1].indexOf(',') > -1 || match[2].indexOf(',') > -1)) {
+                        match[1] = match[1].replace(',', '.');
+                        match[2] = match[2].replace(',', '.');
+
+                        pattern = match[1] + ' ' + match[2];
                     }
 
-                    if (point) {
-                        self.availableSearchTypes[TC.Consts.searchType.COORDINATES].label = /^X(\d+(?:\.\d+)?)Y(\d+(?:\.\d+)?)$/.test(id) ? self.getLocaleString('search.list.coordinates.utm') + self.map.crs : self.getLocaleString('search.list.coordinates.geo');
+                    // parse coordinates
+                    pattern = pattern.replace(self.UTMX_LABEL, '').replace(self.UTMY_LABEL, '').replace(self.LON_LABEL, '').replace(self.LAT_LABEL, '');
+                    var coords = TC.Util.parseCoords(pattern);
+                    if (coords) {
+                        var xValue = coords[0].value;
+                        var yValue = coords[1].value;
+                        var xLabel = (coords[0].type === TC.Consts.UTM) ? self.UTMX : self.LAT;
+                        var yLabel = (coords[1].type === TC.Consts.UTM) ? self.UTMY : self.LON;
+                        var id = xLabel + xValue + yLabel + yValue;
 
+                        var point = self.getPoint(id);
+                        if (point && !self.insideLimit(point)) {
+                            xValue = coords[1].value;
+                            yValue = coords[0].value;
+                            xLabel = (coords[1].type === TC.Consts.UTM) ? self.UTMX : self.LAT;
+                            yLabel = (coords[0].type === TC.Consts.UTM) ? self.UTMY : self.LON;
+                            id = xLabel + xValue + yLabel + yValue;
+                            point = self.getPoint(id);
+                        }
+
+                        if (point) {
+                            self.availableSearchTypes[TC.Consts.searchType.COORDINATES].label = /^X(\d+(?:\.\d+)?)Y(\d+(?:\.\d+)?)$/.test(id) ? self.getLocaleString('search.list.coordinates.utm') + self.map.crs : self.getLocaleString('search.list.coordinates.geo');
+
+                            //console.log('getCoordinates promise resuelta');
+                            resolve([{
+                                id: id, label: self.getLabel(id), dataRole: TC.Consts.searchType.COORDINATES
+                            }]);
+                        }
+                        else {
+                            //console.log('getCoordinates promise resuelta');
+                            resolve([]);
+                        }
+                    } else {
                         //console.log('getCoordinates promise resuelta');
-                        deferred.resolve([{
-                            id: id, label: self.getLabel(id), dataRole: TC.Consts.searchType.COORDINATES
-                        }]);
-                    }
-                    else {
-                        //console.log('getCoordinates promise resuelta');
-                        deferred.resolve([]);
+                        resolve([]);
                     }
                 } else {
                     //console.log('getCoordinates promise resuelta');
-                    deferred.resolve([]);
+                    resolve([]);
                 }
             } else {
                 //console.log('getCoordinates promise resuelta');
-                deferred.resolve([]);
+                resolve([]);
             }
-        } else {
-            //console.log('getCoordinates promise resuelta');
-            deferred.resolve([]);
-        }
-
-        //console.log('getCoordinates promise');
-        return deferred.promise();
+        });
     };
 
     ctlProto.getCadastralRef = function (pattern) {
-        var self = this;
-        var deferred = new $.Deferred();
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            var match = pattern.match(new RegExp($.trim(self.MUN_LABEL.toLowerCase()) + '?\\s(.*)\\,\\s?' + $.trim(self.POL_LABEL.toLowerCase()) + '?\\s(\\d{1,2})\\,\\s?' + $.trim(self.PAR_LABEL.toLowerCase()) + '?\\s(\\d{1,4})'));
+            if (match) {
+                pattern = match[1] + ', ' + match[2] + ', ' + match[3];
+            }
 
-        var match = pattern.match(new RegExp($.trim(self.MUN_LABEL.toLowerCase()) + '?\\s(.*)\\,\\s?' + $.trim(self.POL_LABEL.toLowerCase()) + '?\\s(\\d{1,2})\\,\\s?' + $.trim(self.PAR_LABEL.toLowerCase()) + '?\\s(\\d{1,4})'));
-        if (match) {
-            pattern = match[1] + ', ' + match[2] + ', ' + match[3];
-        }
+            var _pattern = pattern;
+            if (!(/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(pattern)) && self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot)
+                _pattern = self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot + ', ' + pattern;
 
-        var _pattern = pattern;
-        if (!(/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(pattern)) && self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot)
-            _pattern = self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot + ', ' + pattern;
+            if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !(new RegExp('^([0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([0-9]{' + self.UTMY_LEN + '})$').test(pattern))) {
+                self.getMunicipalities().then(function (list) {
+                    var match = /^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.exec(_pattern);
+                    if (match) {
+                        var matcher = new RegExp($.trim(match[1]).replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "i");
+                        var results = [];
 
-        if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !(new RegExp('^([0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([0-9]{' + self.UTMY_LEN + '})$').test(pattern))) {
-            $.when(self.getMunicipalities()).then(function (list) {
-                var match = /^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.exec(_pattern);
-                if (match) {
-                    var matcher = new RegExp($.trim(match[1]).replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "i");
-                    var results = [];
+                        const getItem = function (mun, munLabel, pol, par) {
+                            var properties = [];
 
-                    const getItem = function (mun, munLabel, pol, par) {
-                        var properties = [];
+                            properties.push[self.MUN] = mun;
+                            properties.push[self.POL] = pol;
+                            properties.push[self.PAR] = par;
 
-                        properties.push[self.MUN] = mun;
-                        properties.push[self.POL] = pol;
-                        properties.push[self.PAR] = par;
-
-                        return {
-                            id: self.MUN + mun + self.POL + pol + self.PAR + par,
-                            label: self.getLabel(self.MUN + munLabel + self.POL + pol + self.PAR + par),
-                            dataRole: TC.Consts.searchType.CADASTRAL,
-                            properties: properties
+                            return {
+                                id: self.MUN + mun + self.POL + pol + self.PAR + par,
+                                label: self.getLabel(self.MUN + munLabel + self.POL + pol + self.PAR + par),
+                                dataRole: TC.Consts.searchType.CADASTRAL,
+                                properties: properties
+                            };
                         };
-                    };
 
-                    results = $.grep(list, function (value) {
-                        value = value.label || value.id || value;
-                        return matcher.test(value) || matcher.test(self.removePunctuation(value));
-                    });
+                        results = $.grep(list, function (value) {
+                            value = value.label || value.id || value;
+                            return matcher.test(value) || matcher.test(self.removePunctuation(value));
+                        });
 
-                    if (results.length > 0) {
-                        for (var i = 0; i < results.length; i++) {
-                            results[i] = getItem(results[i].id, results[i].label, $.trim(match[2]), $.trim(match[3]));
-                        }
-                    }
-
-                    if (/^[0-9]*$/g.test(match[1])) {
-
-                        if (match[1].trim() === self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot) {
-
-                            var suggestionRoot = list.filter(function (elm) {
-                                return parseInt(elm.id) === parseInt(self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot);
-                            })[0];
-
-                            if (suggestionRoot) {
-                                deferred.resolve([getItem(suggestionRoot.id, suggestionRoot.label, $.trim(match[2]), $.trim(match[3]))]);
+                        if (results.length > 0) {
+                            for (var i = 0; i < results.length; i++) {
+                                results[i] = getItem(results[i].id, results[i].label, $.trim(match[2]), $.trim(match[3]));
                             }
                         }
 
-                        results.push(getItem($.trim(match[1]), $.trim(match[1]), $.trim(match[2]), $.trim(match[3])));
+                        if (/^[0-9]*$/g.test(match[1])) {
+
+                            if (match[1].trim() === self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot) {
+
+                                var suggestionRoot = list.filter(function (elm) {
+                                    return parseInt(elm.id) === parseInt(self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot);
+                                })[0];
+
+                                if (suggestionRoot) {
+                                    resolve([getItem(suggestionRoot.id, suggestionRoot.label, $.trim(match[2]), $.trim(match[3]))]);
+                                }
+                            }
+
+                            results.push(getItem($.trim(match[1]), $.trim(match[1]), $.trim(match[2]), $.trim(match[3])));
+                        }
+
+                        //console.log('getCadastralRef promise resuelta');
+                        resolve(results);
                     }
-
-                    //console.log('getCadastralRef promise resuelta');
-                    deferred.resolve(results);
-                }
-            });
-        } else {
-            //console.log('getCadastralRef promise resuelta - no es ref catastral');
-            deferred.resolve([]);
-        }
-
-        //console.log('getCadastralRef promise');
-        return deferred.promise();
+                });
+            } else {
+                //console.log('getCadastralRef promise resuelta - no es ref catastral');
+                resolve([]);
+            }
+        });
     };
 
     ctlProto.stringPatternsValidators = {
@@ -2844,19 +2899,17 @@ TC.inherit(TC.control.Search, TC.Control);
     const requestToWFS = function (type, doneCallback, data) {
         const self = this;
 
-        return $.ajax({
+        self.resultsList.innerHTML = '<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
+        self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+        return TC.ajax({
             url: type.url,
-            type: 'POST',
-            contentType: "application/x-www-form-urlencoded;charset=UTF-8",
-            dataType: 'text',
-            data: type.filter.getParams(data),
-            beforeSend: function () {
-                self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
-                self.$text.trigger("targetUpdated.autocomplete");
-            }
+            method: 'POST',
+            //contentType: "application/x-www-form-urlencoded;charset=UTF-8",
+            responseType: 'text',
+            data: type.filter.getParams(data)
         })
-            .done(doneCallback)
-            .fail(function (data) {
+            .then(doneCallback)
+            .catch(function (data) {
                 if (data.statusText !== 'abort')
                     alert('error');
 
@@ -2864,7 +2917,7 @@ TC.inherit(TC.control.Search, TC.Control);
             });
     };
 
-    const getResultsFromWFS = function (allowedRoles, deferred, objectsToQuery) {
+    const getResultsFromWFS = function (allowedRoles, resolve, reject, objectsToQuery) {
         const self = this;
 
         if (objectsToQuery) {
@@ -2889,194 +2942,181 @@ TC.inherit(TC.control.Search, TC.Control);
                 });
             });
 
-            $.when.apply($, self.request).then(function () {
+            Promise.all(self.request).then(function () {
                 //self.request = [];
                 //console.log('getStringPattern promise resuelta');
-                deferred.resolve(results);
+                resolve(results);
             });
         } else {
             //console.log('getStringPattern promise resuelta - no encaja en address');
-            deferred.resolve([]);
-        }
-    };    
-
-    ctlProto.getStringPattern = function (allowedRoles, pattern) {
-        var self = this;
-        var deferred = new $.Deferred();
-
-        pattern = normalizedCriteria.call(self, pattern);
-
-        /* gestionamos:
-            Entidad de población: Irisarri Auzoa (Igantzi)
-            Topónimo: Aldabeko Bidea (Arbizu)
-        */
-        var combinedCriteria = /(.*)\((.*)\)/.exec(pattern);
-        if (combinedCriteria && combinedCriteria.length > 2) {
-
-            // búsqueda de entidad de población
-            var objectsToQuery = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1]);
-
-            // búsqueda de topónimo
-            var bothSearchObjects = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1] + ',' + combinedCriteria[2]);
-
-            bothSearchObjects = (bothSearchObjects || []).concat(objectsToQuery || []);
-
-            getResultsFromWFS.call(self, allowedRoles, deferred, bothSearchObjects);
-
-            return deferred;
-        } else {
-            var objectsToQuery = getObjectsFromStringToQuery.call(self, allowedRoles, pattern);
-
-            getResultsFromWFS.call(self, allowedRoles, deferred, objectsToQuery);
-
-            //console.log('getStringPattern promise');
-            return deferred;
+            resolve([]);
         }
     };
 
-    ctlProto.getRoad = function (pattern) {
-        var self = this;
-        var deferred = new $.Deferred();
+    ctlProto.getStringPattern = function (allowedRoles, pattern) {
+        const self = this;
 
-        pattern = pattern.trim();
-        if (pattern.length < 2) {
-            deferred.resolve([]);
-        } else {
-            var type = self.getSearchTypeByRole(TC.Consts.searchType.ROAD);
+        return new Promise(function (resolve, reject) {
+            pattern = normalizedCriteria.call(self, pattern);
 
-            var roadPattern = type.getPattern();
-            var match = roadPattern.exec(pattern);
-            if (match && match[3]) {
+            /* gestionamos:
+                Entidad de población: Irisarri Auzoa (Igantzi)
+                Topónimo: Aldabeko Bidea (Arbizu)
+            */
+            var combinedCriteria = /(.*)\((.*)\)/.exec(pattern);
+            if (combinedCriteria && combinedCriteria.length > 2) {
 
-                var _pattern = match[2] ? match[2].trim() + "-" + match[3].trim() : match[3].trim();
-                if (match[4] && match[4].length > 0) {
-                    _pattern = _pattern + "-" + match[4].trim();
-                }
+                // búsqueda de entidad de población
+                var objectsToQuery = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1]);
 
-                $.ajax({
-                    url: type.url + '?' + type.filter.getParams({ t: _pattern }),
-                    type: 'GET',
-                    contentType: "application/x-www-form-urlencoded;charset=UTF-8",
-                    beforeSend: function () {
-                        self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
-                        self.$text.trigger("targetUpdated.autocomplete");
-                    }
-                }).done(function (data) {
-                    var result = [];
-                    if (data.totalFeatures > 0) {
-                        data.features.map(function (feature) {
-                            var properties = type.outputProperties;
-                            if (!result.some(function (elem) {
-                                return (elem.text == feature.properties[properties[0]]);
-                            })) {
-                                var label = type.outputFormatLabel.tcFormat(type.outputProperties.map(function (outputProperty) {
-                                    return feature.properties[outputProperty];
-                                }));
+                // búsqueda de topónimo
+                var bothSearchObjects = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1] + ',' + combinedCriteria[2]);
 
-                                var text = type.outputProperties.map(function (outputProperty) {
-                                    return feature.properties[outputProperty];
-                                }).join('-');
+                bothSearchObjects = (bothSearchObjects || []).concat(objectsToQuery || []);
 
-                                result.push({
-                                    id: type.dataIdProperty.map(function (elem) {
-                                        return feature.properties[elem];
-                                    }).join('#'),
-                                    label: label,
-                                    text: text,
-                                    dataLayer: feature.id.split('.')[0],
-                                    dataRole: type.typeName
-                                });
-                            }
-                        });
-
-                        //console.log('getRoad promise resuelta');
-                        deferred.resolve(result);
-                    } else {
-                        //console.log('getRoad promise resuelta');
-                        deferred.resolve([]);
-                    }
-                }).fail(function (data) {
-                    //console.log('getRoad promise resuelta - xhr fail');
-                    deferred.resolve([]);
-                });
+                getResultsFromWFS.call(self, allowedRoles, resolve, reject, bothSearchObjects);
             } else {
-                //console.log('getRoad promise resuelta - no encaja en road');
-                deferred.resolve([]);
-            }
-        }
+                var objectsToQuery = getObjectsFromStringToQuery.call(self, allowedRoles, pattern);
 
-        //console.log('getRoad promise');
-        return deferred.promise();
+                getResultsFromWFS.call(self, allowedRoles, resolve, reject, objectsToQuery);
+            }
+        });
+    };
+
+    ctlProto.getRoad = function (pattern) {
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            pattern = pattern.trim();
+            if (pattern.length < 2) {
+                resolve([]);
+            } else {
+                var type = self.getSearchTypeByRole(TC.Consts.searchType.ROAD);
+
+                var roadPattern = type.getPattern();
+                var match = roadPattern.exec(pattern);
+                if (match && match[3]) {
+
+                    var _pattern = match[2] ? match[2].trim() + "-" + match[3].trim() : match[3].trim();
+                    if (match[4] && match[4].length > 0) {
+                        _pattern = _pattern + "-" + match[4].trim();
+                    }
+
+                    self.resultsList.innerHTML = '<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
+                    self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+                    TC.ajax({
+                        url: type.url + '?' + type.filter.getParams({ t: _pattern }),
+                        method: 'GET',
+                        responseType: TC.Consts.mimeType.JSON
+                    }).then(function (data) {
+                        var result = [];                        
+
+                        if (data.totalFeatures > 0) {
+                            data.features.map(function (feature) {
+                                var properties = type.outputProperties;
+                                if (!result.some(function (elem) {
+                                    return (elem.text == feature.properties[properties[0]]);
+                                })) {
+                                    var label = type.outputFormatLabel.tcFormat(type.outputProperties.map(function (outputProperty) {
+                                        return feature.properties[outputProperty];
+                                    }));
+
+                                    var text = type.outputProperties.map(function (outputProperty) {
+                                        return feature.properties[outputProperty];
+                                    }).join('-');
+
+                                    result.push({
+                                        id: type.dataIdProperty.map(function (elem) {
+                                            return feature.properties[elem];
+                                        }).join('#'),
+                                        label: label,
+                                        text: text,
+                                        dataLayer: feature.id.split('.')[0],
+                                        dataRole: type.typeName
+                                    });
+                                }
+                            });
+
+                            //console.log('getRoad promise resuelta');
+                            resolve(result);
+                        } else {
+                            //console.log('getRoad promise resuelta');
+                            resolve([]);
+                        }
+                    }).catch(function (data) {
+                        //console.log('getRoad promise resuelta - xhr fail');
+                        resolve([]);
+                    });
+                } else {
+                    //console.log('getRoad promise resuelta - no encaja en road');
+                    resolve([]);
+                }
+            }
+        });
     };
 
     ctlProto.getPK = function (pattern) {
         var self = this;
-        var deferred = new $.Deferred();
-
-        pattern = pattern.trim();
-        if (pattern.length < 3) {
-            deferred.resolve([]);
-        } else {
-
-            var type = self.getSearchTypeByRole(TC.Consts.searchType.ROADPK);
-
-            var roadPKPattern = type.getPattern();
-            var match = roadPKPattern.exec(pattern);
-            if (match && match[3] && match[5]) {
-
-                var _pattern = match[2] ? match[2].trim() + "-" + match[3].trim() : match[3].trim();
-                if (match[4] && match[4].length > 0) {
-                    _pattern = _pattern + "-" + match[4].trim();
-                }
-
-                $.ajax({
-                    url: type.url + '?' + type.filter.getParams({ t: _pattern, s: match[5].trim() }),
-                    type: 'GET',
-                    contentType: "application/x-www-form-urlencoded;charset=UTF-8",
-                    beforeSend: function () {
-                        self.$list.html('<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
-                        self.$text.trigger("targetUpdated.autocomplete");
-                    }
-                }).done(function (data) {
-                    var result = [];
-                    if (data.totalFeatures > 0) {
-                        data.features.map(function (feature) {
-                            var properties = type.outputProperties;
-                            if (!result.some(function (elem) {
-                                return (elem.label == feature.properties[properties[0]]);
-                            })) {
-                                var text = type.outputFormatLabel.tcFormat(type.outputProperties.map(function (outputProperty) {
-                                    return feature.properties[outputProperty];
-                                }));
-                                result.push({
-                                    id: type.dataIdProperty.map(function (elem) {
-                                        return feature.properties[elem];
-                                    }).join('#'),
-                                    label: text,
-                                    text: text,
-                                    dataLayer: feature.id.split('.')[0],
-                                    dataRole: type.typeName
-                                });
-                            }
-                        });
-                        //console.log('getRoadPK promise resuelta');
-                        deferred.resolve(result);
-                    } else {
-                        //console.log('getRoadPK promise resuelta');
-                        deferred.resolve([]);
-                    }
-                }).fail(function (data) {
-                    //console.log('getRoadPK promise resuelta - xhr fail');
-                    deferred.resolve([]);
-                });
+        return new Promise(function (resolve, reject) {
+            pattern = pattern.trim();
+            if (pattern.length < 3) {
+                resolve([]);
             } else {
-                //console.log('getRoadPK promise resuelta - no encaja en pk');
-                deferred.resolve([]);
-            }
-        }
 
-        //console.log('getRoadPK promise');
-        return deferred.promise();
+                var type = self.getSearchTypeByRole(TC.Consts.searchType.ROADPK);
+
+                var roadPKPattern = type.getPattern();
+                var match = roadPKPattern.exec(pattern);
+                if (match && match[3] && match[5]) {
+
+                    var _pattern = match[2] ? match[2].trim() + "-" + match[3].trim() : match[3].trim();
+                    if (match[4] && match[4].length > 0) {
+                        _pattern = _pattern + "-" + match[4].trim();
+                    }
+
+                    self.resultsList.innerHTML = '<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
+                    self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+                    TC.ajax({
+                        url: type.url + '?' + type.filter.getParams({ t: _pattern, s: match[5].trim() }),
+                        method: 'GET',
+                        responseType: TC.Consts.mimeType.JSON                        
+                    }).then(function (data) {
+                        var result = [];
+                        if (data.totalFeatures > 0) {
+                            data.features.map(function (feature) {
+                                var properties = type.outputProperties;
+                                if (!result.some(function (elem) {
+                                    return (elem.label == feature.properties[properties[0]]);
+                                })) {
+                                    var text = type.outputFormatLabel.tcFormat(type.outputProperties.map(function (outputProperty) {
+                                        return feature.properties[outputProperty];
+                                    }));
+                                    result.push({
+                                        id: type.dataIdProperty.map(function (elem) {
+                                            return feature.properties[elem];
+                                        }).join('#'),
+                                        label: text,
+                                        text: text,
+                                        dataLayer: feature.id.split('.')[0],
+                                        dataRole: type.typeName
+                                    });
+                                }
+                            });
+                            //console.log('getRoadPK promise resuelta');
+                            resolve(result);
+                        } else {
+                            //console.log('getRoadPK promise resuelta');
+                            resolve([]);
+                        }
+                    }).catch(function (data) {
+                        //console.log('getRoadPK promise resuelta - xhr fail');
+                        resolve([]);
+                    });
+                } else {
+                    //console.log('getRoadPK promise resuelta - no encaja en pk');
+                    resolve([]);
+                }
+            }
+        });
     };
 
     ctlProto.search = function (pattern, callback) {
@@ -3087,7 +3127,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
             for (var i = 0; i < self.request.length; i++) {
                 console.log("new criteria: search promise/s aborted");
-                self.request[i].abort();
+                //self.request[i].abort();
             }
 
             self.request = [];
@@ -3099,13 +3139,12 @@ TC.inherit(TC.control.Search, TC.Control);
 
             var waiting = [];
             var addWaiting = function (fn) {
-                var wait = new $.Deferred();
-                waiting.push(wait);
-
-                $.when(fn.call(self, pattern)).then(function (result) {
-                    results = results.concat(result);
-                    wait.resolve(results);
-                });
+                waiting.push(new Promise(function (resolve, reject) {
+                    fn.call(self, pattern).then(function (result) {
+                        results = results.concat(result);
+                        resolve(results);
+                    });
+                }));
             };
 
             var addressSearched = false;
@@ -3118,7 +3157,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
             });
 
-            $.when.apply(self, waiting).then(function () {
+            Promise.all(waiting).then(function () {
                 if (results)
                     self._search.data = results = results.sort(function (a, b) {
                         var pattern = /(\d+)/;
@@ -3148,8 +3187,8 @@ TC.inherit(TC.control.Search, TC.Control);
 
                     if (!self.layer ||
                         (self.layer && self.layer.features.length === 0)) {
-                        self.$list.html('<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>');
-                        self.$text.trigger("targetUpdated.autocomplete");
+                        self.resultsList.innerHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
+                        self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
                     }
                 }
 
@@ -3172,168 +3211,166 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto._goToResult = function (id, dataRole) {
         var self = this;
         var goTo = null;
-        const deferred = $.Deferred();
+        return new Promise(function (resolve, reject) {
+            if (!self.loading)
+                self.loading = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
 
-        if (!self.loading)
-            self.loading = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
+            var wait;
+            wait = self.loading.addWait();
 
-        var wait;
-        wait = self.loading.addWait();
+            // en pantallas pequeñas, colapsamos el panel de herramientas
+            if (Modernizr.mq('(max-width: 30em)')) {
+                self.textInput.blur();
+                self.map.trigger(TC.Consts.event.TOOLSCLOSE);
+            }
 
-        // en pantallas pequeñas, colapsamos el panel de herramientas
-        if (Modernizr.mq('(max-width: 30em)')) {
-            self.$text.blur();
-            self.map.$events.trigger($.Event(TC.Consts.event.TOOLSCLOSE), {});
-        }
+            self.cleanMap();
 
-        self.cleanMap();
+            var customSearchType = false;
+            var keepOnLooping = true;
 
-        var customSearchType = false;
-        var keepOnLooping = true;
+            self.allowedSearchTypes.forEach(function (allowed) {
+                if (keepOnLooping) {
 
-        self.allowedSearchTypes.forEach(function (allowed) {
-            if (keepOnLooping) {
+                    if (!self.availableSearchTypes[allowed.typeName]) {
 
-                if (!self.availableSearchTypes[allowed.typeName]) {
-
-                    if (allowed.goTo) {
-                        customSearchType = true;
-
-                        goTo = allowed.goTo.call(self, id);
-                        if (goTo !== null) {
-                            keepOnLooping = false;
-                        }
-                    } else console.log('Falta implementación del método goTo');
-
-                } else {
-
-                    var dr = dataRole || self.getElementOnSuggestionList.call(self, id).dataRole;
-                    if (dr) {
-
-                        var searchType = self.getSearchTypeByRole(dr);
-
-                        if (self.availableSearchTypes[dr] && searchType && searchType.goTo) {
-                            goTo = searchType.goTo.call(self, id, dr);
-                            if (goTo !== null) {
-                                keepOnLooping = false;
-                            }
-                        } else if (!self.availableSearchTypes[dr] && searchType && searchType.goTo) {
+                        if (allowed.goTo) {
                             customSearchType = true;
 
-                            goTo = searchType.goTo.call(self, id, dr);
+                            goTo = allowed.goTo.call(self, id);
                             if (goTo !== null) {
                                 keepOnLooping = false;
                             }
                         } else console.log('Falta implementación del método goTo');
+
+                    } else {
+
+                        var dr = dataRole || self.getElementOnSuggestionList.call(self, id).dataRole;
+                        if (dr) {
+
+                            var searchType = self.getSearchTypeByRole(dr);
+
+                            if (self.availableSearchTypes[dr] && searchType && searchType.goTo) {
+                                goTo = searchType.goTo.call(self, id, dr);
+                                if (goTo !== null) {
+                                    keepOnLooping = false;
+                                }
+                            } else if (!self.availableSearchTypes[dr] && searchType && searchType.goTo) {
+                                customSearchType = true;
+
+                                goTo = searchType.goTo.call(self, id, dr);
+                                if (goTo !== null) {
+                                    keepOnLooping = false;
+                                }
+                            } else console.log('Falta implementación del método goTo');
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        self.loading.removeWait(wait);
+            self.loading.removeWait(wait);
 
-        if (goTo) {
+            if (goTo) {
 
-            self.getLayer().then(function (layer) {
-                switch (true) {
-                    case goTo.params.type == TC.Consts.layerType.VECTOR:
-                        for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
-                            if (layer.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
-                                delete layer[self.WFS_TYPE_ATTRS[i]];
-                        }
-                        break;
-                    case goTo.params.type == TC.Consts.layerType.WFS:
-                        for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
-                            layer[self.WFS_TYPE_ATTRS[i]] = goTo.params[self.WFS_TYPE_ATTRS[i]];
-                        }
+                self.getLayer().then(function (layer) {
+                    switch (true) {
+                        case goTo.params.type == TC.Consts.layerType.VECTOR:
+                            for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
+                                if (layer.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
+                                    delete layer[self.WFS_TYPE_ATTRS[i]];
+                            }
+                            break;
+                        case goTo.params.type == TC.Consts.layerType.WFS:
+                            for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
+                                layer[self.WFS_TYPE_ATTRS[i]] = goTo.params[self.WFS_TYPE_ATTRS[i]];
+                            }
 
-                        wait = self.loading.addWait();
-                        break;
-                    default:
-                }
-
-                layer.type = goTo.params.type;
-
-                self.map.$events.on(TC.Consts.event.FEATURESADD, function (e) {
-                    if (e.layer === self.layer) {
-                        setQueryableFeatures(e.features);
+                            wait = self.loading.addWait();
+                            break;
+                        default:
                     }
-                });
 
-                layer.refresh().then(function () {
-                    self.map.one(TC.Consts.event.LAYERUPDATE, function (e) {
-                        if (e.layer == layer) {
-                            // Salta cuando se pinta una feature que no es de tipo API porque la gestión de estilos salta antes (no es controlable)
-                            self.map.one(TC.Consts.event.FEATURESADD, function (e) {
-                                if (e.layer == layer) {
-                                    if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
-                                        self.$list.hide('fast');
-                                        var bounds = e.layer.wrap.layer.getSource().getExtent();
-                                        var radius = e.layer.map.options.pointBoundsRadius;
+                    layer.type = goTo.params.type;
 
-                                        if (bounds[2] - bounds[0] === 0) {
-                                            bounds[0] = bounds[0] - radius;
-                                            bounds[2] = bounds[2] + radius;
+                    self.map.on(TC.Consts.event.FEATURESADD, function (e) {
+                        if (e.layer === self.layer) {
+                            setQueryableFeatures.call(self, e.features);
+                        }
+                    });
+
+                    layer.refresh().then(function () {
+                        self.map.one(TC.Consts.event.LAYERUPDATE, function (e) {
+                            if (e.layer == layer) {
+                                // Salta cuando se pinta una feature que no es de tipo API porque la gestión de estilos salta antes (no es controlable)
+                                self.map.one(TC.Consts.event.FEATURESADD, function (e) {
+                                    if (e.layer == layer) {
+                                        if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
+                                            self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+                                            var bounds = e.layer.wrap.layer.getSource().getExtent();
+                                            var radius = e.layer.map.options.pointBoundsRadius;
+
+                                            if (bounds[2] - bounds[0] === 0) {
+                                                bounds[0] = bounds[0] - radius;
+                                                bounds[2] = bounds[2] + radius;
+                                            }
+                                            if (bounds[3] - bounds[1] === 0) {
+                                                bounds[1] = bounds[1] - radius;
+                                                bounds[3] = bounds[3] + radius;
+                                            }
+                                            e.layer.map.setExtent(bounds);
+
+                                            // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
+                                            self.map.trigger(TC.Consts.event.ZOOMTO, {
+                                                extent: bounds, layer: e.layer
+                                            });
                                         }
-                                        if (bounds[3] - bounds[1] === 0) {
-                                            bounds[1] = bounds[1] - radius;
-                                            bounds[3] = bounds[3] + radius;
-                                        }
-                                        e.layer.map.setExtent(bounds);
+                                        else if (e.layer.features && e.layer.features.length > 0) {
+                                            self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+                                            self.layer.map.zoomToFeatures(e.layer.features);
 
-                                        // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
-                                        self.map.$events.trigger($.Event(TC.Consts.event.ZOOMTO, {
-                                            extent: bounds, layer: e.layer
-                                        }));
+                                            self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features });
+
+                                        } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
+                                            self.resultsList.inner = goTo.emptyResultHTML;
+                                            self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+
+                                            self.map.trigger(TC.Consts.event.SEARCHQUERYEMPTY);
+                                        }
+
+                                        self.loading.removeWait(wait);
                                     }
-                                    else if (e.layer.features && e.layer.features.length > 0) {
-                                        self.$list.hide('fast');                                                                
-                                        self.layer.map.zoomToFeatures(e.layer.features);
+                                });
 
-                                        self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features }));
+                                if (e.layer.features && e.layer.features.length > 0) {
+                                    self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+                                    self.layer.map.zoomToFeatures(self.layer.features);
 
-                                    } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
-                                        self.$list.html(goTo.emptyResultHTML);
-                                        self.$text.trigger("targetUpdated.autocomplete");
+                                    self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features });
 
-                                        self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
+                                    self.loading.removeWait(wait);
+                                } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
+                                    self.resultsList.innerHTML = goTo.emptyResultHTML;
+                                    self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+
+                                    if (!(e.newData && e.newData.features && e.newData.features.length > 0)) {
+                                        self.map.trigger(TC.Consts.event.SEARCHQUERYEMPTY);
                                     }
 
                                     self.loading.removeWait(wait);
                                 }
-                            });
-
-                            if (e.layer.features && e.layer.features.length > 0) {
-                                self.$list.hide('fast');                                 
-                                self.layer.map.zoomToFeatures(self.layer.features);
-
-                                self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features }));
-
-                                self.loading.removeWait(wait);
-                            } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
-                                self.$list.html(goTo.emptyResultHTML);
-                                self.$text.trigger("targetUpdated.autocomplete");
-
-                                if (!(e.newData && e.newData.features && e.newData.features.length > 0)) {
-                                    self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
-                                }
-
-                                self.loading.removeWait(wait);
                             }
-                        }
+                        });
                     });
                 });
-            });
 
-            deferred.resolve(goTo);
-        } else {
-            deferred.reject();
-            if (!customSearchType) {
-                self.map.$events.trigger($.Event(TC.Consts.event.SEARCHQUERYEMPTY));
+                resolve(goTo);
+            } else {
+                reject();
+                if (!customSearchType) {
+                    self.map.trigger(TC.Consts.event.SEARCHQUERYEMPTY);
+                }
             }
-        }
-
-        return deferred.promise();
+        });
     };
 
     ctlProto.goToResult = function (id, dataRole) {
@@ -3358,11 +3395,11 @@ TC.inherit(TC.control.Search, TC.Control);
         var point = self.getPoint(id);
         var delta;
         var title;
-        var deferred;
+        var promise;
 
         if (point) {
             title = self.getLabel(id);
-            deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));            
+            promise = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
         } else {
             var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
             id = self.LAT + match[2] + self.LON + match[1];
@@ -3370,16 +3407,16 @@ TC.inherit(TC.control.Search, TC.Control);
 
             if (point) {
                 title = self.getLabel(id);
-                deferred = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));               
+                promise = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
 
-                self.$text.val(title);
+                self.textInput.value = title;
             }
         }
 
-        $.when(deferred).then(function (feat) {
-            self.map.$events.trigger($.Event(TC.Consts.event.FEATURESADD, {
+        promise.then(function (feat) {
+            self.map.trigger(TC.Consts.event.FEATURESADD, {
                 layer: self.layer, features: [feat]
-            }));
+            });
 
             self.map.zoomToFeatures([feat]);
 
@@ -3567,7 +3604,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
     ctlProto.getPattern = function () {
         var self = this;
-        return self.$text.val();
+        return self.textInput.value;
     };
 
     ctlProto.getLabel = function (id) {
@@ -3639,18 +3676,14 @@ TC.inherit(TC.control.Search, TC.Control);
             result[i] = map[text.charAt(i)] || text.charAt(i);
         }
         return result.join('');
-    };
-
-    ctlProto.decodeEntities = function (text) {
-        return $('<div/>').html(text).text();
-    };
+    };    
 
     ctlProto.exportState = function () {
         const self = this;
         if (self.exportsState) {
             return {
                 id: self.id,
-                searchText: self.$text.val(),
+                searchText: self.textInput.value,
                 layer: self.layer.exportState({
                     exportStyles: false
                 })
@@ -3661,7 +3694,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
     ctlProto.importState = function (state) {
         const self = this;
-        self.$text.val(state.searchText);
+        self.textInput.value = state.searchText;
         self.layer.importState(state.layer).then(function () {
             self.layer.features.forEach(function (f) {
                 f.setStyle(null); // Los estilos vienen dados exclusivamente por la capa, borramos estilos propios de la feature
@@ -3690,8 +3723,8 @@ if (!String.prototype.splitRemoveWhiteSpaces) {
         var _arr = [];
         var arr = this.split(separator);
         for (var i = 0; i < arr.length; i++)
-            if ($.trim(arr[i]).length > 0)
-                _arr.push($.trim(arr[i]));
+            if (arr[i].trim().length > 0)
+                _arr.push(arr[i].trim());
 
         return _arr;
     };
