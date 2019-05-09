@@ -24,9 +24,6 @@ TC.control.DataLoader = function () {
             }
         }
     ];
-    self._ctlDeferreds.length = 2;
-    self._ctlDeferreds[0] = $.Deferred();
-    self._ctlDeferreds[1] = $.Deferred();
     self.defaultSelection = 0;
 };
 
