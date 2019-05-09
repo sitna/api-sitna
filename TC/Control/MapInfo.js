@@ -107,7 +107,6 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
     ctlProto.importState = function (state) {
         const self = this;
-        console.log(this);
         if (self.map && state.features.length) {
             self.map.addLayer({
                 id: self.getUID(),
@@ -171,7 +170,6 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
     ctlProto.shortenedLink = function () {
         const self = this;
-        var deferred = $.Deferred();
         var wait;
 
         const generateLinkWithoutParams = function () {
@@ -210,80 +208,78 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                 return null;
             });
         };
-        const onError = function () {
-            self.map.toast(self.getLocaleString("urlTooLongForShortener"), { type: TC.Consts.msgType.ERROR });
-            self.map.getLoadingIndicator().removeWait(wait);
-            deferred.resolve("");
-        };
 
-        var url = generateLinkWithoutParams();
+        return new Promise(function (resolve, reject) {
+            const onError = function () {
+                self.map.toast(self.getLocaleString("urlTooLongForShortener"), { type: TC.Consts.msgType.ERROR });
+                self.map.getLoadingIndicator().removeWait(wait);
+                resolve("");
+            };
 
-        if (url.length > self.QR_MAX_URL_LENGTH && url.length < self.SHORTEN_URL_LENGTH) {
+            var url = generateLinkWithoutParams();
 
-            wait = self.map.getLoadingIndicator().addWait();
+            if (url.length > self.QR_MAX_URL_LENGTH && url.length < self.SHORTEN_URL_LENGTH) {
 
-            shortenUrl(url).then(function (response) {
-                if (response && response.responseText) {
-                    self.map.getLoadingIndicator().removeWait(wait);
-                    deferred.resolve(response.responseText.replace('http://', 'https://'));
-                } else {
-                    onerror();
-                }
-            }, onerror);
-        } else {
-            if (url.length >= self.SHORTEN_URL_LENGTH) {
-                onError();
-            }
+                wait = self.map.getLoadingIndicator().addWait();
 
-            deferred.resolve("");
-        }
-
-        return deferred;
-
-    }
-
-    ctlProto.makeQRCode = function ($codeContainer, width, height) {
-        const self = this;
-        var deferred = $.Deferred();
-
-        TC.loadJS(
-            typeof QRCode === 'undefined',
-            [TC.apiLocation + 'lib/qrcode/qrcode.min.js'],
-            function () {
-                self.shortenedLink().then(function (url) {
-                    url = url || "";
-                    if (url.length > 0) {
-                        var options = {
-                            text: url
-                        };
-
-                        if (width && height) {
-                            options.width = width;
-                            options.height = height;
-                        }
-
-                        var config = { attributes: true, childList: true, subtree: true };
-                        var observer = new MutationObserver(function (mutationsList, observer) {
-                            var srcMutation = mutationsList.filter(function (mutation) {
-                                return mutation.type === "attributes"
-                            }).filter(function (mutation) {
-                                return mutation.attributeName.indexOf('src') > -1;
-                            });
-
-                            if (srcMutation.length > 0) {
-                                observer.disconnect();
-                                deferred.resolve(srcMutation[0].target.src);
-                            }
-                        });
-                        observer.observe($codeContainer.get(0), config);
-                        var code = new QRCode($codeContainer.get(0), options);
+                shortenUrl(url).then(function (response) {
+                    if (response && response.responseText) {
+                        self.map.getLoadingIndicator().removeWait(wait);
+                        resolve(response.responseText.replace('http://', 'https://'));
                     } else {
-                        deferred.resolve();
+                        onerror();
                     }
-                });
-            });
+                }, onerror);
+            } else {
+                if (url.length >= self.SHORTEN_URL_LENGTH) {
+                    onError();
+                }
 
-        return deferred.promise();
+                resolve("");
+            }
+        });
+    };
+
+    ctlProto.makeQRCode = function (codeContainer, width, height) {
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            TC.loadJS(
+                typeof QRCode === 'undefined',
+                [TC.apiLocation + 'lib/qrcode/qrcode.min.js'],
+                function () {
+                    self.shortenedLink().then(function (url) {
+                        url = url || "";
+                        if (url.length > 0) {
+                            var options = {
+                                text: url
+                            };
+
+                            if (width && height) {
+                                options.width = width;
+                                options.height = height;
+                            }
+
+                            var config = { attributes: true, childList: true, subtree: true };
+                            var observer = new MutationObserver(function (mutationsList, observer) {
+                                var srcMutation = mutationsList.filter(function (mutation) {
+                                    return mutation.type === "attributes"
+                                }).filter(function (mutation) {
+                                    return mutation.attributeName.indexOf('src') > -1;
+                                });
+
+                                if (srcMutation.length > 0) {
+                                    observer.disconnect();
+                                    resolve(srcMutation[0].target.src);
+                                }
+                            });
+                            observer.observe(codeContainer, config);
+                            new QRCode(codeContainer, options);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+        });
     };
 
     ctlProto.drawScaleBarIntoCanvas = function (options) {
