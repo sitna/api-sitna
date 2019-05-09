@@ -1,14 +1,11 @@
 ﻿TC.control = TC.control || {};
 TC.Control = function () {
-    var self = this;
-    
-    //TC.Object.apply(self, arguments);
-    self.$events = $(self);
+    const self = this;
+    TC.EventTarget.call(self);
 
     self.map = null;
     self.isActive = false;
     self.isDisabled = false;
-    self._firstRender = $.Deferred();
 
     var len = arguments.length;
 
@@ -16,323 +13,324 @@ TC.Control = function () {
     self.id = self.options.id || TC.getUID(self.CLASS.substr(TC.Control.prototype.CLASS.length + 1) + '-');
     self.div = TC.Util.getDiv(self.options.div ? self.options.div : arguments[0]);
     self._$div = $(self.div);
-    self._$div.addClass(TC.Control.prototype.CLASS).addClass(self.CLASS);
+
+    // 12/03/2019 GLS https://developer.mozilla.org/es/docs/Web/API/Element/classList
+    // Múltiples argumentos para add() y remove() IE	Sin soporte
+    self.div.classList.add(TC.Control.prototype.CLASS);
+    self.div.classList.add(self.CLASS);    
+    
     self.template = self.options.template || self.template;
     self.exportsState = false;
-
-    //self.render();
 };
 
-//TC.inherit(TC.Control, TC.Object);
-TC.Control.prototype.on = function (events, callback) {
-    var obj = this;
-    obj.$events.on(events, callback);
-    return obj;
-};
+TC.inherit(TC.Control, TC.EventTarget);
 
-TC.Control.prototype.one = function (events, callback) {
-    var obj = this;
-    obj.$events.one(events, callback);
-    return obj;
-};
+(function () {
+    const ctlProto = TC.Control.prototype;
 
-TC.Control.prototype.off = function (events, callback) {
-    var obj = this;
-    obj.$events.off(events, callback);
-    return obj;
-};
+    ctlProto.CLASS = 'tc-ctl';
 
-TC.Control.prototype.CLASS = 'tc-ctl';
+    ctlProto.template = '';
 
-TC.Control.prototype.template = '';
-
-TC.Control.prototype.show = function () {
-    this._$div.show();
-};
-
-TC.Control.prototype.hide = function () {
-    this._$div.hide();
-};
-
-TC.Control.prototype.render = function (callback) {
-    var self = this;
-    self.renderData(null, callback);
-};
-
-TC.Control.prototype.renderData = function (data, callback) {
-    var self = this;
-    if (self.map) {
-        var e = $.Event(TC.Consts.event.BEFORECONTROLRENDER, { dataObject: data });
-        self.$events.trigger(e);
-    }
-    self._$div.toggleClass(TC.Consts.classes.DISABLED, self.isDisabled);
-
-    TC.loadJSInOrder(
-        !window.dust,
-        TC.url.templating,
-        function () {
-            var processTemplates = function (templates)
-            {
-                var ret = $.Deferred();
-                var htmDefs = [];
-                for (var key in templates)
-                {
-                    var template = templates[key];
-                    if (typeof template === 'string')
-                    {
-                        if (dust.cache[self.CLASS]) {
-                            dust.render(self.CLASS, data, function (err, out) {
-                                self._$div.html(out);
-                                if (err) {
-                                    TC.error(err);
-                                }
-                            });                            
-                        } else {
-                            var def = $.ajax({
-                                url: template,
-                                type: "get",
-                                dataType: "html"
-                            });
-                            def.templateKey = key;
-
-                            htmDefs.push(def);
-                        }                        
-                    }
-                    else if ($.isFunction(template))
-                    {
-                        template();
-                    }
-                }
-
-                //si defs está vacío, resolver inmediatamente
-                if (htmDefs.length == 0) ret.resolve();
-                else
-                {                    
-                    $.when.apply($, htmDefs).then(function ()   //args tiene los htms
-                    {
-                        //si sólo había un deferred, args es arguments
-                        if (arguments.length==3 && !$.isArray(arguments[0]))
-                        {
-                            var htm = arguments[0];
-                            var key = arguments[2].templateKey;
-                            var tpl = dust.compile(htm, key);
-                            dust.loadSource(tpl);
-                        }
-                        else
-                        {
-                            for (var i = 0; i < arguments.length; i++)
-                            {
-                                var args = arguments[i];
-                                var htm = args[0];
-                                var key = args[2].templateKey;
-                                var tpl = dust.compile(htm, key);
-                                dust.loadSource(tpl);
-                            }
-                        }
-
-                        
-                        ret.resolve();
-                    }, 
-                    function (a,b,c)
-                    {
-                        console.error("Deferred fallido");
-                    });
-                }
-
-                return ret;
-            };
-
-
-            var tplDef;
-
-            if (typeof self.template === 'object') {
-                tplDef = processTemplates(self.template);
-            }
-            else {
-                var templates = {};
-
-                if(self.template) templates[self.CLASS] = self.template;
-                
-
-                tplDef = processTemplates(templates);
-            }
-
-            tplDef.then(function ()
-            {
-                if (dust.cache[self.CLASS])
-                {
-                    dust.render(self.CLASS, data, function (err, out)
-                    {
-                        self._$div.html(out);
-                        if (err)
-                        {
-                            TC.error(err);
-                        }
-                    });
-                }
-
-                self._firstRender.resolve();
-                self.$events.trigger($.Event(TC.Consts.event.CONTROLRENDER));
-                if ($.isFunction(callback))
-                {
-                    callback();
-                }
-            });
-        }
-    );
-};
-
-TC.Control.prototype.getRenderedHtml = function (templateId, data, callback) {
-    var self = this;
-    var result = $.Deferred();
-    var render = function () {
-        if (dust.cache[templateId]) {
-            dust.render(templateId, data, function (err, out) {
-                if (err) {
-                    TC.error(err);
-                    result.reject();
-                }
-                else {
-                    if ($.isFunction(callback)) {
-                        callback(out);
-                    }
-                    result.resolve(out);
-                }
-            });
-        }
+    ctlProto.show = function () {
+        this.div.style.display = '';
     };
-    TC.loadJSInOrder(
-        !window.dust,
-        TC.url.templating,
-        function () {
-            if (!dust.cache[templateId]) {
-                var template = self.template[templateId];
+
+    ctlProto.hide = function () {
+        this.div.style.display = 'none';
+    };
+
+    ctlProto.render = function (callback) {
+        const self = this;
+        return self._set1stRenderPromise(self.renderData(null, function () {
+            self.addUIEventListeners();
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }));
+    };
+
+    ctlProto._set1stRenderPromise = function (promise) {
+        const self = this;
+        if (!self._firstRender) {
+            self._firstRender = promise;
+        }
+        return promise;
+    };
+
+    const processTemplates = function (ctl, data, templates) {
+        return new Promise(function (resolve, reject) {
+            const htmlPromises = [];
+            const templateKeys = [];
+            for (var key in templates) {
+                var template = templates[key];
                 if (typeof template === 'string') {
-                    $.ajax({
-                        url: template,
-                        type: "get",
-                        dataType: "html"
-                    }).done(function () {
-                        var html = arguments[0];
-                        var tpl = dust.compile(html, templateId);
-                        dust.loadSource(tpl);
-                        render();
-                    });
+                    if (dust.cache[ctl.CLASS]) {
+                        dust.render(ctl.CLASS, data, function (err, out) {
+                            ctl.div.innerHTML = out;
+                            if (err) {
+                                TC.error(err);
+                            }
+                        });
+                    } else {
+                        var prom = TC.ajax({
+                            url: template,
+                            method: "GET",
+                            responseType: 'text'
+                        });
+                        htmlPromises.push(prom);
+                        templateKeys.push(key);
+                    }
                 }
                 else if ($.isFunction(template)) {
                     template();
-                    render();
                 }
             }
-            else {
-                render();
+
+            if (htmlPromises.length === 0) {
+                resolve();
             }
-        }
-    );
-    return result;
-};
+            else {
+                Promise.all(htmlPromises)
+                    .then(function (templateArray) {
+                        templateArray.forEach(function (template, idx) {
+                            const tpl = dust.compile(template, templateKeys[idx]);
+                            dust.loadSource(tpl);
+                        });
+                        resolve();
+                    })
+                    .catch(function (err) {
+                        console.error("Error fetching templates: " + err);
+                        reject(err instanceof Error ? err : Error(err));
+                    });
+            }
 
-TC.Control.prototype.register = function (map) {
-    var self = this;
-    self.map = map;
-    self.render();
-    if (self.options.active) {
-        self.activate();
-    }
-};
+        });
+    };
 
-TC.Control.prototype.activate = function () {
-    var self = this;
-    if (self.map && self.map.activeControl && self.map.activeControl != self)
-    {
-        self.map.previousActiveControl = self.map.activeControl;
+    ctlProto.renderData = function (data, callback) {
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            if (self.map) {
+                self.trigger(TC.Consts.event.BEFORECONTROLRENDER, { dataObject: data });
+            }
+            if (self.isDisabled) {
+                self.div.classList.add(TC.Consts.classes.DISABLED);
+            }
+            else {
+                self.div.classList.remove(TC.Consts.classes.DISABLED);
+            }
 
-        /* provisional hasta que el 3D deje de ser un control */
-        if (!(TC.control.ThreeD && self instanceof TC.control.ThreeD)) {
+            TC.loadJSInOrder(
+                !window.dust,
+                TC.url.templating,
+                function () {
+                    var tplProm;
+
+                    if (typeof self.template === 'object') {
+                        tplProm = processTemplates(self, data, self.template);
+                    }
+                    else {
+                        var templates = {};
+
+                        if (self.template) templates[self.CLASS] = self.template;
+
+
+                        tplProm = processTemplates(self, data, templates);
+                    }
+
+                    tplProm
+                        .then(function () {
+                            if (dust.cache[self.CLASS]) {
+                                dust.render(self.CLASS, data, function (err, out) {
+                                    self.div.innerHTML = out;
+                                    if (err) {
+                                        reject(Error(err));
+                                        TC.error(err);
+                                    }
+                                });
+                            }
+
+                            self.trigger(TC.Consts.event.CONTROLRENDER);
+                            if ($.isFunction(callback)) {
+                                callback();
+                            }
+                            resolve();
+                        })
+                        .catch(function (err) {
+                            reject(Error(err));
+                        });
+                }
+            );
+        });
+    };
+
+    ctlProto.getRenderedHtml = function (templateId, data, callback) {
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            var render = function () {
+                if (dust.cache[templateId]) {
+                    dust.render(templateId, data, function (err, out) {
+                        if (err) {
+                            TC.error(err);
+                            reject(Error(err));
+                        }
+                        else {
+                            if ($.isFunction(callback)) {
+                                callback(out);
+                            }
+                            resolve(out);
+                        }
+                    });
+                }
+            };
+            TC.loadJSInOrder(
+                !window.dust,
+                TC.url.templating,
+                function () {
+                    if (!dust.cache[templateId]) {
+                        var template = self.template[templateId];
+                        if (typeof template === 'string') {
+                            TC.ajax({
+                                url: template,
+                                method: "GET",
+                                responseType: 'text'
+                            })
+                                .then(function (html) {
+                                    var tpl = dust.compile(html, templateId);
+                                    dust.loadSource(tpl);
+                                    render();
+                                })
+                                .catch(function (err) {
+                                    console.log("Error fetching template: " + err)
+                                });
+                        }
+                        else if ($.isFunction(template)) {
+                            template();
+                            render();
+                        }
+                    }
+                    else {
+                        render();
+                    }
+                }
+            );
+        });
+    };
+
+    ctlProto.register = function (map) {
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            self.map = map;
+            Promise.resolve(self.render()).then(function () {
+                if (self.options.active) {
+                    self.activate();
+                }
+                resolve(self);
+            });
+        });
+    };
+
+    ctlProto.activate = function () {
+        var self = this;
+        if (self.map && self.map.activeControl && self.map.activeControl != self) {
+            self.map.previousActiveControl = self.map.activeControl;
             self.map.activeControl.deactivate();
         }
-    }
-    self.isActive = true;
-    if (self.map) {
-        self.map.activeControl = self;
-        self.map.$events.trigger($.Event(TC.Consts.event.CONTROLACTIVATE, { control: self }));
-        self.$events.trigger($.Event(TC.Consts.event.CONTROLACTIVATE, { control: self }));
-    }
-};
-
-TC.Control.prototype.deactivate = function (stopChain)
-{
-    if (arguments.length == 0) stopChain = false;
-
-    var self = this;
-    self.isActive = false;
-    if (self.map)
-    {
-        self.map.activeControl = null;
-
-        if (!stopChain)
-        {
-            //determinar cuál es el control predeterminado para reactivarlo
-            //salvo que sea yo mismo, claro
-            var nextControl = self.map.getDefaultControl();
-            if (nextControl == self) nextControl = null;
-            else if(self.map.previousActiveControl == self) // GLS: Validamos antes de activar que el control activo anterior sea distinto al control actual
-                nextControl = null;
-            else if (!nextControl) { 
-                nextControl = self.map.previousActiveControl;
-            }
-
-            if (nextControl)
-                nextControl.activate();
+        self.isActive = true;
+        if (self.map) {
+            self.map.activeControl = self;
+            self.map.trigger(TC.Consts.event.CONTROLACTIVATE, { control: self });
+            self.trigger(TC.Consts.event.CONTROLACTIVATE, { control: self });
         }
-        self.map.$events.trigger($.Event(TC.Consts.event.CONTROLDEACTIVATE, { control: self }));
-        self.$events.trigger($.Event(TC.Consts.event.CONTROLDEACTIVATE, { control: self }));
-    }
-};
+    };
 
-TC.Control.prototype.enable = function () {
-    var self = this;
-    self.isDisabled = false;
-    if (self._$div) {
-        self._$div.removeClass(TC.Consts.classes.DISABLED);
-    }
-};
+    ctlProto.deactivate = function (stopChain) {
+        if (arguments.length == 0) stopChain = false;
 
-TC.Control.prototype.disable = function () {
-    var self = this;
-    self.isDisabled = true;
-    if (self._$div) {
-        self._$div.addClass(TC.Consts.classes.DISABLED);
-    }
-};
+        var self = this;
+        self.isActive = false;
+        if (self.map) {
+            self.map.activeControl = null;
 
-TC.Control.prototype.renderPromise = function ()
-{
-    return this._firstRender.promise();
-};
+            if (!stopChain) {
+                //determinar cuál es el control predeterminado para reactivarlo
+                //salvo que sea yo mismo, claro
+                var nextControl = self.map.getDefaultControl();
+                if (nextControl == self) nextControl = null;
+                else if (self.map.previousActiveControl == self) // GLS: Validamos antes de activar que el control activo anterior sea distinto al control actual
+                    nextControl = null;
+                else if (!nextControl) {
+                    nextControl = self.map.previousActiveControl;
+                }
 
-TC.Control.prototype.isExclusive = function () {
-    return false;
-};
+                if (nextControl)
+                    nextControl.activate();
+            }
+            self.map.trigger(TC.Consts.event.CONTROLDEACTIVATE, { control: self });
+            self.trigger(TC.Consts.event.CONTROLDEACTIVATE, { control: self });
+        }
+    };
 
-TC.Control.prototype.getLocaleString = function (key, texts) {
-    var self = this;
-    var locale = self.map ? self.map.options.locale : TC.Cfg.locale;
-    return TC.Util.getLocaleString(locale, key, texts);
-};
+    ctlProto.enable = function () {
+        var self = this;
+        self.isDisabled = false;
+        if (self.div) {
+            self.div.classList.remove(TC.Consts.classes.DISABLED);
+        }
+    };
 
-TC.Control.prototype.getUID = function () {
-    const self = this;
-    return TC.getUID(self.id + '-');
-};
+    ctlProto.disable = function () {
+        var self = this;
+        self.isDisabled = true;
+        if (self.div) {
+            self.div.classList.add(TC.Consts.classes.DISABLED);
+        }
+    };
 
-TC.Control.prototype.exportState = function () {
-    const self = this;
-    if (self.exportsState) {
-        return {};
-    }
-    return null;
-};
+    ctlProto.renderPromise = function () {
+        const self = this;
+        return self._firstRender || new Promise(function (resolve, reject) {
+            self.one(TC.Consts.event.CONTROLRENDER, function () {
+                resolve(self);
+            });
+        });
+    };
 
-TC.Control.prototype.importState = function (state) {
-};
+    ctlProto.addUIEventListener = function (selector, event, listener) {
+        const self = this;
+        const elements = selector ? self.div.querySelectorAll(selector) : [self.div];
+        elements.forEach(function (elm) {
+            elm.addEventListener(event, listener);
+        });
+    };
+
+    ctlProto.addUIEventListeners = function () {
+    };
+
+    ctlProto.isExclusive = function () {
+        return false;
+    };
+
+    ctlProto.getLocaleString = function (key, texts) {
+        var self = this;
+        var locale = self.map ? self.map.options.locale : TC.Cfg.locale;
+        return TC.Util.getLocaleString(locale, key, texts);
+    };
+
+    ctlProto.getUID = function () {
+        const self = this;
+        return TC.getUID(self.id + '-');
+    };
+
+    ctlProto.exportState = function () {
+        const self = this;
+        if (self.exportsState) {
+            return {};
+        }
+        return null;
+    };
+
+    ctlProto.importState = function (state) {
+    };
+})();

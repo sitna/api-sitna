@@ -20,23 +20,24 @@ TC.inherit(TC.control.NavBar, TC.Control);
         if (!self.wrap) {
             self.wrap = new TC.wrap.control.NavBar(self);
         }
+        return self._set1stRenderPromise(Promise.resolve());
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         self.wrap.register(map);
+
+        if (self.options.home === undefined || self.options.home) {
+            map.addControl('navBarHome');
+        }        
 
         //esta chama es para que la primera vez se ajuste la barrita de escala (debido a otra chama con el maxResolution, que es culpa de OL)
         map.loaded(function () {
             self.wrap.refresh();
-        });
+        });        
 
-        map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
-            var bottomLeft = TC.Util.reproject([map.options.initialExtent[0], map.options.initialExtent[1]], map.options.crs, e.crs);
-            var topRight = TC.Util.reproject([map.options.initialExtent[2], map.options.initialExtent[3]], map.options.crs, e.crs);
-            self.wrap.setInitialExtent([bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]]);
-        });
+        return result;
     };
 
 })();

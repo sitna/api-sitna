@@ -2,13 +2,13 @@
  * LoadJS descargado de https://github.com/muicss/loadjs
  * @version 3.5.2
  */
-loadjs = function () { var n = function () { }, e = {}, t = {}, r = {}; function c(n, e) { if (n) { var c = r[n]; if (t[n] = e, c) for (; c.length;) c[0](n, e), c.splice(0, 1) } } function i(e, t) { e.call && (e = { success: e }), t.length ? (e.error || n)(t) : (e.success || n)(e) } function o(e, t, r, c) { var i, s, u = document, f = r.async, a = (r.numRetries || 0) + 1, h = r.before || n; c = c || 0, /(^css!|\.css$)/.test(e) ? (i = !0, (s = u.createElement("link")).rel = "stylesheet", s.href = e.replace(/^css!/, "")) : ((s = u.createElement("script")).src = e, s.async = void 0 === f || f), s.onload = s.onerror = s.onbeforeload = function (n) { var u = n.type[0]; if (i && "hideFocus" in s) try { s.sheet.cssText.length || (u = "e") } catch (n) { u = "e" } if ("e" == u && (c += 1) < a) return o(e, t, r, c); t(e, u, n.defaultPrevented) }, !1 !== h(e, s) && u.head.appendChild(s) } function s(n, t, r) { var s, u; if (t && t.trim && (s = t), u = (s ? r : t) || {}, s) { if (s in e) throw "LoadJS"; e[s] = !0 } !function (n, e, t) { var r, c, i = (n = n.push ? n : [n]).length, s = i, u = []; for (r = function (n, t, r) { if ("e" == t && u.push(n), "b" == t) { if (!r) return; u.push(n) } --i || e(u) }, c = 0; c < s; c++) o(n[c], r, t) }(n, function (n) { i(u, n), c(s, n) }, u) } return s.ready = function (n, e) { return function (n, e) { var c, i, o, s = [], u = (n = n.push ? n : [n]).length, f = u; for (c = function (n, t) { t.length && s.push(n), --f || e(s) }; u--;) i = n[u], (o = t[i]) ? c(i, o) : (r[i] = r[i] || []).push(c) }(n, function (n) { i(e, n) }), s }, s.done = function (n) { c(n, []) }, s.reset = function () { e = {}, t = {}, r = {} }, s.isDefined = function (n) { return n in e }, s }();
+loadjs = function () { var l = function () { }, c = {}, f = {}, u = {}; function o(e, n) { if (e) { var t = u[e]; if (f[e] = n, t) for (; t.length;)t[0](e, n), t.splice(0, 1) } } function s(e, n) { e.call && (e = { success: e }), n.length ? (e.error || l)(n) : (e.success || l)(e) } function h(t, r, i, c) { var o, s, e = document, n = i.async, f = (i.numRetries || 0) + 1, u = i.before || l, a = t.replace(/^(css|img)!/, ""); c = c || 0, /(^css!|\.css$)/.test(t) ? (o = !0, (s = e.createElement("link")).rel = "stylesheet", s.href = a) : /(^img!|\.(png|gif|jpg|svg)$)/.test(t) ? (s = e.createElement("img")).src = a : ((s = e.createElement("script")).src = t, s.async = void 0 === n || n), !(s.onload = s.onerror = s.onbeforeload = function (e) { var n = e.type[0]; if (o && "hideFocus" in s) try { s.sheet.cssText.length || (n = "e") } catch (e) { 18 != e.code && (n = "e") } if ("e" == n && (c += 1) < f) return h(t, r, i, c); r(t, n, e.defaultPrevented) }) !== u(t, s) && e.head.appendChild(s) } function t(e, n, t) { var r, i; if (n && n.trim && (r = n), i = (r ? t : n) || {}, r) { if (r in c) throw "LoadJS"; c[r] = !0 } !function (e, r, n) { var t, i, c = (e = e.push ? e : [e]).length, o = c, s = []; for (t = function (e, n, t) { if ("e" == n && s.push(e), "b" == n) { if (!t) return; s.push(e) } --c || r(s) }, i = 0; i < o; i++)h(e[i], t, n) }(e, function (e) { s(i, e), o(r, e) }, i) } return t.ready = function (e, n) { return function (e, t) { e = e.push ? e : [e]; var n, r, i, c = [], o = e.length, s = o; for (n = function (e, n) { n.length && c.push(e), --s || t(c) }; o--;)r = e[o], (i = f[r]) ? n(r, i) : (u[r] = u[r] || []).push(n) }(e, function (e) { s(n, e) }), t }, t.done = function (e) { o(e, []) }, t.reset = function () { c = {}, f = {}, u = {} }, t.isDefined = function (e) { return e in c }, t }();
 
 var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.5.1';
+TC.version = '1.6.0';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -64,7 +64,8 @@ if (!TC.Consts) {
         JSONPACK: 'lib/jsonpack/jsonpack.min.js',
         UA_PARSER: 'lib/ua-parser/ua-parser.min.js',
         HASH: 'lib/jshash/md5-min.js',
-        URL_POLYFILL: 'lib/polyfill/url.js'
+        URL_POLYFILL: 'lib/polyfill/url.js',
+        PROMISE_POLYFILL: 'lib/polyfill/promise/polyfill.min.js'
     };
     TC.Consts.classes = {
         MAP: 'tc-map',
@@ -84,7 +85,8 @@ if (!TC.Consts) {
         IPAD_IOS7_FIX: 'tc-ipad-ios7-fix',
         INFO: 'tc-msg-info',
         WARNING: 'tc-msg-warning',
-        ERROR: 'tc-msg-error'
+        ERROR: 'tc-msg-error',
+        THREED: 'tc-threed'
     };
     TC.Consts.msgType = {
         INFO: 'info',
@@ -146,10 +148,10 @@ if (!TC.Consts) {
         FEATUREINFO: 'featureinfo.tc',
         NOFEATUREINFO: 'nofeatureinfo.tc',
         FEATUREINFOERROR: 'featureinfoerror.tc',
-        CLICK: 'click.tc',
-        MOUSEUP: 'mouseup.tc',
-        MOUSEMOVE: 'mousemove.tc',
-        MOUSELEAVE: 'mouseleave.tc',
+        CLICK: 'click',
+        MOUSEUP: 'mouseup',
+        MOUSEMOVE: 'mousemove',
+        MOUSELEAVE: 'mouseleave',
         STARTLOADING: 'startloading.tc',
         STOPLOADING: 'stoploading.tc',
         EXTERNALSERVICEADDED: 'externalserviceadded.tc',
@@ -157,30 +159,38 @@ if (!TC.Consts) {
         PROJECTIONCHANGE: 'projectionchange.tc',
         VIEWCHANGE: 'viewchange.tc',
         TERRAINPROVIDERADD: 'terrainprovideradd.tc',
-        TERRAINPROVIDERREMOVE: 'terrainproviderremove.tc'
+        TERRAINPROVIDERREMOVE: 'terrainproviderremove.tc',
+        OVERVIEWBASELAYERCHANGE: 'overviewbaselayerchange.tc',
+        POPUP: 'popup.tc'
     };
     TC.Consts.layer = {
         IDENA_ORTHOPHOTO: 'ortofoto',
         IDENA_BASEMAP: 'mapabase',
         IDENA_CADASTER: 'catastro',
         IDENA_CARTO: 'cartografia',
+        IDENA_ORTHOPHOTO2018: 'ortofoto2018',
+        IDENA_ORTHOPHOTO2017: 'ortofoto2017',
         IDENA_ORTHOPHOTO2014: 'ortofoto2014',
         IDENA_ORTHOPHOTO2012: 'ortofoto2012',
         IDENA_DYNBASEMAP: 'mapabase_dinamico',
         IDENA_DYNORTHOPHOTO: 'ortofoto_dinamico',
+        IDENA_DYNORTHOPHOTO2018: 'ortofoto2018_dinamico',
+        IDENA_DYNORTHOPHOTO2017: 'ortofoto2017_dinamico',
         IDENA_DYNORTHOPHOTO2014: 'ortofoto2014_dinamico',
         IDENA_DYNORTHOPHOTO2012: 'ortofoto2012_dinamico',
         IDENA_DYNCARTO: 'cartografia_dinamico',
         IDENA_BW_RELIEF: 'relieve_bn',
-        IDENA_BASEMAP_ORTHOPHOTO: 'base_orto',        
+        IDENA_BASEMAP_ORTHOPHOTO: 'base_orto',
 
         IGN_ES_CARTO: "ign-raster",
         IGN_ES_BASEMAP: "ign-base",
+        IGN_ES_BASEMAP_GREY: "ign-base-gris",
         IGN_ES_RELIEF: "ign-mtn",
         IGN_ES_ORTHOPHOTO: "ign-pnoa",
 
         IGN_ES_DYNCARTO: "ign-raster-dyn",
         IGN_ES_DYNBASEMAP: "ign-base-dyn",
+        IGN_ES_DYNBASEMAP_GREY: "ign-base-gris-dyn",
         IGN_ES_DYNRELIEF: "ign-mtn-dyn",
         IGN_ES_DYNORTHOPHOTO: "ign-pnoa-dyn",
 
@@ -200,6 +210,7 @@ if (!TC.Consts) {
         CARTO_DARK: 'carto_dark',
         MAPBOX_STREETS: 'mapbox_streets',
         MAPBOX_SATELLITE: 'mapbox_satellite',
+
         BLANK: 'ninguno'
     };
     TC.Consts.text = {
@@ -385,6 +396,17 @@ if (!TC.Consts) {
         VISIBLE: 4
     };
 
+    TC.Consts.view = {
+        DEFAULT: 0,
+        THREED: 1,
+        PRINTING: 2
+    };
+
+    TC.Consts.units = {
+        DEGREES: "degrees",
+        METERS: "m"
+    };
+
     TC.Consts.MARKER = 'marker';
 
     TC.Defaults = (function () {
@@ -424,6 +446,8 @@ if (!TC.Consts) {
 
             locale: 'es-ES',
 
+            view: TC.Consts.view.DEFAULT,
+
             screenSize: 20,
             pixelTolerance: 10, // Used in GFI requests
             maxResolutionError: 0.01, // Max error ratio to consider two resolutions equivalent
@@ -450,6 +474,36 @@ if (!TC.Consts) {
                 },
                 {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO,
+                    title: 'Ortofoto máxima actualidad',
+                    type: TC.Consts.layerType.WMTS,
+                    url: '//idena.navarra.es/ogc/wmts/',
+                    matrixSet: 'epsg25830',
+                    layerNames: 'ortofoto_maxima_actualidad',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO,
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IDENA_ORTHOPHOTO2018,
+                    title: 'Ortofoto 2018',
+                    type: TC.Consts.layerType.WMTS,
+                    url: '//idena.navarra.es/ogc/wmts/',
+                    matrixSet: 'epsg25830',
+                    layerNames: 'ortofoto2018',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2018.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2018,
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IDENA_ORTHOPHOTO2017,
                     title: 'Ortofoto 2017',
                     type: TC.Consts.layerType.WMTS,
                     url: '//idena.navarra.es/ogc/wmts/',
@@ -459,8 +513,8 @@ if (!TC.Consts) {
                     format: 'image/jpeg',
                     isDefault: false,
                     hideTree: true,
-                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
-                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2017.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2017,
                     overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
                 },
                 {
@@ -492,7 +546,7 @@ if (!TC.Consts) {
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg',
                     fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2012,
                     overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
-                },                
+                },
                 {
                     id: TC.Consts.layer.IDENA_CARTO,
                     title: 'Cartografía topográfica',
@@ -569,6 +623,30 @@ if (!TC.Consts) {
                     overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
                 },
                 {
+                    id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2018,
+                    title: 'Ortofoto 2014',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'ortofoto_5000_2018',
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2018.jpg',
+                    overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2017,
+                    title: 'Ortofoto 2014',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'ortofoto_5000_2017',
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2017.jpg',
+                    overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
+                },
+                {
                     id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2014,
                     title: 'Ortofoto 2014',
                     type: TC.Consts.layerType.WMS,
@@ -619,7 +697,7 @@ if (!TC.Consts) {
                 },
                 {
                     id: TC.Consts.layer.IGN_ES_BASEMAP,
-                    title: "Mapa base \r\n (IGN ES)",
+                    title: "Callejero \r\n (IGN ES)",
                     type: TC.Consts.layerType.WMTS,
                     url: "//www.ign.es/wmts/ign-base",
                     encoding: TC.Consts.WMTSEncoding.KVP,
@@ -631,10 +709,23 @@ if (!TC.Consts) {
                     overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
                 },
                 {
+                    id: TC.Consts.layer.IGN_ES_BASEMAP_GREY,
+                    title: "Callejero gris \r\n (IGN ES)",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "//www.ign.es/wmts/ign-base",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "IGNBase-gris",
+                    matrixSet: "EPSG:25830",
+                    format: "image/jpeg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-basemap_grey_ign.png",
+                    fallbackLayer: TC.Consts.layer.IGN_ES_DYNBASEMAP_GREY,
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
                     id: TC.Consts.layer.IGN_ES_RELIEF,
                     title: "Relieve \r\n (IGN ES)",
                     type: TC.Consts.layerType.WMTS,
-                    url: "//servicios.idee.es/wmts/mdt",
+                    url: "//www.ign.es/wmts/mdt",
                     encoding: TC.Consts.WMTSEncoding.KVP,
                     layerNames: "Relieve",
                     matrixSet: "EPSG:25830",
@@ -666,6 +757,15 @@ if (!TC.Consts) {
                     overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
                 },
                 {
+                    id: TC.Consts.layer.IGN_ES_DYNBASEMAP_GREY,
+                    title: 'Callejero gris \r\n (IGN ES)',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//www.ign.es/wms-inspire/ign-base',
+                    layerNames: 'IGNBaseTodo-gris',
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap_grey_ign.png',
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
                     id: TC.Consts.layer.IGN_ES_DYNORTHOPHOTO,
                     title: 'Ortofoto \r\n (IGN ES)',
                     type: TC.Consts.layerType.WMS,
@@ -674,24 +774,24 @@ if (!TC.Consts) {
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto_pnoa.jpg',
                     overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
                 },
-				{
-				    id: TC.Consts.layer.IGN_ES_DYNCARTO,
-				    title: 'Cartografía topográfica \r\n (IGN ES)',
-				    type: TC.Consts.layerType.WMS,
-				    url: '//www.ign.es/wms-inspire/mapa-raster',
-				    layerNames: 'mtn_rasterizado',
-				    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto_ign.png',
-				    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
-				},
-				{
-				    id: TC.Consts.layer.IGN_ES_DYNRELIEF,
-				    title: 'Relieve \r\n (IGN ES)',
-				    type: TC.Consts.layerType.WMS,
-				    url: '//servicios.idee.es/wms-inspire/mdt',
-				    layerNames: 'relieve',
-				    thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_ign.jpg',
-				    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
-				},
+                {
+                    id: TC.Consts.layer.IGN_ES_DYNCARTO,
+                    title: 'Cartografía topográfica \r\n (IGN ES)',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//www.ign.es/wms-inspire/mapa-raster',
+                    layerNames: 'mtn_rasterizado',
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto_ign.png',
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_DYNRELIEF,
+                    title: 'Relieve \r\n (IGN ES)',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//www.ign.es/wms-inspire/mdt',
+                    layerNames: 'relieve',
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_ign.jpg',
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
                 {
                     id: TC.Consts.layer.IGN_FR_CARTO,
                     title: "Cartografía raster \r\n (IGN FR)",
@@ -715,7 +815,7 @@ if (!TC.Consts) {
                     layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGN",
                     matrixSet: "PM",
                     format: "image/jpeg",
-                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.jpg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.png",
                     fallbackLayer: TC.Consts.layer.IGN_FR_DYNBASEMAP,
                     ignoreProxification: true,
                     overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
@@ -764,7 +864,7 @@ if (!TC.Consts) {
                     type: TC.Consts.layerType.WMS,
                     url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/geoportail/r/wms",
                     layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGN",
-                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.jpg",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.png",
                     ignoreProxification: true,
                     overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
                 },
@@ -773,7 +873,7 @@ if (!TC.Consts) {
                     title: 'Relieve \r\n (IGN FR)',
                     type: TC.Consts.layerType.WMS,
                     url: "//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/geoportail/r/wms",
-                    layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW",
+                    layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE",
                     thumbnail: TC.apiLocation + "tc/css/img/thumb-estom-fr-ign.png",
                     ignoreProxification: true,
                     overviewMapLayer: TC.Consts.layer.IGN_FR_BASEMAP
@@ -914,24 +1014,25 @@ if (!TC.Consts) {
                         cadastral: {}
                     }
                 },
-                measure: false,
+                measure: false,                
                 streetView: true,
-                featureInfo: true
+                featureInfo: true,
+                featureTools: true
             },
 
             layout: null,
 
             styles: {
                 point: {
-                    fillColor: '#000',
+                    fillColor: '#000000',
                     fillOpacity: 0.1,
-                    strokeColor: '#f00',
+                    strokeColor: '#ff0000',
                     strokeWidth: 2,
                     radius: 6,
                     labelOutlineWidth: 2,
-                    labelOutlineColor: '#fff',
+                    labelOutlineColor: '#ffffff',
                     labelOffset: [0, -16],
-                    fontColor: '#000',
+                    fontColor: '#000000',
                     fontSize: 10
                 },
                 marker: {
@@ -946,32 +1047,32 @@ if (!TC.Consts) {
                     width: 32,
                     height: 32,
                     labelOutlineWidth: 2,
-                    labelOutlineColor: '#fff',
+                    labelOutlineColor: '#ffffff',
                     labelOffset: [0, -32],
-                    fontColor: '#000',
+                    fontColor: '#000000',
                     fontSize: 10
                 },
                 line: {
-                    strokeColor: '#f00',
+                    strokeColor: '#ff0000',
                     strokeWidth: 2,
                     labelOutlineWidth: 2,
-                    labelOutlineColor: '#fff',
-                    fontColor: '#000',
+                    labelOutlineColor: '#ffffff',
+                    fontColor: '#000000',
                     fontSize: 10
                 },
                 polygon: {
-                    strokeColor: '#f00',
+                    strokeColor: '#ff0000',
                     strokeWidth: 2,
-                    fillColor: '#000',
+                    fillColor: '#000000',
                     fillOpacity: 0.3,
                     labelOutlineWidth: 2,
-                    labelOutlineColor: '#fff',
-                    fontColor: '#000',
+                    labelOutlineColor: '#ffffff',
+                    fontColor: '#000000',
                     fontSize: 10
                 },
                 cluster: {
                     point: {
-                        fillColor: '#336',
+                        fillColor: '#333366',
                         fillOpacity: 0.6,
                         radius: getClusterRadius,
                         label: '${features.length}',
@@ -981,33 +1082,33 @@ if (!TC.Consts) {
                 },
                 selection: {
                     point: {
-                        fillColor: '#00f',
+                        fillColor: '#0000ff',
                         fillOpacity: 0.5,
-                        strokeColor: '#00f',
+                        strokeColor: '#0000ff',
                         strokeWidth: 2,
                         radius: 6,
                         labelOutlineWidth: 2,
-                        labelOutlineColor: '#fff',
+                        labelOutlineColor: '#ffffff',
                         labelOffset: [0, -16],
-                        fontColor: '#000',
+                        fontColor: '#000000',
                         fontSize: 10
                     },
                     line: {
-                        strokeColor: '#00f',
+                        strokeColor: '#0000ff',
                         strokeWidth: 2,
                         labelOutlineWidth: 2,
-                        labelOutlineColor: '#fff',
-                        fontColor: '#000',
+                        labelOutlineColor: '#ffffff',
+                        fontColor: '#000000',
                         fontSize: 10
                     },
                     polygon: {
-                        strokeColor: '#00f',
+                        strokeColor: '#0000ff',
                         strokeWidth: 2,
-                        fillColor: '#000',
+                        fillColor: '#000000',
                         fillOpacity: .3,
                         labelOutlineWidth: 2,
-                        labelOutlineColor: '#fff',
-                        fontColor: '#000',
+                        labelOutlineColor: '#ffffff',
+                        fontColor: '#000000',
                         fontSize: 10
                     }
                 }
@@ -1121,6 +1222,7 @@ if (!TC.Consts) {
                     }
                 };
 
+
                 try {
                     req.send(null);
                 } catch (error) {
@@ -1170,8 +1272,131 @@ if (!TC.Consts) {
             }
         }
 
+        if (!('Promise' in window)) {
+            TC.syncLoadJS(TC.apiLocation + TC.Consts.url.PROMISE_POLYFILL);
+        }
+        // Polyfill para NodeList.forEach
+        if (window.NodeList && !NodeList.prototype.forEach) {
+            NodeList.prototype.forEach = Array.prototype.forEach;
+        }
+        if (!('finally' in Promise.prototype)) {
+            // Muchos polyfills de Promise no implementan finally, lo hacemos aquí en ese caso
+            Promise.prototype.finally = function (callback) {
+                const ctor = this.constructor;
+                return this.then(
+                    function (val) {
+                        return ctor.resolve(callback()).then(function () {
+                            return value;
+                        });
+                    },
+                    function (err) {
+                        return ctor.resolve(callback()).then(function () {
+                            return ctor.reject(err);
+                        });
+                    }
+                );
+            };
+        }
+
+        // Parche para soportar $.when
+        if ('$' in window) {
+            $._oldWhen = $.when;
+            $.when = function () {
+                const newArgs = new Array(arguments.length);
+                for (var i = 0; i < arguments.length; i++) {
+                    const arg = newArgs[i] = arguments[i];
+                    if (arg instanceof Promise) {
+                        const newArg = $.Deferred();
+                        arg
+                            .then(function (val) {
+                                newArg.resolve(val)
+                            })
+                            .catch(function (err) {
+                                newArg.reject(err);
+                            });
+                        newArgs[i] = newArg;
+                    }
+                }
+                return $._oldWhen.apply(this, newArgs);
+            };
+        }
+
+        // Transformación de petición AJAX de jQuery a promesa nativa
+        TC.ajax = function (options) {
+            return new Promise(function (resolve, reject) {
+                options = options || {};
+                const method = options.method || 'GET';
+                var data;
+                if (options.data) {
+                    if (typeof options.data === 'string') {
+                        data = options.data;
+                    }
+                    else if (typeof options.data === 'object') {
+                        const paramArray = [];
+                        for (var key in options.data) {
+                            paramArray[paramArray.length] = key + '=' + options.data[key].toString();
+                        }
+                        data = paramArray.join('&');
+                    }
+                }
+                var url = options.url;
+                if (method === 'GET') {
+                    url = url + '?' + data;
+                }
+                const request = new XMLHttpRequest();
+                request.open(method, options.url);
+
+                if (options.contentType || typeof options.contentType === 'boolean') {
+                    if (options.contentType) {
+                        request.setRequestHeader('Content-Type', options.contentType + '; charset=UTF-8');
+                    }
+                    
+                }
+                else {
+                    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                }
+
+                request.onreadystatechange = function (e) {
+                    if (request.readyState === 4) { // DONE
+                        if (request.status !== 200) {
+                            reject({
+                                status: request.status,
+                                msg: request.statusText,
+                                url: options.url
+                            });
+                        } else {
+                            var responseData;
+                            try {
+                                switch (options.responseType) {
+                                    case TC.Consts.mimeType.JSON:
+                                        responseData = JSON.parse(request.responseText);
+                                        break;
+                                    case TC.Consts.mimeType.XML:
+                                        responseData = new DOMParser().parseFromString(request.responseText, 'application/xml');
+                                        break;
+                                    default:
+                                        responseData = request.responseText;
+                                        break;
+                                }
+                                resolve(responseData);
+                            }
+                            catch (error) {
+                                reject(error);
+                            }
+                        }
+                    }
+                };
+
+                try {
+                    request.send(method === 'POST' ? data : null);
+                } catch (error) {
+                    reject(Error(error));
+                }
+            });
+        };
+
         // Completamos los datos de versión
-        $(document).ready(function () {
+        document.addEventListener('DOMContentLoaded', function () {
             var build;
             var mapLibrary = 'Unknown library';
             var OL2 = 'OpenLayers 2';
@@ -1196,17 +1421,17 @@ if (!TC.Consts) {
             TC.version = TC.version + ' (' + build + '; ' + mapLibrary + '; @ ' + TC.apiLocation + ')';
         });
 
-        //if (!$.support.cors && window.XDomainRequest) {
-        //    // IE8 cross-domain patch
-        //    TC.syncLoadJS(TC.proxify(TC.apiLocation + 'lib/jQuery/jquery.xdomainrequest.min.js'));
-        //}
-
-
         TC.loadJSInOrder = function (condition, url, callback) {
             TC.loadJS(condition, url, callback, true);
         };
 
-        TC.loadJS = function (condition, url, callback, inOrder) {
+        const addCrossOriginAttr = function (path, scriptEl) {
+            if (!TC.Util.isSameOrigin(path)) {
+                scriptEl.crossOrigin = "anonymous";
+            }
+        };
+
+        TC.loadJS = function (condition, url, callback, inOrder, notCrossOrigin) {
             if (arguments.length < 4) {
                 inOrder = false;
             }
@@ -1222,16 +1447,57 @@ if (!TC.Consts) {
             //si tiene canvas, es que es un navegador nuevo
             if (Modernizr.canvas) {
                 if (condition) {
-                    loadjs(urls, {
-                        success: function () {
-                            callback();
-                        },
-                        error: function (pathsNotFound) {
-                            _showLoadFailedError(pathsNotFound);
-                        },
-                        async: !inOrder,
-                        numRetries: 1
-                    });
+                    urls = urls instanceof Array ? urls : [urls];                    
+
+                    var name = "";
+                    const getName = function (path) {
+                        return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
+                    };
+                    if (urls.length > 1) {
+                        var toReduce = urls.slice(0).filter(function (path, index) {
+                            if (loadjs.isDefined(getName(path))) {
+                                urls.splice(index, 1);
+                                loadjs.ready(getName(path), callback);
+                                return false;
+                            } else {
+                                return true;
+                            }
+                        });
+                        if (toReduce.length === 1) {
+                            name = getName(toReduce[0]);
+                        } else if (toReduce.length > 0) {
+                            name = toReduce.reduce(function (prev, curr) {
+                                return getName(prev) + "_" + getName(curr);
+                            });
+                        }
+                    } else {
+                        name = getName(urls[0]);
+                    }
+
+                    if (name.length > 0) {
+                        if (!loadjs.isDefined(name)) {
+                            var options = {
+                                async: !inOrder,
+                                numRetries: 1
+                            };
+
+                            if (!notCrossOrigin && !TC.Util.detectIE()) {
+                                options.before = addCrossOriginAttr;
+                            }
+
+                            loadjs(urls, name, options);
+                            loadjs.ready(name, {
+                                success: function () {
+                                    callback();
+                                },
+                                error: function (pathsNotFound) {
+                                    _showLoadFailedError(pathsNotFound);
+                                }
+                            });
+                        } else {
+                            loadjs.ready(name, callback);
+                        }
+                    }
                 }
                 else {
                     callback();
@@ -1247,66 +1513,51 @@ if (!TC.Consts) {
                     callback();
                 }
             }
-        };
-
-        var testCSS = function (url) {
-            var result = false;
-            for (var i = 0; i < document.styleSheets.length; i++) {
-                var href = document.styleSheets[i].href;
-                if (href) {
-                    var idx = href.indexOf(url);
-                    if (idx >= 0 && idx === href.length - url.length) {
-                        result = true;
-                        break;
-                    }
-                }
-            }
-            return result;
-        };
+        };        
 
         TC.loadCSS = function (url) {
-            if (!testCSS(url)) {
-                loadjs(url, {
+            const getName = function (path) {
+                return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
+            };
+
+            const name = getName(url);
+            if (!loadjs.isDefined(name)) {
+                loadjs(url, name, {
                     error: function (pathsNotFound) {
                         _showLoadFailedError(pathsNotFound);
                     },
                     numRetries: 1
                 });
+            } else {
+                loadjs.ready(name);
             }
         };
 
         var projectionDataCache = {};
 
         TC.getProjectionData = function (options) {
-            var deferred = $.Deferred();
-            options = options || {};
-            var code = options.crs.substr(options.crs.indexOf(':') + 1);
-            if (parseInt(code) === Number.NaN) {
-                // El CRS no está en modo urn o EPSG
-                code = options.crs.substr(options.crs.lastIndexOf('/') + 1);
-            }
-            var projData = projectionDataCache[code];
-            if (projData) {
-                deferred.resolve(projData);
-            }
-            else {
-                var url = TC.Consts.url.EPSG + '?format=json&q=' + code;
-                var ajaxOptions = {
-                    dataType: 'json',
-                    success: function (data) {
-                        projectionDataCache[code] = data;
-                        deferred.resolve(data);
-                    },
-                    error: function (error) {
-                        deferred.reject(error);
-                    }
-                };
-                if (options.sync) {
-                    ajaxOptions.async = false;
+            return new Promise(function (resolve, reject) {
+                options = options || {};
+                var code = options.crs.substr(options.crs.indexOf(':') + 1);
+                if (parseInt(code) === Number.NaN) {
+                    // El CRS no está en modo urn o EPSG
+                    code = options.crs.substr(options.crs.lastIndexOf('/') + 1);
                 }
-                $.ajax(url, ajaxOptions);
-            }
-            return deferred.promise();
+                var projData = projectionDataCache[code];
+                if (projData) {
+                    resolve(projData);
+                }
+                else {
+                    var url = TC.Consts.url.EPSG + '?format=json&q=' + code;
+                    const toolProxification = new TC.tool.Proxification(TC.proxify);
+                    toolProxification.fetchJSON(url, options).then(function (data) {
+                        projectionDataCache[code] = data;
+                        resolve(data);
+                    }).catch(function (error) {
+                        reject(Error(error));
+                    });
+                }
+            });
         };
 
         TC.loadProjDef = function (options) {
@@ -1451,15 +1702,6 @@ if (!TC.Consts) {
 
         TC.cache = {};
 
-        TC.inherit = function (childCtor, parentCtor) {
-            function tempCtor() {
-            };
-            tempCtor.prototype = parentCtor.prototype;
-            childCtor._super = parentCtor.prototype;
-            childCtor.prototype = new tempCtor();
-            childCtor.prototype.constructor = childCtor;
-        };
-
         TC.alert = function (text) {
             alert(text);
         };
@@ -1491,64 +1733,12 @@ if (!TC.Consts) {
 
         };
 
-        /**
-         * <p>Objeto base de la API que gestiona eventos.
-         * @class TC.Object
-         * @constructor
-         */
-        TC.Object = function () {
-            var obj = this;
-            /**
-             * <p>Propiedad que lanza los eventos en el objeto. Para suscribirse a un evento, utilizar los mecanismos de jQuery.</p>
-             * <p>Los métodos {{#crossLink "TC.Object/on:method"}}{{/crossLink}}, {{#crossLink "TC.Object/one:method"}}{{/crossLink}} y {{#crossLink "TC.Object/off:method"}}{{/crossLink}}
-             * de <code>TC.Map</code> se mapean a los métodos homónimos de este objeto.
-             * @property $events
-             * @type jQuery
-             */
-            obj.$events = $(obj);
-        };
-
-        /**
-         * Asigna un callback a uno o varios eventos.
-         * @method on
-         * @chainable
-         * @param {string} events Nombre de evento o nombres de evento separados por espacios.
-         * @param {function} callback Función a ejecutar.
-         * @return {TC.Object}
-         */
-        TC.Object.prototype.on = function (events, callback) {
-            var obj = this;
-            obj.$events.on(events, callback);
-            return obj;
-        };
-
-        /**
-         * Asigna un callback a uno o varios eventos. Este se ejecutará a lo sumo una vez por evento.
-         * @method one
-         * @chainable
-         * @param {string} events Nombre de evento o nombres de evento separados por espacios.
-         * @param {function} callback Función a ejecutar.
-         * @return {TC.Object}
-         */
-        TC.Object.prototype.one = function (events, callback) {
-            var obj = this;
-            obj.$events.one(events, callback);
-            return obj;
-        };
-
-        /**
-         * Desasigna un callback o todos los callbacks de uno o varios eventos.
-         * @method off
-         * @chainable
-         * @param {string} events Nombre de evento o nombres de evento separados por espacios.
-         * @param {function} [callback] Función a desasignar.
-         * @return {TC.Object}
-         */
-        TC.Object.prototype.off = function (events, callback) {
-            var obj = this;
-            obj.$events.off(events, callback);
-            return obj;
-        };
+        if (!TC.Map) {
+            TC.syncLoadJS(TC.apiLocation + 'TC/Map');
+        }
+        if (!TC.Util) {
+            TC.syncLoadJS(TC.apiLocation + 'TC/Util');
+        }
 
         // OpenLayers connectors
         TC.wrap = {
@@ -1556,24 +1746,26 @@ if (!TC.Consts) {
                 var self = this;
                 self.parent = map;
                 self.map = null;
-                self.mapDeferred = new $.Deferred();
                 /*
                  *  wrap.getMap: Gets OpenLayers map or a promise for the OpenLayers map
                  */
                 self.getMap = function () {
-                    return self.map || self.mapDeferred.promise();
+                    return self._promise;
                 };
             },
             Layer: function (layer) {
                 var self = this;
                 self.parent = layer;
                 self.layer = null;
-                self.layerDeferred = new $.Deferred();
+                TC.EventTarget.call(self);
                 /*
                  *  getLayer: Gets OpenLayers layer or a promise for the OpenLayers layer
                  */
                 self.getLayer = function () {
-                    return self.layer || self.layerDeferred.promise();
+                    if (self.layer) {
+                        return Promise.resolve(self.layer);
+                    }
+                    return self._promise;
                 };
                 /*
                  *  setLayer: Resolves the deferred layer object
@@ -1581,12 +1773,6 @@ if (!TC.Consts) {
                  */
                 self.setLayer = function (olLayer) {
                     self.layer = olLayer;
-                    if (olLayer) {
-                        self.layerDeferred.resolve(olLayer);
-                    }
-                    else {
-                        self.layerDeferred.reject();
-                    }
                 };
             },
             layer: {
@@ -1601,6 +1787,7 @@ if (!TC.Consts) {
                 Click: function () { TC.wrap.Control.apply(this, arguments); },
                 ScaleBar: function () { TC.wrap.Control.apply(this, arguments); },
                 NavBar: function () { TC.wrap.Control.apply(this, arguments); },
+                NavBarHome: function () { TC.wrap.Control.apply(this, arguments); },
                 Coordinates: function () { TC.wrap.Control.apply(this, arguments); },
                 Search: function () { TC.wrap.Control.apply(this, arguments); },
                 Measure: function () { TC.wrap.Control.apply(this, arguments); },
@@ -1618,11 +1805,13 @@ if (!TC.Consts) {
             Feature: function () { },
             Geometry: function () { }
         };
+        TC.inherit(TC.wrap.Layer, TC.EventTarget);
         TC.inherit(TC.wrap.layer.Raster, TC.wrap.Layer);
         TC.inherit(TC.wrap.layer.Vector, TC.wrap.Layer);
         TC.inherit(TC.wrap.control.Click, TC.wrap.Control);
         TC.inherit(TC.wrap.control.ScaleBar, TC.wrap.Control);
         TC.inherit(TC.wrap.control.NavBar, TC.wrap.Control);
+        TC.inherit(TC.wrap.control.NavBarHome, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Coordinates, TC.wrap.Control);
         TC.inherit(TC.wrap.control.Measure, TC.wrap.Control);
         TC.inherit(TC.wrap.control.OverviewMap, TC.wrap.Control);
@@ -1637,12 +1826,6 @@ if (!TC.Consts) {
 
         TC.loadCSS(TC.apiLocation + 'TC/css/tcmap.css');
 
-        if (!TC.Map) {
-            TC.syncLoadJS(TC.apiLocation + 'TC/Map');
-        }
-        if (!TC.Util) {
-            TC.syncLoadJS(TC.apiLocation + 'TC/Util');
-        }
 
         TC.loadJS(!Modernizr.urlparser, TC.apiLocation + TC.Consts.url.URL_POLYFILL, function () { });
 
@@ -1700,7 +1883,7 @@ if (!TC.Consts) {
             options = value || $.cookie.defaults || {};
             var decode = options.raw ? raw : decoded;
             var cookies = document.cookie.split('; ');
-            for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')) ; i++) {
+            for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')); i++) {
                 if (decode(parts.shift()) === key) {
                     return decode(parts.join('='));
                 }
@@ -1713,7 +1896,7 @@ if (!TC.Consts) {
     })(jQuery, document);
 }
 
-$(function () {
+document.addEventListener('DOMContentLoaded', function () {
 
     TC.browser = TC.Util.getBrowser();
 
@@ -1725,25 +1908,30 @@ $(function () {
             return item.name.toLowerCase() === TC.browser.name.toLowerCase();
         });
 
-        if (match.length > 0 && !isNaN(match[0].version)) {
-            if (TC.browser.version < match[0].version) {
-                isSupported = false;
-            }
-        }
-
-        if (TC.Cfg.oldBrowserAlert && !isSupported) {
+        // GLS: 14/02/2019 Añadimos gestión para que no muestre tostada ni envíe correos en caso de que el navegador sea uno expirado
+        if (match.length > 0 && match[0].expired) {            
             TC.Cfg.loggingErrorsEnabled = false;
-            var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
+        } else {
+            if (match.length > 0 && !isNaN(match[0].version)) {
+                if (TC.browser.version < match[0].version) {
+                    isSupported = false;
+                }
+            }
 
-            $.when(TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale)).done(function () {
-                TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), TC.Consts.msgErrorMode.TOAST);
-            });
-        }
+            if (TC.Cfg.oldBrowserAlert && !isSupported) {
+                TC.Cfg.loggingErrorsEnabled = false;
+                var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
+
+                TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale).then(function () {
+                    TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), TC.Consts.msgErrorMode.TOAST);
+                });
+            }
+        }        
     });
 
     if (/ip(ad|hone|od)/i.test(navigator.userAgent)) {
         // En iOS, el primer click es un mouseover, por eso usamos touchstart como sustituto.
-        TC.Consts.event.CLICK = "touchstart.tc";
+        TC.Consts.event.CLICK = "touchstart";
     }
 
     // Gestión de errores
@@ -1752,19 +1940,33 @@ $(function () {
     }
     JL.defaultAjaxUrl = TC.Consts.url.ERROR_LOGGER;
 
-    window.addEventListener('error', (function () {
+    const onError = (function () {
         var errorCount = 0;
 
         var mapObj;
 
         return function (e) {
-            mapObj = mapObj || $('.' + TC.Consts.classes.MAP).data('map');
-            var errorMsg = e.message;
-            var url = e.filename;
-            var lineNumber = e.lineno;
-            var column = e.colno;
-            var errorObj = e.error;
-            var apiError = url.indexOf(TC.apiLocation) > 0;
+            mapObj = mapObj || TC.Map.get(document.querySelector('.' + TC.Consts.classes.MAP));
+
+            var errorMsg, url = "", lineNumber = -1, column = -1, errorObj, apiError;
+
+            if (e.type === "unhandledrejection") {
+                errorMsg = e.reason.message;
+                if (e.reason.stack) {
+                    apiError = e.reason.stack.indexOf(TC.apiLocation) > 0;
+                } else {
+                    apiError = true;
+                }
+                errorObj = e.reason;
+            } else {
+                errorMsg = e.message;
+                url = e.filename;
+                lineNumber = e.lineno;
+                column = e.colno;
+                errorObj = e.error;
+                apiError = url.indexOf(TC.apiLocation) > 0;
+            }
+
             // Si notifyApplicationErrors === false solo capturamos los errores de la API
             if ((TC.Cfg.notifyApplicationErrors || apiError) && errorCount < TC.Cfg.maxErrorCount && TC.Cfg.loggingErrorsEnabled) {
                 // Send object with all data to server side log, using severity fatal, 
@@ -1784,8 +1986,8 @@ $(function () {
 
                 if (!TC.isDebug) {
                     var DEFAULT_CONTACT_EMAIL = "webmaster@itracasa.es";
-                    $.when(TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale))
-                        .done(function () {
+                    TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale)
+                        .then(function () {
                             TC.error(TC.Util.getLocaleString(mapObj.options.locale, "genericError") + (mapObj.options.contactEmail || DEFAULT_CONTACT_EMAIL), { type: TC.Consts.msgType.ERROR });
                         });
                 }
@@ -1793,5 +1995,8 @@ $(function () {
             // Tell browser to run its own error handler as well   
             return false;
         };
-    })(), false);
+    })();
+
+    window.addEventListener('error', onError, false);
+    window.addEventListener('unhandledrejection', onError, false);
 });

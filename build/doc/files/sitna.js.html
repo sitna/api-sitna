@@ -16,7 +16,7 @@
             <div class="project-title">
                     <a href="../"><img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA"></a>
                 
-                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.5.1</span>
+                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.6.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -267,8 +267,17 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
  */
 
 /**
+### 1.6.0
+
+- Añadida capacidad de compartir entidades vectoriales.
+- Cambiada interfaz de usuario del control de información del mapa.
+- Añadido control de dibujo y medida.
+- Añadido control con herramientas para aplicar a una entidad geográfica: zoom, compartir, descargar, borrar.
+- Corrección de errores.
+
 ### 1.5.1
 
+- Cambiada la interfaz de usuario del control de mapas de fondo para mostrar una preselección de mapas.
 - Corrección de errores.
 
 ### 1.5.0
@@ -393,7 +402,6 @@ TC.isDebug = true;
 
 (function () {
     if (!window.TC || !window.TC.Cfg) {
-        var src;
         var script;
         if (document.currentScript) {
             script = document.currentScript;
@@ -410,7 +418,7 @@ TC.isDebug = true;
         req.send(null);
 
         var head = document.getElementsByTagName(&quot;head&quot;)[0];
-        var script = document.createElement(&quot;script&quot;);
+        script = document.createElement(&quot;script&quot;);
         script.type = &quot;text/javascript&quot;;
         script.text = req.responseText;
         head.appendChild(script);
@@ -1371,7 +1379,7 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
-  Identificador de la capa de cartografía topográfica del WMS de IDENA.
+  Identificador de la capa de cartografía topográfica del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
   @property IDENA_CARTO
   @type string
   @final
@@ -1385,6 +1393,18 @@ No se deberían modificar las propiedades de esta clase.
 /**
   Identificador de la capa de relieve en blanco y negro del WMS de IDENA.
   @property IDENA_BW_RELIEF
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de ortofoto 2018 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+  @property IDENA_ORTHOPHOTO2018
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de ortofoto 2017 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+  @property IDENA_ORTHOPHOTO2017
   @type string
   @final
  */
@@ -1407,8 +1427,26 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
+  Identificador de la capa de cartografía topográfica del WMS de IDENA.
+  @property IDENA_DYNCARTO
+  @type string
+  @final
+ */
+/**
   Identificador de la capa de ortofoto de máxima actualidad del WMS de IDENA.
   @property IDENA_DYNORTHOPHOTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de ortofoto 2018 del WMS de IDENA.
+  @property IDENA_DYNORTHOPHOTO2018
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de ortofoto 2017 del WMS de IDENA.
+  @property IDENA_DYNORTHOPHOTO2017
   @type string
   @final
  */
@@ -1425,37 +1463,97 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
-  Identificador de la capa de OpenStreetMap a través del WMTS de la API SITNA.
+  Identificador de la capa de cartografía raster del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_CARTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del callejero del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_BASEMAP
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del callejero en gris del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_BASEMAP_GREY
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de relieve del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_RELIEF
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del PNOA del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_ORTHOPHOTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de cartografía raster del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNCARTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del callejero del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNBASEMAP
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del callejero en gris del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNBASEMAP_GREY
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de relieve del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNRELIEF
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del PNOA del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNORTHOPHOTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa de OpenStreetMap a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property OSM
   @type string
   @final
  */
 /**
-  Identificador de la capa de Carto Voyager a través del WMTS de la API SITNA.
+  Identificador de la capa de Carto Voyager a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property CARTO_VOYAGER
   @type string
   @final
  */
 /**
-  Identificador de la capa de Carto Light a través del WMTS de la API SITNA.
+  Identificador de la capa de Carto Light a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property CARTO_LIGHT
   @type string
   @final
  */
 /**
-  Identificador de la capa de Carto Dark a través del WMTS de la API SITNA.
+  Identificador de la capa de Carto Dark a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property CARTO_DARK
   @type string
   @final
  */
 /**
-  Identificador de la capa de Mapbox Streets a través del WMTS de la API SITNA.
+  Identificador de la capa de Mapbox Streets a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property MAPBOX_STREETS
   @type string
   @final
  */
 /**
-  Identificador de la capa de Mapbox Satellite a través del WMTS de la API SITNA.
+  Identificador de la capa de Mapbox Satellite a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
   @property MAPBOX_SATELLITE
   @type string
   @final
@@ -2125,18 +2223,16 @@ Esta clase no tiene constructor.
 &#x60;&#x60;&#x60;javascript
     &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
     &lt;script&gt;
-      // Activamos el proxy para poder acceder a servicios de otro dominio.
-      SITNA.Cfg.proxy = &quot;proxy.ashx?&quot;;
       // Añadimos el control featureInfo.
       SITNA.Cfg.controls.featureInfo = true;
       // Añadimos una capa WMS sobre la que hacer las consultas.
       SITNA.Cfg.workLayers = [
         {
-          id: &quot;ocupacionSuelo&quot;,
-          title: &quot;Ocupación del suelo&quot;,
+          id: &quot;terremotos&quot;,
+          title: &quot;Terremotos últimos 365 días&quot;,
           type: SITNA.Consts.layerType.WMS,
-          url: &quot;http://www.ign.es/wms-inspire/ocupacion-suelo&quot;,
-          layerNames: [&quot;LC.LandCoverSurfaces&quot;]
+          url: &quot;https://www.ign.es/wms-inspire/geofisica&quot;,
+          layerNames: [&quot;Ultimos365dias&quot;]
         }
       ];
       var map = new SITNA.Map(&quot;mapa&quot;);
@@ -2470,12 +2566,12 @@ Esta clase no tiene constructor.
     &lt;script&gt;
       // Creamos un mapa con el control de StreetView.
       // La vista de StreetView se debe dibujar en el elemento con identificador &quot;sv&quot;.
-      // Se utilizará la clave de Google Maps para IDENA.
+      // Se utilizará la clave de Google Maps para el SITNA.
       var map = new SITNA.Map(&quot;mapa&quot;, {
         controls: {
           streetView: {
             viewDiv: &quot;sv&quot;,
-            googleMapsKey: &quot;AIzaSyDXDQza0kXXHNHqq0UqNWulbYmGZmPY6TM&quot;
+            googleMapsKey: &quot;AIzaSyDyXgqllcajbMjx8yQxEX28VgA9nQOhtCM&quot;
           }
         }
       });
@@ -2510,7 +2606,7 @@ Puede obtener más información en el [sitio para desarrolladores de Google](htt
               search: { 
                 coordinates: false,
                 cadastralParcel: false,
-                municipality: false,
+                municipality: true,
                 town: true,
                 street: true,
                 postalAddress: true,
@@ -3536,9 +3632,10 @@ El tipo de la capa no puede ser {{#crossLink &quot;SITNA.consts.LayerType/WFS:pr
             };
 
             var url = queryable.url + &#x27;?&#x27; + $.param(params);
-            $.ajax({
-                url: url
-            }).done(function (data) {
+            TC.ajax({
+                url: url,
+                responseType: TC.Consts.mimeType.JSON
+            }).then(function (data) {
                 queryable.queryableData = [];
 
                 if (data.features) {
@@ -3941,7 +4038,7 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.searchMunicipa
      
               var search = function () {
                  map.removeSearch();
-                 map.searchCouncil(&quot;27&quot;, function (idQuery) {
+                 map.searchMunicipality(&quot;27&quot;, function (idQuery) {
                   if (idQuery == null) {
                     alert(&quot;No se ha encontrado el municipio con código 27.&quot;);
                   }
@@ -4179,25 +4276,28 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.searchFeature.
             });
 
             tcMap.on(TC.Consts.event.FEATURESADD, function (e) {
-                if (e.layer == tcSrchGenericLayer &amp;&amp; e.layer.features &amp;&amp; e.layer.features.length &gt; 0) {
+                const layer = e.layer;
+                if (layer == tcSrchGenericLayer &amp;&amp; layer.features &amp;&amp; layer.features.length &gt; 0) {
 
-                    for (var i = 0; i &lt; e.layer.features.length; i++) {
-                        if (e.layer.features[i].showsPopup != tcSearch.queryableFeatures)
-                            e.layer.features[i].showsPopup = tcSearch.queryableFeatures;
+                    for (var i = 0; i &lt; layer.features.length; i++) {
+                        if (layer.features[i].showsPopup != tcSearch.queryableFeatures)
+                            layer.features[i].showsPopup = tcSearch.queryableFeatures;
                     }
 
-                    tcMap.zoomToFeatures(e.layer.features);
+                    tcMap.zoomToFeatures(layer.features);
                 }
             });
 
             tcMap.on(TC.Consts.event.LAYERUPDATE, function (e) {
-                if (e.layer == tcSrchGenericLayer &amp;&amp; e.newData &amp;&amp; e.newData.features &amp;&amp; e.newData.features.length == 0)
+                const layer = e.layer;
+                const newData = e.newData;
+                if (layer == tcSrchGenericLayer &amp;&amp; newData &amp;&amp; newData.features &amp;&amp; newData.features.length == 0)
                     tcMap.toast(tcSearch.EMPTY_RESULTS_LABEL, {
                         type: TC.Consts.msgType.INFO, duration: 5000
                     });
 
                 if (callback)
-                    callback(e.layer == tcSrchGenericLayer &amp;&amp; e.newData &amp;&amp; e.newData.features &amp;&amp; e.newData.features.length == 0 ? null : idQuery);
+                    callback(layer == tcSrchGenericLayer &amp;&amp; newData &amp;&amp; newData.features &amp;&amp; newData.features.length == 0 ? null : idQuery);
             });
         }
     };
@@ -4334,8 +4434,8 @@ El valor de esa opción es una ruta a una carpeta, donde se encontrarán todos o
 La maquetación por defecto añade los siguientes controles al conjunto por defecto: {{#crossLink &quot;SITNA.cfg.MapControlOptions/navBar:property&quot;}}{{/crossLink}},
 {{#crossLink &quot;SITNA.cfg.MapControlOptions/basemapSelector:property&quot;}}{{/crossLink}}, {{#crossLink &quot;SITNA.cfg.MapControlOptions/TOC:property&quot;}}{{/crossLink}},
 {{#crossLink &quot;SITNA.cfg.MapControlOptions/legend:property&quot;}}{{/crossLink}}, {{#crossLink &quot;SITNA.cfg.MapControlOptions/scaleBar:property&quot;}}{{/crossLink}},
-{{#crossLink &quot;SITNA.cfg.MapControlOptions/search:property&quot;}}{{/crossLink}}, {{#crossLink &quot;SITNA.cfg.MapControlOptions/measure:property&quot;}}{{/crossLink}},
-{{#crossLink &quot;SITNA.cfg.MapControlOptions/overviewMap:property&quot;}}{{/crossLink}} y {{#crossLink &quot;SITNA.cfg.MapControlOptions/popup:property&quot;}}{{/crossLink}}.
+{{#crossLink &quot;SITNA.cfg.MapControlOptions/search:property&quot;}}{{/crossLink}}, {{#crossLink &quot;SITNA.cfg.MapControlOptions/streetView:property&quot;}}{{/crossLink}}
+, {{#crossLink &quot;SITNA.cfg.MapControlOptions/measure:property&quot;}}{{/crossLink}}, {{#crossLink &quot;SITNA.cfg.MapControlOptions/overviewMap:property&quot;}}{{/crossLink}} y {{#crossLink &quot;SITNA.cfg.MapControlOptions/popup:property&quot;}}{{/crossLink}}.
 Puede [descargar la maquetación por defecto](../../tc/layout/responsive/responsive.zip).
 
 ### Soporte multiidioma

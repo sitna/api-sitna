@@ -39,7 +39,7 @@
 });
 
 function doPrint() {
-    TC.Util.showModal('#printMessage');
+    TC.Util.showModal(document.querySelector('#printMessage'));
 	
 }
 

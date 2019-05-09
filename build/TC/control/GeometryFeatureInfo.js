@@ -12,7 +12,7 @@ if (!TC.filter) {
         var self = this;
         TC.control.FeatureInfoCommons.apply(this, arguments);
         self.wrap = new TC.wrap.control.GeometryFeatureInfo(self);
-        self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor
+        self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor;
         self._isDrawing = false;
         self._isSearching = false;
         self._drawToken = false;
@@ -23,12 +23,14 @@ if (!TC.filter) {
     var ctlProto = TC.control.GeometryFeatureInfo.prototype;
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.control.FeatureInfoCommons.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.control.FeatureInfoCommons.prototype.register.call(self, map);
 
-        self.$events.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
+        self.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
             self.wrap.cancelDraw();
         });
+
+        return result;
     };
 
     ctlProto.callback = function (coords, xy) {
@@ -63,17 +65,17 @@ if (!TC.filter) {
 
     ctlProto.responseCallback = function (options) {
         var self = this;
+
         TC.control.FeatureInfoCommons.prototype.responseCallback.call(self, options);
 
         if (self.filterFeature) {
             var services = options.services;
-            self.info = { services: services };
 
             // Eliminamos capas sin resultados a no ser que tenga un error
             for (var i = 0; i < services.length; i++) {
                 var service = services[i];
                 if (service.hasLimits) {
-                    delete service.layers
+                    delete service.layers;
                     service.hasLimits = service.hasLimits;
                 }
                 else {

@@ -29,7 +29,7 @@
         
         if (options.attributions) {
             this.attributions = options.attributions;
-            this.view.map.$events.trigger($.Event(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: this }));
+            this.view.map.trigger(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: this });
         }
 
         if (!(options.url instanceof Cesium.Resource)) {
@@ -149,7 +149,7 @@
         var promise = Cesium.when.defer();
 
         var manageAttributions = function (provider) {
-            self.view.map.$events.trigger($.Event(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: provider }));
+            self.view.map.trigger(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: provider });
         };
 
         Cesium.CesiumTerrainProvider.prototype.requestTileGeometry.apply(self, [x, y, level])
@@ -486,7 +486,7 @@ WCSTerrainProvider  */
                     if (Cesium.defined(resultat.getHeightmapTerrainDataFromWCS)) {
 
                         if (!provider.adviced && level > 14) {
-                            provider.view.map.toast(provider.view.getLocaleString('threed.terrainAdvice'), { type: TC.Consts.msgType.INFO });
+                            provider.view.map.toast(TC.Util.getLocaleString(provider.view.map.options.locale, "threed.terrainAdvice"), { type: TC.Consts.msgType.INFO });
                             provider.adviced = true;
                         }
 

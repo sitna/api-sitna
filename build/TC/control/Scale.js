@@ -25,24 +25,23 @@ TC.inherit(TC.control.Scale, TC.Control);
     }
 
     ctlProto.render = function (callback) {
-        var self = this;
-        $('input[type=button]', self._$div).off();
-        self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize }, function () {
+        const self = this;
+        return self._set1stRenderPromise(self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize }, function () {
 
-            var $span = self._$div.find('span')
-            $span.text('1:' + self.format($span.text().substr(2)));
+            const span = self.div.querySelector('span');
+            span.textContent = '1:' + self.format(span.textContent.substr(2));
 
-            self._$div.find('input[type="button"]').on(TC.Consts.event.CLICK, function () { self.setScreenSize.call(self); });
+            self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () { self.setScreenSize(); });
 
             if ($.isFunction(callback)) {
                 callback();
             }
-        });
+        }));
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         var screenSize = TC.Util.storage.getLocalValue(TC.Consts.SCREEN_SIZE_KEY);
         if (screenSize) {
             TC.Cfg.screenSize = screenSize;
@@ -53,6 +52,8 @@ TC.inherit(TC.control.Scale, TC.Control);
                 self.update();
             });
         });
+
+        return result;
     };
 
     ctlProto.update = function () {

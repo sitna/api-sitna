@@ -17,36 +17,39 @@ TC.control.Print = function (options)
 
     if (opts.target)
     {
-        for (var key in self.template)
-        {
-            if (!dust.cache[key])
-            {
-                self.template[key]();
-            }
-        }
-        var $target = $(opts.target);
-        $target.addClass(TC.Consts.classes.PRINTABLE);
+        const target = opts.target;
 
-        var renderPage = function (e)
-        {
-            var page = open(null, self.CLASS);
-            var content = $target.html();
-            dust.render(self.CLASS + '-page', { title: self.title, content: content, cssUrl: self.cssUrl }, function (err, out)
-            {
-                page.document.write(out);
-                page.document.close();
-                page.focus();
-                if (err)
-                {
-                    TC.error(err);
+        if (!target.querySelector('.' + self.CLASS + '-btn')) {
+            for (var key in self.template) {
+                if (!dust.cache[key]) {
+                    self.template[key]();
                 }
+            }
+            
+            target.classList.add(TC.Consts.classes.PRINTABLE);
+
+            var renderPage = function (e) {
+                var page = open(null, self.CLASS);
+                var content = target.innerHTML;
+                dust.render(self.CLASS + '-page', { title: self.title, content: content, cssUrl: self.cssUrl }, function (err, out) {
+                    page.document.write(out);
+                    page.document.close();
+                    page.focus();
+                    if (err) {
+                        TC.error(err);
+                    }
+                });
+            };
+            dust.render(self.CLASS, null, function (err, out) {
+                if (target.firstChild) {
+                    target.firstChild.insertAdjacentHTML('beforebegin', out);
+                }
+                else {
+                    target.innerHTML = out;
+                }
+                target.querySelector('.' + self.CLASS + '-btn').addEventListener('click', renderPage);
             });
-        };
-        dust.render(self.CLASS, null, function (err, out)
-        {
-            $target.append(out);
-            $target.find('.' + self.CLASS + '-btn').on('click', renderPage);
-        });
+        }
     }
 };
 

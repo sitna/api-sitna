@@ -16,7 +16,7 @@
             <div class="project-title">
                     <a href="../"><img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA"></a>
                 
-                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.5.1</span>
+                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.6.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -158,7 +158,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l1854"><code>sitna.js:1854</code></a>
+            Se define en: <a href="../files/sitna.js.html#l1952"><code>sitna.js:1952</code></a>
         </div>
     
 
@@ -392,7 +392,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l1908"><code>sitna.js:1908</code></a>
+        <a href="../files/sitna.js.html#l2006"><code>sitna.js:2006</code></a>
         
         </p>
 
@@ -444,7 +444,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l1902"><code>sitna.js:1902</code></a>
+        <a href="../files/sitna.js.html#l2000"><code>sitna.js:2000</code></a>
         
         </p>
 
@@ -496,7 +496,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l1952"><code>sitna.js:1952</code></a>
+        <a href="../files/sitna.js.html#l2050"><code>sitna.js:2050</code></a>
         
         </p>
 
@@ -548,7 +548,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l1922"><code>sitna.js:1922</code></a>
+        <a href="../files/sitna.js.html#l2020"><code>sitna.js:2020</code></a>
         
         </p>
 
@@ -600,7 +600,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l2078"><code>sitna.js:2078</code></a>
+        <a href="../files/sitna.js.html#l2174"><code>sitna.js:2174</code></a>
         
         </p>
 
@@ -713,7 +713,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l1964"><code>sitna.js:1964</code></a>
+        <a href="../files/sitna.js.html#l2062"><code>sitna.js:2062</code></a>
         
         </p>
 
@@ -729,18 +729,16 @@
 <h4 id="ejemplo-">Ejemplo:</h4>
 <pre class="code prettyprint"><code class="lang-javascript">  &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
   &lt;script&gt;
-    // Activamos el proxy para poder acceder a servicios de otro dominio.
-    SITNA.Cfg.proxy = &quot;proxy.ashx?&quot;;
     // Añadimos el control featureInfo.
     SITNA.Cfg.controls.featureInfo = true;
     // Añadimos una capa WMS sobre la que hacer las consultas.
     SITNA.Cfg.workLayers = [
       {
-        id: &quot;ocupacionSuelo&quot;,
-        title: &quot;Ocupación del suelo&quot;,
+        id: &quot;terremotos&quot;,
+        title: &quot;Terremotos últimos 365 días&quot;,
         type: SITNA.Consts.layerType.WMS,
-        url: &quot;http://www.ign.es/wms-inspire/ocupacion-suelo&quot;,
-        layerNames: [&quot;LC.LandCoverSurfaces&quot;]
+        url: &quot;https://www.ign.es/wms-inspire/geofisica&quot;,
+        layerNames: [&quot;Ultimos365dias&quot;]
       }
     ];
     var map = new SITNA.Map(&quot;mapa&quot;);
@@ -785,7 +783,7 @@
             
         
         
-        <a href="../files/sitna.js.html#l2151"><code>sitna.js:2151</code></a>
+        <a href="../files/sitna.js.html#l2247"><code>sitna.js:2247</code></a>
         
         </p>
 
@@ -880,7 +878,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1928"><code>sitna.js:1928</code></a>
+        <a href="../files/sitna.js.html#l2026"><code>sitna.js:2026</code></a>
         
         </p>
 
@@ -932,7 +930,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1866"><code>sitna.js:1866</code></a>
+        <a href="../files/sitna.js.html#l1964"><code>sitna.js:1964</code></a>
         
         </p>
 
@@ -984,7 +982,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1946"><code>sitna.js:1946</code></a>
+        <a href="../files/sitna.js.html#l2044"><code>sitna.js:2044</code></a>
         
         </p>
 
@@ -1036,7 +1034,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1872"><code>sitna.js:1872</code></a>
+        <a href="../files/sitna.js.html#l1970"><code>sitna.js:1970</code></a>
         
         </p>
 
@@ -1088,7 +1086,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1896"><code>sitna.js:1896</code></a>
+        <a href="../files/sitna.js.html#l1994"><code>sitna.js:1994</code></a>
         
         </p>
 
@@ -1140,7 +1138,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1934"><code>sitna.js:1934</code></a>
+        <a href="../files/sitna.js.html#l2032"><code>sitna.js:2032</code></a>
         
         </p>
 
@@ -1192,7 +1190,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1993"><code>sitna.js:1993</code></a>
+        <a href="../files/sitna.js.html#l2089"><code>sitna.js:2089</code></a>
         
         </p>
 
@@ -1259,7 +1257,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1884"><code>sitna.js:1884</code></a>
+        <a href="../files/sitna.js.html#l1982"><code>sitna.js:1982</code></a>
         
         </p>
 
@@ -1311,7 +1309,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1878"><code>sitna.js:1878</code></a>
+        <a href="../files/sitna.js.html#l1976"><code>sitna.js:1976</code></a>
         
         </p>
 
@@ -1363,7 +1361,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1890"><code>sitna.js:1890</code></a>
+        <a href="../files/sitna.js.html#l1988"><code>sitna.js:1988</code></a>
         
         </p>
 
@@ -1415,7 +1413,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1940"><code>sitna.js:1940</code></a>
+        <a href="../files/sitna.js.html#l2038"><code>sitna.js:2038</code></a>
         
         </p>
 
@@ -1467,7 +1465,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1958"><code>sitna.js:1958</code></a>
+        <a href="../files/sitna.js.html#l2056"><code>sitna.js:2056</code></a>
         
         </p>
 
@@ -1519,7 +1517,7 @@ se dispone de las siguientes funcionalidades: </p>
             
         
         
-        <a href="../files/sitna.js.html#l1914"><code>sitna.js:1914</code></a>
+        <a href="../files/sitna.js.html#l2012"><code>sitna.js:2012</code></a>
         
         </p>
 
@@ -1573,7 +1571,7 @@ rara vez será necesario tener los dos a la vez en un visor.</p>
             
         
         
-        <a href="../files/sitna.js.html#l2021"><code>sitna.js:2021</code></a>
+        <a href="../files/sitna.js.html#l2117"><code>sitna.js:2117</code></a>
         
         </p>
 

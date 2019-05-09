@@ -1,0 +1,23 @@
+<table class="table">
+    <thead>
+        {#columns}
+    <th>{.}</th>
+    {/columns}
+    </thead>
+    <tbody>
+        {#results}
+        <tr title="{@i18n $key="zoomToFeature" /}" data-id="{Id}" data-index="{$idx}" class="tc-selectable">
+        {@iterate on=. }
+        {@select key=key}
+    <td class="{key|removeAccents|downcase}">
+        {@startsWith key=value value="http"}<a href="{value}" target="_blank" title="{@i18n $key="query.linkOpenAtNewTab" /}">{@i18n $key="query.linkText" /}</a>
+        {:else}
+        {value|numberSeparator}
+        {/startsWith}
+    </td>
+    {/select}
+    {/iterate}
+    </tr>
+    {/results}
+    </tbody>
+</table>

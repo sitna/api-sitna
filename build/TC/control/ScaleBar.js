@@ -21,12 +21,17 @@ TC.inherit(TC.control.ScaleBar, TC.Control);
             self.wrap = new TC.wrap.control.ScaleBar(self);
         }
         self.wrap.render();
+        return self._set1stRenderPromise(Promise.resolve());
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
-        map.wrap.getMap().addControl(self.wrap.ctl);
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            Promise.all([TC.Control.prototype.register.call(self, map), map.wrap.getMap()]).then(function (objects) {
+                objects[1].addControl(self.wrap.ctl);
+                resolve(self);
+            });
+        });
     };
 
     ctlProto.getText = function () {

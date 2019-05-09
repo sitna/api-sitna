@@ -12,13 +12,13 @@
         return chunk;
     }
     dust.helpers.startsWith = function (chunk, context, bodies, params) {
-        params = params || {};
-        var obj = params['with'] || context.current();
-        
-        for (var k in obj.split(',')) {
-            if (context.current().toLowerCase().startsWith(k.toLowerCase()))
-                return true;
+        var body = bodies.block, skip = bodies['else'], key = params["key"], value = params["value"];
+        if (typeof (key) === "string" && key.toLowerCase().indexOf(value.toLowerCase())===0) {
+            chunk = chunk.render(body, context);
         }
-        return false;
-    }
+        else if (skip) {
+            chunk = chunk.render(skip, context);
+        }
+        return chunk;
+    };
 })();

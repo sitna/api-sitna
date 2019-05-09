@@ -12,22 +12,36 @@ if (!TC.control.MapContents) {
 
         TC.control.MapContents.apply(self, arguments);
 
-        self._$dialogDiv = $(TC.Util.getDiv(self.options.dialogDiv));
+        self._cssClasses = {
+            LOAD_CRS_BUTTON: self.CLASS + '-crs-btn-load',
+            CRS_DIALOG: self.CLASS + '-crs-dialog',
+            CRS_LIST: self.CLASS + '-crs-list',
+            CURRENT_CRS_NAME: self.CLASS + '-cur-crs-name',
+            CURRENT_CRS_CODE: self.CLASS + '-cur-crs-code'
+        };
+
+        self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+        self._$dialogDiv = $(self._dialogDiv);
         if (!self.options.dialogDiv) {
-            self._$dialogDiv.appendTo('body');
+            document.body.appendChild(self._dialogDiv);
         }
 
-        self._$dialogDiv.on(TC.Consts.event.CLICK, 'button:not(.tc-modal-close)', function (e) {
+        self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.tc-modal-close)', function (e) {
+
+            if (e.target.classList.contains(self._cssClasses.LOAD_CRS_BUTTON)) {
+                self.loadFallbackProjections();
+                return;
+            }
 
             TC.Util.closeModal();
-            const $btn = $(e.target);
-            const crs = $btn.data(_dataKeys.PROJCODE);
+            const btn = e.target;
+            const crs = btn.dataset.crsCode;
 
             // dependerá del que esté activo
-            const $dialog = self._$dialogDiv.find('.' + self.CLASS + '-crs-dialog');
-            $dialog.addClass(TC.Consts.classes.HIDDEN);
+            const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
+            dialog.classList.add(TC.Consts.classes.HIDDEN);
 
-            const layer = $dialog.data(_dataKeys.LAYER);
+            const layer = self.getLayer(dialog.dataset.layerId);
             if (layer) {
                 if (crs) {
                     TC.loadProjDef({
@@ -41,13 +55,13 @@ if (!TC.control.MapContents) {
                     });
                 }
                 else {
-                    const fallbackLayer = $btn.data(_dataKeys.FALLBACK_LAYER);
+                    const fallbackLayer = $(btn).data(_dataKeys.FALLBACK_LAYER);
                     if (fallbackLayer) {
-                        self.map.setBaseLayer(layer);
+                        self.map.setBaseLayer(fallbackLayer);
                     }
                 }
             }
-        });
+        }));
     };
 
     TC.inherit(TC.control.BasemapSelector, TC.control.MapContents);
@@ -57,9 +71,7 @@ if (!TC.control.MapContents) {
     ctlProto.CLASS = 'tc-ctl-bms';
 
     var _dataKeys = {
-        LAYER: 'tcLayer',
-        FALLBACK_LAYER: 'tcFallbackLayer',
-        PROJCODE: 'tcProjCode'
+        FALLBACK_LAYER: 'tcFallbackLayer'
     };
 
     ctlProto.template = {};
@@ -69,32 +81,40 @@ if (!TC.control.MapContents) {
         ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/BasemapSelectorDialog.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "backgroundMaps" }).w("</h2><div class=\"tc-ctl-bms-tree\"><form><ul class=\"tc-ctl-bms-branch\">").s(ctx.get(["baseLayers"], false), ctx, { "block": body_1 }, {}).s(ctx.get(["dialogMore"], false), ctx, { "block": body_2 }, {}).w("</ul></form></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-bms-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\"><label class=\"tc-ctl-bms-more-node\" title=\"").h("i18n", ctx, {}, { "$key": "moreBackgroundMaps" }).w("\"><input type=\"radio\" name=\"bms\" value=\"moreLayers\" /><span></span></label></li>"); } body_2.__dustBody = !0; return body_0
+        ctlProto.template[ctlProto.CLASS] = function () {
+            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "backgroundMaps" }).w("</h2><div class=\"tc-ctl-bms-tree\"><form><ul class=\"tc-ctl-bms-branch\">").s(ctx.get(["baseLayers"], false), ctx, { "block": body_1 }, {}).s(ctx.get(["dialogMore"], false), ctx, { "block": body_2 }, {}).w("</ul></form></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-bms-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\"><label class=\"tc-ctl-bms-more-node\" title=\"").h("i18n", ctx, {}, { "$key": "moreBackgroundMaps" }).w("\"><input type=\"radio\" name=\"bms\" value=\"moreLayers\"><span></span></label></li>"); } body_2.__dustBody = !0; return body_0
         };
-        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\" ><label").x(ctx.get(["legend"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["thumbnail"], false), ctx, { "block": body_2 }, {}).w("><input type=\"radio\" name=\"bms\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["mustReproject"], false), ctx, { "block": body_3 }, {}).w(" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.getPath(false, ["legend", "src"]), ctx, "h").w(")\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.get(["thumbnail"], false), ctx, "h").w(")\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" class=\"tc-disabled\""); } body_3.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-bms-more-dialog tc-modal tc-hidden\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "backgroundMaps" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div><div class=\"tc-ctl-bms-crs-dialog tc-modal tc-hidden\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "baseLayerNotCompatible" }).w("</h3><div class=\"tc-ctl-popup-close tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "baseLayerNotCompatible.instructions|h" }).w("</p><ul class=\"tc-ctl-bms-crs-list tc-crs-list\"></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\" ><label").x(ctx.get(["legend"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["thumbnail"], false), ctx, { "block": body_2 }, {}).w("><input type=\"radio\" name=\"bms\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["mustReproject"], false), ctx, { "block": body_3 }, {}).w("><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.getPath(false, ["legend", "src"]), ctx, "h").w(")\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.get(["thumbnail"], false), ctx, "h").w(")\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" class=\"tc-disabled\""); } body_3.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-bms-more-dialog tc-modal tc-hidden\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "backgroundMaps" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div><div class=\"tc-ctl-bms-crs-dialog tc-modal tc-hidden\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "baseLayerNotCompatible" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "baseLayerNotCompatible.instructions|h" }).w("</p><ul class=\"tc-ctl-bms-crs-list tc-crs-list\"></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
     }
+
+    const getClosestParent = function (elm, selector) {
+        while (elm && !elm.matches(selector)) {
+            elm = elm.parentElement;
+        }
+        return elm;
+    };
 
     const changeInputRadioBaseMap = function (e, callback) {
         const self = this;
         var flagToCallback = true;
 
-        var $radio = $(e.target);
+        var radio = e.target;
 
-        var layer = $radio.closest('li').data(_dataKeys.LAYER);
+        var layer = self.getLayer(getClosestParent(radio, 'li').dataset.layerId);
 
-        if (self.options.dialogMore && $radio.closest('.' + self.CLASS + '-more-dialog').length > 0) {
-            self._$div.find('input[type=radio]').each(function (index, input) {
-                var bmsLayer = $(input).closest('li').data(_dataKeys.LAYER);
+        if (self.options.dialogMore && getClosestParent(radio, '.' + self.CLASS + '-more-dialog')) {
+            const radios = self.div.querySelectorAll('input[type=radio]');
+            for (var i = 0, len = radios.length; i < len; i++) {
+                const bmsLayer = self.getLayer(getClosestParent(radios[i], 'li').dataset.layerId);
                 if (bmsLayer) {
                     switch (true) {
                         case bmsLayer.id === layer.id:
                             layer = bmsLayer;
-                            $radio = $(input);
-                            return false;
+                            break;
                     }
                 }
-            });
+            };
         }
 
         if (layer != self.map.getBaseLayer()) {
@@ -102,7 +122,7 @@ if (!TC.control.MapContents) {
 
                 if (self.map.on3DView) {
                     if (!layer.getFallbackLayer()) {
-                        self._$currentSelection.prop('checked', true);
+                        self._currentSelection.checked = true;
                         e.stopPropagation();
                         return;
                     } else if (layer.getFallbackLayer()) {
@@ -119,8 +139,8 @@ if (!TC.control.MapContents) {
                     }
                 } else {
                     // provisonal
-                    if (self._$currentSelection) {
-                        self._$currentSelection.prop('checked', true);
+                    if (self._currentSelection) {
+                        self._currentSelection.checked = true;
                     }
 
                     // Buscamos alternativa
@@ -140,9 +160,9 @@ if (!TC.control.MapContents) {
                         self.showProjectionChangeDialog(dialogOptions);
                     }
                     //layer.getCompatibleCRS({ normalized: true });
+                    flagToCallback = false;
                 }
 
-                flagToCallback = false;
             }
             else {
 
@@ -154,8 +174,8 @@ if (!TC.control.MapContents) {
             }
         }
 
-        if (this._$currentSelection) {
-            this._$currentSelection.prop('checked', true);
+        if (this._currentSelection) {
+            this._currentSelection.checked = true;
         }
 
 
@@ -168,34 +188,10 @@ if (!TC.control.MapContents) {
         array.splice(to, 0, array.splice(from, 1)[0]);
     };
 
-    const limitElements = function () {
+    ctlProto.register = function (map) {
         const self = this;
 
-        // mantenemos el número de elementos configurados y reordenamos la propiedad baseLayers del mapa.
-        if (self.options.dialogMore) {
-            const $ul = self._$div.find('.' + self.CLASS + '-branch');
-            const $lis = $ul.find('li');
-
-            var numElements = self.options.dialogMore.max - 1;
-            if ($lis.length > numElements) {
-                $lis.slice(numElements, $lis.length - 1).addClass(TC.Consts.classes.HIDDEN);
-            }
-
-            $lis.each(function (i, li) {
-                var layer = $(li).data(_dataKeys.LAYER);
-                if (layer) {
-                    if (self.map.baseLayers[i].id !== layer.id) {
-                        moveElement(self.map.baseLayers, self.map.baseLayers.indexOf(layer), i);
-                    }
-                }
-            });
-        }
-    };
-
-    ctlProto.register = function (map) {
-        var self = this;
-
-        TC.control.MapContents.prototype.register.call(self, map);
+        const result = TC.control.MapContents.prototype.register.call(self, map);
 
         if (self.options.dialogMore) {
             map.on(TC.Consts.event.VIEWCHANGE, function () {
@@ -204,38 +200,35 @@ if (!TC.control.MapContents) {
         }
 
         map.on(TC.Consts.event.BASELAYERCHANGE + ' ' + TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.VIEWCHANGE, function (e) {
-            self.update(self._$div, e.layer);
+            self.update(self.div, e.layer);
         });
 
 
-        self._$div.on('change', 'input[type=radio]', function (e) {
-            const self = this;
+        self.div.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
 
-            var $radio = $(e.target);
-
-            if ($radio.val() == "moreLayers") {
+            if (e.target.value === "moreLayers") {
                 self.showMoreLayersDialog();
             } else {
                 changeInputRadioBaseMap.call(self, e);
             }
 
             e.stopPropagation();
-        }.bind(self));
+        }));
+
+        return result;
     };
 
     ctlProto.render = function (callback) {
-        var self = this;
-        TC.control.MapContents.prototype.render.call(self, callback, self.options);
+        const self = this;
+        const result = TC.control.MapContents.prototype.render.call(self, callback, self.options);
 
         self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
-            self._$dialogDiv.html(html);
+            self._dialogDiv.innerHTML = html;
 
             if (self.options.dialogMore) {
-                const $dialog = self._$dialogDiv.find('.' + self.CLASS + '-more-dialog');
+                const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
 
-                $dialog.on('change', 'input[type=radio]', function (e) {
-                    const self = this;
-
+                dialog.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
                     changeInputRadioBaseMap.call(self, e, function (close) {
                         if (close) {
                             TC.Util.closeModal();
@@ -243,43 +236,53 @@ if (!TC.control.MapContents) {
                     });
 
                     e.stopPropagation();
-
-                }.bind(self));
+                }));
             }
         });
+
+        return result;
     };
 
-    ctlProto.update = function ($div, baseLayer) {
-        var self = this;
+    ctlProto.update = function (div, baseLayer) {
+        const self = this;
 
-        $div = $div || self._$div;
+        div = div || self.div;
 
-        $div.find('ul.' + self.CLASS + '-branch').children('li').each(function (idx, elm) {
-            var $li = $(elm);
-            var layer = $li.data(_dataKeys.LAYER);
+        div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll('li').forEach(function (li) {
+            const layer = self.getLayer(li.dataset.layerId);
             if (layer) {
-                var curBaseLayer = baseLayer || self.map.baseLayer;
-                var $radio = $li.find('input[type=radio]').first();
-                var checked = curBaseLayer && (curBaseLayer === layer || curBaseLayer.id === layer.id || (layer.getFallbackLayer && (curBaseLayer === layer.getFallbackLayer() || (layer.getFallbackLayer() && curBaseLayer.id === layer.getFallbackLayer().id))));
+                const curBaseLayer = baseLayer || self.map.baseLayer;
+                const radio = li.querySelector('input[type=radio]');
+                const checked = curBaseLayer && (curBaseLayer === layer || curBaseLayer.id === layer.id || (layer.getFallbackLayer && (curBaseLayer === layer.getFallbackLayer() || (layer.getFallbackLayer() && curBaseLayer.id === layer.getFallbackLayer().id))));
 
                 if (self.map.on3DView && layer.mustReproject && layer.fallbackLayer && layer.getFallbackLayer) {
                     layer.getFallbackLayer().getCapabilitiesPromise().then(function () {
                         var mustReproject = !layer.getFallbackLayer().isCompatible(self.map.getCRS());
 
-                        $radio
-                            .prop('checked', checked)
-                            .toggleClass(TC.Consts.classes.DISABLED, mustReproject || false);
-                        $li.attr('title', mustReproject ? self.map.on3DView ? self.getLocaleString('notAvailableTo3D') : self.getLocaleString('reprojectionNeeded') : null);
+                        radio.checked = checked;
+                        if (mustReproject) {
+                            radio.classList.add(TC.Consts.classes.DISABLED);
+                            li.setAttribute('title', self.map.on3DView ? self.getLocaleString('notAvailableTo3D') : self.getLocaleString('reprojectionNeeded'));
+                        }
+                        else {
+                            radio.classList.remove(TC.Consts.classes.DISABLED);
+                            li.removeAttribute('title');
+                        }
                     });
                 } else {
-                    $radio
-                        .prop('checked', checked)
-                        .toggleClass(TC.Consts.classes.DISABLED, layer.mustReproject || false);
-                    $li.attr('title', layer.mustReproject ? self.map.on3DView ? self.getLocaleString('notAvailableTo3D') : self.getLocaleString('reprojectionNeeded') : null);
+                    radio.checked = checked;
+                    if (layer.mustReproject) {
+                        radio.classList.add(TC.Consts.classes.DISABLED);
+                        li.setAttribute('title', self.map.on3DView ? self.getLocaleString('notAvailableTo3D') : self.getLocaleString('reprojectionNeeded'));
+                    }
+                    else {
+                        radio.classList.remove(TC.Consts.classes.DISABLED);
+                        li.removeAttribute('title');
+                    }
                 }
 
                 if (checked) {
-                    self._$currentSelection = $radio;
+                    self._currentSelection = radio;
                 }
             }
         });
@@ -288,7 +291,7 @@ if (!TC.control.MapContents) {
     };
 
     ctlProto.updateLayerTree = function (layer) {
-        var self = this;
+        const self = this;        
         if (layer.isBase && !layer.options.stealth) {
             TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
 
@@ -298,34 +301,31 @@ if (!TC.control.MapContents) {
                 TC.url.templating,
                 function () {
                     dust.render(template, self.layerTrees[layer.id], function (err, out) {
-                        var $newLi = $(out);
-                        var uid = $newLi.data('tcLayerUid');
-                        var $ul = self._$div.find('.' + self.CLASS + '-branch');
-                        var $li = $ul.find('li[data-tc-layer-uid="' + uid + '"]');
-                        if ($li.length === 1) {
-                            $li.html($newLi.html());
+                        const parser = new DOMParser();
+                        const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
+                        var uid = newLi.dataset.tcLayerUid;
+                        const ul = self.div.querySelector('.' + self.CLASS + '-branch');
+                        const currentLi = ul.querySelector('li[data-tc-layer-uid="' + uid + '"]');
+                        if (currentLi) {
+                            currentLi.innerHTML = newLi.innerHTML;
                         }
                         else {
-                            $newLi.data(_dataKeys.LAYER, layer);
+                            newLi.dataset.layerId = layer.id;
 
                             // Insertamos elemento en el lugar correcto, según indica la colección baseLayers
                             var idx = self.map.baseLayers.filter(function (baseLayer) {
+                                // Buscamos capas que deban mostrarse o capas que están siendo fallbacks de capas que deben mostrarse
                                 return !baseLayer.stealth;
                             }).map(function (baseLayer) {
                                 return baseLayer.id;
                             }).indexOf(layer.id);
 
-                            if (idx < 0) {
-                                $ul.append($newLi);
+                            const lis = ul.querySelectorAll('li');
+                            if (idx < 0 || idx >= lis.length) {
+                                ul.appendChild(newLi);
                             }
                             else {
-                                const $lis = $ul.find('li');
-                                if (idx >= $lis.length) {
-                                    $ul.append($newLi);
-                                }
-                                else {
-                                    $newLi.insertBefore($ul.find('li').get(idx));
-                                }
+                                ul.insertBefore(newLi, lis[idx]);
                             }
                         }
                         if (err) {
@@ -343,114 +343,172 @@ if (!TC.control.MapContents) {
     };
 
     ctlProto.removeLayer = function (layer) {
-        var self = this;
+        const self = this;
         if (layer.isBase) {
-            var $lis = self._$div.find('.' + self.CLASS + '-branch').children('li');
-            $lis.each(function (idx, elm) {
-                var $li = $(elm);
-                if ($li.data(_dataKeys.LAYER) === layer) {
-                    $li.remove();
-                    return false;
+            const lis = self.div.querySelector('.' + self.CLASS + '-branch').querySelectorAll('li');
+            for (var i = 0, len = lis.length; i < len; i++) {
+                const li = lis[i];
+                if (li.dataset.layerId === layer.id) {
+                    li.parentElement.removeChild(li);
+                    break;
                 }
-            });
+            }
         }
+    };
+
+    ctlProto.onErrorLayer = function (layer) {
+        const self = this;
+
+        if (layer.isBase && !layer.options.stealth) {
+            self.map.toast(self.getLocaleString('baseLayerNotAvailable', { mapName: layer.title }), { type: TC.Consts.msgType.ERROR });
+        }
+    };
+
+    ctlProto.loadFallbackProjections = function () {
+        const self = this;
+        const lis = self._dialogDiv
+            .querySelector('.' + self._cssClasses.CRS_DIALOG)
+            .querySelectorAll('ul.' + self._cssClasses.CRS_LIST + ' li');
+        lis.forEach(function (li) {
+            li.classList.remove(TC.Consts.classes.HIDDEN);
+            if (li.querySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON)) {
+                li.classList.add(TC.Consts.classes.HIDDEN);
+            }
+        });
     };
 
     ctlProto.showProjectionChangeDialog = function (options) {
         const self = this;
         options = options || {};
         const layer = options.layer;
-        const $dialog = self._$dialogDiv.find('.' + self.CLASS + '-crs-dialog');
-        const $modalBody = $dialog.find('.tc-modal-body').addClass(TC.Consts.classes.LOADING);
+        const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
+        const modalBody = dialog.querySelector('.tc-modal-body');
+        modalBody.classList.add(TC.Consts.classes.LOADING);
+        const blCRSList = layer.getCompatibleCRS();
 
-        $dialog.removeClass(TC.Consts.classes.HIDDEN);
+        dialog.classList.remove(TC.Consts.classes.HIDDEN);
 
-        $dialog.data(_dataKeys.LAYER, layer);
-        const $ul = $dialog
-            .find('ul.' + self.CLASS + '-crs-list')
-            .empty();
+        dialog.dataset.layerId = layer.id;
+        const ul = dialog.querySelector('ul.' + self.CLASS + '-crs-list');
+        ul.innerHTML = '';
         self.map.loadProjections({
             crsList: self.map.getCompatibleCRS({
-                layers: self.map.workLayers.concat(layer)
+                layers: self.map.workLayers.concat(layer),
+                includeFallbacks: true
             }),
             orderBy: 'name'
         }).then(function (projList) {
+            var hasFallbackCRS = false;
+            const fragment = document.createDocumentFragment();
             projList
                 .forEach(function (projObj) {
-                    $ul
-                        .append($('<li>')
-                            .append($('<button>')
-                                .html(self.getLocaleString('changeMapToCrs', { crs: projObj.name + ' (' + projObj.code + ')' }))
-                                .data(_dataKeys.PROJCODE, projObj.code)));
+                    const li = document.createElement('li');
+                    const button = document.createElement('button');
+
+                    if (blCRSList.filter(function (crs) {
+                        return TC.Util.CRSCodesEqual(crs, projObj.code)
+                    }).length === 0) {
+                        // Es un CRS del fallback
+                        hasFallbackCRS = true;
+
+                        button.innerHTML = projObj.name + ' (' + projObj.code + ')';
+                        $(button)
+                            .data(_dataKeys.FALLBACK_LAYER, options.layer.fallbackLayer);
+                        button.dataset.crsCode = projObj.code;
+                        button.classList.add(TC.Consts.classes.WARNING);
+                        li.classList.add(TC.Consts.classes.HIDDEN);
+                    } else {
+                        button.innerHTML = self.getLocaleString('changeMapToCrs', { crs: projObj.name + ' (' + projObj.code + ')' });
+                        button.dataset.crsCode = projObj.code;
+                    }
+
+                    li.appendChild(button);
+                    fragment.appendChild(li);
                 });
 
             if (options.fallbackLayer) {
-                $ul
-                    .append($('<li>')
-                        .append($('<button>')
-                            .html(self.getLocaleString('reprojectOnTheFly'))
-                            .data(_dataKeys.FALLBACK_LAYER, options.fallbackLayer)));
+                const li = document.createElement('li');
+                const button = document.createElement('button');
+                button.innerHTML = self.getLocaleString('reprojectOnTheFly');
+                $(button).data(_dataKeys.FALLBACK_LAYER, options.fallbackLayer);
+                li.appendChild(button);
+                fragment.appendChild(li);
             }
 
-            $modalBody.removeClass(TC.Consts.classes.LOADING);
+            if (hasFallbackCRS) {
+                const li = document.createElement('li');
+                const button = document.createElement('button');
+                button.classList.add(self._cssClasses.LOAD_CRS_BUTTON);
+                button.innerHTML = self.getLocaleString('showOnTheFlyProjections');
+                li.appendChild(button);
+                fragment.appendChild(li);
+            }
+            ul.appendChild(fragment);
+
+            modalBody.classList.remove(TC.Consts.classes.LOADING);
         });
-        $dialog.find('.' + self.CLASS + '-name').html(layer.title || layer.name);
-        TC.Util.showModal($dialog);
+        dialog.querySelector('.' + self.CLASS + '-name').innerHTML = layer.title || layer.name;
+        TC.Util.showModal(dialog);
     };
 
     ctlProto.showMoreLayersDialog = function () {
         const self = this;
 
-        const $dialog = self._$dialogDiv.find('.' + self.CLASS + '-more-dialog');
+        const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
 
         if (self.map.on3DView) {
-            $dialog.addClass(TC.Consts.classes.THREED);
-        } else if ($dialog.hasClass(TC.Consts.classes.THREED)) {
-            $dialog.removeClass(TC.Consts.classes.THREED);
+            dialog.classList.add(TC.Consts.classes.THREED);
+        } else {
+            dialog.classList.remove(TC.Consts.classes.THREED);
         }
 
-        $dialog.find('.tc-modal-body').empty();
+        const modalBody = dialog.querySelector('.tc-modal-body');
+        modalBody.innerHTML = '';
+        modalBody.classList.add(TC.Consts.classes.LOADING);
+        dialog.classList.remove(TC.Consts.classes.HIDDEN);
 
-        const $modalBody = $dialog.find('.tc-modal-body').addClass(TC.Consts.classes.LOADING);
-        $dialog.removeClass(TC.Consts.classes.HIDDEN);
-
-        TC.Util.showModal($dialog, {
+        TC.Util.showModal(dialog, {
             closeCallback: function () {
                 // no hay selección, vuelvo a seleccionar el mapa de fondo actual del mapa.
-                this._$currentSelection.prop('checked', true);
+                this._currentSelection.checked = true;
                 this.update();
             }.bind(self)
         });
 
-        if (!$dialog.find('.tc-modal-window').hasClass(self.CLASS + '-more-dialog')) {
-            $dialog.find('.tc-modal-window').addClass(self.CLASS + '-more-dialog');
-        }
+        dialog.querySelector('.tc-modal-window').classList.add(self.CLASS + '-more-dialog');
 
         self._getMoreBaseLayers().then(function () {
 
             self.getRenderedHtml(self.CLASS, { baseLayers: self._moreBaseLayers }, function (html) {
-                $modalBody.html(html);
-                $modalBody.removeClass(TC.Consts.classes.LOADING);
-                $modalBody.find('li').each(function (i, li) {
-                    $(li).data(_dataKeys.LAYER, self._moreBaseLayers[i]);
+                modalBody.innerHTML = html;
+                modalBody.classList.remove(TC.Consts.classes.LOADING);
+                modalBody.querySelectorAll('li').forEach(function (li, idx) {
+                    li.dataset.layerId = self._moreBaseLayers[idx].id;
                 });
 
-                self.update($modalBody);
+                self.update(modalBody);
             });
         });
+    };
+
+    ctlProto.getLayer = function (id) {
+        const self = this;
+        return self.map && (self.map.getLayer(id) || (self._moreBaseLayers && self._moreBaseLayers.filter(function (layer) {
+            return layer.id === id;
+        })[0]));
     };
 
     const getTo3DVIew = function (baseLayer) {
         const self = this;
 
-        var promise = new $.Deferred;
-        var fallbackPromise = new $.Deferred;
-
-        $.when.apply(this, [baseLayer.getCapabilitiesPromise(), baseLayer.getFallbackLayer() ? baseLayer.getFallbackLayer().getCapabilitiesPromise() : fallbackPromise.resolve()]).then(function () {
-            promise.resolve();
+        return new Promise(function (resolve, reject) {
+            Promise.all([
+                baseLayer.getCapabilitiesPromise(),
+                baseLayer.getFallbackLayer() ? baseLayer.getFallbackLayer().getCapabilitiesPromise() : Promise.resolve()
+            ]).then(function () {
+                resolve();
+            });
         });
-
-        return promise;
     };
 
     ctlProto._getMoreBaseLayers = function () {
@@ -458,34 +516,38 @@ if (!TC.control.MapContents) {
 
         if (!self._moreBaseLayers && !self._moreBaseLayersPromise) {
 
-            self._moreBaseLayersPromise = new $.Deferred;
+            self._moreBaseLayersPromise = new Promise(function (resolve, reject) {
 
-            // GLS: Carlos no quiere que se muestren los respectivos dinámicos así que los filtro.
-            var noDyn = TC.Cfg.availableBaseLayers.filter(function (l) {
-                return TC.Cfg.availableBaseLayers.filter(function (l) {
-                    return l.fallbackLayer
-                }).map(function (l) {
-                    return l.fallbackLayer
-                }).indexOf(l.id) == -1
-            });
-
-            $.when.apply(this, noDyn.map(function (baseLayer) {
-                if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS) {
-                    return new TC.layer.Raster(baseLayer);
-                } else if (baseLayer.type == TC.Consts.layerType.VECTOR) {
-                    return new TC.layer.Vector(baseLayer);
-                }
-            })).then(function () {
-
-                var baseLayers = Array.prototype.slice.call(arguments);
-
-                $.when.apply(this, baseLayers.filter(function (baseLayer) {
-                    return baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS;
+                // GLS: Carlos no quiere que se muestren los respectivos dinámicos así que los filtro.
+                var noDyn = TC.Cfg.availableBaseLayers.filter(function (l) {
+                    return TC.Cfg.availableBaseLayers.filter(function (l) {
+                        return l.fallbackLayer
+                    }).map(function (l) {
+                        return l.fallbackLayer
+                    }).indexOf(l.id) == -1
                 }).map(function (baseLayer) {
-                    return self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
-                })).then(function () {
+                    if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS) {
+                        return new TC.layer.Raster(baseLayer);
+                    } else if (baseLayer.type == TC.Consts.layerType.VECTOR) {
+                        return new TC.layer.Vector(baseLayer);
+                    }
+                });
 
-                    self._moreBaseLayers = baseLayers.map(function (baseLayer) {
+                Promise.all(noDyn).then(function (baseLayers) {
+                    self._moreBaseLayers = new Array(baseLayers.length);
+
+                    var numToAdd = baseLayers.length;
+
+                    const resolvePromise = function () {
+                        self._moreBaseLayers = self._moreBaseLayers.filter(function (baseLayer) {
+                            return baseLayer !== null;
+                        });
+
+                        resolve(self._moreBaseLayers);
+                    };
+                    const addLayer = function (i) {
+                        const baseLayer = this;
+
                         baseLayer.map = self.map;
                         baseLayer.isBase = baseLayer.options.isBase = true;
 
@@ -498,6 +560,55 @@ if (!TC.control.MapContents) {
 
                         if (self.map.on3DView && baseLayer.mustReproject && baseLayer.getFallbackLayer && baseLayer.getFallbackLayer()) {
                             baseLayer.mustReproject = !baseLayer.getFallbackLayer().isCompatible(self.map.getCRS());
+                        }
+
+                        self._moreBaseLayers.splice(i, 1, baseLayer);
+                        numToAdd--;
+
+                        if (numToAdd === 0) {
+                            resolvePromise();
+                        }
+                    };
+
+                    baseLayers.forEach(function (baseLayer, i) {
+                        if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS) {
+                            var promise = self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
+                            promise.then(
+                                addLayer.bind(baseLayer, i),
+                                function (fail) {
+                                    self._moreBaseLayers.splice(i, 1, null);
+                                    numToAdd--;
+
+                                    if (numToAdd === 0) {
+                                        resolvePromise();
+                                    }
+                                });
+                        } else {
+                            addLayer.call(baseLayer, i);
+                        }
+                    });
+                });
+            });
+
+        } else if (self._moreBaseLayers) {
+
+            return new Promise(function (resolve, reject) {
+                Promise.all(self._moreBaseLayers.filter(function (baseLayer) {
+                    return baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS;
+                }).map(function (baseLayer) {
+                    return self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
+                })).then(function () {
+
+                    self._moreBaseLayers = self._moreBaseLayers.map(function (baseLayer) {
+
+                        if (baseLayer.type === TC.Consts.layerType.WMTS) {
+                            var matrixSet = baseLayer.wrap.getCompatibleMatrixSets(self.map.getCRS())[0];
+                            baseLayer.mustReproject = !matrixSet;
+                        } else if (baseLayer.type === TC.Consts.layerType.WMS) {
+                            baseLayer.mustReproject = !baseLayer.isCompatible(self.map.getCRS());
+                        }
+                        if (self.map.on3DView && baseLayer.mustReproject && baseLayer.getFallbackLayer && baseLayer.getFallbackLayer()) {
+                            baseLayer.mustReproject = !baseLayer.getFallbackLayer().isCompatible(self.map.getCRS());
 
                             return baseLayer;
                         }
@@ -505,39 +616,11 @@ if (!TC.control.MapContents) {
                         return baseLayer;
                     });
 
-                    self._moreBaseLayersPromise.resolve(self._moreBaseLayers);
+                    resolve(self._moreBaseLayers);
                 });
             });
-
-        } else if (self._moreBaseLayers) {
-
-            $.when.apply(this, self._moreBaseLayers.filter(function (baseLayer) {
-                return baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS;
-            }).map(function (baseLayer) {
-                return self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
-            })).then(function () {
-
-                self._moreBaseLayers = self._moreBaseLayers.map(function (baseLayer) {
-
-                    if (baseLayer.type === TC.Consts.layerType.WMTS) {
-                        var matrixSet = baseLayer.wrap.getCompatibleMatrixSets(self.map.getCRS())[0];
-                        baseLayer.mustReproject = !matrixSet;
-                    } else if (baseLayer.type === TC.Consts.layerType.WMS) {
-                        baseLayer.mustReproject = !baseLayer.isCompatible(self.map.getCRS());
-                    }
-                    if (self.map.on3DView && baseLayer.mustReproject && baseLayer.getFallbackLayer && baseLayer.getFallbackLayer()) {
-                        baseLayer.mustReproject = !baseLayer.getFallbackLayer().isCompatible(self.map.getCRS());
-
-                        return baseLayer;
-                    }
-
-                    return baseLayer;
-                });
-            });
-
-            self._moreBaseLayersPromise.resolve(self._moreBaseLayers);
         }
 
-        return self._moreBaseLayersPromise.promise();
+        return self._moreBaseLayersPromise;
     };
 })();

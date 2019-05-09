@@ -70,3 +70,12 @@ TC.inherit(TC.feature.Point, TC.Feature);
 TC.feature.Point.prototype.STYLETYPE = TC.Consts.geom.POINT;
 
 TC.feature.Point.prototype.CLASSNAME = 'TC.feature.Point';
+
+TC.feature.Point.prototype.getCoords = function (options) {
+    options = options || {};
+    const coords = TC.Feature.prototype.getCoords.call(this, options);
+    if (options.pointArray) {
+        return [coords];
+    }
+    return coords;
+};

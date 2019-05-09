@@ -166,7 +166,7 @@ input[type=range]::-ms-thumb {
     background-color: #5a7586;
 }
 
-.tc-ctl-nav {
+.tc-ctl.tc-ctl-nav {
     top: 4.7em;
 }
 

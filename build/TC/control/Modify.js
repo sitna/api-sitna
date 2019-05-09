@@ -6,9 +6,9 @@ if (!TC.Control) {
 
 TC.Consts.event.BEFOREFEATUREMODIFY = "beforefeaturemodify.tc";
 TC.Consts.event.FEATUREMODIFY = "featuremodify.tc";
-TC.Consts.event.FEATURESSELECT = "featureselect.tc";
-TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
-TC.Consts.event.CHANGE = 'change.tc';
+TC.Consts.event.FEATURESSELECT = "featuresselect.tc";
+TC.Consts.event.FEATURESUNSELECT = "featuresunselect.tc";
+TC.Consts.event.CHANGE = 'change';
 
 (function () {
 
@@ -17,7 +17,10 @@ TC.Consts.event.CHANGE = 'change.tc';
 
         TC.Control.apply(self, arguments);
 
-        self.__firstRender = $.Deferred();
+        if (!Modernizr.inputtypes.color && !window.CP) {
+            TC.loadCSS(TC.apiLocation + 'lib/color-picker/color-picker.min.css');
+            TC.syncLoadJS(TC.apiLocation + 'lib/color-picker/color-picker.min.js');
+        }
 
         self.styles = $.extend(true, TC.Cfg.styles.selection, self.options.styles);
         self.styles.text = self.styles.text || {
@@ -30,8 +33,6 @@ TC.Consts.event.CHANGE = 'change.tc';
         self._classSelector = '.' + self.CLASS;
 
         self.wrap = new TC.wrap.control.Modify(self);
-
-        self._layerPromise = $.Deferred();
     };
 
     TC.inherit(TC.control.Modify, TC.Control);
@@ -48,11 +49,11 @@ TC.Consts.event.CHANGE = 'change.tc';
     }
 
     const setFeatureSelectedState = function (ctl, features) {
-        ctl._$deleteBtn.prop('disabled', features.length === 0);
-        ctl._$joinBtn.prop('disabled', features.length < 2);
-        ctl._$splitBtn.prop('disabled', features.filter(complexGeometryFilter).length === 0);
+        ctl._deleteBtn.disabled = features.length === 0;
+        ctl._joinBtn.disabled = features.length < 2;
+        ctl._splitBtn.disabled = features.filter(complexGeometryFilter).length === 0;
         ctl.displayLabelText();
-    }
+    };
 
     const styleFunction = function (feature, mapStyles) {
         var result;
@@ -118,62 +119,70 @@ TC.Consts.event.CHANGE = 'change.tc';
     };
 
     ctlProto.register = function (map) {
-        var self = this;
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
+        const result = TC.Control.prototype.register.call(self, map);
         if (self.options.layer) {
 
             self.setLayer(self.options.layer);
 
             map
                 .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
-                    $.when(self.getLayer(), self.renderPromise()).then(function (layer) {
+                    Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
+                        const layer = objects[0];
                         if (e.layer === layer) {
-                            self._$selectBtn.prop('disabled', false);
-                            self._$textBtn.prop('disabled', false);
+                            self._selectBtn.disabled = false;
+                            self._textBtn.disabled = false;
                         }
                     });
                 })
                 .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
-                    $.when(self.getLayer(), self.renderPromise()).then(function (layer) {
-                        if (e.layer === layer) {
-                            if (e.feature) {
-                                self.unselectFeatures([e.feature]);
+                    const layer = e.layer;
+                    const feature = e.feature;
+                    Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
+                        if (layer === objects[0]) {
+                            if (feature) {
+                                self.unselectFeatures([feature]);
                             }
                             else {
                                 self.unselectFeatures();
                             }
                             setFeatureSelectedState(self, self.getSelectedFeatures());
                             if (self.layer.features.length === 0) {
-                                self._$selectBtn.prop('disabled', true);
+                                self._selectBtn.disabled = true;
                                 self.setTextMode(false);
-                                self._$textBtn.prop('disabled', true);
+                                self._textBtn.disabled = true;
                             }
                         }
                     });
                 });
 
-            self
-                .on(TC.Consts.event.FEATURESSELECT, function (e) {
-                    const selectedFeatures = self.getSelectedFeatures();
-                    setFeatureSelectedState(self, selectedFeatures);
-                    //setFeatureUnselectedStyle(self, self.layer.features.filter(function (feature) {
-                    //    return selectedFeatures.indexOf(feature) < 0;
-                    //}));
-                    //setFeatureSelectedStyle(self, e.features);
-
-                })
-                .on(TC.Consts.event.FEATURESUNSELECT, function (e) {
-                    setFeatureSelectedState(self, self.getSelectedFeatures());
-                    //setFeatureUnselectedStyle(self, e.features);
+            const featureSelectUpdater = function () {
+                const selectedFeatures = self.getSelectedFeatures();
+                setFeatureSelectedState(self, selectedFeatures);
+                const unselectedFeatures = self.layer.features.filter(function (feature) {
+                    return selectedFeatures.indexOf(feature) < 0;
                 });
+                unselectedFeatures.forEach(function (feature) {
+                    feature.toggleSelectedStyle(false);
+                });
+                selectedFeatures.forEach(function (feature) {
+                    feature.toggleSelectedStyle(true);
+                });
+            };
+            self
+                .on(TC.Consts.event.FEATURESSELECT, featureSelectUpdater)
+                .on(TC.Consts.event.FEATURESUNSELECT, featureSelectUpdater);
         }
+
+        return result;
     };
 
     ctlProto.render = function (callback) {
         const self = this;
 
         const renderCallback = function () {
-            self._$selectBtn = self._$div.find('.' + self.CLASS + '-btn-select').on(TC.Consts.event.CLICK, function (e) {
+            self._selectBtn = self.div.querySelector('.' + self.CLASS + '-btn-select');
+            self._selectBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
                 if (!e.target.disabled) {
                     if (self.isActive) {
                         self.deactivate();
@@ -183,31 +192,31 @@ TC.Consts.event.CHANGE = 'change.tc';
                     }
                 }
             });
-            self._$deleteBtn = self._$div.find('.' + self.CLASS + '-btn-delete').on(TC.Consts.event.CLICK, function () {
+            self._deleteBtn = self.div.querySelector('.' + self.CLASS + '-btn-delete');
+            self._deleteBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.deleteSelectedFeatures();
             });
-            self._$textBtn = self._$div.find('.' + self.CLASS + '-btn-text')
-                .on(TC.Consts.event.CLICK, function () {
-                    self.setTextMode(!self.textActive);
-                });
-            self._$joinBtn = self._$div.find('.' + self.CLASS + '-btn-join');
-            self._$splitBtn = self._$div.find('.' + self.CLASS + '-btn-split');
-            self._$text = self._$div.find('input.' + self.CLASS + '-txt')
-                .on('input.tc', function (e) {
-                    self.labelFeatures(e.target.value);
-                });
-            self._$styleSection = self._$div.find('.' + self.CLASS + '-style');
+            self._textBtn = self.div.querySelector('.' + self.CLASS + '-btn-text');
+            self._textBtn.addEventListener(TC.Consts.event.CLICK, function () {
+                self.setTextMode(!self.textActive);
+            });
+            self._joinBtn = self.div.querySelector('.' + self.CLASS + '-btn-join');
+            self._splitBtn = self.div.querySelector('.' + self.CLASS + '-btn-split');
+            self._textInput = self.div.querySelector('input.' + self.CLASS + '-txt');
+            self._textInput.addEventListener('input', function (e) {
+                self.labelFeatures(e.target.value);
+            });
+            self._styleSection = self.div.querySelector('.' + self.CLASS + '-style');
 
-            self._$fontColorPicker = self._$div.find(self._classSelector + '-fnt-c').on(TC.Consts.event.CHANGE, function (e) {
+            self._fontColorPicker = self.div.querySelector(self._classSelector + '-fnt-c');
+            self._fontColorPicker.addEventListener(TC.Consts.event.CHANGE, function (e) {
                 self.setFontColor(e.target.value);
             });
 
-            self._$fontSizeSelector = self._$div.find('.' + self.CLASS + '-fnt-s')
-                .on(TC.Consts.event.CHANGE, function (e) {
-                    self.setFontSize(e.target.value);
-                });
-
-            self.__firstRender.resolve();
+            self._fontSizeSelector = self.div.querySelector('.' + self.CLASS + '-fnt-s');
+            self._fontSizeSelector.addEventListener(TC.Consts.event.CHANGE, function (e) {
+                self.setFontSize(e.target.value);
+            });
 
             if ($.isFunction(callback)) {
                 callback();
@@ -221,59 +230,66 @@ TC.Consts.event.CHANGE = 'change.tc';
             labelOutlineWidth: self.styles.text.labelOutlineWidth
         };
 
+        var promise;
         if (Modernizr.inputtypes.color) {
-            self.renderData(renderObject, renderCallback);
+            promise = self._set1stRenderPromise(self.renderData(renderObject, renderCallback));
         }
         else {
-            // El navegador no soporta input[type=color], cargamos polyfill
-            TC.loadJS(
-                !$.fn.spectrum,
-                TC.apiLocation + 'lib/spectrum/spectrum.min.js',
-                function () {
-                    TC.loadCSS(TC.apiLocation + 'lib/spectrum/spectrum.css');
-                    self.renderData(renderObject, function () {
-                        self._$div.find('input[type=color]').spectrum({
-                            preferredFormat: 'hex',
-                            showPalette: true,
-                            palette: [],
-                            selectionPalette: [],
-                            cancelText: self.getLocaleString('cancel'),
-                            chooseText: self.getLocaleString('ok'),
-                            replacerClassName: self.CLASS + '-str-c'
-                        });
+            // El navegador no soporta input[type=color], usamos polyfill
+            promise = self._set1stRenderPromise(self.renderData(renderObject, function () {
+                const input = self.div.querySelector('input[type=color]');
+                input.style.backgroundColor = input.value;
+                input.style.color = 'transparent';
+                const picker = new CP(input, 'click', document.body);
 
-                        renderCallback();
+                input.onclick = function (e) {
+                    e.preventDefault();
+                };
+
+                // Evitamos que salga el teclado virtual en iOS
+                input.onfocus = function (e) {
+                    this.blur();
+                };
+
+                input.onchange = function (e) {
+                    this.style.backgroundColor = this.value;
+                };
+                self.map.loaded(function () {
+                    picker.on("change", function (color) {
+                        self.setFontColor('#' + color);
                     });
-                }
-            )
-        }
-    };
+                });
 
-    ctlProto.renderPromise = function () {
-        return this.__firstRender.promise();
+                renderCallback();
+            }));
+        }
+        return promise;
     };
 
     ctlProto.activate = function () {
-        var self = this;
-        self._$selectBtn.addClass(TC.Consts.classes.ACTIVE);
+        const self = this;
+        self._selectBtn.classList.add(TC.Consts.classes.ACTIVE);
         TC.Control.prototype.activate.call(self);
         self.wrap.activate(self.mode);
     };
 
     ctlProto.deactivate = function () {
-        var self = this;
-        if (self._$selectBtn) {
-            self._$selectBtn.removeClass(TC.Consts.classes.ACTIVE);
-            //setFeatureUnselectedStyle(self, self.getSelectedFeatures());
-        }
+        const self = this;
         TC.Control.prototype.deactivate.call(self);
-        if (self._$selectBtn) {
+        if (self._selectBtn) {
             setFeatureSelectedState(self, []);
         }
         if (self.wrap) {
             self.wrap.deactivate();
         }
-        //self.$events.trigger($.Event(TC.Consts.event.DRAWCANCEL, { ctrl: self }));
+        //self.trigger(TC.Consts.event.DRAWCANCEL, { ctrl: self });
+        if (self._selectBtn) {
+            self._selectBtn.classList.remove(TC.Consts.classes.ACTIVE);
+            self.layer.features.forEach(function (feature) {
+                feature.toggleSelectedStyle(false);
+            });
+            //setFeatureUnselectedStyle(self, self.getSelectedFeatures());
+        }
     };
 
     ctlProto.clear = function () {
@@ -309,11 +325,6 @@ TC.Consts.event.CHANGE = 'change.tc';
         else {
             self.deactivate();
         }
-
-        var event = activate ? TC.Consts.event.CONTROLACTIVATE : TC.Consts.event.CONTROLDEACTIVATE;
-        if (self.map) {
-            self.map.$events.trigger($.Event(event, { control: self }));
-        }
         return self;
     };
 
@@ -321,24 +332,29 @@ TC.Consts.event.CHANGE = 'change.tc';
         var self = this;
         // Se ha instanciado un control sin capa asociada
         if (self.options && typeof self.options.layer === 'boolean' && !self.options.layer) {
-            return null;
+            return Promise.resolve(null);
         }
-        return self.layer ? self.layer : self._layerPromise;
+        if (self.layer) {
+            return Promise.resolve(self.layer);
+        }
+        return self._layerPromise;
     };
 
     ctlProto.setLayer = function (layer) {
         var self = this;
         if (self.map) {
-            if (typeof (layer) === "string") {
-                self.map.loaded(function () {
-                    self.layer = self.map.getLayer(layer);
-                    self._layerPromise.resolve(self.layer);
-                });
-            }
-            else {
-                self.layer = layer;
-                self._layerPromise.resolve(self.layer);
-            }
+            self._layerPromise = new Promise(function (resolve, reject) {
+                if (typeof (layer) === "string") {
+                    self.map.loaded(function () {
+                        self.layer = self.map.getLayer(layer);
+                        resolve(self.layer);
+                    });
+                }
+                else {
+                    self.layer = layer;
+                    resolve(self.layer);
+                }
+            });
         }
     };
 
@@ -411,8 +427,20 @@ TC.Consts.event.CHANGE = 'change.tc';
     ctlProto.setTextMode = function (active) {
         const self = this;
         self.textActive = active;
-        self._$textBtn.toggleClass(TC.Consts.classes.ACTIVE, active);
-        self._$styleSection.toggleClass(TC.Consts.classes.HIDDEN, !active);
+        if (active) {
+            self._textBtn.classList.add(TC.Consts.classes.ACTIVE);
+            self._textBtn.classList.add(active);
+        }
+        else {
+            self._textBtn.classList.remove(TC.Consts.classes.ACTIVE);
+            self._textBtn.classList.remove(active);
+        }
+        if (active) {
+            self._styleSection.classList.remove(TC.Consts.classes.HIDDEN);
+        }
+        else {
+            self._styleSection.classList.add(TC.Consts.classes.HIDDEN);
+        }
         self.displayLabelText();
         return self;
     };
@@ -425,12 +453,13 @@ TC.Consts.event.CHANGE = 'change.tc';
         color = TC.Util.colorArrayToString(color);
         outlineColor = outlineColor || self.getLabelOutlineColor(color);
         self.renderPromise().then(function () {
-            self._$fontColorPicker.val(color);
+            self._fontColorPicker.value = color;
+            self._textInput.style.color = color;
+            self._textInput.style.textShadow = '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor;
             if (!Modernizr.inputtypes.color) {
-                self._$fontColorPicker.spectrum('set', color);
+                self._fontColorPicker.style.backgroundColor = color;
+                self._fontColorPicker.blur();
             }
-            self._$text.css('color', color);
-            self._$text.css('text-shadow', '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor);
         });
         return self;
     };
@@ -458,8 +487,8 @@ TC.Consts.event.CHANGE = 'change.tc';
         const sizeValue = parseInt(size);
         if (sizeValue !== Number.NaN) {
             self.renderPromise().then(function () {
-                self._$fontSizeSelector.val(sizeValue);
-                self._$text.css('font-size', sizeValue + 'pt');
+                self._fontSizeSelector.value = sizeValue;
+                self._textInput.style.fontSize = sizeValue + 'pt';
             });
         }
         return self;
@@ -493,10 +522,10 @@ TC.Consts.event.CHANGE = 'change.tc';
                 const r = parseInt(matchForLong[1], 16);
                 const g = parseInt(matchForLong[2], 16);
                 const b = parseInt(matchForLong[3], 16);
-                return (r + g + b) / 3 < 128 ? '#fff' : '#000';
+                return (r + g + b) / 3 < 128 ? '#ffffff' : '#000000';
             }
         }
-        return '#fff';
+        return '#ffffff';
     };
 
     ctlProto.displayLabelText = function () {
@@ -521,7 +550,7 @@ TC.Consts.event.CHANGE = 'change.tc';
             self
                 .setFontSizeWatch(size)
                 .setFontColorWatch(color)
-                ._$text.val(text);
+                ._textInput.value = text;
         });
         return self;
     };

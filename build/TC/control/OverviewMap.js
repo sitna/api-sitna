@@ -9,12 +9,9 @@ TC.control.OverviewMap = function () {
 
     TC.Control.apply(self, arguments);
 
-    self.$events = $(self);
     self.isLoaded = false;
 
     self.layer = null;
-
-    self.wrap = new TC.wrap.control.OverviewMap(self);
 };
 
 TC.inherit(TC.control.OverviewMap, TC.Control);
@@ -32,9 +29,7 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
     }
 
     ctlProto.register = function (map) {
-        var self = this;
-
-        TC.Control.prototype.register.call(self, map);
+        const self = this;
 
         const instanceLayer = function (layer) {
             var lyr;
@@ -78,53 +73,66 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
 
         const registerLayer = function (layer) {
             var lyr;
-            
-            lyr = instanceLayer(layer);            
+
+            lyr = instanceLayer(layer);
 
             return lyr;
         };
 
-        map.loaded(function () {
-            self.defaultLayer = registerLayer(self.options.layer);
-            self.layer = registerLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.options.availableBaseLayers[0]);
-            self.wrap.register(map);
+        const resetOVMapProjection = function (e) {
+            const resetOptions = {};
+            self.layer.getCapabilitiesPromise().then(function () {
+                if (!self.layer.isCompatible(map.crs) && self.layer.wrap.getCompatibleMatrixSets(map.crs).length === 0) {
+                    resetOptions.layer = self.layer.getFallbackLayer();
+                }
+                self.wrap.reset(resetOptions);
+            });
+        };
 
-            const resetOVMapProjection = function (e) {
-                const resetOptions = {};
-                self.layer.getCapabilitiesPromise().then(function () {
-                    if (!self.layer.isCompatible(map.crs) && self.layer.wrap.getCompatibleMatrixSets(map.crs).length === 0) {
-                        resetOptions.layer = self.layer.getFallbackLayer();
-                    }
-                    self.wrap.reset(resetOptions);
+        const changeBaseLayer = function (e) {
+            const self = this;
+
+            if (self.map.baseLayer.type === TC.Consts.layerType.WMS || self.map.baseLayer.type === TC.Consts.layerType.WMTS || self.options.layer) {
+                var newLayer = self.map.baseLayer.overviewMapLayer || self.options.layer;
+                if (self.layer.id !== newLayer) {
+                    var overviewMapLayer = registerLayer(newLayer);
+                    self.wrap.reset({
+                        layer: overviewMapLayer
+                    }).then(function (layer) {
+                        self.layer = layer;
+                    });
+                } else if (TC.Consts.event.PROJECTIONCHANGE.indexOf(e.type) > -1) {
+                    self.wrap.reset({
+                        layer: self.layer
+                    }).then(function (layer) {
+                        self.layer = layer;
+                    });
+                }
+            }
+        };
+
+        const result = new Promise(function (resolve, reject) {
+            TC.Control.prototype.register.call(self, map)
+                .then(function (ctl) {
+                    self.wrap = new TC.wrap.control.OverviewMap(self);
+                    map.loaded(function () {
+                        self.defaultLayer = registerLayer(self.options.layer);
+                        self.layer = registerLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.options.availableBaseLayers[0]);
+
+                        self.wrap.register(map);                        
+
+                        resetOVMapProjection({ crs: map.crs });
+
+                        map.on(TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.BASELAYERCHANGE, changeBaseLayer.bind(self));
+                    });
+                    resolve(ctl);
+                })
+                .catch(function (err) {
+                    reject(err);
                 });
-            };
-
-            resetOVMapProjection({ crs: map.crs });
-
-            const changeBaseLayer = function (e) {
-                const self = this;
-
-                if (self.map.baseLayer.type === TC.Consts.layerType.WMS || self.map.baseLayer.type === TC.Consts.layerType.WMTS) {                    
-                    var newLayer = self.map.baseLayer.overviewMapLayer || self.options.layer;
-                    if (self.layer.id !== newLayer) {
-                        var overviewMapLayer = registerLayer(newLayer);
-                        self.wrap.reset({
-                            layer: overviewMapLayer
-                        }).then(function (layer) {
-                            self.layer = layer;
-                        });
-                    } else if (TC.Consts.event.PROJECTIONCHANGE.indexOf(e.type) > -1) {
-                        self.wrap.reset({
-                            layer: self.layer
-                        }).then(function (layer) {
-                            self.layer = layer;
-                        });
-                    }
-                }                
-            };
-            
-            map.on(TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.BASELAYERCHANGE, changeBaseLayer.bind(self));            
         });
+
+        return result;
     };
 
     ctlProto.loaded = function (callback) {
@@ -135,7 +143,7 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
                 callback();
             }
             else {
-                self.$events.on(TC.Consts.event.MAPLOAD, callback);
+                self.on(TC.Consts.event.MAPLOAD, callback);
             }
         }
     };

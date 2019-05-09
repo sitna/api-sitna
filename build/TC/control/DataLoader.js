@@ -24,9 +24,6 @@ TC.control.DataLoader = function () {
             }
         }
     ];
-    self._ctlDeferreds.length = 2;
-    self._ctlDeferreds[0] = $.Deferred();
-    self._ctlDeferreds[1] = $.Deferred();
     self.defaultSelection = 0;
 };
 
@@ -38,7 +35,7 @@ TC.inherit(TC.control.DataLoader, TC.control.TabContainer);
     ctlProto.register = function (map) {
         const self = this;
         self.title = self.getLocaleString('addMaps');
-        TC.control.TabContainer.prototype.register.call(self, map);
+        return TC.control.TabContainer.prototype.register.call(self, map);
     };
 
 })();

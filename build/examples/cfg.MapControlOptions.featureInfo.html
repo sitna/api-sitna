@@ -9,29 +9,27 @@
 <body>
     <div class="instructions">
         <p>Ejemplo de uso de <a href="../doc/classes/SITNA.cfg.MapControlOptions.html#property_featureInfo">SITNA.cfg.MapControlOptions.featureInfo</a>.</p>
-        <p>Obtención de información de superficies de cubierta terrestre.</p>
+        <p>Obtención de información de los últimos terremotos.</p>
     </div>
     <script src="../"></script>
     <script type="text/javascript" src="examples.js"></script>
 
     <div id="mapa"></div>
     <script>
-        // Activamos el proxy para poder acceder a servicios de otro dominio.
-        SITNA.Cfg.proxy = "proxy.ashx?";
         // Añadimos el control featureInfo.
         SITNA.Cfg.controls.featureInfo = true;
         // Añadimos una capa WMS sobre la que hacer las consultas.
         SITNA.Cfg.workLayers = [
             {
-                id: "ocupacionSuelo",
-                title: "Ocupación del suelo",
+                id: "terremotos",
+                title: "Terremotos últimos 365 días",
                 type: SITNA.Consts.layerType.WMS,
-                url: "http://www.ign.es/wms-inspire/ocupacion-suelo",
-                layerNames: ["LC.LandCoverSurfaces"]
+                url: "https://www.ign.es/wms-inspire/geofisica",
+                layerNames: ["Ultimos365dias"]
             }
         ];
         var map = new SITNA.Map("mapa");
     </script>
-	
+
 </body>
 </html>

@@ -11,198 +11,214 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     var capabilitiesPromises = {};
 
-    var isWebWorkerEnabled = !TC.isLegacy && window.hasOwnProperty('Worker');
-    var wwDeferred = $.Deferred();
-    if (isWebWorkerEnabled) {
-        // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
-        var wwLocation = TC.apiLocation + 'TC/workers/tc-caps-web-worker.js';
-        if (TC.Util.isSameOrigin(TC.apiLocation)) {
-            wwDeferred.resolve(wwLocation);
+    const isWebWorkerEnabled = !TC.isLegacy && window.hasOwnProperty('Worker');
+    const wwPromise = new Promise(function (resolve, reject) {
+        if (isWebWorkerEnabled) {
+            // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
+            var wwLocation = TC.apiLocation + 'TC/workers/tc-caps-web-worker.js';
+            if (TC.Util.isSameOrigin(TC.apiLocation)) {
+                resolve(wwLocation);
+            }
+            else {
+                TC.ajax({
+                    url: wwLocation,
+                    method: 'GET',
+                    responseType: 'text'
+                }).then(
+                    function (data) {
+                        var blob = new Blob([data], { type: "text/javascript" });
+                        var url = window.URL.createObjectURL(blob);
+                        resolve(url);
+                    },
+                    function (e) {
+                        reject(Error(e));
+                    }
+                    );
+            }
+        }
+    });
+
+    const parseCapabilities = function (layer, data) {
+        var capabilities;
+
+        if (data.documentElement) {
+
+            const serviceException = data.getElementsByTagName('ServiceException')[0];
+            if (serviceException) {
+                capabilities = { error: serviceException.textContent };
+            }
+            else {
+                var format = (layer.type === TC.Consts.layerType.WMTS) ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
+                capabilities = format.read(data);
+
+                //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
+                if (layer.type === TC.Consts.layerType.WMTS) {
+                    if (capabilities.Contents && capabilities.Contents.Layer) {
+                        const layerCollection = data.getElementsByTagName('Layer');
+                        for (var i = 0, len = layerCollection.length; i < len; i++) {
+                            const curXmlLy = layerCollection[i];
+                            var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
+                            var id = nd.firstChild.data;
+
+                            var capLy = capabilities.Contents.Layer.filter(function (ly) {
+                                return ly.Identifier == id;
+                            });
+
+                            if (capLy.length) {
+                                capLy = capLy[0];
+                                for (var j = 0; j < capLy.TileMatrixSetLink.length; j++) {
+                                    var capLink = capLy.TileMatrixSetLink[j];
+                                    matrixId = capLink.TileMatrixSet;
+
+                                    xmlLink = curXmlLy.getElementsByTagName('TileMatrixSetLink').each(function (ix, curLink) {
+                                        return $(curLink).find("TileMatrixSet:first").text() == matrixId;
+                                    });
+
+                                    if (xmlLink.length) {
+                                        xmlLink = xmlLink[0];
+                                        capLink.TileMatrixSetLimits = [];
+                                        const tmlCollection = xmlLink.getElementsByTagName('TileMatrixLimits');
+                                        for (var k = 0, kk = tmlCollection.length; k < kk; k++) {
+                                            const lim = tmlCollection[k];
+                                            capLink.TileMatrixSetLimits.push({
+                                                TileMatrix: lim.getElementsByTagName('TileMatrix')[0].textContent,
+                                                MinTileRow: parseInt(lim.getElementsByTagName('MinTileRow')[0].textContent),
+                                                MinTileCol: parseInt(lim.getElementsByTagName('MinTileCol')[0].textContent),
+                                                MaxTileRow: parseInt(lim.getElementsByTagName('MaxTileRow')[0].textContent),
+                                                MaxTileCol: parseInt(lim.getElementsByTagName('MaxTileCol')[0].textContent)
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            storeCapabilities(layer, capabilities);
+            return Promise.resolve(capabilities);
         }
         else {
-            $.ajax({
-                url: wwLocation,
-                type: 'GET',
-                dataType: 'text'
-            }).then(
-                function (data) {
-                    var blob = new Blob([data], { type: "text/javascript" });
-                    var url = window.URL.createObjectURL(blob);
-                    wwDeferred.resolve(url);
-                },
-                function (e) {
-                    wwDeferred.reject();
+            return new Promise(function (resolve, reject) {
+                if (isWebWorkerEnabled && typeof data === 'string') {
+                    wwPromise.then(function (wwUrl) {
+                        var worker = new Worker(wwUrl);
+                        worker.onmessage = function (e) {
+                            if (e.data.state === 'success') {
+                                capabilities = e.data.capabilities;
+
+                                // GLS: Sólo almacenamos si el capabilities es correcto
+                                storeCapabilities(layer, capabilities);
+                            }
+                            else {
+                                capabilities = {
+                                    error: 'Web worker error'
+                                }
+                                reject(capabilities.error);
+                            }
+
+                            resolve(capabilities);
+                            worker.terminate();
+                        };
+                        worker.postMessage({
+                            type: layer.type,
+                            text: data
+                        });
+                    })
                 }
-            );
+                else {
+                    capabilities = data;
+                    resolve(capabilities);
+                }
+            });
         }
-    }
-
-    var getRequest = function (url, retry) {
-        TC._capabilitiesRequests = TC._capabilitiesRequests || [];
-
-        var result = TC._capabilitiesRequests[url] = (!retry && TC._capabilitiesRequests[url]) || $.ajax({
-            url: retry ? TC.proxify(url) : url,
-            type: 'GET',
-            dataType: isWebWorkerEnabled ? 'text' : 'xml'
-        });
-        return result;
     };
 
-    /*
-     *  getCapabilities: Obtiene el capabilities de la capa layer, y llama a los callback correspondientes
-     */
-    var getCapabilities = function (layer, success, error) {
-        var serviceUrl = layer.url;
-
-        var processingCapabilities = false;
-
-        // GLS: se resuelve cuando terminemos de procesar el capabilities
-        layer._capabilitiesPromise = $.Deferred();
-
-        var capabilitiesFromUrl = capabilitiesPromises[serviceUrl];
-        if (capabilitiesFromUrl) {
-            processingCapabilities = true;
+    const capabilitiesError = function (layer, reason) {
+        const msg = 'No se pudo obtener el documento de capacidades del servicio ' + layer.url + ': [' + reason + ']';
+        TC.error(msg);
+        if (layer.map) {
+            layer.map.trigger(TC.Consts.event.LAYERERROR, { layer: layer, reason: 'couldNotGetCapabilities' });
         }
-        else {
-            capabilitiesFromUrl = capabilitiesPromises[serviceUrl] = $.Deferred();
-        }
+        layer.wrap.setLayer(null);
+        return msg;
+    };
 
-        var processedCapabilities = function (capabilities) {
-            if (capabilities.error) {
-                capabilitiesError(layer, capabilities.error);
-                layer._capabilitiesPromise.reject();
-                return;
-            }
-            // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
-            // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
-            layer.capabilities = layer.capabilities || capabilities;
-
-
-            if (layer.capabilitiesUrl_) {
-                // GLS: Si la capa ya ha sido gestionada, registramos este valor en el capabilities del servicio para poder asignarlo a 
-                //      futuras capas hermanas sin tener que gestionarlas de nuevo.
-                capabilities._capabilitiesURL = layer.capabilitiesUrl_;
-            } else {
-                // GLS: Si la capa no tiene función para la URL del capabilities es porque ya lo hemos gestionado para una capa hermana, 
-                //      por ello asigno el valor ya almacenado
-                layer.capabilitiesUrl_ = capabilities._capabilitiesURL;
-            }
-
-            var actualUrl = layer.getGetMapUrl();
-            TC.capabilities[layer.options.url] = TC.capabilities[layer.options.url] || capabilities;
-            TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
-
-            _createLayer(layer);
-
-            layer._capabilitiesPromise.resolve(capabilities);
-        };
-
-        // En el caso de que la URL del capabilities no sea la misma que la del GetMap, no puedo reutilizar nada porque no sé con qué URL funciona al final.
-        //if (processingCapabilities) {
-        //    // Ya se está procesando el capabilities en otra capa, no es necesario seguir
-
-        //    capabilitiesFromUrl.then(processedCapabilities);
-
-        //    // GLS: Buscamos en capas y mapas base cargados, una capa hermana de la cual obtener el método de cargas (GFI, GetFEature...) ya gestionado.
-        //    var sameService = layer.getSiblingLoadedLayer.call(layer, function (elem) {
-        //        return $.isFunction(elem.capabilitiesUrl_);
-        //    });
-
-        //    if (sameService) {
-        //        self.capabilitiesUrl_ = sameService.capabilitiesUrl_;
-        //    }
-        //    return;
-        //}
-
-        var url;
-        var params = {};
-        if (layer.type === TC.Consts.layerType.WMTS) {
-            if (layer.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
-                var suffix = '/1.0.0/WMTSCapabilities.xml';
-                const suffixIdx = serviceUrl.indexOf(suffix);
-                if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
-                    if (serviceUrl[serviceUrl.length - 1] === '/') {
-                        suffix = suffix.substr(1);
+    const getCapabilitiesOnline = function (layer) {
+        const serviceUrl = layer.url;
+        return new Promise(function (resolve, reject) {
+            var url;
+            const params = {};
+            if (layer.type === TC.Consts.layerType.WMTS) {
+                if (layer.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
+                    var suffix = '/1.0.0/WMTSCapabilities.xml';
+                    const suffixIdx = serviceUrl.indexOf(suffix);
+                    if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
+                        if (serviceUrl[serviceUrl.length - 1] === '/') {
+                            suffix = suffix.substr(1);
+                        }
+                        url = serviceUrl + suffix;
                     }
-                    url = serviceUrl + suffix;
+                    else {
+                        url = serviceUrl;
+                    }
                 }
                 else {
                     url = serviceUrl;
+                    params.SERVICE = 'WMTS';
+                    params.VERSION = '1.0.0';
+                    params.REQUEST = 'GetCapabilities';
                 }
             }
             else {
                 url = serviceUrl;
-                params.SERVICE = 'WMTS';
-                params.VERSION = '1.0.0';
+                params.SERVICE = 'WMS';
+                params.VERSION = '1.3.0';
                 params.REQUEST = 'GetCapabilities';
             }
-        }
-        else {
-            url = serviceUrl;
-            params.SERVICE = 'WMS';
-            params.VERSION = '1.3.0';
-            params.REQUEST = 'GetCapabilities';
-        }
-        url = url + '?' + $.param($.extend(params, layer.queryParams));
-        TC._capabilitiesRequests = TC._capabilitiesRequests || {};
+            url = url + '?' + $.param($.extend(params, layer.queryParams));
 
-        // GlS: Completamos las urls para las distintas funciones de una capa (GFI, getLegend...)
-        //      además del capabilities para almacenar de nuevo en localStorage
-        var getCapabilitesUrlPromise = layer.setCapabilitiesUrl_(url, success, error);
-
-        // Obtenemos el capabilities almacenado en caché
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + serviceUrl)
-                .then(function (value) {
-                    if (value) {
-                        capabilitiesPromises[layer.url].then(processedCapabilities);
-
-                        getCapabilitesUrlPromise.then(function () {
-                            capabilitiesPromises[layer.url].resolve(value);
-                        });
-                    }
-                });
-        });
-
-        getCapabilitesUrlPromise.then(function (state) {
-            if (state === layer.capabilitiesState_.PENDING) {
-                // GLS:
-                // Durante las pruebas no hemos obtenido el capabilities, por tanto: 
-                //      1. Llamo al método que hemos asignado durante las pruebas. Proporciona la URL a la cual hacer la petición
-                getRequest(layer.capabilitiesUrl_(url)).then(function (data) {
-                    success(layer, data);
-                }, function (jqXHR, textStatus, errorThrown) {
-                    getRequest(url, true).then(function (data) {
-                        success(layer, data);
-                    }, function (msg) {
-                        error(layer, msg.responseText);
+            layer.toolProxification.fetch(url, { retryAttempts: 2 }).then(function (data) {
+                parseCapabilities(layer, data.responseText)
+                    .then(function (capabilities) {
+                        if (capabilities.error) {
+                            reject(Error(capabilitiesError(layer, capabilities.error)));
+                            return;
+                        }
+                        resolve(capabilities);
+                    })
+                    .catch(function (error) {
+                        reject(Error(error));
                     });
-                });
-            }
-        });
+            }).catch(function (dataError) {
+                reject(Error(capabilitiesError(layer, dataError)));
+            });
 
-        $.when(getCapabilitesUrlPromise, capabilitiesFromUrl).done(function (state, capabilities) {
-            // GLS: Si el estado es done, es que durante las pruebas hemos obtenido el capabilities correctamente y 
-            //      se ha asignado el método que proporciona la URL para próximas peticiones (GFI, GetFeature...)
-            if (state === layer.capabilitiesState_.DONE && capabilities) {
-                processedCapabilities(capabilities);
-            } else if (capabilities) {
-                processedCapabilities(capabilities);
-            }
         });
     };
 
-    var capabilitiesError = function (layer, reason) {
-        var msg = 'No se pudo obtener el documento de capacidades de servicio ' + layer.url + ': [' + reason + ']';
-        layer._capabilitiesPromise.reject(msg);
-        TC.error(msg);
-        if (layer.map) {
-            layer.map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: layer, reason: 'couldNotGetCapabilities' }));
-        }
-        layer.wrap.setLayer(null);
+    const getCapabilitiesFromStorage = function (layer) {
+        return new Promise(function (resolve, reject) {
+            // Obtenemos el capabilities almacenado en caché
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + layer.url)
+                    .then(function (value) {
+                        if (value) {
+                            resolve(value);
+                        }
+                        else {
+                            reject('Capabilities not in storage');
+                        }
+                    })
+                    .catch(function () {
+                        reject('Undefined storage error');
+                    });
+            });
+        });
     };
 
-    var storeCapabilities = function (layer, capabilities) {
+    const storeCapabilities = function (layer, capabilities) {
         TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
 
             // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
@@ -215,14 +231,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     return;
                 } else {
 
-                    $.when(layer._capabilitiesPromise).then(function () {
-                        // GLS: Para almacenar el capabilities en local storage elimino la propiedad que contiene la función de peticiones
-                        var fn = capabilities._capabilitiesURL;
-                        delete capabilities._capabilitiesURL;
-
-                        localforage.setItem(capKey, capabilities).then(function () {
-                            capabilities._capabilitiesURL = fn;
-                        }).catch(function (err) {
+                    layer.getCapabilitiesPromise().then(function () {
+                        localforage.setItem(capKey, capabilities).then(function () { }).catch(function (err) {
                             console.log(err);
                         });
                     });
@@ -237,118 +247,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         });
     };
 
-    var parseCapabilities = function (layer, data) {
-        var capabilities;
-
-        if (data.documentElement) {
-
-            if ($(data).find("ServiceException").length > 0) {
-                capabilities = { error: $(data).find("ServiceException").text() };
-            }
-            else {
-                var format = (layer.type === TC.Consts.layerType.WMTS) ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
-                capabilities = format.read(data);
-
-                //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
-                if (layer.type === TC.Consts.layerType.WMTS) {
-                    if (capabilities.Contents && capabilities.Contents.Layer) {
-                        $("Layer", data).each(function (ix, curXmlLy) {
-                            var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
-                            var id = nd.firstChild.data;
-                            var xmlLy = $(curXmlLy);
-
-                            var capLy = capabilities.Contents.Layer.filter(function (ly) {
-                                return ly.Identifier == id;
-                            });
-
-                            if (capLy.length) {
-                                capLy = capLy[0];
-                                for (var i = 0; i < capLy.TileMatrixSetLink.length; i++) {
-                                    var capLink = capLy.TileMatrixSetLink[i];
-                                    matrixId = capLink.TileMatrixSet;
-
-                                    xmlLink = xmlLy.find("TileMatrixSetLink").each(function (ix, curLink) {
-                                        return $(curLink).find("TileMatrixSet:first").text() == matrixId;
-                                    });
-
-                                    if (xmlLink.length) {
-                                        xmlLink = xmlLink[0];
-                                        capLink.TileMatrixSetLimits = [];
-                                        $(xmlLink).find("TileMatrixLimits").each(function (ix, curLim) {
-                                            var lim = $(curLim);
-                                            capLink.TileMatrixSetLimits.push({
-                                                TileMatrix: lim.find("TileMatrix").text(),
-                                                MinTileRow: parseInt(lim.find("MinTileRow").text()),
-                                                MinTileCol: parseInt(lim.find("MinTileCol").text()),
-                                                MaxTileRow: parseInt(lim.find("MaxTileRow").text()),
-                                                MaxTileCol: parseInt(lim.find("MaxTileCol").text())
-                                            });
-                                        });
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
-            }
-
-            capabilitiesPromises[layer.url].resolve(capabilities);
-            storeCapabilities(layer, capabilities);
-        }
-        else {
-            if (isWebWorkerEnabled && typeof data === 'string') {
-                wwDeferred.then(function (wwUrl) {
-                    var worker = new Worker(wwUrl);
-                    worker.onmessage = function (e) {
-                        if (e.data.state === 'success') {
-                            capabilities = e.data.capabilities;
-
-                            // GLS: Sólo almacenamos si el capabilities es correcto
-                            storeCapabilities(layer, capabilities);
-                        }
-                        else {
-                            capabilities = {
-                                error: 'Web worker error'
-                            }
-                        }
-
-                        capabilitiesPromises[layer.url].resolve(capabilities);
-                        worker.terminate();
-                    };
-                    worker.postMessage({
-                        type: layer.type,
-                        text: data
-                    });
-                })
-            }
-            else {
-                capabilities = data;
-                capabilitiesPromises[layer.url].resolve(capabilities);
-            }
-        }
-    };
-
-    /*
-     *  _createLayer: Crea la capa nativa correspondiente según el tipo
-     */
-    var _createLayer = function (layer) {
-        var ollyr;
-        if (!layer.wrap.layer) {
-            switch (layer.type) {
-                case TC.Consts.layerType.GROUP:
-                    break;
-                case TC.Consts.layerType.WMTS:
-                    ollyr = _createWMTSLayer(layer);
-                    break;
-                default:
-                    ollyr = _createWMSLayer(layer);
-                    break;
-            }
-            layer.wrap.setLayer(ollyr);
-        }
-    };
-
-    var _createWMSLayer = function (layer) {
+    const _createWMSLayer = function (layer) {
 
         var layerNames = $.isArray(layer.names) ? layer.names.join(',') : layer.names;
         var format = layer.options.format;
@@ -377,12 +276,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return layer.wrap.createWMSLayer(layer.getGetMapUrl(), params, options);
     };
 
-    var _createWMTSLayer = function (layer) {
+    const _createWMTSLayer = function (layer) {
         return layer.wrap.createWMTSLayer(layer.options);
     };
 
-
-    var _getLayerNodeIndex = function _getLayerNodeIndex(layer, treeNode) {
+    const _getLayerNodeIndex = function _getLayerNodeIndex(layer, treeNode) {
 
         var result = $.inArray(treeNode.name, layer.availableNames);
         if (result === -1) {
@@ -396,7 +294,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return result;
     }
 
-    var _sortTree = function _sortTree(layer, treeNode) {
+    const _sortTree = function _sortTree(layer, treeNode) {
         var _sortFunction = function (n1, n2) {
             return _getLayerNodeIndex(layer, n2) - _getLayerNodeIndex(layer, n1);
         }
@@ -406,7 +304,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
     };
 
-    var _getLayerNamePosition = function _getLayerNamePosition(treeNode, name, counter) {
+    const _getLayerNamePosition = function _getLayerNamePosition(treeNode, name, counter) {
         var result = false;
         counter.count = counter.count + 1;
         if (treeNode.name === name) {
@@ -422,131 +320,6 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             }
         }
         return result;
-    }
-
-    var _checkByRequest = function (url, callbackOK, callbackError) {
-        var done = $.Deferred();
-
-        getRequest(url, false)
-            .done(function (data) {
-                done.resolve(true);
-
-                if (callbackOK && $.isFunction(callbackOK)) {
-                    callbackOK(data);
-                }
-            }).fail(function (error) {
-                done.resolve(false);
-
-                if (callbackError && $.isFunction(callbackError)) {
-                    callbackError(error);
-                }
-            });
-
-        return done.promise();
-    };
-
-    var _checkSSLSupport = function (url, callbackOK, callbackError) {
-        var self = this;
-
-        return _checkByRequest(url.replace(self.PROTOCOL_REGEX, "https://"), callbackOK, callbackError);
-    };
-
-    var _checkCORSSupport = function (url, callbackOK, callbackError) {
-
-        return _checkByRequest(url, callbackOK, callbackError);
-    };
-
-    var _checkIs404 = function (url, callbackOK, callbackError) {
-
-        return _checkByRequest(url, callbackOK, callbackError);
-    };
-
-    var _imageHasCORS = function (src, olImage) {
-        var done = $.Deferred();
-
-        // GLS:
-        // Analizar la respuesta de la petición para detectar un error de CORS no es posible, por tanto lo hago mediante un método un tanto rudimentario.
-        var imgCORS = document.createElement("img");
-        imgCORS.crossOrigin = "anonymous";
-
-        var onloadCallback;
-        if ($.isFunction(imgCORS.onload)) {
-            onloadCallback = imgCORS.onload;
-        }
-        imgCORS.onload = function () {
-
-            var createCanvas = function (img) {
-                var canvas = document.createElement('CANVAS');
-                var ctx = canvas.getContext('2d');
-                canvas.height = img.height;
-                canvas.width = img.width;
-                ctx.drawImage(img, 0, 0);
-
-                return canvas;
-            };
-
-            try {
-                var canvas = createCanvas(imgCORS);
-                result = canvas.toDataURL("image/png");
-
-                if (olImage) {
-                    // GLS: revisar como abstraernos de OL
-                    // GLS: en el código hay set pero parece que no es accesible
-                    olImage.image_ = imgCORS;
-                    olImage.state = ol.ImageState.LOADED;
-                    olImage.changed();
-                }
-
-                // GLS: si la exportación del canvas no da error es que el servicio cuenta con CORS.
-                done.resolve(true);
-            } catch (e) {
-                if (e.code === 18) { // GLS: 18 - SECURITY_ERR
-
-                    // GLS: si el servicio no cuenta con CORS el atributo crossOrigin = "anonymous" provoca un error al exportar el canvas.
-                    done.resolve(false);
-                } else {
-
-                    if (olImage) {
-                        // GLS: revisar como abstraernos de OL
-                        // GLS: en el código hay set pero parece que no es accesible
-                        olImage.image_ = imgCORS;
-                        olImage.state = ol.ImageState.LOADED;
-                        olImage.changed();
-                    }
-
-                    // GLS: si el error no es una excepción de seguridad lo tratamos como si tuviese CORS (ya se encargará la gestión de errores de corregirlo).
-                    done.resolve(true);
-                }
-            }
-
-            imgCORS.onload = undefined;
-            imgCORS.onerror = undefined;
-
-            if (onloadCallback && $.isFunction(onloadCallback)) {
-                onloadCallback();
-            }
-        };
-
-        var onerrorCallback;
-        if ($.isFunction(imgCORS.onerror)) {
-            onerrorCallback = imgCORS.onerror;
-        }
-        imgCORS.onerror = function () {
-
-            imgCORS.onload = undefined;
-            imgCORS.onerror = undefined;
-
-            // GLS: si el servicio no cuenta con CORS el atributo crossOrigin = "anonymous" provoca un error en la petición de la imagen.
-            done.resolve(false);
-
-            if (onerrorCallback && $.isFunction(onerrorCallback)) {
-                onerrorCallback();
-            }
-        };
-
-        imgCORS.src = src;
-
-        return done.promise();
     };
 
     /**
@@ -620,6 +393,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     TC.layer.Raster = function () {
         var self = this;
 
+        if (!TC.tool || !TC.tool.Proxification) {
+            TC.syncLoadJS(TC.apiLocation + 'TC/tool/Proxification');
+        }
+
+        this.toolProxification = new TC.tool.Proxification(TC.proxify);
+
         //esta promise se resolverá cuando el capabilities esté descargado y parseado
         //se utiliza para saber cuándo está listo el capabilities en los casos en los que se instancia el layer pero no se añade al mapa
         //porque la forma habitual de detectar esto es por los eventos del mapa (que en esos casos no saltarán)
@@ -643,6 +422,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
          * @type string
          */
         self.url = self.options.url;
+        self.capabilities = TC.capabilities[self.url];
 
         self.params = self.options.params;
         /**
@@ -690,7 +470,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         var names = TC.Util.getElementByNodeName(namedLayerElm[0], 'sld:Name');
 
                         if (names && names.length > 0) {
-                            var name = $(names[0]).text();
+                            var name = names[0].textContent;
                             self.names.push(name);
                             self.availableNames.push(name);
                         }
@@ -703,13 +483,88 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         self._capabilitiesNodes = {};
 
-
         /**
       * Árbol del documento de capabilities del servicio.
       * @property capabilities
       * @type object
       */
-        getCapabilities(self, parseCapabilities, capabilitiesError);
+        self.wrap._promise = new Promise(function (resolve, reject) {
+            /*
+             *  _createOLLayer: Crea la capa nativa correspondiente según el tipo
+             */
+            var _createOLLayer = function () {
+                var ollyr;
+                if (!self.wrap.layer) {
+                    switch (self.type) {
+                        case TC.Consts.layerType.GROUP:
+                            break;
+                        case TC.Consts.layerType.WMTS:
+                            ollyr = _createWMTSLayer(self);
+                            break;
+                        default:
+                            ollyr = _createWMSLayer(self);
+                            break;
+                    }
+                    self.wrap.setLayer(ollyr);
+                    resolve(ollyr);
+                }
+            };
+
+            const processedCapabilities = function (capabilities) {
+                // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
+                // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
+                self.capabilities = self.capabilities || capabilities;
+
+                var actualUrl = self.getGetMapUrl();
+                TC.capabilities[self.options.url] = TC.capabilities[self.options.url] || capabilities;
+                TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
+
+                _createOLLayer();
+            };
+
+            if (self.capabilities) {
+                processedCapabilities(self.capabilities);
+                self._capabilitiesPromise = Promise.resolve(self.capabilities);
+                return;
+            }
+
+            const cachePromise = capabilitiesPromises[self.url];
+            capabilitiesPromises[self.url] = self._capabilitiesPromise = cachePromise || new Promise(function (res, rej) {
+                var onlineFail = false;
+                var storageFail = false;
+                const onlinePromise = getCapabilitiesOnline(self);
+                const storagePromise = getCapabilitiesFromStorage(self);
+
+                onlinePromise
+                    .then(function (capabilities) {
+                        res(capabilities);
+                    })
+                    .catch(function (error) {
+                        onlineFail = true;
+                        if (storageFail) {
+                            rej(Error(error));
+                        }
+                    });
+                storagePromise
+                    .then(function (capabilities) {
+                        res(capabilities);
+                    })
+                    .catch(function (error) {
+                        storageFail = true;
+                        if (onlineFail) {
+                            rej(Error(error));
+                        }
+                    });
+            });
+
+            self.getCapabilitiesPromise()
+                .then(function (capabilities) {
+                    processedCapabilities(capabilities);
+                })
+                .catch(function (error) {
+                    reject(Error(error));
+                });
+        });
 
         self._disgregatedLayerNames = null;
 
@@ -728,6 +583,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         DONE: 1
     };
 
+    layerProto.CAPABILITIES_STORE_KEY_PREFIX = 'TC.capabilities.';
+
     layerProto.getByProxy_ = function (url) {
         return TC.proxify(url);
     };
@@ -742,241 +599,6 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return url;
     };
 
-    layerProto.getCapabilitiesUrl_promise_ = function () {
-        var self = this;
-
-        if (!self.capabilitiesUrl_promise_) {
-            self.capabilitiesUrl_promise_ = $.Deferred();
-        }
-
-        return self.capabilitiesUrl_promise_;
-    };
-
-    // GLS:
-    // Escenario: Visor en HTTPS + ServiceWorker 
-    // Se necesita HTTPS: 
-    // Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
-    // Durante el desarrollo, podrás usar el service worker a través de localhost, pero para implementarlo en un sitio deberás configurar HTTPS en tu servidor.     
-
-    layerProto.getCapabilitiesUrl_ServiceWorker_ = function (url) {
-        var self = this;
-
-        var layerUrl = url && url.trim() || self.url.trim();
-
-        // GLS:
-        // Lo no compatible con CORS falla de forma predeterminada:
-        // Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
-        // De manera predeterminada, obtener un recurso de una URL de terceros no será posible si esta no admite CORS.
-
-        TC.Util.consoleRegister("Escenario: Visor en HTTPS + ServiceWorker");
-        TC.Util.consoleRegister("Service worker nos obliga a estar en HTTPS");
-
-        // GLS:
-        // Primer paso: comprobamos si el servicio a solicitar es HTTPS, si no lo es producirá contenido mixto y el service worker no lo acepta. 
-        TC.Util.consoleRegister("Comprobamos si el servicio a solicitar es HTTPS, si no lo es producirá contenido mixto y el service worker no lo acepta");
-        if (!TC.Util.isSecureURL(layerUrl)) {
-            // GLS:
-            // Segundo paso: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloqueará la petición.
-            TC.Util.consoleRegister("No lo es: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloqueará la petición");
-            self.getCapabilitiesUrl_MixedContent_FromHTTPS_(layerUrl);
-        } else {
-            // GLS:
-            // Siguiente paso: validamos si el servicio cuenta con CORS
-            TC.Util.consoleRegister("Sí lo es: validamos si cuenta con CORS");
-            _checkCORSSupport(layerUrl, self.capabilitiesLoad_).then(function (hasCORS) {
-                if (hasCORS) {
-                    TC.Util.consoleRegister("Tiene cabeceras CORS");
-                    self.capabilitiesUrl_ = self.getByUrl_;
-                    self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
-                } else {
-                    // GLS: Al no soportar CORS, proxificamos.                    
-                    TC.Util.consoleRegister("NO tiene cabeceras CORS -> proxificamos:");
-                    TC.Util.consoleRegister("GetCapabilities, GFI, 3D");
-                    TC.Util.consoleRegister("GetMap");
-                    self.capabilitiesUrl_ = self.getByProxy_;
-                    self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
-                }
-            });
-        }
-    };
-
-    // GLS:
-    // Escenario: Visor en HTTPS y servicio en HTTP    
-    // 1. Validaremos si el servicio soporta HTTPS
-    // 2. Comprobaremos si cuenta con CORS
-
-    layerProto.getCapabilitiesUrl_MixedContent_FromHTTPS_ = function (url) {
-        var self = this;
-
-        var layerUrl = url && url.trim() || self.url.trim();
-
-        TC.Util.consoleRegister("Escenario: Visor en HTTPS y servicio en HTTP");
-
-        // GLS:
-        // Primer  paso: validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloquea la petición.
-        TC.Util.consoleRegister("Validamos si soporta SSL, ya que: aunque cuente con cabeceras CORS si el protocolo es distinto, el navegador bloquea la petición");
-        _checkSSLSupport.call(self, layerUrl, self.capabilitiesLoad_).then(function (supportSSL) {
-            if (!supportSSL) {
-                TC.Util.consoleRegister("Realmente no sabemos si el error se produce por no soportar HTTPS o porque no tiene CORS, sea como sea: es necesario proxificar");
-                // GLS: Realmente no sabemos si el error se produce por no soportar HTTPS o porque no tiene CORS, sea como sea: es necesario proxificar.                    
-                self.capabilitiesUrl_ = self.getByProxy_;
-                self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
-            } else {
-                // GLS:
-                // Dado que estamos en un escenario de cross origin y si la petición/comprobación de SSL ha funcionado correctamente
-                // podemos afirmar que el servicio cuenta con cabeceras CORS
-                TC.Util.consoleRegister("Dado que estamos en un escenario de cross origin y si la petición/comprobación de SSL ha funcionado correctamente: podemos afirmar que el servicio cuenta con cabeceras CORS");
-                self.capabilitiesUrl_ = self.getBySSL_;
-                self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
-            }
-        });
-    };
-
-    // GLS:
-    // Escenario: Visor en HTTP y servicio en HTTPS
-    // 1. Comprobaremos si cuenta con CORS
-
-    layerProto.getCapabilitiesUrl_MixedContent_FromHTTP_ = function (url) {
-        var self = this;
-
-        var layerUrl = url && url.trim() || self.url.trim();
-
-        TC.Util.consoleRegister("Escenario: Visor en HTTP y servicio en HTTPS");
-
-        self.getCapabilitiesUrl_CORSSupport_.call(self, layerUrl);
-    };
-
-    // GLS:
-    // Escenario: El visor y el servicio a solicitar tienen distinto protocolo provocando contenido mixto
-    //            Validaremos si existe service worker instalado (es más restrictivo) 
-
-    layerProto.getCapabilitiesUrl_MixedContent_ = function (url, location) {
-        var self = this;
-
-        var layerUrl = url && url.trim() || self.url.trim();
-        var location_ = location || document.location.href;
-
-        TC.Util.consoleRegister("¿Estamos en HTTPS?");
-        if (TC.Util.isSecureURL(location_)) {
-            // GLS:
-            // Primer paso: Al ser un sitio seguro, validamos si existe un service worker (es más restrictivo)
-            TC.Util.consoleRegister("Al ser un sitio seguro, validamos si existe un service worker (es más restrictivo)");
-            if (TC.Util.isServiceWorker()) {
-                TC.Util.consoleRegister("Sí hay ServiceWorker");
-                self.getCapabilitiesUrl_ServiceWorker_.call(self, layerUrl);
-            } else {
-                TC.Util.consoleRegister("No hay ServiceWorker");
-                self.getCapabilitiesUrl_MixedContent_FromHTTPS_.call(self, layerUrl);
-            }
-        } else {
-            TC.Util.consoleRegister("No lo estamos");
-            self.getCapabilitiesUrl_MixedContent_FromHTTP_.call(self, layerUrl);
-        }
-    }
-
-    // GLS:
-    // Escenario: Mismo protocolo, únicamente debemos validar CORS
-
-    layerProto.getCapabilitiesUrl_ProtocolSiblings_ = function (url, location) {
-        var self = this;
-
-        var layerUrl = url && url.trim() || self.url.trim();
-        var location_ = location || document.location.href;
-
-        // GLS:
-        // Primer paso: Validamos si existe un service worker (es más restrictivo)        
-        TC.Util.consoleRegister("Validamos si estamos en HTTPS y si hay ServiceWorker (es más restrictivo)");
-        if (TC.Util.isSecureURL(location_) && TC.Util.isServiceWorker()) {
-            TC.Util.consoleRegister("Sí hay ServiceWorker");
-            self.getCapabilitiesUrl_ServiceWorker_.call(self, layerUrl);
-        } else {
-            TC.Util.consoleRegister("No hay ServiceWorker");
-            self.getCapabilitiesUrl_CORSSupport_.call(self, layerUrl);
-        }
-    };
-
-    layerProto.getCapabilitiesUrl_CORSSupport_ = function (url) {
-        var self = this;
-
-        var layerUrl = url && url.trim() || self.url.trim();
-
-        // GLS:
-        // Primer paso: Validamos si soporta CORS.
-        TC.Util.consoleRegister("Validamos si soporta CORS");
-        _checkCORSSupport(layerUrl, self.capabilitiesLoad_).then(function (hasCORS) {
-            if (hasCORS) {
-                TC.Util.consoleRegister("Cuenta con cabeceras CORS");
-                self.capabilitiesUrl_ = self.getByUrl_;
-                self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
-            } else {
-                // GLS: Al no soportar CORS, proxificamos.
-                TC.Util.consoleRegister("NO tiene cabeceras CORS -> proxificamos:");
-                TC.Util.consoleRegister("Capabilities");
-                self.capabilitiesUrl_ = self.getByProxy_;
-                self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
-            }
-        });
-    };
-
-    layerProto.setCapabilitiesUrl_ = function (url, success, error, location) {
-        var self = this;
-
-        self.capabilitiesUrl_promise_ = $.Deferred();
-
-        var layerUrl = url && url.trim() || self.url.trim();
-        var location_ = location || document.location.href;
-
-        if (!self.capabilitiesLoad_) {
-            self.capabilitiesLoad_ = function (data) {
-                success(self, data);
-            };
-        }
-
-        if (!self.capabilitiesLoadError_) {
-            self.capabilitiesLoadError_ = function (err) {
-                error(self, err);
-            };
-        }
-
-        //TC.Util.consoleRegister("Buscamos en las capas de trabajo si exite alguna del mismo servicio.");
-        //TC.Util.consoleRegister("Si es así asignamos la misma función para el capabilities");
-        //// GLS: 
-        //// Buscamos en las capas de trabajo si exite alguna del mismo servicio. 
-        //// Si es así asignamos la misma función para el capabilities.        
-        //var sameService = self.getSiblingLoadedLayer.call(self, function (elem) {
-        //    return $.isFunction(elem.capabilitiesUrl_());
-        //});
-
-        //if (!self.capabilitiesUrl_ && sameService) {
-        //    TC.Util.consoleRegister("Hay capa hermana, no validamos nada y asignamos misma función de carga");
-        //    self.capabilitiesUrl_ = sameService.capabilitiesUrl_();
-        //    self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.DONE);
-        //} else {
-
-        TC.Util.consoleRegister("No hay capa hermana");
-        // GLS:
-        // Primer paso: validamos si existe cross origin
-        TC.Util.consoleRegister("Validamos si existe cross origin");
-        if (TC.Util.isSameOriginByLocation(layerUrl, location_)) {
-            TC.Util.consoleRegister("Tenemos mismo origen, cargamos directamente");
-            self.capabilitiesUrl_ = self.getByUrl_;
-            self.getCapabilitiesUrl_promise_().resolve(self.capabilitiesState_.PENDING);
-
-        } // GLS: Estamos en cross origin
-        else if (TC.Util.isSameProtocol(layerUrl, location_)) {
-            TC.Util.consoleRegister("Hay cross origin");
-            TC.Util.consoleRegister("Sin contenido mixto");
-            self.getCapabilitiesUrl_ProtocolSiblings_.call(self, layerUrl);
-        } else {
-            TC.Util.consoleRegister("Tenemos contenido mixto");
-            self.getCapabilitiesUrl_MixedContent_.call(self, layerUrl);
-        }
-        //}
-
-        return self.getCapabilitiesUrl_promise_();
-    };
-
-    layerProto.CAPABILITIES_STORE_KEY_PREFIX = 'TC.capabilities.';
 
     layerProto.setVisibility = function (visible) {
         var layer = this;
@@ -1183,47 +805,45 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      */
     layerProto.setLayerNames = function (layerNames, options) {
         var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var ln = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            layer.names = ln;
-            var opts = _extendLayerNameOptions(options);
-            if (opts.aggregate) {
-                ln = _aggregateLayerNames(layer, ln);
-            }
-            layer._disgregatedLayerNames = null;
-            var newParams = {
-                LAYERS: ln.join(','), TRANSPARENT: true
-            };
-            // Si no hay capas ocultamos la capa de servicio
-            if (!ln.length) {
-                layer.setVisibility(false);
-            }
-            if (opts.lazy) {
-                var params = layer._newParams || layer.wrap.getParams();
-                layer._newParams = $.extend(params, newParams);
-            }
-            else {
-                if (layer.map) {
-                    layer.map.$events.trigger($.Event(TC.Consts.event.BEFOREUPDATEPARAMS, { layer: layer }));
+        return new Promise(function (resolve, reject) {
+            layer.wrap.getLayer().then(function () {
+                var ln = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                layer.names = ln;
+                var opts = _extendLayerNameOptions(options);
+                if (opts.aggregate) {
+                    ln = _aggregateLayerNames(layer, ln);
                 }
-                layer.tree = null;
-                layer._cache.visibilityStates = {
+                layer._disgregatedLayerNames = null;
+                var newParams = {
+                    LAYERS: ln.join(','), TRANSPARENT: true
                 };
-                layer.wrap.setParams(newParams);
-                if (opts.reset || !layer.map) {
-                    // layerNames se fija cuando se añade al mapa o cuando reset = true.
-                    layer.availableNames = layer.names;
+                // Si no hay capas ocultamos la capa de servicio
+                if (!ln.length) {
+                    layer.setVisibility(false);
                 }
-                if (layer.map) {
-                    layer.map.$events.trigger($.Event(TC.Consts.event.UPDATEPARAMS, { layer: layer }));
+                if (opts.lazy) {
+                    var params = layer._newParams || layer.wrap.getParams();
+                    layer._newParams = $.extend(params, newParams);
                 }
-            }
-            result.resolve(layer.names);
+                else {
+                    if (layer.map) {
+                        layer.map.trigger(TC.Consts.event.BEFOREUPDATEPARAMS, { layer: layer });
+                    }
+                    layer.tree = null;
+                    layer._cache.visibilityStates = {
+                    };
+                    layer.wrap.setParams(newParams);
+                    if (opts.reset || !layer.map) {
+                        // layerNames se fija cuando se añade al mapa o cuando reset = true.
+                        layer.availableNames = layer.names;
+                    }
+                    if (layer.map) {
+                        layer.map.trigger(TC.Consts.event.UPDATEPARAMS, { layer: layer });
+                    }
+                }
+                resolve(layer.names);
+            });
         });
-
-        return result;
     };
 
     /**
@@ -1239,23 +859,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.addLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2a = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var ln = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2a = _disgregateLayerNames(layer, ln2a);
-                ln = layer.getDisgregatedLayerNames();
-            }
-            $.when(layer.setLayerNames(_sortLayerNames(layer, _combineArray(ln, ln2a, null)), options)).then(function (names) {
-                result.resolve(names);
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2a = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2a = _disgregateLayerNames(self, ln2a);
+                    ln = self.getDisgregatedLayerNames();
+                }
+                self.setLayerNames(_sortLayerNames(self, _combineArray(ln, ln2a, null)), options).then(function (names) {
+                    resolve(names);
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -1271,23 +889,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.removeLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2r = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var ln = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2r = _disgregateLayerNames(layer, ln2r);
-                ln = layer.getDisgregatedLayerNames();
-            }
-            $.when(layer.setLayerNames(_sortLayerNames(layer, _combineArray(ln, null, ln2r)), options)).then(function (names) {
-                result.resolve(names);
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2r = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2r = _disgregateLayerNames(self, ln2r);
+                    ln = self.getDisgregatedLayerNames();
+                }
+                self.setLayerNames(_sortLayerNames(self, _combineArray(ln, null, ln2r)), options).then(function (names) {
+                    resolve(names);
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -1303,51 +919,51 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.toggleLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2t = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var currentLayerNames = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2t = _disgregateLayerNames(layer, ln2t);
-                currentLayerNames = layer.getDisgregatedLayerNames();
-            }
-            var ln2a = [];
-            var ln2r = [];
-            for (var i = 0; i < ln2t.length; i++) {
-                var l = ln2t[i];
-                if ($.inArray(l, currentLayerNames) < 0) {
-                    ln2a[ln2a.length] = l;
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2t = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var currentLayerNames = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2t = _disgregateLayerNames(self, ln2t);
+                    currentLayerNames = self.getDisgregatedLayerNames();
                 }
-                else {
-                    ln2r[ln2r.length] = l;
-                }
-            }
-            var deferreds = [];
-            if (ln2a.length > 0) {
-                deferreds.push(layer.addLayerNames(ln2a, opts));
-            }
-            if (ln2r.length > 0) {
-                deferreds.push(layer.removeLayerNames(ln2r, opts));
-            }
-            $.when.apply(this, deferreds).then(function (a1, a2) {
-                if (a1) {
-                    if (a2) {
-                        result.resolve(a1.concat(a2));
+                var ln2a = [];
+                var ln2r = [];
+                for (var i = 0; i < ln2t.length; i++) {
+                    var l = ln2t[i];
+                    if ($.inArray(l, currentLayerNames) < 0) {
+                        ln2a[ln2a.length] = l;
                     }
                     else {
-                        result.resolve(a1);
+                        ln2r[ln2r.length] = l;
                     }
                 }
-                else {
-                    result.resolve([]);
+                var promises = [];
+                if (ln2a.length > 0) {
+                    promises.push(self.addLayerNames(ln2a, opts));
                 }
+                if (ln2r.length > 0) {
+                    promises.push(self.removeLayerNames(ln2r, opts));
+                }
+                Promise.all(promises).then(function (arrays) {
+                    const a1 = arrays[0];
+                    const a2 = arrays[1];
+                    if (a1) {
+                        if (a2) {
+                            resolve(a1.concat(a2));
+                        }
+                        else {
+                            resolve(a1);
+                        }
+                    }
+                    else {
+                        resolve([]);
+                    }
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -1364,7 +980,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         ///</summary>
         ///<returns type="array" elementType="string"></returns>
         var self = this;
-        var olLayer = self.wrap.getLayer();
+        var olLayer = self.wrap.layer;
         if (self.wrap.isNative(olLayer) && self.type === TC.Consts.layerType.WMS) {
             if (!self._disgregatedLayerNames) {
                 var layerNames = self.wrap.getParams().LAYERS;
@@ -1395,6 +1011,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var result = false;
         switch (self.type) {
             case TC.Consts.layerType.WMTS:
+                result = self.wrap.isCompatible(crs) || self.wrap.getCompatibleMatrixSets(crs).length > 0;
+                break;
             case TC.Consts.layerType.WMS:
                 result = self.wrap.isCompatible(crs);
                 break;
@@ -1499,7 +1117,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
                 }
                 break;
-            case TC.Consts.layerType.WMS:
+            case TC.Consts.layerType.WMS:                
                 result = true;
                 var layers = self.wrap.getAllLayerNodes();
                 if (layers.length > 0) {
@@ -1520,6 +1138,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     if (node) {
                         var scaleDenominators = self.wrap.getScaleDenominators(node);
                         result = !(parseFloat(scaleDenominators[1]) > currentScale || parseFloat(scaleDenominators[0]) < currentScale);
+
+                        // GLS: si no es visible miramos si tiene capas hijas y si tiene comprobamos si alguna de ellas es visible a la escala actual.
+                        if (!result) {
+                            if (node.Layer && node.Layer.length > 0) {
+                                return node.Layer.some(function (nodeLayer) {
+                                    var scaleDenominators = self.wrap.getScaleDenominators(nodeLayer);
+                                    return !(parseFloat(scaleDenominators[1]) > currentScale || parseFloat(scaleDenominators[0]) < currentScale)
+                                });
+                            }
+                        }
                     }
                 }
                 break;
@@ -1959,21 +1587,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 else
                     return null;
             })
-            .filter(function (elto) {
-                return elto != null;
-            })
-            .sort(function (a, b) {
-                if (b.tcScore === a.tcScore) {
-                    //si la puntuación es la misma reordenamos por título
-                    var titleA = TC.Util.replaceAccent(a.Title);
-                    var titleB = TC.Util.replaceAccent(b.Title);
-                    if (titleA < titleB) return -1;
-                    if (titleA > titleB) return 1;
-                    return 0;
-                }
-                else
-                    return b.tcScore - a.tcScore;
-            });
+                .filter(function (elto) {
+                    return elto != null;
+                })
+                .sort(function (a, b) {
+                    if (b.tcScore === a.tcScore) {
+                        //si la puntuación es la misma reordenamos por título
+                        var titleA = TC.Util.replaceAccent(a.Title);
+                        var titleB = TC.Util.replaceAccent(b.Title);
+                        if (titleA < titleB) return -1;
+                        if (titleA > titleB) return 1;
+                        return 0;
+                    }
+                    else
+                        return b.tcScore - a.tcScore;
+                });
 
             this.lastPattern = text;
             this.lastMatches = matches;
@@ -2006,11 +1634,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var result = null;
 
         var infoFormats = layer.wrap.getInfoFormats();
-        for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
-            var format = TC.wrap.layer.Raster.infoFormatPreference[i];
-            if ($.inArray(format, infoFormats) >= 0) {
-                result = format;
-                break;
+        if (infoFormats) {
+            for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
+                var format = TC.wrap.layer.Raster.infoFormatPreference[i];
+                if ($.inArray(format, infoFormats) >= 0) {
+                    result = format;
+                    break;
+                }
             }
         }
         return result;
@@ -2020,71 +1650,62 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      * Carga la imagen de leyenda de una capa por POST.
      */
     layerProto.getLegendGraphicImage = function () {
-        var self = this;
-        var deferred = $.Deferred();
-
-
-        //Si ya hemos hecho esta consulta previamente, retornamos la respuesta
-        if (self.options.params.base64LegendSrc) {
-            return deferred.resolve(self.options.params.base64LegendSrc);
-        }
-
-        if (typeof window.btoa === 'function') {
-            var name = self.names[0];
-            var info = self.wrap.getInfo(name);
-            var xhr = new XMLHttpRequest();
-            var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
-            var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
-            var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
-
-            for (var i = 0 ; i < dataEntries.length ; i++) {
-                var chunks = dataEntries[i].split('=');
-
-                if (chunks && chunks.length > 1 && chunks[1]) {
-                    params += "&" + dataEntries[i];
-                }
-            }
-            if (self.options.params.env) {
-                params += "&" + self.options.params.env;
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            //Si ya hemos hecho esta consulta previamente, retornamos la respuesta
+            if (self.options.params.base64LegendSrc) {
+                return resolve(self.options.params.base64LegendSrc);
             }
 
-            xhr.open('POST', url[0], true);
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            if (typeof window.btoa === 'function') {
+                var name = self.names[0];
+                var info = self.wrap.getInfo(name);
+                var xhr = new XMLHttpRequest();
+                var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
+                var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
+                var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
 
-            xhr.responseType = 'arraybuffer';
-            xhr.onload = function (e) {
-                if (this.status === 200) {
-                    var uInt8Array = new Uint8Array(this.response);
-                    var i = uInt8Array.length;
-                    var binaryString = new Array(i);
-                    while (i--) {
-                        binaryString[i] = String.fromCharCode(uInt8Array[i]);
-                    }
-                    var data = binaryString.join('');
-                    var type = xhr.getResponseHeader('content-type');
-                    if (type.indexOf('image') === 0) {
-                        var imageSrc;
-                        imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
-                        self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
-                        deferred.resolve(imageSrc);
+                for (var i = 0; i < dataEntries.length; i++) {
+                    var chunks = dataEntries[i].split('=');
+
+                    if (chunks && chunks.length > 1 && chunks[1]) {
+                        params += "&" + dataEntries[i];
                     }
                 }
-            };
-            xhr.send(params);
-        } else {
-            deferred.reject("Función window.btoa no soportada por el navegador");
-        }
-        return deferred.promise();
+                if (self.options.params.env) {
+                    params += "&" + self.options.params.env;
+                }
+
+                xhr.open('POST', url[0], true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                xhr.responseType = 'arraybuffer';
+                xhr.onload = function (e) {
+                    if (this.status === 200) {
+                        var uInt8Array = new Uint8Array(this.response);
+                        var i = uInt8Array.length;
+                        var binaryString = new Array(i);
+                        while (i--) {
+                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                        }
+                        var data = binaryString.join('');
+                        var type = xhr.getResponseHeader('content-type');
+                        if (type.indexOf('image') === 0) {
+                            var imageSrc;
+                            imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
+                            self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
+                            resolve(imageSrc);
+                        }
+                    }
+                };
+                xhr.send(params);
+            } else {
+                reject(Error("Función window.btoa no soportada por el navegador"));
+            }
+        });
     };
 
     layerProto.getUrl = function (src) {
-        var self = this;
-
-        return src;
-    };
-
-    // método que nos ayuda a gestionar los posibles errores HTTP que quedan enmascarados en errores por CORS
-    layerProto._onQuarantine = function (src) {
         var self = this;
 
         return src;
@@ -2095,217 +1716,47 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     //          Es decir, sólo puede cargar texturas de sitios para los que su contenido tiene aprobación de CORS.
 
     // Usamos el mismo método que para el capabilities ya que la carga de texturas es igual de restrictiva.
-
     layerProto.getWebGLUrl = function (src, location) {
-        var self = this;
-        var done = new $.Deferred();
+        const self = this;
+        return new Promise(function (resolve, reject) {
 
-        if (self.getWebGLUrl !== layerProto.getWebGLUrl) {
-            done.resolve(self.getWebGLUrl.call(self, src));
-        } else {
-            // GLS: 
-            // Buscamos en las capas de trabajo si exite alguna del mismo servicio. 
-            // Si es así asignamos la misma función de carga de imágenes.
+            var _src = !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src;
 
-            TC.Util.consoleRegister("Buscamos en las capas de trabajo si exite alguna del mismo servicio.");
-            TC.Util.consoleRegister("Si hay capa hermana asignamos la misma función de carga de imágenes sin validar nada.");
-
-            var sameService = self.getSiblingLoadedLayer.call(self, function (elem) {
-                return elem.getWebGLUrl.toString() !== layerProto.getWebGLUrl.toString();
-            });
-
-            if (sameService) {
-                TC.Util.consoleRegister("Tenemos capa hermana, no validamos nada más.");
-                self.getWebGLUrl = sameService.getWebGLUrl;
-                done.resolve(self.getWebGLUrl.call(self, src));
+            if (self.ignoreProxification) {
+                resolve(_src);
             } else {
+                const options = {
+                    exportable: true,
+                    ignoreProxification: self.ignoreProxification
+                };
 
-                if (TC.Util.detectIE()) {
-                    // GLS: Cuando tenemos capas cargadas y pasamos a 3D, en IE, no he conseguido gestionar correctamente los errores de serguridad, 
-                    //      sí cuando se añaden capas estando ya en 3D. Por ello, no aplico el algoritmo de proxificación y aplico el mimso método de carga
-                    //      que para el capabilities.
-                    self.getWebGLUrl = self.capabilitiesUrl_;
-
-                    done.resolve(self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src));
-                }
-                else {
-                    TC.Util.consoleRegister("No hay capa hermana.");
-
-                    var location_ = location || document.location.href;
-
-                    if (TC.Util.isSameOrigin(src)) {
-                        // GLS: 
-                        // Escenario mismo origen
-                        TC.Util.consoleRegister("Escenario mismo origen");
-                        self.getWebGLUrl = self.getByUrl_;
-                        done.resolve(self.getByUrl_(src));
-                    } else {
-                        // GLS: 
-                        // Escenario cross origin
-                        TC.Util.consoleRegister("Escenario cross origin");
-
-                        var quarantine = function () {
-                            if (self.geoBBox && self.geoBBox.length > 0) { // Se completa al crear la capa de Cesium geoBBox										
-                                // validamos si el bbox de la petición casa con la cobertura de la capa para detectar (sin código de servidor no es posible) si puede ser un error 400 enmascarado con un error de CORS
-                                var requestBBoxValues = decodeURIComponent(src.split('&').filter(function (elm) {
-                                    return elm.indexOf('bbox') > -1
-                                })[0]).replace('bbox=', '').split(',').map(function (elm) {
-                                    return parseInt(elm);
-                                });
-                                var layerBBoxValues = self.geoBBox[0];
-
-                                if (layerBBoxValues && !(requestBBoxValues[0] >= layerBBoxValues[0] &&
-                                     requestBBoxValues[2] <= layerBBoxValues[2] &&
-
-                                     requestBBoxValues[1] >= layerBBoxValues[1] &&
-                                     requestBBoxValues[3] <= layerBBoxValues[3])) {
-                                    // lo ponemos en cuarentena porque el bbox de la petición es mayor que lo indicado en el capabilities y podría tartase de un error HTTP 400 Bad request
-                                    self.getWebGLUrl = self._onQuarantine;
-                                    done.resolve(self._onQuarantine(src));
-                                } else {
-                                    // si el bbox encaja con puede ser que sea otro error, pero no tenemos info para contrastarlo.
-                                    self.getWebGLUrl = self.getByProxy_;
-                                    done.resolve(self.getByProxy_(src));
-                                }
-                            } else {
-                                self.getWebGLUrl = self.getByProxy_;
-                                done.resolve(self.getByProxy_(src));
-                            }
-                        };
-
-                        // Primer paso: comprobamos si existe service worker ya que:                    
-                        //      Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
-                        //      Lo no compatible con CORS falla de forma predeterminada:                    
-                        //          De manera predeterminada, obtener un recurso de una URL de terceros no será posible si esta no admite CORS.
-                        TC.Util.consoleRegister("Comprobamos si existe service worker");
-                        if (TC.Util.isSecureURL(location_) && TC.Util.isServiceWorker()) {
-
-                            TC.Util.consoleRegister("Hay serviceworker");
-                            // GLS:
-                            //  comprobar si tenemos contenido mixto, ya que en la comprobación de CORS el service worker bloqueará la petición si lo tenemos.
-                            TC.Util.consoleRegister("Comprobar si tenemos contenido mixto, ya que en la comprobación de CORS el service worker bloqueará la petición si tenemos contenido mixto");
-                            if (!TC.Util.isSameProtocol(src, location_)) {
-                                // GLS: comprobamos si soporta SSL: si no, habrá que proxificar
-                                TC.Util.consoleRegister("Comprobamos si soporta SSL: si no, habrá que proxificar");
-                                _checkSSLSupport.call(self, src,
-                                    function () {
-                                        // GLS: 
-                                        // Siguiente paso: validar si tiene CORS
-                                        TC.Util.consoleRegister("Validamos si tiene CORS");
-                                        _imageHasCORS(src).then(function (hasCORS) {
-                                            if (!hasCORS) {
-                                                TC.Util.consoleRegister("No tiene CORS");
-
-                                                self.getWebGLUrl = self.getByProxy_;
-                                                done.resolve(self.getByProxy_(src));
-
-                                            } else {
-                                                //GLS: modificamos la función que nos da la url de la imagen como https
-                                                TC.Util.consoleRegister("Tiene CORS");
-                                                self.getWebGLUrl = self.getBySSL_;
-                                                done.resolve(self.getBySSL_(src));
-                                            }
-                                        });
-                                    }, function () {
-                                        // GLS: al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos
-                                        TC.Util.consoleRegister("Al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos");
-                                        self.getWebGLUrl = self.getByProxy_;
-                                        done.resolve(self.getByProxy_(src));
-                                    });
-                            } else {
-                                TC.Util.consoleRegister("No hay contenido mixto");
-                                TC.Util.consoleRegister("Validamos si tiene CORS");
-                                _imageHasCORS(src).then(function (hasCORS) {
-                                    if (!hasCORS) {
-                                        TC.Util.consoleRegister("No tiene CORS");
-                                        // Con service worker y una respuesta de un error 400 sin CORS, enmascara el problema como de CORS, gestionamos en cuarentena										
-                                        quarantine();
-
-                                    } else {
-                                        //GLS: modificamos la función que nos da la url de la imagen como https
-                                        TC.Util.consoleRegister("Tiene CORS");
-                                        self.getWebGLUrl = self.getByUrl_;
-                                        done.resolve(self.getByUrl_(src));
-                                    }
-                                });
-                            }
-                        } else {
-                            TC.Util.consoleRegister("No hay serviceworker");
-                            _imageHasCORS(src).then(function (hasCORS) {
-                                if (hasCORS) {
-                                    TC.Util.consoleRegister("Tiene cabeceras CORS");
-
-                                    self.getWebGLUrl = self.getByUrl_;
-                                    done.resolve(self.getByUrl_(src));
-                                }
-                                else {
-                                    TC.Util.consoleRegister("NO tiene cabeceras CORS");
-                                    quarantine();
-                                }
-                            });
+                self.toolProxification.fetchImage(_src, options).then(function () {
+                    self.toolProxification.cacheHost.getAction(_src, options).then(function (cache) {
+                        if (cache && cache.action) {
+                            resolve(cache.action.call(self.toolProxification, _src));
                         }
-                    }
-                }
+                    });
+                }).catch(function (e) {
+                    reject(Error(e));
+                });
             }
-        }
 
-        return done;
-    };
+            //// IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
+            //if (self.ignoreProxification) {
+            //    setSRC({ src: TC.Consts.BLANK_IMAGE });
+            //    return;
+            //}
 
-    layerProto.getLegendUrl = function (src, location) {
-        var self = this;
-
-        var _location = location || document.location.href;
-        var protocolRegex = /^(https?:\/\/)/i;
-
-        var distinctProtocol = function (src) {
-            // Primer paso: Validamos si la url de la leyenda y el del servicio tiene el mismo protocolo
-            if (!TC.Util.isSameProtocol(src, self.url) && protocolRegex.test(src) && protocolRegex.test(self.url) && TC.Util.isSecureURL(self.url.match(protocolRegex)[1])) {
-                // GLS: Si no coinciden aplicamos el protocolo del servicio a la leyenda, ya que cuenta con SSL.
-                return src.replace(src.match(protocolRegex)[1], self.url.match(protocolRegex)[1]);
-            } else {
-                // GLS: Con service worker las peticiones con contenido mixto son bloqueadas.
-                if (TC.Util.isServiceWorker()) {
-                    if (!TC.Util.isSecureURL(src)) {
-                        return self.getBySSL_(src);
-                    } else {
-                        return src;
-                    }
-                } else {
-                    // Si queremos mantener la seguridad de la página tenemos que proxificar: return self.capabilitiesUrl_(src);                
-                    return src;
-                }
-            }
-        };
-
-        if (!TC.Util.isServiceWorker()) {
-            if (TC.Util.isSameProtocol(src, _location)) {
-                return /^(https?:)?\/\//i.test(src) ? src.substr(src.indexOf('//')) : src;
-            } else {
-                // GLS:
-                // Si nuestro sitio es seguro y tenemos contenido mixto porque el servicio no es https, perderemos el https.
-                if (TC.Util.isSecureURL(_location) && !TC.Util.isSecureURL(src)) {
-                    return distinctProtocol(src);
-                } else {
-                    // GLS: Comprobar c\u00f3mo se comporta en el visor de impresi\u00f3n 
-                    return src;
-                }
-            }
-        } else {
-            return distinctProtocol(src);
-        }
-    };
-
-    layerProto.getFeatureInfoUrl = function (url) {
-        var self = this;
-
-        return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);
+            //return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);        
+        });
     };
 
     layerProto.getFeatureUrl = function (url) {
         var self = this;
 
-        return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);
+        return self.toolProxification.cacheHost.getAction(url).then(function (cache) {
+            return cache.action.call(self.toolProxification, url);
+        });
     };
 
     // GLS:
@@ -2321,596 +1772,226 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
             const matchingLayer = layers.filter(function (elem) {
                 return (elem.type === TC.Consts.layerType.WMS ||
-                        elem.type === TC.Consts.layerType.WMTS) &&
-                        (elem.capabilities === self.capabilities || elem.url === self.url) &&
-                        (dynamicStatement && $.isFunction(dynamicStatement) ? dynamicStatement(elem) : true);
+                    elem.type === TC.Consts.layerType.WMTS) &&
+                    (elem.capabilities === self.capabilities || elem.url === self.url) &&
+                    (dynamicStatement && $.isFunction(dynamicStatement) ? dynamicStatement(elem) : true);
             })[0];
 
             return matchingLayer || null;
         }
     };
 
-    // GLS:
-    // Asigna la función de carga de imagen para una capa raster en base a:
-    //    1. ¿Existe alguna capa en capas de trabajo del mismo servicio?
-    //    2. ¿Existe cross origin?
-    //    3. ¿Debemos mantener el canvas exportable?
-    //    4. ¿Navegamos mediante IE?
-    //    5. ¿El servicio cuenta con CORS?
     layerProto.getImageLoad = function (image, src, location) {
-        var self = this;
+        const self = this;
 
-        var location_ = location || document.location.href;
-        var isPOST = (self.options.method === "POST");
+        // Viene sin nombre desde el control TOC, si es así lo ignoramos.
+        if (self.names && self.names.length > 0) {
 
-        // comprobamos z/x/y contra el matrixset del capabilities para evitar peticiones 404
-        if (self.type === TC.Consts.layerType.WMTS) {
-            var z, x, y;
-            if (self.encoding != "KVP") {
-                var _src = src.replace('.' + self.format.split('/')[1], '');
-                var parts = _src.split('/').slice(_src.split('/').length - 3).map(function (elm) { return parseInt(elm); });
-                z = parts[0];
-                x = parts[1];
-                y = parts[2];
-            } else {
-                var parts = /.*TileMatrix=(\d*)&TileCol=(\d*)&TileRow=(\d*)/i.exec(src);
-                if (parts && parts.length == 4) {
-                    parts = parts.slice(1).map(function (elm) { return parseInt(elm); });
-                    z = parts[0];
-                    x = parts[2];
-                    y = parts[1];
+            const setSRC = function (data) {
+                var olImg = image.getImage();
+
+                if (!TC.Util.isSameOrigin(data.src)) {
+                    if (!self.map || (self.map && self.map.mustBeExportable)) {
+                        olImg.crossOrigin = data.crossOrigin !== null ? data.crossOrigin : "anonymous";
+                    }
                 }
-            }
 
-            if (z && x && y) {
-                var wmtsOptions = self.wrap.getWMTSLayer();
-                if (wmtsOptions) {
-                    var matrixSet = wmtsOptions.TileMatrixSetLink.filter(function (elm) { return elm.TileMatrixSet === self.matrixSet; });
-                    if (matrixSet.length > 0) {
+                // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
+                olImg.setAttribute("src", data.src);
 
-                        if (matrixSet[0].TileMatrixSetLimits.length > 0) {
-                            var matrixSetLimits = matrixSet[0].TileMatrixSetLimits.sort(function (a, b) {
-                                if (parseInt(a.TileMatrix) > parseInt(b.TileMatrix))
-                                    return 1;
-                                else if (parseInt(a.TileMatrix) < parseInt(b.TileMatrix))
-                                    return -1;
-                                else return 0;
-                            });
+                _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
+            };
 
-                            var level = matrixSetLimits[z];
-                            if (level && self.map && self.map.on3DView) {
-                                if (!(level.MinTileRow <= x && level.MaxTileRow >= x && level.MinTileCol <= y && level.MaxTileCol >= y)) {
-                                    console.log('Prevenimos petición fuera de matrix set, cargamos imagen en blanco');
-                                    self.imageLoad_blank_.call(self, image);
-                                    return;
+            const error = function (error) {
+                _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
+                setSRC({ src: TC.Consts.BLANK_IMAGE });
+            };
+
+            // comprobamos z/x/y contra el matrixset del capabilities para evitar peticiones 404
+            if (self.type === TC.Consts.layerType.WMTS) {
+                var z, x, y;
+                if (self.encoding != "KVP") {
+                    var _src = src.replace('.' + self.format.split('/')[1], '');
+                    var parts = _src.split('/').slice(_src.split('/').length - 3).map(function (elm) { return parseInt(elm); });
+                    z = parts[0];
+                    x = parts[1];
+                    y = parts[2];
+                } else {
+                    var parts = /.*TileMatrix=(\d*)&TileCol=(\d*)&TileRow=(\d*)/i.exec(src);
+                    if (parts && parts.length == 4) {
+                        parts = parts.slice(1).map(function (elm) { return parseInt(elm); });
+                        z = parts[0];
+                        x = parts[2];
+                        y = parts[1];
+                    }
+                }
+
+                if (z && x && y) {
+                    var wmtsOptions = self.wrap.getWMTSLayer();
+                    if (wmtsOptions) {
+                        var matrixSet = wmtsOptions.TileMatrixSetLink.filter(function (elm) { return elm.TileMatrixSet === self.matrixSet; });
+                        if (matrixSet.length > 0) {
+
+                            if (matrixSet[0].TileMatrixSetLimits.length > 0) {
+                                var matrixSetLimits = matrixSet[0].TileMatrixSetLimits.sort(function (a, b) {
+                                    if (parseInt(a.TileMatrix) > parseInt(b.TileMatrix))
+                                        return 1;
+                                    else if (parseInt(a.TileMatrix) < parseInt(b.TileMatrix))
+                                        return -1;
+                                    else return 0;
+                                });
+
+                                var level = matrixSetLimits[z];
+                                if (level && self.map && self.map.on3DView) {
+                                    if (!(level.MinTileRow <= x && level.MaxTileRow >= x && level.MinTileCol <= y && level.MaxTileCol >= y)) {
+                                        console.log('Prevenimos petición fuera de matrix set, cargamos imagen en blanco');
+                                        setSRC({ src: TC.Consts.BLANK_IMAGE });
+                                        return;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
 
-        if (self.imageLoad_) {
-            self.imageLoad_.call(self, image, src);
-        } else {
+            _get$events.call(self).trigger(TC.Consts.event.BEFORETILELOAD, { tile: image });
 
-            // GLS: 
-            // Buscamos en las capas de trabajo si exite alguna del mismo servicio. 
-            // Si es así asignamos la misma función de carga de imágenes.
+            var params = "";
+            var isPOST = self.options.method === "POST";
+            if (isPOST) {
+                var url = src.split('?');
+                params = url[1].split("&").filter(function (param) {
+                    const values = param.split('=');
+                    // eliminamos los valores en blanco y el parámetro layers
+                    return values.length > 1 && values[1].trim().length > 0 && values[0].trim().toLowerCase() !== "layers";
+                }).join('&');
 
-            TC.Util.consoleRegister("Buscamos en las capas de trabajo si exite alguna del mismo servicio.");
-            TC.Util.consoleRegister("Si hay capa hermana asignamos la misma función de carga de imágenes sin validar nada.");
+                self.toolProxification.fetchImageAsBlob(url[0], {
+                    type: "POST",
+                    data: params,
+                    contentType: "application/x-www-form-urlencoded"
+                }).then(function (blob) {
+                    const imageUrl = URL.createObjectURL(blob);
+                    const img = image.getImage();
+                    img.onload = function (evt) {
+                        URL.revokeObjectURL(imageUrl);
+                    };
+                    setSRC({ src: imageUrl });
+                }).catch(error);
 
-            var sameService = self.getSiblingLoadedLayer.call(self, function (elem) {
-                return $.isFunction(elem.imageLoad_);
-            });
-
-            if (!isPOST && sameService) {
-
-                TC.Util.consoleRegister("Hay capa hermana cargada, asignamos mismo método de carga");
-                self.imageLoad_ = sameService.imageLoad_;
-                self.getUrl = sameService.getUrl;
-                self.imageLoad_.call(self, image, src);
             } else {
-                TC.Util.consoleRegister("No hay capa hermana, pasamos a gestionar");
-
-                if (TC.Util.isSameOrigin(src)) {
-                    // GLS: 
-                    // Escenario mismo origen
-                    TC.Util.consoleRegister("Escenario mismo origen");
-                    self.imageLoad_ = !isPOST ? layerProto.imageLoad : layerProto.imageLoadHttpRequest_;
-                    self.imageLoad_.call(self, image, src);
-
+                if (!self.ignoreProxification) {
+                    self.toolProxification.fetchImage(src, { exportable: !self.map || (self.map && self.map.mustBeExportable) }).then(function (img) {
+                        setSRC(img);
+                    }).catch(error);
                 } else {
-                    // GLS: 
-                    // Escenario cross origin
+                    setSRC({ src: src });
+                    var img = image.getImage();
 
-                    TC.Util.consoleRegister("Escenario cross origin");
-
-                    if (isPOST) {
-                        self.imageLoad_ = layerProto.imageLoad_POST;
-                        self.imageLoad_.call(self, image, src);
-
-                        return;
-                    }
-
-                    // Primer paso: comprobamos si existe service worker ya que:                    
-                    //      Según https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=es-419: 
-                    //      Lo no compatible con CORS falla de forma predeterminada:                    
-                    //          De manera predeterminada, obtener un recurso de una URL de terceros no será posible si esta no admite CORS.
-                    TC.Util.consoleRegister("Comprobamos si existe service worker");
-                    if (TC.Util.isSecureURL(location_) && TC.Util.isServiceWorker()) {
-                        self.imageLoad_ServiceWorkerCrossOrigin.call(self, image, src);
-                    } else {
-                        TC.Util.consoleRegister("No hay serviceworker");
-                        // Siguiente paso: valoramos si el canvas debe mantenerse exportable
-                        TC.Util.consoleRegister("Siguiente paso: valoramos si el canvas debe mantenerse exportable");
-                        if (!self.map || (self.map && !self.map.mustBeExportable)) {
-                            // GLS: 
-                            // Si no importa un tainted canvas mantenemos la misma función que si no hubiese cross origin
-                            TC.Util.consoleRegister("No hay exportación: no importa un tainted canvas, mantenemos la misma función que si no hubiese cross origin");
-                            self.imageLoad_ = layerProto.imageLoad;
-                            self.imageLoad_.call(self, image, src);
-
-                        } else {
-                            self.imageLoad_ExportableCrossOrigin.call(self, image, src);
+                    if (!TC.Util.isSameOrigin(src)) {
+                        if (!self.map || (self.map && self.map.mustBeExportable)) {
+                            img.crossOrigin = "anonymous";
                         }
-                    }
+                    }                    
+
+                    img.onload = function () {
+                        _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
+                    };
+                    img.onerror = function (error) {                        
+                        img.src = TC.Consts.BLANK_IMAGE;
+                        _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
+                    };
+
+                    img.src = self.names.length ? src : TC.Consts.BLANK_IMAGE;
                 }
             }
-        }
-    };
-
-    // GLS:
-    // Escenario solitud por POST, por tanto mediante XMLHttpRequest
-    // No validamos nada, ya que la solicitud se hace igual que para el capabilities, por tanto usamos el mismo get
-
-    layerProto.imageLoad_POST = function (image, src) {
-        var self = this;
-
-        // GLS: indicamos la misma función que para el capabilities ya que también se hace la solicitud por xmlHttpRequest
-        self.getUrl = self.capabilitiesUrl_;
-
-        self.imageLoadHttpRequest_.call(self, image, !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src);
-    };
-
-    // GLS:
-    // Escenario cross origin + service worker:
-    // 1. ¿Existe contenido mixto?
-    // 2. ¿El servicio cuenta con cabeceras CORS?
-    // Aunque la carga de imágenes mediante <img src> es más laxa -contenido mixto y/o CORS-, 
-    // si tenemos un service worker, pasa a ser igual de resctrictiva que mediante XMLHttpRequest.
-
-    layerProto.imageLoad_ServiceWorkerCrossOrigin = function (image, src, location) {
-        var self = this;
-
-        var location_ = location || document.location.href;
-
-        TC.Util.consoleRegister("Hay serviceworker");
-
-        // GLS:
-        // Primer paso: comprobar si tenemos contenido mixto, ya que en la comprobación de CORS el service worker bloqueará la petición si lo tenemos.
-        TC.Util.consoleRegister("Comprobar si tenemos contenido mixto, ya que en la comprobación de CORS el service worker bloqueará la petición si tenemos contenido mixto");
-        if (!TC.Util.isSameProtocol(src, location_)) {
-            // GLS: comprobamos si soporta SSL: si no, habrá que proxificar
-            TC.Util.consoleRegister("Comprobamos si soporta SSL: si no, habrá que proxificar");
-            _checkSSLSupport.call(self, src,
-                function () {
-
-                    TC.Util.consoleRegister("Validamos si debemos mantener un canvas limpio");
-
-                    if (!self.map || (self.map && !self.map.mustBeExportable)) {
-                        TC.Util.consoleRegister("No hay exportación: no importa un tainted canvas, mantenemos la misma función que si no hubiese cross origin");
-                        self.imageLoad_ = layerProto.imageLoad;
-
-                        self.imageLoad_.call(self, image, src);
-                    } else {
-                        TC.Util.consoleRegister("Hay exportación a imagen");
-                        // GLS: 
-                        // Siguiente paso: validar si tiene CORS
-                        TC.Util.consoleRegister("Validamos si tiene CORS");
-                        $.when(_imageHasCORS(self.names.length ?
-                                   self.getBySSL_(src) :
-                                   TC.Consts.BLANK_IMAGE, image)
-                        ).then(function (hasCORS) {
-                            if (!hasCORS) {
-                                TC.Util.consoleRegister("No tiene CORS");
-                                self.imageLoad_ = layerProto.imageLoad_CrossOriginNoCORS;
-
-                                self.imageLoad_.call(self, image, src);
-                            } else {
-                                //GLS: modificamos la función que nos da la url de la imagen como https
-                                TC.Util.consoleRegister("Tiene CORS");
-                                self.getUrl = self.getBySSL_;
-                                self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
-
-                                self.imageLoad_.call(self, image, src);
-                            }
-                        });
-                    }
-                }, function () {
-                    // GLS: al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos
-                    TC.Util.consoleRegister("Al no soportar SSL tenemos contenido mixto, que bloqueará el service worker: proxificamos");
-                    self.imageLoad_ = layerProto.imageLoad_CrossOriginNoCORS;
-                    self.imageLoad_.call(self, image, src);
-                });
         } else {
-            TC.Util.consoleRegister("No tenemos contenido mixto");
-            TC.Util.consoleRegister("Valoramos si el canvas debe mantenerse exportable");
-
-            if (!self.map || (self.map && !self.map.mustBeExportable)) {
-                TC.Util.consoleRegister("No hay exportación: no importa un tainted canvas, mantenemos la misma función que si no hubiese cross origin");
-
-                self.imageLoad_ = layerProto.imageLoad;
-
-                self.imageLoad_.call(self, image, src);
-            } else {
-
-                TC.Util.consoleRegister("Hay exportación a imagen");
-                TC.Util.consoleRegister("Validamos si tiene CORS");
-                // GLS:
-                // Siguiente paso: ¿el servicio tiene cabeceras CORS?            
-                //      Según: https://www.w3.org/TR/cors/#handling-a-response-to-a-cross-origin-request
-                //          7.1.1 Handling a Response to a Cross-Origin Request
-                //              User agents must filter out all response headers other than those that are a simple response header or of which 
-                //              the field name is an ASCII case-insensitive match for one of the values of the Access-Control-Expose-Headers headers (if any), 
-                //              before exposing response headers to APIs defined in CORS API specifications.
-                //                  NOTE: The getResponseHeader() method of XMLHttpRequest will therefore not expose any header not indicated above.
-                //
-                //      Analizar la respuesta de la petición para detectar un error de CORS no es posible, por tanto lo hago mediante un método un tanto rudimentario.
-
-
-                $.when(_imageHasCORS(self.names.length ?
-                                   self.getUrl(src) :
-                                   TC.Consts.BLANK_IMAGE, image)
-                  ).then(function (hasCORS) {
-                      if (!hasCORS) {
-                          TC.Util.consoleRegister("No tiene cabeceras CORS");
-                          self.imageLoad_ = layerProto.imageLoad_CrossOriginNoCORS;
-
-                          self.imageLoad_.call(self, image, src);
-                      } else {
-                          TC.Util.consoleRegister("Tiene cabeceras CORS");
-                          self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
-
-                          self.imageLoad_.call(self, image, src);
-                      }
-                  });
-            }
+            // lanzamos el evento para gestionar el loading
+            _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
         }
-    };
-
-    // GLS: 
-    // Escenario Cross origin y mapa exportable:
-    // Aunque la petición de imágenes por src funcione haya cross origin y/o contemos con CORS, 
-    // al tener que mantener un canvas limpio la petición de las imágenes se vuelve más restrictiva.
-
-    layerProto.imageLoad_ExportableCrossOrigin = function (image, src) {
-        var self = this;
-
-        TC.Util.consoleRegister("El canvas debe manternerse exportable");
-        // GLS: 
-        // Primer paso: validamos si navegamos mediante InternetExplorer. IE es más restrictivo en cuanto a la exportación en casos de cross origin.
-        TC.Util.consoleRegister("Primer paso: validamos si navegamos mediante InternetExplorer. IE es más restrictivo en cuanto a la exportación en casos de cross origin");
-        if (!TC.Util.detectIE()) {
-            TC.Util.consoleRegister("No es IE");
-            self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
-            self.imageLoad_.call(self, image, src);
-
-        } else {
-            TC.Util.consoleRegister("Segundo paso: al navegar mediante IE y haber crossOrigin comprobamos si el servicio cuenta con cabeceras CORS o no");
-            // GLS: 
-            // Segundo paso: al navegar mediante IE y haber crossOrigin comprobamos si el servicio cuenta con cabeceras CORS o no.
-            //      Según: https://www.w3.org/TR/cors/#handling-a-response-to-a-cross-origin-request
-            //          7.1.1 Handling a Response to a Cross-Origin Request
-            //              User agents must filter out all response headers other than those that are a simple response header or of which 
-            //              the field name is an ASCII case-insensitive match for one of the values of the Access-Control-Expose-Headers headers (if any), 
-            //              before exposing response headers to APIs defined in CORS API specifications.
-            //                  NOTE: The getResponseHeader() method of XMLHttpRequest will therefore not expose any header not indicated above.
-            //
-            //      Analizar la respuesta de la petición para detectar un error de CORS no es posible, por tanto lo hago mediante un método un tanto rudimentario.
-
-            $.when(_imageHasCORS(self.names.length ?
-                                   self.getUrl(src) :
-                                   TC.Consts.BLANK_IMAGE, image)
-                  ).then(function (hasCORS) {
-                      if (hasCORS) {
-                          TC.Util.consoleRegister("Tiene cabeceras CORS");
-                          self.imageLoad_ = layerProto.imageLoad_CrossOrigin;
-                          // GLS: no invoco la función de imageLoad porque la validación de CORS es correcto por lo tanto ya tenemos la imagen en el mapa
-                          // flacunza: aunque ya tengamos la imagen hay que invocar la función porque hay eventos de carga y error de imagen que tienen que saltar
-                          // además, no se hace una petición extra cuando se asigna la propiedad src del un elemento img si la imagen está en memoria.
-                          self.imageLoad_.call(self, image, src);
-                      }
-                      else {
-                          TC.Util.consoleRegister("No tiene cabeceras CORS");
-                          self.imageLoad_ = layerProto.imageLoad_IE_CrossOriginNoCORS;
-                          // GLS: invoco la función de imageLoad porque ha fallado la validación
-                          self.imageLoad_.call(self, image, src);
-                      }
-                  });
-        }
-    };
-
-    // GLS: 
-    // Escenario Cross origin sin CORS:         
-    //      Si el servicio no cuenta con cabeceras CORS, la petición de la imagen por src funcionará correctamente
-    //      pero al asignar el atributo crossOrigin = "anonymous" para que el canvas se mantenga exportable, provocará
-    //      un error en la petición de la de imagen. Por tanto:
-    //      1. No es suficiente con proxificar el src de la imagen puesto que tendremos un tainted canvas y no será exportable.
-    //      2. Es necesario proxificar la petición y cargar la imagen como Blob. 
-
-    layerProto.imageLoad_CrossOriginNoCORS = function (image, src) {
-        var self = this;
-
-        // GLS: Proxificamos la url de la imagen para esta petición y las siguientes.
-        TC.Util.consoleRegister("Proxificamos la url de la imagen para esta petición y las siguientes.");
-        self.getUrl = self.getByProxy_;
-
-        self.imageLoadHttpRequest_.call(self, image, src);
-    };
-
-    // GLS: 
-    // Escenario Cross origin sin CORS desde IE: 
-    //      Si no hay necesidad de exportar el canvas, no es necesario cargar la imagen como Blob y por tanto tampoco proxificar.
-    //      Al contrario que en Chrome, en IE, no saltamos el escollo de tainted canvas con el atributo crossOrigin: anonymous.
-    //      Por tanto es necesario cargar la imagen como Blob y ello lleva consigo la proxificación.
-
-    layerProto.imageLoad_IE_CrossOriginNoCORS = function (image, src) {
-        var self = this;
-
-        self.imageLoad_CrossOriginNoCORS.call(self, image, src);
-    };
-
-    // GLS: 
-    // Escenario Cross origin con CORS: 
-    //      La petición de una imagen por src funciona correctamente y con el  
-    //      atributo crossOrigin = "anonymous" salvaguardamos el canvas para que pueda ser exportado, sin ello dará un error de seguridad.
-
-    layerProto.imageLoad_CrossOrigin = function (image, src) {
-        var self = this;
-        var img = image.getImage();
-
-        img.crossOrigin = "anonymous";
-        img.onerror = function () {
-
-            // IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
-            if (self.ignoreProxification) {
-                self.imageLoad_blank_.call(self, image);
-                return;
-            }
-
-            // GLS: si el servicio no cuenta con CORS el atributo crossOrigin = "anonymous" provoca un error en la petición de la imagen.
-            // GLS: también puede ser que el error sea un 404
-            // GLS: tengo que repetir la llamada por ajax para poder conocer el status del error, por src no es accesible el error.
-
-            TC.Util.consoleRegister("La carga de imagen ha dado un error, verificamos si se trata de un 404 u otro tipo de error, tenemos que repetir la petición por ajax para poder conocer el status del error, la carga por src no muestra el tipo de error");
-            $.when(_checkIs404(src, function (data) {
-                // Habrá sido algo momentáneo, no hago nada.
-                TC.Util.consoleRegister("Habrá sido algo momentáneo, no hago nada");
-            }, function (error) {
-                // GLS: Si se trata de un 404 no proxifico, únicamente cargo una imagen en blanco.
-                if (error && error.status === 404) {
-                    TC.Util.consoleRegister("Se trata de un 404, cargo imagen en blanco y nada más.");
-                    self.imageLoad_blank_.call(self, image);
-                } else if (error.status === 400) {
-
-                } else {
-                    TC.Util.consoleRegister("No es un 404");
-
-                    // GLS: Proxificamos la url de la imagen para esta petición y las siguientes.
-                    self.getUrl = self.getByProxy_;
-
-                    img.onerror = self.imageLoadingError_.bind(self, image, 'blob', self.imageLoadedBlob_);
-                    img.src = self.names.length ? self.getUrl(src) : TC.Consts.BLANK_IMAGE;
-                    image.load();
-                }
-            }));
-        };
-        img.src = self.names.length ? self.getUrl(src) : TC.Consts.BLANK_IMAGE;
-    };
-
-    // GLS: 
-    // Escenario no hay cross origin: 
-    //      La petición de una imagen por src funciona correctamente y el canvas puede ser exportado.
-
-    layerProto.imageLoad = function (image, src) {
-        var self = this;
-        var img = image.getImage();
-
-        img.onerror = function () {
-            img.crossOrigin = "anonymous";
-            img.onerror = self.imageLoadingError_.bind(self, image, 'blob', self.imageLoadedBlob_);
-            img.src = self.names.length ? self.getUrl(src) : TC.Consts.BLANK_IMAGE;
-        };
-        img.src = self.names.length ? self.getUrl(src) : TC.Consts.BLANK_IMAGE;
     };
 
     var _get$events = function () {
-        var self = this;
-
-        return self.wrap && self.wrap.$events ? self.wrap.$events : $(self);
-    };
-
-    layerProto.imageLoadHttpRequest_ = function (image, src) {
-        var self = this;
-
-        var params = "";
-        var isPOST = self.options.method === "POST";
-
-        if (isPOST) {
-            _get$events.call(self).trigger($.Event(TC.Consts.event.BEFORETILELOAD, { tile: image }));
-
-            var url = src.split('?');
-            var dataEntries = url[1].split("&");
-
-            for (var i = 0; i < dataEntries.length; i++) {
-                var chunks = dataEntries[i].split('=');
-
-                if (chunks && chunks.length > 1 && chunks[1] && chunks[0] !== "LAYERS") { //Quitamos el parámetro LAYERS de la petición
-                    params += "&" + dataEntries[i];
-                }
-            }
-
-            src = url[0];
+        const self = this;
+        if (self.wrap && self.wrap.$events) {
+            return self.wrap.$events;
         }
-
-        var xhr = new XMLHttpRequest();
-        // GLS: XMLHttpRequest open method -> IE Security Warning:   Cross-domain, cross-port, and mixed protocol requests are not allowed. The bstrUrl parameter may only specify files in the same domain, using the same port and protocol method, as that from which the page is served.
-        //      https://msdn.microsoft.com/es-es/library/ms536648(v=vs.85).aspx
-        try {
-            xhr.open(isPOST ? self.options.method : "GET", self.names.length ? self.getUrl(src) : TC.Consts.BLANK_IMAGE);
-
-            if (isPOST) {
-                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            }
-            xhr.responseType = "blob";
-
-            xhr.onload = self.imageLoadedBlob_.bind(self, xhr, image);
-            xhr.onerror = self.imageLoadingError_.bind(self, image, 'blob', self.imageLoadedBlob_);
-
-            if (params) {
-                xhr.send(params);
-            } else {
-                xhr.send();
-            }
-        } catch (exception) {
-            self.imageLoadingError_.call(self, image, 'blob', self.imageLoadedBlob_);
-        }
-    };
-
-    layerProto.imageLoadingError_ = function (image, responseType, onload) {
-        var self = this;
-        var img = image.getImage();
-
-        img.onerror = undefined;
-
-        // IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
-        if (self.ignoreProxification) {
-            self.imageLoad_blank_.call(self, image);
-            return;
-        }
-
-        TC.Util.consoleRegister("Se ha producido un error en la petición de imagen. Proxificamos la url de la imagen para esta petición y las siguientes.");
-        // GLS: Proxificamos la url de la imagen para esta petición y las siguientes.
-        self.getUrl = self.getByProxy_;
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', self.getUrl(image.getImage().getAttribute('src') || image.src_));
-        xhr.responseType = responseType;
-
-        TC.Util.consoleRegister("Si en la gestión del error vuelve a dar error, no intentamos nada más, cargamos una imagen en blanco y lanzamos el evento de error.");
-        xhr.onerror = function () { // GLS: si en la gestión del error vuelve a dar error, no intentamos nada más y lanzamos el evento de error.
-            _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: this.status, text: this.statusText } }));
-            self.imageLoad_blank_.call(self, image);
-        }
-        xhr.onload = onload.bind(self, xhr, image);
-
-        xhr.send();
-    };
-
-    layerProto.imageLoadedBlob_ = function (xhr, image) {
-        var self = this;
-
-        if (self.imageLoad_ !== layerProto.imageLoadHttpRequest_) {
-            // GLS: Si hemos llegado hasta aquí y el método de carga no es éste, es que hemos gestionado un error, por tanto: asignamos como método éste mismo
-            TC.Util.consoleRegister("Si hemos llegado hasta aquí es que hemos gestionado un error, por lo tanto: modificamos el método de carga layerProto.imageLoadHttpRequest_");
-
-            self.imageLoad_ = layerProto.imageLoadHttpRequest_;
-        }
-
-        var img = image.getImage();
-
-        if (xhr.status >= 400 && xhr.status <= 500) {
-            _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: xhr.status, text: xhr.statusText } }));
-
-            self.imageLoad_blank_.call(self, image);
-        } else if (xhr.response && xhr.response.type && xhr.response.type.indexOf("image") === -1) {
-            self.imageLoad_blank_.call(self, image);
-        }
-        else if (xhr.status === 200) {
-
-            var imageUrl = URL.createObjectURL(xhr.response);
-
-            img.onload = function (evt) {
-                URL.revokeObjectURL(evt.target.src);
-
-                _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
-            };
-
-            // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
-            img.setAttribute("src", imageUrl);
-
-        }
-    };
-
-    layerProto.imageLoad_blank_ = function (image) {
-        var self = this;
-        var img = image.getImage();
-
-        img.crossOrigin = "anonymous";
-        img.src = TC.Consts.BLANK_IMAGE;
+        return null;
     };
 
     layerProto.getWFSCapabilitiesPromise = function () {
-        var self = this;
+        const self = this;
+
         if (typeof (WFSCapabilities) === "undefined") {
             TC.syncLoadJS(TC.apiLocation + 'TC/layer/WFSCapabilitiesParser');
         }
         var url = this.options.url.replace(/service=wms/i, "service=wfs").replace(/\/wms(\/|\?|\b)/i, "$'/wfs/")
-        var defer = $.Deferred();
+        var _src = !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(url)) ? self.getBySSL_(url) : url;
         var basicUrl = url.substring(url.indexOf("://") < 0 ? 0 : url.indexOf("://") + 3);
         if (TC.WFScapabilities[basicUrl]) {
-            setTimeout(function () {
-                defer.resolve(TC.WFScapabilities[basicUrl]);
-            }, 100);
-            return defer;
-        }
-        var params = {
-        }
-        params.SERVICE = 'WFS';
-        params.VERSION = '2.0.0';
-        params.REQUEST = 'GetCapabilities';
-        $.ajax({
-            url: this.getUrl(url + '?' + $.param(params)),
-            type: 'GET'
-        }).then(function () {
-            var capabilities
-            var xmlDoc;
-            if (jQuery.isXMLDoc(arguments[0]))
-                xmlDoc = arguments[0];
+            if (TC.WFScapabilities[basicUrl] instanceof Promise)
+                return TC.WFScapabilities[basicUrl];
             else
-                xmlDoc = (new DOMParser()).parseFromString(arguments[0], 'text/xml');
-            //comprueba si el servidor ha devuelto una excepcion
+                return new Promise(function (resolve, reject) {
+                    setTimeout(function () {
+                        resolve(TC.WFScapabilities[basicUrl]);
+                    }, 100);
+                });
+        }
+        TC.WFScapabilities[basicUrl] = new Promise(function (resolve, reject) {
+            var params = {
+            }
+            params.SERVICE = 'WFS';
+            params.VERSION = '2.0.0';
+            params.REQUEST = 'GetCapabilities';
 
-            var errorNode = $(xmlDoc).find("ServiceException");
-            if (errorNode.length === 0)
-                errorNode = $(xmlDoc).find("ExceptionText");
-            if (errorNode.length > 0) {
-                defer.reject(null, "error", errorNode.html());
-                return;
-            }
-            try {
-                capabilities = WFSCapabilities.Parse(xmlDoc);
-            }
-            catch (err) {
-                defer.reject(err);
-                return;
-            }
+            var url = self.getUrl(_src + '?' + TC.Util.getParamString(params));
 
-            if (!capabilities.Operations) {
-                defer.reject(null);
-                return;
-            }
-            var _url = (capabilities.Operations.GetCapabilities.DCP && capabilities.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"]) || capabilities.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource
-            TC.WFScapabilities[_url] = capabilities;
-            TC.WFScapabilities[basicUrl] = capabilities;
-            defer.resolve(capabilities);
-        }, function (jqXHR, textStatus, errorThrown) {
-            defer.reject(jqXHR, textStatus, errorThrown);
+            self.toolProxification.fetch(url, { retryAttempts: 2 }).then(function (data) {
+
+                var capabilities
+                var xmlDoc;
+                const documentElement = data.responseText && (data.responseText.ownerDocument || data.responseText).documentElement;
+                const isXMLDoc = documentElement ? documentElement.nodeName !== 'HTML' : false;
+                if (isXMLDoc) {
+                    xmlDoc = data.responseText;
+                }
+                else {
+                    xmlDoc = (new DOMParser()).parseFromString(data.responseText, 'text/xml');
+                }
+                //comprueba si el servidor ha devuelto una excepcion
+
+                var errorNode = xmlDoc.getElementsByTagName('ServiceException')[0];
+                if (!errorNode) {
+                    errorNode = xmlDoc.getElementsByTagName('ExceptionText')[0];
+                }
+                if (errorNode) {
+                    reject(Error(errorNode.innerHTML));
+                    return;
+                }
+                try {
+                    capabilities = WFSCapabilities.Parse(xmlDoc);
+                }
+                catch (err) {
+                    reject(err instanceof Error ? err : Error(err));
+                    return;
+                }
+
+                if (!capabilities.Operations) {
+                    reject(null);
+                    return;
+                }
+                var _url = (capabilities.Operations.GetCapabilities.DCP && capabilities.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"]) || capabilities.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource
+                TC.WFScapabilities[_url] = capabilities;
+                TC.WFScapabilities[basicUrl] = capabilities;
+                resolve(capabilities);
+            }).catch(function (error) {
+                //reject(Error(capabilitiesError(layer, dataError)));
+                reject(error instanceof Error ? error : Error(error));
+            });
         });
-        return defer;
+        return TC.WFScapabilities[basicUrl];
     };
 
     layerProto.getFallbackLayer = function () {

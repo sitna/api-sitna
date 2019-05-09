@@ -26,7 +26,7 @@ TC.inherit(TC.control.Click, TC.Control);
     ctlProto.register = function (map) {
         var self = this;
         self.wrap.register(map);
-        TC.Control.prototype.register.call(self, map);
+        return TC.Control.prototype.register.call(self, map);
     };
 
     ctlProto.activate = function () {

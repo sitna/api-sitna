@@ -613,7 +613,7 @@ li.tc-ctl-toc-node {
     }
 
 
-.tc-ctl-finfo-tools button {
+.tc-ctl-ftools button {
     width: 2.5em;
     height: 2.5em;
 }
@@ -623,23 +623,23 @@ li.tc-ctl-toc-node {
     padding-right: 2.6em;
 }
 
-.tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
+.tc-ctl-ftools button.tc-ctl-ftools-btn:after {
     font-size: 1.5em;
     line-height: 1.75em;
     font-family: 'FontAwesome';
     content: '\f141';
 }
 
-.tc-ctl-finfo-dialog-dl button, .tc-ctl-dmm-dialog-dl button {
+.tc-ctl-ftools-dialog-dl button, .tc-ctl-dmm-dialog-dl button {
     width: 50%;
 }
 
-    .tc-ctl-finfo-dialog-dl button:nth-child(even), .tc-ctl-dmm-dialog-dl button:nth-child(even) {
+    .tc-ctl-ftools-dialog-dl button:nth-child(even), .tc-ctl-dmm-dialog-dl button:nth-child(even) {
         border-top-right-radius: 0.3em;
         border-bottom-right-radius: 0.3em;
     }
 
-    .tc-ctl-finfo-dialog-dl button:nth-child(2n+3), .tc-ctl-dmm-dialog-dl button:nth-child(2n+3) {
+    .tc-ctl-ftools-dialog-dl button:nth-child(2n+3), .tc-ctl-dmm-dialog-dl button:nth-child(2n+3) {
         text-indent: 0;
         border-top-left-radius: 0.3em;
         border-bottom-left-radius: 0.3em;
@@ -1003,7 +1003,7 @@ ul.tc-ctl-finfo-services > li, ul.tc-ctl-finfo-layers > li, ul.tc-ctl-finfo-feat
 
 .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table {
     border: 0.2em #eee solid;
-    cursor: url(img/zoomin.cur), url(//sitna.tracasa.es/api/TC/layout/responsive/img/zoomin.cur), /* Internet Explorer */
+    cursor: url(//sitna.tracasa.es/api/TC/layout/responsive/img/zoomin.cur), /* Internet Explorer */
     default;
 }
 
@@ -1644,23 +1644,6 @@ label.tc-ctl-edit-btn-polygon span {
     line-height: 1.9em;
 }
 
-.tc-ctl-geolocation-info-tracking .tc-ctl-p-results {
-    padding: 0;
-    max-width: 70%;
-}
-
-    .tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop57 {
-        top: 3.55em;
-    }
-
-    .tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop33 {
-        top: 2.65em;
-    }
-
-    .tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop159 {
-        top: 10.05em;
-    }
-
 .tc-ctl-file-open .tc-ctl-file-open-label:before {
     font-family: FontAwesome;
     content: "\f093";
@@ -1853,12 +1836,6 @@ label.tc-ctl-edit-btn-polygon span {
     top: calc(100vh - 22.6em);
 }
 
-.tc-ctl-geolocation-info-tracking .tc-ctl-p-results .prpanel-group {
-    position: static;
-    width: auto;
-    top: auto;
-}
-
 .prpanel-default {
     height: 100%;
 }
@@ -1866,11 +1843,6 @@ label.tc-ctl-edit-btn-polygon span {
 .tc-ctl-p-results .prpanel-group .prpanel {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-}
-
-.tc-ctl-geolocation-info-tracking .tc-ctl-p-results .prpanel-group .prpanel {
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
 }
 
 .prpanel-heading {
@@ -1885,12 +1857,6 @@ label.tc-ctl-edit-btn-polygon span {
     width: 2em;
     height: 2em;
 }
-
-.tc-ctl-geolocation-info-tracking .tc-ctl-p-results .prcollapsed {
-    top: 1.5em;
-    left: 3em;
-}
-
 
 .tc-ctl-p-results #results {
     background-color: #fff;
@@ -1979,30 +1945,30 @@ label.tc-ctl-edit-btn-polygon span {
         max-height: 80vh;
     }
 
-    .tc-ctl-finfo-dialog-dl, .tc-ctl-dmm-dialog-dl {
+    .tc-ctl-ftools-dialog-dl, .tc-ctl-dmm-dialog-dl {
         min-width: 20em;
     }
 
-        .tc-ctl-finfo-dialog-dl button {
+        .tc-ctl-ftools-dialog-dl button {
             width: 25%;
         }
 
-            .tc-ctl-finfo-dialog-dl button:nth-child(even) {
+            .tc-ctl-ftools-dialog-dl button:nth-child(even) {
                 border-top-right-radius: 0;
                 border-bottom-right-radius: 0;
             }
 
-            .tc-ctl-finfo-dialog-dl button:nth-child(2n+3) {
+            .tc-ctl-ftools-dialog-dl button:nth-child(2n+3) {
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;
             }
 
-            .tc-ctl-finfo-dialog-dl button:last-child {
+            .tc-ctl-ftools-dialog-dl button:last-child {
                 border-top-right-radius: 0.3em;
                 border-bottom-right-radius: 0.3em;
             }
 
-            .tc-ctl-finfo-dialog-dl button.tc-ctl-finfo-dl-btn-geojson {
+            .tc-ctl-ftools-dialog-dl button.tc-ctl-ftools-dl-btn-geojson {
                 text-indent: -0.6em;
             }
 
@@ -2121,17 +2087,12 @@ label.tc-ctl-edit-btn-polygon span {
     }
 
     .tc-ctl-nav-btn-zoomout.ol-zoom-out {
-        top: 10em;
+        top: 0em;
     }
 
     .tc-threed button.tc-ctl-nav-btn-zoomout.ol-zoom-out {
         top: auto;
-    }
-
-    .ol-zoom-extent {
-        position: absolute;
-        top: 14em;
-    }
+    }    
 
     .tc-threed div.ol-zoom-extent {
         top: 4em;
@@ -2440,7 +2401,7 @@ label.tc-ctl-edit-btn-polygon span {
         width: auto;
     }
 
-    .tc-ctl-finfo-tools button {
+    .tc-ctl-ftools button {
         width: 2em;
         height: 2em;
     }
@@ -2451,15 +2412,15 @@ label.tc-ctl-edit-btn-polygon span {
     }
 
     /* Necesario para IE porque acumula estilos con tcmap.css */
-    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-ftools button.tc-ctl-ftools-btn:after {
         font-size: initial;
     }
 
-    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-ftools button.tc-ctl-ftools-btn:after {
         font-size: 0.67em;
     }
 
-    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-finfo-tools button.tc-ctl-finfo-tools-btn:after {
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-ftools button.tc-ctl-ftools-btn:after {
         font-size: 1.5em;
         line-height: 1.5em;
     }

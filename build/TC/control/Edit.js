@@ -29,73 +29,73 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
     };
 
     var storeFeature = function (key, feature) {
-        var deferred = $.Deferred();
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            var obj;
-            var geometryType;
-            switch (true) {
-                case feature instanceof TC.feature.Polygon:
-                    geometryType = TC.Consts.geom.POLYGON;
-                    break;
-                case feature instanceof TC.feature.Polyline:
-                    geometryType = TC.Consts.geom.POLYLINE;
-                    break;
-                case feature instanceof TC.feature.Point:
-                    geometryType = TC.Consts.geom.POINT;
-                    break;
-                case feature instanceof TC.feature.MultiPolygon:
-                    geometryType = TC.Consts.geom.MULTIPOLYGON;
-                    break;
-                case feature instanceof TC.feature.MultiPolyline:
-                    geometryType = TC.Consts.geom.MULTIPOLYLINE;
-                    break;
-            }
-            obj = {
-                id: feature.id || feature.provId,
-                attributes: feature.data,
-                type: geometryType,
-                geometry: feature.geometry,
-            }
-            localforage.setItem(key, obj)
-                .then(function () {
-                    deferred.resolve({ feature: feature });
-                })
-                .catch(function (error) {
-                    deferred.reject({ feature: feature, error: error });
-                });
+        return new Promise(function (resolve, reject) {
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                var obj;
+                var geometryType;
+                switch (true) {
+                    case feature instanceof TC.feature.Polygon:
+                        geometryType = TC.Consts.geom.POLYGON;
+                        break;
+                    case feature instanceof TC.feature.Polyline:
+                        geometryType = TC.Consts.geom.POLYLINE;
+                        break;
+                    case feature instanceof TC.feature.Point:
+                        geometryType = TC.Consts.geom.POINT;
+                        break;
+                    case feature instanceof TC.feature.MultiPolygon:
+                        geometryType = TC.Consts.geom.MULTIPOLYGON;
+                        break;
+                    case feature instanceof TC.feature.MultiPolyline:
+                        geometryType = TC.Consts.geom.MULTIPOLYLINE;
+                        break;
+                }
+                obj = {
+                    id: feature.id || feature.provId,
+                    attributes: feature.data,
+                    type: geometryType,
+                    geometry: feature.geometry,
+                }
+                localforage.setItem(key, obj)
+                    .then(function () {
+                        resolve({ feature: feature });
+                    })
+                    .catch(function (error) {
+                        reject({ feature: feature, error: error });
+                    });
+            });
         });
-        return deferred.promise();
     };
 
     var deleteFeature = function (key) {
-        var deferred = $.Deferred();
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            localforage.removeItem(key)
-                .then(function () {
-                    deferred.resolve(key);
-                })
-                .catch(function (error) {
-                    deferred.reject(error);
-                });
+        return new Promise(function (resolve, reject) {
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                localforage.removeItem(key)
+                    .then(function () {
+                        resolve(key);
+                    })
+                    .catch(function (error) {
+                        reject(Error(error));
+                    });
+            });
         });
-        return deferred.promise();
     };
 
     var readFeature = function (key) {
-        var deferred = $.Deferred();
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            localforage.getItem(key)
-                .then(function (value) {
-                    deferred.resolve({
-                        key: key,
-                        feature: value
+        return new Promise(function (resolve, reject) {
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                localforage.getItem(key)
+                    .then(function (value) {
+                        resolve({
+                            key: key,
+                            feature: value
+                        });
+                    })
+                    .catch(function (error) {
+                        reject(error);
                     });
-                })
-                .catch(function (error) {
-                    deferred.reject(error);
-                });
+            });
         });
-        return deferred.promise();
     };
 
     var getStoragePrefix = function (ctl, layerId) {
@@ -115,9 +115,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
     };
 
     var setFeatureSelectReadyState = function (ctl) {
-        ctl._$deleteBtn.prop('disabled', true);
-        ctl._$joinBtn.prop('disabled', true);
-        ctl._$splitBtn.prop('disabled', true);
+        ctl._deleteBtn.disabled = true;
+        ctl._joinBtn.disabled = true;
+        ctl._splitBtn.disabled = true;
     }
 
     var complexGeometryFilter = function (elm) {
@@ -132,14 +132,14 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
     };
 
     var setFeatureSelectedState = function (ctl, features) {
-        ctl._$deleteBtn.prop('disabled', features.length === 0);
-        ctl._$joinBtn.prop('disabled', features.length < 2);
-        ctl._$splitBtn.prop('disabled', features.filter(complexGeometryFilter).length === 0);
+        ctl._deleteBtn.disabled = features.length === 0;
+        ctl._joinBtn.disabled = features.length < 2;
+        ctl._splitBtn.disabled = features.filter(complexGeometryFilter).length === 0;
     }
 
     var setSaveButtonsState = function (ctl, disabled) {
-        ctl._$saveBtn.prop('disabled', disabled);
-        ctl._$discardBtn.prop('disabled', disabled);
+        ctl._saveBtn.disabled = disabled;
+        ctl._discardBtn.disabled = disabled;
         self.checkedOut = !disabled;
     };
 
@@ -167,24 +167,24 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
     };
 
     var addChangesLayer = function (ctl, layer) {
-        var deferred = $.Deferred();
-        var changesLayer = ctl._changesLayers[layer.id];
-        if (changesLayer) {
-            deferred.resolve(changesLayer);
-        }
-        else {
-            changesLayer = ctl._changesLayers[layer.id] = new TC.layer.Vector({
-                id: TC.getUID(),
-                title: layer.title + ' - cambios pendientes',
-                stealth: true,
-                styles: ctl.getChangesLayerStyle(layer)
-            });
-            var idx = ctl.map.layers.indexOf(layer);
-            ctl.map.insertLayer(changesLayer, idx + 1, function () {
-                deferred.resolve(changesLayer);
-            });
-        }
-        return deferred.promise();
+        return new Promise(function (resolve, reject) {
+            var changesLayer = ctl._changesLayers[layer.id];
+            if (changesLayer) {
+                resolve(changesLayer);
+            }
+            else {
+                changesLayer = ctl._changesLayers[layer.id] = new TC.layer.Vector({
+                    id: TC.getUID(),
+                    title: layer.title + ' - cambios pendientes',
+                    stealth: true,
+                    styles: ctl.getChangesLayerStyle(layer)
+                });
+                var idx = ctl.map.layers.indexOf(layer);
+                ctl.map.insertLayer(changesLayer, idx + 1, function () {
+                    resolve(changesLayer);
+                });
+            }
+        });
     };
 
     /* Creamos el constructor, llamando al constructor del padre */
@@ -195,9 +195,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
         self._classSelector = '.' + self.CLASS;
 
-        self.$events = $(self);
         self.wrap = new TC.wrap.control.Edit(self);
-        self._layerDeferred = $.Deferred();
         self.layer = null;
         self.checkedOut = false;
         //self.feature = self.options.feature ? self.options.feature : null;
@@ -218,7 +216,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
             self.getChangesLayerStyleFunction = self.getChangesLayerStyle;
         }
 
-        self.$events
+        self
             .on(TC.Consts.event.FEATUREADD, function (e) {
                 var feat = e.feature;
                 feat.provId = getNewFeatureId();
@@ -364,7 +362,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/EditAttributes.html";
     } else {
         ctlProto.template[ctlProto.CLASS] = function () {
-            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "featureEdit" }).w(" <span class=\"tc-beta\">").h("i18n", ctx, {}, { "$key": "beta" }).w("</span></h2><div class=\"tc-ctl-edit-layer\"><select class=\"tc-combo tc-ctl-edit-layer-sel\"><option value=\"\">").h("i18n", ctx, {}, { "$key": "selectLayerToEdit" }).w("</option>").s(ctx.get(["layers"], false), ctx, { "block": body_1 }, {}).w("</select><input type=\"checkbox\" id=\"tc-ctl-edit-view-changes-cb\"").x(ctx.get(["showChanges"], false), ctx, { "block": body_2 }, {}).w(" /><label class=\"tc-ctl-edit-view-changes\" for=\"tc-ctl-edit-view-changes-cb\">").h("i18n", ctx, {}, { "$key": "highlightUnsyncedChanges" }).w("</label></div><div class=\"tc-ctl-edit-mode\"><form><label class=\"tc-ctl-edit-btn-select\" title=\"").h("i18n", ctx, {}, { "$key": "select" }).w("\"><input type=\"radio\" name=\"mode\" value=\"select\" /><span>").h("i18n", ctx, {}, { "$key": "select" }).w("</span></label><label class=\"tc-ctl-edit-btn-point\" title=\"").h("i18n", ctx, {}, { "$key": "newPoint" }).w("\"><input type=\"radio\" name=\"mode\" value=\"addpoint\" /><span>").h("i18n", ctx, {}, { "$key": "newPoint" }).w("</span></label><label class=\"tc-ctl-edit-btn-line\" title=\"").h("i18n", ctx, {}, { "$key": "newLine" }).w("\"><input type=\"radio\" name=\"mode\" value=\"addline\" /><span>").h("i18n", ctx, {}, { "$key": "newLine" }).w("</span></label><label class=\"tc-ctl-edit-btn-polygon\" title=\"").h("i18n", ctx, {}, { "$key": "newPolygon" }).w("\"><input type=\"radio\" name=\"mode\" value=\"addpolygon\" /><span>").h("i18n", ctx, {}, { "$key": "newPolygon" }).w("</span></label></form></div><div class=\"tc-ctl-edit-select tc-hidden\"><button class=\"tc-ctl-btn tc-ctl-edit-btn-delete\" disabled title=\"").h("i18n", ctx, {}, { "$key": "delete" }).w("\">").h("i18n", ctx, {}, { "$key": "delete" }).w("</button><button class=\"tc-ctl-btn tc-ctl-edit-btn-join\" disabled title=\"").h("i18n", ctx, {}, { "$key": "joinGeometries.tooltip" }).w("\">").h("i18n", ctx, {}, { "$key": "joinGeometries" }).w("</button><button class=\"tc-ctl-btn tc-ctl-edit-btn-split\" disabled title=\"").h("i18n", ctx, {}, { "$key": "splitGeometry" }).w("\">").h("i18n", ctx, {}, { "$key": "splitGeometry" }).w("</button><button class=\"tc-ctl-btn tc-ctl-edit-btn-cancel\" disabled title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div><div class=\"tc-ctl-edit-point tc-hidden\"></div><div class=\"tc-ctl-edit-line tc-hidden\"></div><div class=\"tc-ctl-edit-polygon tc-hidden\"></div><div class=\"tc-ctl-edit-save\"><button class=\"tc-button tc-icon-button tc-ctl-edit-btn-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "syncChanges" }).w("\">").h("i18n", ctx, {}, { "$key": "syncChanges" }).w("</button><button class=\"tc-button tc-icon-button tc-ctl-edit-btn-discard\" disabled title=\"").h("i18n", ctx, {}, { "$key": "discardChanges" }).w("\">").h("i18n", ctx, {}, { "$key": "discardChanges" }).w("</button></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<option value=\"").f(ctx.get(["id"], false), ctx, "h").w("\">").f(ctx.get(["title"], false), ctx, "h").w("</option>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" checked"); } body_2.__dustBody = !0; return body_0
+            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "featureEdit" }).w("</h2><div class=\"tc-ctl-edit-layer\"><select class=\"tc-combo tc-ctl-edit-layer-sel\"><option value=\"\">").h("i18n", ctx, {}, { "$key": "selectLayerToEdit" }).w("</option>").s(ctx.get(["layers"], false), ctx, { "block": body_1 }, {}).w("</select><input type=\"checkbox\" id=\"tc-ctl-edit-view-changes-cb\"").x(ctx.get(["showChanges"], false), ctx, { "block": body_2 }, {}).w(" /><label class=\"tc-ctl-edit-view-changes\" for=\"tc-ctl-edit-view-changes-cb\">").h("i18n", ctx, {}, { "$key": "highlightUnsyncedChanges" }).w("</label></div><div class=\"tc-ctl-edit-mode\"><form><label class=\"tc-ctl-edit-btn-select\" title=\"").h("i18n", ctx, {}, { "$key": "select" }).w("\"><input type=\"radio\" name=\"mode\" value=\"select\" /><span>").h("i18n", ctx, {}, { "$key": "select" }).w("</span></label><label class=\"tc-ctl-edit-btn-point\" title=\"").h("i18n", ctx, {}, { "$key": "newPoint" }).w("\"><input type=\"radio\" name=\"mode\" value=\"addpoint\" /><span>").h("i18n", ctx, {}, { "$key": "newPoint" }).w("</span></label><label class=\"tc-ctl-edit-btn-line\" title=\"").h("i18n", ctx, {}, { "$key": "newLine" }).w("\"><input type=\"radio\" name=\"mode\" value=\"addline\" /><span>").h("i18n", ctx, {}, { "$key": "newLine" }).w("</span></label><label class=\"tc-ctl-edit-btn-polygon\" title=\"").h("i18n", ctx, {}, { "$key": "newPolygon" }).w("\"><input type=\"radio\" name=\"mode\" value=\"addpolygon\" /><span>").h("i18n", ctx, {}, { "$key": "newPolygon" }).w("</span></label></form></div><div class=\"tc-ctl-edit-select tc-hidden\"><button class=\"tc-ctl-btn tc-ctl-edit-btn-delete\" disabled title=\"").h("i18n", ctx, {}, { "$key": "delete" }).w("\">").h("i18n", ctx, {}, { "$key": "delete" }).w("</button><button class=\"tc-ctl-btn tc-ctl-edit-btn-join\" disabled title=\"").h("i18n", ctx, {}, { "$key": "joinGeometries.tooltip" }).w("\">").h("i18n", ctx, {}, { "$key": "joinGeometries" }).w("</button><button class=\"tc-ctl-btn tc-ctl-edit-btn-split\" disabled title=\"").h("i18n", ctx, {}, { "$key": "splitGeometry" }).w("\">").h("i18n", ctx, {}, { "$key": "splitGeometry" }).w("</button><button class=\"tc-ctl-btn tc-ctl-edit-btn-cancel\" disabled title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div><div class=\"tc-ctl-edit-point tc-hidden\"></div><div class=\"tc-ctl-edit-line tc-hidden\"></div><div class=\"tc-ctl-edit-polygon tc-hidden\"></div><div class=\"tc-ctl-edit-save\"><button class=\"tc-button tc-icon-button tc-ctl-edit-btn-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "syncChanges" }).w("\">").h("i18n", ctx, {}, { "$key": "syncChanges" }).w("</button><button class=\"tc-button tc-icon-button tc-ctl-edit-btn-discard\" disabled title=\"").h("i18n", ctx, {}, { "$key": "discardChanges" }).w("\">").h("i18n", ctx, {}, { "$key": "discardChanges" }).w("</button></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<option value=\"").f(ctx.get(["id"], false), ctx, "h").w("\">").f(ctx.get(["title"], false), ctx, "h").w("</option>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" checked"); } body_2.__dustBody = !0; return body_0
         };
         ctlProto.template[ctlProto.CLASS + '-attr'] = function () {
             dust.register(ctlProto.CLASS + '-attr', body_0); var blocks = { "inputText": body_27, "inputNumber": body_28, "inputCheckbox": body_29, "inputDate": body_31, "inputTime": body_32, "inputDatetime": body_33 }; function body_0(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<div class=\"tc-ctl-edit-attr\"><h3>").h("i18n", ctx, {}, { "$key": "attributeEdit" }).w("</h3><div class=\"tc-ctl-edit-attr-body\"><table><tbody>").s(ctx.get(["data"], false), ctx, { "block": body_1 }, {}).w("</tbody></table></div><div class=\"tc-ctl-edit-attr-footer\"><button class=\"tc-button tc-ctl-edit-btn-attr-ok\">").h("i18n", ctx, {}, { "$key": "ok" }).w("</button><button class=\"tc-button tc-ctl-edit-btn-attr-cancel\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<tr><th>").f(ctx.get(["name"], false), ctx, "h").w("</th><td>").x(ctx.get(["readOnly"], false), ctx, { "else": body_2, "block": body_34 }, {}).w("</td></tr>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.x(ctx.get(["availableValues"], false), ctx, { "block": body_3 }, {}).h("select", ctx, { "block": body_5 }, { "key": ctx.get(["type"], false) }); } body_2.__dustBody = !0; function body_3(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<select class=\"tc-combo\" name=\"").f(ctx.get(["name"], false), ctx, "h").w("\"><option value=\"\"></option>").s(ctx.get(["availableValues"], false), ctx, { "block": body_4 }, {}).w("</select>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<option value=\"").f(ctx.getPath(true, []), ctx, "h").w("\">").f(ctx.getPath(true, []), ctx, "h").w("</option>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.h("none", ctx, { "block": body_6 }, {}).h("eq", ctx, { "block": body_7 }, { "value": "int" }).h("eq", ctx, { "block": body_8 }, { "value": "integer" }).h("eq", ctx, { "block": body_9 }, { "value": "double" }).h("eq", ctx, { "block": body_10 }, { "value": "boolean" }).h("eq", ctx, { "block": body_11 }, { "value": "date" }).h("eq", ctx, { "block": body_12 }, { "value": "time" }).h("eq", ctx, { "block": body_13 }, { "value": "dateTime" }).h("eq", ctx, { "block": body_14 }, { "value": "byte" }).h("eq", ctx, { "block": body_15 }, { "value": "long" }).h("eq", ctx, { "block": body_16 }, { "value": "negativeInteger" }).h("eq", ctx, { "block": body_17 }, { "value": "nonNegativeInteger" }).h("eq", ctx, { "block": body_18 }, { "value": "nonPositiveInteger" }).h("eq", ctx, { "block": body_19 }, { "value": "positiveInteger" }).h("eq", ctx, { "block": body_20 }, { "value": "short" }).h("eq", ctx, { "block": body_21 }, { "value": "unsignedLong" }).h("eq", ctx, { "block": body_22 }, { "value": "unsignedInt" }).h("eq", ctx, { "block": body_23 }, { "value": "unsignedShort" }).h("eq", ctx, { "block": body_24 }, { "value": "unsignedByte" }).h("eq", ctx, { "block": body_25 }, { "value": "float" }).h("eq", ctx, { "block": body_26 }, { "value": "decimal" }); } body_5.__dustBody = !0; function body_6(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputText"), ctx, {}, {}); } body_6.__dustBody = !0; function body_7(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_7.__dustBody = !0; function body_8(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_8.__dustBody = !0; function body_9(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_9.__dustBody = !0; function body_10(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputCheckbox"), ctx, {}, {}); } body_10.__dustBody = !0; function body_11(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputDate"), ctx, {}, {}); } body_11.__dustBody = !0; function body_12(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputTime"), ctx, {}, {}); } body_12.__dustBody = !0; function body_13(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputDatetime"), ctx, {}, {}); } body_13.__dustBody = !0; function body_14(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_14.__dustBody = !0; function body_15(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_15.__dustBody = !0; function body_16(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_16.__dustBody = !0; function body_17(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_17.__dustBody = !0; function body_18(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_18.__dustBody = !0; function body_19(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_19.__dustBody = !0; function body_20(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_20.__dustBody = !0; function body_21(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_21.__dustBody = !0; function body_22(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_22.__dustBody = !0; function body_23(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_23.__dustBody = !0; function body_24(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_24.__dustBody = !0; function body_25(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_25.__dustBody = !0; function body_26(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.b(ctx.getBlock("inputNumber"), ctx, {}, {}); } body_26.__dustBody = !0; function body_27(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<input type=\"text\" class=\"tc-textbox\" name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" value=\"").f(ctx.get(["value"], false), ctx, "h").w("\" />"); } body_27.__dustBody = !0; function body_28(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<input type=\"number\" class=\"tc-textbox\" name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" value=\"").f(ctx.get(["value"], false), ctx, "h").w("\" />"); } body_28.__dustBody = !0; function body_29(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<input type=\"checkbox\" name=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["value"], false), ctx, { "block": body_30 }, {}).w("/>"); } body_29.__dustBody = !0; function body_30(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w(" checked"); } body_30.__dustBody = !0; function body_31(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<input type=\"date\" class=\"tc-textbox\" name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" value=\"").f(ctx.get(["value"], false), ctx, "h").w("\" />"); } body_31.__dustBody = !0; function body_32(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<input type=\"time\" class=\"tc-textbox\" name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" value=\"").f(ctx.get(["value"], false), ctx, "h").w("\" />"); } body_32.__dustBody = !0; function body_33(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.w("<input type=\"datetime\" class=\"tc-textbox\" name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" value=\"").f(ctx.get(["value"], false), ctx, "h").w("\" />"); } body_33.__dustBody = !0; function body_34(chk, ctx) { ctx = ctx.shiftBlocks(blocks); return chk.f(ctx.get(["value"], false), ctx, "h"); } body_34.__dustBody = !0; return body_0
@@ -375,7 +373,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
        La lógica del control suele definirse aquí. */
     ctlProto.register = function (map) {
         var self = this;
-        TC.control.SWCacheClient.prototype.register.call(self, map);
+        const result = TC.control.SWCacheClient.prototype.register.call(self, map);
 
         const drawPointsId = self.getUID();
         const drawLinesId = self.getUID();
@@ -387,9 +385,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
         map
             .on(TC.Consts.event.LAYERUPDATE, function (e) {
-                if (e.layer.type === TC.Consts.layerType.WFS && !e.layer.options.stealth) {
-                    var layer = e.layer;
-                    var features = self.features[e.layer.id] = self.features[e.layer.id] || {
+                const layer = e.layer;
+                if (layer.type === TC.Consts.layerType.WFS && !layer.options.stealth) {
+                    var features = self.features[layer.id] = self.features[layer.id] || {
                         added: [],
                         modified: [],
                         removed: []
@@ -437,27 +435,27 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                                                     id = k.substr(addedStoragePrefix.length);
                                                     var idNumber = parseInt(id.substr(id.lastIndexOf('.') + 1));
                                                     newFeatureIdNumber = Math.max(newFeatureIdNumber, idNumber + 1);
-                                                    var addDeferred;
+                                                    var addPromise;
                                                     switch (obj.feature.type) {
                                                         case TC.Consts.geom.POINT:
-                                                            addDeferred = layer.addPoint(obj.feature.geometry);
+                                                            addPromise = layer.addPoint(obj.feature.geometry);
                                                             break;
                                                         case TC.Consts.geom.POLYLINE:
-                                                            addDeferred = layer.addPolyline(obj.feature.geometry);
+                                                            addPromise = layer.addPolyline(obj.feature.geometry);
                                                             break;
                                                         case TC.Consts.geom.POLYGON:
-                                                            addDeferred = layer.addPolygon(obj.feature.geometry);
+                                                            addPromise = layer.addPolygon(obj.feature.geometry);
                                                             break;
                                                         case TC.Consts.geom.MULTIPOLYLINE:
-                                                            addDeferred = layer.addMultiPolyline(obj.feature.geometry);
+                                                            addPromise = layer.addMultiPolyline(obj.feature.geometry);
                                                             break;
                                                         case TC.Consts.geom.MULTIPOLYGON:
-                                                            addDeferred = layer.addMultiPolygon(obj.feature.geometry);
+                                                            addPromise = layer.addMultiPolygon(obj.feature.geometry);
                                                             break;
                                                         default:
                                                             break;
                                                     };
-                                                    addDeferred.then(function (feat) {
+                                                    addPromise.then(function (feat) {
                                                         //feat.setStyle($.extend({}, layer.styles.line, layer.styles.polygon));
                                                         changesLayer.addFeature(feat);
                                                         features.added.push(feat);
@@ -477,25 +475,27 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 }
             })
             .on(TC.Consts.event.LAYERADD, function (e) {
-                if (e.layer.type === TC.Consts.layerType.WFS && !e.layer.options.stealth) {
-                    self.features[e.layer.id] = self.features[e.layer.id] || {
+                const layer = e.layer;
+                if (layer.type === TC.Consts.layerType.WFS && !layer.options.stealth) {
+                    self.features[layer.id] = self.features[layer.id] || {
                         added: [],
                         modified: [],
                         removed: []
                     };
-                    $('<option>')
-                        .attr('value', e.layer.id)
-                        .html(e.layer.title || e.layer.id)
-                        .appendTo(self._$layerSelect);
+                    const option = document.createElement('option');
+                    option.setAttribute('value', layer.id);
+                    option.innerHTML = layer.title || layer.id;
+                    self._layerSelect.appendChild(option);
                 }
             })
             .on(TC.Consts.event.LAYERREMOVE, function (e) {
-                if (e.layer.type === TC.Consts.layerType.WFS && !e.layer.options.stealth) {
-                    var $option = self._$layerSelect.find('option[value=' + e.layer.id + ']');
-                    if ($option.filter(':selected').length > 0) {
+                const layer = e.layer;
+                if (layer.type === TC.Consts.layerType.WFS && !layer.options.stealth) {
+                    var option = self._layerSelect.querySelector('option[value=' + layer.id + ']');
+                    if (option.selected) {
                         self.setLayer(null);
                     }
-                    $option.remove();
+                    option.parentElement.removeChild(option);
                 }
             })
             .on(TC.Consts.event.POPUP, function (e) {
@@ -534,27 +534,39 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                         return 0;
                     });
                     self.getRenderedHtml(self.CLASS + '-attr', { data: attributes }, function (html) {
-                        var $contentDiv = self.attributeEditor.$contentDiv;
-                        $contentDiv.html(html);
-                        var $input = $contentDiv.find('input');
-                        var $select = $contentDiv.find('select');
-                        $input.on('input', function (e) {
-                            var $ipt = $(e.target);
-                            var $sel = $select.filter('[name=' + $ipt.attr('name') + ']');
-                            if ($sel.val() !== $ipt.val()) {
-                                $sel.val('');
-                            }
+                        const contentDiv = self.attributeEditor.contentDiv;
+                        contentDiv.innerHTML = html;
+                        const inputs = contentDiv.querySelectorAll('input');
+                        const selects = contentDiv.querySelectorAll('select');
+                        inputs.forEach(function (elm) {
+                            elm.addEventListener('input', function (e) {
+                                const input = e.target;
+                                for (var i = 0, len = selects.length; i < len; i++) {
+                                    const select = selects[i];
+                                    if (select.matches('[name=' + e.target.getAttribute('name') + ']') && select.value !== input.value) {
+                                        select.value = '';
+                                        break;
+                                    }
+                                }
+                            });
                         });
-                        $select.on('change', function (e) {
-                            var $sel = $(e.target);
-                            $input.filter('[name=' + $sel.attr('name') + ']').val($sel.val());
+                        selects.forEach(function (elm) {
+                            elm.addEventListener('change', function (e) {
+                                const select = e.target;
+                                for (var i = 0, len = inputs.length; i < len; i++) {
+                                    const input = inputs[i];
+                                    if (input.matches('[name=' + select.getAttribute('name') + ']')) {
+                                        input.value = select.value;
+                                        break;
+                                    }
+                                }
+                            });
                         });
-                        $contentDiv.find('.' + self.CLASS + '-btn-attr-ok').on('click', function () {
+                        contentDiv.querySelector('.' + self.CLASS + '-btn-attr-ok').addEventListener('click', function () {
                             var data = {};
-                            $input.each(function (idx, elm) {
-                                $input = $(elm);
-                                var name = $input.attr('name');
-                                var value = $input.val();
+                            inputs.forEach(function (input) {
+                                var name = input.getAttribute('name');
+                                var value = input.value;
                                 switch (attributeTypes[name]) {
                                     case 'int':
                                     case 'integer':
@@ -598,10 +610,10 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                                 }
                             });
                             feature.setData(data);
-                            self.$events.trigger($.Event(TC.Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer }));
+                            self.trigger(TC.Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer });
                             self.attributeEditor.hide();
                         });
-                        $contentDiv.find('.' + self.CLASS + '-btn-attr-cancel').on('click', function () {
+                        contentDiv.querySelector('.' + self.CLASS + '-btn-attr-cancel').addEventListener('click', function () {
                             self.attributeEditor.hide();
                         });
                     });
@@ -630,29 +642,29 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
             self.renderPromise().then(function () {
                 var DRAW = 'draw';
-                $.when.apply(self, [
+                Promise.all([
                     map.addControl(DRAW, {
                         id: drawPointsId,
-                        div: self._$div.find('.' + self.CLASS + '-point'),
+                        div: self.div.querySelector('.' + self.CLASS + '-point'),
                         mode: TC.Consts.geom.POINT,
                         layer: false
                     }),
                     map.addControl(DRAW, {
                         id: drawLinesId,
-                        div: self._$div.find('.' + self.CLASS + '-line'),
+                        div: self.div.querySelector('.' + self.CLASS + '-line'),
                         mode: TC.Consts.geom.POLYLINE,
                         layer: false
                     }),
                     map.addControl(DRAW, {
                         id: drawPolygonsId,
-                        div: self._$div.find('.' + self.CLASS + '-polygon'),
+                        div: self.div.querySelector('.' + self.CLASS + '-polygon'),
                         mode: TC.Consts.geom.POLYGON,
                         layer: false
                     })
-                ]).then (function (pntCtl, linCtl, pgnCtl) {
-                    self.pointDraw = pntCtl;
-                    self.lineDraw = linCtl;
-                    self.polygonDraw = pgnCtl;
+                ]).then (function (controls) {
+                    self.pointDraw = controls[0];
+                    self.lineDraw = controls[1];
+                    self.polygonDraw = controls[2];
 
                     var drawendHandler = function (e) {
                         //var styleObj = {};
@@ -688,18 +700,18 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                         }
                         //feature.setStyle(styleObj);
                         self.layer.addFeature(feature);
-                        self.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { feature: feature }));
+                        self.trigger(TC.Consts.event.FEATUREADD, { feature: feature });
                     };
                     var drawcancelHandler = function () {
                         self.cancel();
                     };
-                    pntCtl
+                    self.pointDraw
                         .on(TC.Consts.event.DRAWEND, drawendHandler)
                         .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    linCtl
+                    self.lineDraw
                         .on(TC.Consts.event.DRAWEND, drawendHandler)
                         .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    pgnCtl
+                    self.polygonDraw
                         .on(TC.Consts.event.DRAWEND, drawendHandler)
                         .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
                     if (self.options.modes && $.isArray(self.options.modes) && self.options.modes.length == 1) {
@@ -708,16 +720,17 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 });
             });
         });
-        //self.miEvent = map.on(TC.Consts.event.FEATURESADD + ".HasFeatures", function (evt) {
-        //    if (evt.layer == self.layer) {
+        //self.miEvent = map.on(TC.Consts.event.FEATURESADD + ".HasFeatures", function (e) {
+        //    if (e.layer == self.layer) {
         //        self.miEvent = map.off(TC.Consts.event.FEATURESADD + ".HasFeatures");
         //    }
         //});
 
         //if (!self.layer || self.layer.features.length==0)
         //self._$resetBtn.prop('disabled', true);
-        //self._$deleteBtn.prop('disabled', true);
+        //self._deleteBtn.disabled = true;
 
+        return result;
     };
 
     ctlProto.render = function (callback) {
@@ -734,67 +747,77 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 }
             }
         }
-        TC.Control.prototype.renderData.call(self, { layers: editLayers, showChanges: self.showChanges }, function () {
+        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { layers: editLayers, showChanges: self.showChanges }, function () {
 
-            self._$layerDiv = self._$div.find(self._classSelector + '-layer');
-            self._$layerSelect = self._$layerDiv.find(self._classSelector + '-layer-sel').on('change', function (e) {
-                self.setLayer(self._$layerSelect.val());
+            self._layerDiv = self.div.querySelector(self._classSelector + '-layer');
+            self._layerSelect = self._layerDiv.querySelector(self._classSelector + '-layer-sel');
+            self._layerSelect.addEventListener('change', function (e) {
+                self.setLayer(self._layerSelect.value);
             });
 
-            self._$layerDiv.find('#' + self.CLASS + '-view-changes-cb').on('change', function (e) {
-                self.showChanges($(e.target).prop('checked'));
+            self._layerDiv.querySelector('#' + self.CLASS + '-view-changes-cb').addEventListener('change', function (e) {
+                self.showChanges(e.target.checked);
             });
 
             //self._$len = self._$div.find(self._classSelector + '-val-len');
             //self._$area = self._$div.find(self._classSelector + '-val-area');
             //self._$peri = self._$div.find(self._classSelector + '-val-peri');
 
-            self._$cancelBtn = self._$div.find(self._classSelector + '-btn-cancel').on('click', function () {
+            self._cancelBtn = self.div.querySelector(self._classSelector + '-btn-cancel');
+            self._cancelBtn.addEventListener('click', function () {
                 self.cancel();
             });
 
-            self._$deleteBtn = self._$div.find(self._classSelector + '-btn-delete').on('click', function () {
+            self._deleteBtn = self.div.querySelector(self._classSelector + '-btn-delete');
+            self._deleteBtn.addEventListener('click', function () {
                 TC.confirm(self.eraseActionConfirmTxt, function () {
                     self.deleteFeatures(self.getSelectedFeatures());
                 });
             });
-            self._$joinBtn = self._$div.find(self._classSelector + '-btn-join').on('click', function () {
+            self._joinBtn = self.div.querySelector(self._classSelector + '-btn-join');
+            self._joinBtn.addEventListener('click', function () {
                 self.joinFeatures(self.getSelectedFeatures());
             });
-            self._$splitBtn = self._$div.find(self._classSelector + '-btn-split').on('click', function () {
+            self._splitBtn = self.div.querySelector(self._classSelector + '-btn-split');
+            self._splitBtn.addEventListener('click', function () {
                 self.splitFeatures(self.getSelectedFeatures());
             });
-            self._$saveBtn = self._$div.find(self._classSelector + '-btn-save').on('click', function () {
+            self._saveBtn = self.div.querySelector(self._classSelector + '-btn-save');
+            self._saveBtn.addEventListener('click', function () {
                 self.applyEdits();
             });
-            self._$discardBtn = self._$div.find(self._classSelector + '-btn-discard').on('click', function () {
+            self._discardBtn = self.div.querySelector(self._classSelector + '-btn-discard');
+            self._discardBtn.addEventListener('click', function () {
                 self.discardEdits();
             });
             //control de renderizado enfunción del modo de edicion        
             if (self.options.modes && $.isArray(self.options.modes) && self.options.modes.length > 0) {
                 for (var m in TC.Consts.editMode)
-                    if (typeof m == "string" && self.options.modes.indexOf(TC.Consts.editMode[m]) < 0) {
-                        $("label" + self._classSelector + "-btn-" + TC.Consts.editMode[m], self._$div).remove();
-                        $("div" + self._classSelector + "-" + TC.Consts.editMode[m], self._$div).remove();
+                    if (typeof m === 'string' && self.options.modes.indexOf(TC.Consts.editMode[m]) < 0) {
+                        const label = self.div.querySelector("label" + self._classSelector + "-btn-" + TC.Consts.editMode[m]);
+                        label.parentElement.removeChild(label);
+                        const div = self.div.querySelector("div" + self._classSelector + "-" + TC.Consts.editMode[m]);
+                        div.parentElement.removeChild(div);
                     }
-                if (self.options.modes.length == 1) {
+                if (self.options.modes.length === 1) {
                     var mode = self.options.modes[0];
-                    $("label" + self._classSelector + "-btn-" + mode, self._$div).css("display", "none");
+                    self.div.querySelector("label" + self._classSelector + "-btn-" + mode).style.display = 'none';
                 }
 
 
             }
-            self._$div.find('input[type=radio][name=mode]').on('change', function () {
-                var $cb = $(this);
-                var newMode = $cb.val();
-                var mode = self.mode === newMode ? undefined : newMode;
-                self.setMode(mode);
+            self.div.querySelectorAll('input[type=radio][name=mode]').forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    var newMode = this.value;
+                    var mode = self.mode === newMode ? undefined : newMode;
+                    self.setMode(mode);
+                });
             });
 
             if ($.isFunction(callback)) {
                 callback();
             }
-        });
+        }));
     };
 
     ctlProto.setLayer = function (layer) {
@@ -838,7 +861,6 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                         case 'gml:GeometryCollectionPropertyType':
                         case 'gml:GeometryAssociationType':
                             return false;
-                            break;
                         default:
                             return true;
                     }
@@ -849,9 +871,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 }
                 self.renderPromise().then(function () {
                     setChangedState(self);
-                    self._$div.find(self._classSelector + '-layer-sel').val(self.layer.id);
+                    self.div.querySelector(self._classSelector + '-layer-sel').value = self.layer.id;
 
-                    $rb = self._$div.find(rbSelector);
+                    const rbList = self.div.querySelectorAll(rbSelector);
                     var selector;
                     switch (self.geometryType) {
                         case TC.Consts.geom.POINT:
@@ -869,21 +891,22 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                             selector = '[value]'
                             break;
                     }
-                    var $activeRb = $rb.filter(selector).attr('disabled', false);
-                    $rb.not($activeRb).attr('disabled', true);
+                    rbList.forEach(function (rb) {
+                        rb.disabled = !rb.matches(selector);
+                    });
                 });
             });
-            self._layerDeferred.resolve(self.layer);
         }
         else {
             self.renderPromise().then(function () {
                 setChangedState(self, false);
-                $rb = self._$div.find(rbSelector).attr('disabled', true);
-                $rb.each(function (idx, elm) {
-                    $(elm).prop('checked', false);
+                const rbList = self.div.querySelectorAll(rbSelector);
+                rbList.forEach(function (rb) {
+                    rb.disabled = true;
+                    rb.checked = false;
                 });
             });
-            self._layerDeferred.resolve(null);
+            self.layer = null;
         }
     };
 
@@ -901,31 +924,32 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
             }
         };
 
-        var $active, $hidden;
+        var active;
+        var hiddenList;
         switch (mode) {
             case TC.Consts.editMode.SELECT:
-                $active = self._$div.find(self._classSelector + '-select');
-                $hidden = self._$div.find(self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
+                active = self.div.querySelector(self._classSelector + '-select');
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
                 self.activate();
                 break;
             case TC.Consts.editMode.ADDPOINT:
-                $active = self._$div.find(self._classSelector + '-point');
-                $hidden = self._$div.find(self._classSelector + '-select,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
+                active = self.div.querySelector(self._classSelector + '-point');
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-select,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
                 activateDraw(self.pointDraw);
                 break;
             case TC.Consts.editMode.ADDLINE:
-                $active = self._$div.find(self._classSelector + '-line');
-                $hidden = self._$div.find(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-polygon');
+                active = self.div.querySelector(self._classSelector + '-line');
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-polygon');
                 activateDraw(self.lineDraw);
                 break;
             case TC.Consts.editMode.ADDPOLYGON:
-                $active = self._$div.find(self._classSelector + '-polygon');
-                $hidden = self._$div.find(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-line');
+                active = self.div.querySelector(self._classSelector + '-polygon');
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-line');
                 activateDraw(self.polygonDraw);
                 break;
             default:
-                $active = $();
-                $hidden = self._$div.find(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
+                active = null;
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
                 if (self.isActive) {
                     self.deactivate();
                 }
@@ -942,18 +966,26 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         }
 
         // Class TC.Consts.classes.CHECKED is for IE8 support
-        var $radio;
+        var radio;
         if (mode) {
-            $radio = self._$div.find('input[type=radio][name=mode][value=' + mode + ']').prop('checked', true).addClass(TC.Consts.classes.CHECKED);
-            $radio.next().addClass(TC.Consts.classes.CHECKED);
+            const radio = self.div.querySelector('input[type=radio][name=mode][value=' + mode + ']');
+            radio.checked = true;
+            radio.classList.add(TC.Consts.classes.CHECKED);
+            radio.nextSibling.classList.add(TC.Consts.classes.CHECKED);
         }
         else {
-            $radio = self._$div.find('input[type=radio][name=mode]').prop('checked', false).removeClass(TC.Consts.classes.CHECKED);
-            $radio.next().removeClass(TC.Consts.classes.CHECKED);
+            self.div.querySelectorAll('input[type=radio][name=mode]').forEach(function (radio) {
+                radio.checked = false;
+                radio.classList.remove(TC.Consts.classes.CHECKED);
+                radio.nextSibling.classList.remove(TC.Consts.classes.CHECKED);
+            });
         }
-        $active.removeClass(TC.Consts.classes.HIDDEN);
-        //$($hidden).addClass(TC.Consts.classes.HIDDEN);
-        $hidden.addClass(TC.Consts.classes.HIDDEN);
+        if (active) {
+            active.classList.remove(TC.Consts.classes.HIDDEN);
+        }
+        hiddenList.forEach(function (hidden) {
+            hidden.classList.add(TC.Consts.classes.HIDDEN);
+        });
     };
 
     ctlProto.showChanges = function (show) {
@@ -987,11 +1019,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         var self = this;
         TC.Control.prototype.activate.call(self);
         var opts = options || {};
-        self._$cancelBtn.prop('disabled', false);
-        $.when(self.getLayer()).then(function () {
-            self.wrap.activate(opts.mode ? opts.mode : self.mode);
-            TC.Control.prototype.activate.call(self);
-        });
+        self._cancelBtn.disabled = false;
+        self.wrap.activate(opts.mode ? opts.mode : self.mode);
+        TC.Control.prototype.activate.call(self);
     };
 
     ctlProto.deactivate = function () {
@@ -1002,7 +1032,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         //    , removed: []
         //};
         self.wrap.cancel(true);
-        self._$cancelBtn.prop('disabled', true);
+        self._cancelBtn.disabled = true;
         self.wrap.deactivate();
     };
 
@@ -1028,11 +1058,11 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 for (var i = 0, len = features.length; i < len; i++) {
                     var feature = features[i];
                     self.layer.removeFeature(feature);
-                    self.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { feature: feature }));
+                    self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
                 }
                 self.layer.addFeature(newFeature).then(function (feat) {
                     self.setSelectedFeatures([newFeature]);
-                    self.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { feature: feat }));
+                    self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
                     feat.showPopup(self.attributeEditor);
                 });
             }
@@ -1058,16 +1088,16 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         for (var i = 0, len = complexFeatures.length; i < len; i++) {
             var feature = complexFeatures[i];
             self.layer.removeFeature(feature);
-            self.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { feature: feature }));
+            self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
         }
-        var newFeatDeferreds = new Array(newFeatures.length);
+        var newFeatPromises = new Array(newFeatures.length);
         for (var i = 0, len = newFeatures.length; i < len; i++) {
-            var deferred = newFeatDeferreds[i] = self.layer.addFeature(newFeatures[i]);
-            deferred.then(function (feat) {
-                self.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { feature: feat }));
+            const promise = newFeatPromises[i] = self.layer.addFeature(newFeatures[i]);
+            promise.then(function (feat) {
+                self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
             });
         }
-        $.when.apply(this, newFeatDeferreds).then(function() {
+        Promise.all(newFeatPromises).then(function() {
             self.setSelectedFeatures(newFeatures);
         });
         setFeatureSelectedState(self, newFeatures);
@@ -1077,7 +1107,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         var self = this;
         self.wrap.deleteFeatures(features);
         if (self.layer.features.length === 0) {
-            self._$deleteBtn.prop('disabled', true);
+            self._deleteBtn.disabled = true;
         }
     };
 
@@ -1143,7 +1173,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
     ctlProto.getLayer = function () {
         var self = this;
-        return self.layer || self._layerDeferred;
+        return self.layer;
     };
 
     ctlProto.getChangesLayerStyle = function (layer) {
