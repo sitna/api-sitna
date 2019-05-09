@@ -34,12 +34,12 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         const self = this;
 
         map.on(TC.Consts.event.VIEWCHANGE, function (e) {
-
+            const view = e.view;
             const onLayerAdd = self.loadGraphics.bind(self);
 
-            if (e.view === TC.Consts.view.THREED) {                
+            if (view === TC.Consts.view.THREED) {                
                 map.on(TC.Consts.event.LAYERADD, onLayerAdd);
-            } else if (e.view === TC.Consts.view.DEFAULT) {
+            } else if (view === TC.Consts.view.DEFAULT) {
                 map.off(TC.Consts.event.LAYERADD, onLayerAdd);
             }
         });
@@ -49,15 +49,13 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
 
     ctlProto.loadGraphics = function () {
         var self = this;
-        self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').not('.' + self.CLASS + '-empty').each(function (idx, elm) {
-            var $li = $(elm);
-            var layer = $li.data(_dataKeys.layer);
+        self.getLayerUIElements().forEach(function (li) {
+            var layer = $(li).data(_dataKeys.layer);
             if (layer) {
-                $li.find('li.tc-ctl-legend-node-visible').each(function (i, e) {
-                    var $_li = $(e);
-                    var $img = $_li.find('img').first();
-                    if ($img && $img.attr('src') != undefined && $img.attr('src').length == 0) {
-                        self.styleLegendImage($img, layer);
+                li.querySelectorAll('li.' + self.CLASS + '-node-visible').forEach(function (l) {
+                    const img = l.querySelector('img');
+                    if (img && img.getAttribute('src') !== undefined && img.getAttribute('src').length === 0) {
+                        self.styleLegendImage(img, layer);
                     }
                 });
             }
@@ -69,31 +67,37 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         var inScale = self.CLASS + '-node-inscale';
         var outOfScale = self.CLASS + '-node-outofscale';
 
-        self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').not('.' + self.CLASS + '-empty').each(function (idx, elm) {
-            var $li = $(elm);
-            var layer = $li.data(_dataKeys.layer);
+        self.getLayerUIElements().forEach(function (li) {
+            var layer = $(li).data(_dataKeys.layer);
 
             if (layer) {
                 var layersInScale = false;
-                $li.find('li').each(function (i, e) {
-                    var $_li = $(e);
-                    if ($_li.hasClass(self.CLASS + '-node-visible')) {
-                        var uid = $_li.data(_dataKeys.layerUid);
+                li.querySelectorAll('li').forEach(function (l) {
+                    if (l.classList.contains(self.CLASS + '-node-visible')) {
+                        var uid = $(l).data(_dataKeys.layerUid);
                         if (layer.isVisibleByScale((uid))) {
                             layersInScale = true;
-                            $_li.removeClass(outOfScale).addClass(inScale);
-                            var $img = $_li.find('img').first();
-                            if ($img.length > 0) {
-                                self.styleLegendImage($img, layer);
+                            l.classList.remove(outOfScale);
+                            l.classList.add(inScale);
+                            const img = l.querySelector('img');
+                            if (img) {
+                                self.styleLegendImage(img, layer);
                             }
                         }
                         else {
-                            $_li.addClass(outOfScale).removeClass(inScale);
+                            l.classList.add(outOfScale);
+                            l.classList.remove(inScale);
                         }
                     }
                 });
-                $li.toggleClass(inScale, layersInScale);
-                $li.toggleClass(outOfScale, !layersInScale);
+                if (layersInScale) {
+                    li.classList.remove(outOfScale);
+                    li.classList.add(inScale);
+                }
+                else {
+                    li.classList.remove(inScale);
+                    li.classList.add(outOfScale);
+                }
             }
         });
     };
@@ -101,29 +105,33 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
     ctlProto.update = function () {
         var self = this;
 
-        self._$div.find('ul.' + self.CLASS + '-branch').first().children('li').each(function (idx, elm) {
-            var $li = $(elm);
-            var layer = $li.data(_dataKeys.layer);
+        self.getLayerUIElements().forEach(function (li) {
+            var layer = $(li).data(_dataKeys.layer);
             if (layer) {
                 layer.getTree();
 
-                $li.find('li').each(function (i, e) {
-                    var $_li = $(e);
-                    var uid = $_li.data(_dataKeys.layerUid);
+                li.querySelectorAll('li').forEach(function (l) {
+                    var uid = $(l).data(_dataKeys.layerUid);
                     var visible = self.CLASS + '-node-visible';
                     var notVisible = self.CLASS + '-node-notvisible';
                     var hasVisible = self.CLASS + '-node-hasvisible';
 
                     switch (layer._cache.visibilityStates[uid]) {
                         case TC.Consts.visibility.NOT_VISIBLE:
-                            $_li.removeClass(visible + ' ' + hasVisible).addClass(notVisible);
+                            l.classList.remove(visible);
+                            l.classList.remove(hasVisible);
+                            l.classList.add(notVisible);                            
                             break;
                         case TC.Consts.visibility.HAS_VISIBLE:
-                            $_li.removeClass(visible + ' ' + notVisible).addClass(hasVisible);
+                            l.classList.remove(visible);
+                            l.classList.remove(notVisible);
+                            l.classList.add(hasVisible);                            
                             break;
                         default:
                             // visible
-                            $_li.removeClass(notVisible + ' ' + hasVisible).addClass(visible);
+                            l.classList.remove(notVisible);
+                            l.classList.remove(hasVisible);
+                            l.classList.add(visible);                            
                             break;
                     }
                 });
@@ -135,28 +143,41 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
     };
 
     ctlProto.updateLayerTree = function (layer) {
-        var self = this;
+        var self = this;        
 
         if (!layer.isBase && !layer.options.stealth) {
+            
+            //// 09/04/2019 GLS: ignoramos el atributo que venga en la capa porque en la leyenda queremos que el árbol se muestre siempre y 
+            //// nos ahorramos el tener que pasarlo en el estado del mapa
+            if (layer.hideTree || layer.options.hideTree) {
+                layer.tree = null;
+                layer.hideTree = layer.options.hideTree = false;
+
+                layer._cache.visibilityStates = {};
+            }            
+
             TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
 
-            self._$div.find('.' + self.CLASS + '-empty').addClass(TC.Consts.classes.HIDDEN);
+            self.div.querySelector('.' + self.CLASS + '-empty').classList.add(TC.Consts.classes.HIDDEN);            
 
             TC.loadJSInOrder(
                 !window.dust,
                 TC.url.templating,
                 function () {
                     dust.render(self.CLASS + '-node', self.layerTrees[layer.id], function (err, out) {
-                        var $newLi = $(out);
-                        var uid = $newLi.data(_dataKeys.layerUid);
-                        var $ul = self._$div.find('ul.' + self.CLASS + '-branch').first();
-                        var $li = $ul.find('li[data-tc-layer-uid="' + uid + '"]');
-                        if ($li.length === 1) {
-                            $li.html($newLi.html());
+                        const parser = new DOMParser();
+                        const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
+                        const uid = $(newLi).data(_dataKeys.layerUid);
+                        const ul = self.div.querySelector('ul.' + self.CLASS + '-branch');
+                        const lis = ul.querySelectorAll('li[data-tc-layer-uid="' + uid + '"]');
+                        if (lis.length === 1) {
+                            const li = lis[0];
+                            li.innerHTML = newLi.innerHTML;
+                            li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
                         }
                         else {
-                            $newLi.data(_dataKeys.layer, layer);
-                            $ul.prepend($newLi);
+                            $(newLi).data(_dataKeys.layer, layer);
+                            ul.insertBefore(newLi, ul.firstChild);
                         }
                         if (err) {
                             TC.error(err);
@@ -169,39 +190,27 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
     };
 
     ctlProto.removeLayer = function (layer) {
-        var self = this;
-        var $getLis = function () {
-            return self._$div.find('.' + self.CLASS + '-branch').first().children('li').not('.' + self.CLASS + '-empty');
-        };
         if (!layer.isBase) {
-            var $lis = $getLis();
-            $lis.each(function (idx, elm) {
-                var $li = $(elm);
-                if ($li.data(_dataKeys.layer) === layer) {
-                    $li.remove();
-                    $lis = $getLis();
-                    return false;
-                }
-            });
-            if ($lis.length === 0) {
-                self._$div.find('.' + self.CLASS + '-empty').removeClass(TC.Consts.classes.HIDDEN);
-            }
+            TC.control.MapContents.prototype.removeLayer.call(this, layer);
         }
     };
 
     ctlProto.updateLayerVisibility = function (layer) {
         var self = this;
-        self._$div.find('.' + self.CLASS + '-branch').first().children('li').each(function (idx, elm) {
-            var $li = $(elm);
-            if ($li.data(_dataKeys.layer) === layer) {
-                $li.toggleClass(self.CLASS + '-node-notvisible', !layer.getVisibility());
-                return false;
+        self.getLayerUIElements().forEach(function (li) {
+            if ($(li).data(_dataKeys.layer) === layer) {
+                if (layer.getVisibility()) {
+                    li.classList.remove(self.CLASS + '-node-notvisible');
+                }
+                else {
+                    li.classList.add(self.CLASS + '-node-notvisible');
+                }
             }
         });
     };
 
     ctlProto.getLayerUIElements = function () {
-        var self = this;
-        return self._$div.find('ul.' + self.CLASS + '-branch').first().children('li.' + self.CLASS + '-node');
+        const self = this;
+        return self.div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll('li.' + self.CLASS + '-node');
     };
 })();
