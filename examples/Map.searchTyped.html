@@ -37,7 +37,7 @@
         var addMunicipalityFilter = function () {
             map.removeSearch();
 
-            map.setQueryType(SITNA.Consts.mapSearchType.MUNICIPALITY, "86", function (idQuery) {
+            map.searchTyped(SITNA.Consts.mapSearchType.MUNICIPALITY, "86", function (idQuery) {
                 if (idQuery == null) {
                     alert("No se ha encontrado el municipio con código 86.");
                 }

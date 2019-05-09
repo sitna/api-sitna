@@ -10,7 +10,7 @@
 
     const viewSource = function () {
         if (!$pre.html()) {
-            $.get(location.href).then(function (html) {
+            TC.ajax({ url: location.href }).then(function (html) {
                 $pre
                     .html(html.replace(/[<>]/g, function (m) { return { '<': '&lt;', '>': '&gt;' }[m] }))
                     .appendTo('body')
