@@ -22,7 +22,9 @@ TC.control.ResultsPanel = function () {
 
     self.data = {};
     self.classes = {
-        FA: 'fa'
+        FA: 'fa',
+        SHOW_IN: 'showIn',
+        SHOW_OUT: 'showOut'
     };
 
     self.contentType = {
@@ -40,7 +42,7 @@ TC.control.ResultsPanel = function () {
 
     if ($.isEmptyObject(self.options)) {
         self.options = { content: "table" };
-    }    
+    }
 
     if (self.options || { content: "table" }) {
         if (self.options.content)
@@ -64,10 +66,11 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     const ctlProto = TC.control.ResultsPanel.prototype;
 
     ctlProto.CLASS = 'tc-ctl-p-results';
+
     ctlProto.template = {};
 
     ctlProto.CHART_SIZE = {
-        MIN_HEIGHT: 70,
+        MIN_HEIGHT: 75,
         MAX_HEIGHT: 128,
 
         MIN_WIDTH: 215,
@@ -82,42 +85,97 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     } else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"prpanel-group prsidebar-body \" style=\"display: none\" data-no-cb><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><span class=\"prpanel-title-text\"></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-csv\" hidden title=\"").h("i18n", ctx, {}, { "$key": "export.excel" }).w("\"><i class=\"fa fa-file-excel-o\"></i></span></h4></div><div id=\"results\" class=\"prpanel-collapse collapse in\"><div class=\"tc-ctl-p-results-menu\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-info\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-table\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-chart\"></div></div></div></div><div class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\" data-no-cb><i class=\"fa-list-alt\" hidden></i><i class=\"fa-area-chart\" hidden></i></div>"); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-table'] = function () { dust.register(ctlProto.CLASS + '-table', body_0); function body_0(chk, ctx) { return chk.w("<table class=\"table\" style=\"display:none;\"><thead>").s(ctx.get(["columns"], false), ctx, { "block": body_1 }, {}).w("</thead><tbody>").s(ctx.get(["results"], false), ctx, { "block": body_2 }, {}).w("</tbody></table>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<th>").f(ctx.getPath(true, []), ctx, "h").w("</th>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<tr>").h("iterate", ctx, { "block": body_3 }, { "on": ctx.getPath(true, []) }).w("</tr>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<td>").f(ctx.get(["value"], false), ctx, "h").w("</td>"); } body_3.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-chart'] = function () { dust.register(ctlProto.CLASS + '-chart', body_0); function body_0(chk, ctx) { return chk.w("<div id=\"track-chart\">").x(ctx.get(["msg"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<span id=\"elevationGain\" >").h("i18n", ctx, {}, { "$key": "geo.trk.chart.elevationGain" }).w(": +").f(ctx.get(["upHill"], false), ctx, "h").w("m, -").f(ctx.get(["downHill"], false), ctx, "h").w("m</span><div id=\"chart\"></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["msg"], false), ctx, "h"); } body_2.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-chart'] = function () { dust.register(ctlProto.CLASS + '-chart', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-track-chart\">").x(ctx.get(["msg"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<span id=\"elevationGain\" >").h("i18n", ctx, {}, { "$key": "geo.trk.chart.elevationGain" }).w(": +").f(ctx.get(["upHill"], false), ctx, "h").w("m, -").f(ctx.get(["downHill"], false), ctx, "h").w("m</span><div class=\"tc-chart\"></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["msg"], false), ctx, "h"); } body_2.__dustBody = !0; return body_0 };
     }
 
+    const isElementVisible = function (elm) {
+        const computedStyle = getComputedStyle(elm);
+        return (elm && !elm.hidden && computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden');
+    };
+
     ctlProto.isVisible = function () {
-        var self = this;
-        return self._$div.find('.prsidebar-body').is(':visible') || self._$div.find('.prcollapsed-max').is(':visible');
+        const self = this;
+        const bodyElm = self.div.querySelector('.prsidebar-body');
+        const maximizeElm = self.div.querySelector('.prcollapsed-max');
+        return isElementVisible(bodyElm) || isElementVisible(maximizeElm);
+    };
+
+    ctlProto.isMinimized = function () {
+        const self = this;
+        const bodyElm = self.div.querySelector('.prsidebar-body');
+        const maximizeElm = self.div.querySelector('.prcollapsed-max');
+        return isElementVisible(maximizeElm) && !isElementVisible(bodyElm);
+    };
+
+    const manageClassList = function (classElement, toAdd, toRemove) {
+        const self = this;
+
+        const elm = self.div.querySelector('.' + classElement);
+        if (elm) {
+            elm.classList.add(toAdd);
+            elm.classList.remove(toRemove);
+        }
+    };
+
+    ctlProto.show = function (classElement) {
+        const self = this;
+
+        const elm = self.div.querySelector('.' + classElement);
+        if (elm && elm.style.display === 'none') {
+            elm.style.display = '';
+        }
+
+        manageClassList.call(self, classElement, self.classes.SHOW_IN, self.classes.SHOW_OUT);
+    };
+
+    ctlProto.hide = function (classElement) {
+        const self = this;
+
+        manageClassList.call(self, classElement, self.classes.SHOW_OUT, self.classes.SHOW_IN);
+
+        const elm = self.div.querySelector('.' + classElement);
+        if (elm) {
+            elm.style.display = 'none';
+        }
+    };
+
+    ctlProto.doVisible = function () {
+        const self = this;
+
+        self.div.classList.remove(TC.Consts.classes.HIDDEN);
+        self.show('prsidebar-body');
     };
 
     ctlProto.render = function (callback) {
-        var self = this;
+        const self = this;
 
-        TC.Control.prototype.render.call(self, function () {
+        self.div.classList.add(TC.Consts.classes.HIDDEN);
 
-            self.$mainTitle = self._$div.find('.prpanel-title-text');
+        return TC.Control.prototype.render.call(self, function () {
 
-            self.$minimize = self._$div.find('.prcollapsed-slide-submenu-min');
-            self.$minimize.on('click', function () {
+            self.mainTitleElm = self.div.querySelector('.prpanel-title-text');
+
+            self.minimizeButton = self.div.querySelector('.prcollapsed-slide-submenu-min');
+            self.minimizeButton.addEventListener('click', function () {
                 self.minimize();
             });
 
-            self.$close = self._$div.find('.prcollapsed-slide-submenu-close');
-            self.$close.on('click', function () {
+            self.closeButton = self.div.querySelector('.prcollapsed-slide-submenu-close');
+            self.closeButton.addEventListener('click', function () {
                 self.close();
             });
 
-            self.$maximize = self._$div.find('.prcollapsed-max');
-            self.$maximize.on('click', function () {
+            self.maximizeButton = self.div.querySelector('.prcollapsed-max');
+            self.maximizeButton.addEventListener('click', function () {
                 self.maximize();
             });
 
             if (self.save) {
-                self.$save = self._$div.find('.prcollapsed-slide-submenu-csv');
-                self.$save.on('click', function () {
+                self.saveButton = self.div.querySelector('.prcollapsed-slide-submenu-csv');
+                self.saveButton.addEventListener('click', function () {
                     self.exportToExcel();
                 });
-                self.$save.removeAttr("hidden");
+                self.saveButton.removeAttribute('hidden');
             }
 
             if (self.content) {
@@ -126,35 +184,35 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 if (self.options.titles) {
 
                     if (self.options.titles.main) {
-                        self.$mainTitle.attr('title', self.options.titles.main);
-                        self.$mainTitle.html(self.options.titles.main);
+                        self.mainTitleElm.setAttribute('title', self.options.titles.main);
+                        self.mainTitleElm.innerHTML = self.options.titles.main;
                     }
 
                     if (self.options.titles.max) {
-                        self.$maximize.attr('title', self.options.titles.max);
+                        self.maximizeButton.setAttribute('title', self.options.titles.max);
                     }
                 } else {
-                    self.$mainTitle.attr('title', self.getLocaleString("rsp.title"));
-                    self.$mainTitle.html(self.getLocaleString("rsp.title"));
+                    self.mainTitleElm.setAttribute('title', self.getLocaleString("rsp.title"));
+                    self.mainTitleElm.innerHTML = self.getLocaleString("rsp.title");
                 }
             }
 
-            self._$div.find(self.content.collapsedClass).removeAttr('hidden').addClass(self.classes.FA);
+            const collapsedElm = self.div.querySelector(self.content.collapsedClass);
+            //collapsedElm.hidden = false;
+            collapsedElm.classList.add(self.classes.FA);
 
-            self.$divInfo = self._$div.find('.' + self.CLASS + '-info');
-            self.$divTable = self._$div.find('.' + self.CLASS + '-table');
-            self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
-            self.$divMenu = self._$div.find('.' + self.CLASS + '-menu');
+            self.infoDiv = self.div.querySelector('.' + self.CLASS + '-info');
+            self.tableDiv = self.div.querySelector('.' + self.CLASS + '-table');
+            //self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
+            self.menuDiv = self.div.querySelector('.' + self.CLASS + '-menu');
 
-            TC.loadJS(Modernizr.touch, TC.apiLocation + 'lib/jQuery/jquery.touchSwipe.min.js', function () {
-                if (Modernizr.touch) {
-                    var $head = self._$div.swipe({
-                        swipeLeft: function () {
-                            self.minimize();
-                        }
-                    });
-                }
-            });
+            if (Modernizr.touch) {
+                TC.Util.swipe(self.div, {
+                    left: function () {
+                        self.minimize();
+                    }
+                });
+            }
 
             if (callback && typeof (callback) === "function")
                 callback.call();
@@ -162,58 +220,61 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     };
 
     ctlProto.minimize = function () {
-        var self = this;
+        const self = this;
 
-        if (self._$div.find(self.content.collapsedClass + ':visible').length == 0) { // ya está minimizado
-            if (!self._$div.find(self.content.collapsedClass).hasClass(self.classes.FA))
-                self._$div.find(self.content.collapsedClass).addClass(self.classes.FA);
+        const collapsedElm = self.div.querySelector(self.content.collapsedClass);
+        if (!isElementVisible(collapsedElm)) { // ya está minimizado
+            collapsedElm.classList.add(self.classes.FA);
+            collapsedElm.hidden = false;
 
-            self._$div.find(self.content.collapsedClass).removeAttr('hidden');
+            self.hide('prsidebar-body');
+            self.show('prcollapsed-max');
 
-
-            self._$div.find('.prsidebar-body').toggle('slide', function () {
-                self._$div.find('.prcollapsed-max').fadeIn();
-            });
-
-            self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELMIN), {});
+            self.map.trigger(TC.Consts.event.RESULTSPANELMIN, { control: self });
         }
     };
 
     ctlProto.maximize = function () {
-        var self = this;
+        const self = this;
 
-        if (self._$div.find(self.content.collapsedClass + ':hidden').length == 0) { // ya está maximizado
-            self._$div.find(self.content.collapsedClass).attr('hidden', 'hidden');
+        const collapsedElm = self.div.querySelector(self.content.collapsedClass);
+        if (isElementVisible(collapsedElm)) { // ya está maximizado
+            collapsedElm.hidden = true;
 
-            self._$div.find('.prsidebar-body').toggle('slide');
-            self._$div.find('.prcollapsed-max').hide();
+            self.show('prsidebar-body');
+            self.hide('prcollapsed-max');
 
-            self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELMAX), {});
+            self.map.trigger(TC.Consts.event.RESULTSPANELMAX, { control: self });
         }
     };
 
-    ctlProto.isMinimized = function () {
-        const self = this;
-        return self._$div.find('.prcollapsed-max:visible').length === 1 && self._$div.find('.prsidebar-body:visible').length === 0;
-    }
-
     ctlProto.close = function () {
-        var self = this;
+        const self = this;
 
-        self._$div.find('.prsidebar-body').hide();
+        self.div.classList.add(TC.Consts.classes.HIDDEN);
 
         if (self.chart && self.chart.chart) {
             self.chart.chart = self.chart.chart.destroy();
         }
 
-        self._$div.find('.prcollapsed-max').hide();
-        self._$div.find(self.content.collapsedClass).attr('hidden', 'hidden').removeClass(self.classes.FA);
+        const body = self.div.querySelector('.prsidebar-body');
+        if (body) {
+            body.style.display = 'none';
+            self.div.querySelector('.prcollapsed-max').style.display = 'none';
 
-        self.map.$events.trigger($.Event(TC.Consts.event.RESULTSPANELCLOSE, { control: self }));
+            const collapsedElm = self.div.querySelector(self.content.collapsedClass);
+            collapsedElm.hidden = true;
+            collapsedElm.classList.remove(self.classes.FA);
+
+            self.map.trigger(TC.Consts.event.RESULTSPANELCLOSE, { control: self });
+        }
     };
 
     ctlProto.openChart = function (data) {
         const self = this;
+
+        self.div.classList.remove(TC.Consts.classes.HIDDEN);
+
         // Cerramos el resto de los perfiles
         self.map.getControlsByClass(TC.control.ResultsPanel)
             .filter(function (ctl) {
@@ -235,7 +296,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 self.elevationProfileCoordinates = data.coords;
                 self.renderElevationProfileChart({
                     data: data,
-                    div: self._$div.find('.' + ctlProto.CLASS + '-chart')
+                    div: self.div.querySelector('.' + ctlProto.CLASS + '-chart')
                 });
             }
         } else {
@@ -252,26 +313,27 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             TC.Consts.url.D3C3 || TC.apiLocation + 'lib/d3c3/d3c3.min.js',
             function () {
                 const data = options.data;
-                const $div = $(options.div);
+                const div = options.div;
                 var locale = TC.Util.getMapLocale(self.map);
                 self.getRenderedHtml(ctlProto.CLASS + '-chart', { upHill: data.upHill.toLocaleString(locale), downHill: data.downHill.toLocaleString(locale) }, function (out) {
 
-                    $div.html(out);
-                    $div.show();
+                    div.innerHTML = out;
+                    div.style.display = '';
 
                     if (self.options.titles) {
 
                         if (self.options.titles.main) {
-                            self._$div.find('.prpanel-title-text').attr('title', self.options.titles.main);
-                            self._$div.find('.prpanel-title-text').html(self.options.titles.main);
+                            const titleElm = self.div.querySelector('.prpanel-title-text');
+                            titleElm.setAttribute('title', self.options.titles.main);
+                            titleElm.innerHTML = self.options.titles.main;
                         }
 
                         if (self.options.titles.max) {
-                            self._$div.find('.prcollapsed-max').attr('title', self.options.titles.max);
+                            self.div.querySelector('.prcollapsed-max').setAttribute('title', self.options.titles.max);
                         }
                     }
                     var chartOptions = $.extend({
-                        bindto: $div.find('.tc-chart')[0],
+                        bindto: div.querySelector('.tc-chart'),
                         padding: {
                             top: 0,
                             right: 15,
@@ -307,7 +369,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         if ($.isFunction(chartOptions._onrendered)) {
                             chartOptions._onrendered.call(this);
                         }
-                        self.map.$events.trigger($.Event(TC.Consts.event.DRAWCHART, { control: self, svg: this.svg[0][0], chart: this }));
+                        self.map.trigger(TC.Consts.event.DRAWCHART, { control: self, svg: this.svg[0][0], chart: this });
                     };
 
                     if (window.c3) {
@@ -404,6 +466,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     ctlProto.openTable = function () {
         var self = this;
 
+        self.div.classList.remove(TC.Consts.classes.HIDDEN);
+
         var data = arguments[0];
         if (data) {
 
@@ -442,23 +506,24 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     callback: callback
                 }
                 self.getRenderedHtml(self.CLASS + '-table', self.tableData).then(function (html) {
-                    var table = self._$div.find('.' + self.CLASS + '-table');
-                    var parent = table.parent();
-                    table.detach();
-                    table.append(html);
-                    parent.append(table);
-                    if (self.tableData.callback)
+                    const table = self.div.querySelector('.' + self.CLASS + '-table');
+                    const parent = table.parentElement;
+                    parent.removeChild(table);
+                    table.innerHTML = html;
+                    parent.appendChild(table);
+                    if (self.tableData.callback) {
                         self.tableData.callback(table);
+                    }
 
                     closeOpenedTableResultsPanel.call(self);
 
-                    self.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE, { control: self }));
+                    self.map.trigger(TC.Consts.event.DRAWTABLE, { control: self });
                 });
 
-                self._$div.find('.' + self.CLASS + '-chart').hide();
-                self._$div.find('.' + self.CLASS + '-info').hide();
+                self.div.querySelector('.' + self.CLASS + '-chart').style.display = 'none';
+                self.div.querySelector('.' + self.CLASS + '-info').style.display = 'none';
 
-                self._$div.find('.prsidebar-body').fadeIn('slide');
+                self.show('prsidebar-body');
             }
         }
 
@@ -467,56 +532,72 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     };
 
     ctlProto.open = function (html, container) {
-        var self = this;
+        const self = this;
 
-        var toCheck = container ? [container] : self._$div.find('.' + self.CLASS + '-table');
+        self.div.classList.remove(TC.Consts.classes.HIDDEN);
+
+        const toCheck = container || self.div.querySelector('.' + self.CLASS + '-table');
         var checkIsRendered = function () {
-            var clientRect = toCheck[0].getBoundingClientRect();
+            var clientRect = toCheck.getBoundingClientRect();
             if (clientRect && clientRect.width > 100) {
                 window.cancelAnimationFrame(this.requestIsRendered);
 
                 //closeOpenedTableResultsPanel.call(self);
-                this.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE, { control: self }));
+                this.map.trigger(TC.Consts.event.DRAWTABLE, { control: self });
             }
         };
 
         self.requestIsRendered = window.requestAnimationFrame(checkIsRendered.bind(self));
 
-        self._$div.find('.' + self.CLASS + '-chart').hide();
-        self._$div.find('.' + self.CLASS + '-table').hide();
-        self._$div.find('.' + self.CLASS + '-info').hide();
+        const chartElm = self.div.querySelector('.' + self.CLASS + '-chart');
+        chartElm.style.display = 'none';
+        const tableElm = self.div.querySelector('.' + self.CLASS + '-table');
+        tableElm.style.display = 'none';
+        const infoElm = self.div.querySelector('.' + self.CLASS + '-info');
+        infoElm.style.display = 'none';
 
         if (html) {
             if (container) {
                 self.getTableContainer = function () {
-                    return $(container);
+                    return container;
                 };
-                $(container).html(html);
-                $(container).show();
+                container.innerHTML = html;
+                container.style.display = '';
             } else {
-                self._$div.find('.' + self.CLASS + '-table').html(html);
-                self._$div.find('.' + self.CLASS + '-table').show();
+                tableElm.innerHTML = html;
+                tableElm.style.display = '';
             }
         }
+
+        const maximizeElm = self.div.querySelector('.prcollapsed-max');
 
         if (self.options.titles) {
 
             if (self.options.titles.main) {
-                self._$div.find('.prpanel-title-text').attr('title', self.options.titles.main);
-                self._$div.find('.prpanel-title-text').html(self.options.titles.main);
+                const titleElm = self.div.querySelector('.prpanel-title-text');
+                titleElm.setAttribute('title', self.options.titles.main);
+                titleElm.innerHTML = self.options.titles.main;
             }
 
             if (self.options.titles.max) {
-                self._$div.find('.prcollapsed-max').attr('title', self.options.titles.max);
+                maximizeElm.setAttribute('title', self.options.titles.max);
+            }
+        }
+
+        if (self.options.classes) {
+            if (self.options.classes.collapsed) {
+                maximizeElm.querySelector('i.fa-list-alt').classList.add(self.options.classes.collapsed);
             }
         }
 
         // si está minimizado
-        if (self._$div.find(self.content.collapsedClass + ':visible').length == 1) {
+        const collapsedElm = self.div.querySelector(self.content.collapsedClass);
+        if (isElementVisible(collapsedElm)) {
             self.maximize();
         }
 
-        self._$div.find('.prsidebar-body').fadeIn('slide');
+        self.show('prsidebar-body');
+        self.hide('prcollapsed-max');
 
         self.map.getLoadingIndicator().hide();
     };
@@ -596,7 +677,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             }
                         },
                         onresize: function () {
-                            this.api.resize(getChartSize());
+                            this.api.resize(getChartSize());                            
                         }
                     }
 
@@ -634,7 +715,10 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
                         svgDefsElement.appendChild(grad);
 
-                        $(d3.select(".c3-brush").node()).remove();
+                        const d3Node = d3.select(".c3-brush").node();
+                        if (d3Node) {
+                            d3Node.parentNode.removeChild(d3Node);
+                        }
 
                         d3.select(".c3-event-rects,.c3-event-rects-single")
                             .selectAll("rect")
@@ -665,10 +749,10 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             }
                         }
 
-                        const $svg = $(svg);
+                        const svgRect = svg.getBoundingClientRect();
                         const chartSize = {
-                            width: $svg.width(),
-                            height: $svg.height()
+                            width: svgRect.width,
+                            height: svgRect.height
                         };
 
                         // ¿es necesario pasar los labels a multiline?
@@ -681,9 +765,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                             if (i == 0) return;
 
                                             d3text = d3.select(this);
-
-                                            if (!d3text.attr('edited')) {
-                                                d3text.attr('edited', true);
+                                            
+                                            if (d3text.node().childNodes.length === 1) {                                                
                                                 var clone = d3text.select('tspan').node().cloneNode();
                                                 var words = d3text.text().split(' ');
 
@@ -732,12 +815,13 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         }
 
                         if (!self.isMinimized()) {
-                            self._$div.find('.prsidebar-body').fadeIn('slide');
+                            self.show('prsidebar-body');
+                            self.hide('prcollapsed-max');
                         }
 
 
-                        self._$div.find('.' + self.CLASS + '-table').hide();
-                        self._$div.find('.' + self.CLASS + '-info').hide();
+                        self.div.querySelector('.' + self.CLASS + '-table').style.display = '';
+                        self.div.querySelector('.' + self.CLASS + '-info').style.display = '';
                     }
                 }
                 else {
@@ -799,21 +883,19 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     };
 
     ctlProto.getTableContainer = function () {
-        if (this.$divTable) {
-            return this.$divTable.get(0);
-        }
+        return this.tableDiv;
     };
 
     ctlProto.getInfoContainer = function () {
-        if (this.$divInfo) {
-            return this.$divInfo.get(0);
-        }
+        return this.infoDiv;
     };
 
     ctlProto.getMenuElement = function () {
-        if (this.$divMenu) {
-            return this.$divMenu.get(0);
-        }
+        return this.menuDiv;
+    };
+
+    ctlProto.getContainerElement = function () {
+        return this.div || null;
     };
 
     ctlProto.register = function (map) {
@@ -824,37 +906,37 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         self.wrap.register(map);
 
         if (self.openOn) {
-            self.map.$events.one(self.openOn, function (e, args) {
-                self.content.fnOpen.call(self, args.data);
+            self.map.one(self.openOn, function (e, args) {
+                self.content.fnOpen.call(self, e.data);
             });
         }
 
         if (self.closeOn) {
-            self.map.$events.one(self.closeOn, function (e, args) {
+            self.map.one(self.closeOn, function (e, args) {
                 self.close();
             });
         }
 
         if (self.options.openOn) {
-            self.map.$events.on(self.options.openOn, function (e, args) {
-                self.content.fnOpen.call(self, args.data);
+            self.map.on(self.options.openOn, function (e, args) {
+                self.content.fnOpen.call(self, e.data);
             });
         }
 
         if (self.options.closeOn) {
-            self.map.$events.on(self.options.closeOn, function (e, args) {
+            self.map.on(self.options.closeOn, function (e, args) {
                 self.close();
             });
         }
 
-        map.on(TC.Consts.event.VIEWCHANGE, function () {
+        //map.on(TC.Consts.event.VIEWCHANGE, function () {
 
-            map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
-                return ctl.options.content !== "chart" && ($(ctl.div).find('.' + ctl.CLASS + '-info:visible').length === 1 || $(ctl.div).find('.' + ctl.CLASS + '-table:visible').length === 1);
-            }).forEach(function (ctl) {
-                ctl.close();
-            });
-        });
+        //    map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
+        //        return ctl.options.content !== "chart" && ($(ctl.div).find('.' + ctl.CLASS + '-info:visible').length === 1 || $(ctl.div).find('.' + ctl.CLASS + '-table:visible').length === 1);
+        //    }).forEach(function (ctl) {
+        //        ctl.close();
+        //    });
+        //});
 
         return result;
     };
