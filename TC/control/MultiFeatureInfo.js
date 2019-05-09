@@ -46,50 +46,42 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.register = function (map) {
         const self = this;
-        const ctlPromise = TC.Control.prototype.register.call(self, map);
-        const deferred = $.Deferred();
-
-        const ctlDeferreds = [ctlPromise];
-        if (self.modes[TC.Consts.geom.POINT]) {
-            var finfoDeferred = $.Deferred();
-            ctlDeferreds.push(finfoDeferred);
-            $.when(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
-                { displayMode: self.options.displayMode }))).then(function (control) {
-                self.fInfoCtrl = control;
-                finfoDeferred.resolve();
-            });
-        }
-        if (self.modes[TC.Consts.geom.POLYLINE]) {
-            var lfinfoDeferred = $.Deferred();
-            ctlDeferreds.push(lfinfoDeferred);
-            $.when(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
-                { displayMode: self.options.displayMode, lineColor: self.lineColor }))).then(function (control) {
-                self.lineFInfoCtrl = control;
-                lfinfoDeferred.resolve();
-            });
-        }
-        if (self.modes[TC.Consts.geom.POLYGON]) {
-            var pfinfoDeferred = $.Deferred();
-            ctlDeferreds.push(pfinfoDeferred);
-            $.when(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
-                { displayMode: self.options.displayMode, lineColor: self.lineColor }))).then(function (control) {
-                self.polygonFInfoCtrl = control;
-                pfinfoDeferred.resolve();
-            });
-        }
-        $.when.apply(this, ctlDeferreds).then(function () {
-            if (self.fInfoCtrl) {
-                self.fInfoCtrl.activate();
-                self.lastCtrlActive = self.fInfoCtrl;
-                deferred.resolve(self);
+        return new Promise(function (resolve, reject) {
+            const ctlPromises = [TC.Control.prototype.register.call(self, map)]
+            if (self.modes[TC.Consts.geom.POINT]) {
+                ctlPromises.push(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
+                    { displayMode: self.options.displayMode })).then(function (control) {
+                        self.fInfoCtrl = control;
+                        return control;
+                    }));
             }
+            if (self.modes[TC.Consts.geom.POLYLINE]) {
+                ctlPromises.push(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
+                    { displayMode: self.options.displayMode, lineColor: self.lineColor })).then(function (control) {
+                        self.lineFInfoCtrl = control;
+                        return control;
+                    }));
+            }
+            if (self.modes[TC.Consts.geom.POLYGON]) {
+                ctlPromises.push(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
+                    { displayMode: self.options.displayMode, lineColor: self.lineColor })).then(function (control) {
+                        self.polygonFInfoCtrl = control;
+                        return control;
+                    }));
+            }
+            Promise.all(ctlPromises).then(function () {
+                if (self.fInfoCtrl) {
+                    self.fInfoCtrl.activate();
+                    self.lastCtrlActive = self.fInfoCtrl;
+                }
+                resolve(self);
+            });
         });
 
-        return deferred.promise();
     };
 
     ctlProto.render = function (callback) {
-        var self = this;
+        const self = this;
         self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor;
         var renderData = {};
         if (self.modes[TC.Consts.geom.POINT]) {
@@ -101,7 +93,7 @@ if (!TC.control.FeatureInfoCommons) {
         if (self.modes[TC.Consts.geom.POLYGON]) {
             renderData.polygonSelectValue = TC.Consts.geom.POLYGON;
         }
-        TC.Control.prototype.renderData.call(self, renderData,
+        return TC.Control.prototype.renderData.call(self, renderData,
             function () {
                 var changeEvent = function () {
                     switch (this.value) {
@@ -128,7 +120,9 @@ if (!TC.control.FeatureInfoCommons) {
                             break;
                     }
                 };
-                self._$div.find('input[type=radio]').on('change', changeEvent);
+                self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
+                    input.addEventListener('change', changeEvent);
+                });
 
                 if ($.isFunction(callback)) {
                     callback();
