@@ -1,0 +1,52 @@
+﻿<div>
+    {@countif key=attributes excludedKeys="the_geom,FEATURE" }
+    <select class="tc-combo" id="attributes" name="attributes">
+        <option value="">{@i18n $key="query.chooseAttrCombo"/}</option>
+        {@iterate on=attributes excludedKeys="the_geom,FEATURE"}
+        <option value="{key}">{key}</option>
+        {/iterate}
+    </select>
+    {:else}
+        <div class="tc-ctl-wfsquery-message tc-msg-warning">{@i18n $key="query.noAttributes"/}</div>
+    {/countif}
+    
+</div>
+<div class="tc-ctl-wfsquery-operacion tc-hidden">
+    <div class="tc-ctl-wfsquery tc-ctl-wfsquery-numeric tc-hidden">
+        <input type="radio" id="cond_1" name="codicion" value="eq" /><label for="cond_1" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.equalToBtn"/}</label>
+        <input type="radio" id="cond_2" name="codicion" value="not" /><label for="cond_2" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.notEqualToBtn"/}</label>
+        <input type="radio" id="cond_3" name="codicion" value="gt" /><label for="cond_3" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.greatherThanBtn"/}</label>
+        <input type="radio" id="cond_4" name="codicion" value="lt" /><label for="cond_4" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.lowerThanBtn"/}</label>
+        <input type="radio" id="cond_5" name="codicion" value="ge" /><label for="cond_5" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.greatherOrEqualThanBtn"/}</label>
+        <input type="radio" id="cond_6" name="codicion" value="le" /><label for="cond_6" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.lowerOrEqualThanBtn"/}</label>
+        <!--<input type="radio" id="cond_7" name="codicion" value="like" /><label for="cond_7" class="tc-ctl-wfsquery-cond">es como</label>-->
+    </div>
+    <div class="tc-ctl-wfsquery tc-ctl-wfsquery-text tc-hidden">
+        <input type="radio" id="cond_8" name="codicion" value="eq" /><label for="cond_8" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.equalToBtn"/}</label>
+        <input type="radio" id="cond_9" name="codicion" value="contains" /><label for="cond_9" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.containsBtn"/}</label>
+        <input type="radio" id="cond_10" name="codicion" value="start" /><label for="cond_10" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.startsByBtn"/}</label>
+        <input type="radio" id="cond_11" name="codicion" value="end" /><label for="cond_11" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.endsByBtn"/}</label>
+    </div>
+    <div class="tc-ctl-wfsquery tc-ctl-wfsquery-date tc-hidden">
+        <input type="radio" id="cond_12" name="codicion" value="bw" /><label for="cond_12" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.equalToBtn"/}</label>
+        <input type="radio" id="cond_13" name="codicion" value="nbw" /><label for="cond_13" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.notEqualToBtn"/}</label>
+        <input type="radio" id="cond_14" name="codicion" value="gt" /><label for="cond_14" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.greatherThanBtn"/}</label>
+        <input type="radio" id="cond_15" name="codicion" value="lt" /><label for="cond_15" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.lowerThanBtn"/}</label>
+        <input type="radio" id="cond_16" name="codicion" value="ge" /><label for="cond_16" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.greatherOrEqualThanBtn"/}</label>
+        <input type="radio" id="cond_17" name="codicion" value="le" /><label for="cond_17" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key="query.lowerOrEqualThanBtn"/}</label>
+        <!--<input type="radio" id="cond_7" name="codicion" value="like" /><label for="cond_7" class="tc-ctl-wfsquery-cond">es como</label>-->
+    </div>
+    <div class="tc-ctl-wfsquery-where tc-hidden">
+        <input type="search" placeholder="{@i18n $key="query.searchFieldPhd" /}" class="tc-textbox" />
+        <button type="button" title="{@i18n $key="query.tooltipAddCondBtn"/}" class="tc-button">{@i18n $key="query.textAddCondBtn"/}</button>
+        <ul class="tc-ctl-wfsquery-list tc-ctl-search-list tc-hidden"></ul>
+        <div class="tc-ctl-wfsquery-key">
+            <label>{@i18n $key="query.logicalOpLbl"/}</label>
+        </div>
+        <div class="tc-ctl-wfsquery-value">
+            <input type="radio" id="log_op_1" class="tc-ctl-wfsquery-logOpRadio" checked name="log_op" value="AND" /><label for="log_op_1" class="tc-ctl-btn tc-ctl-wfsquery-logOp">{@i18n $key="query.logicalOpAndLbl"/}</label>
+            <input type="radio" id="log_op_2" class="tc-ctl-wfsquery-logOpRadio" name="log_op" value="OR" /><label for="log_op_2" class="tc-ctl-btn tc-ctl-wfsquery-logOp">{@i18n $key="query.logicalOpOrLbl"/}</label>
+        </div>
+        <div class="tc-ctl-wfsquery-whereList"></div>
+    </div>
+</div>

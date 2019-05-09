@@ -1,0 +1,13 @@
+{#conditions}
+<div class="tc-ctl-wfsquery-where-cond">
+    {field}&nbsp;{opText}&nbsp;
+    {?isString}
+    &quot;
+    {/isString}
+    {valueToShow|numberSeparator}
+    {?isString}
+    &quot;
+    {/isString}
+</div>
+<div class="tc-ctl-wfsquery-del-cond" title="{@i18n $key="query.tooltipRemoveCond"/}"></div>	
+{/conditions}
