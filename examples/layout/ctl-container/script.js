@@ -1,17 +1,25 @@
-﻿$(function () {
-    var $ovPanel = $('.ovmap-panel');
-    var map = $ovPanel.parent().data('map');
+﻿document.addEventListener('DOMContentLoaded', function () {
+
+    const ovPanel = document.querySelector('.ovmap-panel');
+    const map = $(ovPanel.parentElement).data('map');
+    const rcollapsedClass = 'right-collapsed';
+    const lcollapsedClass = 'left-collapsed';
     var ovmap;
 
-    $('.right-panel > h1').on(TC.Consts.event.CLICK, function (e) {
+    document.querySelector('.right-panel > h1').addEventListener(TC.Consts.event.CLICK, function (e) {
         e.preventDefault();
         e.stopPropagation();
-        var $tab = $(e.target);
-        var $panel = $tab.parent();
-        $panel.toggleClass('right-collapsed');
-        if (map && $panel.hasClass('ovmap-panel')) {
+        const tab = e.target;
+        const panel = tab.parentElement;
+        if (panel.classList.contains(rcollapsedClass)) {
+            panel.classList.remove(rcollapsedClass);
+        }
+        else {
+            panel.classList.add(rcollapsedClass);
+        }
+        if (map && panel === ovPanel) {
             if (ovmap) {
-                if ($panel.hasClass('right-collapsed')) {
+                if (panel.classList.contains(rcollapsedClass)) {
                     ovmap.disable();
                 }
                 else {
@@ -23,25 +31,38 @@
         }
     });
 
-    $('.left-panel > h1').on(TC.Consts.event.CLICK, function (e) {
+    document.querySelector('.left-panel > h1').addEventListener(TC.Consts.event.CLICK, function (e) {
         e.preventDefault();
         e.stopPropagation();
-        var $tab = $(e.target);
-        var $panel = $tab.parent();
-        $panel.toggleClass('left-collapsed');
+        const panel = e.target.parentElement;
+        if (panel.classList.contains(lcollapsedClass)) {
+            panel.classList.remove(lcollapsedClass);
+        }
+        else {
+            panel.classList.add(lcollapsedClass);
+        }
     });
 
-    $('.tools-panel').on(TC.Consts.event.CLICK, function (e) {
-        var $tab = $(e.target);
-        if ($tab.is('h2')) {
-            var $ctl = $tab.parent();
+    document.querySelector('.tools-panel').addEventListener(TC.Consts.event.CLICK, function (e) {
+        const tab = e.target;
+        if (tab.tagName === ('H2')) {
+            const ctlDiv = tab.parentElement;
             if (map && map.layout && map.layout.accordion) {
-                if ($ctl.hasClass(TC.Consts.classes.COLLAPSED)) {
-                    var $ctls = $(this).find('h2').parent().not('.tc-ctl-search');
-                    $ctls.not($ctl).addClass(TC.Consts.classes.COLLAPSED);
+                if (ctlDiv.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                    this.querySelectorAll('h2').forEach(function (h2) {
+                        const div = h2.parentElement;
+                        if (div !== ctlDiv && !div.matches('.tc-ctl-search')) {
+                            div.classList.add(TC.Consts.classes.COLLAPSED);
+                        }
+                    });
                 }
             }
-            $ctl.toggleClass(TC.Consts.classes.COLLAPSED);
+            if (ctlDiv.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                ctlDiv.classList.remove(TC.Consts.classes.COLLAPSED);
+            }
+            else {
+                ctlDiv.classList.add(TC.Consts.classes.COLLAPSED);
+            }
         }
     });
 
@@ -59,20 +80,25 @@
         var changes = $.isArray(configArray) ? configArray : [configArray];
 
         if (changes) {
+            var map;
             changes.forEach(function (item) {
                 var elem = item.apply;
                 var clickedElems = $.isArray(elem.elements) ? elem.elements : [elem.elements];
-
-                $(map._$div).on(elem.event, clickedElems.join(), function () {
+                map = item.map || map || TC.Map.get(document.querySelector('.tc-map'));
+                map.div.addEventListener(elem.event, TC.EventTarget.listenerBySelector(clickedElems.join(), function () {
                     if (window.matchMedia(item.screenCondition).matches) { // si es una pantalla estrecha
                         elem.changes.forEach(function (change) {
                             var targets = $.isArray(change.targets) ? change.targets : [change.targets];
                             var classes = $.isArray(change.classes) ? change.classes : [change.classes];
 
-                            $(targets.join()).toggleClass(classes.join(' '), true);
+                            document.querySelectorAll(targets.join()).forEach(function (elm) {
+                                classes.forEach(function (cls) {
+                                    elm.classList.add(cls);
+                                });
+                            });
                         });
                     }
-                });
+                }));
             });
         }
     };
@@ -90,17 +116,17 @@
             }
             //mover el Multifeature info dentro del TOC
             if (TC.control.MultiFeatureInfo) {
-                var toc = map.getControlsByClass('TC.control.WorkLayers')[0];
+                var toc = map.getControlsByClass('TC.control.WorkLayerManager')[0];
                 if (toc) {
-                    var mfi = $('.' + TC.control.MultiFeatureInfo.prototype.CLASS);
-                    mfi.detach();
-                    $('.' + toc.CLASS + '-content').prepend(mfi);
+                    const mfi = document.querySelector('.' + TC.control.MultiFeatureInfo.prototype.CLASS);
+                    document.querySelector('.' + toc.CLASS + '-content').firstChild.insertAdjacentElement('beforebegin', mfi);
                 }
             }
 
             //Aplicar clases CSS cuando se haga click en elementos definidos por configuración
             TC.Cfg.applyChanges([
                 {
+                    "map": map,
                     "screenCondition": "(max-width: 42em)",
                     "apply": {
                         "event": "click",
@@ -119,44 +145,36 @@
         TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
         TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
 
-        map.$events.on(TC.Consts.event.TOOLSOPEN, function (e) {
-            var $toolsPanel = $('.tools-panel');
-            $toolsPanel.removeClass('right-collapsed');
+        map.on(TC.Consts.event.TOOLSOPEN, function (e) {
+            document.querySelector('.tools-panel').classList.remove(rcollapsedClass);
         });
 
-        map.$events.on(TC.Consts.event.TOOLSCLOSE, function (e) {
-            var $toolsPanel = $('.tools-panel');
-            if (!$toolsPanel.hasClass('right-collapsed'))
-                $toolsPanel.addClass('right-collapsed');
+        map.on(TC.Consts.event.TOOLSCLOSE, function (e) {
+            document.querySelector('.tools-panel').classList.add(rcollapsedClass);
         });
     }
 
-    TC.loadJS(
-        Modernizr.touch,
-        TC.apiLocation + 'lib/jQuery/jquery.touchSwipe.min.js',
-        function () {
-            if (Modernizr.touch) {
-                var $right = $('.right-panel').swipe({
-                    swipeRight: function () {
-                        $(this).addClass('right-collapsed');
-                    }
-                });
-                var $left = $('.left-panel').swipe({
-                    swipeLeft: function () {
-                        $(this).addClass('left-collapsed');
-                    }
-                });
-                $right.find('li,a').addClass('noSwipe');
-                $left.find('li,a').addClass('noSwipe');
-            }
-        }
-    );
+    if (Modernizr.touch) {
+        const addSwipe = function (direction) {
+            const selector = '.' + direction + '-panel';
+            const className = direction + '-collapsed';
+            const options = { noSwipe: 'li,a' };
+            options[direction] = function () {
+                this.classList.add(className);
+            };
+            document.querySelectorAll(selector).forEach(function (panel) {
+                TC.Util.swipe(panel, options);
+            });
+        };
+        addSwipe('right');
+        addSwipe('left');
+    }
     //TC.loadJS(
     //    Modernizr.touch,
     //    TC.apiLocation + 'FastClick/fastclick.min.js',
     //    function () {
     //        if (Modernizr.touch) {
-    //            $(function () {
+    //            document.addEventListener('DOMContentLoaded', function () {
     //                Origami.fastclick(document.body);
     //            });
     //        }
