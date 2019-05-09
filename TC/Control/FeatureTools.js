@@ -35,9 +35,10 @@ TC.control.FeatureTools = function () {
         );
     }
 
-    self._$dialogDiv = $(TC.Util.getDiv(self.options.dialogDiv));
+    self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+    self._$dialogDiv = $(self._dialogDiv);
     if (!self.options.dialogDiv) {
-        self._$dialogDiv.appendTo('body');
+        document.body.appendChild(self._dialogDiv);
     }
 };
 
@@ -63,42 +64,31 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
 
     ctlProto.register = function (map) {
         const self = this;
-        const deferred = $.Deferred();
-        const basePromise = TC.Control.prototype.register.call(self, map);
-
-        $.when(basePromise, self.renderPromise()).then(function () {
-            self.map.addControl('share', {
-                id: self.getUID(),
-                div: self._$dialogDiv.find('.tc-modal-body .' + self.CLASS + '-share-dialog-ctl'),
-                includeControls: false // Establecemos el control para que no exporte estados de controles, así no se comparte la feature dos veces
-            }).then(function (ctl) {
-                self._shareCtl = ctl;
-                deferred.resolve(self);
-            });
-        });
-
         map
             .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE + ' ' + TC.Consts.event.DRAWCHART, function (e) {
-                self.currentDisplay = e.control;
-                if (self.currentDisplay.caller) {
-                    self.highlightedFeature = self.currentDisplay.caller.highlightedFeature;
+                self.currentDisplay = e.control;              // caso feature compartida
+                if (self.currentDisplay.caller || (!self.currentDisplay.caller && self.currentDisplay.currentFeature)) {
+                    self.highlightedFeature = !(!self.currentDisplay.caller && self.currentDisplay.currentFeature) ? self.currentDisplay.caller.highlightedFeature : self.currentDisplay.currentFeature;
                     if (self.highlightedFeature) {
                         self.highlightedFeature.showsPopup = true;
                     }
                 }
-                self.addUI(e.control);
+                self.addUI(self.currentDisplay);
             })
             .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
                 self.currentDisplay = null;
             })
             .on(TC.Consts.event.FEATUREADD, function (e) {
-                if (self.currentDisplay && self.currentDisplay.caller && e.feature === self.currentDisplay.caller.highlightedFeature) {
-                    self.highlightedFeature = e.feature;
+                const feature = e.feature;
+                if (self.currentDisplay && self.currentDisplay.caller && feature === self.currentDisplay.caller.highlightedFeature) {
+                    self.highlightedFeature = feature;
                     self.highlightedFeature.showsPopup = true;
                 }
-            }).on(TC.Consts.event.FEATUREREMOVE, function (e) {
-                if (e.feature === self.highlightedFeature) {
-                    const highlightedFeature = e.feature.clone();
+            })
+            .on(TC.Consts.event.FEATUREREMOVE, function (e) {
+                const feature = e.feature;
+                if (feature === self.highlightedFeature) {
+                    const highlightedFeature = feature.clone();
                     highlightedFeature.showsPopup = true;
                     // Si la feature se eliminó por un cierre de popup provocado por la apertura de otro, 
                     // reasignamos la feature nueva al popup, ya que este está apuntando a una feature que ya no está en el mapa.
@@ -113,86 +103,105 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                 }
             });
 
-        return deferred.promise();
+        return new Promise(function (resolve, reject) {
+            Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]).then(function () {
+                self.map.addControl('share', {
+                    id: self.getUID(),
+                    div: self._dialogDiv.querySelector('.tc-modal-body .' + self.CLASS + '-share-dialog-ctl'),
+                    includeControls: false // Establecemos el control para que no exporte estados de controles, así no se comparte la feature dos veces
+                }).then(function (ctl) {
+                    self._shareCtl = ctl;
+                    resolve(self);
+                }).catch(function (err) {
+                    reject(err instanceof Error ? err : Error(err));
+                });
+            });
+        });
     };
 
     ctlProto.render = function (callback) {
         const self = this;
-        self.getRenderedHtml(self.CLASS + '-dialog', {
+        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', {
             checkboxId: self.getUID(),
             elevation: self.options.displayElevation
         }, function (html) {
-            self._$dialogDiv
-                .html(html)
-                .on(TC.Consts.event.CLICK, 'button[data-format]', function (e) {
-                    TC.Util.closeModal();
-                    const li = self.map.getLoadingIndicator();
-                    const waitId = li && li.addWait();
+            self._dialogDiv.innerHTML = html;
+            self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
+                TC.Util.closeModal();
+                const li = self.map.getLoadingIndicator();
+                const waitId = li && li.addWait();
 
-                    const shareOptions = {};
-                    if (self._$dialogDiv.find(self._selectors.ELEVATION_CHECKBOX).prop('checked')) {
-                        const interpolateCoords = self._$dialogDiv.find(self._selectors.INTERPOLATION_RADIO + ':checked').val() === "1";
-                        shareOptions.elevation = {
-                            resolution: interpolateCoords ? parseFloat(self._$dialogDiv.find(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').val()) || self.options.displayElevation.resolution : 0
-                        };
-                    }
-                    prepareFeatureToShare(self, shareOptions)
-                        .then(
-                        function (feature) {
-                            self.map.exportFeatures([feature], {
-                                fileName: self._getFeatureFilename(feature),
-                                format: $(e.target).data('format')
-                            });
-                        },
-                        function (msg, type) {
-                            if (type === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
-                                TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
-                                return;
-                            }
-                            TC.error(self.getLocaleString('elevation.error'));
-                        }
-                        )
-                        .always(function () {
-                            li && li.removeWait(waitId);
+                const shareOptions = {};
+                if (self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX) && self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked) {
+                    const interpolateCoords = self._dialogDiv.querySelector(self._selectors.INTERPOLATION_RADIO + ':checked').value === "1";
+                    shareOptions.elevation = {
+                        resolution: interpolateCoords ? parseFloat(self._dialogDiv.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || self.options.displayElevation.resolution : 0
+                    };
+                }
+                prepareFeatureToShare(self, shareOptions)
+                    .then(
+                    function (feature) {
+                        self.map.exportFeatures([feature], {
+                            fileName: self._getFeatureFilename(feature),
+                            format: e.target.dataset.format
                         });
-                })
-                .on('change', self._selectors.ELEVATION_CHECKBOX, function (e) {
-                    self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
-                })
-                .on('change', self._selectors.INTERPOLATION_RADIO, function (e) {
-                    self._$dialogDiv.find(self._selectors.INTERPOLATION_DISTANCE).toggleClass(TC.Consts.classes.HIDDEN, e.target.value === '0');
-                });
+                    },
+                    function (error) {
+                        if (error === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                            TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
+                            return;
+                        }
+                        TC.error(self.getLocaleString('elevation.error'));
+                    }
+                    )
+                    .finally(function () {
+                        li && li.removeWait(waitId);
+                    });
+            }));
+            self._dialogDiv.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.ELEVATION_CHECKBOX, function (e) {
+                self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
+            }));
+            self._dialogDiv.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (e) {
+                const idDiv = self._dialogDiv.querySelector(self._selectors.INTERPOLATION_DISTANCE);
+                if (e.target.value === '0') {
+                    idDiv.classList.add(TC.Consts.classes.HIDDEN);
+                }
+                else {
+                    idDiv.classList.remove(TC.Consts.classes.HIDDEN);
+                }
+            }));
 
-            self._firstRender.resolve();
-            self.$events.trigger($.Event(TC.Consts.event.CONTROLRENDER));
+            self.trigger(TC.Consts.event.CONTROLRENDER);
             if ($.isFunction(callback)) {
                 callback();
             }
-        });
+        }));
     };
 
     ctlProto.addUI = function (ctl) {
         const self = this;
-        const $menuContainer = $(ctl.getMenuElement());
+        const menuContainer = ctl.getMenuElement();
         // Nos aseguramos de que el se decora el control una sola vez
         const menuIsMissing = function () {
-            return $menuContainer.length && !$menuContainer.find('.' + self.CLASS).length;
+            return menuContainer && !menuContainer.querySelector('.' + self.CLASS);
         };
         if (menuIsMissing()) {
             // Añadimos los botones de herramientas
             self.getRenderedHtml(self.CLASS, null, function (html) {
                 if (menuIsMissing()) {
-                    const $tools = $menuContainer
-                        .append(html)
-                        .find('.' + self.CLASS);
+                    const parser = new DOMParser();
+                    const tools = parser.parseFromString(html, 'text/html').body.firstChild;
+                    menuContainer.appendChild(tools);
 
                     self.updateUI(ctl);
 
                     if (!self.map.options.stateful) {
                         // Compartir no funciona sin estado
-                        $tools.find('.' + self.CLASS + '-share-btn').remove();
+                        const shareBtn = tools.querySelector('.' + self.CLASS + '-share-btn');
+                        shareBtn.parentElement.removeChild(shareBtn);
                     }
-                    self._setToolButtonHandlers($tools);
+                    self._setToolButtonHandlers(tools);
+                    self._decorateDisplay(ctl.getContainerElement());
                 }
             });
         }
@@ -201,67 +210,110 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         }
     };
 
+    ctlProto._decorateDisplay = function (container) {
+        const self = this;        
+
+        if (self.highlightedFeature) {
+
+            // Añadimos un zoom a la feature al pulsar en la tabla
+            if (container.querySelector('table.tc-attr')) {
+                container.querySelector('table.tc-attr').addEventListener(TC.Consts.event.CLICK, function (e) {
+                    self.zoomToCurrentFeature();
+                });
+
+                container.querySelector('table.tc-attr').classList.add(self.CLASS + '-zoom');
+                container.querySelector('table.tc-attr').setAttribute('title', self.getLocaleString('clickToCenter'));
+            }                        
+
+            // Añadimos botón de imprimir
+            TC.loadJS(
+                !TC.control.Print,
+                [TC.apiLocation + 'TC/control/Print'],
+                function () {
+                    var printTitle = "";
+
+                    if (self.highlightedFeature) {
+                        printTitle = self.highlightedFeature.id;
+
+                        if (self.highlightedFeature.showsPopup === true) {
+                            new TC.control.Print({
+                                target: container,
+                                title: printTitle
+                            });
+                        }
+                    }
+                });
+        }        
+    };
+
     ctlProto.updateUI = function (ctl) {
         const self = this;
-        const $uiDiv = $(ctl.getMenuElement()).find('.' + self.CLASS);
-        $uiDiv.removeClass(TC.Consts.classes.ACTIVE);
+        const uiDiv = ctl.getMenuElement().querySelector('.' + self.CLASS);
+        uiDiv.classList.remove(TC.Consts.classes.ACTIVE);
         clearTimeout(self._uiUpdateTimeout);
         self._uiUpdateTimeout = setTimeout(function () {
             const currentFeature = self.getCurrentFeature();
-            $uiDiv.toggleClass(TC.Consts.classes.ACTIVE, !!currentFeature && currentFeature.showsPopup);
+            if (currentFeature && currentFeature.showsPopup) {
+                uiDiv.classList.add(TC.Consts.classes.ACTIVE);
+            }
+            else {
+                uiDiv.classList.remove(TC.Consts.classes.ACTIVE);
+            }
         }, 100);
     };
 
-    ctlProto._setToolButtonHandlers = function ($container) {
+    ctlProto._setToolButtonHandlers = function (container) {
         const self = this;
 
         // Evento para mostrar diálogo modal de descarga
-        $container.find('.' + self.CLASS + '-dl-btn').on(TC.Consts.event.CLICK, function (e) {
+        container.querySelector('.' + self.CLASS + '-dl-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
             self.showDownloadDialog();
         });
 
-        // Evento para mostrar diálogo modal de compartir
-        $container.find('.' + self.CLASS + '-share-btn').on(TC.Consts.event.CLICK, function (e) {
-            self.showShareDialog();
-        });
+        if (self.map.options.stateful) {
+            // Evento para mostrar diálogo modal de compartir
+            container.querySelector('.' + self.CLASS + '-share-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
+                self.showShareDialog();
+            });
+        }
 
         // Evento para hacer zoom
-        $container.find('.' + self.CLASS + '-zoom-btn').on(TC.Consts.event.CLICK, function (e) {
+        container.querySelector('.' + self.CLASS + '-zoom-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
             self.zoomToCurrentFeature();
         });
 
         // Evento para borrar la feature
-        $container.find('.' + self.CLASS + '-del-btn').on(TC.Consts.event.CLICK, function (e) {
+        container.querySelector('.' + self.CLASS + '-del-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
             self.removeCurrentFeature();
         });
     };
 
     ctlProto.getHighlightLayer = function () {
         const self = this;
-        const deferred = $.Deferred();
-        if (self.layer) {
-            deferred.resolve(self.layer);
-        }
-        else {
-            self.map.addLayer({
-                id: self.getUID(),
-                title: self.CLASS + ': Highlighted features layer',
-                type: TC.Consts.layerType.VECTOR,
-                stealth: true
-            }).then(function (layer) {
-                if (!self.layer) {
-                    self.layer = layer;
-                }
-                deferred.resolve(self.layer);
-            });
-        }
-        return deferred.promise();
+        return new Promise(function (resolve, reject) {
+            if (self.layer) {
+                resolve(self.layer);
+            }
+            else {
+                self.map.addLayer({
+                    id: self.getUID(),
+                    title: self.CLASS + ': Highlighted features layer',
+                    type: TC.Consts.layerType.VECTOR,
+                    stealth: true
+                }).then(function (layer) {
+                    if (!self.layer) {
+                        self.layer = layer;
+                    }
+                    resolve(self.layer);
+                });
+            }
+        });
     };
 
     ctlProto.showDownloadDialog = function () {
         const self = this;
 
-        const $dialog = self._$dialogDiv.find('.' + self.CLASS + '-dialog');
+        const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-dialog');
         const feature = self.getCurrentFeature();
         const isPoint = (TC.feature.Point && feature instanceof TC.feature.Point) ||
             (TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint);
@@ -271,17 +323,30 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
             (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon);
 
         // Si no es una línea o polígono, no es necesario preguntar si queremos interpolar
-        $dialog.find('.' + self.CLASS + '-dialog-ip').toggleClass(TC.Consts.classes.HIDDEN,
-            !self._$dialogDiv.find(self._selectors.ELEVATION_CHECKBOX).prop('checked') || (!isLine && !isPolygon));
+        const ipDiv = dialog.querySelector('.' + self.CLASS + '-dialog-ip');
+        if (ipDiv) {
+            if ((self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX) && !self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked) || (!isLine && !isPolygon)) {
+                ipDiv.classList.add(TC.Consts.classes.HIDDEN);
+            }
+            else {
+                ipDiv.classList.remove(TC.Consts.classes.HIDDEN);
+            }
+        }
         // Si es un polígono, no es necesario mostrar el botón de GPX
-        $dialog.find('button[data-format=GPX]').toggleClass(TC.Consts.classes.HIDDEN, !!isPolygon);
+        const gpxBtn = dialog.querySelector('button[data-format=GPX]');
+        if (isPolygon) {
+            gpxBtn.classList.add(TC.Consts.classes.HIDDEN);
+        }
+        else {
+            gpxBtn.classList.remove(TC.Consts.classes.HIDDEN);
+        }
 
-        TC.Util.showModal(self._$dialogDiv.find('.' + self.CLASS + '-dl-dialog'));
+        TC.Util.showModal(self._dialogDiv.querySelector('.' + self.CLASS + '-dl-dialog'));
     };
 
     ctlProto.showShareDialog = function () {
         const self = this;
-        TC.Util.showModal(self._$dialogDiv.find('.' + self.CLASS + '-share-dialog'), {
+        TC.Util.showModal(self._dialogDiv.querySelector('.' + self.CLASS + '-share-dialog'), {
             openCallback: function () {
                 self.onShowShareDialog();
             },
@@ -334,54 +399,54 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
 
     const prepareFeatureToShare = function (ctl, options) {
         options = options || {};
-        const deferred = $.Deferred();
-        const currentFeature = ctl.getCurrentFeature();
-        if (currentFeature) {
-            const feature = currentFeature.clone();
-            feature.setId(currentFeature.id);
-            feature.layer = currentFeature.layer;
-            if (options.elevation) {
-                var mustGetElevations = true;
-                if (!options.elevation.resolution && feature.getGeometryStride() > 2) {
-                    mustGetElevations = false;
-                }
-                if (mustGetElevations) {
-                    const elevOptions = {
-                        crs: ctl.map.crs,
-                        features: [feature],
-                        maxCoordQuantity: ctl.options.displayElevation && ctl.options.displayElevation.maxCoordQuantity,
-                        resolution: options.elevation.resolution,
-                        sampleNumber: 0 // No queremos determinar el número de muestras
-                    };
-                    ctl.elevation.setGeometry(elevOptions).then(
-                        function (features) {
-                            deferred.resolve(features[0]);
-                        },
-                        function (msg, type) {
-                            deferred.reject(msg, type);
-                        }
-                    );
+        return new Promise(function (resolve, reject) {
+            const currentFeature = ctl.getCurrentFeature();
+            if (currentFeature) {
+                const feature = currentFeature.clone();
+                feature.setId(currentFeature.id);
+                feature.layer = currentFeature.layer;
+                if (options.elevation) {
+                    var mustGetElevations = true;
+                    if (!options.elevation.resolution && feature.getGeometryStride() > 2) {
+                        mustGetElevations = false;
+                    }
+                    if (mustGetElevations) {
+                        const elevOptions = {
+                            crs: ctl.map.crs,
+                            features: [feature],
+                            maxCoordQuantity: ctl.options.displayElevation && ctl.options.displayElevation.maxCoordQuantity,
+                            resolution: options.elevation.resolution,
+                            sampleNumber: 0 // No queremos determinar el número de muestras
+                        };
+                        ctl.elevation.setGeometry(elevOptions).then(
+                            function (features) {
+                                resolve(features[0]);
+                            },
+                            function (error) {
+                                reject(Error(error));
+                            }
+                        );
+                    }
+                    else {
+                        resolve(feature);
+                    }
                 }
                 else {
-                    deferred.resolve(feature);
+                    const coordsArray = feature.getCoordsArray();
+                    const firstCoord = coordsArray[0];
+                    if (firstCoord && firstCoord.length > 2) {
+                        coordsArray.forEach(function (coord) {
+                            coord.length = 2;
+                        });
+                        feature.setCoords(feature.geometry);
+                    }
+                    resolve(feature);
                 }
             }
             else {
-                const coordsArray = feature.getCoordsArray();
-                const firstCoord = coordsArray[0];
-                if (firstCoord && firstCoord.length > 2) {
-                    coordsArray.forEach(function (coord) {
-                        coord.length = 2;
-                    });
-                    feature.setCoords(feature.geometry);
-                }
-                deferred.resolve(feature);
+                resolve(null);
             }
-        }
-        else {
-            deferred.resolve(null);
-        }
-        return deferred.promise();
+        });
     };
 
     ctlProto.onShowShareDialog = function () {
@@ -390,10 +455,10 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         shareCtl.extraParams = null;
         prepareFeatureToShare(self).then(function (feature) {
             shareCtl.featureToShare = feature;
-            var $shareDiv = shareCtl._$div;
+            const shareDiv = shareCtl.div;
             const link = shareCtl.generateLink();
-            $shareDiv.find(".tc-url input[type=text]").val(link);
-            $shareDiv.find(".tc-iframe input[type=text]").val(shareCtl.generateIframe(link));
+            shareDiv.querySelector(".tc-url input[type=text]").value = link;
+            shareDiv.querySelector(".tc-iframe input[type=text]").value = shareCtl.generateIframe(link);
         });
     };
 
@@ -408,7 +473,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
 
     ctlProto._getFeatureFilename = function (feature) {
         const self = this;
-        const layerTitle = self.getFeatureTitle(feature).replace(new RegExp(self.TITLE_SEPARATOR, 'g'), self.FILE_TITLE_SEPARATOR) || self.getLocaleString('feature');
+        const layerTitle = self.getFeatureTitle(feature).toString().replace(new RegExp(self.TITLE_SEPARATOR, 'g'), self.FILE_TITLE_SEPARATOR) || self.getLocaleString('feature');
         return layerTitle.toLowerCase().replace(/\s/gi, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
     };
 
