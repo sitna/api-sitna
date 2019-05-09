@@ -49,21 +49,20 @@ var sitnaBuild = {
         'lib/dust/dust-full-helpers.min.js',
         'lib/dust/dustjs-i18n.min.js',
         'lib/dust/dust.overrides.js',
-        'lib/localForage/localforage.min.js',
         'lib/jsnlog/jsnlog.min.js'
     ],
     midSrc: [
-        'lib/jQuery/jquery.xdomainrequest.min.js',
         'lib/jQuery/autocomplete.js',
-        'lib/jQuery/jquery.event.drag.js',
-        'lib/jQuery/jquery.event.drop.js',
-        'lib/jQuery/jquery-watch.min.js',
+        'lib/draggabilly/draggabilly.pkgd.min.js',
+        'lib/sortable/Sortable.min.js',
         'lib/qrcode/qrcode.min.js',
         'lib/jsonpack/jsonpack.min.js',
         'lib/ua-parser/ua-parser.min.js',
+        'TC/tool/Proxification.js',
         'TC/Map.js',
         'TC/Util.js',
         'tcmap.js',
+        'lib/localForage/localforage.min.js',
         'TC/Layer.js',
         'TC/Control.js',
         'TC/Feature.js',
@@ -80,6 +79,7 @@ var sitnaBuild = {
         'TC/control/SWCacheClient.js',
         'TC/control/Measure.js',
         'TC/control/ProjectionSelector.js',
+        'TC/control/Container.js',
         'TC/control/TabContainer.js',
         'TC/ol/**/*.js',
         'TC/control/**/*.js',
@@ -254,7 +254,7 @@ var sitnaBuild = {
             '!TC/workers/**/*'
         ];
         var olSrc1 = [
-            'lib/ol/build/ol-debug.js',
+            'lib/ol/build/ol-custom.js',
             'lib/proj4js/proj4.js',
             'lib/jquery/jquery.2.1.3.js'
         ];
