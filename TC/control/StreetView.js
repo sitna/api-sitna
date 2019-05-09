@@ -1,6 +1,6 @@
 ﻿/// <reference path="../feature/Marker.js" />
 /// <reference path="../feature/Point.js" />
-/// <reference path="../ol/ol3.js" />
+/// <reference path="../ol/ol.js" />
 
 
 if (!TC.Control) {
@@ -15,7 +15,6 @@ if (!TC.Control) {
 
     TC.control.StreetView = function () {
         var self = this;
-        this._templatePromise = $.Deferred();
         self._sv = null;
         self._mapActiveControl = null;
 
@@ -26,7 +25,6 @@ if (!TC.Control) {
         }
 
         self.viewDiv = null;
-        self._$viewDiv = null;
         self._startLonLat = null;
 
         //self.render();
@@ -48,27 +46,56 @@ if (!TC.Control) {
         ctlProto.template[ctlProto.CLASS + '-view'] = function () { dust.register(ctlProto.CLASS + '-view', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-sv-btn-close\" title=\"").h("i18n", ctx, {}, { "$key": "closeStreetView" }).w("\"></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
+    const dispatchCanvasResize = function () {
+        var event = document.createEvent('HTMLEvents');
+        event.initEvent('resize', true, false);
+        this.map.div.querySelector('canvas').dispatchEvent(event);
+    };
+
     var preset = function (ctl) {
-        ctl._$div.find('.' + ctl.CLASS + '-btn').addClass(TC.Consts.classes.CHECKED);
-        $(ctl.map.div).addClass(ctl.CLASS + '-active');
+        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.add(TC.Consts.classes.CHECKED);
+        ctl.map.div.classList.add(ctl.CLASS + '-active');
     };
 
     var reset = function (ctl) {
+        const view = ctl.viewDiv;
+        const transitionEvents = ['webkitTransitionEnd', 'msTransitionEnd', 'oTransitionEnd', 'transitionend'];
+        const onTransitionend = function () {
+            if (!TC.Util.detectSafari()) {
+                transitionEvents.forEach(function (eventName) {
+                    view.removeEventListener(eventName, onTransitionend);
+                });
+            }
+
+            dispatchCanvasResize.call(ctl);
+        };
+
+        // Safari no lanza transitionend
+        if (TC.Util.detectSafari()) {
+            setTimeout(function () {
+                dispatchCanvasResize.call(ctl);
+            }, 500);
+        } else {
+            transitionEvents.forEach(function (eventName) {
+                view.addEventListener(eventName, onTransitionend);
+            });
+        }
+
         ctl.layer.clearFeatures();
-        ctl._$div.find('.' + ctl.CLASS + '-btn').removeClass(TC.Consts.classes.CHECKED);
-        ctl._$div.find('.' + ctl.CLASS + '-drag').removeClass(TC.Consts.classes.HIDDEN);
-        $(ctl.map.div).removeClass(ctl.CLASS + '-active');
+        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.remove(TC.Consts.classes.CHECKED);
+        ctl.div.querySelector('.' + ctl.CLASS + '-drag').classList.remove(TC.Consts.classes.HIDDEN);
+        ctl.map.div.classList.remove(ctl.CLASS + '-active');
         ctl._startLonLat = null;
     };
 
     var resolve = function (ctl) {
         var result = false;
-        var $btn = ctl._$div.find('.' + ctl.CLASS + '-btn');
-        var $drag = ctl._$div.find('.' + ctl.CLASS + '-drag');
+        const btn = ctl.div.querySelector('.' + ctl.CLASS + '-btn');
+        const drag = ctl.div.querySelector('.' + ctl.CLASS + '-drag');
 
-        var btnRect = $btn[0].getBoundingClientRect();
-        var dragRect = $drag[0].getBoundingClientRect();
-        $drag.addClass(TC.Consts.classes.HIDDEN);
+        var btnRect = btn.getBoundingClientRect();
+        var dragRect = drag.getBoundingClientRect();
+        drag.classList.add(TC.Consts.classes.HIDDEN);
         if (dragRect.top < btnRect.top || dragRect.top > btnRect.bottom ||
             dragRect.left < btnRect.left || dragRect.left > btnRect.right) {
             // Hemos soltado fuera del botón: activar StreetView
@@ -88,10 +115,10 @@ if (!TC.Control) {
             /////////////////////
             // Activamos StreetView
             var mapRect = ctl.map.div.getBoundingClientRect();
-            var xpos = ((dragRect.left + dragRect.right) / 2) - mapRect.left;
-            var ypos = dragRect.bottom - mapRect.top;
+            var xpos = (((dragRect.left * window.devicePixelRatio) + (dragRect.right * window.devicePixelRatio)) / 2) - (mapRect.left * window.devicePixelRatio);
+            var ypos = (dragRect.bottom * window.devicePixelRatio) - (mapRect.top * window.devicePixelRatio);
             var coords = ctl.map.wrap.getCoordinateFromPixel([xpos, ypos]);
-            ctl.callback(coords);           
+            ctl.callback(coords);
         }
         else {
             reset(ctl);
@@ -102,12 +129,12 @@ if (!TC.Control) {
     ctlProto.register = function (map) {
         const self = this;
 
-        if (!self._$viewDiv) {
+        if (!self.viewDiv) {
             self.viewDiv = TC.Util.getDiv(self.options.viewDiv);
-            self._$viewDiv = $(self.viewDiv)
-                .addClass(self.CLASS + '-view ' + TC.Consts.classes.HIDDEN);
+            self.viewDiv.classList.add(self.CLASS + '-view');
+            self.viewDiv.classList.add(TC.Consts.classes.HIDDEN);
             if (!self.options.viewDiv) {
-                self._$viewDiv.insertBefore(map.div);
+                map.div.insertAdjacentElement('beforebegin', self.viewDiv);
             }
         }
 
@@ -134,57 +161,55 @@ if (!TC.Control) {
             });
         }
 
-        self._templatePromise.then(function () {
+        self.renderPromise().then(function () {
             TC.loadJS(
-                !$.fn.drag,
-                [TC.apiLocation + 'lib/jquery/jquery.event.drag.js', TC.apiLocation + 'lib/jquery/jquery.event.drop.js'],
+                !window.Draggabilly,
+                [TC.apiLocation + 'lib/draggabilly/draggabilly.pkgd.min.js'],
                 function () {
-                    var $drag = self._$div.find('.' + self.CLASS + '-drag');
-                    $drag
-                        .drag(function (e, dd) {
-                            $drag.css({
-                                transform: 'translate(' + dd.deltaX + 'px, ' + dd.deltaY + 'px)'
-                            });
-                        })
-                        .drag('start', function (e, dd) {
-                            preset(self);
-                            e.preventDefault();
-                            e.stopPropagation();
-                        })
-                        .drag('end', function (e, dd) {
-                            resolve(self);
-                            $drag.css({
-                                transform: 'none'
-                            });
-                        });
+                    const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
+                        containment: self.map.div
+                    });
+                    drag.on('dragStart', function (e) {
+                        preset(self);
+                    });
+                    drag.on('dragEnd', function (e) {
+                        resolve(self);
+                        drag.setPosition(0, 0);
+                    });
                 }
             );
 
-            var $view = self._$viewDiv;
-            $view.find('.' + self.CLASS + '-btn-close').on('mouseup', function (e) {
-                const $mapDiv = $(self.map.div);
+            const view = self.viewDiv;
+            view.querySelector('.' + self.CLASS + '-btn-close').addEventListener(TC.Consts.event.CLICK, function (e) {
+                const mapDiv = self.map.div;
                 const endProcess = function () {
-                    if ($mapDiv.hasClass(TC.Consts.classes.COLLAPSED)) {
-                        $mapDiv.removeClass(TC.Consts.classes.COLLAPSED).trigger('resize'); // Para evitar que salga borroso el mapa tras cerrar SV.
-                    }
+                    mapDiv.classList.remove(TC.Consts.classes.COLLAPSED);
+                    const resizeEvent = document.createEvent('HTMLEvents');
+                    resizeEvent.initEvent('resize', false, false);
+                    mapDiv.dispatchEvent(resizeEvent); // Para evitar que salga borroso el mapa tras cerrar SV.
                 };
-                var transitionEnd = 'transitionend.tc';
-                $view.off(transitionEnd).on(transitionEnd, function (e) {
-                    if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
-                        $view.off(transitionEnd);
+                const transitionend = 'transitionend';
+                const onTransitionend = function (e) {
+                    if (e.propertyName === 'width' || e.propertyName === 'height') {
+                        view.removeEventListener(transitionend, onTransitionend);
                         endProcess();
                     }
-                });
+                };
+                view.removeEventListener(transitionend, onTransitionend);
+                view.addEventListener(transitionend, onTransitionend);
                 setTimeout(endProcess, 1000); // backup por si falla la transición.
 
-                $view.addClass(TC.Consts.classes.HIDDEN).removeClass(TC.Consts.classes.VISIBLE);
-                self._$div.find('.' + self.CLASS + '-drag').removeClass(TC.Consts.classes.HIDDEN);
+                view.classList.add(TC.Consts.classes.HIDDEN);
+                view.classList.remove(TC.Consts.classes.VISIBLE);
+                self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(TC.Consts.classes.HIDDEN);
                 self.layer.wrap.setDraggable(false);
                 reset(self);
                 self._sv.setVisible(false);
                 e.stopPropagation();
-                var $header = self._$div.parents('body').find('header');
-                if ($header.length > 0) $header.css('display', '');
+                const header = document.body.querySelector('header');
+                if (header) {
+                    header.style.display = '';
+                }
 
                 if (self._previousActiveControl) {
                     self._previousActiveControl.activate();
@@ -192,7 +217,7 @@ if (!TC.Control) {
             });
         }
             , function (a, b, c) {
-                TC.error("Error de renderizado Streetview");
+                TC.error("Error de renderizado StreetView");
             });
 
         return result;
@@ -201,40 +226,43 @@ if (!TC.Control) {
 
 
     ctlProto.render = function () {
-        var self = this;
+        const self = this;
 
-        TC.Control.prototype.render.call(self, function () {
-            if (dust.cache[self.CLASS + '-view']) {
-                dust.render(self.CLASS + '-view', null, function (err, out) {
-                    //lo normal sería hacer el resolve después de volcar out en $viewDiv
-                    //pero a veces fallaba
-                    //no se detonaba, sin dar error alguno
-                    //así que lo arreglo como a mí me gusta:
-                    setTimeout(function () {
-                        self._$viewDiv.html(out);
-                        if (err) {
-                            TC.error(err);
+        return self._set1stRenderPromise(new Promise(function (resolve, reject) {
+            self.renderData(null, function () {
+                if (dust.cache[self.CLASS + '-view']) {
+                    dust.render(self.CLASS + '-view', null, function (err, out) {
+                        //lo normal sería hacer el resolve después de volcar out en viewDiv
+                        //pero a veces fallaba
+                        //no se detonaba, sin dar error alguno
+                        //así que lo arreglo como a mí me gusta:
+                        setTimeout(function () {
+                            self.viewDiv.innerHTML = out;
+                            if (err) {
+                                TC.error(err);
+                            }
+                            resolve(self);
                         }
-                        self._templatePromise.resolve();
-                    }
-                        , 300);
+                            , 300);
 
 
-                    //console.log("Casi resuelto... " + out.length);
-                    //self._$viewDiv.html(out);
-                    //if (err)
-                    //{
-                    //    TC.error(err);
-                    //}
-                    //self._templatePromise.resolve();
-                    //console.log("Resuelto!");
+                        //console.log("Casi resuelto... " + out.length);
+                        //self._$viewDiv.html(out);
+                        //if (err)
+                        //{
+                        //    TC.error(err);
+                        //}
+                        //resolve(self);
+                        //console.log("Resuelto!");
 
-                });
-            }
-            else {
-                TC.error("No hay dust.cache para StreetView");
-            }
-        });
+                    });
+                }
+                else {
+                    TC.error("No hay dust.cache para StreetView");
+                    resolve(self);
+                }
+            });
+        }));
     };
 
     var waitId = 0;
@@ -245,8 +273,8 @@ if (!TC.Control) {
 
         var ondrop = function (feature) {
             if (self._sv) {
-                var bounds = feature.getBounds();
-                lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.crs, geogCrs);
+                var bounds = feature.getBounds();                
+                lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.crs, geogCrs);                
                 self._sv.setPosition({ lng: lonLat[0], lat: lonLat[1] });
             }
         }
@@ -263,7 +291,7 @@ if (!TC.Control) {
             waitId = li.addWait(waitId);
         }
 
-        var $mapDiv = $(self.map.div);
+        const mapDiv = self.map.div;
 
         var setMarker = function (sv, center) {
             self.layer.clearFeatures();
@@ -287,7 +315,7 @@ if (!TC.Control) {
                 layer: self.layer,
                 showsPopup: false
             });
-            $.when.apply(this, self.map._markerDeferreds).then(function (marker) {
+            Promise.all(self.map._markerPromises).then(function () {
                 // Para poder arrastrar a pegman                
                 self.layer.wrap.setDraggable(true, ondrop, ondrag);
             });
@@ -297,7 +325,7 @@ if (!TC.Control) {
                     self.map.setCenter(xy);
                 };
                 // Esperamos a que el mapa esté colapsado para centrarnos: ahorramos ancho de banda
-                if ($mapDiv.hasClass(TC.Consts.classes.COLLAPSED)) {
+                if (mapDiv.classList.contains(TC.Consts.classes.COLLAPSED)) {
                     setCenter();
                 }
                 else {
@@ -315,9 +343,9 @@ if (!TC.Control) {
 
                     setMarker();
 
-                    var $view = self._$viewDiv;
+                    const view = self.viewDiv;
                     var lonLat = TC.Util.reproject(coords, self.map.crs, geogCrs);
-                    var svDone = $view.hasClass(TC.Consts.classes.VISIBLE);
+                    var svDone = view.classList.contains(TC.Consts.classes.VISIBLE);
 
                     var svOptions = {
                         position: new google.maps.LatLng(lonLat[1], lonLat[0]),
@@ -336,9 +364,9 @@ if (!TC.Control) {
                     };
 
                     if (!self._sv) {
-                        self._sv = new google.maps.StreetViewPanorama($view[0], svOptions);
+                        self._sv = new google.maps.StreetViewPanorama(view, svOptions);
                         google.maps.event.addListener(self._sv, 'position_changed', function () {
-                            setMarker(self._sv, $view.hasClass(TC.Consts.classes.VISIBLE));
+                            setMarker(self._sv, view.classList.contains(TC.Consts.classes.VISIBLE));
                         });
                         google.maps.event.addListener(self._sv, 'pov_changed', function () {
                             if (self.layer.features && self.layer.features.length > 0) {
@@ -358,25 +386,32 @@ if (!TC.Control) {
                             }
                             if (svStatus === google.maps.StreetViewStatus.OK) {
 
-                                $mapDiv.addClass(TC.Consts.classes.COLLAPSED).trigger('resize');
+                                mapDiv.classList.add(TC.Consts.classes.COLLAPSED);
+                                const resizeEvent = document.createEvent('HTMLEvents');
+                                resizeEvent.initEvent('resize', false, false);
+                                mapDiv.dispatchEvent(resizeEvent);
 
                                 const endProcess = function () {
                                     google.maps.event.trigger(self._sv, 'resize');
+
+                                    dispatchCanvasResize.call(self);
                                 };
-                                var transitionEnd = 'transitionend.tc';
-                                $view.off(transitionEnd).on(transitionEnd, function (e) {
-                                    if (e.originalEvent.propertyName === 'width' || e.originalEvent.propertyName === 'height') {
+                                var transitionend = 'transitionend';
+                                const onTransitionend = function (e) {
+                                    if (e.propertyName === 'width' || e.propertyName === 'height') {
                                         if (!svDone) {
                                             svDone = true;
-                                            $view.off(transitionEnd);
+                                            view.removeEventListener(transitionend, onTransitionend);
                                             endProcess();
                                         }
                                     }
-                                });
+                                };
+                                view.removeEventListener(transitionend, onTransitionend);
+                                view.addEventListener(transitionend, onTransitionend);
 
                                 setTimeout(endProcess, 1000); // Backup por si no salta el transitionend.
 
-                                if (!$view.hasClass(TC.Consts.classes.VISIBLE)) {
+                                if (!view.classList.contains(TC.Consts.classes.VISIBLE)) {
                                     self._sv.setVisible(true);
                                     setMarker(self._sv, true);
 
@@ -389,13 +424,17 @@ if (!TC.Control) {
                                     }
 
                                     setTimeout(function () {
-                                        $view.css('left', '').css('top', '');
+                                        view.style.left = '';
+                                        view.style.top = '';
                                         // triggers transitionend
-                                        $view.removeClass(TC.Consts.classes.HIDDEN).addClass(TC.Consts.classes.VISIBLE);
+                                        view.classList.remove(TC.Consts.classes.HIDDEN);
+                                        view.classList.add(TC.Consts.classes.VISIBLE);
                                     }, 200);
 
-                                    var $header = self._$div.parents('body').find('header');
-                                    if ($header.length > 0) $header.css('display', 'none');
+                                    const header = document.body.querySelector('header');
+                                    if (header) {
+                                        header.style.display = 'none';
+                                    }
                                 }
                             }
                             else {
