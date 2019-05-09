@@ -57,7 +57,9 @@ div.tc-ctl-printMap .tc-ctl-printMap-btn {
     padding-top: 0.15em;
     background-color: #fff;
     border-bottom-left-radius: 0.3em;
+    border-bottom-left-radius: var(--border-radius);
     border-bottom-right-radius: 0.3em;
+    border-bottom-right-radius: var(--border-radius);
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
 }
 

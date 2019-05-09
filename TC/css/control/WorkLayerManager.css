@@ -36,6 +36,7 @@
     font-size: 0.67em;
     font-weight: normal;
     background-color: #c00;
+    background-color: var(--main-hl-color);
     color: #fff;
     vertical-align: top;
 }
@@ -48,8 +49,10 @@
 .tc-ctl-wlm li.tc-ctl-wlm-elm {
     position: relative;
     background-color: #fff;
+    background-color: var(--main-bg-color);
     border: 1px solid #999;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     padding: 0.3em;
     margin-top: -1px;
     box-sizing: border-box;
@@ -126,14 +129,15 @@
 .tc-ctl-wlm .tc-ctl-wlm-dd, .tc-ctl-wlm .tc-ctl-wlm-del {
     position: absolute;
     width: 10%;
-    height: 1em;
-    top: 50%;
-    margin-top: -0.3em;
+    height: 100%;
+    top: 0;
     right: 0;
     color: #666;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     text-align: center;
     vertical-align: middle;
+    font-size: 1.4em;
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-dd {
@@ -148,6 +152,15 @@
         content: '\2716';
     }
 
+.tc-ctl-wlm .tc-ctl-wlm-dd:after, .tc-ctl-wlm .tc-ctl-wlm-del:after {
+    position: absolute;
+    width: 100%;
+    height: 2em;
+    line-height: 2em;
+    right: 0;
+    top: calc(50% - 1em);
+}
+
 .tc-ctl-wlm .tc-ctl-wlm-dd:after {
     content: '\21a5\21a7';
 }
@@ -156,36 +169,41 @@
     content: '\2716';
 }
 
-.tc-ctl-wlm input[type=checkbox] {
-    width: 7%;
-    vertical-align: middle;
+
+.tc-ctl-wlm input[type=range] {    
+    flex-basis: 80%;
+    padding:0;
 }
 
-.tc-ctl-wlm input[type=range] {
-    padding: 0;
-    width: 75%;
-    vertical-align: middle;
+.tc-ctl-wlm .tc-ctl-wlm-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90%;
 }
 
-.tc-ctl-wlm .tc-ctl-wlm-btn-info {
-    display: inline-block;
-    vertical-align: middle;
-    width: 8%;
+.tc-ctl-wlm .tc-ctl-wlm-btn-info {    
     color: #600;
+    color: var(--main-inactive-color);
     cursor: pointer;
-    vertical-align: top;
     line-height: 1.5em;
-    font-size: 1.2em;
+    font-size: 1.6em;
 }
 
-    .tc-ctl-wlm .tc-ctl-wlm-btn-info.tc-checked {
-        color: #c00;
-    }
+.tc-ctl-wlm .tc-ctl-wlm-btn-info.tc-checked {
+    color: #c00;
+    color: var(--main-hl-color);
+}
 
-    .tc-ctl-wlm .tc-ctl-wlm-btn-info:after {
-        font-family: 'mapskin';
-        content: '\e024';
-    }
+.tc-ctl-wlm .tc-ctl-wlm-btn-info:after {
+    font-family: 'mapskin';
+    content: '\e024';
+}
+
+.tc-ctl-wlm .tc-ctl-wlm-btn-info.tc-hidden {
+    display: block;
+    visibility: visible;
+}
 
 .tc-ctl-wlm .tc-ctl-wlm-info {
     width: 90%;
@@ -245,6 +263,7 @@
     background-color: #eee;
     z-index: 20000;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     color: #666;
     padding: 0.3em;
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
@@ -259,19 +278,15 @@
         margin-left: 0;
     }
 
-@media screen and (min-width: 22cm) and (min-height: 22cm) {
+.tc-ctl-wlm-del.disabled {
+    cursor: default;
+    color: #ccc;
+}
 
-    .tc-ctl-wlm .tc-ctl-wlm-dd, .tc-ctl-wlm .tc-ctl-wlm-del {
-        position: absolute;
-        width: 10%;
-        height: 1em;
-        top: 50%;
-        margin-top: -0.5em;
-        right: 0;
-        color: #666;
-        border-radius: 0.3em;
-        text-align: center;
-        vertical-align: middle;
+
+@media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
+    .tc-ctl-wlm .tc-ctl-wlm-btn-info {
+        font-size: 1.2em;
     }
 
     .tc-ctl-wlm h2 button {
@@ -284,5 +299,9 @@
         font-size: 14px;
         outline: none;
         padding: 0;
+    }
+
+    .tc-ctl-wlm .tc-ctl-wlm-dd, .tc-ctl-wlm .tc-ctl-wlm-del {
+        font-size: 14px;
     }
 }

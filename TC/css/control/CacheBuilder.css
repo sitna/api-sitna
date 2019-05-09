@@ -16,6 +16,7 @@ ul.tc-ctl-cbuild-bl-list {
     cursor: pointer;
     border: 0.3em solid #ccc;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
 }
 
 .tc-ctl-cbuild-bl-node label {
@@ -39,6 +40,7 @@ ul.tc-ctl-cbuild-bl-list {
     background-color: #ccc;
     opacity: 0.5;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     padding: 0.3em;
     font-size: 0.8em;
     font-weight: bold;
@@ -68,10 +70,12 @@ ul.tc-ctl-cbuild-bl-list {
 .tc-ctl-cbuild-bl-node input[type=checkbox] ~ span {
     border: 0.3em solid #ccc;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
 }
 
 .tc-ctl-cbuild-bl-node input[type=checkbox]:checked ~ span {
     border-color: #c00;
+    border-color: var(--main-hl-color);
 }
 
 ul.tc-ctl-cbuild-bl-list > li {
@@ -92,7 +96,9 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 
     ul.tc-ctl-cbuild-bl-list input[type=checkbox]:checked + div {
         background-color: #c00;
+        background-color: var(--main-hl-color);
         border: 1px solid #c00;
+        border-color: var(--main-hl-color);
     }
 
 
@@ -143,6 +149,7 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 
     .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-active:before {
         color: #c00;
+        color: var(--main-hl-color);
     }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-edit:before {
@@ -183,8 +190,10 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw {
-    background-color: #630101;
-    border-color: #630101;
+    background-color: #600;
+    background-color: var(--main-inactive-color);
+    border-color: #600;
+    border-color: var(--main-inactive-color);
 }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
@@ -212,6 +221,7 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     padding: 0 0 0 0.2em;
     border: 1px solid #ccc;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     margin: 0 0 0.6em 0;
 }
 
@@ -241,13 +251,16 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     padding: 0.1em;
     margin-bottom: 0.5em;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     box-sizing: border-box;
 }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-progress-bar .tc-ctl-cbuild-progress-ratio {
         height: 100%;
         background-color: #c00;
+        border-color: var(--main-hl-color);
         border-radius: 0.3em;
+        border-radius: var(--border-radius);
     }
 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-res-panel {
@@ -284,6 +297,7 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     max-height: 8em;
     height: auto;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     border: 1px solid #CCC;
     padding: 0;
     list-style: none;

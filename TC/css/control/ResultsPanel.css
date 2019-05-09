@@ -1,4 +1,237 @@
-﻿body {
+﻿
+@-webkit-keyframes showIn {
+    from {
+        opacity: 0
+    }
+
+    to {
+        opacity: 1
+    }
+}
+
+@-moz-keyframes showIn {
+    from {
+        opacity: 0
+    }
+
+    to {
+        opacity: 1
+    }
+}
+
+@keyframes showIn {
+    from {
+        opacity: 0
+    }
+
+    to {
+        opacity: 1
+    }
+}
+
+@-webkit-keyframes showOut {
+    from {
+        opacity: 1
+    }
+
+    to {
+        opacity: 0
+    }
+}
+
+@-moz-keyframes showOut {
+    from {
+        opacity: 1
+    }
+
+    to {
+        opacity: 0
+    }
+}
+
+@keyframes showOut {
+    from {
+        opacity: 1
+    }
+
+    to {
+        opacity: 0
+    }
+}
+
+body {
+}
+
+div.tc-map div.tc-ctl-p-results {
+    position: absolute;
+    top: 1.5em;
+    left: 3em;
+    padding: 0;
+    max-width: 40%;
+    min-width: 225px;
+}
+
+.tc-threed > .tc-ctl-p-results {
+    min-width: 260px;
+}
+
+.tc-ctl-p-results .prpanel-title span {
+    margin-left: 0.5em;
+}
+
+.tc-ctl-p-results h4 .prcollapsed-slide-submenu:hover {
+    cursor: pointer;
+}
+
+.tc-ctl-p-results #results {
+    font-size: 12px;
+}
+
+.tc-ctl-p-results .prpanel-default {
+    box-shadow: 1px 1px 5px #ddd;
+}
+
+.tc-ctl-p-results .prpanel {
+    background-color: rgba(255,255,255,0);
+}
+
+.prpanel-group .prpanel {
+    border: 0;
+    margin-bottom: 0;
+    border-radius: 4px;
+}
+
+.prpanel-default > .prpanel-heading > h4 {
+    margin: 0;
+}
+
+.prpanel-heading {
+    height: 2em;
+    background-color: rgba(0,0,0,.5);
+    color: #fff;
+    border-color: #ddd;
+    border-bottom: 0;
+    line-height: 2em;
+    padding: 0em 0.5em;
+    border-top-left-radius: 0.2em;
+    border-top-right-radius: 0.2em;
+}
+
+.prpanel-default > .prpanel-heading > .prpanel-title > a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.tc-ctl-p-results .prpanel-title span {
+    margin-left: .5em;
+}
+
+.prcollapsed-pull-right {
+    float: right !important;
+}
+
+.prcollapsed-pull-left {
+    float: left !important;
+}
+
+.prcollapsed .fa {
+    color: #fff;
+}
+
+.prcollapsed {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.66);
+    border: 0;
+    border-radius: 0.2em;
+    line-height: 2.1em;
+    width: 2em;
+    height: 2em;
+    text-align: center;
+    font-family: FontAwesome;
+}
+
+div.prcollapsed-samehw {
+    line-height: 2em;
+    width: 2em;
+    height: 2em;
+    font-size: 100%;
+}
+
+div.prpanel-heading-samehw {
+    line-height: 2em;
+    height: 2em;
+}
+
+.prcollapsed:hover {
+    cursor: pointer;
+}
+
+.prcollapsed::before {
+    color: white;
+}
+
+.prcollapsed.table::before {
+    content: '\f022';
+}
+
+.prcollapsed.chart::before {
+    content: '\f1fe';
+}
+
+.tc-ctl-p-results #results {
+    font-size: 12px;
+    background-color: rgba(255,255,255,.7);
+}
+
+.collapse.in {
+    display: block;
+    min-width: 225px;
+}
+
+.collapse {
+    display: none;
+}
+
+.prpanel-group .panel {
+    border: 0;
+}
+
+.prpanel-title {
+    font-size: 14px;
+}
+
+.tc-ctl-p-results #results {
+    font-size: 12px;
+}
+
+.tc-ctl-p-results .prpanel-group .prpanel {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.tc-ctl-p-results #results {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.tc-ctl-p-results .prpanel-body {
+    padding: 5px 10px 15px 10px
+}
+
+    .tc-ctl-p-results .prpanel-body div.tc-chart svg {
+        overflow-x: overlay !important;
+    }
+
+.prpanel-default > .prpanel-heading + .prpanel-collapse > .prpanel-body {
+    border-top-color: #ddd;
+}
+
+.prpanel-group .prpanel-heading + .prpanel-collapse > .list-group, .prpanel-group .prpanel-heading + .prpanel-collapse > .prpanel-body {
+    border-top: 1px solid #ddd;
+}
+
+.prpanel > .list-group, .prpanel > .prpanel-collapse > .list-group {
+    margin-bottom: 0;
 }
 
 .prpanel-collapse, .prpanel-collapse.collapse.in {
@@ -68,6 +301,10 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
         width: 100%;
     }
 
+        div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking {
+            width: auto;
+        }
+
 .tc-ctl-p-results div.tc-ctl-finfo {
     display: block;
     max-width: 100%;
@@ -104,11 +341,11 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
     border-collapse: collapse;
 }
 
-.tc-ctl-p-results-table tr:nth-child(odd), .tc-ctl-p-results-info tr:nth-child(odd) {
+.tc-ctl-p-results-info tr:nth-child(odd) {
     background: #eee;
 }
 
-.tc-ctl-p-results-table tr:nth-child(even), .tc-ctl-p-results-info tr:nth-child(even) {
+.tc-ctl-p-results-info tr:nth-child(even) {
     background: #fff;
 }
 
@@ -124,6 +361,10 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
     text-overflow: clip;
     overflow: auto;
     white-space: normal;
+}
+
+.prpanel-body {
+    position: relative; /* para que la impresora se mantega dentro del panel */
 }
 
 .prpanel-body.list-group.tc-ctl-p-results-table, .prpanel-body.list-group.tc-ctl-p-results-info {
@@ -149,13 +390,24 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
         margin-bottom: 0.5em;
     }
 
+
+
+.tc-ctl-p-results a.tc-ctl-print-btn {
+    position: absolute;
+    right: 0;
+    margin: 0.2em;
+    z-index: 100000;
+    margin-top: 2.5em;
+}
+
 .tc-ctl-p-results-table a.tc-ctl-print-btn, .tc-ctl-p-results-info a.tc-ctl-print-btn {
     position: absolute;
     right: 0;
     margin: 0.2em;
     z-index: 100000;
-    /*font-size: 0.3em;*/
+    top: auto;
 }
+
 
 .tc-ctl-p-results-table table, .tc-ctl-p-results-info table {
     font-size: 1em;
@@ -181,12 +433,17 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-attr th {
     cursor: url(//sitna.tracasa.es/api/TC/layout/responsive/img/zoomin.cur),default\9;
 }
 
+.tc-ctl-p-results-table tbody td.tc-numeric {
+    text-align: right;
+}
+
 .ie10 .tc-ctl-p-results-table tbody tr {
     cursor: url(//sitna.tracasa.es/api/TC/layout/responsive/img/zoomin.cur),default;
 }
 
 .tc-ctl-p-results-table thead th {
     border-bottom: 1px solid #dee2e6;
+    text-align: center;
 }
 
 .tc-ctl-p-results-table tbody td {
@@ -254,6 +511,20 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-attr th {
     .tc-ctl-p-results-table tbody .tc-icon.tc-icon-info:after {
         content: '\e024';
     }
+
+.showIn {
+    -webkit-animation: showIn 0.5s normal forwards ease-in-out;
+    -moz-animation: showIn 0.5s normal forwards ease-in-out;
+    animation: showIn 0.5s normal forwards ease-in-out;
+    /*display:inline-block !important;*/
+}
+
+.showOut {
+    -webkit-animation: showOut 0.5s normal forwards ease-in-out;
+    -moz-animation: showOut 0.5s normal forwards ease-in-out;
+    animation: showOut 0.5s normal forwards ease-in-out;    
+}
+    
 
 @media screen and (pointer:coarse),(max-device-width: 768px), (max-device-height: 768px) {
 

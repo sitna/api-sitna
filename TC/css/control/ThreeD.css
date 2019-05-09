@@ -1,16 +1,19 @@
-﻿.tc-ctl-threed {
+﻿
+.tc-ctl.tc-ctl-threed {
+    top: calc(1.5em + 2em + 10em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em); /* margen antes del +, el +, el alto de la barra, el - y el margen inferior, la casita, el margen inferior, btn streetView, el margen inferior, btn fullScreen, el margen inferior */
     position: absolute;
-    width: 2em;
-    height: 2em;
-    padding: 0;
-    margin-top: 0.3em;
-    z-index: 10002;
-    top: 22.7em;
     left: 0.7em;
+    padding: 0;
+}
+
+.tc-ctl-threed {
+    width: 2em;
+    height: 2em;    
+    position: absolute;
 }
 
     .tc-ctl-threed button {
-        color: #fff;
+        color: #fff;        
         border-radius: 0.2em;
         border: 0;
         background-color: rgba(0, 0, 0, 0.66);
@@ -34,7 +37,7 @@
         }
 
         .tc-ctl-threed button[disabled] {
-            background-color: rgb(0, 0, 0);
+            background-color: rgba(156, 156, 156, 0.5);
         }
 
 /*.tc-ctl-threed button[disabled]:before {

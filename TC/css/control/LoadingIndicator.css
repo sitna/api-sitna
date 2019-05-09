@@ -25,6 +25,7 @@
     position: absolute;
     top: 0;
     background-color: #c00;
+    background-color: var(--main-hl-color);
     width: 20px;
     height: 20px;
     -moz-animation-name: bounce_fading_bar;

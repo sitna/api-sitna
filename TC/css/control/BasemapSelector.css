@@ -28,6 +28,7 @@ ul.tc-ctl-bms-branch {
     cursor: pointer;
     border: 0.3em solid #ccc;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     height: 4rem;
     width: 4rem;
     background-size: 100% 100%;
@@ -53,11 +54,13 @@ ul.tc-ctl-bms-branch {
 .tc-ctl-bms-node input[type=radio] ~ span {
     border: 0.3em solid #ccc;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
 }
 
 .tc-ctl-bms-node input[type=radio]:checked ~ span {
     cursor: default;
     border-color: #c00;
+    border-color: var(--main-hl-color);
 }
 
 .tc-ctl-bms-node input[type=radio].tc-disabled ~ span:after {
@@ -69,6 +72,7 @@ ul.tc-ctl-bms-branch {
     text-shadow: none;
     font-size: 1.2em;
     background-color: #fff;
+    background-color: var(--main-bg-color);
     width: 1.8em;
     height: 1.8em;
     line-height: 1.8em;
@@ -130,7 +134,9 @@ ul.tc-ctl-bms-branch input[type=radio] {
 
     ul.tc-ctl-bms-branch input[type=radio]:checked + div {
         background-color: #c00;
+        background-color: var(--main-hl-color);
         border: 1px solid #c00;
+        border-color: var(--main-hl-color);
     }
 
 @media screen and (min-width: 42em) {

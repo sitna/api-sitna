@@ -28,6 +28,7 @@
             text-align: center;
             border: 1px solid #666;
             background-color: #fff;
+            background-color: var(--main-bg-color);
             color: #666;
             cursor: pointer;
             overflow: hidden;
@@ -37,18 +38,24 @@
 
         .tc-ctl-meas-select input[type=radio]:checked ~ span {
             border-color: #c00;
+            border-color: var(--main-hl-color);
             color: #c00;
+            color: var(--main-hl-color);
             z-index: 10007;
         }
 
     .tc-ctl-meas-select label:first-child input[type=radio] ~ span {
         border-top-left-radius: 0.3em;
+        border-top-left-radius: var(--border-radius);
         border-bottom-left-radius: 0.3em;
+        border-bottom-left-radius: var(--border-radius);
     }
 
     .tc-ctl-meas-select label:last-child input[type=radio] ~ span {
         border-top-right-radius: 0.3em;
+        border-top-right-radius: var(--border-radius);
         border-bottom-right-radius: 0.3em;
+        border-bottom-right-radius: var(--border-radius);
     }
 
     .tc-ctl-meas-select label:first-child input[type=radio]:checked ~ span {
@@ -100,6 +107,7 @@ label.tc-ctl-meas-btn-area span:before {
 
     .tc-ctl-meas-prof-btn.tc-active {
         color: #c00;
+        color: var(--main-hl-color);
     }
 
     .tc-ctl-meas-prof-btn:before {

@@ -25,6 +25,7 @@
             text-align: center;
             border: 1px solid #666;
             background-color: #fff;
+            background-color: var(--main-bg-color);
             color: #666;
             cursor: pointer;
             overflow: hidden;
@@ -34,21 +35,28 @@
 
         .tc-ctl-share-select input[type=radio]:checked ~ span {
             border-color: #c00;
+            border-color: var(--main-hl-color);
             color: #c00;
+            color: var(--main-hl-color);
             border-bottom-right-radius: 0;
             border-bottom-left-radius: 0;
             border-bottom-color: #fff;
+            border-bottom-color: var(--main-bg-color);
             z-index: 10007;
         }
 
     .tc-ctl-share-select label:first-child input[type=radio] ~ span {
         border-top-left-radius: 0.3em;
+        border-top-left-radius: var(--border-radius);
         border-bottom-left-radius: 0.3em;
+        border-bottom-left-radius: var(--border-radius);
     }
 
     .tc-ctl-share-select label:last-child input[type=radio] ~ span {
         border-top-right-radius: 0.3em;
+        border-top-right-radius: var(--border-radius);
         border-bottom-right-radius: 0.3em;
+        border-bottom-right-radius: var(--border-radius);
     }
 
     .tc-ctl-share-select label:first-child input[type=radio]:checked ~ span {

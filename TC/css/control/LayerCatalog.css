@@ -38,9 +38,11 @@ ul.tc-ctl-lcat-branch {
         color: #ccc;
         padding: 0.5em;
         background-color: #fff;
+        background-color: var(--main-bg-color);
     }
 
 li.tc-ctl-lcat-node {
+    position: relative;
     line-height: 1.2em;
     font-family: Arial, helvetica, sans-serif;
     margin: 0;
@@ -50,8 +52,18 @@ li.tc-ctl-lcat-node {
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALDwAACw8BkvkDpQAAAAd0SU1FB9YIBhQIJYVaFGwAAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAEFJREFUOE9jmDlz5n8GZgYGXPj///948agB9DAAJI8LDyIDCGFsACo+WLyATSMMo2tCxkQZAFKED48aMPAG/GcAAFySJ1PSNmZLAAAAAElFTkSuQmCC) no-repeat;
 }
 
+    li.tc-ctl-lcat-node > button.tc-ctl-lcat-collapse-btn {
+        position: absolute;
+        left: 0;
+        width: 20px;
+        height: 15px;
+        background-color: transparent;
+        border: 0;
+    }
+
     li.tc-ctl-lcat-node > span {
         background-color: #fff;
+        background-color: var(--main-bg-color);
         display: inline;
         position: relative;
         -webkit-transition: all .2s ease;
@@ -64,10 +76,12 @@ li.tc-ctl-lcat-node {
         li.tc-ctl-lcat-node > span.tc-selectable {
             cursor: pointer;
             color: #600;
+            color: var(--main-inactive-color);
         }
 
             li.tc-ctl-lcat-node > span.tc-selectable:hover {
                 color: #c00;
+                color: var(--main-hl-color);
             }
                 li.tc-ctl-lcat-node > span.tc-selectable:hover:after, div.tc-ctl-lcat-search > ul > li:hover:after, div.tc-ctl-lcat-search > ul > li > ul > li:hover:after {
                     padding: 0;
@@ -78,6 +92,7 @@ li.tc-ctl-lcat-node {
                     z-index: 10008;
                     background-color: #eee;
                     border-radius: 0.3em;
+                    border-radius: var(--border-radius);
                     color: #666;
                     text-align: center;
                     width: 12em;
@@ -123,10 +138,12 @@ li.tc-ctl-lcat-search-group button.tc-ctl-lcat-search-btn-info:focus, li.tc-ctl-
 
 li.tc-ctl-lcat-node > button.tc-ctl-lcat-btn-info:hover, li.tc-ctl-lcat-search-group button.tc-ctl-lcat-search-btn-info:hover:after {
     color: #600;
+    color: var(--main-inactive-color);
 }
 
 li.tc-ctl-lcat-node > button.tc-ctl-lcat-btn-info.tc-checked:after, li.tc-ctl-lcat-search-group button.tc-ctl-lcat-search-btn-info.tc-checked:after {
     color: #c00;
+    color: var(--main-hl-color);
 }
 
 li.tc-ctl-lcat-leaf {
@@ -146,16 +163,19 @@ li.tc-ctl-lcat-node-notvisible {
 ul.tc-ctl-lcat-branch li.tc-ctl-lcat-node:last-child {
     /* img/lastnode.png */
     background: #fff url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALEAAACxABrSO9dQAAAAd0SU1FB9YIBhQIIhs+gc8AAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAFhJREFUOE/tzUEKgDAQBMEF//+Afe1IQLCRTryJgkJdkvRY3Z3aqmaSLP0DTwyM+5kXDdyx7zj3v9J1jD4yMB6taEQWkUZkEWlEFpFGZBFpRBaRRmTRKbUD3MALjd92TQsAAAAASUVORK5CYII=) no-repeat;
+    background-color: var(--main-bg-color);
 }
 
 ul.tc-ctl-lcat-branch li.tc-ctl-lcat-node.tc-collapsed:last-child {
     /* img/lastnode-collapsed.png */
     background: #fff url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALEQAACxEBf2RfkQAAAAd0SU1FB9YIBhQIIhs+gc8AAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAGVJREFUOE/tzcEJgDAQBdEF+y8g1a4EBIdlEg2KJwPvEHW+0VrL2CJGMnPqH/hioL8fWR7op9xfGrhi53juf6U6VO4eUQmeDVS3BvpHMxqRRaQRWUQakUWkEVlEGpFFpBFZdMrYAVwrEFV8yTH0AAAAAElFTkSuQmCC) no-repeat;
+    background-color: var(--main-bg-color);
 }
 
 ul.tc-ctl-lcat-branch li.tc-ctl-lcat-leaf:last-child {
     /* img/lastleaf.png */
     background: #fff url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALDwAACw8BkvkDpQAAAAd0SU1FB9YIBhQIIhs+gc8AAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAFdJREFUOE/tzTEKgDAQBdEF73+APe2XCOIUkxQWomDxqs38VHentqqZJEv/wBMD4z7zooG7jgH7lSw8fWRgPFrRiCwijcgi0ogsIo3IItKILCKNyKJLagc9jQWTqTPg4gAAAABJRU5ErkJggg==) no-repeat;
+    background-color: var(--main-bg-color);
 }
 
 ul.tc-ctl-lcat-branch.tc-collapsed {
@@ -217,6 +237,7 @@ ul.tc-ctl-lcat-branch.tc-collapsed {
     overflow: auto;
     border: 1px solid #999;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     padding: 0;
     -webkit-transition: all .2s ease;
     -moz-transition: all .2s ease;
@@ -261,6 +282,7 @@ div.tc-ctl-lcat-legend {
 .tc-ctl-lcat .tc-ctl-lcat-metadata h4 {
     font-size: 1em;
     color: #666;
+    color: var(--title-color);
     margin: 0;
     text-transform: lowercase;
 }
@@ -401,6 +423,7 @@ div.tc-ctl-lcat-legend {
 
     .tc-ctl-lcat-search li h5:hover {
         color: #c00;
+        color: var(--main-hl-color);
     }
 
 .tc-ctl-lcat-search li.tc-ctl-lcat-no-results h5:hover {
@@ -436,7 +459,7 @@ div.tc-ctl-lcat-legend {
     }
 
         .tc-ctl-lcat-search li.tc-ctl-lcat-search-group > h5:hover {
-            color: initial;
+            color: inherit;
         }
 
     .tc-ctl-lcat-search li.tc-ctl-lcat-search-group > ul {
@@ -472,7 +495,7 @@ div.tc-ctl-lcat-legend {
     margin-right: 11px;
 }
 
-    .tc-ctl-lcat-tree ul button:after, .tc-ctl-lcat-search ul button:after {
+    .tc-ctl-lcat-tree ul button.tc-ctl-lcat-btn-info:after, .tc-ctl-lcat-search ul button:after {
         font-family: 'mapskin';
         content: '\e024';
     }
@@ -501,6 +524,7 @@ div.tc-ctl-lcat-legend {
 
 div.tc-ctl-lcat-search ul li button:hover:after {
     color: #c00;
+    color: var(--main-hl-color);
 }
 
 div.tc-ctl-lcat-search > ul > li, div.tc-ctl-lcat-search > ul > li > ul > li {
@@ -516,6 +540,7 @@ div.tc-ctl-lcat-search > ul > li, div.tc-ctl-lcat-search > ul > li > ul > li {
     padding: 0 0 0 0.2em;
     border: 1px solid #ccc;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
 }
 
 div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked > p {
@@ -523,7 +548,7 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     cursor: default;
 }
 
-@media screen and (min-width: 22cm) and (min-height: 22cm) {
+@media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
     li.tc-ctl-lcat-node > .tc-ctl-lcat-btn-info {
         font-size: 1em;
     }

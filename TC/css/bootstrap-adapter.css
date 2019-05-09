@@ -70,6 +70,7 @@ input[type="search"] {
 /* Cambiar estilo del tooltip de bootstrap para que se parezca al de la API */
 .tooltip > .tooltip-inner {
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     color: #666;
     background-color: #eee;
 }

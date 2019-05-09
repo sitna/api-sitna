@@ -3,7 +3,7 @@
     width: 97%;
 }
 
-    .tc-ctl-xwms-cnt > select.tc-combo, .tc-ctl-xwms-cnt > input[type="text"] {
+    .tc-ctl-xwms-cnt > select.tc-combo, .tc-ctl-xwms-cnt > input[type="url"] {
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
         box-sizing: border-box;

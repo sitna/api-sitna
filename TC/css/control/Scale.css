@@ -2,11 +2,16 @@
     position: absolute;
     top: 1.875em;
     left: 4em;
+}
+
+.tc-ctl-sb, .tc-ctl-scl, .tc-ctl-ss {
+    display: inline-block;
     z-index: 10002;
     color: #333;
     background-color: #ccc;
     border: 1px solid #ccc;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     opacity: 0.5;
     font-size: 0.8em;
 }

@@ -37,14 +37,10 @@
             margin-right: 0.5em;
         }
 
-    .tc-ctl-geolocation-locate .tc-ctl-geolocation-locate-hide {
+    /*.tc-ctl-geolocation-locate .tc-ctl-geolocation-locate-hide {
         background-color: #630101;
         border-color: #630101;
-    }
-
-.tc-map.tc-collapsed .tc-ctl-geolocation-info-tracking {
-    display: none;
-}
+    }*/
 
 .tc-ctl-geolocation-select {
     padding-top: 0.5em;
@@ -72,6 +68,7 @@
             text-align: center;
             border: 1px solid #666;
             background-color: #fff;
+            background-color: var(--main-bg-color);
             color: #666;
             cursor: pointer;
             overflow: hidden;
@@ -81,16 +78,21 @@
 
         .tc-ctl-geolocation-select input[type=radio]:checked ~ span {
             border-color: #c00;
+            border-color: var(--main-hl-color);
             border-bottom-right-radius: 0;
             border-bottom-left-radius: 0;
             border-bottom-color: #fff;
+            border-bottom-color: var(--main-bg-color);
             color: #c00;
+            color: var(--main-hl-color);
             z-index: 10007;
         }
 
     .tc-ctl-geolocation-select label:first-child input[type=radio] ~ span {
         border-top-left-radius: 0.3em;
+        border-top-left-radius: var(--border-radius);
         border-bottom-left-radius: 0.3em;
+        border-bottom-left-radius: var(--border-radius);
     }
 
     .tc-ctl-geolocation-select label:first-child input[type=radio]:checked ~ span {
@@ -100,7 +102,9 @@
 
     .tc-ctl-geolocation-select label:last-child input[type=radio] ~ span {
         border-top-right-radius: 0.3em;
+        border-top-right-radius: var(--border-radius);
         border-bottom-right-radius: 0.3em;
+        border-bottom-right-radius: var(--border-radius);
     }
 
     .tc-ctl-geolocation-select label:last-child input[type=radio]:checked ~ span {
@@ -116,26 +120,32 @@ label.tc-ctl-geolocation-btn-track {
     margin-left: 0;
 }
 
+
 .tc-ctl-geolocation-track-center {
+    top: calc(1.5em + 2em + 10em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em); /* margen antes del +, el +, el alto de la barra, el - y el margen inferior, la casita, el margen inferior, btn streetView, el margen inferior, btn fullScreen, el margen inferior, btn 3D, el margen inferior */
     position: absolute;
     left: 0.7em;
-    top: 29.35em;
+    padding: 0;
     width: 2em;
     height: 2em;
-    margin-top: 0.3em;
-    z-index: 10002;
 }
 
-    .tc-ctl-geolocation-track-center button {
+.tc-ctl-geolocation-track-center.tc-ctl {    
+    padding: 0;
+}
+
+    .tc-ctl-geolocation-track-center button {        
+        width: 100%;
+        height: 100%;
+        z-index: 10002;
+        color: #fff;
         border-radius: 0.2em;
         border: 0;
         background-color: rgba(0, 0, 0, 0.66);
-        width: 100%;
-        height: 100%;
         padding: 0;
     }
 
-        .tc-ctl-geolocation-track-center button:before {
+        .tc-ctl-geolocation-track-center button:after {
             font-family: mapskin;
             content: "\e029";
         }
@@ -185,55 +195,6 @@ i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
             border-color: #630101;
         }
 
-
-.tc-ctl-geolocation-info-tracking div.tc-ctl-p-results {
-    -webkit-transition: all 0.5s linear;
-    -moz-transition: all 0.5s linear;
-    -o-transition: all 0.5s linear;
-    -ms-transition: all 0.5s linear;
-    transition: all 0.5s linear;
-    min-width: inherit;
-}
-
-.tc-threed .tc-ctl-geolocation-info-tracking .tc-ctl-p-results {
-    z-index: 1;
-}
-
-.tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop33 {
-    top: 1.5em;
-}
-
-.tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop57 {
-    top: 3.55em;
-}
-
-.tc-ctl-geolocation-info-tracking .tc-ctl-p-results.moveTop159 {
-    top: 15.9em;
-}
-
-.tc-ctl-geolocation-info-tracking div#results {
-    height: 5em;
-}
-
-.tc-ctl-geolocation-info-tracking div.tc-ctl-p-results ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    color: rgba(69, 69, 69, 0.9);
-}
-
-    .tc-ctl-geolocation-info-tracking div.tc-ctl-p-results ul li {
-        float: left;
-    }
-
-        .tc-ctl-geolocation-info-tracking div.tc-ctl-p-results ul li span {
-            font-weight: bold;
-        }
-
-        .tc-ctl-geolocation-info-tracking div.tc-ctl-p-results ul li:last-child {
-            margin-left: 0.4em;
-        }
-
 button.tc-ctl-geolocation-active {
     border-color: #630101;
     background-color: #630101;
@@ -266,8 +227,11 @@ label.tc-ctl-geolocation-track-available-label {
             display: inline-block;
             cursor: pointer; /* "hand" cursor */
             border: 1px solid #C00;
+            border-color: var(--main-hl-color);
             border-radius: 0.3em;
+            border-radius: var(--border-radius);
             background-color: #C00;
+            background-color: var(--main-hl-color);
             height: 2em;
             padding: 0 18px;
             box-sizing: border-box;
@@ -286,6 +250,7 @@ label.tc-ctl-geolocation-track-available-label {
     max-height: 8em;
     height: auto;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     border: 1px solid #CCC;
     padding: 0;
     list-style: none;
@@ -311,6 +276,7 @@ label.tc-ctl-geolocation-track-available-label {
 
             .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable:hover {
                 color: #c00;
+                color: var(--main-hl-color);
             }
 
 ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-available-empty > span {
@@ -608,6 +574,7 @@ div.tc-ctl-geolocation-track-render {
     padding: 0.3em;
     border: 0.1em solid #DFDFDF;
     border-radius: 0.3em;
+    border-radius: var(--border-radius);
     font-size: 11px;
 }
 
@@ -757,7 +724,44 @@ div.tc-ctl-geolocation-track-render {
             font-weight: bold;
         }
 
-@media screen and (min-width: 22cm) and (min-height: 22cm) {
+table.tc-ctl-geolocation-info-tracking {
+    margin: 0.5em auto;
+    height: 3.3em;
+}
+
+    table.tc-ctl-geolocation-info-tracking td {
+        border: none;
+    }
+
+.tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking:not(.nested) tbody tr:nth-child(odd), .tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking.nested tbody:nth-child(even) {
+    background: none;
+}
+
+.tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking:not(.nested) tbody tr:nth-child(even), .tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking.nested tbody:nth-child(odd) {
+    background: none;
+}
+
+.tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking tbody tr {
+    cursor: default; /* initial no funciona en IE */
+}
+
+.tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking {
+    color: rgba(69, 69, 69, 0.9);
+    line-height: 0.5em;
+}
+
+
+
+
+
+/* GPS y rutas - mostrar NOVEDAD en 3D */
+.tc-ctl-geolocation.tc-threed h2 span.tc-beta {
+    visibility: visible;
+    opacity: 1;
+    display: inline-block;
+}
+
+@media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
 
     i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
         font-size: 17px;

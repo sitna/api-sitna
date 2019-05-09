@@ -18,6 +18,7 @@
         display: inline-block;
         background-color: transparent;
         color: #c00;
+        color: var(--main-hl-color);
         padding: 0;
         border-width: 0;
         margin-top: 0.5em;
@@ -69,7 +70,9 @@
     width: 25%;
     border: 0;
     border-left: 1px solid #fff;
+    border-left-color: var(--main-bg-color);
     border-right: 1px solid #fff;
+    border-right-color: var(--main-bg-color);
     border-radius: 0;
     margin: 0.5em 0 0.5em 0;
 }
@@ -84,9 +87,12 @@
 
 .tc-ctl h2, .tc-ctl-ftools-dialog-dl h2 {
     color: #666;
+    color: var(--title-color);
     text-transform: lowercase;
     background-color: #fff;
+    background-color: var(--main-bg-color);
     border-bottom: 1px solid #999;
+    border-bottom-color: var(--divider-color);
     font-family: Arial, helvetica, sans-serif;
     font-size: 1.1em;
     font-weight: bold;
@@ -153,6 +159,7 @@
         height: 100%;
         border: 0.3em solid transparent;
         border-radius: 0.3em;
+        border-radius: var(--border-radius);
         text-align: center;
         box-sizing: border-box;
     }
@@ -163,6 +170,7 @@
 
     .tc-ctl-ftools-dialog-ip label input[type=radio]:checked ~ span {
         border-color: #c00;
+        border-color: var(--main-hl-color);
     }
 
     .tc-ctl-ftools-dialog-ip label input[type=radio][value="0"] ~ span {
@@ -196,3 +204,9 @@
     .tc-ctl-ftools-dialog-ip-m input[type=number] {
         width: 3em;
     }
+
+table.tc-ctl-ftools-zoom {
+    cursor: zoom-in;
+    cursor: url(//sitna.tracasa.es/api/TC/layout/responsive/img/zoomin.cur), /* Internet Explorer */
+    default;
+}
