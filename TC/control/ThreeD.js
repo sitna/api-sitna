@@ -42,48 +42,65 @@
     };
 
     ctlProto.renderData = function (data, callback) {
-        var self = this;
+        const self = this;
 
-        TC.Control.prototype.renderData.call(self, data, function () {
+        return TC.Control.prototype.renderData.call(self, data, function () {
+            self.button = self.div.querySelector('.' + self.CLASS + '-btn');
 
-            self.$button = self._$div.find('.' + self.CLASS + '-btn');
+            if (Number.isInteger(TC.Util.detectIE()) && TC.Util.detectIE() < 12) {
+                self.button.setAttribute('title', self.getLocaleString("threed.not.supported"));
+                self.button.classList.remove(self.classes.BETA);
+            }
 
-            self.$button.on(TC.Consts.event.CLICK, function () {
-                if (!self.map.on3DView) {
-                    self.activate();
+            self.button.addEventListener(TC.Consts.event.CLICK, function () {
+
+                if (self.button.getAttribute("disabled") === "disabled") {
+                    return;
+                }
+
+                if (Number.isInteger(TC.Util.detectIE()) && TC.Util.detectIE() < 12) {
+                    self.map.toast(self.getLocaleString("threed.not.supported"), { type: TC.Consts.msgType.ERROR });
                 } else {
-                    self.$button.attr('disabled', 'disabled');
+                    if (!self.map.on3DView) {
+                        self.activate();
+                    } else {
+                        self.button.setAttribute("disabled", "disabled");
 
-                    TC.view.ThreeD.unapply();
+                        TC.view.ThreeD.unapply({
+                            callback: function () {
+                                self.button.setAttribute('title', self.getLocaleString("threed.tip"));
 
-                    self.$button.attr('title', self.getLocaleString("threed.tip"));
+                                self.button.classList.remove(self.classes.BTNACTIVE);
 
-                    self.$button.removeClass(self.classes.BTNACTIVE);
-
-                    self.$button.removeAttr('disabled');
+                                self.button.removeAttribute("disabled");
+                            }
+                        });
+                    }
                 }
             });
-        });
 
-        if ($.isFunction(callback)) {
-            callback();
-        }
+            if ($.isFunction(callback)) {
+                callback();
+            }
+        });
     };
 
     ctlProto.activate = function () {
         var self = this;
 
-        self.$button.attr('disabled', 'disabled');
+        self.button.setAttribute("disabled", "disabled");
 
         self.browserSupportWebGL.call(self);
 
         const manageButton = function () {
-            self.$button.attr('title', self.getLocaleString("threed.two.tip"));
-            self.$button.removeClass(self.classes.BETA);
+            self.button.setAttribute('title', self.getLocaleString('threed.two.tip'));
+            self.button.classList.remove(self.classes.BETA);
 
-            self.$button.addClass(self.classes.BTNACTIVE);
+            self.button.classList.add(self.classes.BTNACTIVE);
+        };
 
-            self.$button.removeAttr('disabled');
+        const removeDisabled = function () {
+            self.button.removeAttribute("disabled");
         };
 
         if (!self.map.view3D) {
@@ -91,10 +108,10 @@
                 !TC.view || !TC.view.ThreeD,
                 TC.apiLocation + 'TC/view/ThreeD',
                 function () {                                                           /* provisional */
-                    TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml });
+                    TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled });
                 });
         } else if (!self.map.on3DView) {                                               /* provisional */
-            TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml });
+            TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled });
         }
 
         manageButton();
