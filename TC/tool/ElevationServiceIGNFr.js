@@ -89,7 +89,6 @@ TC.inherit(TC.tool.ElevationServiceIGNFr, TC.tool.ElevationService);
 
     toolProto.parseResponse = function (response, options) {
         var self = this;
-        response = JSON.parse(response);
         if (response.elevations) {
             var elevations = response.elevations.map(function (elev) {
                 return [elev.lon, elev.lat, elev.z];

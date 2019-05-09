@@ -22,7 +22,6 @@ TC.inherit(TC.tool.ElevationServiceIGNEs, TC.tool.ElevationService);
     toolProto.request = function (options) {
         const self = this;
         options = options || {};
-        const deferred = $.Deferred();
         var coordinateListArray;
         var isPolygon = false;
         switch (true) {
@@ -111,43 +110,45 @@ TC.inherit(TC.tool.ElevationServiceIGNEs, TC.tool.ElevationService);
             '&amp;COVERAGE=' + coverageName + '&amp;RESX=' +
             coverageResolution +
             '&amp;RESY=' + coverageResolution +
-            '&amp;FORMAT=ArcGrid&amp;EXCEPTIONS=XML',
+            '&amp;FORMAT=ArcGrid&amp;EXCEPTIONS=XML';
 
-        TC.tool.ElevationService.prototype.request.call(self, {
-            dataInputs: dataInputs,
-            process: self.process,
-            contentType: false,
-            output: {
-                uom: 'urn:ogc:def:dataType:OGC:0.0:Integer'
-            }
-        }).then(function (response) {
-            var xml;
-            try {
-                xml = new DOMParser().parseFromString(response, TC.Consts.mimeType.XML);
-            }
-            catch (error) {
-                deferred.reject(error);
-            }
-            const urlElement = xml.getElementsByTagName("URL")[0];
-            if (urlElement) {
-                $.ajax({
-                    url: TC.proxify(urlElement.innerHTML),
-                    type: 'GET',
-                    contentType: false
-                }).then(function (text) {
-                    deferred.resolve(text);
-                }, function (error) {
-                    deferred.reject(error);
+        return new Promise(function (resolve, reject) {
+            TC.tool.ElevationService.prototype.request.call(self, {
+                dataInputs: dataInputs,
+                process: self.process,
+                contentType: false,
+                output: {
+                    uom: 'urn:ogc:def:dataType:OGC:0.0:Integer'
+                }
+            })
+                .then(function (response) {
+                    var xml;
+                    try {
+                        xml = new DOMParser().parseFromString(response, TC.Consts.mimeType.XML);
+                    }
+                    catch (error) {
+                        reject(Error(error));
+                    }
+                    const urlElement = xml.getElementsByTagName("URL")[0];
+                    if (urlElement) {
+                        TC.ajax({
+                            url: TC.proxify(urlElement.innerHTML),
+                            method: 'GET',
+                            contentType: false
+                        }).then(function (text) {
+                            resolve(text);
+                        }, function (error) {
+                            reject(Error(error));
+                        });
+                    }
+                    else {
+                        reject(Error('Servicio WPS del IGN no ha devuelto una respuesta rápida'));
+                    }
+                })
+                .catch(function (error) {
+                    reject(Error(error));
                 });
-            }
-            else {
-                deferred.reject('Servicio WPS del IGN no ha devuelto una respuesta rápida');
-            }
-        }, function (error) {
-                deferred.reject(error);
         });
-
-        return deferred.promise();
     };
 
     toolProto.parseResponse = function (response, options) {
