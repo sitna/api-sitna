@@ -29,73 +29,73 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
     };
 
     var storeFeature = function (key, feature) {
-        var deferred = $.Deferred();
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            var obj;
-            var geometryType;
-            switch (true) {
-                case feature instanceof TC.feature.Polygon:
-                    geometryType = TC.Consts.geom.POLYGON;
-                    break;
-                case feature instanceof TC.feature.Polyline:
-                    geometryType = TC.Consts.geom.POLYLINE;
-                    break;
-                case feature instanceof TC.feature.Point:
-                    geometryType = TC.Consts.geom.POINT;
-                    break;
-                case feature instanceof TC.feature.MultiPolygon:
-                    geometryType = TC.Consts.geom.MULTIPOLYGON;
-                    break;
-                case feature instanceof TC.feature.MultiPolyline:
-                    geometryType = TC.Consts.geom.MULTIPOLYLINE;
-                    break;
-            }
-            obj = {
-                id: feature.id || feature.provId,
-                attributes: feature.data,
-                type: geometryType,
-                geometry: feature.geometry,
-            }
-            localforage.setItem(key, obj)
-                .then(function () {
-                    deferred.resolve({ feature: feature });
-                })
-                .catch(function (error) {
-                    deferred.reject({ feature: feature, error: error });
-                });
+        return new Promise(function (resolve, reject) {
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                var obj;
+                var geometryType;
+                switch (true) {
+                    case feature instanceof TC.feature.Polygon:
+                        geometryType = TC.Consts.geom.POLYGON;
+                        break;
+                    case feature instanceof TC.feature.Polyline:
+                        geometryType = TC.Consts.geom.POLYLINE;
+                        break;
+                    case feature instanceof TC.feature.Point:
+                        geometryType = TC.Consts.geom.POINT;
+                        break;
+                    case feature instanceof TC.feature.MultiPolygon:
+                        geometryType = TC.Consts.geom.MULTIPOLYGON;
+                        break;
+                    case feature instanceof TC.feature.MultiPolyline:
+                        geometryType = TC.Consts.geom.MULTIPOLYLINE;
+                        break;
+                }
+                obj = {
+                    id: feature.id || feature.provId,
+                    attributes: feature.data,
+                    type: geometryType,
+                    geometry: feature.geometry,
+                }
+                localforage.setItem(key, obj)
+                    .then(function () {
+                        resolve({ feature: feature });
+                    })
+                    .catch(function (error) {
+                        reject({ feature: feature, error: error });
+                    });
+            });
         });
-        return deferred.promise();
     };
 
     var deleteFeature = function (key) {
-        var deferred = $.Deferred();
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            localforage.removeItem(key)
-                .then(function () {
-                    deferred.resolve(key);
-                })
-                .catch(function (error) {
-                    deferred.reject(error);
-                });
+        return new Promise(function (resolve, reject) {
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                localforage.removeItem(key)
+                    .then(function () {
+                        resolve(key);
+                    })
+                    .catch(function (error) {
+                        reject(Error(error));
+                    });
+            });
         });
-        return deferred.promise();
     };
 
     var readFeature = function (key) {
-        var deferred = $.Deferred();
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            localforage.getItem(key)
-                .then(function (value) {
-                    deferred.resolve({
-                        key: key,
-                        feature: value
+        return new Promise(function (resolve, reject) {
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                localforage.getItem(key)
+                    .then(function (value) {
+                        resolve({
+                            key: key,
+                            feature: value
+                        });
+                    })
+                    .catch(function (error) {
+                        reject(error);
                     });
-                })
-                .catch(function (error) {
-                    deferred.reject(error);
-                });
+            });
         });
-        return deferred.promise();
     };
 
     var getStoragePrefix = function (ctl, layerId) {
@@ -115,9 +115,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
     };
 
     var setFeatureSelectReadyState = function (ctl) {
-        ctl._$deleteBtn.prop('disabled', true);
-        ctl._$joinBtn.prop('disabled', true);
-        ctl._$splitBtn.prop('disabled', true);
+        ctl._deleteBtn.disabled = true;
+        ctl._joinBtn.disabled = true;
+        ctl._splitBtn.disabled = true;
     }
 
     var complexGeometryFilter = function (elm) {
@@ -132,14 +132,14 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
     };
 
     var setFeatureSelectedState = function (ctl, features) {
-        ctl._$deleteBtn.prop('disabled', features.length === 0);
-        ctl._$joinBtn.prop('disabled', features.length < 2);
-        ctl._$splitBtn.prop('disabled', features.filter(complexGeometryFilter).length === 0);
+        ctl._deleteBtn.disabled = features.length === 0;
+        ctl._joinBtn.disabled = features.length < 2;
+        ctl._splitBtn.disabled = features.filter(complexGeometryFilter).length === 0;
     }
 
     var setSaveButtonsState = function (ctl, disabled) {
-        ctl._$saveBtn.prop('disabled', disabled);
-        ctl._$discardBtn.prop('disabled', disabled);
+        ctl._saveBtn.disabled = disabled;
+        ctl._discardBtn.disabled = disabled;
         self.checkedOut = !disabled;
     };
 
@@ -167,24 +167,24 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
     };
 
     var addChangesLayer = function (ctl, layer) {
-        var deferred = $.Deferred();
-        var changesLayer = ctl._changesLayers[layer.id];
-        if (changesLayer) {
-            deferred.resolve(changesLayer);
-        }
-        else {
-            changesLayer = ctl._changesLayers[layer.id] = new TC.layer.Vector({
-                id: TC.getUID(),
-                title: layer.title + ' - cambios pendientes',
-                stealth: true,
-                styles: ctl.getChangesLayerStyle(layer)
-            });
-            var idx = ctl.map.layers.indexOf(layer);
-            ctl.map.insertLayer(changesLayer, idx + 1, function () {
-                deferred.resolve(changesLayer);
-            });
-        }
-        return deferred.promise();
+        return new Promise(function (resolve, reject) {
+            var changesLayer = ctl._changesLayers[layer.id];
+            if (changesLayer) {
+                resolve(changesLayer);
+            }
+            else {
+                changesLayer = ctl._changesLayers[layer.id] = new TC.layer.Vector({
+                    id: TC.getUID(),
+                    title: layer.title + ' - cambios pendientes',
+                    stealth: true,
+                    styles: ctl.getChangesLayerStyle(layer)
+                });
+                var idx = ctl.map.layers.indexOf(layer);
+                ctl.map.insertLayer(changesLayer, idx + 1, function () {
+                    resolve(changesLayer);
+                });
+            }
+        });
     };
 
     /* Creamos el constructor, llamando al constructor del padre */
@@ -195,9 +195,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
         self._classSelector = '.' + self.CLASS;
 
-        self.$events = $(self);
         self.wrap = new TC.wrap.control.Edit(self);
-        self._layerDeferred = $.Deferred();
         self.layer = null;
         self.checkedOut = false;
         //self.feature = self.options.feature ? self.options.feature : null;
@@ -218,7 +216,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
             self.getChangesLayerStyleFunction = self.getChangesLayerStyle;
         }
 
-        self.$events
+        self
             .on(TC.Consts.event.FEATUREADD, function (e) {
                 var feat = e.feature;
                 feat.provId = getNewFeatureId();
@@ -387,9 +385,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
         map
             .on(TC.Consts.event.LAYERUPDATE, function (e) {
-                if (e.layer.type === TC.Consts.layerType.WFS && !e.layer.options.stealth) {
-                    var layer = e.layer;
-                    var features = self.features[e.layer.id] = self.features[e.layer.id] || {
+                const layer = e.layer;
+                if (layer.type === TC.Consts.layerType.WFS && !layer.options.stealth) {
+                    var features = self.features[layer.id] = self.features[layer.id] || {
                         added: [],
                         modified: [],
                         removed: []
@@ -437,27 +435,27 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                                                     id = k.substr(addedStoragePrefix.length);
                                                     var idNumber = parseInt(id.substr(id.lastIndexOf('.') + 1));
                                                     newFeatureIdNumber = Math.max(newFeatureIdNumber, idNumber + 1);
-                                                    var addDeferred;
+                                                    var addPromise;
                                                     switch (obj.feature.type) {
                                                         case TC.Consts.geom.POINT:
-                                                            addDeferred = layer.addPoint(obj.feature.geometry);
+                                                            addPromise = layer.addPoint(obj.feature.geometry);
                                                             break;
                                                         case TC.Consts.geom.POLYLINE:
-                                                            addDeferred = layer.addPolyline(obj.feature.geometry);
+                                                            addPromise = layer.addPolyline(obj.feature.geometry);
                                                             break;
                                                         case TC.Consts.geom.POLYGON:
-                                                            addDeferred = layer.addPolygon(obj.feature.geometry);
+                                                            addPromise = layer.addPolygon(obj.feature.geometry);
                                                             break;
                                                         case TC.Consts.geom.MULTIPOLYLINE:
-                                                            addDeferred = layer.addMultiPolyline(obj.feature.geometry);
+                                                            addPromise = layer.addMultiPolyline(obj.feature.geometry);
                                                             break;
                                                         case TC.Consts.geom.MULTIPOLYGON:
-                                                            addDeferred = layer.addMultiPolygon(obj.feature.geometry);
+                                                            addPromise = layer.addMultiPolygon(obj.feature.geometry);
                                                             break;
                                                         default:
                                                             break;
                                                     };
-                                                    addDeferred.then(function (feat) {
+                                                    addPromise.then(function (feat) {
                                                         //feat.setStyle($.extend({}, layer.styles.line, layer.styles.polygon));
                                                         changesLayer.addFeature(feat);
                                                         features.added.push(feat);
@@ -477,25 +475,27 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 }
             })
             .on(TC.Consts.event.LAYERADD, function (e) {
-                if (e.layer.type === TC.Consts.layerType.WFS && !e.layer.options.stealth) {
-                    self.features[e.layer.id] = self.features[e.layer.id] || {
+                const layer = e.layer;
+                if (layer.type === TC.Consts.layerType.WFS && !layer.options.stealth) {
+                    self.features[layer.id] = self.features[layer.id] || {
                         added: [],
                         modified: [],
                         removed: []
                     };
-                    $('<option>')
-                        .attr('value', e.layer.id)
-                        .html(e.layer.title || e.layer.id)
-                        .appendTo(self._$layerSelect);
+                    const option = document.createElement('option');
+                    option.setAttribute('value', layer.id);
+                    option.innerHTML = layer.title || layer.id;
+                    self._layerSelect.appendChild(option);
                 }
             })
             .on(TC.Consts.event.LAYERREMOVE, function (e) {
-                if (e.layer.type === TC.Consts.layerType.WFS && !e.layer.options.stealth) {
-                    var $option = self._$layerSelect.find('option[value=' + e.layer.id + ']');
-                    if ($option.filter(':selected').length > 0) {
+                const layer = e.layer;
+                if (layer.type === TC.Consts.layerType.WFS && !layer.options.stealth) {
+                    var option = self._layerSelect.querySelector('option[value=' + layer.id + ']');
+                    if (option.selected) {
                         self.setLayer(null);
                     }
-                    $option.remove();
+                    option.parentElement.removeChild(option);
                 }
             })
             .on(TC.Consts.event.POPUP, function (e) {
@@ -534,27 +534,39 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                         return 0;
                     });
                     self.getRenderedHtml(self.CLASS + '-attr', { data: attributes }, function (html) {
-                        var $contentDiv = self.attributeEditor.$contentDiv;
-                        $contentDiv.html(html);
-                        var $input = $contentDiv.find('input');
-                        var $select = $contentDiv.find('select');
-                        $input.on('input', function (e) {
-                            var $ipt = $(e.target);
-                            var $sel = $select.filter('[name=' + $ipt.attr('name') + ']');
-                            if ($sel.val() !== $ipt.val()) {
-                                $sel.val('');
-                            }
+                        const contentDiv = self.attributeEditor.contentDiv;
+                        contentDiv.innerHTML = html;
+                        const inputs = contentDiv.querySelectorAll('input');
+                        const selects = contentDiv.querySelectorAll('select');
+                        inputs.forEach(function (elm) {
+                            elm.addEventListener('input', function (e) {
+                                const input = e.target;
+                                for (var i = 0, len = selects.length; i < len; i++) {
+                                    const select = selects[i];
+                                    if (select.matches('[name=' + e.target.getAttribute('name') + ']') && select.value !== input.value) {
+                                        select.value = '';
+                                        break;
+                                    }
+                                }
+                            });
                         });
-                        $select.on('change', function (e) {
-                            var $sel = $(e.target);
-                            $input.filter('[name=' + $sel.attr('name') + ']').val($sel.val());
+                        selects.forEach(function (elm) {
+                            elm.addEventListener('change', function (e) {
+                                const select = e.target;
+                                for (var i = 0, len = inputs.length; i < len; i++) {
+                                    const input = inputs[i];
+                                    if (input.matches('[name=' + select.getAttribute('name') + ']')) {
+                                        input.value = select.value;
+                                        break;
+                                    }
+                                }
+                            });
                         });
-                        $contentDiv.find('.' + self.CLASS + '-btn-attr-ok').on('click', function () {
+                        contentDiv.querySelector('.' + self.CLASS + '-btn-attr-ok').addEventListener('click', function () {
                             var data = {};
-                            $input.each(function (idx, elm) {
-                                $input = $(elm);
-                                var name = $input.attr('name');
-                                var value = $input.val();
+                            inputs.forEach(function (input) {
+                                var name = input.getAttribute('name');
+                                var value = input.value;
                                 switch (attributeTypes[name]) {
                                     case 'int':
                                     case 'integer':
@@ -598,10 +610,10 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                                 }
                             });
                             feature.setData(data);
-                            self.$events.trigger($.Event(TC.Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer }));
+                            self.trigger(TC.Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer });
                             self.attributeEditor.hide();
                         });
-                        $contentDiv.find('.' + self.CLASS + '-btn-attr-cancel').on('click', function () {
+                        contentDiv.querySelector('.' + self.CLASS + '-btn-attr-cancel').addEventListener('click', function () {
                             self.attributeEditor.hide();
                         });
                     });
@@ -630,29 +642,29 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
             self.renderPromise().then(function () {
                 var DRAW = 'draw';
-                $.when.apply(self, [
+                Promise.all([
                     map.addControl(DRAW, {
                         id: drawPointsId,
-                        div: self._$div.find('.' + self.CLASS + '-point'),
+                        div: self.div.querySelector('.' + self.CLASS + '-point'),
                         mode: TC.Consts.geom.POINT,
                         layer: false
                     }),
                     map.addControl(DRAW, {
                         id: drawLinesId,
-                        div: self._$div.find('.' + self.CLASS + '-line'),
+                        div: self.div.querySelector('.' + self.CLASS + '-line'),
                         mode: TC.Consts.geom.POLYLINE,
                         layer: false
                     }),
                     map.addControl(DRAW, {
                         id: drawPolygonsId,
-                        div: self._$div.find('.' + self.CLASS + '-polygon'),
+                        div: self.div.querySelector('.' + self.CLASS + '-polygon'),
                         mode: TC.Consts.geom.POLYGON,
                         layer: false
                     })
-                ]).then (function (pntCtl, linCtl, pgnCtl) {
-                    self.pointDraw = pntCtl;
-                    self.lineDraw = linCtl;
-                    self.polygonDraw = pgnCtl;
+                ]).then (function (controls) {
+                    self.pointDraw = controls[0];
+                    self.lineDraw = controls[1];
+                    self.polygonDraw = controls[2];
 
                     var drawendHandler = function (e) {
                         //var styleObj = {};
@@ -688,18 +700,18 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                         }
                         //feature.setStyle(styleObj);
                         self.layer.addFeature(feature);
-                        self.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { feature: feature }));
+                        self.trigger(TC.Consts.event.FEATUREADD, { feature: feature });
                     };
                     var drawcancelHandler = function () {
                         self.cancel();
                     };
-                    pntCtl
+                    self.pointDraw
                         .on(TC.Consts.event.DRAWEND, drawendHandler)
                         .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    linCtl
+                    self.lineDraw
                         .on(TC.Consts.event.DRAWEND, drawendHandler)
                         .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    pgnCtl
+                    self.polygonDraw
                         .on(TC.Consts.event.DRAWEND, drawendHandler)
                         .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
                     if (self.options.modes && $.isArray(self.options.modes) && self.options.modes.length == 1) {
@@ -708,15 +720,15 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 });
             });
         });
-        //self.miEvent = map.on(TC.Consts.event.FEATURESADD + ".HasFeatures", function (evt) {
-        //    if (evt.layer == self.layer) {
+        //self.miEvent = map.on(TC.Consts.event.FEATURESADD + ".HasFeatures", function (e) {
+        //    if (e.layer == self.layer) {
         //        self.miEvent = map.off(TC.Consts.event.FEATURESADD + ".HasFeatures");
         //    }
         //});
 
         //if (!self.layer || self.layer.features.length==0)
         //self._$resetBtn.prop('disabled', true);
-        //self._$deleteBtn.prop('disabled', true);
+        //self._deleteBtn.disabled = true;
 
         return result;
     };
@@ -735,67 +747,77 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 }
             }
         }
-        TC.Control.prototype.renderData.call(self, { layers: editLayers, showChanges: self.showChanges }, function () {
+        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { layers: editLayers, showChanges: self.showChanges }, function () {
 
-            self._$layerDiv = self._$div.find(self._classSelector + '-layer');
-            self._$layerSelect = self._$layerDiv.find(self._classSelector + '-layer-sel').on('change', function (e) {
-                self.setLayer(self._$layerSelect.val());
+            self._layerDiv = self.div.querySelector(self._classSelector + '-layer');
+            self._layerSelect = self._layerDiv.querySelector(self._classSelector + '-layer-sel');
+            self._layerSelect.addEventListener('change', function (e) {
+                self.setLayer(self._layerSelect.value);
             });
 
-            self._$layerDiv.find('#' + self.CLASS + '-view-changes-cb').on('change', function (e) {
-                self.showChanges($(e.target).prop('checked'));
+            self._layerDiv.querySelector('#' + self.CLASS + '-view-changes-cb').addEventListener('change', function (e) {
+                self.showChanges(e.target.checked);
             });
 
             //self._$len = self._$div.find(self._classSelector + '-val-len');
             //self._$area = self._$div.find(self._classSelector + '-val-area');
             //self._$peri = self._$div.find(self._classSelector + '-val-peri');
 
-            self._$cancelBtn = self._$div.find(self._classSelector + '-btn-cancel').on('click', function () {
+            self._cancelBtn = self.div.querySelector(self._classSelector + '-btn-cancel');
+            self._cancelBtn.addEventListener('click', function () {
                 self.cancel();
             });
 
-            self._$deleteBtn = self._$div.find(self._classSelector + '-btn-delete').on('click', function () {
+            self._deleteBtn = self.div.querySelector(self._classSelector + '-btn-delete');
+            self._deleteBtn.addEventListener('click', function () {
                 TC.confirm(self.eraseActionConfirmTxt, function () {
                     self.deleteFeatures(self.getSelectedFeatures());
                 });
             });
-            self._$joinBtn = self._$div.find(self._classSelector + '-btn-join').on('click', function () {
+            self._joinBtn = self.div.querySelector(self._classSelector + '-btn-join');
+            self._joinBtn.addEventListener('click', function () {
                 self.joinFeatures(self.getSelectedFeatures());
             });
-            self._$splitBtn = self._$div.find(self._classSelector + '-btn-split').on('click', function () {
+            self._splitBtn = self.div.querySelector(self._classSelector + '-btn-split');
+            self._splitBtn.addEventListener('click', function () {
                 self.splitFeatures(self.getSelectedFeatures());
             });
-            self._$saveBtn = self._$div.find(self._classSelector + '-btn-save').on('click', function () {
+            self._saveBtn = self.div.querySelector(self._classSelector + '-btn-save');
+            self._saveBtn.addEventListener('click', function () {
                 self.applyEdits();
             });
-            self._$discardBtn = self._$div.find(self._classSelector + '-btn-discard').on('click', function () {
+            self._discardBtn = self.div.querySelector(self._classSelector + '-btn-discard');
+            self._discardBtn.addEventListener('click', function () {
                 self.discardEdits();
             });
             //control de renderizado enfunción del modo de edicion        
             if (self.options.modes && $.isArray(self.options.modes) && self.options.modes.length > 0) {
                 for (var m in TC.Consts.editMode)
-                    if (typeof m == "string" && self.options.modes.indexOf(TC.Consts.editMode[m]) < 0) {
-                        $("label" + self._classSelector + "-btn-" + TC.Consts.editMode[m], self._$div).remove();
-                        $("div" + self._classSelector + "-" + TC.Consts.editMode[m], self._$div).remove();
+                    if (typeof m === 'string' && self.options.modes.indexOf(TC.Consts.editMode[m]) < 0) {
+                        const label = self.div.querySelector("label" + self._classSelector + "-btn-" + TC.Consts.editMode[m]);
+                        label.parentElement.removeChild(label);
+                        const div = self.div.querySelector("div" + self._classSelector + "-" + TC.Consts.editMode[m]);
+                        div.parentElement.removeChild(div);
                     }
-                if (self.options.modes.length == 1) {
+                if (self.options.modes.length === 1) {
                     var mode = self.options.modes[0];
-                    $("label" + self._classSelector + "-btn-" + mode, self._$div).css("display", "none");
+                    self.div.querySelector("label" + self._classSelector + "-btn-" + mode).style.display = 'none';
                 }
 
 
             }
-            self._$div.find('input[type=radio][name=mode]').on('change', function () {
-                var $cb = $(this);
-                var newMode = $cb.val();
-                var mode = self.mode === newMode ? undefined : newMode;
-                self.setMode(mode);
+            self.div.querySelectorAll('input[type=radio][name=mode]').forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    var newMode = this.value;
+                    var mode = self.mode === newMode ? undefined : newMode;
+                    self.setMode(mode);
+                });
             });
 
             if ($.isFunction(callback)) {
                 callback();
             }
-        });
+        }));
     };
 
     ctlProto.setLayer = function (layer) {
@@ -839,7 +861,6 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                         case 'gml:GeometryCollectionPropertyType':
                         case 'gml:GeometryAssociationType':
                             return false;
-                            break;
                         default:
                             return true;
                     }
@@ -850,9 +871,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 }
                 self.renderPromise().then(function () {
                     setChangedState(self);
-                    self._$div.find(self._classSelector + '-layer-sel').val(self.layer.id);
+                    self.div.querySelector(self._classSelector + '-layer-sel').value = self.layer.id;
 
-                    $rb = self._$div.find(rbSelector);
+                    const rbList = self.div.querySelectorAll(rbSelector);
                     var selector;
                     switch (self.geometryType) {
                         case TC.Consts.geom.POINT:
@@ -870,21 +891,22 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                             selector = '[value]'
                             break;
                     }
-                    var $activeRb = $rb.filter(selector).attr('disabled', false);
-                    $rb.not($activeRb).attr('disabled', true);
+                    rbList.forEach(function (rb) {
+                        rb.disabled = !rb.matches(selector);
+                    });
                 });
             });
-            self._layerDeferred.resolve(self.layer);
         }
         else {
             self.renderPromise().then(function () {
                 setChangedState(self, false);
-                $rb = self._$div.find(rbSelector).attr('disabled', true);
-                $rb.each(function (idx, elm) {
-                    $(elm).prop('checked', false);
+                const rbList = self.div.querySelectorAll(rbSelector);
+                rbList.forEach(function (rb) {
+                    rb.disabled = true;
+                    rb.checked = false;
                 });
             });
-            self._layerDeferred.resolve(null);
+            self.layer = null;
         }
     };
 
@@ -902,31 +924,32 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
             }
         };
 
-        var $active, $hidden;
+        var active;
+        var hiddenList;
         switch (mode) {
             case TC.Consts.editMode.SELECT:
-                $active = self._$div.find(self._classSelector + '-select');
-                $hidden = self._$div.find(self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
+                active = self.div.querySelector(self._classSelector + '-select');
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
                 self.activate();
                 break;
             case TC.Consts.editMode.ADDPOINT:
-                $active = self._$div.find(self._classSelector + '-point');
-                $hidden = self._$div.find(self._classSelector + '-select,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
+                active = self.div.querySelector(self._classSelector + '-point');
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-select,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
                 activateDraw(self.pointDraw);
                 break;
             case TC.Consts.editMode.ADDLINE:
-                $active = self._$div.find(self._classSelector + '-line');
-                $hidden = self._$div.find(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-polygon');
+                active = self.div.querySelector(self._classSelector + '-line');
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-polygon');
                 activateDraw(self.lineDraw);
                 break;
             case TC.Consts.editMode.ADDPOLYGON:
-                $active = self._$div.find(self._classSelector + '-polygon');
-                $hidden = self._$div.find(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-line');
+                active = self.div.querySelector(self._classSelector + '-polygon');
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-line');
                 activateDraw(self.polygonDraw);
                 break;
             default:
-                $active = $();
-                $hidden = self._$div.find(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
+                active = null;
+                hiddenList = self.div.querySelectorAll(self._classSelector + '-select,' + self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
                 if (self.isActive) {
                     self.deactivate();
                 }
@@ -943,18 +966,26 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         }
 
         // Class TC.Consts.classes.CHECKED is for IE8 support
-        var $radio;
+        var radio;
         if (mode) {
-            $radio = self._$div.find('input[type=radio][name=mode][value=' + mode + ']').prop('checked', true).addClass(TC.Consts.classes.CHECKED);
-            $radio.next().addClass(TC.Consts.classes.CHECKED);
+            const radio = self.div.querySelector('input[type=radio][name=mode][value=' + mode + ']');
+            radio.checked = true;
+            radio.classList.add(TC.Consts.classes.CHECKED);
+            radio.nextSibling.classList.add(TC.Consts.classes.CHECKED);
         }
         else {
-            $radio = self._$div.find('input[type=radio][name=mode]').prop('checked', false).removeClass(TC.Consts.classes.CHECKED);
-            $radio.next().removeClass(TC.Consts.classes.CHECKED);
+            self.div.querySelectorAll('input[type=radio][name=mode]').forEach(function (radio) {
+                radio.checked = false;
+                radio.classList.remove(TC.Consts.classes.CHECKED);
+                radio.nextSibling.classList.remove(TC.Consts.classes.CHECKED);
+            });
         }
-        $active.removeClass(TC.Consts.classes.HIDDEN);
-        //$($hidden).addClass(TC.Consts.classes.HIDDEN);
-        $hidden.addClass(TC.Consts.classes.HIDDEN);
+        if (active) {
+            active.classList.remove(TC.Consts.classes.HIDDEN);
+        }
+        hiddenList.forEach(function (hidden) {
+            hidden.classList.add(TC.Consts.classes.HIDDEN);
+        });
     };
 
     ctlProto.showChanges = function (show) {
@@ -988,11 +1019,9 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         var self = this;
         TC.Control.prototype.activate.call(self);
         var opts = options || {};
-        self._$cancelBtn.prop('disabled', false);
-        $.when(self.getLayer()).then(function () {
-            self.wrap.activate(opts.mode ? opts.mode : self.mode);
-            TC.Control.prototype.activate.call(self);
-        });
+        self._cancelBtn.disabled = false;
+        self.wrap.activate(opts.mode ? opts.mode : self.mode);
+        TC.Control.prototype.activate.call(self);
     };
 
     ctlProto.deactivate = function () {
@@ -1003,7 +1032,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         //    , removed: []
         //};
         self.wrap.cancel(true);
-        self._$cancelBtn.prop('disabled', true);
+        self._cancelBtn.disabled = true;
         self.wrap.deactivate();
     };
 
@@ -1029,11 +1058,11 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 for (var i = 0, len = features.length; i < len; i++) {
                     var feature = features[i];
                     self.layer.removeFeature(feature);
-                    self.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { feature: feature }));
+                    self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
                 }
                 self.layer.addFeature(newFeature).then(function (feat) {
                     self.setSelectedFeatures([newFeature]);
-                    self.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { feature: feat }));
+                    self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
                     feat.showPopup(self.attributeEditor);
                 });
             }
@@ -1059,16 +1088,16 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         for (var i = 0, len = complexFeatures.length; i < len; i++) {
             var feature = complexFeatures[i];
             self.layer.removeFeature(feature);
-            self.$events.trigger($.Event(TC.Consts.event.FEATUREREMOVE, { feature: feature }));
+            self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
         }
-        var newFeatDeferreds = new Array(newFeatures.length);
+        var newFeatPromises = new Array(newFeatures.length);
         for (var i = 0, len = newFeatures.length; i < len; i++) {
-            var deferred = newFeatDeferreds[i] = self.layer.addFeature(newFeatures[i]);
-            deferred.then(function (feat) {
-                self.$events.trigger($.Event(TC.Consts.event.FEATUREADD, { feature: feat }));
+            const promise = newFeatPromises[i] = self.layer.addFeature(newFeatures[i]);
+            promise.then(function (feat) {
+                self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
             });
         }
-        $.when.apply(this, newFeatDeferreds).then(function() {
+        Promise.all(newFeatPromises).then(function() {
             self.setSelectedFeatures(newFeatures);
         });
         setFeatureSelectedState(self, newFeatures);
@@ -1078,7 +1107,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         var self = this;
         self.wrap.deleteFeatures(features);
         if (self.layer.features.length === 0) {
-            self._$deleteBtn.prop('disabled', true);
+            self._deleteBtn.disabled = true;
         }
     };
 
@@ -1144,7 +1173,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
     ctlProto.getLayer = function () {
         var self = this;
-        return self.layer || self._layerDeferred;
+        return self.layer;
     };
 
     ctlProto.getChangesLayerStyle = function (layer) {
