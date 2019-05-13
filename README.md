@@ -46,3 +46,8 @@ http://sitna.navarra.es/geoportal/recursos/api.aspx
 
 * Desarrollos de ANIMSA para el Ayuntamiento de Pamplona/ANIMSA's developments for the Town Council of Pamplona:
   * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Eventos en la vía pública. Policía Municipal de Pamplona")
+
+## Hoja de ruta/Roadmap
+Consultar [aquí](./roadmap.md).
+
+See [here](./roadmap.md).
