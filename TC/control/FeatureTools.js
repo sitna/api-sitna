@@ -72,8 +72,9 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                     if (self.highlightedFeature) {
                         self.highlightedFeature.showsPopup = true;
                     }
-                }
-                self.addUI(self.currentDisplay);
+
+                    self.addUI(self.currentDisplay);
+                }                
             })
             .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
                 self.currentDisplay = null;
