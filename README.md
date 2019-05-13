@@ -17,8 +17,8 @@ http://sitna.navarra.es/geoportal/recursos/api.aspx
   * [Mapa de Fosas](http://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
 
 * Desarrollos para ayuntamientos de Navarra/Developments for town councils in Navarre:
-  * [IRUSKAN. Visor Ciudad Pamplona](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")/[IRUSKAN. Pamplona City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
-  * [IRUSKAN. Visor Comercio Pamplona](https://sig.pamplona.es/comercio "Actividad Económica. Ayuntamiento de Pamplona")/[IRUSKAN. Pamplona Commerce Viewer](https://sig.pamplona.es/comercio/?lang=en "Economic Activity - Pamplona Town Council")
+  * IRUSKAN. [Visor Ciudad Pamplona](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")/[Pamplona City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
+  * IRUSKAN. [Visor Comercio Pamplona](https://sig.pamplona.es/comercio "Actividad Económica. Ayuntamiento de Pamplona")/[Pamplona Commerce Viewer](https://sig.pamplona.es/comercio/?lang=en "Economic Activity - Pamplona Town Council")
   * Geo Andosilla ([es](https://idena.navarra.es/municipios/andosilla/?lang=es "Infraestructura de Datos Espaciales de Andosilla")/[en](https://idena.navarra.es/municipios/andosilla/?lang=en "Spatial Data Infrastructure of Andosilla"))
   * Geo Huarte / Uharte ([es](https://idena.navarra.es/municipios/huarte/?lang=es "Infraestructura de Datos Espaciales de Huarte / Uharte")/[en](https://idena.navarra.es/municipios/huarte/?lang=en "Spatial Data Infrastructure of Huarte / Uharte"))
   * Geo Leitza([es](https://idena.navarra.es/municipios/leitza/?lang=es "Infraestructura de Datos Espaciales de Leitza")/[en](https://idena.navarra.es/municipios/leitza/?lang=en "Spatial Data Infrastructure of Leitza"))
