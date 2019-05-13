@@ -11,8 +11,8 @@ http://sitna.navarra.es/geoportal/recursos/api.aspx
 
 ## Sitios web desarrollados con la API SITNA/Websites developed with API SITNA
 * Desarrollos para el Gobierno de Navarra/Developments for the Government of Navarre:
-  * [IDENA](https://idena.navarra.es "Infraestructura de Datos Espaciales de Navarra")
-  * [Incidencias en Carreteras](https://incidenciasCarreteras.navarra.es "Estado de las carreteras. Gobierno de Navarra")
+  * [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra")
+  * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Estado de las carreteras. Gobierno de Navarra")
   * [Cartoteca y Fototeca](https://cartotecaYfototeca.navarra.es "Cartoteca y Fototeca. Gobierno de Navarra")
   * [Mapa de Fosas](http://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
 
