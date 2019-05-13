@@ -11,19 +11,19 @@ http://sitna.navarra.es/geoportal/recursos/api.aspx
 
 ## Sitios web desarrollados con la API SITNA/Websites developed with API SITNA
 * Desarrollos para el Gobierno de Navarra/Developments for the Government of Navarre:
-  * [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra")
+  * [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra")/[IDENA (en)](https://idena.navarra.es/navegar/?lang=en "Spatial Data Infrastructure of Navarre")
   * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Estado de las carreteras. Gobierno de Navarra")
   * [Cartoteca y Fototeca](https://cartotecaYfototeca.navarra.es "Cartoteca y Fototeca. Gobierno de Navarra")
   * [Mapa de Fosas](http://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
 
 * Desarrollos para ayuntamientos de Navarra/Developments for town councils in Navarre:
-  * [IRUSKAN. Visor Ciudad Pamplona](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")
-  * [IRUSKAN. Visor Comercio Pamplona](https://sig.pamplona.es/comercio "Actividad Económica. Ayuntamiento de Pamplona")
-  * [Geo Andosilla](https://idena.navarra.es/municipios/andosilla "Infraestructura de Datos Espaciales de Andosilla")
-  * [Geo Huarte / Uharte](https://idena.navarra.es/municipios/huarte "Infraestructura de Datos Espaciales de Huarte / Uharte")
-  * [Geo Leitza](https://idena.navarra.es/municipios/leitza "Infraestructura de Datos Espaciales de Leitza")
-  * [Geo Lesaka](https://idena.navarra.es/municipios/lesaka "Infraestructura de Datos Espaciales de Lesaka")
-  * [Geo Noáin (Valle de Elorz) / Noain (Elortzibar)](https://idena.navarra.es/municipios/noain "Infraestructura de Datos Espaciales de Noáin (Valle de Elorz) / Noain (Elortzibar)")
+  * [IRUSKAN. Visor Ciudad Pamplona](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")/[IRUSKAN. Pamplona City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
+  * [IRUSKAN. Visor Comercio Pamplona](https://sig.pamplona.es/comercio "Actividad Económica. Ayuntamiento de Pamplona")/[IRUSKAN. Pamplona Commerce Viewer](https://sig.pamplona.es/comercio/?lang=en "Economic Activity - Pamplona Town Council")
+  * [Geo Andosilla](https://idena.navarra.es/municipios/andosilla "Infraestructura de Datos Espaciales de Andosilla")/[Geo Andosilla (en)](https://idena.navarra.es/municipios/andosilla/?lang=en "Spatial Data Infrastructure of Andosilla")
+  * [Geo Huarte / Uharte](https://idena.navarra.es/municipios/huarte "Infraestructura de Datos Espaciales de Huarte / Uharte")/[Geo Huarte / Uharte (en)](https://idena.navarra.es/municipios/huarte/?lang=en "Spatial Data Infrastructure of Huarte / Uharte")
+  * [Geo Leitza](https://idena.navarra.es/municipios/leitza "Infraestructura de Datos Espaciales de Leitza")/[Geo Leitza (en)](https://idena.navarra.es/municipios/leitza/?lang=en "Spatial Data Infrastructure of Leitza")
+  * [Geo Lesaka](https://idena.navarra.es/municipios/lesaka "Infraestructura de Datos Espaciales de Lesaka")/[Geo Lesaka (en)](https://idena.navarra.es/municipios/lesaka/?lang=en "Spatial Data Infrastructure of Lesaka")
+  * [Geo Noáin (Valle de Elorz) / Noain (Elortzibar)](https://idena.navarra.es/municipios/noain "Infraestructura de Datos Espaciales de Noáin (Valle de Elorz) / Noain (Elortzibar)")/[Geo Noáin (Valle de Elorz) / Noain (Elortzibar) (en)](https://idena.navarra.es/municipios/noain/?lang=en "Spatial Data Infrastructure of Noáin (Valle de Elorz) / Noain (Elortzibar)")
 
 * Usos en Gobierno de Navarra del visor de KMLs/Government of Navarre's KML viewer applications:
   * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/ "Cámaras de tráfico. Gobierno de Navarra")
