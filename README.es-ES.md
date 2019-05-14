@@ -10,7 +10,7 @@ http://sitna.navarra.es/api/doc/
 http://sitna.navarra.es/geoportal/recursos/api.aspx
 
 ## Sitios web desarrollados con la API SITNA
-Puede acceder a una lista de sitios web que contienen visores desarrollados con la API SITNA en [este documento](./websites.md).
+Puede acceder a una lista de sitios web que contienen visores desarrollados con la API SITNA en [este documento](./websites.es-ES.md).
 
 ## Hoja de ruta/Roadmap
-Consultar [aquí](./roadmap.md).
+Consultar [aquí](./roadmap.es-ES.md).
