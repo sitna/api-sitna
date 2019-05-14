@@ -34,5 +34,5 @@
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Carpeta personal de Salud. Gobierno de Navarra")
     * [Informes de Evaluación de Edificios. Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
 
-* Desarrollos de ANIMSA para el Ayuntamiento de Pamplona:
+* Desarrollos de [ANIMSA](https://www.animsa.es/) para el Ayuntamiento de Pamplona:
   * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Eventos en la vía pública. Policía Municipal de Pamplona")
