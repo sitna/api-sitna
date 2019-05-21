@@ -1098,9 +1098,13 @@ TC.inherit = function (childCtor, parentCtor) {
                                             self.wrap.setMap();
                                             const ctlPromises = [];
                                             for (var name in self.options.controls) {
-                                                const ctlOptions = self.options.controls[name];
+                                                var ctlOptions = self.options.controls[name];
                                                 if (ctlOptions) {
-                                                    ctlPromises.push(self.addControl(name, typeof ctlOptions === 'boolean' ? {} : ctlOptions));
+                                                    ctlOptions = typeof ctlOptions === 'boolean' ? {} : $.extend(true, {}, ctlOptions);
+                                                    if (typeof ctlOptions.div === 'string') {
+                                                        ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
+                                                    }
+                                                    ctlPromises.push(self.addControl(name, ctlOptions));
                                                 }
                                             }
 

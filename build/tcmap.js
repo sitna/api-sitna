@@ -1,8 +1,314 @@
 ﻿/**
  * LoadJS descargado de https://github.com/muicss/loadjs
- * @version 3.5.2
+ * @version 3.6.1
  */
-loadjs = function () { var l = function () { }, c = {}, f = {}, u = {}; function o(e, n) { if (e) { var t = u[e]; if (f[e] = n, t) for (; t.length;)t[0](e, n), t.splice(0, 1) } } function s(e, n) { e.call && (e = { success: e }), n.length ? (e.error || l)(n) : (e.success || l)(e) } function h(t, r, i, c) { var o, s, e = document, n = i.async, f = (i.numRetries || 0) + 1, u = i.before || l, a = t.replace(/^(css|img)!/, ""); c = c || 0, /(^css!|\.css$)/.test(t) ? (o = !0, (s = e.createElement("link")).rel = "stylesheet", s.href = a) : /(^img!|\.(png|gif|jpg|svg)$)/.test(t) ? (s = e.createElement("img")).src = a : ((s = e.createElement("script")).src = t, s.async = void 0 === n || n), !(s.onload = s.onerror = s.onbeforeload = function (e) { var n = e.type[0]; if (o && "hideFocus" in s) try { s.sheet.cssText.length || (n = "e") } catch (e) { 18 != e.code && (n = "e") } if ("e" == n && (c += 1) < f) return h(t, r, i, c); r(t, n, e.defaultPrevented) }) !== u(t, s) && e.head.appendChild(s) } function t(e, n, t) { var r, i; if (n && n.trim && (r = n), i = (r ? t : n) || {}, r) { if (r in c) throw "LoadJS"; c[r] = !0 } !function (e, r, n) { var t, i, c = (e = e.push ? e : [e]).length, o = c, s = []; for (t = function (e, n, t) { if ("e" == n && s.push(e), "b" == n) { if (!t) return; s.push(e) } --c || r(s) }, i = 0; i < o; i++)h(e[i], t, n) }(e, function (e) { s(i, e), o(r, e) }, i) } return t.ready = function (e, n) { return function (e, t) { e = e.push ? e : [e]; var n, r, i, c = [], o = e.length, s = o; for (n = function (e, n) { n.length && c.push(e), --s || t(c) }; o--;)r = e[o], (i = f[r]) ? n(r, i) : (u[r] = u[r] || []).push(n) }(e, function (e) { s(n, e) }), t }, t.done = function (e) { o(e, []) }, t.reset = function () { c = {}, f = {}, u = {} }, t.isDefined = function (e) { return e in c }, t }();
+loadjs = (function () {
+    /**
+     * Global dependencies.
+     * @global {Object} document - DOM
+     */
+
+    var devnull = function () { },
+        bundleIdCache = {},
+        bundleResultCache = {},
+        bundleCallbackQueue = {};
+
+
+    /**
+     * Subscribe to bundle load event.
+     * @param {string[]} bundleIds - Bundle ids
+     * @param {Function} callbackFn - The callback function
+     */
+    function subscribe(bundleIds, callbackFn) {
+        // listify
+        bundleIds = bundleIds.push ? bundleIds : [bundleIds];
+
+        var depsNotFound = [],
+            i = bundleIds.length,
+            numWaiting = i,
+            fn,
+            bundleId,
+            r,
+            q;
+
+        // define callback function
+        fn = function (bundleId, pathsNotFound) {
+            if (pathsNotFound.length) depsNotFound.push(bundleId);
+
+            numWaiting--;
+            if (!numWaiting) callbackFn(depsNotFound);
+        };
+
+        // register callback
+        while (i--) {
+            bundleId = bundleIds[i];
+
+            // execute callback if in result cache
+            r = bundleResultCache[bundleId];
+            if (r) {
+                fn(bundleId, r);
+                continue;
+            }
+
+            // add to callback queue
+            q = bundleCallbackQueue[bundleId] = bundleCallbackQueue[bundleId] || [];
+            q.push(fn);
+        }
+    }
+
+
+    /**
+     * Publish bundle load event.
+     * @param {string} bundleId - Bundle id
+     * @param {string[]} pathsNotFound - List of files not found
+     */
+    function publish(bundleId, pathsNotFound) {
+        // exit if id isn't defined
+        if (!bundleId) return;
+
+        var q = bundleCallbackQueue[bundleId];
+
+        // cache result
+        bundleResultCache[bundleId] = pathsNotFound;
+
+        // exit if queue is empty
+        if (!q) return;
+
+        // empty callback queue
+        while (q.length) {
+            q[0](bundleId, pathsNotFound);
+            q.splice(0, 1);
+        }
+    }
+
+
+    /**
+     * Execute callbacks.
+     * @param {Object or Function} args - The callback args
+     * @param {string[]} depsNotFound - List of dependencies not found
+     */
+    function executeCallbacks(args, depsNotFound) {
+        // accept function as argument
+        if (args.call) args = { success: args };
+
+        // success and error callbacks
+        if (depsNotFound.length) (args.error || devnull)(depsNotFound);
+        else (args.success || devnull)(args);
+    }
+
+
+    /**
+     * Load individual file.
+     * @param {string} path - The file path
+     * @param {Function} callbackFn - The callback function
+     */
+    function loadFile(path, callbackFn, args, numTries) {
+        var doc = document,
+            async = args.async,
+            maxTries = (args.numRetries || 0) + 1,
+            beforeCallbackFn = args.before || devnull,
+            pathStripped = path.replace(/^(css|img)!/, ''),
+            isLegacyIECss,
+            e;
+
+        numTries = numTries || 0;
+
+        if (/(^css!|\.css$)/.test(path)) {
+            // css
+            e = doc.createElement('link');
+            e.rel = 'stylesheet';
+            e.href = pathStripped;
+
+            // tag IE9+
+            isLegacyIECss = 'hideFocus' in e;
+
+            // use preload in IE Edge (to detect load errors)
+            if (isLegacyIECss && e.relList) {
+                isLegacyIECss = 0;
+                e.rel = 'preload';
+                e.as = 'style';
+            }
+        } else if (/(^img!|\.(png|gif|jpg|svg)$)/.test(path)) {
+            // image
+            e = doc.createElement('img');
+            e.src = pathStripped;
+        } else {
+            // javascript
+            e = doc.createElement('script');
+            e.src = path;
+            e.async = async === undefined ? true : async;
+        }
+
+        e.onload = e.onerror = e.onbeforeload = function (ev) {
+            var result = ev.type[0];
+
+            // treat empty stylesheets as failures to get around lack of onerror
+            // support in IE9-11
+            if (isLegacyIECss) {
+                try {
+                    if (!e.sheet.cssText.length) result = 'e';
+                } catch (x) {
+                    // sheets objects created from load errors don't allow access to
+                    // `cssText` (unless error is Code:18 SecurityError)
+                    if (x.code != 18) result = 'e';
+                }
+            }
+
+            // handle retries in case of load failure
+            if (result == 'e') {
+                // increment counter
+                numTries += 1;
+
+                // exit function and try again
+                if (numTries < maxTries) {
+                    return loadFile(path, callbackFn, args, numTries);
+                }
+            } else if (e.rel == 'preload' && e.as == 'style') {
+                // activate preloaded stylesheets
+                return e.rel = 'stylesheet'; // jshint ignore:line
+            }
+
+            // execute callback
+            callbackFn(path, result, ev.defaultPrevented);
+        };
+
+        // add to document (unless callback returns `false`)
+        if (beforeCallbackFn(path, e) !== false) doc.head.appendChild(e);
+    }
+
+
+    /**
+     * Load multiple files.
+     * @param {string[]} paths - The file paths
+     * @param {Function} callbackFn - The callback function
+     */
+    function loadFiles(paths, callbackFn, args) {
+        // listify paths
+        paths = paths.push ? paths : [paths];
+
+        var numWaiting = paths.length,
+            x = numWaiting,
+            pathsNotFound = [],
+            fn,
+            i;
+
+        // define callback function
+        fn = function (path, result, defaultPrevented) {
+            // handle error
+            if (result == 'e') pathsNotFound.push(path);
+
+            // handle beforeload event. If defaultPrevented then that means the load
+            // will be blocked (ex. Ghostery/ABP on Safari)
+            if (result == 'b') {
+                if (defaultPrevented) pathsNotFound.push(path);
+                else return;
+            }
+
+            numWaiting--;
+            if (!numWaiting) callbackFn(pathsNotFound);
+        };
+
+        // load scripts
+        for (i = 0; i < x; i++) loadFile(paths[i], fn, args);
+    }
+
+
+    /**
+     * Initiate script load and register bundle.
+     * @param {(string|string[])} paths - The file paths
+     * @param {(string|Function|Object)} [arg1] - The (1) bundleId or (2) success
+     *   callback or (3) object literal with success/error arguments, numRetries,
+     *   etc.
+     * @param {(Function|Object)} [arg2] - The (1) success callback or (2) object
+     *   literal with success/error arguments, numRetries, etc.
+     */
+    function loadjs(paths, arg1, arg2) {
+        var bundleId,
+            args;
+
+        // bundleId (if string)
+        if (arg1 && arg1.trim) bundleId = arg1;
+
+        // args (default is {})
+        args = (bundleId ? arg2 : arg1) || {};
+
+        // throw error if bundle is already defined
+        if (bundleId) {
+            if (bundleId in bundleIdCache) {
+                throw "LoadJS";
+            } else {
+                bundleIdCache[bundleId] = true;
+            }
+        }
+
+        function loadFn(resolve, reject) {
+            loadFiles(paths, function (pathsNotFound) {
+                // execute callbacks
+                executeCallbacks(args, pathsNotFound);
+
+                // resolve Promise
+                if (resolve) {
+                    executeCallbacks({ success: resolve, error: reject }, pathsNotFound);
+                }
+
+                // publish bundle load event
+                publish(bundleId, pathsNotFound);
+            }, args);
+        }
+
+        if (args.returnPromise) return new Promise(loadFn);
+        else loadFn();
+    }
+
+
+    /**
+     * Execute callbacks when dependencies have been satisfied.
+     * @param {(string|string[])} deps - List of bundle ids
+     * @param {Object} args - success/error arguments
+     */
+    loadjs.ready = function ready(deps, args) {
+        // subscribe to bundle load event
+        subscribe(deps, function (depsNotFound) {
+            // execute callbacks
+            executeCallbacks(args, depsNotFound);
+        });
+
+        return loadjs;
+    };
+
+
+    /**
+     * Manually satisfy bundle dependencies.
+     * @param {string} bundleId - The bundle id
+     */
+    loadjs.done = function done(bundleId) {
+        publish(bundleId, []);
+    };
+
+
+    /**
+     * Reset loadjs dependencies statuses
+     */
+    loadjs.reset = function reset() {
+        bundleIdCache = {};
+        bundleResultCache = {};
+        bundleCallbackQueue = {};
+    };
+
+
+    /**
+     * Determine if bundle has already been defined
+     * @param String} bundleId - The bundle id
+     */
+    loadjs.isDefined = function isDefined(bundleId) {
+        return bundleId in bundleIdCache;
+    };
+
+
+    // export
+    return loadjs;
+
+})();
 
 var TC = TC || {};
 /*
@@ -1841,11 +2147,7 @@ if (!TC.Consts) {
             return result;
         };
 
-    })();
-
-    (function ($, document) {
-
-        var pluses = /\+/g;
+        const pluses = /\+/g;
         function raw(s) {
             return s;
         }
@@ -1853,11 +2155,11 @@ if (!TC.Consts) {
             return decodeURIComponent(s.replace(pluses, ' '));
         }
 
-        $.cookie = function (key, value, options) {
+        TC.cookie = function (key, value, options) {
 
             // key and at least value given, set cookie...
             if (arguments.length > 1 && (!/Object/.test(Object.prototype.toString.call(value)) || value === null)) {
-                options = $.extend({}, $.cookie.defaults, options);
+                options = $.extend({}, options);
 
                 if (value === null) {
                     options.expires = -1;
@@ -1880,7 +2182,7 @@ if (!TC.Consts) {
             }
 
             // key and possibly options given, get cookie...
-            options = value || $.cookie.defaults || {};
+            options = value || {};
             var decode = options.raw ? raw : decoded;
             var cookies = document.cookie.split('; ');
             for (var i = 0, parts; (parts = cookies[i] && cookies[i].split('=')); i++) {
@@ -1891,9 +2193,7 @@ if (!TC.Consts) {
             return null;
         };
 
-        $.cookie.defaults = {};
-
-    })(jQuery, document);
+    })();
 }
 
 document.addEventListener('DOMContentLoaded', function () {
