@@ -35,20 +35,25 @@
     top: -10em;
 }
 
-.tc-ctl-nav .tc-ctl-nav-btn-zoomout {
+.tc-ctl-nav .tc-ctl-nav-btn-zoomout.ol-zoom-out {
     top: 0em;
 }
 
-        .tc-ctl-nav .tc-ctl-nav-btn:after {
-            position: absolute;
-            width: 1em;
-            height: 1em;
-            margin: auto;
-            color: #fff;
-            text-align: center;
-            vertical-align: middle;
-            line-height: 1em;
-        }
+.tc-ctl-nav-home .ol-zoom-extent {
+    position: static;
+    top: auto;
+}
+
+.tc-ctl-nav .tc-ctl-nav-btn:after {
+    position: absolute;
+    width: 1em;
+    height: 1em;
+    margin: auto;
+    color: #fff;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 1em;
+}
 
     .tc-ctl-nav .tc-ctl-nav-btn-zoomin {
         border-bottom-left-radius: 0;
@@ -73,6 +78,10 @@
         top: 0;
         left: 0;
     }
+
+.tc-ctl-nav .tc-ctl-nav-slider, .tc-ctl-nav .tc-ctl-nav-bar {
+    display: block;
+}
 
     .tc-ctl-nav .tc-ctl-nav-slider, .tc-ctl-nav-slider.ol-zoomslider-thumb {
         position: absolute;
