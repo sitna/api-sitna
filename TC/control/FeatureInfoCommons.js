@@ -177,7 +177,11 @@ TC.control.FeatureInfoCommons.displayMode = {
                 }
 
                 // GLS: si la feature es resultado de GFI decoramos
-                if (e.control.currentFeature && e.control.currentFeature.layer && [self.filterLayer.id, self.resultsLayer.id].indexOf(e.control.currentFeature.layer.id) > -1) {
+                if (e.control.currentFeature &&
+                    e.control.currentFeature.layer &&
+                    self.filterLayer &&
+                    self.resultsLayer &&
+                    [self.filterLayer.id, self.resultsLayer.id].indexOf(e.control.currentFeature.layer.id) > -1) {
                     self._decorateDisplay(control);
                 }
             })
