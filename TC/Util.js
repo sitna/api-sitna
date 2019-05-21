@@ -86,6 +86,10 @@
             return true;
         },
 
+        isFunction: function (obj) {
+            return typeof obj === 'function';
+        },
+
         getMapLocale: function (map) {
             return map.options && map.options.locale && map.options.locale.replace('_', '-') || "es-ES";
         },
@@ -595,10 +599,10 @@
 
         storage: {
             getCookie: function (key) {
-                return $.cookie(key);
+                return TC.cookie(key);
             },
             setCookie: function (key, value, options) {
-                return $.cookie(key, value, options);
+                return TC.cookie(key, value, options);
             },
             getLocalValue: function (key) {
                 var result = null;
