@@ -487,21 +487,25 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                                 const ul = self.div.querySelector('ul');
                                 $(li).data(_dataKeys.layer, layer);
 
-                                const insertIdx = self.map.workLayers
+                                const lis = self.getLayerUIElements();
+                                const layerList = self.map.workLayers
                                     .filter(function (l) {
                                         return !l.stealth;
-                                    })
-                                    .reverse()
-                                    .indexOf(layer);
-                                const lis = self.getLayerUIElements();
-                                if (lis.length < insertIdx || lis.length === 0) {
+                                    });
+                                const layerIdx = layerList.indexOf(layer);
+                                var inserted = false;
+                                for (var i = 0, ii = lis.length; i < ii; i++) {
+                                    const referenceLi = lis[i];
+                                    const referenceLayer = $(referenceLi).data(_dataKeys.layer);
+                                    const referenceLayerIdx = layerList.indexOf(referenceLayer);
+                                    if (referenceLayerIdx < layerIdx) {
+                                        referenceLi.insertAdjacentElement('beforebegin', li);
+                                        inserted = true;
+                                        break;
+                                    }
+                                }
+                                if (!inserted) {
                                     ul.appendChild(li);
-                                }
-                                else if (lis.length === insertIdx) {
-                                    ul.insertBefore(li, lis[lis.length - 1]);
-                                }
-                                else {
-                                    ul.insertBefore(li, lis[Math.max(insertIdx, 0)]);
                                 }
                                 if (domReadyPromise) domReadyPromise(li);
                                 self.updateScale();
