@@ -628,7 +628,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 }
 
 div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-wfsquery-results .tc-ctl-p-results-table {
-    /*max-width: 60vw;*/
+    max-width: 60vw;
     min-width:100%;
 }
 
@@ -692,7 +692,6 @@ div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
     }
 
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-wfsquery-results .tc-ctl-p-results-table {
-        max-width: 60vw;
         min-width: initial;
     }
 
