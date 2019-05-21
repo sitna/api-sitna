@@ -19226,7 +19226,7 @@ if (!TC.Consts) {
                     numRetries: 1
                 });
             } else {
-                loadjs.ready(name);
+                loadjs.ready(name, {});
             }
         };
 
