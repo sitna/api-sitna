@@ -58496,10 +58496,8 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
 /**
 ### 1.6.0
 
-- Añadida capacidad de compartir entidades vectoriales.
+- Añadida capacidad de compartir las entidades vectoriales existentes en el mapa.
 - Cambiada interfaz de usuario del control de información del mapa.
-- Añadido control de dibujo y medida.
-- Añadido control con herramientas para aplicar a una entidad geográfica: zoom, compartir, descargar, borrar.
 - Corrección de errores.
 
 ### 1.5.1
