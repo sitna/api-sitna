@@ -914,16 +914,10 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                         }
                     });
                 }
-
                 //se deshabilita el swipe para que se pueda hacer scroll horizontal del panel de resultados
                 if (Modernizr.touch) {
                     TC.Util.swipe(ctlResultsPanel.div, 'disable');
-                }
-                //politica para replegar el panel de herramientas:
-                //si el panel de herramientas se superpone al panel de resultados lo repliego
-                var toolPanel = document.getElementById("tools-panel") || document.body.querySelector(".tools-panel");
-                if (toolPanel && ctlResultsPanel.div.getElementsByClassName("prpanel-group")[0].colliding(toolPanel))
-                        toolPanel.classList.add("right-collapsed");
+                }                
             }
         });
 
