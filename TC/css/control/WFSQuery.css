@@ -69,7 +69,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     width: 100%;
 }
 
-.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond {    
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond {
     float: left;
     padding: 6px 6px;
     text-align: center;
@@ -82,8 +82,9 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 1px;    
-    color: white
+    margin-left: 1px;
+    color: white;
+    box-sizing: border-box;
 }
 
     .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond:first-of-type {
@@ -623,11 +624,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     }
 }
 /*Estilos del results panel*/
-.tc-ctl-wfsquery-results .tc-ctl-p-results-table {
-    max-width: 60%;
-}
-
-div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-wfsquery-results .tc-ctl-p-results-table {
+div.tc-ctl.tc-ctl-wfsquery-results .tc-ctl-p-results-table {
     max-width: 60vw;
     min-width:100%;
 }

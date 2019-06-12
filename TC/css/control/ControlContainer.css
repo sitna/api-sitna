@@ -66,9 +66,11 @@ div.tc-map.tc-ctl-sv-active.tc-collapsed .tc-ctl-cctr {
 }
 
 div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results {
+    min-width: 0;
     min-width: -moz-fit-content;
     min-width: -webkit-fit-content;
     min-width: fit-content;
+    max-width: none;
     max-width: -moz-fit-content;
     max-width: -webkit-fit-content;
     max-width: fit-content;
