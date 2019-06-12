@@ -1144,7 +1144,11 @@ TC.inherit = function (childCtor, parentCtor) {
                                                     });
                                                 });
                                             workLayersNotInState.forEach(function (workLayer) {
-                                                self.addLayer(workLayer).then(setVisibility);
+                                                self.addLayer(workLayer)
+                                                    .then(setVisibility)
+                                                    .catch(function(e) {
+														TC.error('Could not add layer from ' + workLayer.url);
+													});
                                             });
 
                                             if (self.state && self.state.layers) {
@@ -1899,7 +1903,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                         });
                                     } else {
                                         crsLayerError(self, lyr);
-                                        reject(layer);
+                                        reject(Error('Layer ' + lyr.id + ' incompatible with CRS'));
                                     }
                                 }
                                 else {
@@ -1929,11 +1933,11 @@ TC.inherit = function (childCtor, parentCtor) {
                             }
                             else {
                                 crsLayerError(self, lyr);
-                                reject(layer);
+                                reject(Error('Layer ' + lyr.id + ' incompatible with CRS'));
                             }
                         }
                     }, function (error) {
-                        reject(layer);
+                        reject(error);
                     });
                 }
             );
@@ -2717,6 +2721,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 layer.addPoint(coord, options);
             }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
+            }
         }
         else {
             _getVectors(self).then(function (vectors) {
@@ -2740,6 +2747,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 self._markerPromises.push(layer.addMarker(coord, options));
 
+            }
+            else {
+                self._markerPromises.push(Promise.reject(new Error('Layer "' + options.layer + '" not found')));
             }
         }
         else {
@@ -2769,6 +2779,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 options.layer.addPolyline(coords, options);
             }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
+            }
         }
         else {
             _getVectors(self).then(function (vectors) {
@@ -2792,6 +2805,9 @@ TC.inherit = function (childCtor, parentCtor) {
             var layer = self.getLayer(options.layer);
             if (layer) {
                 options.layer.addPolygon(coords, options);
+            }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
             }
         }
         else {
