@@ -2172,21 +2172,20 @@ TC.inherit(TC.control.Search, TC.Control);
     };
 
     ctlProto.getLayer = function () {
-        var self = this;
+        const self = this;
         return self.layerPromise;
     };
 
     ctlProto.getFeatures = function () {
-        var self = this;
-        var features = [];
-
+        const self = this;
         return self.layer.features;
     };
 
     ctlProto.cleanMap = function () {
-        var self = this;
+        const self = this;
 
-        self.getLayer().then(function (l) {
+        if (self.layer) {
+            const l = self.layer;
             var features = l.features.slice();
             l.clearFeatures();
 
@@ -2196,7 +2195,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 if (l.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
                     delete l[self.WFS_TYPE_ATTRS[i]];
             }
-        });
+        }
     };
 
     ctlProto.getMunicipalities = function () {
