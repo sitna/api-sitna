@@ -148,7 +148,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                         });
                     },
                     function (error) {
-                        if (error === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                        if (TC.tool.Elevation && error === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
                             TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
                             return;
                         }
