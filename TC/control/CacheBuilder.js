@@ -995,18 +995,8 @@ if (!TC.control.SWCacheClient) {
                             }
                         }
                     });
-                    var blListTextKey;
-                    const lis = self._dialogDiv.querySelectorAll(self._selectors.BLLISTITEM);
-                    for (var i = 0, len = lis.length; i < len; i++) {
-                        if (lis[i].matches('.' + TC.Consts.classes.HIDDEN)) {
-                            blListTextKey = 'selectAtLeastOne';
-                            break;
-                        }
-                    }
-                    if (!blListTextKey) {
-                        blListTextKey = 'cb.noMapsAtSelectedExtent';
-                    }
-                    self._dialogDiv.querySelector(self._selectors.BLLISTTEXT).innerHTML = self.getLocaleString(blListTextKey);
+                    const visibleLi = self._dialogDiv.querySelector(self._selectors.BLLISTITEM + ':not(.' + TC.Consts.classes.HIDDEN + ')');
+                    self._dialogDiv.querySelector(self._selectors.BLLISTTEXT).innerHTML = self.getLocaleString(visibleLi ? 'selectAtLeastOne' : 'cb.noMapsAtSelectedExtent');
 
                     updateThumbnails(self);
                     showEstimatedMapSize(self);
