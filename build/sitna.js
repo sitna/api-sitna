@@ -111,6 +111,10 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
  */
 
 /**
+### 1.6.1
+
+- Corrección de errores.
+
 ### 1.6.0
 
 - Añadida capacidad de compartir las entidades vectoriales existentes en el mapa.

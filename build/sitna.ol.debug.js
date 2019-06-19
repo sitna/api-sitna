@@ -13729,7 +13729,11 @@ TC.inherit = function (childCtor, parentCtor) {
                                                     });
                                                 });
                                             workLayersNotInState.forEach(function (workLayer) {
-                                                self.addLayer(workLayer).then(setVisibility);
+                                                self.addLayer(workLayer)
+                                                    .then(setVisibility)
+                                                    .catch(function(e) {
+														TC.error('Could not add layer from ' + workLayer.url);
+													});
                                             });
 
                                             if (self.state && self.state.layers) {
@@ -14484,7 +14488,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                         });
                                     } else {
                                         crsLayerError(self, lyr);
-                                        reject(layer);
+                                        reject(Error('Layer ' + lyr.id + ' incompatible with CRS'));
                                     }
                                 }
                                 else {
@@ -14514,11 +14518,11 @@ TC.inherit = function (childCtor, parentCtor) {
                             }
                             else {
                                 crsLayerError(self, lyr);
-                                reject(layer);
+                                reject(Error('Layer ' + lyr.id + ' incompatible with CRS'));
                             }
                         }
                     }, function (error) {
-                        reject(layer);
+                        reject(error);
                     });
                 }
             );
@@ -15302,6 +15306,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 layer.addPoint(coord, options);
             }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
+            }
         }
         else {
             _getVectors(self).then(function (vectors) {
@@ -15325,6 +15332,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 self._markerPromises.push(layer.addMarker(coord, options));
 
+            }
+            else {
+                self._markerPromises.push(Promise.reject(new Error('Layer "' + options.layer + '" not found')));
             }
         }
         else {
@@ -15354,6 +15364,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 options.layer.addPolyline(coords, options);
             }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
+            }
         }
         else {
             _getVectors(self).then(function (vectors) {
@@ -15377,6 +15390,9 @@ TC.inherit = function (childCtor, parentCtor) {
             var layer = self.getLayer(options.layer);
             if (layer) {
                 options.layer.addPolygon(coords, options);
+            }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
             }
         }
         else {
@@ -17705,7 +17721,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.6.0';
+TC.version = '1.6.1';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -41397,7 +41413,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                         });
                     },
                     function (error) {
-                        if (error === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                        if (TC.tool.Elevation && error === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
                             TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
                             return;
                         }
@@ -44770,7 +44786,7 @@ if (!TC.control.ProjectionSelector) {
         ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/LayerCatalogDialog.html";
     }
     else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "availableLayers" }).x(ctx.get(["enableSearch"], false), ctx, { "block": body_1 }, {}).w("</h2><div class=\"tc-ctl-lcat-search tc-hidden tc-collapsed\"><div class=\"tc-group\"><input type=\"search\" class=\"tc-ctl-lcat-input tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "textToSearchInLayers" }).w("\"></input></div><ul></ul></div><div class=\"tc-ctl-lcat-tree\">").x(ctx.get(["layerTrees"], false), ctx, { "else": body_3, "block": body_4 }, {}).w("</div><div class=\"tc-ctl-lcat-info tc-hidden\">").p("tc-ctl-lcat-info", ctx, ctx.rebase(ctx.getPath(true, [])), {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.x(ctx.get(["layerTrees"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<button class=\"tc-ctl-lcat-btn-search\" title=\"").h("i18n", ctx, {}, { "$key": "searchLayersbytext" }).w("\"></button>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<div class=\"tc-ctl tc-ctl-lcat-loading\"><span>").h("i18n", ctx, {}, { "$key": "loadingLayerTree" }).w("...</span></div>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<ul class=\"tc-ctl-lcat-branch\">").s(ctx.get(["layerTrees"], false), ctx, { "block": body_5 }, {}).w("</ul>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.p("tc-ctl-lcat-branch", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_5.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "availableLayers" }).x(ctx.get(["enableSearch"], false), ctx, { "block": body_1 }, {}).w("</h2><div class=\"tc-ctl-lcat-search tc-hidden tc-collapsed\"><div class=\"tc-group\"><input type=\"search\" class=\"tc-ctl-lcat-input tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "textToSearchInLayers" }).w("\"></div><ul></ul></div><div class=\"tc-ctl-lcat-tree\">").x(ctx.get(["layerTrees"], false), ctx, { "else": body_3, "block": body_4 }, {}).w("</div><div class=\"tc-ctl-lcat-info tc-hidden\">").p("tc-ctl-lcat-info", ctx, ctx.rebase(ctx.getPath(true, [])), {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.x(ctx.get(["layerTrees"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<button class=\"tc-ctl-lcat-btn-search\" title=\"").h("i18n", ctx, {}, { "$key": "searchLayersByText" }).w("\"></button>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<div class=\"tc-ctl tc-ctl-lcat-loading\"><span>").h("i18n", ctx, {}, { "$key": "loadingLayerTree" }).w("...</span></div>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<ul class=\"tc-ctl-lcat-branch\">").s(ctx.get(["layerTrees"], false), ctx, { "block": body_5 }, {}).w("</ul>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.p("tc-ctl-lcat-branch", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_5.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-branch'] = function () { dust.register(ctlProto.CLASS + '-branch', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><button class=\"tc-ctl-lcat-collapse-btn\"></button><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-lcat-branch tc-collapsed\">").s(ctx.get(["children"], false), ctx, { "block": body_3 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-ctl-lcat-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-collapsed\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.p("tc-ctl-lcat-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_3.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["isVisible"], false), ctx, { "block": body_1 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\">").x(ctx.get(["children"], false), ctx, { "block": body_4 }, {}).w("<span data-tooltip=\"").x(ctx.get(["name"], false), ctx, { "block": body_5 }, {}).w("\">").f(ctx.get(["title"], false), ctx, "h").w("</span>").x(ctx.get(["name"], false), ctx, { "block": body_6 }, {}).w("<ul class=\"tc-ctl-lcat-branch tc-collapsed\">").s(ctx.get(["children"], false), ctx, { "block": body_7 }, {}).w("</ul></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-ctl-lcat-leaf\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("class=\"tc-ctl-lcat-node tc-collapsed\""); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<button class=\"tc-ctl-lcat-collapse-btn\"></button>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "clickToAddToMap" }); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<button title=\"").h("i18n", ctx, {}, { "$key": "infoFromThisLayer" }).w("\" class=\"tc-ctl-lcat-btn-info\"></button>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.p("tc-ctl-lcat-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_7.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-info'] = function () { dust.register(ctlProto.CLASS + '-info', body_0); function body_0(chk, ctx) { return chk.w("<a class=\"tc-ctl-lcat-info-close\"></a><h2>").h("i18n", ctx, {}, { "$key": "layerInfo" }).w("</h2><h3 class=\"tc-ctl-lcat-title\">").f(ctx.get(["title"], false), ctx, "h").w("</h3>").x(ctx.get(["abstract"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-lcat-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div><pre>").f(ctx.get(["abstract"], false), ctx, "h", ["s"]).w("</pre></div></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<div class=\"tc-ctl-lcat-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_3 }, {}).w("</ul></div>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h", ["s"]).w("\" type=\"").f(ctx.get(["format"], false), ctx, "h").w("\" title=\"").f(ctx.get(["formatDescription"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h", ["s"]).w("</a></li>"); } body_3.__dustBody = !0; return body_0 };
@@ -51632,21 +51648,20 @@ TC.inherit(TC.control.Search, TC.Control);
     };
 
     ctlProto.getLayer = function () {
-        var self = this;
+        const self = this;
         return self.layerPromise;
     };
 
     ctlProto.getFeatures = function () {
-        var self = this;
-        var features = [];
-
+        const self = this;
         return self.layer.features;
     };
 
     ctlProto.cleanMap = function () {
-        var self = this;
+        const self = this;
 
-        self.getLayer().then(function (l) {
+        if (self.layer) {
+            const l = self.layer;
             var features = l.features.slice();
             l.clearFeatures();
 
@@ -51656,7 +51671,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 if (l.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
                     delete l[self.WFS_TYPE_ATTRS[i]];
             }
-        });
+        }
     };
 
     ctlProto.getMunicipalities = function () {
@@ -55154,16 +55169,10 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                         }
                     });
                 }
-
                 //se deshabilita el swipe para que se pueda hacer scroll horizontal del panel de resultados
                 if (Modernizr.touch) {
                     TC.Util.swipe(ctlResultsPanel.div, 'disable');
-                }
-                //politica para replegar el panel de herramientas:
-                //si el panel de herramientas se superpone al panel de resultados lo repliego
-                var toolPanel = document.getElementById("tools-panel") || document.body.querySelector(".tools-panel");
-                if (toolPanel && ctlResultsPanel.div.getElementsByClassName("prpanel-group")[0].colliding(toolPanel))
-                        toolPanel.classList.add("right-collapsed");
+                }                
             }
         });
 
@@ -58498,6 +58507,10 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
  */
 
 /**
+### 1.6.1
+
+- Corrección de errores.
+
 ### 1.6.0
 
 - Añadida capacidad de compartir las entidades vectoriales existentes en el mapa.
