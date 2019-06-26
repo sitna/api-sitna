@@ -5,6 +5,7 @@
   * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Estado de las carreteras. Gobierno de Navarra")
   * [Cartoteca y Fototeca](https://cartotecaYfototeca.navarra.es "Cartoteca y Fototeca. Gobierno de Navarra")
   * [Mapa de Fosas](http://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
+  * [Toponimia](https://administracionelectronica.navarra.es/toponimia/)
 
 * Desarrollos para ayuntamientos de Navarra:
   * IRUSKAN. [Visor Ciudad Pamplona](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")
