@@ -29,7 +29,7 @@ var SearchType = function (type, options, parent) {
 
     self._featureTypes = [];
 
-    $.extend(self, options);
+    TC.Util.extend(self, options);
 
     self.typeName = type;
 
@@ -189,7 +189,7 @@ var SearchType = function (type, options, parent) {
         var getUnique = function (inputArray) {
             var outputArray = [];
             for (var i = 0; i < inputArray.length; i++) {
-                if ((jQuery.inArray(inputArray[i], outputArray)) == -1) {
+                if (outputArray.indexOf(inputArray[i]) === -1) {
                     outputArray.push(inputArray[i]);
                 }
             }
@@ -611,7 +611,7 @@ var SearchType = function (type, options, parent) {
 
                 params.FILTER = filters.f;
 
-                return $.param(params);
+                return TC.Util.getParamString(params);
             },
             getGoToFilter: function (id) {
                 var props = [];
@@ -1323,10 +1323,11 @@ TC.control.Search = function () {
                     params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
 
                     TC.ajax({
-                        url: self.rootCfg[TC.Consts.searchType.MUNICIPALITY].url + '?' + $.param(params),
+                        url: self.rootCfg[TC.Consts.searchType.MUNICIPALITY].url + '?' + TC.Util.getParamString(params),
                         method: 'GET',
                         responseType: TC.Consts.mimeType.JSON
-                    }).then(function (data) {
+                    }).then(function (response) {
+                        const data = response.data;
                         if (data.totalFeatures > 0) {
 
                             self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel = data.features.map(function (feature) {
@@ -1390,10 +1391,11 @@ TC.control.Search = function () {
                     params.CQL_FILTER = params.CQL_FILTER.join(' OR ');
 
                     TC.ajax({
-                        url: self.rootCfg[TC.Consts.searchType.LOCALITY].url + '?' + $.param(params),
+                        url: self.rootCfg[TC.Consts.searchType.LOCALITY].url + '?' + TC.Util.getParamString(params),
                         method: 'GET',
                         responseType: TC.Consts.mimeType.JSON
-                    }).then(function (data) {
+                    }).then(function (response) {
+                        const data = response.data;
                         if (data.totalFeatures > 0) {
 
                             self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel = data.features.map(function (feature) {
@@ -1428,7 +1430,7 @@ TC.control.Search = function () {
     if (self.options.allowedSearchTypes) {
         for (var allowed in self.options.allowedSearchTypes) {
 
-            if (self.availableSearchTypes[allowed] && !$.isEmptyObject(self.options.allowedSearchTypes[allowed])) {
+            if (self.availableSearchTypes[allowed] && !TC.Util.isEmptyObject(self.options.allowedSearchTypes[allowed])) {
 
                 // GLS: gestionamos el override de featureType y renderFeatureType.
                 // Si por defecto cuenta con renderFeatureType y sobrescribe featureType y no renderFeatureType, 
@@ -1441,7 +1443,7 @@ TC.control.Search = function () {
                 }
 
                 // GLS: override de la configuración por defecto con la del config.JSON
-                $.extend(self.availableSearchTypes[allowed], self.options.allowedSearchTypes[allowed]);
+                TC.Util.extend(self.availableSearchTypes[allowed], self.options.allowedSearchTypes[allowed]);
 
 
                 // GLS: Limitamos la búsqueda en portales y calles cuando así se establezca en la configuración de las búsquedas
@@ -1501,9 +1503,7 @@ TC.inherit(TC.control.Search, TC.Control);
         ctlProto.template = TC.apiLocation + "TC/templates/Search.html";
     }
     else {
-        ctlProto.template = function () {
-            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "search.1" }).w("</h2><div class=\"tc-ctl-search-content\"><input type=\"search\" class=\"tc-ctl-search-txt\" placeholder=\"").h("i18n", ctx, {}, { "$key": "search.placeholder" }).w("\" title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" /><a title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" class=\"tc-ctl-btn tc-ctl-search-btn\">").h("i18n", ctx, {}, { "$key": "search.2" }).w("</a><ul class=\"tc-ctl-search-list tc-hidden\"></ul></div>"); } body_0.__dustBody = !0; return body_0
-        };
+        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "search.1" }).w("</h2><div class=\"tc-ctl-search-content\"><input type=\"search\" class=\"tc-ctl-search-txt\" placeholder=\"").h("i18n", ctx, {}, { "$key": "search.placeholder" }).w("\" title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" /><button title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" class=\"tc-ctl-btn tc-ctl-search-btn\">").h("i18n", ctx, {}, { "$key": "search.2" }).w("</button><ul class=\"tc-ctl-search-list tc-hidden\"></ul></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
     ctlProto.register = function (map) {
@@ -1652,7 +1652,6 @@ TC.inherit(TC.control.Search, TC.Control);
             }
 
             self.resultsList = self.div.querySelector('.tc-ctl-search-list');
-            self.$list = $(self.resultsList);
             self.button = self.div.querySelector('.tc-ctl-search-btn');
             self.button.addEventListener(TC.Consts.event.CLICK, function () {
                 self.getLayer().then(function (l) {
@@ -1678,34 +1677,6 @@ TC.inherit(TC.control.Search, TC.Control);
                 self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
                 self.textInput.focus();
             }));
-
-
-            // IE10 polyfill
-            try {
-                if (self.textInput.classList.contains('::-ms-clear')) {
-                    var oldValue;
-                    self.textInput.addEventListener('mouseup', function (e) {
-                        oldValue = self.textInput.value;
-
-                        if (oldValue === '') {
-                            return;
-                        }
-
-                        // When this event is fired after clicking on the clear button
-                        // the value is not cleared yet. We have to wait for it.
-                        setTimeout(function () {
-                            var newValue = self.textInput.value;
-
-                            if (newValue === '') {
-                                self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
-                                // Gotcha
-                                _search();
-                            }
-                        }, 1);
-                    });
-                }
-            }
-            catch (e) { }
 
             self.textInput.addEventListener('keypress', function (e) {
                 if (e.which == 13) {
@@ -2128,7 +2099,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 }
             );
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         });
@@ -2221,12 +2192,13 @@ TC.inherit(TC.control.Search, TC.Control);
                     if (type.featurePrefix) {
                         params.TYPENAME = type.featurePrefix + ':' + params.TYPENAME;
                     }
-                    var url = type.url + '?' + $.param(params);
+                    var url = type.url + '?' + TC.Util.getParamString(params);
                     TC.ajax({
                         url: url,
                         method: 'GET',
                         responseType: 'text'
-                    }).then(function (data) {
+                    }).then(function (response) {
+                        const data = response.data;
                         var parser;
                         if (type.outputFormat === TC.Consts.format.JSON) {
                             parser = new TC.wrap.parser.JSON();
@@ -2273,12 +2245,12 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.getCoordinates = function (pattern) {
         const self = this;
         return new Promise(function (resolve, reject) {
-            var match = pattern.match(new RegExp('^' + $.trim(self.UTMX_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + $.trim(self.UTMY_LABEL.toLowerCase()) + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
+            var match = pattern.match(new RegExp('^' + self.UTMX_LABEL.trim().toLowerCase() + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim().toLowerCase() + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
             if (match) {
                 pattern = match[1] + ' ' + match[2];
             }
 
-            match = pattern.match(new RegExp('^' + $.trim(self.LAT_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LON_LABEL.toLowerCase()) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
+            match = pattern.match(new RegExp('^' + self.LAT_LABEL.trim().toLowerCase() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LON_LABEL.trim().toLowerCase() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
             if (match) {
                 pattern = match[1] + ' ' + match[3];
             }
@@ -2352,7 +2324,7 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.getCadastralRef = function (pattern) {
         const self = this;
         return new Promise(function (resolve, reject) {
-            var match = pattern.match(new RegExp($.trim(self.MUN_LABEL.toLowerCase()) + '?\\s(.*)\\,\\s?' + $.trim(self.POL_LABEL.toLowerCase()) + '?\\s(\\d{1,2})\\,\\s?' + $.trim(self.PAR_LABEL.toLowerCase()) + '?\\s(\\d{1,4})'));
+            var match = pattern.match(new RegExp(self.MUN_LABEL.trim().toLowerCase() + '?\\s(.*)\\,\\s?' + self.POL_LABEL.trim().toLowerCase() + '?\\s(\\d{1,2})\\,\\s?' + self.PAR_LABEL.trim().toLowerCase() + '?\\s(\\d{1,4})'));
             if (match) {
                 pattern = match[1] + ', ' + match[2] + ', ' + match[3];
             }
@@ -2365,7 +2337,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 self.getMunicipalities().then(function (list) {
                     var match = /^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.exec(_pattern);
                     if (match) {
-                        var matcher = new RegExp($.trim(match[1]).replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "i");
+                        var matcher = new RegExp(match[1].trim().replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "i");
                         var results = [];
 
                         const getItem = function (mun, munLabel, pol, par) {
@@ -2383,14 +2355,14 @@ TC.inherit(TC.control.Search, TC.Control);
                             };
                         };
 
-                        results = $.grep(list, function (value) {
+                        results = list.filter(function (value) {
                             value = value.label || value.id || value;
                             return matcher.test(value) || matcher.test(self.removePunctuation(value));
                         });
 
                         if (results.length > 0) {
                             for (var i = 0; i < results.length; i++) {
-                                results[i] = getItem(results[i].id, results[i].label, $.trim(match[2]), $.trim(match[3]));
+                                results[i] = getItem(results[i].id, results[i].label, match[2].trim(), match[3].trim());
                             }
                         }
 
@@ -2403,11 +2375,11 @@ TC.inherit(TC.control.Search, TC.Control);
                                 })[0];
 
                                 if (suggestionRoot) {
-                                    resolve([getItem(suggestionRoot.id, suggestionRoot.label, $.trim(match[2]), $.trim(match[3]))]);
+                                    resolve([getItem(suggestionRoot.id, suggestionRoot.label, match[2].trim(), match[3].trim())]);
                                 }
                             }
 
-                            results.push(getItem($.trim(match[1]), $.trim(match[1]), $.trim(match[2]), $.trim(match[3])));
+                            results.push(getItem(match[1].trim(), match[1].trim(), match[2].trim(), match[3].trim()));
                         }
 
                         //console.log('getCadastralRef promise resuelta');
@@ -2808,7 +2780,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         } else if (indicatedRoot.length > 1) {
 
                             indicatedRoot.map(function (elem) {
-                                var newResult = $.extend({
+                                var newResult = TC.Util.extend({
                                 }, result[i]);
                                 newResult.t = elem.id;
 
@@ -2821,7 +2793,7 @@ TC.inherit(TC.control.Search, TC.Control);
                     }
                 }
                 else {
-                    result.push($.extend({}, result[i], { t: root }));
+                    result.push(TC.Util.extend({}, result[i], { t: root }));
                 };
             }
         }
@@ -2935,8 +2907,8 @@ TC.inherit(TC.control.Search, TC.Control);
                     return Object.keys(type.queryProperties).length === Object.keys(data).length;
                 }).map(function (dataRole) {
                     var type = self.getSearchTypeByRole(dataRole);
-                    self.request.push(requestToWFS.call(self, type, function (data) {
-                        results = results.concat(type.getSuggestionListElements(data));
+                    self.request.push(requestToWFS.call(self, type, function (response) {
+                        results = results.concat(type.getSuggestionListElements(response.data));
                     }, data));
                 });
             });
@@ -3006,7 +2978,8 @@ TC.inherit(TC.control.Search, TC.Control);
                         url: type.url + '?' + type.filter.getParams({ t: _pattern }),
                         method: 'GET',
                         responseType: TC.Consts.mimeType.JSON
-                    }).then(function (data) {
+                    }).then(function (response) {
+                        const data = response.data;
                         var result = [];                        
 
                         if (data.totalFeatures > 0) {
@@ -3078,7 +3051,8 @@ TC.inherit(TC.control.Search, TC.Control);
                         url: type.url + '?' + type.filter.getParams({ t: _pattern, s: match[5].trim() }),
                         method: 'GET',
                         responseType: TC.Consts.mimeType.JSON                        
-                    }).then(function (data) {
+                    }).then(function (response) {
+                        const data = response.data;
                         var result = [];
                         if (data.totalFeatures > 0) {
                             data.features.map(function (feature) {
@@ -3132,7 +3106,7 @@ TC.inherit(TC.control.Search, TC.Control);
             self.request = [];
         }
 
-        pattern = $.trim(pattern);
+        pattern = pattern.trim();
         if (pattern.length > 0) {
             pattern = pattern.toLowerCase();
 
@@ -3145,8 +3119,6 @@ TC.inherit(TC.control.Search, TC.Control);
                     });
                 }));
             };
-
-            var addressSearched = false;
 
             self.allowedSearchTypes.forEach(function (allowed) {
                 if (allowed.parser) {
@@ -3218,7 +3190,7 @@ TC.inherit(TC.control.Search, TC.Control);
             wait = self.loading.addWait();
 
             // en pantallas pequeñas, colapsamos el panel de herramientas
-            if (Modernizr.mq('(max-width: 30em)')) {
+            if (matchMedia('(max-width: 30em)').matches) {
                 self.textInput.blur();
                 self.map.trigger(TC.Consts.event.TOOLSCLOSE);
             }
@@ -3398,7 +3370,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
         if (point) {
             title = self.getLabel(id);
-            promise = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
+            promise = self.layer.addMarker(point, TC.Util.extend({}, self.map.options.styles.point, { title: title, group: title }));
         } else {
             var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
             id = self.LAT + match[2] + self.LON + match[1];
@@ -3406,7 +3378,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
             if (point) {
                 title = self.getLabel(id);
-                promise = self.layer.addMarker(point, $.extend({}, self.map.options.styles.point, { title: title, group: title }));
+                promise = self.layer.addMarker(point, TC.Util.extend({}, self.map.options.styles.point, { title: title, group: title }));
 
                 self.textInput.value = title;
             }
@@ -3469,9 +3441,9 @@ TC.inherit(TC.control.Search, TC.Control);
                 featurePrefix: type.featurePrefix,
                 featureType: type.featureType,
                 properties: new TC.filter.and(
-                    new TC.filter.equalTo(type.queryProperties.firstQueryWord, $.trim(match[1])),
-                    new TC.filter.equalTo(type.queryProperties.secondQueryWord, $.trim(match[2])),
-                    new TC.filter.equalTo(type.queryProperties.thirdQueryWord, $.trim(match[3]))),
+                    new TC.filter.equalTo(type.queryProperties.firstQueryWord, match[1].trim()),
+                    new TC.filter.equalTo(type.queryProperties.secondQueryWord, match[2].trim()),
+                    new TC.filter.equalTo(type.queryProperties.thirdQueryWord, match[3].trim())),
                 outputFormat: type.outputFormat,
                 styles: type.styles
             };
@@ -3613,14 +3585,14 @@ TC.inherit(TC.control.Search, TC.Control);
 
         if (id.match(new RegExp('^(?:' + self.LAT + '[-\\d])|(?:' + self.UTMX + '[\\d])'))) {
             result = result.replace(self.LAT, self.LAT_LABEL).replace(self.LON, ' ' + self.LON_LABEL).replace(self.UTMX, self.UTMX_LABEL).replace(self.UTMY, ' ' + self.UTMY_LABEL);
-            var match = result.match(new RegExp('^' + $.trim(self.LAT_LABEL) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LON_LABEL) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
+            var match = result.match(new RegExp('^' + self.LAT_LABEL.trim() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LON_LABEL.trim() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
             if (match) {
                 result = result.replace(match[1], parseFloat(match[1]).toLocaleString(locale));
                 result = result.replace(match[3], parseFloat(match[3]).toLocaleString(locale));
             }
 
             var localeDecimalSeparator = 1.1.toLocaleString(locale).substring(1, 2);
-            var match = result.match(new RegExp('^' + $.trim(self.UTMX_LABEL) + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + $.trim(self.UTMY_LABEL) + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
+            var match = result.match(new RegExp('^' + self.UTMX_LABEL.trim() + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim() + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
             if (match) {
                 if (!Number.isInteger(parseFloat(match[1])))
                     result = result.replace(match[1], match[1].replace('.', localeDecimalSeparator));
@@ -3631,7 +3603,7 @@ TC.inherit(TC.control.Search, TC.Control);
         } else if (id.match(new RegExp('^(?:' + self.LON + '[-\\d])'))) {
             result = result.replace(self.LON, self.LON_LABEL).replace(self.LAT, ' ' + self.LAT_LABEL);
 
-            var match = result.match(new RegExp('^' + $.trim(self.LON_LABEL) + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + $.trim(self.LAT_LABEL) + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
+            var match = result.match(new RegExp('^' + self.LON_LABEL.trim() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LAT_LABEL.trim() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
             if (match) {
                 result = result.replace(match[1], parseFloat(match[1]).toLocaleString(locale));
                 result = result.replace(match[3], parseFloat(match[3]).toLocaleString(locale));
