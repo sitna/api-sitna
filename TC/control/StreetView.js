@@ -131,8 +131,7 @@ if (!TC.Control) {
 
         if (!self.viewDiv) {
             self.viewDiv = TC.Util.getDiv(self.options.viewDiv);
-            self.viewDiv.classList.add(self.CLASS + '-view');
-            self.viewDiv.classList.add(TC.Consts.classes.HIDDEN);
+            self.viewDiv.classList.add(self.CLASS + '-view', TC.Consts.classes.HIDDEN);
             if (!self.options.viewDiv) {
                 map.div.insertAdjacentElement('beforebegin', self.viewDiv);
             }
@@ -164,7 +163,7 @@ if (!TC.Control) {
         self.renderPromise().then(function () {
             TC.loadJS(
                 !window.Draggabilly,
-                [TC.apiLocation + 'lib/draggabilly/draggabilly.pkgd.min.js'],
+                [TC.apiLocation + TC.Consts.url.DRAGGABILLY],
                 function () {
                     const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
                         containment: self.map.div
