@@ -230,7 +230,7 @@ TC.filter.Comparison.prototype.write = function () {
             Pattern: this.pattern
         });
     if (this.params)
-        if ($.isArray(this.params))
+        if (Array.isArray(this.params))
             values = this.params.reduce(function (a, b, i) {
                 var fmt = function (text) {
                     return '<{prefix}:Literal>{value}</{prefix}:Literal>'.format({ prefix: this._defaultPrefixNS, value: text });
@@ -357,7 +357,7 @@ TC.filter.Function.prototype.write = function () {
                 return _text;
             }
         }
-        if ($.isArray(this.params)) {
+        if (Array.isArray(this.params)) {
             var prefix = this._defaultPrefixNS;
             values = this.params.reduce(function (a, b, i) {
                 var fmt = function (param) {
@@ -381,20 +381,47 @@ TC.filter.Spatial = function (tagName, geometryName, geometry, opt_srsName) {
     this.geometryName = geometryName;
     this.geometry = geometry;
     this.srsName = opt_srsName;
+    this.wrap = new TC.wrap.Filter(this);
 };
+
+TC.wrap.Filter = function (filter) {
+    this.parent = filter;
+};
+
+TC.wrap.Filter.prototype.getAxisOrientation = function () {
+    // Establecemos el srsName a EPSG:xxxx o urn:x-ogc:def:crs:EPSG:xxxx dependiendo del orden de eje de coordenadas del CRS.
+    // Esto se debe a que GeoServer hace asunciones en el orden de los ejes dependiendo del formato de srsName que se use.
+    // Más información: https://docs.geoserver.org/latest/en/user/services/wfs/basics.html#wfs-basics-axis
+    var srsName = this.parent.srsName;
+    if (srsName) {
+        const match = srsName.match(/\d{4,6}$/);
+        if (match) {
+            const code = match[0];
+            const def = ol.proj.get(srsName);
+            if (def) {
+                return ((def.axisOrientation_ === 'neu' ? 'urn:x-ogc:def:crs:EPSG:' : 'EPSG:') + code);
+            }
+        }
+    }
+    return srsName;
+};
+
 TC.inherit(TC.filter.Spatial, TC.filter.Filter);
 
 TC.filter.Spatial.prototype.write = function () {
     var pattern = null;
-    if (this.geometryName)
+    if (this.geometryName) {
         pattern = '<{prefix}:{tag}><{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>{geometry}</{prefix}:{tag}>';
-    else
+    }
+    else {
         pattern = '<{prefix}:{tag}><{prefix}:{fieldTitle}/>{geometry}</{prefix}:{tag}>';
+    }
+
     return pattern.format({
         prefix: this._defaultPrefixNS,
         tag: this.getTagName(),
         name: this.geometryName,
-        geometry: (this.geometry instanceof TC.filter.Function ? this.writeInnerCondition_(this.geometry) : this.geometry.wrap.toGML(undefined, this.srsName)),
+        geometry: (this.geometry instanceof TC.filter.Function ? this.writeInnerCondition_(this.geometry) : this.geometry.wrap.toGML(undefined, this.wrap.getAxisOrientation())),
         fieldTitle: this._fieldTitle
     });
 };
