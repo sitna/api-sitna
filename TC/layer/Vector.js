@@ -181,7 +181,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
 
     var addFeaturesInternal = function (layer, coordsArray, constructorName, styleType, options) {
         var style = (layer.options.styles && layer.options.styles[styleType]) || TC.Cfg.styles[styleType];
-        var opts = $.extend(true, {}, style, options);
+        var opts = TC.Util.extend(true, {}, style, options);
         return new Promise(function (resolve, reject) {
             var FeatureConstructor;
             const endFn = function () {
@@ -475,7 +475,8 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 method: 'GET',
                 responseType: TC.Consts.mimeType.XML
             })
-                .then(function (data) {
+                .then(function (response) {
+                    const data = response.data;
                     var ns = 'http://www.w3.org/2001/XMLSchema';
                     var complexType = data.getElementsByTagNameNS(ns, 'complexType')[0];
                     if (complexType) {
@@ -506,12 +507,12 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         });
         promise.then(
             function (data) {
-                if ($.isFunction(callback)) {
+                if (TC.Util.isFunction(callback)) {
                     callback(data);
                 }
             },
             function (errorText) {
-                if ($.isFunction(error)) {
+                if (TC.Util.isFunction(error)) {
                     error(errorText);
                 }
             }
@@ -688,14 +689,14 @@ TC.inherit(TC.layer.Vector, TC.Layer);
                 fObj.data = f.getData();
                 fObj.showsPopup = f.showsPopup;
                 if (options.exportStyles === undefined || options.exportStyles) {
-                    layerStyle = $.extend({}, layerStyle);
+                    layerStyle = TC.Util.extend({}, layerStyle);
                     for (var key in layerStyle) {
                         var val = layerStyle[key];
-                        if ($.isFunction(val)) {
+                        if (TC.Util.isFunction(val)) {
                             layerStyle[key] = val(f);
                         }
                     }
-                    fObj.style = $.extend(layerStyle, f.getStyle());
+                    fObj.style = TC.Util.extend(layerStyle, f.getStyle());
                 }
                 return fObj;
             });
@@ -708,7 +709,7 @@ TC.inherit(TC.layer.Vector, TC.Layer);
         return new Promise(function (resolve, reject) {
             const promises = new Array(obj.features.length);
             obj.features.forEach(function (f, idx) {
-                const featureOptions = $.extend(f.style, { data: f.data, id: f.id, showsPopup: f.showsPopup });
+                const featureOptions = TC.Util.extend(f.style, { data: f.data, id: f.id, showsPopup: f.showsPopup });
                 var addFn;
                 switch (f.type) {
                     case TC.Consts.geom.POLYGON:
