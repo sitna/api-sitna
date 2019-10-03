@@ -21,7 +21,7 @@ TC.control.Coordinates = function () {
 
     TC.control.ProjectionSelector.apply(self, arguments);
 
-    $.extend(self._cssClasses, {
+    TC.Util.extend(self._cssClasses, {
         CRS: self.CLASS + '-crs',
         GEOCRS: self.CLASS + '-geocrs',
         X: self.CLASS + '-x',
@@ -191,7 +191,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                 //    self.setVisibility([e.clientX, e.clientY]);
                 //});
 
-                if ($.isFunction(callback)) {
+                if (TC.Util.isFunction(callback)) {
                     callback();
                 }
             });
@@ -344,7 +344,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
     };
 
     // Establece la posición de la cruz en la posición recibida
-    var animationTimeout;
+    //var animationTimeout;
     ctlProto.coordsToClick = function (e) {
         var self = this;
 
@@ -359,10 +359,10 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                 return;
             }
 
-            $(self.div).stop(true, true);
-
-            if (animationTimeout)
-                clearTimeout(animationTimeout);
+            self.div.classList.remove('tc-fading');
+            setTimeout(function () {
+                self.div.classList.add('tc-fading');
+            }, 10);
 
             self.updateCoordsCtrl(e.coordinate);
 
@@ -371,16 +371,16 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
             }
 
             self.div.classList.remove(TC.Consts.classes.HIDDEN);
-            self.div.style.visibility = 'visible';
+            //self.div.style.visibility = 'visible';
 
-            self.div.style.opacity = '0.7';
+            //self.div.style.opacity = '0.7';
 
-            animationTimeout = setTimeout(function () {
-                $(self.div).animate({ opacity: 0 }, 3000, "linear",
-                    function () {
-                        self.clear();
-                    });
-            }, 5000);
+            //animationTimeout = setTimeout(function () {
+            //    $(self.div).animate({ opacity: 0 }, 3000, "linear",
+            //        function () {
+            //            self.clear();
+            //        });
+            //}, 5000);
         }
     };
 
