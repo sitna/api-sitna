@@ -6,10 +6,10 @@ TC.tool.ElevationService = function (options) {
     self.url = self.options.url;
     self.process = self.options.process;
     self.minimumElevation = self.options.minimumElevation;
-    if ($.isFunction(self.options.request)) {
+    if (TC.Util.isFunction(self.options.request)) {
         self.request = self.options.request;
     }
-    if ($.isFunction(self.options.parseResponse)) {
+    if (TC.Util.isFunction(self.options.parseResponse)) {
         self.parseResponse = self.options.parseResponse;
     }
 };
@@ -68,7 +68,7 @@ TC.tool.ElevationService = function (options) {
                             responseType: TC.Consts.mimeType.JSON,
                             data: options.body || TC.format.WPS.buildExecuteQuery(data)
                         }).then(function (response) {
-                            resolve(response);
+                            resolve(response.data);
                         }, function (error) {
                             reject(Error(error));
                         });
