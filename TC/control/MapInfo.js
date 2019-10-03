@@ -138,12 +138,12 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         if (self.extraParams) {
             // Hacemos merge de parámetros de URL
             var params = TC.Util.getQueryStringParams(currentUrl);
-            $.extend(params, self.extraParams);
+            TC.Util.extend(params, self.extraParams);
             var qsPosition = currentUrl.indexOf('?');
             if (qsPosition >= 0) {
                 currentUrl = currentUrl.substring(0, qsPosition);
             }
-            currentUrl = currentUrl.concat('?', $.param(params));
+            currentUrl = currentUrl.concat('?', TC.Util.getParamString(params));
         }
 
         // eliminamos el parámetro del idioma, si no lo arrastramos al compartir
@@ -227,9 +227,9 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                         self.map.getLoadingIndicator().removeWait(wait);
                         resolve(response.responseText.replace('http://', 'https://'));
                     } else {
-                        onerror();
+                        onError();
                     }
-                }, onerror);
+                }, onError);
             } else {
                 if (url.length >= self.SHORTEN_URL_LENGTH) {
                     onError();
@@ -295,7 +295,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const drawFill = function (ctx, width, height) {
             var elem = document.getElementsByClassName(sb[0].CLASS);
             var fillnode = elem.item(0);
-            var fillBoundingCR = $.extend({}, fillnode.getBoundingClientRect());
+            var fillBoundingCR = TC.Util.extend({}, fillnode.getBoundingClientRect());
 
             fillBoundingCR.left = (options.left || 15) - 2;
 
@@ -320,7 +320,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
         var elem = document.getElementsByClassName("ol-scale-line-inner");
         var node = elem.item(0);
-        var boundingCR = $.extend({}, node.getBoundingClientRect());
+        var boundingCR = TC.Util.extend({}, node.getBoundingClientRect());
 
         var text = node.textContent;
 
