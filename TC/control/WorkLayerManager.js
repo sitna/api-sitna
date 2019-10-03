@@ -34,26 +34,20 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
     }
     else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "loadedLayers" }).w("<span class=\"tc-ctl-wlm-n\"></span><button class=\"tc-ctl-wlm-del-all tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "removeAllLayersFromMap" }).w("\"></button></h2><div class=\"tc-ctl-wlm-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</div><div class=\"tc-ctl-wlm-content tc-hidden\"><form><ul>").s(ctx.get(["workLayers"], false), ctx, { "block": body_1 }, {}).w("</ul></form></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-wlm-elm", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-elm'] = function () { dust.register(ctlProto.CLASS + '-elm', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-wlm-elm\" tabindex=\"-1\"><div class=\"tc-ctl-wlm-lyr\">").x(ctx.get(["path"], false), ctx, { "block": body_1 }, {}).w("</div><div class=\"tc-ctl-wlm-type\"></div><div class=\"tc-ctl-wlm-path\" title=\"").s(ctx.get(["path"], false), ctx, { "else": body_2, "block": body_3 }, {}).w("\">").s(ctx.get(["path"], false), ctx, { "else": body_5, "block": body_6 }, {}).w("</div><div class=\"tc-ctl-wlm-buttons\"><div class=\"tc-ctl-wlm-btn-info\" title=\"").h("i18n", ctx, {}, { "$key": "infoFromThisLayer" }).w("\"></div><input type=\"range\" value=\"").f(ctx.get(["opacity"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "transparencyOfThisLayer" }).w("\" /><input type=\"checkbox\" ").nx(ctx.get(["hide"], false), ctx, { "block": body_8 }, {}).w(" title=\"").h("i18n", ctx, {}, { "$key": "visibilityOfThisLayer" }).w("\" /></div><div class=\"tc-ctl-wlm-info tc-hidden\">").x(ctx.get(["abstract"], false), ctx, { "block": body_9 }, {}).x(ctx.get(["customLegend"], false), ctx, { "else": body_10, "block": body_13 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_14 }, {}).w("</div><div class=\"tc-ctl-wlm-dd ").x(ctx.get(["hide"], false), ctx, { "block": body_16 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "dragToReorder" }).w("\"></div><div class=\"tc-ctl-wlm-del ").x(ctx.get(["unremovable"], false), ctx, { "block": body_17 }, {}).w(" ").nx(ctx.get(["hide"], false), ctx, { "block": body_18 }, {}).w("\" ").nx(ctx.get(["unremovable"], false), ctx, { "block": body_19 }, {}).w("></div></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_4 }, {}); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" &bull; "); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_7 }, {}); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w(" &bull; "); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("checked=\"checked\""); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("<div class=\"tc-ctl-wlm-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div><pre>").f(ctx.get(["abstract"], false), ctx, "h", ["s"]).w("</pre></div></div>"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.x(ctx.get(["legend"], false), ctx, { "block": body_11 }, {}); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<div class=\"tc-ctl-wlm-legend\" data-tc-layer-name=\"").f(ctx.get(["layerNames"], false), ctx, "h").w("\"><h4>").h("i18n", ctx, {}, { "$key": "content" }).w("</h4>").s(ctx.get(["legend"], false), ctx, { "block": body_12 }, {}).w("</div>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.w("<div><p>").f(ctx.get(["title"], false), ctx, "h").w("</p><img data-tc-img=\"").f(ctx.get(["src"], false), ctx, "h").w("\" /></div>"); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<ul class=\"tc-ctl-wlm-custom-legend\">").f(ctx.get(["customLegend"], false), ctx, "h", ["s"]).w("</ul>"); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.w("<div class=\"tc-ctl-wlm-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_15 }, {}).w("</ul></div>"); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h", ["s"]).w("\" type=\"").f(ctx.get(["format"], false), ctx, "h").w("\" title=\"").f(ctx.get(["formatDescription"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("tc-hidden"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("disabled"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.w("tc-hidden"); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("title=\"").h("i18n", ctx, {}, { "$key": "removeLayerFromMap" }).w("\""); } body_19.__dustBody = !0; return body_0; };
+        ctlProto.template[ctlProto.CLASS + '-elm'] = function () { dust.register(ctlProto.CLASS + '-elm', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-wlm-elm\" tabindex=\"-1\"><div class=\"tc-ctl-wlm-lyr\">").x(ctx.get(["path"], false), ctx, { "block": body_1 }, {}).w("</div><div class=\"tc-ctl-wlm-type\"></div><div class=\"tc-ctl-wlm-path\" title=\"").s(ctx.get(["path"], false), ctx, { "else": body_2, "block": body_3 }, {}).w("\">").s(ctx.get(["path"], false), ctx, { "else": body_5, "block": body_6 }, {}).w("</div><div class=\"tc-ctl-wlm-buttons\"><div class=\"tc-ctl-wlm-btn-info\" title=\"").h("i18n", ctx, {}, { "$key": "infoFromThisLayer" }).w("\"></div><input type=\"range\" value=\"").f(ctx.get(["opacity"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "transparencyOfThisLayer" }).w("\" /><input type=\"checkbox\" ").nx(ctx.get(["hide"], false), ctx, { "block": body_8 }, {}).w(" title=\"").h("i18n", ctx, {}, { "$key": "visibilityOfThisLayer" }).w("\" /></div><div class=\"tc-ctl-wlm-info tc-hidden\">").x(ctx.get(["abstract"], false), ctx, { "block": body_9 }, {}).x(ctx.get(["customLegend"], false), ctx, { "else": body_10, "block": body_13 }, {}).x(ctx.get(["metadata"], false), ctx, { "block": body_14 }, {}).w("</div><div class=\"tc-ctl-wlm-dd ").x(ctx.get(["hide"], false), ctx, { "block": body_16 }, {}).w("\" title=\"").h("i18n", ctx, {}, { "$key": "dragToReorder" }).w("\"></div><div class=\"tc-ctl-wlm-del ").x(ctx.get(["unremovable"], false), ctx, { "block": body_17 }, {}).w(" ").nx(ctx.get(["hide"], false), ctx, { "block": body_18 }, {}).w("\" ").nx(ctx.get(["unremovable"], false), ctx, { "block": body_19 }, {}).w("></div></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_4 }, {}); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" &bull; "); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_7 }, {}); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w(" &bull; "); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("checked=\"checked\""); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("<div class=\"tc-ctl-wlm-abstract\"><h4>").h("i18n", ctx, {}, { "$key": "abstract" }).w("</h4><div><pre>").f(ctx.get(["abstract"], false), ctx, "h", ["s"]).w("</pre></div></div>"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.x(ctx.get(["legend"], false), ctx, { "block": body_11 }, {}); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<div class=\"tc-ctl-wlm-legend\" data-layer-name=\"").f(ctx.get(["layerNames"], false), ctx, "h").w("\"><h4>").h("i18n", ctx, {}, { "$key": "content" }).w("</h4>").s(ctx.get(["legend"], false), ctx, { "block": body_12 }, {}).w("</div>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.w("<div><p>").f(ctx.get(["title"], false), ctx, "h").w("</p><img data-img=\"").f(ctx.get(["src"], false), ctx, "h").w("\" /></div>"); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<ul class=\"tc-ctl-wlm-custom-legend\">").f(ctx.get(["customLegend"], false), ctx, "h", ["s"]).w("</ul>"); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.w("<div class=\"tc-ctl-wlm-metadata\"><h4>").h("i18n", ctx, {}, { "$key": "metadata" }).w("</h4><ul>").s(ctx.get(["metadata"], false), ctx, { "block": body_15 }, {}).w("</ul></div>"); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w("<li><a href=\"").f(ctx.get(["url"], false), ctx, "h", ["s"]).w("\" type=\"").f(ctx.get(["format"], false), ctx, "h").w("\" title=\"").f(ctx.get(["formatDescription"], false), ctx, "h").w("\" target=\"_blank\">").f(ctx.get(["formatDescription"], false), ctx, "h").w("</a></li>"); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("tc-hidden"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("disabled"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.w("tc-hidden"); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("title=\"").h("i18n", ctx, {}, { "$key": "removeLayerFromMap" }).w("\""); } body_19.__dustBody = !0; return body_0; };
         ctlProto.template[ctlProto.CLASS + '-type-sgl'] = function () { dust.register(ctlProto.CLASS + '-type-sgl', body_0); function body_0(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "singleLayer" }); } body_0.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-type-grp'] = function () { dust.register(ctlProto.CLASS + '-type-grp', body_0); function body_0(chk, ctx) { return chk.w("<div>").h("i18n", ctx, {}, { "$key": "groupLayerThatContains" }).w(":</div><ul>").s(ctx.get(["Layer"], false), ctx, { "block": body_1 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-wlm-type-grp-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-type-grp-node'] = function () { dust.register(ctlProto.CLASS + '-type-grp-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-wlm-tip-grp-elm\"><span>").f(ctx.get(["Title"], false), ctx, "h").w("</span><ul>").s(ctx.get(["Layer"], false), ctx, { "block": body_1 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-wlm-type-grp-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
     }
 
-    const _dataKeys = {
-        layer: 'tcLayer'
-    };
-
     const findLayerElement = function (ctl, layer) {
         return ctl.getLayerUIElements().filter(function (li) {
-            return $(li).data(_dataKeys.layer) === layer;
+            return li.dataset.layerId === layer.id;
         })[0];
     };
 
     var getElligibleLayersNumber = function (ctl) {
-        return $.grep(ctl.map.workLayers, function (lyr) {
-            return !lyr.stealth;
-        }).length;
+        return ctl.layers.length;
     };
 
     const shouldBeDelAllVisible = function (ctl) {
@@ -72,8 +66,8 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
         else {
             return;
         }
-        const sourceLayer = $(listItem).data(_dataKeys.layer);
-        const targetLayer = $(targetItem).data(_dataKeys.layer);
+        const sourceLayer = ctl.map.getLayer(listItem.dataset.layerId);
+        const targetLayer = ctl.map.getLayer(targetItem.dataset.layerId);
         var newIdx = -1;
         for (var i = 0; i < ctl.map.layers.length; i++) {
             if (targetLayer === ctl.map.layers[i]) {
@@ -88,7 +82,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
 
     ctlProto.render = function (callback, options) {
         const self = this;
-        return self._set1stRenderPromise(self.map ? self.renderData(options ? $.extend(self.map.getLayerTree(), options) : self.map.getLayerTree(), function () {
+        return self._set1stRenderPromise(self.map ? self.renderData(options ? TC.Util.extend(self.map.getLayerTree(), options) : self.map.getLayerTree(), function () {
             self.addUIEventListeners();
             TC.loadJS(
                 !window.Sortable,
@@ -169,6 +163,10 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
         return new Promise(function (resolve, reject) {
             TC.control.TOC.prototype.register.call(self, map).then(function () {
 
+                map.loaded(function () {                   
+                    self.updateScale();
+                });
+
                 map
                     .on(TC.Consts.event.LAYEROPACITY, function (e) {
                         const li = findLayerElement(self, e.layer);
@@ -190,11 +188,14 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                                     // Desplegamos el control capas cargadas
                                     if (self.map && self.map.layout && self.map.layout.accordion) {
                                         if (self.div.classList.contains(TC.Consts.classes.COLLAPSED)) {
-                                            for (var i = 0; i < self.map.controls.length; i++) {
-                                                if (self.map.controls[i] !== self) {
-                                                    self.map.controls[i].div.classList.add(TC.Consts.classes.COLLAPSED);
-                                                }
-                                            }
+                                            self.map.controls
+                                                .filter(function (ctl) {
+                                                    // Todos los otros controles que no cuelgan de otro control
+                                                    return ctl !== self && !ctl.containerControl;
+                                                })
+                                                .forEach(function (ctl) {
+                                                    ctl.div.classList.add(TC.Consts.classes.COLLAPSED);
+                                                });
                                         }
                                     }
 
@@ -218,7 +219,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
         });
     };
 
-    ctlProto.onExternalServiceAdded = function (e, map) {
+    ctlProto.onExternalServiceAdded = function (e) {
         // Este control no tiene que aceptar servicios externos directamente
     };
 
@@ -234,7 +235,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             }
             while (li && !li.matches('li.' + self.CLASS + '-elm'));
 
-            const layer = $(li).data(_dataKeys.layer);
+            const layer = self.map.getLayer(li.dataset.layerId);
             layer.setVisibility(checkbox.checked);
             e.stopPropagation();
         }));
@@ -247,7 +248,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             }
             while (li && li.tagName !== 'LI');
 
-            const layer = $(li).data(_dataKeys.layer);
+            const layer = self.map.getLayer(li.dataset.layerId);
             layer.setOpacity(range.value / 100);
         };
         self.div.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=range]', inputRangeListener));
@@ -259,7 +260,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                 li = li.parentElement;
             }
             while (li && li.tagName !== 'LI');
-            const layer = $(li).data(_dataKeys.layer);
+            const layer = self.map.getLayer(li.dataset.layerId);
             self.map.removeLayer(layer);
         }));
 
@@ -267,7 +268,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             TC.confirm(self.getLocaleString('layersRemove.confirm'), function () {
                 self.getLayerUIElements()
                     .map(function (li) {
-                        return $(li).data(_dataKeys.layer);
+                        return self.map.getLayer(li.dataset.layerId);
                     })
                     .forEach(function (layer) {
                         self.map.removeLayer(layer);
@@ -283,34 +284,19 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             }
             while (li && li.tagName !== 'LI');
             const info = li.querySelector('.' + self.CLASS + '-info');
-            const layer = $(li).data(_dataKeys.layer);
+            const layer = self.map.getLayer(li.dataset.layerId);
             // Cargamos la imagen de la leyenda
             info.querySelectorAll('.' + self.CLASS + '-legend img').forEach(function (img) {
                 self.styleLegendImage(img, layer);
             });
-            if (info.classList.contains(TC.Consts.classes.HIDDEN)) {
-                info.classList.remove(TC.Consts.classes.HIDDEN);
-            }
-            else {
-                info.classList.add(TC.Consts.classes.HIDDEN);
-            }
+            info.classList.toggle(TC.Consts.classes.HIDDEN);
 
             if (li.querySelector('input[type="checkbox"]').checked) {
                 const dragHandle = li.querySelector('.' + self.CLASS + '-dd');
-                if (info.classList.contains(TC.Consts.classes.HIDDEN)) {
-                    dragHandle.classList.remove(TC.Consts.classes.HIDDEN);
-                }
-                else {
-                    dragHandle.classList.add(TC.Consts.classes.HIDDEN);
-                }
+                dragHandle.classList.toggle(TC.Consts.classes.HIDDEN, !info.classList.contains(TC.Consts.classes.HIDDEN));
             }
 
-            if (a.classList.contains(TC.Consts.classes.CHECKED)) {
-                a.classList.remove(TC.Consts.classes.CHECKED);
-            }
-            else {
-                a.classList.add(TC.Consts.classes.CHECKED);
-            }
+            a.classList.toggle(TC.Consts.classes.CHECKED);
         }));
 
         self.div.addEventListener(self.CLICKEVENT, TC.EventTarget.listenerBySelector('.' + self.CLASS + '-btn-query', function (e) {
@@ -323,7 +309,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                 li = li.parentElement;
             }
             while (li && li.tagName !== 'LI');
-            const layer = $(li).data(_dataKeys.layer);
+            const layer = self.map.getLayer(li.dataset.layerId);
             self.queryControl.renderModalDialog(layer);
         }));
     };
@@ -353,7 +339,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
     };
 
     ctlProto.updateLayerTree = function (layer) {
-        var self = this;
+        var self = this;        
 
         var getLegendImgByPost = function (layer) {
             return new Promise(function (resolve, reject) {
@@ -468,7 +454,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
 
                                     dust.render(className, layerNode, function (err, out) {
                                         var tip;
-                                        
+
                                         typeElm.addEventListener('mouseover', function (e) {
                                             const mapDiv = self.map.div;
                                             const typeElmRect = typeElm.getBoundingClientRect();
@@ -485,7 +471,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                                     });
                                 }
                                 const ul = self.div.querySelector('ul');
-                                $(li).data(_dataKeys.layer, layer);
+                                li.dataset.layerId = layer.id;
 
                                 const lis = self.getLayerUIElements();
                                 const layerList = self.map.workLayers
@@ -496,8 +482,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                                 var inserted = false;
                                 for (var i = 0, ii = lis.length; i < ii; i++) {
                                     const referenceLi = lis[i];
-                                    const referenceLayer = $(referenceLi).data(_dataKeys.layer);
-                                    const referenceLayerIdx = layerList.indexOf(referenceLayer);
+                                    const referenceLayerIdx = layerList.indexOf(self.map.getLayer(referenceLi.dataset.layerId));
                                     if (referenceLayerIdx < layerIdx) {
                                         referenceLi.insertAdjacentElement('beforebegin', li);
                                         inserted = true;
@@ -507,6 +492,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                                 if (!inserted) {
                                     ul.appendChild(li);
                                 }
+
                                 if (domReadyPromise) domReadyPromise(li);
                                 self.updateScale();
                             });
@@ -531,11 +517,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                 }
 
                 const deleteAllElm = self.div.querySelector('.' + self.CLASS + '-del-all');
-                if (shouldBeDelAllVisible(self)) {
-                    deleteAllElm.classList.remove(TC.Consts.classes.HIDDEN);
-                } else {
-                    deleteAllElm.classList.add(TC.Consts.classes.HIDDEN);
-                }
+                deleteAllElm.classList.toggle(TC.Consts.classes.HIDDEN, !shouldBeDelAllVisible(self));
             }
         }
     };
@@ -543,7 +525,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
     ctlProto.updateScale = function () {
         var self = this;
         self.getLayerUIElements().forEach(function (li) {
-            var layer = $(li).data(_dataKeys.layer);
+            var layer = self.map.getLayer(li.dataset.layerId);
             if (layer.names) {
                 var isVisible = false;
                 for (var i = 0; i < layer.names.length; i++) {
@@ -552,13 +534,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                         break;
                     }
                 }
-                const notVisibleClass = self.CLASS + '-elm-notvisible';
-                if (isVisible) {
-                    li.classList.remove(notVisibleClass);
-                }
-                else {
-                    li.classList.add(notVisibleClass);
-                }
+                li.classList.toggle(self.CLASS + '-elm-notvisible', !isVisible);
             }
         });
     };
@@ -585,7 +561,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             self.layers.splice(idx, 1);
         }
         self.getLayerUIElements().forEach(function (li) {
-            if ($(li).data(_dataKeys.layer) === layer) {
+            if (li.dataset.layerId === layer.id) {
                 li.parentElement.removeChild(li);
             }
         });
@@ -611,15 +587,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
 
     ctlProto.getLayerUIElements = function () {
         const self = this;
-        const result = [];
-        const children = self.div.querySelector('ul').children;
-        for (var i = 0, len = children.length; i < len; i++) {
-            child = children[i];
-            if (child.matches('li.' + self.CLASS + '-elm')) {
-                result[result.length] = child;
-            }
-        }
-        return result;
+        return Array.from(self.div.querySelectorAll(`ul > li.${self.CLASS}-elm`));
     };
 
     //analiza la nueva capa añadida si tiene habilitado o no el WFS
@@ -629,7 +597,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             fncResolve = resolve;
         })
         var cssClassUnavailable = 'tc-unavailable';
-        
+
         var queryButton;
         domReadyPromise.then(function (li) {
             queryButton = document.createElement('div');
