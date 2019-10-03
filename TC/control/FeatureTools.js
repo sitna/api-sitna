@@ -36,7 +36,9 @@ TC.control.FeatureTools = function () {
     }
 
     self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-    self._$dialogDiv = $(self._dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
     if (!self.options.dialogDiv) {
         document.body.appendChild(self._dialogDiv);
     }
@@ -133,7 +135,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                 const waitId = li && li.addWait();
 
                 const shareOptions = {};
-                if (self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX) && self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked) {
+                if (self.options.displayElevation && self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked) {
                     const interpolateCoords = self._dialogDiv.querySelector(self._selectors.INTERPOLATION_RADIO + ':checked').value === "1";
                     shareOptions.elevation = {
                         resolution: interpolateCoords ? parseFloat(self._dialogDiv.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || self.options.displayElevation.resolution : 0
@@ -148,7 +150,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                         });
                     },
                     function (error) {
-                        if (TC.tool.Elevation && error === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                        if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
                             TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
                             return;
                         }
@@ -164,16 +166,11 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
             }));
             self._dialogDiv.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (e) {
                 const idDiv = self._dialogDiv.querySelector(self._selectors.INTERPOLATION_DISTANCE);
-                if (e.target.value === '0') {
-                    idDiv.classList.add(TC.Consts.classes.HIDDEN);
-                }
-                else {
-                    idDiv.classList.remove(TC.Consts.classes.HIDDEN);
-                }
+                idDiv.classList.toggle(TC.Consts.classes.HIDDEN, e.target.value === '0');
             }));
 
             self.trigger(TC.Consts.event.CONTROLRENDER);
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         }));
@@ -217,13 +214,20 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         if (self.highlightedFeature) {
 
             // Añadimos un zoom a la feature al pulsar en la tabla
-            if (container.querySelector('table.tc-attr')) {
-                container.querySelector('table.tc-attr').addEventListener(TC.Consts.event.CLICK, function (e) {
+            const attributeTable = container.querySelector('table.tc-attr');
+            if (attributeTable) {
+                attributeTable.addEventListener(TC.Consts.event.CLICK, function (e) {
                     self.zoomToCurrentFeature();
                 });
 
-                container.querySelector('table.tc-attr').classList.add(self.CLASS + '-zoom');
-                container.querySelector('table.tc-attr').setAttribute('title', self.getLocaleString('clickToCenter'));
+                attributeTable.querySelectorAll('a').forEach(function (a) {
+                    a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                        e.stopPropagation(); // No queremos zoom si pulsamos en un enlace
+                    });
+                });
+
+                attributeTable.classList.add(self.CLASS + '-zoom');
+                attributeTable.setAttribute('title', self.getLocaleString('clickToCenter'));
             }                        
 
             // Añadimos botón de imprimir
@@ -254,12 +258,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         clearTimeout(self._uiUpdateTimeout);
         self._uiUpdateTimeout = setTimeout(function () {
             const currentFeature = self.getCurrentFeature();
-            if (currentFeature && currentFeature.showsPopup) {
-                uiDiv.classList.add(TC.Consts.classes.ACTIVE);
-            }
-            else {
-                uiDiv.classList.remove(TC.Consts.classes.ACTIVE);
-            }
+            uiDiv.classList.toggle(TC.Consts.classes.ACTIVE, !!(currentFeature && currentFeature.showsPopup));
         }, 100);
     };
 
@@ -316,31 +315,19 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
 
         const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-dialog');
         const feature = self.getCurrentFeature();
-        const isPoint = (TC.feature.Point && feature instanceof TC.feature.Point) ||
-            (TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint);
         const isLine = (TC.feature.Polyline && feature instanceof TC.feature.Polyline) ||
             (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline);
         const isPolygon = (TC.feature.Polygon && feature instanceof TC.feature.Polygon) ||
             (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon);
 
-        // Si no es una línea o polígono, no es necesario preguntar si queremos interpolar
-        const ipDiv = dialog.querySelector('.' + self.CLASS + '-dialog-ip');
-        if (ipDiv) {
-            if ((self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX) && !self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked) || (!isLine && !isPolygon)) {
-                ipDiv.classList.add(TC.Consts.classes.HIDDEN);
-            }
-            else {
-                ipDiv.classList.remove(TC.Consts.classes.HIDDEN);
-            }
+        if (self.options.displayElevation) {
+            // Si no es una línea o polígono, no es necesario preguntar si queremos interpolar
+            const ipDiv = dialog.querySelector('.' + self.CLASS + '-dialog-ip');
+            ipDiv.classList.toggle(TC.Consts.classes.HIDDEN, !self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked || (!isLine && !isPolygon));
         }
         // Si es un polígono, no es necesario mostrar el botón de GPX
         const gpxBtn = dialog.querySelector('button[data-format=GPX]');
-        if (isPolygon) {
-            gpxBtn.classList.add(TC.Consts.classes.HIDDEN);
-        }
-        else {
-            gpxBtn.classList.remove(TC.Consts.classes.HIDDEN);
-        }
+        gpxBtn.classList.toggle(TC.Consts.classes.HIDDEN, isPolygon);
 
         TC.Util.showModal(self._dialogDiv.querySelector('.' + self.CLASS + '-dl-dialog'));
     };
@@ -424,7 +411,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                                 resolve(features[0]);
                             },
                             function (error) {
-                                reject(Error(error));
+                                reject(error instanceof Error ? error : Error(error));
                             }
                         );
                     }
