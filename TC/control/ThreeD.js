@@ -47,39 +47,30 @@
         return TC.Control.prototype.renderData.call(self, data, function () {
             self.button = self.div.querySelector('.' + self.CLASS + '-btn');
 
-            if (Number.isInteger(TC.Util.detectIE()) && TC.Util.detectIE() < 12) {
-                self.button.setAttribute('title', self.getLocaleString("threed.not.supported"));
-                self.button.classList.remove(self.classes.BETA);
-            }
-
             self.button.addEventListener(TC.Consts.event.CLICK, function () {
 
                 if (self.button.getAttribute("disabled") === "disabled") {
                     return;
                 }
 
-                if (Number.isInteger(TC.Util.detectIE()) && TC.Util.detectIE() < 12) {
-                    self.map.toast(self.getLocaleString("threed.not.supported"), { type: TC.Consts.msgType.ERROR });
+                if (!self.map.on3DView) {
+                    self.activate();
                 } else {
-                    if (!self.map.on3DView) {
-                        self.activate();
-                    } else {
-                        self.button.setAttribute("disabled", "disabled");
+                    self.button.setAttribute("disabled", "disabled");
 
-                        TC.view.ThreeD.unapply({
-                            callback: function () {
-                                self.button.setAttribute('title', self.getLocaleString("threed.tip"));
+                    TC.view.ThreeD.unapply({
+                        callback: function () {
+                            self.button.setAttribute('title', self.getLocaleString("threed.tip"));
 
-                                self.button.classList.remove(self.classes.BTNACTIVE);
+                            self.button.classList.remove(self.classes.BTNACTIVE);
 
-                                self.button.removeAttribute("disabled");
-                            }
-                        });
-                    }
+                            self.button.removeAttribute("disabled");
+                        }
+                    });
                 }
             });
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         });
