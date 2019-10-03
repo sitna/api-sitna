@@ -12,7 +12,7 @@ if (!TC.filter) {
         var self = this;
         TC.control.FeatureInfoCommons.apply(this, arguments);
         self.wrap = new TC.wrap.control.GeometryFeatureInfo(self);
-        self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor;
+        self.lineColor = !self.options.lineColor ? "#cc0000" : self.options.lineColor;
         self._isDrawing = false;
         self._isSearching = false;
         self._drawToken = false;
@@ -92,15 +92,12 @@ if (!TC.filter) {
                 }
 
             }
-            if (services.length) {
-                self.renderData(options, function () {
+            self.renderData(options, function () {
+                if (services.length) {
                     self.insertLinks();
-                    self.displayResults();
-                });
-            }
-            else {
-                self.resultsLayer.clearFeatures();
-            }
+                }
+                self.displayResults();
+            });
         }
     };
 
