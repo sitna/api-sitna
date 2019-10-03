@@ -496,7 +496,6 @@ div.panel-content > div.tc-ctl-printMap-txt input.tc-ctl-printMap-title, div.tc-
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
     -webkit-transition: all .2s ease;
        -moz-transition: all .2s ease;
-        -ie-transition: all .2s ease;
          -o-transition: all .2s ease;
             transition: all .2s ease;
 }
@@ -557,12 +556,6 @@ div.panel-content > div.tc-ctl-printMap-txt input.tc-ctl-printMap-title, div.tc-
     color: #000;
     background-color: #D2EA56;
 }
-    /*Hack para IE 9,10 y 11*/
-    @media screen and (min-width:0\0) {
-        .tc-ctl-help-btn:after {
-            margin-left: -.5px;
-        }
-    }
 
     @media screen and (-webkit-min-device-pixel-ratio:0) {
         .tc-ctl-help-btn:after {
