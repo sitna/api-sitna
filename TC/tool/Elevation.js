@@ -13,15 +13,20 @@ TC.tool.Elevation = function (options) {
         self._servicePromises[idx] = new Promise(function (resolve, reject) {
             var ctorName = 'ElevationService';
             var path = TC.apiLocation + 'TC/tool/ElevationService';
+            const paths = [];
             var srvOptions = srv;
             if (typeof srv === 'string') {
+                if (!TC.tool[ctorName]) {
+                    paths.push(path);
+                }
                 ctorName = srv.substr(0, 1).toUpperCase() + srv.substr(1);
                 path = TC.apiLocation + 'TC/tool/' + ctorName;
                 srvOptions = {};
+                paths.push(path);
             }
-            TC.loadJS(
+            TC.loadJSInOrder(
                 !TC.tool[ctorName],
-                [path],
+                paths,
                 function () {
                     resolve(new TC.tool[ctorName](srvOptions));
                 }
@@ -142,11 +147,6 @@ TC.tool.Elevation = function (options) {
             return new Promise(function (resolve, reject) {
                 if (options.maxCoordQuantity) {
                     if (options.resolution) {
-                        const getDistance = function (p1, p2) {
-                            const dx = p2[0] - p1[0];
-                            const dy = p2[1] - p1[1];
-                            return Math.sqrt(dx * dx + dy * dy);
-                        };
                         // Validador de número de coordenadas máximo
                         const numPoints = features.reduce(function (acc, feat) {
                             if (feat) {
@@ -165,7 +165,7 @@ TC.tool.Elevation = function (options) {
                             return acc;
                         }, 0);
                         if (numPoints > options.maxCoordQuantity) {
-                            reject(TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED);
+                            reject(Error(TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED));
                         }
                     }
                 }
