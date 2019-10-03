@@ -141,9 +141,13 @@ TC.inherit(TC.control.Popup, TC.Control);
     ctlProto.hide = function () {
         var self = this;
         if (self.map) {
+            const data = {
+                control: self,
+                feature: self.currentFeature
+            };
             self.map.wrap.hidePopup(self);
             self.setDragged(false);
-            self.map.trigger(TC.Consts.event.POPUPHIDE, { control: self });
+            self.map.trigger(TC.Consts.event.POPUPHIDE, data);
         }
     };
 
@@ -159,12 +163,7 @@ TC.inherit(TC.control.Popup, TC.Control);
         const self = this;
         self.dragged = dragged;
         if (self.popupDiv) {
-            if (dragged) {
-                self.popupDiv.classList.add(TC.Consts.classes.DRAGGED);
-            }
-            else {
-                self.popupDiv.classList.remove(TC.Consts.classes.DRAGGED);
-            }
+            self.popupDiv.classList.toggle(TC.Consts.classes.DRAGGED, !!dragged);
         }
         self.wrap.setDragged(dragged);
     };
