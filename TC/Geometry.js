@@ -10,16 +10,16 @@
 })(TC, function () {
         const Geometry = {
             isPoint: function (geometry) {
-                return $.isArray(geometry) && geometry.length >= 2 && typeof geometry[0] === 'number' && typeof geometry[1] === 'number';
+                return Array.isArray(geometry) && geometry.length >= 2 && typeof geometry[0] === 'number' && typeof geometry[1] === 'number';
             },
             isRing: function (geometry) {
-                return $.isArray(geometry) && (geometry.length === 0 || Geometry.isPoint(geometry[0]));
+                return Array.isArray(geometry) && (geometry.length === 0 || Geometry.isPoint(geometry[0]));
             },
             isRingCollection: function (geometry) {
-                return $.isArray(geometry) && (geometry.length === 0 || Geometry.isRing(geometry[0]));
+                return Array.isArray(geometry) && (geometry.length === 0 || Geometry.isRing(geometry[0]));
             },
             isMultiRingCollection: function (geometry) {
-                return $.isArray(geometry) && (geometry.length === 0 || Geometry.isRingCollection(geometry[0]));
+                return Array.isArray(geometry) && (geometry.length === 0 || Geometry.isRingCollection(geometry[0]));
             },
             getNearest: function getNearest(point, candidates) {
                 return TC.wrap.Geometry.getNearest(point, candidates);
