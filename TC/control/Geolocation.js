@@ -157,7 +157,9 @@ TC.control.Geolocation = function (options) {
 
     var opts = options || {};
     self._dialogDiv = TC.Util.getDiv(opts.dialogDiv);
-    self._$dialogDiv = $(self._dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
     if (!opts.dialogDiv) {
         document.body.appendChild(self._dialogDiv);
     }
@@ -468,12 +470,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     const newFormat = label.querySelector('input[type=radio][name=mode]').value;
 
                     options.forEach(function (option) {
-                        if (option.matches('.' + self.CLASS + '-' + newFormat)) {
-                            option.classList.remove(TC.Consts.classes.HIDDEN);
-                        }
-                        else {
-                            option.classList.add(TC.Consts.classes.HIDDEN);
-                        }
+                        option.classList.toggle(TC.Consts.classes.HIDDEN, !option.matches('.' + self.CLASS + '-' + newFormat));
                     });
                 });
             });
@@ -505,7 +502,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             self.track.trackWPT = self.div.querySelector(self._classSelector + '-track-waypoint');
 
             if (TC.Util.detectMobile()) {
-                if (Modernizr.mq('screen and (max-height: 50em) and (max-width: 50em)'))
+                if (matchMedia('screen and (max-height: 50em) and (max-width: 50em)').matches)
                     self.track.trackToolPanelOpened.checked = false;
             }
 
@@ -588,31 +585,6 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             };
             self.track.trackSearch.addEventListener("keyup", trackSearchListener);
             self.track.trackSearch.addEventListener("search", trackSearchListener);
-
-            // IE10 polyfill
-            try {
-                if (self.track.trackSearch.querySelector('::-ms-clear')) {
-                    var oldValue;
-                    self.track.trackSearch.addEventListener('mouseup', function (e) {
-                        oldValue = self.track.trackSearch.value;
-
-                        if (oldValue === '') {
-                            return;
-                        }
-
-                        // When this event is fired after clicking on the clear button
-                        // the value is not cleared yet. We have to wait for it.
-                        setTimeout(function () {
-                            var newValue = self.track.trackSearch.value;
-
-                            if (newValue === '') {
-                                _filter(newValue);
-                            }
-                        }, 1);
-                    });
-                }
-            }
-            catch (e) { }
 
             // en el panel
             self.track.trackSave.addEventListener('click', self.saveTrack.bind(self));
@@ -711,9 +683,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 if (!self.isDisabled) {
                     const listElement = self.track.trackList.querySelector('li[data-id="' + e.index + '"]');
                     _drawTrack(self, listElement.querySelector(sel.DRAW));
-                    $(self.track.trackList).animate({
-                        scrollTop: e.index * listElement.offsetHeight
-                    }, 'slow');
+                    setTimeout(function () {
+                        self.track.trackList.scrollTop = e.index * listElement.offsetHeight;
+                    }, 100);
                 } else {
                     self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: TC.Consts.msgType.WARNING });
                 }
@@ -845,12 +817,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     self.simulate_pausedElapse = -1;
 
                 e.target.setAttribute('title', self.getLocaleString(self.simulate_paused ? 'tr.lst.play' : 'tr.lst.pause'));
-                if (self.simulate_paused) {
-                    e.target.classList.add('play');
-                }
-                else {
-                    e.target.classList.remove('play');
-                }
+                e.target.classList.toggle('play', !!self.simulate_paused);
             }));
 
             var lapse = 0.5;
@@ -948,7 +915,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 });
             }
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         });
@@ -1234,7 +1201,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         window.addEventListener('visibilitychange', _onWindowVisibility, false);
 
         // ipad / iphone / ipod (Safari mobile, not Android default browsers not Chrome Mobile that is)
-        if (TC.Util.detectSafari() && Modernizr.touch && !navigator.userAgent.match(/Android/i) && !navigator.userAgent.match(/CriOS/i)) {
+        if (TC.Util.detectSafari() && TC.browserFeatures.touch() && !navigator.userAgent.match(/Android/i) && !navigator.userAgent.match(/CriOS/i)) {
             window.addEventListener('pagehide', _onWindowBlurred, false);
             window.addEventListener('pageshow', _onWindowFocused, false);
         } else { // the rest            
@@ -1247,7 +1214,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         window.removeEventListener('visibilitychange', _onWindowVisibility, false);
 
         // ipad / iphone / ipod (Safari mobile, not Android default browsers not Chrome Mobile that is)
-        if (TC.Util.detectSafari() && Modernizr.touch && !navigator.userAgent.match(/Android/i) && !navigator.userAgent.match(/CriOS/i)) {
+        if (TC.Util.detectSafari() && TC.browserFeatures.touch() && !navigator.userAgent.match(/Android/i) && !navigator.userAgent.match(/CriOS/i)) {
             window.removeEventListener('pagehide', _onWindowBlurred, false);
             window.removeEventListener('pageshow', _onWindowFocused, false);
         } else { // the rest            
@@ -1317,7 +1284,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         TC.Util.showModal(self._dialogDiv.querySelector('.tc-ctl-geolocation-continue-track-dialog'), {
             closeCallback: function () {
 
-                if ($.isFunction(callback)) {
+                if (TC.Util.isFunction(callback)) {
                     callback();
                 }
             }
@@ -1473,7 +1440,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 tracksArray.push(tracks[index]);
                 tracksArray.sort(function (a, b) {
                     if (typeof (a.name) === "string") {
-                        return $.isFunction(a.name.localeCompare) ? a.name.localeCompare(b.name) : 0;
+                        return TC.Util.isFunction(a.name.localeCompare) ? a.name.localeCompare(b.name) : 0;
                     } else { return 0; }
                 });
             }
@@ -1581,16 +1548,18 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         self.miDiv.style.height = dataDiv.height + 'px';
 
         self.miProgressDiv = document.createElement('div');
-        self.miProgressDiv.classList.add('miProgressDiv');
-        self.miProgressDiv.classList.add(self.CLASS + '-track-elevation-chart-progress');
-        self.miProgressDiv.classList.add(TC.Consts.classes.HIDDEN);
+        self.miProgressDiv.classList.add(
+            'miProgressDiv',
+            self.CLASS + '-track-elevation-chart-progress',
+            TC.Consts.classes.HIDDEN);
         self.miProgressDiv.style.width = '0%';
         self.miProgressDiv.style.height = dataDiv.height + 'px';
 
         self.miProgressTextDiv = document.createElement('div');
-        self.miProgressTextDiv.classList.add('miProgressTextDiv');
-        self.miProgressTextDiv.classList.add('tc-ctl-geolocation-track-elevation-chart-progress');
-        self.miProgressTextDiv.classList.add('text');
+        self.miProgressTextDiv.classList.add(
+            'miProgressTextDiv',
+            'tc-ctl-geolocation-track-elevation-chart-progress',
+            'text');
         self.miProgressTextDiv.style.width = dataDiv.width + 'px';
         self.miProgressTextDiv.style.height = dataDiv.height + 'px';
 
@@ -1621,34 +1590,33 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.chartSetProgress = function (previous, current, distance, doneTime) {
         var self = this;
 
-        if (self.miDiv) {
-            if (self.miDiv.style.display === 'none') {
-                self.miDiv.style.display = '';
-            }
-
-            self.miProgressDiv.classList.remove(TC.Consts.classes.HIDDEN);
-
-            var done = previous.d;
-            var progress = (done + Math.hypot(previous.p[0] - current[0], previous.p[1] - current[1])) / distance * 100;
-
-            self.miProgressDiv.style.width = progress + '%';
-
-            var locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
-            var ele = parseInt(current[2].toFixed(0)).toLocaleString(locale);
-            var dist;
-            var measure;
-            if ((done / 1000) < 1) {
-                dist = Math.round((done / 1000) * 1000);
-                measure = ' m';
-            } else {
-                dist = Math.round((done / 1000) * 100) / 100;
-                measure = ' km';
-            }
-
-            dist = dist.toLocaleString(locale);
-
-            self.miProgressTextDiv.innerHTML = '<div><span>' + ele + ' m' + '</span>' + '<br>' + '<span>' + dist + measure + '</span></div>' + (doneTime ? '<br><span>' + doneTime.toString + '</span>' : '');
+        if (self.miDiv && self.miDiv.style.display === 'none') {
+            self.miDiv.style.display = '';
         }
+
+        self.miProgressDiv.classList.remove(TC.Consts.classes.HIDDEN);
+
+        var done = previous.d;
+        var progress = (done + Math.hypot(previous.p[0] - current[0], previous.p[1] - current[1])) / distance * 100;
+
+        self.miProgressDiv.style.width = progress + '%';
+
+        var locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
+        var ele = parseInt(current[2].toFixed(0)).toLocaleString(locale);
+        var dist;
+        var measure;
+        if ((done / 1000) < 1) {
+            dist = Math.round((done / 1000) * 1000);
+            measure = ' m';
+        } else {
+            dist = Math.round((done / 1000) * 100) / 100;
+            measure = ' km';
+        }
+
+        dist = dist.toLocaleString(locale);
+
+        self.miProgressTextDiv.innerHTML = '<div><span>' + ele + ' m' + '</span>' + '<br>' + '<span>' + dist + measure + '</span></div>' + (doneTime ? '<br><span>' + doneTime.toString + '</span>' : '');
+
     };
 
     ctlProto._getTime = function (timeFrom, timeTo) {
@@ -1669,7 +1637,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
         d.s = Math.floor(diff / 1000);
 
-        return $.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
+        return TC.Util.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
     };
 
     ctlProto.simulateTrack = function (li) {
@@ -1866,7 +1834,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                                     empty = true;
                                 }
 
-                                self.chartData = !empty ? $.extend({}, { time: time, ele: ele, x: x, miny: minEle, maxy: maxEle }, elevationGain) : null;
+                                self.chartData = !empty ? TC.Util.extend({}, { time: time, ele: ele, x: x, miny: minEle, maxy: maxEle }, elevationGain) : null;
 
                                 resolve(self.chartData);
                                 return;
