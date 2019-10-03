@@ -11,7 +11,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     var capabilitiesPromises = {};
 
-    const isWebWorkerEnabled = !TC.isLegacy && window.hasOwnProperty('Worker');
+    const isWebWorkerEnabled = window.hasOwnProperty('Worker');
     const wwPromise = new Promise(function (resolve, reject) {
         if (isWebWorkerEnabled) {
             // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
@@ -25,7 +25,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     method: 'GET',
                     responseType: 'text'
                 }).then(
-                    function (data) {
+                    function (response) {
+                        const data = response.data;
                         var blob = new Blob([data], { type: "text/javascript" });
                         var url = window.URL.createObjectURL(blob);
                         resolve(url);
@@ -70,12 +71,17 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                                     var capLink = capLy.TileMatrixSetLink[j];
                                     matrixId = capLink.TileMatrixSet;
 
-                                    xmlLink = curXmlLy.getElementsByTagName('TileMatrixSetLink').each(function (ix, curLink) {
-                                        return $(curLink).find("TileMatrixSet:first").text() == matrixId;
-                                    });
+                                    var xmlLink;
+                                    const xmlLinks = curXmlLy.getElementsByTagName('TileMatrixSetLink');
+                                    for (var k = 0, kk = xmlLinks.length; k < kk; k++) {
+                                        const curLink = xmlLinks[k];
+                                        if (curLink.querySelector("TileMatrixSet:first").textContent == matrixId) {
+                                            xmlLink = curLink;
+                                            break;
+                                        }
+                                    }
 
-                                    if (xmlLink.length) {
-                                        xmlLink = xmlLink[0];
+                                    if (xmlLink) {
                                         capLink.TileMatrixSetLimits = [];
                                         const tmlCollection = xmlLink.getElementsByTagName('TileMatrixLimits');
                                         for (var k = 0, kk = tmlCollection.length; k < kk; k++) {
@@ -136,48 +142,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     const capabilitiesError = function (layer, reason) {
-        const msg = 'No se pudo obtener el documento de capacidades del servicio ' + layer.url + ': [' + reason + ']';
-        TC.error(msg);
-        if (layer.map) {
-            layer.map.trigger(TC.Consts.event.LAYERERROR, { layer: layer, reason: 'couldNotGetCapabilities' });
-        }
-        layer.wrap.setLayer(null);
-        return msg;
+        return 'No se pudo obtener el documento de capacidades del servicio ' + layer.url + ': [' + reason + ']';
     };
 
     const getCapabilitiesOnline = function (layer) {
-        const serviceUrl = layer.url;
         return new Promise(function (resolve, reject) {
-            var url;
-            const params = {};
-            if (layer.type === TC.Consts.layerType.WMTS) {
-                if (layer.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
-                    var suffix = '/1.0.0/WMTSCapabilities.xml';
-                    const suffixIdx = serviceUrl.indexOf(suffix);
-                    if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
-                        if (serviceUrl[serviceUrl.length - 1] === '/') {
-                            suffix = suffix.substr(1);
-                        }
-                        url = serviceUrl + suffix;
-                    }
-                    else {
-                        url = serviceUrl;
-                    }
-                }
-                else {
-                    url = serviceUrl;
-                    params.SERVICE = 'WMTS';
-                    params.VERSION = '1.0.0';
-                    params.REQUEST = 'GetCapabilities';
-                }
-            }
-            else {
-                url = serviceUrl;
-                params.SERVICE = 'WMS';
-                params.VERSION = '1.3.0';
-                params.REQUEST = 'GetCapabilities';
-            }
-            url = url + '?' + $.param($.extend(params, layer.queryParams));
+            const url = layer.getGetCapabilitiesUrl();
 
             layer.toolProxification.fetch(url, { retryAttempts: 2 }).then(function (data) {
                 parseCapabilities(layer, data.responseText)
@@ -208,11 +178,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                             resolve(value);
                         }
                         else {
-                            reject('Capabilities not in storage');
+                            reject(Error('Capabilities not in storage: ' + layer.url));
                         }
                     })
                     .catch(function () {
-                        reject('Undefined storage error');
+                        reject(Error('Undefined storage error'));
                     });
             });
         });
@@ -249,7 +219,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     const _createWMSLayer = function (layer) {
 
-        var layerNames = $.isArray(layer.names) ? layer.names.join(',') : layer.names;
+        var layerNames = Array.isArray(layer.names) ? layer.names.join(',') : layer.names;
         var format = layer.options.format;
         var options = layer.options;
 
@@ -261,11 +231,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         };
 
         if (layer.params) {
-            $.extend(params, layer.params);
+            TC.Util.extend(params, layer.params);
         }
 
         if (layer.queryParams) {
-            $.extend(params, layer.queryParams);
+            TC.Util.extend(params, layer.queryParams);
         }
 
         var infoFormat = layer.getPreferredInfoFormat();
@@ -282,7 +252,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     const _getLayerNodeIndex = function _getLayerNodeIndex(layer, treeNode) {
 
-        var result = $.inArray(treeNode.name, layer.availableNames);
+        var result = layer.availableNames.indexOf(treeNode.name);
         if (result === -1) {
             for (var i = 0, len = treeNode.children.length; i < len; i++) {
                 result = _getLayerNodeIndex(layer, treeNode.children[i]);
@@ -443,7 +413,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         else {
             self.names = [];
             self.availableNames = [];
-            if ($.isArray(self.options.layerNames)) {
+            if (Array.isArray(self.options.layerNames)) {
                 for (var i = 0; i < self.options.layerNames.length; i++) {
                     var name = self.options.layerNames[i];
                     if (typeof name === 'string') {
@@ -464,15 +434,25 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 var sldBody = self.options.params ? self.options.params.sld_body : null;
 
                 if (sldBody) {
-                    var sldBodyToXml = $.parseXML(sldBody);
-                    var namedLayerElm = TC.Util.getElementByNodeName(sldBodyToXml, 'sld:NamedLayer');
-                    if (namedLayerElm && namedLayerElm.length > 0) {
-                        var names = TC.Util.getElementByNodeName(namedLayerElm[0], 'sld:Name');
+                    const parser = new DOMParser();
+                    var sldBodyToXml;
+                    try {
+                        sldBodyToXml = parser.parseFromString(sldBody, 'text/xml');
+                    }
+                    catch (e) {
+                        TC.error(e.message);
+                        sldBodyToXml = null;
+                    }
+                    if (sldBodyToXml) {
+                        var namedLayerElm = TC.Util.getElementByNodeName(sldBodyToXml, 'sld:NamedLayer');
+                        if (namedLayerElm && namedLayerElm.length > 0) {
+                            var names = TC.Util.getElementByNodeName(namedLayerElm[0], 'sld:Name');
 
-                        if (names && names.length > 0) {
-                            var name = names[0].textContent;
-                            self.names.push(name);
-                            self.availableNames.push(name);
+                            if (names && names.length > 0) {
+                                var name = names[0].textContent;
+                                self.names.push(name);
+                                self.availableNames.push(name);
+                            }
                         }
                     }
                 }
@@ -506,7 +486,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                             break;
                     }
                     self.wrap.setLayer(ollyr);
-                    resolve(ollyr);
+                    if (ollyr) {
+                        resolve(ollyr);
+                    }
+                    else {
+                        reject(Error('Could not create native layer for "' + self.id + '"'));
+                    }
                 }
             };
 
@@ -530,8 +515,6 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
             const cachePromise = capabilitiesPromises[self.url];
             capabilitiesPromises[self.url] = self._capabilitiesPromise = cachePromise || new Promise(function (res, rej) {
-                var onlineFail = false;
-                var storageFail = false;
                 const onlinePromise = getCapabilitiesOnline(self);
                 const storagePromise = getCapabilitiesFromStorage(self);
 
@@ -540,20 +523,18 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         res(capabilities);
                     })
                     .catch(function (error) {
-                        onlineFail = true;
-                        if (storageFail) {
-                            rej(Error(error));
-                        }
+                        storagePromise.catch(function () {
+                            rej(error);
+                        });
                     });
                 storagePromise
                     .then(function (capabilities) {
                         res(capabilities);
                     })
-                    .catch(function (error) {
-                        storageFail = true;
-                        if (onlineFail) {
-                            rej(Error(error));
-                        }
+                    .catch(function () {
+                        onlinePromise.catch(function (error) {
+                            rej(error);
+                        });
                     });
             });
 
@@ -562,7 +543,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     processedCapabilities(capabilities);
                 })
                 .catch(function (error) {
-                    reject(Error(error));
+                    if (self.map) {
+                        self.map.trigger(TC.Consts.event.LAYERERROR, { layer: self, reason: 'couldNotGetCapabilities' });
+                    }
+                    reject(error);
                 });
         });
 
@@ -632,7 +616,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         return elto.Identifier == limit.TileMatrix
                     });
                     if (matrix.length) {
-                        var combi = $.extend({ matrixIndex: tset.TileMatrix.indexOf(matrix[0]) }, matrix[0], limit);
+                        var combi = TC.Util.extend({ matrixIndex: tset.TileMatrix.indexOf(matrix[0]) }, matrix[0], limit);
                         ret.push(combi);
                     }
                 }
@@ -676,13 +660,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 }
             }
 
-            var nodeNames = $.map(children, function (elm) {
+            var nodeNames = children.map(function (elm) {
                 return layer.wrap.getName(elm);
             }).reverse();
             var idx, firstIdx;
             var fail = false;
 
-            firstIdx = idx = $.inArray(nodeNames[0], names);
+            firstIdx = idx = names.indexOf(nodeNames[0]);
             if (idx < 0) {
                 fail = true;
             }
@@ -743,7 +727,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     var _extendLayerNameOptions = function (options) {
-        return $.extend({ aggregate: true, lazy: false }, options);
+        return TC.Util.extend({ aggregate: true, lazy: false }, options);
     };
 
     var _combineArray = function (source, add, rem) {
@@ -754,7 +738,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         r = rem ? rem : [];
         var sa = s.concat(a);
         for (var i = 0; i < sa.length; i++) {
-            if ($.inArray(sa[i], sa) === i && $.inArray(sa[i], r) === -1) {
+            if (sa.indexOf(sa[i]) === i && r.indexOf(sa[i]) === -1) {
                 result[result.length] = sa[i];
             }
         }
@@ -781,7 +765,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     var _isNameInArray = function (layer, name, names, looseComparison) {
-        return $.grep(names, function (elm) {
+        return names.filter(function (elm) {
             return layer.compareNames(name, elm, looseComparison);
         }).length > 0;
     };
@@ -807,7 +791,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var layer = this;
         return new Promise(function (resolve, reject) {
             layer.wrap.getLayer().then(function () {
-                var ln = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
                 layer.names = ln;
                 var opts = _extendLayerNameOptions(options);
                 if (opts.aggregate) {
@@ -817,13 +801,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 var newParams = {
                     LAYERS: ln.join(','), TRANSPARENT: true
                 };
-                // Si no hay capas ocultamos la capa de servicio
-                if (!ln.length) {
-                    layer.setVisibility(false);
-                }
                 if (opts.lazy) {
                     var params = layer._newParams || layer.wrap.getParams();
-                    layer._newParams = $.extend(params, newParams);
+                    layer._newParams = TC.Util.extend(params, newParams);
                 }
                 else {
                     if (layer.map) {
@@ -863,7 +843,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return new Promise(function (resolve, reject) {
             self.wrap.getLayer().then(function () {
                 var opts = _extendLayerNameOptions(options);
-                var ln2a = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln2a = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
                 var ln = self.wrap.getParams().LAYERS;
                 if (opts.aggregate) {
                     ln2a = _disgregateLayerNames(self, ln2a);
@@ -893,7 +873,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return new Promise(function (resolve, reject) {
             self.wrap.getLayer().then(function () {
                 var opts = _extendLayerNameOptions(options);
-                var ln2r = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln2r = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
                 var ln = self.wrap.getParams().LAYERS;
                 if (opts.aggregate) {
                     ln2r = _disgregateLayerNames(self, ln2r);
@@ -923,7 +903,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return new Promise(function (resolve, reject) {
             self.wrap.getLayer().then(function () {
                 var opts = _extendLayerNameOptions(options);
-                var ln2t = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln2t = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
                 var currentLayerNames = self.wrap.getParams().LAYERS;
                 if (opts.aggregate) {
                     ln2t = _disgregateLayerNames(self, ln2t);
@@ -933,7 +913,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 var ln2r = [];
                 for (var i = 0; i < ln2t.length; i++) {
                     var l = ln2t[i];
-                    if ($.inArray(l, currentLayerNames) < 0) {
+                    if (currentLayerNames.indexOf(l) < 0) {
                         ln2a[ln2a.length] = l;
                     }
                     else {
@@ -984,7 +964,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         if (self.wrap.isNative(olLayer) && self.type === TC.Consts.layerType.WMS) {
             if (!self._disgregatedLayerNames) {
                 var layerNames = self.wrap.getParams().LAYERS;
-                layerNames = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                layerNames = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
                 self._disgregatedLayerNames = _disgregateLayerNames(self, layerNames);
             }
         }
@@ -1117,13 +1097,13 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
                 }
                 break;
-            case TC.Consts.layerType.WMS:                
+            case TC.Consts.layerType.WMS:
                 result = true;
                 var layers = self.wrap.getAllLayerNodes();
                 if (layers.length > 0) {
                     currentScale = _getOgcScale();
                     var node;
-                    if (typeof nameOrUid === 'number') {
+                    if (parseInt(nameOrUid).toString() === nameOrUid) { // Es numérico, asumimos que es un UID
                         node = self._capabilitiesNodes[nameOrUid];
                     }
                     else {
@@ -1217,6 +1197,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     layerProto.getTree = function () {
         var self = this;
+        
         var result = self.tree;
 
         var addChild = function (node, child) {
@@ -1450,7 +1431,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     layerProto.getPath = function (layerName, ignorePrefix) {
-        return $.map(this.getNodePath(layerName, ignorePrefix), function (node) {
+        return this.getNodePath(layerName, ignorePrefix).map(function (node) {
             return node.title || node.Title;
         });
     };
@@ -1508,6 +1489,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
     layerProto.getResolutions = function () {
         return this.wrap.getResolutions();
+    };
+
+    layerProto.setResolutions = function (resolutions) {
+        this.wrap.setResolutions(resolutions);
     };
 
     //Devuelve un array de subLayers cuyo nombre o descripción contenga el texto indicado
@@ -1625,19 +1610,57 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return result;
     };
 
+    layerProto.getGetCapabilitiesUrl = function () {
+        const self = this;
+        var url;
+        const serviceUrl = self.url;
+        const params = {};
+        if (self.type === TC.Consts.layerType.WMTS) {
+            if (self.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
+                var suffix = '/1.0.0/WMTSCapabilities.xml';
+                const suffixIdx = serviceUrl.indexOf(suffix);
+                if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
+                    if (serviceUrl[serviceUrl.length - 1] === '/') {
+                        suffix = suffix.substr(1);
+                    }
+                    url = serviceUrl + suffix;
+                }
+                else {
+                    url = serviceUrl;
+                }
+            }
+            else {
+                url = serviceUrl;
+                params.SERVICE = 'WMTS';
+                params.VERSION = '1.0.0';
+                params.REQUEST = 'GetCapabilities';
+            }
+        }
+        else {
+            url = serviceUrl;
+            params.SERVICE = 'WMS';
+            params.VERSION = '1.3.0';
+            params.REQUEST = 'GetCapabilities';
+        }
+        url = url + '?' + TC.Util.getParamString(TC.Util.extend(params, self.queryParams));
+        return url;
+    };
+
+
+
     layerProto.getGetMapUrl = function () {
         return cleanOgcUrl(this.wrap.getGetMapUrl());
     };
 
     layerProto.getPreferredInfoFormat = function () {
-        var layer = this;
+        const layer = this;
         var result = null;
 
-        var infoFormats = layer.wrap.getInfoFormats();
+        const infoFormats = layer.wrap.getInfoFormats();
         if (infoFormats) {
             for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
                 var format = TC.wrap.layer.Raster.infoFormatPreference[i];
-                if ($.inArray(format, infoFormats) >= 0) {
+                if (infoFormats.indexOf(format) >= 0) {
                     result = format;
                     break;
                 }
@@ -1754,8 +1777,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     layerProto.getFeatureUrl = function (url) {
         var self = this;
 
-        return self.toolProxification.cacheHost.getAction(url).then(function (cache) {
-            return cache.action.call(self.toolProxification, url);
+        return self.toolProxification.fetch(url).then(function () {
+            return self.toolProxification.cacheHost.getAction(url)
+                .then(function (cache) {
+                    return cache.action.call(self.toolProxification, url);
+                })
+                .catch(function (error) {
+                    return Promise.reject(error);
+                })
+        }).catch(function (error) {
+            return Promise.reject(error);
         });
     };
 
@@ -1774,7 +1805,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 return (elem.type === TC.Consts.layerType.WMS ||
                     elem.type === TC.Consts.layerType.WMTS) &&
                     (elem.capabilities === self.capabilities || elem.url === self.url) &&
-                    (dynamicStatement && $.isFunction(dynamicStatement) ? dynamicStatement(elem) : true);
+                    (TC.Util.isFunction(dynamicStatement) ? dynamicStatement(elem) : true);
             })[0];
 
             return matchingLayer || null;
@@ -1784,23 +1815,23 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     layerProto.getImageLoad = function (image, src, location) {
         const self = this;
 
+        const setSRC = function (data) {
+            var olImg = image.getImage();
+
+            if (!TC.Util.isSameOrigin(data.src)) {
+                if (!self.map || (self.map && self.map.mustBeExportable)) {
+                    olImg.crossOrigin = data.crossOrigin !== null ? data.crossOrigin : "anonymous";
+                }
+            }
+
+            // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
+            olImg.setAttribute("src", data.src);
+
+            _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
+        };
+
         // Viene sin nombre desde el control TOC, si es así lo ignoramos.
         if (self.names && self.names.length > 0) {
-
-            const setSRC = function (data) {
-                var olImg = image.getImage();
-
-                if (!TC.Util.isSameOrigin(data.src)) {
-                    if (!self.map || (self.map && self.map.mustBeExportable)) {
-                        olImg.crossOrigin = data.crossOrigin !== null ? data.crossOrigin : "anonymous";
-                    }
-                }
-
-                // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
-                olImg.setAttribute("src", data.src);
-
-                _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
-            };
 
             const error = function (error) {
                 _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
@@ -1893,12 +1924,12 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                         if (!self.map || (self.map && self.map.mustBeExportable)) {
                             img.crossOrigin = "anonymous";
                         }
-                    }                    
+                    }
 
                     img.onload = function () {
                         _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
                     };
-                    img.onerror = function (error) {                        
+                    img.onerror = function (error) {
                         img.src = TC.Consts.BLANK_IMAGE;
                         _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
                     };
@@ -1907,6 +1938,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 }
             }
         } else {
+            setSRC({ src: TC.Consts.BLANK_IMAGE });
             // lanzamos el evento para gestionar el loading
             _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
         }
@@ -1925,10 +1957,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         if (typeof (WFSCapabilities) === "undefined") {
             TC.syncLoadJS(TC.apiLocation + 'TC/layer/WFSCapabilitiesParser');
-        }
-        var url = this.options.url.replace(/service=wms/i, "service=wfs").replace(/\/wms(\/|\?|\b)/i, "$'/wfs/")
-        var _src = !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(url)) ? self.getBySSL_(url) : url;
-        var basicUrl = url.substring(url.indexOf("://") < 0 ? 0 : url.indexOf("://") + 3);
+        }        
+        const newUrl = this.options.url.replace(/wms/gi, "wfs");
+        const _src = !TC.Util.isSecureURL(newUrl) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(newUrl)) ? self.getBySSL_(newUrl) : newUrl;
+        const basicUrl = newUrl.substring(newUrl.indexOf("://") < 0 ? 0 : newUrl.indexOf("://") + 3);
         if (TC.WFScapabilities[basicUrl]) {
             if (TC.WFScapabilities[basicUrl] instanceof Promise)
                 return TC.WFScapabilities[basicUrl];
@@ -1939,7 +1971,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }, 100);
                 });
         }
-        TC.WFScapabilities[basicUrl] = new Promise(function (resolve, reject) {
+        TC.WFScapabilities[basicUrl] = new Promise(function (resolve, reject) {            
             var params = {
             }
             params.SERVICE = 'WFS';
@@ -2005,7 +2037,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 const ablCollection = self.map ? self.map.options.availableBaseLayers : TC.Cfg.availableBaseLayers;
                 ablCollection.forEach(function (baseLayer) {
                     if (self.options.fallbackLayer === baseLayer.id) {
-                        self.fallbackLayer = new TC.layer.Raster($.extend({}, baseLayer, { isBase: true, stealth: true, map: self.map }));
+                        self.fallbackLayer = new TC.layer.Raster(TC.Util.extend({}, baseLayer, { isBase: true, stealth: true, map: self.map }));
                         self.fallbackLayer.firstOption = self;
                     }
                 });
@@ -2015,7 +2047,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 self.fallbackLayer.firstOption = self;
             }
             else {
-                self.fallbackLayer = new TC.layer.Raster($.extend({}, fbLayer, {
+                self.fallbackLayer = new TC.layer.Raster(TC.Util.extend({}, fbLayer, {
                     id: TC.getUID(),
                     isBase: true,
                     stealth: true,
