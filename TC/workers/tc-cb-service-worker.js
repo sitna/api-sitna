@@ -2,7 +2,7 @@
 
     // Arreglo del bug de actualización de la cache
     self.addEventListener('install', function (event) {
-        var cacheName = 'TC.offline.map.common';
+        const cacheName = 'TC.offline.map.common';
         event.waitUntil(
             caches.has(cacheName).then(function (hasCache) {
                 if (hasCache) {
@@ -53,35 +53,46 @@
     });
 
     // Diccionario de estados de cacheo de mapas. Necesario para poder cancelar cacheos.
-    var currentMapStates = {};
+    const currentMapStates = {};
+
+    const postMessage = function (msg) {
+        self.clients.matchAll()
+            .then(function (clientList) {
+                clientList.forEach(function (client) {
+                    client.postMessage(msg);
+                });
+            });
+    };
 
     self.addEventListener('message', function (event) {
         // Procesamos las solicitudes de cacheo y borrado
 
-        var postMessage = function (msg) {
-            self.clients.matchAll()
-                .then(function (clientList) {
-                    clientList.forEach(function (client) {
-                        client.postMessage(msg);
-                    });
-                });
-        };
-
-        var action = event.data.action;
+        const action = event.data.action;
+        const name = event.data.name;
+        const silent = event.data.silent;
+        const urlList = event.data.list;
         switch (action) {
             case 'create':
-                var name = event.data.name;
-                var silent = event.data.silent;
                 currentMapStates[name] = action;
-                var createCache = function () {
+                caches.delete(name).finally(function () {
                     caches.open(name)
-                    .then(function (cache) {
-                        var list = event.data.list;
-                        var listLength = list.length;
-                        var counter = 0;
-                        list.forEach(function (url) {
-                            if (currentMapStates[name]) {
-                                cache.add(url)
+                        .then(function (cache) {
+                            const addToCache = function (idx) {
+                                if (!currentMapStates[name]) { // Se ha cancelado la creación de la cache
+                                    return;
+                                }
+                                if (idx === urlList.length) {
+                                    if (!silent) {
+                                        postMessage({
+                                            action: action,
+                                            name: name,
+                                            event: 'cached'
+                                        });
+                                    }
+                                    return;
+                                }
+                                const count = idx + 1;
+                                cache.add(urlList[idx])
                                     .then(
                                         function () {
                                             if (!silent) {
@@ -89,16 +100,9 @@
                                                     action: action,
                                                     name: name,
                                                     event: 'progress',
-                                                    count: ++counter,
-                                                    total: listLength
+                                                    count: count,
+                                                    total: urlList.length
                                                 });
-                                                if (counter === listLength) {
-                                                    postMessage({
-                                                        action: action,
-                                                        name: name,
-                                                        event: 'cached'
-                                                    });
-                                                }
                                             }
                                         },
                                         function () {
@@ -109,16 +113,16 @@
                                                 url: url
                                             });
                                         }
-                                    );
-                            }
+                                    )
+                                    .finally(function () {
+                                        addToCache(count);
+                                    });
+                            };
+                            addToCache(0);
                         });
-                    });
-                };
-                caches.delete(name).then(createCache, createCache);
+                });
                 break;
             case 'delete':
-                var name = event.data.name;
-                var silent = event.data.silent;
                 delete currentMapStates[name];
                 caches.delete(name).then(
                     function () {
