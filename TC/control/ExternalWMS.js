@@ -5,13 +5,9 @@ if (!TC.Control) {
 }
 
 TC.control.ExternalWMS = function (options) {
-    if (TC.isLegacy) {
-        console.warn("El control ExternalWMS no soporta modo legacy");
-        return;
-    }
-    var self = this;
-    this.count = 0;
-    this._addedUrls = [];
+    const self = this;
+    self.count = 0;
+    self._addedUrls = [];
 
     TC.Control.apply(self, arguments);
 
@@ -37,11 +33,6 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
     };
 
     ctlProto.register = function (map) {
-        if (TC.isLegacy) {
-            console.warn("El control ExternalWMS no soporta modo legacy");
-            return;
-        }
-
         const self = this;
         const result = TC.Control.prototype.register.call(self, map);
 
@@ -69,7 +60,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
             return url;
         }
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('button[name="agregar"]', function (evt) {
+        const addWMS = function () {
             var url = self.div.querySelector('input').value.trim();
 
             if (!url) {
@@ -116,7 +107,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                     };
                     //URI: recorremos las opciones buscando el servicio que se va a agregar a ver si tiene parametro layerNames
                     for (var i = 0; i < self.options.suggestions.length; i++) {
-                        var _current = $.grep(self.options.suggestions[i].items, function (item, i) {
+                        var _current = self.options.suggestions[i].items.filter(function (item, i) {
                             return item.url === url;
                         });
                         if (_current.length > 0 && _current[0].layerNames) {
@@ -150,7 +141,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                                 if (option.value.replace(/https?:\/\/|\/\//, '') === url.replace(/https?:\/\/|\/\//, '')) {
                                     selectedOptions.push(option);
                                 }
-                            });                            
+                            });
                             self.markServicesAsSelected(selectedOptions);
                             self._addedUrls.push(url);
                             loadingCtrl.hide();
@@ -164,8 +155,17 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                         });
                 }
             }
+        };
 
-        }));
+        self.renderPromise().then(() => {
+            self.div.querySelector('input').addEventListener('keyup', (e) => {
+                if (e.key && e.key.toLowerCase() === "enter" && self.div.querySelector('input').value.trim().length > 0) {
+                    addWMS();
+                }
+            });
+        });       
+
+        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('button[name="agregar"]', addWMS));
 
         map.on(TC.Consts.event.LAYERADD, function (e) {
             const layer = e.layer;
