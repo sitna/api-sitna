@@ -17,12 +17,12 @@ TC.Consts.event.CHANGE = 'change';
 
         TC.Control.apply(self, arguments);
 
-        if (!Modernizr.inputtypes.color && !window.CP) {
+        if (!TC.browserFeatures.inputTypeColor() && !window.CP) {
             TC.loadCSS(TC.apiLocation + 'lib/color-picker/color-picker.min.css');
             TC.syncLoadJS(TC.apiLocation + 'lib/color-picker/color-picker.min.js');
         }
 
-        self.styles = $.extend(true, TC.Cfg.styles.selection, self.options.styles);
+        self.styles = TC.Util.extend(true, TC.Cfg.styles.selection, self.options.styles);
         self.styles.text = self.styles.text || {
             fontSize: self.styles.line.fontSize,
             fontColor: self.styles.line.fontColor,
@@ -60,14 +60,14 @@ TC.Consts.event.CHANGE = 'change';
         switch (true) {
             case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
             case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
-                result = $.extend({}, mapStyles.polygon);
+                result = TC.Util.extend({}, mapStyles.polygon);
                 break;
             case TC.feature.Point && feature instanceof TC.feature.Point:
             case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
-                result = $.extend({}, mapStyles.point);
+                result = TC.Util.extend({}, mapStyles.point);
                 break;
             default:
-                result = $.extend({}, mapStyles.line);
+                result = TC.Util.extend({}, mapStyles.line);
                 break;
         }
         const style = feature.getStyle();
@@ -84,7 +84,7 @@ TC.Consts.event.CHANGE = 'change';
     //const setFeatureSelectedStyle = function (ctl, features) {
     //    const mapStyles = ctl.map.options.styles.selection;
     //    features.forEach(function (feature) {
-    //        feature._originalStyle = $.extend({}, feature.getStyle());
+    //        feature._originalStyle = TC.Util.extend({}, feature.getStyle());
     //        feature.setStyle(ctl.styleFunction(feature));
     //    });
     //};
@@ -218,7 +218,7 @@ TC.Consts.event.CHANGE = 'change';
                 self.setFontSize(e.target.value);
             });
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         };
@@ -231,7 +231,7 @@ TC.Consts.event.CHANGE = 'change';
         };
 
         var promise;
-        if (Modernizr.inputtypes.color) {
+        if (TC.browserFeatures.inputTypeColor()) {
             promise = self._set1stRenderPromise(self.renderData(renderObject, renderCallback));
         }
         else {
@@ -403,14 +403,14 @@ TC.Consts.event.CHANGE = 'change';
         switch (true) {
             case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
             case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
-                result = $.extend({}, mapStyles.polygon);
+                result = TC.Util.extend({}, mapStyles.polygon);
                 break;
             case TC.feature.Point && feature instanceof TC.feature.Point:
             case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
-                result = $.extend({}, mapStyles.point);
+                result = TC.Util.extend({}, mapStyles.point);
                 break;
             default:
-                result = $.extend({}, mapStyles.line);
+                result = TC.Util.extend({}, mapStyles.line);
                 break;
         }
         const style = feature.getStyle();
@@ -428,17 +428,11 @@ TC.Consts.event.CHANGE = 'change';
         const self = this;
         self.textActive = active;
         if (active) {
-            self._textBtn.classList.add(TC.Consts.classes.ACTIVE);
-            self._textBtn.classList.add(active);
-        }
-        else {
-            self._textBtn.classList.remove(TC.Consts.classes.ACTIVE);
-            self._textBtn.classList.remove(active);
-        }
-        if (active) {
+            self._textBtn.classList.add(TC.Consts.classes.ACTIVE, active);
             self._styleSection.classList.remove(TC.Consts.classes.HIDDEN);
         }
         else {
+            self._textBtn.classList.remove(TC.Consts.classes.ACTIVE, active);
             self._styleSection.classList.add(TC.Consts.classes.HIDDEN);
         }
         self.displayLabelText();
@@ -456,7 +450,7 @@ TC.Consts.event.CHANGE = 'change';
             self._fontColorPicker.value = color;
             self._textInput.style.color = color;
             self._textInput.style.textShadow = '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor;
-            if (!Modernizr.inputtypes.color) {
+            if (!TC.browserFeatures.inputTypeColor()) {
                 self._fontColorPicker.style.backgroundColor = color;
                 self._fontColorPicker.blur();
             }
@@ -550,7 +544,7 @@ TC.Consts.event.CHANGE = 'change';
             self
                 .setFontSizeWatch(size)
                 .setFontColorWatch(color)
-                ._textInput.value = text;
+                ._textInput.value = text || '';
         });
         return self;
     };
@@ -561,7 +555,7 @@ TC.Consts.event.CHANGE = 'change';
         if (features.length) {
             const style = features[0].getStyle();
             features.forEach(function (feature) {
-                const textStyle = $.extend({}, self.styles.text, style);
+                const textStyle = TC.Util.extend({}, self.styles.text, style);
                 style.label = text;
                 style.labelOffset = textStyle.labelOffset;
                 style.fontColor = textStyle.fontColor;
