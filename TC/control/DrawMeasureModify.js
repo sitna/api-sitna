@@ -10,7 +10,9 @@ TC.control.DrawMeasureModify = function () {
     TC.control.Measure.apply(self, arguments);
 
     self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-    self._$dialogDiv = $(self._dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
     if (!self.options.dialogDiv) {
         document.body.appendChild(self._dialogDiv);
     }
@@ -128,7 +130,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 self._elevProfileBtn.style.display = 'none';
             }
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         }));
@@ -144,7 +146,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                     fileName: self.getLocaleString('sketch').toLowerCase().replace(' ', '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true),
                     format: format
                 };
-                const includeElevation = self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked;
+                const includeElevation = self.options.displayElevation ? self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked : false;
                 if (includeElevation) {
                     const interpolateCoords = self._dialogDiv.querySelector('input[type=radio][name=ip-coords]:checked').value === "1";
                     const li = self.map.getLoadingIndicator();
@@ -180,7 +182,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                             self.map.exportFeatures(features, exportOptions);
                         })
                         .catch(function (error) {
-                            if (error === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                            if (error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
                                 TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
                                 return;
                             }
@@ -217,12 +219,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
             }));
             self._dialogDiv.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio][name=ip-coords]', function (e) {
                 const ipMessage = self._dialogDiv.querySelector('.' + self.CLASS + '-dialog-ip-m');
-                if (e.target.value === '0') {
-                    ipMessage.classList.add(TC.Consts.classes.HIDDEN);
-                }
-                else {
-                    ipMessage.classList.remove(TC.Consts.classes.HIDDEN);
-                }
+                ipMessage.classList.toggle(TC.Consts.classes.HIDDEN, e.target.value === '0');
             }));
             self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
                 const format = e.target.dataset.format;
@@ -576,10 +573,10 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 const elevationText = self._elevationText.innerHTML;
                 if (self._1stCoordValue.textContent.trim().length > 0 && self._2ndCoordValue.textContent.trim().length > 0) {
                     data.CRS = self.map.crs;
-                    data[firstCoordText.substr(0, firstCoordText.indexOf(':'))] = $(self._1stCoordValue).data(_dataKeys.VALUE);
-                    data[secondCoordText.substr(0, secondCoordText.indexOf(':'))] = $(self._2ndCoordValue).data(_dataKeys.VALUE);
+                    data[firstCoordText.substr(0, firstCoordText.indexOf(':'))] = parseFloat(self._1stCoordValue.dataset.value);
+                    data[secondCoordText.substr(0, secondCoordText.indexOf(':'))] = parseFloat(self._2ndCoordValue.dataset.value);
                     if (elevationText) {
-                        data[self.getLocaleString('ele')] = $(self._elevationValue).data(_dataKeys.VALUE);
+                        data[self.getLocaleString('ele')] = parseFloat(self._elevationValue.dataset.value);
                     }
                     feature.setData(data);
                 }
@@ -664,19 +661,19 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 return Math.round(val * factor) / factor;
             }
             self._1stCoordValue.innerHTML = TC.Util.formatNumber(coord1.toFixed(precision), locale);
-            $(self._1stCoordValue).data(_dataKeys.VALUE, round(coord1));
+            self._1stCoordValue.dataset.value = round(coord1);
             self._2ndCoordValue.innerHTML = TC.Util.formatNumber(coord2.toFixed(precision), locale);
-            $(self._2ndCoordValue).data(_dataKeys.VALUE, round(coord2));
+            self._2ndCoordValue.dataset.value = round(coord2);
             if (options.coords.length > 2) {
                 const elevation = Math.round(options.coords[2]);
                 self._elevationText.innerHTML = self.getLocaleString('ele').toLowerCase() + ': ';
                 self._elevationValue.innerHTML = TC.Util.formatNumber(elevation.toFixed(TC.Consts.METER_PRECISION), locale) + ' m';
-                $(self._elevationValue).data(_dataKeys.VALUE, elevation);
+                self._elevationValue.dataset.value = elevation;
             }
             else {
                 self._elevationText.innerHTML = '';
                 self._elevationValue.innerHTML = '';
-                $(self._elevationValue).data(_dataKeys.VALUE, null);
+                self._elevationValue.dataset.value = '';
             }
         }
         return self;
@@ -690,12 +687,12 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
             self._1stCoordText.innerHTML = self.NOMEASURE;
             self._2ndCoordText.innerHTML = '';
             self._1stCoordValue.innerHTML = '';
-            $(self._1stCoordValue).data(_dataKeys.VALUE, null);
+            self._1stCoordValue.dataset.value = '';
             self._2ndCoordValue.innerHTML = '';
-            $(self._2ndCoordValue).data(_dataKeys.VALUE, null);
+            self._2ndCoordValue.dataset.value = '';
             self._elevationText.innerHTML = '';
             self._elevationValue.innerHTML = '';
-            $(self._elevationValue).data(_dataKeys.VALUE, null);
+            self._elevationValue.dataset.value = '';
         }
         return self;
     };
@@ -731,7 +728,6 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         const self = this;
 
         const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-dialog');
-        const $dialog = $(dialog);
         const hasPoints = self.layer.features.some(function (feature) {
             return (TC.feature.Point && feature instanceof TC.feature.Point) ||
                 (TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint);
@@ -745,24 +741,15 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon);
         });
 
-        // Si no hay líneas o polígonos, no es necesario preguntar si queremos interpolar
-        const ipDiv = dialog.querySelector('.' + self.CLASS + '-dialog-ip');
-
-        if (!self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked || (!hasLines && !hasPolygons)) {
-            ipDiv.classList.add(TC.Consts.classes.HIDDEN);
-        }
-        else {
-            ipDiv.classList.remove(TC.Consts.classes.HIDDEN);
+        if (self.options.displayElevation) {
+            // Si no hay líneas o polígonos, no es necesario preguntar si queremos interpolar
+            const ipDiv = dialog.querySelector('.' + self.CLASS + '-dialog-ip');
+            ipDiv.classList.toggle(TC.Consts.classes.HIDDEN, !self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked || (!hasLines && !hasPolygons));
         }
 
         // Si no hay líneas o puntos, no es necesario mostrar el botón de GPX
         const gpxButton = dialog.querySelector('button[data-format=GPX]');
-        if (hasLines || hasPoints) {
-            gpxButton.classList.remove(TC.Consts.classes.HIDDEN);
-        }
-        else {
-            gpxButton.classList.add(TC.Consts.classes.HIDDEN);
-        }
+        gpxButton.classList.toggle(TC.Consts.classes.HIDDEN, !(hasLines || hasPoints));
 
         TC.Util.showModal(dialog, options);
         return self;
@@ -847,7 +834,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 if (typeof self.options.displayElevation === 'object') {
                     elevationGainOptions.hillDeltaThreshold = self.options.displayElevation.hillDeltaThreshold;
                 }
-                $.extend(self.elevationProfileData, TC.tool.Elevation.getElevationGain(elevationGainOptions));
+                TC.Util.extend(self.elevationProfileData, TC.tool.Elevation.getElevationGain(elevationGainOptions));
 
                 // Cacheamos el perfil
                 const matchingFeature = self.layer.features
