@@ -1,0 +1,80 @@
+﻿.tc-ctl.tc-ctl-m-finfo {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.tc-ctl-m-finfo-select {
+    font-size: 0.9em;
+    line-height: 1.8em;
+}
+
+    .tc-ctl-m-finfo-select form {
+        display: flex;
+    }
+
+    .tc-ctl-m-finfo-select label {
+        position: relative;
+        display: inline-block;
+        flex-grow: 1;
+        margin: 0;
+        padding: 0;
+        font-size: 1em;
+    }
+
+    .tc-ctl-m-finfo-select input[type=radio] {
+        display: none;
+    }
+
+    .tc-ctl-m-finfo-select form > span {
+        height: 2em;
+        text-align: center;
+        box-sizing: border-box;
+        border: 0.1em solid transparent;
+        background-color: var(--main-bg-color);
+        display: inline-block;
+        flex-grow: 1;
+    }
+
+    .tc-ctl-m-finfo-select input[type=radio] ~ span {
+        display: inline-block;
+        width: calc(100% - 0.1em);
+        height: 2em;
+        text-align: center;
+        box-sizing: border-box;
+        cursor: pointer;
+    }
+
+        .tc-ctl-m-finfo-select input[type=radio] ~ span:before {
+            font-family: mapskin;
+            letter-spacing: 0.1em;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+    .tc-ctl-m-finfo-select label.tc-ctl-m-finfo-btn-point input[type=radio] ~ span:before {
+        content: '\e045';
+    }
+
+    .tc-ctl-m-finfo-select label.tc-ctl-m-finfo-btn-line input[type=radio] ~ span:before {
+        content: '\e046';
+    }
+
+    .tc-ctl-m-finfo-select label.tc-ctl-m-finfo-btn-polygon input[type=radio] ~ span:before {
+        content: '\e047';
+    }
+
+    .tc-ctl-m-finfo-select input[type=radio]:checked ~ span {
+        color: var(--btn-hl-color);
+        background-color: var(--btn-hl-bg-color);
+        border-color: var(--btn-hl-border-color);
+        z-index: 10007;
+    }
+
+    .tc-ctl-m-finfo-select input[type=radio]:disabled ~ span {
+        color: var(--btn-disabled-color);
+        background-color: var(--btn-disabled-bg-color);
+        border-color: var(--btn-disabled-border-color);
+        cursor: default;
+    }
