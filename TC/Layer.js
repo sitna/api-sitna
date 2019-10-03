@@ -117,7 +117,7 @@ TC.Layer = function (options) {
      * @default {}
      */
     _layer.options = options || {};
-    $.extend(_layer, _layer.options);
+    TC.Util.extend(_layer, _layer.options);
 
     /**
      * Identificador de capa, debe ser único en el mapa. Si no se asigna en las opciones del constructor, se genera uno automáticamente.
