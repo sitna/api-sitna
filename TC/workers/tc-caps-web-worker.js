@@ -606,6 +606,7 @@ console.log("MILLISECONDS",end2-start2);
         var tileMatrixSets = contents.TileMatrixSet;
         for (var i = 0, len = tileMatrixSets.length; i < len; i++) {
             var tms = tileMatrixSets[i];
+            tms.SupportedCRS = tms.SupportedCRS.trim();
             for (var j = 0, lenj = tms.TileMatrix.length; j < lenj; j++) {
                 var tm = tms.TileMatrix[j];
                 tm.MatrixHeight = parseInt(tm.MatrixHeight);
