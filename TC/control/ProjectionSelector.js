@@ -22,7 +22,9 @@ if (!TC.control.MapContents) {
         };
 
         self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-        self._$dialogDiv = $(self._dialogDiv);
+        if (window.$) {
+            self._$dialogDiv = $(self._dialogDiv);
+        }
         if (!self.options.dialogDiv) {
             document.body.appendChild(self._dialogDiv);
         }
@@ -64,7 +66,7 @@ if (!TC.control.MapContents) {
     };
 
     ctlProto.getAvailableCRS = function (options) {
-        return this.map.getCompatibleCRS({ includeFallbacks: true })
+        return this.map.getCompatibleCRS(TC.Util.extend(options || {}, { includeFallbacks: true }))
     };
 
     ctlProto.showProjectionChangeDialog = function (options) {
@@ -76,20 +78,56 @@ if (!TC.control.MapContents) {
         const ul = body.querySelector('ul.' + self._cssClasses.CRS_LIST);
         ul.innerHTML = '';
         const blFirstOption = self.map.baseLayer.firstOption || self.map.baseLayer;
-        const blFallback = blFirstOption.getFallbackLayer();
-        const blCRSList = blFirstOption.getCompatibleCRS();
+        const blFallback = blFirstOption.isRaster() ? blFirstOption.getFallbackLayer() : null;
 
         const loadProjs = function () {
+            var crsList = [];
+            var blCRSList = [];
+
+            options = options || {};
+            
+            if (blFirstOption.isRaster()) {
+                blCRSList = blFirstOption.getCompatibleCRS();
+                crsList = self.getAvailableCRS(TC.Util.extend(options, {}));
+            } else {
+                blCRSList = self.map.baseLayers
+                    .filter((layer) => {
+                        return layer.isRaster();
+                    })
+                    .map((layer) => {
+                        return layer.getCompatibleCRS({ normalized: true, includeFallback: true });
+                    })
+                    .reduce((prev, current, index, array) => {
+                        return prev.concat(current.filter((l) => { return prev.indexOf(l) < 0 }));
+                    });
+
+                const crsLists = (options.layer ? self.map.workLayers.concat(options.layer) : self.map.workLayers)
+                    .filter(function (layer) {
+                        return layer.isRaster();
+                    })
+                    .map(function (layer) {
+                        return layer.getCompatibleCRS({ normalized: true, includeFallback: true });
+                    });
+
+                crsList = blCRSList.filter((crs) => {
+                    return crsLists.every((elm) => {
+                        return elm.indexOf(crs) > -1;
+                    });
+                });
+            }
+
             self.map.loadProjections({
-                crsList: self.getAvailableCRS(options),
+                crsList: crsList,
                 orderBy: 'name'
             }).then(function (projList) {
                 var hasFallbackCRS = false;
+                var currentCRSName = dialog.querySelector('.' + self._cssClasses.CURRENT_CRS_NAME);
+                var currentCRSCode = dialog.querySelector('.' + self._cssClasses.CURRENT_CRS_CODE);
                 projList
                     .forEach(function (projObj) {
-                        if (TC.Util.CRSCodesEqual(self.map.crs, projObj.code)) {
-                            dialog.querySelector('.' + self._cssClasses.CURRENT_CRS_NAME).textContent = projObj.name;
-                            dialog.querySelector('.' + self._cssClasses.CURRENT_CRS_CODE).textContent = projObj.code;
+                        if (currentCRSName && currentCRSCode && TC.Util.CRSCodesEqual(self.map.crs, projObj.code)) {
+                            currentCRSName.textContent = projObj.name;
+                            currentCRSCode.textContent = projObj.code;
                         }
                         else {
                             const button = document.createElement('button');
