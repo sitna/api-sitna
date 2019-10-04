@@ -17,31 +17,24 @@
 
 .tc-ctl-mod > button {
     display: inline-block;
-    border-left: 1px solid #fff;
-    border-left-color: var(--main-bg-color);
-    border-right: 1px solid #fff;
-    border-right-color: var(--main-bg-color);
     height: 2em;
-    margin: 0;
+    margin: 0 0.1em 0 0.1em;
     vertical-align: top;
     cursor: pointer;
     flex-grow: 1;
     border: 0;
     text-align: center;
-    color: #fff;
     width: 33.33%;
 }
 
 .tc-ctl-mod .tc-ctl-btn:first-child {
-    border-top-left-radius: 0.3em;
+    margin-left: 0.05em;
     border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: 0.3em;
     border-bottom-left-radius: var(--border-radius);
 }
 
 .tc-ctl-mod .tc-ctl-btn:last-child {
-    border-top-right-radius: 0.3em;
+    margin-right: 0.05em;
     border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: 0.3em;
     border-bottom-right-radius: var(--border-radius);
 }
