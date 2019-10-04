@@ -103,9 +103,7 @@
 				<ows:LowerCorner>-20037508.3427892 -20037508.3427892</ows:LowerCorner>
 				<ows:UpperCorner>20037508.3427892 20037508.3427892</ows:UpperCorner>
 			</ows:BoundingBox>
-			<ows:SupportedCRS>
-             urn:ogc:def:crs:EPSG::3857
-			</ows:SupportedCRS>
+			<ows:SupportedCRS>urn:ogc:def:crs:EPSG::3857</ows:SupportedCRS>
 			<WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible
 			</WellKnownScaleSet>
       <TileMatrix>
