@@ -5,6 +5,7 @@
   * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Estado de las carreteras. Gobierno de Navarra")
   * [Cartoteca y Fototeca](https://cartotecaYfototeca.navarra.es "Cartoteca y Fototeca. Gobierno de Navarra")
   * [Mapa de Fosas](http://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
+  * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en)
 
 * Developments for town councils in Navarre:
   * IRUSKAN. [Pamplona City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
