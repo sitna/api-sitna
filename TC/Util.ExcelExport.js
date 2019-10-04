@@ -104,10 +104,10 @@
 
         var arrData = [];
 
-        if ($.isArray(responseData)) {
+        if (Array.isArray(responseData)) {
             arrData = responseData;
         }
-        else if ($.isFunction(responseData)) {
+        else if (TC.Util.isFunction(responseData)) {
             arrData = responseData();
         }
 
