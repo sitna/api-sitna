@@ -1,0 +1,16 @@
+{
+  "name": "ol-webpack",
+  "version": "1.0.0",
+  "description": "Example using OpenLayers with Webpack",
+  "scripts": {
+    "bundle": "webpack --config webpack.config.js --output-filename ol-sitna.js --mode development",
+	"build": "webpack --config webpack.config.js --output-filename ol-sitna.min.js --mode production"
+  },
+  "devDependencies": {
+    "webpack": "^4.12.1",
+    "webpack-command": "^0.3.0"
+  },
+  "dependencies": {
+    "ol": "^5.1.2"
+  }
+}
