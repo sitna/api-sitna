@@ -1,0 +1,140 @@
+﻿<div id="attr_{{name}}" class="attr item{{#if access}} {{access}}{{/if}}{{#if deprecated}} deprecated{{/if}}{{#if extended_from}} inherited{{/if}}">
+    <a name="config_{{name}}"></a> {{! For backwards compatibility }}
+    <h3 class="name"><code>{{name}}</code></h3>
+    <span class="type">{{#crossLink type}}{{/crossLink}}</span>
+
+    {{#if deprecated}}
+        <span class="flag deprecated"{{#if deprecationMessage}} title="{{deprecationMessage}}"{{/if}}>deprecated</span>
+    {{/if}}
+
+    {{#if access}}
+        <span class="flag {{access}}">{{access}}</span>
+    {{/if}}
+
+    {{#if final}}
+        <span class="flag final">final</span>
+    {{/if}}
+
+    {{#if static}}
+        <span class="flag static">static</span>
+    {{/if}}
+
+    {{#if optional}}
+        <span class="flag optional">optional</span>
+    {{/if}}
+
+    {{#if required}}
+        <span class="flag required">required</span>
+    {{/if}}
+
+    {{#if readonly}}
+        <span class="flag readonly">readonly</span>
+    {{/if}}
+
+    <div class="meta">
+        {{#if overwritten_from}}
+            <p>Hereda de
+            <a href="{{crossLinkRaw overwritten_from/class}}#attr_{{overwritten_from/name}}">
+                {{overwritten_from/class}}
+            </a>
+            {{#if foundAt}}
+            pero se sobreescribe en
+            {{/if}}
+        {{else}}
+            {{#if extended_from}}
+                <p>Hereda de
+                <a href="{{crossLinkRaw extended_from}}#attr_{{name}}">{{extended_from}}</a>:
+            {{else}}
+                {{#providedBy}}
+                    <p>Proporcionado por el módulo <a href="../modules/{{.}}.html">{{.}}</a>.</p>
+                {{/providedBy}}
+                <p style="display:none">
+                {{#if foundAt}}
+                Se define en
+                {{/if}}
+            {{/if}}
+        {{/if}}
+        {{#if foundAt}}
+        <a href="{{foundAt}}">`{{{file}}}:{{{line}}}`</a>
+        {{/if}}
+        </p>
+
+        {{#if deprecationMessage}}
+            <p>Deprecated: {{deprecationMessage}}</p>
+        {{/if}}
+
+        {{#if since}}
+            <p>Disponible desde {{since}}</p>
+        {{/if}}
+    </div>
+
+    <div class="description">
+        {{{attrDescription}}}
+    </div>
+
+    {{#if default}}
+        <p><strong>Por defecto:</strong> {{default}}</p>
+    {{/if}}
+
+    {{#if emit}}
+        <div class="emits box">
+            <h4>Dispara el evento <code>{{name}}Change</code></h4>
+
+            <p>
+			Se dispara cuando el valor del atributo de configuración `{{{name}}}`
+			se cambia. Puede escuchar el evento usando el método `on` si desea
+			ser notificado antes de que el valor del atributo cambie, o usando el método
+			`after` si desea ser notificado después de que el valor del atributo cambie.
+            </p>
+
+            <div class="params">
+                <h4>Parámetros:</h4>
+
+                <ul class="params-list">
+                    <li class="param">
+                        <code class="param-name">e</code>
+                        <span class="type">{{#crossLink "EventFacade"}}{{/crossLink}}</span>
+
+                        <div class="param-description">
+							Se añade un objeto fachada del evento con las
+							siguientes propiedades específicas de atributo:
+                        </div>
+
+                        <ul class="params-list">
+                            <li class="param">
+                                <code class="param-name">prevVal</code>
+                                <span class="type">Any</span>
+                                <div class="param-description">El valor del atributo, antes de ser establecido.</div>
+                            </li>
+                            <li class="param">
+                                <code class="param-name">newVal</code>
+                                <span class="type">Any</span>
+                                <div class="param-description">El valor en que se va a establecer el atributo.</div>
+                            </li>
+                            <li class="param">
+                                <code class="param-name">attrName</code>
+                                <span class="type">{{#crossLink "String"}}{{/crossLink}}</span>
+                                <div class="param-description">El nombre del atributo que se establece.</div>
+                            </li>
+                            <li class="param">
+                                <code class="param-name">subAttrName</code>
+                                <span class="type">{{#crossLink "String"}}{{/crossLink}}</span>
+                                <div class="param-description">Si se está estableciendo una propiedad dentro del valor del atributo, el nombre de la propiedad sub-atributo establecida.</div>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    {{/if}}
+
+    {{#example}}
+        <div class="example">
+            <h4>Ejemplos:</h4>
+
+            <div class="example-content">
+                {{{.}}}
+            </div>
+        </div>
+    {{/example}}
+</div>
