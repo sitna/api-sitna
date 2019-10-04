@@ -1,4 +1,4 @@
-﻿{?elevation}
+﻿{?displayElevation}
 <div class="tc-ctl-finfo-coords">
     <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-crs">CRS: <span class="tc-ctl-finfo-coords-val">{crs}</span></span> 
     {?isGeo}
@@ -7,9 +7,9 @@
     {:else}
     <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">x: <span class="tc-ctl-finfo-coords-val">{coords[0]}</span></span> 
     <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">y: <span class="tc-ctl-finfo-coords-val">{coords[1]}</span></span> 
-    {/isGeo} <span class="tc-ctl-finfo-coords-pair">{@i18n $key="ele"/}: <span class="tc-ctl-finfo-coords-val">{elevation} m</span></span>
+    {/isGeo} <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-elev">{@i18n $key="ele"/}: <span class="tc-ctl-finfo-coords-val"></span></span>
 </div>
-{/elevation}
+{/displayElevation}
 <ul class="tc-ctl-finfo-services">
     {#services}
     <li>
@@ -82,7 +82,7 @@
         </div>
     </li>
     {:else}
-        {^elevation}<li class="tc-ctl-finfo-empty">{@i18n $key="noData"/}</li>{/elevation}
+        {^displayElevation}<li class="tc-ctl-finfo-empty">{@i18n $key="noData"/}</li>{/displayElevation}
     {/services}
 </ul>
 {?featureCount}
