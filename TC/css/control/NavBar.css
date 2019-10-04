@@ -29,31 +29,26 @@
     font-size: 1em;
     border: 0;
     border-radius: 0.2em;
-    background-color: rgba(0, 0, 0, 0.66);
+    color: var(--map-btn-color);
+    background-color: var(--map-btn-bg-color);
     cursor: pointer;
     z-index: 10002;
     top: -10em;
 }
 
-.tc-ctl-nav .tc-ctl-nav-btn-zoomout.ol-zoom-out {
+.tc-ctl-nav .tc-ctl-nav-btn-zoomout {
     top: 0em;
 }
 
-.tc-ctl-nav-home .ol-zoom-extent {
-    position: static;
-    top: auto;
-}
-
-.tc-ctl-nav .tc-ctl-nav-btn:after {
-    position: absolute;
-    width: 1em;
-    height: 1em;
-    margin: auto;
-    color: #fff;
-    text-align: center;
-    vertical-align: middle;
-    line-height: 1em;
-}
+        .tc-ctl-nav .tc-ctl-nav-btn:after {
+            position: absolute;
+            width: 1em;
+            height: 1em;
+            margin: auto;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 1em;
+        }
 
     .tc-ctl-nav .tc-ctl-nav-btn-zoomin {
         border-bottom-left-radius: 0;
@@ -79,14 +74,10 @@
         left: 0;
     }
 
-.tc-ctl-nav .tc-ctl-nav-slider, .tc-ctl-nav .tc-ctl-nav-bar {
-    display: block;
-}
-
     .tc-ctl-nav .tc-ctl-nav-slider, .tc-ctl-nav-slider.ol-zoomslider-thumb {
         position: absolute;
         z-index: 10003;
-        background-color: #000;
+        background-color: var(--map-slider-thumb-bg-color);
         height: 0.5em;
         width: 2em;
         font-size: 1em;
@@ -103,7 +94,7 @@
     height: 10em;
     width: 2em;
     font-size: 1em;
-    background-color: #ccc;
+    background-color: var(--map-slider-bg-color);
     z-index: 10002;
     opacity: 0.5;
     cursor: pointer;
