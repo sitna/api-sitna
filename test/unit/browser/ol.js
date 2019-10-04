@@ -1,18 +1,6 @@
 ﻿/*global _comma_separated_list_of_variables_*/
 describe('Tests de ol.js', function () {
     describe('ol.proj.get', function () {
-        it('"EPSG:4326" debe devolver una proyeccion WGS84', function () {
-            chai.expect(ol.proj.get('EPSG:4326')).to.be.instanceof(ol.proj.EPSG4326.Projection_);
-        });
-        it('"http://www.opengis.net/gml/srs/epsg.xml#4326" debe devolver una proyeccion WGS84', function () {
-            chai.expect(ol.proj.get('http://www.opengis.net/gml/srs/epsg.xml#4326')).to.be.instanceof(ol.proj.EPSG4326.Projection_);
-        });
-        it('"urn:ogc:def:crs:EPSG::4326" debe devolver una proyeccion WGS84', function () {
-            chai.expect(ol.proj.get('urn:ogc:def:crs:EPSG::4326')).to.be.instanceof(ol.proj.EPSG4326.Projection_);
-        });
-        it('"http://www.opengis.net/gml/srs/epsg.xml#4326" debe devolver una proyeccion WGS84', function () {
-            chai.expect(ol.proj.get('http://www.opengis.net/gml/srs/epsg.xml#4326')).to.be.instanceof(ol.proj.EPSG4326.Projection_);
-        });
         it('un objeto ol.proj.Projection debe devolver un objeto ol.proj.Projection', function () {
             chai.expect(ol.proj.get(new ol.proj.Projection({ code: '25831' }))).to.be.instanceof(ol.proj.Projection);
         });
@@ -75,75 +63,6 @@ describe('Tests de ol.js', function () {
         });
         it('en GML2 debe intentar leer una geometria de un nodo con nietos', function () {
             chai.expect(shouldTryReadGeometry(gml2)).to.be.instanceof(ol.Feature);
-        });
-    });
-
-    describe('ol.format.KML.createStyleDefaults_', function () {
-        it('debe devolver un estilo', function () {
-            var result = ol.format.KML.createStyleDefaults_();
-            chai.expect(result).to.be.ok;
-            chai.expect(result[0]).to.be.instanceof(ol.style.Style);
-        });
-    });
-
-    describe('ol.format.KML.readDocumentOrFolder_', function () {
-        it('un nodo "nodo" debe devolver un array vacio', function () {
-            var format = new ol.format.KML();
-            var node = ol.xml.DOCUMENT.createElement('nodo');
-            chai.expect(format.readDocumentOrFolder_(node, [{}])).to.have.lengthOf(0);
-        });
-    });
-
-    describe('ol.format.KML.readStyle_', function () {
-        it('un nodo vacio debe devolver un estilo', function () {
-            var node = ol.xml.DOCUMENT.createElement('nodo');
-            var result = ol.format.KML.readStyle_(node, [{}]);
-            chai.expect(result).to.be.ok;
-            chai.expect(result[0]).to.be.instanceof(ol.style.Style);
-        });
-    });
-
-    //describe('ol.format.KML.readURI_', function () {
-    //    it('un nodo con una URL debe devolver esa URL', function () {
-    //        var text = 'http://example.com';
-    //        var node = ol.xml.DOCUMENT.createElement('nodo');
-    //        var textNode = ol.xml.DOCUMENT.createTextNode(text);
-    //        node.appendChild(textNode);
-    //        var result = ol.format.KML.readStyle_(node, [{}]);
-    //        chai.expect(ol.format.KML.readURI_(node)).to.equal(text);
-    //    });
-    //});
-
-    describe('ol.format.KML.whenParser_', function () {
-        it('un nodo "when" debe ejecutarse', function () {
-            var node = ol.xml.DOCUMENT.createElement('when');
-            chai.expect(ol.format.KML.whenParser_(node, [{ whens: []}])).to.be.undefined;
-        });
-    });
-
-    describe('ol.format.KML.prototype.readFeatures', function () {
-        it('un documento kml vacio debe devolver un array vacio', function () {
-            var format = new ol.format.KML();
-            chai.expect(format.readFeatures('<kml></kml>')).to.be.empty;
-        });
-    });
-
-    describe('ol.format.XSD.readDateTime', function () {
-        it('un nodo vacio debe devolver undefined', function () {
-            var node = ol.xml.DOCUMENT.createElement('nodo');
-            chai.expect(ol.format.XSD.readDateTime(node)).to.be.undefined;
-        });
-        it('un nodo con una fecha debe devolver un numero', function () {
-            var node = ol.xml.DOCUMENT.createElement('nodo');
-            var textNode = ol.xml.DOCUMENT.createTextNode('01/01/00');
-            node.appendChild(textNode);
-            chai.expect(ol.format.XSD.readDateTime(node)).to.be.a.number;
-        });
-    });
-
-    describe('ol.format.GML3Patched', function () {
-        it('debe ser un constructor de la clase ol.format.GML3', function () {
-            chai.expect(new ol.format.GML3Patched()).to.be.instanceof(ol.format.GML3);
         });
     });
 
