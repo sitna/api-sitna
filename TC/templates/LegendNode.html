@@ -1,12 +1,12 @@
 ﻿{?customLegend}
     {customLegend|s}
 {:else}
-    <li {?children}class="tc-ctl-legend-node" {:else}class="tc-ctl-legend-node tc-ctl-legend-leaf" {/children} data-tc-layer-name="{name}" data-tc-layer-uid="{uid}">
+    <li {?children}class="tc-ctl-legend-node" {:else}class="tc-ctl-legend-node tc-ctl-legend-leaf" {/children} data-layer-name="{name}" data-layer-uid="{uid}">
         <div class="tc-ctl-legend-title">{title}</div>
         {?legend}
         <div class="tc-ctl-legend-watch">
             {?legend.src}
-            <img src="" data-tc-img="{legend.src}" {?legend.width}style="width:{legend.width}px;height:{legend.height}px;" {/legend.width} />
+            <img src="" data-img="{legend.src}" {?legend.width}style="width:{legend.width}px;height:{legend.height}px;" {/legend.width} />
             {:else}
                 {?legend.width}
                     <div class="tc-ctl-legend-img" style="border:solid {legend.strokeWidth}px {legend.strokeColor};background-color:{legend.fillColor}{?legend.width};width:{legend.width}px;height:{legend.height}px;border-radius:50%{/legend.width}"></div>
