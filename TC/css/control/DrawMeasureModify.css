@@ -8,57 +8,55 @@
 }
 
 .tc-ctl-dmm-tool button {
-    width: 50%;
+    margin: 0 0.1em 0 0.1em;
+    position: relative;
+    flex-grow: 1;
+    display: inline-block;
     border-radius: 0;
-    border-left: 1px solid #fff;
-    border-left-color: var(--main-bg-color);
-    border-right: 1px solid #fff;
-    border-right-color: var(--main-bg-color);
-    background-color: #666;
+    border: 0;
+    height: 2em;
+    vertical-align: top;
+    text-align: center;
+    color: var(--btn-color);
 }
 
     .tc-ctl-dmm-tool button:disabled {
-        background-color: rgba(234, 234, 227, 1);
+        color: var(--btn-disabled-color);
+        background-color: var(--btn-disabled-bg-color);
+        border-color: var(--btn-disabled-border-color);
     }
 
     .tc-ctl-dmm-tool button:first-child {
-        border-top-left-radius: 0.3em;
+        margin-left: 0.05em;
         border-top-left-radius: var(--border-radius);
-        border-bottom-left-radius: 0.3em;
         border-bottom-left-radius: var(--border-radius);
     }
 
     .tc-ctl-dmm-tool button:last-child {
-        border-top-right-radius: 0.3em;
+        margin-right: 0.05em;
+        width: calc(50% - 0.1em);
         border-top-right-radius: var(--border-radius);
-        border-bottom-right-radius: 0.3em;
         border-bottom-right-radius: var(--border-radius);
     }
 
-    .tc-ctl-dmm-tool button:first-child:disabled {
-        border-left-color: rgba(234, 234, 227, 1);
-    }
 
-    .tc-ctl-dmm-tool button:last-child:disabled {
-        border-right-color: rgba(234, 234, 227, 1);
-    }
-
-
-.tc-ctl-dmm-mod > button {
-    width: 50%;
+.tc-ctl-dmm .tc-ctl-dmm-mod {
+    display: block;
+    width: 100%;
+    padding: 0;
 }
 
+    .tc-ctl-dmm .tc-ctl-dmm-mod > button {
+        width: calc(20% - 0.2em);
+    }
+
 .tc-ctl-dmm .tc-ctl-mod-btn-delete {
-    border-top-right-radius: 0.3em;
     border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: 0.3em;
     border-bottom-right-radius: var(--border-radius);
-    border-right: 1px solid #c00;
-    border-right-color: var(--main-hl-color);
 }
 
     .tc-ctl-dmm .tc-ctl-mod-btn-delete:disabled {
-        border-right-color: rgba(234, 234, 227, 1);
+        border-right-color: var(--btn-disabled-border-color);
     }
 
 .tc-ctl-dmm .tc-ctl-mod-btn-join, .tc-ctl-dmm .tc-ctl-mod-btn-split {
@@ -129,7 +127,6 @@
         width: 100%;
         height: 100%;
         border: 0.3em solid transparent;
-        border-radius: 0.3em;
         border-radius: var(--border-radius);
         text-align: center;
         box-sizing: border-box;
@@ -140,7 +137,6 @@
     }
 
     .tc-ctl-dmm-dialog-ip label input[type=radio]:checked ~ span {
-        border-color: #c00;
         border-color: var(--main-hl-color);
     }
 
@@ -176,13 +172,6 @@
         width: 3em;
     }
 
-.tc-ctl-dmm .tc-ctl-mod > button {
-    border-left: 1px solid #fff;
-    border-left-color: var(--main-bg-color);
-    border-right: 1px solid #fff;
-    border-right-color: var(--main-bg-color);
-}
-
 .tc-ctl-dmm .tc-ctl-mod .tc-ctl-btn:last-child {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
@@ -191,26 +180,32 @@
 .tc-ctl-dmm-dialog-dl button {
     width: 25%;
     border: 0;
-    border-left: 1px solid #fff;
+    border-left: 1px solid;
     border-left-color: var(--main-bg-color);
-    border-right: 1px solid #fff;
+    border-right: 1px solid;
     border-right-color: var(--main-bg-color);
     border-radius: 0;
     margin: 0.5em 0 0.5em 0;
 }
 
-.tc-ctl-dmm-tool button {
-    position: relative;
-    flex-grow: 1;
-    display: inline-block;
-    border: 0;
-    border-left: 1px solid #fff;
-    border-left-color: var(--main-bg-color);
-    border-right: 1px solid #fff;
-    border-right-color: var(--main-bg-color);
-    height: 2em;
-    margin: 0;
-    vertical-align: top;
-    text-align: center;
-    color: #fff;
+.tc-ctl-dmm-cmd {
+    position: absolute;
+    top: 0;
+    left: 60%;
 }
+
+    .tc-ctl-dmm-cmd button {
+        width: calc(50% - 0.2em);
+        text-indent: -1000vw;
+        position: relative;
+        margin: 0 0.1em 0 0.1em;
+        color: var(--btn-color);
+        background-color: var(--btn-bg-color);
+        border-color: var(--btn-border-color);
+    }
+
+    .tc-ctl-dmm-cmd button:disabled {
+        color: var(--btn-disabled-color);
+        background-color: var(--btn-disabled-bg-color);
+        border-color: var(--btn-disabled-border-color);
+    }
