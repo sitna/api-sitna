@@ -278,11 +278,6 @@ div.prpanel-heading-samehw {
         margin: 0.8em;
     }
 
-.tc-ctl-p-results-table {
-    width: 100%;
-    overflow-x: hidden;
-}
-
 div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
     flex-direction: column;
 }
@@ -318,7 +313,7 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
 
 .tc-ctl-p-results-table {
     width: 100%;
-    overflow-x: hidden;
+    overflow: auto;
 }
 
 .tc-ctl-p-results .tc-ctl-finfo-coords {
@@ -335,11 +330,6 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
     .tc-ctl-p-results-table a.tc-ctl-print-btn:before, .tc-ctl-p-results-info a.tc-ctl-print-btn:before {
         margin-right: 0;
     }
-
-.tc-ctl-p-results-table table, .tc-ctl-p-results-info table {
-    font-size: 1em;
-    border-collapse: collapse;
-}
 
 .tc-ctl-p-results-info tr:nth-child(odd) {
     background: #eee;
@@ -395,7 +385,7 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
 .tc-ctl-p-results a.tc-ctl-print-btn {
     position: absolute;
     right: 0;
-    margin: 0.2em;
+    margin-right: 1.2em;
     z-index: 100000;
     margin-top: 2.5em;
 }
@@ -428,22 +418,16 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-attr th {
 }
 
 .tc-ctl-p-results-table tbody tr {
-    cursor: zoom-in;
-    /*IE hack*/
-    cursor: url(//sitna.tracasa.es/api/TC/layout/responsive/img/zoomin.cur),default\9;
+    cursor: zoom-in;    
 }
 
 .tc-ctl-p-results-table tbody td.tc-numeric {
     text-align: right;
 }
 
-.ie10 .tc-ctl-p-results-table tbody tr {
-    cursor: url(//sitna.tracasa.es/api/TC/layout/responsive/img/zoomin.cur),default;
-}
-
 .tc-ctl-p-results-table thead th {
     border-bottom: 1px solid #dee2e6;
-    text-align: center;
+    text-align:center;
 }
 
 .tc-ctl-p-results-table tbody td {
