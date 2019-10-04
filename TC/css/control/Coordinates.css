@@ -1,4 +1,25 @@
-﻿
+﻿@keyframes slow-fadeout {
+    0% {
+        opacity: 0.7;
+        visibility: visible;
+    }
+
+    63% {
+        opacity: 0.7;
+        visibility: visible;
+    }
+
+    99% {
+        opacity: 0;
+        visibility: visible;
+    }
+
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
 .tc-ctl-coords {
     position: absolute;
     padding: 0;
@@ -16,7 +37,12 @@
     width: -webkit-max-content;
 }
 
+    .tc-ctl-coords.tc-fading {
+        animation: slow-fadeout 8s;
+    }
+
     .tc-ctl-coords.tc-hidden {
+        animation: none;
         visibility: hidden;
     }
 
