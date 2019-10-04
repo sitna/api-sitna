@@ -14,8 +14,7 @@ ul.tc-ctl-cbuild-bl-list {
     display: inline-block;
     margin: 0;
     cursor: pointer;
-    border: 0.3em solid #ccc;
-    border-radius: 0.3em;
+    border: var(--thumb-border-width) solid var(--thumb-border-color);
     border-radius: var(--border-radius);
 }
 
@@ -39,7 +38,6 @@ ul.tc-ctl-cbuild-bl-list {
     right: 1em;
     background-color: #ccc;
     opacity: 0.5;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
     padding: 0.3em;
     font-size: 0.8em;
@@ -57,9 +55,10 @@ ul.tc-ctl-cbuild-bl-list {
     display: block;
     margin: 0;
     padding-top: 1em;
-    top: -0.3em;
-    left: -0.3em;
-    text-shadow: 0.1em 0.1em 0 #fff, 0.1em -0.1em 0 #fff, -0.1em 0.1em 0 #fff, -0.1em -0.1em 0 #fff;
+    top: calc(-1 * var(--thumb-border-width));
+    left: calc(-1 * var(--thumb-border-width));
+    color: var(--thumb-text-color);
+    text-shadow: 0.1em 0.1em 0 var(--thumb-text-shadow-color), 0.1em -0.1em 0 var(--thumb-text-shadow-color), -0.1em 0.1em 0 var(--thumb-text-shadow-color), -0.1em -0.1em 0 var(--thumb-text-shadow-color);
 }
 
 .tc-ctl-cbuild-bl-node label span {
@@ -68,13 +67,11 @@ ul.tc-ctl-cbuild-bl-list {
 }
 
 .tc-ctl-cbuild-bl-node input[type=checkbox] ~ span {
-    border: 0.3em solid #ccc;
-    border-radius: 0.3em;
+    border: var(--thumb-border-width) solid var(--thumb-border-color);
     border-radius: var(--border-radius);
 }
 
 .tc-ctl-cbuild-bl-node input[type=checkbox]:checked ~ span {
-    border-color: #c00;
     border-color: var(--main-hl-color);
 }
 
@@ -84,6 +81,8 @@ ul.tc-ctl-cbuild-bl-list > li {
     margin: 0.2em;
     vertical-align: top;
     text-align: center;
+    color: var(--list-color);
+    background: var(--list-bg-color);
 }
 
     ul.tc-ctl-cbuild-bl-list > li.tc-hidden {
@@ -95,9 +94,8 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 }
 
     ul.tc-ctl-cbuild-bl-list input[type=checkbox]:checked + div {
-        background-color: #c00;
         background-color: var(--main-hl-color);
-        border: 1px solid #c00;
+        border: 1px solid;
         border-color: var(--main-hl-color);
     }
 
@@ -112,7 +110,8 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-active {
-    background: rgba(102, 0, 0, 0.1);
+    color: var(--list-hl-color);
+    background: var(--list-hl-bg-color);
 }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-disabled {
@@ -140,7 +139,7 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     .tc-ctl-cbuild .tc-ctl-cbuild-list li button:before {
         display: inline-block;
         position: relative;
-        color: #666;
+        color: var(--glyph-color);
         font-family: Mapskin;
         width: 100%;
         height: 2em;
@@ -148,8 +147,7 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-active:before {
-        color: #c00;
-        color: var(--main-hl-color);
+        color: var(--glyph-hl-color);
     }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-edit:before {
@@ -190,15 +188,12 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw {
-    background-color: #600;
     background-color: var(--main-inactive-color);
-    border-color: #600;
     border-color: var(--main-inactive-color);
 }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-btn-new:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
         font-family: mapskin;
-        color: #fff;
         height: 2em;
         margin-right: 0.5em;
     }
@@ -212,6 +207,9 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     font-family: mapskin;
     content: "\e001";
     transform: rotate(45deg);
+    height: 1em;
+    width: 1em;
+    line-height: 1em;
 }
 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-txt-name {
@@ -220,7 +218,6 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     height: 2em;
     padding: 0 0 0 0.2em;
     border: 1px solid #ccc;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
     margin: 0 0 0.6em 0;
 }
@@ -250,16 +247,14 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     border: 0.1em solid #999;
     padding: 0.1em;
     margin-bottom: 0.5em;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
     box-sizing: border-box;
 }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-progress-bar .tc-ctl-cbuild-progress-ratio {
         height: 100%;
-        background-color: #c00;
+        background-color: var(--main-hl-color);
         border-color: var(--main-hl-color);
-        border-radius: 0.3em;
         border-radius: var(--border-radius);
     }
 
@@ -296,7 +291,6 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     overflow-x: hidden;
     max-height: 8em;
     height: auto;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
     border: 1px solid #CCC;
     padding: 0;
