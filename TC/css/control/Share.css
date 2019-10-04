@@ -23,10 +23,9 @@
             height: 100%;
             line-height: 2em;
             text-align: center;
-            border: 1px solid #666;
-            background-color: #fff;
+            border: 1px solid var(--tab-border-color);
             background-color: var(--main-bg-color);
-            color: #666;
+            color: var(--tab-color);
             cursor: pointer;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -34,28 +33,21 @@
         }
 
         .tc-ctl-share-select input[type=radio]:checked ~ span {
-            border-color: #c00;
             border-color: var(--main-hl-color);
-            color: #c00;
             color: var(--main-hl-color);
             border-bottom-right-radius: 0;
             border-bottom-left-radius: 0;
-            border-bottom-color: #fff;
             border-bottom-color: var(--main-bg-color);
             z-index: 10007;
         }
 
     .tc-ctl-share-select label:first-child input[type=radio] ~ span {
-        border-top-left-radius: 0.3em;
         border-top-left-radius: var(--border-radius);
-        border-bottom-left-radius: 0.3em;
         border-bottom-left-radius: var(--border-radius);
     }
 
     .tc-ctl-share-select label:last-child input[type=radio] ~ span {
-        border-top-right-radius: 0.3em;
         border-top-right-radius: var(--border-radius);
-        border-bottom-right-radius: 0.3em;
         border-bottom-right-radius: var(--border-radius);
     }
 
@@ -115,7 +107,7 @@ div.tc-ctl-share-url-box {
     font-size: 1em;
     border-right: 0;
     position: relative;
-    background-color: #eee;
+    background-color: var(--input-disabled-bg-color);
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     width: calc(76% - 0.2em);
@@ -148,7 +140,7 @@ div.tc-ctl-share-url-box {
 .tc-ctl-share .ga-share-icon {
     display: inline-block;
     padding: 0 6px;
-    color: #666;
+    color: var(--title-color);
     font-size: 21px;
     font-family: FontAwesome;
     font-weight: 400;
@@ -167,7 +159,7 @@ div.tc-ctl-share-url-box {
 }
 
 .tc-ctl-share .ga-share-icons a:hover {
-    color: #c00;
+    color: var(--main-hl-color);
 }
 
 .tc-ctl-share .ga-share-icons a.disabled:hover {
