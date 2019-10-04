@@ -26,8 +26,7 @@ ul.tc-ctl-bms-branch {
     display: inline-block;
     margin: 0;
     cursor: pointer;
-    border: 0.3em solid #ccc;
-    border-radius: 0.3em;
+    border: var(--thumb-border-width) solid var(--thumb-border-color);
     border-radius: var(--border-radius);
     height: 4rem;
     width: 4rem;
@@ -40,26 +39,26 @@ ul.tc-ctl-bms-branch {
         display: block;
         margin: 0;
         padding-top: 0.6rem;
-        top: -0.3em;
-        left: -0.3em;
-        text-shadow: 0.1em 0.1em 0 #fff, 0.1em -0.1em 0 #fff, -0.1em 0.1em 0 #fff, -0.1em -0.1em 0 #fff;
+        top: calc(-1 * var(--thumb-border-width));
+        left: calc(-1 * var(--thumb-border-width));
+        color: var(--thumb-text-color);
+        text-shadow: 0.1em 0.1em 0 var(--thumb-text-shadow-color), 0.1em -0.1em 0 var(--thumb-text-shadow-color), -0.1em 0.1em 0 var(--thumb-text-shadow-color), -0.1em -0.1em 0 var(--thumb-text-shadow-color);
         height: 3.36rem;
         width: 4rem;
     }
 
 .tc-ctl-bms-more-dialog .tc-ctl-bms-node label span {
-    text-shadow: #fff -0.06rem 0, #fff 0rem 0.08rem, #fff 0.08rem 0, #fff 0rem -0.06rem, #fff 0.06rem 0.08rem;
+    color: var(--thumb-text-color);
+    text-shadow: var(--thumb-text-shadow-color) -0.06rem 0, var(--thumb-text-shadow-color) 0rem 0.08rem, var(--thumb-text-shadow-color) 0.08rem 0, var(--thumb-text-shadow-color) 0rem -0.06rem, var(--thumb-text-shadow-color) 0.06rem 0.08rem;
 }
 
 .tc-ctl-bms-node input[type=radio] ~ span {
-    border: 0.3em solid #ccc;
-    border-radius: 0.3em;
+    border: var(--thumb-border-width) solid var(--thumb-border-color);
     border-radius: var(--border-radius);
 }
 
 .tc-ctl-bms-node input[type=radio]:checked ~ span {
     cursor: default;
-    border-color: #c00;
     border-color: var(--main-hl-color);
 }
 
@@ -71,7 +70,6 @@ ul.tc-ctl-bms-branch {
     right: 0;
     text-shadow: none;
     font-size: 1.2em;
-    background-color: #fff;
     background-color: var(--main-bg-color);
     width: 1.8em;
     height: 1.8em;
@@ -85,6 +83,10 @@ ul.tc-ctl-bms-branch {
     text-align: left;
     margin: 0 auto;
     padding: 0;
+}
+
+.tc-offline .tc-ctl-bms-more-node {
+    display: none;
 }
 
 .tc-ctl-bms-more-node:after {
@@ -133,9 +135,8 @@ ul.tc-ctl-bms-branch input[type=radio] {
 }
 
     ul.tc-ctl-bms-branch input[type=radio]:checked + div {
-        background-color: #c00;
         background-color: var(--main-hl-color);
-        border: 1px solid #c00;
+        border: 1px solid;
         border-color: var(--main-hl-color);
     }
 
