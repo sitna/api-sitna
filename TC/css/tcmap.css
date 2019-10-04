@@ -31,6 +31,7 @@
 @import url(control/FullScreen.css);
 @import url(control/NavBarHome.css);
 @import url(control/WFSQuery.css);
+@import url(control/MultiFeatureInfo.css);
 
 /*! normalize.css v1.0.0 | MIT License | git.io/normalize */
 article, aside, details, figcaption, figure, footer, header, hgroup, nav, section, summary {
@@ -68,27 +69,66 @@ body {
 
 :root {
     /* custom variables */
-    --text-color: #000;
-    --main-bg-color: #fff;
-    --main-hl-color: #c00;
-    --main-inactive-color: #600;
-    --title-color: #666;
-    --divider-color: #999;
+    --text-main-color: #000000;
+    --text-sec-color: #333333;
+    --disabled-text-color: #cccccc;
+    --main-bg-color: #ffffff;
+    --main-hl-color: #cc0000;
+    --main-inactive-color: #660000;
+    --title-color: #666666;
+    --main-divider-color: #999999;
+    --sec-divider-color: #cccccc;
     --border-radius: 0.3rem;
-    --ph-color: #999;
+    --glyph-color: #666666;
+    --glyph-sec-color: #aaaaaa;
+    --glyph-hl-color: #cc0000;
+    --ph-color: #999999;
+    --btn-color: #ffffff;
+    --btn-bg-color: #666666;
+    --btn-border-color: #666666;
+    --btn-disabled-color: #ffffff;
+    --btn-disabled-bg-color: #cccccc;
+    --btn-disabled-border-color: #cccccc;
+    --btn-hl-color: #fff;
+    --btn-hl-bg-color: #cc0000;
+    --btn-hl-border-color: #cc0000;
+    --input-color: #000000;
+    --input-bg-color: #ffffff;
+    --input-border-color: #cccccc;
+    --input-disabled-bg-color: #eeeeee;
+    --input-select-color: #666666;
+    --tab-color: #666666;
+    --tab-border-color: #666666;
+    --tab-border-hl-color: #cc0000;
+    --tb-color: #444444;
+    --map-btn-color: #ffffff;
+    --map-btn-bg-color: rgba(0, 0, 0, 0.66);
+    --map-slider-thumb-bg-color: #000000;
+    --map-slider-bg-color: #cccccc;
+    --thumb-border-width: 0.3em;
+    --thumb-border-color: #cccccc;
+    --thumb-text-color: #000000;
+    --thumb-text-shadow-color: #ffffff;
+    --overlay-color: #000000;
+    --overlay-bg-color: rgba(255,255,255,0.7);
+    --overlay-border-color: #cccccc;
+    --cell-odd-bg-color: #eeeeee;
+    --cell-even-bg-color: #ffffff;
+    --list-color: #000000;
+    --list-bg-color: #ffffff;
+    --list-hl-color: #000000;
+    --list-hl-bg-color: rgba(102, 0, 0, 0.1);
 }
 
-.tc-map :-ms-input-placeholder { /* Internet Explorer 10+ */
-    color: #999;
+.tc-map :-ms-input-placeholder { /* Edge */
+    color: var(--ph-color);
 }
 
 .tc-map ::-webkit-input-placeholder { /* WebKit browsers */
-    color: #999;
     color: var(--ph-color);
 }
 
 .tc-map ::-moz-placeholder {
-    color: #999;
     color: var(--ph-color);
 }
 
@@ -720,6 +760,56 @@ table {
 }
 
 
+@-moz-keyframes bounce-fading-bar {
+    0% {
+        -moz-transform: scale(.6);
+    }
+
+    100% {
+        -moz-transform: scale(.3);
+    }
+}
+
+@-webkit-keyframes bounce-fading-bar {
+    0% {
+        -webkit-transform: scale(.6);
+    }
+
+    100% {
+        -webkit-transform: scale(.3);
+    }
+}
+
+@-ms-keyframes bounce-fading-bar {
+    0% {
+        -ms-transform: scale(.6);
+    }
+
+    100% {
+        -ms-transform: scale(.3);
+    }
+}
+
+@-o-keyframes bounce-fading-bar {
+    0% {
+        -o-transform: scale(.6);
+    }
+
+    100% {
+        -o-transform: scale(.3);
+    }
+}
+
+@keyframes bounce-fading-bar {
+    0% {
+        transform: scale(.6);
+    }
+
+    100% {
+        transform: scale(.3);
+    }
+}
+
 .tc-ipad-ios7-fix {
     height: 97% !important;
 }
@@ -746,7 +836,6 @@ html, body {
 }
 
     .tc-map.tc-loading {
-        background-color: #fff;
         background-color: var(--main-bg-color);
     }
 
@@ -796,7 +885,6 @@ html, body {
         z-index: 10012;
         border-top: 0.2em solid #fff;
         border-left: 0.2em solid #fff;
-        border-top-left-radius: 0.3em;
         border-top-left-radius: var(--border-radius);
     }
 
@@ -823,20 +911,19 @@ html, body {
     }
 
     .tc-map .ol-viewport {
-        background-color: #fff;
         background-color: var(--main-bg-color);
     }
 
 .tc-ctl {
     padding: 0.5em;
     z-index: 10000;
-    color: #000;
-    color: var(--text-color);
+    color: var(--text-main-color);
 }
 
 .tc-ctl-btn {
-    background-color: #666;
-    color: #fff;
+    background-color: var(--btn-bg-color);
+    color: var(--btn-color);
+    border: 1px solid var(--btn-border-color);
 }
 
     .tc-ctl-btn:focus {
@@ -844,18 +931,20 @@ html, body {
     }
 
     .tc-ctl-btn.tc-disabled {
-        background-color: #ccc;
+        color: var(--btn-disabled-color);
+        background-color: var(--btn-disabled-bg-color);
+        border-color: var(--btn-disabled-border-color);
         cursor: default;
     }
 
     .tc-ctl-btn.tc-active {
-        background-color: #c00;
-        background-color: var(--main-hl-color);
+        color: var(--btn-hl-color);
+        background-color: var(--btn-hl-bg-color);
+        border-color: var(--btn-hl-border-color);
     }
 
 .ol-control button {
     border: 0;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
 }
 
@@ -873,7 +962,7 @@ html, body {
 button.tc-msg-warning:after {
     font-family: mapskin;
     font-style: normal;
-    color: #999;
+    color: var(--glyph-sec-color);
     content: '\e0a4';
     margin-left: 0.5em;
 }
@@ -887,15 +976,14 @@ button.tc-msg-warning:after {
 }
 
 .tc-ctl.tc-disabled h2 {
-    color: #ccc;
+    color: var(--disabled-text-color);
     text-decoration: line-through;
 }
 
 .tc-ctl-finfo-empty {
     font-style: italic;
-    color: #ccc;
+    color: var(--disabled-text-color);
     padding: 0.5em;
-    background-color: #fff;
     background-color: var(--main-bg-color);
     list-style-type: none;
     box-sizing: border-box;
@@ -911,9 +999,8 @@ button.tc-msg-warning:after {
     text-align: center;
     font-size: 0.67em;
     font-weight: normal;
-    background-color: #c00;
     background-color: var(--main-hl-color);
-    color: #fff;
+    color: var(--btn-hl-color);
     vertical-align: top;
 }
 
@@ -941,10 +1028,9 @@ button.tc-msg-warning:after {
             height: 100%;
             line-height: 2em;
             text-align: center;
-            border: 1px solid #666;
-            background-color: #fff;
+            border: 1px solid var(--tab-border-color);
             background-color: var(--main-bg-color);
-            color: #666;
+            color: var(--tab-color);
             cursor: pointer;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -983,7 +1069,6 @@ button.tc-msg-warning:after {
         position: absolute;
         -webkit-transition: none;
         -moz-transition: none;
-        -ie-transition: none;
         -o-transition: none;
         transition: none;
     }
@@ -993,7 +1078,6 @@ button.tc-msg-warning:after {
     background-color: transparent;
     height: 1em;
     width: 3em;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
     padding: 0;
     margin-left: 0.2em;
@@ -1002,32 +1086,24 @@ button.tc-msg-warning:after {
 
     .tc-ctl input[type=color]::-webkit-color-swatch {
         height: 1em;
-        border-radius: 0.3em;
         border-radius: var(--border-radius);
         border-color: #666;
     }
 
 .tc-ctl-tctr label:first-child input[type=radio] ~ span {
-    border-top-left-radius: 0.3em;
     border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: 0.3em;
     border-bottom-left-radius: var(--border-radius);
 }
 
 .tc-ctl-tctr label:last-child input[type=radio] ~ span {
-    border-top-right-radius: 0.3em;
     border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: 0.3em;
     border-bottom-right-radius: var(--border-radius);
 }
 
 .tc-ctl-tctr-select input[type=radio]:checked ~ span {
-    border-color: #c00;
     border-color: var(--main-hl-color);
-    color: #c00;
     color: var(--main-hl-color);
     z-index: 10007;
-    border-bottom-color: #fff;
     border-bottom-color: var(--main-bg-color);
 }
 
@@ -1053,8 +1129,12 @@ table.tc-attr a[target=_blank]:after, .tc-ctl-finfo-val a[target=_blank]:after {
     margin-right: 0.5em;
 }
 
+    .tc-ctl-finfo-coords-pair.tc-hidden {
+        display: none;
+    }
+
 .tc-ctl-finfo-coords-val {
-    color: #000;
+    color: var(--text-main-color);
 }
 
 ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
@@ -1080,7 +1160,6 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
 .tc-ctl-finfo h4 {
     font-size: 0.9em;
     margin: 0 0 0.5em 0;
-    color: #666;
     color: var(--title-color);
     text-shadow: 0 0 0.3em #fff;
 }
@@ -1106,7 +1185,6 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
 
 .tc-ctl-finfo pre {
     width: 40vw;
-    background-color: #fff;
     background-color: var(--main-bg-color);
     margin: 0;
 }
@@ -1115,7 +1193,6 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
 .tc-ctl-finfo iframe {
     width: 40vw;
     height: 40vh;
-    background-color: #fff;
     background-color: var(--main-bg-color);
 }
 
@@ -1138,13 +1215,12 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
     .tc-ctl-finfo ul.tc-ctl-finfo-features li table {
         -webkit-transition: border .3s ease;
         -moz-transition: border .3s ease;
-        -ie-transition: border .3s ease;
         -o-transition: border .3s ease;
         transition: border .3s ease;
     }
 
     .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table {
-        border: 0.2em #c00 solid;
+        border: 0.2em solid;
         border-color: var(--main-hl-color);
     }
 
@@ -1158,16 +1234,12 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
 }
 
 .tc-btn-dl:first-child {
-    border-top-left-radius: 0.3em;
     border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: 0.3em;
     border-bottom-left-radius: var(--border-radius);
 }
 
 .tc-btn-dl:last-child {
-    border-top-right-radius: 0.3em;
     border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: 0.3em;
     border-bottom-right-radius: var(--border-radius);
 }
 
@@ -1235,56 +1307,6 @@ a:hover.olButton {
     visibility: visible;
 }
 
-@-moz-keyframes bounce_fading_bar {
-    0% {
-        -moz-transform: scale(.6);
-    }
-
-    100% {
-        -moz-transform: scale(.3);
-    }
-}
-
-@-webkit-keyframes bounce_fading_bar {
-    0% {
-        -webkit-transform: scale(.6);
-    }
-
-    100% {
-        -webkit-transform: scale(.3);
-    }
-}
-
-@-ms-keyframes bounce_fading_bar {
-    0% {
-        -ms-transform: scale(.6);
-    }
-
-    100% {
-        -ms-transform: scale(.3);
-    }
-}
-
-@-o-keyframes bounce_fading_bar {
-    0% {
-        -o-transform: scale(.6);
-    }
-
-    100% {
-        -o-transform: scale(.3);
-    }
-}
-
-@keyframes bounce_fading_bar {
-    0% {
-        transform: scale(.6);
-    }
-
-    100% {
-        transform: scale(.3);
-    }
-}
-
 .input-group {
     margin: 10px;
     width: 95%;
@@ -1294,9 +1316,8 @@ a:hover.olButton {
     overflow-y: auto;
     overflow-x: hidden;
     height: auto;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
-    border: 1px solid #CCC;
+    border: 1px solid var(--sec-divider-color);
     padding: 0;
     list-style: none;
     margin-top: 0.5em;
@@ -1311,6 +1332,8 @@ a:hover.olButton {
         overflow: hidden;
         line-height: 2em;
         box-sizing: content-box;
+        color: var(--list-color);
+        background-color: var(--list-bg-color);
     }
 
 .c3 .c3-axis-x path, .c3 .c3-axis-x line {
@@ -1358,71 +1381,6 @@ a:hover.olButton {
     font-size: 10px;
 }
 
-/*#track-chart {
-    width: 17%;
-    height: 17%;
-    min-width: 21em;
-    min-height: 8em;
-    padding-right: 1em;
-    background-color: rgba(255,255,255, 0.6);
-    border: 1px solid #CCC;
-    border-radius: 5px;
-    box-shadow: 0 5px 15px rgba(0,0,0,.5);
-    position: absolute;
-    bottom: 0em;
-    right: 1.8em;
-    display: none;
-}
-
-    #track-chart > span {
-        height: 1.2em;
-        width: 100%;
-        cursor: pointer;
-        text-indent: 50%;
-        color: rgba(69, 69, 69, 0.9);
-        position: absolute;
-        top: 0;
-    }
-
-        #track-chart > span:before {
-            font-family: FontAwesome;
-            content: "\f0d7";
-        }
-
-    #track-chart.collapsed > span:before {
-        content: "\f0d8";
-    }
-
-.track-chart-for-collapse {
-}
-
-#track-chart.collapsed {
-    bottom: -15%;
-}
-
-#track-chart h5 {
-    color: rgba(0,0,0,0.75);
-    margin-left: 1em;
-    float: left;
-    width: 70%;
-}
-
-#track-chart span#spentTime {
-    width: 25%;
-    font-size: 75%;
-    float: left;
-    margin-top: 1.8em;
-    text-align: right;
-    font-weight: bold;
-    color: rgba(0,0,0,0.85);
-}*/
-/*
-#track-chart div#chart {
-    bottom: 0.5em;
-    width: 100%;
-    position: static !important; /* estamos obligados a indicar el important, puesto que c3 añade estilos en línea al div del gráfico
-}*/
-
 .tc-track-chart p {
     width: 337px;
     color: rgba(0,0,0,0.9);
@@ -1432,7 +1390,7 @@ a:hover.olButton {
 .track-elevation-tooltip {
     background-color: rgba(255,255,255, 0.8);
     padding: 0.8em;
-    border: 1px solid #CCC;
+    border: 1px solid var(--sec-divider-color);
     border-radius: 5px;
     box-shadow: 0 5px 15px rgba(0,0,0,.5);
     font-size: 1.4em;
@@ -1632,32 +1590,30 @@ a:hover.olButton {
         line-height: 2em;
         display: inline-block;
         font-weight: bold;
-        color: #333;
+        color: var(--text-sec-color);
     }
 
 .tc-textbox, .tc-combo {
     height: 2em;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
-    border: 1px solid #CCC;
+    border: 1px solid var(--input-border-color);
     padding: 0;
     padding-left: 0.2em;
-    color: #444;
+    color: var(--input-color);
+    background-color: var(--input-bg-color);
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
 }
 
 .tc-combo {
-    color: #666;
+    color: var(--input-select-color);
 }
 
 .tc-button {
-    border: 1px solid #C00;
-    border-color: var(--main-hl-color);
-    border-radius: 0.3em;
+    border: 1px solid;
+    border-color: var(--btn-hl-border-color);
     border-radius: var(--border-radius);
-    background-color: #C00;
-    background-color: var(--main-hl-color);
-    color: white;
+    background-color: var(--btn-hl-bg-color);
+    color: var(--btn-hl-color);
     padding: 6px 10px;
     cursor: pointer;
     font-size: 13px;
@@ -1751,6 +1707,12 @@ div.tc-alert.tc-hidden {
     z-index: 100010;
 }
 
+    .tc-modal.tc-visible {
+        animation: fadeIn 0.25s;
+        display: block;
+        visibility: visible;
+    }
+
     .tc-modal .tc-modal-background {
         width: 100%;
         height: 100%;
@@ -1773,8 +1735,8 @@ body .tc-map .tc-modal .tc-modal-background {
     -o-transform: translate(-50%, 0);
     -webkit-transform: translate(-50%, 0);
     transform: translate(-50%, 0);
-    background-color: white;
-    border: 1px solid #CCC;
+    background-color: var(--main-bg-color);
+    border: 1px solid var(--sec-divider-color);
     border-radius: 5px;
     box-shadow: 0 5px 15px rgba(0,0,0,.5);
     z-index: 100011;
@@ -1790,7 +1752,6 @@ body .tc-map .tc-modal .tc-modal-background {
         padding: 0.2em 0 0 0;
         margin: 0;
         font-size: 16px;
-        color: #666;
         color: var(--title-color);
         font-weight: normal;
         flex: 2 1 auto;
@@ -1801,7 +1762,7 @@ body .tc-map .tc-modal .tc-modal-background {
         padding: 0;
         margin: 0;
         margin-left: 0.3em;
-        color: #000;
+        color: var(--text-main-color);
     }
 
         .tc-modal .tc-modal-header .tc-modal-close:after {
@@ -1838,7 +1799,6 @@ body .tc-map .tc-modal .tc-modal-background {
 }
 
 .tc-modal h4 {
-    color: #666;
     color: var(--title-color);
     margin: 0.5em 0 0.5em 0;
     padding: 0;
@@ -1867,7 +1827,6 @@ body .tc-map .tc-modal .tc-modal-background {
     font-size: 0.9em;
     color: #fff;
     text-align: center;
-    border-radius: 0.3em;
     border-radius: var(--border-radius);
     padding: 0.6em 0.5em;
     margin-left: -0.15em;
@@ -1895,36 +1854,82 @@ body .tc-map .tc-modal .tc-modal-background {
         text-align: left;
     }
 
-    .tc-toast.tc-msg-info span, .tc-toast.tc-msg-warning span, .tc-toast.tc-msg-error span {
-        font-family: 'FontAwesome';
+    /* cuando no se cargan los estilos del layout responsive, no funcionan los estilos de las tostadas porque usan fontAwesome */
+    .tc-toast.tc-msg-warning span {
         font-size: 1em;
         margin-right: 0.4em;
         float: left;
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 14px solid #ff0;
+        border-radius: 0.1em;
     }
 
-        .tc-toast.tc-msg-info span:before, .tc-toast.tc-msg-error span:before {
-            background-image: -ms-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
-            background-image: -moz-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
-            background-image: -o-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
-            background-image: -webkit-gradient(radial, center center, 0, center center, 125, color-stop(70, #FFFFFF), color-stop(70, #010103));
-            background-image: -webkit-radial-gradient(center, ellipse closest-side, #FFFFFF 70%, #010103 70%);
-            background-image: radial-gradient(ellipse closest-side at center, #FFFFFF 70%, #010103 70%);
-        }
-
-        .tc-toast.tc-msg-info span:before {
-            content: '\f05a';
-            color: #00f;
-        }
-
         .tc-toast.tc-msg-warning span:before {
-            content: '\f071';
-            color: #ff0;
+            /*content: "\ff01";
+            margin-top: 0.15em;
+            position: absolute;
+            margin-left: -0.3em;
+            color: #000000;
+            font-size: 0.8em;*/
+            content: "!";
+            margin-top: 0.15em;
+            position: absolute;
+            margin-left: -0.15em;
+            color: #000000;
+            font-size: 0.8em;
+            font-weight: bold;
         }
+
+    .tc-toast.tc-msg-error span {
+        font-size: 0.8em;
+        float: left;
+        background: #ff0000;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+    }
 
         .tc-toast.tc-msg-error span:before {
-            content: '\f057';
-            color: #f00;
+            /*content: '\271a';
+            color: #ffffff;
+            transform: rotate(45deg);
+            position: absolute;
+            left: 0.75em;
+            top: 0.65em;*/
+            content: "x";
+            color: #ffffff;
+            position: absolute;
+            left: 0.9em;
+            top: 0.8em;
+            font-weight: bold;
         }
+
+    .tc-toast.tc-msg-info span {
+        font-size: 0.8em;
+        float: left;
+        background: #0000ff;
+        width: 13.5px;
+        height: 13.5px;
+        border-radius: 50%;
+    }
+
+        .tc-toast.tc-msg-info span:before {
+            /*content: '\2139';
+            color: #ffffff;
+            position: absolute;
+            left: 1.05em;
+            top: 0.8em;*/
+            content: "i";
+            color: #ffffff;
+            position: absolute;
+            left: 1.05em;
+            top: 0.8em;
+            font-weight: bold;
+        }
+
 
     .tc-toast.tc-hidden {
         -moz-animation: fadeout 0.3s; /* Firefox */
@@ -2058,12 +2063,10 @@ label.tc-ctl-edit-view-changes {
             height: 100%;
             line-height: 2em;
             text-align: center;
-            border-radius: 0.3em;
             border-radius: var(--border-radius);
             box-sizing: border-box;
             border-right-width: 0;
             border: 1px solid #666;
-            background-color: #fff;
             background-color: var(--main-bg-color);
             color: #666;
             cursor: pointer;
@@ -2117,23 +2120,17 @@ label.tc-ctl-edit-view-changes {
         }
 
 .tc-ctl-edit-btn-new {
-    border-top-left-radius: 0.3em;
     border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: 0.3em;
     border-bottom-left-radius: var(--border-radius);
 }
 
 .tc-ctl-edit-btn-cancel {
-    border-top-right-radius: 0.3em;
     border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: 0.3em;
     border-bottom-right-radius: var(--border-radius);
 }
 
 .tc-ctl-edit-btn-delete {
-    border-top-left-radius: 0.3em;
     border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: 0.3em;
     border-bottom-left-radius: var(--border-radius);
 }
 
@@ -2162,9 +2159,7 @@ label.tc-ctl-edit-btn-select, label.tc-ctl-edit-btn-point, label.tc-ctl-edit-btn
     border-color: #666;
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 0;
-    border-bottom-color: #fff;
     border-bottom-color: var(--main-bg-color);
-    color: #c00;
     color: var(--main-hl-color);
     z-index: 10007;
 }
@@ -2187,7 +2182,6 @@ label.tc-ctl-edit-btn-select, label.tc-ctl-edit-btn-point, label.tc-ctl-edit-btn
 
 .tc-ctl-edit-select, .tc-ctl-edit .tc-ctl.tc-ctl-edit-point, .tc-ctl-edit .tc-ctl.tc-ctl-edit-line, .tc-ctl-edit .tc-ctl.tc-ctl-edit-polygon {
     /*position: fixed;*/
-    background-color: #fff;
     background-color: var(--main-bg-color);
     padding-top: 1em;
     top: 0;
@@ -2196,7 +2190,6 @@ label.tc-ctl-edit-btn-select, label.tc-ctl-edit-btn-point, label.tc-ctl-edit-btn
     overflow: hidden;
     -webkit-transition: all .2s ease;
     -moz-transition: all .2s ease;
-    -ie-transition: all .2s ease;
     -o-transition: all .2s ease;
     transition: all .2s ease;
 }
@@ -2360,103 +2353,24 @@ label.tc-ctl-edit-btn-select, label.tc-ctl-edit-btn-point, label.tc-ctl-edit-btn
     opacity: 0.9;
 }
 
-.tc-ctl.tc-ctl-m-finfo {
-    padding-left: 0;
-    padding-right: 0;
-}
-
 .tc-ctl-finfo-services:empty + .tc-ctl-print-btn {
     display: none;
 }
 
-.tc-ctl-m-finfo-select {
-    font-size: 0.9em;
-    line-height: 1.8em;
-}
-
-    .tc-ctl-m-finfo-select form {
-        display: flex;
-    }
-
-    .tc-ctl-m-finfo-select label {
-        position: relative;
-        display: inline-block;
-        flex-grow: 1;
-        margin: 0;
-        padding: 0;
-        font-size: 1em;
-    }
-
-    .tc-ctl-m-finfo-select input[type=radio] {
-        display: none;
-    }
-
-    .tc-ctl-m-finfo-select form > span {
-        height: 2em;
-        text-align: center;
-        box-sizing: border-box;
-        border: 0.1em solid transparent;
-        background-color: #fff;
-        background-color: var(--main-bg-color);
-        display: inline-block;
-        flex-grow: 1;
-    }
-
-    .tc-ctl-m-finfo-select input[type=radio] ~ span {
-        display: inline-block;
-        width: calc(100% - 0.1em);
-        height: 2em;
-        text-align: center;
-        box-sizing: border-box;
-        cursor: pointer;
-    }
-
-        .tc-ctl-m-finfo-select input[type=radio] ~ span:before {
-            font-family: mapskin;
-            letter-spacing: 0.1em;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-    .tc-ctl-m-finfo-select label.tc-ctl-m-finfo-btn-point input[type=radio] ~ span:before {
-        content: '\e045';
-    }
-
-    .tc-ctl-m-finfo-select label.tc-ctl-m-finfo-btn-line input[type=radio] ~ span:before {
-        content: '\e046';
-    }
-
-    .tc-ctl-m-finfo-select label.tc-ctl-m-finfo-btn-polygon input[type=radio] ~ span:before {
-        content: '\e047';
-    }
-
 label:first-of-type input[type=radio] ~ span {
-    border-top-left-radius: 0.3em;
     border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: 0.3em;
     border-bottom-left-radius: var(--border-radius);
 }
 
 label:last-child input[type=radio] ~ span {
     width: 100%;
-    border-top-right-radius: 0.3em;
     border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: 0.3em;
     border-bottom-right-radius: var(--border-radius);
     /* para el salto de línea */
     white-space: pre-line;
 }
 
-.tc-ctl-m-finfo-select input[type=radio]:checked ~ span {
-    color: #fff;
-    background-color: #c00;
-    background-color: var(--main-hl-color);
-    z-index: 10007;
-}
-
-.tc-warningIE {
+.tc-warning-ie {
     width: 100%;
     z-index: 100000;
     text-align: center;
@@ -2472,28 +2386,13 @@ label:last-child input[type=radio] ~ span {
     height: 15%;
     bottom: 0;
     flex-wrap: wrap;
+    cursor: pointer;
 }
 
-    .tc-warningIE span {
-        width: 100%;
-        align-self: flex-end;
-    }
-
-    .tc-warningIE button {
-        background-color: black;
-        font-weight: bold;
-    }
-
-        .tc-warningIE button[disabled] {
-            color: black;
-            background-color: rgba(234, 234, 227, 1);
-            border-color: rgba(234, 234, 227, 1);
-        }
-
-.tc-loading.tc-map .tc-warningIE {
+.tc-loading.tc-map .tc-warning-ie {
     visibility: visible;
 }
 
-    .tc-loading.tc-map .tc-warningIE * {
+    .tc-loading.tc-map .tc-warning-ie * {
         visibility: visible;
     }
