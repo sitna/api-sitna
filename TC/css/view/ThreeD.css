@@ -20,9 +20,6 @@
     -moz-transition-transition-property: opacity;
     -moz-transition-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
-    -ie-transition-transition-property: opacity;
-    -ie-transition-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -o-transition-transition-property: opacity;
     -o-transition-transition-duration: 0.5s;
     -o-transition-timing-function: ease-in-out;
@@ -43,9 +40,6 @@
     -webkit-transition-property: fill-opacity;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: fill-opacity;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: fill-opacity;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -83,9 +77,6 @@
     -webkit-transition-property: stroke-opacity;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: stroke-opacity;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: stroke-opacity;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -98,9 +89,6 @@
     -webkit-transition-property: stroke-width;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: stroke-width;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: stroke-width;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -129,9 +117,6 @@
     -webkit-transition-property: fill;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: fill;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: fill;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -144,9 +129,6 @@
     -webkit-transition-property: stroke-width;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: stroke-width;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: stroke-width;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -159,9 +141,6 @@
     -webkit-transition-property: stroke;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: stroke;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: stroke;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -220,9 +199,6 @@
     -webkit-transition-property: fill-opacity;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: fill-opacity;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: fill-opacity;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -256,9 +232,6 @@
     -webkit-transition-property: stroke-opacity;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: stroke-opacity;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: stroke-opacity;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -271,9 +244,6 @@
     -webkit-transition-property: stroke-width;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: stroke-width;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: stroke-width;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -301,9 +271,6 @@
     -webkit-transition-property: fill;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: fill;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: fill;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -316,9 +283,6 @@
     -webkit-transition-property: stroke-width;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: stroke-width;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: stroke-width;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -331,9 +295,6 @@
     -webkit-transition-property: stroke;
     -webkit-transition-duration: 0.5s;
     -webkit-transition-timing-function: ease-in-out;
-    -ie-transition-property: stroke;
-    -ie-transition-duration: 0.5s;
-    -ie-transition-timing-function: ease-in-out;
     -moz-transition-property: stroke;
     -moz-transition-duration: 0.5s;
     -moz-transition-timing-function: ease-in-out;
@@ -384,7 +345,6 @@
     transition: visibility 0s linear 300ms, opacity 300ms;
     -moz-transition: visibility 0s linear 300ms, opacity 300ms;
     -webkit-transition: visibility 0s linear 300ms, opacity 300ms;
-    -ie-transition: visibility 0s linear 300ms, opacity 300ms;
     -o-transition: visibility 0s linear 300ms, opacity 300ms;
 }
 
@@ -393,7 +353,6 @@
     opacity: 1;
     transition: visibility 0s linear 0s, opacity 300ms;
     -moz-transition: visibility 0s linear 0s, opacity 300ms;
-    -ie-transition: visibility 0s linear 0s, opacity 300ms;
     -webkit-transition: visibility 0s linear 0s, opacity 300ms;
     -o-transition: visibility 0s linear 0s, opacity 300ms;
 }
