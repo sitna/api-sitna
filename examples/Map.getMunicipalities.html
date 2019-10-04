@@ -30,32 +30,36 @@
     </div>
     <div id="mapa"></div>
     <script>
-        // Crear mapa.
-        var map = new SITNA.Map("mapa");
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
 
-        map.loaded(function () {
-            // completamos el desplegable
-            map.getMunicipalities(function (data) {
-                $.each(data, function (key, value) {
-                    $('#municipality').append($("<option></option>")
-                                   .attr("value", value.id)
-                                   .text(value.label));
-                });
+    map.loaded(function () {
+        // completamos el desplegable
+        map.getMunicipalities(function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
             });
+            document.querySelector("#municipality").appendChild(fragment);
         });
+    });
 
-        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-        function applyFilter() {
-            var id = $('#municipality').find('option:selected').val();
-            if (id == -1)
-                map.removeSearch();
-            else {
-                map.searchMunicipality(id, function (idQuery) {
-                    if (idQuery == null)
-                        alert('No se han encontrado resultados');
-                });
-            }
-        };
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter() {
+        var id = document.querySelector("#council").querySelector("option:checked").value;
+        if (id == -1)
+            map.removeSearch();
+        else {
+            map.searchMunicipality(id, function (idQuery) {
+                if (idQuery == null) {
+                    alert("No se han encontrado resultados");
+                }
+            });
+        }
+    };
     </script>
 
 </body>

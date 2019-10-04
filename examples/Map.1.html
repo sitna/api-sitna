@@ -45,11 +45,11 @@
     <script>
         // Alternar modos pantalla completa e incrustado
         if (location.search === "?embedded") {
-            $("#mapa").addClass("embedded");
-            $("#embeddedLink").hide();
+            document.querySelector("#mapa").classList.add("embedded");
+            document.querySelector("#embeddedLink").style.display = 'none';
         }
         else {
-            $("#fullLink").hide();
+            document.querySelector("#fullLink").style.display = '';
         }
     </script>
 
