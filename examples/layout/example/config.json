@@ -4,7 +4,7 @@
         {
             "id": "santiago",
             "title": "Camino de Santiago",
-            "url": "http://www.ign.es/wms-inspire/camino-santiago",
+            "url": "https://www.ign.es/wms-inspire/camino-santiago",
             "layerNames": "PS.ProtectedSite,GN.GeographicalNames,AU.AdministrativeUnit",
             "format": "image/png",
             "hideTree": false
