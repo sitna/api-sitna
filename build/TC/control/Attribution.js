@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -226,11 +226,6 @@ TC.inherit(TC.control.Attribution, TC.Control);
     ctlProto.toggleOtherAttributions = function () {
         const self = this;
         const other = self.div.querySelector('.' + self.CLASS + '-other');
-        if (other.classList.contains(TC.Consts.classes.COLLAPSED)) {
-            other.classList.remove(TC.Consts.classes.COLLAPSED);
-        }
-        else {
-            other.classList.add(TC.Consts.classes.COLLAPSED);
-        }
+        other.classList.toggle(TC.Consts.classes.COLLAPSED);
     };
 })();

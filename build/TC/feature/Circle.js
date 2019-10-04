@@ -1,22 +1,17 @@
-﻿TC.feature = TC.feature || {};
+TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
 }
 
 TC.feature.Circle = function (coords, options) {
-    var self = this;
+    const self = this;
 
     TC.Feature.apply(self, arguments);
 
-    var opts;
-    if (self.wrap.isNative(coords)) {
-        coords._wrap = self.wrap;
-        self.wrap.feature = coords;
-    }
-    else {
-        opts = self.options = $.extend(true, self.options, TC.Cfg.styles.polygon, options);
-        self.wrap.createCircle(coords, opts);
+    if (!self.wrap.isNative(coords)) {
+        options = self.options = TC.Util.extend(true, self.options, TC.Cfg.styles.polygon, options);
+        self.wrap.createCircle(coords, options);
     }
 };
 
@@ -31,10 +26,20 @@ TC.inherit(TC.feature.Circle, TC.Feature);
 
     featProto.getCoords = function () {
         return this.wrap.getGeometry();
+
     };
 
     featProto.setCoords = function (coords) {
-        return this.wrap.setGeometry(coords);
+        const self = this;
+        if (Array.isArray(coords) &&
+            Array.isArray(coords[0])
+            && !Array.isArray(coords[0][0]) && !Array.isArray(coords[0][1])
+            && !Array.isArray(coords[1])) {
+            return TC.Feature.prototype.setCoords.call(self, coords);
+        }
+        else {
+            throw new Error('Coordinates not valid for circle');
+        }
     };
 
 })();

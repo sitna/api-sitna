@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.Container) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control/Container');
@@ -40,7 +40,7 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
         var bufferPromises = new Array(self.ctlCount);
         for (var i = 0, len = self.controlOptions.length; i < len; i++) {
             var ctl = self.controlOptions[i];
-            bufferPromises[i] = self.map.addControl(ctl.name, $.extend({
+            bufferPromises[i] = self.map.addControl(ctl.name, TC.Util.extend({
                 id: self.uids[i],
                 div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
             }, ctl.options));

@@ -1,4 +1,4 @@
-﻿var TC = TC || {};
+var TC = TC || {};
 
 TC.inherit = function (childCtor, parentCtor) {
     childCtor.prototype = Object.create(parentCtor.prototype);
@@ -355,7 +355,7 @@ TC.inherit = function (childCtor, parentCtor) {
             var saveState = function () {
                 previousState = currentState;
                 currentState = TC.Util.utf8ToBase64(state);
-                if (currentState !== previousState) {                    
+                if (currentState !== previousState) {
                     window.history.pushState(state, null, window.location.href.split('#').shift() + '#' + currentState);
                 }
             };
@@ -396,8 +396,8 @@ TC.inherit = function (childCtor, parentCtor) {
         var baseLayerData = [];
 
         // ¿es una capa de respaldo?
-        if (self.baseLayers) {            
-            baseLayerData = self.baseLayers.filter(function (baseLayer) {                
+        if (self.baseLayers) {
+            baseLayerData = self.baseLayers.filter(function (baseLayer) {
                 return baseLayer.isRaster() && baseLayer.fallbackLayer;
             }).map(function (baseLayer) {
                 return {
@@ -424,7 +424,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 if (layer.layerNames && layer.layerNames.length) {
                     entry = {
                         u: TC.Util.isOnCapabilities(layer.url),
-                        n: $.isArray(layer.names) ? layer.names.join(',') : layer.names,
+                        n: Array.isArray(layer.names) ? layer.names.join(',') : layer.names,
                         o: layer.getOpacity(),
                         v: layer.getVisibility(),
                         h: layer.options.hideTitle,
@@ -446,7 +446,7 @@ TC.inherit = function (childCtor, parentCtor) {
         }
 
         if (extraStates) {
-            $.extend(state, extraStates);
+            TC.Util.extend(state, extraStates);
         }
 
         return jsonpack.pack(state);
@@ -548,12 +548,12 @@ TC.inherit = function (childCtor, parentCtor) {
                         var layerInConfig = false;
 
                         for (j = 0; j < self.options.workLayers.length; j++) {
-                            var lyrCfg = $.extend({}, self.options.workLayers[j], { map: self });
+                            var lyrCfg = TC.Util.extend({}, self.options.workLayers[j], { map: self });
 
                             if (capa.u === lyrCfg.url && lyrCfg.layerNames.indexOf(capa.n) >= 0) {
                                 layerInConfig = true;
                                 lyrCfg.renderOptions = { "opacity": capa.o, "hide": !capa.v };
-                                lyrCfg.unremovable = capa.ur;                                
+                                lyrCfg.unremovable = capa.ur;
                                 lyrCfg.title = capa.t;
                                 promises.push(self.addLayer(lyrCfg).then(function (layer) {
                                     layer.setVisibility(this.v);
@@ -562,7 +562,7 @@ TC.inherit = function (childCtor, parentCtor) {
                             }
                         }
 
-                        if (!layerInConfig) {                            
+                        if (!layerInConfig) {
                             promises.push(self.addLayer({
                                 id: TC.getUID(),
                                 url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
@@ -712,7 +712,9 @@ TC.inherit = function (childCtor, parentCtor) {
          * @type HTMLElement
          */
         self.div = TC.Util.getDiv(div);
-        self._$div = $(self.div);
+        if (TC._jQueryIsLoaded) {
+            self._$div = $(self.div);
+        }
         /**
          * El mapa ha cargado todas sus capas iniciales y todos sus controles
          * @event MAPLOAD
@@ -768,9 +770,7 @@ TC.inherit = function (childCtor, parentCtor) {
          * @event BEFOREUPDATE
          */
 
-        self.div.classList.add(TC.Consts.classes.LOADING);
-        $(self.div).data('map', self);
-        self.div.classList.add(TC.Consts.classes.MAP);
+        self.div.classList.add(TC.Consts.classes.LOADING, TC.Consts.classes.MAP);
 
         // Para gestionar zoomToMarkers
         self._markerPromises = [];
@@ -807,12 +807,9 @@ TC.inherit = function (childCtor, parentCtor) {
             },
             getMapLayers: function () {
                 return this.layers
-                    .filter(function (l) {
-                        return l.pending === false;
-                    })
-                    .map(function (l) {
-                        return l.mapLayer;
-                    });
+                    .filter(l => l.pending === false)
+                    .filter(l => !l.rejected)
+                    .map(l => l.mapLayer);
             },
             resolve: function (map, layer, isBase) {
                 const layerObj = this.layers[this.getIndex(layer.id)];
@@ -842,13 +839,15 @@ TC.inherit = function (childCtor, parentCtor) {
                     });
                 }
             },
-            reject: function (map, layer, isBase) {
-                const layerObj = this.layers[this.getIndex(layer.id)];
-                layerObj.mapLayer = layer;
+            reject: function (map, error) {
+                const layerObj = this.layers[this.getIndex(error.layerId)];
+                layerObj.mapLayer = null;
                 layerObj.pending = false;
                 layerObj.rejected = true;
-                var index = map.options.baseLayers.map(function (l) { return l.id }).indexOf(layer.id);
-                map.baseLayers.splice(index, 1);
+                var index = map.options.baseLayers.map(l => l.id).indexOf(error.layerId);
+                if (index >= 0) {
+                    map.baseLayers.splice(index, 1);
+                }
             },
             getResolvedWorkLayerIndex: function (map, id) {
                 return this.layers.filter(function (l) {
@@ -887,36 +886,27 @@ TC.inherit = function (childCtor, parentCtor) {
                                 }
 
                                 map.isLoaded = true;
+                                map.div.classList.remove(TC.Consts.classes.LOADING);
                                 map.trigger(TC.Consts.event.MAPLOAD);
-
-                                // GLS 13/02/2019 Si el usuario navega con IE, no quitamos el loading del mapa hasta que el usuario haga click
-                                if (!(Number.isInteger(TC.Util.detectIE()) && TC.Util.detectIE() < 12 && map.options.warningIE)) {
-                                    map.div.classList.remove(TC.Consts.classes.LOADING);
-                                }
                             };
                             // tenemos estado 3d
                             if (map.state && map.state.vw3) {
-                                if (Number.isInteger(TC.Util.detectIE()) && TC.Util.detectIE() < 12) {
-                                    map.toast(TC.Util.getLocaleString(map.options.locale, "threed.not.supported"), { type: TC.Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
-                                    setLoaded();
-                                } else {
-                                    if (!map.div.classList.contains(TC.Consts.classes.THREED)) {
-                                        map.div.classList.add(TC.Consts.classes.THREED);
+                                if (!map.div.classList.contains(TC.Consts.classes.THREED)) {
+                                    map.div.classList.add(TC.Consts.classes.THREED);
 
-                                        TC.loadJS(
-                                            !TC.view || !TC.view.ThreeD,
-                                            TC.apiLocation + 'TC/view/ThreeD',
-                                            function () {
-                                                TC.view.ThreeD.apply({
-                                                    map: map, state: map.state.vw3, callback: function () {
-                                                        setLoaded();
+                                    TC.loadJS(
+                                        !TC.view || !TC.view.ThreeD,
+                                        TC.apiLocation + 'TC/view/ThreeD',
+                                        function () {
+                                            TC.view.ThreeD.apply({
+                                                map: map, state: map.state.vw3, callback: function () {
+                                                    setLoaded();
 
-                                                        map.getControlsByClass(TC.control.ThreeD)[0].button.removeAttribute("disabled");
-                                                    }
-                                                });
-                                            }
-                                        );
-                                    }
+                                                    map.getControlsByClass(TC.control.ThreeD)[0].button.removeAttribute("disabled");
+                                                }
+                                            });
+                                        }
+                                    );
                                 }
                             } else {
                                 setLoaded();
@@ -960,8 +950,10 @@ TC.inherit = function (childCtor, parentCtor) {
             }
         };
 
+        self._layerBuffer.layers = [];
+
         if (!TC.ready) {
-            TC.Cfg = $.extend({}, TC.Defaults, TC.Cfg);
+            TC.Cfg = TC.Util.extend({}, TC.Defaults, TC.Cfg);
             TC.ready = true;
         }
 
@@ -983,32 +975,6 @@ TC.inherit = function (childCtor, parentCtor) {
          */
         options = options || {};
         mergeOptions.call(self, options);
-
-        const manageWarningIE = function () {
-            const WARNINGIE_CLASS = '.tc-warningIE';
-            const WARNINGIE_ID_TEMPLATE = "warningIE";
-            const WARNINGIE_TEMPLATE = TC.isDebug ? TC.apiLocation + "TC/templates/WarningIE.html" : function () { dust.register(WARNINGIE_ID_TEMPLATE, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-warningIE\"><span>").h("i18n", ctx, {}, { "$key": "warningIE" }).w("</span><button class=\"tc-button tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "warningIEContinue" }).w("\">").h("i18n", ctx, {}, { "$key": "warningIEContinue" }).w("</button></div>"); } body_0.__dustBody = !0; return body_0 };
-
-            TC.Util.getRenderedHtml(WARNINGIE_ID_TEMPLATE, WARNINGIE_TEMPLATE, null, function (html) {
-
-                var template = document.createElement('template');
-                template.innerHTML = html.trim();
-                self.div.appendChild(template.content ? template.content.firstChild : template.firstChild);
-
-                self.loaded(function () {
-                    const button = document.querySelector(WARNINGIE_CLASS + ' > button');
-                    button.classList.remove(TC.Consts.classes.HIDDEN);
-
-                    const onWarningClick = function (e) {
-                        button.removeEventListener('click', onWarningClick);
-                        self.div.removeChild(document.querySelector(WARNINGIE_CLASS));
-                        self.div.classList.remove(TC.Consts.classes.LOADING);
-                    };
-
-                    button.addEventListener('click', onWarningClick);
-                });
-            });
-        };
 
         var init = function () {
 
@@ -1073,20 +1039,16 @@ TC.inherit = function (childCtor, parentCtor) {
                     self.initialExtent = self.options.initialExtent;
                     self.maxExtent = self.options.maxExtent;
 
-                    if (Number.isInteger(TC.Util.detectIE()) && TC.Util.detectIE() < 12 && self.options.warningIE) {
-                        manageWarningIE();
-                    }
-
                     self.wrap = new TC.wrap.Map(self);
 
                     TC.loadJS(
-                        !(TC.isLegacy ? window[TC.Consts.PROJ4JSOBJ_LEGACY] : window[TC.Consts.PROJ4JSOBJ]),
+                        !window[TC.Consts.PROJ4JSOBJ],
                         [
                             TC.url.proj4js
                         ],
                         function () {
                             TC.loadJSInOrder(
-                                !(TC.isLegacy ? window[TC.Consts.OLNS_LEGACY] : window[TC.Consts.OLNS]),
+                                !window[TC.Consts.OLNS],
                                 [
                                     TC.url.ol,
                                     TC.url.olConnector
@@ -1100,7 +1062,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                             for (var name in self.options.controls) {
                                                 var ctlOptions = self.options.controls[name];
                                                 if (ctlOptions) {
-                                                    ctlOptions = typeof ctlOptions === 'boolean' ? {} : $.extend(true, {}, ctlOptions);
+                                                    ctlOptions = typeof ctlOptions === 'boolean' ? {} : TC.Util.extend(true, {}, ctlOptions);
                                                     if (typeof ctlOptions.div === 'string') {
                                                         ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
                                                     }
@@ -1119,7 +1081,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                                 if (typeof lyrCfg === 'string') {
                                                     lyrCfg = getAvailableBaseLayer.call(self, lyrCfg);
                                                 }
-                                                self.addLayer($.extend({}, lyrCfg, { isBase: true, map: self }));
+                                                self.addLayer(TC.Util.extend({}, lyrCfg, { isBase: true, map: self }));
                                             }
 
                                             var setVisibility = function (layer) {
@@ -1129,7 +1091,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                             };
                                             const workLayersNotInState = self.options.workLayers
                                                 .map(function (workLayer) {
-                                                    return $.extend({}, workLayer, { map: self });
+                                                    return TC.Util.extend({}, workLayer, { map: self });
                                                 })
                                                 .filter(function (workLayer) {
                                                     if (!self.state || !self.state.layers) {
@@ -1150,7 +1112,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                             if (self.state && self.state.layers) {
 
                                                 self.state.layers.forEach(function (stateLayer) {
-                                                                                                        
+
                                                     // añado como promesa cada una de las capas que se añaden
                                                     self.addLayer({
                                                         id: stateLayer.id || TC.getUID(),
@@ -1181,7 +1143,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                                     }.bind(stateLayer));
                                                 });
                                             }
-                                            Promise.all(ctlPromises).then(function () {
+                                            Promise.all(ctlPromises).finally(function () {
                                                 self.isReady = true;
                                                 self.trigger(TC.Consts.event.MAPREADY);
                                             })
@@ -1257,7 +1219,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 }
 
                 if (TC.Util.detectIE() && window.location.href.length === 2047) {
-                    TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValidForIE'), TC.Consts.msgErrorMode.TOAST);
+                    TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValidForEdge'), TC.Consts.msgErrorMode.TOAST);
                 }
 
                 if (obj) {
@@ -1284,7 +1246,7 @@ TC.inherit = function (childCtor, parentCtor) {
                             }
                             else if (!obj.layers[i].hasOwnProperty("o") || !obj.layers[i].hasOwnProperty("v") || !obj.layers[i].hasOwnProperty("h")) {
                                 inValidState = true
-                                jQuery.extend(obj.layers[i], {
+                                TC.Util.extend(obj.layers[i], {
                                     o: (obj.layers[i].o || 1),
                                     v: (obj.layers[i].v || true),
                                     h: (obj.layers[i].h || false)
@@ -1336,94 +1298,6 @@ TC.inherit = function (childCtor, parentCtor) {
             }
         };
 
-        const buildLayout = function (layout) {
-            var layoutObj = {};
-            const tryGetFile = function (url, resource) {
-                return new Promise(function (res, rej) {
-                    //Comprobamos si existe el fichero enviando una petición HEAD
-                    TC.ajax({
-                        method: 'HEAD',
-                        url: url
-                    })
-                        .then(function (data) {
-                            res({ resource: resource, found: true, url: url });
-                        })
-                        .catch(function (error) {
-                            res({ resource: resource, found: error.status !== 404, url: url });
-                        })
-                });
-            };
-
-            return new Promise(function (resolve, reject) {
-                if (typeof (layout) === 'string') {
-                    var layoutPath = layout;
-
-                    var isAbsoluteUrl = /^(https?:)?\/\//i.test(layoutPath);
-
-                    const getFileFromAvailableLocation = function (loObj, key, fileName) {
-                        return new Promise(function (res, rej) {
-                            // 1. Buscamos en un layout local
-                            // 2. Buscamos en un layout en el API con el mismo nombre
-                            // 3. Buscamos en el layout responsive del API
-                            var urlsToQuery = [
-                                layoutPath + '/' + fileName,
-                                apiTcUrl + layoutPath + '/' + fileName,
-                                apiTcUrl + 'layout/responsive' + '/' + fileName
-                            ];
-
-                            // flacunza: si la URL tiene pinta de ser absoluta es ella sola la más probable, así que la ponemos la primera
-                            if (isAbsoluteUrl) {
-                                urlsToQuery.unshift(layoutPath + '/' + fileName);
-                            }
-
-                            var i = 0;
-                            (function iterate(pos) {
-                                tryGetFile(urlsToQuery[pos], key).then(function (result) {
-                                    if (result.found) {
-                                        res(addFileToLayout(loObj, result));
-                                    } else {
-                                        if (pos === urlsToQuery.length - 1) {
-                                            res(loObj);
-                                        }
-                                        else {
-                                            iterate(++pos);
-                                        }
-                                    }
-                                });
-                            })(i);
-                        });
-                    };
-
-                    var addFileToLayout = function (loObj, data) {
-                        if (!(data.resource in loObj)) {
-
-                            var resourceUrl = (data.found ? data.url : apiTcUrl + layoutPath + '/' + layoutFiles[data.resource]);
-                            loObj[data.resource] = resourceUrl;
-                        }
-
-                        return loObj;
-                    };
-
-                    //buscamos el parámetro layout en la url del navegador
-                    var apiTcUrl = TC.apiLocation + 'TC/';
-                    //var defaultLayout = 'idena';
-                    //var layoutPath = idena.layout ? idena.layout : defaultLayout;
-
-                    var layoutFiles = { script: 'script.js', style: 'style.css', markup: 'markup.html', config: 'config.json', i18n: 'resources' };
-                    var layoutFilesLength = Object.keys(layoutFiles).length;
-
-                    Promise.all(Object.keys(layoutFiles).map(function (key) {
-                        return getFileFromAvailableLocation(layoutObj, key, layoutFiles[key])
-                    })).then(function () {
-                        resolve(layoutObj);
-                    });
-                } else {
-                    resolve(layout);
-                }
-            });
-        };
-
-
         TC.i18n = TC.i18n || {};
         // i18n: carga de recursos si no está cargados previamente
         TC.i18n.loadResources = TC.i18n.loadResources || function (condition, path, locale) {
@@ -1435,9 +1309,10 @@ TC.inherit = function (childCtor, parentCtor) {
                         method: 'GET',
                         responseType: TC.Consts.mimeType.JSON
                     })
-                        .then(function (data) {
+                        .then(function (response) {
+                            const data = response.data;
                             TC.i18n[locale] = TC.i18n[locale] || {};
-                            $.extend(TC.i18n[locale], data);
+                            TC.Util.extend(TC.i18n[locale], data);
                             if (typeof (dust) !== 'undefined') {
                                 TC.loadJS(
                                     !window.dust.i18n,
@@ -1449,7 +1324,7 @@ TC.inherit = function (childCtor, parentCtor) {
                             }
                         })
                         .catch(function (err) {
-                            reject(err instanceof Error ? err : Error(err));
+                            reject(err);
                         });
                 });
             } else {
@@ -1477,144 +1352,179 @@ TC.inherit = function (childCtor, parentCtor) {
         }));
 
         Promise.all(i18nPromises).finally(function () {
+            // 22/03/2019 GLS: siempre vamos a tener layout porque en sitna.js (1757) se establece por defecto layout/responsive
+            //                 si el usuario define otro se sobrescribe
+            if (self.options.layout) {
+                var layout = self.options.layout;
 
-            // Prevalece el layout que recibamos por parámetro en la aplicación. Si no lo hay, entonces usamos el de las opciones.
-            const mapLayout = TC.Util.getParameterByName(TC.Cfg.layoutURLParamName) || self.options.layout;
-            if (mapLayout) {
-                buildLayout(mapLayout).then(function (layout) {
-                    self.trigger(TC.Consts.event.BEFORELAYOUTLOAD, { map: self });
+                self.trigger(TC.Consts.event.BEFORELAYOUTLOAD, { map: self });
 
-                    var layoutURLs;
-                    if (typeof layout === 'string') {
-                        layoutURLs = { href: $.trim(layout) };
+                var layoutURLs = {};
+                var ignoreError = false;
+                if (typeof layout === 'string') {
+                    var href = layout.trim();
+                    href += href.match(/\/$/) ? '' : '/';
+
+                    layoutURLs.config = href + 'config.json';
+                    layoutURLs.markup = href + 'markup.html';
+                    layoutURLs.style = href + 'style.css';
+                    layoutURLs.script = href + 'script.js';
+                    layoutURLs.i18n = href + 'resources';
+
+                    // Si el layout se define como string, no podemos saber qué archivos a definido y cuales no, 
+                    // por eso tampoco podemos saber si es un error de configuración o es que no lo ha definido así que no mostramos error entendiendo que si
+                    // el archivo no está es porque no quiere.
+                    ignoreError = true;
+                }
+                else if (
+                    layout.hasOwnProperty('config') ||
+                    layout.hasOwnProperty('markup') ||
+                    layout.hasOwnProperty('style') ||
+                    layout.hasOwnProperty('script') ||
+                    layout.hasOwnProperty('href') ||
+                    layout.hasOwnProperty('i18n')
+                ) {
+                    layoutURLs = TC.Util.extend({}, layout);
+                }
+
+                if (layoutURLs.i18n) {
+                    layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
+                }
+
+                self.layout = layoutURLs;
+
+                const layoutPromises = [];
+                const ResponseError = function (status, url) {
+                    this.status = status;
+                    this.url = url;
+                };
+                const onError = function (error) {
+                    if (!ignoreError || error.status.toString() !== "404") {
+                        const mapObj = TC.Map.get(document.querySelector('.' + TC.Consts.classes.MAP));
+                        TC.error(
+                            TC.Util.getLocaleString(mapObj.options.locale, "urlFailedToLoad",
+                                { url: error.url }),
+                            [TC.Consts.msgErrorMode.TOAST, TC.Consts.msgErrorMode.EMAIL],
+                            "Error al cargar " + error.url);
                     }
-                    else if (
-                        layout.hasOwnProperty('config') ||
-                        layout.hasOwnProperty('markup') ||
-                        layout.hasOwnProperty('style') ||
-                        layout.hasOwnProperty('ie8Style') ||
-                        layout.hasOwnProperty('script') ||
-                        layout.hasOwnProperty('href') ||
-                        layout.hasOwnProperty('i18n')
-                    ) {
-                        layoutURLs = $.extend({}, layout);
-                    }
-                    if (layoutURLs.href) {
-                        layoutURLs.href += layoutURLs.href.match(/\/$/) ? '' : '/';
+                };
+
+                const i18LayoutPromise = new Promise(function (resolve, reject) {
+                    if (layoutURLs.config) {
+
+                        layoutPromises.push(fetch(layoutURLs.config)
+                            .then(function (response) {
+                                if (!response.ok) { // status no está en el rango 200-299
+                                    throw new ResponseError(response.status, layoutURLs.config);
+                                }
+                                return response.json();
+                            }).then(function (data) {
+                                resolve(data.i18n);
+                                mergeOptions.call(self, data, options);
+                            }).catch(function (error) {
+                                onError(error);
+
+                                resolve(false);
+                            }));
                     }
                     else {
-                        for (var key in layoutURLs) {
-                            const value = layoutURLs[key];
-                            if (value) {
-                                layoutURLs.href = value.substr(0, value.lastIndexOf('/') + 1);
-                                break;
-                            }
-                        }
+                        resolve(false);
                     }
-                    layoutURLs.config = layoutURLs.config || layoutURLs.href + 'config.json';
-                    layoutURLs.markup = layoutURLs.markup || layoutURLs.href + 'markup.html';
-                    layoutURLs.style = layoutURLs.style || layoutURLs.href + 'style.css';
-                    layoutURLs.ie8Style = layoutURLs.ie8Style || layoutURLs.href + 'ie8.css';
-                    layoutURLs.script = layoutURLs.script || layoutURLs.href + 'script.js';
-                    layoutURLs.i18n = layoutURLs.i18n || layoutURLs.href + 'resources';
-                    if (layoutURLs.i18n) {
-                        layoutURLs.i18n += layoutURLs.i18n.match(/\/$/) ? '' : '/';
-                    }
+                });
+                layoutPromises.push(i18LayoutPromise);
 
-                    self.layout = layoutURLs;
+                if (layoutURLs.style) {
+                    // Añadimos una clase para hacer más fáciles las reglas del layout
+                    self.div.classList.add('tc-lo');
 
-                    const layoutPromises = [];
-
-                    const i18LayoutPromise = new Promise(function (resolve, reject) {
-                        if (layoutURLs.config) {
-                            const request = TC.ajax({
-                                url: layoutURLs.config,
-                                method: 'GET',
-                                responseType: TC.Consts.mimeType.JSON,
-                                //async: Modernizr.canvas, // !IE8,
-                            });
-                            request
-                                .then(function (data) {
-                                    resolve(data.i18n);
-                                    mergeOptions.call(self, data, options);
-                                })
-                                .catch(function (error) {
-                                    TC.error(error);
-                                    resolve(false);
-                                });
-                            layoutPromises.push(request);
+                    // GLS: 28/03/2019 Necesito hacer el HEAD para validar si existe porque si lo hago directamente y lo cargo como BLOB, 
+                    // las referencias a las fuentes son relativas al blob por lo que no funcionan, así que HEAD y si existe lo cargo por href
+                    fetch(layoutURLs.style, {
+                        method: navigator.onLine ? 'HEAD': 'GET' // FLP: Las peticiones HEAD no se guardan en la cache, así que offline fallan, por eso la opción GET.
+                    }).then(function (response) {
+                        if (!response.ok) { // status no está en el rango 200-299
+                            throw new ResponseError(response.status, layoutURLs.style);
                         }
-                        else {
-                            resolve(false);
-                        }
+                        return response;
+                    }).then(function () {
+                        var linkElement = document.createElement('link');
+                        linkElement.rel = 'stylesheet';
+                        linkElement.href = layoutURLs.style;
+
+                        document.head.appendChild(linkElement);
+                    }).catch(function (error) {
+                        onError(error);
                     });
-                    layoutPromises.push(i18LayoutPromise);
+                }
 
-                    if (layoutURLs.style) {
-                        // Añadimos una clase para hacer más fáciles las reglas del layout
-                        self.div.classList.add('tc-lo');
-                        TC.loadCSS(layoutURLs.style);
-                    }
-                    if (!Modernizr.canvas && layoutURLs.ie8Style) {
-                        TC.loadCSS(layoutURLs.ie8Style);
-                    }
+                if (layoutURLs.markup) {
+                    layoutPromises.push(new Promise(function (resolve, reject) {
 
-                    if (layoutURLs.markup) {
-                        layoutPromises.push(new Promise(function (resolve, reject) {
-                            TC.ajax({
-                                url: layoutURLs.markup,
-                                method: 'GET',
-                                responseType: 'text',
-                                //async: Modernizr.canvas, // !IE8
-                            })
-                                .then(function (data) {
-                                    // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
-                                    i18LayoutPromise.then(function (i18n) {
-                                        if (i18n && locale) {
-                                            TC.i18n.loadResources(true, layoutURLs.i18n, locale).finally(function () {
-                                                var templateId = 'tc-markup';
-                                                var replacerFunction = function (str, match1, match2) {
-                                                    return TC.Util.getLocaleString(locale, match1 || match2);
-                                                };
-                                                //data = data.replace(/\{\{([^\}\{]+)\}\}/g, replacerFunction); // Estilo {{key}}
-                                                //data = data.replace(/\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFunction); // Estilo {@i18n $key="key"/}
-                                                data = data.replace(/(?:\{\{([^\}\{]+)\}\}|\{@i18n \$key="([^\}\{]+)"\/\})/g, replacerFunction); // Ambos estilos anteriores
-                                                if (self.div.lastElementChild) {
-                                                    self.div.lastElementChild.insertAdjacentHTML('afterend', data);
-                                                }
-                                                else {
-                                                    self.div.innerHTML = data;
-                                                }
-                                                resolve();
-                                            });
-                                        }
-                                        else {
-                                            if (self.div.lastElementChild) {
-                                                self.div.lastElementChild.insertAdjacentHTML('afterend', data);
-                                            }
-                                            else {
-                                                self.div.innerHTML = data;
-                                            }
+                        fetch(layoutURLs.markup)
+                            .then(function (response) {
+                                if (!response.ok) { // status no está en el rango 200-299
+                                    throw new ResponseError(response.status, layoutURLs.markup);
+                                }
+                                return response.text();
+                            }).then(function (data) {
+                                // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
+                                i18LayoutPromise.then(function (i18n) {
+                                    if (i18n && locale && layoutURLs.i18n) {
+                                        TC.i18n.loadResources(true, layoutURLs.i18n, locale).finally(function () {
+                                            var replacerFunction = function (str, match1, match2) {
+                                                return TC.Util.getLocaleString(locale, match1 || match2);
+                                            };
+                                            //data = data.replace(/\{\{([^\}\{]+)\}\}/g, replacerFunction); // Estilo {{key}}
+                                            //data = data.replace(/\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFunction); // Estilo {@i18n $key="key"/}
+                                            data = data.replace(/(?:\{\{([^\}\{]+)\}\}|\{@i18n \$key="([^\}\{]+)"\/\})/g, replacerFunction); // Ambos estilos anteriores
+                                            self.div.insertAdjacentHTML('beforeend', data);
                                             resolve();
-                                        }
-                                    });
-                                })
-                                .catch(function (error) {
-                                    reject(Error(error));
+                                        });
+                                    }
+                                    else {
+                                        self.div.insertAdjacentHTML('beforeend', data);
+                                        resolve();
+                                    }
                                 });
-                        }));
-                    }
+                            }).catch(function (error) {
+                                onError(error);
 
-                    Promise.all(layoutPromises).finally(function () {
-                        TC.loadJS(
-                            layoutURLs.script,
-                            layoutURLs.script,
-                            function () {
-                                setHeightFix(self.div);
+                                reject(Error(error));
+                            });
+                    }));
+                }
+
+                Promise.all(layoutPromises).finally(function () {
+
+                    if (layoutURLs.script) {
+                        fetch(layoutURLs.script)
+                            .then(function (response) {
+                                if (!response.ok) { // status no está en el rango 200-299
+                                    throw new ResponseError(response.status, layoutURLs.script);
+                                }
+                                return response.blob();
+                            }).then(function (fileBlob) {
+                                var fileURL = URL.createObjectURL(fileBlob);
+
+                                var scriptElement = document.createElement('script');
+                                scriptElement.src = fileURL;
+
+                                scriptElement.onload = function () {
+                                    setHeightFix(self.div);
+                                    init();
+                                };
+
+                                document.head.appendChild(scriptElement);
+
+                            }).catch(function (error) {
+                                onError(error);
                                 init();
                             });
-                    });
+                    } else {
+                        init();
+                    }
                 });
+
             }
             else {
                 init();
@@ -1667,7 +1577,7 @@ TC.inherit = function (childCtor, parentCtor) {
                             break;
                     }
                 }
-                if (!$.isArray(options)) {
+                if (!Array.isArray(options)) {
                     fnc(text, options, subject)
                 }
                 else {
@@ -1704,7 +1614,7 @@ TC.inherit = function (childCtor, parentCtor) {
      */
     var mergeLayerOptions = function (optionsArray, propertyName) {
         // lista de opciones de capa de los argumentos
-        var layerOptions = $.map(optionsArray, function (elm) {
+        var layerOptions = Array.prototype.slice.call(optionsArray).map(function (elm) {
             var result = {};
             if (elm) {
                 result[propertyName] = elm[propertyName];
@@ -1723,12 +1633,12 @@ TC.inherit = function (childCtor, parentCtor) {
 
             for (var i = 0; i < layerOption['baseLayers'].length; i++) {
                 if (typeof layerOption['baseLayers'][i] === 'object') {
-                    $.extend(layerOption['baseLayers'][i], getAvailableBaseLayer.call(this, layerOption['baseLayers'][i].id));
+                    TC.Util.extend(layerOption['baseLayers'][i], getAvailableBaseLayer.call(this, layerOption['baseLayers'][i].id));
                 }
             }
         } else {
             layerOptions.unshift(true); // Deep merge
-            layerOption = $.extend.apply(this, layerOptions);
+            layerOption = TC.Util.extend.apply(this, layerOptions);
             if (propertyName === 'availableBaseLayers') console.log("layerOption", layerOption);
         }
 
@@ -1740,6 +1650,11 @@ TC.inherit = function (childCtor, parentCtor) {
             Object.keys(controlOptions).filter(function (key) {
                 return Object.keys(controlOptions.controlContainer.controls).indexOf(key) > -1
             }).forEach(function (key) {
+                const containerControl = controlOptions.controlContainer.controls[key];
+                if (typeof containerControl.options === 'boolean') {
+                    containerControl.options = {}
+                }
+                TC.Util.extend(containerControl.options, controlOptions[key]);
                 delete controlOptions[key];
             });
         }
@@ -1747,8 +1662,9 @@ TC.inherit = function (childCtor, parentCtor) {
         return controlOptions;
     }
 
-    var mergeOptions = function () {
-        const result = this.options = $.extend.apply(this, $.merge([true, {}, TC.Cfg], arguments));
+    const mergeOptions = function () {
+        const argArray = [true, {}, TC.Cfg].concat(Array.prototype.slice.call(arguments));
+        const result = this.options = TC.Util.extend.apply(this, argArray);
         // Concatenamos las colecciones availableBaseLayers
         result.availableBaseLayers = TC.Cfg.availableBaseLayers.concat.apply(TC.Cfg.availableBaseLayers, Array.prototype.map.call(arguments, function (arg) {
             return arg.availableBaseLayers || [];
@@ -1756,7 +1672,9 @@ TC.inherit = function (childCtor, parentCtor) {
         result.baseLayers = mergeLayerOptions.call(this, arguments, 'baseLayers');
         result.workLayers = mergeLayerOptions.call(this, arguments, 'workLayers');
 
-        const controls = Array.prototype.slice.call(arguments).filter(function (elem) { return elem.controls }).map(function (elem) { return elem.controls });
+        const controls = Array.prototype.slice.call(arguments)
+            .filter(elem => elem.controls)
+            .map(elem => elem.controls);
         if (controls.length > 0) {
             result.controls = mergeControlOptions(result.controls);
         }
@@ -1795,7 +1713,7 @@ TC.inherit = function (childCtor, parentCtor) {
      * @async
      * @param {TC.Layer|TC.cfg.LayerOptions|string} layer Objeto de capa, objeto de opciones del constructor de la capa, o identificador de capa.
      * @param {function} [callback] Función de callback.
-     * @return {jQuery.Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
+     * @return {Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
      */
     mapProto.addLayer = function (layer, callback) {
         const self = this;
@@ -1808,6 +1726,14 @@ TC.inherit = function (childCtor, parentCtor) {
             }
 
             self._layerBuffer.add(layer.id || layer, isLayerRaster, layer.isBase);
+
+            if (self.getLayer(layer.id)) {
+                // Si ya existe capa con el mismo id, lanzamos error
+                const error = Error(`Layer "${layer.id}" already exists`);
+                error.layerId = layer.id;
+                reject(error);
+                return;
+            }
 
             var lyr;
             var test;
@@ -1826,7 +1752,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 [objUrl],
                 function () {
                     if (typeof layer === 'string') {
-                        lyr = new TC.layer.Raster($.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
+                        lyr = new TC.layer.Raster(TC.Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
                     }
                     else {
                         if (layer instanceof TC.Layer) {
@@ -1857,83 +1783,93 @@ TC.inherit = function (childCtor, parentCtor) {
                             idx = self.wrap.getLayerCount();
                         }
 
-                        const currentCrs = self.state && self.state.crs ? self.state.crs : self.getCRS();
-                        const isCompatible = lyr.isCompatible(currentCrs);
-                        if (lyr.isBase) {
-                            if (!isCompatible) {
-                                if (!lyr.type === TC.Consts.layerType.WMTS) {
-                                    lyr.mustReproject = true;
-                                }
-                                else {
-                                    const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
-                                    if (compatibleMatrixSet) {
-                                        lyr.wrap.setMatrixSet(compatibleMatrixSet);
+                        const currentCrs = self.state && self.state.crs ? self.state.crs : self.getCRS();                        
+                        TC.loadProjDef({
+                            crs: currentCrs,
+                            callback: function () {                                
+                                const isCompatible = lyr.isCompatible(currentCrs);
+                                if (lyr.isBase) {
+                                    if (!isCompatible) {
+                                        if (!lyr.type === TC.Consts.layerType.WMTS) {
+                                            lyr.mustReproject = true;
+                                        }
+                                        else {
+                                            const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
+                                            if (compatibleMatrixSet) {
+                                                lyr.wrap.setMatrixSet(compatibleMatrixSet);
+                                            }
+                                            else {
+                                                lyr.mustReproject = true;
+                                            }
+                                        }
+                                    }
+                                    if (self.state) {
+                                        lyr.isDefault = (self.state.base === lyr.id) || (self.state.base === lyr.options.fallbackLayer);
+                                    }
+                                    else if (typeof self.options.defaultBaseLayer === 'string') {
+                                        lyr.isDefault = self.options.defaultBaseLayer === lyr.id;
+                                    }
+                                    else if (typeof self.options.defaultBaseLayer === 'number') {
+                                        lyr.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                    }
+                                    if (lyr.isDefault) {
+                                        var fit;
+                                        if (lyr.mustReproject && !lyr.type === TC.Consts.layerType.WMTS ||
+                                            lyr.mustReproject && lyr.type === TC.Consts.layerType.WMTS && !lyr.wrap.getCompatibleMatrixSets(currentCrs)[0]) {
+                                            if (lyr.options.fallbackLayer && lyr.getFallbackLayer) {
+
+                                                self.addLayer(lyr.getFallbackLayer()).then(function (l) {
+                                                    self.wrap.setBaseLayer(l.wrap.layer);
+                                                    self.baseLayer = l.wrap.parent;
+                                                    // GLS: Tema casita + initialExtent
+                                                    fitToExtent(fit);
+
+                                                    resolve(lyr);
+                                                });
+                                            } else {
+                                                crsLayerError(self, lyr);
+                                                const error = Error('Layer ' + lyr.id + ' incompatible with CRS');
+                                                error.layerId = layer.id;
+                                                reject(error);
+                                            }
+                                        }
+                                        else {
+                                            fit = self.baseLayer === null;
+
+                                            lyr.wrap.getLayer().then(function (ollyr) {
+                                                self.wrap.setBaseLayer(ollyr);
+                                                self.baseLayer = lyr;
+
+                                                // GLS: Tema casita + initialExtent
+                                                fitToExtent(fit);
+
+                                                resolve(lyr);
+                                            });
+                                        }
                                     }
                                     else {
-                                        lyr.mustReproject = true;
-                                    }
-                                }
-                            }
-                            if (self.state) {
-                                lyr.isDefault = (self.state.base === lyr.id) || (self.state.base === lyr.options.fallbackLayer);
-                            }
-                            else if (typeof self.options.defaultBaseLayer === 'string') {
-                                lyr.isDefault = self.options.defaultBaseLayer === lyr.id;
-                            }
-                            else if (typeof self.options.defaultBaseLayer === 'number') {
-                                lyr.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
-                            }
-                            if (lyr.isDefault) {
-                                var fit;
-                                if (lyr.mustReproject && !lyr.type === TC.Consts.layerType.WMTS ||
-                                    lyr.mustReproject && lyr.type === TC.Consts.layerType.WMTS && !lyr.wrap.getCompatibleMatrixSets(currentCrs)[0]) {
-                                    if (lyr.options.fallbackLayer && lyr.getFallbackLayer) {
-
-                                        self.addLayer(lyr.getFallbackLayer()).then(function (l) {
-                                            self.wrap.setBaseLayer(l.wrap.layer);
-                                            self.baseLayer = l.wrap.parent;
-                                            // GLS: Tema casita + initialExtent
-                                            fitToExtent(fit);
-
-                                            resolve(lyr);
-                                        });
-                                    } else {
-                                        crsLayerError(self, lyr);
-                                        reject(layer);
+                                        //self.baseLayers[self.baseLayers.length] = lyr;
+                                        resolve(lyr);
                                     }
                                 }
                                 else {
-                                    fit = self.baseLayer === null;
-
-                                    lyr.wrap.getLayer().then(function (ollyr) {
-                                        self.wrap.setBaseLayer(ollyr);
-                                        self.baseLayer = lyr;
-
-                                        // GLS: Tema casita + initialExtent
-                                        fitToExtent(fit);
-
-                                        resolve(lyr);
-                                    });
+                                    if (isCompatible) {
+                                        lyr.wrap.getLayer().then(function (l) {
+                                            resolve(lyr);
+                                        });
+                                    }
+                                    else {
+                                        crsLayerError(self, lyr);
+                                        const error = Error('Layer ' + lyr.id + ' incompatible with CRS');
+                                        error.layerId = layer.id;
+                                        reject(error);
+                                    }
                                 }
                             }
-                            else {
-                                //self.baseLayers[self.baseLayers.length] = lyr;
-                                resolve(lyr);
-                            }
-                        }
-                        else {
-                            if (isCompatible) {
-                                lyr.wrap.getLayer().then(function (l) {
-                                    resolve(lyr);
-                                });
-                            }
-                            else {
-                                crsLayerError(self, lyr);
-                                reject(layer);
-                            }
-                        }
+                        });
                     }, function (error) {
-                        reject(layer);
+                        error.layerId = layer.id;
+                        reject(error);
                     });
                 }
             );
@@ -1947,12 +1883,12 @@ TC.inherit = function (childCtor, parentCtor) {
                 }
                 self.trigger(TC.Consts.event.LAYERADD, { layer: l });
                 self._layerBuffer.checkMapLoad(self);
-                if ($.isFunction(callback)) {
+                if (TC.Util.isFunction(callback)) {
                     callback(l);
                 }
             })
-            .catch(function (l) {
-                self._layerBuffer.reject(self, l, l.isBase);                
+            .catch(function (err) {
+                self._layerBuffer.reject(self, err);
                 self._layerBuffer.checkMapLoad(self);
             });
 
@@ -2000,6 +1936,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 for (var i = 0; i < self.layers.length; i++) {
                     if (self.layers[i] === layer) {
                         self.layers.splice(i, 1);
+                        break;
                     }
                 }
                 if (layer.isBase) {
@@ -2072,7 +2009,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 });
                 self.trigger(TC.Consts.event.LAYERORDER, { layer: layer, oldIndex: beforeIdx, newIndex: idx });
             }
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         });
@@ -2110,20 +2047,20 @@ TC.inherit = function (childCtor, parentCtor) {
             if (!found) {
                 layer = getAvailableBaseLayer.call(self, layer);
                 if (layer) {
-                    layer = self.addLayer($.extend(true, {}, layer, { isDefault: true, map: self }));
+                    layer = self.addLayer(TC.Util.extend(true, {}, layer, { isDefault: true, map: self }));
                     found = true;
                 }
             }
         }
         else {
-            if ($.inArray(layer, self.layers) < 0) {
+            if (self.layers.indexOf(layer) < 0) {
                 layer.isDefault = true;
                 layer.map = self;
                 self.addLayer(layer);
                 // GLS: comento lo siguiente porque ya se va a tratar en la línea 1838, si no, se lanza el evento 2 veces
                 //.then(function () {                
                 //self.trigger(TC.Consts.event.BASELAYERCHANGE, { layer: layer });
-                //if ($.isFunction(callback)) {
+                //if (TC.Util.isFunction(callback)) {
                 //    callback();
                 //}
                 //});
@@ -2149,7 +2086,7 @@ TC.inherit = function (childCtor, parentCtor) {
                         self.wrap.setBaseLayer(olLayer).then(function () {
                             self.baseLayer = layer;
                             self.trigger(TC.Consts.event.BASELAYERCHANGE, { layer: layer });
-                            if ($.isFunction(callback)) {
+                            if (TC.Util.isFunction(callback)) {
                                 callback();
                             }
                         });
@@ -2175,7 +2112,7 @@ TC.inherit = function (childCtor, parentCtor) {
      */
     mapProto.ready = function (callback) {
         var self = this;
-        if ($.isFunction(callback)) {
+        if (TC.Util.isFunction(callback)) {
             if (self.isReady) {
                 callback();
             }
@@ -2193,7 +2130,7 @@ TC.inherit = function (childCtor, parentCtor) {
      */
     mapProto.loaded = function (callback) {
         var self = this;
-        if ($.isFunction(callback)) {
+        if (TC.Util.isFunction(callback)) {
             if (self.isLoaded) {
                 callback();
             }
@@ -2247,7 +2184,7 @@ TC.inherit = function (childCtor, parentCtor) {
      * @async
      * @param {TC.Control|string} control Control a añadir o nombre del control
      * @param {object} [options] Objeto de opciones de configuración del control. Consultar el parámetro de opciones del constructor del control.
-     * @return {jQuery.Promise} Promesa de objeto {{#crossLink "TC.Control"}}{{/crossLink}}
+     * @return {Promise} Promesa de objeto {{#crossLink "TC.Control"}}{{/crossLink}}
      */
     mapProto.addControl = function (control, options) {
         const self = this;
@@ -2308,7 +2245,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 }
             }
         }
-        if ($.isFunction(obj)) {
+        if (TC.Util.isFunction(obj)) {
             for (var i = 0; i < self.controls.length; i++) {
                 var ctl = self.controls[i];
                 if (ctl instanceof obj) {
@@ -2332,11 +2269,21 @@ TC.inherit = function (childCtor, parentCtor) {
     };
 
     mapProto.getDefaultControl = function () {
-        var candidate = this.getControlsByClass("TC.control.FeatureInfo");
-        if (candidate && candidate.length)
-            return candidate[0];
-        else
-            return null;
+        const self = this;
+        var candidate;
+        if (self.options.defaultActiveControl) {
+            candidate = self.getControlsByClass('TC.control.' + self.options.defaultActiveControl.substr(0, 1).toUpperCase() + self.options.defaultActiveControl.substr(1))[0];
+        }
+        if (!candidate) {
+            candidate = self.getControlsByClass('TC.control.MultiFeatureInfo')[0];
+            if (candidate) {
+                candidate = candidate.lastCtrlActive;
+            }
+            else {
+                candidate = self.getControlsByClass('TC.control.FeatureInfo')[0];
+            }
+        }
+        return candidate;
     };
 
     /**
@@ -2494,45 +2441,45 @@ TC.inherit = function (childCtor, parentCtor) {
                 const loadProj = function () {
                     TC.loadProjDef({
                         crs: options.crs,
-                        callback: function () {                            
+                        callback: function () {
                             const setProjection = function (baseLayer) {
 
-                            const _setProjection = function () {
-                                const layerProjectionOptions = $.extend({}, options, { oldCrs: self.crs });
-                                const setLayerProjection = function (layer) {
-                                    layer.setProjection(layerProjectionOptions);
-                                };
-                                if (baseLayer.isCompatible(options.crs) || baseLayer.wrap.getCompatibleMatrixSets(options.crs).length > 0) {
-                                    baseLayer.setProjection(layerProjectionOptions);
-                                    self.wrap.setProjection($.extend({}, options, { baseLayer: baseLayer }));
-                                    self.crs = options.crs;
-                                    // En las capas base disponibles, evaluar su compatibilidad con el nuevo CRS
-                                    self.baseLayers
-                                        .filter(function (layer) {
-                                            return layer !== baseLayer;
-                                        })
-                                        .forEach(setLayerProjection);
-                                    // Reprojectamos capas cargadas
-                                    self.workLayers.forEach(setLayerProjection);
-                                    const resolveChange = function () {
-                                        self.trigger(TC.Consts.event.PROJECTIONCHANGE, { crs: options.crs });
-                                        resolve();
+                                const _setProjection = function () {
+                                    const layerProjectionOptions = TC.Util.extend({}, options, { oldCrs: self.crs });
+                                    const setLayerProjection = function (layer) {
+                                        layer.setProjection(layerProjectionOptions);
                                     };
-                                    if (baseLayer && baseLayer !== self.baseLayer) {
-                                        self.setBaseLayer(baseLayer, resolveChange);
+                                    if (baseLayer.isCompatible(options.crs) || baseLayer.wrap.getCompatibleMatrixSets(options.crs).length > 0) {
+                                        baseLayer.setProjection(layerProjectionOptions);
+                                        self.wrap.setProjection(TC.Util.extend({}, options, { baseLayer: baseLayer }));
+                                        self.crs = options.crs;
+                                        // En las capas base disponibles, evaluar su compatibilidad con el nuevo CRS
+                                        self.baseLayers
+                                            .filter(function (layer) {
+                                                return layer !== baseLayer;
+                                            })
+                                            .forEach(setLayerProjection);
+                                        // Reprojectamos capas cargadas
+                                        self.workLayers.forEach(setLayerProjection);
+                                        const resolveChange = function () {
+                                            self.trigger(TC.Consts.event.PROJECTIONCHANGE, { crs: options.crs });
+                                            resolve();
+                                        };
+                                        if (baseLayer && baseLayer !== self.baseLayer) {
+                                            self.setBaseLayer(baseLayer, resolveChange);
+                                        }
+                                        else {
+                                            resolveChange();
+                                        }
                                     }
-                                    else {
-                                        resolveChange();
+                                    else if (baseLayer.fallbackLayer) {
+                                        setProjection(baseLayer.fallbackLayer);
+                                    } else {
+                                        reject();
                                     }
-                                }
-                                else if (baseLayer.fallbackLayer) {
-                                    setProjection(baseLayer.fallbackLayer);
-                                } else {
-                                    reject();
-                                }
-                            };
+                                };
 
-                                if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WTMS) {
+                                if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS) {
                                     baseLayer.getCapabilitiesPromise().then(_setProjection);
                                 } else {
                                     _setProjection();
@@ -2669,7 +2616,7 @@ TC.inherit = function (childCtor, parentCtor) {
      * @return {TC.Layer}
      */
     mapProto.getLayer = function (layer) {
-        var self = this;
+        const self = this;
         var result = null;
         if (typeof layer === 'string') {
             for (var i = 0; i < self.layers.length; i++) {
@@ -2679,7 +2626,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 }
             }
         }
-        else if (TC.Layer && layer instanceof TC.Layer) {
+        else if (TC.Layer && layer instanceof TC.Layer && layer.map === self) {
             result = layer;
         }
         return result;
@@ -2717,6 +2664,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 layer.addPoint(coord, options);
             }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
+            }
         }
         else {
             _getVectors(self).then(function (vectors) {
@@ -2740,6 +2690,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 self._markerPromises.push(layer.addMarker(coord, options));
 
+            }
+            else {
+                self._markerPromises.push(Promise.reject(new Error('Layer "' + options.layer + '" not found')));
             }
         }
         else {
@@ -2769,6 +2722,9 @@ TC.inherit = function (childCtor, parentCtor) {
             if (layer) {
                 options.layer.addPolyline(coords, options);
             }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
+            }
         }
         else {
             _getVectors(self).then(function (vectors) {
@@ -2792,6 +2748,9 @@ TC.inherit = function (childCtor, parentCtor) {
             var layer = self.getLayer(options.layer);
             if (layer) {
                 options.layer.addPolygon(coords, options);
+            }
+            else {
+                throw new Error('Layer "' + options.layer + '" not found');
             }
         }
         else {
@@ -2869,9 +2828,9 @@ TC.inherit = function (childCtor, parentCtor) {
         setTimeout(function () {
             if (toast.parentElement) {
                 toast.parentElement.removeChild(toast);
-            }            
-            if (container && !container.querySelector('.' + toastClass) && container.parentElement) {                
-                container.parentElement.removeChild(container);                
+            }
+            if (container && !container.querySelector('.' + toastClass) && container.parentElement) {
+                container.parentElement.removeChild(container);
             }
         }, 1000);
     };
@@ -2908,7 +2867,7 @@ TC.inherit = function (childCtor, parentCtor) {
         }
         const toast = document.createElement('div');
         const span = document.createElement('span');
-        toast.classList.add(toastClass);        
+        toast.classList.add(toastClass);
         toast.appendChild(span);
         const p = document.createElement('p');
         p.innerHTML = text;
@@ -2946,18 +2905,13 @@ TC.inherit = function (childCtor, parentCtor) {
         if (/iPad/i.test(navigator.userAgent)) {
             var ih = window.innerHeight;
             var mh = div.getBoundingClientRect.height;
-            var dh = Modernizr.mq('only screen and (orientation : landscape)') ? 20 : 0;
+            var dh = matchMedia('only screen and (orientation : landscape)').matches ? 20 : 0;
             if (mh === ih + dh) {
                 mapHeightNeedsFix = true;
             }
         }
         var fix = function () {
-            if (Modernizr.mq('only screen and (orientation : landscape)')) {
-                div.classList.add(TC.Consts.classes.IPAD_IOS7_FIX);
-            }
-            else {
-                div.classList.remove(TC.Consts.classes.IPAD_IOS7_FIX);
-            }
+            div.classList.toggle(TC.Consts.classes.IPAD_IOS7_FIX, matchMedia('only screen and (orientation : landscape)').matches);
         };
         if (mapHeightNeedsFix) {
             fix();

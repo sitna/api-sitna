@@ -1,4 +1,4 @@
-﻿document.querySelectorAll('.tc-map').forEach(function (elm) {
+document.querySelectorAll('.tc-map').forEach(function (elm) {
     const map = TC.Map.get(elm);
 
     if (map && !map._layoutDone) {
@@ -16,18 +16,13 @@
             const lcollapsedClass = 'left-collapsed';
             var ovmap;
 
-            document.querySelectorAll('.right-panel > h1').forEach(function (h1) {
+            map.div.querySelectorAll('.right-panel > h1').forEach(function (h1) {
                 h1.addEventListener(TC.Consts.event.CLICK, function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const tab = e.target;
                     const panel = tab.parentElement;
-                    if (panel.classList.contains(rcollapsedClass)) {
-                        panel.classList.remove(rcollapsedClass);
-                    }
-                    else {
-                        panel.classList.add(rcollapsedClass);
-                    }
+                    panel.classList.toggle(rcollapsedClass);
                     if (map && panel === ovPanel) {
                         if (ovmap) {
                             if (panel.classList.contains(rcollapsedClass)) {
@@ -44,21 +39,16 @@
             });
 
 
-            document.querySelectorAll('.left-panel > h1').forEach(function (h1) {
+            map.div.querySelectorAll('.left-panel > h1').forEach(function (h1) {
                 h1.addEventListener(TC.Consts.event.CLICK, function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const panel = e.target.parentElement;
-                    if (panel.classList.contains(lcollapsedClass)) {
-                        panel.classList.remove(lcollapsedClass);
-                    }
-                    else {
-                        panel.classList.add(lcollapsedClass);
-                    }
+                    panel.classList.toggle(lcollapsedClass);
                 });
             });
 
-            document.querySelector('.tools-panel').addEventListener(TC.Consts.event.CLICK, function (e) {
+            map.div.querySelector('.tools-panel').addEventListener(TC.Consts.event.CLICK, function (e) {
                 const tab = e.target;
                 if (tab.tagName === ('H2')) {
                     const ctlDiv = tab.parentElement;
@@ -72,12 +62,7 @@
                             });
                         }
                     }
-                    if (ctlDiv.classList.contains(TC.Consts.classes.COLLAPSED)) {
-                        ctlDiv.classList.remove(TC.Consts.classes.COLLAPSED);
-                    }
-                    else {
-                        ctlDiv.classList.add(TC.Consts.classes.COLLAPSED);
-                    }
+                    ctlDiv.classList.toggle(TC.Consts.classes.COLLAPSED);
                 }
             });
 
@@ -103,11 +88,11 @@
                 TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
 
                 map.on(TC.Consts.event.TOOLSOPEN, function (e) {
-                    document.querySelector('.tools-panel').classList.remove(rcollapsedClass);
+                    map.div.querySelector('.tools-panel').classList.remove(rcollapsedClass);
                 });
 
                 map.on(TC.Consts.event.TOOLSCLOSE, function (e) {
-                    document.querySelector('.tools-panel').classList.add(rcollapsedClass);
+                    map.div.querySelector('.tools-panel').classList.add(rcollapsedClass);
                 });
 
                 // En pantalla estrecha colapsar panel de herramientas al activar una
@@ -132,7 +117,7 @@
                 });
             }
 
-            if (Modernizr.touch) {
+            if (TC.browserFeatures.touch()) {
                 const addSwipe = function (direction) {
                     const selector = '.' + direction + '-panel';
                     const className = direction + '-collapsed';

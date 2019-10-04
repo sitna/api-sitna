@@ -1,320 +1,14 @@
-﻿/**
+/**
  * LoadJS descargado de https://github.com/muicss/loadjs
- * @version 3.6.1
+ * @version 3.5.2
  */
-loadjs = (function () {
-    /**
-     * Global dependencies.
-     * @global {Object} document - DOM
-     */
-
-    var devnull = function () { },
-        bundleIdCache = {},
-        bundleResultCache = {},
-        bundleCallbackQueue = {};
-
-
-    /**
-     * Subscribe to bundle load event.
-     * @param {string[]} bundleIds - Bundle ids
-     * @param {Function} callbackFn - The callback function
-     */
-    function subscribe(bundleIds, callbackFn) {
-        // listify
-        bundleIds = bundleIds.push ? bundleIds : [bundleIds];
-
-        var depsNotFound = [],
-            i = bundleIds.length,
-            numWaiting = i,
-            fn,
-            bundleId,
-            r,
-            q;
-
-        // define callback function
-        fn = function (bundleId, pathsNotFound) {
-            if (pathsNotFound.length) depsNotFound.push(bundleId);
-
-            numWaiting--;
-            if (!numWaiting) callbackFn(depsNotFound);
-        };
-
-        // register callback
-        while (i--) {
-            bundleId = bundleIds[i];
-
-            // execute callback if in result cache
-            r = bundleResultCache[bundleId];
-            if (r) {
-                fn(bundleId, r);
-                continue;
-            }
-
-            // add to callback queue
-            q = bundleCallbackQueue[bundleId] = bundleCallbackQueue[bundleId] || [];
-            q.push(fn);
-        }
-    }
-
-
-    /**
-     * Publish bundle load event.
-     * @param {string} bundleId - Bundle id
-     * @param {string[]} pathsNotFound - List of files not found
-     */
-    function publish(bundleId, pathsNotFound) {
-        // exit if id isn't defined
-        if (!bundleId) return;
-
-        var q = bundleCallbackQueue[bundleId];
-
-        // cache result
-        bundleResultCache[bundleId] = pathsNotFound;
-
-        // exit if queue is empty
-        if (!q) return;
-
-        // empty callback queue
-        while (q.length) {
-            q[0](bundleId, pathsNotFound);
-            q.splice(0, 1);
-        }
-    }
-
-
-    /**
-     * Execute callbacks.
-     * @param {Object or Function} args - The callback args
-     * @param {string[]} depsNotFound - List of dependencies not found
-     */
-    function executeCallbacks(args, depsNotFound) {
-        // accept function as argument
-        if (args.call) args = { success: args };
-
-        // success and error callbacks
-        if (depsNotFound.length) (args.error || devnull)(depsNotFound);
-        else (args.success || devnull)(args);
-    }
-
-
-    /**
-     * Load individual file.
-     * @param {string} path - The file path
-     * @param {Function} callbackFn - The callback function
-     */
-    function loadFile(path, callbackFn, args, numTries) {
-        var doc = document,
-            async = args.async,
-            maxTries = (args.numRetries || 0) + 1,
-            beforeCallbackFn = args.before || devnull,
-            pathStripped = path.replace(/^(css|img)!/, ''),
-            isLegacyIECss,
-            e;
-
-        numTries = numTries || 0;
-
-        if (/(^css!|\.css$)/.test(path)) {
-            // css
-            e = doc.createElement('link');
-            e.rel = 'stylesheet';
-            e.href = pathStripped;
-
-            // tag IE9+
-            isLegacyIECss = 'hideFocus' in e;
-
-            // use preload in IE Edge (to detect load errors)
-            if (isLegacyIECss && e.relList) {
-                isLegacyIECss = 0;
-                e.rel = 'preload';
-                e.as = 'style';
-            }
-        } else if (/(^img!|\.(png|gif|jpg|svg)$)/.test(path)) {
-            // image
-            e = doc.createElement('img');
-            e.src = pathStripped;
-        } else {
-            // javascript
-            e = doc.createElement('script');
-            e.src = path;
-            e.async = async === undefined ? true : async;
-        }
-
-        e.onload = e.onerror = e.onbeforeload = function (ev) {
-            var result = ev.type[0];
-
-            // treat empty stylesheets as failures to get around lack of onerror
-            // support in IE9-11
-            if (isLegacyIECss) {
-                try {
-                    if (!e.sheet.cssText.length) result = 'e';
-                } catch (x) {
-                    // sheets objects created from load errors don't allow access to
-                    // `cssText` (unless error is Code:18 SecurityError)
-                    if (x.code != 18) result = 'e';
-                }
-            }
-
-            // handle retries in case of load failure
-            if (result == 'e') {
-                // increment counter
-                numTries += 1;
-
-                // exit function and try again
-                if (numTries < maxTries) {
-                    return loadFile(path, callbackFn, args, numTries);
-                }
-            } else if (e.rel == 'preload' && e.as == 'style') {
-                // activate preloaded stylesheets
-                return e.rel = 'stylesheet'; // jshint ignore:line
-            }
-
-            // execute callback
-            callbackFn(path, result, ev.defaultPrevented);
-        };
-
-        // add to document (unless callback returns `false`)
-        if (beforeCallbackFn(path, e) !== false) doc.head.appendChild(e);
-    }
-
-
-    /**
-     * Load multiple files.
-     * @param {string[]} paths - The file paths
-     * @param {Function} callbackFn - The callback function
-     */
-    function loadFiles(paths, callbackFn, args) {
-        // listify paths
-        paths = paths.push ? paths : [paths];
-
-        var numWaiting = paths.length,
-            x = numWaiting,
-            pathsNotFound = [],
-            fn,
-            i;
-
-        // define callback function
-        fn = function (path, result, defaultPrevented) {
-            // handle error
-            if (result == 'e') pathsNotFound.push(path);
-
-            // handle beforeload event. If defaultPrevented then that means the load
-            // will be blocked (ex. Ghostery/ABP on Safari)
-            if (result == 'b') {
-                if (defaultPrevented) pathsNotFound.push(path);
-                else return;
-            }
-
-            numWaiting--;
-            if (!numWaiting) callbackFn(pathsNotFound);
-        };
-
-        // load scripts
-        for (i = 0; i < x; i++) loadFile(paths[i], fn, args);
-    }
-
-
-    /**
-     * Initiate script load and register bundle.
-     * @param {(string|string[])} paths - The file paths
-     * @param {(string|Function|Object)} [arg1] - The (1) bundleId or (2) success
-     *   callback or (3) object literal with success/error arguments, numRetries,
-     *   etc.
-     * @param {(Function|Object)} [arg2] - The (1) success callback or (2) object
-     *   literal with success/error arguments, numRetries, etc.
-     */
-    function loadjs(paths, arg1, arg2) {
-        var bundleId,
-            args;
-
-        // bundleId (if string)
-        if (arg1 && arg1.trim) bundleId = arg1;
-
-        // args (default is {})
-        args = (bundleId ? arg2 : arg1) || {};
-
-        // throw error if bundle is already defined
-        if (bundleId) {
-            if (bundleId in bundleIdCache) {
-                throw "LoadJS";
-            } else {
-                bundleIdCache[bundleId] = true;
-            }
-        }
-
-        function loadFn(resolve, reject) {
-            loadFiles(paths, function (pathsNotFound) {
-                // execute callbacks
-                executeCallbacks(args, pathsNotFound);
-
-                // resolve Promise
-                if (resolve) {
-                    executeCallbacks({ success: resolve, error: reject }, pathsNotFound);
-                }
-
-                // publish bundle load event
-                publish(bundleId, pathsNotFound);
-            }, args);
-        }
-
-        if (args.returnPromise) return new Promise(loadFn);
-        else loadFn();
-    }
-
-
-    /**
-     * Execute callbacks when dependencies have been satisfied.
-     * @param {(string|string[])} deps - List of bundle ids
-     * @param {Object} args - success/error arguments
-     */
-    loadjs.ready = function ready(deps, args) {
-        // subscribe to bundle load event
-        subscribe(deps, function (depsNotFound) {
-            // execute callbacks
-            executeCallbacks(args, depsNotFound);
-        });
-
-        return loadjs;
-    };
-
-
-    /**
-     * Manually satisfy bundle dependencies.
-     * @param {string} bundleId - The bundle id
-     */
-    loadjs.done = function done(bundleId) {
-        publish(bundleId, []);
-    };
-
-
-    /**
-     * Reset loadjs dependencies statuses
-     */
-    loadjs.reset = function reset() {
-        bundleIdCache = {};
-        bundleResultCache = {};
-        bundleCallbackQueue = {};
-    };
-
-
-    /**
-     * Determine if bundle has already been defined
-     * @param String} bundleId - The bundle id
-     */
-    loadjs.isDefined = function isDefined(bundleId) {
-        return bundleId in bundleIdCache;
-    };
-
-
-    // export
-    return loadjs;
-
-})();
+loadjs = function () { var l = function () { }, c = {}, f = {}, u = {}; function o(e, n) { if (e) { var t = u[e]; if (f[e] = n, t) for (; t.length;)t[0](e, n), t.splice(0, 1) } } function s(e, n) { e.call && (e = { success: e }), n.length ? (e.error || l)(n) : (e.success || l)(e) } function h(t, r, i, c) { var o, s, e = document, n = i.async, f = (i.numRetries || 0) + 1, u = i.before || l, a = t.replace(/^(css|img)!/, ""); c = c || 0, /(^css!|\.css$)/.test(t) ? (o = !0, (s = e.createElement("link")).rel = "stylesheet", s.href = a) : /(^img!|\.(png|gif|jpg|svg)$)/.test(t) ? (s = e.createElement("img")).src = a : ((s = e.createElement("script")).src = t, s.async = void 0 === n || n), !(s.onload = s.onerror = s.onbeforeload = function (e) { var n = e.type[0]; if (o && "hideFocus" in s) try { s.sheet.cssText.length || (n = "e") } catch (e) { 18 != e.code && (n = "e") } if ("e" == n && (c += 1) < f) return h(t, r, i, c); r(t, n, e.defaultPrevented) }) !== u(t, s) && e.head.appendChild(s) } function t(e, n, t) { var r, i; if (n && n.trim && (r = n), i = (r ? t : n) || {}, r) { if (r in c) throw "LoadJS"; c[r] = !0 } !function (e, r, n) { var t, i, c = (e = e.push ? e : [e]).length, o = c, s = []; for (t = function (e, n, t) { if ("e" == n && s.push(e), "b" == n) { if (!t) return; s.push(e) } --c || r(s) }, i = 0; i < o; i++)h(e[i], t, n) }(e, function (e) { s(i, e), o(r, e) }, i) } return t.ready = function (e, n) { return function (e, t) { e = e.push ? e : [e]; var n, r, i, c = [], o = e.length, s = o; for (n = function (e, n) { n.length && c.push(e), --s || t(c) }; o--;)r = e[o], (i = f[r]) ? n(r, i) : (u[r] = u[r] || []).push(n) }(e, function (e) { s(n, e) }), t }, t.done = function (e) { o(e, []) }, t.reset = function () { c = {}, f = {}, u = {} }, t.isDefined = function (e) { return e in c }, t }();
 
 var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '1.6.1';
+TC.version = '2.0.0 [2019-10-4 13:46:48]';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -333,9 +27,7 @@ TC.version = '1.6.1';
 
 if (!TC.Consts) {
     TC.Consts = {};
-    TC.Consts.OLNS_LEGACY = 'OpenLayers';
     TC.Consts.OLNS = 'ol';
-    TC.Consts.PROJ4JSOBJ_LEGACY = 'Proj4js';
     TC.Consts.PROJ4JSOBJ = 'proj4';
     TC.Consts.GEOGRAPHIC = 'geographic';
     TC.Consts.UTM = 'UTM';
@@ -346,19 +38,14 @@ if (!TC.Consts) {
     TC.Consts.METER_PRECISION = 0;
     TC.Consts.DEGREE_PRECISION = 5;
     TC.Consts.EXTENT_TOLERANCE = 0.9998;/*URI: debido al redondeo del extente en el hash se obtiene un nivel de resolución mayor al debido. Con este valor definimos una tolerancia para que use una resolución si es muy muy muy próxima*/
+    TC.Consts.SRSDOWNLOAD_GEOJSON_KML = "EPSG:4326";
     TC.Consts.url = {
         SPLIT_REGEX: /([^:]*:)?\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
-        MODERNIZR: 'lib/modernizr.js',
-        JQUERY_LEGACY: TC.apiLocation + 'lib/jquery/jquery.1.10.2.js',
-        JQUERY: '//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.js',
-        OL_LEGACY: 'lib/OpenLayers/OpenLayers.sitna.js',
-        OL: 'lib/ol/build/ol-custom.js',
-        OL_CONNECTOR_LEGACY: 'TC/ol/ol2.js',
-        OL_CONNECTOR: 'TC/ol/ol.js',
+        OL: 'lib/ol/build/ol-sitna',
+        OL_CONNECTOR: 'TC/ol/ol',
         TEMPLATING: 'lib/dust/dust-full-helpers.min.js',
         TEMPLATING_I18N: 'lib/dust/dustjs-i18n.min.js',
         TEMPLATING_OVERRIDES: 'lib/dust/dust.overrides.js',
-        PROJ4JS_LEGACY: 'lib/proj4js/legacy/proj4js-compressed.js',
         PROJ4JS: 'lib/proj4js/proj4-src.js',
         EPSG: 'https://epsg.io/',
         LOCALFORAGE: TC.apiLocation + 'lib/localForage/localforage.min.js',
@@ -370,6 +57,7 @@ if (!TC.Consts) {
         JSONPACK: 'lib/jsonpack/jsonpack.min.js',
         UA_PARSER: 'lib/ua-parser/ua-parser.min.js',
         HASH: 'lib/jshash/md5-min.js',
+        DRAGGABILLY: 'lib/draggabilly/draggabilly.pkgd',
         URL_POLYFILL: 'lib/polyfill/url.js',
         PROMISE_POLYFILL: 'lib/polyfill/promise/polyfill.min.js'
     };
@@ -493,12 +181,14 @@ if (!TC.Consts) {
         IGN_ES_BASEMAP_GREY: "ign-base-gris",
         IGN_ES_RELIEF: "ign-mtn",
         IGN_ES_ORTHOPHOTO: "ign-pnoa",
+        IGN_ES_LIDAR: "ign-lidar",
 
         IGN_ES_DYNCARTO: "ign-raster-dyn",
         IGN_ES_DYNBASEMAP: "ign-base-dyn",
         IGN_ES_DYNBASEMAP_GREY: "ign-base-gris-dyn",
         IGN_ES_DYNRELIEF: "ign-mtn-dyn",
         IGN_ES_DYNORTHOPHOTO: "ign-pnoa-dyn",
+        IGN_ES_DYNLIDAR: "ign-lidar-dyn",
 
         IGN_FR_CARTO: "ign-fr-cartes",
         IGN_FR_BASEMAP: "ign-fr-base",
@@ -747,8 +437,6 @@ if (!TC.Consts) {
             notifyApplicationErrors: false,
             loggingErrorsEnabled: true,
             maxErrorCount: 10,
-            layoutURLParamName: 'layout', // Parámetro donde leer en la URL de la aplicación para cargar un layout.
-            titleURLParamName: 'title', // Parámetro donde leer en la URL de la aplicación para cargar un título de mapa, p. e. al imprimir.
 
             locale: 'es-ES',
 
@@ -855,7 +543,7 @@ if (!TC.Consts) {
                 },
                 {
                     id: TC.Consts.layer.IDENA_CARTO,
-                    title: 'Cartografía topográfica',
+                    title: 'Cartografía topográfica 2017',
                     type: TC.Consts.layerType.WMTS,
                     url: '//idena.navarra.es/ogc/wmts/',
                     matrixSet: 'epsg25830',
@@ -1054,6 +742,19 @@ if (!TC.Consts) {
                     overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
                 },
                 {
+                    id: TC.Consts.layer.IGN_ES_LIDAR,
+                    title: "Modelo digital LIDAR (IGN ES)",
+                    type: TC.Consts.layerType.WMTS,
+                    url: "http://wmts-mapa-lidar.idee.es/lidar",
+                    encoding: TC.Consts.WMTSEncoding.KVP,
+                    layerNames: "EL.GridCoverageDSM",
+                    matrixSet: "GoogleMapsCompatible",
+                    format: "image/png",
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-lidar_ign.jpg",
+                    fallbackLayer: TC.Consts.layer.IGN_ES_DYNLIDAR,
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
                     id: TC.Consts.layer.IGN_ES_DYNBASEMAP,
                     title: 'Mapa base \r\n (IGN ES)',
                     type: TC.Consts.layerType.WMS,
@@ -1096,6 +797,15 @@ if (!TC.Consts) {
                     url: '//www.ign.es/wms-inspire/mdt',
                     layerNames: 'relieve',
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_ign.jpg',
+                    overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IGN_ES_DYNLIDAR,
+                    title: 'Modelo digital LIDAR (IGN ES)',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//wms-mapa-lidar.idee.es/lidar',
+                    layerNames: 'EL.GridCoverage',
+                    thumbnail: TC.apiLocation + "tc/css/img/thumb-lidar_ign.jpg",
                     overviewMapLayer: TC.Consts.layer.IGN_ES_BASEMAP
                 },
                 {
@@ -1320,8 +1030,8 @@ if (!TC.Consts) {
                         cadastral: {}
                     }
                 },
-                measure: false,                
-                streetView: true,
+                measure: false,
+                streetView: false,
                 featureInfo: true,
                 featureTools: true
             },
@@ -1455,7 +1165,7 @@ if (!TC.Consts) {
          * proxify: returns cross-origin safe URL
          */
         TC.proxify = function (url) {
-            url = $.trim(url);
+            url = url.trim();
             var result = url;
             if (TC.Cfg.proxy) {
                 var prevent = false;
@@ -1500,7 +1210,7 @@ if (!TC.Consts) {
         };
 
         var _showLoadFailedError = function (url) {
-            var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
+            const mapObj = TC.Map.get(document.querySelector('.' + TC.Consts.classes.MAP));
             TC.error(
                 TC.Util.getLocaleString(mapObj.options.locale, "urlFailedToLoad",
                     { url: url }),
@@ -1562,21 +1272,103 @@ if (!TC.Consts) {
             }
         };
 
-        if (!window.Modernizr) {
-            TC.syncLoadJS(TC.apiLocation + TC.Consts.url.MODERNIZR);
-        }
-        Modernizr.touch = Modernizr.touchevents; // compatibilidad hacia atrás
-
-        TC.isLegacy = TC.isLegacy || !Modernizr.canvas;
-
-        if (!window.jQuery) {
-            if (Modernizr.canvas && !TC.isLegacy) { // > ie8
-                TC.syncLoadJS(TC.Consts.url.JQUERY);
+        const prefixes = ['', '-webkit-', '-moz-', '-o-', '-ms-'];
+        const randomText = ':-)';
+        const urlString = 'http://sitna.tracasa.es/';
+        var touch;
+        var inputTypeColor;
+        var urlParser;
+        TC.browserFeatures = {
+            touch: function () {
+                if (touch === undefined) {
+                    if (('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch) {
+                        touch = true;
+                        return true;
+                    }
+                    const query = prefixes
+                        .map(function (prefix) { return '(' + prefix + 'touch-enabled)'; })
+                        .join();
+                    touch = matchMedia(query).matches;
+                }
+                return touch;
+            },
+            inputTypeColor: function () {
+                if (inputTypeColor === undefined) {
+                    const elm = document.createElement('input');
+                    elm.setAttribute('type', 'color');
+                    inputTypeColor = elm.type !== 'text' && 'style' in elm;
+                    if (inputTypeColor) {
+                        elm.value = randomText;
+                        inputTypeColor = elm.value !== randomText;
+                    }
+                }
+                return inputTypeColor;
+            },
+            urlParser: function () {
+                if (urlParser === undefined) {
+                    try {
+                        // have to actually try use it, because Safari defines a dud constructor
+                        const url = new URL(urlString);
+                        urlParser = url.href === urlString;
+                    } catch (e) {
+                        urlParser = false;
+                    }
+                }
+                return urlParser;
             }
-            else {
-                TC.syncLoadJS(TC.Consts.url.JQUERY_LEGACY);
-            }
+        };
+
+        const patchJQuery = function () {
+            // Parche para soportar $.when
+            $._oldWhen = $.when;
+            $.when = function () {
+                const newArgs = new Array(arguments.length);
+                for (var i = 0; i < arguments.length; i++) {
+                    const arg = newArgs[i] = arguments[i];
+                    if (arg instanceof Promise) {
+                        const newArg = $.Deferred();
+                        arg
+                            .then(function (val) {
+                                newArg.resolve(val)
+                            })
+                            .catch(function (err) {
+                                newArg.reject(err);
+                            });
+                        newArgs[i] = newArg;
+                    }
+                }
+                return $._oldWhen.apply(this, newArgs);
+            };
+        };
+
+        if (window.jQuery) {
+            TC._jQueryIsLoaded = true;
+            patchJQuery();
         }
+        //else {
+        //    Object.defineProperty(window, 'jQuery', {
+        //        configurable: true,
+        //        get: fnction () {
+        //            console.trace();
+        //            Object.defineProperty(window, 'jQuery', { writable: true });
+        //            TC.syncLoadJS(TC.Consts.url.JQUERY);
+        //            patchJQuery();
+        //            TC._jQueryIsLoaded = true;
+        //            return jQuery;
+        //        }
+        //    });
+        //    Object.defineProperty(window, '$', {
+        //        configurable: true,
+        //        get: function () {
+        //            console.trace();
+        //            Object.defineProperty(window, '$', { writable: true });
+        //            TC.syncLoadJS(TC.Consts.url.JQUERY);
+        //            patchJQuery();
+        //            TC._jQueryIsLoaded = true;
+        //            return $;
+        //        }
+        //    });
+        //}
 
         if (!('Promise' in window)) {
             TC.syncLoadJS(TC.apiLocation + TC.Consts.url.PROMISE_POLYFILL);
@@ -1604,27 +1396,8 @@ if (!TC.Consts) {
             };
         }
 
-        // Parche para soportar $.when
-        if ('$' in window) {
-            $._oldWhen = $.when;
-            $.when = function () {
-                const newArgs = new Array(arguments.length);
-                for (var i = 0; i < arguments.length; i++) {
-                    const arg = newArgs[i] = arguments[i];
-                    if (arg instanceof Promise) {
-                        const newArg = $.Deferred();
-                        arg
-                            .then(function (val) {
-                                newArg.resolve(val)
-                            })
-                            .catch(function (err) {
-                                newArg.reject(err);
-                            });
-                        newArgs[i] = newArg;
-                    }
-                }
-                return $._oldWhen.apply(this, newArgs);
-            };
+        if (!TC.tool || !TC.tool.Proxification) {
+            TC.syncLoadJS(TC.apiLocation + 'TC/tool/Proxification');
         }
 
         // Transformación de petición AJAX de jQuery a promesa nativa
@@ -1649,6 +1422,9 @@ if (!TC.Consts) {
                 if (method === 'GET') {
                     url = url + '?' + data;
                 }
+                if (options.cache === false) {
+                    url += (url.indexOf('?') < 0 ? '&' : '?') + 'ts=' + Date.now();
+                }
                 const request = new XMLHttpRequest();
                 request.open(method, options.url);
 
@@ -1656,7 +1432,7 @@ if (!TC.Consts) {
                     if (options.contentType) {
                         request.setRequestHeader('Content-Type', options.contentType + '; charset=UTF-8');
                     }
-                    
+
                 }
                 else {
                     request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
@@ -1684,7 +1460,7 @@ if (!TC.Consts) {
                                         responseData = request.responseText;
                                         break;
                                 }
-                                resolve(responseData);
+                                resolve({ data: responseData, contentType: request.getResponseHeader("Content-type") });
                             }
                             catch (error) {
                                 reject(error);
@@ -1696,7 +1472,7 @@ if (!TC.Consts) {
                 try {
                     request.send(method === 'POST' ? data : null);
                 } catch (error) {
-                    reject(Error(error));
+                    reject(error);
                 }
             });
         };
@@ -1705,24 +1481,16 @@ if (!TC.Consts) {
         document.addEventListener('DOMContentLoaded', function () {
             var build;
             var mapLibrary = 'Unknown library';
-            var OL2 = 'OpenLayers 2';
-            var OL = 'OpenLayers 4';
+            var OL = 'OpenLayers';
             if (TC.Control) {
                 build = 'Compiled';
-                if (TC.isLegacy) {
-                    if (window.OpenLayers) {
-                        mapLibrary = OL2;
-                    }
-                }
-                else {
-                    if (window.ol) {
-                        mapLibrary = OL;
-                    }
+                if (window.ol) {
+                    mapLibrary = OL + ' ' + ol.VERSION;
                 }
             }
             else {
                 build = 'On demand';
-                mapLibrary = TC.isLegacy ? OL2 : OL;
+                mapLibrary = OL;
             }
             TC.version = TC.version + ' (' + build + '; ' + mapLibrary + '; @ ' + TC.apiLocation + ')';
         });
@@ -1742,7 +1510,7 @@ if (!TC.Consts) {
                 inOrder = false;
             }
 
-            var urls = $.isArray(url) ? url : [url];
+            var urls = Array.isArray(url) ? url : [url];
             urls = urls.map(function (elm) {
                 if (!/\.js$/i.test(elm) && elm.indexOf(TC.apiLocation) === 0) { // Si pedimos un archivo sin extensión y es nuestro se la ponemos según el entorno
                     return elm + (TC.isDebug ? '.js' : '.min.js');
@@ -1750,76 +1518,71 @@ if (!TC.Consts) {
                 return elm;
             });
 
-            //si tiene canvas, es que es un navegador nuevo
-            if (Modernizr.canvas) {
-                if (condition) {
-                    urls = urls instanceof Array ? urls : [urls];                    
+            if (condition) {
+                urls = urls instanceof Array ? urls : [urls];
 
-                    var name = "";
-                    const getName = function (path) {
-                        return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
-                    };
-                    if (urls.length > 1) {
-                        var toReduce = urls.slice(0).filter(function (path, index) {
-                            if (loadjs.isDefined(getName(path))) {
-                                urls.splice(index, 1);
-                                loadjs.ready(getName(path), callback);
-                                return false;
-                            } else {
-                                return true;
+                var name = "";
+                const getName = function (path) {
+                    return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
+                };
+                if (urls.length > 1) {
+                    var toReduce = urls.slice(0).filter(function (path, index) {
+                        if (loadjs.isDefined(getName(path))) {
+                            urls.splice(index, 1);
+                            loadjs.ready(getName(path), callback);
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    });
+                    if (toReduce.length === 1) {
+                        name = getName(toReduce[0]);
+                    } else if (toReduce.length > 0) {
+                        name = toReduce.reduce(function (prev, curr) {
+                            return getName(prev) + "_" + getName(curr);
+                        });
+                    }
+                } else {
+                    name = getName(urls[0]);
+                }
+
+                if (name.length > 0) {
+                    if (!loadjs.isDefined(name)) {
+                        var options = {
+                            async: !inOrder,
+                            numRetries: 1
+                        };
+
+                        if (!notCrossOrigin && !TC.Util.detectIE()) {
+                            options.before = addCrossOriginAttr;
+                        }
+
+                        loadjs(urls, name, options);
+                        loadjs.ready(name, {
+                            success: function () {
+                                callback();
+                            },
+                            error: function (pathsNotFound) {
+                                _showLoadFailedError(pathsNotFound);
                             }
                         });
-                        if (toReduce.length === 1) {
-                            name = getName(toReduce[0]);
-                        } else if (toReduce.length > 0) {
-                            name = toReduce.reduce(function (prev, curr) {
-                                return getName(prev) + "_" + getName(curr);
-                            });
-                        }
                     } else {
-                        name = getName(urls[0]);
-                    }
-
-                    if (name.length > 0) {
-                        if (!loadjs.isDefined(name)) {
-                            var options = {
-                                async: !inOrder,
-                                numRetries: 1
-                            };
-
-                            if (!notCrossOrigin && !TC.Util.detectIE()) {
-                                options.before = addCrossOriginAttr;
+                        // Esto vuelve a añadir el script al head si se está pidiendo un script cargado previamente.
+                        urls.forEach(function (url) {
+                            const urlObj = new URL(url, location.href);
+                            const script = Array.from(document.scripts).filter((scr) => scr.src === urlObj.href)[0];
+                            if (script) {
+                                document.head.appendChild(script.cloneNode());
                             }
-
-                            loadjs(urls, name, options);
-                            loadjs.ready(name, {
-                                success: function () {
-                                    callback();
-                                },
-                                error: function (pathsNotFound) {
-                                    _showLoadFailedError(pathsNotFound);
-                                }
-                            });
-                        } else {
-                            loadjs.ready(name, callback);
-                        }
+                        });
+                        loadjs.ready(name, callback);
                     }
-                }
-                else {
-                    callback();
                 }
             }
             else {
-                if (condition) {
-                    for (var i = 0; i < urls.length; i++) {
-                        TC.syncLoadJS(urls[i]);
-                    }
-                }
-                if (callback) {
-                    callback();
-                }
+                callback();
             }
-        };        
+        };
 
         TC.loadCSS = function (url) {
             const getName = function (path) {
@@ -1845,7 +1608,7 @@ if (!TC.Consts) {
             return new Promise(function (resolve, reject) {
                 options = options || {};
                 var code = options.crs.substr(options.crs.indexOf(':') + 1);
-                if (parseInt(code) === Number.NaN) {
+                if (Number.isNaN(parseInt(code))) {
                     // El CRS no está en modo urn o EPSG
                     code = options.crs.substr(options.crs.lastIndexOf('/') + 1);
                 }
@@ -1871,46 +1634,45 @@ if (!TC.Consts) {
             const crs = options.crs;
             const epsgPrefix = 'EPSG:';
             const urnPrefix = 'urn:ogc:def:crs:EPSG::';
+            const urnxPrefix = 'urn:x-ogc:def:crs:EPSG:';
             const gmlPrefix = 'http://www.opengis.net/gml/srs/epsg.xml#';
 
+            const fromHTTPURIToURN = function (name) {
+                var match = /http:\/\/www\.opengis\.net\/def\/crs\/EPSG\/\d\/(\d{4})/.exec(name);
+                if (match && match.length === 2) {
+                    return urnPrefix + match[1];
+                }
+
+                return name;
+            };
+
             var getDef;
-            if (TC.isLegacy) {
-                if (!window[TC.Consts.PROJ4JSOBJ_LEGACY]) {
-                    TC.syncLoadJS(TC.url.proj4js);
-                }
-                getDef = function (name) {
-                    return Proj4js.defs[name];
-                };
+            if (!window[TC.Consts.PROJ4JSOBJ]) {
+                TC.syncLoadJS(TC.url.proj4js);
             }
-            else {
-                if (!window[TC.Consts.PROJ4JSOBJ]) {
-                    TC.syncLoadJS(TC.url.proj4js);
-                }
-                getDef = function (name) {
-                    return proj4.defs(name);
-                };
-            }
-            if (!window.Proj4js) {
-                window.Proj4js = {
-                    Proj: function (code) { return proj4(Proj4js.defs[code]); },
-                    defs: proj4.defs,
-                    transform: proj4
-                };
-            }
+            getDef = function (name) {
+                name = fromHTTPURIToURN(name);
+                return proj4.defs(name);
+            };
             const loadProj4Def = function (code, def) {
-                Proj4js.defs[code] = def;
-                if (!TC.isLegacy) {
-                    proj4.defs(code, def);
+                proj4.defs(code, def);
+                if (window.ol && window.ol.proj) {
+                    // https://openlayers.org/en/latest/apidoc/module-ol_proj_proj4.html
+                    window.ol.proj.proj4.register(proj4);
                 }
+            };
+            const isFunction = function (obj) {
+                return typeof obj === 'function';
             };
             const loadDef = function (code, def, name) {
                 const epsgCode = epsgPrefix + code;
                 const urnCode = urnPrefix + code;
+                const urnxCode = urnxPrefix + code;
                 const gmlCode = gmlPrefix + code;
                 var axisUnawareDef;
                 if (typeof def === 'object') {
-                    axisUnawareDef = $.extend({}, def);
-                    def = $.extend({}, def);
+                    axisUnawareDef = TC.Util.extend({}, def);
+                    def = TC.Util.extend({}, def);
                     if (axisUnawareDef.axis) {
                         delete axisUnawareDef.axis;
                     }
@@ -1920,6 +1682,7 @@ if (!TC.Consts) {
                 }
                 loadProj4Def(epsgCode, def);
                 loadProj4Def(urnCode, def);
+                loadProj4Def(urnxCode, def);
                 // Por convención, los CRS definidos por URI siempre tienen orden de coordenadas X-Y.
                 loadProj4Def(gmlCode, axisUnawareDef);
                 if (crs.indexOf('http') === 0) {
@@ -1950,20 +1713,20 @@ if (!TC.Consts) {
             var def = getDef(crs);
             if (def) {
                 loadDef(code, def, options.name);
-                if ($.isFunction(options.callback)) {
+                if (isFunction(options.callback)) {
                     options.callback();
                 }
             }
             else {
                 if (options.def) {
                     loadDef(code, options.def, options.name);
-                    if ($.isFunction(options.callback)) {
+                    if (isFunction(options.callback)) {
                         options.callback();
                     }
                 }
                 else {
                     TC.getProjectionData(options).then(function (data) {
-                        if (loadDefResponse(data) && $.isFunction(options.callback)) {
+                        if (loadDefResponse(data) && isFunction(options.callback)) {
                             options.callback();
                         };
                     });
@@ -1979,16 +1742,9 @@ if (!TC.Consts) {
             ]
         };
 
-        if (TC.isLegacy) {
-            TC.url.ol = TC.apiLocation + TC.Consts.url.OL_LEGACY;
-            TC.url.olConnector = TC.apiLocation + TC.Consts.url.OL_CONNECTOR_LEGACY;
-            TC.url.proj4js = TC.apiLocation + TC.Consts.url.PROJ4JS_LEGACY;
-        }
-        else {
-            TC.url.ol = TC.apiLocation + TC.Consts.url.OL;
-            TC.url.olConnector = TC.apiLocation + TC.Consts.url.OL_CONNECTOR;
-            TC.url.proj4js = TC.apiLocation + TC.Consts.url.PROJ4JS;
-        }
+        TC.url.ol = TC.apiLocation + TC.Consts.url.OL;
+        TC.url.olConnector = TC.apiLocation + TC.Consts.url.OL_CONNECTOR;
+        TC.url.proj4js = TC.apiLocation + TC.Consts.url.PROJ4JS;
 
         // Precargamos el CRS por defecto
         TC.loadProjDef({ crs: 'EPSG:25830', name: 'ETRS89 / UTM zone 30N', def: '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs' });
@@ -2000,7 +1756,11 @@ if (!TC.Consts) {
         TC.loadProjDef({ crs: 'EPSG:3043', name: 'ETRS89 / UTM zone 31N (N-E)', def: '+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
         TC.loadProjDef({ crs: 'EPSG:4230', name: 'ED50', def: '+proj=longlat +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +no_defs +axis=neu' });
 
-        TC.Cfg = $.extend(true, {}, TC.Defaults, TC.Cfg);
+        if (!TC.Util) {
+            TC.syncLoadJS(TC.apiLocation + 'TC/Util');
+        }
+
+        TC.Cfg = TC.Util.extend(true, {}, TC.Defaults, TC.Cfg);
 
         TC.capabilities = {};
 
@@ -2014,19 +1774,19 @@ if (!TC.Consts) {
 
         TC.prompt = function (text, value, callback) {
             var newValue = prompt(text, value);
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback(newValue);
             }
         };
 
         TC.confirm = function (text, accept, cancel) {
             if (confirm(text)) {
-                if ($.isFunction(accept)) {
+                if (TC.Util.isFunction(accept)) {
                     accept();
                 }
             }
             else {
-                if ($.isFunction(cancel)) {
+                if (TC.Util.isFunction(cancel)) {
                     cancel();
                 }
             }
@@ -2042,9 +1802,6 @@ if (!TC.Consts) {
         if (!TC.Map) {
             TC.syncLoadJS(TC.apiLocation + 'TC/Map');
         }
-        if (!TC.Util) {
-            TC.syncLoadJS(TC.apiLocation + 'TC/Util');
-        }
 
         // OpenLayers connectors
         TC.wrap = {
@@ -2057,7 +1814,7 @@ if (!TC.Consts) {
                  */
                 self.getMap = function () {
                     return self._promise;
-                };
+                };                
             },
             Layer: function (layer) {
                 var self = this;
@@ -2133,7 +1890,7 @@ if (!TC.Consts) {
         TC.loadCSS(TC.apiLocation + 'TC/css/tcmap.css');
 
 
-        TC.loadJS(!Modernizr.urlparser, TC.apiLocation + TC.Consts.url.URL_POLYFILL, function () { });
+        TC.loadJS(!TC.browserFeatures.urlParser(), TC.apiLocation + TC.Consts.url.URL_POLYFILL, function () { });
 
         var uids = {};
         TC.getUID = function (prefix) {
@@ -2159,7 +1916,7 @@ if (!TC.Consts) {
 
             // key and at least value given, set cookie...
             if (arguments.length > 1 && (!/Object/.test(Object.prototype.toString.call(value)) || value === null)) {
-                options = $.extend({}, options);
+                options = TC.Util.extend({}, options);
 
                 if (value === null) {
                     options.expires = -1;
@@ -2209,7 +1966,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // GLS: 14/02/2019 Añadimos gestión para que no muestre tostada ni envíe correos en caso de que el navegador sea uno expirado
-        if (match.length > 0 && match[0].expired) {            
+        if (match.length > 0 && match[0].expired) {
             TC.Cfg.loggingErrorsEnabled = false;
         } else {
             if (match.length > 0 && !isNaN(match[0].version)) {
@@ -2220,13 +1977,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (TC.Cfg.oldBrowserAlert && !isSupported) {
                 TC.Cfg.loggingErrorsEnabled = false;
-                var mapObj = $('.' + TC.Consts.classes.MAP).data('map');
+                const mapObj = TC.Map.get(document.querySelector('.' + TC.Consts.classes.MAP));
 
                 TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale).then(function () {
                     TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), TC.Consts.msgErrorMode.TOAST);
                 });
             }
-        }        
+        }
     });
 
     if (/ip(ad|hone|od)/i.test(navigator.userAgent)) {
@@ -2251,9 +2008,9 @@ document.addEventListener('DOMContentLoaded', function () {
             var errorMsg, url = "", lineNumber = -1, column = -1, errorObj, apiError;
 
             if (e.type === "unhandledrejection") {
-                errorMsg = e.reason.message;
-                if (e.reason.stack) {
-                    apiError = e.reason.stack.indexOf(TC.apiLocation) > 0;
+                errorMsg = e.reason ? e.reason.message : "";
+                if (e.reason && e.reason.stack) {
+                    apiError = e.reason.stack.indexOf(TC.apiLocation) >= 0;
                 } else {
                     apiError = true;
                 }
@@ -2264,9 +2021,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 lineNumber = e.lineno;
                 column = e.colno;
                 errorObj = e.error;
-                apiError = url.indexOf(TC.apiLocation) > 0;
+                apiError = url.indexOf(TC.apiLocation) >= 0;
             }
-
+            
             // Si notifyApplicationErrors === false solo capturamos los errores de la API
             if ((TC.Cfg.notifyApplicationErrors || apiError) && errorCount < TC.Cfg.maxErrorCount && TC.Cfg.loggingErrorsEnabled) {
                 // Send object with all data to server side log, using severity fatal, 
@@ -2279,6 +2036,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     "lineNumber": lineNumber,
                     "column": column,
                     "appUrl": location.href,
+                    "apiVersion": TC.version,
                     "prevState": mapObj.getPreviousMapState(),
                     "userAgent": navigator.userAgent
                 }, errorObj);

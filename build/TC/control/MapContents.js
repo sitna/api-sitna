@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -19,14 +19,9 @@ TC.inherit(TC.control.MapContents, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-mc';
 
-    var _dataKeys = {
-        layer: 'tcLayer',
-        img: 'tcImg'
-    };
-
     ctlProto.render = function (callback, options) {
         const self = this;
-        return self._set1stRenderPromise(self.map ? self.renderData(options ? $.extend(self.map.getLayerTree(), options) : self.map.getLayerTree(), function () {
+        return self._set1stRenderPromise(self.map ? self.renderData(options ? TC.Util.extend(self.map.getLayerTree(), options) : self.map.getLayerTree(), function () {
             self.addUIEventListeners();
             if (typeof callback === 'function') {
                 callback();
@@ -52,7 +47,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                         var containsName = function containsName(node) {
                             var result = false;
                             if (node) {
-                                if ($.inArray(node.name, names) >= 0) {
+                                if (names.indexOf(node.name) >= 0) {
                                     result = true;
                                 }
                                 else {
@@ -133,7 +128,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 previousElm = currentElm;
                 for (var j = 0, jj = elms.length; j < jj; j++) {
                     const elm = elms[j];
-                    if ($(elm).data(_dataKeys.layer) === l) {
+                    if (elm.dataset.layerId === l.id) {
                         currentElm = elm;
                         break;
                     }
@@ -156,7 +151,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
         const liCollection = self.getLayerUIElements();
         for (var i = 0, len = liCollection.length; i < len; i++) {
             const li = liCollection[i];
-            if ($(li).data(_dataKeys.layer) === layer) {
+            if (li.dataset.layerId === layer.id) {
                 li.parentElement.removeChild(li);
                 break;
             }
@@ -182,7 +177,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
      */
     ctlProto.styleLegendImage = function (img, layer) {
         if (!img.getAttribute('src')) {
-            var imgSrc = $(img).data(_dataKeys.img);
+            var imgSrc = img.dataset.img;
 
             const toolProxification = new TC.tool.Proxification(TC.proxify);
 
@@ -224,7 +219,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     }
 
                     toolProxification.fetchImage(imgSrc).then(function (img) {
-                        $(img).data(_dataKeys.img, img.src);
+                        img.dataset.img = img.src;
                     }).catch(function (err) {
                         TC.error(err);
                     });

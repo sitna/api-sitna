@@ -1,4 +1,4 @@
-﻿TC.feature = TC.feature || {};
+TC.feature = TC.feature || {};
 
 if (!TC.feature.Point) {
     TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point');
@@ -60,19 +60,15 @@ if (!TC.feature.Point) {
  * available options: url, cssClass, group, width, height, anchor
  */
 TC.feature.Marker = function (coords, options) {
-    var self = this;
+    const self = this;
 
     TC.Feature.apply(self, arguments);
 
-    if (self.wrap.isNative(coords)) {
-        coords._wrap = self.wrap;
-        self.wrap.feature = coords;
-    }
-    else {
-        var opts = self.options = $.extend(true, self.options, TC.Cfg.styles.marker, options);
+    if (!self.wrap.isNative(coords)) {
+        options = self.options = TC.Util.extend(true, self.options, TC.Cfg.styles.marker, options);
         var locale = self.layer && self.layer.map ? self.layer.map.options.locale: TC.Cfg.locale;
-        self.title = opts.title || TC.i18n[locale][TC.Consts.MARKER];
-        self.wrap.createMarker(coords, opts);
+        self.title = options.title || TC.i18n[locale][TC.Consts.MARKER];
+        self.wrap.createMarker(coords, options);
     }
 };
 

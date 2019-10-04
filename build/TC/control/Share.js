@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.MapInfo) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/MapInfo');
@@ -14,7 +14,9 @@ TC.control.Share = function (options) {
 
     var opts = options || {};
     self._dialogDiv = TC.Util.getDiv(opts.dialogDiv);
-    self._$dialogDiv = $(self._dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
     if (!opts.dialogDiv) {
         document.body.appendChild(self._dialogDiv);
     }
@@ -44,7 +46,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
         }).then(function () {
             return TC.Control.prototype.render.call(self, function () {
                 //Si el navegador no soporta copiar al portapapeles, ocultamos el botón de copiar
-                if (TC.Util.detectChrome() || TC.Util.detectIE() >= 10 || TC.Util.detectFirefox() >= 41) {
+                if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
                     self.div.querySelectorAll('button').forEach(function (btn) {
                         btn.classList.remove('hide');
                     });
@@ -68,16 +70,11 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
                         const newFormat = label.querySelector('input[type=radio][name=format]').value;
 
                         options.forEach(function (option) {
-                            if (option.matches('.tc-' + newFormat)) {
-                                option.classList.remove(TC.Consts.classes.HIDDEN);
-                            }
-                            else {
-                                option.classList.add(TC.Consts.classes.HIDDEN);
-                            }
+                            option.classList.toggle(TC.Consts.classes.HIDDEN, !option.matches('.tc-' + newFormat));
                         });
                     });
                 });
-                if ($.isFunction(callback)) {
+                if (TC.Util.isFunction(callback)) {
                     callback();
                 }
             });
@@ -99,18 +96,11 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
         const self = this;
 
         const browserAlert = self.div.querySelector('.' + self.CLASS + '-alert');
-        if (maxLengthExceed.browser) { //Si la URL sobrepasa el tamaño máximo avisamos que puede fallar en IE
-            browserAlert.classList.remove(TC.Consts.classes.HIDDEN);
-        } else {
-            browserAlert.classList.add(TC.Consts.classes.HIDDEN);
-        }
+        //Si la URL sobrepasa el tamaño máximo avisamos que puede fallar en Edge
+        browserAlert.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.browser);
 
         const qrAlert = self._dialogDiv.querySelector('.' + self.CLASS + '-qr-alert');
-        if (maxLengthExceed.qr) {
-            qrAlert.classList.remove(TC.Consts.classes.HIDDEN);
-        } else {
-            qrAlert.classList.add(TC.Consts.classes.HIDDEN);
-        }
+        qrAlert.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.qr);
     };
 
     ctlProto.generateIframe = function (url) {
@@ -232,11 +222,11 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
             if (self._dialogDiv.querySelector('.' + self.CLASS + '-qr-alert').classList.contains(TC.Consts.classes.HIDDEN)) {                
                 self.makeQRCode(qrContainer, 256, 256).then(function (qrCodeBase64) {
                     if (qrCodeBase64) {
-                        TC.Util.showModal(self._$dialogDiv.get(0).querySelector(self._classSelector + '-qr-dialog'));
+                        TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-qr-dialog'));
                     }
                 });
             } else {
-                TC.Util.showModal(self._$dialogDiv.get(0).querySelector(self._classSelector + '-qr-dialog'));
+                TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-qr-dialog'));
             }
         }));
 

@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 TC.Consts = TC.Consts || {};
 TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
@@ -33,7 +33,7 @@ TC.inherit(TC.control.Scale, TC.Control);
 
             self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () { self.setScreenSize(); });
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         }));

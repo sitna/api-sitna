@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 TC.Control = function () {
     const self = this;
     TC.EventTarget.call(self);
@@ -9,15 +9,14 @@ TC.Control = function () {
 
     var len = arguments.length;
 
-    self.options = $.extend({}, len > 1 ? arguments[1] : arguments[0]);
+    self.options = TC.Util.extend({}, len > 1 ? arguments[1] : arguments[0]);
     self.id = self.options.id || TC.getUID(self.CLASS.substr(TC.Control.prototype.CLASS.length + 1) + '-');
     self.div = TC.Util.getDiv(self.options.div ? self.options.div : arguments[0]);
-    self._$div = $(self.div);
+    if (TC._jQueryIsLoaded) {
+        self._$div = $(self.div);
+    }
 
-    // 12/03/2019 GLS https://developer.mozilla.org/es/docs/Web/API/Element/classList
-    // Múltiples argumentos para add() y remove() IE	Sin soporte
-    self.div.classList.add(TC.Control.prototype.CLASS);
-    self.div.classList.add(self.CLASS);    
+    self.div.classList.add(TC.Control.prototype.CLASS, self.CLASS);
     
     self.template = self.options.template || self.template;
     self.exportsState = false;
@@ -82,7 +81,7 @@ TC.inherit(TC.Control, TC.EventTarget);
                         templateKeys.push(key);
                     }
                 }
-                else if ($.isFunction(template)) {
+                else if (TC.Util.isFunction(template)) {
                     template();
                 }
             }
@@ -92,8 +91,10 @@ TC.inherit(TC.Control, TC.EventTarget);
             }
             else {
                 Promise.all(htmlPromises)
-                    .then(function (templateArray) {
-                        templateArray.forEach(function (template, idx) {
+                    .then(function (responseArray) {
+                        responseArray
+                            .map(response => response.data)
+                            .forEach(function (template, idx) {
                             const tpl = dust.compile(template, templateKeys[idx]);
                             dust.loadSource(tpl);
                         });
@@ -114,12 +115,7 @@ TC.inherit(TC.Control, TC.EventTarget);
             if (self.map) {
                 self.trigger(TC.Consts.event.BEFORECONTROLRENDER, { dataObject: data });
             }
-            if (self.isDisabled) {
-                self.div.classList.add(TC.Consts.classes.DISABLED);
-            }
-            else {
-                self.div.classList.remove(TC.Consts.classes.DISABLED);
-            }
+            self.div.classList.toggle(TC.Consts.classes.DISABLED, self.isDisabled);
 
             TC.loadJSInOrder(
                 !window.dust,
@@ -152,7 +148,7 @@ TC.inherit(TC.Control, TC.EventTarget);
                             }
 
                             self.trigger(TC.Consts.event.CONTROLRENDER);
-                            if ($.isFunction(callback)) {
+                            if (TC.Util.isFunction(callback)) {
                                 callback();
                             }
                             resolve();
@@ -176,7 +172,7 @@ TC.inherit(TC.Control, TC.EventTarget);
                             reject(Error(err));
                         }
                         else {
-                            if ($.isFunction(callback)) {
+                            if (TC.Util.isFunction(callback)) {
                                 callback(out);
                             }
                             resolve(out);
@@ -196,7 +192,8 @@ TC.inherit(TC.Control, TC.EventTarget);
                                 method: "GET",
                                 responseType: 'text'
                             })
-                                .then(function (html) {
+                                .then(function (response) {
+                                    const html = response.data;
                                     var tpl = dust.compile(html, templateId);
                                     dust.loadSource(tpl);
                                     render();
@@ -205,7 +202,7 @@ TC.inherit(TC.Control, TC.EventTarget);
                                     console.log("Error fetching template: " + err)
                                 });
                         }
-                        else if ($.isFunction(template)) {
+                        else if (TC.Util.isFunction(template)) {
                             template();
                             render();
                         }

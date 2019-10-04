@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
@@ -21,7 +21,9 @@ if (!TC.control.MapContents) {
         };
 
         self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-        self._$dialogDiv = $(self._dialogDiv);
+        if (window.$) {
+            self._$dialogDiv = $(self._dialogDiv);
+        }
         if (!self.options.dialogDiv) {
             document.body.appendChild(self._dialogDiv);
         }
@@ -55,7 +57,7 @@ if (!TC.control.MapContents) {
                     });
                 }
                 else {
-                    const fallbackLayer = $(btn).data(_dataKeys.FALLBACK_LAYER);
+                    const fallbackLayer = self.getFallbackLayer(btn.dataset.fallbackLayerId);
                     if (fallbackLayer) {
                         self.map.setBaseLayer(fallbackLayer);
                     }
@@ -70,10 +72,6 @@ if (!TC.control.MapContents) {
 
     ctlProto.CLASS = 'tc-ctl-bms';
 
-    var _dataKeys = {
-        FALLBACK_LAYER: 'tcFallbackLayer'
-    };
-
     ctlProto.template = {};
     if (TC.isDebug) {
         ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/BasemapSelector.html";
@@ -84,7 +82,7 @@ if (!TC.control.MapContents) {
         ctlProto.template[ctlProto.CLASS] = function () {
             dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "backgroundMaps" }).w("</h2><div class=\"tc-ctl-bms-tree\"><form><ul class=\"tc-ctl-bms-branch\">").s(ctx.get(["baseLayers"], false), ctx, { "block": body_1 }, {}).s(ctx.get(["dialogMore"], false), ctx, { "block": body_2 }, {}).w("</ul></form></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-bms-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\"><label class=\"tc-ctl-bms-more-node\" title=\"").h("i18n", ctx, {}, { "$key": "moreBackgroundMaps" }).w("\"><input type=\"radio\" name=\"bms\" value=\"moreLayers\"><span></span></label></li>"); } body_2.__dustBody = !0; return body_0
         };
-        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\" ><label").x(ctx.get(["legend"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["thumbnail"], false), ctx, { "block": body_2 }, {}).w("><input type=\"radio\" name=\"bms\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["mustReproject"], false), ctx, { "block": body_3 }, {}).w("><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.getPath(false, ["legend", "src"]), ctx, "h").w(")\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.get(["thumbnail"], false), ctx, "h").w(")\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" class=\"tc-disabled\""); } body_3.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\" data-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\" ><label").x(ctx.get(["legend"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["thumbnail"], false), ctx, { "block": body_2 }, {}).w("><input type=\"radio\" name=\"bms\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["mustReproject"], false), ctx, { "block": body_3 }, {}).w("><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.getPath(false, ["legend", "src"]), ctx, "h").w(")\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.get(["thumbnail"], false), ctx, "h").w(")\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" class=\"tc-disabled\""); } body_3.__dustBody = !0; return body_0 };
         ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-bms-more-dialog tc-modal tc-hidden\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "backgroundMaps" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div><div class=\"tc-ctl-bms-crs-dialog tc-modal tc-hidden\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "baseLayerNotCompatible" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "baseLayerNotCompatible.instructions|h" }).w("</p><ul class=\"tc-ctl-bms-crs-list tc-crs-list\"></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
     }
 
@@ -184,10 +182,6 @@ if (!TC.control.MapContents) {
         }
     };
 
-    const moveElement = function (array, from, to) {
-        array.splice(to, 0, array.splice(from, 1)[0]);
-    };
-
     ctlProto.register = function (map) {
         const self = this;
 
@@ -253,7 +247,8 @@ if (!TC.control.MapContents) {
             if (layer) {
                 const curBaseLayer = baseLayer || self.map.baseLayer;
                 const radio = li.querySelector('input[type=radio]');
-                const checked = curBaseLayer && (curBaseLayer === layer || curBaseLayer.id === layer.id || (layer.getFallbackLayer && (curBaseLayer === layer.getFallbackLayer() || (layer.getFallbackLayer() && curBaseLayer.id === layer.getFallbackLayer().id))));
+                const checked = curBaseLayer && (curBaseLayer === layer || curBaseLayer.id === layer.id ||
+                    (layer.getFallbackLayer && (curBaseLayer === layer.getFallbackLayer() || (layer.getFallbackLayer() && curBaseLayer.id === layer.getFallbackLayer().id))));
 
                 if (self.map.on3DView && layer.mustReproject && layer.fallbackLayer && layer.getFallbackLayer) {
                     layer.getFallbackLayer().getCapabilitiesPromise().then(function () {
@@ -303,9 +298,9 @@ if (!TC.control.MapContents) {
                     dust.render(template, self.layerTrees[layer.id], function (err, out) {
                         const parser = new DOMParser();
                         const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
-                        var uid = newLi.dataset.tcLayerUid;
+                        var uid = newLi.dataset.layerUid;
                         const ul = self.div.querySelector('.' + self.CLASS + '-branch');
-                        const currentLi = ul.querySelector('li[data-tc-layer-uid="' + uid + '"]');
+                        const currentLi = ul.querySelector('li[data-layer-uid="' + uid + '"]');
                         if (currentLi) {
                             currentLi.innerHTML = newLi.innerHTML;
                         }
@@ -364,6 +359,18 @@ if (!TC.control.MapContents) {
         }
     };
 
+    ctlProto.getFallbackLayer = function (id) {
+        const self = this;
+        const filterFn = function (layer) {
+            return layer.fallbackLayer && layer.fallbackLayer.id === id;
+        };
+        var result = self.map.baseLayers.filter(filterFn)[0].fallbackLayer;
+        if (!result && self._moreBaseLayers) {
+            result = self._moreBaseLayers.filter(filterFn)[0].fallbackLayer;
+        }
+        return result;
+    };
+
     ctlProto.loadFallbackProjections = function () {
         const self = this;
         const lis = self._dialogDiv
@@ -412,8 +419,9 @@ if (!TC.control.MapContents) {
                         hasFallbackCRS = true;
 
                         button.innerHTML = projObj.name + ' (' + projObj.code + ')';
-                        $(button)
-                            .data(_dataKeys.FALLBACK_LAYER, options.layer.fallbackLayer);
+                        if (options.layer.fallbackLayer) {
+                            button.dataset.fallbackLayerId = options.layer.fallbackLayer.id;
+                        }
                         button.dataset.crsCode = projObj.code;
                         button.classList.add(TC.Consts.classes.WARNING);
                         li.classList.add(TC.Consts.classes.HIDDEN);
@@ -430,7 +438,7 @@ if (!TC.control.MapContents) {
                 const li = document.createElement('li');
                 const button = document.createElement('button');
                 button.innerHTML = self.getLocaleString('reprojectOnTheFly');
-                $(button).data(_dataKeys.FALLBACK_LAYER, options.fallbackLayer);
+                button.dataset.fallbackLayerId = options.fallbackLayer.id;
                 li.appendChild(button);
                 fragment.appendChild(li);
             }
@@ -456,11 +464,7 @@ if (!TC.control.MapContents) {
 
         const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
 
-        if (self.map.on3DView) {
-            dialog.classList.add(TC.Consts.classes.THREED);
-        } else {
-            dialog.classList.remove(TC.Consts.classes.THREED);
-        }
+        dialog.classList.toggle(TC.Consts.classes.THREED, !!self.map.on3DView);
 
         const modalBody = dialog.querySelector('.tc-modal-body');
         modalBody.innerHTML = '';

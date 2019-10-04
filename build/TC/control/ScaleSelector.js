@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.Scale) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/Scale');
@@ -44,9 +44,9 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
                         self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () { self.setScreenSize(); });
 
                         self.div.querySelector('select').addEventListener('change', function () {
-                            self.setScale($(this).val());
+                            self.setScale(this.value);
                         });
-                        if ($.isFunction(callback)) {
+                        if (TC.Util.isFunction(callback)) {
                             callback();
                         }
                         resolve();

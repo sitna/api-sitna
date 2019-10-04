@@ -1,4 +1,4 @@
-﻿/* MergeTerrainProvider */
+/* MergeTerrainProvider */
 (function () {
 
     /* d3-polygon: para validar si un punto está dentro de la cobertura de Navarra */

@@ -1,4 +1,4 @@
-﻿var TC = TC || {};
+var TC = TC || {};
 TC.view = TC.view || {};
 
 if (!TC.control.MapContents) {
@@ -99,7 +99,7 @@ if (!TC.control.MapContents) {
                                 reject();
                             }
                             else {
-                                if ($.isFunction(callback)) {
+                                if (TC.Util.isFunction(callback)) {
                                     callback(out);
                                 }
                                 resolve(out);
@@ -117,13 +117,14 @@ if (!TC.control.MapContents) {
                                 TC.ajax({
                                     url: template,
                                     method: "get"
-                                }).then(function (html) {
+                                }).then(function (response) {
+                                    const html = response.data;
                                     var tpl = dust.compile(html, templateId);
                                     dust.loadSource(tpl);
                                     render();
                                 });
                             }
-                            else if ($.isFunction(template)) {
+                            else if (TC.Util.isFunction(template)) {
                                 template();
                                 render();
                             }
@@ -1100,27 +1101,12 @@ if (!TC.control.MapContents) {
 
         // left
         self.tiltUp.disabled = self.isTiltUpDisabled;
-        if (self.isTiltUpDisabled) {
-            if (!self.tiltUp.classList.contains(self.parent.classes.CAMERACTRARROWDISABLED)) {
-                self.tiltUp.classList.add(self.parent.classes.CAMERACTRARROWDISABLED);
-            }
-        }
-        else {
-            self.tiltUp.classList.remove(self.parent.classes.CAMERACTRARROWDISABLED);
-        }
+        self.tiltUp.classList.toggle(self.parent.classes.CAMERACTRARROWDISABLED, self.isTiltUpDisabled);
 
 
         // right
         self.tiltDown.disabled = self.isTiltDownDisabled;
-        if (self.isTiltDownDisabled) {
-            if (!self.tiltDown.classList.contains(self.parent.classes.CAMERACTRARROWDISABLED)) {
-                self.tiltDown.classList.add(self.parent.classes.CAMERACTRARROWDISABLED);
-            }
-        }
-        else {
-            self.tiltDown.classList.remove(self.parent.classes.CAMERACTRARROWDISABLED);
-        }
-
+        self.tiltDown.classList.toggle(self.parent.classes.CAMERACTRARROWDISABLED, self.isTiltDownDisabled);
     };
     CameraControls.prototype.disableRotate = function () {
         var self = this;
@@ -1148,21 +1134,11 @@ if (!TC.control.MapContents) {
 
         // left
         self.rotateLeft.disabled = isDisable;
-        if (isDisable) {
-            self.rotateLeft.classList.add(self.parent.classes.CAMERACTRARROWDISABLED);
-        }
-        else {
-            self.rotateLeft.classList.remove(self.parent.classes.CAMERACTRARROWDISABLED);
-        }
+        self.rotateLeft.classList.toggle(self.parent.classes.CAMERACTRARROWDISABLED, isDisable);
 
         // right
         self.rotateRight.disabled = isDisable;
-        if (isDisable) {
-            self.rotateRight.classList.add(self.parent.classes.CAMERACTRARROWDISABLED);
-        }
-        else {
-            self.rotateRight.classList.remove(self.parent.classes.CAMERACTRARROWDISABLED);
-        }
+        self.rotateRight.classList.toggle(self.parent.classes.CAMERACTRARROWDISABLED, isDisable);
 
         return isDisable;
     };
@@ -2113,7 +2089,7 @@ if (!TC.control.MapContents) {
                 styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
                 styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
 
-            styles = $.extend({}, styles, feature.options, feature.getStyle());
+            styles = TC.Util.extend({}, styles, feature.options, feature.getStyle());
 
             return styles;
         }
@@ -2337,7 +2313,7 @@ if (!TC.control.MapContents) {
             else if (TC.feature.Polygon && feature.CLASSNAME == "TC.feature.Polygon") {
                 polygon.geometryType = function (coords, options) {
                     return new Promise(function (resolve, reject) {
-                        if ($.isArray(coords) && coords.length === 1 && $.isArray(coords[0])) {
+                        if (Array.isArray(coords) && coords.length === 1 && Array.isArray(coords[0])) {
                             coords = coords[0];
                         }
 
@@ -2775,7 +2751,7 @@ if (!TC.control.MapContents) {
             var byPromise = false;
             var cartesians = [];
             var toCartesian = function (coord, arr) {
-                if (!$.isArray(coord)) {
+                if (!Array.isArray(coord)) {
                     return;
                 }
 
@@ -2798,14 +2774,14 @@ if (!TC.control.MapContents) {
                 polygons;
 
             var forPoints = function (points, arr) {
-                if ($.isArray(points)) {
+                if (Array.isArray(points)) {
                     for (var i = 0; i < points.length; i++) {
                         toCartesian(points[i], arr);
                     }
                 }
             };
             var forRingsOrPolylines = function (ringsOrPolylines, arr) {
-                if ($.isArray(ringsOrPolylines)) {
+                if (Array.isArray(ringsOrPolylines)) {
                     for (var i = 0; i < ringsOrPolylines.length; i++) {
                         arr.push([]);
                         forPoints(ringsOrPolylines[i], arr[arr.length - 1]);
@@ -2813,7 +2789,7 @@ if (!TC.control.MapContents) {
                 }
             };
             var forPolygons = function (polygons) {
-                if ($.isArray(polygons)) {
+                if (Array.isArray(polygons)) {
                     for (var i = 0; i < polygons.length; i++) {
                         cartesians.push([]);
                         forRingsOrPolylines(polygons[i], cartesians[cartesians.length - 1]);
@@ -2828,7 +2804,7 @@ if (!TC.control.MapContents) {
                     break;
                 case (TC.feature.MultiPolygon && feature.CLASSNAME == "TC.feature.MultiPolygon"):
                     polygons = geometry;
-                    if ($.isArray(polygons)) {
+                    if (Array.isArray(polygons)) {
                         forPolygons(polygons);
 
                         converter = polygonConverter.call(self, feature);
@@ -2837,7 +2813,7 @@ if (!TC.control.MapContents) {
                     break;
                 case ((TC.feature.Polygon && feature.CLASSNAME == "TC.feature.Polygon") || (TC.feature.MultiPolyline && feature.CLASSNAME == "TC.feature.MultiPolyline")):
                     ringsOrPolylines = geometry;
-                    if ($.isArray(ringsOrPolylines)) {
+                    if (Array.isArray(ringsOrPolylines)) {
                         forRingsOrPolylines(ringsOrPolylines, cartesians);
 
                         if (feature.CLASSNAME == "TC.feature.Polygon") {
@@ -2852,7 +2828,7 @@ if (!TC.control.MapContents) {
                     break;
                 case (TC.feature.Polyline && feature.CLASSNAME == "TC.feature.Polyline"):
                     points = geometry;
-                    if ($.isArray(points)) {
+                    if (Array.isArray(points)) {
                         forPoints(points, cartesians);
 
                         converter = lineConverter(feature);
@@ -3097,8 +3073,7 @@ if (!TC.control.MapContents) {
         self.map.div.classList.add(TC.Consts.classes.THREED);
 
         self.divThreedMap = document.querySelector('#' + self.selectors.divThreedMap);
-        self.divThreedMap.classList.add(self.classes.MAPTHREED);
-        self.divThreedMap.classList.add(self.classes.LOADING);
+        self.divThreedMap.classList.add(self.classes.MAPTHREED, self.classes.LOADING);
 
         self.view3D.container = self.divThreedMap;
 
@@ -3265,9 +3240,7 @@ if (!TC.control.MapContents) {
                 }
 
                 self.view3D.setViewFromCameraView.call(self).then(function () {
-                    self.divThreedMap.classList.remove(self.classes.MAPTHREED);
-
-                    self.divThreedMap.classList.remove(self.CLASS + '-divMap-fadeIn');
+                    self.divThreedMap.classList.remove(self.classes.MAPTHREED, self.CLASS + '-divMap-fadeIn');
                     self.divThreedMap.classList.add(self.CLASS + '-divMap-fadeOut');
                     self.mapView.viewHTML.classList.remove(self.CLASS + '-divMap-fadeOut');
                     self.mapView.viewHTML.classList.add(self.CLASS + '-divMap-fadeIn');
@@ -3429,7 +3402,7 @@ if (!TC.control.MapContents) {
 
         var event2DHandler = function (e) {
             var self = this;
-            
+
             switch (true) {
                 case e.type == TC.Consts.event.BEFOREBASELAYERCHANGE:
                     if (!self.waiting)
@@ -3822,6 +3795,15 @@ if (!TC.control.MapContents) {
                     geolocation2D.Const.Selector.DRAW];
                     var geolocation_videoControls_ = geolocation_videoControls.bind(self);
 
+                    var lstEventListener = function (e) {
+                        var classes = commands;                        
+                        if (commands.some(function (cls) {
+                            return e.target.classList.contains(cls.replace('.', ''))
+                        })) {
+                            geolocation_videoControls_(e);
+                        }
+                    };
+
                     geolocation2D.reset = function () {
 
                         TC.wrap.control.Geolocation.prototype.setTracking = geolocation2D._setTracking;
@@ -3833,16 +3815,14 @@ if (!TC.control.MapContents) {
                         geolocation2D.elevationTrack = geolocation2D._elevationTrack;
 
                         commands.forEach(function (command) {
-                            $(document).off("click", self.view3D.linked2DControls.geolocation._classSelector + ' ' + command, geolocation_videoControls_);
+                            document.removeEventListener('click', lstEventListener);                            
                         });
 
                         geolocation2D.off(geolocation2D.Const.Event.IMPORTEDTRACK, geolocation_videoControls_);
 
                     };
 
-                    commands.forEach(function (command) {
-                        $(document).on("click", self.view3D.linked2DControls.geolocation._classSelector + ' ' + command, geolocation_videoControls_);
-                    });
+                    document.addEventListener('click', lstEventListener);
 
                     geolocation2D.on(geolocation2D.Const.Event.IMPORTEDTRACK, geolocation_videoControls_);
 

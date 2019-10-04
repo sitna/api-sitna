@@ -18,6 +18,12 @@
     padding-right: 2em;
 }
 
+    .instructions.fade-out {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s .1s, opacity .1s linear;
+    }
+
 .instructions p {
     margin: 0.2em 0 0.2em 0;
 }
@@ -74,16 +80,44 @@ body > pre.prettyprint {
 }
 
 #view-source {
-    display: none;
+    visibility: hidden;
+    opacity: 0;
     position: absolute;
     z-index: 10010;
 }
 
+    #view-source.fade-in {
+        display: block;
+        visibility: visible;
+        opacity: 1;
+        transition: opacity .25s linear;
+    }
+
+    #view-source.fade-out {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s .25s, opacity .25s linear;
+    }
+
 #hide-source-link {
+    visibility: hidden;
+    opacity: 0;
     position: absolute;
-    display: none;
     font-style: italic;
     top: 3vh;
     right: 6vw;
     z-index: 10011;
 }
+
+    #hide-source-link.fade-in {
+        display: block;
+        visibility: visible;
+        opacity: 1;
+        transition: opacity .25s linear;
+    }
+
+    #hide-source-link.fade-out {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s .25s, opacity .25s linear;
+    }

@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -49,10 +49,10 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
 
             if (typeof layer === 'string') {
                 var lyrObj = findLayerById(layer, map.options.availableBaseLayers);
-                if (!$.isPlainObject(lyrObj)) {
+                if (!TC.Util.isPlainObject(lyrObj)) {
                     lyrObj = findLayerById(layer, map.options.baseLayers);
                 }
-                if ($.isPlainObject(lyrObj)) {
+                if (TC.Util.isPlainObject(lyrObj)) {
                     lyr = new TC.layer.Raster(lyrObj);
                 }
             }
@@ -138,7 +138,7 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
     ctlProto.loaded = function (callback) {
         var self = this;
 
-        if ($.isFunction(callback)) {
+        if (TC.Util.isFunction(callback)) {
             if (self.isLoaded && self.map && self.map.isLoaded) {
                 callback();
             }

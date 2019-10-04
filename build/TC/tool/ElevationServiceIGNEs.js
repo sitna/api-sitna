@@ -1,4 +1,4 @@
-﻿TC.tool = TC.tool || {};
+TC.tool = TC.tool || {};
 
 if (!TC.tool.ElevationService) {
     TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
@@ -135,8 +135,8 @@ TC.inherit(TC.tool.ElevationServiceIGNEs, TC.tool.ElevationService);
                             url: TC.proxify(urlElement.innerHTML),
                             method: 'GET',
                             contentType: false
-                        }).then(function (text) {
-                            resolve(text);
+                        }).then(function (response) {
+                            resolve(response.data);
                         }, function (error) {
                             reject(Error(error));
                         });

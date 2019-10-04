@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -57,7 +57,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                         self.div.querySelector('.tc-ctl-meas-select').classList.add(TC.Consts.classes.HIDDEN);
                     }
 
-                    self.div.querySelectorAll('span').forEach(function (span) {
+                    self.div.querySelectorAll(`.${TC.control.Measure.prototype.CLASS}-select span`).forEach(function (span) {
                         span.addEventListener(TC.Consts.event.CLICK, function (e) {
                             var label = this;
                             while (label && label.tagName !== 'LABEL') {
@@ -71,7 +71,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                         });
                     });
 
-                    if ($.isFunction(callback)) {
+                    if (TC.Util.isFunction(callback)) {
                         callback();
                     }
                 });
@@ -194,18 +194,13 @@ TC.inherit(TC.control.Measure, TC.Control);
             return elm !== self._activeMode;
         });
 
-        // Class TC.Consts.classes.CHECKED is for IE8 support
         if (mode) {
             const radio = self.div.querySelector('input[type=radio][name=mode][value=' + mode + ']');
             radio.checked = true;
-            radio.classList.add(TC.Consts.classes.CHECKED);
-            radio.nextSibling.classList.add(TC.Consts.classes.CHECKED);
         }
         else {
             self.div.querySelectorAll('input[type=radio][name=mode]').forEach(function (radio) {
                 radio.checked = false;
-                radio.classList.remove(TC.Consts.classes.CHECKED);
-                radio.nextSibling.classList.remove(TC.Consts.classes.CHECKED);
             });
         }
         if (self._activeMode) {

@@ -1,4 +1,4 @@
-﻿var TC = TC || {};
+var TC = TC || {};
 
 TC.tool = TC.tool || {};
 
@@ -478,7 +478,7 @@ TC.tool.Proxification = function (proxy, options) {
             var host = toHost(src);
 
             for (var i = 0; i < this.getList(options).length; i++) {
-                if (this.getList(options)[i].key && options.exportable == this.getList(options)[i].exportable) {
+                if (this.getList(options)[i].key === host && options.exportable == this.getList(options)[i].exportable) {
                     this.getList(options).splice(i, 1);
                     break;
                 }
@@ -490,6 +490,9 @@ TC.tool.Proxification = function (proxy, options) {
 
             var host = toHost(src);
             var cache = this.get(host, options);
+            if (!cache) {
+                return Promise.reject(new Error('Cache null'));
+            }
             return cache._actionPromise;
         };
     };
@@ -503,6 +506,15 @@ TC.tool.Proxification = function (proxy, options) {
             if (navigator.serviceWorker.controller && navigator.serviceWorker.controller.state === "activated") {
                 return true;
             } else {
+                navigator.serviceWorker.ready
+                    .then(function (registration) {
+                        if (registration.active) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    });
+
                 return false;
             }
         } else {
@@ -544,6 +556,12 @@ TC.tool.Proxification = function (proxy, options) {
         if (!/^(f|ht)tps?:\/\//i.test(url))
             return true;
         return (/^(f|ht)tps:\/\//i.test(url));
+    };
+
+    const ResponseError = function (status, text, url) {
+        this.status = status;
+        this.text = text;
+        this.url = url;
     };
 
     var changeProtocol = function (src, newProtocol) {
@@ -782,7 +800,7 @@ TC.tool.Proxification = function (proxy, options) {
         },
         validateResponse: function (response) {
             if (!response.ok) { // status no está en el rango 200-299
-                throw Error(response.statusText);
+                throw new ResponseError(response.status, response.statusText, response.url);
             }
             return response;
         },
@@ -1149,7 +1167,7 @@ TC.tool.Proxification = function (proxy, options) {
                 .catch(function (error) {
                     if (actions.length === 1) {
                         console.log('request failed', error);
-                        return Promise.reject(new Error(error.message));
+                        return Promise.reject(error);
                     }
 
                     actions.shift();
@@ -1158,11 +1176,17 @@ TC.tool.Proxification = function (proxy, options) {
         };
 
         if (self.cacheHost.is(url, options)) {
-            return self.cacheHost.getAction(url, options).then(function (cache) {
-                return _makeRequest(url, options, [cache.action]);
-            }).catch(function (error) {
-                return Promise.reject(new Error(error));
-            });
+            return new Promise(function (resolve, reject) {
+                self.cacheHost.getAction(url, options).then(function (cache) {
+                    resolve(_makeRequest(url, options, [cache.action]));
+                }).catch(function (error) {
+                    if (error.status > 400) {
+                        reject(new Error(error.text));
+                    } else {
+                        resolve(self.fetch(url, options));
+                    }
+                });
+            });            
         } else {
             var cache = self.cacheHost.addKey(url, options);
             return new Promise(function (resolve, reject) {
@@ -1181,7 +1205,7 @@ TC.tool.Proxification = function (proxy, options) {
                         self.cacheHost.removeKey(url, options);
 
                         rejectActionPromise(error);
-                        reject(error);
+                        reject(new Error(error.text));
                     };
 
                     if (self._isSameOrigin(url)) {
@@ -1193,7 +1217,7 @@ TC.tool.Proxification = function (proxy, options) {
                                 _makeRequest(url, options, [self._actionHTTPS, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             } else {
                                 // HTTP -> HTTPS (si el visor no es HTTP) -> (HTTP)Proxy
-                                _makeRequest(url, options, self._isSecureURL(self._location) ? [self._actionDirect, self._actionHTTPS, self._actionProxy] : [self._actionDirect, self._actionProxy], cache).then(fnResolve).catch(fnReject);
+                                _makeRequest(url, options, !self._isSecureURL(self._location) ? [self._actionDirect, self._actionHTTPS, self._actionProxy] : [self._actionHTTPS, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             }
                         } else {
                             if (self._isServiceWorker()) {
@@ -1204,6 +1228,13 @@ TC.tool.Proxification = function (proxy, options) {
                                 _makeRequest(url, options, [self._actionDirect, self._actionHTTP, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             }
                         }
+                    }
+                });
+                cache._actionPromise.catch(function (error) {
+                    if (error.status > 400) {
+                        reject(new Error(error.text));
+                    } else {
+                        resolve(self.fetch(url, options));
                     }
                 });
             });

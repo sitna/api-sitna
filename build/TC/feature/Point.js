@@ -1,4 +1,4 @@
-﻿TC.feature = TC.feature || {};
+TC.feature = TC.feature || {};
 
 if (!TC.Feature) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
@@ -54,14 +54,10 @@ TC.feature.Point = function (coords, options) {
 
     TC.Feature.apply(self, arguments);
 
-    var opts;
-    if (self.wrap.isNative(coords)) {
-        coords._wrap = self.wrap;
+    if (!self.wrap.isNative(coords)) {
         self.wrap.feature = coords;
-    }
-    else {
-        opts = self.options = $.extend(true, self.options, TC.Cfg.styles.point, options);
-        self.wrap.createPoint(coords, opts);
+        options = self.options = TC.Util.extend(true, self.options, TC.Cfg.styles.point, options);
+        self.wrap.createPoint(coords, options);
     }
 };
 

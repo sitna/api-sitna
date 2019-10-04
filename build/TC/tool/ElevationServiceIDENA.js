@@ -1,4 +1,4 @@
-﻿TC.tool = TC.tool || {};
+TC.tool = TC.tool || {};
 
 if (!TC.tool.ElevationService) {
     TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');

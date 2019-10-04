@@ -1,4 +1,4 @@
-﻿/*
+/*
 Name: autoComplete
 Author: Raymond Camden & Andy Matthews
 Contributors: Jim Pease (@jmpease)

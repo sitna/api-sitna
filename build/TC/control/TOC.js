@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.MapContents) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
@@ -26,8 +26,8 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
     }
     else {
         ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "worklayers" }).w("</h2><div class=\"tc-ctl-toc-tree\"><div class=\"tc-ctl-toc-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</div><ul class=\"tc-ctl-toc-branch tc-ctl-toc-wl\">").s(ctx.get(["workLayers"], false), ctx, { "block": body_1 }, {}).w("</ul></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-toc-wlbranch", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-branch'] = function () { dust.register(ctlProto.CLASS + '-branch', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><button class=\"tc-ctl-toc-collapse-btn\"></button><input type=\"checkbox\" class=\"tc-ctl-toc-branch-cb\" name=\"toc\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["isVisible"], false), ctx, { "block": body_3 }, {}).w(" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-toc-branch\">").s(ctx.get(["children"], false), ctx, { "block": body_4 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node tc-ctl-toc-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" checked"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.p("tc-ctl-toc-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_4.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-tc-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-tc-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\">").x(ctx.get(["children"], false), ctx, { "block": body_3 }, {}).w("<input type=\"checkbox\" name=\"toc\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["isVisible"], false), ctx, { "block": body_4 }, {}).w(" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-toc-branch\">").s(ctx.get(["children"], false), ctx, { "block": body_5 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node tc-ctl-toc-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<button class=\"tc-ctl-toc-collapse-btn\"></button>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" checked"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.p("tc-ctl-toc-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_5.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-branch'] = function () { dust.register(ctlProto.CLASS + '-branch', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><button class=\"tc-ctl-toc-collapse-btn\"></button><input type=\"checkbox\" class=\"tc-ctl-toc-branch-cb\" name=\"toc\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["isVisible"], false), ctx, { "block": body_3 }, {}).w(" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-toc-branch\">").s(ctx.get(["children"], false), ctx, { "block": body_4 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node tc-ctl-toc-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" checked"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.p("tc-ctl-toc-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_4.__dustBody = !0; return body_0 };
+        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\">").x(ctx.get(["children"], false), ctx, { "block": body_3 }, {}).w("<input type=\"checkbox\" name=\"toc\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["isVisible"], false), ctx, { "block": body_4 }, {}).w(" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-toc-branch\">").s(ctx.get(["children"], false), ctx, { "block": body_5 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node tc-ctl-toc-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<button class=\"tc-ctl-toc-collapse-btn\"></button>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" checked"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.p("tc-ctl-toc-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_5.__dustBody = !0; return body_0 };
     }
 
     var _dataKeys = {
@@ -42,24 +42,24 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         const result = TC.control.MapContents.prototype.register.call(self, map);
 
         map.on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
-            self.onExternalServiceAdded.call(self, e, this);
+            self.onExternalServiceAdded(e);
         });
 
         return result;
     };
 
-    ctlProto.onExternalServiceAdded = function (e, map) {
+    ctlProto.onExternalServiceAdded = function (e) {
         const self = this;
         if (e && e.layer) {
-            e.layer.map = map;
-            map.addLayer(e.layer).then(function (layer) {
+            e.layer.map = self.map;
+            self.map.addLayer(e.layer).then(function (layer) {
                 self.updateLayerTree(e.layer);
             });
         }
     };
 
     ctlProto.addUIEventListeners = function () {
-        var self = this;
+        const self = this;
         self.div.addEventListener(CLICKEVENT, TC.EventTarget.listenerBySelector('input[type=checkbox]', function (e) { // No usamos TC.Consts.event.CLICK porque en iPad los eventos touchstart no van bien en los checkbox
             const checkbox = e.target;
             var ul = checkbox;
@@ -76,13 +76,13 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
             for (var i = 0, len = lis.length; i < len; i++) {
                 const li = lis[i];
                 if (li.contains(checkbox)) {
-                    const layer = $(li).data(_dataKeys.layer);
+                    const layer = self.map.getLayer(li.dataset.layerId);
                     var parent = checkbox;
                     do {
                         parent = parent.parentElement;
                     }
                     while (parent && parent.tagName !== 'LI');
-                    const uid = $(parent).data(_dataKeys.layerUid)
+                    const uid = parent.dataset.layerUid;
                     layer.setNodeVisibility(uid, checkbox.checked);
                     break;
                 }
@@ -94,19 +94,9 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
             e.target.blur();
             const li = e.target.parentElement;
             if (!li.classList.contains(self.CLASS + '-leaf')) {
-                if (li.classList.contains(TC.Consts.classes.COLLAPSED)) {
-                    li.classList.remove(TC.Consts.classes.COLLAPSED);
-                }
-                else {
-                    li.classList.add(TC.Consts.classes.COLLAPSED);
-                }
+                li.classList.toggle(TC.Consts.classes.COLLAPSED);
                 const ul = li.querySelector('ul');
-                if (ul.classList.contains(TC.Consts.classes.COLLAPSED)) {
-                    ul.classList.remove(TC.Consts.classes.COLLAPSED);
-                }
-                else {
-                    ul.classList.add(TC.Consts.classes.COLLAPSED);
-                }
+                ul.classList.toggle(TC.Consts.classes.COLLAPSED);
                 e.stopPropagation();
             }
         }));
@@ -126,7 +116,7 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         };
 
         self.getLayerUIElements().forEach(function (li) {
-            var layer = $(li).data(_dataKeys.layer);
+            const layer = self.map.getLayer(li.dataset.layerId);
             if (layer) {
                 _getCheckbox(li).checked = layer.getVisibility();
 
@@ -134,7 +124,7 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
 
                 li.querySelectorAll('li').forEach(function (l) {
                     const checkbox = _getCheckbox(l);
-                    var uid = $(l).data(_dataKeys.layerUid);
+                    const uid = l.dataset.layerUid;
                     switch (layer.getNodeVisibility(uid)) {
                         case TC.Consts.visibility.VISIBLE:
                             checkbox.checked = true;
@@ -160,12 +150,12 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
     };
 
     ctlProto.updateScale = function () {
-        var self = this;
+        const self = this;
         self.getLayerUIElements().forEach(function (li) {
-            var layer = $(li).data(_dataKeys.layer);
-            li.querySelectorAll('li').forEach(function (i, e) {
-                var $_li = $(e);
-                $_li.toggleClass(self.CLASS + '-node-notvisible', !layer.isVisibleByScale($_li.data(_dataKeys.layerUid)));
+            const layer = self.map.getLayer(li.dataset.layerId);
+            li.querySelectorAll('li').forEach(function (elm) {
+                const uid = elm.dataset.layerUid;
+                elm.classList.toggle(self.CLASS + '-node-notvisible', !layer.isVisibleByScale(uid));
             });
         });
     };
@@ -186,17 +176,17 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
                     dust.render(template, self.layerTrees[layer.id], function (err, out) {
                         const parser = new DOMParser();
                         const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
-                        const uid = $(newLi).data(_dataKeys.layerUid);
-                        const li = self.div.querySelector('.' + self.CLASS + '-wl li[data-tc-layer-uid="' + uid + '"]');
+                        const uid = newLi.dataset.layerUid;
+                        const li = self.div.querySelector('.' + self.CLASS + '-wl li[data-layer-uid="' + uid + '"]');
                         if (li) {
                             li.innerHTML = newLi.innerHTML;
                             li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
-                            if (!$(li).data(_dataKeys.layer)) {
-                                $(li).data(_dataKeys.layer, layer);
+                            if (!li.dataset.layerId) {
+                                li.dataset.layerId = layer.id;
                             }
                         }
                         else {
-                            $(newLi).data(_dataKeys.layer, layer);
+                            newLi.dataset.layerId = layer.id;
                             const ul = self.div.querySelector('.' + self.CLASS + '-wl');
                             ul.insertBefore(newLi, ul.firstChild);
                         }
@@ -228,7 +218,7 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
     ctlProto.updateLayerVisibility = function (layer) {
         var self = this;
         self.getLayerUIElements().forEach(function (li) {
-            if ($(li).data(_dataKeys.layer) === layer) {
+            if (li.dataset.layerId === layer.id) {
                 var isHidden = !layer.getVisibility();
                 li.querySelectorAll('input[type=checkbox]').forEach(function (checkbox) {
                     if (checkbox.matches('.' + self.CLASS + '-branch-cb')) {
@@ -257,10 +247,10 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
                 var ctl = controlOptions[0];
                 var newDiv = document.createElement("div");
                 self.div.appendChild(newDiv);
-                self.map.addControl(ctl.name, $.extend({ 'div': newDiv }, ctl.options));
+                self.map.addControl(ctl.name, TC.Util.extend({ 'div': newDiv }, ctl.options));
             }
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         });

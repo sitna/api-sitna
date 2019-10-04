@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 TC.Consts.classes.PRINTABLE = 'tc-printable';
 
@@ -41,12 +41,7 @@ TC.control.Print = function (options)
                 });
             };
             dust.render(self.CLASS, null, function (err, out) {
-                if (target.firstChild) {
-                    target.firstChild.insertAdjacentHTML('beforebegin', out);
-                }
-                else {
-                    target.innerHTML = out;
-                }
+                target.insertAdjacentHTML('afterbegin', out);
                 target.querySelector('.' + self.CLASS + '-btn').addEventListener('click', renderPage);
             });
         }

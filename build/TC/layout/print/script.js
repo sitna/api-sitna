@@ -1,4 +1,4 @@
-﻿$(function () {
+$(function () {
 
     var size = TC.Util.getParameterByName("size");
     var orientation = TC.Util.getParameterByName("orientation");

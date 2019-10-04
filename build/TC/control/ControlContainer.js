@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.Container) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control/Container');
@@ -40,7 +40,7 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
 
         Object.keys(self.controlOptions).forEach(function (key, i) {
             var ctl = self.controlOptions[key];            
-            bufferPromises[i] = self.map.addControl(key, $.extend({
+            bufferPromises[i] = self.map.addControl(key, TC.Util.extend({
                 id: self.uids[i],
                 div: self.div.querySelector('.' + self.CLASS + '-elm-' + i).querySelector('div')
             }, ctl.options));
@@ -58,7 +58,7 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
         const self = this;
         return self._set1stRenderPromise(self.renderData({
             controls: Object.keys(self.controlOptions).map(function (key, i) {
-                return $.extend(self.controlOptions[key], { index: i });
+                return TC.Util.extend(self.controlOptions[key], { index: i });
             })
         }));
     };
@@ -73,7 +73,7 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
                 template.innerHTML = html.trim();
 
                 self.div.querySelector('ul.' + self.CLASS + '-' + options.side).appendChild(template.content ? template.content.firstChild : template.firstChild);
-                self.map.addControl(control, $.extend({
+                self.map.addControl(control, TC.Util.extend({
                     id: self.getUID(),
                     div: self.div.querySelector('.' + self.CLASS + '-elm-' + self.ctlCount).querySelector('div')
                 }, options)).then(function (ctrl) {

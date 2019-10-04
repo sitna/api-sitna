@@ -1,4 +1,4 @@
-﻿var TC = TC || {};
+var TC = TC || {};
 TC.format = TC.format || {};
 (function (root, factory) {
     if (typeof exports === "object") { // CommonJS

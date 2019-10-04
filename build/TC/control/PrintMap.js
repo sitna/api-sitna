@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.MapInfo) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/MapInfo');
@@ -55,7 +55,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         { /* logo */
                             image: null,
                             height: 22,
-                            width: 45,
+                            /*width: 45,*/
                             margin: [0, 0, 0, 6]
                         },
                         { /* título */
@@ -97,7 +97,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         { /* logo */
                             image: null,
                             height: 22,
-                            width: 45,
+                            /*width: 45,*/
                             margin: [0, 0, 0, 6]
                         },
                         { /* título */
@@ -149,7 +149,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         { /* logo */
                             image: null,
                             height: 22,
-                            width: 45,
+                            /*width: 45,*/
                             margin: [0, 0, 0, 6]
                         },
                         { /* título */
@@ -191,7 +191,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         { /* logo */
                             image: null,
                             height: 22,
-                            width: 45,
+                            /*width: 45,*/
                             margin: [0, 0, 0, 6]
                         },
                         { /* título */
@@ -587,8 +587,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
                 self.map.toastHide(self.getLocaleString('print.advice.title') + ': ' + self.getLocaleString('print.advice.desc'));
 
-                self.map.div.classList.remove(self.currentFormat);
-                self.map.div.classList.remove(self.CLASS + '-printing');
+                self.map.div.classList.remove(self.currentFormat, self.CLASS + '-printing');
 
                 self.map.div.style.removeProperty('width');
                 self.map.div.style.removeProperty('height');
@@ -609,7 +608,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 });
 
                 self.getRenderedHtml(self.CLASS + '-tools', null, function (html) {
-                    self.map.div.lastElementChild.insertAdjacentHTML('afterend', html);
+                    self.map.div.insertAdjacentHTML('beforeend', html);
 
                     self.map.div.querySelector('.' + self.CLASS + '-btn-close').addEventListener('click', resetPrinting);
 
@@ -703,6 +702,9 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         var size = TC.Util.calculateAspectRatioFit(canvas.width, canvas.height, layout.logoWidth, layout.logoHeight);
 
                         var logoColumn = getLogoColumn(layout);
+                        //URI: si no se define la anchura en el layout calcula la anchura en función de proporción entre ancho y alto de la imagen y el alto de su posición en el PDF
+                        if (!logoColumn.width)
+                            logoColumn.width = (canvas.width / canvas.height) * logoColumn.height;
                         logoColumn.image = dataUrl;
                         return logoColumn;
 
@@ -751,10 +753,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
                         return scaleBarColumn;
                     } else {
-                        onError();
+                        return onError();
                     }
                 } else {
-                    onError();
+                    return onError();
                 }
             };
             const getLegend = function () {
@@ -1044,11 +1046,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
         const alertElm = self.div.querySelector('.' + self.CLASS + '-alert');
         if (document.querySelector("#" + self.CLASS + "-image-qr").checked) {
-            if (maxLengthExceed.qr) {
-                alertElm.classList.remove(TC.Consts.classes.HIDDEN);
-            } else {
-                alertElm.classList.add(TC.Consts.classes.HIDDEN);
-            }
+            alertElm.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.qr);
         } else {
             alertElm.classList.add(TC.Consts.classes.HIDDEN);
         }

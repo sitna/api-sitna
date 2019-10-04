@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.FeatureInfoCommons) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
@@ -39,13 +39,19 @@ if (!TC.control.FeatureInfoCommons) {
     const mergeOptions = function (opt1, opt2) {
         if (opt1 === true) {
             opt1 = {};
-            return $.extend(opt1, opt2);
+            return TC.Util.extend(opt1, opt2);
         }
         return opt1;
     };
 
     ctlProto.register = function (map) {
         const self = this;
+
+        self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
+            input.checked = false;
+        });
+
+
         return new Promise(function (resolve, reject) {
             const ctlPromises = [TC.Control.prototype.register.call(self, map)]
             if (self.modes[TC.Consts.geom.POINT]) {
@@ -69,11 +75,23 @@ if (!TC.control.FeatureInfoCommons) {
                         return control;
                     }));
             }
+
+            map.on(`${TC.Consts.event.LAYERADD} ${TC.Consts.event.LAYERREMOVE} ${TC.Consts.event.LAYERVISIBILITY}`, function (e) {
+                self.updateUI();
+            });
+
+            map.on(`${TC.Consts.event.CONTROLACTIVATE} ${TC.Consts.event.CONTROLDEACTIVATE}`, function (e) {
+                if (e.control === self.fInfoCtrl || e.control === self.lineFInfoCtrl || e.control === self.polygonFInfoCtrl) {
+                    self.updateUI();
+                }
+            });
+
             Promise.all(ctlPromises).then(function () {
                 if (self.fInfoCtrl) {
                     self.fInfoCtrl.activate();
                     self.lastCtrlActive = self.fInfoCtrl;
                 }
+                self.updateUI();
                 resolve(self);
             });
         });
@@ -99,23 +117,17 @@ if (!TC.control.FeatureInfoCommons) {
                     switch (this.value) {
                         case TC.Consts.geom.POLYLINE:
                             //modo línea
-                            console.log("seleccion por línea");
-                            if (self.map.activeControl === self.fInfoCtrl || self.map.activeControl === self.polygonFInfoCtrl)
-                                self.lineFInfoCtrl.activate();
+                            self.lineFInfoCtrl.activate();
                             self.lastCtrlActive = self.lineFInfoCtrl;
                             break;
                         case TC.Consts.geom.POLYGON:
                             //modo poligono
-                            console.log("seleccion por polígono");
-                            if (self.map.activeControl === self.fInfoCtrl || self.map.activeControl === self.lineFInfoCtrl)
-                                self.polygonFInfoCtrl.activate();
+                            self.polygonFInfoCtrl.activate();
                             self.lastCtrlActive = self.polygonFInfoCtrl;
                             break;
                         default:
                             //modo point
-                            console.log("seleccion por punto");
-                            if (self.map.activeControl === self.polygonFInfoCtrl || self.map.activeControl === self.lineFInfoCtrl)
-                                self.fInfoCtrl.activate();
+                            self.fInfoCtrl.activate();
                             self.lastCtrlActive = self.fInfoCtrl;
                             break;
                     }
@@ -124,32 +136,57 @@ if (!TC.control.FeatureInfoCommons) {
                     input.addEventListener('change', changeEvent);
                 });
 
-                if ($.isFunction(callback)) {
+                if (TC.Util.isFunction(callback)) {
                     callback();
                 }
             });
     };
+
     ctlProto.activate = function () {
         var self = this;
         if (self.lastCtrlActive)
             self.lastCtrlActive.activate();
-    }
+    };
+
     ctlProto.deactivate = function () {
         var self = this;
         self.lastCtrlActive.deactivate(false);
-    }
+    };
 
-
-    TC.Map.prototype.getDefaultControl = function () {
-        var candidate = this.getControlsByClass("TC.control.MultiFeatureInfo");
-        if (candidate && candidate.length)
-            return candidate[0].lastCtrlActive;
-        else {
-            candidate = this.getControlsByClass("TC.control.FeatureInfo");
-            if (candidate && candidate.length)
-                return candidate[0];
-            else
-                return null;
+    ctlProto.updateUI = function () {
+        const self = this;
+        if (self.map) {
+            const enabled = self.map.workLayers.some(l => l.type === TC.Consts.layerType.WMS && l.getVisibility());
+            self.div.querySelectorAll('input').forEach(function (input) {
+                input.disabled = !enabled;
+            });
+            if (self.fInfoCtrl) {
+                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POINT}]`);
+                if (input) {
+                    input.checked = self.fInfoCtrl.isActive;
+                }
+            }
+            if (self.lineFInfoCtrl) {
+                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POLYLINE}]`);
+                if (input) {
+                    input.checked = self.lineFInfoCtrl.isActive;
+                }
+            }
+            if (self.polygonFInfoCtrl) {
+                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POLYGON}]`);
+                if (input) {
+                    input.checked = self.polygonFInfoCtrl.isActive;
+                }
+            }
+            // Hack para compensar bug de Edge: no se actualiza el estilo al cambiar el estado del radio.
+            const displayValue = self.div.style.display;
+            self.div.style.display = 'none';
+            if (displayValue) {
+                self.div.style.display = displayValue;
+            }
+            else {
+                self.div.style.removeProperty('display');
+            }
         }
     };
 

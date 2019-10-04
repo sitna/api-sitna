@@ -1,4 +1,4 @@
-﻿; var TC = TC || {};
+; var TC = TC || {};
 (function (root, factory) {
     if (typeof exports === "object") { // CommonJS
         module.exports = factory();
@@ -71,11 +71,27 @@
 
     const swipeHandlers = new WeakMap();
     const modalCloseHandlers = new WeakMap();
+    const hasOwn = ({}).hasOwnProperty;
 
     var Util = {
 
         isPlainObject: function (obj) {
-            return Object.prototype.toString.call(obj) === '[object Object]';
+            // Not plain objects:
+            // - Any object or value whose internal [[Class]] property is not "[object Object]"
+            // - DOM nodes
+            // - window
+            if (typeof obj !== 'object' || obj.nodeType || obj.window === obj) {
+                return false;
+            }
+
+            if (obj.constructor &&
+                !hasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
+                return false;
+            }
+
+            // If the function hasn't returned already, we're confident that
+            // |obj| is a plain object, created by {} or constructed with new Object
+            return true;
         },
 
         isEmptyObject: function (obj) {
@@ -88,6 +104,64 @@
 
         isFunction: function (obj) {
             return typeof obj === 'function';
+        },
+
+        extend: function () {
+            var clone,
+                target = arguments[0] || {},
+                i = 1,
+                deep = false;
+
+            // Comprobar si hay que hacer copia profunda (primer parámetro === true)
+            if (typeof target === 'boolean') {
+                deep = target;
+
+                target = arguments[i] || {};
+                i++;
+            }
+
+            // Handle case when target is a string or something (possible in deep copy)
+            if (typeof target !== 'object' && !Util.isFunction(target)) {
+                target = {};
+            }
+
+            for (var len = arguments.length; i < len; i++) {
+                // Only deal with non-null/undefined values
+                const options = arguments[i];
+                if (options != null) {
+                    // Extend the base object
+                    for (var name in options) {
+                        const src = target[name];
+                        const copy = options[name];
+
+                        // Prevent never-ending loop
+                        if (target === copy) {
+                            continue;
+                        }
+
+                        // Recurse if we're merging plain objects or arrays
+                        const copyIsArray = Array.isArray(copy);
+                        if (deep && copy && (Util.isPlainObject(copy) || copyIsArray)) {
+                            if (copyIsArray) {
+                                clone = src && Array.isArray(src) ? src : [];
+
+                            } else {
+                                clone = src && Util.isPlainObject(src) ? src : {};
+                            }
+
+                            // Never move original objects, clone them
+                            target[name] = Util.extend(deep, clone, copy);
+
+                            // Don't bring in undefined values
+                        } else if (copy !== undefined) {
+                            target[name] = copy;
+                        }
+                    }
+                }
+            }
+
+            // Return the modified object
+            return target;
         },
 
         getMapLocale: function (map) {
@@ -368,7 +442,7 @@
             };
 
             var _parseCoord = function (text) {
-                var t = $.trim(text);
+                var t = text.trim();
                 // nnºnn'nn''N
                 if (t.match(/^1?\d{0,2}\s*\u00B0(\s*\d{1,2}\s*'(\s*\d{1,2}([.,]\d+)?\s*'')?)?\s*[NnSsWwOoEe]$/g)) {
                     switch (t[t.length - 1]) {
@@ -407,7 +481,7 @@
                 return null;
             };
 
-            text = $.trim(text).toUpperCase();
+            text = text.trim().toUpperCase();
             var xy = text.split(',');
             if (xy.length === 4) {
                 xy = [xy.slice(0, 1).join('.'), xy.slice(2, 3).join('.')];
@@ -430,9 +504,9 @@
             var multipoint = true;
             var multiring = true;
             var multipoly = true;
-            if ($.isArray(coords[0])) {
-                if ($.isArray(coords[0][0])) {
-                    if (!$.isArray(coords[0][0][0])) {
+            if (Array.isArray(coords[0])) {
+                if (Array.isArray(coords[0][0])) {
+                    if (!Array.isArray(coords[0][0][0])) {
                         multipoly = false;
                         coords = [coords];
                     }
@@ -450,15 +524,15 @@
             }
             TC.loadProjDef({ crs: sourceCrs, sync: true });
             TC.loadProjDef({ crs: targetCrs, sync: true });
-            var sourcePrj = new Proj4js.Proj(sourceCrs);
-            var targetPrj = new Proj4js.Proj(targetCrs);
+            var sourcePrj = proj4(proj4.defs[sourceCrs]);
+            var targetPrj = proj4(proj4.defs[targetCrs]);
             result = new Array(coords.length);
             coords.forEach(function (poly, pidx) {
                 const rp = result[pidx] = [];
                 poly.forEach(function (ring, ridx) {
                     const rr = rp[ridx] = [];
                     ring.forEach(function (coord, cidx) {
-                        var point = Proj4js.transform(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
+                        var point = proj4(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
                         rr[cidx] = [point.x, point.y];
                         if (coord.length > 2) {
                             rr[cidx][2] = coord[2];
@@ -484,7 +558,7 @@
             var toRad = function (number) {
                 return number * Math.PI / 180;
             };
-            if ($.isArray(extent) && extent.length >= 4) {
+            if (Array.isArray(extent) && extent.length >= 4) {
                 var dLat = this.degToRad(extent[3] - extent[1]);
                 var sindlat2 = Math.sin(dLat / 2);
                 var a = sindlat2 * sindlat2;
@@ -573,7 +647,7 @@
             else {
                 queryString = location.search;
             }
-            var result = $.map(queryString.replace(/(^\?)/, '').split("&"), function (elm) {
+            var result = queryString.replace(/(^\?)/, '').split("&").map(function (elm) {
                 return elm = elm.split("="), this[elm[0]] = elm[1], this
             }.bind({}))[0];
             delete result[''];
@@ -710,27 +784,27 @@
             return !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/);
         },
         detectMouse: function () {
-            if (Modernizr.mq('(pointer:coarse)') && Modernizr.mq('(pointer:fine)'))
+            const matchesCoarse = matchMedia('(pointer:coarse)').matches;
+            const matchesFine = matchMedia('(pointer:fine)').matches;
+            if (matchesCoarse && matchesFine) {
                 return true;
-            if (Modernizr.mq('(pointer:coarse)') && !Modernizr.mq('(pointer:fine)')) {
+            }
+            if (matchesCoarse && !matchesFine) {
                 var testHover = function () {
                     //console.log('estamos en testHover');
                     var mq = '(hover: hover)',
-                        hover = !Modernizr.touch, // fallback if mq4 not supported: no hover for touch
+                        hover = !TC.browserFeatures.touch(), // fallback if mq4 not supported: no hover for touch
                         mqResult;
 
-                    if ('matchMedia' in window) {
-                        //console.log('dispone de matchMedia');
-                        mqResult = window.matchMedia(mq);
-                        //console.log('resultado de window.matchMedia(mq): ' + mqResult.media);
-                        //console.log('mq: ' + mq);
-                        if (mqResult.media === mq) {
-                            //console.log('es igual');
-                            // matchMedia supports hover detection, so we rely on that
-                            hover = mqResult.matches;
-                            //console.log('va retornar: ' + hover);
-                        }
-                    } else { console.log('no dispone de matchMedia'); }
+                    mqResult = window.matchMedia(mq);
+                    //console.log('resultado de window.matchMedia(mq): ' + mqResult.media);
+                    //console.log('mq: ' + mq);
+                    if (mqResult.media === mq) {
+                        //console.log('es igual');
+                        // matchMedia supports hover detection, so we rely on that
+                        hover = mqResult.matches;
+                        //console.log('va retornar: ' + hover);
+                    }
 
                     return hover;
                 };
@@ -739,12 +813,15 @@
                     return true;
                 else return false;
             }
-            if (!Modernizr.mq('(pointer:coarse)') && Modernizr.mq('(pointer:fine)'))
+            if (!matchesCoarse && matchesFine) {
                 return true;
-            if (Modernizr.mq('(pointer:none)'))
+            }
+            if (matchMedia('(pointer:none)').matches) {
                 return false;
-            if (!Modernizr.touch)
+            }
+            if (!TC.browserFeatures.touch()) {
                 return true;
+            }
         },
         detectAndroid: function () {
             return navigator.userAgent.match(/Android/i);
@@ -836,39 +913,37 @@
             options = options || {};
 
             contentNode.hidden = false;
-            $(contentNode).fadeIn(250, function () {
-                if (window.$ && contentNode instanceof $) {
-                    contentNode = contentNode.get(0);
-                }
-                const closeButton = contentNode.querySelectorAll('.tc-modal-close');
-                if (closeButton && closeButton.length > 0) {
-                    for (var i = 0; i < closeButton.length; i++) {
-                        var closeCallback = modalCloseHandlers.get(closeButton[i]);
-                        if (closeCallback) {
-                            modalCloseHandlers.delete(closeButton[i]);
-                        }
-                        else {
-                            closeCallback = function (e) {
-                                e.stopPropagation();
-                                return TC.Util.closeModal(options.closeCallback, e.target);
-                            };
-                            modalCloseHandlers.set(closeButton[i], closeCallback);
-                        }
+            if (window.$ && contentNode instanceof $) {
+                contentNode = contentNode.get(0);
+            }
+            contentNode.classList.add(TC.Consts.classes.VISIBLE);
+            const closeButton = contentNode.querySelectorAll('.tc-modal-close');
+            if (closeButton && closeButton.length > 0) {
+                for (var i = 0; i < closeButton.length; i++) {
+                    var closeCallback = modalCloseHandlers.get(closeButton[i]);
+                    if (closeCallback) {
+                        modalCloseHandlers.delete(closeButton[i]);
+                    }
+                    else {
+                        closeCallback = function (e) {
+                            e.stopPropagation();
+                            return TC.Util.closeModal(options.closeCallback, e.target);
+                        };
                         modalCloseHandlers.set(closeButton[i], closeCallback);
-                        closeButton[i].addEventListener('click', closeCallback);
-                        if ($.isFunction(options.openCallback)) {
-                            options.openCallback();
-                        }
+                    }
+                    modalCloseHandlers.set(closeButton[i], closeCallback);
+                    closeButton[i].addEventListener('click', closeCallback);
+                    if (Util.isFunction(options.openCallback)) {
+                        options.openCallback();
                     }
                 }
-            });
+            }
         },
 
         closeModal: function (callback, target) {
 
             const hide = function (modal) {
-                modal.style.display = 'none';
-                modal.querySelector('.tc-modal-window').removeAttribute('style');
+                modal.classList.remove(TC.Consts.classes.VISIBLE);
             };
 
             var modal;
@@ -1080,9 +1155,17 @@
          * Acorta una URL utilizando el servicio de Bit.ly. No funciona para URLs locales.
          */
         shortenUrl: function (url) {
-            return TC.ajax({
-                url: "https://api-ssl.bitly.com/v3/shorten",
-                data: { access_token: "6c466047309f44bd8173d83e81491648b243ee3d", longUrl: url },
+            return new Promise(function (resolve, reject) {
+                TC.ajax({
+                    url: "https://api-ssl.bitly.com/v3/shorten",
+                    data: { access_token: "6c466047309f44bd8173d83e81491648b243ee3d", longUrl: url },
+                })
+                    .then(function (response) {
+                        resolve(response.data);
+                    })
+                    .catch(function (e) {
+                        reject(e);
+                    });
             });
         },
 
@@ -1108,7 +1191,7 @@
         },
 
         colorArrayToString: function (color) {
-            if ($.isArray(color)) {
+            if (Array.isArray(color)) {
                 color = color
                     .slice(0, 3)
                     .reduce(function (prev, cur) {
@@ -1361,67 +1444,81 @@
         },
 
         downloadFileForm: function (url, data) {
-
             var download = function (url, data) {
-                const fragment = document.createDocumentFragment();
-                var form = document.createElement('form');
-                form.classList.add('tc-ctl-download-form');
-                form.setAttribute('method', 'post');
-                form.setAttribute('enctype', 'text/plain');
-                form.setAttribute('action', TC.Util.detectIE() !== false && TC.Util.detectIE() <= 11 ? TC.proxify(url) : url);
-                const input = document.createElement('input');
-                input.classList.add('tc-ctl-download-query');
-                input.setAttribute('name', data.substring(0, data.indexOf("=")));
-                form.appendChild(input);
-                fragment.appendChild(form);
-                const iframes = document.querySelectorAll('iframe');
-                var iframe;
-                for (var i = 0, len = iframes.length; i < len; i++) {
-                    const currentIframe = iframes[i];
-                    if (currentIframe.dataset.downloadUrl === url) {
-                        iframe = currentIframe;
-                        break;
+
+                new Promise(function (resolve, reject) {
+                    const request = new XMLHttpRequest();
+                    request.responseType = "blob";
+                    request.open("POST", url);
+                    request.setRequestHeader('Content-Type', 'application/xml; charset=UTF-8');
+
+                    request.onreadystatechange = function (e) {
+                        if (request.readyState === 4) { // DONE
+                            if (request.status !== 200) {
+                                reject({
+                                    status: request.status,
+                                    msg: request.statusText,
+                                    url: options.url
+                                });
+                            } else {
+
+                                try {
+                                    //URI: Miro si devuelve una cabecera content-disposition attachment. Si es asi uso el filenae como nombre de fichero. Esta descarga seguramente venga
+                                    //de un proxy con postproceso de zippeado
+                                    const contentDispositionHeader = request.getResponseHeader("Content-disposition");
+                                    var filename = "";
+                                    if (contentDispositionHeader) {
+                                        filename = contentDispositionHeader.split("; ")[1].substring(9);
+                                        if (contentDispositionHeader.split("; ")[0] !== "attachment") {
+                                            filename = filename.substring(0, filename.lastIndexOf("."));
+                                        }
+                                    }
+                                    resolve({ data: request.response, contentType: request.getResponseHeader("Content-type"), filename: filename });
+                                }
+                                catch (error) {
+                                    reject(error);
+                                }
+                            }
+                        }
+                    };
+
+                    try {
+                        request.send(data);
+                    } catch (error) {
+                        reject(error);
                     }
-                }
-                if (!iframe) {
-                    iframe = document.createElement('iframe');
-                    iframe.style.visibility = 'hidden';
-                    iframe.style.display = 'none';
-                    iframe.dataset.downloadUrl = url;
-                    document.body.appendChild(iframe);
-                }
-
-                const content = iframe.contentDocument;
-                content.open();
-                content.write(form.outerHTML);
-                content.close();
-                content.querySelector('input').value = data.substring(data.indexOf("=") + 1);
-                form = content.querySelector('form');
-                return form;
-            };
-
+                }).then(function (response) {
+                    var format = "";
+                    if (response.data.type.indexOf("kml") >= 0)
+                        format = ".kml";
+                    else if (response.data.type.indexOf("json") >= 0)
+                        format = ".geojson";
+                    else if (response.data.type.indexOf("xml") >= 0)
+                        format = ".gml";
+                    TC.Util.downloadFile((response.filename ? response.filename : TC.getUID()) + format, response.contentType, response.data)
+                });
+            };            
             var htmlObj = [];
-            if ($.isArray(url)) {
+            if (Array.isArray(url)) {
                 var arrDownloads = url;
                 for (var i = 0; i < arrDownloads.length; i++) {
-                    htmlObj.push(download(arrDownloads[i].url, arrDownloads[i].data));
+                    download(arrDownloads[i].url, arrDownloads[i].data);
                 }
             }
             else {
-                htmlObj.push(download(url, data));
-            }
-            htmlObj.forEach(function (form) {
-                form.submit();
-            });
-            setTimeout(function () {
-                document.querySelectorAll('.tc-ctl-download-form').forEach(function (form) {
-                    form.parentElement.removeChild(form);
-                });
-            }, 1000);
+                download(url, data);
+            }            
         },
 
-        WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits) {
-            if (!$.isArray(layers))
+        WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits, srsName) {
+            const getSRSAttribute = function () {                
+                if (srsName) {
+                    return ' srsName="' + srsName +'"'
+                }
+                else
+                    return '';
+            }
+            if (!Array.isArray(layers))
                 layers = [layers];
             var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
                 'xmlns:ogc="http://www.opengis.net/ogc" service="WFS" {resultType} {format} ';
@@ -1442,17 +1539,17 @@
             var query = '<wfs:GetFeature ' + queryHeader.format({ resultType: (onlyHits ? 'resultType="hits"' : ''), format: 'outputFormat="' + outputFormat + '"' }) + '>';
             var queryBody = '';
 
-            var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}">{filter}</wfs:Query>';
-            $.each(layers, function (index, value) {
+            var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{filter}</wfs:Query>';
+            layers.forEach(function (value) {
                 queryBody += queryItem.format({ typeName: value, filter: (filter ? filter.getText(capabilities.version) : "") });
             });
             query += queryBody + '</wfs:GetFeature>'
             return query;
         },
 
-        WFSFilterBuilder: function (feature, version) {
+        WFSFilterBuilder: function (feature, version, srsName) {
             var filter = '';
-            if (jQuery.isPlainObject(feature)) {
+            if (Util.isPlainObject(feature)) {
                 filter = '<{prefix}:Filter><{prefix}:Intersects><fes:ValueReference></fes:ValueReference><{prefix}:Function name="querySingle"><{prefix}:Literal>{clipLayer}</{prefix}:Literal><{prefix}:Literal>{geometryName}</{prefix}:Literal><{prefix}:Literal>{where}</{prefix}:Literal></{prefix}:Function></{prefix}:Intersects></{prefix}:Filter>'
                     .format({ prefix: (version === "2.0.0" ? "fes" : "ogc"), "clipLayer": feature.clipLayer, "geometryName": feature.geometryName, "where": feature.where })
             }
@@ -1460,7 +1557,7 @@
                 switch (true) {
                     case !feature:
                         break;
-                    case $.isArray(feature)://bbox
+                    case Array.isArray(feature)://bbox
                         var gmlEnvelope = ('<gml:Envelope>' +
                             '<gml:lowerCorner>{lowerCorner}</gml:lowerCorner>' +
                             '<gml:upperCorner>{upperCorner}</gml:upperCorner>' +
@@ -1479,10 +1576,10 @@
                         switch (true) {
                             case version === "1.0.0":
                             case version === "1.1.0":
-                                filter += '<ogc:Filter><ogc:Intersects><ogc:PropertyName></ogc:PropertyName>' + TC.Util.writeGMLGeometry(feature, "2.0") + '</ogc:Intersects></ogc:Filter>';
+                                filter += '<ogc:Filter><ogc:Intersects><ogc:PropertyName></ogc:PropertyName>' + TC.Util.writeGMLGeometry(feature, { version: "2.0", srsName: srsName  }) + '</ogc:Intersects></ogc:Filter>';
                                 break;
                             case version === "2.0.0":
-                                filter += '<fes:Filter><fes:Intersects><fes:ValueReference></fes:ValueReference>' + TC.Util.writeGMLGeometry(feature, "3.2") + '</fes:Intersects></fes:Filter>';
+                                filter += '<fes:Filter><fes:Intersects><fes:ValueReference></fes:ValueReference>' + TC.Util.writeGMLGeometry(feature, { version: "3.2", srsName: srsName }) + '</fes:Intersects></fes:Filter>';
                                 break;
                         }
 
@@ -1496,8 +1593,16 @@
             return filter;
         },
 
-        writeGMLGeometry: function (feature, gmlVersion) {
-
+        writeGMLGeometry: function (feature, options) {
+            options = options || {};
+            const gmlVersion = options.version;
+            const getSRSName = function () {
+                if (options.srsName) {
+                    return ' srsName="' + options.srsName + '"'
+                }
+                else
+                    return '';
+            };
             var getGmlCoordinates = function (coords) {
                 var result;
                 if (gmlVersion.indexOf('3') === 0) {
@@ -1507,8 +1612,9 @@
                     }
                 }
                 else {
-                    result = coords;
-                    jQuery.each(result, function (i, item) { return item.join(",") }).join(" ");
+                    result = coords.map(function (coord) {
+                        return coord.join(',');
+                    }).join(' ');
                 }
                 return result;
             };
@@ -1519,13 +1625,13 @@
                 case "3.2":
                     switch (true) {
                         case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
-                            return "<gml:LineString srsDimension=\"2\"><gml:posList>" +
+                            return "<gml:LineString srsDimension=\"2\"" + getSRSName()+"><gml:posList>" +
                                 getGmlCoordinates(feature.geometry) +
                                 "</gml:posList></gml:LineString>";
                             break;
                             break;
                         default:
-                            return "<gml:Polygon srsDimension=\"2\"><gml:exterior><gml:LinearRing><gml:posList>" +
+                            return "<gml:Polygon srsDimension=\"2\"" + getSRSName() +"><gml:exterior><gml:LinearRing><gml:posList>" +
                                 getGmlCoordinates(feature.geometry[0]) +
                                 "</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>";
                             break;
@@ -1535,12 +1641,12 @@
                 default:
                     switch (true) {
                         case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
-                            return "<gml:LineString><gml:coordinates>" +
+                            return "<gml:LineString" + getSRSName() +"><gml:coordinates>" +
                                 getGmlCoordinates(feature.geometry[0]) +
                                 "</gml:coordinates></gml:LineString>";
                             break;
                         default:
-                            return "<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>" +
+                            return "<gml:Polygon" + getSRSName() +"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>" +
                                 getGmlCoordinates(feature.geometry[0]) +
                                 "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon>";
                             break;
@@ -1637,7 +1743,7 @@
                                 reject(Error(err));
                             }
                             else {
-                                if ($.isFunction(callback)) {
+                                if (Util.isFunction(callback)) {
                                     callback(out);
                                 }
                                 resolve(out);
@@ -1656,7 +1762,8 @@
                                     method: "GET",
                                     responseType: 'text'
                                 })
-                                    .then(function (html) {
+                                    .then(function (response) {
+                                        const html = response.data;
                                         var tpl = dust.compile(html, templateId);
                                         dust.loadSource(tpl);
                                         render();
@@ -1665,7 +1772,7 @@
                                         console.log("Error fetching template: " + err)
                                     });
                             }
-                            else if ($.isFunction(template)) {
+                            else if (Util.isFunction(template)) {
                                 template();
                                 render();
                             }
@@ -1681,7 +1788,7 @@
         explodeGeometry: function (obj) {
             const origin = obj.origin;
             const iterationFunction = function (elm, idx, arr) {
-                if ($.isArray(elm)) {
+                if (Array.isArray(elm)) {
                     elm.forEach(iterationFunction);
                 }
                 else {
@@ -1698,7 +1805,7 @@
         },
 
         cloneMappingFunction: function (elm) {
-            if ($.isArray(elm)) {
+            if (Array.isArray(elm)) {
                 return elm.map(TC.Util.cloneMappingFunction);
             }
             return elm;
@@ -1708,7 +1815,7 @@
             const origin = [Number.MAX_VALUE, Number.MAX_VALUE];
             const newGeom = geometry.map(TC.Util.cloneMappingFunction);
             const firstIterationFunction = function (elm, idx) {
-                if ($.isArray(elm)) {
+                if (Array.isArray(elm)) {
                     elm.forEach(firstIterationFunction);
                 }
                 else {
@@ -1728,7 +1835,7 @@
             origin[0] = round(origin[0]);
             origin[1] = round(origin[1]);
             const secondIterationFunction = function (elm, idx, arr) {
-                if ($.isArray(elm)) {
+                if (Array.isArray(elm)) {
                     elm.forEach(secondIterationFunction);
                 }
                 else {
@@ -1760,35 +1867,37 @@
     var fncOvelaps = function (elem1, elem2,comparisonFnc) {        
         return comparisonFnc(elem1.getBoundingClientRect(), elem2.getBoundingClientRect());
     }
-    HTMLElement.prototype.colliding = function (other) {
-        return fncOvelaps(this, other, function (rect1, rect2) {
-            return !(
-                rect1.top > rect2.bottom ||
-                rect1.right < rect2.left ||
-                rect1.bottom < rect2.top ||
-                rect1.left > rect2.right
-            );
-        });        
-    };
-    HTMLElement.prototype.containing = function (other) {
-        fncOvelaps(this, other, function (rect1, rect2) {
-            return !(
-                rect1.left <= rect2.left &&
-                rect2.left < rect1.width &&
-                rect1.top <= rect2.top &&
-                rect2.top < rect1.height
-            );
-        });
-    };
-    HTMLElement.prototype.inside = function (other) {
-        return fncOvelaps(this, other, function (rect1, rect2) {
-            return (
-                ((rect2.top <= rect1.top) && (rect1.top <= rect2.bottom)) &&
-                ((rect2.top <= rect1.bottom) && (rect1.bottom <= rect2.bottom)) &&
-                ((rect2.left <= rect1.left) && (rect1.left <= rect2.right)) &&
-                ((rect2.left <= rect1.right) && (rect1.right <= rect2.right))
-            );
-        });        
-    };
+    if (this.HTMLElement) {
+        HTMLElement.prototype.colliding = function (other) {
+            return fncOvelaps(this, other, function (rect1, rect2) {
+                return !(
+                    rect1.top > rect2.bottom ||
+                    rect1.right < rect2.left ||
+                    rect1.bottom < rect2.top ||
+                    rect1.left > rect2.right
+                );
+            });
+        };
+        HTMLElement.prototype.containing = function (other) {
+            fncOvelaps(this, other, function (rect1, rect2) {
+                return !(
+                    rect1.left <= rect2.left &&
+                    rect2.left < rect1.width &&
+                    rect1.top <= rect2.top &&
+                    rect2.top < rect1.height
+                );
+            });
+        };
+        HTMLElement.prototype.inside = function (other) {
+            return fncOvelaps(this, other, function (rect1, rect2) {
+                return (
+                    ((rect2.top <= rect1.top) && (rect1.top <= rect2.bottom)) &&
+                    ((rect2.top <= rect1.bottom) && (rect1.bottom <= rect2.bottom)) &&
+                    ((rect2.left <= rect1.left) && (rect1.left <= rect2.right)) &&
+                    ((rect2.left <= rect1.right) && (rect1.right <= rect2.right))
+                );
+            });
+        };
+    }
     return Util;
 });

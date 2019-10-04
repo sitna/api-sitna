@@ -16,7 +16,7 @@
             <div class="project-title">
                     <a href="../"><img class="logo" src="http://sitna.tracasa.es/api/tc/css/img/sitna-logo.png" title="API SITNA"></a>
                 
-                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">1.6.1</span>
+                    <h1 class="project-name"><a href="../">API SITNA</a></h1> <span class="project-version">2.0.0</span>
                 
                 
                     <p class="description">API de mapas del Gobierno de Navarra</p>
@@ -158,7 +158,7 @@
 
     
         <div class="foundat" style="display:none">
-            Se define en: <a href="../files/sitna.js.html#l2956"><code>sitna.js:2956</code></a>
+            Se define en: <a href="../files/sitna.js.html#l2968"><code>sitna.js:2968</code></a>
         </div>
     
 
@@ -235,7 +235,7 @@ siempre sobreescribirá una opción de la configuración global.</p>
           title: "Toponimia y mallas cartográficas",
           type: SITNA.Consts.layerType.WMS,
           url: "//idena.navarra.es/ogc/wms",
-          layerNames: "IDENA:toponimia,IDENA:mallas"
+          layerNames: "IDENA:TOPONI_Txt_Toponimos,IDENA:mallas"
         }
       ]
     });
@@ -479,7 +479,7 @@ siempre sobreescribirá una opción de la configuración global.</p>
             
         
         
-        <a href="../files/sitna.js.html#l2956"><code>sitna.js:2956</code></a>
+        <a href="../files/sitna.js.html#l2968"><code>sitna.js:2968</code></a>
         
         </p>
 
@@ -811,7 +811,7 @@ Es necesario establecer esta opción para poder utilizar el método SITNA.Map.<a
             
         
         
-        <a href="../files/sitna.js.html#l3110"><code>sitna.js:3110</code></a>
+        <a href="../files/sitna.js.html#l3122"><code>sitna.js:3122</code></a>
         
         </p>
 
@@ -965,7 +965,7 @@ el tipo de capa a <a href="../classes/SITNA.consts.LayerType.html#property_KML" 
             
         
         
-        <a href="../files/sitna.js.html#l3207"><code>sitna.js:3207</code></a>
+        <a href="../files/sitna.js.html#l3219"><code>sitna.js:3219</code></a>
         
         </p>
 
@@ -1305,7 +1305,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l4221"><code>sitna.js:4221</code></a>
+        <a href="../files/sitna.js.html#l4365"><code>sitna.js:4365</code></a>
         
         </p>
 
@@ -1416,7 +1416,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3655"><code>sitna.js:3655</code></a>
+        <a href="../files/sitna.js.html#l3787"><code>sitna.js:3787</code></a>
         
         </p>
 
@@ -1432,40 +1432,46 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             <p>Obtiene los valores (id y label) de las mancomunidades de residuos disponibles en la capa de IDENA. </p>
 <p>Puede consultar también online el <a href="../../examples/Map.getCommonwealths.html">ejemplo 1</a>. </p>
 <h4 id="ejemplo-">Ejemplo:</h4>
-<pre class="code prettyprint"><code class="lang-javascript"> &lt;div class=&quot;instructions divSelect&quot;&gt;
-   &lt;div&gt;
-     Mancomunidades de residuos
-     &lt;select id=&quot;commonwealths&quot; onchange=&quot;applyFilter()&quot;&gt;
-       &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
-     &lt;/select&gt;
-   &lt;/div&gt;
- &lt;/div&gt;
- &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
- &lt;script&gt;
-   // Crear mapa.
-   var map = new SITNA.Map(&quot;mapa&quot;);
-   map.loaded(function () {
-     // completamos el desplegable
-     map.getCommonwealths(function (data) {
-       $.each(data, function (key, value) {
-         $(&#39;#commonwealths&#39;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
-           .attr(&quot;value&quot;, value.id)
-           .text(value.label));
-         });
-       });
-     });
-   // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-   function applyFilter() {
-     var id = $(&#39;#commonwealths&#39;).find(&#39;option:selected&#39;).val();
-     if (id == -1)
-       map.removeSearch();
-     else {
-       map.searchCommonwealth(id, function (idQuery) {
-         if (idQuery == null)
-           alert(&#39;No se han encontrado resultados&#39;);
-       });
-     }
-   };
+<pre class="code prettyprint"><code class="lang-javascript">&lt;div class=&quot;instructions divSelect&quot;&gt;
+    &lt;div&gt;
+        Mancomunidades de residuos
+        &lt;select id=&quot;commonwealths&quot; onchange=&quot;applyFilter()&quot;&gt;
+            &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+        &lt;/select&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+// Crear mapa.
+var map = new SITNA.Map(&quot;mapa&quot;);
+
+map.loaded(function () {
+    // completamos el desplegable
+    map.getCommonwealths(function (data) {
+        var fragment = document.createDocumentFragment();
+        data.forEach(function (value) {
+            var option = document.createElement(&quot;option&quot;);
+            option.setAttribute(&quot;value&quot;, value.id);
+            option.textContent = value.label;
+            fragment.appendChild(option);
+        });
+        document.querySelector(&quot;#commonwealths&quot;).appendChild(fragment);
+    });
+});
+
+// Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+function applyFilter() {
+    var id = document.querySelector(&quot;#commonwealths&quot;).querySelector(&quot;option:checked&quot;).value;
+    if (id == -1)
+        map.removeSearch();
+    else {
+        map.searchCommonwealth(id, function (idQuery) {
+            if (idQuery == null) {
+                alert(&quot;No se han encontrado resultados&quot;);
+            }
+        });
+    }
+};
 &lt;/script&gt;</code></pre>
 
         </div>
@@ -1553,7 +1559,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3706"><code>sitna.js:3706</code></a>
+        <a href="../files/sitna.js.html#l3844"><code>sitna.js:3844</code></a>
         
         </p>
 
@@ -1569,40 +1575,46 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             <p>Obtiene los valores (id y label) de los concejos disponibles en la capa de IDENA. </p>
 <p>Puede consultar también online el <a href="../../examples/Map.getCouncils.html">ejemplo 1</a>. </p>
 <h4 id="ejemplo-">Ejemplo:</h4>
-<pre class="code prettyprint"><code class="lang-javascript"> &lt;div class=&quot;instructions divSelect&quot;&gt;
-   &lt;div&gt;
-     Concejos
-     &lt;select id=&quot;council&quot; onchange=&quot;applyFilter()&quot;&gt;
-       &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
-     &lt;/select&gt;
-   &lt;/div&gt;
- &lt;/div&gt;
- &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
- &lt;script&gt;
-   // Crear mapa.
-   var map = new SITNA.Map(&quot;mapa&quot;);
-   map.loaded(function () {
-     // completamos el desplegable
-     map.getCouncils(function (data) {
-       $.each(data, function (key, value) {
-         $(&#39;#council&#39;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
-           .attr(&quot;value&quot;, value.id)
-           .text(value.label));
-         });
-       });
-     });
-   // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-   function applyFilter() {
-     var id = $(&#39;#council&#39;).find(&#39;option:selected&#39;).val();
-     if (id == -1)
-       map.removeSearch();
-     else {
-       map.searchCouncil(id, function (idQuery) {
-         if (idQuery == null)
-           alert(&#39;No se han encontrado resultados&#39;);
-       });
-     }
-   };
+<pre class="code prettyprint"><code class="lang-javascript">&lt;div class=&quot;instructions divSelect&quot;&gt;
+    &lt;div&gt;
+        Concejos
+        &lt;select id=&quot;council&quot; onchange=&quot;applyFilter()&quot;&gt;
+            &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+        &lt;/select&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+// Crear mapa.
+var map = new SITNA.Map(&quot;mapa&quot;);
+
+map.loaded(function () {
+    // completamos el desplegable
+    map.getCouncils(function (data) {
+        var fragment = document.createDocumentFragment();
+        data.forEach(function (value) {
+            var option = document.createElement(&quot;option&quot;);
+            option.setAttribute(&quot;value&quot;, value.id);
+            option.textContent = value.label;
+            fragment.appendChild(option);
+        });
+        document.querySelector(&quot;#council&quot;).appendChild(fragment);
+    });
+});
+
+// Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+function applyFilter() {
+    var id = document.querySelector(&quot;#council&quot;).querySelector(&quot;option:checked&quot;).value;
+    if (id == -1)
+        map.removeSearch();
+    else {
+        map.searchCouncil(id, function (idQuery) {
+            if (idQuery == null) {
+                alert(&quot;No se han encontrado resultados&quot;);
+            }
+        });
+    }
+};
 &lt;/script&gt;</code></pre>
 
         </div>
@@ -1690,7 +1702,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3553"><code>sitna.js:3553</code></a>
+        <a href="../files/sitna.js.html#l3671"><code>sitna.js:3671</code></a>
         
         </p>
 
@@ -1706,41 +1718,48 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             <p>Obtiene los valores (id y label) de los municipios disponibles en la capa de IDENA.</p>
 <p>Puede consultar también online el <a href="../../examples/Map.getMunicipalities.html">ejemplo 1</a>.</p>
 <h4 id="ejemplo-">Ejemplo:</h4>
-<pre class="code prettyprint"><code class="lang-javascript">  &lt;div class=&quot;instructions divSelect&quot;&gt;
+<pre class="code prettyprint"><code class="lang-javascript">&lt;div class=&quot;instructions divSelect&quot;&gt;
     &lt;div&gt;
-      Municipios
-      &lt;select id=&quot;municipality&quot; onchange=&quot;applyFilter()&quot;&gt;
-        &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
-      &lt;/select&gt;
+        Municipios
+        &lt;select id=&quot;municipality&quot; onchange=&quot;applyFilter()&quot;&gt;
+            &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+        &lt;/select&gt;
+
     &lt;/div&gt;
-  &lt;/div&gt;
-  &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
-  &lt;script&gt;
-    // Crear mapa.
-    var map = new SITNA.Map(&quot;mapa&quot;);
-    map.loaded(function () {
-      // completamos el desplegable
-      map.getMunicipalities(function (data) {
-        $.each(data, function (key, value) {
-          $(&#39;#municipality&#39;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
-            .attr(&quot;value&quot;, value.id)
-            .text(value.label));
-          });
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+// Crear mapa.
+var map = new SITNA.Map(&quot;mapa&quot;);
+
+map.loaded(function () {
+    // completamos el desplegable
+    map.getMunicipalities(function (data) {
+        var fragment = document.createDocumentFragment();
+        data.forEach(function (value) {
+            var option = document.createElement(&quot;option&quot;);
+            option.setAttribute(&quot;value&quot;, value.id);
+            option.textContent = value.label;
+            fragment.appendChild(option);
         });
-      });
-    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-    function applyFilter() {
-      var id = $(&#39;#municipality&#39;).find(&#39;option:selected&#39;).val();
-      if (id == -1)
+        document.querySelector(&quot;#municipality&quot;).appendChild(fragment);
+    });
+});
+
+// Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+function applyFilter() {
+    var id = document.querySelector(&quot;#council&quot;).querySelector(&quot;option:checked&quot;).value;
+    if (id == -1)
         map.removeSearch();
-      else {
+    else {
         map.searchMunicipality(id, function (idQuery) {
-          if (idQuery == null)
-            alert(&#39;No se han encontrado resultados&#39;);
+            if (idQuery == null) {
+                alert(&quot;No se han encontrado resultados&quot;);
+            }
         });
-      }
-    };
- &lt;/script&gt;</code></pre>
+    }
+};
+&lt;/script&gt;</code></pre>
 
         </div>
 
@@ -1827,7 +1846,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3604"><code>sitna.js:3604</code></a>
+        <a href="../files/sitna.js.html#l3729"><code>sitna.js:3729</code></a>
         
         </p>
 
@@ -1843,41 +1862,48 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             <p>Obtiene los valores (id y label) de los cascos urbanos disponibles en la capa de IDENA.</p>
 <p>Puede consultar también online el <a href="../../examples/Map.getUrbanAreas.html">ejemplo 1</a>.</p>
 <h4 id="ejemplo-">Ejemplo:</h4>
-<pre class="code prettyprint"><code class="lang-javascript">  &lt;div class=&quot;instructions divSelect&quot;&gt;
-   &lt;div&gt;
-     Cascos urbanos
-     &lt;select id=&quot;urban&quot; onchange=&quot;applyFilter()&quot;&gt;
-       &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
-     &lt;/select&gt;
-   &lt;/div&gt;
-  &lt;/div&gt;
-  &lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
-  &lt;script&gt;
-   // Crear mapa.
-   var map = new SITNA.Map(&quot;mapa&quot;);
-   map.loaded(function () {
-     // completamos el desplegable
-     map.getUrbanAreas(function (data) {
-       $.each(data, function (key, value) {
-         $(&#39;#urban&#39;).append($(&quot;&lt;option&gt;&lt;/option&gt;&quot;)
-            .attr(&quot;value&quot;, value.id)
-            .text(value.label));
-         });
-       });
-     });
-   // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-   function applyFilter() {
-     var id = $(&#39;#urban&#39;).find(&#39;option:selected&#39;).val();
-     if (id == -1)
-       map.removeSearch();
-     else {
-       map.searchUrbanArea(id, function (idQuery) {
-         if (idQuery == null)
-           alert(&#39;No se han encontrado resultados&#39;);
-       });
-     }
-   };
-  &lt;/script&gt;</code></pre>
+<pre class="code prettyprint"><code class="lang-javascript">&lt;div class=&quot;instructions divSelect&quot;&gt;
+    &lt;div&gt;
+        Cascos urbanos
+        &lt;select id=&quot;urban&quot; onchange=&quot;applyFilter()&quot;&gt;
+            &lt;option value=&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;
+        &lt;/select&gt;
+
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mapa&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+// Crear mapa.
+var map = new SITNA.Map(&quot;mapa&quot;);
+
+map.loaded(function () {
+    // completamos el desplegable
+    map.getUrbanAreas(function (data) {
+        var fragment = document.createDocumentFragment();
+        data.forEach(function (value) {
+            var option = document.createElement(&quot;option&quot;);
+            option.setAttribute(&quot;value&quot;, value.id);
+            option.textContent = value.label;
+            fragment.appendChild(option);
+        });
+        document.querySelector(&quot;#urban&quot;).appendChild(fragment);
+    });
+});
+
+// Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+function applyFilter() {
+    var id = document.querySelector(&quot;#urban&quot;).querySelector(&quot;option:checked&quot;).value;
+    if (id == -1)
+        map.removeSearch();
+    else {
+        map.searchUrbanArea(id, function (idQuery) {
+            if (idQuery == null) {
+                alert(&#39;No se han encontrado resultados&#39;);
+            }
+        });
+    }
+};
+&lt;/script&gt;</code></pre>
 
         </div>
 
@@ -1964,7 +1990,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3383"><code>sitna.js:3383</code></a>
+        <a href="../files/sitna.js.html#l3395"><code>sitna.js:3395</code></a>
         
         </p>
 
@@ -2068,7 +2094,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l4150"><code>sitna.js:4150</code></a>
+        <a href="../files/sitna.js.html#l4294"><code>sitna.js:4294</code></a>
         
         </p>
 
@@ -2216,7 +2242,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3757"><code>sitna.js:3757</code></a>
+        <a href="../files/sitna.js.html#l3901"><code>sitna.js:3901</code></a>
         
         </p>
 
@@ -2360,7 +2386,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3795"><code>sitna.js:3795</code></a>
+        <a href="../files/sitna.js.html#l3939"><code>sitna.js:3939</code></a>
         
         </p>
 
@@ -2516,7 +2542,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3995"><code>sitna.js:3995</code></a>
+        <a href="../files/sitna.js.html#l4139"><code>sitna.js:4139</code></a>
         
         </p>
 
@@ -2711,7 +2737,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3868"><code>sitna.js:3868</code></a>
+        <a href="../files/sitna.js.html#l4012"><code>sitna.js:4012</code></a>
         
         </p>
 
@@ -2855,7 +2881,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3832"><code>sitna.js:3832</code></a>
+        <a href="../files/sitna.js.html#l3976"><code>sitna.js:3976</code></a>
         
         </p>
 
@@ -2998,7 +3024,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3160"><code>sitna.js:3160</code></a>
+        <a href="../files/sitna.js.html#l3172"><code>sitna.js:3172</code></a>
         
         </p>
 
@@ -3143,7 +3169,7 @@ SITNA.cfg.MarkerStyleOptions.<a href="../classes/SITNA.cfg.MarkerStyleOptions.ht
             
         
         
-        <a href="../files/sitna.js.html#l3332"><code>sitna.js:3332</code></a>
+        <a href="../files/sitna.js.html#l3344"><code>sitna.js:3344</code></a>
         
         </p>
 

@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.SWCacheClient) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
@@ -199,7 +199,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         self.layer = null;
         self.checkedOut = false;
         //self.feature = self.options.feature ? self.options.feature : null;
-        self.callback = (arguments[2] && $.isFunction(arguments[2])) ? arguments[2] : (self.options.callback ? self.options.callback : null);
+        self.callback = TC.Util.isFunction(arguments[2]) ? arguments[2] : (self.options.callback ? self.options.callback : null);
         self.multi = self.options.multi ? self.options.multi : false;
         self.eraseActionConfirmTxt = self.options.eraseText ? self.options.eraseText : "¿Está seguro de eliminar esta(s) geometría(s)?";
         self.cancelActionConfirmTxt = self.options.cancelText ? self.options.eraseText : "Si continua todos los cambios se perderán. ¿Desea continuar?";
@@ -212,7 +212,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         self.snapping = (typeof self.options.snapping === 'boolean') ? self.options.snapping : true;
         self._changesLayers = {};
         self._showsChanges = (typeof self.options.showChanges === 'boolean') ? self.options.showChanges : true;
-        if ($.isFunction(self.options.getChangesLayerStyleFunction)) {
+        if (TC.Util.isFunction(self.options.getChangesLayerStyleFunction)) {
             self.getChangesLayerStyleFunction = self.getChangesLayerStyle;
         }
 
@@ -456,7 +456,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                                                             break;
                                                     };
                                                     addPromise.then(function (feat) {
-                                                        //feat.setStyle($.extend({}, layer.styles.line, layer.styles.polygon));
+                                                        //feat.setStyle(TC.Util.extend({}, layer.styles.line, layer.styles.polygon));
                                                         changesLayer.addFeature(feat);
                                                         features.added.push(feat);
                                                         feat.provId = id;
@@ -673,26 +673,26 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                         switch (self.geometryType) {
                             case TC.Consts.geom.POINT:
                                 featConstructor = TC.feature.Point;
-                                //$.extend(styleObj, self.layer.styles.point);
+                                //TC.Util.extend(styleObj, self.layer.styles.point);
                                 break;
                             case TC.Consts.geom.POLYLINE:
                                 featConstructor = TC.feature.Polyline;
-                                //$.extend(styleObj, self.layer.styles.line);
+                                //TC.Util.extend(styleObj, self.layer.styles.line);
                                 break;
                             case TC.Consts.geom.POLYGON:
                                 featConstructor = TC.feature.Polygon;
-                                //$.extend(styleObj, self.layer.styles.line, self.layer.styles.polygon);
+                                //TC.Util.extend(styleObj, self.layer.styles.line, self.layer.styles.polygon);
                                 break;
                             case TC.Consts.geom.MULTIPOLYLINE:
                                 featConstructor = TC.feature.MultiPolyline;
-                                //$.extend(styleObj, self.layer.styles.line);
+                                //TC.Util.extend(styleObj, self.layer.styles.line);
                                 break;
                             case TC.Consts.geom.MULTIPOLYGON:
                                 featConstructor = TC.feature.MultiPolygon;
-                                //$.extend(styleObj, self.layer.styles.line, self.layer.styles.polygon);
+                                //TC.Util.extend(styleObj, self.layer.styles.line, self.layer.styles.polygon);
                                 break;
                             default:
-                                //$.extend(styleObj, self.layer.styles.line, self.layer.styles.polygon);
+                                //TC.Util.extend(styleObj, self.layer.styles.line, self.layer.styles.polygon);
                                 break;
                         }
                         if (featConstructor) {
@@ -714,7 +714,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                     self.polygonDraw
                         .on(TC.Consts.event.DRAWEND, drawendHandler)
                         .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    if (self.options.modes && $.isArray(self.options.modes) && self.options.modes.length == 1) {
+                    if (self.options.modes && Array.isArray(self.options.modes) && self.options.modes.length == 1) {
                         self.setMode(self.options.modes[0], null);
                     }
                 });
@@ -791,7 +791,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 self.discardEdits();
             });
             //control de renderizado enfunción del modo de edicion        
-            if (self.options.modes && $.isArray(self.options.modes) && self.options.modes.length > 0) {
+            if (self.options.modes && Array.isArray(self.options.modes) && self.options.modes.length > 0) {
                 for (var m in TC.Consts.editMode)
                     if (typeof m === 'string' && self.options.modes.indexOf(TC.Consts.editMode[m]) < 0) {
                         const label = self.div.querySelector("label" + self._classSelector + "-btn-" + TC.Consts.editMode[m]);
@@ -814,7 +814,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 });
             });
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         }));
@@ -965,19 +965,14 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
                 break;
         }
 
-        // Class TC.Consts.classes.CHECKED is for IE8 support
         var radio;
         if (mode) {
             const radio = self.div.querySelector('input[type=radio][name=mode][value=' + mode + ']');
             radio.checked = true;
-            radio.classList.add(TC.Consts.classes.CHECKED);
-            radio.nextSibling.classList.add(TC.Consts.classes.CHECKED);
         }
         else {
             self.div.querySelectorAll('input[type=radio][name=mode]').forEach(function (radio) {
                 radio.checked = false;
-                radio.classList.remove(TC.Consts.classes.CHECKED);
-                radio.nextSibling.classList.remove(TC.Consts.classes.CHECKED);
             });
         }
         if (active) {
@@ -999,7 +994,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
 
     ctlProto.cancel = function () {
         var self = this;
-        if (self.options.modes && $.isArray(self.options.modes) && self.options.modes.length == 1) {
+        if (self.options.modes && Array.isArray(self.options.modes) && self.options.modes.length == 1) {
             self.setMode(self.options.modes[0], null);
         }
         else {
@@ -1194,7 +1189,7 @@ TC.Consts.event.FEATURESUNSELECT = "featureunselect.tc";
         };
 
         var dash = [1, 3];
-        var result = $.extend(true, {}, layer.options.styles);
+        var result = TC.Util.extend(true, {}, layer.options.styles);
         if (result.point) {
             result.point.strokeColor = getNegativeColor(result.point.strokeColor);
             result.point.lineDash = dash;

@@ -1,4 +1,4 @@
-﻿
+
 
 /**
 Para crear la interfaz de usuario, la API SITNA dibuja en la página una gran cantidad de elementos HTML. Para marcarlos como elementos de la
@@ -71,13 +71,13 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
      </div>
      <div class="tc-ctl-lcat-tree">
        <ul class="tc-ctl-lcat-branch">
-         <li class="tc-ctl-lcat-node" data-tc-layer-name="" data-tc-layer-uid="10"><span>IDENA</span>
+         <li class="tc-ctl-lcat-node" data-layer-name="" data-layer-uid="10"><span>IDENA</span>
            <ul class="tc-ctl-lcat-branch">
-             <li class="tc-ctl-lcat-node tc-collapsed" data-tc-layer-name="nombresGeograficos" data-tc-layer-uid="656"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Nombres geográficos</span><button class="tc-ctl-lcat-btn-info"></button>
+             <li class="tc-ctl-lcat-node tc-collapsed" data-layer-name="nombresGeograficos" data-layer-uid="656"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Nombres geográficos</span><button class="tc-ctl-lcat-btn-info"></button>
                <ul class="tc-ctl-lcat-branch tc-collapsed">
-                 <li class="tc-ctl-lcat-node tc-collapsed" data-tc-layer-name="IDENA:toponimia" data-tc-layer-uid="657"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Toponimia</span><button class="tc-ctl-lcat-btn-info"></button>
+                 <li class="tc-ctl-lcat-node tc-collapsed" data-layer-name="IDENA:toponimia" data-layer-uid="657"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Toponimia</span><button class="tc-ctl-lcat-btn-info"></button>
                    <ul class="tc-ctl-lcat-branch tc-collapsed">
-                     <li class="tc-ctl-lcat-node tc-ctl-lcat-leaf" data-tc-layer-name="IDENA:TOPONI_Txt_Toponimos" data-tc-layer-uid="658"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Nombres de lugar (topónimos)</span><button class="tc-ctl-lcat-btn-info"></button>
+                     <li class="tc-ctl-lcat-node tc-ctl-lcat-leaf" data-layer-name="IDENA:TOPONI_Txt_Toponimos" data-layer-uid="658"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Nombres de lugar (topónimos)</span><button class="tc-ctl-lcat-btn-info"></button>
                        <ul class="tc-ctl-lcat-branch tc-collapsed"></ul>
                      </li>
                    </ul>
@@ -86,12 +86,12 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
              </li>
            </ul>
          </li>
-         <li class="tc-ctl-lcat-node tc-collapsed" data-tc-layer-name="" data-tc-layer-uid="962"><span>IGN - Unidades administrativas</span>
+         <li class="tc-ctl-lcat-node tc-collapsed" data-layer-name="" data-layer-uid="962"><span>IGN - Unidades administrativas</span>
            <ul class="tc-ctl-lcat-branch tc-collapsed">
-             <li class="tc-ctl-lcat-node tc-ctl-lcat-leaf" data-tc-layer-name="AU.AdministrativeBoundary" data-tc-layer-uid="963"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Límite administrativo</span><button class="tc-ctl-lcat-btn-info"></button>
+             <li class="tc-ctl-lcat-node tc-ctl-lcat-leaf" data-layer-name="AU.AdministrativeBoundary" data-layer-uid="963"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Límite administrativo</span><button class="tc-ctl-lcat-btn-info"></button>
                <ul class="tc-ctl-lcat-branch tc-collapsed"></ul>
              </li>
-             <li class="tc-ctl-lcat-node tc-ctl-lcat-leaf" data-tc-layer-name="AU.AdministrativeUnit" data-tc-layer-uid="964"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Unidad administrativa</span><button class="tc-ctl-lcat-btn-info"></button>
+             <li class="tc-ctl-lcat-node tc-ctl-lcat-leaf" data-layer-name="AU.AdministrativeUnit" data-layer-uid="964"><span data-tooltip="Pulse para añadir al mapa" class="tc-selectable">Unidad administrativa</span><button class="tc-ctl-lcat-btn-info"></button>
                <ul class="tc-ctl-lcat-branch tc-collapsed"></ul>
              </li>
            </ul>
@@ -111,14 +111,19 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
  */
 
 /**
-### 1.6.1
+### 2.0.0
 
+- Eliminadas todas las referencias a OpenLayers 2.
+- Eliminada la dependencia de jQuery.
+- Se retira el soporte a Internet Explorer.
 - Corrección de errores.
 
 ### 1.6.0
 
-- Añadida capacidad de compartir las entidades vectoriales existentes en el mapa.
+- Añadida capacidad de compartir entidades vectoriales.
 - Cambiada interfaz de usuario del control de información del mapa.
+- Añadido control de dibujo y medida.
+- Añadido control con herramientas para aplicar a una entidad geográfica: zoom, compartir, descargar, borrar.
 - Corrección de errores.
 
 ### 1.5.1
@@ -276,17 +281,12 @@ La dirección principal de acceso a la API es **[//sitna.tracasa.es/api/](//sitn
 otras necesidades concretas:
 
 - Lógica de la API compilada en un solo archivo:
-  + OpenLayers 4 como motor, minimizada: [//sitna.tracasa.es/api/sitna.ol.min.js](//sitna.tracasa.es/api/sitna.ol.min.js).
-  + OpenLayers 4 como motor, sin minimizar: [//sitna.tracasa.es/api/sitna.ol.debug.js](//sitna.tracasa.es/api/sitna.ol.debug.js).
-  + OpenLayers 2 como motor, minimizada: [//sitna.tracasa.es/api/sitna.ol2.min.js](//sitna.tracasa.es/api/sitna.ol2.min.js).
-  + OpenLayers 2 como motor, sin minimizar: [//sitna.tracasa.es/api/sitna.ol2.debug.js](//sitna.tracasa.es/api/sitna.ol2.debug.js).
+  + Minimizada: [//sitna.tracasa.es/api/sitna.ol.min.js](//sitna.tracasa.es/api/sitna.ol.min.js).
+  + Sin minimizar: [//sitna.tracasa.es/api/sitna.ol.debug.js](//sitna.tracasa.es/api/sitna.ol.debug.js).
 
-- Lógica de la API repartida en varios archivos que se solicitan bajo demanda. En este caso se utiliza OpenLayers 4 como motor a no ser que el navegador sea incompatible,
- en cuyo caso será OpenLayers 2:
+- Lógica de la API repartida en varios archivos que se solicitan bajo demanda:
   + Minimizada: [//sitna.tracasa.es/api/sitna.min.js](//sitna.tracasa.es/api/sitna.min.js).
   + Sin minimizar: [//sitna.tracasa.es/api/sitna.js](//sitna.tracasa.es/api/sitna.js).
-
-_Aviso: a las opciones basadas en OpenLayers 2 se les ha retirado el soporte desde la versión 1.1.0 de la API SITNA._
 
 @module 1. Direcciones de la API
  */
@@ -1225,7 +1225,7 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
-  Identificador de la capa de cartografía topográfica del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+  Identificador de la capa de cartografía topográfica 2017 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
   @property IDENA_CARTO
   @type string
   @final
@@ -1273,7 +1273,7 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
-  Identificador de la capa de cartografía topográfica del WMS de IDENA.
+  Identificador de la capa de cartografía topográfica 2017 del WMS de IDENA.
   @property IDENA_DYNCARTO
   @type string
   @final
@@ -1339,6 +1339,12 @@ No se deberían modificar las propiedades de esta clase.
   @final
  */
 /**
+  Identificador de la capa del modelo digital de superficies LIDAR del WMTS del Instituto Geográfico Nacional.
+  @property IGN_ES_LIDAR
+  @type string
+  @final
+ */
+/**
   Identificador de la capa de cartografía raster del WMS del Instituto Geográfico Nacional.
   @property IGN_ES_DYNCARTO
   @type string
@@ -1365,6 +1371,12 @@ No se deberían modificar las propiedades de esta clase.
 /**
   Identificador de la capa del PNOA del WMS del Instituto Geográfico Nacional.
   @property IGN_ES_DYNORTHOPHOTO
+  @type string
+  @final
+ */
+/**
+  Identificador de la capa del modelo digital de superficies LIDAR del WMS del Instituto Geográfico Nacional.
+  @property IGN_ES_DYNLIDAR
   @type string
   @final
  */
@@ -3021,7 +3033,7 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.1.html), el [e
           title: "Toponimia y mallas cartográficas",
           type: SITNA.Consts.layerType.WMS,
           url: "//idena.navarra.es/ogc/wms",
-          layerNames: "IDENA:toponimia,IDENA:mallas"
+          layerNames: "IDENA:TOPONI_Txt_Toponimos,IDENA:mallas"
         }
       ]
     });
@@ -3065,7 +3077,7 @@ SITNA.Map = function (div, options) {
     var map = this;
 
     // Por defecto en SITNA todas las búsquedas están habilitadas
-    TC.Cfg.controls.search.allowedSearchTypes = $.extend(TC.Cfg.controls.search.allowedSearchTypes, {
+    TC.Cfg.controls.search.allowedSearchTypes = TC.Util.extend(TC.Cfg.controls.search.allowedSearchTypes, {
         urban: {},
         street: {},
         number: {},
@@ -3075,24 +3087,24 @@ SITNA.Map = function (div, options) {
     if (options && options.controls && options.controls.search) {
         var keys = Object.keys(options.controls.search);
 
-        var searchCfg = $.extend(options.controls.search, { allowedSearchTypes: {} });
+        var searchCfg = TC.Util.extend(options.controls.search, { allowedSearchTypes: {} });
 
         keys.forEach(function (key) {
-            if (typeof (options.controls.search[key]) === "boolean" || $.isPlainObject(options.controls.search[key])) {
+            if (typeof (options.controls.search[key]) === "boolean" || TC.Util.isPlainObject(options.controls.search[key])) {
                 if (options.controls.search[key]) {
 
                     switch (true) {
                         case (key === "postalAddress"):
-                            searchCfg.allowedSearchTypes[TC.Consts.searchType.NUMBER] = $.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                            searchCfg.allowedSearchTypes[TC.Consts.searchType.NUMBER] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                             break;
                         case (key === "cadastralParcel"):
-                            searchCfg.allowedSearchTypes[TC.Consts.searchType.CADASTRAL] = $.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                            searchCfg.allowedSearchTypes[TC.Consts.searchType.CADASTRAL] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                             break;
                         case (key === "town"):
-                            searchCfg.allowedSearchTypes[TC.Consts.searchType.URBAN] = $.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                            searchCfg.allowedSearchTypes[TC.Consts.searchType.URBAN] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                             break;
                         default:
-                            searchCfg.allowedSearchTypes[key] = $.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                            searchCfg.allowedSearchTypes[key] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                     }
                 }
 
@@ -3431,34 +3443,139 @@ El tipo de la capa no puede ser {{#crossLink "SITNA.consts.LayerType/WFS:propert
      param {string|SITNA.consts.MapSearchType} searchType Fuente de datos del cual obtendremos los valores disponibles para buscar posteriormente.
      param {function} [callback] Función a la que se llama tras obtener los datos.  
      example
-       <div id="mapa"></div>
-       <script>
-         // Crear un mapa con las opciones por defecto.
-         var map = new SITNA.Map("mapa");
-       
-         // Cuando esté todo cargado proceder a trabajar con el mapa.
-         map.loaded(function () {  
-           // Retorna un array de objetos (id, label) con todos los municipios de Navarra
-           map.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, function (data) {
-             $.each(data, function (key, value) {
-               $('#municipality')  // Completamos el combo '#municipality' con los datos recibidos
-                .append($("<option></option>")
-                .attr("value", value.id)
-                .text(value.label));
-             });
-           });
-   
-           // Retorna un array de objetos (id, label) con todas las mancomunidades de residuos de Navarra
-           map.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, function (data) {
-             $.each(data, function (key, value) {
-               $('#commonwealth')  // Completamos el combo '#community' con los datos recibidos
-                .append($("<option></option>")
-                .attr("value", value.id)
-                .text(value.label));
-             });
-           });
-         });
-       </script>
+        <div class="instructions divSelect">
+            <div>
+                Municipios
+                <select id="municipality" onchange="applyFilter(this)">
+                    <option value="-1">Seleccione...</option>
+                </select>
+                <br />
+                <br />
+                Concejos
+                <select id="council" onchange="applyFilter(this)">
+                    <option value="-1">Seleccione...</option>
+                </select>
+                <br />
+                <br />
+                Casco Urbano
+                <select id="urban" onchange="applyFilter(this)">
+                    <option value="-1">Seleccione...</option>
+                </select>
+                <br />
+                <br />
+                Manconmunidad
+                <select id="commonwealth" onchange="applyFilter(this)">
+                    <option value="-1">Seleccione...</option>
+                </select>
+            </div>
+        </div>
+        <div id="mapa"></div>
+        <script>
+        // Crear mapa.
+        var map = new SITNA.Map("mapa");
+
+        map.loaded(function () {
+            // completamos el desplegable de municipios
+            map.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, function (data) {
+                var fragment = document.createDocumentFragment();
+                data.forEach(function (value) {
+                    var option = document.createElement("option");
+                    option.setAttribute("value", value.id);
+                    option.textContent = value.label;
+                    fragment.appendChild(option);
+                });
+                document.querySelector("#municipality").appendChild(fragment);
+            });
+
+            // completamos el desplegable de concejos
+            map.getQueryableData(SITNA.Consts.mapSearchType.COUNCIL, function (data) {
+                var fragment = document.createDocumentFragment();
+                data.forEach(function (value) {
+                    var option = document.createElement("option");
+                    option.setAttribute("value", value.id);
+                    option.textContent = value.label;
+                    fragment.appendChild(option);
+                });
+                document.querySelector("#council").appendChild(fragment);
+            });
+
+            // completamos el desplegable de cascos urbanos
+            map.getQueryableData(SITNA.Consts.mapSearchType.URBAN, function (data) {
+                var fragment = document.createDocumentFragment();
+                data.forEach(function (value) {
+                    var option = document.createElement("option");
+                    option.setAttribute("value", value.id);
+                    option.textContent = value.label;
+                    fragment.appendChild(option);
+                });
+                document.querySelector("#urban").appendChild(fragment);
+            });
+
+            // completamos el desplegable de mancomunidades de residuos
+            map.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, function (data) {
+                var fragment = document.createDocumentFragment();
+                data.forEach(function (value) {
+                    var option = document.createElement("option");
+                    option.setAttribute("value", value.id);
+                    option.textContent = value.label;
+                    fragment.appendChild(option);
+                });
+                document.querySelector("#commonwealth").appendChild(fragment);
+            });
+        });
+
+        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+        function applyFilter(target) {
+            if (target) {
+                var municipalitySelect = document.querySelector("#municipality");
+                var councilSelect = document.querySelector("#council");
+                var urbanSelect = document.querySelector("#urban");
+                var commonwealthSelect = document.querySelector("#commonwealth");
+                var id = target.querySelector('option:checked').value;
+                var searchType;
+                switch (true) {
+                    case target.id == SITNA.Consts.mapSearchType.MUNICIPALITY:
+                        searchType = SITNA.Consts.mapSearchType.MUNICIPALITY;
+
+                        councilSelect.value = -1;
+                        urbanSelect.value = -1;
+                        commonwealthSelect.value = -1;
+                        break;
+                    case target.id == SITNA.Consts.mapSearchType.COUNCIL:
+                        searchType = SITNA.Consts.mapSearchType.COUNCIL;
+
+                        municipalitySelect.value = -1;
+                        urbanSelect.value = -1;
+                        commonwealthSelect.value = -1;
+                        break;
+                    case target.id == SITNA.Consts.mapSearchType.URBAN:
+                        searchType = SITNA.Consts.mapSearchType.URBAN;
+
+                        municipalitySelect.value = -1;
+                        councilSelect.value = -1;
+                        commonwealthSelect.value = -1;
+                        break;
+                    case target.id == SITNA.Consts.mapSearchType.COMMONWEALTH:
+                        searchType = SITNA.Consts.mapSearchType.COMMONWEALTH;
+
+                        municipalitySelect.value = -1;
+                        councilSelect.value = -1;
+                        urbanSelect.value = -1;
+                        break;
+                }
+
+                if (id == -1)
+                    map.removeSearch();
+                else {
+                    map.searchTyped(searchType, id, function (idQuery) {
+                        if (idQuery == null) {
+                            alert('No se han encontrado resultados');
+                        }
+                    });
+                }
+            }
+        };
+        </script>
     */
     map.getQueryableData = function (searchType, callback) {
         var queryable = tcSearch.availableSearchTypes[searchType];
@@ -3477,15 +3594,16 @@ El tipo de la capa no puede ser {{#crossLink "SITNA.consts.LayerType/WFS:propert
                 outputformat: TC.Consts.format.JSON
             };
 
-            var url = queryable.url + '?' + $.param(params);
+            var url = queryable.url + '?' + TC.Util.getParamString(params);
             TC.ajax({
                 url: url,
                 responseType: TC.Consts.mimeType.JSON
-            }).then(function (data) {
+            }).then(function (response) {
+                const responseData = response.data;
                 queryable.queryableData = [];
 
-                if (data.features) {
-                    var features = data.features;
+                if (responseData.features) {
+                    var features = responseData.features;
 
                     for (var i = 0; i < features.length; i++) {
                         var f = features[i];
@@ -3556,41 +3674,48 @@ El tipo de la capa no puede ser {{#crossLink "SITNA.consts.LayerType/WFS:propert
     Puede consultar también online el [ejemplo 1](../../examples/Map.getMunicipalities.html).
 #### Ejemplo:  
 ```javascript
-      <div class="instructions divSelect">
+    <div class="instructions divSelect">
         <div>
-          Municipios
-          <select id="municipality" onchange="applyFilter()">
-            <option value="-1">Seleccione...</option>
-          </select>
+            Municipios
+            <select id="municipality" onchange="applyFilter()">
+                <option value="-1">Seleccione...</option>
+            </select>
+
         </div>
-      </div>
-      <div id="mapa"></div>
-      <script>
-        // Crear mapa.
-        var map = new SITNA.Map("mapa");
-        map.loaded(function () {
-          // completamos el desplegable
-          map.getMunicipalities(function (data) {
-            $.each(data, function (key, value) {
-              $('#municipality').append($("<option></option>")
-                .attr("value", value.id)
-                .text(value.label));
-              });
+    </div>
+    <div id="mapa"></div>
+    <script>
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
+
+    map.loaded(function () {
+        // completamos el desplegable
+        map.getMunicipalities(function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
             });
-          });
-        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-        function applyFilter() {
-          var id = $('#municipality').find('option:selected').val();
-          if (id == -1)
+            document.querySelector("#municipality").appendChild(fragment);
+        });
+    });
+
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter() {
+        var id = document.querySelector("#council").querySelector("option:checked").value;
+        if (id == -1)
             map.removeSearch();
-          else {
+        else {
             map.searchMunicipality(id, function (idQuery) {
-              if (idQuery == null)
-                alert('No se han encontrado resultados');
+                if (idQuery == null) {
+                    alert("No se han encontrado resultados");
+                }
             });
-          }
-        };
-     </script>
+        }
+    };
+    </script>
 ```
 
     @method getMunicipalities
@@ -3607,42 +3732,49 @@ El tipo de la capa no puede ser {{#crossLink "SITNA.consts.LayerType/WFS:propert
     Puede consultar también online el [ejemplo 1](../../examples/Map.getUrbanAreas.html).
 #### Ejemplo:
 ```javascript
-      <div class="instructions divSelect">
-       <div>
-         Cascos urbanos
-         <select id="urban" onchange="applyFilter()">
-           <option value="-1">Seleccione...</option>
-         </select>
-       </div>
-      </div>
-      <div id="mapa"></div>
-      <script>
-       // Crear mapa.
-       var map = new SITNA.Map("mapa");
-       map.loaded(function () {
-         // completamos el desplegable
-         map.getUrbanAreas(function (data) {
-           $.each(data, function (key, value) {
-             $('#urban').append($("<option></option>")
-                .attr("value", value.id)
-                .text(value.label));
-             });
-           });
-         });
-       // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-       function applyFilter() {
-         var id = $('#urban').find('option:selected').val();
-         if (id == -1)
-           map.removeSearch();
-         else {
-           map.searchUrbanArea(id, function (idQuery) {
-             if (idQuery == null)
-               alert('No se han encontrado resultados');
-           });
-         }
-       };
-      </script>
-```  
+    <div class="instructions divSelect">
+        <div>
+            Cascos urbanos
+            <select id="urban" onchange="applyFilter()">
+                <option value="-1">Seleccione...</option>
+            </select>
+
+        </div>
+    </div>
+    <div id="mapa"></div>
+    <script>
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
+
+    map.loaded(function () {
+        // completamos el desplegable
+        map.getUrbanAreas(function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#urban").appendChild(fragment);
+        });
+    });
+
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter() {
+        var id = document.querySelector("#urban").querySelector("option:checked").value;
+        if (id == -1)
+            map.removeSearch();
+        else {
+            map.searchUrbanArea(id, function (idQuery) {
+                if (idQuery == null) {
+                    alert('No se han encontrado resultados');
+                }
+            });
+        }
+    };
+    </script>
+```
 
     @method getUrbanAreas
     @async  
@@ -3653,46 +3785,52 @@ El tipo de la capa no puede ser {{#crossLink "SITNA.consts.LayerType/WFS:propert
         map.getQueryableData(SITNA.Consts.mapSearchType.URBAN, callback);
     };
     /**
-      Obtiene los valores (id y label) de las mancomunidades de residuos disponibles en la capa de IDENA. 
+    Obtiene los valores (id y label) de las mancomunidades de residuos disponibles en la capa de IDENA. 
       
-Puede consultar también online el [ejemplo 1](../../examples/Map.getCommonwealths.html). 
+    Puede consultar también online el [ejemplo 1](../../examples/Map.getCommonwealths.html). 
 #### Ejemplo:
 ```javascript
-       <div class="instructions divSelect">
-         <div>
-           Mancomunidades de residuos
-           <select id="commonwealths" onchange="applyFilter()">
-             <option value="-1">Seleccione...</option>
-           </select>
-         </div>
-       </div>
-       <div id="mapa"></div>
-       <script>
-         // Crear mapa.
-         var map = new SITNA.Map("mapa");
-         map.loaded(function () {
-           // completamos el desplegable
-           map.getCommonwealths(function (data) {
-             $.each(data, function (key, value) {
-               $('#commonwealths').append($("<option></option>")
-                 .attr("value", value.id)
-                 .text(value.label));
-               });
-             });
-           });
-         // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-         function applyFilter() {
-           var id = $('#commonwealths').find('option:selected').val();
-           if (id == -1)
-             map.removeSearch();
-           else {
-             map.searchCommonwealth(id, function (idQuery) {
-               if (idQuery == null)
-                 alert('No se han encontrado resultados');
-             });
-           }
-         };
-      </script>
+    <div class="instructions divSelect">
+        <div>
+            Mancomunidades de residuos
+            <select id="commonwealths" onchange="applyFilter()">
+                <option value="-1">Seleccione...</option>
+            </select>
+        </div>
+    </div>
+    <div id="mapa"></div>
+    <script>
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
+
+    map.loaded(function () {
+        // completamos el desplegable
+        map.getCommonwealths(function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#commonwealths").appendChild(fragment);
+        });
+    });
+
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter() {
+        var id = document.querySelector("#commonwealths").querySelector("option:checked").value;
+        if (id == -1)
+            map.removeSearch();
+        else {
+            map.searchCommonwealth(id, function (idQuery) {
+                if (idQuery == null) {
+                    alert("No se han encontrado resultados");
+                }
+            });
+        }
+    };
+    </script>
 ```    
 
      @method getCommonwealths
@@ -3704,46 +3842,52 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.getCommonwealt
         map.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, callback);
     };
     /**
-       Obtiene los valores (id y label) de los concejos disponibles en la capa de IDENA. 
+    Obtiene los valores (id y label) de los concejos disponibles en la capa de IDENA. 
        
-Puede consultar también online el [ejemplo 1](../../examples/Map.getCouncils.html). 
- #### Ejemplo:    
- ```javascript
-        <div class="instructions divSelect">
-          <div>
+    Puede consultar también online el [ejemplo 1](../../examples/Map.getCouncils.html). 
+#### Ejemplo:    
+```javascript
+    <div class="instructions divSelect">
+        <div>
             Concejos
             <select id="council" onchange="applyFilter()">
-              <option value="-1">Seleccione...</option>
+                <option value="-1">Seleccione...</option>
             </select>
-          </div>
         </div>
-        <div id="mapa"></div>
-        <script>
-          // Crear mapa.
-          var map = new SITNA.Map("mapa");
-          map.loaded(function () {
-            // completamos el desplegable
-            map.getCouncils(function (data) {
-              $.each(data, function (key, value) {
-                $('#council').append($("<option></option>")
-                  .attr("value", value.id)
-                  .text(value.label));
-                });
-              });
+    </div>
+    <div id="mapa"></div>
+    <script>
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
+
+    map.loaded(function () {
+        // completamos el desplegable
+        map.getCouncils(function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
             });
-          // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-          function applyFilter() {
-            var id = $('#council').find('option:selected').val();
-            if (id == -1)
-              map.removeSearch();
-            else {
-              map.searchCouncil(id, function (idQuery) {
-                if (idQuery == null)
-                  alert('No se han encontrado resultados');
-              });
-            }
-          };
-       </script>
+            document.querySelector("#council").appendChild(fragment);
+        });
+    });
+
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter() {
+        var id = document.querySelector("#council").querySelector("option:checked").value;
+        if (id == -1)
+            map.removeSearch();
+        else {
+            map.searchCouncil(id, function (idQuery) {
+                if (idQuery == null) {
+                    alert("No se han encontrado resultados");
+                }
+            });
+        }
+    };
+    </script>
 ```
 
       @method getCouncils
@@ -3936,7 +4080,7 @@ Puede consultar también online el [ejemplo 1](../../examples/Map.searchMunicipa
                         if (!(id instanceof Array)) id = [id];
                         for (var i = 0; i < query.dataIdProperty.length; i++) {
                             filter.push(
-                              new TC.filter.equalTo(query.dataIdProperty[i], $.trim(id[i]))
+                              new TC.filter.equalTo(query.dataIdProperty[i], id[i].trim())
                             );
                         }
 
@@ -4272,7 +4416,6 @@ El valor de esa opción es una ruta a una carpeta, donde se encontrarán todos o
 - `config.json`, con un objeto JSON que sobreescribirá propiedades de {{#crossLink "SITNA.Cfg"}}{{/crossLink}}.
 - `style.css`, para personalizar el estilo del visor y sus controles.
 - `script.js`, para añadir lógica nueva. Este es el lugar idóneo para la lógica de la nueva interfaz definida por el marcado inyectado con `markup.html`.
-- `ie8.css`, para adaptar el estilo a Internet Explorer 8, dado que este navegador tiene soporte CSS3 deficiente.
 - `resources/*.json`, donde `*` es el código IETF del idioma que tendrá la interfaz de usuario, por ejemplo `resources/es-ES.json`.
  Si se van a soportar varios idiomas hay que preparar un archivo por idioma. Para saber cómo establecer un idioma de interfaz de usuario, consultar
  la opción `locale` del constructor de {{#crossLink "SITNA.Map"}}{{/crossLink}}.

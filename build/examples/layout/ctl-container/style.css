@@ -316,12 +316,6 @@
     }
 }
 
-/* Eliminar retardo de 300 ms en pantallas táctiles con IE */
-body {
-    -ms-touch-action: none; /* IE10 */
-    touch-action: none; /* IE11 */
-}
-
 input[type=range] {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -437,7 +431,6 @@ html, body {
 
     html:-ms-fullscreen {
         clip: auto;
-        /* width: 100%; /* needed to center contents in IE */
     }
 
 
@@ -516,11 +509,6 @@ a {
     line-height: 2em;
 }
 
-    /* Necesario para IE porque acumula estilos con tcmap.css */
-    .tc-ctl-nav .tc-ctl-nav-btn-home:after {
-        font-size: initial;
-    }
-
     .tc-ctl-nav .tc-ctl-nav-btn-home:after {
         font-size: 1.5em;
     }
@@ -556,11 +544,6 @@ a {
     .tools-panel .tc-ctl-wlm div.tc-ctl-wlm-content {
         max-height: none;
     }
-
-        /* Esto elimina el bug de IE en que la lista cuando se vacía a veces se queda con tamaño enorme */
-        .tools-panel .tc-ctl-wlm div.tc-ctl-wlm-content ul:hover {
-            height: auto;
-        }
 
 li.tc-ctl-toc-node {
     margin-top: 1em;
@@ -849,12 +832,10 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
 
 .tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
     /* la regla position:fixed no tiene efecto, ya que el div padre se ocuta mediante la regla transform: translateX */
-    /* lo anterior no pasa en IE, así que hay que comentar -ms-transform y transform */
     -webkit-transform: translateX(-100%); /* Safari and Chrome */
     -moz-transform: translateX(-100%); /* Firefox */
-    /*-ms-transform: translateX(-100%); */ /* IE 9 */
     -o-transform: translateX(-100%); /* Opera */
-    /*transform: translateX(-100%);*/ /* */
+    transform: translateX(-100%); /* */
     position: fixed;
     background-color: #fff;
     padding-top: 0.5em;
@@ -875,7 +856,6 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     overflow: hidden;
     -webkit-transition: all .3s ease;
     -moz-transition: all .3s ease;
-    -ie-transition: all .3s ease;
     -o-transition: all .3s ease;
     transition: all .3s ease;
 }
@@ -1002,13 +982,10 @@ ul.tc-ctl-finfo-services > li, ul.tc-ctl-finfo-layers > li, ul.tc-ctl-finfo-feat
     }
 
 .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table {
-    border: 0.2em #eee solid;
-    cursor: url(//sitna.tracasa.es/api/TC/layout/responsive/img/zoomin.cur), /* Internet Explorer */
-    default;
+    border: 0.2em #eee solid;    
 }
 
-.tc-ctl-finfo.tc-threed ul.tc-ctl-finfo-services > li.tc-checked {
-    max-height: 250px;
+.tc-ctl-finfo.tc-threed ul.tc-ctl-finfo-services > li.tc-checked {    
     overflow-y: auto;
 }
 
@@ -1227,7 +1204,6 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     background-color: #fff;
     -webkit-transition: transform .3s ease;
     -moz-transition: transform .3s ease;
-    -ie-transition: transform .3s ease;
     -o-transition: transform .3s ease;
     transition: transform .3s ease;
     z-index: 10005;
@@ -1239,7 +1215,6 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
         overflow: auto;
         -webkit-transition: all .3s ease;
         -moz-transition: all .3s ease;
-        -ie-transition: all .3s ease;
         -o-transition: all .3s ease;
         transition: all .3s ease;
         -webkit-box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
@@ -1317,13 +1292,12 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     top: 0;
     height: 100%;
     max-height: 100%;
-    z-index: 10008;
+    z-index: 10009;
 }
 
     .tools-panel .tc-ctl > div {
         -webkit-transition: all .3s ease;
         -moz-transition: all .3s ease;
-        -ie-transition: all .3s ease;
         -o-transition: all .3s ease;
         transition: all .3s ease;
     }
@@ -1758,11 +1732,6 @@ label.tc-ctl-edit-btn-polygon span {
 
     .tc-ctl-p-results-table .tc-ctl-finfo-btn-prev:hover, .tc-ctl-p-results-table .tc-ctl-finfo-btn-next:hover {
         color: #000;
-    }
-
-    /* Regla para IE, para resetear el tamaño de fuente */
-    .tc-ctl-p-results-table .tc-ctl-finfo-btn-prev:before, .tc-ctl-p-results-table .tc-ctl-finfo-btn-next:before {
-        font-size: 0.667em;
     }
 
     .tc-ctl-p-results-table .tc-ctl-finfo-btn-prev:before, .tc-ctl-p-results-table .tc-ctl-finfo-btn-next:before {
@@ -2411,15 +2380,6 @@ label.tc-ctl-edit-btn-polygon span {
         padding-right: 2.1em;
     }
 
-    /* Necesario para IE porque acumula estilos con tcmap.css */
-    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-ftools button.tc-ctl-ftools-btn:after {
-        font-size: initial;
-    }
-
-    .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-ftools button.tc-ctl-ftools-btn:after {
-        font-size: 0.67em;
-    }
-
     .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-ctl-ftools button.tc-ctl-ftools-btn:after {
         font-size: 1.5em;
         line-height: 1.5em;
@@ -2445,11 +2405,6 @@ label.tc-ctl-edit-btn-polygon span {
 
     .tc-ctl-finfo.tc-threed .tc-ctl-finfo-val {
         max-width: 22vw;
-    }
-
-    .tc-ctl-p-results-table .tc-ctl-finfo {
-        /* Necesario para IE, en caso contrario el elemento se estira y no tiene barra de scroll, dejando la barra de scroll en su padre */
-        max-height: calc(95vh - 5rem);
     }
 
     div.tc-threed div.prpanel-group {
@@ -2766,14 +2721,13 @@ label.tc-ctl-edit-btn-polygon span {
 .tc-ctl-draw {
     -webkit-transition: all .3s ease;
     -moz-transition: all .3s ease;
-    -ie-transition: all .3s ease;
     -o-transition: all .3s ease;
     transition: all .3s ease;
 }
 
 [disabled], .tc-active[disabled] {
-    background-color: rgba(234, 234, 227, 1);
-    border-color: rgba(234, 234, 227, 1);
+    background-color: var(--btn-disabled-bg-color);
+    border-color: var(--btn-disabled-bg-color);
     cursor: default;
 }
 
@@ -2792,7 +2746,6 @@ input[type=range][disabled] {
 .tc-ctl > div.tc-ctl-tctr-elm {
     -webkit-transition: none;
     -moz-transition: none;
-    -ie-transition: none;
     -o-transition: none;
     transition: none;
 }

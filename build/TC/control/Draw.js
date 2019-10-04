@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -38,7 +38,7 @@ TC.Consts.event.CHANGE = 'change';
 
         TC.Control.apply(self, arguments);
 
-        if (!Modernizr.inputtypes.color && !window.CP) {
+        if (!TC.browserFeatures.inputTypeColor() && !window.CP) {
             TC.loadCSS(TC.apiLocation + 'lib/color-picker/color-picker.min.css');
             TC.syncLoadJS(TC.apiLocation + 'lib/color-picker/color-picker.min.js');
         }
@@ -148,7 +148,7 @@ TC.Consts.event.CHANGE = 'change';
             styleTools: self.options.styleTools
         };
         return self._set1stRenderPromise(self.renderData(renderObject, function () {
-            if (!Modernizr.inputtypes.color) {
+            if (!TC.browserFeatures.inputTypeColor()) {
                 // El navegador no soporta input[type=color], usamos polyfill
                 const input = self.div.querySelector('input[type=color]');
                 if (input) {
@@ -185,7 +185,7 @@ TC.Consts.event.CHANGE = 'change';
 
             if (self.options.measure)
                 self.measure = self.options.measure
-            if ($.isFunction(self.options.callback))
+            if (TC.Util.isFunction(self.options.callback))
                 self.callBack = self.options.callback;
             if (self.options.persistent === undefined) {
                 self.persistent = true;
@@ -234,7 +234,7 @@ TC.Consts.event.CHANGE = 'change';
                 self._strokeWidthWatch = self.div.querySelector(self._classSelector + '-str-w-watch');
             }
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         }));
@@ -255,7 +255,7 @@ TC.Consts.event.CHANGE = 'change';
 
         const setStyles = function () {
             self.styles = {};
-            $.extend(true, self.styles, self.options.styles || self.layer.options.styles);
+            TC.Util.extend(true, self.styles, self.options.styles || self.layer.options.styles);
         };
 
         self._layerPromise = new Promise(function (resolve, reject) {
@@ -350,9 +350,7 @@ TC.Consts.event.CHANGE = 'change';
         self._cancelBtn.disabled = false;
         TC.Control.prototype.activate.call(self);
         self.wrap.activate(self.mode);
-        self.div.classList.remove(self._pointClass);
-        self.div.classList.remove(self._lineClass);
-        self.div.classList.remove(self._polygonClass);
+        self.div.classList.remove(self._pointClass, self._lineClass, self._polygonClass);
         switch (self.mode) {
             case TC.Consts.geom.POINT:
                 self.div.classList.add(self._pointClass);
@@ -427,7 +425,7 @@ TC.Consts.event.CHANGE = 'change';
     ctlProto.setStyle = function (style) {
         const self = this;
         if (style) {
-            $.extend(self.style, style);
+            TC.Util.extend(self.style, style);
         }
         else {
             switch (self.options.mode) {
@@ -483,7 +481,7 @@ TC.Consts.event.CHANGE = 'change';
                 color = '#' + match[1] + match[1] + match[2] + match[2] + match[3] + match[3];
             }
             self._strokeColorPicker.value = color;
-            if (!Modernizr.inputtypes.color) {
+            if (!TC.browserFeatures.inputTypeColor()) {
                 const input = self._strokeColorPicker;
                 input.style.backgroundColor = color;
                 input.blur();

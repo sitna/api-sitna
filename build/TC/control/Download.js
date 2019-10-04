@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.MapInfo) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/MapInfo');
@@ -18,7 +18,9 @@ TC.control.Download = function (options) {
 
     var opts = options || {};
     self._dialogDiv = TC.Util.getDiv(opts.dialogDiv);
-    self._$dialogDiv = $(self._dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
     if (!opts.dialogDiv) {
         document.body.appendChild(self._dialogDiv);
     }    
@@ -183,13 +185,11 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
             }
             else {
                 var extent = self.map.getExtent();
-                var coordsXY = TC.Util.reproject(extent.slice(0, 2), self.map.crs, TC.Defaults.crs);
-                var coordsXY2 = TC.Util.reproject(extent.slice(2), self.map.crs, TC.Defaults.crs);
-
-                var arrPromises = TC.WFSGetFeatureBuilder(self.map, new TC.filter.bbox([coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]]), format, true);
+                
+                var arrPromises = TC.WFSGetFeatureBuilder(self.map, new TC.filter.bbox(extent, self.map.getCRS()), format, true);
                 Promise.all(arrPromises).then(function (responseArray) {
 
-                    var responses = $.grep(responseArray, function (item) { return item != null });
+                    var responses = responseArray.filter(function (item) { return item != null });
                     if (responses.length === 0) {
                         _showAlertMsg({ key: TC.Consts.WFSErrors.NoLayers }, wait);
                         return;
@@ -292,11 +292,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
         const self = this;
         const alert = self.div.querySelector('.' + self.CLASS + '-alert');
         if (document.getElementById(self.CLASS + '-image-qr').checked) {
-            if (maxLengthExceed.qr) {
-                alert.classList.remove(TC.Consts.classes.HIDDEN);
-            } else if (!maxLengthExceed.qr) {
-                alert.classList.add(TC.Consts.classes.HIDDEN);
-            }
+            alert.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.qr);
         } else {
             alert.classList.add(TC.Consts.classes.HIDDEN);
         }

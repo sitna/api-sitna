@@ -1,4 +1,4 @@
-﻿
+
 TC.control = TC.control || {};
 
 if (!TC.Control) {
@@ -40,7 +40,7 @@ TC.control.ResultsPanel = function () {
 
     self.content = self.contentType.TABLE;
 
-    if ($.isEmptyObject(self.options)) {
+    if (TC.Util.isEmptyObject(self.options)) {
         self.options = { content: "table" };
     }
 
@@ -206,7 +206,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             //self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
             self.menuDiv = self.div.querySelector('.' + self.CLASS + '-menu');
 
-            if (Modernizr.touch) {
+            if (TC.browserFeatures.touch()) {
                 TC.Util.swipe(self.div, {
                     left: function () {
                         self.minimize();
@@ -313,9 +313,13 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             TC.Consts.url.D3C3 || TC.apiLocation + 'lib/d3c3/d3c3.min.js',
             function () {
                 const data = options.data;
+                data.ele = data.ele.map(val => val === null ? 0 : val);
                 const div = options.div;
                 var locale = TC.Util.getMapLocale(self.map);
-                self.getRenderedHtml(ctlProto.CLASS + '-chart', { upHill: data.upHill.toLocaleString(locale), downHill: data.downHill.toLocaleString(locale) }, function (out) {
+                self.getRenderedHtml(ctlProto.CLASS + '-chart', {
+                    upHill: data.upHill ? data.upHill.toLocaleString(locale) : '0',
+                    downHill: data.downHill ? data.downHill.toLocaleString(locale) : '0'
+                }, function (out) {
 
                     div.innerHTML = out;
                     div.style.display = '';
@@ -332,7 +336,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             self.div.querySelector('.prcollapsed-max').setAttribute('title', self.options.titles.max);
                         }
                     }
-                    var chartOptions = $.extend({
+                    var chartOptions = TC.Util.extend({
                         bindto: div.querySelector('.tc-chart'),
                         padding: {
                             top: 0,
@@ -365,8 +369,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         };
                     }
 
-                    chartOptions.onrendered = function () {
-                        if ($.isFunction(chartOptions._onrendered)) {
+                    chartOptions.onrendered = function () {                        
+                        if (TC.Util.isFunction(chartOptions._onrendered)) {
                             chartOptions._onrendered.call(this);
                         }
                         self.map.trigger(TC.Consts.event.DRAWCHART, { control: self, svg: this.svg[0][0], chart: this });
@@ -470,16 +474,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         var data = arguments[0];
         if (data) {
-
-            var deleteColumns = function () {
-                for (var i = 0; i < data.length; i++) {
-                    for (var k in data[i]) {
-                        if (columns.indexOf(k) < 0) {
-                            delete data[i][k];
-                        }
-                    }
-                }
-            };
 
             var css;
             if (data.css) {
@@ -852,7 +846,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         d.s = Math.floor(diff / 1000);
 
-        return $.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
+        return TC.Util.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
     };
 
     ctlProto.getElevationChartTooltip = function (data) {
@@ -946,7 +940,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         var rows = [_ctl.tableData.columns];
 
-        $.each(_ctl.tableData.results, function (index, value) {
+        _ctl.tableData.results.forEach(function (value) {
             var row = [];
             for (var k in value) {
                 if (value.hasOwnProperty(k) && k !== "Id" && k !== "Geom") { //Las columnas ID y Geom no aparece en la exportaci\u00f3n
@@ -961,7 +955,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             exporter.Save(fileName, rows, title);
         }
         if (!TC.Util.ExcelExport) {
-            TC.loadJS(true, TC.apiLocation + 'TC/TC.Util.ExcelExport', function () {
+            TC.loadJS(true, TC.apiLocation + 'TC/Util.ExcelExport', function () {
                 _fncSave(new TC.Util.ExcelExport());
             });
         }

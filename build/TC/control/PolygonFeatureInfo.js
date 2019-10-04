@@ -1,4 +1,4 @@
-﻿TC.control = TC.control || {};
+TC.control = TC.control || {};
 
 if (!TC.control.GeometryFeatureInfo) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/GeometryFeatureInfo');

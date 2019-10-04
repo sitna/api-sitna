@@ -1,4 +1,4 @@
-﻿if (!TC.Control) {
+if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
@@ -7,7 +7,7 @@ TC.control.FileImport = function () {
 
     TC.Control.apply(self, arguments);
 
-    if ($.isArray(self.options.formats)) {
+    if (Array.isArray(self.options.formats)) {
         self.formats = self.options.formats;
     }
     else {
