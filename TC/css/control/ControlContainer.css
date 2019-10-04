@@ -76,16 +76,25 @@ div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results {
     max-width: fit-content;
     display: table;
     overflow: hidden;
+    pointer-events: none;
+    /*para edge*/
+    max-width: none;
+    min-width: auto;
 }
 
+    div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results * {
+        pointer-events: all;
+    }
+    
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .prsidebar-body {
         display: inline-block;
     }
 
-    div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .prcollapsed {
-        position: static; /* sin esto en IE no respeta el alto del botón y se montan */
-    }
-
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results #results {
         height: auto;
+    }
+
+    div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results div.prcollapsed {
+        top: auto;
+        left: auto;
     }
