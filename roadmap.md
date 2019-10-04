@@ -22,4 +22,4 @@ Planned upgrades as on 13/05/2019:
 18.	Link to metadata from *loaded layers* control. :sparkles:
 19.	Link to abstract and metadata from *background maps* control. :sparkles:
 
-:one: Upgrade fulfilled with version 2.0.0.
+:one: Upgrade fulfilled with [version 2.0.0](https://github.com/sitna/api-sitna/releases/tag/2.0.0).
