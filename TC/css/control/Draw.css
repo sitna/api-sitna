@@ -1,20 +1,16 @@
 ﻿
 .tc-ctl-draw-btn-new {
-    border-top-left-radius: 0.3em;
     border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: 0.3em;
     border-bottom-left-radius: var(--border-radius);
 }
 
 .tc-ctl-btn.tc-ctl-draw-btn-new.tc-active {
-    background-color: #c00;
-    background-color: var(--main-hl-color);
+    background-color: var(--btn-hl-bg-color);
+    border-color: var(--btn-hl-border-color);
 }
 
 .tc-ctl-draw-btn-cancel {
-    border-top-right-radius: 0.3em;
     border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: 0.3em;
     border-bottom-right-radius: var(--border-radius);
 }
 
@@ -49,18 +45,6 @@
     transform-origin: 20% 50%;
 }
 
-.tc-ctl-draw .tc-ctl-draw-tools > button {
-    display: inline-block;
-    border-left: 1px solid #fff;
-    border-left-color: var(--main-bg-color);
-    border-right: 1px solid #fff;
-    border-right-color: var(--main-bg-color);
-    height: 2em;
-    margin: 0;
-    vertical-align: top;
-    cursor: pointer;
-}
-
 #map > .tc-ctl-draw {
     display: none;
 }
@@ -73,14 +57,28 @@
         position: relative;
         flex-grow: 1;
         display: inline-block;
-        border: 0;
-        border-left: 1px solid #fff;
-        border-left-color: var(--main-bg-color);
-        border-right: 1px solid #fff;
-        border-right-color: var(--main-bg-color);
         height: 2em;
-        margin: 0;
+        margin: 0 0.1em 0 0.1em;
         vertical-align: top;
         text-align: center;
-        color: #fff;
+        color: var(--btn-color);
+        cursor: pointer;
     }
+        .tc-ctl-draw-tools > button:first-child {
+            margin-left: 0.05em;
+        }
+
+        .tc-ctl-draw-tools > button:last-child {
+            margin-right: 0.05em;
+            border-right-color: var(--btn-border-color);
+        }
+
+        .tc-ctl-draw-tools > button:disabled {
+            color: var(--btn-disabled-color);
+            background-color: var(--btn-disabled-bg-color);
+            border-color: var(--btn-disabled-border-color);
+        }
+
+            .tc-ctl-draw-tools > button:disabled:last-child {
+                border-right-color: var(--btn-disabled-border-color);
+            }
