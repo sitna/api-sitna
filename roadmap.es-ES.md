@@ -22,4 +22,4 @@ Mejoras planeadas a día de 13/05/2019:
 18.	Enlace a metadatos en el control *Capas cargadas*. :sparkles:
 19.	Enlace a abstract y metadatos en el control *Mapas de Fondo*. :sparkles:
 
-:one: Mejora añadida en la versión 2.0.0.
+:one: Mejora añadida en la [versión 2.0.0](https://github.com/sitna/api-sitna/releases/tag/2.0.0).
