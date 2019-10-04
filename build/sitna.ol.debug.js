@@ -11433,7 +11433,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '2.0.0 [2019-10-4 13:46:52]';
+TC.version = '2.0.0 [2019-10-4 14:25:49]';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -55278,7 +55278,9 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
 
 - Eliminadas todas las referencias a OpenLayers 2.
 - Eliminada la dependencia de jQuery.
+- Eliminada la dependencia de Modernizr.
 - Se retira el soporte a Internet Explorer.
+- Actualización a OpenLayers 5.
 - Corrección de errores.
 
 ### 1.6.0

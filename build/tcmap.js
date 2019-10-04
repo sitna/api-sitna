@@ -8,7 +8,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '2.0.0 [2019-10-4 13:46:48]';
+TC.version = '2.0.0 [2019-10-4 14:25:45]';
 (function () {
     if (!TC.apiLocation) {
         var src;
