@@ -34,5 +34,5 @@ Some documentation and examples have been developed and made available [here](ht
 ## Websites developed with API SITNA
 You can get to a list of websites that have been developed with API SITNA in [this document](./websites.md).
 
-## Hoja de ruta/Roadmap
+## Roadmap
 See [here](./roadmap.md).
