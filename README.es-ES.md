@@ -33,5 +33,5 @@ Con el fin de facilitar la comprensión de la API consulte la documentación y e
 ## Sitios web desarrollados con la API SITNA
 Puede acceder a una lista de sitios web que contienen visores desarrollados con la API SITNA en [este documento](./websites.es-ES.md).
 
-## Hoja de ruta/Roadmap
+## Hoja de ruta
 Consultar [aquí](./roadmap.es-ES.md).
