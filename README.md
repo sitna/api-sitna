@@ -11,7 +11,7 @@ API SITNA is a JavaScript API that enables us to include an interactive map view
 
 This SITNA product has been developed to be used in the web applications of the Government of Navarra. However it can be used by any user or organization in their web pages.
 
-Among other, API SITNA provides the following functionalities:
+Among other ones, API SITNA provides the following functionalities:
 
 - It provides navigation tools included in common map viewers, such as zoom, location map and basic measuring tools.
 - It allows you to search for a municipality in Navarre by its name, an address, a cadastral parcel or a point by its coordinates, among other options.
