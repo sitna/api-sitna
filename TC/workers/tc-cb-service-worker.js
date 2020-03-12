@@ -10,7 +10,7 @@
                         cache.keys().then(function (keys) {
                             console.log("Revisando cache...");
                             if (keys.length) {
-                                fetch(keys[0]).then(function () {
+                                return fetch(keys[0]).then(function () {
                                     // Estamos online, borramos cache
                                     caches.delete(cacheName).then(function () {
                                         console.log("Cache con bug (" + cacheName + ") borrada");
@@ -19,6 +19,7 @@
                                     console.log(e);
                                 });
                             }
+                            return self.skipWaiting();
                         });
                     });
                 }
@@ -56,7 +57,7 @@
     const currentMapStates = {};
 
     const postMessage = function (msg) {
-        self.clients.matchAll()
+        self.clients.matchAll({ includeUncontrolled: true })
             .then(function (clientList) {
                 clientList.forEach(function (client) {
                     client.postMessage(msg);
@@ -92,7 +93,8 @@
                                     return;
                                 }
                                 const count = idx + 1;
-                                cache.add(urlList[idx])
+                                const url = urlList[idx];
+                                cache.add(url)
                                     .then(
                                         function () {
                                             if (!silent) {
