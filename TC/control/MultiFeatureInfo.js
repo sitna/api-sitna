@@ -6,7 +6,6 @@ if (!TC.control.FeatureInfoCommons) {
 (function () {
     TC.control.MultiFeatureInfo = function () {
         var self = this;
-        self.lineColor = null;
         TC.Control.apply(self, arguments);
         self.modes = self.options.modes || {};
         if (typeof self.modes[TC.Consts.geom.POINT] === 'undefined') {
@@ -15,9 +14,10 @@ if (!TC.control.FeatureInfoCommons) {
         if (typeof self.modes[TC.Consts.geom.POLYGON] === 'undefined') {
             self.modes[TC.Consts.geom.POLYGON] = true;
         }
-        self.fInfoCtrl = null;
-        self.lineFInfoCtrl = null;
-        self.polygonFInfoCtrl = null;
+        self.featureInfoControl = null;
+        self.lineFeatureInfoControl = null;
+        self.polygonFeatureInfoControl = null;
+        self.featureInfoControls = [];
         self.lastCtrlActive = null;
         self.popup = null;
         self.exportsState = false; // Los controles que exportan estado son los hijos
@@ -29,17 +29,14 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.CLASS = 'tc-ctl-m-finfo';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/MultiFeatureInfo.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS,body_0);function body_0(chk,ctx){return chk.w("<div class=\"tc-ctl-m-finfo-select\"><form><span>").h("i18n",ctx,{},{"$key":"selection"}).w("</span>").x(ctx.get(["pointSelectValue"], false),ctx,{"block":body_1},{}).x(ctx.get(["lineSelectValue"], false),ctx,{"block":body_2},{}).x(ctx.get(["polygonSelectValue"], false),ctx,{"block":body_3},{}).w("</form></div>");}body_0.__dustBody=!0;function body_1(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-point\" title=\"").h("i18n",ctx,{},{"$key":"selectionByPoint"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["pointSelectValue"], false),ctx,"h").w("\" checked /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byPoint"}).w("</span></label>");}body_1.__dustBody=!0;function body_2(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-line\" title=\"").h("i18n",ctx,{},{"$key":"selectionByLine"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["lineSelectValue"], false),ctx,"h").w("\" /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byLine"}).w("</span></label>");}body_2.__dustBody=!0;function body_3(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-polygon\" title=\"").h("i18n",ctx,{},{"$key":"selectionByPrecinct"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["polygonSelectValue"], false),ctx,"h").w("\" /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byPrecinct"}).w("</span></label>");}body_3.__dustBody=!0;return body_0};
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/MultiFeatureInfo.html";
 
     const mergeOptions = function (opt1, opt2) {
-        if (opt1 === true) {
-            opt1 = {};
-            return TC.Util.extend(opt1, opt2);
+        if (opt1) {
+            if (opt1 === true) {
+                opt1 = {};
+            }
+            return TC.Util.extend(true, opt1, opt2);
         }
         return opt1;
     };
@@ -54,24 +51,28 @@ if (!TC.control.FeatureInfoCommons) {
 
         return new Promise(function (resolve, reject) {
             const ctlPromises = [TC.Control.prototype.register.call(self, map)]
+            const styles = self.options.styles || {};
             if (self.modes[TC.Consts.geom.POINT]) {
                 ctlPromises.push(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
                     { displayMode: self.options.displayMode })).then(function (control) {
-                        self.fInfoCtrl = control;
+                        self.featureInfoControl = control;
+                        self.featureInfoControls.push(control);
                         return control;
                     }));
             }
             if (self.modes[TC.Consts.geom.POLYLINE]) {
                 ctlPromises.push(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
-                    { displayMode: self.options.displayMode, lineColor: self.lineColor })).then(function (control) {
-                        self.lineFInfoCtrl = control;
+                    { displayMode: self.options.displayMode, style: styles.line })).then(function (control) {
+                        self.lineFeatureInfoControl = control;
+                        self.featureInfoControls.push(control);
                         return control;
                     }));
             }
             if (self.modes[TC.Consts.geom.POLYGON]) {
                 ctlPromises.push(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
-                    { displayMode: self.options.displayMode, lineColor: self.lineColor })).then(function (control) {
-                        self.polygonFInfoCtrl = control;
+                    { displayMode: self.options.displayMode, style: styles.polygon })).then(function (control) {
+                        self.polygonFeatureInfoControl = control;
+                        self.featureInfoControls.push(control);
                         return control;
                     }));
             }
@@ -81,15 +82,15 @@ if (!TC.control.FeatureInfoCommons) {
             });
 
             map.on(`${TC.Consts.event.CONTROLACTIVATE} ${TC.Consts.event.CONTROLDEACTIVATE}`, function (e) {
-                if (e.control === self.fInfoCtrl || e.control === self.lineFInfoCtrl || e.control === self.polygonFInfoCtrl) {
+                if (e.control === self.featureInfoControl || e.control === self.lineFeatureInfoControl || e.control === self.polygonFeatureInfoControl) {
                     self.updateUI();
                 }
             });
 
             Promise.all(ctlPromises).then(function () {
-                if (self.fInfoCtrl) {
-                    self.fInfoCtrl.activate();
-                    self.lastCtrlActive = self.fInfoCtrl;
+                if (self.featureInfoControl) {
+                    self.featureInfoControl.activate();
+                    self.lastCtrlActive = self.featureInfoControl;
                 }
                 self.updateUI();
                 resolve(self);
@@ -100,7 +101,6 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.render = function (callback) {
         const self = this;
-        self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor;
         var renderData = {};
         if (self.modes[TC.Consts.geom.POINT]) {
             renderData.pointSelectValue = TC.Consts.geom.POINT;
@@ -111,24 +111,24 @@ if (!TC.control.FeatureInfoCommons) {
         if (self.modes[TC.Consts.geom.POLYGON]) {
             renderData.polygonSelectValue = TC.Consts.geom.POLYGON;
         }
-        return TC.Control.prototype.renderData.call(self, renderData,
+        return self._set1stRenderPromise(self.renderData(renderData,
             function () {
                 var changeEvent = function () {
                     switch (this.value) {
                         case TC.Consts.geom.POLYLINE:
                             //modo línea
-                            self.lineFInfoCtrl.activate();
-                            self.lastCtrlActive = self.lineFInfoCtrl;
+                            self.lineFeatureInfoControl.activate();
+                            self.lastCtrlActive = self.lineFeatureInfoControl;
                             break;
                         case TC.Consts.geom.POLYGON:
                             //modo poligono
-                            self.polygonFInfoCtrl.activate();
-                            self.lastCtrlActive = self.polygonFInfoCtrl;
+                            self.polygonFeatureInfoControl.activate();
+                            self.lastCtrlActive = self.polygonFeatureInfoControl;
                             break;
                         default:
                             //modo point
-                            self.fInfoCtrl.activate();
-                            self.lastCtrlActive = self.fInfoCtrl;
+                            self.featureInfoControl.activate();
+                            self.lastCtrlActive = self.featureInfoControl;
                             break;
                     }
                 };
@@ -136,10 +136,41 @@ if (!TC.control.FeatureInfoCommons) {
                     input.addEventListener('change', changeEvent);
                 });
 
+                //URI bind del click del boton de borrar seleccionadas
+                const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
+                delFeaturesBtn.addEventListener(TC.Consts.event.CLICK, function (event) {
+                    event.preventDefault();
+                    self.featureInfoControls.forEach(ctl => {
+                        ctl.info = null;
+                        ctl._infoHistory = {};
+                        ctl.resultsLayer.features.slice().forEach(f => ctl.downplayFeature(f));
+                        ctl.filterLayer.features.slice().forEach(f => f.layer.removeFeature(f));
+                    });
+                });
+                self.map
+                    //.on(TC.Consts.event.FEATUREINFO, function () {
+                    //    delFeaturesBtn.disabled = false;
+                    //})
+                    //.on(TC.Consts.event.NOFEATUREINFO, function (e) {
+                    //    if (e.control && e.control.filterFeature) {
+                    //        delFeaturesBtn.disabled = false;
+                    //    }
+                    //})
+                    .on(TC.Consts.event.FEATUREREMOVE, function (e) {
+                        if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
+                            self.updateUI();
+                        }
+                    })
+                    .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
+                        if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
+                            self.updateUI();
+                        }
+                    });
+
                 if (TC.Util.isFunction(callback)) {
                     callback();
                 }
-            });
+            }));
     };
 
     ctlProto.activate = function () {
@@ -155,29 +186,35 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.updateUI = function () {
         const self = this;
-        if (self.map) {
+        self.renderPromise().then(function () {
             const enabled = self.map.workLayers.some(l => l.type === TC.Consts.layerType.WMS && l.getVisibility());
             self.div.querySelectorAll('input').forEach(function (input) {
                 input.disabled = !enabled;
             });
-            if (self.fInfoCtrl) {
+            if (self.featureInfoControl) {
                 const input = self.div.querySelector(`input[value=${TC.Consts.geom.POINT}]`);
                 if (input) {
-                    input.checked = self.fInfoCtrl.isActive;
+                    input.checked = self.featureInfoControl.isActive;
                 }
             }
-            if (self.lineFInfoCtrl) {
+            if (self.lineFeatureInfoControl) {
                 const input = self.div.querySelector(`input[value=${TC.Consts.geom.POLYLINE}]`);
                 if (input) {
-                    input.checked = self.lineFInfoCtrl.isActive;
+                    input.checked = self.lineFeatureInfoControl.isActive;
                 }
             }
-            if (self.polygonFInfoCtrl) {
+            if (self.polygonFeatureInfoControl) {
                 const input = self.div.querySelector(`input[value=${TC.Consts.geom.POLYGON}]`);
                 if (input) {
-                    input.checked = self.polygonFInfoCtrl.isActive;
+                    input.checked = self.polygonFeatureInfoControl.isActive;
                 }
             }
+
+            const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
+            delFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !self.featureInfoControls.some(c => c.options.persistentHighlights));
+            delFeaturesBtn.disabled = self.featureInfoControls.every(ctl => ctl.resultsLayer && ctl.resultsLayer.features.length === 0 && ctl.filterLayer && ctl.filterLayer.features.length === 0);
+
+
             // Hack para compensar bug de Edge: no se actualiza el estilo al cambiar el estado del radio.
             const displayValue = self.div.style.display;
             self.div.style.display = 'none';
@@ -187,7 +224,7 @@ if (!TC.control.FeatureInfoCommons) {
             else {
                 self.div.style.removeProperty('display');
             }
-        }
+        });
     };
 
 })();
