@@ -18,6 +18,7 @@ TC.Consts.event.DRAWEND = 'drawend.tc';
 TC.Consts.event.DRAWCANCEL = 'drawcancel.tc';
 TC.Consts.event.DRAWUNDO = 'drawundo.tc';
 TC.Consts.event.DRAWREDO = 'drawredo.tc';
+TC.Consts.event.POINT = 'point.tc';
 TC.Consts.event.MEASURE = 'measure.tc';
 TC.Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
 TC.Consts.event.STYLECHANGE = 'stylechange.tc';
@@ -101,12 +102,7 @@ TC.Consts.event.CHANGE = 'change';
         ctl._cancelBtn.disabled = false;
     };
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/Draw.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-draw-tools\"><button class=\"tc-ctl-btn tc-ctl-draw-btn-new\" title=\"").f(ctx.get(["tooltip"], false), ctx, "h").w("\">").h("i18n", ctx, {}, { "$key": "new" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-undo\" disabled title=\"").h("i18n", ctx, {}, { "$key": "undo" }).w("\">").h("i18n", ctx, {}, { "$key": "undo" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-redo\" disabled title=\"").h("i18n", ctx, {}, { "$key": "redo" }).w("\">").h("i18n", ctx, {}, { "$key": "redo" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-end\" disabled title=\"").h("i18n", ctx, {}, { "$key": "end" }).w("\">").h("i18n", ctx, {}, { "$key": "end" }).w("</button><button class=\"tc-ctl-btn tc-ctl-draw-btn-cancel\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div>").x(ctx.get(["styleTools"], false), ctx, { "block": body_1 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-draw-style\">").h("i18n", ctx, {}, { "$key": "strokeColor" }).w("<input type=\"color\" class=\"tc-ctl-col tc-ctl-draw-str-c\" value=\"").f(ctx.get(["strokeColor"], false), ctx, "h").w("\" title=\"").h("i18n", ctx, {}, { "$key": "selectColor" }).w("\" />").h("i18n", ctx, {}, { "$key": "strokeWidth" }).w("<div class=\"tc-ctl-draw-str-w-watch\" style=\"border-bottom-width:").f(ctx.get(["strokeWidth"], false), ctx, "h").w("px;\"> </div><input type=\"number\" class=\"tc-ctl-draw-str-w tc-textbox\" value=\"").f(ctx.get(["strokeWidth"], false), ctx, "h").w("\" min=\"1\" max=\"15\" /></div>"); } body_1.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/Draw.html";
 
     ctlProto.render = function (callback) {
         var self = this;
@@ -253,17 +249,11 @@ TC.Consts.event.CHANGE = 'change';
             }
         });
 
-        const setStyles = function () {
-            self.styles = {};
-            TC.Util.extend(true, self.styles, self.options.styles || self.layer.options.styles);
-        };
-
         self._layerPromise = new Promise(function (resolve, reject) {
             map.loaded(function () {
                 if (self.options.layer) {
                     self.setLayer(self.options.layer);
                     resolve(self.layer);
-                    setStyles();
                 }
                 else {
                     // Si self.options.layer === false se instancia el control sin capa asociada
@@ -276,6 +266,7 @@ TC.Consts.event.CHANGE = 'change';
                             id: self.getUID(),
                             title: 'DrawControl',
                             stealth: true,
+                            owner: self,
                             type: TC.Consts.layerType.VECTOR,
                             styles: {
                                 point: map.options.styles.point,
@@ -286,7 +277,6 @@ TC.Consts.event.CHANGE = 'change';
                             map.putLayerOnTop(layer);
                             self.setLayer(layer);
                             resolve(self.layer);
-                            setStyles();
                         });
                     }
                 }
@@ -411,9 +401,9 @@ TC.Consts.event.CHANGE = 'change';
             self.mode = mode;
 
         if (activate && mode) {
-            if (self.layer) {
-                self.layer.map.putLayerOnTop(self.layer);
-            }
+            //if (self.layer) {
+                //self.layer.map.putLayerOnTop(self.layer);
+            //}
             self.activate();
         }
         else {
@@ -425,7 +415,7 @@ TC.Consts.event.CHANGE = 'change';
     ctlProto.setStyle = function (style) {
         const self = this;
         if (style) {
-            TC.Util.extend(self.style, style);
+            self.style = TC.Util.extend(self.style, style);
         }
         else {
             switch (self.options.mode) {
@@ -542,12 +532,16 @@ TC.Consts.event.CHANGE = 'change';
         return self;
     };
 
-    ctlProto.getLayer = function() {
+    ctlProto.getLayer = function () {
+        const self = this;
+        if (self.layer) {
+            return Promise.resolve(self.layer);
+        }
         return this._layerPromise;
     };
 
     ctlProto.setLayer = function (layer) {
-        var self = this;
+        const self = this;
         if (self.map) {
             if (typeof (layer) === "string") {
                 self.layer = self.map.getLayer(layer);
@@ -555,6 +549,11 @@ TC.Consts.event.CHANGE = 'change';
             else {
                 self.layer = layer;
             }
+
+            self.styles = {};
+            const layerStyles = (self.layer && self.layer.styles) || TC.Cfg.styles;
+            TC.Util.extend(true, self.styles, self.options.styles || layerStyles);
+
         }
     };
 
