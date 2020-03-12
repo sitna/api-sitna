@@ -5,8 +5,6 @@ if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
-TC.Consts.event.RESULTTOOLTIP = 'resulttooltip.tc';
-TC.Consts.event.RESULTTOOLTIPEND = 'resulttooltipend.tc';
 TC.Consts.event.DRAWCHART = 'drawchart.tc';
 TC.Consts.event.DRAWTABLE = 'drawtable.tc';
 TC.Consts.event.RESULTSPANELMIN = 'resultspanelmin.tc';
@@ -56,6 +54,7 @@ TC.control.ResultsPanel = function () {
 
         if (self.options.save)
             self.save = self.options.save;
+
     }
 };
 
@@ -67,8 +66,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-p-results';
 
-    ctlProto.template = {};
-
     ctlProto.CHART_SIZE = {
         MIN_HEIGHT: 75,
         MAX_HEIGHT: 128,
@@ -78,15 +75,10 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         MAX_WIDTH: 445
     };
 
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ResultsPanel.html";
-        ctlProto.template[ctlProto.CLASS + '-table'] = TC.apiLocation + "TC/templates/ResultsPanelTable.html";
-        ctlProto.template[ctlProto.CLASS + '-chart'] = TC.apiLocation + "TC/templates/ResultsPanelChart.html";
-    } else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"prpanel-group prsidebar-body \" style=\"display: none\" data-no-cb><div class=\"prpanel prpanel-default\"><div class=\"prpanel-heading\"><h4 class=\"prpanel-title\"><span class=\"prpanel-title-text\"></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"><i class=\"fa fa-times\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-min\" title=\"").h("i18n", ctx, {}, { "$key": "hide" }).w("\"><i class=\"fa fa-chevron-left\"></i></span><span class=\"prcollapsed-pull-right prcollapsed-slide-submenu prcollapsed-slide-submenu-csv\" hidden title=\"").h("i18n", ctx, {}, { "$key": "export.excel" }).w("\"><i class=\"fa fa-file-excel-o\"></i></span></h4></div><div id=\"results\" class=\"prpanel-collapse collapse in\"><div class=\"tc-ctl-p-results-menu\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-info\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-table\"></div><div class=\"prpanel-body list-group tc-ctl-p-results-chart\"></div></div></div></div><div class=\"prcollapsed prcollapsed-max prcollapsed-pull-left\" style=\"display: none;\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\" data-no-cb><i class=\"fa-list-alt\" hidden></i><i class=\"fa-area-chart\" hidden></i></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-table'] = function () { dust.register(ctlProto.CLASS + '-table', body_0); function body_0(chk, ctx) { return chk.w("<table class=\"table\" style=\"display:none;\"><thead>").s(ctx.get(["columns"], false), ctx, { "block": body_1 }, {}).w("</thead><tbody>").s(ctx.get(["results"], false), ctx, { "block": body_2 }, {}).w("</tbody></table>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<th>").f(ctx.getPath(true, []), ctx, "h").w("</th>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<tr>").h("iterate", ctx, { "block": body_3 }, { "on": ctx.getPath(true, []) }).w("</tr>"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<td>").f(ctx.get(["value"], false), ctx, "h").w("</td>"); } body_3.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-chart'] = function () { dust.register(ctlProto.CLASS + '-chart', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-track-chart\">").x(ctx.get(["msg"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<span id=\"elevationGain\" >").h("i18n", ctx, {}, { "$key": "geo.trk.chart.elevationGain" }).w(": +").f(ctx.get(["upHill"], false), ctx, "h").w("m, -").f(ctx.get(["downHill"], false), ctx, "h").w("m</span><div class=\"tc-chart\"></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.f(ctx.get(["msg"], false), ctx, "h"); } body_2.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = {};
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ResultsPanel.html";
+    ctlProto.template[ctlProto.CLASS + '-table'] = TC.apiLocation + "TC/templates/ResultsPanelTable.html";
+    ctlProto.template[ctlProto.CLASS + '-chart'] = TC.apiLocation + "TC/templates/ResultsPanelChart.html";
 
     const isElementVisible = function (elm) {
         const computedStyle = getComputedStyle(elm);
@@ -177,6 +169,16 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 });
                 self.saveButton.removeAttribute('hidden');
             }
+            if (self.options.download && self.options.content === "table") {
+                self.downloadButton = self.div.querySelector('.prcollapsed-slide-submenu-dwn');
+                self.downloadButton.addEventListener('click', function () {
+                    if (TC.Util.isFunction(self.options.download)) {
+                        self.options.download.apply(self,[]);
+                    }
+                });
+                self.downloadButton.removeAttribute('hidden');
+            }           
+            
 
             if (self.content) {
                 self.content = self.content;
@@ -293,7 +295,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 self.map.toast(data.msg);
             }
             else {
-                self.elevationProfileCoordinates = data.coords;
+                self.elevationProfileChartData = data;
                 self.renderElevationProfileChart({
                     data: data,
                     div: self.div.querySelector('.' + ctlProto.CLASS + '-chart')
@@ -302,8 +304,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         } else {
             self.map.toast(options.msg);
         }
-
-        self.map.getLoadingIndicator().hide();
     };
 
     ctlProto.renderElevationProfileChart = function (options) {
@@ -354,7 +354,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             contents: function (d) {
                                 var fn = self.chart.tooltip;
                                 if (typeof (fn) !== "function")
-                                    fn = TC.Util.getFNFromString(self.chart.tooltip);
+                                    fn = TC.Util.getFnFromString(self.chart.tooltip);
                                 return fn.call(eval(self.chart.ctx), d);
                             }
                         }
@@ -364,7 +364,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         chartOptions.onmouseout = function () {
                             var fn = self.chart.onmouseout;
                             if (typeof (fn) !== "function")
-                                fn = TC.Util.getFNFromString(self.chart.onmouseout);
+                                fn = TC.Util.getFnFromString(self.chart.onmouseout);
                             fn.call(eval(self.chart.ctx));
                         };
                     }
@@ -520,9 +520,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 self.show('prsidebar-body');
             }
         }
-
-        self.map.getLoadingIndicator().hide();
-
     };
 
     ctlProto.open = function (html, container) {
@@ -592,8 +589,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         self.show('prsidebar-body');
         self.hide('prcollapsed-max');
-
-        self.map.getLoadingIndicator().hide();
     };
 
     ctlProto.createChartOptions = function (options) {
@@ -605,11 +600,19 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             default:
                 if (options.ele != null) {
                     const getChartSize = function () {
+                        const panelStyle = getComputedStyle(self.getContainerElement());
                         const docWidth = document.documentElement.clientWidth / 100 * 40; // css panel contendor
-                        return {
-                            height: docWidth > 445 ? options.maxHeight || self.CHART_SIZE.MAX_HEIGHT : options.minHeight || self.CHART_SIZE.MIN_HEIGHT,
-                            width: docWidth > 445 ? options.maxWidth || self.CHART_SIZE.MAX_WIDTH : docWidth > 310 ? options.mediumWidth || self.CHART_SIZE.MEDIUM_WIDTH : options.minWidth || self.CHART_SIZE.MIN_WIDTH
+                        const r = {
+                            height: docWidth > 445 ? options.maxHeight || self.CHART_SIZE.MAX_HEIGHT : options.minHeight || self.CHART_SIZE.MIN_HEIGHT
                         };
+                        // Si el panel ocupa el ancho del mapa dejamos el ancho del perfil que ocupe todo, en cualquier otro caso tenemos tres anchos predefinidos.
+                        if (panelStyle.width === getComputedStyle(self.map.div).width) {
+                            r.width = parseFloat(panelStyle.width) * 0.95;
+                        }
+                        else {
+                            r.width = docWidth > 445 ? options.maxWidth || self.CHART_SIZE.MAX_WIDTH : docWidth > 310 ? options.mediumWidth || self.CHART_SIZE.MEDIUM_WIDTH : options.minWidth || self.CHART_SIZE.MIN_WIDTH
+                        }
+                        return r;
                     };
 
                     var maxy = Number.NEGATIVE_INFINITY;
@@ -719,12 +722,12 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             .style("cursor", "pointer")
                             .on("click", function (e) {
                                 d3.event.stopPropagation();
-                                const point = self.elevationProfileCoordinates[e.index].slice(0, 2);
+                                const point = self.elevationProfileChartData.coords[e.index].slice(0, 2);
                                 if (point) {
                                     TC.loadJS(!TC.feature || (TC.feature && !TC.feature.Point),
                                         [TC.apiLocation + 'TC/feature/Point'],
                                         function () {
-                                            self.map.zoomToFeatures([new TC.feature.Point(point)]);
+                                            self.map.zoomToFeatures([new TC.feature.Point(point, {})]);
                                         }
                                     );
                                 }
@@ -851,7 +854,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
     ctlProto.getElevationChartTooltip = function (data) {
         const self = this;
-        const coords = self.elevationProfileCoordinates;
+        const coords = self.elevationProfileChartData.coords;
         var distance = data[0].x;
         distance = distance / 1000;
 
@@ -889,7 +892,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     };
 
     ctlProto.getContainerElement = function () {
-        return this.div || null;
+        return this.div.querySelector('.prsidebar-body') || null;
     };
 
     ctlProto.register = function (map) {
