@@ -16,14 +16,8 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
     ctlProto.CLASS = 'tc-ctl-legend';
 
     ctlProto.template = {};
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Legend.html";
-        ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/LegendNode.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "legend" }).w("</h2><div class=\"tc-ctl-legend-tree\"><ul class=\"tc-ctl-legend-branch\">").s(ctx.get(["workLayers"], false), ctx, { "else": body_1, "block": body_2 }, {}).w("</ul></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li class=\"tc-ctl-legend-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.p("tc-ctl-legend-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_2.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["customLegend"], false), ctx, { "else": body_1, "block": body_11 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" data-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><div class=\"tc-ctl-legend-title\">").f(ctx.get(["title"], false), ctx, "h").w("</div>").x(ctx.get(["legend"], false), ctx, { "block": body_4 }, {}).w("<ul class=\"tc-ctl-legend-branch\">").s(ctx.get(["children"], false), ctx, { "block": body_10 }, {}).w("</ul></li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-legend-node tc-ctl-legend-leaf\" "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("class=\"tc-ctl-legend-node\" "); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<div class=\"tc-ctl-legend-watch\">").x(ctx.getPath(false, ["legend", "src"]), ctx, { "else": body_5, "block": body_8 }, {}).w("</div><div class=\"tc-ctl-legend-nvr\">").h("i18n", ctx, {}, { "$key": "notVisibleAtCurrentResolution" }).w("</div>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.x(ctx.getPath(false, ["legend", "width"]), ctx, { "block": body_6 }, {}); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<div class=\"tc-ctl-legend-img\" style=\"border:solid ").f(ctx.getPath(false, ["legend", "strokeWidth"]), ctx, "h").w("px ").f(ctx.getPath(false, ["legend", "strokeColor"]), ctx, "h").w(";background-color:").f(ctx.getPath(false, ["legend", "fillColor"]), ctx, "h").x(ctx.getPath(false, ["legend", "width"]), ctx, { "block": body_7 }, {}).w("\"></div>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w(";width:").f(ctx.getPath(false, ["legend", "width"]), ctx, "h").w("px;height:").f(ctx.getPath(false, ["legend", "height"]), ctx, "h").w("px;border-radius:50%"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("<img src=\"\" data-img=\"").f(ctx.getPath(false, ["legend", "src"]), ctx, "h").w("\" ").x(ctx.getPath(false, ["legend", "width"]), ctx, { "block": body_9 }, {}).w(" />"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("style=\"width:").f(ctx.getPath(false, ["legend", "width"]), ctx, "h").w("px;height:").f(ctx.getPath(false, ["legend", "height"]), ctx, "h").w("px;\" "); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.p("tc-ctl-legend-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.f(ctx.get(["customLegend"], false), ctx, "h", ["s"]); } body_11.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Legend.html";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/LegendNode.html";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -66,8 +60,9 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
             const layer = self.map.getLayer(li.dataset.layerId);
 
             if (layer) {
-                var layersInScale = false;
-                li.querySelectorAll('li').forEach(function (l) {
+                let layersInScale = false;
+                const lis = li.querySelectorAll('li');
+                lis.forEach(function (l) {
                     if (l.classList.contains(self.CLASS + '-node-visible')) {
                         const uid = l.dataset.layerUid;
                         if (layer.isVisibleByScale(uid)) {
@@ -85,6 +80,13 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
                         }
                     }
                 });
+                layersInScale = layersInScale || !lis.length;
+                if (!lis.length) {
+                    const img = li.querySelector('img');
+                    if (img) {
+                        self.styleLegendImage(img);
+                    }
+                }
                 li.classList.toggle(inScale, layersInScale);
                 li.classList.toggle(outOfScale, !layersInScale);
             }
@@ -146,32 +148,28 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
 
             self.div.querySelector('.' + self.CLASS + '-empty').classList.add(TC.Consts.classes.HIDDEN);            
 
-            TC.loadJSInOrder(
-                !window.dust,
-                TC.url.templating,
-                function () {
-                    dust.render(self.CLASS + '-node', self.layerTrees[layer.id], function (err, out) {
-                        const parser = new DOMParser();
-                        const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
-                        const uid = newLi.dataset.layerUid;
-                        const ul = self.div.querySelector('ul.' + self.CLASS + '-branch');
-                        const lis = ul.querySelectorAll('li[data-layer-uid="' + uid + '"]');
-                        if (lis.length === 1) {
-                            const li = lis[0];
-                            li.innerHTML = newLi.innerHTML;
-                            li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
-                        }
-                        else {
-                            newLi.dataset.layerId = layer.id;
-                            ul.insertBefore(newLi, ul.firstChild);
-                        }
-                        if (err) {
-                            TC.error(err);
-                        }
-                    });
+            self.getRenderedHtml(self.CLASS + '-node', self.layerTrees[layer.id])
+                .then(function (out) {
+                    const parser = new DOMParser();
+                    const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
+                    const uid = newLi.dataset.layerUid;
+                    const ul = self.div.querySelector('ul.' + self.CLASS + '-branch');
+                    const lis = ul.querySelectorAll('li[data-layer-uid="' + uid + '"]');
+                    if (lis.length === 1) {
+                        const li = lis[0];
+                        li.innerHTML = newLi.innerHTML;
+                        li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
+                    }
+                    else {
+                        newLi.dataset.layerId = layer.id;
+                        ul.insertBefore(newLi, ul.firstChild);
+                    }
+
                     self.update();
-                }
-            );
+                })
+                .catch(function (err) {
+                    TC.error(err);
+                });
         }
     };
 
