@@ -26,7 +26,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
             if (typeof callback === 'function') {
                 callback();
             }
-        }) : Promise.reject());
+        }) : Promise.reject(Error('Cannot render: control has no map')));
     };
 
     ctlProto.register = function (map) {
@@ -134,11 +134,13 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     }
                 }
                 if (l === layer) {
-                    if (previousElm) {
-                        previousElm.insertAdjacentElement('afterend', currentElm);
-                    }
-                    else {
-                        currentElm.parentElement.firstChild.insertAdjacentElement('beforebegin', currentElm);
+                    if (currentElm) {
+                        if (previousElm) {
+                            previousElm.insertAdjacentElement('afterend', currentElm);
+                        }
+                        else {
+                            currentElm.parentElement.firstChild.insertAdjacentElement('beforebegin', currentElm);
+                        }
                     }
                     break;
                 }
