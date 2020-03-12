@@ -19,12 +19,7 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
 
     ctlProto.CLASS = 'tc-ctl-ss';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/ScaleSelector.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"ol-scale-line ol-unselectable\"><nobr><select>").s(ctx.get(["scales"], false), ctx, { "block": body_1 }, {}).w("</select> <input type=\"button\" value=\"").f(ctx.get(["screenSize"], false), ctx, "h").w("''\" title=\"").h("i18n", ctx, {}, { "$key": "estimatedMapSize" }).w("\" /></nobr></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<option value=\"").f(ctx.getPath(true, []), ctx, "h").w("\"").h("eq", ctx, { "block": body_2 }, { "key": body_3, "value": body_4 }).w(">1:").h("math", ctx, {}, { "key": body_5, "method": "round" }).w("</option>\n"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" selected=\"true\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.f(ctx.get(["scale"], false), ctx, "h"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h"); } body_5.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/ScaleSelector.html";
 
     ctlProto.render = function (callback) {
         var self = this;
