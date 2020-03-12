@@ -56,12 +56,12 @@ if (!TC.control.SWCacheClient) {
                                 });
                             }
                         );
-                    }).catch(function () {
-                        reject();
+                    }).catch(function (error) {
+                        reject(error);
                     });
                 }
                 else {
-                    reject();
+                    reject(Error('There is no manifest in document'));
                 }
             }
         });
@@ -288,20 +288,11 @@ if (!TC.control.SWCacheClient) {
     TC.Consts.event.MAPCACHEERROR = TC.Consts.event.MAPCACHEERROR || 'mapcacheerror.tc';
 
     ctlProto.template = {};
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/CacheBuilder.html";
-        ctlProto.template[ctlProto.CLASS + '-map-node'] = TC.apiLocation + "TC/templates/CacheBuilderMapNode.html";
-        ctlProto.template[ctlProto.CLASS + '-bl-node'] = TC.apiLocation + "TC/templates/CacheBuilderBaseLayerNode.html";
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/CacheBuilderDialog.html";
-        ctlProto.template[ctlProto.CLASS + '-off-panel'] = TC.apiLocation + "TC/templates/CacheBuilderOfflinePanel.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "offlineMaps" }).w("</h2><div class=\"tc-ctl-cbuild-content\"><div class=\"tc-ctl-cbuild-draw tc-hidden\"></div><i class=\"tc-ctl-cbuild-map-search-icon\"></i><input type=\"search\" list=\"").f(ctx.get(["listId"], false), ctx, "h").w("\" class=\"tc-ctl-cbuild-map-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "cb.filter.plhr" }).w("\"").x(ctx.get(["storedMaps"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" maxlength=\"200\" /> <ul id=\"").f(ctx.get(["listId"], false), ctx, "h").w("\" class=\"tc-ctl-cbuild-list\"><li class=\"tc-ctl-cbuild-map-available-empty\"").x(ctx.get(["storedMaps"], false), ctx, { "block": body_3 }, {}).w("><span>").h("i18n", ctx, {}, { "$key": "cb.noMaps" }).w("</span></li><li class=\"tc-ctl-cbuild-map-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li>").s(ctx.get(["storedMaps"], false), ctx, { "block": body_4 }, {}).w("</ul><div class=\"tc-ctl-cbuild-new\"><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-new\" disabled title=\"").h("i18n", ctx, {}, { "$key": "newofflinemap" }).w("\">").h("i18n", ctx, {}, { "$key": "newOfflineMap" }).w("</button></div><div class=\"tc-ctl-cbuild-drawing tc-hidden\"><div class=\"tc-ctl-cbuild-tile-cmd\"><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-cancel-draw\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div><div class=\"tc-ctl-cbuild-progress tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "cb.DownloadingMap|s" }).w(": <span class=\"tc-ctl-cbuild-progress-count\"></span></p><div class=\"tc-ctl-cbuild-progress-bar\"><div class=\"tc-ctl-cbuild-progress-ratio\" style=\"width:0\"></div></div><button class=\"tc-button tc-icon-button tc-ctl-cbuild-btn-cancel-dl\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" disabled"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk; } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" hidden"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.p("tc-ctl-cbuild-map-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_4.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-map-node'] = function () { dust.register(ctlProto.CLASS + '-map-node', body_0); function body_0(chk, ctx) { return chk.w("<li data-extent=\"").f(ctx.get(["extent"], false), ctx, "h").w("\"><span><a href=\"").f(ctx.get(["url"], false), ctx, "h").w("\" title=\"").f(ctx.get(["name"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</a></span><input class=\"tc-textbox tc-hidden\" type=\"text\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\" /><button class=\"tc-btn-save tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "save" }).w("\"></button><button class=\"tc-btn-cancel tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "cancel" }).w("\"></button><button class=\"tc-btn-edit\" title=\"").h("i18n", ctx, {}, { "$key": "editMapName" }).w("\">").h("i18n", ctx, {}, { "$key": "editMapName" }).w("</button><button class=\"tc-btn-view\" title=\"").h("i18n", ctx, {}, { "$key": "viewMapExtent" }).w("\">").h("i18n", ctx, {}, { "$key": "viewMapExtent" }).w("</button><button class=\"tc-btn-delete\" title=\"").h("i18n", ctx, {}, { "$key": "deleteMap" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteMap" }).w("</button></li>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-bl-node'] = function () { dust.register(ctlProto.CLASS + '-bl-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-cbuild-bl-node\" data-layer-uid=\"").f(ctx.get(["id"], false), ctx, "h").w("\"><label style=\"background-size: 100% 100%; background-image: url(").f(ctx.get(["thumbnail"], false), ctx, "h").w(")\"><input type=\"checkbox\" name=\"cbbl\" value=\"").f(ctx.get(["id"], false), ctx, "h").w("\" disabled><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label></li>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-cbuild-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "newOfflineMap" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><input type=\"text\" class=\"tc-ctl-cbuild-txt-name\" placeholder=\"").h("i18n", ctx, {}, { "$key": "nameRequired" }).w("\" required /><div class=\"tc-ctl-cbuild-bl-panel\"><h4>").h("i18n", ctx, {}, { "$key": "availableOfflineMaps" }).w("</h4><p class=\"tc-ctl-cbuild-bl-panel-txt\">").h("i18n", ctx, {}, { "$key": "selectAtLeastOne" }).w("</p><ul class=\"tc-ctl-cbuild-bl-list\"></ul></div><div class=\"tc-ctl-cbuild-res-panel\"><h4>").h("i18n", ctx, {}, { "$key": "maxRes" }).w("</h4><div class=\"tc-ctl-cbuild-res\"></div><input type=\"range\" class=\"tc-ctl-cbuild-rng-maxres\" disabled value=\"0\" title=\"").h("i18n", ctx, {}, { "$key": "maxRes" }).w("\"></div><div class=\"tc-ctl-cbuild-tile-count\"></div></div><div class=\"tc-modal-footer\"><button class=\"tc-button tc-modal-close tc-ctl-cbuild-btn-ok\" disabled>").h("i18n", ctx, {}, { "$key": "ok" }).w("</button><button type=\"button\" class=\"tc-button tc-modal-close tc-ctl-cbuild-btn-cancel\">").h("i18n", ctx, {}, { "$key": "cancel" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-off-panel'] = function () { dust.register(ctlProto.CLASS + '-off-panel', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-cbuild-off-panel tc-conn-wifi\"><span>").h("i18n", ctx, {}, { "$key": "offlineMap" }).w("</span> <a href=\"\" class=\"tc-ctl-cbuild-link-exit\" title=\"").h("i18n", ctx, {}, { "$key": "returnToOnlineMaps" }).w("\"><span>").h("i18n", ctx, {}, { "$key": "returnToOnlineMaps" }).w("</span></a></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/CacheBuilder.html";
+    ctlProto.template[ctlProto.CLASS + '-map-node'] = TC.apiLocation + "TC/templates/CacheBuilderMapNode.html";
+    ctlProto.template[ctlProto.CLASS + '-bl-node'] = TC.apiLocation + "TC/templates/CacheBuilderBaseLayerNode.html";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/CacheBuilderDialog.html";
+    ctlProto.template[ctlProto.CLASS + '-off-panel'] = TC.apiLocation + "TC/templates/CacheBuilderOfflinePanel.html";
 
     const getExtentFromString = function (str) {
         return decodeURIComponent(str).split(',').map(function (elm) {
@@ -780,55 +771,74 @@ if (!TC.control.SWCacheClient) {
 
         const result = TC.control.SWCacheClient.prototype.register.call(self, map);
 
-        if (navigator.serviceWorker) {
-            navigator.serviceWorker.ready.then(function () {
-                navigator.serviceWorker.addEventListener('message', function (event) {
-                    switch (event.data.event) {
-                        case 'progress':
-                            self.trigger(TC.Consts.event.MAPCACHEPROGRESS, { url: event.data.name, loaded: event.data.count, total: event.data.total });
-                            break;
-                        case 'cached':
-                            self.trigger(TC.Consts.event.MAPCACHEDOWNLOAD, { url: event.data.name });
-                            break;
-                        case 'deleted':
-                            self.trigger(TC.Consts.event.MAPCACHEDELETE, { url: event.data.name });
-                            break;
-                        case 'error':
-                            if (event.data.action === self._actions.CREATE) {
-                                TC.error(self.getLocaleString('cb.resourceDownload.error', { url: event.data.url }));
-                            }
-                            break;
-                        default:
-                            break;
-                    }
+        self.getServiceWorker().then(
+            function () {
+                navigator.serviceWorker.ready.then(function () {
+                    navigator.serviceWorker.addEventListener('message', function (event) {
+                        switch (event.data.event) {
+                            case 'progress':
+                                self.trigger(TC.Consts.event.MAPCACHEPROGRESS, { url: event.data.name, loaded: event.data.count, total: event.data.total });
+                                break;
+                            case 'cached':
+                                self.trigger(TC.Consts.event.MAPCACHEDOWNLOAD, { url: event.data.name });
+                                break;
+                            case 'deleted':
+                                self.trigger(TC.Consts.event.MAPCACHEDELETE, { url: event.data.name });
+                                break;
+                            case 'error':
+                                if (event.data.action === self._actions.CREATE) {
+                                    TC.error(self.getLocaleString('cb.resourceDownload.error', { url: event.data.url }));
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    });
                 });
-            });
 
-            if (navigator.onLine) {
-                // Cacheamos mediante service worker las URLs del manifiesto
-                requestManifest().then(function (obj) {
-                    const hashStorageKey = self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash';
-                    var hash;
-                    if (self.localStorage) {
-                        hash = self.localStorage.getItem(hashStorageKey);
-                    }
-                    if (hash !== obj.hash) {
-                        self.cacheUrlList(obj.urls);
-                        self.one(TC.Consts.event.MAPCACHEDOWNLOAD, function () {
-                            const firstLoad = !hash;
-                            if (self.localStorage) {
-                                self.localStorage.setItem(hashStorageKey, obj.hash);
-                            }
-                            if (!firstLoad) {
-                                TC.confirm(self.getLocaleString('newAppVersionAvailable'), function () {
-                                    location.reload();
-                                });
-                            }
-                        });
-                    }
+                if (navigator.onLine) {
+                    // Cacheamos mediante service worker las URLs del manifiesto
+                    requestManifest().then(function (obj) {
+                        const hashStorageKey = self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash';
+                        var hash;
+                        if (self.localStorage) {
+                            hash = self.localStorage.getItem(hashStorageKey);
+                        }
+                        if (hash !== obj.hash) {
+                            self.cacheUrlList(obj.urls);
+                            self.one(TC.Consts.event.MAPCACHEDOWNLOAD, function () {
+                                const firstLoad = !hash;
+                                if (self.localStorage) {
+                                    self.localStorage.setItem(hashStorageKey, obj.hash);
+                                }
+                                if (!firstLoad) {
+                                    TC.confirm(self.getLocaleString('newAppVersionAvailable'), function () {
+                                        location.reload();
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            },
+            function (error) {
+                self.renderPromise().then(function () {
+                    const container = self.div.querySelector(`.${self.CLASS}-new`);
+                    const warning = document.createElement('div');
+                    warning.classList.add('tc-alert', 'alert-warning');
+                    const header = document.createElement('p');
+                    const text = document.createElement('strong');
+                    text.innerHTML = self.getLocaleString('offlineMap.error');
+                    header.appendChild(text);
+                    const reason = document.createElement('p');
+                    reason.innerHTML = error.message;
+                    warning.appendChild(header);
+                    warning.appendChild(reason);
+                    container.querySelector(self._selectors.NEWBTN).classList.add(TC.Consts.classes.HIDDEN);
+                    container.appendChild(warning);
                 });
             }
-        }
+        ).catch(() => console.log("No SW available: no events handled"));
 
         if (self.mapIsOffline) {
             map.div.classList.add(TC.Consts.classes.OFFLINE);
@@ -861,6 +871,7 @@ if (!TC.control.SWCacheClient) {
             id: layerId,
             type: TC.Consts.layerType.VECTOR,
             stealth: true,
+            owner: self,
             styles: {
                 line: map.options.styles.line
             }
@@ -914,9 +925,11 @@ if (!TC.control.SWCacheClient) {
                     showEstimatedMapSize(self);
                     TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-dialog'), {
                         openCallback: function () {
-                            checkboxes.forEach(function (cb) {
-                                cb.disabled = false;
-                            });
+                            setTimeout(function () { // Este timeout evita el pulsado accidental cuando sale el diálogo
+                                checkboxes.forEach(function (cb) {
+                                    cb.disabled = false;
+                                });
+                            }, 100);
                             var time;
                             if (Date.prototype.toLocaleString) {
                                 var opt = {};
@@ -1032,9 +1045,7 @@ if (!TC.control.SWCacheClient) {
 
             self.renderPromise().then(function () {
                 self.div.querySelector(self._selectors.NEWBTN).disabled = false;
-                for (var i = 0, len = map.baseLayers.length; i < len; i++) {
-                    addRenderedListNode(map.baseLayers[i]);
-                }
+                map.baseLayers.forEach(addRenderedListNode);
             });
 
             if (self.mapIsOffline) {
