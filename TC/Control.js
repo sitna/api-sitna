@@ -154,7 +154,7 @@ TC.inherit(TC.Control, TC.EventTarget);
                             resolve();
                         })
                         .catch(function (err) {
-                            reject(Error(err));
+                            reject(err instanceof Error ? err : Error(err));
                         });
                 }
             );
