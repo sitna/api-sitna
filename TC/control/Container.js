@@ -33,7 +33,7 @@ TC.inherit(TC.control.Container, TC.Control);
             Promise.all([result, self.renderPromise()]).then(function () {
                 self.onRenderPromise();
 
-                resolve();
+                resolve(self);
             });
         });        
     };
@@ -45,9 +45,7 @@ TC.inherit(TC.control.Container, TC.Control);
     ctlProto.getControl = function (idx) {
         var promise = this._ctlPromises[idx];
         if (!promise) {
-            return new Promise(function (resolve, reject) {
-                reject();
-            });            
+            return Promise.reject(Error('No control found'));            
         }
 
         return promise;
