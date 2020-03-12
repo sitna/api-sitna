@@ -17,6 +17,7 @@ if (!TC.Control) {
     var ctlProto = TC.control.SWCacheClient.prototype;
 
     ctlProto.CLASS = 'tc-ctl-swcc';
+    ctlProto.SW_URL = 'tc-cb-service-worker.js';
 
     ctlProto.register = function (map) {
         const self = this;
@@ -27,7 +28,7 @@ if (!TC.Control) {
         self._swPromise = new Promise(function (resolve, reject) {
             if (navigator.serviceWorker) {
 
-                navigator.serviceWorker.register('tc-cb-service-worker.js', {
+                navigator.serviceWorker.register(self.SW_URL, {
                     scope: './'
                 }).then(
                     function (reg) {
@@ -43,7 +44,7 @@ if (!TC.Control) {
                     },
                     function (reason) {
                         self.serviceWorkerEnabled = false;
-                        reject();
+                        reject(new Error(reason));
                         console.error('Could not register service worker: ' + reason);
                     });
             }
@@ -52,6 +53,14 @@ if (!TC.Control) {
             }
         });
 
+        self._swPromise.catch(() => {
+            if (location.protocol !== 'https:') {
+                map.toast(self.getLocaleString('httpsRequired.warning', { url: location.href.replace(location.protocol, '') }), { type: TC.Consts.msgType.WARNING });
+            }
+            else {
+                map.toast(self.getLocaleString('browserNotCompatible.warning'), { type: TC.Consts.msgType.WARNING });
+            }
+        });
         return result;
     };
 
@@ -70,9 +79,11 @@ if (!TC.Control) {
                     resolve(cacheName);
                 }
                 else if (event.data.event === 'error') {
-                    reject();
+                    reject(Error(`Error message from service worker [${event.data.url} - ${event.data.action} - ${event.data.name}]`));
                 }
-                navigator.serviceWorker.removeEventListener(MESSAGE, messageHandler);
+                if (event.data.event !== 'progress') {
+                    navigator.serviceWorker.removeEventListener(MESSAGE, messageHandler);
+                }
             }
         };
         navigator.serviceWorker.addEventListener(MESSAGE, messageHandler);
