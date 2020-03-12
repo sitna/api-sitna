@@ -214,7 +214,7 @@
             return null;
         },
 
-        getFNFromString: function (fnName) {
+        getFnFromString: function (fnName) {
             var scope = window;
             var scopeSplit = fnName.split('.');
             for (i = 0; i < scopeSplit.length - 1; i++) {
@@ -288,7 +288,7 @@
             else if (div instanceof HTMLElement) {
                 result = div;
             }
-            else if ('$' in window && div instanceof $ && div.length) {
+            else if (div && '$' in window && div instanceof $ && div.length) {
                 result = div[0];
             }
             else {
@@ -328,8 +328,8 @@
                 else {
                     const iconDiv = document.createElement('div');
                     iconDiv.style.display = 'none';
-                    iconDiv.classList.add(cssClass);                    
-                    document.body.appendChild(iconDiv);                    
+                    iconDiv.classList.add(cssClass);
+                    document.body.appendChild(iconDiv);
                     // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
                     var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec(window.getComputedStyle(iconDiv, null).backgroundImage);
                     if (match && match.length > 1) {
@@ -371,6 +371,53 @@
             }
             if (!result && options !== TC.Cfg.styles.point && options.cssClass !== '') {
                 result = getPointIconUrl(TC.Cfg.styles.point);
+            }
+            return result;
+        },
+
+        getLegendImageFromStyle: function (style, options) {
+            let result = null;
+            options = options || {};
+            if (style.url) {
+                result = style.url;
+            }
+            else {
+                let width = options.width || 32;
+                let height = options.height || 16;
+                const strokeWidth = style.strokeWidth || 0;
+                const strokeHalfWidth = strokeWidth / 2;
+                const diameter = (style.radius || 0) * 2 + strokeWidth;
+                const lineDashText = style.lineDash ? `stroke-dasharray="${style.lineDash.join(' ')}" ` : '';
+                let body;
+                width = Math.max(width, diameter);
+                height = Math.max(height, diameter);
+                switch (options.geometryType) {
+                    case TC.Consts.geom.POINT:
+                        body = `<circle cx="${width / 2}" cy="${height / 2}" r="${style.radius}" stroke="${style.strokeColor}" stroke-width="${strokeWidth}" fill="${style.fillColor}" fill-opacity="${style.fillOpacity}" ${lineDashText}/>`;
+                        break;
+                    case TC.Consts.geom.POLYLINE:
+                        const xStart = strokeHalfWidth;
+                        const yStart = height - strokeHalfWidth;
+                        const xEnd = width - strokeHalfWidth;
+                        const yEnd = strokeHalfWidth;
+                        body = `<polyline points="${xStart},${yStart} ${xEnd},${yEnd}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth}" ${lineDashText}/>`;
+                        break;
+                    case TC.Consts.geom.POLYGON:
+                        const x1 = strokeHalfWidth;
+                        const y1 = height - strokeHalfWidth;
+                        const x2 = strokeHalfWidth;
+                        const y2 = strokeHalfWidth;
+                        const x3 = strokeHalfWidth + width * 0.8;
+                        const y3 = strokeHalfWidth;
+                        const x4 = width - strokeHalfWidth;
+                        const y4 = height - strokeHalfWidth;
+                        body = `<polygon points="${x1},${y1} ${x2},${y2} ${x3},${y3} ${x4},${y4}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth};fill:${style.fillColor};fill-opacity:${style.fillOpacity}" ${lineDashText}/>`;
+                        break;
+                    default:
+                        body = `<rect x="${strokeHalfWidth}" x="${strokeHalfWidth}" width="${width - strokeWidth}" height="${height - strokeWidth}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth};fill:${style.fillColor};fill-opacity:${style.fillOpacity}" ${lineDashText}/>`;
+                        break;
+                }
+                result = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${body}</svg>`);
             }
             return result;
         },
@@ -533,7 +580,11 @@
                     const rr = rp[ridx] = [];
                     ring.forEach(function (coord, cidx) {
                         var point = proj4(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
-                        rr[cidx] = [point.x, point.y];
+                        if (targetPrj.oProj.units === TC.Consts.units.METERS) {
+                            rr[cidx] = [Math.round(point.x), Math.round(point.y)];
+                        } else {
+                            rr[cidx] = [point.x, point.y];
+                        }
                         if (coord.length > 2) {
                             rr[cidx][2] = coord[2];
                         }
@@ -555,9 +606,6 @@
         getMetersPerDegree: function (extent) {
             var result = undefined;
             var R = 6370997; // m
-            var toRad = function (number) {
-                return number * Math.PI / 180;
-            };
             if (Array.isArray(extent) && extent.length >= 4) {
                 var dLat = this.degToRad(extent[3] - extent[1]);
                 var sindlat2 = Math.sin(dLat / 2);
@@ -1340,7 +1388,7 @@
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState === 4) {
                             if (xhr.status !== 200) {
-                                reject();
+                                reject(Error('HTTP error ' + xhr.status));
                             }
                         }
                     };
@@ -1443,10 +1491,10 @@
             });
         },
 
-        downloadFileForm: function (url, data) {
-            var download = function (url, data) {
+        downloadFileForm: async function (url, data) {
+            var download = async function (url, data) {
 
-                new Promise(function (resolve, reject) {
+                var response = await new Promise(function (resolve, reject) {
                     const request = new XMLHttpRequest();
                     request.responseType = "blob";
                     request.open("POST", url);
@@ -1458,7 +1506,7 @@
                                 reject({
                                     status: request.status,
                                     msg: request.statusText,
-                                    url: options.url
+                                    url: url
                                 });
                             } else {
 
@@ -1487,41 +1535,55 @@
                     } catch (error) {
                         reject(error);
                     }
-                }).then(function (response) {
-                    var format = "";
-                    if (response.data.type.indexOf("kml") >= 0)
-                        format = ".kml";
-                    else if (response.data.type.indexOf("json") >= 0)
-                        format = ".geojson";
-                    else if (response.data.type.indexOf("xml") >= 0)
-                        format = ".gml";
-                    TC.Util.downloadFile((response.filename ? response.filename : TC.getUID()) + format, response.contentType, response.data)
                 });
-            };            
+                var format = "";
+                if (response.data.type.indexOf("kml") >= 0)
+                    format = ".kml";
+                else if (response.data.type.indexOf("json") >= 0)
+                    format = ".geojson";
+                else if (response.data.type.indexOf("xml") >= 0) {
+                    format = ".gml";
+                    if (/outputFormat="\S{1,}"/.exec(data)[0].includes(".kml") || /outputFormat="\S{1,}"/.exec(data)[0].includes("shape-zip")) {
+                        throw { key: TC.Consts.DownloadError.MIMETYPE_NOT_SUPORTED, url: url, data: data, format: /outputFormat="\S{1,}"/.exec(data)[0] };
+                    }
+                }
+                TC.Util.downloadFile((response.filename ? response.filename : TC.getUID()) + format, response.contentType, response.data);
+
+            };
             var htmlObj = [];
+            var _err;
             if (Array.isArray(url)) {
                 var arrDownloads = url;
                 for (var i = 0; i < arrDownloads.length; i++) {
-                    download(arrDownloads[i].url, arrDownloads[i].data);
+                    try {
+                        await download(arrDownloads[i].url, arrDownloads[i].data);
+                    }
+                    catch (err) {
+                        _err = err;
+                    }
+                }
+                if (_err) {
+                    throw _err;
                 }
             }
             else {
                 download(url, data);
-            }            
+            }
         },
 
-        WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits, srsName) {
-            const getSRSAttribute = function () {                
+        WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits, srsName, maxFeatures) {
+            const getSRSAttribute = function () {
                 if (srsName) {
-                    return ' srsName="' + srsName +'"'
+                    return ' srsName="' + srsName + '"'
                 }
                 else
                     return '';
             }
-            if (!Array.isArray(layers))
+            if (!Array.isArray(layers) && !(layers instanceof Object))
                 layers = [layers];
+
             var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
-                'xmlns:ogc="http://www.opengis.net/ogc" service="WFS" {resultType} {format} ';
+                ' service="WFS" {resultType} {format} ';
             switch (capabilities.version) {
                 case "1.0.0":
                 case "1.1.0":
@@ -1536,13 +1598,24 @@
                     queryHeader += (i + '="' + capabilities[i] + '" ');
             }
 
-            var query = '<wfs:GetFeature ' + queryHeader.format({ resultType: (onlyHits ? 'resultType="hits"' : ''), format: 'outputFormat="' + outputFormat + '"' }) + '>';
+            var query = '<wfs:GetFeature ' + queryHeader.format({ resultType: (onlyHits ? 'resultType="hits"' : ''), format: 'outputFormat="' + outputFormat + '"' }) + (capabilities.version !== "2.0.0" && maxFeatures ? ' maxFeatures="' + maxFeatures + '"' : '') + '>';
             var queryBody = '';
+            if (Array.isArray(layers)) {
+                var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{filter}</wfs:Query>';
+                if (Array.isArray(layers))
+                    layers.forEach(function (value) {
+                        queryBody += queryItem.format({ typeName: value, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "") });
+                    });
+            }
+            else {
+                var queryItem = '';
+                for (var layer in layers) {
+                    var queryItem = ('<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{filter}</wfs:Query>');
+                    let filter = layers[layer]
+                    queryBody += queryItem.format({ typeName: layer, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "") });
+                }
+            }
 
-            var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{filter}</wfs:Query>';
-            layers.forEach(function (value) {
-                queryBody += queryItem.format({ typeName: value, filter: (filter ? filter.getText(capabilities.version) : "") });
-            });
             query += queryBody + '</wfs:GetFeature>'
             return query;
         },
@@ -1576,7 +1649,7 @@
                         switch (true) {
                             case version === "1.0.0":
                             case version === "1.1.0":
-                                filter += '<ogc:Filter><ogc:Intersects><ogc:PropertyName></ogc:PropertyName>' + TC.Util.writeGMLGeometry(feature, { version: "2.0", srsName: srsName  }) + '</ogc:Intersects></ogc:Filter>';
+                                filter += '<ogc:Filter><ogc:Intersects><ogc:PropertyName></ogc:PropertyName>' + TC.Util.writeGMLGeometry(feature, { version: "2.0", srsName: srsName }) + '</ogc:Intersects></ogc:Filter>';
                                 break;
                             case version === "2.0.0":
                                 filter += '<fes:Filter><fes:Intersects><fes:ValueReference></fes:ValueReference>' + TC.Util.writeGMLGeometry(feature, { version: "3.2", srsName: srsName }) + '</fes:Intersects></fes:Filter>';
@@ -1625,13 +1698,13 @@
                 case "3.2":
                     switch (true) {
                         case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
-                            return "<gml:LineString srsDimension=\"2\"" + getSRSName()+"><gml:posList>" +
+                            return "<gml:LineString srsDimension=\"2\"" + getSRSName() + "><gml:posList>" +
                                 getGmlCoordinates(feature.geometry) +
                                 "</gml:posList></gml:LineString>";
                             break;
                             break;
                         default:
-                            return "<gml:Polygon srsDimension=\"2\"" + getSRSName() +"><gml:exterior><gml:LinearRing><gml:posList>" +
+                            return "<gml:Polygon srsDimension=\"2\"" + getSRSName() + "><gml:exterior><gml:LinearRing><gml:posList>" +
                                 getGmlCoordinates(feature.geometry[0]) +
                                 "</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>";
                             break;
@@ -1641,12 +1714,12 @@
                 default:
                     switch (true) {
                         case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
-                            return "<gml:LineString" + getSRSName() +"><gml:coordinates>" +
+                            return "<gml:LineString" + getSRSName() + "><gml:coordinates>" +
                                 getGmlCoordinates(feature.geometry[0]) +
                                 "</gml:coordinates></gml:LineString>";
                             break;
                         default:
-                            return "<gml:Polygon" + getSRSName() +"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>" +
+                            return "<gml:Polygon" + getSRSName() + "><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>" +
                                 getGmlCoordinates(feature.geometry[0]) +
                                 "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon>";
                             break;
@@ -1733,57 +1806,57 @@
             return link.href;
         },
 
-        getRenderedHtml: function (templateId, template, data, callback) {
-            return new Promise(function (resolve, reject) {
-                var render = function () {
-                    if (dust.cache[templateId]) {
-                        dust.render(templateId, data, function (err, out) {
-                            if (err) {
-                                TC.error(err);
-                                reject(Error(err));
-                            }
-                            else {
-                                if (Util.isFunction(callback)) {
-                                    callback(out);
-                                }
-                                resolve(out);
-                            }
-                        });
-                    }
-                };
-                TC.loadJSInOrder(
-                    !window.dust,
-                    TC.url.templating,
-                    function () {
-                        if (!dust.cache[templateId]) {
-                            if (typeof template === 'string') {
-                                TC.ajax({
-                                    url: template,
-                                    method: "GET",
-                                    responseType: 'text'
-                                })
-                                    .then(function (response) {
-                                        const html = response.data;
-                                        var tpl = dust.compile(html, templateId);
-                                        dust.loadSource(tpl);
-                                        render();
-                                    })
-                                    .catch(function (err) {
-                                        console.log("Error fetching template: " + err)
-                                    });
-                            }
-                            else if (Util.isFunction(template)) {
-                                template();
-                                render();
-                            }
-                        }
-                        else {
-                            render();
-                        }
-                    }
-                );
-            });
-        },
+        //getRenderedHtml: function (templateId, template, data, callback) {
+        //    return new Promise(function (resolve, reject) {
+        //        var render = function () {
+        //            if (dust.cache[templateId]) {
+        //                dust.render(templateId, data, function (err, out) {
+        //                    if (err) {
+        //                        TC.error(err);
+        //                        reject(Error(err));
+        //                    }
+        //                    else {
+        //                        if (Util.isFunction(callback)) {
+        //                            callback(out);
+        //                        }
+        //                        resolve(out);
+        //                    }
+        //                });
+        //            }
+        //        };
+        //        TC.loadJSInOrder(
+        //            !window.dust,
+        //            TC.url.templating,
+        //            function () {
+        //                if (!dust.cache[templateId]) {
+        //                    if (typeof template === 'string') {
+        //                        TC.ajax({
+        //                            url: template,
+        //                            method: "GET",
+        //                            responseType: 'text'
+        //                        })
+        //                            .then(function (response) {
+        //                                const html = response.data;
+        //                                var tpl = dust.compile(html, templateId);
+        //                                dust.loadSource(tpl);
+        //                                render();
+        //                            })
+        //                            .catch(function (err) {
+        //                                console.log("Error fetching template: " + err)
+        //                            });
+        //                    }
+        //                    else if (Util.isFunction(template)) {
+        //                        template();
+        //                        render();
+        //                    }
+        //                }
+        //                else {
+        //                    render();
+        //                }
+        //            }
+        //        );
+        //    });
+        //},
 
         explodeGeometry: function (obj) {
             const origin = obj.origin;
@@ -1809,6 +1882,30 @@
                 return elm.map(TC.Util.cloneMappingFunction);
             }
             return elm;
+        },
+
+        isGeometry: function (type) {
+            switch (type) {
+                case 'gml:LinearRingPropertyType':
+                case 'gml:PolygonPropertyType':
+                case 'gml:MultiPolygonPropertyType':
+                case 'gml:MultiSurfacePropertyType':
+                case 'gml:LineStringPropertyType':
+                case 'gml:MultiLineStringPropertyType':
+                case 'gml:PointPropertyType':
+                case 'gml:MultiPointPropertyType':
+                case 'gml:BoxPropertyType':
+                case 'gml:GeometryCollectionPropertyType':
+                case 'gml:GeometryAssociationType':
+                case 'gml:GeometryPropertyType':
+                case 'gml:MultiCurvePropertyType':
+                case 'gml:CurvePropertyType':
+                    return true;
+                    break;
+                default:
+                    return false;
+                    break;
+            }
         },
 
         compactGeometry: function (geometry, precision) {
@@ -1852,6 +1949,37 @@
                 origin: origin,
                 geom: newGeom
             }
+        },
+
+        hasStyleOptions: function (options) {
+            return options.hasOwnProperty('strokeColor') ||
+                options.hasOwnProperty('strokeWidth') ||
+                options.hasOwnProperty('fillColor') ||
+                options.hasOwnProperty('strokeOpacity') ||
+                options.hasOwnProperty('fillOpacity') ||
+                options.hasOwnProperty('radius') ||
+                options.hasOwnProperty('anchor') ||
+                options.hasOwnProperty('width') ||
+                options.hasOwnProperty('height') ||
+                options.hasOwnProperty('labelOutlineWidth') ||
+                options.hasOwnProperty('labelOutlineColor') ||
+                options.hasOwnProperty('labelOffset') ||
+                options.hasOwnProperty('fontColor') ||
+                options.hasOwnProperty('fontSize');
+        },
+
+        formatCoord: function (x, nDecimales) {
+            return x.toLocaleString(TC.Util.getLocaleUserChoice(), { maximumFractionDigits: nDecimales });
+
+            // No respeta el formato de los números según el idioma
+            //var result;            
+            //result = x.toFixed(nDecimales);
+            //if (nDecimales <= 3) {
+            //    result = result.replace(/\B(?=(\d{3})+(?!\d))/g, "|");
+            //}
+
+            //result = result.replace(".", ",").replace(/\|/g, ".");
+            //return result;
         }
     };
     String.prototype.format = function () {
@@ -1864,7 +1992,7 @@
             str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), args[arg]);
         return str;
     };
-    var fncOvelaps = function (elem1, elem2,comparisonFnc) {        
+    var fncOvelaps = function (elem1, elem2, comparisonFnc) {
         return comparisonFnc(elem1.getBoundingClientRect(), elem2.getBoundingClientRect());
     }
     if (this.HTMLElement) {
