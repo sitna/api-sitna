@@ -467,6 +467,10 @@ TC.inherit = function (childCtor, parentCtor) {
         const self = this;
         const promises = [];
 
+        if (!stringOrJson) {
+            return Promise.resolve();
+        }
+
         if (!self.loadingctrl) {
             self.loadingCtrl = self.getControlsByClass("TC.control.LoadingIndicator")[0];
         }
@@ -595,17 +599,21 @@ TC.inherit = function (childCtor, parentCtor) {
                         resolved();
                     });
             }
+            else {
+                resolved();
+            }
         });
     };
 
-    const getReduceByBooleanFunction = function (prop) {
+    const getReduceByValueFunction = function (prop, value) {
         return function (prev, cur, idx) {
-            return cur[prop] ? idx : prev;
+            return cur[prop] === value ? idx : prev;
         };
     };
-    const getReduceByIdFunction = function (id) {
-        return function (prev, cur, idx, arr) {
-            return cur.id === id ? idx : prev;
+
+    const getReduceByZIndexFunction = function (zIndex) {
+        return function (prev, cur, idx) {
+            return cur.zIndex <= zIndex ? idx : prev;
         };
     };
 
@@ -783,24 +791,17 @@ TC.inherit = function (childCtor, parentCtor) {
                 });
             },
             getIndex: function (id) {
-                return this.layers.reduce(getReduceByIdFunction(id), -1);
+                return this.layers.reduce(getReduceByValueFunction('id', id), -1);
             },
-            add: function (id, isRaster, isBase) {
+            add: function (id, zIndex, isBase) {
                 var idx;
                 const obj = {
                     id: id,
                     pending: true,
-                    isRaster: isRaster,
+                    zIndex: zIndex,
                     isBase: isBase
                 };
-                if (isRaster) {
-                    idx = this.getRasterIndex();
-                    this.layers.splice(idx, 0, obj);
-                }
-                else {
-                    idx = this.layers.length;
-                    this.layers[idx] = obj;
-                }
+                this.layers.splice(this.getIndexForZIndex(zIndex), 0, obj);
             },
             remove: function (id) {
                 this.layers.splice(this.getIndex(id), 1);
@@ -852,7 +853,7 @@ TC.inherit = function (childCtor, parentCtor) {
             getResolvedWorkLayerIndex: function (map, id) {
                 return this.layers.filter(function (l) {
                     return l.id === id || (!l.isBase && l.pending === false);
-                }).reduce(getReduceByIdFunction(id), -1);
+                }).reduce(getReduceByValueFunction('id', id), -1);
             },
             getResolvedVisibleLayerIndex: function (map, id) {
                 var index = this.getResolvedWorkLayerIndex(map, id);
@@ -861,8 +862,8 @@ TC.inherit = function (childCtor, parentCtor) {
                 }
                 return index;
             },
-            getRasterIndex: function () {
-                return this.layers.reduce(getReduceByBooleanFunction('isRaster'), -1) + 1;
+            getIndexForZIndex: function (zIndex) {
+                return this.layers.reduce(getReduceByZIndexFunction(zIndex), -1) + 1;
             },
             checkMapLoad: function (map) {
                 const self = this;
@@ -1029,6 +1030,17 @@ TC.inherit = function (childCtor, parentCtor) {
                     };
                     self.on(TC.Consts.event.LAYERADD, _handleLayerAdd);
 
+                    if (self.options.elevation) {
+                        TC.loadJS(
+                            !TC.tool || !TC.tool.Elevation,
+                            TC.apiLocation + 'TC/tool/Elevation',
+                            function () {
+                                const elevationOptions = typeof self.options.elevation === 'boolean' ? {} : self.options.elevation;
+                                self.elevation = new TC.tool.Elevation(elevationOptions);
+                            }
+                        );
+                    }
+
 
                     /**
                      * Well-known ID (WKID) del CRS del mapa.
@@ -1126,12 +1138,6 @@ TC.inherit = function (childCtor, parentCtor) {
                                                             hide: !stateLayer.v
                                                         }
                                                     }).then(function (layer) {
-                                                        layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
-                                                            var layer = this.parent;
-                                                            if (event.error.code === 401 || event.error.code === 403)
-                                                                layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
-                                                            layer.map.removeLayer(layer);
-                                                        });
                                                         var rootNode = layer.wrap.getRootLayerNode();
                                                         layer.title = stateLayer.t || rootNode.Title || rootNode.title;
                                                         if (this.o < 1) {
@@ -1179,7 +1185,9 @@ TC.inherit = function (childCtor, parentCtor) {
                                 delete wl._noFeatureClicked;
                             });
                             self.getControlsByClass(TC.control.Popup).forEach(function (p) {
-                                p.hide();
+                                if (p.isVisible()) {
+                                    p.hide();
+                                }
                             });
                         }
                     });
@@ -1313,6 +1321,7 @@ TC.inherit = function (childCtor, parentCtor) {
                             const data = response.data;
                             TC.i18n[locale] = TC.i18n[locale] || {};
                             TC.Util.extend(TC.i18n[locale], data);
+                            //TC.i18n.currentLocale = TC.i18n[locale];
                             if (typeof (dust) !== 'undefined') {
                                 TC.loadJS(
                                     !window.dust.i18n,
@@ -1329,6 +1338,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 });
             } else {
                 dust.i18n.add(locale, TC.i18n[locale]);
+                //TC.i18n.currentLocale = TC.i18n[locale];
                 result = Promise.resolve();
             }
             return result;
@@ -1399,7 +1409,7 @@ TC.inherit = function (childCtor, parentCtor) {
                     this.url = url;
                 };
                 const onError = function (error) {
-                    if (!ignoreError || error.status.toString() !== "404") {
+                    if (!ignoreError || error.status != 404) {
                         const mapObj = TC.Map.get(document.querySelector('.' + TC.Consts.classes.MAP));
                         TC.error(
                             TC.Util.getLocaleString(mapObj.options.locale, "urlFailedToLoad",
@@ -1409,7 +1419,7 @@ TC.inherit = function (childCtor, parentCtor) {
                     }
                 };
 
-                const i18LayoutPromise = new Promise(function (resolve, reject) {
+                const i18nLayoutPromise = new Promise(function (resolve, reject) {
                     if (layoutURLs.config) {
 
                         layoutPromises.push(fetch(layoutURLs.config)
@@ -1431,7 +1441,7 @@ TC.inherit = function (childCtor, parentCtor) {
                         resolve(false);
                     }
                 });
-                layoutPromises.push(i18LayoutPromise);
+                layoutPromises.push(i18nLayoutPromise);
 
                 if (layoutURLs.style) {
                     // Añadimos una clase para hacer más fáciles las reglas del layout
@@ -1468,15 +1478,16 @@ TC.inherit = function (childCtor, parentCtor) {
                                 return response.text();
                             }).then(function (data) {
                                 // markup.html puede ser una plantilla dust para soportar i18n, compilarla si es el caso
-                                i18LayoutPromise.then(function (i18n) {
+                                i18nLayoutPromise.then(function (i18n) {
                                     if (i18n && locale && layoutURLs.i18n) {
                                         TC.i18n.loadResources(true, layoutURLs.i18n, locale).finally(function () {
-                                            var replacerFunction = function (str, match1, match2) {
-                                                return TC.Util.getLocaleString(locale, match1 || match2);
+                                            const replacerFn = function (match, grp1, grp2, grp3) {
+                                                return TC.Util.getLocaleString(locale, grp1 || grp2 || grp3);
                                             };
-                                            //data = data.replace(/\{\{([^\}\{]+)\}\}/g, replacerFunction); // Estilo {{key}}
-                                            //data = data.replace(/\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFunction); // Estilo {@i18n $key="key"/}
-                                            data = data.replace(/(?:\{\{([^\}\{]+)\}\}|\{@i18n \$key="([^\}\{]+)"\/\})/g, replacerFunction); // Ambos estilos anteriores
+                                            //data = data.replace(/\{\{([^\}\{]+)\}\}/g, replacerFn); // Estilo {{key}}
+                                            //data = data.replace(/\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFn); // Estilo {@i18n $key="key"/}
+                                            //data = data.replace(/\{\{i18n "([^\}\{]+)"\}\}/g, replacerFn); // Estilo {{i18n "key"}}
+                                            data = data.replace(/\{\{i18n "([^\}\{]+)"\}\}|\{\{([^\}\{]+)\}\}|\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFn); // Los tres estilos anteriores
                                             self.div.insertAdjacentHTML('beforeend', data);
                                             resolve();
                                         });
@@ -1645,18 +1656,38 @@ TC.inherit = function (childCtor, parentCtor) {
         return layerOption[propertyName];
     };
 
-    const mergeControlOptions = function (controlOptions) {
+    const mergeControlOptions = function (controlOptions) {        
+
         if (controlOptions.controlContainer) {
-            Object.keys(controlOptions).filter(function (key) {
-                return Object.keys(controlOptions.controlContainer.controls).indexOf(key) > -1
-            }).forEach(function (key) {
-                const containerControl = controlOptions.controlContainer.controls[key];
-                if (typeof containerControl.options === 'boolean') {
-                    containerControl.options = {}
-                }
-                TC.Util.extend(containerControl.options, controlOptions[key]);
-                delete controlOptions[key];
-            });
+
+            if (Array.isArray(controlOptions.controlContainer.controls)) {
+
+                controlOptions.controlContainer.controls.forEach((ctl) => {
+                    Object.keys(ctl).filter((key) => key !== "position").forEach((name) => {
+                        if (controlOptions[name] !== undefined) {
+                            if (typeof ctl[name] === 'boolean') {
+                                ctl[name] = {};
+                            }
+                            TC.Util.extend(ctl[name], controlOptions[name]);
+                            delete controlOptions[name];
+                        }                        
+                    });
+                });
+                
+            } else {
+                // GLS compatibilidad hacia atrás
+
+                Object.keys(controlOptions).filter(function (key) {
+                    return Object.keys(controlOptions.controlContainer.controls).indexOf(key) > -1
+                }).forEach(function (key) {
+                    const containerControl = controlOptions.controlContainer.controls[key];
+                    if (typeof containerControl.options === 'boolean') {
+                        containerControl.options = {}
+                    }
+                    TC.Util.extend(containerControl.options, controlOptions[key]);
+                    delete controlOptions[key];
+                });
+            }            
         }
 
         return controlOptions;
@@ -1676,9 +1707,8 @@ TC.inherit = function (childCtor, parentCtor) {
             .filter(elem => elem.controls)
             .map(elem => elem.controls);
         if (controls.length > 0) {
-            result.controls = mergeControlOptions(result.controls);
-        }
-
+            result.controls = TC.Util.extend(result.controls, mergeControlOptions(TC.Util.extend(controls[0], controls[1])));
+        }        
         return result;
     };
 
@@ -1707,6 +1737,27 @@ TC.inherit = function (childCtor, parentCtor) {
         }
     };
 
+    const appendRasterEvents = function (layer) {
+        layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
+            const wrap = this;
+            if (!wrap._tileloaderror) {
+                const path = layer.getPath();
+                const title = path.length ? path[path.length - 1] : layer.title;
+                layer.map.toast(TC.Util.getLocaleString(layer.map.options.locale, 'tileload.error',
+                    { name: title, error: event.error.text }),
+                    { type: TC.Consts.msgType.ERROR });
+                wrap._tileloaderror = true;
+                const onTileload = function (e) {
+                    if (e.tile.src && e.tile.src !== TC.Consts.BLANK_IMAGE) {
+                        delete wrap._tileloaderror;
+                        wrap.$events.off(TC.Consts.event.TILELOAD, onTileload);
+                    }
+                };
+                wrap.$events.on(TC.Consts.event.TILELOAD, onTileload);
+            }
+        });
+    };
+
     /**
      * Añade una capa al mapa.
      * @method addLayer
@@ -1725,7 +1776,12 @@ TC.inherit = function (childCtor, parentCtor) {
                 layer.id = TC.getUID();
             }
 
-            self._layerBuffer.add(layer.id || layer, isLayerRaster, layer.isBase);
+            let zIndex = layer.options ? layer.options.zIndex : layer.zIndex;
+            if (typeof zIndex !== 'number') {
+                zIndex = isLayerRaster ? 0 : 1;
+            }
+
+            self._layerBuffer.add(layer.id || layer, zIndex, layer.isBase);
 
             if (self.getLayer(layer.id)) {
                 // Si ya existe capa con el mismo id, lanzamos error
@@ -1777,6 +1833,7 @@ TC.inherit = function (childCtor, parentCtor) {
                         // Nos aseguramos de que las capas raster se quedan por debajo de las vectoriales
                         var idx;
                         if (isRaster(lyr)) {
+                            appendRasterEvents(lyr);
                             idx = self.wrap.indexOfFirstVector();
                         }
                         if (idx === -1) {
@@ -1860,9 +1917,17 @@ TC.inherit = function (childCtor, parentCtor) {
                                     }
                                     else {
                                         crsLayerError(self, lyr);
-                                        const error = Error('Layer ' + lyr.id + ' incompatible with CRS');
-                                        error.layerId = layer.id;
-                                        reject(error);
+                                        //URI: Si la capa no existe ne el capabilities se crea un falso negativo como capa no compatible con el CRS
+                                        //y se enviaba un correo de log con ese error
+                                        if (lyr.isValidFromNames()) {
+                                            const error = Error('Layer ' + lyr.id + ' incompatible with CRS');
+                                            error.layerId = layer.id;
+                                            reject(error);
+                                        }
+                                        else {
+                                            resolve(lyr);
+                                        }
+                                        
                                     }
                                 }
                             }
@@ -1932,35 +1997,42 @@ TC.inherit = function (childCtor, parentCtor) {
                 return reject("Unremovable");
             }
 
-            layer.wrap.getLayer().then(function (olLayer) {
-                for (var i = 0; i < self.layers.length; i++) {
-                    if (self.layers[i] === layer) {
-                        self.layers.splice(i, 1);
+            let found = false;
+            for (var i = 0; i < self.layers.length; i++) {
+                if (self.layers[i] === layer) {
+                    self.layers.splice(i, 1);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                reject(new Error(`Layer ${layer.id} not found in map`));
+                return;
+            }
+            if (layer.isBase) {
+                for (var i = 0; i < self.baseLayers.length; i++) {
+                    if (self.baseLayers[i] === layer) {
+                        self.baseLayers.splice(i, 1);
+                        if (self.baseLayer === layer) {
+                            self.setBaseLayer(self.baseLayers[0]);
+                        }
                         break;
                     }
                 }
-                if (layer.isBase) {
-                    for (var i = 0; i < self.baseLayers.length; i++) {
-                        if (self.baseLayers[i] === layer) {
-                            self.baseLayers.splice(i, 1);
-                            if (self.baseLayer === layer) {
-                                self.setBaseLayer(self.baseLayers[0]);
-                            }
-                            break;
-                        }
+            }
+            else {
+                for (var i = 0; i < self.workLayers.length; i++) {
+                    if (self.workLayers[i] === layer) {
+                        self.workLayers.splice(i, 1);
+                        break;
                     }
                 }
-                else {
-                    for (var i = 0; i < self.workLayers.length; i++) {
-                        if (self.workLayers[i] === layer) {
-                            self.workLayers.splice(i, 1);
-                            break;
-                        }
-                    }
-                    if (layer === self.vectors) {
-                        self.vectors = null;
-                    }
+                if (layer === self.vectors) {
+                    self.vectors = null;
                 }
+            }
+
+            layer.wrap.getLayer().then(function (olLayer) {
                 self.wrap.removeLayer(olLayer);
                 self._layerBuffer.remove(layer.id);
                 self.trigger(TC.Consts.event.LAYERREMOVE, { layer: layer });
@@ -2442,6 +2514,7 @@ TC.inherit = function (childCtor, parentCtor) {
                     TC.loadProjDef({
                         crs: options.crs,
                         callback: function () {
+                            const oldCrs = self.crs;
                             const setProjection = function (baseLayer) {
 
                                 const _setProjection = function () {
@@ -2462,7 +2535,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                         // Reprojectamos capas cargadas
                                         self.workLayers.forEach(setLayerProjection);
                                         const resolveChange = function () {
-                                            self.trigger(TC.Consts.event.PROJECTIONCHANGE, { crs: options.crs });
+                                            self.trigger(TC.Consts.event.PROJECTIONCHANGE, { oldCrs: oldCrs, newCrs: options.crs });
                                             resolve();
                                         };
                                         if (baseLayer && baseLayer !== self.baseLayer) {
@@ -2475,7 +2548,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                     else if (baseLayer.fallbackLayer) {
                                         setProjection(baseLayer.fallbackLayer);
                                     } else {
-                                        reject();
+                                        reject(Error('Layer has no fallback'));
                                     }
                                 };
 
@@ -2779,7 +2852,7 @@ TC.inherit = function (childCtor, parentCtor) {
         this.wrap.setResolution(resolution);
     };
 
-    mapProto.exportFeatures = function (features, options) {
+    mapProto.exportFeatures =async function (features, options) {
         var self = this;
         options = options || {};
         var loadingCtl = self.getLoadingIndicator();
@@ -2788,6 +2861,20 @@ TC.inherit = function (childCtor, parentCtor) {
         // En GPX hay un bug con los valores cero, que hace que se tome el valor de elevación del punto previo, por eso ponemos NaN.
         const elevSubst = options.format === TC.Consts.format.GPX ? Number.NaN : 0;
         features.forEach(function (feature, idx) {
+            // Decodificamos entidades HTML de la feature
+            const data = feature.getData();
+            for (let key in data) {
+                if (/&(\w+|#\d{2,4});/g.test(key)) {
+                    const value = data[key];
+                    const newData = {};
+                    const elm = document.createElement('div');
+                    elm.innerHTML = key;
+                    newData[elm.innerText] = value;
+                    feature.unsetData(key);
+                    feature.setData(newData);
+                }
+            }
+            // Formateamos el valor de elevación
             var flatCoords = feature.getCoords({ pointArray: true });
             if (flatCoords.some(function (point) {
                 return point[2] === null;
@@ -2800,13 +2887,25 @@ TC.inherit = function (childCtor, parentCtor) {
                     }
                 });
             }
-        });
-
+        });        
         const text = self.wrap.exportFeatures(features, options);
         const mimeType = TC.Consts.mimeType[options.format];
         const format = options.format || "";
-        TC.Util.downloadFile((options.fileName || TC.getUID()) + '.' + format.toLowerCase(), mimeType, text);
-        loadingCtl && loadingCtl.removeWait(waitId);
+        if (format === TC.Consts.format.KMZ) {
+            var zip = new JSZip();
+            var fileName = (options.fileName || TC.getUID())
+            zip.file(fileName + ".kml", text);
+            zip.generateAsync({ type: "blob", mimeType: mimeType}).then(function (blob) {
+                filename = fileName + ".kmz";
+                TC.Util.downloadBlob(filename, blob);
+                loadingCtl && loadingCtl.removeWait(waitId);
+            });
+        }
+        else {
+            TC.Util.downloadFile((options.fileName || TC.getUID()) + '.' + format.toLowerCase(), mimeType, text);
+            loadingCtl && loadingCtl.removeWait(waitId);
+        }       
+        
     };
 
 
