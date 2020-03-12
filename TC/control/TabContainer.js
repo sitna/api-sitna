@@ -24,12 +24,7 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
 
     ctlProto.CLASS = 'tc-ctl-tctr';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/TabContainer.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").f(ctx.get(["title"], false), ctx, "h").w("</h2><div class=\"tc-ctl-tctr-select\"><form>").s(ctx.get(["controls"], false), ctx, { "block": body_1 }, {}).w("</form></div>").s(ctx.get(["controls"], false), ctx, { "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<label class=\"tc-ctl-tctr-tab tc-ctl-tctr-tab-").f(ctx.get(["$idx"], false), ctx, "h").w("\" style=\"width:calc(100%/").f(ctx.get(["$len"], false), ctx, "h").w(" - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"").f(ctx.get(["$idx"], false), ctx, "h").w("\" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<div class=\"tc-ctl-tctr-elm tc-ctl-tctr-elm-").f(ctx.get(["$idx"], false), ctx, "h").w(" tc-hidden\"></div>"); } body_2.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/TabContainer.html";
 
     ctlProto.onRenderPromise = function () {
         const self = this;
@@ -40,10 +35,26 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
         var bufferPromises = new Array(self.ctlCount);
         for (var i = 0, len = self.controlOptions.length; i < len; i++) {
             var ctl = self.controlOptions[i];
-            bufferPromises[i] = self.map.addControl(ctl.name, TC.Util.extend({
+            var ctlName = "";
+            var ctlOptions = {};
+
+            // GLS: 20/01/2020 código compatibilidad hacia atrás
+            if (ctl["name"] !== undefined && ctl["options"] !== undefined) {
+                console.log('Gestionamos config de tabContainer antiguo');
+
+                ctlName = ctl["name"];
+                ctlOptions = ctl["options"];
+            } else {
+                ctlName = Object.keys(ctl).filter((key) => {
+                    return key !== "title";
+                })[0];
+                ctlOptions = ctl[ctlName];
+            }
+            
+            bufferPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
                 id: self.uids[i],
                 div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
-            }, ctl.options));
+            }, ctlOptions));
         }
         var writeTitle = function (ctl, idx) {
             ctl.renderPromise().then(function () {
@@ -96,6 +107,22 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
                         }
                     });
                     self._oldValue = newValue;
+                }
+
+                if (active && active.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                    active.classList.remove(TC.Consts.classes.COLLAPSED);
+
+                    // GLS 24/01/2020 necesitamos un mutation observer para poder quitar el tc.collapsed cuando volvamos de  
+                    // otro control ya que no hay click porque la pestaña ya está activa.
+                    var observerTabElementAddCollapsedClass = new MutationObserver(function (mutations) {                        
+                        mutations.forEach(function (mutation) {
+                            if (mutation.target.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                                mutation.target.classList.remove(TC.Consts.classes.COLLAPSED);
+                            }
+                        });
+                    });
+                    
+                    observerTabElementAddCollapsedClass.observe(active, { attributes: true });                    
                 }
 
                 if (active) {
