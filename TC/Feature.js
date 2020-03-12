@@ -60,7 +60,10 @@ TC.Feature.prototype.setVisibility = function (visible) {
         });
 
         if (popup.length > 0) {
-            popup[0].hide();
+            const p = popup[0];
+            if (p.isVisible()) {
+                p.hide();
+            }
         }
     }
 
@@ -85,7 +88,11 @@ TC.Feature.prototype.setStyle = function (style) {
 };
 
 TC.Feature.prototype.toggleSelectedStyle = function (condition) {
-    this.wrap.toggleSelectedStyle(condition);
+    const self = this;
+    if (self._hasSelectedStyle != condition) {
+        self._hasSelectedStyle = condition;
+        self.wrap.toggleSelectedStyle(condition);
+    }
 };
 
 TC.Feature.prototype.getLegend = function () {
@@ -142,7 +149,10 @@ TC.Feature.prototype.setCoords = function (coords) {
                 toNumberCoords(elm);
             }
             else {
-                if (typeof elm !== 'number') {
+                if (elm === null) {
+                    arr[idx] = 0;
+                }
+                else if (typeof elm !== 'number') {
                     console.log('Warning: coordinate does not have number type');
                     arr[idx] = parseFloat(elm);
                 }
@@ -171,13 +181,19 @@ TC.Feature.prototype.getData = function () {
 };
 
 TC.Feature.prototype.setData = function (data) {
-    var self = this;
+    const self = this;
     self.data = TC.Util.extend(self.data, data);
     self.wrap.setData(data);
 };
 
+TC.Feature.prototype.unsetData = function (key) {
+    const self = this;
+    delete self.data[key];
+    self.wrap.unsetData(key);
+};
+
 TC.Feature.prototype.clearData = function () {
-    var self = this;
+    const self = this;
     self.data = {};
     self.wrap.clearData();
 };
@@ -202,6 +218,73 @@ TC.Feature.prototype.getInfo = function (options) {
             const hSlots = [];
             const openText = TC.Util.getLocaleString(locale, 'open');
             const titleText = TC.Util.getLocaleString(locale, 'linkInNewWindow');
+            const formatValue = function (value) {
+                var html = [];
+                var isUrl = TC.Util.isURL(value);
+                if (isUrl) {
+                    html[html.length] = '<a href="';
+                    html[html.length] = value;
+                    html[html.length] = '" target="_blank" title="';
+                    html[html.length] = titleText;
+                    html[html.length] = '">';
+                    html[html.length] = openText;
+                    html[html.length] = '</a>';
+                }
+                else {
+                    html[html.length] = value !== undefined ? (typeof (value) === "number"?TC.Util.formatNumber(value, locale):value) : '&mdash;';
+                }
+                return html;
+            }
+            const recursiva = function (data) {
+                var html = [];
+                if (data instanceof Array) {
+                    html[html.length] = '<div class="complexAttr">';
+                    var id = 'complexAttr_' + TC.getUID()
+                    html[html.length] = '<input type="checkbox" id="' + id + '" />';
+                    html[html.length] = '<div>';
+                    html[html.length] = '<label for="' + id + '" title="" class="plus"></label>';
+                    html[html.length] = '<label for="' + id + '" title="" class="title">' + data.length + ' ' + TC.Util.getLocaleString(locale, 'featureInfo.complexData.array') + '</label><br/>';
+                    html[html.length] = '<table class="complexAttr"><tbody>';
+                    for (var i = 0; i < data.length; i++) {
+                        html[html.length] = '<tr><td>';
+                        html = html.concat(recursiva(data[i]));
+                        html[html.length] = '</td></tr>';
+                    }
+                    html[html.length] = '</tbody></table></div></div>';
+                } else if (data instanceof Object) {
+                    html[html.length] = '<table class="complexAttr"><tbody>';
+                    for (var i in data) {
+                        html[html.length] = '<tr>';
+                        if (data[i] && data[i] instanceof Array) {
+                            html[html.length] = '<th style="display:none">' + i + '</th><td>'
+                            html[html.length] = '<label for="' + id + '" class="title">' + i + '</label><br/>';
+                            html = html.concat(recursiva(data[i]));
+                            html[html.length] = '</div></td>';
+                        }
+                        else if (data[i] && data[i] instanceof Object) {
+                            //if(data[i] && Object.entries(data[i]).some((item)=>{return item[1] instanceof Object})){						
+                            var id = 'complexAttr_' + TC.getUID()
+                            html[html.length] = '<th style="display:none">' + i + '</th><td>';
+                            html[html.length] = '<input type="checkbox" id="' + id + '" /><div>';
+                            html[html.length] = '<label for="' + id + '" title="" class="plus"></label>';
+                            html[html.length] = '<label for="' + id + '" title="" class="title">' + i + '</label><br/>';
+                            html = html.concat(recursiva(data[i]));
+                            html[html.length] = '</div></td>';
+                        }
+                        else {
+                            html[html.length] = '<th class="key">' + i + '</th>';
+                            html[html.length] = '<td class="value">';
+                            html = html.concat(recursiva(data[i]));
+                            html[html.length] = '</td>';
+                        }
+                        html[html.length] = '</tr>';
+                    }
+                    html[html.length] = '</tbody></table>';
+                } else {
+                    html = html.concat(formatValue(data));
+                }
+                return html;
+            };
             for (var key in data) {
                 const value = data[key];
                 const match = key.match(/^h(\d)_/i);
@@ -213,20 +296,16 @@ TC.Feature.prototype.getInfo = function (options) {
                         html[html.length] = '<tr><th>';
                         html[html.length] = key;
                         html[html.length] = '</th><td>';
-                        var isUrl = TC.Util.isURL(value);
-                        if (isUrl) {
-                            html[html.length] = '<a href="';
-                            html[html.length] = value;
-                            html[html.length] = '" target="_blank" title="';
-                            html[html.length] = titleText;
-                            html[html.length] = '">';
-                            html[html.length] = openText;
-                            html[html.length] = '</a>';
-                        }
-                        else {
-                            html[html.length] = value !== undefined ? TC.Util.formatNumber(value, locale) : '&mdash;';
-                        }
+                        html = html.concat(formatValue(value));
                         html[html.length] = '</td></tr>';
+                    }
+                    else {
+                        html[html.length] = '<tr><th>';
+                        html[html.length] = key;
+                        html[html.length] = '</th><td>';
+                        html = html.concat(recursiva(value))
+                        html[html.length] = '</td></tr>';
+
                     }
                 }
             }
@@ -299,13 +378,11 @@ TC.Feature.prototype.showPopup = function (control) {
         else {
             ctlPromise = map.addControl('popup');
         }
-        ctlPromise.then(function (ctl) {            
+        ctlPromise.then(function (ctl) {
             ctl.currentFeature = self;
-            map.getControlsByClass(TC.control.Popup).forEach(function (p) {
-                if (p.isVisible()) {
-                    p.hide();
-                }
-            });
+            map.getControlsByClass(TC.control.Popup)
+                .filter(p => p !== ctl && p.isVisible())
+                .forEach(p => p.hide());
             self.wrap.showPopup(ctl);
             // Ajustamos el ancho del título al de la tabla de atributos
             const attrTable = ctl.contentDiv.querySelector("table.tc-attr");
@@ -327,37 +404,25 @@ TC.Feature.prototype.showResultsPanel = function (control) {
     const map = (self.layer && self.layer.map) || (control && control.map);
     if (map) {
         var ctlPromise;
-        var panel = control;
-        if (!panel) {
-            // Buscamos un resultsPanel existente que no esté asociado a un control.
-            var resultsPanels = map.getControlsByClass('TC.control.ResultsPanel').filter(function (ctrl) { return ctrl.options.content === "table" });
-            for (var i = 0, len = resultsPanels.length; i < len; i++) {
-                var p = resultsPanels[i];
-                if (!p.caller) {
-                    panel = p;
-                    break;
-                }
+
+        var resultsPanelOptions = {
+            content: "table",
+            titles: {
+                main: TC.Util.getLocaleString(map.options.locale, "rsp.title"),
+                max: TC.Util.getLocaleString(map.options.locale, "rsp.title")
             }
+        };
+        var controlContainer = map.getControlsByClass('TC.control.ControlContainer')[0];
+        if (controlContainer) {
+            resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
+            ctlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
+        } else {
+            resultsPanelOptions.div = document.createElement('div');
+            map.div.appendChild(resultsPanelOptions.div);
+            ctlPromise = map.addControl('resultsPanel', resultsPanelOptions);
         }
-        if (panel) {
-            panel.currentFeature = self;
-            ctlPromise = Promise.resolve(panel);
-        }
-        else {
-            var resultsPanelOptions = {
-                content: "table"
-            };            
-            var controlContainer = map.getControlsByClass('TC.control.ControlContainer')[0];
-            if (controlContainer) {
-                resultsPanelOptions.side = controlContainer.SIDE.RIGHT;
-                ctlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
-            } else {
-                resultsPanelOptions.div = document.createElement('div');
-                map.div.appendChild(resultsPanelOptions.div);
-                ctlPromise = map.addControl('resultsPanel', resultsPanelOptions);
-            }
-        }
-        ctlPromise.then(function (ctl) {            
+
+        ctlPromise.then(function (ctl) {
             ctl.currentFeature = self;
 
             // GLS: si contamos con el contenedor de controles no es necesario cerra el resto de paneles ya que no habrá solape excepto los paneles
@@ -367,19 +432,16 @@ TC.Feature.prototype.showResultsPanel = function (control) {
                 });
             }
 
-            // cerramos los paneles con feature asociada
+            // cerramos los paneles con feature asociada que no sean gráfico
             const panels = map.getControlsByClass('TC.control.ResultsPanel');
             panels.forEach(function (p) {
-                if (p.currentFeature) {
+                if (p.currentFeature && !p.chart) {
                     p.close();
                 }
             });
 
-            if (ctl.div.querySelector('.tc-ctl-print-btn')) {
-                ctl.div.querySelector('.tc-ctl-print-btn').remove();
-            }
             ctl.menuDiv.innerHTML = '';
-            ctl.open(self.getInfo({ locale: map.options.locale }), ctl.getInfoContainer());            
+            ctl.open(self.getInfo({ locale: map.options.locale }), ctl.getInfoContainer());
 
             var onViewChange = function (e) {
                 map.off(TC.Consts.event.VIEWCHANGE, onViewChange);
