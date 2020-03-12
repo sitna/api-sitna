@@ -43,20 +43,9 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
 
     ctlProto.CLASS = 'tc-ctl-coords';
 
-    var _dataKeys = {
-        PROJCODE: 'tcProjCode'
-    };
-
     ctlProto.template = {};
-
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Coordinates.html";
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/CoordinatesDialog.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div>CRS: <span class=\"tc-ctl-coords-crs\">").f(ctx.get(["crs"], false), ctx, "h").w("</span><button class=\"tc-ctl-coords-crs\" title=\"").h("i18n", ctx, {}, { "$key": "changeCRS" }).w("\">").f(ctx.get(["crs"], false), ctx, "h").w("</button></div><div class=\"tc-ctl-coords-xy\">").x(ctx.get(["isGeo"], false), ctx, { "else": body_1, "block": body_3 }, {}).w("</div>").x(ctx.get(["showGeo"], false), ctx, { "block": body_5 }, {}).w("<span class=\"close\"></span>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("x: <span class=\"tc-ctl-coords-x\">").f(ctx.get(["x"], false), ctx, "h").w("</span> y: <span class=\"tc-ctl-coords-y\">").f(ctx.get(["y"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("z: <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-coords-lat\">").f(ctx.get(["lat"], false), ctx, "h").w("</span> ").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-coords-lon\">").f(ctx.get(["lon"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_4 }, {}); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-alt\"><div class=\"tc-ctl-coords-xy\">").h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-coords-lat\">").f(ctx.get(["lat"], false), ctx, "h").w("</span> ").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-coords-lon\">").f(ctx.get(["lon"], false), ctx, "h").w("</span> ").x(ctx.get(["ele"], false), ctx, { "block": body_6 }, {}).w("</div></div>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-coords-elevation\">").f(ctx.get(["ele"], false), ctx, "h").w("</span> "); } body_6.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-coords-crs-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "changeCRS" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "coords.currentProjection|h" }).w("</p><p class=\"tc-ctl-coords-no-change\">").h("i18n", ctx, {}, { "$key": "coords.noCrs.warning|s" }).w("</p><div class=\"tc-ctl-coords-change\"><p>").h("i18n", ctx, {}, { "$key": "coords.instructions|s" }).w("</p><p class=\"tc-msg-warning tc-hidden\">").h("i18n", ctx, {}, { "$key": "coords.instructions.warning|s" }).w("</p></div><ul class=\"tc-ctl-coords-crs-list tc-crs-list\"></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Coordinates.html";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/CoordinatesDialog.html";
 
     ctlProto.register = function (map) {
         var self = this;
@@ -142,7 +131,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
             map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
                 if (!map.on3DView) {
                     self.isGeo = map.wrap.isGeo();
-                    self.crs = e.crs;
+                    self.crs = e.newCrs;
                     self.render();
                 }                
             });
@@ -198,7 +187,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
         }));
     };
 
-    ctlProto.onMouseMove = function (e) {
+    ctlProto.onMouseMove = function (e) {        
         this.wrap.onMouseMove(e);
     };
 
@@ -220,17 +209,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
             clientRect.left + clientRect.width >= e.clientX &&
             clientRect.top <= e.clientY &&
             clientRect.top + clientRect.height >= e.clientY);
-    };
-
-    ctlProto.formatCoord = function (x, nDecimales) {
-        var result;
-        result = x.toFixed(nDecimales);
-        if (nDecimales <= 3) {
-            result = result.replace(/\B(?=(\d{3})+(?!\d))/g, "|");
-        }
-        result = result.replace(".", ",").replace(/\|/g, ".");
-        return result;
-    };
+    };    
 
     ctlProto.update = function () {
         const self = this;
@@ -240,13 +219,13 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
         }
 
         if (!self.isGeo) {
-            self.x = self.formatCoord(self.xy[0], TC.Consts.METER_PRECISION);
-            self.y = self.formatCoord(self.xy[1], TC.Consts.METER_PRECISION);
+            self.x = TC.Util.formatCoord(self.xy[0], TC.Consts.METER_PRECISION);
+            self.y = TC.Util.formatCoord(self.xy[1], TC.Consts.METER_PRECISION);
         }
 
         if (self.isGeo || self.options.showGeo) {
-            self.lat = self.formatCoord(self.latLon[0], TC.Consts.DEGREE_PRECISION);
-            self.lon = self.formatCoord(self.latLon[1], TC.Consts.DEGREE_PRECISION);
+            self.lat = TC.Util.formatCoord(self.latLon[0], TC.Consts.DEGREE_PRECISION);
+            self.lon = TC.Util.formatCoord(self.latLon[1], TC.Consts.DEGREE_PRECISION);
         }
 
         self.render(function () {
@@ -349,7 +328,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
         var self = this;
 
         // Si streetView está activo, no responde al click
-        if (!self.map.div.classList.contains('tc-ctl-sv-active ' + TC.Consts.classes.COLLAPSED)) {
+        if (!self.map.div.classList.contains('tc-ctl-sv-active') || !self.map.div.classList.contains(TC.Consts.classes.COLLAPSED)) {
 
             var coordsBounding = self.div.getBoundingClientRect();
             if ((coordsBounding.left <= e.clientX && e.clientX <= coordsBounding.right && coordsBounding.top <= e.clientY && e.clientY <= coordsBounding.bottom)) {
@@ -407,6 +386,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                     id: self.getUID(),
                     type: TC.Consts.layerType.VECTOR,
                     stealth: true,
+                    owner: self,
                     title: 'Coordenadas',
                 }).then(function (layer) {
                     self.layer = layer;
