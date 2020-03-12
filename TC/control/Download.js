@@ -8,6 +8,10 @@ if (!TC.filter) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
 }
 
+TC.Consts.DownloadError = {
+    MIMETYPE_NOT_SUPORTED: "MimeTypeNotSupported"
+}
+
 TC.control.Download = function (options) {
     var self = this;
     self._classSelector = '.' + self.CLASS;
@@ -34,21 +38,15 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
     ctlProto.CLASS = 'tc-ctl-download';
 
     ctlProto.template = {};
-
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Download.html";
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/DownloadDialog.html";
-    } else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "download" }).w(" </h2><div class=\"tc-ctl-tctr tc-ctl-tctr-select\"><form><label class=\"tc-ctl-tctr-tab tc-ctl-download-image\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"image\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.map" }).w("</span></label><label class=\"tc-ctl-tctr-tab tc-ctl-download-data\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"data\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.vector" }).w("</span></label></form></div><div class=\"tc-ctl tc-ctl-tctr-elm tc-ctl-tctr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image tc-collapsed\"><div><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format-image\" class=\"tc-combo\"><option value=\"image/png\">PNG</option><option value=\"image/jpeg\">JPEG</option></select><div class=\"tc-ctl-download-div\"><input id=\"tc-ctl-download-image-qr\" class=\"tc-hidden\" type=\"checkbox\" checked style=\"display:none;\" /><label for=\"tc-ctl-download-image-qr\" class=\"tc-ctl-download-image-qr-label\" title=\"").h("i18n", ctx, {}, { "$key": "createQrCodeToImage" }).w("\">").h("i18n", ctx, {}, { "$key": "appendQRCode" }).w("</label></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadImageFromCurrentMap" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div><div class=\"tc-ctl-download-alert tc-alert alert-warning tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "qrAdvice|s" }).w("</p></div></div></div><div class=\"tc-ctl tc-ctl-tctr-elm tc-ctl-tctr-elm-data tc-group tc-ctl-download-cnt tc-collapsed\"><div><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format\" class=\"tc-combo\"><option value=\"GML32\">GML</option><option value=\"application/json\">GeoJSON</option><option value=\"application/vnd.google-earth.kml+xml\">KML (Google Earth)</option><option value=\"shape-zip\">Shape (ESRI)</option></select><div class=\"tc-ctl-download-div\"><i class=\"tc-ctl-download-help icon-question-sign\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "showDownloadHelp" }).w("\"></i></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadLayersFromCurrentExtent" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div><div class=\"tc-alert alert-warning tc-hidden\"><p id=\"zoom-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures.instructions" }).w("</p><p id=\"layers-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded.instructions" }).w("</p><p id=\"url-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers.instructions" }).w("</p><p id=\"noFeatures-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noData" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noData.instructions" }).w("</p><p id=\"novalid-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noValidService" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noValidService.instructions" }).w("</p></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-download-help-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "downloadData" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "dl.instructions.1|s" }).w("</p><ul><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.2|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.3|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.4|s" }).w("<ul><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.5|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.6|s" }).w("</li></ul></li></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Download.html";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/DownloadDialog.html";
 
     ctlProto.render = function (callback) {
         const self = this;
         return self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
         }).then(function () {
-            return TC.Control.prototype.render.call(self, function () {
+            return TC.Control.prototype.renderData.call(self, { controlId: self.id }, function () {
 
                 const cs = '.tc-ctl-tctr';
                 self._selectors = {
@@ -137,7 +135,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                         self.drawScaleBarIntoCanvas({ canvas: newCanvas, fill: true });
                     }
 
-                    if (self._activeElm.querySelector('#' + self.CLASS + '-image-qr:checked')) {
+                    if (self._activeElm.querySelector(`#${self.CLASS}-image-qr-${self.id}:checked`)) {
                         const codeContainerId = 'qrcode';
                         var codeContainer = document.getElementById(codeContainerId);
                         if (codeContainer) {
@@ -186,12 +184,12 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
             else {
                 var extent = self.map.getExtent();
                 
-                var arrPromises = TC.WFSGetFeatureBuilder(self.map, new TC.filter.bbox(extent, self.map.getCRS()), format, true);
-                Promise.all(arrPromises).then(function (responseArray) {
+                var arrPromises = TC.WFSGetFeatureBuilder(self.map, TC.filter.bbox(extent, self.map.getCRS()), format, true);
+                Promise.all(arrPromises).then(async function (responseArray) {
 
                     var responses = responseArray.filter(function (item) { return item != null });
                     if (responses.length === 0) {
-                        _showAlertMsg({ key: TC.Consts.WFSErrors.NoLayers }, wait);
+                        _showAlertMsg({ key: TC.Consts.WFSErrors.NO_LAYERS }, wait);
                         return;
                     }
                     var arrDownloads = [];
@@ -209,8 +207,24 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                         if (data && url)
                             arrDownloads.push({ url: url + "?download=zip", data: data });
                     }
+                    try {
+                        await TC.Util.downloadFileForm(arrDownloads);
+                    }
+                    catch (err) {
+                        if (err.key === TC.Consts.DownloadError.MIMETYPE_NOT_SUPORTED) {
+                            const service = responseArray.find(function (response) { return response.data === err.data }).service;
+                            const params = {
+                                plural: service.layers.length > 1 ? self.getLocaleString("dl.format.notSupported.plural") : "",
+                                layerNames: service.layers.reduce(function (vi, va, i, array) {
+                                    return (vi instanceof Array ? vi : [vi]).concat([va.title]).join(i < array.length - 1 ? ", " : " " + self.getLocaleString("dl.format.notSupported.conjunction") +" ")
+                                }, []),                                
+                                serviceTitle: service.mapLayers[0].title,
+                                format:format
+                            }
+                            self.map.toast(self.getLocaleString("dl.format.notSupported").format(params), { type: TC.Consts.msgType.ERROR });
+                        }
+                    }
 
-                    TC.Util.downloadFileForm(arrDownloads);
                     self.map.getLoadingIndicator().removeWait(wait);
                 });
             }
@@ -236,19 +250,19 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
             const alert = self.div.querySelector('.alert-warning:not(.' + self.CLASS + '-alert)');
             var errorMsg;
             switch (error.key) {
-                case TC.Consts.WFSErrors.NumMaxFeatures:
-                    errorMsg = alert.querySelector("#zoom-msg").innerHTML.format({ serviceName: error.params.serviceTitle });
+                case TC.Consts.WFSErrors.MAX_NUM_FEATURES:
+                    errorMsg = alert.querySelector("#zoom-msg-" + self.id).innerHTML.format({ serviceName: error.params.serviceTitle });
                     break;
-                case TC.Consts.WFSErrors.NoLayers:
+                case TC.Consts.WFSErrors.NO_LAYERS:
                     errorMsg = self.getLocaleString('noLayersLoaded');
                     break;
-                case TC.Consts.WFSErrors.GetCapabilities:
-                    errorMsg = alert.querySelector("#novalid-msg").innerHTML.format({ serviceName: error.params.serviceTitle });
+                case TC.Consts.WFSErrors.GETCAPABILITIES:
+                    errorMsg = alert.querySelector("#novalid-msg-" + self.id).innerHTML.format({ serviceName: error.params.serviceTitle });
                     break;
-                case TC.Consts.WFSErrors.NoFeatures:
-                    errorMsg = alert.querySelector("#noFeatures-msg").innerHTML;
+                case TC.Consts.WFSErrors.NO_FEATURES:
+                    errorMsg = alert.querySelector("#noFeatures-msg-" + self.id).innerHTML;
                     break;
-                case TC.Consts.WFSErrors.Indeterminate:
+                case TC.Consts.WFSErrors.INDETERMINATE:
                     errorMsg = self.getLocaleString("wfs.IndeterminateError");
                     self.map.toast(errorMsg, { type: TC.Consts.msgType.ERROR });
                     TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
@@ -272,7 +286,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
         self.div.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-btn', _download));
         self.div.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', _showHelp));
 
-        self.div.addEventListener('change', TC.EventTarget.listenerBySelector("#" + self.CLASS + "-image-qr", function (e) {
+        self.div.addEventListener('change', TC.EventTarget.listenerBySelector(`#${self.CLASS}-image-qr-${self.id}`, function (e) {
             if (e.target.checked) {
                 self.generateLink();
             } else {
@@ -291,7 +305,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
     ctlProto.manageMaxLengthExceed = function (maxLengthExceed) {
         const self = this;
         const alert = self.div.querySelector('.' + self.CLASS + '-alert');
-        if (document.getElementById(self.CLASS + '-image-qr').checked) {
+        if (document.getElementById(`${self.CLASS}-image-qr-${self.id}`).checked) {
             alert.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.qr);
         } else {
             alert.classList.add(TC.Consts.classes.HIDDEN);
