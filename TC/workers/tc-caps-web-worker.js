@@ -1,8 +1,4 @@
-﻿// ==ClosureCompiler==
-// @output_file_name default.js
-// @compilation_level SIMPLE_OPTIMIZATIONS
-// ==/ClosureCompiler==
-
+﻿
 /**
  * @author: Tobias Nickel
  * @created: 06.04.2015
@@ -17,6 +13,7 @@
  * filter {function} filter method, as you know it from Array.filter. but is goes throw the DOM.
  * simplify {bool} to use tXml.simplify.
  */
+
 
 function tXml(S, options) {
     "use strict";
@@ -379,6 +376,7 @@ tXml.getElementsByClassName = function (S, classname, simplified) {
 if ('object' === typeof module) {
     module.exports = tXml;
 }
+
 //console.clear();
 //console.log('here:',tXml.getElementById('<some><xml id="test">dada</xml><that id="test">value</that></some>','test'));
 //console.log('here:',tXml.getElementsByClassName('<some><xml id="test" class="sdf test jsalf">dada</xml><that id="test">value</that></some>','test'));
@@ -658,6 +656,212 @@ console.log("MILLISECONDS",end2-start2);
         delete om.Operation;
     };
 
+    var wfsParser = function () {
+        var keys = ["name", "Name"],
+            parameters = ["Parameter", "Constraint"],
+            a2o = function (a) {
+                return a.reduce(function (result, item, index) {
+                    if (keys.some((k) => { return item.hasOwnProperty(k); })) {
+                        var key = keys.find((k) => { return item.hasOwnProperty(k); });
+                        var objName = (item[key].substring(item[key].indexOf(":") + 1));
+                        delete item[key];
+                        result[objName] = item.hasOwnProperty("AllowedValues") && item.AllowedValues.Value || item
+                        return result;
+                    }
+                    else {
+                        return (index === 0 ? [] : result).concat(item);
+                    }
+                }, {});
+            },
+            pp = function (p) {
+                var o = {};
+                if (p instanceof Array) {
+                    o = a2o(p);
+                }
+                else
+                    o = p.hasOwnProperty("AllowedValues") && p.AllowedValues.Value && keys.find((k) => { return p.hasOwnProperty(k) }) && (o[p[keys.find((k) => { return p.hasOwnProperty(k) })]] = p.AllowedValues.Value) && o || p
+                return o;
+
+            },
+            e = {
+                V1_0_0: "1.0.0",
+                V1_1_0: "1.1.0",
+                V2_0_0: "2.0.0"
+            },
+            r = function () {
+                var r, n = [],
+                    u = [],
+                    p = [],
+                    capabilites = arguments[0];
+                switch (capabilites.version) {
+                    case e.V1_0_0:
+                        r = e.V1_0_0;
+                        break;
+                    case e.V1_1_0:
+                        r = e.V1_1_0;
+                        break;
+                    case e.V2_0_0:
+                        r = e.V2_0_0
+                }
+                n = t(capabilites, r), u = a(capabilites, r), p = i(capabilites, r);
+                var o = s(capabilites, r),
+                    l = {
+                        Operations: n,
+                        FeatureTypes: u,
+                        Filters: p
+                    };
+                return Object.assign(l, o), l
+            },
+            t = function (r, t) {
+                switch (t) {
+                    case e.V1_0_0:
+                        var a = r.Capability.Request;
+                        if (a.GetFeature) {
+                            var i = [];
+                            for (var s in a.GetFeature.ResultFormat) i.push(s.toLowerCase());
+                            a.GetFeature.outputFormat = i, delete a.GetFeature.ResultFormat, a.GetFeature.Operations = r.FeatureTypeList.Operations
+                        }
+                        return a;
+                    case e.V1_1_0:
+                        return {};
+                    case e.V2_0_0:
+                        var n = {};
+                        for (var s in r.OperationsMetadata) {
+                            var u = {};
+                            if (!(r.OperationsMetadata[s] instanceof Array)) continue;
+                            u[s] = a2o(r.OperationsMetadata[s]);
+                            for (var p in u[s]) {
+                                u[s][p] = ((o) => {
+                                    var r = {};
+                                    if (o instanceof Array)
+                                        return a2o(o);
+                                    for (k in o) {
+                                        if (parameters.find((i) => { return k === i })) {
+                                            r = Object.assign(r, pp(o[parameters.find((i) => { return k === i })]));
+                                        }
+                                        else
+                                            r[k] = o[k];
+                                    } return r;
+                                })(u[s][p]);
+                            }
+                            n = Object.assign(n, u[s]);
+                        }
+                        return n
+                }
+                return null
+            },
+            a = function (r, t) {
+                switch (t) {
+                    case e.V1_0_0:
+                        r.FeatureTypeList.FeatureType = (r.FeatureTypeList.FeatureType instanceof Array) ? r.FeatureTypeList.FeatureType : [r.FeatureTypeList.FeatureType];
+                        for (var a = {}, i = 0; i < r.FeatureTypeList.FeatureType.length; i++) {
+                            var s = r.FeatureTypeList.FeatureType[i].Name;
+                            a[s.substring(s.indexOf(":") + 1)] = r.FeatureTypeList.FeatureType[i]
+                        }
+                        return a;
+                    case e.V1_1_0:
+                        return {};
+                    case e.V2_0_0:
+                        r.FeatureTypeList.FeatureType = (r.FeatureTypeList.FeatureType instanceof Array) ? r.FeatureTypeList.FeatureType : [r.FeatureTypeList.FeatureType];
+                        for (var a = {}, i = 0; i < r.FeatureTypeList.FeatureType.length; i++) {
+                            var s = r.FeatureTypeList.FeatureType[i].Name;
+                            a[s.substring(s.indexOf(":") + 1)] = r.FeatureTypeList.FeatureType[i]
+                        }
+                        return a
+                }
+                return null
+            },
+            i = function (r, t) {
+                switch (t) {
+                    case e.V1_0_0:
+                        return r.Filter_Capabilities;
+                    case e.V1_1_0:
+                        return {};
+                    case e.V2_0_0:
+                        var a = r.Filter_Capabilities;
+                        return a
+                }
+                return null
+            },
+            s = function (r, t) {
+                switch (t) {
+                    case e.V1_0_0:
+                        var a = {};
+                        for (var i in r) "string" == typeof r[i] && (a[i] = r[i]);
+                        return a;
+                    case e.V1_1_0:
+                        return {};
+                    case e.V2_0_0:
+                        var a = {};
+                        for (var i in r) "string" == typeof r[i] && (a[i] = r[i]);
+                        return a
+                }
+                return {}
+            },
+            n = function (e) {
+                var e = e,
+                    t = e.substring(e.indexOf("://") < 0 ? 0 : e.indexOf("://") + 3);
+                if (TC.capabilities[t]) return Promise.resolve(TC.capabilities[t]);
+                var a = {};
+                return a.SERVICE = "WFS", a.VERSION = "2.0.0", a.REQUEST = "GetCapabilities", new Promise(function (x, y) {
+                    TC.ajax({
+                        url: TC.proxify(e) + "?" + TC.Util.getParamString(a),
+                        method: "GET"
+                    }).then(function (response) {
+                        var e = WFSCapabilities.Parse(response.data),
+                            a = e.Operations.GetCapabilities.DCP && e.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"] || e.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource;
+                        TC.capabilities[a] = e, TC.capabilities[t] = e, x(WFSCapabilities.Parse(response.data))
+                    })
+                })
+            };
+        return {
+            Promises: n,
+            Parse: r
+        }
+    }();
+
+
+    var processFeatureTypesWFS = function (capabilities) {
+        capabilities["FeatureTypes"] = arrayToObject(capabilities.FeatureTypeList.FeatureType, "Name");
+        delete capabilities.FeatureTypeList;
+    };
+
+    var processOperationsWFS = function (capabilities) {
+        capabilities["Operations"] = arrayToObject(capabilities.OperationsMetadata.Operation, "name");
+        delete capabilities.OperationsMetadata;
+    };
+
+    var processFiltersWFS = function (capabilities) {
+        const _keyName = "name";
+        const fncRecursiva = function (obj, objDestino) {
+            if (!isPlainObject(obj)) {
+                for (var key in obj) {
+                    var chdObj = obj[key];
+                    if (chdObj instanceof Array) {
+                        objDestino[key] = Object.assign(objDestino[key] || {}, arrayToObject(chdObj, _keyName));
+                    }
+                    else
+                        fncRecursiva(chdObj, objDestino);
+                }
+            }
+            else {
+                if (obj.hasOwnProperty(_keyName)) {
+                    delete obj[_keyName];
+                    objDestino[_keyName] = obj;
+                }
+                else
+                    objDestino = obj;
+            }
+
+        }
+        capabilities["Filters"] = {};
+        for (var key in capabilities.Filter_Capabilities) {
+            capabilities["Filters"][key] = {};
+            fncRecursiva(capabilities.Filter_Capabilities[key], capabilities["Filters"][key]);
+        }
+        delete capabilities.Filter_Capabilities;
+    };
+
     var postprocessWMS = function (xml) {
         var capabilities = xml['WMS_Capabilities'] || (xml['?xml'] && (xml['?xml']['WMS_Capabilities'] || xml['?xml']['WMT_MS_Capabilities']));
         if (capabilities) {
@@ -680,10 +884,41 @@ console.log("MILLISECONDS",end2-start2);
         }
         return capabilities;
     };
+    var postprocessWFS = function (xml) {
+        var capabilities = xml['WFS_Capabilities'] || (xml['?xml'] && (xml['?xml']['WFS_Capabilities']));
+        if (capabilities) {
+            capabilities = wfsParser.Parse(capabilities);
+            //añadir prefijo a los atributos simples y pue empiecen por http
+            for (var attr in capabilities) {
+                if (typeof (capabilities[attr]) === "string" && capabilities[attr].indexOf("http") === 0) {
+                    capabilities["xmlns:" + attr] = capabilities[attr];
+                    delete capabilities[attr];
+                }
+            }
+            delete capabilities.updateSequence;
+        }
+        return capabilities;
+    };
 
     onmessage = function (e) {
+
+        //if (e.data.url)
+        //    this.importScripts(e.data.url + 'TC/workers/tXml.js');
+        //else
+        //    this.importScripts('tXml.js');
         var xml = simplify(tXml(e.data.text));
-        var capabilities = e.data.type === 'WMTS' ? postprocessWMTS(xml) : postprocessWMS(xml);
+        var capabilities;
+        switch (e.data.type) {
+            case "WMS":
+                capabilities = postprocessWMS(xml);
+                break;
+            case "WMTS":
+                capabilities = postprocessWMTS(xml);
+                break;
+            case "WFS":
+                capabilities = postprocessWFS(xml);
+                break;
+        }
         postMessage({
             state: capabilities ? 'success' : 'error',
             capabilities: capabilities
