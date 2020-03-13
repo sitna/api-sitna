@@ -24,6 +24,7 @@ TC.control.FeatureInfoCommons = function () {
     self._layersPromise = null;
     self.filterFeature = null;
     self.info = null;
+    self._infoHistory = {};
     self.popup = null;
     self.resultsPanel = null;
     self.lastFeatureCount = null;
@@ -38,7 +39,7 @@ TC.control.FeatureInfoCommons.displayMode = {
 (function () {
 
     var layerCount = function (ctl) {
-        return ctl.info.services ?
+        return ctl.info && ctl.info.services ?
             ctl.info.services.reduce(function (sCount, service) {
                 return sCount + service.layers.reduce(function (lCount, layer) {
                     return lCount + 1;
@@ -53,13 +54,11 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.CLASS = 'tc-ctl-finfo';
 
     ctlProto.TITLE_SEPARATOR = ' • ';
+    ctlProto.DEFAULT_STROKE_COLOR = '#0000ff';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/FeatureInfo.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["displayElevation"], false), ctx, { "block": body_1 }, {}).w("<ul class=\"tc-ctl-finfo-services\">").s(ctx.get(["services"], false), ctx, { "else": body_4, "block": body_6 }, {}).w("</ul>").x(ctx.get(["featureCount"], false), ctx, { "block": body_30 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-coords\"><span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-crs\">CRS: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.get(["crs"], false), ctx, "h").w("</span></span> ").x(ctx.get(["isGeo"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-elev\">").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-finfo-coords-val\"></span></span></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x\">x: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "0"]), ctx, "h").w("</span></span> <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x\">y: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "1"]), ctx, "h").w("</span></span> "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lat\">").h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "1"]), ctx, "h").w("</span></span> <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lon\">").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "0"]), ctx, "h").w("</span></span> "); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.nx(ctx.get(["displayElevation"], false), ctx, { "block": body_5 }, {}); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</li>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<li><h3>").x(ctx.get(["title"], false), ctx, { "else": body_7, "block": body_10 }, {}).w("</h3><div class=\"tc-ctl-finfo-service-content\">").s(ctx.get(["hasLimits"], false), ctx, { "else": body_11, "block": body_29 }, {}).w("</div></li>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.x(ctx.getPath(false, ["layers", "0", "title"]), ctx, { "else": body_8, "block": body_9 }, {}); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.f(ctx.getPath(false, ["layer", "name"]), ctx, "h"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.f(ctx.getPath(false, ["layers", "0", "title"]), ctx, "h"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-layers\">").s(ctx.get(["layers"], false), ctx, { "else": body_12, "block": body_13 }, {}).w("</ul>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataAtThisService" }).w("</li>"); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<li><h4><span class=\"tc-ctl-finfo-layer-n\">").f(ctx.getPath(false, ["features", "length"]), ctx, "h").w("</span> ").s(ctx.get(["path"], false), ctx, { "block": body_14 }, {}).w("</h4> <div class=\"tc-ctl-finfo-layer-content\"><ul class=\"tc-ctl-finfo-features\">").s(ctx.get(["features"], false), ctx, { "else": body_16, "block": body_17 }, {}).w("</ul></div></li>"); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_15 }, {}); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w(" &bull; "); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataInThisLayer" }).w("</li>"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("<li>").x(ctx.get(["rawContent"], false), ctx, { "else": body_18, "block": body_23 }, {}).w("</li>"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.x(ctx.get(["error"], false), ctx, { "else": body_19, "block": body_22 }, {}); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("<h5>").f(ctx.get(["id"], false), ctx, "h").w("</h5><table").x(ctx.get(["geometry"], false), ctx, { "block": body_20 }, {}).w("><tbody>").s(ctx.get(["attributes"], false), ctx, { "block": body_21 }, {}).w("</tbody></table>"); } body_19.__dustBody = !0; function body_20(chk, ctx) { return chk.w(" title=\"").h("i18n", ctx, {}, { "$key": "clickToShowOnMap" }).w("\""); } body_20.__dustBody = !0; function body_21(chk, ctx) { return chk.w("<tr><th class=\"tc-ctl-finfo-attr\">").f(ctx.get(["name"], false), ctx, "h").w("</th><td class=\"tc-ctl-finfo-val\">").f(ctx.get(["value"], false), ctx, "h").w("</td></tr>"); } body_21.__dustBody = !0; function body_22(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").h("i18n", ctx, {}, { "$key": "fi.error" }).w("<span class=\"tc-ctl-finfo-error-text\">").f(ctx.get(["error"], false), ctx, "h").w("</span></span>"); } body_22.__dustBody = !0; function body_23(chk, ctx) { return chk.w("<h5>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h5>").h("eq", ctx, { "else": body_24, "block": body_25 }, { "key": ctx.get(["rawFormat"], false), "value": "text/html" }); } body_23.__dustBody = !0; function body_24(chk, ctx) { return chk.w("<pre>").f(ctx.get(["rawContent"], false), ctx, "h").w("</pre>"); } body_24.__dustBody = !0; function body_25(chk, ctx) { return chk.w(" ").x(ctx.get(["expandUrl"], false), ctx, { "block": body_26 }, {}); } body_25.__dustBody = !0; function body_26(chk, ctx) { return chk.h("ne", ctx, { "else": body_27, "block": body_28 }, { "key": ctx.get(["expandUrl"], false), "value": "" }); } body_26.__dustBody = !0; function body_27(chk, ctx) { return chk.w("<iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\"></iframe>"); } body_27.__dustBody = !0; function body_28(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-features-iframe-cnt\"><iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\"></iframe><a class=\"tc-ctl-finfo-open\" onclick=\"window.open('").f(ctx.get(["expandUrl"], false), ctx, "h").w("', '_blank')\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\"></a></div>"); } body_28.__dustBody = !0; function body_29(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").f(ctx.get(["hasLimits"], false), ctx, "h").w("</span>"); } body_29.__dustBody = !0; function body_30(chk, ctx) { return chk.h("gt", ctx, { "block": body_31 }, { "key": ctx.get(["featureCount"], false), "value": "1", "type": "number" }); } body_30.__dustBody = !0; function body_31(chk, ctx) { return chk.w("<a class=\"tc-ctl-btn tc-ctl-finfo-btn-prev\">").h("i18n", ctx, {}, { "$key": "previous" }).w("</a><div class=\"tc-ctl-finfo-counter\"><span class=\"tc-ctl-finfo-counter-current\"></span>/").f(ctx.get(["featureCount"], false), ctx, "h").w("</div><a class=\"tc-ctl-btn tc-ctl-finfo-btn-next\">").h("i18n", ctx, {}, { "$key": "next" }).w("</a>"); } body_31.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = {};
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureInfo.html";
+    ctlProto.template[ctlProto.CLASS + "-object"] = TC.apiLocation + "TC/templates/FeatureInfoObject.html";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -81,8 +80,8 @@ TC.control.FeatureInfoCommons.displayMode = {
         map
             .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
                 if (e.control === self.getDisplayControl() && self.resultsLayer) {
-                    if (self.highlightedFeature) {
-                        self.resultsLayer.removeFeature(self.highlightedFeature);
+                    if (self.highlightedFeature && !self.options.persistentHighlights) {
+                        self.downplayFeature(self.highlightedFeature);
                         self.highlightedFeature = null;
                     }
                     if (!self.querying && e.feature) {
@@ -100,13 +99,10 @@ TC.control.FeatureInfoCommons.displayMode = {
                 }
 
                 // GLS: si la feature es resultado de GFI decoramos
-                if (e.control.currentFeature &&
-                    e.control.currentFeature.layer &&
-                    self.filterLayer &&
-                    self.resultsLayer &&
-                    [self.filterLayer.id, self.resultsLayer.id].indexOf(e.control.currentFeature.layer.id) > -1) {
+                if (e.control.caller == self) {
                     self._decorateDisplay(control);
                 }
+
             })
             .on(TC.Consts.event.DRAWCHART, function (e) {
                 setTimeout(function () {
@@ -114,7 +110,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                 }, 50);
             })
             .on(TC.Consts.event.LAYERREMOVE, function () {
-                if (self.info && self.info.services) {
+                if (Object.keys(self._infoHistory).length) {
                     const services = {};
                     self.map.workLayers
                         .filter(function (layer) {
@@ -124,25 +120,35 @@ TC.control.FeatureInfoCommons.displayMode = {
                             const names = services[layer.url] || [];
                             services[layer.url] = names.concat(layer.getDisgregatedLayerNames())
                         });
-                    for (var i = 0, len = self.info.services.length; i < len; i++) {
-                        const service = self.info.services[i];
-                        const mapNames = services[service.mapLayers[0].url] || [];
-                        const infoNames = service.layers.reduce(function (arr, layer) {
-                            return arr.concat(layer.name);
-                        }, []);
-                        if (!infoNames.every(function (name) {
-                            return mapNames.indexOf(name) >= 0;
-                        })) {
-                            // En el objeto info hay capas que no están ya en el mapa: borramos resultados.
-                            self.downplayFeatures();
-                            self.info = null;
-                            self.closeResults();
-                            break;
+                    let featuresDeleted = false;
+                    for (let url in self._infoHistory) {
+                        const historyService = self._infoHistory[url];
+                        if (services.hasOwnProperty(url)) {
+                            const service = services[url];
+                            for (let name in historyService) {
+                                const historyLayer = historyService[name];
+                                if (service.indexOf(name) < 0) {
+                                    historyLayer.slice().forEach(f => self.downplayFeature(f));
+                                    historyLayer.length = 0;
+                                    featuresDeleted = true;
+                                }
+                            }
                         }
+                        else {
+                            for (let name in historyService) {
+                                const historyLayer = historyService[name];
+                                historyLayer.slice().forEach(f => self.downplayFeature(f));
+                                featuresDeleted = true;
+                            }
+                            delete self._infoHistory[url];
+                        }
+                    }
+                    if (featuresDeleted) {
+                        self.closeResults();
                     }
                 }
             })
-            .on(TC.Consts.event.VIEWCHANGE, function (e) {                
+            .on(TC.Consts.event.VIEWCHANGE, function (e) {
                 self.closeResults();
             });
 
@@ -167,7 +173,6 @@ TC.control.FeatureInfoCommons.displayMode = {
         if (!options.featureCount) {
             self.lastFeatureCount = 0;
             self.map.trigger(TC.Consts.event.NOFEATUREINFO, { control: self });
-            self.closeResults();
         }
         else {
             self._addSourceAttributes();
@@ -199,22 +204,11 @@ TC.control.FeatureInfoCommons.displayMode = {
         switch (mode) {
             case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
                 if (!self.resultsPanel) {
-                    var rp = map.getControlsByClass('TC.control.ResultsPanel').filter(function (ctrl) { return ctrl.options.content === "table" })[0];
-                    if (rp) {
-                        self.resultsPanel = rp;
-                        rp.caller = self;
-                    }
-                    else {
-                        var setResultsPanel = function setResultsPanel(e) {
-                            const control = e.control;
-                            if (TC.control.ResultsPanel && control instanceof TC.control.ResultsPanel) {
-                                self.resultsPanel = control;
-                                control.caller = self;
-                                map.off(TC.Consts.event.CONTROLADD, setResultsPanel);
-                            }
-                        };
-                        map.on(TC.Consts.event.CONTROLADD, setResultsPanel);
-                    }
+                    map.addControl('resultsPanel')
+                        .then(function (rp) {
+                            self.resultsPanel = rp;
+                            rp.caller = self;
+                        });
                 }
                 break;
             default:
@@ -260,14 +254,14 @@ TC.control.FeatureInfoCommons.displayMode = {
                 case TC.control.Popup && options.control instanceof TC.control.Popup:
                     return options.control.getContainerElement();
                 case TC.control.ResultsPanel && options.control instanceof TC.control.ResultsPanel:
-                    return options.control.getTableContainer();
+                    return options.control.getInfoContainer();
                 default:
                     return null;
             }
         }
         switch (self.displayMode) {
             case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
-                return self.resultsPanel.getTableContainer();
+                return self.resultsPanel.getInfoContainer();
             default:
                 return self.popup.getContainerElement();
         }
@@ -291,7 +285,6 @@ TC.control.FeatureInfoCommons.displayMode = {
         switch (self.displayMode) {
             case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
                 if (self.resultsPanel) {
-
                     // GLS: si contamos con el control de controles no es necesario cerrar los paneles visibles ya que no habría solape
                     if (self.map.getControlsByClass(TC.control.ControlContainer).length === 0) {
                         self.map.getControlsByClass(TC.control.ResultsPanel).forEach(function (p) {
@@ -299,21 +292,31 @@ TC.control.FeatureInfoCommons.displayMode = {
                                 p.close();
                             }
                         });
-                    } else {
-                        // cerramos los paneles con feature asociada
-                        const panels = self.map.getControlsByClass('TC.control.ResultsPanel');
-                        panels.forEach(function (p) {
-                            if (p !== self.resultsPanel && p.currentFeature) {
-                                p.close();
-                            }
-                        });
                     }
+
+                    // cerramos los paneles con feature asociada
+                    const panels = self.map.getControlsByClass('TC.control.ResultsPanel');
+                    panels.forEach(function (p) {
+                        if (p !== self.resultsPanel && p.currentFeature && !p.chart) {
+                            p.close();
+                        }
+                    });
 
                     self.resultsPanel.currentFeature = self.filterFeature;
                     self.resultsPanel.open(self.filterFeature.data, self.resultsPanel.getInfoContainer());
                     
+                    TC.loadJS(
+                        !TC.control.Print,
+                        [TC.apiLocation + 'TC/control/Print'],
+                        function () {
+                            // Eliminamos la impresora porque al pintar los resultados ya se añadirá
+                            const printBtn = self.getMenuTarget().querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn');
+                            if (printBtn.length > 0) {
+                                printBtn[0].remove();
+                            }
 
-                    self.displayResultsCallback();
+                            self.displayResultsCallback();
+                        });
                 }
 
                 break;
@@ -326,7 +329,7 @@ TC.control.FeatureInfoCommons.displayMode = {
     };
 
     const getElementIndex = function (elm) {
-        return Array.from(elm.parentElement.childNodes).indexOf(elm);
+        return Array.from(elm.parentElement.children).indexOf(elm);
     };
 
     const getParentElement = function (elm, tagName) {
@@ -470,8 +473,8 @@ TC.control.FeatureInfoCommons.displayMode = {
             }
         }
 
-        content.querySelectorAll('table').forEach(function (table) {
-            table.addEventListener(TC.Consts.event.CLICK, function (e) {                
+        content.querySelectorAll('table:not(.complexAttr)').forEach(function (table) {
+            table.addEventListener(TC.Consts.event.CLICK, function (e) {
                 const li = this.parentElement;
                 if (li.classList.contains(TC.Consts.classes.DISABLED)) {
                     return;
@@ -487,7 +490,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                         self.map.on(TC.Consts.event.ZOOM, zoomHandler);
                         self._zooming = true;
                         ///////
-                        
+
                         self.map.zoomToFeatures([self.resultsLayer.features[0]], { animate: true });
                     }
                 }
@@ -498,14 +501,15 @@ TC.control.FeatureInfoCommons.displayMode = {
                 e.stopPropagation();
             });
         });
-        content.querySelectorAll('table a').forEach(function (a) {
+        content.querySelectorAll('table a, table label, table input').forEach(function (a) {
             a.addEventListener(TC.Consts.event.CLICK, function (e) {
                 e.stopPropagation();
             });
         });
 
         if (TC.browserFeatures.touch() && self.displayMode === TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL) {
-            if (content.querySelector('.' + self.CLASS + '-btn-prev').style.display !== 'none') { // Si los botones de anterior/siguiente están visibles, montamos el swipe
+            const prevBtn = content.querySelector('.' + self.CLASS + '-btn-prev');
+            if (!prevBtn || prevBtn.style.display !== 'none') { // Si los botones de anterior/siguiente están visibles, montamos el swipe
                 if (self.resultsPanel) {
                     TC.Util.swipe(self.resultsPanel.div, 'disable');
                 }
@@ -576,6 +580,17 @@ TC.control.FeatureInfoCommons.displayMode = {
             feature = feature || self.getFeature(serviceIdx, layerIdx, featureIdx);
 
             self.downplayFeatures({ exception: feature });
+
+            // Añadimos feature al historial de features resaltadas
+            const service = self.info.services[serviceIdx];
+            if (!self._infoHistory.hasOwnProperty(service.url)) {
+                self._infoHistory[service.url] = {};
+            }
+            const historyService = self._infoHistory[service.url];
+            const layer = service.layers[layerIdx];
+            const historyLayer = historyService[layer.name] || [];
+            historyService[layer.name] = historyLayer.concat(feature);
+
             featureLi.classList.add(TC.Consts.classes.CHECKED);
             layerLi.classList.add(TC.Consts.classes.CHECKED);
             serviceLi.classList.add(TC.Consts.classes.CHECKED);
@@ -608,16 +623,19 @@ TC.control.FeatureInfoCommons.displayMode = {
 
             //Si la feature a resaltar ya está resaltada, no hacemos nada. Así evitamos parpadeo
             if (featureAlreadyHighlighted.length > 0) {
+                self.highlightedFeature = featureAlreadyHighlighted[0]; // Asignamos la original, la seleccionada inicialmente es un clon
                 return;
             }
 
-            for (var i = 0; i < features.length; i++) {
-                var f = features[i];
-                if (f !== self.filterFeature) {
-                    self.resultsLayer.removeFeature(f);
-                }
+            if (!self.options.persistentHighlights) {
+                features.forEach(f => {
+                    if (f !== self.filterFeature) {
+                        self.downplayFeature(f);
+                    }
+                });
             }
             if (feature && feature.geometry) {
+                feature.showsPopup = self.options.persistentHighlights;
                 self.resultsLayer.addFeature(feature);
             }
             else {
@@ -626,10 +644,29 @@ TC.control.FeatureInfoCommons.displayMode = {
         }
     };
 
+    ctlProto.downplayFeature = function (feature) {
+        const self = this;
+        self.resultsLayer.removeFeature(feature);
+        for (url in self._infoHistory) {
+            const service = self._infoHistory[url];
+            for (name in service) {
+                const layer = service[name];
+                const idx = layer.indexOf(feature);
+                if (idx >= 0) {
+                    layer.splice(idx, 1);
+                    if (!layer.length) {
+                        delete service[name];
+                    }
+                }
+            }
+        }
+    };
+
     ctlProto.downplayFeatures = function (options) {
         const self = this;
         options = options || {};
-        if (self.highlightedFeature !== options.exception) {
+        if (self.highlightedFeature && self.highlightedFeature !== options.exception) {
+            self.downplayFeature(self.highlightedFeature);
             self.highlightedFeature = null;
         }
         const exceptionFLi = options.exception ? self.getFeatureElement(options.exception) : undefined;
@@ -639,7 +676,6 @@ TC.control.FeatureInfoCommons.displayMode = {
             exceptionSLi = getParentElement(exceptionLLi, 'LI');
         }
 
-        self.resultsLayer.clearFeatures();
         const target = self.getDisplayTarget();
         Array.from(target.querySelectorAll('ul.' + self.CLASS + '-services li'))
             .filter(function (li) {
@@ -652,7 +688,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                     TC.Consts.classes.FROMLEFT,
                     TC.Consts.classes.FROMRIGHT);
             });
-        target.querySelectorAll('.' + self.CLASS + '-features table').forEach(function (table) {
+        target.querySelectorAll('.' + self.CLASS + '-features table:not(.complexAttr)').forEach(function (table) {
             table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
         });
     };
@@ -662,6 +698,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         const target = self.getDisplayTarget();
         var max = 0;
         //medir la máxima anchura de <ul>
+        target.querySelectorAll("input").forEach(function (checkbox) { checkbox.checked = true })
         target.querySelectorAll(".tc-ctl-finfo-features li").forEach(function (elm) {
             max = Math.max(max, elm.offsetLeft + elm.offsetWidth);
         });
@@ -670,6 +707,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         if (max) {
             target.style.width = max + 50 + 'px';
         }
+        target.querySelectorAll("input").forEach(function (checkbox) { checkbox.checked = false })
     };
 
     ctlProto._resetSize = function () {
@@ -724,9 +762,9 @@ TC.control.FeatureInfoCommons.displayMode = {
         if (self.map && self.resultsLayer) {
             self.lastFeatureCount = null;
 
-            self.resultsLayer.features.forEach(function (feature) {
-                self.resultsLayer.removeFeature(feature);
-            });
+            if (!self.options.persistentHighlights) {
+                self.resultsLayer.features.slice().forEach(f => self.downplayFeature(f));
+            }
             self.info = null;
         }
     };
@@ -741,11 +779,15 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.deactivate = function (stopChain) {
         var self = this;
-        if (self.popup) {
+        if (self.popup && self.popup.isVisible()) {
             self.popup.hide();
         }
-        self.resultsLayer.clearFeatures();
-        self.filterLayer.clearFeatures();
+        if (!self.options.persistentHighlights) {
+            self.resultsLayer.features.slice().forEach(f => self.downplayFeature(f));
+            self.info = null;
+            self._infoHistory = {};
+        }
+        self.filterLayer && self.filterLayer.clearFeatures();
         self.filterFeature = null;
         if (self.wrap) {
             self.wrap.deactivate();
@@ -782,6 +824,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                 id: self.getUID(),
                 title: self.CLASS + ': Results layer',
                 type: TC.Consts.layerType.VECTOR,
+                owner: self,
                 stealth: true
             };
         }
@@ -790,15 +833,21 @@ TC.control.FeatureInfoCommons.displayMode = {
             filterLayer = self.options.filterLayer;
         }
         else {
+            const styles = {};
+            if (self.geometryType === TC.Consts.geom.POLYLINE) {
+                styles.line = self.style;
+            }
+            if (self.geometryType === TC.Consts.geom.POLYGON) {
+                styles.polygon = self.style;
+            }
+
             filterLayer = {
                 id: self.getUID(),
                 title: self.CLASS + ': Filter layer',
+                owner: self,
                 stealth: true,
-                type: TC.Consts.layerType.VECTOR
-                , styles: {
-                    line: { strokeColor: self.lineColor, strokeWidth: 2 },
-                    polygon: { strokeColor: self.lineColor, strokeWidth: 2, fillColor: "#000", fillOpacity: 0.3 }
-                }
+                type: TC.Consts.layerType.VECTOR,
+                styles: styles
             };
         }
 
@@ -817,15 +866,16 @@ TC.control.FeatureInfoCommons.displayMode = {
     };
 
     ctlProto._decorateDisplay = function (ctl) {
-        const self = this;        
+        const self = this;
 
-        const resultsContainer = self.getDisplayTarget({ control: ctl });
+        const resultsContainer = self.getMenuTarget({ control: ctl });
 
         // Añadimos botón de imprimir
         TC.loadJS(
             !TC.control.Print,
             [TC.apiLocation + 'TC/control/Print'],
             function () {
+
                 if (!resultsContainer.querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
                     var printTitle = self.getLocaleString("feature");
                     if (ctl === self.getDisplayControl()) {
@@ -833,8 +883,8 @@ TC.control.FeatureInfoCommons.displayMode = {
                             const geom = self.filterFeature.geometry;
                             printTitle = self.getLocaleString('featuresAt', {
                                 crs: self.map.crs,
-                                x: TC.Util.formatNumber(geom[0], self.map.locale),
-                                y: TC.Util.formatNumber(geom[1], self.map.locale)
+                                x: TC.Util.formatCoord(geom[0], self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION),
+                                y: TC.Util.formatCoord(geom[1], self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION)
                             });
                         }
                         else {
@@ -844,10 +894,12 @@ TC.control.FeatureInfoCommons.displayMode = {
                     else if (ctl.currentFeature) {
                         printTitle = ctl.currentFeature.id;
                     }
+
                     // Si hay datos porque el popup es de un GFI con éxito o es de una feature resaltada damos la opción de imprimirlos
                     if (self.lastFeatureCount || (ctl.currentFeature && ctl.currentFeature.showsPopup === true)) {
                         new TC.control.Print({
                             target: resultsContainer,
+                            printableElement: self.getDisplayTarget({ control: ctl }),
                             title: printTitle
                         });
                     }
