@@ -1,24 +1,28 @@
 {
   "name": "sitna",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "API de creación de mapas JavaScript",
   "main": "gulpfile.js",
   "directories": {
     "doc": "doc"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs": "jsdoc -c ./batch/jsdoc/conf.json"
   },
   "author": "Fernando Lacunza",
-  "license": "ISC",
+  "license": "BSD-2-Clause",
   "devDependencies": {
+    "@sitna/jsdoc-template": "0.0.9",
     "chai": "~3.5.0",
     "del": "~1.1.1",
     "gulp": "^4.0.2",
     "gulp-casperjs": "~0.0.6",
     "gulp-clean-css": "^4.2.0",
-    "gulp-concat": "^2.5.2",
+    "gulp-concat": "^2.6.1",
     "gulp-debug": "~2.0.1",
+    "gulp-filter": "^6.0.0",
+    "gulp-jsdoc3": "^2.0.0",
     "gulp-jshint": "^1.9.2",
     "gulp-jsonlint": "^1.2.0",
     "gulp-minify": "^3.1.0",
@@ -27,13 +31,25 @@
     "gulp-plumber": "^1.1.0",
     "gulp-replace": "~0.5.3",
     "gulp-zip": "^5.0.0",
-    "merge-stream": "^1.0.1",
+    "jsdoc": "^3.6.3",
     "mocha": "~3.2.0",
     "mochawesome": "^2.1.0",
+    "ncp": "^2.0.0",
     "ol": "^5.3.2",
     "sinon": "~2.1.0",
     "webpack-stream": "^5.2.1",
-    "yuidocjs": "0.3.50"
+    "yuidocjs": "^0.3.50"
   },
-  "dependencies": {}
+  "dependencies": {
+    "acorn": "^7.0.0",
+    "draggabilly": "^2.2.0",
+    "dustjs-helpers": "^1.7.4",
+    "dustjs-linkedin": "2.7.1",
+    "handlebars": "^4.5.3",
+    "jszip": "^3.2.2",
+    "localforage": "^1.7.3",
+    "proj4": "^2.6.0",
+    "sortablejs": "^1.10.1",
+    "ua-parser-js": "^0.7.20"
+  }
 }
