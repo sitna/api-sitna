@@ -41,11 +41,10 @@ div.tc-map div.tc-ctl-cctr {
     }
 
         div.tc-map div.tc-ctl-cctr li > div.tc-ctl {
-            position: static; /* initial no funciona en IE */
+            position: initial;
             top: auto;
             left: auto;
             pointer-events: initial;
-            pointer-events: auto; /* initial no funciona en IE */            
         }
 
         div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-hidden, .tc-ctl-cctr li > div.tc-ctl.tc-disabled {
@@ -85,7 +84,11 @@ div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results {
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results * {
         pointer-events: all;
     }
-    
+
+    div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .tc-ctl-p-results-chart * {
+        pointer-events: unset;
+    }
+
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .prsidebar-body {
         display: inline-block;
     }
@@ -93,8 +96,9 @@ div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results {
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results #results {
         height: auto;
     }
-
+    
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results div.prcollapsed {
         top: auto;
         left: auto;
+        position: static;
     }
