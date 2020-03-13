@@ -1,8 +1,9 @@
-﻿<div class="tc-ctl-m-finfo-select">
+<div class="tc-ctl-m-finfo-select">
     <form>
-        <span>{@i18n $key="selection"/}</span>
-        {?pointSelectValue}<label class="tc-ctl-m-finfo-btn-point" title="{@i18n $key="selectionByPoint"/}"><input type="radio" name="selectmode" value="{pointSelectValue}" checked /><span class="tc-ctl-btn">{@i18n $key="byPoint"/}</span></label>{/pointSelectValue}
-        {?lineSelectValue}<label class="tc-ctl-m-finfo-btn-line" title="{@i18n $key="selectionByLine"/}"><input type="radio" name="selectmode" value="{lineSelectValue}" /><span class="tc-ctl-btn">{@i18n $key="byLine"/}</span></label>{/lineSelectValue}
-        {?polygonSelectValue}<label class="tc-ctl-m-finfo-btn-polygon" title="{@i18n $key="selectionByPrecinct"/}"><input type="radio" name="selectmode" value="{polygonSelectValue}" /><span class="tc-ctl-btn">{@i18n $key="byPrecinct"/}</span></label>{/polygonSelectValue}
+        <span>{@i18n $key="selectionBy"/}</span>
+        {?pointSelectValue}<label class="tc-ctl-m-finfo-btn-point" title="{@i18n $key=" selectionByPoint"/}"><input type="radio" name="selectmode" value="{pointSelectValue}" checked /><span class="tc-ctl-btn">{@i18n $key="byPoint"/}</span></label>{/pointSelectValue}
+        {?lineSelectValue}<label class="tc-ctl-m-finfo-btn-line" title="{@i18n $key=" selectionByLine"/}"><input type="radio" name="selectmode" value="{lineSelectValue}" /><span class="tc-ctl-btn">{@i18n $key="byLine"/}</span></label>{/lineSelectValue}
+        {?polygonSelectValue}<label class="tc-ctl-m-finfo-btn-polygon" title="{@i18n $key=" selectionByPrecinct"/}"><input type="radio" name="selectmode" value="{polygonSelectValue}" /><span class="tc-ctl-btn">{@i18n $key="byPrecinct"/}</span></label>{/polygonSelectValue}
+        <button class="tc-ctl-m-finfo-btn-remove" disabled title="{@i18n $key="deleteFeatures"/}"></button>
     </form>
 </div>
