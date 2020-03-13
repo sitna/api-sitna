@@ -18,17 +18,9 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
     ctlProto.CLASS = 'tc-ctl-toc';
 
     ctlProto.template = {};
-
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/TOC.html";
-        ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/TOCBranch.html";
-        ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/TOCNode.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "worklayers" }).w("</h2><div class=\"tc-ctl-toc-tree\"><div class=\"tc-ctl-toc-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</div><ul class=\"tc-ctl-toc-branch tc-ctl-toc-wl\">").s(ctx.get(["workLayers"], false), ctx, { "block": body_1 }, {}).w("</ul></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-toc-wlbranch", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-branch'] = function () { dust.register(ctlProto.CLASS + '-branch', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><button class=\"tc-ctl-toc-collapse-btn\"></button><input type=\"checkbox\" class=\"tc-ctl-toc-branch-cb\" name=\"toc\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["isVisible"], false), ctx, { "block": body_3 }, {}).w(" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-toc-branch\">").s(ctx.get(["children"], false), ctx, { "block": body_4 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node tc-ctl-toc-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" checked"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.p("tc-ctl-toc-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_4.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.w("<li ").x(ctx.get(["children"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(" data-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\">").x(ctx.get(["children"], false), ctx, { "block": body_3 }, {}).w("<input type=\"checkbox\" name=\"toc\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["isVisible"], false), ctx, { "block": body_4 }, {}).w(" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span><ul class=\"tc-ctl-toc-branch\">").s(ctx.get(["children"], false), ctx, { "block": body_5 }, {}).w("</ul></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node tc-ctl-toc-leaf\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("class=\"tc-ctl-toc-node\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<button class=\"tc-ctl-toc-collapse-btn\"></button>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w(" checked"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.p("tc-ctl-toc-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_5.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/TOC.html";
+    ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/TOCBranch.html";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/TOCNode.html";
 
     var _dataKeys = {
         layer: 'tcLayer',
@@ -168,44 +160,39 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
 
             self.div.querySelector('.' + self.CLASS + '-empty').classList.add(TC.Consts.classes.HIDDEN);
 
-            var template = self.CLASS + '-branch';
-            TC.loadJSInOrder(
-                !window.dust,
-                TC.url.templating,
-                function () {
-                    dust.render(template, self.layerTrees[layer.id], function (err, out) {
-                        const parser = new DOMParser();
-                        const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
-                        const uid = newLi.dataset.layerUid;
-                        const li = self.div.querySelector('.' + self.CLASS + '-wl li[data-layer-uid="' + uid + '"]');
-                        if (li) {
-                            li.innerHTML = newLi.innerHTML;
-                            li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
-                            if (!li.dataset.layerId) {
-                                li.dataset.layerId = layer.id;
-                            }
+            self.getRenderedHtml(self.CLASS + '-branch', self.layerTrees[layer.id])
+                .then(function (out) {
+                    const parser = new DOMParser();
+                    const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
+                    const uid = newLi.dataset.layerUid;
+                    const li = self.div.querySelector('.' + self.CLASS + '-wl li[data-layer-uid="' + uid + '"]');
+                    if (li) {
+                        li.innerHTML = newLi.innerHTML;
+                        li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
+                        if (!li.dataset.layerId) {
+                            li.dataset.layerId = layer.id;
                         }
-                        else {
-                            newLi.dataset.layerId = layer.id;
-                            const ul = self.div.querySelector('.' + self.CLASS + '-wl');
-                            ul.insertBefore(newLi, ul.firstChild);
-                        }
-                        if (err) {
-                            TC.error(err);
-                        }
-                    });
-                    var wl = 'ul.' + self.CLASS + '-wl';
-                    var branch = 'ul.' + self.CLASS + '-branch';
-                    var node = 'li.' + self.CLASS + '-node';
-                    var leaf = 'li.' + self.CLASS + '-leaf';
-                    self.div.querySelectorAll(wl + ' ' + branch + ' ' + branch + ',' + wl + ' ' + branch + ' ' + node).forEach(function (node) {
-                        if (!node.matches(leaf)) {
-                            node.classList.add(TC.Consts.classes.COLLAPSED);
-                        }
-                    });
-                    self.update();
+                    }
+                    else {
+                        newLi.dataset.layerId = layer.id;
+                        const ul = self.div.querySelector('.' + self.CLASS + '-wl');
+                        ul.insertBefore(newLi, ul.firstChild);
+                    }
+                })
+                .catch(function (err) {
+                    TC.error(err);
+                });
+
+            var wl = 'ul.' + self.CLASS + '-wl';
+            var branch = 'ul.' + self.CLASS + '-branch';
+            var node = 'li.' + self.CLASS + '-node';
+            var leaf = 'li.' + self.CLASS + '-leaf';
+            self.div.querySelectorAll(wl + ' ' + branch + ' ' + branch + ',' + wl + ' ' + branch + ' ' + node).forEach(function (node) {
+                if (!node.matches(leaf)) {
+                    node.classList.add(TC.Consts.classes.COLLAPSED);
                 }
-            );
+            });
+            self.update();
         }
     };
 
