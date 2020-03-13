@@ -14,9 +14,6 @@ TC.control.FeatureTools = function () {
 
     TC.Control.apply(self, arguments);
 
-    self.layer = null;
-    self.exportsState = true;
-
     const cs = self._classSelector = '.' + self.CLASS;
     self._selectors = {
         ELEVATION_CHECKBOX: cs + '-dialog-elev input[type=checkbox]',
@@ -55,14 +52,10 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
     ctlProto.FILE_TITLE_SEPARATOR = '__';
 
     ctlProto.template = {};
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureTools.html";
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/FeatureToolsDialog.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-ftools\"><button class=\"tc-ctl-ftools-dl-btn\" title=\"").h("i18n", ctx, {}, { "$key": "download" }).w("\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button><button class=\"tc-ctl-ftools-share-btn\" title=\"").h("i18n", ctx, {}, { "$key": "share" }).w("\">").h("i18n", ctx, {}, { "$key": "share" }).w("</button><button class=\"tc-ctl-ftools-zoom-btn\" title=\"").h("i18n", ctx, {}, { "$key": "zoomToFeature" }).w("\">").h("i18n", ctx, {}, { "$key": "zoomToFeature" }).w("</button><button class=\"tc-ctl-ftools-del-btn\" title=\"").h("i18n", ctx, {}, { "$key": "deleteFeature" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteFeature" }).w("</button></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-ftools-dialog tc-ctl-ftools-dl-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "feature" }).w(" - ").h("i18n", ctx, {}, { "$key": "download" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\">").s(ctx.get(["elevation"], false), ctx, { "block": body_1 }, {}).w("<div class=\"tc-ctl-ftools-dialog-dl\"><div><button class=\"tc-button tc-btn-dl tc-ctl-ftools-dl-btn-kml\" data-format=\"KML\" title=\"KML\">KML</button><button class=\"tc-button tc-btn-dl tc-ctl-ftools-dl-btn-gml\" data-format=\"GML\" title=\"GML\">GML</button><button class=\"tc-button tc-btn-dl tc-ctl-ftools-dl-btn-geojson\" data-format=\"GeoJSON\" title=\"GeoJSON\">GeoJSON</button><button class=\"tc-button tc-btn-dl tc-ctl-ftools-dl-btn-wkt\" data-format=\"WKT\" title=\"WKT\">WKT</button><button class=\"tc-button tc-btn-dl tc-ctl-ftools-dl-btn-gpx\" data-format=\"GPX\" title=\"GPX\">GPX</button></div></div></div></div></div><div class=\"tc-ctl-ftools-dialog tc-ctl-ftools-share-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "feature" }).w(" - ").h("i18n", ctx, {}, { "$key": "share" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><div class=\"tc-ctl-ftools-share-dialog-ctl\"></div></div></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-ftools-dialog-elev\"><input id=\"").f(ctx.get(["checkboxId"], false), ctx, "h").w("\" type=\"checkbox\"><label for=\"").f(ctx.get(["checkboxId"], false), ctx, "h").w("\" class=\"tc-ctl-ftools-dialog-elev-label\">").h("i18n", ctx, {}, { "$key": "includeElevations" }).w("</label></div>").x(ctx.get(["resolution"], false), ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<div class=\"tc-ctl-ftools-dialog-ip tc-hidden\"><h4>").h("i18n", ctx, {}, { "$key": "interpolateCoordsFromElevProfile" }).w("</h4><label><input type=\"radio\" name=\"finfo-ip-coords\" value=\"0\" checked /><span>").h("i18n", ctx, {}, { "$key": "no" }).w("</span></label><label><input type=\"radio\" name=\"finfo-ip-coords\" value=\"1\"/><span>").h("i18n", ctx, {}, { "$key": "yes" }).w("</span></label><div class=\"tc-ctl-ftools-dialog-ip-m tc-hidden\">").h("i18n", ctx, {}, { "$key": "interpolateEveryXMeters.1" }).w("<input type=\"number\" min=\"1\" step=\"1\" class=\"tc-textbox\" value=\"").f(ctx.get(["resolution"], false), ctx, "h").w("\" />").h("i18n", ctx, {}, { "$key": "interpolateEveryXMeters.2" }).w("</div></div>"); } body_2.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureTools.html";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/FeatureToolsDialog.html";
+
+    var downloadDialog = null;
 
     ctlProto.register = function (map) {
         const self = this;
@@ -71,12 +64,8 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                 self.currentDisplay = e.control;              // caso feature compartida
                 if (self.currentDisplay.caller || (!self.currentDisplay.caller && self.currentDisplay.currentFeature)) {
                     self.highlightedFeature = !(!self.currentDisplay.caller && self.currentDisplay.currentFeature) ? self.currentDisplay.caller.highlightedFeature : self.currentDisplay.currentFeature;
-                    if (self.highlightedFeature) {
-                        self.highlightedFeature.showsPopup = true;
-                    }
-
                     self.addUI(self.currentDisplay);
-                }                
+                }
             })
             .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
                 self.currentDisplay = null;
@@ -85,26 +74,25 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                 const feature = e.feature;
                 if (self.currentDisplay && self.currentDisplay.caller && feature === self.currentDisplay.caller.highlightedFeature) {
                     self.highlightedFeature = feature;
-                    self.highlightedFeature.showsPopup = true;
-                }
-            })
-            .on(TC.Consts.event.FEATUREREMOVE, function (e) {
-                const feature = e.feature;
-                if (feature === self.highlightedFeature) {
-                    const highlightedFeature = feature.clone();
-                    highlightedFeature.showsPopup = true;
-                    // Si la feature se eliminó por un cierre de popup provocado por la apertura de otro, 
-                    // reasignamos la feature nueva al popup, ya que este está apuntando a una feature que ya no está en el mapa.
-                    map.getControlsByClass('TC.control.Popup').concat(map.getControlsByClass('TC.control.ResultsPanel')).forEach(function (ctl) {
-                        if (ctl.currentFeature === self.highlightedFeature) {
-                            ctl.currentFeature = highlightedFeature;
-                        }
-                    });
-                    self.getHighlightLayer().then(function (layer) {
-                        layer.addFeature(highlightedFeature);
-                    });
                 }
             });
+        //.on(TC.Consts.event.FEATUREREMOVE, function (e) {
+        //    const feature = e.feature;
+        //    if (feature === self.highlightedFeature) {
+        //        const highlightedFeature = feature.clone();
+        //        highlightedFeature.showsPopup = true;
+        //        // Si la feature se eliminó por un cierre de popup provocado por la apertura de otro, 
+        //        // reasignamos la feature nueva al popup, ya que este está apuntando a una feature que ya no está en el mapa.
+        //        map.getControlsByClass('TC.control.Popup').concat(map.getControlsByClass('TC.control.ResultsPanel')).forEach(function (ctl) {
+        //            if (ctl.currentFeature === self.highlightedFeature) {
+        //                ctl.currentFeature = highlightedFeature;
+        //            }
+        //        });
+        //        self.getHighlightLayer().then(function (layer) {
+        //            layer.addFeature(highlightedFeature);
+        //        });
+        //    }
+        //});
 
         return new Promise(function (resolve, reject) {
             Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]).then(function () {
@@ -122,56 +110,18 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         });
     };
 
-    ctlProto.render = function (callback) {
+    ctlProto.render = function () {
         const self = this;
+
         return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', {
             checkboxId: self.getUID(),
             elevation: self.options.displayElevation
         }, function (html) {
             self._dialogDiv.innerHTML = html;
-            self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
-                TC.Util.closeModal();
-                const li = self.map.getLoadingIndicator();
-                const waitId = li && li.addWait();
-
-                const shareOptions = {};
-                if (self.options.displayElevation && self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked) {
-                    const interpolateCoords = self._dialogDiv.querySelector(self._selectors.INTERPOLATION_RADIO + ':checked').value === "1";
-                    shareOptions.elevation = {
-                        resolution: interpolateCoords ? parseFloat(self._dialogDiv.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || self.options.displayElevation.resolution : 0
-                    };
-                }
-                prepareFeatureToShare(self, shareOptions)
-                    .then(
-                    function (feature) {
-                        self.map.exportFeatures([feature], {
-                            fileName: self._getFeatureFilename(feature),
-                            format: e.target.dataset.format
-                        });
-                    },
-                    function (error) {
-                        if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
-                            TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
-                            return;
-                        }
-                        TC.error(self.getLocaleString('elevation.error'));
-                    }
-                    )
-                    .finally(function () {
-                        li && li.removeWait(waitId);
-                    });
-            }));
-            self._dialogDiv.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.ELEVATION_CHECKBOX, function (e) {
-                self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
-            }));
-            self._dialogDiv.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (e) {
-                const idDiv = self._dialogDiv.querySelector(self._selectors.INTERPOLATION_DISTANCE);
-                idDiv.classList.toggle(TC.Consts.classes.HIDDEN, e.target.value === '0');
-            }));
-
-            self.trigger(TC.Consts.event.CONTROLRENDER);
-            if (TC.Util.isFunction(callback)) {
-                callback();
+            if (!downloadDialog) {
+                self.map.addControl('FeatureDownloadDialog').then(ctl => {
+                    downloadDialog = ctl;
+                });
             }
         }));
     };
@@ -186,7 +136,8 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         if (menuIsMissing()) {
             // Añadimos los botones de herramientas
             self.getRenderedHtml(self.CLASS, null, function (html) {
-                if (menuIsMissing()) {
+                if (menuIsMissing()) {                    
+
                     const parser = new DOMParser();
                     const tools = parser.parseFromString(html, 'text/html').body.firstChild;
                     menuContainer.appendChild(tools);
@@ -199,7 +150,31 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                         shareBtn.parentElement.removeChild(shareBtn);
                     }
                     self._setToolButtonHandlers(tools);
-                    self._decorateDisplay(ctl.getContainerElement());
+
+                    const container = ctl.getContainerElement();
+                    self._decorateDisplay(container);
+
+                    // Añadimos botón de imprimir
+                    TC.loadJS(
+                        !TC.control.Print,
+                        [TC.apiLocation + 'TC/control/Print'],
+                        function () {
+                            var printTitle = "";
+
+                            if (!container.querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
+                                if (self.highlightedFeature) {
+                                    printTitle = self.highlightedFeature.id;
+
+                                    if (self.highlightedFeature.showsPopup === true) {
+                                        new TC.control.Print({
+                                            target: menuContainer,
+                                            printableElement: container,
+                                            title: printTitle
+                                        });
+                                    }
+                                }
+                            }
+                        });
                 }
             });
         }
@@ -209,7 +184,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
     };
 
     ctlProto._decorateDisplay = function (container) {
-        const self = this;        
+        const self = this;
 
         if (self.highlightedFeature) {
 
@@ -220,7 +195,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                     self.zoomToCurrentFeature();
                 });
 
-                attributeTable.querySelectorAll('a').forEach(function (a) {
+                attributeTable.querySelectorAll('a, table label, table input').forEach(function (a) {
                     a.addEventListener(TC.Consts.event.CLICK, function (e) {
                         e.stopPropagation(); // No queremos zoom si pulsamos en un enlace
                     });
@@ -228,27 +203,8 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
 
                 attributeTable.classList.add(self.CLASS + '-zoom');
                 attributeTable.setAttribute('title', self.getLocaleString('clickToCenter'));
-            }                        
-
-            // Añadimos botón de imprimir
-            TC.loadJS(
-                !TC.control.Print,
-                [TC.apiLocation + 'TC/control/Print'],
-                function () {
-                    var printTitle = "";
-
-                    if (self.highlightedFeature) {
-                        printTitle = self.highlightedFeature.id;
-
-                        if (self.highlightedFeature.showsPopup === true) {
-                            new TC.control.Print({
-                                target: container,
-                                title: printTitle
-                            });
-                        }
-                    }
-                });
-        }        
+            }
+        }
     };
 
     ctlProto.updateUI = function (ctl) {
@@ -258,7 +214,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         clearTimeout(self._uiUpdateTimeout);
         self._uiUpdateTimeout = setTimeout(function () {
             const currentFeature = self.getCurrentFeature();
-            uiDiv.classList.toggle(TC.Consts.classes.ACTIVE, !!(currentFeature && currentFeature.showsPopup));
+            uiDiv.classList.toggle(TC.Consts.classes.ACTIVE, currentFeature && currentFeature.layer.owner ? currentFeature.layer.owner.filterLayer !== currentFeature.layer : true);
         }, 100);
     };
 
@@ -288,48 +244,25 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         });
     };
 
-    ctlProto.getHighlightLayer = function () {
-        const self = this;
-        return new Promise(function (resolve, reject) {
-            if (self.layer) {
-                resolve(self.layer);
-            }
-            else {
-                self.map.addLayer({
-                    id: self.getUID(),
-                    title: self.CLASS + ': Highlighted features layer',
-                    type: TC.Consts.layerType.VECTOR,
-                    stealth: true
-                }).then(function (layer) {
-                    if (!self.layer) {
-                        self.layer = layer;
-                    }
-                    resolve(self.layer);
-                });
-            }
-        });
-    };
-
     ctlProto.showDownloadDialog = function () {
         const self = this;
 
-        const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-dialog');
         const feature = self.getCurrentFeature();
-        const isLine = (TC.feature.Polyline && feature instanceof TC.feature.Polyline) ||
-            (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline);
-        const isPolygon = (TC.feature.Polygon && feature instanceof TC.feature.Polygon) ||
-            (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon);
 
-        if (self.options.displayElevation) {
-            // Si no es una línea o polígono, no es necesario preguntar si queremos interpolar
-            const ipDiv = dialog.querySelector('.' + self.CLASS + '-dialog-ip');
-            ipDiv.classList.toggle(TC.Consts.classes.HIDDEN, !self._dialogDiv.querySelector(self._selectors.ELEVATION_CHECKBOX).checked || (!isLine && !isPolygon));
-        }
-        // Si es un polígono, no es necesario mostrar el botón de GPX
-        const gpxBtn = dialog.querySelector('button[data-format=GPX]');
-        gpxBtn.classList.toggle(TC.Consts.classes.HIDDEN, isPolygon);
+        var options = {
+            title: self.getLocaleString("feature") + " - " + self.getLocaleString("download"),
+            fileName: self._getFeatureFilename(feature)
+        };
 
-        TC.Util.showModal(self._dialogDiv.querySelector('.' + self.CLASS + '-dl-dialog'));
+        if (self.options.displayElevation !== true)
+            options = Object.assign({}, options, { elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation) });
+        else
+            options = Object.assign({}, options, { elevation: self.map.elevation && self.map.elevation.options });
+
+        if (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon || TC.feature.Polygon && feature instanceof TC.feature.Polygon)
+            options = Object.assign({}, options, { excludedFormats: ["GPX"] });
+
+        downloadDialog.open(feature, options);
     };
 
     ctlProto.showShareDialog = function () {
@@ -371,9 +304,8 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                 self.currentDisplay.close ? self.currentDisplay.close() : self.currentDisplay.hide();
             }
         };
-        // No pedimos confirmación para borrar si es un resalte de GFI o una de las features añadidas por FeatureTools.
-        if ((self.currentDisplay && self.currentDisplay.caller && self.currentDisplay.caller.highlightedFeature === currentFeature) ||
-            currentFeature.layer === self.layer) {
+        // No pedimos confirmación para borrar si es un resalte de GFI.
+        if (currentFeature && currentFeature.layer.owner && currentFeature.layer === currentFeature.layer.owner.resultsLayer) {
             removeFeature();
             closeDisplay();
         }
@@ -465,23 +397,4 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         return layerTitle.toLowerCase().replace(/\s/gi, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
     };
 
-    ctlProto.exportState = function () {
-        const self = this;
-        if (self.exportsState && self.layer) {
-            return {
-                id: self.id,
-                layer: self.layer.exportState()
-            };
-        }
-        return null;
-    };
-
-    ctlProto.importState = function (state) {
-        const self = this;
-        if (state.layer) {
-            self.getHighlightLayer().then(function (layer) {
-                layer.importState(state.layer);
-            });
-        }
-    };
 })();
