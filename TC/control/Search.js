@@ -601,13 +601,21 @@ var SearchType = function (type, options, parent) {
                 var _properties = _getProperties(self.outputProperties);
                 var _ids = _getProperties(self.dataIdProperty);
 
+                const removeDuplicates = (toCheck) => {
+                    const arr = toCheck.split(',');
+                    return arr.filter((item, i) => {
+                        return (arr.indexOf(item) === i);
+                    }).join(',');
+                };
+
                 if (_properties instanceof Array && _ids instanceof Array) {
                     params.PROPERTYNAME = '';
                     for (var i = 0; i < _properties.length; i++) {
-                        params.PROPERTYNAME += '(' + _properties[i] + ',' + _ids[i] + ')';
+                        params.PROPERTYNAME += '(' + removeDuplicates(_properties[i] + ',' + _ids[i]) + ')';
                     }
-                } else
-                    params.PROPERTYNAME = _properties + ',' + _ids;
+                } else {
+                    params.PROPERTYNAME = removeDuplicates(_properties + ',' + _ids);
+                }
 
                 params.FILTER = filters.f;
 
@@ -1101,7 +1109,7 @@ TC.control.Search = function () {
         geometryName: 'the_geom',
         featureType: 'TOPONI_Txt_Toponimos',
         renderFeatureType: '',
-        dataIdProperty: ['CTOPONIMO'],
+        dataIdProperty: ['CMUNICIPIO', 'CTOPONIMO'],
         idPropertiesIdentifier: '#',
         queryProperties: {
             firstQueryWord: ['TOPONIMO', 'TOPONINOAC']
@@ -1118,7 +1126,7 @@ TC.control.Search = function () {
             {
                 point: {
                     radius: 0,
-                    label: "CADTEXT",
+                    label: "TOPONIMO",
                     angle: "CADANGLE",
                     fontColor: "#ff5722",
                     fontSize: 14,
@@ -1160,7 +1168,7 @@ TC.control.Search = function () {
             {
                 point: {
                     radius: 0,
-                    label: "CADTEXT",
+                    label: "TOPONIMO",
                     angle: "CADANGLE",
                     fontColor: "#ff5722",
                     fontSize: 14,
@@ -1421,7 +1429,6 @@ TC.control.Search = function () {
                     resolve(self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel);
                 }
             });
-            return done;
         }
     };
 
@@ -1499,12 +1506,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
     TC.Consts.event.SEARCHQUERYEMPTY = TC.Consts.event.SEARCHQUERYEMPTY || 'searchqueryempty.tc';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/Search.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "search.1" }).w("</h2><div class=\"tc-ctl-search-content\"><input type=\"search\" class=\"tc-ctl-search-txt\" placeholder=\"").h("i18n", ctx, {}, { "$key": "search.placeholder" }).w("\" title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" /><button title=\"").h("i18n", ctx, {}, { "$key": "search.instructions" }).w("\" class=\"tc-ctl-btn tc-ctl-search-btn\">").h("i18n", ctx, {}, { "$key": "search.2" }).w("</button><ul class=\"tc-ctl-search-list tc-hidden\"></ul></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/Search.html";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -1566,6 +1568,7 @@ TC.inherit(TC.control.Search, TC.Control);
         self.layerPromise = map.addLayer({
             id: self.getUID(),
             title: 'Búsquedas',
+            owner: self,
             stealth: true,
             declutter: true,
             type: TC.Consts.layerType.VECTOR,
@@ -1616,6 +1619,279 @@ TC.inherit(TC.control.Search, TC.Control);
         self.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "properties", "outputFormat"];
 
         return result;
+    };
+
+    const highlighting = function (elm) {
+        const self = this;
+
+        var highlighted = elm.label;
+        var strReg = [];
+
+        // eliminamos caracteres extraños del patrón ya analizado
+
+        if (self.lastPattern.trim().length === 0 && self.textInput.value.trim().length > 0) {
+            self.lastPattern = self.textInput.value.trim();
+        }
+
+        var normalizedLastPattern = self.lastPattern;
+        if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(normalizedLastPattern))
+            normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
+        else
+            normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
+
+
+        var querys = [];
+        var separatorChar = ',';
+        if (normalizedLastPattern.indexOf(separatorChar) == -1) {
+            separatorChar = ' ';
+        }
+
+        querys = normalizedLastPattern.trim().split(separatorChar);
+
+        // si estamos tratando con coordenadas el separador es el espacio, no la coma
+        if ((elm.label.indexOf(self.LAT_LABEL) > -1 && elm.label.indexOf(self.LON_LABEL) > -1) ||
+            (elm.label.indexOf(self.UTMX_LABEL) > -1 && elm.label.indexOf(self.UTMY_LABEL) > -1)) {
+            querys = self.lastPattern.split(' ');
+
+            for (var t = 0; t < querys.length; t++) {
+                if (querys[t].trim().slice(-1) == ',')
+                    querys[t] = querys[t].slice(0, -1);
+            }
+        }
+
+        for (var q = 0; q < querys.length; q++) {
+            if (querys[q].trim().length > 0) {
+                strReg.push('(' + querys[q].trim().replace(/\(/gi, "").replace(/\)/gi, "") + ')');
+                var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
+                if (match) {
+                    var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
+                    for (var st = 0; st < _strReg.length; st++) {
+                        if (_strReg[st].trim().length > 0)
+                            strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
+                    }
+                }
+            }
+        }
+
+        if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
+            var rPattern = self.getSearchTypeByRole(elm.dataRole).getPattern();
+            var match = rPattern.exec(self.lastPattern);
+
+            if (match) {
+                strReg = [];
+
+                if (match[2] && match[3] && match[4]) {
+                    strReg.push('(' + match[2] + "-" + match[3] + "-" + match[4] + ')');
+                } else if (match[2] && match[3]) {
+                    strReg.push('(' + match[2] + "-" + match[3] + ')');
+                } else if (match[3] && match[4]) {
+                    strReg.push('(' + match[3] + "-" + match[4] + ')');
+                } else if (match[2] || match[3]) {
+                    strReg.push('(' + (match[2] || match[3]) + ')');
+                }
+
+                if (match[5]) {
+                    strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
+                }
+            } else if (match && match[5]) {
+                strReg = [];
+
+                strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
+            }
+        }
+
+        var pattern = '(' + strReg.join('|') + ')';
+
+        pattern = pattern.replace(/á|à/gi, "a");
+        pattern = pattern.replace(/é|è/gi, "e");
+        pattern = pattern.replace(/í|ì/gi, "i");
+        pattern = pattern.replace(/ó|ò/gi, "o");
+        pattern = pattern.replace(/ú|ù/gi, "u");
+        pattern = pattern.replace(/ü/gi, "u");
+
+        pattern = pattern.replace(/a/gi, "[a|á|à]");
+        pattern = pattern.replace(/e/gi, "[e|é|è]");
+        pattern = pattern.replace(/i/gi, "[i|í|ì]");
+        pattern = pattern.replace(/o/gi, "[o|ó|ò]");
+        pattern = pattern.replace(/u/gi, "[u|ú|ü|ù]");
+        var rex = new RegExp(pattern, "gi");
+
+        var label = elm.label;
+
+        if (elm.dataRole !== TC.Consts.searchType.ROAD || elm.dataRole !== TC.Consts.searchType.ROADPK) {
+            highlighted = label.replace(rex,
+                function () {
+                    var params = Array.prototype.slice.call(arguments, 0);
+
+                    if (params[params.length - 3]) {
+                        return params[0].replace(params[params.length - 3], "<b>" + params[params.length - 3] + "</b>");
+                    } else {
+                        return "<b>" + params[0] + "</b>";
+                    }
+                });
+        } else {
+            highlighted = label.replace(rex, "<b>$1</b>");
+        }
+
+        return highlighted;
+    };
+
+    const selectionCallback = function (e) {
+        const self = this;
+        var _target = e.target;
+
+        if (_target.tagName.toLowerCase() !== 'a') {
+            let el = e.target;
+            const matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector || el.msMatchesSelector;
+
+            while (el) {
+                if (matchesSelector.call(el, 'a')) {
+                    _target = el;
+                    break;
+                } else {
+                    el = el.parentElement;
+                }
+            }
+        }
+
+        if (_target.querySelector('span[hidden]')) {
+            self.textInput.value = _target.querySelector('span[hidden]').textContent;
+            self.lastPattern = self.textInput.value;
+            self._goToResult(unescape(_target.getAttribute('href')).substring(1), _target.parentNode.getAttribute('dataRole'));
+            TC.UI.autocomplete.call(self.textInput, 'clear');
+        }
+    };
+
+    const sortAlphaNum = function (a, b) {
+        const reA = /[^a-zA-Z]/g;
+        const reN = /[^0-9]/g;
+
+        var AInt = parseInt(a, 10);
+        var BInt = parseInt(b, 10);
+
+        if (isNaN(AInt) && isNaN(BInt)) {
+            var aA = a.replace(reA, "");
+            var bA = b.replace(reA, "");
+            if (aA === bA) {
+                var aN = parseInt(a.replace(reN, ""), 10);
+                var bN = parseInt(b.replace(reN, ""), 10);
+                return aN === bN ? 0 : aN > bN ? 1 : -1;
+            } else {
+                return aA > bA ? 1 : -1;
+            }
+        } else if (isNaN(AInt)) {//A is not an Int
+            return 1;//to make alphanumeric sort first return -1 here
+        } else if (isNaN(BInt)) {//B is not an Int
+            return -1;//to make alphanumeric sort first return 1 here
+        } else {
+            return AInt > BInt ? 1 : -1;
+        }
+    };
+
+    const sortByRoleAndAlphabet = function (a, b) {
+        const self = this;
+
+        if (self.getSearchTypeByRole(a.dataRole).searchWeight && self.getSearchTypeByRole(b.dataRole).searchWeight) {
+            if ((self.getSearchTypeByRole(a.dataRole).searchWeight || 0) > (self.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
+                return 1;
+            } else if ((self.getSearchTypeByRole(a.dataRole).searchWeight || 0) < (self.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
+                return -1;
+            }
+            else {
+                return sortAlphaNum(a.label, b.label);
+            }
+        } else {
+            if (a.dataRole > b.dataRole) {
+                return 1;
+            }
+            else if (a.dataRole < b.dataRole)
+                return -1;
+            else {
+                return sortAlphaNum(a.label, b.label);
+            }
+        }
+    };
+
+    const sortByRoot = function (a, b) {
+        const self = this;
+
+        const sort_ = function () {
+            var first = self.rootCfg.active.root[0] instanceof Array ? self.rootCfg.active.root[0].join('-') : self.rootCfg.active.root[0];
+
+            var aRoot, bRoot;
+            if (a.properties && a.properties.length > 0 && b.properties && b.properties.length > 0) {
+                aRoot = self.rootCfg.active.dataIdProperty.map(function (elem) { return a.properties[elem].toString(); }).join('-');
+                bRoot = self.rootCfg.active.dataIdProperty.map(function (elem) { return b.properties[elem].toString(); }).join('-');
+            } else {
+                aRoot = a.id;
+                bRoot = b.id;
+            }
+
+            if (aRoot !== first && bRoot === first) {
+                return 1;
+            } else if (aRoot === first && bRoot !== first) {
+                return -1;
+            } else {
+                return sortAlphaNum(a.label, b.label);
+            }
+        }.bind(this);
+
+        if (self.getSearchTypeByRole(a.dataRole).searchWeight && self.getSearchTypeByRole(b.dataRole).searchWeight) {
+            if ((self.getSearchTypeByRole(a.dataRole).searchWeight || 0) > (self.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
+                return 1;
+            } else if ((self.getSearchTypeByRole(a.dataRole).searchWeight || 0) < (self.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
+                return -1;
+            }
+            else {
+                return sort_();
+            }
+        }
+        else {
+            return sort_();
+        }
+    };
+
+    const buildHTML = function (results) {
+        const self = this;
+
+        var html = [];
+        var dataRoles = [];
+
+        // ordenamos por roles y alfabéticamente
+        var data = results.results.sort(sortByRoleAndAlphabet.bind(self));
+
+        if (self.rootCfg.active) {// si hay root, aplicamos el orden por entidades 
+            data = data.sort(sortByRoot.bind(self));
+        }
+
+        for (var i = 0; i < data.length; i++) {
+            var elm = data[i];
+
+            if (dataRoles.indexOf(elm.dataRole) == -1) {
+                html[html.length] = self.getSearchTypeByRole(elm.dataRole).getSuggestionListHead();
+                dataRoles.push(elm.dataRole);
+            }
+
+            html[html.length] = '<li dataRole="' + elm.dataRole + '">' +
+                '<a href="' + '#' + encodeURIComponent(elm.id) + '">' +
+                '<span hidden>' +
+                elm.label +
+                '</span>' +
+                highlighting.call(self, elm) +
+                '</a>' +
+                '</li>';
+        }
+
+        Array.prototype.map.call(self.resultsList.querySelectorAll('li[dataRole]'), (elm) => {
+            return elm.getAttribute('dataRole');
+        }).filter((dataRole, i, liDataRoles) => {
+            return liDataRoles.indexOf(dataRole) === i && !dataRoles.includes(dataRole);
+        }).forEach(dataRole => {
+            html[html.length] = self.getSearchTypeByRole(dataRole).getSuggestionListHead();
+            html[html.length] = '<li dataRole="' + dataRole + '"><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
+        });
+        
+        return html.join('');
     };
 
     ctlProto.renderData = function (data, callback) {
@@ -1760,303 +2036,40 @@ TC.inherit(TC.control.Search, TC.Control);
                         }
                     };
 
-                    var closest = function (el, selector) {
-                        const matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector || el.msMatchesSelector;
-
-                        while (el) {
-                            if (matchesSelector.call(el, selector)) {
-                                return el;
-                            } else {
-                                el = el.parentElement;
-                            }
-                        }
-                        return null;
-                    };
-
-                    const callback = function (e) {
-                        var _target = e.target;
-
-                        if (e.target.tagName.toLowerCase() !== 'a') {
-                            _target = closest(e.target, 'a');
-                        }
-
-                        if (_target.querySelector('span[hidden]')) {
-                            self.textInput.value = _target.querySelector('span[hidden]').textContent;
-                            self.lastPattern = self.textInput.value;
-                            self._goToResult(unescape(_target.getAttribute('href')).substring(1), _target.parentNode.getAttribute('dataRole'));
-                            TC.UI.autocomplete.call(self.textInput, 'clear');
-                        }
-                    };
-
-                    const buildHTML = function (results) {
-
-                        var html = [];
-                        var dataRoles = [];
-
-                        var reA = /[^a-zA-Z]/g;
-                        var reN = /[^0-9]/g;
-                        function sortAlphaNum(a, b) {
-                            var AInt = parseInt(a, 10);
-                            var BInt = parseInt(b, 10);
-
-                            if (isNaN(AInt) && isNaN(BInt)) {
-                                var aA = a.replace(reA, "");
-                                var bA = b.replace(reA, "");
-                                if (aA === bA) {
-                                    var aN = parseInt(a.replace(reN, ""), 10);
-                                    var bN = parseInt(b.replace(reN, ""), 10);
-                                    return aN === bN ? 0 : aN > bN ? 1 : -1;
-                                } else {
-                                    return aA > bA ? 1 : -1;
-                                }
-                            } else if (isNaN(AInt)) {//A is not an Int
-                                return 1;//to make alphanumeric sort first return -1 here
-                            } else if (isNaN(BInt)) {//B is not an Int
-                                return -1;//to make alphanumeric sort first return 1 here
-                            } else {
-                                return AInt > BInt ? 1 : -1;
-                            }
-                        };
-
-                        // ordenamos por roles y alfabéticamente
-                        var data = results.results.sort(function (a, b) {
-                            if (this.ctx.getSearchTypeByRole(a.dataRole).searchWeight && this.ctx.getSearchTypeByRole(b.dataRole).searchWeight) {
-                                if ((this.ctx.getSearchTypeByRole(a.dataRole).searchWeight || 0) > (this.ctx.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
-                                    return 1;
-                                } else if ((this.ctx.getSearchTypeByRole(a.dataRole).searchWeight || 0) < (this.ctx.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
-                                    return -1;
-                                }
-                                else {
-                                    return sortAlphaNum(a.label, b.label);
-                                }
-                            } else {
-                                if (a.dataRole > b.dataRole) {
-                                    return 1;
-                                }
-                                else if (a.dataRole < b.dataRole)
-                                    return -1;
-                                else {
-                                    return sortAlphaNum(a.label, b.label);
-                                }
-                            }
-                        }.bind(this));
-
-                        if (self.rootCfg.active) {// si hay root, aplicamos el orden por entidades 
-                            data = data.sort(function (a, b) {
-
-                                const sort_ = function () {
-                                    var first = this.rootCfg.active.root[0] instanceof Array ? this.rootCfg.active.root[0].join('-') : this.rootCfg.active.root[0];
-
-                                    var aRoot, bRoot;
-                                    if (a.properties && a.properties.length > 0 && b.properties && b.properties.length > 0) {
-                                        aRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return a.properties[elem].toString(); }).join('-');
-                                        bRoot = this.rootCfg.active.dataIdProperty.map(function (elem) { return b.properties[elem].toString(); }).join('-');
-                                    } else {
-                                        aRoot = a.id;
-                                        bRoot = b.id;
-                                    }
-
-                                    if (aRoot !== first && bRoot === first) {
-                                        return 1;
-                                    } else if (aRoot === first && bRoot !== first) {
-                                        return -1;
-                                    } else {
-                                        return sortAlphaNum(a.label, b.label);
-                                    }
-                                }.bind(this);
-
-                                if (this.getSearchTypeByRole(a.dataRole).searchWeight && this.getSearchTypeByRole(b.dataRole).searchWeight) {
-                                    if ((this.getSearchTypeByRole(a.dataRole).searchWeight || 0) > (this.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
-                                        return 1;
-                                    } else if ((this.getSearchTypeByRole(a.dataRole).searchWeight || 0) < (this.getSearchTypeByRole(b.dataRole).searchWeight || 0)) {
-                                        return -1;
-                                    }
-                                    else {
-                                        return sort_();
-                                    }
-                                }
-                                else {
-                                    return sort_();
-                                }
-
-                            }.bind(self));
-                        }
-
-                        for (var i = 0; i < data.length; i++) {
-                            var elm = data[i];
-
-                            if (dataRoles.indexOf(elm.dataRole) == -1) {
-
-                                var type = this.ctx.getSearchTypeByRole(elm.dataRole);
-
-                                html[html.length] = type.getSuggestionListHead();
-
-                                dataRoles.push(elm.dataRole);
-                            }
-
-                            const highlighting = function () {
-                                var highlighted = elm.label;
-                                var strReg = [];
-
-                                // eliminamos caracteres extraños del patrón ya analizado
-
-                                if (this.ctx.lastPattern.trim().length === 0 && self.textInput.value.trim().length > 0) {
-                                    this.ctx.lastPattern = self.textInput.value.trim();                                    
-                                }
-
-                                var normalizedLastPattern = this.ctx.lastPattern;
-                                if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(normalizedLastPattern))
-                                    normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
-                                else
-                                    normalizedLastPattern = normalizedLastPattern.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
-
-
-                                var querys = [];
-                                var separatorChar = ',';
-                                if (normalizedLastPattern.indexOf(separatorChar) == -1) {
-                                    separatorChar = ' ';
-                                }
-
-                                querys = normalizedLastPattern.trim().split(separatorChar);                                
-
-                                // si estamos tratando con coordenadas el separador es el espacio, no la coma
-                                if ((elm.label.indexOf(this.ctx.LAT_LABEL) > -1 && elm.label.indexOf(this.ctx.LON_LABEL) > -1) ||
-                                    (elm.label.indexOf(this.ctx.UTMX_LABEL) > -1 && elm.label.indexOf(this.ctx.UTMY_LABEL) > -1)) {
-                                    querys = this.ctx.lastPattern.split(' ');
-
-                                    for (var t = 0; t < querys.length; t++) {
-                                        if (querys[t].trim().slice(-1) == ',')
-                                            querys[t] = querys[t].slice(0, -1);
-                                    }
-                                }
-
-                                for (var q = 0; q < querys.length; q++) {
-                                    if (querys[q].trim().length > 0) {
-                                        strReg.push('(' + querys[q].trim().replace(/\(/gi, "").replace(/\)/gi, "") + ')');
-                                        var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
-                                        if (match) {
-                                            var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
-                                            for (var st = 0; st < _strReg.length; st++) {
-                                                if (_strReg[st].trim().length > 0)
-                                                    strReg.push('(' + _strReg[st].trim().replace(/\(/gi, "\\(").replace(/\)/gi, "\\)") + ')');
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADPK) {
-                                    var rPattern = self.getSearchTypeByRole(elm.dataRole).getPattern();
-                                    var match = rPattern.exec(this.ctx.lastPattern);
-
-                                    if (match) {
-                                        strReg = [];
-
-                                        if (match[2] && match[3] && match[4]) {
-                                            strReg.push('(' + match[2] + "-" + match[3] + "-" + match[4] + ')');
-                                        } else if (match[2] && match[3]) {
-                                            strReg.push('(' + match[2] + "-" + match[3] + ')');
-                                        } else if (match[3] && match[4]) {
-                                            strReg.push('(' + match[3] + "-" + match[4] + ')');
-                                        } else if (match[2] || match[3]) {
-                                            strReg.push('(' + (match[2] || match[3]) + ')');
-                                        }
-
-                                        if (match[5]) {
-                                            strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
-                                        }
-                                    } else if (match && match[5]) {
-                                        strReg = [];
-
-                                        strReg.push("(?:" + self.getLocaleString("search.list.pk") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
-                                    }
-                                }
-
-                                var pattern = '(' + strReg.join('|') + ')';
-
-                                pattern = pattern.replace(/á|à/gi, "a");
-                                pattern = pattern.replace(/é|è/gi, "e");
-                                pattern = pattern.replace(/í|ì/gi, "i");
-                                pattern = pattern.replace(/ó|ò/gi, "o");
-                                pattern = pattern.replace(/ú|ù/gi, "u");
-                                pattern = pattern.replace(/ü/gi, "u");
-
-                                pattern = pattern.replace(/a/gi, "[a|á|à]");
-                                pattern = pattern.replace(/e/gi, "[e|é|è]");
-                                pattern = pattern.replace(/i/gi, "[i|í|ì]");
-                                pattern = pattern.replace(/o/gi, "[o|ó|ò]");
-                                pattern = pattern.replace(/u/gi, "[u|ú|ü|ù]");
-                                var rex = new RegExp(pattern, "gi");
-
-                                var label = elm.label;
-
-                                if (elm.dataRole !== TC.Consts.searchType.ROAD || elm.dataRole !== TC.Consts.searchType.ROADPK) {
-                                    highlighted = label.replace(rex,
-                                        function () {
-                                            var params = Array.prototype.slice.call(arguments, 0);                                            
-
-                                            if (params[params.length - 3]) {
-                                                return params[0].replace(params[params.length - 3], "<b>" + params[params.length - 3] + "</b>");
-                                            } else {
-                                                return "<b>" + params[0] + "</b>";
-                                            }
-                                        });
-                                } else {
-                                    highlighted = label.replace(rex, "<b>$1</b>");
-                                }
-
-                                return highlighted;
-                            }.bind(this);
-
-                            html[html.length] = '<li dataRole="' + elm.dataRole + '"><a href="' + '#' + encodeURIComponent(elm.id) + '"><span hidden>' + elm.label + '</span>' + highlighting() + '</a></li>';
-                        }
-
-
-
-                        return html.join('');
-                    };
-
                     TC.UI.autocomplete.call(self.textInput, {
                         link: '#',
                         target: self.resultsList,
                         minLength: 2,
                         ctx: self,
                         source: source,
-                        callback: callback,
-                        buildHTML: buildHTML
-                    });                    
+                        callback: selectionCallback.bind(self),
+                        buildHTML: buildHTML.bind(self)
+                    });
 
-                    var getNextSibling = function (elem, selector) {
-
+                    const getNextSibling = function (elem, selector) {
                         // Get the next sibling element
                         var sibling = elem.nextElementSibling;
-
                         // If there's no selector, return the first sibling
                         if (!selector) return sibling;
-
                         // If the sibling matches our selector, use it
                         // If not, jump to the next sibling and continue the loop
                         while (sibling) {
                             if (sibling.matches(selector)) return sibling;
                             sibling = sibling.nextElementSibling
                         }
-
                     };
 
-                    var getPreviousSibling = function (elem, selector) {
-
+                    const getPreviousSibling = function (elem, selector) {
                         // Get the next sibling element
                         var sibling = elem.previousElementSibling;
-
                         // If there's no selector, return the first sibling
                         if (!selector) return sibling;
-
                         // If the sibling matches our selector, use it
                         // If not, jump to the next sibling and continue the loop
                         while (sibling) {
                             if (sibling.matches(selector)) return sibling;
                             sibling = sibling.previousElementSibling;
                         }
-
                     };
 
                     // Detect up/down arrow
@@ -2072,7 +2085,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 } else {
                                     // Scenario 3: We're in the list but not on the last element, simply move down
                                     getNextSibling(document.activeElement.parentElement, 'li:not([header])')
-                                        .querySelector('a').focus();                                    
+                                        .querySelector('a').focus();
                                 }
                                 e.preventDefault(); // Stop page from scrolling
                                 e.stopPropagation();
@@ -2085,7 +2098,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 } else {
                                     // Scenario 3: We're in the list but not on the first element, simply move up
                                     getPreviousSibling(document.activeElement.parentElement, 'li:not([header])')
-                                        .querySelector('a').focus();                                    
+                                        .querySelector('a').focus();
                                 }
                                 e.preventDefault(); // Stop page from scrolling
                                 e.stopPropagation();
@@ -2136,9 +2149,9 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.getElementOnSuggestionList = function (id, dataRole) {
         const self = this;
 
-        for (var i = 0; i < self._search.data.length; i++) {
-            if (self._search.data[i].id == id && (!dataRole || (dataRole && self._search.data[i].dataRole === dataRole)))
-                return self._search.data[i];
+        for (var i = 0; i < self.searchRequestsResults.length; i++) {
+            if (self.searchRequestsResults[i].id == id && (!dataRole || (dataRole && self.searchRequestsResults[i].dataRole === dataRole)))
+                return self.searchRequestsResults[i];
         }
     };
 
@@ -2304,19 +2317,19 @@ TC.inherit(TC.control.Search, TC.Control);
                         }
                         else {
                             //console.log('getCoordinates promise resuelta');
-                            resolve([]);
+                            reject();
                         }
                     } else {
                         //console.log('getCoordinates promise resuelta');
-                        resolve([]);
+                        reject();
                     }
                 } else {
                     //console.log('getCoordinates promise resuelta');
-                    resolve([]);
+                    reject();
                 }
             } else {
                 //console.log('getCoordinates promise resuelta');
-                resolve([]);
+                reject();
             }
         });
     };
@@ -2388,7 +2401,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 });
             } else {
                 //console.log('getCadastralRef promise resuelta - no es ref catastral');
-                resolve([]);
+                reject();
             }
         });
     };
@@ -2867,89 +2880,114 @@ TC.inherit(TC.control.Search, TC.Control);
         return null;
     };
 
-    const requestToWFS = function (type, doneCallback, data) {
+    const requestToWFS = function (type, signal, doneCallback, data) {
         const self = this;
 
-        self.resultsList.innerHTML = '<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
-        self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
-        return TC.ajax({
-            url: type.url,
+        return fetch(type.url, {
             method: 'POST',
-            //contentType: "application/x-www-form-urlencoded;charset=UTF-8",
-            responseType: 'text',
-            data: type.filter.getParams(data)
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: type.filter.getParams(data),
+            signal: signal
         })
+            .then(function (response) {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw "Search: error requestToWFS";
+                }
+            })
             .then(doneCallback)
-            .catch(function (data) {
-                if (data.statusText !== 'abort')
-                    alert('error');
+            .catch(function (err) {
+                if (err.name === 'AbortError') {
+                    console.log('Search: petición abortada');
+                } else {
+                    TC.error(err);
+                }
+
+                throw err;
 
                 //console.log('getStringPattern promise resuelta - data.statusText: ' + data.statusText);
             });
     };
 
-    const getResultsFromWFS = function (allowedRoles, resolve, reject, objectsToQuery) {
-        const self = this;
-
-        if (objectsToQuery) {
-            var results = [];
-
-            self._search.data = results;
-
-            if (!self.request) {
-                self.request = [];
-            }
-
-            objectsToQuery.forEach(function (data, i) {
-
-                allowedRoles.filter(function (elm) {
-                    var type = self.getSearchTypeByRole(elm);
-                    return Object.keys(type.queryProperties).length === Object.keys(data).length;
-                }).map(function (dataRole) {
-                    var type = self.getSearchTypeByRole(dataRole);
-                    self.request.push(requestToWFS.call(self, type, function (response) {
-                        results = results.concat(type.getSuggestionListElements(response.data));
-                    }, data));
-                });
-            });
-
-            Promise.all(self.request).then(function () {
-                //self.request = [];
-                //console.log('getStringPattern promise resuelta');
-                resolve(results);
-            });
-        } else {
-            //console.log('getStringPattern promise resuelta - no encaja en address');
-            resolve([]);
-        }
-    };
-
     ctlProto.getStringPattern = function (allowedRoles, pattern) {
         const self = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
+            let toQuery = [];
+            let requestsQuery = [];
+
             pattern = normalizedCriteria.call(self, pattern);
+
+            console.log('getStringPattern sartzen da: ' + pattern);
 
             /* gestionamos:
                 Entidad de población: Irisarri Auzoa (Igantzi)
                 Topónimo: Aldabeko Bidea (Arbizu)
             */
-            var combinedCriteria = /(.*)\((.*)\)/.exec(pattern);
+            let combinedCriteria = /(.*)\((.*)\)/.exec(pattern);
             if (combinedCriteria && combinedCriteria.length > 2) {
-
                 // búsqueda de entidad de población
-                var objectsToQuery = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1]);
-
+                toQuery = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1]) || [];
                 // búsqueda de topónimo
-                var bothSearchObjects = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1] + ',' + combinedCriteria[2]);
+                let toQueryCombined = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1] + ',' + combinedCriteria[2]) || [];
 
-                bothSearchObjects = (bothSearchObjects || []).concat(objectsToQuery || []);
-
-                getResultsFromWFS.call(self, allowedRoles, resolve, reject, bothSearchObjects);
+                toQuery = toQuery.concat(toQueryCombined);
             } else {
-                var objectsToQuery = getObjectsFromStringToQuery.call(self, allowedRoles, pattern);
+                toQuery = getObjectsFromStringToQuery.call(self, allowedRoles, pattern) || [];
+            }
 
-                getResultsFromWFS.call(self, allowedRoles, resolve, reject, objectsToQuery);
+            if (toQuery.length > 0) {
+                let pendingSuggestionLstHead = [];
+                let filterRoles = (dataToQuery) => {
+                    return allowedRoles.filter(function (elm) {
+                        return Object.keys(self.getSearchTypeByRole(elm).queryProperties).length === Object.keys(dataToQuery).length;
+                    });
+                };
+                let pendingHeaderRoles = [];
+
+                for (var i = 0; i < toQuery.length; i++) {
+                    let dataToQuery = toQuery[i];
+                    let roles = filterRoles(dataToQuery);
+
+                    for (var r = 0; r < roles.length; r++) {
+                        let type = self.getSearchTypeByRole(roles[r]);
+
+                        if (pendingHeaderRoles.indexOf(type.typeName) < 0) {
+                            pendingSuggestionLstHead.push(type.getSuggestionListHead());
+                            pendingSuggestionLstHead.push('<li dataRole="' + type.typeName + '"><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>');
+
+                            pendingHeaderRoles.push(type.typeName);
+                        }
+
+                        let responseToSuggestionLstElmt = (response) => {
+                            return type.getSuggestionListElements(response);
+                        };
+
+                        requestsQuery.push(requestToWFS.call(self, type, self.searchRequestsAbortController.signal, responseToSuggestionLstElmt, dataToQuery));
+                    }
+                }
+
+                if (requestsQuery.length > 0) {
+                    self.resultsList.innerHTML += pendingSuggestionLstHead.join('');
+                    self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+
+                    Promise.all(requestsQuery)
+                        .then((results) => {
+                            console.log('denei espiatzen duben promesan sartzen da');
+                            //console.log('getStringPattern promise resuelta');                                  
+                            resolve([].concat.apply([], results));
+                        }).catch((error) => {
+                            console.log('denei espiatzen duben promesan catchien sartzen da');
+                            reject();
+                        });
+                } else {
+                    reject();
+                }
+            } else {
+                reject();
             }
         });
     };
@@ -2972,18 +3010,24 @@ TC.inherit(TC.control.Search, TC.Control);
                         _pattern = _pattern + "-" + match[4].trim();
                     }
 
-                    self.resultsList.innerHTML = '<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
+                    self.resultsList.innerHTML = type.getSuggestionListHead() +
+                        '<li dataRole="' + type.typeName + '"><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
                     self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
-                    TC.ajax({
-                        url: type.url + '?' + type.filter.getParams({ t: _pattern }),
-                        method: 'GET',
-                        responseType: TC.Consts.mimeType.JSON
-                    }).then(function (response) {
-                        const data = response.data;
-                        var result = [];                        
 
-                        if (data.totalFeatures > 0) {
-                            data.features.map(function (feature) {
+                    console.log('getRoad new');
+                    fetch(type.url + '?' + type.filter.getParams({ t: _pattern }), {
+                        signal: self.searchRequestsAbortController.signal
+                    }).then((response) => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw "Search: error getRoad";
+                        }
+                    }).then((response) => {
+                        let result = [];
+
+                        if (response.totalFeatures > 0) {
+                            response.features.map(function (feature) {
                                 var properties = type.outputProperties;
                                 if (!result.some(function (elem) {
                                     return (elem.text == feature.properties[properties[0]]);
@@ -3012,15 +3056,15 @@ TC.inherit(TC.control.Search, TC.Control);
                             resolve(result);
                         } else {
                             //console.log('getRoad promise resuelta');
-                            resolve([]);
+                            reject();
                         }
                     }).catch(function (data) {
                         //console.log('getRoad promise resuelta - xhr fail');
-                        resolve([]);
+                        reject();
                     });
                 } else {
                     //console.log('getRoad promise resuelta - no encaja en road');
-                    resolve([]);
+                    reject();
                 }
             }
         });
@@ -3045,17 +3089,24 @@ TC.inherit(TC.control.Search, TC.Control);
                         _pattern = _pattern + "-" + match[4].trim();
                     }
 
-                    self.resultsList.innerHTML = '<li><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
+                    self.resultsList.innerHTML = type.getSuggestionListHead() +
+                        '<li dataRole="' + type.typeName + '"><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
                     self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
-                    TC.ajax({
-                        url: type.url + '?' + type.filter.getParams({ t: _pattern, s: match[5].trim() }),
-                        method: 'GET',
-                        responseType: TC.Consts.mimeType.JSON                        
+
+                    console.log('getRoadPK new');
+
+                    fetch(type.url + '?' + type.filter.getParams({ t: _pattern, s: match[5].trim() }), {
+                        signal: self.searchRequestsAbortController.signal
+                    }).then((response) => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw "Search: error getRoadPK";
+                        }
                     }).then(function (response) {
-                        const data = response.data;
-                        var result = [];
-                        if (data.totalFeatures > 0) {
-                            data.features.map(function (feature) {
+                        let result = [];
+                        if (response.totalFeatures > 0) {
+                            response.features.map(function (feature) {
                                 var properties = type.outputProperties;
                                 if (!result.some(function (elem) {
                                     return (elem.label == feature.properties[properties[0]]);
@@ -3078,15 +3129,15 @@ TC.inherit(TC.control.Search, TC.Control);
                             resolve(result);
                         } else {
                             //console.log('getRoadPK promise resuelta');
-                            resolve([]);
+                            reject();
                         }
                     }).catch(function (data) {
                         //console.log('getRoadPK promise resuelta - xhr fail');
-                        resolve([]);
+                        reject();
                     });
                 } else {
                     //console.log('getRoadPK promise resuelta - no encaja en pk');
-                    resolve([]);
+                    reject();
                 }
             }
         });
@@ -3094,43 +3145,61 @@ TC.inherit(TC.control.Search, TC.Control);
 
     ctlProto.search = function (pattern, callback) {
         var self = this;
-        var results = [];
-
-        if (self.request) {
-
-            for (var i = 0; i < self.request.length; i++) {
-                console.log("new criteria: search promise/s aborted");
-                //self.request[i].abort();
-            }
-
-            self.request = [];
-        }
 
         pattern = pattern.trim();
         if (pattern.length > 0) {
             pattern = pattern.toLowerCase();
 
-            var waiting = [];
-            var addWaiting = function (fn) {
-                waiting.push(new Promise(function (resolve, reject) {
-                    fn.call(self, pattern).then(function (result) {
-                        results = results.concat(result);
-                        resolve(results);
-                    });
-                }));
+            console.log('hasten ga: ' + pattern);
+
+            if (self.searchRequestsAbortController) {
+                self.searchRequestsAbortController.abort();
+            }
+
+            self.resultsList.innerHTML = '';
+            self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+
+            self.searchRequestsResults = [];
+
+            let isAborted = false;
+            let onAbort = () => {
+                console.log('bertan behera uzten du: ' + pattern);
+                
+                isAborted = true;
+                self.searchRequestsAbortController.signal.removeEventListener('abort', onAbort);
+            }
+
+            self.searchRequestsAbortController = new AbortController();
+            self.searchRequestsAbortController.signal.addEventListener('abort', onAbort);
+
+            let toRender = 0;
+            let renderingEnd = () => {
+                toRender--;
+                if (toRender === 0) {
+                    // si al término de las peticiones ya estamos con otro patrón no hacemos nada
+                    if (pattern !== self.textInput.value.trim().toLowerCase()) {
+                        return;
+                    }
+                    else {                        
+                        if (self.searchRequestsResults.length === 0) {
+                            self.cleanMap();
+
+                            if (!self.layer ||
+                                (self.layer && self.layer.features.length === 0)) {
+
+                                self.resultsList.innerHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
+                                self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+                            }
+                        }
+
+                        self.lastPattern = "";
+                    }
+                }
             };
 
-            self.allowedSearchTypes.forEach(function (allowed) {
-                if (allowed.parser) {
-                    addWaiting(allowed.parser);
-                } else {
-                    console.log('Falta implementación del método parser');
-                }
-            });
-
-            Promise.all(waiting).then(function () {
-                if (results)
-                    self._search.data = results = results.sort(function (a, b) {
+            let renderResultsOnSuggestionList = () => {
+                if (self.searchRequestsResults) {
+                    self.searchRequestsResults = self.searchRequestsResults.sort(function (a, b) {
                         var pattern = /(\d+)/;
                         var _a, _b = '';
                         if (pattern.test(a.label) && pattern.test(b.label)) {
@@ -3148,25 +3217,72 @@ TC.inherit(TC.control.Search, TC.Control);
                                 return -1;
                             else
                                 return 0;
-                    }.bind(self));
+                    });
 
-                if (callback)
-                    callback(results);
+                    // compatibilidad hacia atrás
+                    self._search.data = self.searchRequestsResults;
 
-                if (results.length === 0) {
-                    self.cleanMap();
-
-                    if (!self.layer ||
-                        (self.layer && self.layer.features.length === 0)) {
-                        self.resultsList.innerHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
-                        self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+                    if (callback) {
+                        callback(self.searchRequestsResults);
                     }
                 }
+            };
 
-                self.lastPattern = "";
+            self.allowedSearchTypes.forEach(function (allowed) {
+                if (allowed.parser) {
+                    toRender++;
+
+                    console.log('registramos promesa: ' + allowed.typeName);
+
+                    allowed.parser.call(self, pattern)
+                        .then(function (dataRole, result) {
+
+                            let manageLoadingByDataRole = () => {
+                                let loadingElemOfDataRole = self.resultsList.querySelector('li[dataRole="' + dataRole + '"]');
+                                if (loadingElemOfDataRole) {
+                                    let indexLoadingElemOfDataRole = Array.prototype.indexOf.call(loadingElemOfDataRole.parentElement.childNodes, loadingElemOfDataRole);
+                                    let headerElemOfDataRole = self.resultsList.childNodes[indexLoadingElemOfDataRole - 1];
+
+                                    self.resultsList.removeChild(headerElemOfDataRole);
+                                    self.resultsList.removeChild(loadingElemOfDataRole);
+                                }
+                            };
+
+                            console.log('resulta promesa: ' + dataRole);
+
+                            if (result && result.length > 0) {
+
+                                // caso topónimo con y sin municipio Irisarri Auzoa (Igantzi)
+                                let toConcat = result.filter((elm, i) => self.searchRequestsResults.findIndex((srrElm) => srrElm.id === elm.id) === -1);
+                                if (toConcat.length === result.length) {
+                                    self.searchRequestsResults = self.searchRequestsResults.concat(toConcat);
+
+                                    renderResultsOnSuggestionList();
+                                } else if (result.length === 1) {
+                                    manageLoadingByDataRole();
+                                }                                
+                            } else {
+                                manageLoadingByDataRole();
+                            }
+
+                            renderingEnd();
+
+                            //resolve(result);
+                        }.bind(self, allowed.typeName)).catch(function (dataRole) {
+                            //reject();
+                            console.log('reject promesa: ' + dataRole);
+                            renderingEnd();
+                        }.bind(self, allowed.typeName));
+                } else {
+                    console.log('Falta implementación del método parser');
+                }
             });
         }
-        else self.cleanMap();
+        else {
+            self.lastPattern = "";
+
+            self.cleanMap();
+        }
     };
 
     var setQueryableFeatures = function (features) {
@@ -3182,6 +3298,12 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto._goToResult = function (id, dataRole) {
         var self = this;
         var goTo = null;
+
+        //02/03/2020 cuando selecciona un elemento abortamos peticiones pendientes
+        if (self.searchRequestsAbortController) {
+            self.searchRequestsAbortController.abort();
+        }
+
         return new Promise(function (resolve, reject) {
             if (!self.loading)
                 self.loading = self.map.getControlsByClass("TC.control.LoadingIndicator")[0];
@@ -3269,74 +3391,77 @@ TC.inherit(TC.control.Search, TC.Control);
                         }
                     });
 
-                    layer.refresh().then(function () {
-                        self.map.one(TC.Consts.event.LAYERUPDATE, function (e) {
-                            if (e.layer == layer) {
-                                // Salta cuando se pinta una feature que no es de tipo API porque la gestión de estilos salta antes (no es controlable)
-                                self.map.one(TC.Consts.event.FEATURESADD, function (e) {
-                                    if (e.layer == layer) {
-                                        if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
-                                            self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
-                                            var bounds = e.layer.wrap.layer.getSource().getExtent();
-                                            var radius = e.layer.map.options.pointBoundsRadius;
 
-                                            if (bounds[2] - bounds[0] === 0) {
-                                                bounds[0] = bounds[0] - radius;
-                                                bounds[2] = bounds[2] + radius;
-                                            }
-                                            if (bounds[3] - bounds[1] === 0) {
-                                                bounds[1] = bounds[1] - radius;
-                                                bounds[3] = bounds[3] + radius;
-                                            }
-                                            e.layer.map.setExtent(bounds);
+                    const layerEventHandler = function (e) {
+                        if (e.layer == layer) {
+                            // Salta cuando se pinta una feature que no es de tipo API porque la gestión de estilos salta antes (no es controlable)
+                            self.map.one(TC.Consts.event.FEATURESADD, function (e) {
+                                if (e.layer == layer) {
+                                    if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
+                                        self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+                                        var bounds = e.layer.wrap.layer.getSource().getExtent();
+                                        var radius = e.layer.map.options.pointBoundsRadius;
 
-                                            // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
-                                            self.map.trigger(TC.Consts.event.ZOOMTO, {
-                                                extent: bounds, layer: e.layer
-                                            });
+                                        if (bounds[2] - bounds[0] === 0) {
+                                            bounds[0] = bounds[0] - radius;
+                                            bounds[2] = bounds[2] + radius;
                                         }
-                                        else if (e.layer.features && e.layer.features.length > 0) {
-                                            self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
-                                            self.layer.map.zoomToFeatures(e.layer.features);
-
-                                            self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features });
-
-                                        } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
-                                            self.resultsList.inner = goTo.emptyResultHTML;
-                                            self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
-
-                                            self.map.trigger(TC.Consts.event.SEARCHQUERYEMPTY);
+                                        if (bounds[3] - bounds[1] === 0) {
+                                            bounds[1] = bounds[1] - radius;
+                                            bounds[3] = bounds[3] + radius;
                                         }
+                                        e.layer.map.setExtent(bounds);
 
-                                        self.loading.removeWait(wait);
+                                        // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
+                                        self.map.trigger(TC.Consts.event.ZOOMTO, {
+                                            extent: bounds, layer: e.layer
+                                        });
                                     }
-                                });
+                                    else if (e.layer.features && e.layer.features.length > 0) {
+                                        self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+                                        self.layer.map.zoomToFeatures(e.layer.features);
 
-                                if (e.layer.features && e.layer.features.length > 0) {
-                                    self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
-                                    self.layer.map.zoomToFeatures(self.layer.features);
+                                        self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features });
 
-                                    self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features });
+                                    } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
+                                        self.resultsList.inner = goTo.emptyResultHTML;
+                                        self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
 
-                                    self.loading.removeWait(wait);
-                                } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
-                                    self.resultsList.innerHTML = goTo.emptyResultHTML;
-                                    self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
-
-                                    if (!(e.newData && e.newData.features && e.newData.features.length > 0)) {
                                         self.map.trigger(TC.Consts.event.SEARCHQUERYEMPTY);
                                     }
 
                                     self.loading.removeWait(wait);
                                 }
+                            });
+
+                            if (e.layer.features && e.layer.features.length > 0) {
+                                self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+                                self.layer.map.zoomToFeatures(self.layer.features);
+
+                                self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features });
+
+                                self.loading.removeWait(wait);
+                            } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
+                                self.resultsList.innerHTML = goTo.emptyResultHTML;
+                                self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
+
+                                if (!(e.newData && e.newData.features && e.newData.features.length > 0)) {
+                                    self.map.trigger(TC.Consts.event.SEARCHQUERYEMPTY);
+                                }
+
+                                self.loading.removeWait(wait);
                             }
-                        });
-                    });
+                        }
+                    };
+
+                    self.map.one(TC.Consts.event.LAYERUPDATE, layerEventHandler);
+
+                    layer.refresh();
                 });
 
                 resolve(goTo);
             } else {
-                reject();
+                reject(Error('Method goTo has no implementation'));
                 if (!customSearchType) {
                     self.map.trigger(TC.Consts.event.SEARCHQUERYEMPTY);
                 }
@@ -3647,7 +3772,7 @@ TC.inherit(TC.control.Search, TC.Control);
             result[i] = map[text.charAt(i)] || text.charAt(i);
         }
         return result.join('');
-    };    
+    };
 
     ctlProto.exportState = function () {
         const self = this;
