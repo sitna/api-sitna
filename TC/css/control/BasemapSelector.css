@@ -90,13 +90,13 @@ ul.tc-ctl-bms-branch {
 }
 
 .tc-ctl-bms-more-node:after {
-    content: "\f0fe";
-    font-family: 'FontAwesome';
+    font-family: sitna;
+    content: '\e905';
     position: absolute;
     color: #666666;
     font-size: 3em;
     top: 50%;
-    left: 52%;
+    left: 50%;
     transform: translate(-50%,-50%);
 }
 
