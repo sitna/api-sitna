@@ -1,11 +1,11 @@
-﻿<div>
-    <span>&copy; {api|s}</span>
+<div>
+    <span>{api|s}</span>
     {?mainData} - {@i18n $key="data"/}:
         {?mainData.site}
-            <span> &copy; <a href="{mainData.site}" target="_blank">{mainData.name}</a></span>
+            <span> <a href="{mainData.site}" target="_blank">{mainData.name}</a></span>
         {:else}
             {?mainData.name}
-                <span> &copy; {mainData.name}</span>
+                <span> {mainData.name}</span>
             {/mainData.name}
         {/mainData.site}
     {/mainData}
@@ -13,9 +13,9 @@
     <div class="tc-ctl-attrib-other {?isCollapsed} tc-collapsed {/isCollapsed}">
         {#otherData}
         {?otherData[$idx].site}
-        <span>&copy; <a href="{otherData[$idx].site}" target="_blank">{otherData[$idx].name}</a></span>
+        <span><a href="{otherData[$idx].site}" target="_blank">{otherData[$idx].name}</a></span>
         {:else}
-        <span>&copy; {otherData[$idx].name}</span>
+        <span>{otherData[$idx].name}</span>
         {/otherData[$idx].site}
         {@sep}, {/sep}
         {/otherData}
