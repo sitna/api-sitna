@@ -1,12 +1,12 @@
-﻿<h2>{@i18n $key="geo"/}</h2>
+<h2>{@i18n $key="geo"/}</h2>
 <div class="tc-ctl-geolocation-content">    
     <div class="tc-ctl-geolocation-track">
         <div class="tc-ctl-geolocation-track-snap-info"></div>        
         <!-- img se insertan en el div del mapa-->        
         <div id="tc-ctl-geolocation-track-elevation-marker" class="tc-ctl-geolocation-trackMarker elevation" style="display: none;"></div>
         <div class="tc-ctl-geolocation-track-panel-block" >
-            <input id="tc-ctl-geolocation-track-panel-opened" type="checkbox" checked/>
-            <label for="tc-ctl-geolocation-track-panel-opened" title="{@i18n $key="geo.trk.panel.help.1"/}">{@i18n $key="geo.trk.panel.help.2"/}</label>
+            <input id="tc-ctl-geolocation-track-panel-opened-{controlId}" type="checkbox" checked/>
+            <label for="tc-ctl-geolocation-track-panel-opened-{controlId}" title="{@i18n $key="geo.trk.panel.help.1"/}">{@i18n $key="geo.trk.panel.help.2"/}</label>
             <i class="tc-ctl-geolocation-track-panel-help icon-question-sign" title="{@i18n $key="geo.trk.panel.help.3"/}"></i>
         </div>
         <div class="tc-ctl-geolocation-track-mng">
@@ -24,8 +24,8 @@
                     <li class="tc-ctl-geolocation-track-not" hidden><span>{@i18n $key="noMatches"/}</span></li>
                 </ol>
                 <div class="tc-ctl-geolocation-track-cnt">
-                    <input name="uploaded-file" id="uploaded-file" type="file" class="tc-ctl-geolocation-track-import tc-button" accept=".gpx,.kml" disabled />
-                    <label class="tc-button tc-icon-button" for="uploaded-file" title="{@i18n $key="geo.trk.import.upload" /}">{@i18n $key="geo.trk.import.lbl"/}</label>
+                    <input name="uploaded-file" id="uploaded-file-{controlId}" type="file" class="tc-ctl-geolocation-track-import tc-button" accept=".gpx,.kml" disabled />
+                    <label class="tc-button tc-icon-button" for="uploaded-file-{controlId}" title="{@i18n $key="geo.trk.import.upload" /}">{@i18n $key="geo.trk.import.lbl"/}</label>
                 </div>
             </div>
             <div class="tc-ctl-geolocation-tracks tc-ctl-geolocation-panel">    
@@ -42,8 +42,8 @@
                 </div>            
                 <div class="tc-ctl-geolocation-track-ui">   
                     <div  class="tc-ctl-geolocation-track-render">
-                        <input id="tc-ctl-geolocation-track-render" type="checkbox" hidden checked />
-                        <label for="tc-ctl-geolocation-track-render" class="tc-ctl-geolocation-track-render" title="{@i18n $key="geo.trk.render"/}">{@i18n $key="geo.trk.render"/}</label>
+                        <input id="tc-ctl-geolocation-track-render-{controlId}" type="checkbox" hidden checked />
+                        <label for="tc-ctl-geolocation-track-render-{controlId}" class="tc-ctl-geolocation-track-render" title="{@i18n $key="geo.trk.render"/}">{@i18n $key="geo.trk.render"/}</label>
                     </div>
                     <button class="tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate" title="{@i18n $key="geo.track.activate.title"/}">{@i18n $key="geo.track.activate"/}</button>
                     <button class="tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden" title="{@i18n $key="geo.track.deactivate.title" /}">{@i18n $key="geo.track.deactivate"/}</button>
