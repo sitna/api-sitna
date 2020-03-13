@@ -1,0 +1,11 @@
+﻿.tc-ctl-tctr-datldr .tc-ctl-tctr-tab-0 span:before {
+    font-family: mapskin;
+    content: '\e03d';
+    margin-right: 0.5em;
+}
+
+.tc-ctl-tctr-datldr .tc-ctl-tctr-tab-1 span:before {
+    font-family: mapskin;
+    content: '\e056';
+    margin-right: 0.5em;
+}

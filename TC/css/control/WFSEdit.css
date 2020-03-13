@@ -1,0 +1,137 @@
+﻿label.tc-ctl-wfsedit-view-original, label.tc-ctl-wfsedit-view-changes {
+    display: inline-block;
+    text-align: left;
+    margin-top: 0.2em;
+    width: 100%;
+}
+
+.tc-ctl-wfsedit-view label[for|=tc-ctl-wfsedit-view-clr-added], .tc-ctl-wfsedit-view label[for|=tc-ctl-wfsedit-view-clr-modified], .tc-ctl-wfsedit-view label[for|=tc-ctl-wfsedit-view-clr-removed] {
+    cursor: pointer;
+}
+
+.tc-ctl-wfsedit-view label[for|=tc-ctl-wfsedit-view-added-cb], .tc-ctl-wfsedit-view label[for|=tc-ctl-wfsedit-view-modified-cb], .tc-ctl-wfsedit-view label[for|=tc-ctl-wfsedit-view-removed-cb] {
+    cursor: pointer;
+}
+
+.tc-ctl-wfsedit-view label[for|=tc-ctl-wfsedit-view-original-cb] {
+    cursor: pointer;
+}
+
+.tc-ctl-wfsedit-view input[type=checkbox] {
+    display: none;
+}
+
+    .tc-ctl-wfsedit-view input[type=checkbox] + label:before {
+        font-family: sitna;
+        font-size: 1.2em;
+        margin-left: 0.5em;
+        display: inline-block;
+        content: '\e911';
+        width: 1.2em;
+    }
+
+    .tc-ctl-wfsedit-view input[type=checkbox]:checked + label:before {
+        content: '\e910';
+    }
+
+.tc-ctl-wfsedit-layer-sel {
+    display: inline-block;
+    margin-top: 0.5em;
+    width: 100%;
+    vertical-align: bottom;
+}
+
+
+.tc-ctl-wfsedit-save {
+    display: flex;
+    padding-top: 0.5em;
+    text-align: right;
+}
+
+    .tc-ctl-wfsedit-save > button {
+        padding: 0;
+        width: 50%;
+        height: 2em;
+    }
+
+.tc-ctl-wfsedit .tc-ctl-wfsedit-btn-save {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-right: 0.1em;
+}
+
+.tc-ctl-wfsedit .tc-ctl-wfsedit-btn-discard {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: 0.1em;
+}
+
+.tc-ctl-wfsedit .tc-hidden {
+    padding-top: 0;
+    display: block;
+    height: 0;
+}
+
+.tc-ctl-wfsedit-view {
+    position: relative;
+    margin-top: 0.5em;
+}
+
+.tc-ctl-wfsedit .tc-ctl-wfsedit-view.tc-hidden {
+    display: none;
+}
+
+.tc-ctl-wfsedit .tc-ctl-edit h2 {
+    display: none;
+}
+
+.tc-ctl-wfsedit-view button.tc-ctl-wfsedit-btn-crop {
+    position: absolute;
+    top: 0.2em;
+    right: 0.2em;
+    border: none;
+    background-color: transparent;
+    text-indent: -1000vw;
+    color: var(--glyph-color);
+    width: 1.2em;
+    height: 1.2em;
+    line-height: 1.2em;
+    padding: 0;
+    outline: none;
+}
+
+    .tc-ctl-wfsedit-view button.tc-ctl-wfsedit-btn-crop:before {
+        font-family: mapskin;
+        content: '\e0a6';
+        position: absolute;
+        text-indent: 0;
+        left: 0;
+        font-size: 1.2em;
+        width: 1em;
+        height: 1em;
+    }
+
+.tc-ctl-wfsedit-view input[type=color] {
+    display: none;
+}
+
+    .tc-ctl-wfsedit-btn-edit:after {
+        font-family: mapskin;
+        content: "\e01a";
+    }
+
+.tc-ctl-wfsedit-btn-edit.tc-loading:after {
+    font-size: 1.1em;
+    cursor: default;
+    animation: spin 1s infinite linear;
+    -moz-animation: spin 1s infinite linear; /* Firefox */
+    -webkit-animation: spin 1s infinite linear; /* Safari and Chrome */
+    -o-animation: spin 1s infinite linear;
+    content: '\2b6e';
+    line-height: 1.25em;
+    height: 1em;
+}
+
+    .tc-ctl-wfsedit-btn-edit.tc-hidden {
+        display: none;
+    }

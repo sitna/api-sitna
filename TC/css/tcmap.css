@@ -30,8 +30,12 @@
 @import url(control/ControlContainer.css);
 @import url(control/FullScreen.css);
 @import url(control/NavBarHome.css);
+@import url(control/DataLoader.css);
 @import url(control/WFSQuery.css);
 @import url(control/MultiFeatureInfo.css);
+@import url(control/Edit.css);
+@import url(control/WFSEdit.css);
+@import url(control/FeatureDownloadDialog.css);
 
 /*! normalize.css v1.0.0 | MIT License | git.io/normalize */
 article, aside, details, figcaption, figure, footer, header, hgroup, nav, section, summary {
@@ -100,7 +104,8 @@ body {
     --tab-color: #666666;
     --tab-border-color: #666666;
     --tab-border-hl-color: #cc0000;
-    --tb-color: #444444;
+    --tab-disabled-color: #cccccc;
+    --tab-disabled-border-color: #cccccc;
     --map-btn-color: #ffffff;
     --map-btn-bg-color: rgba(0, 0, 0, 0.66);
     --map-slider-thumb-bg-color: #000000;
@@ -117,7 +122,7 @@ body {
     --list-color: #000000;
     --list-bg-color: #ffffff;
     --list-hl-color: #000000;
-    --list-hl-bg-color: rgba(102, 0, 0, 0.1);
+    --list-hl-bg-color: rgba(102, 0, 0, 0.1);    
 }
 
 .tc-map :-ms-input-placeholder { /* Edge */
@@ -298,8 +303,14 @@ legend {
 
 @font-face {
     font-family: 'mapskin';
-    src: url('fonts/mapskin.eot');
-    src: url('fonts/mapskin.eot') format('embedded-opentype'), url('fonts/mapskin.ttf') format('truetype'), url('fonts/mapskin.woff') format('woff'), url('fonts/mapskin.svg') format('svg');
+    src: url('fonts/mapskin.ttf') format('truetype'), url('fonts/mapskin.woff') format('woff'), url('fonts/mapskin.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'sitna';
+    src: url('fonts/sitna.ttf') format('truetype'), url('fonts/sitna.woff') format('woff'), url('fonts/sitna.svg') format('svg');
     font-weight: normal;
     font-style: normal;
 }
@@ -920,6 +931,19 @@ html, body {
     color: var(--text-main-color);
 }
 
+    .tc-ctl h2 {
+        color: var(--title-color);
+        text-transform: lowercase;
+        background-color: var(--main-bg-color);
+        border-bottom: 1px solid;
+        border-bottom-color: var(--main-divider-color);
+        font-family: Arial, helvetica, sans-serif;
+        font-size: 1.1em;
+        font-weight: bold;
+        padding: 0.2em;
+        margin: 0;
+    }
+
 .tc-ctl-btn {
     background-color: var(--btn-bg-color);
     color: var(--btn-color);
@@ -1082,6 +1106,8 @@ button.tc-msg-warning:after {
     padding: 0;
     margin-left: 0.2em;
     margin-right: 0.5em;
+    cursor: pointer;
+    outline: none;
 }
 
     .tc-ctl input[type=color]::-webkit-color-swatch {
@@ -1123,7 +1149,12 @@ table.tc-attr a[target=_blank]:after, .tc-ctl-finfo-val a[target=_blank]:after {
     user-select: text;
 }
 
+.tc-ctl-finfo-coords.tc-hidden {
+    display: none;
+}
+
 .tc-ctl-finfo-coords-pair {
+    display: inline-block;
     color: #999;
     white-space: nowrap;
     margin-right: 0.5em;
@@ -1225,9 +1256,10 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
     }
 
 /* Para hacer sitio al botón de herramientas */
-.tc-ctl-finfo-features tr:nth-child(1) td.tc-ctl-finfo-val {
+/*URI: Creo que esto sobra*/
+/*.tc-ctl-finfo-features tr:nth-child(1) td.tc-ctl-finfo-val {
     padding-right: 2.1em;
-}
+}*/
 
 .tc-ctl-finfo-counter {
     display: none;
@@ -1252,7 +1284,7 @@ a:hover.olButton {
 }
 
 .tc-point {
-    background-image: url(img/point.png);
+    background-image: url(img/point.svg);
 }
 
 .tc-marker1 {
@@ -1766,9 +1798,8 @@ body .tc-map .tc-modal .tc-modal-background {
     }
 
         .tc-modal .tc-modal-header .tc-modal-close:after {
-            font-family: mapskin;
-            content: '\e001';
-            transform: rotate(45deg);
+            font-family: sitna;
+            content: '\e908';
             display: block;
             font-size: 1.4em;
         }
@@ -1786,17 +1817,21 @@ body .tc-map .tc-modal .tc-modal-background {
         transform: scale(0.5);
         min-height: 10em;
     }
-
-.tc-modal .tc-modal-footer {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: auto;
-    padding: 0.8em;
-    border-top: 1px solid #EEE;
-    text-align: right;
-    position: relative;
-}
+    .tc-modal .tc-modal-body.tc-loading .tc-button, .tc-modal .tc-modal-body.tc-loading .tc-ctl-btn {
+        visibility: hidden;
+        transition:unset;
+    }
+        
+    .tc-modal .tc-modal-footer {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: auto;
+        padding: 0.8em;
+        border-top: 1px solid #EEE;
+        text-align: right;
+        position: relative;
+    }
 
 .tc-modal h4 {
     color: var(--title-color);
@@ -1848,6 +1883,11 @@ body .tc-map .tc-modal .tc-modal-background {
         word-wrap: break-word; /* IE11, Firefox */
         margin: 0;
         padding: 0;
+    }
+
+    .tc-toast p a {
+        display: contents;
+        font-weight: bold;
     }
 
     .tc-toast ul {
@@ -1982,6 +2022,10 @@ span.tc-beta {
     content: "\f1c3";
 }
 
+.fa-download:before {
+    content: "\f019";
+}
+
 .fa-list-alt.tracking {
     margin-top: 0.5em;
     margin-left: 0.1em;
@@ -2016,285 +2060,6 @@ div.ms-parent.tc-combo {
     background-color: hsl(0, 100%, 0%);
     animation: lightness 5s infinite alternate;
 }
-
-label.tc-ctl-edit-view-changes {
-    display: inline-block;
-    text-align: left;
-    margin-top: 0.2em;
-    width: 100%;
-}
-
-.tc-ctl-edit-layer input[type=checkbox] {
-    display: none;
-}
-
-    .tc-ctl-edit-layer input[type=checkbox] + label.tc-ctl-edit-view-changes:before {
-        font-family: FontAwesome;
-        font-size: 1.2em;
-        margin-left: 0.5em;
-        display: inline-block;
-        content: "\f096";
-        width: 1.2em;
-    }
-
-    .tc-ctl-edit-layer input[type=checkbox]:checked + label.tc-ctl-edit-view-changes:before {
-        content: "\f046";
-    }
-
-.tc-ctl-edit-mode {
-    padding-top: 0.5em;
-}
-
-    .tc-ctl-edit-mode label {
-        position: relative;
-        display: inline-block;
-        width: 4em;
-        height: 2em;
-        margin: 0.2em;
-    }
-
-    .tc-ctl-edit-mode input[type=radio] {
-        display: none;
-    }
-
-        .tc-ctl-edit-mode input[type=radio] ~ span {
-            display: block;
-            width: 100%;
-            height: 100%;
-            line-height: 2em;
-            text-align: center;
-            border-radius: var(--border-radius);
-            box-sizing: border-box;
-            border-right-width: 0;
-            border: 1px solid #666;
-            background-color: var(--main-bg-color);
-            color: #666;
-            cursor: pointer;
-        }
-
-        .tc-ctl-edit-mode input[type=radio]:disabled ~ span {
-            color: #ccc;
-            border-top: 1px solid #ccc;
-            border-bottom: 1px solid #ccc;
-            border-right-width: 0;
-            cursor: default;
-        }
-
-        .tc-ctl-edit-mode input[type=radio] ~ span:before {
-            position: absolute;
-            font-family: mapskin;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-select input[type=radio] ~ span:before {
-        text-indent: 0;
-        content: '\e00f';
-    }
-
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-point input[type=radio] ~ span:before {
-        text-indent: 0;
-        letter-spacing: 0.2em;
-        font-size: 1.2em;
-        content: '\e01a\e045';
-    }
-
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-line input[type=radio] ~ span:before {
-        text-indent: 0;
-        letter-spacing: 0.2em;
-        font-size: 1.2em;
-        content: '\e01a\e046';
-    }
-
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-polygon input[type=radio] ~ span {
-        border-right-width: 1px;
-    }
-
-        .tc-ctl-edit-mode label.tc-ctl-edit-btn-polygon input[type=radio] ~ span:before {
-            text-indent: 0;
-            letter-spacing: 0.2em;
-            font-size: 1.2em;
-            content: '\e01a\e047';
-        }
-
-.tc-ctl-edit-btn-new {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
-}
-
-.tc-ctl-edit-btn-cancel {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
-}
-
-.tc-ctl-edit-btn-delete {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
-}
-
-label.tc-ctl-edit-btn-select, label.tc-ctl-edit-btn-point, label.tc-ctl-edit-btn-line, label.tc-ctl-edit-btn-polygon {
-    margin-right: 0;
-    margin-left: 0;
-}
-
-    label.tc-ctl-edit-btn-select input[type=radio] ~ span {
-        border-right-width: 0;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-    }
-
-    label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line input[type=radio] ~ span {
-        border-right-width: 0;
-        border-radius: 0;
-    }
-
-    label.tc-ctl-edit-btn-polygon input[type=radio] ~ span {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-    }
-
-.tc-ctl-edit-mode input[type=radio]:checked ~ span {
-    border-color: #666;
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-color: var(--main-bg-color);
-    color: var(--main-hl-color);
-    z-index: 10007;
-}
-
-.tc-ctl-edit {
-    text-align: center;
-}
-
-    .tc-ctl-edit h2 {
-        text-align: left;
-    }
-
-    .tc-ctl-edit .tc-ctl-edit-select.tc-hidden, .tc-ctl-edit .tc-ctl-edit-point.tc-hidden, .tc-ctl-edit .tc-ctl-edit-line.tc-hidden, .tc-ctl-edit .tc-ctl-edit-polygon.tc-hidden {
-        display: none;
-    }
-
-.tc-ctl-edit-mode label {
-    width: 25%;
-}
-
-.tc-ctl-edit-select, .tc-ctl-edit .tc-ctl.tc-ctl-edit-point, .tc-ctl-edit .tc-ctl.tc-ctl-edit-line, .tc-ctl-edit .tc-ctl.tc-ctl-edit-polygon {
-    /*position: fixed;*/
-    background-color: var(--main-bg-color);
-    padding-top: 1em;
-    top: 0;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    -webkit-transition: all .2s ease;
-    -moz-transition: all .2s ease;
-    -o-transition: all .2s ease;
-    transition: all .2s ease;
-}
-
-/*.tc-ctl-edit-select > button, .tc-ctl-edit-save > button {
-        position: relative;
-        display: inline-block;
-        border: 0;
-        border-left: 1px solid #fff;
-        border-right: 1px solid #fff;
-        height: 2em;
-        margin: 0;
-        vertical-align: top;
-        width: 20%;
-        text-align: center;
-        color: #fff;
-    }*/
-
-.tc-ctl-edit-layer-sel {
-    margin-top: 0.5em;
-    width: 100%;
-}
-
-.tc-ctl-edit-select > button {
-    width: 25%;
-}
-
-.tc-ctl-edit-save {
-    padding-top: 1em;
-    text-align: right;
-}
-
-    .tc-ctl-edit-save > button {
-        padding: 0;
-        width: 50%;
-    }
-
-.tc-ctl-edit .tc-ctl-edit-btn-save {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.tc-ctl-edit .tc-ctl-edit-btn-discard {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-.tc-ctl-edit .tc-hidden {
-    padding-top: 0;
-    display: block;
-    height: 0;
-}
-
-.tc-ctl-edit-txt {
-    display: inline-block;
-    width: 96%;
-    margin: 1em 0 0.5em 0;
-    border: 1px solid #ccc;
-    border-radius: 0.3em;
-    text-align: left;
-    padding: 0.3em;
-}
-
-.tc-ctl-edit-attr h3 {
-    margin: 0;
-    font-size: 1em;
-}
-
-.tc-ctl-edit-attr-body table {
-    border: 0.1em solid #666;
-    cursor: default;
-}
-
-.tc-ctl-edit-attr-body select.tc-combo {
-    box-sizing: border-box;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    width: 15%;
-    border-right: none;
-    float: left;
-}
-
-.tc-ctl-edit-attr-body input {
-    box-sizing: border-box;
-    width: 100%;
-}
-
-.tc-ctl-edit-attr-body select.tc-combo + input {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    width: 85%;
-}
-
-.tc-ctl-edit-attr-footer {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: auto;
-    padding-top: 1em;
-    text-align: right;
-}
-
-    .tc-ctl-edit-attr-footer .tc-button {
-        margin-left: 0.2em;
-    }
 
 .tc-ctl-file p {
     margin: 0.5em 0 0.5em 0;
@@ -2362,7 +2127,7 @@ label:first-of-type input[type=radio] ~ span {
     border-bottom-left-radius: var(--border-radius);
 }
 
-label:last-child input[type=radio] ~ span {
+label:last-of-type input[type=radio] ~ span {
     width: 100%;
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
