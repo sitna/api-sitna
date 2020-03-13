@@ -14,8 +14,8 @@
     }
 
         .tc-ctl-xwms-cnt > button:before {
-            font-family: 'FontAwesome';
-            content: '\f067';
+            font-family: sitna;
+            content: '\e904';
             margin-right: 0.5em;
         }
 

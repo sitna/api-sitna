@@ -22,9 +22,10 @@
     .tc-ctl-nav-home .tc-ctl-nav-home-btn:after {
         width: 100%;
         height: 100%;
-        font-size: 2em;
-        content: '\2302';
-        line-height: 1em;
+        font-size: 1em;
+        font-family: sitna;
+        content: '\e900';
+        line-height: 2em;
         left: 0;
         top: 0;
         position: absolute;

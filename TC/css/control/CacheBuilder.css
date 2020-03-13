@@ -171,9 +171,8 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-list li button.tc-btn-cancel:before {
-        font-family: mapskin;
-        content: "\e001";
-        transform: rotate(45deg);
+        font-family: sitna;
+        content: "\e908";
         width: auto;
         height: auto;
     }
@@ -185,6 +184,11 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
     white-space: nowrap;
     text-overflow: clip;
     height: 2em;
+}
+
+.tc-ctl-cbuild .tc-ctl-cbuild-btn-new.tc-hidden {
+    display: inline-block;
+    position: absolute;
 }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw {
@@ -204,12 +208,15 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 
 .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-draw:before, .tc-ctl-cbuild .tc-ctl-cbuild-btn-cancel-dl:before {
     display: inline-block;
-    font-family: mapskin;
-    content: "\e001";
-    transform: rotate(45deg);
+    font-family: sitna;
+    content: "\e908";
     height: 1em;
     width: 1em;
     line-height: 1em;
+}
+
+.tc-ctl-cbuild .tc-alert {
+    margin-bottom: 0.5em;
 }
 
 .tc-ctl-cbuild-dialog .tc-ctl-cbuild-txt-name {
@@ -350,8 +357,8 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 }
 
     .tc-ctl-cbuild-map-search-icon:before {
-        font-family: FontAwesome;
-        content: "\f002";
+        font-family: sitna;
+        content: '\e90e';
     }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-list > li {

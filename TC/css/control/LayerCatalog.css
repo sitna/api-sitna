@@ -544,9 +544,9 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     .tc-ctl-lcat-loading-node:before {
         position: absolute;
         font-size: 85%;
-        font-family: "FontAwesome";
+        font-family: sitna;
         color: #999999;
-        content: "\f1ce";
+        content: '\e90f';
         margin-left: -15px;
         margin-top: 2px;
         display: inline-block;
