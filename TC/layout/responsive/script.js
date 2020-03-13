@@ -145,6 +145,17 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                 map.div.querySelector('.tools-panel').classList.add(rcollapsedClass);
             });
 
+            // En pantalla estrecha colapsar panel de herramientas al activar una
+            map.on(TC.Consts.event.CONTROLACTIVATE, function (e) {
+                const control = e.control;
+                if (map.getControlsByClass('TC.control.Draw').filter(ctl => ctl === control).length) {
+                    const toolsPanel = document.querySelector('.tools-panel');
+                    if (getComputedStyle(map.div).height === getComputedStyle(toolsPanel).height) {
+                        toolsPanel.classList.add(rcollapsedClass);
+                    }
+                }
+            });
+
             if (TC.browserFeatures.touch()) {
                 const addSwipe = function (direction) {
                     const selector = '.' + direction + '-panel';
