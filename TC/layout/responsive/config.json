@@ -3,26 +3,26 @@
   "controls": {
     "controlContainer": {
       "div": "ccontainer",
-      "controls": {
-        "navBar": {
-          "side": "left",
-          "options": {
+      "controls": [
+        {
+          "position": "left",
+          "navBar": {
             "home": false
           }
         },
-        "navBarHome": {
-          "side": "left",
-          "options": true
+        {
+          "position": "left",
+          "navBarHome": true
         },
-        "streetView": {
-          "side": "left",
-          "options": true
+        {
+          "position": "left",
+          "streetView": true
         },
-        "scaleBar": {
-          "side": "right",
-          "options": true
+        {
+          "position": "right",
+          "scaleBar": true
         }
-      }
+      ]
     },
     "basemapSelector": {
       "div": "bms"
