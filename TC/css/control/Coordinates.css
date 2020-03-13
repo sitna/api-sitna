@@ -156,5 +156,5 @@ button.tc-ctl-coords-crs:before {
     height: 15px;
     width: 15px;
     position: absolute;
-    background-image: url(../img/crosshair.png);
+    background-image: url(../img/crosshair.svg);
 }
