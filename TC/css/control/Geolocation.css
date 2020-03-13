@@ -1,5 +1,5 @@
 ﻿
-.tc-ctl-geolocation h2 {
+.tc-ctl.tc-ctl-geolocation h2 {
     text-transform: none;
 }
 
@@ -37,7 +37,7 @@
             margin-right: 0.5em;
         }
 
-    /*.tc-ctl-geolocation-locate .tc-ctl-geolocation-locate-hide {
+/*.tc-ctl-geolocation-locate .tc-ctl-geolocation-locate-hide {
         background-color: #630101;
         border-color: #630101;
     }*/
@@ -122,11 +122,11 @@ label.tc-ctl-geolocation-btn-track {
     height: 2em;
 }
 
-.tc-ctl-geolocation-track-center.tc-ctl {    
-    padding: 0;
-}
+    .tc-ctl-geolocation-track-center.tc-ctl {
+        padding: 0;
+    }
 
-    .tc-ctl-geolocation-track-center button {        
+    .tc-ctl-geolocation-track-center button {
         width: 100%;
         height: 100%;
         z-index: 10002;
@@ -251,27 +251,29 @@ label.tc-ctl-geolocation-track-available-label {
     .tc-ctl-geolocation-track-available-lst > li {
         color: var(--list-color);
         background-color: var(--list-bg-color);
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > span {
-        width: 58%;
-        float: left;
-        -ms-text-overflow: ellipsis;
-        -o-text-overflow: ellipsis;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-        height: 2em;
-    }
-
-        .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable {
-            cursor: pointer;
-            color: #600;
+        .tc-ctl-geolocation-track-available-lst > li > span {
+            -ms-text-overflow: ellipsis;
+            -o-text-overflow: ellipsis;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            height: 2em;
+            width: 85%;
         }
 
-            .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable:hover {
-                color: var(--main-hl-color);
+            .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable {
+                cursor: pointer;
+                color: #600;
             }
+
+                .tc-ctl-geolocation-track-available-lst > li > span.tc-selectable:hover {
+                    color: var(--main-hl-color);
+                }
 
 ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-available-empty > span {
     text-decoration: none;
@@ -289,9 +291,8 @@ ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-not > sp
     background-color: transparent;
     border: 0;
     padding: 0;
-    width: 7.5%;
-    margin-right: 1%;
     outline: none;
+    width: 2.5em;
 }
 
     .tc-ctl-geolocation-track-available-lst > li > button:before {
@@ -316,14 +317,10 @@ ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-not > sp
         content: "\f1fe";
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete {
-        margin-left: -8px;
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete:before {
+        font-family: FontAwesome;
+        content: "\f1f8";
     }
-
-        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete:before {
-            font-family: FontAwesome;
-            content: "\f1f8";
-        }
 
     .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-edit:before {
         font-family: FontAwesome;
@@ -340,23 +337,10 @@ ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-not > sp
         content: "\f00d";
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx:before {
-        font-family: Arial;
-        font-size: 70%;
-        font-weight: bold;
-        content: "GPX";
+    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export:before {
+        font-family: sitna;
+        content: "\e902";
     }
-
-    .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml, .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-gpx {
-        padding-top: 0.25em;
-    }
-
-        .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export-kml:before {
-            font-family: Arial;
-            font-size: 70%;
-            font-weight: bold;
-            content: "KML";
-        }
 
 
 input#tc-ctl-geolocation-track-available-srch {
@@ -411,7 +395,7 @@ div.tc-ctl-geolocation-continue-track-dialog > div > div > button.tc-button {
 }
 
 i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
-    cursor: pointer;
+    cursor: help;
     vertical-align: top;
     color: var(--glyph-sec-color);
     margin-left: 4px;
@@ -599,59 +583,36 @@ div.tc-ctl-geolocation-track-render {
     box-sizing: content-box;
 }
 
-    .tc-ctl-geolocation-track-available-lst > li > input {
-        margin-right: 1%;
-        padding-left: 0.5em;
-        width: 81.5%;
-        float: left;
+    .tc-ctl-geolocation-track-available-lst > li > input {                
+        width:85%;
     }
 
 
     .tc-ctl-geolocation-track-available-lst > li > .tc-btn-simulate:before {
         font-family: FontAwesome;
         content: "\f008";
-    }
-
-    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop {
-        padding-left: 0.15em;
-    }
+    }    
 
         .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop:before {
             font-family: FontAwesome;
             content: "\f04d";
         }
 
-    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause:before {
-        padding-left: 0.25em;
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause:before {        
         font-family: FontAwesome;
         content: "\f04c";
     }
-
-    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause {
-        width: 18px;
-    }
+    
 
         .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause.play:before {
             font-family: FontAwesome;
             content: "\f04b";
-        }
-
-    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-forward {
-        margin-right: 0%;
-        padding-left: 0.15em;
-        float: right;
-        margin-top: 0.48em;
-    }
+        }    
 
         .tc-ctl-geolocation-track-available-lst > li > .tc-btn-forward:before {
             font-family: FontAwesome;
             content: "\f04e";
-        }
-
-    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-backward {
-        padding-left: 0.15em;
-        margin-left: -8px;
-    }
+        }    
 
         .tc-ctl-geolocation-track-available-lst > li > .tc-btn-backward:before {
             font-family: FontAwesome;
@@ -659,18 +620,16 @@ div.tc-ctl-geolocation-track-render {
         }
 
     .tc-ctl-geolocation-track-available-lst > li > .tc-spn-speed {
-        width: 15%;
-        float: none;
         font-weight: bold;
         font-family: Arial;
         font-size: 85%;
         color: #666;
         text-decoration: none;
         cursor: auto;
+        white-space: nowrap;
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > select.tc-sel-speed {
-        width: 20%;
+    .tc-ctl-geolocation-track-available-lst > li > select.tc-sel-speed {        
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
