@@ -1957,6 +1957,7 @@
                 options.hasOwnProperty('fillColor') ||
                 options.hasOwnProperty('strokeOpacity') ||
                 options.hasOwnProperty('fillOpacity') ||
+                options.hasOwnProperty('url') ||
                 options.hasOwnProperty('radius') ||
                 options.hasOwnProperty('anchor') ||
                 options.hasOwnProperty('width') ||
