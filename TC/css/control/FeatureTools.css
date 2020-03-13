@@ -6,7 +6,7 @@
 
     .tc-ctl-ftools.tc-active {
         display: block;
-        animation: slidedown 0.2s;
+        animation: slidedown 0.3s;
         transform-origin: top center;
     }
 
@@ -27,6 +27,10 @@
         -o-transition: all .2s ease;
         transition: all .2s ease;
     }
+
+        .tc-ctl-ftools button:focus {
+            outline: none;
+        }
 
         .tc-ctl-ftools button:after {
             position: absolute;
@@ -60,145 +64,6 @@
             content: "\2702";
         }
 
-.tc-ctl-ftools-dialog .tc-ctl {
-    padding: 0;
-}
-
-.tc-ctl-ftools-dialog-dl button {
-    width: 25%;
-    border: 0;
-    border-left: 1px solid;
-    border-left-color: var(--main-bg-color);
-    border-right: 1px solid;
-    border-right-color: var(--main-bg-color);
-    border-radius: 0;
-    margin: 0.5em 0 0.5em 0;
-}
-
-.tc-ctl-ftools-dialog-dl .tc-btn-dl.tc-hidden {
-    display: none;
-}
-
-.tc-ctl-ftools-dialog-dl button.tc-ctl-ftools-dl-btn-geojson {
-    text-indent: -0.6em;
-}
-
-.tc-ctl h2, .tc-ctl-ftools-dialog-dl h2 {
-    color: var(--title-color);
-    text-transform: lowercase;
-    background-color: var(--main-bg-color);
-    border-bottom: 1px solid;
-    border-bottom-color: var(--main-divider-color);
-    font-family: Arial, helvetica, sans-serif;
-    font-size: 1.1em;
-    font-weight: bold;
-    padding: 0.2em;
-    margin: 0;
-}
-
-.tc-ctl-ftools-dialog-elev {
-    height: 2em;
-}
-
-    .tc-ctl-ftools-dialog-elev input[type=checkbox] {
-        display: none;
-    }
-
-        .tc-ctl-ftools-dialog-elev input[type=checkbox] + label:before {
-            display: inline-block;
-            content: "\2610";
-            margin-right: 0.3em;
-        }
-
-        .tc-ctl-ftools-dialog-elev input[type=checkbox]:checked + label:before {
-            content: "\2611";
-        }
-
-.tc-ctl-ftools-dialog-ip {
-    margin-bottom: 0.5em;
-    text-align: center;
-    overflow: hidden;
-    transition: height ease 0.2s;
-}
-
-    .tc-ctl-ftools-dialog-ip.tc-hidden * {
-        display: none;
-    }
-
-    .tc-ctl-ftools-dialog-ip.tc-hidden label span {
-        display: none;
-    }
-
-    .tc-ctl-ftools-dialog-ip.tc-hidden label {
-        display: inline-block;
-    }
-
-    .tc-ctl-ftools-dialog-ip input[type=radio] {
-        display: none;
-    }
-
-    .tc-ctl-ftools-dialog-ip label {
-        display: inline-block;
-        width: 6em;
-        height: 6em;
-        transition: height ease 0.2s;
-    }
-
-    .tc-ctl-ftools-dialog-ip.tc-hidden label {
-        height: 0;
-        opacity: 0;
-    }
-
-    .tc-ctl-ftools-dialog-ip label input[type=radio] ~ span {
-        display: inline-block;
-        width: 100%;
-        height: 100%;
-        border: 0.3em solid transparent;
-        border-radius: var(--border-radius);
-        text-align: center;
-        box-sizing: border-box;
-    }
-
-    .tc-ctl-ftools-dialog-ip.tc-hidden label input[type=radio] ~ span {
-        display: none;
-    }
-
-    .tc-ctl-ftools-dialog-ip label input[type=radio]:checked ~ span {
-        border-color: var(--main-hl-color);
-    }
-
-    .tc-ctl-ftools-dialog-ip label input[type=radio][value="0"] ~ span {
-        background-image: url(../img/uip-features.svg);
-        background-repeat: no-repeat;
-        background-size: contain;
-        background-position-y: bottom;
-    }
-
-    .tc-ctl-ftools-dialog-ip label input[type=radio][value="1"] ~ span {
-        background-image: url(../img/ip-features.svg);
-        background-repeat: no-repeat;
-        background-size: contain;
-        background-position-y: bottom;
-    }
-
-.tc-ctl-ftools-dialog-ip-m {
-    transition: height ease 0.2s;
-    height: 2.2em;
-    opacity: 1;
-    padding-top: 0.5em;
-}
-
-    .tc-ctl-ftools-dialog-ip-m.tc-hidden {
-        visibility: visible;
-        height: 0;
-        opacity: 0;
-        padding-top: 0;
-    }
-
-    .tc-ctl-ftools-dialog-ip-m input[type=number] {
-        width: 3em;
-    }
-
 table.tc-ctl-ftools-zoom {
-    cursor: zoom-in;    
+    cursor: zoom-in;
 }
