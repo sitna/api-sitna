@@ -686,7 +686,7 @@ div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prcollapsed-slide-submenu-d
     }
 }
 
-/*Aqui van los estilos para las mierdas de Inspire*/
+/*Aqui van los estilos para los atributos de Inspire*/
 
 .tc-ctl-p-results table:not(.nested) .complexAttr tbody tr {
     background-color: transparent
