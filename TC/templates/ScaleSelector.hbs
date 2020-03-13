@@ -1,0 +1,5 @@
+<div class="ol-scale-line ol-unselectable"><nobr><select>
+{{#each scales}}
+    <option value="{{.}}"{{#if (eq . scale)}} selected="true"{{/if}}>1:{{round .}}</option>
+{{/each}}
+</select> <input type="button" value="{{screenSize}}''" title="{{i18n "estimatedMapSize"}}" /></nobr></div>

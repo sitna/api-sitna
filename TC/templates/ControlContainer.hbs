@@ -1,0 +1,19 @@
+<ul class="tc-ctl-cctr-left">
+    {{#each controls}}
+    {{#if (eq position "left")}}
+    <li class="tc-ctl-cctr-elm tc-ctl-cctr-elm-{{index}}">
+        <div></div>
+    </li>
+    {{/if}}
+    {{/each}}
+</ul>
+<ul class="tc-ctl-cctr-right">
+    {{#each controls}}
+    {{#if (eq position "right")}}
+    <li class="tc-ctl-cctr-elm tc-ctl-cctr-elm-{{index}}">
+        <div></div>
+    </li>
+    {{/if}}
+    {{/each}}
+</ul>
+

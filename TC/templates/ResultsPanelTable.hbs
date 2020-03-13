@@ -1,0 +1,19 @@
+
+{{#if results}}
+    <h4>{{tableTitle}}</h4>
+    <table class="table">            
+        <tbody>
+            <tr class="{{css.trClass}}">
+                {{#each columns}}
+                    <th class="{{../css.thClass}}" title="{{this}}">{{this}}</th>
+                {{/each}}
+             </tr>
+            {{#each results}}
+                <tr class="{{../css.trClass}}">
+                {{#each this}}
+                    <td class="{{../../css.tdClass}}" title="{{this}}">{{this}}</td>
+                {{/each}}
+            {{/each}}            
+        </tbody>
+    </table>
+{{/if}}    

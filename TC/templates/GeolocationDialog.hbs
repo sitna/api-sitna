@@ -1,0 +1,33 @@
+<div class="tc-ctl-geolocation-continue-track-dialog tc-modal" >
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{{i18n "geo.gps"}}</h3>
+            <div class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <button class="tc-button tc-ctl-geolocation-track-continue"> {{i18n "geo.trk.dialog.cnt"}} </button>
+            <button class="tc-button tc-ctl-geolocation-track-new"> {{i18n "geo.trk.dialog.new"}} </button>            
+            <button class="tc-button tc-modal-close"> {{i18n "geo.trk.dialog.cancel"}} </button>
+        </div>
+    </div>
+</div>
+<div class="tc-ctl-geolocation-track-advert-dialog tc-modal" >
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{{i18n "geo.track.activate.title"}}</h3>
+            <div class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <p id="pageBlurMsg">{{i18n "geo.trk.page.blur"}}</p>
+            <p class="tc-ctl-geolocation-track-advertisement p">                
+                <label> <input type="checkbox" name="checkbox" id="advertisement"> {{i18n "geo.trk.dialog.advertisement"}} </label>        
+            </p>
+        </div>
+        <div class="tc-modal-footer">
+            <button class="tc-button tc-ctl-geolocation-track-advert-ok"> {{i18n "ok"}} </button>
+        </div>
+    </div>
+</div>
+

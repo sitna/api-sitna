@@ -1,0 +1,45 @@
+<li class="tc-ctl-wlm-elm" tabindex="-1">
+    <div class="tc-ctl-wlm-lyr">{{#if path}}{{title}}{{/if}}</div>
+    <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{{#each path}}{{this}}{{#unless @first}} &bull; {{/unless}}{{else}}{{title}}{{/each}}">{{#each path}}{{this}}{{#unless @first}} &bull; {{/unless}}{{else}}{{title}}{{/each}}</div>
+    <div class="tc-ctl-wlm-buttons">
+        <div class="tc-ctl-wlm-btn-info" title="{{i18n "infoFromThisLayer"}}"></div>
+        <div class="tc-ctl-wlm-tools"></div>
+        <input type="range" value="{{opacity}}" title="{{i18n "transparencyOfThisLayer"}}" />
+        <input type="checkbox" id="tc-ctl-wlm-tools-visibility-{{id}}" {{#unless hide}}checked="checked"{{/unless}} title="{{i18n "visibilityOfThisLayer"}}" />
+        <label for="tc-ctl-wlm-tools-visibility-{{id}}" title="{{i18n "visibilityOfThisLayer"}}">{{i18n "visibilityOfThisLayer"}}</label>
+        <button class="tc-ctl-wlm-btn-del" {{#if unremovable}}disabled{{else}}title="{@i18n $key="removeLayerFromMap"/}"{{/if}}>{{i18n "removeLayerFromMap"}}</button>
+    </div>
+        <div class="tc-ctl-wlm-info tc-hidden">
+            {{#if abstract}}
+            <div class="tc-ctl-wlm-abstract">
+                <h4>{{i18n "abstract"}}</h4>
+                <div><pre>{{{abstract}}}</pre></div>
+            </div>
+            {{/if}}
+            {{#if customLegend}}
+            <ul class="tc-ctl-wlm-custom-legend">
+                {{{customLegend}}}
+            </ul>
+            {{else}}
+                {{#if legend}}
+                <div class="tc-ctl-wlm-legend" data-layer-name="{{layerNames}}">
+                    <h4>{{i18n "content"}}</h4>
+                    {{#each legend}}
+                    <div><p>{{title}}</p><img data-img="{{src}}" /></div>
+                    {{/each}}
+                </div>
+                {{/if}}
+            {{/if}}
+            {{#if metadata}}
+            <div class="tc-ctl-wlm-metadata">
+                <h4>{{i18n "metadata"}}</h4>
+                <ul>
+                    {{#each metadata}}
+                    <li><a href="{{{url}}}" type="{{format}}" title="{{formatDescription}}" target="_blank">{{formatDescription}}</a></li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
+        </div>
+    <div class="tc-ctl-wlm-dd" title="{{i18n "dragToReorder"}}"></div>
+</li>

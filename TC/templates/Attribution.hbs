@@ -1,0 +1,16 @@
+<div>
+    <span>{{{api}}}</span>
+    {{#if mainData}} - {{i18n "data"}}:
+        {{#if mainData.site}}
+            <span> <a href="{{mainData.site}}" target="_blank">{{mainData.name}}</a></span>
+        {{else}}
+            {{#if mainData.name}}
+                <span> {{mainData.name}}</span>
+            {{/if}}
+        {{/if}}
+    {{/if}}
+    {{#if otherData}} - <span class="tc-ctl-attrib-cmd">{{i18n "others"}}...</span>{{/if}}
+    <div class="tc-ctl-attrib-other{{#if isCollapsed}} tc-collapsed{{/if}}">
+	{{#each otherData}}{{#unless @first}}, {{/unless}}{{#if site}}<span><a href="{{site}}" target="_blank">{{name}}</a></span>{{else}}<span>{{name}}</span>{{/if}}{{/each}}
+    </div>
+</div>
