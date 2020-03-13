@@ -1,0 +1,59 @@
+{@isObject object=. }
+<table class="complexAttr">
+    <tbody>
+        {@iterate on=.}
+        {@isKeyKalue on=.}
+        <tr class="keyValue">
+            <th class="key">{key}</th>
+            <td class="value">{>tc-ctl-wfsquery-table-object:value/}</td>
+        </tr>
+        {:else}
+        <tr>
+            <th style="display:none">{key}</th>
+            <td>
+                {@isObject object=value }
+                <!--object-->
+                <input type="checkbox" id="complexAttr_{.|objectId}">
+                <div>
+                    <label for="complexAttr_{.|objectId}" title="" class="plus"></label>
+                    <label for="complexAttr_{.|objectId}" title="" class="title">{key}</label><br />
+                {:array}
+                <!--array-->
+                <div>
+                    <label for="complexAttr_{.|objectId}" class="title">{key}</label><br />
+                {:else}
+                <div>
+                    <!--native-->
+                {/isObject}
+                    {>tc-ctl-wfsquery-table-object:value/}
+                </div>
+            </td>
+        </tr>
+        {/isKeyKalue}
+        {/iterate}
+    </tbody>
+
+</table>
+{:array}
+<div class="complexAttr">
+    <input type="checkbox" id="complexAttr_{.|objectId}">
+    <div>
+        <label for="complexAttr_{.|objectId}" title="" class="plus"></label>
+        <label for="complexAttr_{.|objectId}" title="" class="title">{@size key=. /}  {@i18n $key="featureInfo.complexData.array"/}</label>
+        <table class="complexAttr">
+            <tbody>
+                {@iterate on=.}
+                <tr>
+                    <td class="arrayNode">{>tc-ctl-wfsquery-table-object:value/}</td>
+                </tr>
+                {/iterate}
+            </tbody>
+        </table>
+    </div>
+</div>
+{:else}
+	{@startsWith key=. value="http"}<a href="{.}" target="_blank" title="{@i18n $key="linkInNewWindow" /}">{@i18n $key="open" /}</a>
+    {:else}
+<div>{.|numberSeparator}</div>
+    {/startsWith}
+{/isObject}
