@@ -14,7 +14,6 @@ TC.feature.Polygon = function (coords, options) {
     TC.Feature.apply(self, arguments);
 
     if (!self.wrap.isNative(coords)) {
-        options = self.options = TC.Util.extend(true, self.options, TC.Cfg.styles.polygon, options);
         self.wrap.createPolygon(coords, options);
     }
 };

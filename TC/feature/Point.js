@@ -56,7 +56,6 @@ TC.feature.Point = function (coords, options) {
 
     if (!self.wrap.isNative(coords)) {
         self.wrap.feature = coords;
-        options = self.options = TC.Util.extend(true, self.options, TC.Cfg.styles.point, options);
         self.wrap.createPoint(coords, options);
     }
 };
