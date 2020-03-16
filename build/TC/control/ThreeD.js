@@ -18,14 +18,7 @@ TC.control = TC.control || {};
         BTNACTIVE: 'active'
     };
 
-    ctlProto.template = {};
-
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ThreeD.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-threed-btn tc-beta-button\" title=\"").h("i18n", ctx, {}, { "$key": "threed.tip" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/ThreeD.html";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -49,14 +42,14 @@ TC.control = TC.control || {};
 
             self.button.addEventListener(TC.Consts.event.CLICK, function () {
 
-                if (self.button.getAttribute("disabled") === "disabled") {
+                if (self.button.disabled) {
                     return;
                 }
 
                 if (!self.map.on3DView) {
                     self.activate();
                 } else {
-                    self.button.setAttribute("disabled", "disabled");
+                    self.button.disabled = true;
 
                     TC.view.ThreeD.unapply({
                         callback: function () {
@@ -64,7 +57,7 @@ TC.control = TC.control || {};
 
                             self.button.classList.remove(self.classes.BTNACTIVE);
 
-                            self.button.removeAttribute("disabled");
+                            self.button.disabled = false;
                         }
                     });
                 }
@@ -79,7 +72,7 @@ TC.control = TC.control || {};
     ctlProto.activate = function () {
         var self = this;
 
-        self.button.setAttribute("disabled", "disabled");
+        self.button.disabled = true;
 
         self.browserSupportWebGL.call(self);
 
@@ -91,7 +84,7 @@ TC.control = TC.control || {};
         };
 
         const removeDisabled = function () {
-            self.button.removeAttribute("disabled");
+            self.button.disabled = false;
         };
 
         if (!self.map.view3D) {

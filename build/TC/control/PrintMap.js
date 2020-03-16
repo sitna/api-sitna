@@ -468,17 +468,9 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
     };
 
     ctlProto.template = {};
-
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/PrintMap.html";
-        ctlProto.template[ctlProto.CLASS + '-view'] = TC.apiLocation + "TC/templates/PrintMapView.html";
-        ctlProto.template[ctlProto.CLASS + '-tools'] = TC.apiLocation + "TC/templates/PrintMapTools.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "print" }).w("</h2><div><div class=\"tc-ctl-printMap-div\"><div class=\"tc-group tc-ctl-printMap-cnt\"><label>").h("i18n", ctx, {}, { "$key": "title" }).w(":</label><input type=\"text\" class=\"tc-ctl-printMap-title tc-textbox\" maxlength=\"30\" placeholder=\"").h("i18n", ctx, {}, { "$key": "mapTitle" }).w("\" /></div><div class=\"tc-group tc-ctl-printMap-cnt\"><label>").h("i18n", ctx, {}, { "$key": "layout" }).w(":</label><select id=\"print-design\" class=\"tc-combo\"><option value=\"landscape\">").h("i18n", ctx, {}, { "$key": "landscape" }).w("</option><option value=\"portrait\">").h("i18n", ctx, {}, { "$key": "portrait" }).w("</option></select></div><div class=\"tc-group tc-ctl-printMap-cnt\"><label>").h("i18n", ctx, {}, { "$key": "size" }).w(":</label><select id=\"print-size\" class=\"tc-combo\"><option value=\"a4\">A4</option><option value=\"a3\">A3</option></select></div><div class=\"tc-group tc-ctl-printMap-cnt tc-ctl-printMap-cnt-btn\"><input id=\"tc-ctl-printMap-image-qr\" class=\"tc-hidden\" type=\"checkbox\" checked style=\"display:none;\" /><label for=\"tc-ctl-printMap-image-qr\" class=\"tc-ctl-printMap-image-qr-label\" title=\"").h("i18n", ctx, {}, { "$key": "createQrCodeToImage" }).w("\">").h("i18n", ctx, {}, { "$key": "appendQRCode" }).w("</label><button class=\"tc-ctl-printMap-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "printMap" }).w("\">").h("i18n", ctx, {}, { "$key": "print" }).w("</button></div><div class=\"tc-group tc-ctl-printMap-cnt\"><div class=\"tc-ctl-printMap-alert tc-alert alert-warning tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "qrAdvice|s" }).w("</p></div></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-view'] = function () { dust.register(ctlProto.CLASS + '-view', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-printMap-view\"> </div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-tools'] = function () { dust.register(ctlProto.CLASS + '-tools', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-printMap-tools\"><div class=\"tc-ctl-printMap-btn-pdf\" title=\"").h("i18n", ctx, {}, { "$key": "printpdf" }).w("\"></div><div class=\"tc-ctl-printMap-btn-close\" title=\"").h("i18n", ctx, {}, { "$key": "close" }).w("\"></div></div> "); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/PrintMap.html";
+    ctlProto.template[ctlProto.CLASS + '-view'] = TC.apiLocation + "TC/templates/PrintMapView.html";
+    ctlProto.template[ctlProto.CLASS + '-tools'] = TC.apiLocation + "TC/templates/PrintMapTools.html";
 
     const hasLegend = function () {
         const self = this;
@@ -833,7 +825,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
                                         }, function (error) {
                                             imageErrorHandling(src);
-                                            reject();
+                                            reject(error);
                                         });
                                     }));
                                 }

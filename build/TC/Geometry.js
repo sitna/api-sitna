@@ -69,6 +69,37 @@
                     }
                 }
                 return result;
+            },
+            getFlatCoordinates: function (geom) {
+                const reductionFn = function (prev, cur) {
+                    return prev.concat(cur);
+                };
+                switch (true) {
+                    case Geometry.isPoint(geom):
+                        return [geom];
+                    case Geometry.isRing(geom):
+                        return geom;
+                    case Geometry.isRingCollection(geom):
+                        return geom.reduce(reductionFn);
+                    case Geometry.isMultiRingCollection(geom):
+                        return geom.reduce(reductionFn).reduce(reductionFn);
+                    default:
+                        return [];
+                }
+            },
+            intersects: function (geom1, geom2) {
+                const flatIntersects = function (coords, geom) {
+                    for (var i = 0, ii = coords.length; i < ii; i++) {
+                        if (Geometry.isInside(coords[i], geom)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                if (flatIntersects(Geometry.getFlatCoordinates(geom1), geom2) || flatIntersects(Geometry.getFlatCoordinates(geom2), geom1)) {
+                    return true;
+                }
+                return false;
             }
         };
         return Geometry;

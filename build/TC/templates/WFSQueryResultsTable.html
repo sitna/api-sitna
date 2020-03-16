@@ -10,9 +10,9 @@
         {@iterate on=. }
         {@select key=key}
     <td class="{key|removeAccents|downcase}">
-        {@startsWith key=value value="http"}<a href="{value}" target="_blank" title="{@i18n $key="query.linkOpenAtNewTab" /}">{@i18n $key="query.linkText" /}</a>
+        {@startsWith key=value value="http"}<a href="{value}" target="_blank" title="{@i18n $key="linkInNewWindow" /}">{@i18n $key="open" /}</a>
         {:else}
-        {value|numberSeparator}
+        {>tc-ctl-wfsquery-table-object:value/}
         {/startsWith}
     </td>
     {/select}

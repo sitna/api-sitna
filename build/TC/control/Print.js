@@ -20,29 +20,29 @@ TC.control.Print = function (options)
         const target = opts.target;
 
         if (!target.querySelector('.' + self.CLASS + '-btn')) {
-            for (var key in self.template) {
-                if (!dust.cache[key]) {
-                    self.template[key]();
-                }
-            }
-            
-            target.classList.add(TC.Consts.classes.PRINTABLE);
+            //for (var key in self.template) {
+            //    if (!dust.cache[key]) {
+            //        self.template[key]();
+            //    }
+            //}
+            (opts.printableElement || target).classList.add(TC.Consts.classes.PRINTABLE);
 
             var renderPage = function (e) {
                 var page = open(null, self.CLASS);
-                var content = target.innerHTML;
-                dust.render(self.CLASS + '-page', { title: self.title, content: content, cssUrl: self.cssUrl }, function (err, out) {
-                    page.document.write(out);
-                    page.document.close();
-                    page.focus();
-                    if (err) {
+                var content = (opts.printableElement || target).innerHTML;
+                TC.Control.prototype.getRenderedHtml.call(self, self.CLASS + '-page', { title: self.title, content: content, cssUrl: self.cssUrl })
+                    .then(function (out) {
+                        page.document.write(out);
+                        page.document.close();
+                        page.focus();
+                    })
+                    .catch(function (err) {
                         TC.error(err);
-                    }
-                });
+                    });
             };
-            dust.render(self.CLASS, null, function (err, out) {
+            TC.Control.prototype.getRenderedHtml.call(self, self.CLASS, null).then(function (out) {
                 target.insertAdjacentHTML('afterbegin', out);
-                target.querySelector('.' + self.CLASS + '-btn').addEventListener('click', renderPage);
+                target.querySelector('.' + self.CLASS + '-btn').addEventListener('click', renderPage.bind(self));
             });
         }
     }
@@ -54,14 +54,7 @@ TC.control.Print = function (options)
     ctlProto.CLASS = 'tc-ctl-print';
 
     ctlProto.template = {};
-
-    //if (TC.isDebug) {
-    //    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Print.html";
-    //    ctlProto.template[ctlProto.CLASS + '-page'] = TC.apiLocation + "TC/templates/PrintPage.html";
-    //}
-    //else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<a class=\"tc-ctl-print-btn\" title=\"").h("i18n", ctx, {}, { "$key": "printThisWindow" }).w("\">").h("i18n", ctx, {}, { "$key": "print" }).w("</a>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-page'] = function () { dust.register(ctlProto.CLASS + '-page', body_0); function body_0(chk, ctx) { return chk.w("<!DOCTYPE html><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>").f(ctx.get(["title"], false), ctx, "h").w("</title><link rel=\"stylesheet\" href=\"").f(ctx.get(["cssUrl"], false), ctx, "h").w("\" /></head><body onload=\"print()\" class=\"tc-ctl-print-page\"><h1>").f(ctx.get(["title"], false), ctx, "h").w("</h1>").f(ctx.get(["content"], false), ctx, "h", ["s"]).w("</body></html>"); } body_0.__dustBody = !0; return body_0 };
-    //}
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Print.html";
+    ctlProto.template[ctlProto.CLASS + '-page'] = TC.apiLocation + "TC/templates/PrintPage.html";
 
 })();

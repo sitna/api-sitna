@@ -3,8 +3,11 @@
     <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}">{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}</div>
     <div class="tc-ctl-wlm-buttons">
         <div class="tc-ctl-wlm-btn-info" title="{@i18n $key="infoFromThisLayer"/}"></div>
+        <div class="tc-ctl-wlm-tools"></div>
         <input type="range" value="{opacity}" title="{@i18n $key="transparencyOfThisLayer"/}" />
-        <input type="checkbox" {^hide}checked="checked"{/hide} title="{@i18n $key="visibilityOfThisLayer"/}" />
+        <input id="tc-ctl-wlm-tools-visibility-{id}" type="checkbox" {^hide}checked="checked"{/hide} title="{@i18n $key="visibilityOfThisLayer"/}" />
+        <label for="tc-ctl-wlm-tools-visibility-{id}" title="{@i18n $key="visibilityOfThisLayer"/}">{@i18n $key="visibilityOfThisLayer"/}</label>
+        <button class="tc-ctl-wlm-btn-del" {?unremovable}disabled{:else}title="{@i18n $key="removeLayerFromMap"/}"{/unremovable}>{@i18n $key="removeLayerFromMap"/}</button>
     </div>
         <div class="tc-ctl-wlm-info tc-hidden">
             {?abstract}
@@ -38,6 +41,5 @@
             </div>
             {/metadata}
         </div>
-    <div class="tc-ctl-wlm-dd {?hide}tc-hidden{/hide}" title="{@i18n $key="dragToReorder"/}"></div>
-    <div class="tc-ctl-wlm-del {?unremovable}disabled{/unremovable} {^hide}tc-hidden{/hide}" {^unremovable}title="{@i18n $key="removeLayerFromMap"/}"{/unremovable}></div>
+    <div class="tc-ctl-wlm-dd" title="{@i18n $key="dragToReorder"/}"></div>
 </li>

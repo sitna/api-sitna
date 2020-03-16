@@ -1,3 +1,5 @@
+
+
 /**
  * Opciones de capa.
  * Esta clase no tiene constructor.
@@ -119,6 +121,8 @@ TC.Layer = function (options) {
     _layer.options = options || {};
     TC.Util.extend(_layer, _layer.options);
 
+    _layer.PROTOCOL_REGEX = /^(f|ht)tp?:\/\//i;
+
     /**
      * Identificador de capa, debe ser único en el mapa. Si no se asigna en las opciones del constructor, se genera uno automáticamente.
      * @property id
@@ -147,6 +151,10 @@ TC.Layer = function (options) {
     _layer.customLegend = _layer.options.customLegend; 
     var defaultFormat = _layer.options.isBase ? TC.Consts.mimeType.JPEG : TC.Consts.mimeType.PNG;
     _layer.options.format = _layer.options.format || defaultFormat;
+
+    if (_layer.options.owner) {
+        _layer.owner = _layer.options.owner;
+    }
 
     if (_layer.options.hideTree === undefined) {
         _layer.options.hideTree = true;
@@ -374,3 +382,238 @@ TC.Layer.prototype.getResolutions = function () {
 
 TC.Layer.prototype.setProjection = function () {
 };
+
+TC.Layer.prototype.getBySSL_ = function (url) {
+    var self = this;
+
+    return url.replace(self.PROTOCOL_REGEX, "https://");
+};
+
+(function () {
+    const isWebWorkerEnabled = window.hasOwnProperty('Worker');
+    const wwPromise = new Promise(function (resolve, reject) {
+        if (isWebWorkerEnabled) {
+            // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
+            var wwLocation = TC.apiLocation + 'TC/workers/tc-caps-web-worker.js';
+            if (TC.Util.isSameOrigin(TC.apiLocation)) {
+                resolve(wwLocation);
+            }
+            else {
+                TC.ajax({
+                    url: wwLocation,
+                    method: 'GET',
+                    responseType: 'text'
+                }).then(
+                    function (response) {
+                        const data = response.data;
+                        var blob = new Blob([data], { type: "text/javascript" });
+                        var url = window.URL.createObjectURL(blob);
+                        resolve(url);
+                    },
+                    function (e) {
+                        reject(Error(e));
+                    }
+                    );
+            }
+        }
+    });
+
+    const parseCapabilities = function (layer, data) {
+        var capabilities;
+
+        if (data.documentElement) {
+
+            const serviceException = data.getElementsByTagName('ServiceException')[0];
+            if (serviceException) {
+                capabilities = { error: serviceException.textContent };
+            }
+            else {
+                var format = (layer.type === TC.Consts.layerType.WMTS) ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
+                capabilities = format.read(data);
+
+                //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
+                if (layer.type === TC.Consts.layerType.WMTS) {
+                    if (capabilities.Contents && capabilities.Contents.Layer) {
+                        const layerCollection = data.getElementsByTagName('Layer');
+                        for (var i = 0, len = layerCollection.length; i < len; i++) {
+                            const curXmlLy = layerCollection[i];
+                            var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
+                            var id = nd.firstChild.data;
+
+                            var capLy = capabilities.Contents.Layer.filter(function (ly) {
+                                return ly.Identifier == id;
+                            });
+
+                            if (capLy.length) {
+                                capLy = capLy[0];
+                                for (var j = 0; j < capLy.TileMatrixSetLink.length; j++) {
+                                    var capLink = capLy.TileMatrixSetLink[j];
+                                    matrixId = capLink.TileMatrixSet;
+
+                                    var xmlLink;
+                                    const xmlLinks = curXmlLy.getElementsByTagName('TileMatrixSetLink');
+                                    for (var k = 0, kk = xmlLinks.length; k < kk; k++) {
+                                        const curLink = xmlLinks[k];
+                                        if (curLink.querySelector("TileMatrixSet:first").textContent == matrixId) {
+                                            xmlLink = curLink;
+                                            break;
+                                        }
+                                    }
+
+                                    if (xmlLink) {
+                                        capLink.TileMatrixSetLimits = [];
+                                        const tmlCollection = xmlLink.getElementsByTagName('TileMatrixLimits');
+                                        for (var k = 0, kk = tmlCollection.length; k < kk; k++) {
+                                            const lim = tmlCollection[k];
+                                            capLink.TileMatrixSetLimits.push({
+                                                TileMatrix: lim.getElementsByTagName('TileMatrix')[0].textContent,
+                                                MinTileRow: parseInt(lim.getElementsByTagName('MinTileRow')[0].textContent),
+                                                MinTileCol: parseInt(lim.getElementsByTagName('MinTileCol')[0].textContent),
+                                                MaxTileRow: parseInt(lim.getElementsByTagName('MaxTileRow')[0].textContent),
+                                                MaxTileCol: parseInt(lim.getElementsByTagName('MaxTileCol')[0].textContent)
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            storeCapabilities(layer, capabilities);
+            return Promise.resolve(capabilities);
+        }
+        else {
+            return new Promise(function (resolve, reject) {
+                if (isWebWorkerEnabled && typeof data === 'string') {
+                    wwPromise.then(function (wwUrl) {
+                        var worker = new Worker(wwUrl);
+                        worker.onmessage = function (e) {
+                            if (e.data.state === 'success') {
+                                capabilities = e.data.capabilities;
+
+                                // GLS: Sólo almacenamos si el capabilities es correcto
+                                storeCapabilities(layer, capabilities);
+                            }
+                            else {
+                                capabilities = {
+                                    error: 'Web worker error'
+                                }
+                                reject(capabilities.error);
+                            }
+
+                            resolve(capabilities);
+                            worker.terminate();
+                        };
+                        worker.postMessage({
+                            type: layer.type,
+                            text: data,
+                            url: (TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation)
+                        });
+                    })
+                }
+                else {
+                    capabilities = data;
+                    resolve(capabilities);
+                }
+            });
+        }
+    };
+
+    const capabilitiesError = function (layer, reason) {
+        return 'No se pudo obtener el documento de capacidades del servicio ' + layer.url + ': [' + reason + ']';
+    };
+
+    const getCapabilitiesOnline = function () {
+        var layer = this;
+        return new Promise(function (resolve, reject) {
+            const url = layer.getGetCapabilitiesUrl();
+
+            layer.toolProxification.fetch(url, { retryAttempts: 2 }).then(function (data) {
+                parseCapabilities(layer, data.responseText)
+                    .then(function (capabilities) {
+                        if (capabilities.error) {
+                            reject(Error(capabilitiesError(layer, capabilities.error)));
+                            return;
+                        }
+                        resolve(capabilities);
+                    })
+                    .catch(function (error) {
+                        reject(Error(error));
+                    });
+            }).catch(function (dataError) {
+                reject(Error(capabilitiesError(layer, dataError)));
+            });
+
+        });
+    };
+
+    const getCapabilitiesFromStorage = function () {
+        var layer = this;
+        return new Promise(function (resolve, reject) {
+            // Obtenemos el capabilities almacenado en caché
+            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+                localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + layer.url)
+                    .then(function (value) {
+                        if (value) {
+                            resolve(value);
+                        }
+                        else {
+                            reject(Error('Capabilities not in storage: ' + layer.url));
+                        }
+                    })
+                    .catch(function () {
+                        reject(Error('Undefined storage error'));
+                    });
+            });
+        });
+    };
+
+    const storeCapabilities = function (layer, capabilities) {
+        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+
+            // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
+            // Así evitamos que la operación, que es bastante pesada, ocupe tiempo de carga 
+            // (con el efecto secundario de que LoadingIndicator esté un tiempo largo apagado durante la carga)
+            var capKey = layer.CAPABILITIES_STORE_KEY_PREFIX + layer.options.url;
+            var setItem = function () {
+                // GLS: antes de guardar, validamos que es un capabilities sin error
+                if (capabilities.hasOwnProperty("error")) {
+                    return;
+                } else {
+
+                    layer.getCapabilitiesPromise().then(function () {
+                        localforage.setItem(capKey, capabilities).catch(err => console.log(err));
+                    });
+                }
+            };
+            if (layer.map) {
+                layer.map.loaded(setItem);
+            }
+            else {
+                setItem();
+            }
+        });
+    };
+
+    const cleanOgcUrl = function (url) {
+        var result = url;
+        if (url) {
+            var match = url.match(/\??SERVICE=\w+&/i);
+            if (match) {
+                result = result.replace(match[0], '');
+            }
+        }
+        return result;
+    };
+    TC.Layer.prototype.getGetMapUrl = function () {
+        return cleanOgcUrl(this.wrap.getGetMapUrl());
+    };
+
+    TC.Layer.prototype.getCapabilitiesOnline = getCapabilitiesOnline
+    TC.Layer.prototype.getCapabilitiesFromStorage = getCapabilitiesFromStorage
+})();
+
+
+

@@ -1,0 +1,21 @@
+<div class="tc-ctl-coords-crs-dialog tc-modal">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{{i18n "changeCRS"}}</h3>
+            <div class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <p>{{i18n "coords.currentProjection"}}</p>
+            <p class="tc-ctl-coords-no-change">{{i18n "coords.noCrs.warning" true}}</p>
+            <div class="tc-ctl-coords-change">
+                <p>{{i18n "coords.instructions" true}}</p>
+                <p class="tc-msg-warning tc-hidden">{{i18n "coords.instructions.warning" true}}</p>
+            </div>
+            <ul class="tc-ctl-coords-crs-list tc-crs-list"></ul>
+        </div>
+        <div class="tc-modal-footer">
+            <button type="button" class="tc-button tc-modal-close">{{i18n "close"}}</button>
+        </div>
+    </div>
+</div>

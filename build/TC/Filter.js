@@ -36,7 +36,8 @@ TC.filter.Filter.prototype.writeFilterCondition_ = function () {
 TC.filter.Filter.prototype.writeInnerCondition_ = function (filter) {
     if (filter != this) {
         filter._defaultNSURL = this._defaultNSURL;
-        filter._defaultPrefixNS = this._defaultPrefixNS
+        filter._defaultPrefixNS = this._defaultPrefixNS;
+        filter._fieldTitle = this._fieldTitle;
     }
 
     if (filter instanceof TC.filter.LogicalNary) {
@@ -58,8 +59,9 @@ TC.filter.Filter.prototype.writeInnerCondition_ = function (filter) {
         return filter.write();
 };
 TC.filter.Filter.prototype.writeInnerArrayCondition_ = function (filters) {
-    return filters.reduce(function (vi, va, index) {
-        return (vi instanceof TC.filter.Filter ? vi.writeInnerCondition_(vi) : vi) + va.writeInnerCondition_(va);
+    const parent = this;
+    return parent.conditions.reduce(function (vi, va, index) {
+        return (vi instanceof TC.filter.Filter ? parent.writeInnerCondition_(vi) : vi) + parent.writeInnerCondition_(va);
     });
 }
 
@@ -86,12 +88,6 @@ TC.filter.not = function (condition) {
     return new TC.filter.Not(condition);
 };
 
-TC.filter.bbox = function () {
-    if (Object.prototype.toString.call(arguments[0]) !== "[object String]")
-        return new TC.filter.Bbox(null, arguments[0], arguments[1]);
-    else        
-        return new TC.filter.Bbox(arguments[0], arguments[1], arguments[2]);
-};
 
 TC.filter.intersects = function () {
     if (Object.prototype.toString.call(arguments[0]) !== "[object String]")
@@ -175,7 +171,7 @@ TC.filter.LogicalNary.prototype.write = function () {
     return '<{prefix}:{tag}>{inner}</{prefix}:{tag}>'.format({
         prefix: this._defaultPrefixNS,
         tag: this.getTagName(),
-        inner: this.writeInnerArrayCondition_(this.conditions)
+        inner: this.writeInnerArrayCondition_()
     });
 }
 
@@ -193,19 +189,6 @@ TC.filter.Filter.prototype.write=function () {
         inner: this.writeInnerCondition_(this.condition)
     });
 }
-
-
-TC.filter.Bbox = function (geometryName, extent, opt_srsName) {
-
-    TC.filter.Filter.call(this, 'BBOX');
-
-    this.geometryName = geometryName;
-
-    this.extent = extent;
-
-    this.srsName = opt_srsName;
-};
-TC.inherit(TC.filter.Bbox, TC.filter.Filter);
 
 TC.filter.Comparison = function (tagName, propertyName) {
 
@@ -426,13 +409,20 @@ TC.filter.Spatial.prototype.write = function () {
     });
 };
 
+TC.filter.bbox = function () {
+    if (Object.prototype.toString.call(arguments[0]) !== "[object String]")
+        return new TC.filter.Bbox(null, arguments[0], arguments[1]);
+    else
+        return new TC.filter.Bbox(arguments[0], arguments[1], arguments[2]);
+};
+
 TC.filter.Bbox = function (geometryName, extent, opt_srsName) {
     TC.filter.Filter.call(this, 'BBOX');
     this.geometryName = geometryName;
     this.extent = extent;
     this.srsName = opt_srsName;
 };
-TC.inherit(TC.filter.Bbox, TC.filter.Filter);
+TC.inherit(TC.filter.Bbox, TC.filter.Spatial);
 
 TC.filter.Bbox.prototype.write = function () {
     var bbox = '<gml:Envelope{srsName}><gml:lowerCorner>{lowerCorner}</gml:lowerCorner><gml:upperCorner>{upperCorner}</gml:upperCorner></gml:Envelope>'

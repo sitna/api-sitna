@@ -82,7 +82,17 @@
     if (!ol.format.GPXCustom) {
         TC.syncLoadJS(TC.apiLocation + 'TC/ol/format/GPXCustom');
     }
-
+    if (!window.JSZip) {
+        window.JSZip = new Promise(function (resolve, reject) {
+            TC.loadJS(!window.JSZip, TC.apiLocation + 'lib/jszip/jszip', function () {
+                resolve();
+            })
+        })
+        window.JSZip.then(null, function (err) {
+            TC.error(err);
+            window.JSZip = false;
+        })
+    }
     // Parche para evitar el error AssertionError: Assertion failed: calculated value (1.020636810790192) ouside allowed range (0-1)
     ol.View.prototype.getValueForResolutionFunction = function (opt_power) {
         const power = opt_power || 2;
@@ -296,7 +306,7 @@
                             let key = '';
                             let count = 0;
                             const uri = child.namespaceURI;
-                            for (const candidate in featureNS) {
+                            for (let candidate in featureNS) {
                                 if (featureNS[candidate] === uri) {
                                     key = candidate;
                                     break;
@@ -325,7 +335,7 @@
             /** @type {Object<string, Object<string, import("../xml.js").Parser>>} */
             const parsersNS = {};
             const featureTypes = Array.isArray(featureType) ? featureType : [featureType];
-            for (const p in featureNS) {
+            for (let p in featureNS) {
                 /** @type {Object<string, import("../xml.js").Parser>} */
                 const parsers = {};
                 for (let i = 0, ii = featureTypes.length; i < ii; ++i) {
@@ -618,22 +628,16 @@
             center: center,
             enableRotation: false
         };
-        if (self.parent.maxExtent) {
-            var maxExtent = self.parent.maxExtent;
-            viewOptions.extent = maxExtent;
-            var rect = self.parent.div.getBoundingClientRect();
-            var ratio = rect.width / rect.height;
-            var dx = maxExtent[2] - maxExtent[0];
-            var dy = maxExtent[3] - maxExtent[1];
-            if (rect.width / rect.height > dx / dy) {
-                viewOptions.resolution = dx / rect.width;
-            }
-            else {
-                viewOptions.resolution = dy / rect.height;
-            }
+        const extentForResolution = self.parent.maxExtent || self.parent.initialExtent;
+        viewOptions.extent = extentForResolution;
+        var rect = self.parent.div.getBoundingClientRect();
+        var dx = extentForResolution[2] - extentForResolution[0];
+        var dy = extentForResolution[3] - extentForResolution[1];
+        if (rect.width / rect.height > dx / dy) {
+            viewOptions.resolution = dx / rect.width;
         }
         else {
-            viewOptions.zoom = 2;
+            viewOptions.resolution = dy / rect.height;
         }
 
         self.map = new ol.Map({
@@ -772,9 +776,7 @@
         const olMapViewport = self.map.getViewport();
 
         olMapViewport.addEventListener(TC.Consts.event.MOUSEMOVE, function (e) {
-            var mapTarget = self.map.getTarget();
             var hit = false;
-            var feature;
 
             if (!self.parent.activeControl || !self.parent.activeControl.isExclusive()) {
 
@@ -800,9 +802,9 @@
             }
 
             if (hit) {
-                mapTarget.style.cursor = 'pointer';
+                olMapViewport.style.cursor = 'pointer';
             } else {
-                mapTarget.style.cursor = '';
+                olMapViewport.style.cursor = '';
                 //self.parent.trigger(TC.Consts.event.FEATUREOUT);
             }
         });
@@ -839,7 +841,7 @@
             });
         }
         else {
-            result = ol.proj.get(options.crs);            
+            result = ol.proj.get(options.crs);
         }
         if (!result.getUnits()) {
             result.units_ = ol.proj.Units.DEGREES;
@@ -849,7 +851,7 @@
 
     TC.wrap.Map.prototype.setProjection = function (options) {
         const self = this;
-        options = options || {};        
+        options = options || {};
         const baseLayer = options.baseLayer || self.parent.baseLayer;
         var extent;
         if (options.extent) {
@@ -874,7 +876,7 @@
         if (resolutions && resolutions.length) {
             viewOptions.resolutions = resolutions;
         }
-        else {            
+        else {
             viewOptions.minZoom = oldView.getMinZoom();
             viewOptions.maxZoom = oldView.getMaxZoom();
             const minResolution = baseLayer.wrap.layer.getMinResolution();
@@ -1377,7 +1379,7 @@
                                     popupCtl._previousContainerPosition = [containerRect.left, containerRect.bottom];
                                 });
                                 //drag.on('dragMove', function (e, pointer, moveVector) {
-                                    //popup.setOffset([popupCtl._currentOffset[0] + moveVector.x, popupCtl._currentOffset[1] + moveVector.y]);
+                                //popup.setOffset([popupCtl._currentOffset[0] + moveVector.x, popupCtl._currentOffset[1] + moveVector.y]);
                                 //});
                                 //.drag(function (ev, dd) {
                                 //    if (!ev.buttons && !Modernizr.touch) { // Evitamos que se mantenga el drag si no hay botón pulsado (p.e. en IE pulsando una scrollbar)
@@ -1390,7 +1392,7 @@
                             }
 
                             const mouseMoveHandler = function (e) {
-                                var mapTarget = olMap.getTarget();
+                                const viewport = olMap.getViewport();
                                 var hit = false;
                                 if (!self.parent.activeControl || !self.parent.activeControl.isExclusive()) {
                                     var pixel = olMap.getEventPixel(e);
@@ -1406,9 +1408,9 @@
                                         });
                                 }
                                 if (hit) {
-                                    mapTarget.style.cursor = 'pointer';
+                                    viewport.style.cursor = 'pointer';
                                 } else {
-                                    mapTarget.style.cursor = '';
+                                    viewport.style.cursor = '';
                                 }
                             };
 
@@ -1466,6 +1468,7 @@
         switch (name) {
             case TC.Consts.layerType.KML:
             case TC.Consts.mimeType.KML:
+            case TC.Consts.format.KMZ:
                 return new ol.format.KMLCustom({
                     showPointNames: false
                 });
@@ -1481,6 +1484,8 @@
                 return new ol.format.GML2();
             case TC.Consts.format.GML3:
                 return new ol.format.GML3();
+            case TC.Consts.format.GML32:
+                return new ol.format.GML32();
             case TC.Consts.mimeType.GML:
             case TC.Consts.format.GML:
                 return new ol.format.GML();
@@ -1500,7 +1505,7 @@
             styles: self.parent.options.styles
         });
         var olFeatures = features.map(function (elm) {
-            var result = elm.wrap.feature;
+            var result = elm.wrap.feature.clone();
             // Si la feature no tiene estilo propio le ponemos el definido por la API
             if (!result.getStyle()) {
                 result.setStyle(nativeStyle);
@@ -1509,7 +1514,6 @@
             // y al clon se le añade el texto como atributo (necesario para exportar etiquetas en KML y GPX)
             const text = getNativeFeatureStyle(result).getText();
             if (text) {
-                result = result.clone();
                 result.setProperties({
                     name: text.getText()
                 });
@@ -1626,7 +1630,7 @@
         }
 
         if (format instanceof ol.format.GMLBase) {
-
+            format.hasZ = features[0].getGeometryStride() >= 3;
             // Quitamos los espacios en blanco de los nombres de atributo en las features: no son válidos en GML.
             olFeatures = olFeatures.map(function (f) {
                 return f.clone();
@@ -1754,6 +1758,9 @@
         var ddInteraction = new ol.interaction.DragAndDrop(ddOptions);
         ddInteraction.on('addfeatures', function (e) {
             var featurePromises = e.features ? e.features.map(function (elm) {
+                if (!elm.getId()) {
+                    elm.setId(TC.getUID());
+                }
                 return TC.wrap.Feature.createFeature(elm);
             }) : [];
             Promise.all(featurePromises).then(function (features) {
@@ -1781,6 +1788,52 @@
         else {
             self.map.addInteraction(ddInteraction);
             var dropArea = ddInteraction.target ? ddInteraction.target : self.map.getViewport();
+
+            //URI: SI existe el objeto JSZIP modificio el metodo handleResult_ que es el maneja el drop de un fichero en el mapa
+            if (window.JSZip) {
+                var processZipFile = function () {
+                    //URI: Me guardo la función original y defino la mía
+                    const originalFnc = ddInteraction.handleResult_;
+
+                    ddInteraction.handleResult_ = function (file, evt) {
+                        var self = this;
+                        //URI: si el fichero es ZIP o KMZ lo proceso sino llamo a la función original con los datos originales
+                        if (file.type === "application/x-zip-compressed" || file.type === "application/vnd.google-earth.kmz") {
+                            (async function (file) {
+                                try {
+                                    var zipContent = await JSZip.loadAsync(file);
+                                }
+                                catch (err) {
+                                    throw err;
+                                }
+                                //URI:Leo el contenido del zip e itero por cada fichero
+                                zipContent.forEach(async function (fileName, zip) {
+                                    //TODO: Desestimar fichro no geográficos
+                                    zip.async("blob").then(function (data) {
+                                        //URI: Me creo un fichero vacío con el nombre solo. El contenido lo manejoa a contunuación
+                                        var newFile = new File([], fileName);
+                                        //URI: El contenid del fichero lo manejo con un filereader que es lo que usa internamente la función original para leer las features 
+                                        var reader = new FileReader();
+                                        reader.onload = function (evt) {
+                                            //URI: una vez que he cargado los datos nuevos en el filereader llamo a la función original pasando el nuevo File y el nuevo FileReader
+                                            originalFnc.apply(self, [newFile, evt]);
+                                        };
+                                        reader.readAsText(data);
+                                    });
+                                });
+                            })(file);
+                        }
+                        else {
+                            originalFnc.apply(self, [file, evt]);
+                        }
+                    }
+                }
+                if (window.JSZip instanceof Promise)
+                    window.JSZip.then(processZipFile);
+                else
+                    processZipFile();
+            }
+
             // Añadidos gestores de eventos para mostrar el indicador visual de drop.
             var handleDrop = function (e) {
                 if (isFileDrag(e)) { // Solo hay gestión si lo que se arrastra es un archivo
@@ -1943,7 +1996,7 @@
                         self.layer.setMaxResolution(layer.maxResolution);
                     }
 
-                  // de grados a metros
+                    // de grados a metros
                 } else if (options.oldCrs && ol.proj.get(options.oldCrs).getUnits() === ol.proj.Units.DEGREES && ol.proj.get(options.crs).getUnits() === ol.proj.Units.METERS) {
                     var metersPerDegree = TC.Util.getMetersPerDegree(ol.proj.transformExtent(layer.map.getExtent(), layer.map.crs, 'EPSG:4326'));
 
@@ -2700,6 +2753,19 @@
         }
     };
 
+    TC.wrap.layer.Raster.prototype.reloadSource = function () {
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            if (self.layer.getSource) {
+                self.layer.getSource().refresh();
+                resolve();
+            }
+            else {
+                reject();
+            }
+        });
+    };
+
     TC.wrap.Geometry = {
         getNearest: function (point, candidates) {
             var pline = new ol.geom.LineString(candidates);
@@ -2843,7 +2909,7 @@
             styleOptions = styles.point;
             var circleOptions = {
                 radius: getStyleValue(styleOptions.radius, feature) ||
-                    (getStyleValue(styleOptions.height, feature) + getStyleValue(styleOptions.width, feature)) / 4
+                (getStyleValue(styleOptions.height, feature) + getStyleValue(styleOptions.width, feature)) / 4
             };
             if (styleOptions.fillColor) {
                 circleOptions.fill = new ol.style.Fill({
@@ -2947,6 +3013,15 @@
             var color;
             var stroke;
             var fill;
+            if (olFeat) {
+                const olGeom = olFeat.getGeometry();
+                const olGeomType = olGeom.getType();
+                // Si la geometría no aplica, no poner ol.style.Image
+                // Esto es porque el parser de KML genera estilos "totum revolutum" a partir de las URL de estilos (bug 27470)
+                if (olGeomType !== ol.geom.GeometryType.POINT && olGeomType !== ol.geom.GeometryType.MULTI_POINT) {
+                    olStyle.setImage(null);
+                }
+            }
             var image = olStyle.getImage();
             if (image) {
                 if (image instanceof ol.style.RegularShape) {
@@ -3003,6 +3078,7 @@
                 }
             }
         }
+
         return result;
     };
 
@@ -3054,73 +3130,8 @@
         layerOptions.source.addFeatures(oldFeatures);
     };
 
-    const getIcon = function (olFeat) {
-        var result = null;
-        var style = getNativeFeatureStyle(olFeat, true);
-        if (style) {
-            var img = style.getImage();
-            if (img instanceof ol.style.Icon) {
-                result = img.getSrc();
-            }
-        }
-        return result;
-    };
-
-    const createFeatureFromNative = function (olFeat) {
-        if (!olFeat._wrapPromise) { // Si no se ha llamado antes a esta función para esta feature
-            olFeat._wrapPromise = new Promise(function (resolve, reject) {
-                var options;
-                var geom = olFeat.getGeometry();
-                const olStyle = olFeat.getStyle();
-                if (olStyle) {
-                    options = getStyleFromNative(olStyle, olFeat);
-                }
-
-                const resolveFn = function (ctorName) {
-                    if (ctorName) {
-                        TC.loadJS(
-                            !TC.feature || !TC.feature[ctorName],
-                            TC.apiLocation + 'TC/feature/' + ctorName,
-                            function () {
-                                resolve(new TC.feature[ctorName](olFeat, options));
-                            }
-                        );
-                    }
-                    else {
-                        resolve(new TC.Feature(olFeat, options));
-                    }
-                };
-
-                if (geom instanceof ol.geom.Point) {
-                    if (getIcon(olFeat)) {
-                        resolveFn('Marker');
-                    }
-                    else {
-                        resolveFn('Point');
-                    }
-                }
-                else if (geom instanceof ol.geom.LineString) {
-                    resolveFn('Polyline');
-                }
-                else if (geom instanceof ol.geom.Polygon) {
-                    resolveFn('Polygon');
-                }
-                else if (geom instanceof ol.geom.MultiLineString) {
-                    resolveFn('MultiPolyline');
-                }
-                else if (geom instanceof ol.geom.MultiPolygon) {
-                    resolveFn('MultiPolygon');
-                }
-                else {
-                    resolveFn();
-                }
-            });
-        }
-        return olFeat._wrapPromise;
-    };
-
     TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeStyle) {
-        var self = this;
+        const self = this;
 
         var createGenericLoader = function (url, format) {
             var internalLoader = ol.featureloader.xhr(url, format);
@@ -3233,11 +3244,15 @@
                     mimeType = 'json';
                     break;
                 case TC.Consts.format.GML3:
-                    outputFormat = new ol.format.GML3();
+                    outputFormat = new ol.format.WFS({ gmlFormat: new ol.format.GML3() });
+                    mimeType = TC.Consts.mimeType.GML;
+                    break;
+                case TC.Consts.format.GML32:
+                    outputFormat = new ol.format.WFS({ gmlFormat: new ol.format.GML32() });
                     mimeType = TC.Consts.mimeType.GML;
                     break;
                 default:
-                    outputFormat = new ol.format.GML2();
+                    outputFormat = new ol.format.WFS({ gmlFormat: new ol.format.GML2() });
                     mimeType = TC.Consts.mimeType.GML;
                     break;
             }
@@ -3251,105 +3266,16 @@
                         self.parent.map.trigger(TC.Consts.event.BEFORELAYERUPDATE, {
                             layer: self.parent
                         });
-                        var ajaxOptions = {};
-                        var crs = projection.getCode();
-                        var version = options.version || '1.1.0';
-                        var url = serviceUrl;
-                        var featureType = Array.isArray(options.featureType) ? options.featureType : [options.featureType];
-                        if (!options.properties || (options.properties instanceof Array && !options.properties.length) || !(Object.keys(options.properties).length)) {
-                            url = url + '?service=WFS&' +
-                                'version=' + version + '&request=GetFeature&typename=' + featureType.join(',') + '&' +
-                                'outputFormat=' + mimeType + '&srsname=' + crs;
-                            if (extent[0] !== -Infinity && extent[1] !== -Infinity && extent[2] !== Infinity && extent[3] !== Infinity) {
-                                url = url + '&bbox=' + extent.join(',') + ',' + crs;
-                            }
 
-                            if (options.maxFeatures)
-                                url = url + "maxFeatures=" + options.maxFeatures;
-                        }
-                        else {
-                            ajaxOptions.method = 'POST';
-                            switch (mimeType) {
-                                case 'json':
-                                    ajaxOptions.responseType = TC.Consts.mimeType.JSON;
-                                    break;
-                                default:
-                                    ajaxOptions.responseType = TC.Consts.mimeType.XML;
-                                    break;
-
-                            }
-                            //ajaxOptions.contentType = TC.Consts.mimeType.XML;
-                            //ajaxOptions.processData = false;
-                            //var formatter = new ol.format.WFS();
-                            //var doc = formatter.writeGetFeature({
-                            //    featureNS: 'wfs',
-                            //    featurePrefix: 'feature',
-                            //    featureTypes: featureType,
-                            //    srsName: crs
-                            //});
-                            //var filter = [];
-                            //filter[0] = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">';
-                            //if (options.properties.length > 1) {
-                            //    filter[filter.length] = '<ogc:And>';
-                            //}
-                            //for (var j = 0; j < options.properties.length; j++) {
-                            //    var prop = options.properties[j];
-                            //    filter[filter.length] = '<ogc:PropertyIsEqualTo matchCase="true"><ogc:PropertyName>';
-                            //    filter[filter.length] = prop.name;
-                            //    filter[filter.length] = '</ogc:PropertyName><ogc:Literal>';
-                            //    filter[filter.length] = prop.value;
-                            //    filter[filter.length] = '</ogc:Literal></ogc:PropertyIsEqualTo>';
-                            //}
-                            //if (options.properties.length > 1) {
-                            //    filter[filter.length] = '</ogc:And>';
-                            //}
-                            //filter[filter.length] = '</ogc:Filter>';
-                            //filter = filter.join('');
-                            //var $doc = $(doc);
-                            //$doc.find('Query').each(function (idx, query) {
-                            //    $(query).html(filter);
-                            //});
-                            //ajaxOptions.data = $('<div>').append($doc).html();
-                            var gml = [];
-                            gml[gml.length] = '<wfs:GetFeature xmlns:wfs="http://www.opengis.net/wfs" service="WFS" version="';
-                            gml[gml.length] = version;
-                            gml[gml.length] = '" outputFormat="';
-                            gml[gml.length] = options.outputFormat;
-                            if (options.maxFeatures) {
-                                gml[gml.length] = '" maxFeatures="';
-                                gml[gml.length] = options.maxFeatures;
-                            }
-                            gml[gml.length] = '" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/';
-                            gml[gml.length] = version;
-                            gml[gml.length] = '/wfs.xsd">';
-                            for (var i = 0; i < featureType.length; i++) {
-                                gml[gml.length] = '<wfs:Query typeName="feature:';
-                                gml[gml.length] = featureType[i];
-                                gml[gml.length] = '" srsName="';
-                                gml[gml.length] = crs;
-                                gml[gml.length] = '">';
-                                if (options.propertynames) {
-                                    var pPrefix = version === '1.1.0' ? 'wfs' : 'ogc';
-                                    var _arrProperties = typeof (options.propertynames) === "string" ? options.propertynames.split(",") : options.propertynames
-                                    if (options.geometryName)
-                                        _arrProperties.push(options.geometryName)
-                                    for (var i; i < _arrProperties.length; i++) {
-                                        gml[gml.length] = '<' + pPrefix + ':PropertyName>' + _arrProperties[i].trim() + '</' + pPrefix + ':PropertyName>';
-                                    }
-                                }
-                                gml[gml.length] = options.properties.getText();
-                                gml[gml.length] = '</wfs:Query>';
-                            }
-                            gml[gml.length] = '</wfs:GetFeature>';
-
-                            ajaxOptions.data = gml.join('');
-                            ajaxOptions.contentType = TC.Consts.mimeType.XML;
-                        }
-                        ajaxOptions.url = url;
-                        self._requestUrl = url;
-                        TC.ajax(ajaxOptions).then(function (response) {
+                        const manageResponse = (response) => {
                             const data = response.data;
-                            const feats = outputFormat.readFeatures(data);
+                            let feats;
+                            try {
+                                feats = outputFormat.readFeatures(data);
+                            }
+                            catch (e) {
+                                self.parent.map.trigger(TC.Consts.event.LAYERERROR, { layer: self.parent, reason: e.message })
+                            }
                             const triggerLayerUpdate = function () {
                                 self.parent.map.trigger(TC.Consts.event.LAYERUPDATE, {
                                     layer: self.parent, newData: data
@@ -3361,7 +3287,7 @@
                                     triggerLayerUpdate();
                                 }
                             };
-                            if (feats.length) {
+                            if (feats && feats.length) {
                                 sOrigin.addFeatures(feats);
                                 self.parent.map.on(TC.Consts.event.FEATURESADD, onFeaturesAdd);
                             }
@@ -3369,7 +3295,101 @@
                                 triggerLayerUpdate();
                             }
                             self.parent.state = TC.Layer.state.IDLE;
+                        }
+
+                        const makeAjaxCall = (onlyHits, capabilities) => {
+                            var ajaxOptions = {};
+                            var crs = projection.getCode();
+                            var version = options.version || capabilities.version || '1.1.0';
+                            capabilities.version = version;
+                            var url = serviceUrl;
+                            var featureType = Array.isArray(options.featureType) ? options.featureType : [options.featureType];
+                            if (options.properties && options.properties.getText(capabilities.version).length > TC.Consts.URL_MAX_LENGTH) {
+                                ajaxOptions.method = 'POST';
+                                ajaxOptions.url = url;
+                                ajaxOptions.data = TC.Util.WFSQueryBuilder(featureType, options.properties, capabilities, onlyHits ? null : options.outputFormat, onlyHits, crs, options.maxFeatures)
+                            }
+                            else {
+                                ajaxOptions.method = 'GET';
+                                ajaxOptions.url = url;
+                                ajaxOptions.data = {
+                                    service: "WFS",
+                                    request: "GetFeature",
+                                    version: version,
+                                    typename: (options.featurePrefix ? options.featurePrefix + ":" : "") + options.featureType,
+                                    outputFormat: options.outputFormat,
+                                    srsname: crs
+                                }
+                                if (onlyHits)
+                                    ajaxOptions.data = Object.assign(ajaxOptions.data, {
+                                        resultType: "hits"
+                                    });
+                                if (options.properties) {
+                                    if (options.properties instanceof TC.filter.Bbox)
+                                        ajaxOptions.data = Object.assign(ajaxOptions.data, {
+                                            BBOX: '{0},{1},{2},{3},{4}'.format(options.properties.extent.concat([crs]))
+                                        });
+                                    else
+                                        ajaxOptions.data = Object.assign(ajaxOptions.data, {
+                                            filter: options.properties.getText()
+                                        });
+                                }
+                                if (options.maxFeatures)
+                                    ajaxOptions.data = Object.assign(ajaxOptions.data, {
+                                        maxFeatures: options.maxFeatures
+                                    });
+                            }
+                            switch (onlyHits ? "" : mimeType) {
+                                case 'json':
+                                    ajaxOptions.responseType = TC.Consts.mimeType.JSON;
+                                    break;
+                                default:
+                                    ajaxOptions.responseType = TC.Consts.mimeType.XML;
+                                    break;
+                            }
+                            ajaxOptions.contentType = TC.Consts.mimeType.XML;
+
+                            return TC.ajax(ajaxOptions);
+                        };
+
+                        self.parent.getCapabilitiesPromise().then((_capabilities) => {
+                            const capabilities = _capabilities;
+                            //obtenos del capabilities nummax de features
+                            let numMaxFeatures = null;
+                            try {
+                                numMaxFeatures = capabilities.Operations.GetFeature.CountDefault.DefaultValue;
+                            }
+                            catch (e) {
+                            }
+                            if (numMaxFeatures) {
+                                if (!options.maxFeatures) options.maxFeatures = numMaxFeatures;
+                                makeAjaxCall(true, capabilities).then((response) => {
+                                    var firstNode = response.data.children[0];
+                                    if (firstNode.tagName.toLowerCase().indexOf("exception") >= 0) {
+                                        self.parent.map.trigger(TC.Consts.event.LAYERERROR, { layer: self.parent, reason: firstNode.querySelector("ExceptionText").innerHTML })
+                                    }
+                                    else if (firstNode.tagName.toLowerCase().indexOf("featurecollection") >= 0) {
+                                        let numOfFeaturesFounded = parseInt((firstNode.attributes["numberMatched"] || firstNode.attributes["numberOfFeatures"]).value, 10);
+                                        if (isNaN(numOfFeaturesFounded) || numOfFeaturesFounded >= parseInt(numMaxFeatures, 10)) {
+                                            self.parent.map.trigger(TC.Consts.event.LAYERERROR, { layer: self.parent, reason: TC.Consts.WFSErrors.MAX_NUM_FEATURES, data: { limit: parseInt(numMaxFeatures, 10), founded: numOfFeaturesFounded } });
+                                            return;
+                                        }
+                                        else if (!isNaN(numOfFeaturesFounded) && numOfFeaturesFounded === 0) {
+                                            //si no encuentra nada. LLamo a la función para 
+                                            manageResponse({
+                                                data: outputFormat.writeFeatures([])
+                                            });
+                                            return;
+                                        }
+                                        makeAjaxCall(false, capabilities).then(manageResponse);
+                                    }
+                                })
+                            }
+                            else {
+                                makeAjaxCall(false, capabilities).then(manageResponse);
+                            }
                         });
+                        self._requestUrl = serviceUrl;
                     }
                 },
                 //strategy: ol.loadingstrategy.all(),
@@ -3536,7 +3556,7 @@
             };
 
             if (!olFeat._wrap || !olFeat._wrap.parent.layer) { // Solo actuar si no es una feature añadida desde la API
-                createFeatureFromNative(olFeat).then(addFeatureToLayer);
+                TC.wrap.Feature.createFeature(olFeat).then(addFeatureToLayer);
             }
         });
 
@@ -3638,7 +3658,7 @@
 
             dynamicStyle = !!(options.cluster && options.cluster.styles) || isDynamicStyle(options.styles);
             self.styleFunction = function (olFeat) {
-                return createNativeStyle(self.parent.options, olFeat);
+                return createNativeStyle({ styles: self.parent.styles }, olFeat);
             };
         }
 
@@ -3650,7 +3670,7 @@
     TC.wrap.layer.Vector.prototype.setStyles = function (options) {
         const self = this;
         self.getLayer().then(function (olLayer) {
-            olLayer.setStyle(self.createStyles(options));
+            olLayer.setStyle(self.createStyles({ styles: options }));
         });
     };
 
@@ -3790,16 +3810,6 @@
         return this._requestUrl;
     };
 
-    TC.wrap.layer.Vector.prototype.getDescribeFeatureTypeUrl = function () {
-        var self = this;
-        var layer = self.parent;
-        var version = layer.options.version || '1.1.0';
-        var url = layer.url;
-        var featureType = Array.isArray(layer.options.featureType) ? layer.options.featureType : [layer.options.featureType];
-        url = url + '?service=WFS&' + 'version=' + version + '&request=DescribeFeatureType&typename=' + featureType.join(',') + '&outputFormat=XMLSCHEMA';
-        return url;
-    };
-
     TC.wrap.layer.Vector.prototype.sendTransaction = function (inserts, updates, deletes) {
         const self = this;
         const getNativeFeature = function (feat) {
@@ -3811,7 +3821,6 @@
             const olDeletes = deletes.map(getNativeFeature);
             if (inserts.length || updates.length || deletes.length) {
                 self.getLayer().then(function (olLayer) {
-                    var source = olLayer.getSource();
                     var format = new ol.format.WFS();
                     var options = self.parent.options;
                     var transaction = format.writeTransaction(olInserts, olUpdates, olDeletes, {
@@ -3822,21 +3831,23 @@
                     var ajaxOptions = {
                         url: self.parent.url,
                         method: 'POST',
+                        contentType: TC.Consts.mimeType.XML,
                         responseType: TC.Consts.mimeType.XML,
                         data: transaction.outerHTML
                     };
                     TC.ajax(ajaxOptions)
                         .then(function (response) {
                             const data = response.data;
-                            var er = data.getElementsByTagName('ExceptionReport')[0];
+                            const ns = 'http://www.opengis.net/ows';
+                            var er = data.getElementsByTagNameNS(ns, 'ExceptionReport')[0];
                             var errorObj = {
                                 reason: ''
                             };
                             if (er) {
-                                var e = er.getElementsByTagName('Exception')[0];
+                                var e = er.getElementsByTagNameNS(ns, 'Exception')[0];
                                 if (e) {
                                     errorObj.code = e.getAttribute('exceptionCode');
-                                    var texts = e.getElementsByTagName('ExceptionText');
+                                    var texts = e.getElementsByTagNameNS(ns, 'ExceptionText');
                                     for (var i = 0, len = texts.length; i < len; i++) {
                                         errorObj.reason += '\n' + texts[i].innerHTML;
                                     }
@@ -3933,6 +3944,36 @@
 
     TC.wrap.layer.Vector.prototype.getAttribution = function () {
         return null;
+    };
+    TC.wrap.layer.Vector.prototype.getGetMapUrl = function () {
+        var result = null;
+        var self = this;
+        switch (self.getServiceType()) {
+            case TC.Consts.layerType.WFS:
+                try {
+                    result = self.parent.capabilities.Operations.GetFeature.DCP.HTTP.Get.href;
+                }
+                catch (ex) {
+                }
+                break;
+            default:
+                break;
+        }
+        const fragment = document.createDocumentFragment();
+        const textarea = document.createElement('textarea');
+        fragment.appendChild(textarea);
+        textarea.innerHTML = result;
+        result = textarea.textContent;
+        return result;
+    };
+
+    TC.wrap.layer.Vector.prototype.getServiceType = function () {
+        var result = null;
+        //URI: Si se tiene capabilities se supone que es un servicio WFS
+        if (this.parent.capabilities) {
+            result = TC.Consts.layerType.WFS;
+        }
+        return result;
     };
 
     TC.wrap.control.Click.prototype.register = function (map) {
@@ -4215,7 +4256,7 @@
         TC.wrap.control.ResultsPanel.prototype.showElevationMarker.call(self, {
             data: d,
             layer: self.parent.layerTrack,
-            coords: self.parent.chart.coordinates
+            coords: self.parent.elevationChartData.coords
         })
     };
 
@@ -4342,7 +4383,7 @@
 
                                 var controlContainer = self.parent.map.getControlsByClass('TC.control.ControlContainer')[0];
                                 if (controlContainer) {
-                                    self.parent.trackCenterButton = controlContainer.addElement({ side: controlContainer.SIDE.LEFT, htmlElement: self.parent.trackCenterButton });
+                                    self.parent.trackCenterButton = controlContainer.addElement({ position: controlContainer.POSITION.LEFT, htmlElement: self.parent.trackCenterButton });
                                 } else {
                                     self.parent.map.div.appendChild(self.parent.trackCenterButton);
                                 }
@@ -4614,7 +4655,7 @@
                 } else {
                     var coordinates = [coordinate, [closestPoint[0], closestPoint[1]]];
 
-                    if (!self.snapLine) self.snapLine = new TC.feature.Polyline(coordinates);
+                    if (!self.snapLine) self.snapLine = new TC.feature.Polyline(coordinates, {});
                     else self.snapLine.wrap.feature.getGeometry().setCoordinates(coordinates);
 
                     // información del punto
@@ -4780,10 +4821,9 @@
         };
     };
 
-    TC.wrap.control.Geolocation.prototype.export = function (type, li) {
+    TC.wrap.control.Geolocation.prototype.export = function (li) {
         const self = this;
         return new Promise(function (resolve, reject) {
-            var features = [];
 
             self.parent.getTrackingData(li).then(function (data) {
                 if (data) {
@@ -4795,27 +4835,13 @@
                         olFeatures = new ol.format.GeoJSON().readFeatures(geoJSON);
                     }
 
-                    features = olFeatures.map(function (feature) {
-                        var clone = feature.clone();
-                        clone.getGeometry().transform(self.parent.map.crs, 'EPSG:4326');
-
-                        if (!(clone.getGeometry() instanceof ol.geom.LineString)) {
-                            return clone;
-                        } else {
-                            return new ol.Feature({
-                                geometry: new ol.geom.MultiLineString([clone.getGeometry().getCoordinates()], ('XYZM'))
-                            });
-                        }
+                    Promise.all(olFeatures.map(function (feature) {
+                        return TC.wrap.Feature.createFeature(feature);
+                    })).then((features) => {
+                        resolve(features);
                     });
-                }
-
-                switch (type) {
-                    case 'GPX':
-                        resolve(features ? new ol.format.GPXCustom().writeFeatures(features) : null);
-                        break;
-                    case 'KML':
-                        resolve(features ? new ol.format.KMLCustom().writeFeatures(features) : null);
-                        break;
+                } else {
+                    reject();
                 }
             });
         });
@@ -4939,9 +4965,11 @@
             }));
         }
 
-        if (toRemove.length > 0)
-            for (var i = 0; i < toRemove.length; i++)
+        if (toRemove.length > 0) {
+            for (var i = 0; i < toRemove.length; i++) {
                 source.removeFeature(toRemove[i]);
+            }
+        }
 
         if (toAdd.length > 0) {
             var sameName = function (array, element) {
@@ -5171,7 +5199,6 @@
                             var d = getDoneAtM(timestamp);
 
                             if (fraction >= 1 || !position || !d) {
-                                self.simulateTrackEnd();
                                 var li = self.parent.getSelectedTrack();
                                 if (li)
                                     self.parent.uiSimulate(false, li);
@@ -5179,6 +5206,8 @@
                                 if (self.parent.hasElevation) {
                                     self.parent.chartProgressClear();
                                 }
+
+                                self.simulateTrackEnd();
 
                                 return;
                             } else {
@@ -5863,6 +5892,7 @@
                     var targetService;
                     if (!targetServices[layer.url]) {
                         targetService = {
+                            url: layer.url,
                             layers: [],
                             mapLayers: [],
                             title: layer.title,
@@ -6146,6 +6176,12 @@
                                                 value: typeof (value) == "number" ? value.toLocaleString(TC.Util.getMapLocale(self.parent.map)) : value
                                             });
                                         }
+                                        else {
+                                            feat.attributes.push({
+                                                name: key,
+                                                value: value//"objeto complejo"
+                                            });
+                                        }
                                     }
                                     if (!defaultFeature && TC.Geometry.isInside(coords, feat.geometry)) {
                                         defaultFeature = feat;
@@ -6222,7 +6258,7 @@
             TC.wrap.control.Click.prototype.register.call(self, map);
             var _clickTrigger = self._trigger;
             self._trigger = function (e) {
-                self.hasEligibleLayers().then(function (hasLayers) {
+                self.hasSuitableLayers().then(function (hasLayers) {
                     if (hasLayers) {
                         if (!self.parent._isSearching) {
                             if (e.type == SINGLECLICK && !self.parent._isDrawing && !self.parent._isSearching) {
@@ -6236,7 +6272,7 @@
         });
     };
 
-    TC.wrap.control.GeometryFeatureInfo.prototype.hasEligibleLayers = function () {
+    TC.wrap.control.GeometryFeatureInfo.prototype.hasSuitableLayers = function () {
         const self = this;
         return new Promise(function (resolve, reject) {
             const map = self.parent.map;
@@ -6358,36 +6394,32 @@
         }
     };
 
-    const _checkMaxFeatures = function (numMaxfeatures, url, data) {
+    const _checkMaxFeatures = function (numMaxfeatures, urlData, data) {
         return new Promise(function (resolve) {
-            TC.ajax({
-                url: url,
+            urlData.mapLayer.toolProxification.fetchXML(urlData.url, {
                 data: data,
-                cache: false,
                 contentType: 'application/xml',
-                responseType: 'application/xml',
-                method: 'POST'
+                type: 'POST'
             }).then(function (response) {
-                const responseData = response.data;
-                if (responseData instanceof XMLDocument) {
-                    var responseAsJSON = xml2json(responseData);
-                    if (responseAsJSON.Exception) {
+                if (response instanceof XMLDocument) {
+                    const exception = response.querySelector("ExceptionReport Exception")
+                    if (exception) {
                         resolve({
                             errors: [{
-                                key: TC.Consts.WFSErrors.Indeterminate,
+                                key: TC.Consts.WFSErrors.INDETERMINATE,
                                 params: {
-                                    err: responseAsJSON.Exception.exceptionCode, errorThrown: responseAsJSON.Exception.ExceptionText
+                                    err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
                                 }
                             }]
                         })
                         return;
                     }
                 }
-                var featFounds = parseInt(responseAsJSON.numberMatched || responseAsJSON.numberOfFeatures, 10)
+                var featFounds = parseInt(response.querySelector("FeatureCollection").getAttribute("numberMatched") || response.querySelector("FeatureCollection").getAttribute("numberOfFeatures"), 10);
                 if (isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
                     resolve({
                         errors: [{
-                            key: TC.Consts.WFSErrors.NumMaxFeatures
+                            key: TC.Consts.WFSErrors.MAX_NUM_FEATURES
                         }]
                     });
                     return;
@@ -6395,7 +6427,7 @@
                 else if (featFounds === 0) {
                     resolve({
                         errors: [{
-                            key: TC.Consts.WFSErrors.NoFeatures
+                            key: TC.Consts.WFSErrors.NO_FEATURES
                         }]
                     });
                     return;
@@ -6403,36 +6435,87 @@
                 else
                     resolve(featFounds);
 
-            }, function (e) {
+            }).catch(function (e) {
+                //return Promise.reject(error);
+
                 resolve({
                     errors: [{
-                        key: TC.Consts.WFSErrors.Indeterminate,
+                        key: TC.Consts.WFSErrors.INDETERMINATE,
                         params: { err: e.name, errorThrown: e.message }
                     }]
                 });
                 return;
             });
+
+            //TC.ajax({
+            //    url: url,
+            //    data: data,
+            //    contentType: 'application/xml',
+            //    responseType: 'application/xml',
+            //    method: 'POST'
+            //}).then(function (response) {
+            //    const responseData = response.data;
+            //    if (responseData instanceof XMLDocument) {
+            //        const exception = responseData.querySelector("ExceptionReport Exception")
+            //        if (exception) {
+            //            resolve({
+            //                errors: [{
+            //                    key: TC.Consts.WFSErrors.INDETERMINATE,
+            //                    params: {
+            //                        err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
+            //                    }
+            //                }]
+            //            })
+            //            return;
+            //        }
+            //    }
+            //    var featFounds = parseInt(responseData.querySelector("FeatureCollection").getAttribute("numberMatched") || responseData.querySelector("FeatureCollection").getAttribute("numberOfFeatures"), 10);                
+            //    if (isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
+            //        resolve({
+            //            errors: [{
+            //                key: TC.Consts.WFSErrors.MAX_NUM_FEATURES
+            //            }]
+            //        });
+            //        return;
+            //    }
+            //    else if (featFounds === 0) {
+            //        resolve({
+            //            errors: [{
+            //                key: TC.Consts.WFSErrors.NO_FEATURES
+            //            }]
+            //        });
+            //        return;
+            //    }
+            //    else
+            //        resolve(featFounds);
+
+            //}, function (e) {
+            //    resolve({
+            //        errors: [{
+            //            key: TC.Consts.WFSErrors.INDETERMINATE,
+            //            params: { err: e.name, errorThrown: e.message }
+            //        }]
+            //    });
+            //    return;
+            //});
         });
     }
 
-    const _makePostCall = function (url, data) {
+    const _makePostCall = function (urlData, data) {
         return new Promise(function (resolve) {
-            TC.ajax({
-                url: url,
+            urlData.mapLayer.toolProxification.fetch(urlData.url, {
                 data: data,
-                cache: false,
                 contentType: 'application/xml',
-                method: 'POST'
+                type: 'POST'
             }).then(function (response) {
-                const responseData = response.data;
-                if (responseData instanceof XMLDocument) {
-                    var responseAsJSON = xml2json(responseData);
-                    if (responseAsJSON.Exception) {
+                if (response instanceof XMLDocument) {
+                    const exception = response.querySelector("ExceptionReport Exception")
+                    if (exception) {
                         resolve({
                             errors: [{
-                                key: TC.Consts.WFSErrors.Indeterminate,
+                                key: TC.Consts.WFSErrors.INDETERMINATE,
                                 params: {
-                                    err: responseAsJSON.Exception.exceptionCode, errorThrown: responseAsJSON.Exception.ExceptionText
+                                    err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
                                 }
                             }]
                         })
@@ -6440,17 +6523,80 @@
                     }
                 }
                 resolve({ response: response });
-            }, function (e) {
+            }).catch(function (e) {
                 resolve({
                     errors: [{
-                        key: TC.Consts.WFSErrors.Indeterminate,
+                        key: TC.Consts.WFSErrors.INDETERMINATE,
                         params: { err: e.name, errorThrown: e.message }
                     }]
                 });
                 return;
             });
         });
-    }
+    };
+
+    const magicFunction = function (layer, availableLayers, filter) {
+        //obtenemos el describe featuretype de cada capa
+        return new Promise(async function (resolve, reject) {
+            try {
+                var response = await layer.describeFeatureType(availableLayers);
+            }
+            catch (error) {
+                reject(error);
+                return;
+            }
+            var returnObject = {};
+            if (availableLayers.length === 1) {
+                var obj = {};
+                obj[availableLayers[0]] = response;
+                response = obj;
+            }
+            //buscamos las geometrías por cada respuesta
+            for (var layerName in response) {
+                let _filter;
+                var geometryFields = [];
+                for (var k in response[layerName]) {
+                    if (TC.Util.isGeometry(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
+                        //if (/^gml:\w+PropertyType$/.test(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
+                        geometryFields.push(k)
+                    }
+                }
+                //Si solo hay un campo de tipo geometría bsucamos recursivamente entre en los filtros logicos And y or a la caza de filtros espaciales
+                //para poner el nombre de la geometría
+                if (geometryFields.length <= 1) {
+                    var recursive = (filter, geomName) => {
+                        if (filter instanceof TC.filter.LogicalNary)
+                            filter.conditions.forEach((condition) => {
+                                recursive(condition, geomName)
+                            })
+                        else if (filter instanceof TC.filter.Spatial) {
+                            filter.geometryName = geomName;
+                            return filter;
+                        }
+                    };
+                    _filter = Object.assign(new filter.constructor, recursive(filter, geometryFields.length === 0 ? null : geometryFields[0]))
+                }
+                //Si has mas de un campo de tipo geometría bsucamos recursivamente entre en los filtros logicos And y or a la caza de filtros espaciales
+                //para duplicar el filtro con los nombres de las geometrias y los emvolvemos en un filtro OR
+                else if (geometryFields.length > 1) {
+                    var recursive = (filter, geomNames) => {
+                        if (filter instanceof TC.filter.LogicalNary)
+                            filter.conditions.forEach((condition) => {
+                                recursive(condition, geomNames);
+                            })
+                        else if (filter instanceof TC.filter.Spatial) {
+                            return TC.filter.or.apply(null, geomNames.reduce((acc, curr) => { acc.push(new TC.filter[filter.getTagName()](curr, filter.geometry, filter.srsName)); return acc }, []))
+                        }
+                    };
+                    _filter = Object.assign(new filter.constructor, recursive(filter, geometryFields));
+                }
+                //ahora construimos el objeto que de vuelta
+                returnObject[layerName] = _filter;
+            }
+            resolve(returnObject);
+
+        });
+    };
 
     var WFSGetFeatureBuilder = function (map, filter, outputFormat, download) {
         const arrPromises = [];
@@ -6488,7 +6634,7 @@
                 }
                 else
                     resolve({
-                        url: url,
+                        url: url.url,
                         data: data
                     });
             });
@@ -6498,10 +6644,14 @@
             if (!olLayer.getVisible() || map.workLayers.indexOf(layer) < 0 || layer.type !== TC.Consts.layerType.WMS)
                 return;
             var availableLayers = layer.getDisgregatedLayerNames() || layer.availableNames;
-            var serviceObj = services[layer.url.toLowerCase()];
+            const url = layer.url.toLowerCase();
+            var serviceObj = services[url];
             if (!serviceObj) {
-                serviceObj = services[layer.url.toLowerCase()] = {
-                    layers: [], mapLayers: [layer], layerNames: []
+                serviceObj = services[url] = {
+                    url: url,
+                    layers: [],
+                    mapLayers: [layer],
+                    layerNames: []
                 };
             }
             for (var i = 0; i < availableLayers.length; i++) {
@@ -6525,7 +6675,7 @@
             if (typeof (serviceObj.request) !== "undefined") {
                 return;
             }
-            serviceObj.request = serviceObj.request || layer.getWFSCapabilitiesPromise(); //WFSCapabilities.Promises(url);
+            serviceObj.request = serviceObj.request || layer.getWFSCapabilities(); //WFSCapabilities.Promises(url);
             arrPromises.push(new Promise(function (resolve, reject) {
                 serviceObj.request.then(function (capabilities) {
                     var service = null;
@@ -6539,28 +6689,28 @@
                     if (!(layerList instanceof Array) || !layerList.length) return;//condici\u00f3n de salida
                     //comprobamos que tiene el getfeature habilitado
                     if (typeof (capabilities.Operations.GetFeature) === "undefined") {
-                        errors.push({ key: TC.Consts.WFSErrors.GetFeatureNotAvailable, params: { serviceTitle: _getServiceTitle(service) } })
+                        errors.push({ key: TC.Consts.WFSErrors.GETFEATURE_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service) } })
                         resolve({ "errors": errors });
                         return;
                     }
                     var availableLayers = [];
                     for (var i = 0; i < layerList.length; i++) {
                         //Comprbamos si la capa en el WMS tiene el mimso nombre que en el WFS
-                        var layer = layerList[i].substring(layerList[i].indexOf(":") + 1);
+                        var layer = layerList[i];
                         //quitamos los ultimos caracteres que sean "_" , cosas de Idena
                         while (layer[layer.length - 1] === "_") {
                             layer = layer.substring(0, layer.lastIndexOf("_"));
                         }
-                        if (!capabilities.FeatureTypes.hasOwnProperty(layer)) {
-                            var titles = service.mapLayers[0].getPath(layer);
-                            errors.push({ key: TC.Consts.WFSErrors.LayersNotAvailable, params: { serviceTitle: _getServiceTitle(service), "layerName": titles[titles.length - 1] } });
+                        if (!capabilities.FeatureTypes.hasOwnProperty(layer.substring(layerList[i].indexOf(":") + 1))) {
+                            var titles = service.mapLayers[0].getPath(layer.substring(layerList[i].indexOf(":") + 1));
+                            errors.push({ key: TC.Consts.WFSErrors.LAYERS_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service), "layerName": titles[titles.length - 1] } });
                             continue;
                         }
                         if (availableLayers.indexOf(layer) < 0)
                             availableLayers.push(layer);
                     }
                     if (availableLayers.length == 0) {
-                        errors.push({ key: TC.Consts.WFSErrors.NoValidLayers, params: { serviceTitle: _getServiceTitle(service) } });
+                        errors.push({ key: TC.Consts.WFSErrors.NO_VALID_LAYERS, params: { serviceTitle: _getServiceTitle(service) } });
                         resolve({ "errors": errors });
                         return;
                     }
@@ -6570,42 +6720,44 @@
                     if (
                         (capabilities.version === "1.0.0" && !capabilities.Operations.GetFeature.Operations.hasOwnProperty("Query"))
                         ||
-                        ((capabilities.version === "2.0.0" || capabilities.version === "1.1.0") && capabilities.Operations.QueryExpressions.AllowedValues.Value.indexOf("wfs:Query") < 0)
+                        ((capabilities.version === "2.0.0" || capabilities.version === "1.1.0") && capabilities.Operations.QueryExpressions.indexOf("wfs:Query") < 0)
                     ) {
-                        errors.push({ key: TC.Consts.WFSErrors.QueryNotAvailable, params: { serviceTitle: _getServiceTitle(service) } });
+                        errors.push({ key: TC.Consts.WFSErrors.QUERY_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service) } });
                         resolve({ "errors": errors });
                         return;
                     }
-                    var url = (capabilities.Operations.GetFeature.DCPType ? capabilities.Operations.GetFeature.DCPType[1].HTTP.Post.onlineResource : capabilities.Operations.GetFeature.DCP.HTTP.Post["xlink:href"]);
+                    var url = (capabilities.Operations.GetFeature.DCPType ? capabilities.Operations.GetFeature.DCPType[1].HTTP.Post.onlineResource : capabilities.Operations.GetFeature.DCP.HTTP.Post["href"]);
 
-                    // var url2 = service.mapLayers[0].getFeatureUrl(url);
-                    service.mapLayers[0].getFeatureUrl(url).then(function (url2) {
+                    Promise.all([
+                        magicFunction(service.mapLayers[0], availableLayers, filter)//clonar filtro
+                    ]).then(function (response) {
+                        var filter = response[0]; //1
                         if (_numMaxFeatures) {
-                            _checkMaxFeatures(_numMaxFeatures, url2, TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, outputFormat, true, getCRS())).then(function (response) {
+                            _checkMaxFeatures(_numMaxFeatures, { url: url, mapLayer: service.mapLayers[0] }, TC.Util.WFSQueryBuilder(filter, null, capabilities, outputFormat, true, getCRS())).then(function (response) {
                                 if (response.errors && response.errors.length > 0) {
                                     switch (response.errors[0].key) {
-                                        case TC.Consts.WFSErrors.Indeterminate:
+                                        case TC.Consts.WFSErrors.INDETERMINATE:
                                             response.errors[0].params["serviceTitle"] = service.mapLayers.reduce(function (prev, cur) {
                                                 return prev || cur.title;
                                             }, '') || _getServiceTitle(service);
                                             break;
-                                        case TC.Consts.WFSErrors.NumMaxFeatures:
+                                        case TC.Consts.WFSErrors.MAX_NUM_FEATURES:
                                             response.errors[0]["params"] = { limit: _numMaxFeatures, serviceTitle: _getServiceTitle(service) };
                                             break;
-                                        case TC.Consts.WFSErrors.NoFeatures:
+                                        case TC.Consts.WFSErrors.NO_FEATURES:
                                             response.errors[0]["params"] = { serviceTitle: _getServiceTitle(service) };
                                             break;
                                     }
                                     resolve(response);
                                 }
                                 else
-                                    _postOrDownload(url2, TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, (download ? outputFormat : TC.Consts.mimeType.JSON), false, getCRS())).then(function (response) {
+                                    _postOrDownload({ url: url, mapLayer: service.mapLayers[0] }, TC.Util.WFSQueryBuilder(filter, null, capabilities, (download ? outputFormat : TC.Consts.mimeType.JSON), false, getCRS())).then(function (response) {
                                         resolve(Object.assign({ service: service, errors: errors }, response));
                                     });
                             });
                         }
                         else {
-                            _postOrDownload(url2, TC.Util.WFSQueryBuilder(availableLayers, filter, capabilities, (download ? outputFormat : TC.Consts.mimeType.JSON), false, getCRS())).then(function (response) {
+                            _postOrDownload({ url: url, mapLayer: service.mapLayers[0] }, TC.Util.WFSQueryBuilder(filter, null, capabilities, (download ? outputFormat : TC.Consts.mimeType.JSON), false, getCRS())).then(function (response) {
                                 resolve(Object.assign({ service: service, errors: errors }, response))
 
                             });
@@ -6613,7 +6765,7 @@
                     }).catch(function (e) {
                         resolve({
                             errors: [{
-                                key: TC.Consts.WFSErrors.Indeterminate,
+                                key: TC.Consts.WFSErrors.INDETERMINATE,
                                 params: { err: e.name, errorThrown: e.message, serviceTitle: _getServiceTitle(service) }
                             }]
                         });
@@ -6624,7 +6776,7 @@
                         if (services[title].request && services[title].request === serviceObj.request) {
                             service = services[title];
                         }
-                    resolve({ errors: [{ key: TC.Consts.WFSErrors.GetCapabilities, params: { err: e.name, serviceTitle: _getServiceTitle(service) } }] });
+                    resolve({ errors: [{ key: TC.Consts.WFSErrors.GETCAPABILITIES, params: { err: e.name, serviceTitle: _getServiceTitle(service) } }] });
                 });
             }));
         });
@@ -6661,9 +6813,9 @@
             case "text/xml":
             case "application/xml":
                 //posible error
-                var jqXHR = xml2json(data);
-                if (jqXHR.ServiceException)
-                    TC.error(jqXHR.ServiceException);
+                const exception = data.querySelector("ServiceException");
+                if (exception)
+                    TC.error(exception);
                 format = null;
                 break;
             default:
@@ -6709,6 +6861,8 @@
             }
             return result;
         };
+
+        var fakeLayers = {};
         for (var j = 0; j < features.length; j++) {
             var feature = features[j];
             if (feature instanceof ol.Feature) {
@@ -6741,10 +6895,8 @@
                         service.layers.push(fakeLayer);
                     }
 
-                    if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
-                        featurePromises.push(TC.wrap.Feature.createFeature(feature));
-                        featureInsertionPoints.push(fakeLayer.features);
-                    }
+                    featurePromises.push(TC.wrap.Feature.createFeature(feature));
+                    featureInsertionPoints.push(feature.id_);
                 }
             }
         }//iteraci\u00f3n sobre las features de esta respuesta
@@ -6759,6 +6911,12 @@
                         if (typeof value !== 'object') {
                             feat.attributes.push({
                                 name: key, value: value
+                            });
+                        }
+                        else {
+                            feat.attributes.push({
+                                name: key,
+                                value: value//"objeto complejo"
                             });
                         }
                     }
@@ -6814,21 +6972,21 @@
                                 hayError = true;
                                 var error = responseObj.errors[j];
                                 switch (error.key) {
-                                    case TC.Consts.WFSErrors.NumMaxFeatures:
+                                    case TC.Consts.WFSErrors.MAX_NUM_FEATURES:
                                         errorMsg = self.parent.getLocaleString("wfs.tooManyFeatures", error.params);
                                         break;
-                                        /*case TC.Consts.WFSErrors.NoLayers:
+                                        /*case TC.Consts.WFSErrors.NO_LAYERS:
                                             errorMsg = self.parent.getLocaleString('noLayersLoaded');*/
                                         break;
-                                    case TC.Consts.WFSErrors.GetCapabilities:
+                                    case TC.Consts.WFSErrors.GETCAPABILITIES:
                                         errorMsg = self.parent.getLocaleString('wfsGFI.inValidService', error.params);
                                         break;
-                                    case TC.Consts.WFSErrors.NoFeatures:
+                                    case TC.Consts.WFSErrors.NO_FEATURES:
                                         //si no hay features nos callamos. Quizas en un futuro se muestre una alerta
                                         hayError = false;
                                         continue;
                                         break;
-                                    case TC.Consts.WFSErrors.Indeterminate:
+                                    case TC.Consts.WFSErrors.INDETERMINATE:
                                         errorMsg = self.parent.getLocaleString("wfs.IndeterminateError");
                                         TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
                                         errorType = TC.Consts.msgType.ERROR;
@@ -6847,7 +7005,7 @@
                     });
 
                     // Puede no haber response porque la URL no es correcta, metemos un condicional
-                    var featuresFound = responseObj.response ? readFeaturesFromResponse(map, responseObj.response.data, responseObj.response.contentType) : [];
+                    var featuresFound = responseObj.response ? readFeaturesFromResponse(map, responseObj.response.responseText, responseObj.response.contentType) : [];
                     //ahora se distribuye la features por servicio y capa
                     arrPromises[arrPromises.length - 1] = featureToServiceDistributor(featuresFound, responseObj.service);
                     if (responseObj.service) {
@@ -6916,7 +7074,7 @@
                 var newPixelPos = olMap.getPixelFromCoordinate(newPos);
                 newPixelPos[1] = olMap.getSize()[1] - newPixelPos[1];
                 self.parent._previousContainerPosition = newPixelPos;
-                self.popup._oldUpdatePixelPosition(newPos);
+                (self.popup._oldUpdatePixelPosition || self.popup.updatePixelPosition).call(self.popup, newPos);
             }
             else {
                 if (self.parent.isVisible()) {
@@ -7064,7 +7222,9 @@
         self.feature = createNativeFeature(options.geometryName);
         self.feature._wrap = self;
         self.parent.setCoords(coords);
-        self.feature.setStyle(createNativeStyle({ styles: { point: options } }));
+        if (TC.Util.hasStyleOptions(options)) {
+            self.feature.setStyle(createNativeStyle({ styles: { point: options } }, self.feature));
+        }
         self.setData(self.parent.data);
     };
 
@@ -7077,7 +7237,9 @@
             self.feature = createNativeFeature(options.geometryName);
             self.feature._wrap = self;
             self.parent.setCoords(coords);
-            self.feature.setStyle(createNativeStyle({ styles: { marker: options } }));
+            if (TC.Util.hasStyleOptions(options)) {
+                self.feature.setStyle(createNativeStyle({ styles: { marker: options } }, self.feature));
+            }
             self.setData(self.parent.data);
         }
         else {
@@ -7091,7 +7253,9 @@
         self.feature = createNativeFeature(options.geometryName);
         self.feature._wrap = self;
         self.parent.setCoords(coords);
-        self.feature.setStyle(createNativeStyle({ styles: { line: options } }));
+        if (TC.Util.hasStyleOptions(options)) {
+            self.feature.setStyle(createNativeStyle({ styles: { line: options } }, self.feature));
+        }
         self.setData(self.parent.data);
     };
 
@@ -7101,8 +7265,8 @@
         self.feature = createNativeFeature(options.geometryName);
         self.feature._wrap = self;
         self.parent.setCoords(coords);
-        if (options.strokeColor || options.strokeWidth || options.fillColor || options.fillOpacity) {
-            self.feature.setStyle(createNativeStyle({ styles: { polygon: options } }));
+        if (TC.Util.hasStyleOptions(options)) {
+            self.feature.setStyle(createNativeStyle({ styles: { polygon: options } }, self.feature));
         }
         self.setData(self.parent.data);
     };
@@ -7114,7 +7278,9 @@
         self.feature = createNativeFeature(options.geometryName);
         self.feature._wrap = self;
         self.parent.setCoords(coords);
-        self.feature.setStyle(createNativeStyle({ styles: { line: options } }));
+        if (TC.Util.hasStyleOptions(options)) {
+            self.feature.setStyle(createNativeStyle({ styles: { line: options } }, self.feature));
+        }
         self.setData(self.parent.data);
     };
 
@@ -7124,8 +7290,8 @@
         self.feature = createNativeFeature(options.geometryName);
         self.feature._wrap = self;
         self.parent.setCoords(coords);
-        if (options.strokeColor || options.strokeWidth || options.fillColor || options.fillOpacity) {
-            self.feature.setStyle(createNativeStyle({ styles: { polygon: options } }));
+        if (TC.Util.hasStyleOptions(options)) {
+            self.feature.setStyle(createNativeStyle({ styles: { polygon: options } }, self.feature));
         }
         self.setData(self.parent.data);
     };
@@ -7154,67 +7320,72 @@
     };
 
     TC.wrap.Feature.createFeature = function (olFeat, options) {
-        return new Promise(function (resolve, reject) {
-            var olGeometry = olFeat.getGeometry();
-            options = options || {};
-            options.id = olFeat.getId();
-
-            // geometría
-            var geomStr;
-            switch (true) {
-                case olGeometry instanceof ol.geom.Point:
-                    var olStyle = olFeat.getStyle();
-                    if (TC.Util.isFunction(olStyle)) {
-                        olStyle = olStyle(olFeat);
-                    }
-                    var olStyles = olStyle ? (Array.isArray(olStyle) ? olStyle : [olStyle]) : [];
-                    for (var i = 0, len = olStyles.length; i < len; i++) {
-                        olStyle = olStyles[i];
-                        if (olStyle.getImage() instanceof ol.style.Icon) {
-                            geomStr = 'Marker';
-                            break;
+        if (!olFeat._featurePromise) {
+            olFeat._featurePromise = new Promise(function (resolve, reject) {
+                var olGeometry = olFeat.getGeometry();
+                options = options || {};
+                options.id = olFeat.getId();
+                let olStyle = olFeat.getStyle();
+                if (olStyle) {
+                    TC.Util.extend(options, getStyleFromNative(olStyle, olFeat));
+                }
+                // geometría
+                let geomStr;
+                switch (true) {
+                    case olGeometry instanceof ol.geom.Point:
+                        if (TC.Util.isFunction(olStyle)) {
+                            olStyle = olStyle(olFeat);
                         }
-                    }
-                    geomStr = geomStr || 'Point';
-                    break;
-                case olGeometry instanceof ol.geom.LineString:
-                    geomStr = 'Polyline';
-                    break;
-                case olGeometry instanceof ol.geom.Polygon:
-                    geomStr = 'Polygon';
-                    break;
-                case olGeometry instanceof ol.geom.MultiLineString:
-                    geomStr = 'MultiPolyline';
-                    break;
-                case olGeometry instanceof ol.geom.MultiPolygon:
-                    geomStr = 'MultiPolygon';
-                    break;
-                default:
-                    break;
-            }
-            if (geomStr) {
-                TC.loadJS(
-                    !TC.feature || (TC.feature && !TC.feature[geomStr]),
-                    [TC.apiLocation + 'TC/feature/' + geomStr],
-                    function () {
-                        var feat = new TC.feature[geomStr](olFeat, options);
-                        feat.data = feat.wrap.getData();
-                        resolve(feat);
-                    }
-                );
-            }
-            else {
-                TC.loadJS(
-                    !TC.Feature,
-                    [TC.apiLocation + 'TC/Feature'],
-                    function () {
-                        var feat = new TC.Feature(olFeat, options);
-                        feat.data = feat.wrap.getData();
-                        resolve(feat);
-                    }
-                );
-            }
-        });
+                        var olStyles = olStyle ? (Array.isArray(olStyle) ? olStyle : [olStyle]) : [];
+                        for (var i = 0, len = olStyles.length; i < len; i++) {
+                            olStyle = olStyles[i];
+                            if (olStyle.getImage() instanceof ol.style.Icon) {
+                                geomStr = 'Marker';
+                                break;
+                            }
+                        }
+                        geomStr = geomStr || 'Point';
+                        break;
+                    case olGeometry instanceof ol.geom.LineString:
+                        geomStr = 'Polyline';
+                        break;
+                    case olGeometry instanceof ol.geom.Polygon:
+                        geomStr = 'Polygon';
+                        break;
+                    case olGeometry instanceof ol.geom.MultiLineString:
+                        geomStr = 'MultiPolyline';
+                        break;
+                    case olGeometry instanceof ol.geom.MultiPolygon:
+                        geomStr = 'MultiPolygon';
+                        break;
+                    default:
+                        break;
+                }
+                if (geomStr) {
+                    TC.loadJS(
+                        !TC.feature || !TC.feature[geomStr],
+                        [TC.apiLocation + 'TC/feature/' + geomStr],
+                        function () {
+                            const feat = new TC.feature[geomStr](olFeat, options);
+                            feat.data = feat.wrap.getData();
+                            resolve(feat);
+                        }
+                    );
+                }
+                else {
+                    TC.loadJS(
+                        !TC.Feature,
+                        [TC.apiLocation + 'TC/Feature'],
+                        function () {
+                            var feat = new TC.Feature(olFeat, options);
+                            feat.data = feat.wrap.getData();
+                            resolve(feat);
+                        }
+                    );
+                }
+            });
+        }
+        return olFeat._featurePromise;
     };
 
     TC.wrap.Feature.prototype.cloneFeature = function () {
@@ -7509,7 +7680,13 @@
             style = style(feature);
         }
         if (Array.isArray(style)) {
-            style = style[style.length - 1];
+            style = style.reduce(function (extendedStyle, currentStyle) {
+                extendedStyle.fill_ = currentStyle.fill_ || extendedStyle.fill_;
+                extendedStyle.image_ = currentStyle.image_ || extendedStyle.image_;
+                extendedStyle.stroke_ = currentStyle.stroke_ || extendedStyle.stroke_;
+                extendedStyle.text_ = currentStyle.text_ || extendedStyle.text_;
+                return extendedStyle;
+            }, new ol.style.Style());
         }
         if (!style && !readonly) {
             style = new ol.style.Style();
@@ -7541,11 +7718,26 @@
         }
         const feature = self.parent;
         const geom = olFeat.getGeometry();
-        var style = getNativeFeatureStyle(olFeat);
-        var layerStyle;
+        let newStyle = olFeat.getStyle();
+        let layerStyle;
         if (feature.layer) {
             layerStyle = getNativeLayerStyle.call(feature.layer.wrap.layer, feature.wrap.feature);
         }
+        if (!newStyle) {
+            if (layerStyle) {
+                newStyle = layerStyle.clone();
+            }
+            else {
+                newStyle = new ol.style.Style();
+            }
+        }
+        if (TC.Util.isFunction(newStyle)) {
+            newStyle = newStyle(olFeat);
+        }
+        if (!Array.isArray(newStyle)) {
+            newStyle = [newStyle];
+        }
+        let style = newStyle[newStyle.length - 1];
         if (geom instanceof ol.geom.Point || geom instanceof ol.geom.MultiPoint) {
 
             var imageStyle;
@@ -7561,9 +7753,15 @@
                     else {
                         iconOptions.size = imageStyle.getSize();
                     }
-                    iconOptions.anchor = getStyleValue(options.anchor, feature) || imageStyle.getAnchor().map(function (elm, idx) {
-                        return elm / iconOptions.size[idx];
-                    });
+                    iconOptions.anchor = getStyleValue(options.anchor, feature);
+                    if (!iconOptions.anchor) {
+                        const imgAnchor = imageStyle.getAnchor();
+                        if (Array.isArray(imgAnchor)) {
+                            iconOptions.anchor = imgAnchor.map(function (elm, idx) {
+                                return elm / iconOptions.size[idx];
+                            });
+                        }
+                    }
                 }
                 else {
                     iconOptions.src = TC.Util.getPointIconUrl(options);
@@ -7579,7 +7777,6 @@
             else if (!(style.getImage()) && style.getText()) { // Etiqueta
 
                 if (options.label !== undefined) {
-                    style = getNativeFeatureStyle(olFeat);
                     if (options.label.length) {
                         style.setText(createNativeTextStyle(options, feature));
                     }
@@ -7597,7 +7794,7 @@
                 }
                 const circleOptions = {
                     radius: getStyleValue(options.radius, feature) ||
-                        (getStyleValue(options.height, feature) + getStyleValue(options.width, feature)) / 4
+                    (getStyleValue(options.height, feature) + getStyleValue(options.width, feature)) / 4
                 };
                 if (isNaN(circleOptions.radius)) {
                     circleOptions.radius = imageStyle.getRadius();
@@ -7648,12 +7845,10 @@
             if (options.strokeWidth) {
                 stroke.setWidth(getStyleValue(options.strokeWidth, feature));
                 strokeChanged = true;
-                style.setStroke(stroke);
             }
             if (options.lineDash) {
                 stroke.setLineDash(options.lineDash)
                 strokeChanged = true;
-                style.setStroke(stroke);
             }
             if (strokeChanged) {
                 style.setStroke(stroke);
@@ -7668,7 +7863,6 @@
         }
 
         if (options.label !== undefined) {
-            style = getNativeFeatureStyle(olFeat);
             if (options.label.length) {
                 style.setText(createNativeTextStyle(options, feature));
             }
@@ -7676,7 +7870,7 @@
                 style.setText();
             }
         }
-
+        olFeat.setStyle(newStyle);
         olFeat.changed();
     };
 
@@ -7884,7 +8078,10 @@
                         if (fStyle) {
                             const image = fStyle.getImage();
                             if (image instanceof ol.style.Icon) {
-                                offset[1] = image.getImageSize()[1] * -image.getScale();
+                                const size = image.getImageSize();
+                                if (size) {
+                                    offset[1] = size[1] * -image.getScale();
+                                }
                             }
                         }
                     }
@@ -7916,7 +8113,9 @@
         var result = null;
         var self = this;
         if (self.feature) {
-            result = self.feature.getGeometry().getExtent();
+            const geometry = self.feature.getGeometry();
+            if (!geometry) return null;
+            result = geometry.getExtent();
         }
         return result;
     };
@@ -7966,6 +8165,11 @@
 
     TC.wrap.Feature.prototype.setData = function (data) {
         this.feature.setProperties(data);
+    };
+
+    TC.wrap.Feature.prototype.unsetData = function (key) {
+        const feature = this.feature;
+        feature.unset(key);
     };
 
     TC.wrap.Feature.prototype.clearData = function () {
@@ -8088,8 +8292,17 @@
             case TC.Consts.geom.POLYGON:
                 type = ol.geom.GeometryType.POLYGON;
                 break;
+            case TC.Consts.geom.MULTIPOLYGON:
+                type = ol.geom.GeometryType.MULTI_POLYGON;
+                break;
             case TC.Consts.geom.POINT:
                 type = ol.geom.GeometryType.POINT;
+                break;
+            case TC.Consts.geom.MULTIPOINT:
+                type = ol.geom.GeometryType.MULTI_POINT;
+                break;
+            case TC.Consts.geom.MULTIPOLYLINE:
+                type = ol.geom.GeometryType.MULTI_LINE_STRING;
                 break;
             default:
                 type = ol.geom.GeometryType.LINE_STRING;
@@ -8163,6 +8376,7 @@
                             if (olLayer) {
                                 drawOptions.source = olLayer.getSource();
                             }
+                            const parentStyles = self.parent.styles || {};
                             switch (mode) {
                                 case TC.Consts.geom.RECTANGLE:
                                     drawOptions.style = createNativeStyle({
@@ -8184,19 +8398,28 @@
                                     };
                                     break;
                                 case TC.Consts.geom.POLYGON:
-                                    drawOptions.style = createNativeStyle({
-                                        styles: { polygon: self.parent.styles.polygon }
-                                    });
+                                case TC.Consts.geom.MULTIPOLYGON:
+                                    if (parentStyles.polygon) {
+                                        drawOptions.style = createNativeStyle({
+                                            styles: { polygon: parentStyles.polygon }
+                                        });
+                                    }
                                     break;
                                 case TC.Consts.geom.POINT:
-                                    drawOptions.style = createNativeStyle({
-                                        styles: { point: self.parent.styles.point }
-                                    });
+                                case TC.Consts.geom.MULTIPOINT:
+                                    if (parentStyles.point) {
+                                        drawOptions.style = createNativeStyle({
+                                            styles: { point: parentStyles.point }
+                                        });
+                                    }
                                     break;
+                                case TC.Consts.geom.MULTIPOLYLINE:
                                 default:
-                                    drawOptions.style = createNativeStyle({
-                                        styles: { line: self.parent.styles.line }
-                                    });
+                                    if (parentStyles.line) {
+                                        drawOptions.style = createNativeStyle({
+                                            styles: { line: parentStyles.line }
+                                        });
+                                    }
                                     break;
                             }
 
@@ -8208,13 +8431,14 @@
                             }, this);
 
                             self.interaction.on('drawend', function (evt) {
-                                evt.feature.setStyle(evt.target.overlay_.getStyle().map(function (style) {
+                                const overlayStyle = evt.target.overlay_.getStyle();
+                                evt.feature.setStyle(Array.isArray(overlayStyle) ? overlayStyle.map(function (style) {
                                     return style.clone();
-                                }));
+                                }) : overlayStyle);
                                 if (self.parent.measure) {
                                     self.parent.trigger(TC.Consts.event.MEASURE, self.getMeasureData());
                                 }
-                                createFeatureFromNative(self.sketch).then(function (feat) {
+                                TC.wrap.Feature.createFeature(self.sketch).then(function (feat) {
                                     self.parent.trigger(TC.Consts.event.DRAWEND, { feature: feat });
                                     self.sketch = null;
                                 });
@@ -8443,7 +8667,6 @@
     };
 
     TC.wrap.control.CacheBuilder.prototype.getRequestSchemas = function (options) {
-        var self = this;
         var extent = options.extent;
         var layers = options.layers;
         var result = new Array(layers.length);
@@ -8538,7 +8761,7 @@
     };
 
     const addHaloToStyle = function (style) {
-        if (style === undefined) {
+        if (!style) {
             style = [];
         }
         if (style instanceof ol.style.Style) {
@@ -8581,28 +8804,33 @@
     };
 
     const createSelectedStyle = function (feat) {
-        feat._originalStyle = feat._originalStyle || feat.getStyle();
-        if (TC.Util.isFunction(feat._originalStyle)) {
+        let originalStyle = feat._originalStyle = feat._originalStyle || feat.getStyle();
+        if (!feat._originalStyle && feat._wrap.parent.layer) {
+            originalStyle = feat._wrap.parent.layer.wrap.layer.getStyle();
+        }
+        if (!originalStyle) {
+            originalStyle = createNativeStyle({}, feat);
+        }
+        if (TC.Util.isFunction(originalStyle)) {
             return function (f, r) {
-                return addHaloToStyle(feat._originalStyle(f, r));
+                return addHaloToStyle(originalStyle(f, r));
             };
         }
-        return addHaloToStyle(feat._originalStyle);
+        return addHaloToStyle(originalStyle);
     };
 
     const setSelectedStyle = function (feat) {
         updateSelectedStyle.call(feat);
         feat.changed();
-        ol.events.listen(feat, CHANGE, updateSelectedStyle, feat);
+        //ol.events.listen(feat, CHANGE, updateSelectedStyle, feat);
     };
 
     const removeSelectedStyle = function (feat) {
-        ol.events.unlisten(feat, CHANGE, updateSelectedStyle, feat);
-        if (feat._originalStyle) {
-            feat.setStyle(null);
+        //ol.events.unlisten(feat, CHANGE, updateSelectedStyle, feat);
+        if (feat.hasOwnProperty('_originalStyle')) {
             feat.setStyle(feat._originalStyle);
         }
-        feat._originalStyle = null;
+        delete feat._originalStyle;
     };
 
     const updateSelectedStyle = function () {
@@ -8665,13 +8893,13 @@
 
                 if (!self._onMouseMove) {
                     self._onMouseMove = function (e) {
-                        const mapTarget = olMap.getTarget();
+                        const viewport = olMap.getViewport();
                         var hit = false;
                         var feature;
 
                         var pixel = olMap.getEventPixel(e);
                         hit = olMap.forEachFeatureAtPixel(pixel, function (feature, layer) {
-                            if (layer === self.parent.layer.wrap.layer) {
+                            if (self.parent.layer && layer === self.parent.layer.wrap.layer) {
                                 return true;
                             }
                             return false;
@@ -8681,9 +8909,9 @@
                             });
 
                         if (hit) {
-                            mapTarget.style.cursor = 'pointer';
+                            viewport.style.cursor = 'pointer';
                         } else {
-                            mapTarget.style.cursor = '';
+                            viewport.style.cursor = '';
                             //self.parent.trigger(TC.Consts.event.FEATUREOUT);
                         }
                     };
@@ -8749,43 +8977,6 @@
         }
     };
 
-    TC.wrap.control.Edit.prototype.activate = function (mode) {
-        var self = this;
-        self.cancel(true);
-        //if (!self.session) {
-        //    self.session = {
-        //        features: []
-        //        , featuresAdded: []
-        //        , featuresRemoved: []
-        //        , featuresModified: []
-        //    };
-        //}
-        if (mode === TC.Consts.editMode.SELECT) {
-            TC.wrap.control.Modify.prototype.activate.call(self);
-        }
-    };
-
-    TC.wrap.control.Edit.prototype.deactivate = function () {
-        var self = this;
-        TC.wrap.control.Modify.prototype.deactivate.call(self);
-
-        if (self.drawInteraction) {
-            self.drawInteraction.abortDrawing_();
-            self.drawInteraction.setActive(false);
-            //self.drawInteraction.destroy();
-            self.parent.map.wrap.getMap().then(function (olMap) {
-                olMap.removeInteraction(self.drawInteraction);
-                self.drawInteraction = null;
-            });
-            //    self.control.layer.events.un("sketchcomplete");
-            //    self.control.deactivate();
-            //    self.control.destroy();
-            //    self.control = null;
-        }
-        self.parent.trigger(TC.Consts.event.CONTROLDEACTIVATE, { ctrl: self });
-        //self.session = null;        
-    };
-
     TC.wrap.control.Edit.prototype.cancel = function (deactivate, cancelTxt) {
         var self = this;
         self.points = [];
@@ -8828,14 +9019,6 @@
         //self.clearSession();
     };
 
-    TC.wrap.control.Edit.prototype.getSelectedFeatures = function () {
-        return TC.wrap.control.Modify.prototype.getSelectedFeatures.call(this);
-    };
-
-    TC.wrap.control.Edit.prototype.setSelectedFeatures = function (features) {
-        TC.wrap.control.Modify.prototype.setSelectedFeatures.call(this, features);
-    };
-
     TC.wrap.control.Edit.prototype.deleteFeatures = function (features) {
         var self = this;
         if (Array.isArray(features)) {
@@ -8867,6 +9050,11 @@
             srsName: srsName
         });
         var xml = parser.writeGeometryNode(this.feature.getGeometry());
+        //elimino los aributos srsName de los hijos en geometrias compuestas Polygon->LinearRing etc;
+        var poligons = xml.querySelector("MultiSurface,MultiPolygon,Polygon")
+        if (poligons) poligons.querySelectorAll("Polygon,LinearRing").forEach((item) => { item.removeAttribute("srsName") });
+        //id para INSPIRE
+        xml.firstChild.setAttribute("gml:id", xml.firstChild.tagName + "." + TC.getUID());
         //reemplazo todos los <loquesea por <gml:loquesea y </loquesea por </gml:loquesea
         return new XMLSerializer().serializeToString(xml.firstChild).replace(/\<\/?\w/gm, function (str) { var pos = str.indexOf("/") > 0 ? str.indexOf("/") + 1 : 1; return str.substring(0, pos) + "gml:" + str.substring(pos) })
         //return new XMLSerializer().serializeToString(xml.firstChild).replace(/\</gm, "<gml:");

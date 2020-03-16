@@ -73,18 +73,9 @@ if (!TC.control.MapContents) {
     ctlProto.CLASS = 'tc-ctl-bms';
 
     ctlProto.template = {};
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/BasemapSelector.html";
-        ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/BasemapSelectorNode.html";
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/BasemapSelectorDialog.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () {
-            dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "backgroundMaps" }).w("</h2><div class=\"tc-ctl-bms-tree\"><form><ul class=\"tc-ctl-bms-branch\">").s(ctx.get(["baseLayers"], false), ctx, { "block": body_1 }, {}).s(ctx.get(["dialogMore"], false), ctx, { "block": body_2 }, {}).w("</ul></form></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.p("tc-ctl-bms-node", ctx, ctx.rebase(ctx.getPath(true, [])), {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\"><label class=\"tc-ctl-bms-more-node\" title=\"").h("i18n", ctx, {}, { "$key": "moreBackgroundMaps" }).w("\"><input type=\"radio\" name=\"bms\" value=\"moreLayers\"><span></span></label></li>"); } body_2.__dustBody = !0; return body_0
-        };
-        ctlProto.template[ctlProto.CLASS + '-node'] = function () { dust.register(ctlProto.CLASS + '-node', body_0); function body_0(chk, ctx) { return chk.w("<li class=\"tc-ctl-bms-node\" data-layer-name=\"").f(ctx.get(["name"], false), ctx, "h").w("\" data-layer-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\" ><label").x(ctx.get(["legend"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["thumbnail"], false), ctx, { "block": body_2 }, {}).w("><input type=\"radio\" name=\"bms\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\"").x(ctx.get(["mustReproject"], false), ctx, { "block": body_3 }, {}).w("><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label></li>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.getPath(false, ["legend", "src"]), ctx, "h").w(")\""); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(" style=\"background-image: url(").f(ctx.get(["thumbnail"], false), ctx, "h").w(")\""); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w(" class=\"tc-disabled\""); } body_3.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-bms-more-dialog tc-modal tc-hidden\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "backgroundMaps" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div><div class=\"tc-ctl-bms-crs-dialog tc-modal tc-hidden\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "baseLayerNotCompatible" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "baseLayerNotCompatible.instructions|h" }).w("</p><ul class=\"tc-ctl-bms-crs-list tc-crs-list\"></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/BasemapSelector.html";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/BasemapSelectorNode.html";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/BasemapSelectorDialog.html";
 
     const getClosestParent = function (elm, selector) {
         while (elm && !elm.matches(selector)) {
@@ -242,7 +233,7 @@ if (!TC.control.MapContents) {
 
         div = div || self.div;
 
-        div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll('li').forEach(function (li) {
+        div.querySelectorAll(`ul.${self.CLASS}-branch li`).forEach(function (li) {
             const layer = self.getLayer(li.dataset.layerId);
             if (layer) {
                 const curBaseLayer = baseLayer || self.map.baseLayer;
@@ -290,46 +281,56 @@ if (!TC.control.MapContents) {
         if (layer.isBase && !layer.options.stealth) {
             TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
 
-            var template = self.CLASS + '-node';
-            TC.loadJSInOrder(
-                !window.dust,
-                TC.url.templating,
-                function () {
-                    dust.render(template, self.layerTrees[layer.id], function (err, out) {
-                        const parser = new DOMParser();
-                        const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
-                        var uid = newLi.dataset.layerUid;
-                        const ul = self.div.querySelector('.' + self.CLASS + '-branch');
-                        const currentLi = ul.querySelector('li[data-layer-uid="' + uid + '"]');
-                        if (currentLi) {
-                            currentLi.innerHTML = newLi.innerHTML;
+            self.getRenderedHtml(self.CLASS + '-node', self.layerTrees[layer.id]).then(function (out) {
+                const parser = new DOMParser();
+                const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
+                var uid = newLi.dataset.layerUid;
+                const ul = self.div.querySelector('.' + self.CLASS + '-branch');
+                const currentLi = ul.querySelector('li[data-layer-uid="' + uid + '"]');
+                if (currentLi) {
+                    currentLi.innerHTML = newLi.innerHTML;
+                }
+                else {
+                    newLi.dataset.layerId = layer.id;
+
+                    // Insertamos elemento en el lugar correcto, según indica la colección baseLayers
+                    const setLayerIds = self.map.baseLayers
+                        .filter(baseLayer => baseLayer && !baseLayer.stealth) // Buscamos capas que deban mostrarse
+                        .map(baseLayer => baseLayer.id);
+                    const idx = setLayerIds.indexOf(layer.id);
+                    let inserted = false;
+                    for (let i = idx - 1; i >= 0; i--) {
+                        const curLi = ul.querySelector(`li[data-layer-id="${setLayerIds[i]}"]`);
+                        if (curLi) {
+                            curLi.insertAdjacentElement('afterend', newLi);
+                            inserted = true;
+                            break;
                         }
-                        else {
-                            newLi.dataset.layerId = layer.id;
-
-                            // Insertamos elemento en el lugar correcto, según indica la colección baseLayers
-                            var idx = self.map.baseLayers.filter(function (baseLayer) {
-                                // Buscamos capas que deban mostrarse o capas que están siendo fallbacks de capas que deben mostrarse
-                                return !baseLayer.stealth;
-                            }).map(function (baseLayer) {
-                                return baseLayer.id;
-                            }).indexOf(layer.id);
-
-                            const lis = ul.querySelectorAll('li');
-                            if (idx < 0 || idx >= lis.length) {
-                                ul.appendChild(newLi);
+                    }
+                    if (!inserted) {
+                        for (let i = idx + 1, ii = setLayerIds.length; i < ii; i++) {
+                            const curLi = ul.querySelector(`li[data-layer-id="${setLayerIds[i]}"]`);
+                            if (curLi) {
+                                curLi.insertAdjacentElement('beforebegin', newLi);
+                                inserted = true;
+                                break;
+                            }
+                        }
+                        if (!inserted) {
+                            const moreLabel = ul.querySelector(`.${self.CLASS}-more-node`);
+                            if (moreLabel) {
+                                moreLabel.parentElement.insertAdjacentElement('beforebegin', newLi);
                             }
                             else {
-                                ul.insertBefore(newLi, lis[idx]);
+                                ul.appendChild(newLi);
                             }
                         }
-                        if (err) {
-                            TC.error(err);
-                        }
-                    });
+                    }
                     self.update();
                 }
-            );
+            }).catch(function (err) {
+                TC.error(err);
+            });
         }
     };
 
@@ -537,61 +538,54 @@ if (!TC.control.MapContents) {
                     }
                 });
 
-                Promise.all(noDyn).then(function (baseLayers) {
-                    self._moreBaseLayers = new Array(baseLayers.length);
+                self._moreBaseLayers = new Array(noDyn.length);
 
-                    var numToAdd = baseLayers.length;
+                const resolvePromise = function () {
+                    self._moreBaseLayers = self._moreBaseLayers.filter(function (baseLayer) {
+                        return baseLayer !== null;
+                    });
 
-                    const resolvePromise = function () {
-                        self._moreBaseLayers = self._moreBaseLayers.filter(function (baseLayer) {
-                            return baseLayer !== null;
-                        });
+                    resolve(self._moreBaseLayers);
+                };
+                const addLayer = function (i) {
+                    const baseLayer = this;
 
-                        resolve(self._moreBaseLayers);
-                    };
-                    const addLayer = function (i) {
-                        const baseLayer = this;
+                    baseLayer.map = self.map;
+                    baseLayer.isBase = baseLayer.options.isBase = true;
 
-                        baseLayer.map = self.map;
-                        baseLayer.isBase = baseLayer.options.isBase = true;
+                    if (baseLayer.type === TC.Consts.layerType.WMTS) {
+                        var matrixSet = baseLayer.wrap.getCompatibleMatrixSets(self.map.getCRS())[0];
+                        baseLayer.mustReproject = !matrixSet;
+                    } else if (baseLayer.type === TC.Consts.layerType.WMS) {
+                        baseLayer.mustReproject = !baseLayer.isCompatible(self.map.getCRS());
+                    }
 
-                        if (baseLayer.type === TC.Consts.layerType.WMTS) {
-                            var matrixSet = baseLayer.wrap.getCompatibleMatrixSets(self.map.getCRS())[0];
-                            baseLayer.mustReproject = !matrixSet;
-                        } else if (baseLayer.type === TC.Consts.layerType.WMS) {
-                            baseLayer.mustReproject = !baseLayer.isCompatible(self.map.getCRS());
-                        }
+                    if (self.map.on3DView && baseLayer.mustReproject && baseLayer.getFallbackLayer && baseLayer.getFallbackLayer()) {
+                        baseLayer.mustReproject = !baseLayer.getFallbackLayer().isCompatible(self.map.getCRS());
+                    }
 
-                        if (self.map.on3DView && baseLayer.mustReproject && baseLayer.getFallbackLayer && baseLayer.getFallbackLayer()) {
-                            baseLayer.mustReproject = !baseLayer.getFallbackLayer().isCompatible(self.map.getCRS());
-                        }
+                    self._moreBaseLayers.splice(i, 1, baseLayer);
+                };
 
-                        self._moreBaseLayers.splice(i, 1, baseLayer);
-                        numToAdd--;
-
-                        if (numToAdd === 0) {
-                            resolvePromise();
-                        }
-                    };
-
-                    baseLayers.forEach(function (baseLayer, i) {
+                Promise.all(noDyn.map(function (baseLayer, i) {
+                    return new Promise(function (res, rej) {
                         if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS) {
                             var promise = self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
                             promise.then(
-                                addLayer.bind(baseLayer, i),
+                                function () {
+                                    addLayer.call(baseLayer, i);
+                                    res();
+                                },
                                 function (fail) {
                                     self._moreBaseLayers.splice(i, 1, null);
-                                    numToAdd--;
-
-                                    if (numToAdd === 0) {
-                                        resolvePromise();
-                                    }
+                                    res();
                                 });
                         } else {
                             addLayer.call(baseLayer, i);
+                            res();
                         }
                     });
-                });
+                })).finally(resolvePromise);
             });
 
         } else if (self._moreBaseLayers) {

@@ -17,12 +17,7 @@ TC.inherit(TC.control.Scale, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-scl';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/Scale.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"ol-scale-line ol-unselectable\"><span>1:").h("math", ctx, {}, { "key": body_1, "method": "round" }).w("</span> <input type=\"button\" value=\"").f(ctx.get(["screenSize"], false), ctx, "h").w("''\" title=\"").h("i18n", ctx, {}, { "$key": "estimatedMapSize" }).w("\" /></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.f(ctx.get(["scale"], false), ctx, "h"); } body_1.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/Scale.html";
 
     ctlProto.render = function (callback) {
         const self = this;

@@ -1,0 +1,58 @@
+<h3>{{i18n "attributeEdit"}}</h3>
+<div class="tc-ctl-mod-attr-body">
+    <table>
+        <tbody>
+            {{#data}}
+            <tr>
+                <th>{{name}}</th>
+                <td>
+                    {{#if readOnly}}
+                        {{value}}
+                    {{else}}
+                        {{#if availableValues}}
+                        <select class="tc-combo" name="{{name}}">
+                            <option value=""></option>
+                            {{#each availableValues}}
+                            <option value="{{.}}">{{.}}</option>
+                            {{/each}}
+                        </select>
+                        {{/if}}
+                        {{#if (eq type "int")}}{{> inputNumber}}
+                        {{else if (eq type "integer")}}{{> inputNumber}}
+                        {{else if (eq type "double")}}{{> inputNumber}}
+                        {{else if (eq type "boolean")}}{{> inputCheckbox}}
+                        {{else if (eq type "date")}}{{> inputDate}}
+                        {{else if (eq type "time")}}{{> inputTime}}
+                        {{else if (eq type "dateTime")}}{{> inputDatetime}}
+                        {{else if (eq type "byte")}}{{> inputNumber}}
+                        {{else if (eq type "long")}}{{> inputNumber}}
+                        {{else if (eq type "negativeInteger")}}{{> inputNumber}}
+                        {{else if (eq type "nonNegativeInteger")}}{{> inputNumber}}
+                        {{else if (eq type "nonPositiveInteger")}}{{> inputNumber}}
+                        {{else if (eq type "positiveInteger")}}{{> inputNumber}}
+                        {{else if (eq type "short")}}{{> inputNumber}}
+                        {{else if (eq type "unsignedLong")}}{{> inputNumber}}
+                        {{else if (eq type "unsignedInt")}}{{> inputNumber}}
+                        {{else if (eq type "unsignedShort")}}{{> inputNumber}}
+                        {{else if (eq type "unsignedByte")}}{{> inputNumber}}
+                        {{else if (eq type "float")}}{{> inputNumber}}
+                        {{else if (eq type "decimal")}}{{> inputNumber}}
+                        {{else}}{{> inputText}}
+                        {{/if}}
+                        {{#*inline "inputText"}}<input type="text" class="tc-textbox" name="{{name}}" value="{{value}}" />{{/inline}}
+                        {{#*inline "inputNumber"}}<input type="number" class="tc-textbox" name="{{name}}" value="{{value}}" />{{/inline}}
+                        {{#*inline "inputCheckbox"}}<input type="checkbox" name="{{name}}"{{#if value}} checked{{/if}}/>{{/inline}}
+                        {{#*inline "inputDate"}}<input type="date" class="tc-textbox" name="{{name}}" value="{{value}}" />{{/inline}}
+                        {{#*inline "inputTime"}}<input type="time" class="tc-textbox" name="{{name}}" value="{{value}}" />{{/inline}}
+                        {{#*inline "inputDatetime"}}<input type="datetime" class="tc-textbox" name="{{name}}" value="{{value}}" />{{/inline}}
+                    {{/if}}
+                </td>
+            </tr>
+            {{/data}}
+        </tbody>
+    </table>
+</div>
+<div class="tc-ctl-mod-attr-footer">
+    <button class="tc-button tc-ctl-mod-btn-attr-ok">{{i18n "ok"}}</button>
+    <button class="tc-button tc-ctl-mod-btn-attr-cancel">{{i18n "cancel"}}</button>
+</div>

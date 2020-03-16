@@ -738,7 +738,7 @@ li.tc-ctl-lcat-node > a.tc-ctl-lcat-btn-info:after {
     content: '\f0c9\f07d';
 }
 
-.tc-ctl-wlm .tc-ctl-wlm-del:after {
+.tc-ctl-wlm .tc-ctl-wlm-btn-del:after {
     font-family: 'FontAwesome';
     content: '\f1f8';
 }
@@ -1015,7 +1015,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked h4 {
     padding: 3em 0 0 0;
     overflow: hidden;
     cursor: pointer;
-    opacity: 0.5;
+    opacity: 0.66;
 }
 
     .tc-ctl-finfo-btn-prev:hover, .tc-ctl-finfo-btn-next:hover {
@@ -1364,14 +1364,12 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     }
 
 .left-collapsed > h1 {
-    opacity: 1;
     -webkit-box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
     -moz-box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
     box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
 }
 
 .right-collapsed > h1 {
-    opacity: 1;
     -webkit-box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
     -moz-box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
     box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
@@ -1464,38 +1462,23 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
     transform: none;
 }
 
-label.tc-ctl-edit-btn-select span {
+.tc-ctl-edit-mode label span {
     text-align: left;
     text-indent: -1000vw;
 }
 
-label.tc-ctl-edit-btn-point span {
-    text-align: left;
-    text-indent: -1000vw;
-}
-
-label.tc-ctl-edit-btn-line span {
-    text-align: left;
-    text-indent: -1000vw;
-}
-
-label.tc-ctl-edit-btn-polygon span {
-    text-align: left;
-    text-indent: -1000vw;
-}
-
-.tc-ctl-edit-mode label.tc-ctl-edit-btn-select input[type=radio] ~ span:before {
+.tc-ctl-edit-mode label.tc-ctl-edit-btn-modify input[type=radio] ~ span:before {
     font-family: 'FontAwesome';
     text-indent: 0;
     content: '\f25a';
 }
 
-.tc-ctl-edit-select > button {
+.tc-ctl-edit-modify > button {
     text-indent: -1000vw;
 }
 
 
-    .tc-ctl-edit-select > button:after {
+    .tc-ctl-edit-modify > button:after {
         position: absolute;
         font-size: 1em;
         height: 100%;
@@ -1507,22 +1490,6 @@ label.tc-ctl-edit-btn-polygon span {
         left: 0;
         top: 0;
     }
-
-.tc-ctl-edit-btn-delete:after {
-    content: '\f12d';
-}
-
-.tc-ctl-edit-btn-join:after {
-    content: '\f247';
-}
-
-.tc-ctl-edit-btn-split:after {
-    content: '\f248';
-}
-
-.tc-ctl-edit-btn-cancel:after {
-    content: '\f00d';
-}
 
 .tc-ctl-edit .tc-ctl-edit-btn-save:before {
     font-family: 'FontAwesome';
@@ -1536,21 +1503,10 @@ label.tc-ctl-edit-btn-polygon span {
     margin-right: 0.5em;
 }
 
-#tools-panel:not(.right-collapsed).slide-panel > h1#tools-tab {
+#tools-panel:not(.right-collapsed).slide-panel > h1#tools-tab, #ovmap-panel:not(.right-collapsed).slide-panel > h1#tools-tab {
     border-bottom-left-radius: 0em;
     margin-left: 0;
-    opacity: 0.8;
     width: 100%;
-}
-
-#tools-panel:not(.right-collapsed).slide-panel > div.panel-content {
-    height: calc(100% - 4em);
-    min-height: 11em;
-    top: 4em;
-    position: relative;
-}
-
-#tools-panel:not(.right-collapsed).slide-panel > h1#tools-tab {
 }
 
     #tools-panel:not(.right-collapsed).slide-panel > h1#tools-tab::before {
@@ -1566,27 +1522,18 @@ label.tc-ctl-edit-btn-polygon span {
         text-align: center;
     }
 
+#tools-panel:not(.right-collapsed).slide-panel > div.panel-content {
+    height: calc(100% - 4em);
+    min-height: 11em;
+    top: 4em;
+    position: relative;
+}
+
 #legend-panel:not(.left-collapsed).slide-panel > h1#legend-tab {
     border-top-right-radius: 0em;
     margin-right: 0;
-    opacity: 0.85;
     width: 100%;
     position: relative;
-}
-
-#legend-panel:not(.left-collapsed).slide-panel > div.panel-content {
-    position: relative;
-}
-
-    #legend-panel:not(.left-collapsed).slide-panel > div.panel-content div#legend {
-        padding: 0;
-    }
-
-#legend-panel:not(.left-collapsed).slide-panel h2 {
-    display: none;
-}
-
-#legend-panel:not(.left-collapsed).slide-panel > h1#legend-tab {
 }
 
     #legend-panel:not(.left-collapsed).slide-panel > h1#legend-tab::before {
@@ -1606,6 +1553,18 @@ label.tc-ctl-edit-btn-polygon span {
         right: 0;
         left: auto;
     }
+
+#legend-panel:not(.left-collapsed).slide-panel > div.panel-content {
+    position: relative;
+}
+
+    #legend-panel:not(.left-collapsed).slide-panel > div.panel-content div#legend {
+        padding: 0;
+    }
+
+#legend-panel:not(.left-collapsed).slide-panel h2 {
+    display: none;
+}
 
 .prcollapsed {
     line-height: 2em;
@@ -2180,7 +2139,6 @@ label.tc-ctl-edit-btn-polygon span {
     #legend-panel:not(.left-collapsed).slide-panel > h1#legend-tab {
         border-top-right-radius: 0.3em;
         margin-right: -6em;
-        opacity: 0.85;
         width: 10em;
         position: absolute;
     }

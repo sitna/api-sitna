@@ -30,12 +30,17 @@ TC.control.DataLoader = function () {
 TC.inherit(TC.control.DataLoader, TC.control.TabContainer);
 
 (function () {
-    var ctlProto = TC.control.DataLoader.prototype;
+    const ctlProto = TC.control.DataLoader.prototype;
 
     ctlProto.register = function (map) {
         const self = this;
         self.title = self.getLocaleString('addMaps');
-        return TC.control.TabContainer.prototype.register.call(self, map);
+        return new Promise(function (resolve, reject) {
+            TC.control.TabContainer.prototype.register.call(self, map).then(ctl => {
+                ctl.div.classList.add(self.CLASS + '-datldr');
+                resolve(ctl);
+            });
+        })
     };
 
 })();

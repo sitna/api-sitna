@@ -4,8 +4,6 @@ if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
-TC.Consts.event.POINT = 'point.tc';
-
 TC.control.Measure = function () {
     var self = this;
 
@@ -33,6 +31,13 @@ TC.control.Measure = function () {
         self.setMode(self.options.mode);
     });
 };
+TC.control.Measure.units = {
+    "m": { peso: 0, abbr: "m&sup2;" },
+    "dam": { peso: 1, abbr: "dam&sup2;" },
+    "hm": { peso: 2, abbr: "hm&sup2;" },
+    "ha": { peso: 2, abbr: "ha" },
+    "km": { peso: 3, abbr: "km&sup2;" }
+}
 
 TC.inherit(TC.control.Measure, TC.Control);
 
@@ -41,10 +46,7 @@ TC.inherit(TC.control.Measure, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-meas';
 
-    if (TC.isDebug)
-        ctlProto.template = TC.apiLocation + "TC/templates/Measure.html";
-    else
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "measure" }).w("</h2><div class=\"tc-ctl-meas-select\"><form><label class=\"tc-ctl-meas-btn-len\"><input type=\"radio\" name=\"mode\" value=\"polyline\" /><span>").h("i18n", ctx, {}, { "$key": "length" }).w("</span></label><label class=\"tc-ctl-meas-btn-area\"><input type=\"radio\" name=\"mode\" value=\"polygon\" /><span>").h("i18n", ctx, {}, { "$key": "areaAndPerimeter" }).w("</span></label></form></div><div class=\"tc-ctl-meas-mode tc-ctl-meas-len tc-hidden\"><div class=\"tc-ctl-meas-line\"></div><div class=\"tc-ctl-meas-txt\">").h("i18n", ctx, {}, { "$key": "length" }).w(": <span class=\"tc-ctl-meas-val-len\"></span></div></div><div class=\"tc-ctl-meas-mode tc-ctl-meas-area tc-hidden\"><div class=\"tc-ctl-meas-polygon\"></div><div class=\"tc-ctl-meas-txt\">").h("i18n", ctx, {}, { "$key": "area" }).w(": <span class=\"tc-ctl-meas-val-area\"></span>, ").h("i18n", ctx, {}, { "$key": "perimeter" }).w(": <span class=\"tc-ctl-meas-val-peri\"></span></div></div>"); } body_0.__dustBody = !0; return body_0 };
+    ctlProto.template = TC.apiLocation + "TC/templates/Measure.html";
 
     ctlProto.render = function (callback) {
         const self = this;
@@ -92,9 +94,12 @@ TC.inherit(TC.control.Measure, TC.Control);
                 const drawLinesId = self.getUID();
                 const drawPolygonsId = self.getUID();
 
+                self.units = self.options.units ? self.options.units : "km";
+
                 self.layerPromise = map.addLayer({
                     id: layerId,
                     title: self.getLocaleString('measure'),
+                    owner: self,
                     stealth: true,
                     type: TC.Consts.layerType.VECTOR,
                     styles: {
@@ -104,12 +109,14 @@ TC.inherit(TC.control.Measure, TC.Control);
                     }
                 });
 
+                self.units = self.options.units ? self.options.units : "km";
+
                 Promise.all([self.layerPromise, self.renderPromise()]).then(function (objects) {
                     const layer = objects[0];
                     self.layer = layer;
                     self.layer.map.putLayerOnTop(self.layer);
 
-                    self._drawLinesPromise = map.addControl('draw', {
+                    self._lineDrawControlPromise = map.addControl('draw', {
                         id: drawLinesId,
                         div: self.div.querySelector('.tc-ctl-meas-line'),
                         mode: TC.Consts.geom.POLYLINE,
@@ -118,7 +125,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                         styleTools: self.persistentDrawControls,
                         layer: self.layer
                     });
-                    self._drawPolygonsPromise = map.addControl('draw', {
+                    self._polygonDrawControlPromise = map.addControl('draw', {
                         id: drawPolygonsId,
                         div: self.div.querySelector('.tc-ctl-meas-polygon'),
                         mode: TC.Consts.geom.POLYGON,
@@ -128,9 +135,9 @@ TC.inherit(TC.control.Measure, TC.Control);
                         layer: self.layer
                     });
 
-                    Promise.all([self._drawLinesPromise, self._drawPolygonsPromise]).then(function (controls) {
-                        self.drawLines = controls[0];
-                        self.drawPolygons = controls[1];
+                    Promise.all([self._lineDrawControlPromise, self._polygonDrawControlPromise]).then(function (controls) {
+                        self.lineDrawControl = controls[0];
+                        self.polygonDrawControl = controls[1];
                         controls.forEach(function (ctl) {
                             ctl.containerControl = self;
                             self.drawControls.push(ctl);
@@ -222,11 +229,11 @@ TC.inherit(TC.control.Measure, TC.Control);
         var event;
         switch (mode) {
             case TC.Consts.geom.POLYLINE:
-                self.drawLines.activate();
+                self.lineDrawControl.activate();
                 event = TC.Consts.event.CONTROLACTIVATE;
                 break;
             case TC.Consts.geom.POLYGON:
-                self.drawPolygons.activate();
+                self.polygonDrawControl.activate();
                 event = TC.Consts.event.CONTROLACTIVATE;
                 break;
             case null:
@@ -264,12 +271,15 @@ TC.inherit(TC.control.Measure, TC.Control);
         const locale = self.map.options.locale || TC.Cfg.locale
         if (options.area) {
             var area = options.area;
-            if (area > 10000) {
-                area = area / 1000000;
-                units = 'km';
-            }
-            precision = units === 'm' ? 0 : 3;
-            self._area.innerHTML = TC.Util.formatNumber(area.toFixed(precision), locale) + ' ' + units + '&sup2;';
+            let html = [];
+            (self.units instanceof Array ? self.units : self.units.split(",")).forEach(function (unit) {
+                const difPeso = TC.control.Measure.units[unit.trim()].peso - TC.control.Measure.units["m"].peso;
+                if (area > Math.pow(100, (difPeso - 1))) {
+                    let precision = unit === 'm' ? 0 : 3;
+                    html.push(TC.Util.formatNumber((area / Math.pow(100, (difPeso))).toFixed(precision), locale) + ' ' + TC.control.Measure.units[unit].abbr);
+                }
+            })
+            self._area.innerHTML = html.join("/");
         }
         if (options.perimeter) {
             var perimeter = options.perimeter;

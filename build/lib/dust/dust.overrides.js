@@ -29,4 +29,34 @@
         }
         return chunk;
     };
+    dust.helpers.isObject = function (chunk, context, bodies, params) {
+        params = params || {};
+        var body = bodies.block, skip = bodies['else'], obj = params["object"] || context.current();
+        if (obj instanceof Array && bodies['array']) {
+            chunk = chunk.render(bodies['array'], context);
+        }
+        else if (obj instanceof Object) {
+            chunk = chunk.render(body, context);
+        }
+        else if (skip) {
+            chunk = chunk.render(skip, context);
+        }
+        return chunk;
+    }
+    dust.helpers.isKeyKalue = function (chunk, context, bodies, params) {
+        params = params || {};
+        var body = bodies.block, skip = bodies['else'], obj = params["object"] || context.current();
+        if (obj.hasOwnProperty("value") && !(obj["value"] instanceof Object))
+            chunk.render(body, context);
+        else if (skip)
+            chunk.render(skip, context);
+        return chunk;
+    }
+    var ids = [];
+    dust.filters.objectId = function (value) {
+        let found = ids.find((item) => { return item.obj === value });
+        if (!found)
+            ids.push(found = { "obj": value, id: TC.getUID() })
+        return found.id;
+    }	    
 })();

@@ -1,0 +1,8 @@
+<svg height="15" width="15" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="7.5" cy="7.5" r="6.5" stroke="transparent" fill="rgba(0,0,0,0.3)" />
+  <circle cx="7.5" cy="7.5" r="6.5" stroke="#0000ff" stroke-width="2" fill="transparent" />
+  <line x1="2" y1="7.5" x2="4" y2="7.5" style="stroke:#0000ff;stroke-width:2;stroke-linecap:round;" />
+  <line x1="13" y1="7.5" x2="11" y2="7.5" style="stroke:#0000ff;stroke-width:2;stroke-linecap:round;" />
+  <line x1="7.5" y1="2" x2="7.5" y2="4" style="stroke:#0000ff;stroke-width:2;stroke-linecap:round;" />
+  <line x1="7.5" y1="13" x2="7.5" y2="11" style="stroke:#0000ff;stroke-width:2;stroke-linecap:round;" />
+</svg> 

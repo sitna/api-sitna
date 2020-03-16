@@ -76,7 +76,7 @@ TC.tool.ElevationService = function (options) {
                 );
             }
             else {
-                reject();
+                reject(Error('Request is not valid for elevation service'));
             }
         });
     };

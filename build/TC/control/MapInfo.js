@@ -110,6 +110,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         if (self.map && state.features.length) {
             self.map.addLayer({
                 id: self.getUID(),
+                owner: self,
                 type: TC.Consts.layerType.VECTOR,
                 title: self.getLocaleString('foi'),
                 stealth: true

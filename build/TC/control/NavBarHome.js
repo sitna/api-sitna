@@ -29,7 +29,7 @@ TC.inherit(TC.control.NavBarHome, TC.Control);
         self.wrap.register(map);        
 
         map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
-            const crs = e.crs;
+            const crs = e.newCrs;
             var bottomLeft = TC.Util.reproject([map.options.initialExtent[0], map.options.initialExtent[1]], map.options.crs, crs);
             var topRight = TC.Util.reproject([map.options.initialExtent[2], map.options.initialExtent[3]], map.options.crs, crs);
             self.wrap.setInitialExtent([bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]]);

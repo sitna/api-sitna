@@ -17,12 +17,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-fscreen';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/FullScreen.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-fscreen-btn\" title=\"").h("i18n", ctx, {}, { "$key": "fscreen.tip" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/FullScreen.html";
 
     const key = {
         fullscreenEnabled: 0,

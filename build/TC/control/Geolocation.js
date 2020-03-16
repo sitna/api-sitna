@@ -106,8 +106,7 @@ TC.control.Geolocation = function (options) {
             DELETE: '.tc-btn-delete',
             SAVE: '.tc-btn-save',
             CANCEL: '.tc-btn-cancel',
-            EXPORT_GPX: '.tc-btn-export-gpx',
-            EXPORT_KML: '.tc-btn-export-kml',
+            EXPORT: '.tc-btn-export',
             STOP: '.tc-btn-stop',
             PAUSE: '.tc-btn-pause',
             BACKWARD: '.tc-btn-backward',
@@ -196,21 +195,20 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
 
     ctlProto.template = {};
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Geolocation.html";
+    ctlProto.template[ctlProto.CLASS + '-track-node'] = TC.apiLocation + "TC/templates/GeolocationTrackNode.html";
+    ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = TC.apiLocation + "TC/templates/GeolocationTrackSnappingNode.html";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/GeolocationDialog.html";
+    ctlProto.template[ctlProto.CLASS + '-tracking-toast'] = TC.apiLocation + "TC/templates/GeolocationTrackingToast.html";
 
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Geolocation.html";
-        ctlProto.template[ctlProto.CLASS + '-track-node'] = TC.apiLocation + "TC/templates/GeolocationTrackNode.html";
-        ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = TC.apiLocation + "TC/templates/GeolocationTrackSnappingNode.html";
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/GeolocationDialog.html";
-        ctlProto.template[ctlProto.CLASS + '-tracking-toast'] = TC.apiLocation + "TC/templates/GeolocationTrackingToast.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "geo" }).w("</h2><div class=\"tc-ctl-geolocation-content\"> <div class=\"tc-ctl-geolocation-track\"><div class=\"tc-ctl-geolocation-track-snap-info\"></div> <!-- img se insertan en el div del mapa--> <div id=\"tc-ctl-geolocation-track-elevation-marker\" class=\"tc-ctl-geolocation-trackMarker elevation\" style=\"display: none;\"></div> <div class=\"tc-ctl-geolocation-track-panel-block\" ><input id=\"tc-ctl-geolocation-track-panel-opened\" type=\"checkbox\" checked/><label for=\"tc-ctl-geolocation-track-panel-opened\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.1" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.2" }).w("</label><i class=\"tc-ctl-geolocation-track-panel-help icon-question-sign\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.panel.help.3" }).w("\"></i></div><div class=\"tc-ctl-geolocation-track-mng\"><div class=\"tc-ctl-geolocation-select\"><form> <label class=\"tc-ctl-geolocation-btn-track\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.title" }).w("\"><input type=\"radio\" name=\"mode\" checked value=\"tracks\" /><span>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</span></label><label class=\"tc-ctl-geolocation-btn-tracks\" title=\"").h("i18n", ctx, {}, { "$key": "geo.tracks.title" }).w("\"><input type=\"radio\" name=\"mode\" value=\"track-available\" /><span>").h("i18n", ctx, {}, { "$key": "geo.tracks" }).w("</span></label> </form></div> <div class=\"tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden\"><i class=\"tc-ctl-geolocation-track-search-icon\"></i><input id=\"tc-ctl-geolocation-track-available-srch\" type=\"search\" list=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-srch tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.filter.plhr" }).w("\" maxlength=\"200\" /> <ol id=\"tc-ctl-geolocation-track-available-lst\" class=\"tc-ctl-geolocation-track-available-lst\"><li class=\"tc-ctl-geolocation-track-available-empty\"><span>").h("i18n", ctx, {}, { "$key": "geo.noTracks" }).w("</span></li><li class=\"tc-ctl-geolocation-track-not\" hidden><span>").h("i18n", ctx, {}, { "$key": "noMatches" }).w("</span></li></ol><div class=\"tc-ctl-geolocation-track-cnt\"><input name=\"uploaded-file\" id=\"uploaded-file\" type=\"file\" class=\"tc-ctl-geolocation-track-import tc-button\" accept=\".gpx,.kml\" disabled /><label class=\"tc-button tc-icon-button\" for=\"uploaded-file\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.import.upload" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.import.lbl" }).w("</label></div></div><div class=\"tc-ctl-geolocation-tracks tc-ctl-geolocation-panel\"> <div class=\"tc-alert alert-warning tc-hidden\" ><p id=\"panel-msg\">").h("i18n", ctx, {}, { "$key": "geo.trk.panel.1" }).w(" <ul><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.2" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.3" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.4" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "geo.trk.panel.5" }).w("</li></ul></p></div> <div class=\"tc-ctl-geolocation-track-ui\"> <div class=\"tc-ctl-geolocation-track-render\"><input id=\"tc-ctl-geolocation-track-render\" type=\"checkbox\" hidden checked /><label for=\"tc-ctl-geolocation-track-render\" class=\"tc-ctl-geolocation-track-render\" title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.trk.render" }).w("</label></div><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.activate" }).w("</button><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "geo.track.deactivate.title" }).w("\">").h("i18n", ctx, {}, { "$key": "geo.track.deactivate" }).w("</button></div><div class=\"tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt\"><input type=\"text\" class=\"tc-ctl-geolocation-track-title tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-save\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.name.save" }).w("\"></button><input type=\"text\" class=\"tc-ctl-geolocation-track-waypoint tc-textbox\" disabled placeholder=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.plhr" }).w("\" maxlength=\"200\" /><button class=\"tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt\" disabled title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.wyp.save" }).w("\"></button></div></div></div></div></div><div class=\"tc-ctl-geolocation-track-center tc-hidden\"><button title=\"").h("i18n", ctx, {}, { "$key": "geo.trk.center" }).w("\"></button></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-track-node'] = function () { dust.register(ctlProto.CLASS + '-track-node', body_0); function body_0(chk, ctx) { return chk.w("<li data-id=\"").f(ctx.get(["id"], false), ctx, "h").w("\" data-uid=\"").f(ctx.get(["uid"], false), ctx, "h").w("\"><span class=\"tc-draw tc-selectable\" title=\"").f(ctx.get(["name"], false), ctx, "h").w("\">").f(ctx.get(["name"], false), ctx, "h").w("</span><input class=\"tc-textbox tc-hidden\" type=\"text\" value=\"").f(ctx.get(["name"], false), ctx, "h").w("\" /> <button class=\"tc-btn-simulate\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.simulate" }).w("\"></button><button hidden class=\"tc-btn-stop\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.stop" }).w("\"></button><button class=\"tc-btn-edit\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.edit" }).w("\"></button><button hidden class=\"tc-btn-pause\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.pause" }).w("\"></button> <button hidden class=\"tc-btn-backward\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.backward" }).w("\"></button><label hidden class=\"tc-spn-speed\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.velocity" }).w("\"></label><button hidden class=\"tc-btn-forward\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.forward" }).w("\"></button> <button class=\"tc-btn-save tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "save" }).w("\"></button><button class=\"tc-btn-cancel tc-hidden\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.cancel" }).w("\"></button><button class=\"tc-btn-delete\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.delete" }).w("\"></button><button class=\"tc-btn-export-gpx\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportGPX" }).w("\"></button><button class=\"tc-btn-export-kml\" title=\"").h("i18n", ctx, {}, { "$key": "tr.lst.exportKML" }).w("\"></button> </li>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-track-snapping-node'] = function () { dust.register(ctlProto.CLASS + '-track-snapping-node', body_0); function body_0(chk, ctx) { return chk.w("<ul>").x(ctx.get(["n"], false), ctx, { "block": body_1 }, {}).w("<li> <span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(":</span> ").f(ctx.get(["x"], false), ctx, "h").w("</li><li> <span>").x(ctx.get(["isGeo"], false), ctx, { "else": body_4, "block": body_5 }, {}).w(":</span> ").f(ctx.get(["y"], false), ctx, "h").w(" </li>").x(ctx.get(["z"], false), ctx, { "block": body_6 }, {}).x(ctx.get(["m"], false), ctx, { "block": body_8 }, {}).w("</ul>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<li><span>").h("i18n", ctx, {}, { "$key": "geo.trk.snapping.name" }).w(":</span> ").f(ctx.get(["n"], false), ctx, "h").w("</li>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("X"); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lon" }); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("Y"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.h("ne", ctx, { "block": body_7 }, { "key": ctx.get(["z"], false), "value": 0 }); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w("<li> <span>Z:</span> ").f(ctx.get(["z"], false), ctx, "h").w(" </li>"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("<li> ").f(ctx.get(["m"], false), ctx, "h").w(" </li>"); } body_8.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-geolocation-continue-track-dialog tc-modal\" ><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.gps" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><button class=\"tc-button tc-ctl-geolocation-track-continue\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cnt" }).w(" </button><button class=\"tc-button tc-ctl-geolocation-track-new\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.new" }).w(" </button> <button class=\"tc-button tc-modal-close\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.cancel" }).w(" </button></div></div></div><div class=\"tc-ctl-geolocation-track-advert-dialog tc-modal\" ><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "geo.track.activate.title" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p id=\"pageBlurMsg\">").h("i18n", ctx, {}, { "$key": "geo.trk.page.blur" }).w("</p><p class=\"tc-ctl-geolocation-track-advertisement p\"> <label> <input type=\"checkbox\" name=\"checkbox\" id=\"advertisement\"> ").h("i18n", ctx, {}, { "$key": "geo.trk.dialog.advertisement" }).w(" </label> </p></div><div class=\"tc-modal-footer\"><button class=\"tc-button tc-ctl-geolocation-track-advert-ok\"> ").h("i18n", ctx, {}, { "$key": "ok" }).w(" </button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-tracking-toast'] = function () { dust.register(ctlProto.CLASS + '-tracking-toast', body_0); function body_0(chk, ctx) { return chk.w("<table class=\"tc-ctl-geolocation-info-tracking\"><tr><th>").x(ctx.get(["isGeo"], false), ctx, { "else": body_1, "block": body_2 }, {}).w(":</th><td> ").f(ctx.get(["x"], false), ctx, "h").w(" </td>").x(ctx.get(["accuracy"], false), ctx, { "block": body_3 }, {}).w("</tr><tr><th>").x(ctx.get(["isGeo"], false), ctx, { "else": body_4, "block": body_5 }, {}).w(":</th><td> ").f(ctx.get(["y"], false), ctx, "h").w(" </td>").x(ctx.get(["speed"], false), ctx, { "block": body_6 }, {}).w("</tr><tr>").x(ctx.get(["z"], false), ctx, { "block": body_7 }, {}).x(ctx.get(["mdt"], false), ctx, { "block": body_10 }, {}).w("</tr> </table>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("X"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lon" }); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<th>").h("i18n", ctx, {}, { "$key": "geo.trk.accuracy" }).w(":</th><td> ").f(ctx.get(["accuracy"], false), ctx, "h").w(" m </td>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("Y"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "lat" }); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<th>").h("i18n", ctx, {}, { "$key": "geo.trk.speed" }).w(":</th><td>").f(ctx.get(["speed"], false), ctx, "h").w(" km/h</td>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.w("<th>").x(ctx.get(["isGeo"], false), ctx, { "else": body_8, "block": body_9 }, {}).w(":</th><td> ").f(ctx.get(["z"], false), ctx, "h").w(" m </td>"); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("Z"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.h("i18n", ctx, {}, { "$key": "ele" }); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w("<th title=\"").h("i18n", ctx, {}, { "$key": " mdt.title" }).w("\">").h("i18n", ctx, {}, { "$key": "ele" }).w(" (").h("i18n", ctx, {}, { "$key": "mdt" }).w("):</th><td>").f(ctx.get(["mdt"], false), ctx, "h").w(" m </td>"); } body_10.__dustBody = !0; return body_0 };
-    }
+    var onFeatureRemove = function (e) {
+        const self = this;
+        const layer = e.layer;
+
+        if (e.layer === self.layerTrack) {
+            self.clearSelection();
+        }
+    };
 
     ctlProto.register = function (map) {
         const self = this;
@@ -222,6 +220,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         map.addLayer({
             id: self.getUID(),
             type: TC.Consts.layerType.VECTOR,
+            owner: self,
             stealth: true,
             title: 'Posicionar.GPS',
         }).then(function (layer) {
@@ -230,6 +229,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         map.addLayer({
             id: self.getUID(),
             type: TC.Consts.layerType.VECTOR,
+            owner: self,
             stealth: true,
             title: 'Posicionar.Tracking',
             styles: {
@@ -269,6 +269,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         map.addLayer({
             id: self.getUID(),
             type: TC.Consts.layerType.VECTOR,
+            owner: self,
             stealth: true,
             title: 'Posicionar.Track',
             styles: {
@@ -341,6 +342,12 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             }
         }.bind(self));
 
+        map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+            if (self.elevationChartData) {
+                self.elevationChartData.coords = TC.Util.reproject(self.elevationChartData.coords, e.oldCrs, e.newCrs);
+            }
+        });
+
         return result;
     };
 
@@ -349,12 +356,14 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         return self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
         }).then(function () {
-            return TC.Control.prototype.render.call(self, callback);
+            return self.renderData({ controlId: self.id }, callback);
         });
     };
 
     ctlProto.importTrack = function (options) {
         var self = this;
+
+        self.map.off(TC.Consts.event.FEATUREREMOVE, onFeatureRemove);
 
         if (!self.isDisabled) {
             if (options.fileName && options.features && options.features.length > 0) {
@@ -366,6 +375,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     addPromises.push(self.layerTrack.addFeature(options.features[i]));
                 }
                 Promise.all(addPromises).then(function () {
+
                     self.wrap.processImportedFeatures({ wait: wait, notReproject: options.notReproject });
 
                     if (self.layerTrack) { // Si tenemos capa es que todo ha ido bien y gestionamos el despliegue del control
@@ -389,7 +399,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         if (!options.isShared) {
                             // abrimos el panel de herramientas
                             self.map.trigger(TC.Consts.event.TOOLSOPEN);
-                        }                        
+                        }
                     }
                 });
             }
@@ -491,7 +501,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
             self.track.trackList = self.div.querySelector(self._classSelector + '-track-available-lst');
 
-            self.track.trackToolPanelOpened = self.div.querySelector('#tc-ctl-geolocation-track-panel-opened');
+            self.track.trackToolPanelOpened = self.div.querySelector('#tc-ctl-geolocation-track-panel-opened-' + self.id);
 
             self.div.querySelector('.' + ctlProto.CLASS + '-track-panel-help').addEventListener('click', function () {
                 _showAlerMsg.call(self);
@@ -521,6 +531,14 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     form.insertAdjacentElement('afterend', input);
                     parent.removeChild(form);
                 });
+
+                const _layerError = function () {
+                    self.map.off(TC.Consts.event.LAYERERROR, _layerError);
+                    self.clearFileInput(self.track.trackImportFile);
+
+                    TC.alert(self.getLocaleString("geo.trk.upload.error3"));
+                };
+
                 self.track.trackImportFile.addEventListener('change', function (e) {
                     if (!self._cleaning) { // Valido que el evento import no lo provoco yo al limpiar el fileinput (al limpiar se lanza el change)                        
                         self.clear(self.Const.Layers.TRACK);
@@ -612,8 +630,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     elm.querySelector(sel.EDIT).classList.add(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.DELETE).classList.add(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.DRAW).classList.add(TC.Consts.classes.HIDDEN);
-                    elm.querySelector(sel.EXPORT_GPX).classList.add(TC.Consts.classes.HIDDEN);
-                    elm.querySelector(sel.EXPORT_KML).classList.add(TC.Consts.classes.HIDDEN);
+                    elm.querySelector(sel.EXPORT).classList.add(TC.Consts.classes.HIDDEN);
 
                     elm.querySelector(sel.SAVE).classList.remove(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.CANCEL).classList.remove(TC.Consts.classes.HIDDEN);
@@ -626,8 +643,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     elm.querySelector(sel.EDIT).classList.remove(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.DELETE).classList.remove(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.DRAW).classList.remove(TC.Consts.classes.HIDDEN);
-                    elm.querySelector(sel.EXPORT_GPX).classList.remove(TC.Consts.classes.HIDDEN);
-                    elm.querySelector(sel.EXPORT_KML).classList.remove(TC.Consts.classes.HIDDEN);
+                    elm.querySelector(sel.EXPORT).classList.remove(TC.Consts.classes.HIDDEN);
 
                     elm.querySelector(sel.SAVE).classList.add(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.CANCEL).classList.add(TC.Consts.classes.HIDDEN);
@@ -640,8 +656,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                         sel.SIMULATE,
                         sel.EDIT,
                         sel.DELETE,
-                        sel.EXPORT_GPX,
-                        sel.EXPORT_KML
+                        sel.EXPORT
                     ];
                     var simulateControls = [
                         sel.STOP,
@@ -720,6 +735,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                             self.uiSimulate(false, btnDraw);
 
                             self.clear(self.Const.Layers.TRACK);
+                            self.map.off(TC.Consts.event.FEATUREREMOVE, onFeatureRemove);
 
                             btnDraw.setAttribute('title', btnDraw.textContent);
                         }
@@ -780,23 +796,27 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 _edit(false, e.target);
             }));
 
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(self._classSelector + ' ' + sel.EXPORT_GPX + ',' + self._classSelector + ' ' + sel.EXPORT_KML, function (e) {
+            list.addEventListener('click', TC.EventTarget.listenerBySelector(self._classSelector + ' ' + sel.EXPORT, function (e) {
                 const parent = e.target.parentElement;
-                var prefix = 'tc-btn-export-';
-                var className = Array.from(e.target.classList).filter(function (cls) {
-                    return cls.indexOf(prefix) === 0;
-                })[0];
-                var mimeType = className.replace(prefix, '').toUpperCase();
+                e.target.setAttribute('disabled', "");
 
-                self.export(mimeType, parent).then(function (data) {
-                    if (data) {
+                self.export(parent).then((features) => {
+                    self.getDownloadDialog().then(function (dialog) {
                         var filename = parent.querySelector('span').textContent;
                         var regex = new RegExp(self.Const.SupportedFileExtensions.join('|'), 'gi');
                         var cleanFilename = filename.replace(regex, '');
-                        TC.Util.downloadFile(cleanFilename + '.' + mimeType.toLowerCase(), self.Const.MimeMap[mimeType], data);
-                    } else {
-                        TC.alert(self.getLocaleString('geo.error.export'));
-                    }
+                        const options = {
+                            title: self.getLocaleString('download'),
+                            fileName: cleanFilename,
+                            elevation: {
+                                resolution: 20,
+                                sampleNumber: 200
+                            }                            
+                        };
+                        dialog.open(features, options);
+
+                        e.target.removeAttribute('disabled');
+                    });
                 });
             }));
 
@@ -898,7 +918,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 TC.Util.closeModal();
             });
 
-            self.track.renderTrack = document.querySelector('#tc-ctl-geolocation-track-render');
+            self.track.renderTrack = document.querySelector('#tc-ctl-geolocation-track-render-' + self.id);
             self.track.renderTrack.addEventListener('change', function () {
                 if (self.track.activateButton.classList.contains(TC.Consts.classes.HIDDEN)) {
                     self.layerTracking.setVisibility(this.checked);
@@ -922,7 +942,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     };
 
     ctlProto.activate = function () {
-        var self = this;
+        //var self = this;
         //TC.Control.prototype.activate.call(self);
     };
 
@@ -935,14 +955,6 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         //TC.Control.prototype.deactivate.call(self);
     };
 
-    var _layerError = function () {
-        var self = this;
-
-        self.map.off(TC.Consts.event.LAYERERROR, _layerError);
-        self.clearFileInput(self.track.trackImportFile);
-
-        TC.alert(self.getLocaleString("geo.trk.upload.error3"));
-    };
     var _activateTrackingBtns = function () {
         var self = this;
 
@@ -1024,7 +1036,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
                 var ctlPromise;
                 const addResultsPanelInfo = function (controlContainer) {
-                    resultsPanelOptions.side = controlContainer.SIDE.RIGHT;
+                    resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
                     ctlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
                 };
 
@@ -1042,7 +1054,6 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 }
 
                 ctlPromise.then(function (resultsPanelInfo) {
-                    resultsPanelInfo.caller = self;
                     self.map.getControlsByClass('TC.control.ResultsPanel').filter(function (panel) {
                         return panel.content === "table" && panel !== resultsPanelInfo;
                     }).forEach(function (panel) {
@@ -1262,7 +1273,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                     checkbox.setAttribute('name', showAdvertisement);
                     checkbox.checked = false;
 
-                    document.querySelector('#pageBlurMsg').textContent = TC.Util.detectMobile() ? self.getLocaleString('geo.trk.page.blur'): self.getLocaleString('geo.trk.page.blur.desktop');
+                    document.querySelector('#pageBlurMsg').textContent = TC.Util.detectMobile() ? self.getLocaleString('geo.trk.page.blur') : self.getLocaleString('geo.trk.page.blur.desktop');
 
                     dialog.querySelector('h3').textContent = showAdvertisement == self.Const.LocalStorageKey.GPSSHOWADVERTISEMENT ?
                         self.getLocaleString("geo.track.activate") + " " + self.getLocaleString("geo.gps") :
@@ -1593,7 +1604,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         if (self.miDiv && self.miDiv.style.display === 'none') {
             self.miDiv.style.display = '';
         }
-
+        
         self.miProgressDiv.classList.remove(TC.Consts.classes.HIDDEN);
 
         var done = previous.d;
@@ -1657,10 +1668,11 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         return new Promise(function (resolve, reject) {
             self.setSelectedTrack(li);
             self.drawTrackingData(li).then(function () {
-                self.elevationTrack(li);
+                self.elevationTrack(li).then(() => {
+                    self.activate();
 
-                self.activate();
-                resolve();
+                    resolve();
+                }); 
             });
         });
     };
@@ -1669,292 +1681,307 @@ TC.inherit(TC.control.Geolocation, TC.Control);
     ctlProto.elevationTrack = function (li, resized) {
         var self = this;
 
-        if (resized) {            
+        return new Promise((resolve, reject) => {
+            const setCurrentFeature = function () {
+                if (self.resultsPanelChart) {
+                    self.resultsPanelChart.currentFeature = self.layerTrack.features.filter((feature) => {
+                        return !(TC.feature.Marker && feature instanceof TC.feature.Marker) && !(TC.feature.Point && feature instanceof TC.feature.Point)
+                    })[0];
+                }
+            };
 
-            self.wrap.simulateTrackEnd();
-            self.uiSimulate(false, li);
-            return;
-        }
+            if (resized) {
 
-        if (!self.onResize) {
-            self.onResize = self.elevationTrack.bind(self, li, true);
-            window.addEventListener("resize", self.onResize, false);
-        }
+                self.wrap.simulateTrackEnd();
+                self.uiSimulate(false, li);
+                return;
+            }
 
-        self.chart = {
-            coordinates: []
-        };
+            if (!self.onResize) {
+                self.onResize = self.elevationTrack.bind(self, li, true);
+                window.addEventListener("resize", self.onResize, false);
+            }
 
-        if (self.track.elevationChart)
-            self.track.elevationChart = self.track.elevationChart.destroy();
+            let chartCoordinates = [];
 
-        var getChartData = function (li) {
-            return new Promise(function (resolve, reject) {
-                TC.loadJS(
-                    !TC.tool || !TC.tool.Elevation,
-                    TC.apiLocation + 'TC/tool/Elevation',
-                    function () {
-                        self.getTrackingData(li).then(function (track) {
-                            var geoJSON = track.data;
-                            if (geoJSON) {
-                                var x, ele; x = []; ele = [];
-                                var empty = true;
-                                var minEle, maxEle;
-                                var elevationGain = {};
-                                var time = {};
-                                var km = 0;
-                                var geom;
+            if (self.track.elevationChart)
+                self.track.elevationChart = self.track.elevationChart.destroy();
 
-                                var f = (new ol.format.GeoJSON()).readFeatures(geoJSON);
+            var getChartData = function (li) {
+                return new Promise(function (resolve, reject) {
+                    TC.loadJS(
+                        !TC.tool || !TC.tool.Elevation,
+                        TC.apiLocation + 'TC/tool/Elevation',
+                        function () {
+                            self.getTrackingData(li).then(function (track) {
+                                var geoJSON = track.data;
+                                if (geoJSON) {
+                                    var x, ele; x = []; ele = [];
+                                    var empty = true;
+                                    var minEle, maxEle;
+                                    var elevationGain = {};
+                                    var time = {};
+                                    var km = 0;
+                                    var geom;
 
-                                var getDistance = function () {
-                                    if (geom.getLayout() == ol.geom.GeometryLayout.XYZ ||
-                                        geom.getLayout() == ol.geom.GeometryLayout.XYZM) {
-                                        var distance = 0;
-                                        if (self.map.crs !== self.map.options.utmCrs) {
-                                            line = new ol.geom.LineString(TC.Util.reproject(geom.getCoordinates(), self.map.crs, self.map.options.utmCrs));
-                                            distance = line.getLength();
-                                        } else {
-                                            distance = geom.getLength();
-                                        }
-                                        return parseFloat((distance / 1000).toFixed(2));
-                                    }
+                                    var f = (new ol.format.GeoJSON()).readFeatures(geoJSON);
 
-                                    return null;
-                                };
-                                var getTime = function () {
-                                    if (geom.getLayout() == ol.geom.GeometryLayout.XYZM ||
-                                        geom.getLayout() == ol.geom.GeometryLayout.XYM) {
-                                        var diff = geom.getLastCoordinate()[3] - geom.getFirstCoordinate()[3];
-                                        return {
-                                            s: Math.floor((diff / 1000) % 60),
-                                            m: Math.floor(((diff / (1000 * 60)) % 60)),
-                                            h: Math.floor(((diff / (1000 * 60 * 60)) % 24))
-                                        };
-                                    }
-
-                                    return null;
-                                };
-
-                                var addX = function (x) {
-                                    if (self.chart.coordinates.length > 0) {
-                                        var distance = 0;
-                                        self.chart.coordinates
-                                            .forEach(function (point, idx, arr) {
-                                                var prev = idx === 0 ? point : arr[idx - 1];
-
-                                                if (self.map.crs !== self.map.options.utmCrs) {
-                                                    point = TC.Util.reproject(point, self.map.crs, self.map.options.utmCrs);
-                                                    prev = TC.Util.reproject(prev, self.map.crs, self.map.options.utmCrs);
-                                                }
-
-                                                const dx = point[0] - prev[0];
-                                                const dy = point[1] - prev[1];
-                                                distance += Math.sqrt(dx * dx + dy * dy);
-
-                                                x.push(parseFloat(distance.toFixed(2)));
-                                            });
-                                    }
-                                };
-
-                                var addElevation = function (ele) {
-                                    var y = [];
-                                    for (var i = 0; i < self.chart.coordinates.length; i++) {
-                                        if (self.chart.coordinates[i].length > 2) {
-                                            var v = (Math.round(self.chart.coordinates[i][2] * 10) / 10);
-                                            if (empty && v > 0)
-                                                empty = false;
-
-                                            ele.push(v);
-
-                                            if (i == 0)
-                                                minEle = maxEle = v;
-
-                                            minEle = Math.min(minEle, v);
-                                            maxEle = Math.max(maxEle, v);
-
-                                        }
-                                        else {
-                                            resolve(null);
-                                            return;
-                                        }
-                                    }
-                                };
-
-                                f.filter(function (feature) {
-                                    return feature.getGeometry().getType().toLowerCase() === 'linestring' || feature.getGeometry().getType().toLowerCase() === 'multilinestring';
-                                }).forEach(function (feature) {
-                                    geom = feature.getGeometry();
-
-                                    switch (geom.getType().toLowerCase()) {
-                                        case 'linestring':
-
-                                            if (track.layout === ol.geom.GeometryLayout.XYZM ||
-                                                track.layout === ol.geom.GeometryLayout.XYZ) {
-
-                                                time = getTime(geom);
-                                                km = getDistance(geom);
-                                                elevationGain = TC.tool.Elevation.getElevationGain({ coords: geom.getCoordinates(), hillDeltaThreshold: self.gapHill });
-                                                self.chart.coordinates = self.chart.coordinates.concat(geom.getCoordinates());
-
-                                                addX(x);
-                                                addElevation(ele);
+                                    var getDistance = function () {
+                                        if (geom.getLayout() == ol.geom.GeometryLayout.XYZ ||
+                                            geom.getLayout() == ol.geom.GeometryLayout.XYZM) {
+                                            var distance = 0;
+                                            if (self.map.crs !== self.map.options.utmCrs) {
+                                                line = new ol.geom.LineString(TC.Util.reproject(geom.getCoordinates(), self.map.crs, self.map.options.utmCrs));
+                                                distance = line.getLength();
+                                            } else {
+                                                distance = geom.getLength();
                                             }
-                                            break;
-                                        case 'multilinestring':
+                                            return parseFloat((distance / 1000).toFixed(2));
+                                        }
 
-                                            if (track.layout === ol.geom.GeometryLayout.XYZM ||
-                                                track.layout === ol.geom.GeometryLayout.XYZ) {
+                                        return null;
+                                    };
+                                    var getTime = function () {
+                                        if (geom.getLayout() == ol.geom.GeometryLayout.XYZM ||
+                                            geom.getLayout() == ol.geom.GeometryLayout.XYM) {
+                                            var diff = geom.getLastCoordinate()[3] - geom.getFirstCoordinate()[3];
+                                            return {
+                                                s: Math.floor((diff / 1000) % 60),
+                                                m: Math.floor(((diff / (1000 * 60)) % 60)),
+                                                h: Math.floor(((diff / (1000 * 60 * 60)) % 24))
+                                            };
+                                        }
 
-                                                var _time;
-                                                var ls = geom.getLineStrings();
-                                                for (var i = 0; i < ls.length; i++) {
-                                                    km = km + getDistance(ls[i]);
+                                        return null;
+                                    };
 
-                                                    if (ls[i].getLayout() == ol.geom.GeometryLayout.XYZM)
-                                                        _time = _time + (ls[i].getLastCoordinate()[3] - ls[i].getFirstCoordinate()[3]);
+                                    var addX = function (x) {
+                                        if (chartCoordinates.length > 0) {
+                                            var distance = 0;
+                                            chartCoordinates
+                                                .forEach(function (point, idx, arr) {
+                                                    var prev = idx === 0 ? point : arr[idx - 1];
 
-                                                    self.chart.coordinates = self.chart.coordinates.concat(ls[i].getCoordinates());
+                                                    if (self.map.crs !== self.map.options.utmCrs) {
+                                                        point = TC.Util.reproject(point, self.map.crs, self.map.options.utmCrs);
+                                                        prev = TC.Util.reproject(prev, self.map.crs, self.map.options.utmCrs);
+                                                    }
 
-                                                    if (_time) { time = getTime(_time); }
+                                                    const dx = point[0] - prev[0];
+                                                    const dy = point[1] - prev[1];
+                                                    distance += Math.sqrt(dx * dx + dy * dy);
+
+                                                    x.push(parseFloat(distance.toFixed(2)));
+                                                });
+                                        }
+                                    };
+
+                                    var addElevation = function (ele) {
+                                        var y = [];
+                                        for (var i = 0; i < chartCoordinates.length; i++) {
+                                            if (chartCoordinates[i].length > 2) {
+                                                var v = (Math.round(chartCoordinates[i][2] * 10) / 10);
+                                                if (empty && v > 0)
+                                                    empty = false;
+
+                                                ele.push(v);
+
+                                                if (i == 0)
+                                                    minEle = maxEle = v;
+
+                                                minEle = Math.min(minEle, v);
+                                                maxEle = Math.max(maxEle, v);
+
+                                            }
+                                            else {
+                                                resolve(null);
+                                                return;
+                                            }
+                                        }
+                                    };
+
+                                    f.filter(function (feature) {
+                                        return feature.getGeometry().getType().toLowerCase() === 'linestring' || feature.getGeometry().getType().toLowerCase() === 'multilinestring';
+                                    }).forEach(function (feature) {
+                                        geom = feature.getGeometry();
+
+                                        switch (geom.getType().toLowerCase()) {
+                                            case 'linestring':
+
+                                                if (track.layout === ol.geom.GeometryLayout.XYZM ||
+                                                    track.layout === ol.geom.GeometryLayout.XYZ) {
+
+                                                    time = getTime(geom);
+                                                    km = getDistance(geom);
+                                                    elevationGain = TC.tool.Elevation.getElevationGain({ coords: geom.getCoordinates(), hillDeltaThreshold: self.gapHill });
+                                                    chartCoordinates = chartCoordinates.concat(geom.getCoordinates());
 
                                                     addX(x);
                                                     addElevation(ele);
                                                 }
-                                            }
+                                                break;
+                                            case 'multilinestring':
 
-                                            break;
-                                        default:
-                                            return null;
-                                            break;
+                                                if (track.layout === ol.geom.GeometryLayout.XYZM ||
+                                                    track.layout === ol.geom.GeometryLayout.XYZ) {
+
+                                                    var _time;
+                                                    var ls = geom.getLineStrings();
+                                                    for (var i = 0; i < ls.length; i++) {
+                                                        km = km + getDistance(ls[i]);
+
+                                                        if (ls[i].getLayout() == ol.geom.GeometryLayout.XYZM)
+                                                            _time = _time + (ls[i].getLastCoordinate()[3] - ls[i].getFirstCoordinate()[3]);
+
+                                                        chartCoordinates = chartCoordinates.concat(ls[i].getCoordinates());
+
+                                                        if (_time) { time = getTime(_time); }
+
+                                                        addX(x);
+                                                        addElevation(ele);
+                                                    }
+                                                }
+
+                                                break;
+                                            default:
+                                                return null;
+                                                break;
+                                        }
+                                    });
+
+                                    if (ele instanceof Array && ele.length == 0) {
+                                        empty = true;
+                                    }
+
+                                    self.elevationChartData = !empty ? TC.Util.extend({}, { time: time, ele: ele, x: x, miny: minEle, maxy: maxEle }, elevationGain) : null;
+
+                                    resolve(self.elevationChartData);
+                                    return;
+                                }
+
+                                resolve(null);
+                                return;
+                            });
+                        }
+                    );
+                });
+            };
+
+            getChartData(li).then(function (data) {
+                if (data != null) {
+                    if (data.time) data.time = ("00000" + data.time.h).slice(-2) + ':' + ("00000" + data.time.m).slice(-2) + ':' + ("00000" + data.time.s).slice(-2);
+                    data.coords = chartCoordinates;
+                    self.hasElevation = true;
+                }
+                else {
+                    self.hasElevation = false;
+                    data = {
+                        msg: self.getLocaleString("geo.trk.chart.chpe.empty")
+                    };
+                }
+
+                data.minHeight = self.CHART_SIZE.MIN_HEIGHT;
+                data.maxHeight = self.CHART_SIZE.MAX_HEIGHT;
+
+                data.minWidth = self.CHART_SIZE.MIN_WIDTH;
+                data.mediumWidth = self.CHART_SIZE.MEDIUM_WIDTH;
+                data.maxWidth = self.CHART_SIZE.MAX_WIDTH;
+
+                self.map.one(TC.Consts.event.DRAWCHART, function (e) {
+                    self.chartProgressInit();
+                    resolve();
+                });
+
+                if (!self.resultsPanelChart) {
+
+                    if (!window.c3) {
+                        TC.syncLoadJS(TC.Consts.url.D3C3 || TC.apiLocation + 'lib/d3c3/d3c3.min.js');
+                    }
+
+                    var resultsPanelOptions = {
+                        content: "chart",
+                        titles: {
+                            main: self.getLocaleString("geo.trk.chart.chpe"),
+                            max: self.getLocaleString("geo.trk.chart.chpe")
+                        },
+                        openOn: self.Const.Event.DRAWTRACK,
+                        closeOn: self.Const.Event.CLEARTRACK,
+                        chart: {
+                            ctx: self,
+                            onmouseout: ctlProto.removeElevationTooltip,
+                            tooltip: ctlProto.getElevationTooltip
+                        }
+                    };
+
+                    var ctlPromise;
+                    const addResultsPanelChart = function (controlContainer) {
+                        resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
+                        ctlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
+                    };
+
+                    if (self.options.displayOn) {
+                        var controlContainer = self.map.getControlsByClass('TC.control.' + self.options.displayOn[0].toUpperCase() + self.options.displayOn.substring(1))[0];
+                        if (!controlContainer) {
+                            self.map.addControl(self.options.displayOn).then(addResultsPanelChart);
+                        } else {
+                            addResultsPanelChart(controlContainer);
+                        }
+                    } else {
+                        resultsPanelOptions.div = document.createElement('div');
+                        self.map.div.appendChild(resultsPanelOptions.div);
+                        ctlPromise = self.map.addControl('resultsPanel', resultsPanelOptions);
+                    }
+
+                    ctlPromise.then(function (resultsPanelChart) {
+                        resultsPanelChart.caller = self;
+                        self.resultsPanelChart = resultsPanelChart;
+
+                        setCurrentFeature();
+                        resultsPanelChart.renderPromise().then(function () {
+
+                            resultsPanelChart.activateSnapping = function (e) {
+                                if (self.layerTrack && (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0))
+                                    self.wrap.deactivateSnapping.call(self.wrap);
+                            };
+                            resultsPanelChart.deactivateSnapping = function (e) {
+                                if (self.layerTrack && self.layerTrack.getVisibility() && self.layerTrack.getOpacity() > 0)
+                                    self.wrap.activateSnapping.call(self.wrap);
+                            };
+
+                            resultsPanelChart.div.addEventListener('mouseover', resultsPanelChart.deactivateSnapping);
+                            resultsPanelChart.div.addEventListener('mouseout', resultsPanelChart.activateSnapping);
+
+                            self.map
+                                .on(TC.Consts.event.RESULTSPANELMIN, function () {
+                                    if (self.miDiv) {
+                                        self.miDiv.style.display = 'none';
+                                    }
+                                })
+                                .on(TC.Consts.event.RESULTSPANELMAX, function () {
+                                    if (self.miDiv) {
+                                        self.miDiv.style.display = '';
+                                    }
+                                })
+                                .on(TC.Consts.event.RESULTSPANELCLOSE, function () {
+                                    if (self.miDiv) {
+                                        self.miDiv.style.display = 'none';
                                     }
                                 });
 
-                                if (ele instanceof Array && ele.length == 0) {
-                                    empty = true;
-                                }
-
-                                self.chartData = !empty ? TC.Util.extend({}, { time: time, ele: ele, x: x, miny: minEle, maxy: maxEle }, elevationGain) : null;
-
-                                resolve(self.chartData);
-                                return;
-                            }
-
-                            resolve(null);
-                            return;
+                            self.map.trigger(self.Const.Event.DRAWTRACK, { data: data });
                         });
-                    }
-                );
-            });
-        };
-
-        getChartData(li).then(function (data) {
-            var locale = TC.Util.getMapLocale(self.map);
-            if (data != null) {
-                if (data.time) data.time = ("00000" + data.time.h).slice(-2) + ':' + ("00000" + data.time.m).slice(-2) + ':' + ("00000" + data.time.s).slice(-2);
-                data.coords = self.chart.coordinates;
-                self.hasElevation = true;
-            }
-            else {
-                self.hasElevation = false;
-                data = {
-                    msg: self.getLocaleString("geo.trk.chart.chpe.empty")
-                };
-            }
-
-            data.minHeight = self.CHART_SIZE.MIN_HEIGHT;
-            data.maxHeight = self.CHART_SIZE.MAX_HEIGHT;
-
-            data.minWidth = self.CHART_SIZE.MIN_WIDTH;
-            data.mediumWidth = self.CHART_SIZE.MEDIUM_WIDTH;
-            data.maxWidth = self.CHART_SIZE.MAX_WIDTH;
-
-            self.map.one(TC.Consts.event.DRAWCHART, function (e) {
-                self.chartProgressInit();
-            });
-
-            if (!self.resultsPanelChart) {
-
-                if (!window.c3) {
-                    TC.syncLoadJS(TC.Consts.url.D3C3 || TC.apiLocation + 'lib/d3c3/d3c3.min.js');
-                }
-
-                var resultsPanelOptions = {
-                    content: "chart",
-                    titles: {
-                        main: self.getLocaleString("geo.trk.chart.chpe"),
-                        max: self.getLocaleString("geo.trk.chart.chpe")
-                    },
-                    openOn: self.Const.Event.DRAWTRACK,
-                    closeOn: self.Const.Event.CLEARTRACK,
-                    chart: {
-                        ctx: self,
-                        onmouseout: ctlProto.removeElevationTooltip,
-                        tooltip: ctlProto.getElevationTooltip
-                    }
-                };
-
-                var ctlPromise;
-                const addResultsPanelChart = function (controlContainer) {
-                    resultsPanelOptions.side = controlContainer.SIDE.RIGHT;
-                    ctlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
-                };
-
-                if (self.options.displayOn) {
-                    var controlContainer = self.map.getControlsByClass('TC.control.' + self.options.displayOn[0].toUpperCase() + self.options.displayOn.substring(1))[0];
-                    if (!controlContainer) {
-                        self.map.addControl(self.options.displayOn).then(addResultsPanelChart);
-                    } else {
-                        addResultsPanelChart(controlContainer);
-                    }
-                } else {
-                    resultsPanelOptions.div = document.createElement('div');
-                    self.map.div.appendChild(resultsPanelOptions.div);
-                    ctlPromise = self.map.addControl('resultsPanel', resultsPanelOptions);
-                }
-
-                ctlPromise.then(function (resultsPanelChart) {
-                    resultsPanelChart.caller = self;
-                    self.resultsPanelChart = resultsPanelChart;
-                    resultsPanelChart.renderPromise().then(function () {
-
-                        resultsPanelChart.activateSnapping = function (e) {
-                            if (self.layerTrack && (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0))
-                                self.wrap.deactivateSnapping.call(self.wrap);
-                        };
-                        resultsPanelChart.deactivateSnapping = function (e) {
-                            if (self.layerTrack && self.layerTrack.getVisibility() && self.layerTrack.getOpacity() > 0)
-                                self.wrap.activateSnapping.call(self.wrap);
-                        };
-
-                        resultsPanelChart.div.addEventListener('mouseover', resultsPanelChart.deactivateSnapping);
-                        resultsPanelChart.div.addEventListener('mouseout', resultsPanelChart.activateSnapping);
-
-                        self.map
-                            .on(TC.Consts.event.RESULTSPANELMIN, function () {
-                                if (self.miDiv) {
-                                    self.miDiv.style.display = 'none';
-                                }
-                            })
-                            .on(TC.Consts.event.RESULTSPANELMAX, function () {
-                                if (self.miDiv) {
-                                    self.miDiv.style.display = '';
-                                }
-                            })
-                            .on(TC.Consts.event.RESULTSPANELCLOSE, function () {
-                                if (self.miDiv) {
-                                    self.miDiv.style.display = 'none';
-                                }
-                            });
-
-                        self.map.trigger(self.Const.Event.DRAWTRACK, { data: data });
                     });
-                });
-            } else {
-                self.resultsPanelChart.open();
-                self.map.trigger(self.Const.Event.DRAWTRACK, { data: data });
-            }
-        });
+                } else {
+                    setCurrentFeature();
+                    self.resultsPanelChart.open();
+                    self.map.trigger(self.Const.Event.DRAWTRACK, { data: data });
+                }
+
+                // 10/02/2020 gestionamos el borrado desde featureTools
+                onFeatureRemove = onFeatureRemove.bind(self);
+                self.map.on(TC.Consts.event.FEATUREREMOVE, onFeatureRemove);
+            });
+        });        
     };
 
     ctlProto.clear = function (layerType) {
@@ -1972,7 +1999,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
             // gráfico perfil de elevación
             if (self.resultsPanelChart)
                 self.resultsPanelChart.close();
-            delete self.chartData;
+            delete self.elevationChartData;
 
             // overlay de la simulación
             self.wrap.simulateTrackEnd();
@@ -2108,7 +2135,7 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                             } catch (error) {
                                 TC.alert(self.getLocaleString("geo.error.savelocalstorage") + ': ' + error.message);
                                 clean(wait);
-                                reject();
+                                reject(error);
                             }
                         } else {
                             console.log('Ya existe un track con ese mismo hash');
@@ -2266,7 +2293,6 @@ TC.inherit(TC.control.Geolocation, TC.Control);
 
     ctlProto.clearSelection = function () {
         var self = this;
-
         self.wrap.deactivateSnapping();
         var selected = self.getSelectedTrack();
         if (selected) {
@@ -2358,10 +2384,9 @@ TC.inherit(TC.control.Geolocation, TC.Control);
         });
     };
 
-    ctlProto.export = function (type, li) {
+    ctlProto.export = function (li) {
         var self = this;
-
-        return self.wrap.export(type, li);
+        return self.wrap.export(li);
     };
 
     ctlProto.getElevationTooltip = function (d) {
@@ -2516,5 +2541,18 @@ TC.inherit(TC.control.Geolocation, TC.Control);
                 }
             }
         }
+    };
+
+    ctlProto.getDownloadDialog = function () {
+        const self = this;
+        if (self._downloadDialog) {
+            return Promise.resolve(self._downloadDialog);
+        }
+        return new Promise(function (resolve, reject) {
+            self.map.addControl('FeatureDownloadDialog').then(ctl => {
+                self._downloadDialog = ctl;
+                resolve(ctl);
+            })
+        });
     };
 })();

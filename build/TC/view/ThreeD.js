@@ -4,57 +4,6 @@ TC.view = TC.view || {};
 if (!TC.control.MapContents) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
-(function () {
-    var lastTime = 0,
-        vendors = ['ms', 'moz', 'webkit', 'o'],
-        // Feature check for performance (high-resolution timers)
-        hasPerformance = !!(window.performance && window.performance.now);
-
-    for (var x = 0, max = vendors.length; x < max && !window.requestAnimationFrame; x += 1) {
-        window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
-        window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame']
-            || window[vendors[x] + 'CancelRequestAnimationFrame'];
-    }
-
-    if (!window.requestAnimationFrame) {
-        window.requestAnimationFrame = function (callback, element) {
-            var currTime = new Date().getTime();
-            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-            var id = window.setTimeout(function () { callback(currTime + timeToCall); },
-                timeToCall);
-            lastTime = currTime + timeToCall;
-            return id;
-        };
-    }
-
-    if (!window.cancelAnimationFrame) {
-        window.cancelAnimationFrame = function (id) {
-            clearTimeout(id);
-        };
-    }
-
-    // Add new wrapper for browsers that don't have performance
-    if (!hasPerformance) {
-        // Store reference to existing rAF and initial startTime
-        var rAF = window.requestAnimationFrame,
-            startTime = +new Date;
-
-        // Override window rAF to include wrapped callback
-        window.requestAnimationFrame = function (callback, element) {
-            // Wrap the given callback to pass in performance timestamp
-            var wrapped = function (timestamp) {
-                // Get performance-style timestamp
-                var performanceTimestamp = (timestamp < 1e12) ? timestamp : timestamp - startTime;
-
-                return callback(performanceTimestamp);
-            };
-
-            // Call original rAF with wrapped callback
-            rAF(wrapped, element);
-        }
-    }
-})();
-
 (function (namespace, signature, factory) {
     namespace[signature] = factory();
 })(TC.view, "ThreeD", function () {
@@ -89,52 +38,7 @@ if (!TC.control.MapContents) {
         },
 
         getRenderedHtml: function (templateId, data, callback) {
-            const self = this;
-            return new Promise(function (resolve, reject) {
-                var render = function () {
-                    if (dust.cache[templateId]) {
-                        dust.render(templateId, data, function (err, out) {
-                            if (err) {
-                                TC.error(err);
-                                reject();
-                            }
-                            else {
-                                if (TC.Util.isFunction(callback)) {
-                                    callback(out);
-                                }
-                                resolve(out);
-                            }
-                        });
-                    }
-                };
-                TC.loadJSInOrder(
-                    !window.dust,
-                    TC.url.templating,
-                    function () {
-                        if (!dust.cache[templateId]) {
-                            var template = self.template[templateId];
-                            if (typeof template === 'string') {
-                                TC.ajax({
-                                    url: template,
-                                    method: "get"
-                                }).then(function (response) {
-                                    const html = response.data;
-                                    var tpl = dust.compile(html, templateId);
-                                    dust.loadSource(tpl);
-                                    render();
-                                });
-                            }
-                            else if (TC.Util.isFunction(template)) {
-                                template();
-                                render();
-                            }
-                        }
-                        else {
-                            render();
-                        }
-                    }
-                );
-            });
+            return TC.Control.prototype.getRenderedHtml.call(this, templateId, data, callback);
         }
     };
 
@@ -148,15 +52,9 @@ if (!TC.control.MapContents) {
     TC.Consts.event.TERRAINRECEIVING = TC.Consts.event.TERRAINRECEIVING || "terrainreceiving.tc.threed";
     TC.Consts.event.TERRAIN404 = TC.Consts.event.TERRAIN404 || "terrain404.tc.threed";
 
-    if (TC.isDebug) {
-        viewProto.template[viewProto.CLASS] = TC.apiLocation + "TC/templates/ThreeD.html";
-        viewProto.template[viewProto.CLASS + '-overlay'] = TC.apiLocation + "TC/templates/ThreeDOverlay.html";
-        viewProto.template[viewProto.CLASS + '-cm-ctls'] = TC.apiLocation + "TC/templates/ThreeDCameraControls.html";
-    } else {
-        viewProto.template[viewProto.CLASS + '-cm-ctls'] = function () { dust.register(viewProto.CLASS + '-cm-ctls', body_0); function body_0(chk, ctx) { return chk.w("<div><svg xmlns:dc=\"http://purl.org/dc/elements/1.1/\"xmlns:cc=\"http://creativecommons.org/ns#\"xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"xmlns:svg=\"http://www.w3.org/2000/svg\"xmlns=\"http://www.w3.org/2000/svg\"xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"width=\"220\"height=\"135\"viewBox=\"0 0 63.40233 35.531682\"version=\"1.1\"id=\"threedControls\"><g inkscape:groupmode=\"layer\"id=\"backgroundLayer\"inkscape:label=\"backgroundLayer\"transform=\"translate(-2.3693123,-42.387899)\"><path style=\"fill:#ffffff;fill-opacity:0.23999999;stroke:none;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.3169643;paint-order:stroke fill markers\"d=\"M 48.005285,42.387899 A 17.766048,17.766048 0 0 0 34.067635,49.16888 17.754217,17.754217 0 0 0 20.123267,42.399784 17.754217,17.754217 0 0 0 2.3693123,60.153739 a 17.754217,17.754217 0 0 0 17.7539547,17.75447 17.754217,17.754217 0 0 0 13.923699,-6.76961 17.766048,17.766048 0 0 0 13.958319,6.78098 17.766048,17.766048 0 0 0 17.766357,-17.76584 17.766048,17.766048 0 0 0 -17.766357,-17.76584 z\"id=\"background\"inkscape:connector-curvature=\"0\" /></g><g inkscape:label=\"tiltLayer\"inkscape:groupmode=\"layer\"id=\"tiltLayer\"transform=\"translate(-26.69084,-42.254264)\"style=\"display:inline\"><g class=\"tc-view-threed-cm-tilt-indicator\"><path class=\"tc-view-threed-cm-tilt-inner\"id=\"tiltInner\"d=\"m 44.44423,52.861576 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z\"inkscape:connector-curvature=\"0\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.reset" }).w("</title></path><path class=\"tc-view-threed-cm-tilt-inner-image\"d=\"m 40.116095,64.124648 c -0.12075,-0.119221 -0.171366,-0.928328 -0.171366,-2.739326 0,-2.143319 0.03709,-2.606753 0.223349,-2.79065 0.19727,-0.194769 0.269957,-0.196719 0.622509,-0.01671 0.219537,0.112088 0.761654,0.542242 1.204705,0.955894 l 0.805547,0.752098 v 0.939855 c 0,0.51692 -0.06955,1.085596 -0.154558,1.263727 -0.173436,0.363428 -1.919571,1.804317 -2.186551,1.804317 -0.09475,0 -0.249383,-0.07614 -0.343635,-0.169192 z m 3.287741,-0.05029 c -0.307698,-0.212789 -0.317387,-0.295835 -0.317387,-2.721198 0,-1.757783 0.05096,-2.552024 0.171366,-2.670904 0.120776,-0.119243 0.941399,-0.169194 2.779684,-0.169194 2.432612,0 2.618273,0.01838 2.756146,0.27272 0.08484,0.156511 0.147831,1.267987 0.147831,2.608402 0,3.088986 0.189068,2.899662 -2.895738,2.899662 -1.872744,0 -2.3862,-0.04266 -2.641902,-0.219488 z m 0.586357,-6.180807 c -0.314529,-0.267117 -0.397432,-0.458143 -0.397432,-0.915756 0,-0.785501 0.427643,-1.207722 1.223233,-1.207722 1.162181,0 1.675866,1.23538 0.851939,2.048861 -0.522115,0.515494 -1.126934,0.542392 -1.67774,0.07462 z m 2.780604,-0.09201 c -0.374474,-0.369724 -0.423284,-0.501051 -0.3506,-0.943285 0.118405,-0.72038 0.53618,-1.088187 1.236028,-1.088187 0.699848,0 1.117624,0.367807 1.236028,1.088187 0.07269,0.442234 0.02388,0.573561 -0.3506,0.943285 -0.300932,0.297119 -0.573881,0.429526 -0.885428,0.429526 -0.311544,0 -0.584496,-0.132407 -0.885428,-0.429526 z\"id=\"tiltImage\"inkscape:connector-curvature=\"0\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.reset" }).w("</title></path><path class=\"tc-view-threed-cm-tilt-outer tc-view-threed-cm-tilt-outer-circle\"id=\"tiltOuter\"d=\"m 44.44423,48.705554 c -6.246102,0 -11.312196,5.070128 -11.312196,11.324146 0,6.254017 5.066094,11.330914 11.312196,11.330914 6.246102,0 11.312196,-5.076897 11.312196,-11.330914 0,-6.254018 -5.066094,-11.324146 -11.312196,-11.324146 z m 0,4.156022 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z\"inkscape:connector-curvature=\"0\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.drag" }).w("</title></path><path class=\"tc-view-threed-cm-tilt-outer tc-view-threed-cm-tilt-outer-shell-circle\"sodipodi:nodetypes=\"ssssssccccsccccssccsssccscccccccsccssscsssssccccccccccccccc\"inkscape:connector-curvature=\"0\"id=\"tiltShell\"d=\"m 44.44423,48.705554 c -6.246102,0 -11.312196,5.070128 -11.312196,11.324146 0,6.254017 5.066094,11.330914 11.312196,11.330914 6.246102,0 11.312196,-5.076897 11.312196,-11.330914 0,-6.254018 -5.066094,-11.324146 -11.312196,-11.324146 z m 0,0.379051 c 2.995132,0 5.705501,1.203885 7.681205,3.154245 l -2.386853,2.382605 0.135232,0.135376 2.386853,-2.382606 c 1.930016,1.972963 3.12387,4.674054 3.12387,7.655475 0,2.981421 -1.193854,5.680844 -3.12387,7.655474 l -2.386853,-2.382605 -0.135232,0.135375 2.386853,2.382606 c -1.975664,1.951759 -4.686314,3.161013 -7.681205,3.161013 -1.94179,0 -3.766282,-0.506879 -5.347316,-1.395323 -0.850442,-0.477894 -1.630441,-1.06619 -2.320365,-1.745384 l 2.407138,-2.402912 c 1.358381,1.325983 3.214811,2.145699 5.260543,2.145699 4.163407,0 7.545972,-3.385283 7.545972,-7.553943 0,-4.168661 -3.382565,-7.547175 -7.545972,-7.547175 -2.045732,0 -3.902162,0.81461 -5.260543,2.13893 l -2.407138,-2.402912 c 1.972594,-1.940536 4.681097,-3.133938 7.667681,-3.133938 z m -0.189325,0.182756 v 3.01887 h 0.378651 v -3.01887 z m -7.606826,3.086558 2.400376,2.402912 C 37.721509,56.11715 36.90502,57.97796 36.90502,60.0297 c 0,2.05174 0.816489,3.910884 2.143435,5.272869 l -2.400376,2.402912 c -0.435151,-0.44326 -0.832923,-0.923297 -1.188195,-1.435068 -0.462681,-0.666492 -0.853281,-1.386809 -1.160484,-2.149815 -0.508689,-1.263436 -0.788715,-2.64392 -0.788715,-4.090898 0,-2.99182 1.197141,-5.70104 3.137394,-7.675781 z m 7.796151,0.507657 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z m -10.744219,6.978598 v 0.379051 h 3.022445 v -0.379051 z m 18.513325,0 v 0.379051 h 3.029207 v -0.379051 z m -7.931385,7.932994 v 3.01887 h 0.37189 v -3.01887 z\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.drag" }).w("</title></path></g></g><g id=\"rotateLayer\"inkscape:groupmode=\"layer\"inkscape:label=\"rotateLayer\"style=\"display:inline\"transform=\"translate(-2.3693123,-42.387899)\"><path class=\"tc-view-threed-cm-rotate-right\"sodipodi:nodetypes=\"cccccccc\"inkscape:connector-curvature=\"0\"id=\"right\"d=\"m 53.241331,72.907368 0.900176,1.930847 c 3.602027,-1.827343 6.291427,-4.493353 8.092762,-8.066897 l 0.969844,0.452626 -0.663464,-4.788009 -3.222445,2.974451 0.983506,0.459005 c -1.447339,3.107391 -3.949649,5.598011 -7.060379,7.037977 z\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.right" }).w("</title></path><path class=\"tc-view-threed-cm-rotate-left\"sodipodi:nodetypes=\"cccccccc\"inkscape:connector-curvature=\"0\"id=\"left\"d=\"m 42.795431,72.906221 -0.900176,1.930846 c -3.602027,-1.827342 -6.291427,-4.493352 -8.092762,-8.066896 l -0.969844,0.452626 0.663465,-4.788009 3.222444,2.974451 -0.983506,0.459005 c 1.44734,3.107391 3.949649,5.598011 7.060379,7.037977 z\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.left" }).w("</title></path><path class=\"tc-view-threed-cm-tilt-up\"sodipodi:nodetypes=\"cccccccc\"inkscape:connector-curvature=\"0\"id=\"up\"d=\"M 7.737296,54.610066 5.80645,53.70989 c 1.827342,-3.602027 4.493352,-6.291427 8.066896,-8.092762 l -0.452626,-0.969844 4.788009,0.663465 -2.974451,3.222444 -0.459005,-0.983506 c -3.107391,1.44734 -5.598011,3.949649 -7.037977,7.060379 z\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.left" }).w("</title></path><path class=\"tc-view-threed-cm-tilt-down\"sodipodi:nodetypes=\"cccccccc\"inkscape:connector-curvature=\"0\"id=\"down\"d=\"m 7.684579,65.708846 -1.930847,0.900176 c 1.827343,3.602027 4.493353,6.291427 8.066897,8.092762 l -0.452626,0.969844 4.788009,-0.663464 -2.974451,-3.222445 -0.459005,0.983506 C 11.615165,71.321886 9.124545,68.819576 7.684579,65.708846 Z\"><title>").h("i18n", ctx, {}, { "$key": "threed.tilt.right" }).w("</title></path><g class=\"tc-view-threed-cm-rotate-indicator\"><path class=\"tc-view-threed-cm-rotate-inner\"inkscape:connector-curvature=\"0\"d=\"m 48.010487,52.995444 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z\"id=\"rotateInner\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.reset" }).w("</title></path><path class=\"tc-view-threed-cm-rotate-inner-image\"d=\"m 45.461645,60.604061 c 0.860585,-1.857231 1.777009,-3.864779 2.036499,-4.461218 0.471802,-1.084433 0.471802,-1.084433 0.66474,-0.667935 2.070474,4.46957 3.86201,8.443545 3.825603,8.485934 -0.02561,0.02982 -0.943964,-0.165127 -2.040793,-0.433206 -1.994234,-0.487419 -1.994234,-0.487419 -3.881098,-0.01711 -1.037775,0.258673 -1.950491,0.470314 -2.028258,0.470314 -0.07777,0 0.562721,-1.519553 1.423307,-3.376784 z m 1.23418,2.027617 c 1.353421,-0.310159 1.353421,-0.310159 1.353421,-2.998288 0,-1.534227 -0.05572,-2.627602 -0.129797,-2.547123 -0.101525,0.110295 -2.316061,4.831583 -2.659547,5.670031 -0.09645,0.23543 -0.15884,0.240844 1.435923,-0.12462 z\"id=\"rotateImage\"inkscape:connector-curvature=\"0\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.reset" }).w("</title></path><path class=\"tc-view-threed-cm-rotate-outer tc-view-threed-cm-rotate-outer-circle\"inkscape:connector-curvature=\"0\"d=\"m 48.010487,48.839422 c -6.246102,0 -11.312196,5.070128 -11.312196,11.324146 0,6.254017 5.066094,11.330914 11.312196,11.330914 6.246102,0 11.312196,-5.076897 11.312196,-11.330914 0,-6.254018 -5.066094,-11.324146 -11.312196,-11.324146 z m 0,4.156022 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z\"id=\"rotateOuter\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.drag" }).w("</title></path><path class=\"tc-view-threed-cm-rotate-outer tc-view-threed-cm-rotate-outer-shell-circle\"d=\"m 48.010487,48.839422 c -6.246102,0 -11.312196,5.070128 -11.312196,11.324146 0,6.254017 5.066094,11.330914 11.312196,11.330914 6.246102,0 11.312196,-5.076897 11.312196,-11.330914 0,-6.254018 -5.066094,-11.324146 -11.312196,-11.324146 z m 0,0.379051 c 2.995132,0 5.705501,1.203885 7.681205,3.154245 l -2.386853,2.382605 0.135232,0.135376 2.386853,-2.382606 c 1.930016,1.972963 3.12387,4.674054 3.12387,7.655475 0,2.981421 -1.193854,5.680844 -3.12387,7.655474 l -2.386853,-2.382605 -0.135232,0.135375 2.386853,2.382606 c -1.975664,1.951759 -4.686314,3.161013 -7.681205,3.161013 -1.94179,0 -3.766282,-0.506879 -5.347316,-1.395323 -0.850442,-0.477894 -1.630441,-1.06619 -2.320365,-1.745384 l 2.407138,-2.402912 c 1.358381,1.325983 3.214811,2.145699 5.260543,2.145699 4.163407,0 7.545972,-3.385283 7.545972,-7.553943 0,-4.168661 -3.382565,-7.547175 -7.545972,-7.547175 -2.045732,0 -3.902162,0.81461 -5.260543,2.13893 l -2.407138,-2.402912 c 1.972594,-1.940536 4.681097,-3.133938 7.667681,-3.133938 z m -0.189325,0.182756 v 3.01887 h 0.378651 v -3.01887 z m -7.606826,3.086558 2.400376,2.402912 c -1.326946,1.360319 -2.143435,3.221129 -2.143435,5.272869 0,2.05174 0.816489,3.910884 2.143435,5.272869 l -2.400376,2.402912 c -0.435151,-0.44326 -0.832923,-0.923297 -1.188195,-1.435068 -0.462681,-0.666492 -0.853281,-1.386809 -1.160484,-2.149815 -0.508689,-1.263436 -0.788715,-2.64392 -0.788715,-4.090898 0,-2.99182 1.197141,-5.70104 3.137394,-7.675781 z m 7.796151,0.507657 c 3.959106,0 7.167321,3.203889 7.167321,7.168124 0,3.964234 -3.208215,7.174892 -7.167321,7.174892 -3.959106,0 -7.160559,-3.210658 -7.160559,-7.174892 0,-3.964235 3.201453,-7.168124 7.160559,-7.168124 z m -10.744219,6.978598 v 0.379051 h 3.022445 v -0.379051 z m 18.513325,0 v 0.379051 H 58.8088 v -0.379051 z m -7.931385,7.932994 v 3.01887 h 0.37189 v -3.01887 z\"id=\"rotateShell\"inkscape:connector-curvature=\"0\"sodipodi:nodetypes=\"ssssssccccsccccssccsssccscccccccsccssscsssssccccccccccccccc\"><title>").h("i18n", ctx, {}, { "$key": "threed.rotate.drag" }).w("</title></path></g> </g></svg></div>"); } body_0.__dustBody = !0; return body_0 };
-        viewProto.template[viewProto.CLASS + '-overlay'] = function () { dust.register(viewProto.CLASS + '-overlay', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-view-threed-overlay\" hidden><svg class=\"tc-view-threed-overlay-svg\"><defs><filter id=\"fGaussian\" x=\"0\" y=\"0\"><feGaussianBlur in=\"SourceGraphic\" stdDeviation=\"3\" /></filter></defs><rect width=\"100%\" height=\"100%\" fill=\"white\" fill-opacity=\"0.5\" filter=\"url(#fGaussian)\" /> </svg> </div>"); } body_0.__dustBody = !0; return body_0 };
-        viewProto.template[viewProto.CLASS] = function () { dust.register(viewProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-threed-btn tc-beta-button\" title=\"").h("i18n", ctx, {}, { "$key": "threed.tip" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    viewProto.template[viewProto.CLASS] = TC.apiLocation + "TC/templates/ThreeD.html";
+    viewProto.template[viewProto.CLASS + '-overlay'] = TC.apiLocation + "TC/templates/ThreeDOverlay.html";
+    viewProto.template[viewProto.CLASS + '-cm-ctls'] = TC.apiLocation + "TC/templates/ThreeDCameraControls.html";
 
     const MapView = function (map, parent) {
         var self = this;
@@ -169,7 +67,7 @@ if (!TC.control.MapContents) {
 
         self.metersPerUnit = map.getMetersPerUnit();
 
-        self.maxResolution;
+        self.maxResolution = null;
 
         //flacunza: modificamos TC.Map.setCenter para que se haga desde la vista 3D cuando está activa
         //así evitamos parpadeos en el mapa de situación
@@ -314,7 +212,7 @@ if (!TC.control.MapContents) {
         // validamos que la resolución calculada esté disponible en el array de resoluciones disponibles
         // si no contamos con un array de resoluciones lo calculamos
         var resolutions = self.map.getResolutions();
-        if (resolutions == null) {
+        if (resolutions === null) {
             resolutions = new Array(22);
             for (var i = 0, ii = resolutions.length; i < ii; ++i) {
                 resolutions[i] = self.mapView.getMaxResolution() / Math.pow(2, i);
@@ -1518,7 +1416,7 @@ if (!TC.control.MapContents) {
                     var addControlPromise;
                     var controlContainer = map.map.getControlsByClass('TC.control.ControlContainer')[0];
                     if (controlContainer) {
-                        resultsPanelOptions.side = controlContainer.SIDE.RIGHT;
+                        resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
                         addControlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
                     } else {
                         resultsPanelOptions.div = document.createElement('div');
@@ -1665,20 +1563,10 @@ if (!TC.control.MapContents) {
 
                     }.bind(map, readyImageryToGetNativeRectangle, nativeRectangle);
 
-                    var that = map;
                     map.map.one(TC.Consts.event.NOFEATUREINFO, function (e) {
                         pending = false;
 
-                        resolve(e);
-
-                        var onClear = function (e) {
-                            if (e.layer == this.filterLayer) {
-                                removeMarker();
-                                map.map.off(TC.Consts.event.FEATURESCLEAR, onClear);
-                            }
-                        }.bind(ctlFeatureInfo);
-
-                        map.map.on(TC.Consts.event.FEATURESCLEAR, onClear);
+                        resolve(e);                        
                     }.bind(ctlFeatureInfo));
 
                     map.map.one(TC.Consts.event.FEATUREINFO, function (e) {
@@ -1688,9 +1576,6 @@ if (!TC.control.MapContents) {
                     });
 
                     map.map.on(TC.Consts.event.FEATURECLICK, function (e) {
-
-
-
                         removeMarker();
 
                         resolve(e);
@@ -2928,46 +2813,6 @@ if (!TC.control.MapContents) {
             currentMapCfg.baseMap = isBaseRaster ? map.baseLayer : self.Consts.BLANK_BASE;
         });
     };
-    var removeNoCompatibleBaseLayers = function (map) {
-        var selectNewBaseLayer = false;
-
-        if (currentMapCfg.baseMaps && currentMapCfg.baseMaps.length) {
-            for (var i = 0; i < currentMapCfg.baseMaps.length; i++) {
-                for (var j = 0; j < map.baseLayers.length; j++) {
-                    if (map.baseLayers[j] === currentMapCfg.baseMaps[i].l) {
-
-                        if (currentMapCfg.baseMap == map.baseLayers[j]) {
-                            // si uno de los mapas de fondo no soportados para 3d es el mapa de fondo seleccionado ahora mismo
-                            // seleciono otro de los que sí son soportados
-                            selectNewBaseLayer = true;
-                        }
-
-                        map.trigger(TC.Consts.event.LAYERREMOVE, { layer: map.baseLayers[j] });
-                        map.baseLayers.splice(j, 1);
-                        break;
-                    }
-                }
-            }
-
-            if (selectNewBaseLayer) {
-                // si uno de los mapas de fondo no soportados para 3d es el mapa de fondo seleccionado ahora mismo
-                // seleciono otro de los que sí son soportados
-
-                map.baseLayer = map.baseLayers[0];
-                map.trigger(TC.Consts.event.BASELAYERCHANGE, { layer: map.baseLayer });
-            }
-        }
-    };
-    var addNoCompatibleBaseLayers = function (map) {
-        var self = this;
-
-        if (currentMapCfg.baseMaps && currentMapCfg.baseMaps.length) {
-            for (var i = 0; i < currentMapCfg.baseMaps.length; i++) {
-                self.map.trigger(TC.Consts.event.LAYERADD, { layer: currentMapCfg.baseMaps[i].l });
-                self.map.baseLayers.splice(currentMapCfg.baseMaps[i].i, 0, currentMapCfg.baseMaps[i].l);
-            }
-        }
-    };
 
     viewProto.init = function (options) {
         const self = this;
@@ -3034,7 +2879,7 @@ if (!TC.control.MapContents) {
             self.view3D.view2DCRS = options.map.crs;
 
             options.map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
-                self.view3D.view2DCRS = e.crs;
+                self.view3D.view2DCRS = e.newCrs;
             });
         } else {
             throw Error('Falta referencia al mapa 2D');
@@ -3452,7 +3297,7 @@ if (!TC.control.MapContents) {
                     }
                     break;
                 }
-                case e.type == TC.Consts.event.FEATUREADD: {
+                case e.type == TC.Consts.event.FEATUREADD: {                    
                     self.view3D.addFeature.call(self.view3D, e.feature);
                     break;
                 }
@@ -3696,8 +3541,8 @@ if (!TC.control.MapContents) {
                     self.view3D.linked2DControls.featureInfo = new TwoDLinkedFeatureInfo(self);
                 }
 
-                var eventHandler = new Cesium.ScreenSpaceEventHandler(self.viewer.canvas, false);
-                eventHandler.setInputAction(function (movement) {
+                const onLeftClickOnCanvas = (movement) => {
+
                     // Si estamos anclados a una entidad ignoro los click en el terreno
                     if (self.viewer.trackedEntity) {
                         return;
@@ -3772,8 +3617,24 @@ if (!TC.control.MapContents) {
                     } else {
                         getFeatureInfo();
                     }
+                };
+                var eventHandler = new Cesium.ScreenSpaceEventHandler(self.viewer.canvas, false);
+                eventHandler.setInputAction(onLeftClickOnCanvas, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-                }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+                const onMouseMoveOnCanvas = (movement) => {
+                    // Si estamos anclados a una entidad ignoro los click en el terreno
+                    if (self.viewer.trackedEntity) {
+                        return;
+                    }
+                    var pickedFeature = self.viewer.scene.pick(movement.endPosition);
+                    if (pickedFeature && pickedFeature.id) {
+                        self.viewer.canvas.style.cursor = 'pointer';
+                    } else {
+                        self.viewer.canvas.style.cursor = 'default';
+                    }
+                };
+                var eventHandler = new Cesium.ScreenSpaceEventHandler(self.viewer.canvas, false);
+                eventHandler.setInputAction(onMouseMoveOnCanvas, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
             }
 
             if (!self.view3D.linked2DControls.geolocation && self.allowedControls.indexOf("geolocation") > -1) {
@@ -3796,7 +3657,7 @@ if (!TC.control.MapContents) {
                     var geolocation_videoControls_ = geolocation_videoControls.bind(self);
 
                     var lstEventListener = function (e) {
-                        var classes = commands;                        
+                        var classes = commands;
                         if (commands.some(function (cls) {
                             return e.target.classList.contains(cls.replace('.', ''))
                         })) {
@@ -3815,7 +3676,7 @@ if (!TC.control.MapContents) {
                         geolocation2D.elevationTrack = geolocation2D._elevationTrack;
 
                         commands.forEach(function (command) {
-                            document.removeEventListener('click', lstEventListener);                            
+                            document.removeEventListener('click', lstEventListener);
                         });
 
                         geolocation2D.off(geolocation2D.Const.Event.IMPORTEDTRACK, geolocation_videoControls_);
@@ -3826,7 +3687,6 @@ if (!TC.control.MapContents) {
 
                     geolocation2D.on(geolocation2D.Const.Event.IMPORTEDTRACK, geolocation_videoControls_);
 
-                    var that = self;
                     /* provisional hasta el refactoring del panel de resultados */
                     var _newPosition = false;
                     geolocation2D._setTracking = TC.wrap.control.Geolocation.prototype.setTracking;
@@ -3853,7 +3713,7 @@ if (!TC.control.MapContents) {
                             geolocation_videoControls.call(self, { target: { className: 'stop' }, custom: true });
                         }
 
-                        geolocation2D._elevationTrack.call(geolocation2D, li, resized);
+                        return geolocation2D._elevationTrack.call(geolocation2D, li, resized);
                     };
 
                     // Si en el paso de 2D a 3D hay perfil dibujado, lanzamos el resize
@@ -4037,7 +3897,7 @@ if (!TC.control.MapContents) {
                     geolocation2D._wrap_showElevationMarker = TC.wrap.control.Geolocation.prototype.showElevationMarker;
                     TC.wrap.control.Geolocation.prototype.showElevationMarker = function (data) {
                         const self = this.view3D.linked2DControls.geolocation;
-                        const coords = self.chart.coordinates;
+                        const coords = self.elevationChartData.coords;
 
                         // GLS: si la capa del track está visible mostramos marcamos punto del gráfico en el mapa
                         if (self.layerTrack.getVisibility() && self.layerTrack.getOpacity() > 0) {
@@ -4116,7 +3976,7 @@ if (!TC.control.MapContents) {
         var override2DZoom = function (activate) {
             var self = this;
 
-            var amount = 200.0;           
+            var amount = 200.0;
 
             var zoom = function (amount) {
                 var self = this;

@@ -25,12 +25,7 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-load';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/LoadingIndicator.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-load-bar\"><div class=\"tc-ctl-load-dots tc-ctl-load-dot1\"> </div><div class=\"tc-ctl-load-dots tc-ctl-load-dot2\"> </div><div class=\"tc-ctl-load-dots tc-ctl-load-dot3\"> </div><div class=\"tc-ctl-load-dots tc-ctl-load-dot4\"> </div><div class=\"tc-ctl-load-dots tc-ctl-load-dot5\"> </div><div class=\"tc-ctl-load-dots tc-ctl-load-dot6\"> </div><div class=\"tc-ctl-load-dots tc-ctl-load-dot7\"> </div><div class=\"tc-ctl-load-dots tc-ctl-load-dot8\"> </div></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/LoadingIndicator.html";
 
     //var ctlProto.waits = {};
     

@@ -9,26 +9,30 @@ TC.tool.Elevation = function (options) {
         //'elevationServiceIGNEs',
         'elevationServiceIGNFr'
     ];
+
+    const abstractServicePromise = new Promise(function (resolve, reject) {
+        TC.loadJS(
+            !TC.tool.ElevationService,
+            TC.apiLocation + 'TC/tool/ElevationService',
+            function () {
+                resolve();
+            }
+        );
+    });
+
     serviceOptions.forEach(function (srv, idx) {
         self._servicePromises[idx] = new Promise(function (resolve, reject) {
-            var ctorName = 'ElevationService';
-            var path = TC.apiLocation + 'TC/tool/ElevationService';
-            const paths = [];
-            var srvOptions = srv;
-            if (typeof srv === 'string') {
-                if (!TC.tool[ctorName]) {
-                    paths.push(path);
-                }
-                ctorName = srv.substr(0, 1).toUpperCase() + srv.substr(1);
-                path = TC.apiLocation + 'TC/tool/' + ctorName;
-                srvOptions = {};
-                paths.push(path);
-            }
-            TC.loadJSInOrder(
+            const serviceName = (typeof srv === 'string') ? srv : srv.name;
+            const ctorName = serviceName.substr(0, 1).toUpperCase() + serviceName.substr(1);
+            const path = TC.apiLocation + 'TC/tool/' + ctorName;
+            const srvOptions = (typeof srv === 'string') ? {} : srv;
+            TC.loadJS(
                 !TC.tool[ctorName],
-                paths,
+                path,
                 function () {
-                    resolve(new TC.tool[ctorName](srvOptions));
+                    abstractServicePromise.then(function () {
+                        resolve(new TC.tool[ctorName](srvOptions));
+                    });
                 }
             );
         });
@@ -42,6 +46,37 @@ TC.tool.Elevation = function (options) {
         return this._servicePromises[idx];
     };
 
+    const mergeResponses = function (responses) {
+        const numPoints = responses.length ? responses[0].length : 0;
+        const elevation = new Array(numPoints);
+        if (numPoints) {
+
+            // Función que aglutina resultados de elevación de los servicios
+            const reduceFnFactory = function (idx) {
+                return function (prev, cur, arr) {
+                    const point = cur[idx];
+                    const result = prev;
+                    if (prev[0] === null && point) {
+                        result[0] = point[0];
+                    }
+                    if (prev[1] === null && point) {
+                        result[1] = point[1];
+                    }
+                    if (prev[2] === null && point) {
+                        result[2] = point[2];
+                    }
+                    return result;
+                };
+            };
+
+            for (var i = 0; i < numPoints; i++) {
+                var fn = reduceFnFactory(i);
+                elevation[i] = responses.reduce(fn, [null, null, null]);
+            }
+        }
+        return elevation;
+    }
+
     toolProto.getElevation = function (options) {
         const self = this;
         options = options || {};
@@ -51,6 +86,12 @@ TC.tool.Elevation = function (options) {
         if (options.sampleNumber === undefined) {
             options.sampleNumber = self.options.sampleNumber;
         }
+        let partialResult;
+        let partialCallback;
+        if (TC.Util.isFunction(options.partialCallback)) {
+            partialCallback = options.partialCallback;
+        }
+
         return new Promise(function (resolve, reject) {
             const onError = function (msg, type) {
                 reject(msg, type);
@@ -68,57 +109,33 @@ TC.tool.Elevation = function (options) {
                                 alwaysPromises[idx] = new Promise(function (res, rej) {
                                     srv.request(options).then(
                                         function (response) {
-                                            res(response);
+                                            res(srv.parseResponse(response, options));
                                         },
                                         function () {
                                             res(null);
                                         }
                                     );
                                 });
+                                if (partialCallback) {
+                                    alwaysPromises[idx].then(function (response) {
+                                        if (response !== null) {
+                                            if (partialResult) {
+                                                partialResult = mergeResponses([partialResult, response]);
+                                            }
+                                            else {
+                                                partialResult = response;
+                                            }
+                                            partialCallback(partialResult);
+                                        }
+                                    });
+                                }
                             });
                         Promise.all(alwaysPromises).then(
-                            function (resps) {
-                                const responses =
-                                    services
-                                        .map(function (srv, idx) { // Parseamos las respuestas que haya
-                                            const r = resps[idx];
-                                            if (!r) {
-                                                return null;
-                                            }
-                                            return srv.parseResponse(r, options);
-                                        })
-                                        .filter(function (r) { // Eliminamos los servicios sin respuesta
-                                            return r !== null;
-                                        });
-
-                                var numPoints = responses.length ? responses[0].length : 0;
-                                var elevation = new Array(numPoints);
-                                if (numPoints) {
-
-                                    const reduceFnFactory = function (idx) {
-                                        return function (prev, cur, arr) {
-                                            const point = cur[idx];
-                                            const result = prev;
-                                            if (prev[0] === null) {
-                                                result[0] = point[0];
-                                            }
-                                            if (prev[1] === null) {
-                                                result[1] = point[1];
-                                            }
-                                            if (prev[2] === null) {
-                                                result[2] = point[2];
-                                            }
-                                            return result;
-                                        };
-                                    };
-
-                                    for (var i = 0; i < numPoints; i++) {
-                                        var fn = reduceFnFactory(i);
-                                        elevation[i] = responses.reduce(fn, [null, null, null]);
-                                    }
-                                }
-                                resolve(elevation);
-                            }, onError
+                            function (responses) {
+                                // Eliminamos los servicios sin respuesta
+                                resolve(mergeResponses(responses.filter(r => r !== null)));
+                            },
+                            onError
                         );
                     }, onError);
                 }
@@ -166,6 +183,7 @@ TC.tool.Elevation = function (options) {
                         }, 0);
                         if (numPoints > options.maxCoordQuantity) {
                             reject(Error(TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED));
+                            return;
                         }
                     }
                 }

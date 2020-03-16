@@ -65,7 +65,6 @@ TC.feature.Marker = function (coords, options) {
     TC.Feature.apply(self, arguments);
 
     if (!self.wrap.isNative(coords)) {
-        options = self.options = TC.Util.extend(true, self.options, TC.Cfg.styles.marker, options);
         var locale = self.layer && self.layer.map ? self.layer.map.options.locale: TC.Cfg.locale;
         self.title = options.title || TC.i18n[locale][TC.Consts.MARKER];
         self.wrap.createMarker(coords, options);

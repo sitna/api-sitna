@@ -10,76 +10,75 @@ TC.Consts.event.FEATURESSELECT = "featuresselect.tc";
 TC.Consts.event.FEATURESUNSELECT = "featuresunselect.tc";
 TC.Consts.event.CHANGE = 'change';
 
-(function () {
+TC.control.Modify = function () {
+    const self = this;
 
-    TC.control.Modify = function () {
-        var self = this;
+    TC.Control.apply(self, arguments);
 
-        TC.Control.apply(self, arguments);
+    if (!TC.browserFeatures.inputTypeColor() && !window.CP) {
+        TC.loadCSS(TC.apiLocation + 'lib/color-picker/color-picker.min.css');
+        TC.syncLoadJS(TC.apiLocation + 'lib/color-picker/color-picker.min.js');
+    }
 
-        if (!TC.browserFeatures.inputTypeColor() && !window.CP) {
-            TC.loadCSS(TC.apiLocation + 'lib/color-picker/color-picker.min.css');
-            TC.syncLoadJS(TC.apiLocation + 'lib/color-picker/color-picker.min.js');
-        }
-
-        self.styles = TC.Util.extend(true, TC.Cfg.styles.selection, self.options.styles);
-        self.styles.text = self.styles.text || {
-            fontSize: self.styles.line.fontSize,
-            fontColor: self.styles.line.fontColor,
-            labelOutlineColor: self.styles.line.labelOutlineColor,
-            labelOutlineWidth: self.styles.line.labelOutlineWidth
-        };
-
-        self._classSelector = '.' + self.CLASS;
-
-        self.wrap = new TC.wrap.control.Modify(self);
+    self.styles = TC.Util.extend(true, TC.Cfg.styles.selection, self.options.styles);
+    self.styles.text = self.styles.text || {
+        fontSize: self.styles.line.fontSize,
+        fontColor: self.styles.line.fontColor,
+        labelOutlineColor: self.styles.line.labelOutlineColor,
+        labelOutlineWidth: self.styles.line.labelOutlineWidth
     };
 
-    TC.inherit(TC.control.Modify, TC.Control);
+    self._classSelector = '.' + self.CLASS;
+
+    self.wrap = new TC.wrap.control.Modify(self);
+    self.snapping = (typeof self.options.snapping === 'boolean') ? self.options.snapping : true;
+};
+
+TC.inherit(TC.control.Modify, TC.Control);
+
+(function () {
 
     var ctlProto = TC.control.Modify.prototype;
 
     ctlProto.CLASS = 'tc-ctl-mod';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/Modify.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-btn tc-ctl-mod-btn-select\" disabled title=\"").h("i18n", ctx, {}, { "$key": "select" }).w("\">").h("i18n", ctx, {}, { "$key": "select" }).w("</button><button class=\"tc-ctl-btn tc-ctl-mod-btn-delete\" disabled title=\"").h("i18n", ctx, {}, { "$key": "deleteSelection" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteSelection" }).w("</button><button class=\"tc-ctl-btn tc-ctl-mod-btn-join\" disabled title=\"").h("i18n", ctx, {}, { "$key": "joinGeometries.tooltip" }).w("\">").h("i18n", ctx, {}, { "$key": "joinGeometries" }).w("</button><button class=\"tc-ctl-btn tc-ctl-mod-btn-split\" disabled title=\"").h("i18n", ctx, {}, { "$key": "splitGeometry" }).w("\">").h("i18n", ctx, {}, { "$key": "splitGeometry" }).w("</button><button class=\"tc-ctl-btn tc-ctl-mod-btn-text\" contenteditable=\"true\" disabled title=\"").h("i18n", ctx, {}, { "$key": "addText" }).w("\">").h("i18n", ctx, {}, { "$key": "addText" }).w("</button><div class=\"tc-ctl-mod-style tc-hidden\"><input type=\"text\" class=\"tc-ctl-mod-txt tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "writeTextForSketch" }).w("\" style=\"font-size:").f(ctx.get(["fontSize"], false), ctx, "h").w("pt;font-color:").f(ctx.get(["fontColor"], false), ctx, "h").w(";text-shadow: 0 0 ").f(ctx.get(["labelOutlineWidth"], false), ctx, "h").w("px ").f(ctx.get(["labelOutlineColor"], false), ctx, "h").w(";\" />").h("i18n", ctx, {}, { "$key": "textColor" }).w("<input type=\"color\" class=\"tc-ctl-mod-fnt-c\" value=\"").f(ctx.get(["fontColor"], false), ctx, "h").w("\" />").h("i18n", ctx, {}, { "$key": "fontSize" }).w("<input type=\"number\" class=\"tc-ctl-mod-fnt-s tc-textbox\" value=\"").f(ctx.get(["fontSize"], false), ctx, "h").w("\" min=\"7\" max=\"20\" /></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = {};
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Modify.html";
+    ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/ModifyAttributes.html";
 
     const setFeatureSelectedState = function (ctl, features) {
         ctl._deleteBtn.disabled = features.length === 0;
+        ctl._editAttrBtn.disabled = features.length !== 1;
         ctl._joinBtn.disabled = features.length < 2;
         ctl._splitBtn.disabled = features.filter(complexGeometryFilter).length === 0;
         ctl.displayLabelText();
     };
 
-    const styleFunction = function (feature, mapStyles) {
-        var result;
-        switch (true) {
-            case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-            case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
-                result = TC.Util.extend({}, mapStyles.polygon);
-                break;
-            case TC.feature.Point && feature instanceof TC.feature.Point:
-            case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
-                result = TC.Util.extend({}, mapStyles.point);
-                break;
-            default:
-                result = TC.Util.extend({}, mapStyles.line);
-                break;
-        }
-        const style = feature.getStyle();
-        if (style.label) {
-            result.label = style.label;
-            result.fontSize = style.fontSize;
-            result.fontColor = style.fontColor;
-            result.labelOutlineColor = style.labelOutlineColor;
-            result.labelOutlineWidth = style.labelOutlineWidth;
-        }
-        return result;
-    };
+    //const styleFunction = function (feature, mapStyles) {
+    //    var result;
+    //    switch (true) {
+    //        case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
+    //        case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
+    //            result = TC.Util.extend({}, mapStyles.polygon);
+    //            break;
+    //        case TC.feature.Point && feature instanceof TC.feature.Point:
+    //        case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
+    //            result = TC.Util.extend({}, mapStyles.point);
+    //            break;
+    //        default:
+    //            result = TC.Util.extend({}, mapStyles.line);
+    //            break;
+    //    }
+    //    const style = feature.getStyle();
+    //    if (style.label) {
+    //        result.label = style.label;
+    //        result.fontSize = style.fontSize;
+    //        result.fontColor = style.fontColor;
+    //        result.labelOutlineColor = style.labelOutlineColor;
+    //        result.labelOutlineWidth = style.labelOutlineWidth;
+    //    }
+    //    return result;
+    //};
 
     //const setFeatureSelectedStyle = function (ctl, features) {
     //    const mapStyles = ctl.map.options.styles.selection;
@@ -122,57 +121,66 @@ TC.Consts.event.CHANGE = 'change';
         const self = this;
         const result = TC.Control.prototype.register.call(self, map);
         if (self.options.layer) {
-
             self.setLayer(self.options.layer);
-
-            map
-                .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
-                    Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
-                        const layer = objects[0];
-                        if (e.layer === layer) {
-                            self._selectBtn.disabled = false;
-                            self._textBtn.disabled = false;
-                        }
-                    });
-                })
-                .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
-                    const layer = e.layer;
-                    const feature = e.feature;
-                    Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
-                        if (layer === objects[0]) {
-                            if (feature) {
-                                self.unselectFeatures([feature]);
-                            }
-                            else {
-                                self.unselectFeatures();
-                            }
-                            setFeatureSelectedState(self, self.getSelectedFeatures());
-                            if (self.layer.features.length === 0) {
-                                self._selectBtn.disabled = true;
-                                self.setTextMode(false);
-                                self._textBtn.disabled = true;
-                            }
-                        }
-                    });
-                });
-
-            const featureSelectUpdater = function () {
-                const selectedFeatures = self.getSelectedFeatures();
-                setFeatureSelectedState(self, selectedFeatures);
-                const unselectedFeatures = self.layer.features.filter(function (feature) {
-                    return selectedFeatures.indexOf(feature) < 0;
-                });
-                unselectedFeatures.forEach(function (feature) {
-                    feature.toggleSelectedStyle(false);
-                });
-                selectedFeatures.forEach(function (feature) {
-                    feature.toggleSelectedStyle(true);
-                });
-            };
-            self
-                .on(TC.Consts.event.FEATURESSELECT, featureSelectUpdater)
-                .on(TC.Consts.event.FEATURESUNSELECT, featureSelectUpdater);
         }
+
+        map
+            .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
+                Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
+                    const layer = objects[0];
+                    if (e.layer === layer) {
+                        self.setSelectableState(true);
+                    }
+                });
+            })
+            .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
+                const layer = e.layer;
+                const feature = e.feature;
+                Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
+                    if (layer === objects[0]) {
+                        if (feature) {
+                            self.unselectFeatures([feature]);
+                        }
+                        else {
+                            self.unselectFeatures();
+                        }
+                        setFeatureSelectedState(self, self.getSelectedFeatures());
+                        if (self.layer.features.length === 0) {
+                            self.setSelectableState(false);
+                            self.setTextMode(false);
+                        }
+                    }
+                });
+            })
+            .on(TC.Consts.event.LAYERUPDATE, function (e) {
+                const layer = e.layer;
+                Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
+                    if (layer === objects[0]) {
+                        setFeatureSelectedState(self, self.getSelectedFeatures());
+                    }
+                });
+            });
+
+        self.on(TC.Consts.event.FEATURESSELECT + ' ' + TC.Consts.event.FEATURESUNSELECT, function () {
+            const selectedFeatures = self.getSelectedFeatures();
+            setFeatureSelectedState(self, selectedFeatures);
+            const unselectedFeatures = self.layer.features.filter(function (feature) {
+                return selectedFeatures.indexOf(feature) < 0;
+            });
+            unselectedFeatures.forEach(function (feature) {
+                feature.toggleSelectedStyle(false);
+            });
+            selectedFeatures.forEach(function (feature) {
+                feature.toggleSelectedStyle(true);
+            });
+
+            if (!self.getAttributeDisplayTarget().classList.contains(TC.Consts.classes.HIDDEN)) {
+                self.displayAttributes();
+            }
+            if (!selectedFeatures.length) {
+                self.closeAttributes();
+            }
+        });
 
         return result;
     };
@@ -202,6 +210,10 @@ TC.Consts.event.CHANGE = 'change';
             });
             self._joinBtn = self.div.querySelector('.' + self.CLASS + '-btn-join');
             self._splitBtn = self.div.querySelector('.' + self.CLASS + '-btn-split');
+            self._editAttrBtn = self.div.querySelector('.' + self.CLASS + '-btn-attr');
+            self._editAttrBtn.addEventListener(TC.Consts.event.CLICK, function () {
+                self.toggleAttributes();
+            });
             self._textInput = self.div.querySelector('input.' + self.CLASS + '-txt');
             self._textInput.addEventListener('input', function (e) {
                 self.labelFeatures(e.target.value);
@@ -217,6 +229,8 @@ TC.Consts.event.CHANGE = 'change';
             self._fontSizeSelector.addEventListener(TC.Consts.event.CHANGE, function (e) {
                 self.setFontSize(e.target.value);
             });
+
+            self._attributesSection = self.div.querySelector('.' + self.CLASS + '-attr');
 
             if (TC.Util.isFunction(callback)) {
                 callback();
@@ -285,9 +299,11 @@ TC.Consts.event.CHANGE = 'change';
         //self.trigger(TC.Consts.event.DRAWCANCEL, { ctrl: self });
         if (self._selectBtn) {
             self._selectBtn.classList.remove(TC.Consts.classes.ACTIVE);
-            self.layer.features.forEach(function (feature) {
-                feature.toggleSelectedStyle(false);
-            });
+            if (self.layer) {
+                self.layer.features.forEach(function (feature) {
+                    feature.toggleSelectedStyle(false);
+                });
+            }
             //setFeatureUnselectedStyle(self, self.getSelectedFeatures());
         }
     };
@@ -341,8 +357,9 @@ TC.Consts.event.CHANGE = 'change';
     };
 
     ctlProto.setLayer = function (layer) {
-        var self = this;
+        const self = this;
         if (self.map) {
+            self.setSelectedFeatures([]);
             self._layerPromise = new Promise(function (resolve, reject) {
                 if (typeof (layer) === "string") {
                     self.map.loaded(function () {
@@ -355,7 +372,17 @@ TC.Consts.event.CHANGE = 'change';
                     resolve(self.layer);
                 }
             });
+            Promise.all([self._layerPromise, self.renderPromise()]).then(function (objs) {
+                const layer = objs[0];
+                self.setSelectableState(layer && layer.features.length > 0);
+            });
         }
+    };
+
+    ctlProto.setSelectableState = function (active) {
+        const self = this;
+        self._selectBtn.disabled = !active;
+        self._textBtn.disabled = !active;
     };
 
     ctlProto.getSelectedFeatures = function () {
@@ -392,6 +419,7 @@ TC.Consts.event.CHANGE = 'change';
         self.wrap.unselectFeatures(features);
         features.forEach(function (feature) {
             self.layer.removeFeature(feature);
+            self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
         });
         return self;
     };
@@ -566,6 +594,92 @@ TC.Consts.event.CHANGE = 'change';
             });
         }
         return self;
+    };
+
+    ctlProto.getAttributeDisplayTarget = function () {
+        return this._attributesSection;
+    };
+
+    ctlProto.displayAttributes = function () {
+        const self = this;
+        const selectedFeatures = self.getSelectedFeatures();
+        const feature = selectedFeatures[selectedFeatures.length - 1];
+        if (feature) {
+            self.getRenderedHtml(self.CLASS + '-attr', { data: feature.getData() }, function (html) {
+                const attributesSection = self.getAttributeDisplayTarget();
+                attributesSection.innerHTML = html;
+                attributesSection.classList.remove(TC.Consts.classes.HIDDEN);
+                self._editAttrBtn.classList.add(TC.Consts.classes.ACTIVE);
+
+                attributesSection.querySelector(`${self.CLASS}-btn-attr-ok`).addEventListener(TC.Consts.event.CLICK, function (e) {
+                    self._onAttrOK();
+                });
+
+                attributesSection.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(TC.Consts.event.CLICK, function () {
+                    self.closeAttributes();
+                });
+            });
+        }
+    };
+
+    ctlProto.closeAttributes = function () {
+        const self = this;
+        self._attributesSection.classList.add(TC.Consts.classes.HIDDEN);
+        self._editAttrBtn.classList.remove(TC.Consts.classes.ACTIVE);
+    };
+
+    ctlProto.toggleAttributes = function () {
+        const self = this;
+        if (self._editAttrBtn.classList.toggle(TC.Consts.classes.ACTIVE)) {
+            self.displayAttributes();
+        }
+        else {
+            self.closeAttributes();
+        }
+    };
+
+    ctlProto._onAttrOK = function () {
+        const self = this;
+        const feature = self.getSelectedFeatures()[0];
+        if (feature) {
+            const data = {};
+            self.getAttributeDisplayTarget().querySelectorAll('input').forEach(function (input) {
+                data[input.getAttribute('name')] = input.value;
+            });
+            feature.setData(data);
+            self.trigger(TC.Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer });
+            self.closeAttributes();
+        }
+    };
+
+    ctlProto.joinFeatures = function (features) {
+        const self = this;
+        if (self.geometryType === TC.Consts.geom.MULTIPOLYLINE ||
+            self.geometryType === TC.Consts.geom.MULTIPOLYGON ||
+            self.geometryType === TC.Consts.geom.MULTIPOINT) {
+            self._joinedFeatureAttributes = [];
+            if (features.length > 1) {
+                var geometries = features.map(function (elm) {
+                    self._joinedFeatureAttributes[self._joinedFeatureAttributes.length] = elm.getData();
+                    return elm.geometry;
+                });
+                var newGeometry = geometries.reduce(function (a, b) {
+                    return a.concat(b);
+                });
+                var newFeature = new features[0].constructor(newGeometry);
+                for (var i = 0, len = features.length; i < len; i++) {
+                    var feature = features[i];
+                    self.layer.removeFeature(feature);
+                    self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
+                }
+                self.layer.addFeature(newFeature).then(function (feat) {
+                    self.setSelectedFeatures([newFeature]);
+                    self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
+                    feat.showPopup(self.attributeEditor);
+                });
+            }
+            setFeatureSelectedState(self, [newFeature]);
+        }
     };
 
 })();

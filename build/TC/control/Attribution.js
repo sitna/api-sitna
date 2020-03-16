@@ -24,12 +24,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-attrib';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/Attribution.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div><span>&copy; ").f(ctx.get(["api"], false), ctx, "h", ["s"]).w("</span>").x(ctx.get(["mainData"], false), ctx, { "block": body_1 }, {}).x(ctx.get(["otherData"], false), ctx, { "block": body_5 }, {}).w("<div class=\"tc-ctl-attrib-other ").x(ctx.get(["isCollapsed"], false), ctx, { "block": body_6 }, {}).w("\">").s(ctx.get(["otherData"], false), ctx, { "block": body_7 }, {}).w("</div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(" - ").h("i18n", ctx, {}, { "$key": "data" }).w(":").x(ctx.getPath(false, ["mainData", "site"]), ctx, { "else": body_2, "block": body_4 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.x(ctx.getPath(false, ["mainData", "name"]), ctx, { "block": body_3 }, {}); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<span> &copy; ").f(ctx.getPath(false, ["mainData", "name"]), ctx, "h").w("</span>"); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.w("<span> &copy; <a href=\"").f(ctx.getPath(false, ["mainData", "site"]), ctx, "h").w("\" target=\"_blank\">").f(ctx.getPath(false, ["mainData", "name"]), ctx, "h").w("</a></span>"); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w(" - <span class=\"tc-ctl-attrib-cmd\">").h("i18n", ctx, {}, { "$key": "others" }).w("...</span>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w(" tc-collapsed "); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.x(ctx.getPath(false, ["otherData", ctx.get(["$idx"], false), "site"]), ctx, { "else": body_8, "block": body_9 }, {}).h("sep", ctx, { "block": body_10 }, {}); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.w("<span>&copy; ").f(ctx.getPath(false, ["otherData", ctx.get(["$idx"], false), "name"]), ctx, "h").w("</span>"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.w("<span>&copy; <a href=\"").f(ctx.getPath(false, ["otherData", ctx.get(["$idx"], false), "site"]), ctx, "h").w("\" target=\"_blank\">").f(ctx.getPath(false, ["otherData", ctx.get(["$idx"], false), "name"]), ctx, "h").w("</a></span>"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.w(", "); } body_10.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/Attribution.html";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -123,8 +118,8 @@ TC.inherit(TC.control.Attribution, TC.Control);
                 }
             }
         };
-
-        self.render();
+        //URI: Si las atribuciones están vacias evito hace una llamada al renderizado del control ya que lo obtendría sin datos.
+        //self.render();
 
         map.loaded(function () {
             if (map.baseLayer.wrap.getAttribution) {
@@ -135,7 +130,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
 
         map.on(TC.Consts.event.LAYERADD, function (e) {
             const layer = e.layer;
-            if (!layer.isBase && layer.wrap.getAttribution) {
+            if (!layer.isBase && layer.wrap.getAttribution && layer.wrap.getAttribution()) {
                 addData(layer.wrap);
                 self.render();
             }
@@ -204,10 +199,10 @@ TC.inherit(TC.control.Attribution, TC.Control);
     };
 
     ctlProto.render = function (callback) {
-        const self = this;
+        const self = this;        
 
         return self._set1stRenderPromise(self.renderData({
-            api: self.apiAttribution,
+            api: (typeof (self.apiAttribution) === 'function' ? self.apiAttribution.apply(self) : self.getLocaleString(self.apiAttribution)),
             mainData: self.mainDataAttribution,
             otherData: self.dataAttributions,
             isCollapsed: self.div.querySelector('.' + self.CLASS + '-other') ? self.div.querySelector('.' + self.CLASS + '-other').classList.contains(TC.Consts.classes.COLLAPSED) : true

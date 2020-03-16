@@ -12,7 +12,6 @@ if (!TC.filter) {
         var self = this;
         TC.control.FeatureInfoCommons.apply(this, arguments);
         self.wrap = new TC.wrap.control.GeometryFeatureInfo(self);
-        self.lineColor = !self.options.lineColor ? "#cc0000" : self.options.lineColor;
         self._isDrawing = false;
         self._isSearching = false;
         self._drawToken = false;
@@ -40,6 +39,7 @@ if (!TC.filter) {
         }
         self.closeResults();
         //self.filterLayer.clearFeatures();
+        self.highlightedFeature = null;
         var visibleLayers = false;
         for (var i = 0; i < self.map.workLayers.length; i++) {
             var layer = self.map.workLayers[i];
@@ -96,6 +96,7 @@ if (!TC.filter) {
                 if (services.length) {
                     self.insertLinks();
                 }
+                self.div.querySelector(`.${self.CLASS}-coords`).classList.add(TC.Consts.classes.HIDDEN);
                 self.displayResults();
             });
         }

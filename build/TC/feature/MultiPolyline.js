@@ -14,7 +14,6 @@ TC.feature.MultiPolyline = function (coords, options) {
     TC.Feature.apply(self, arguments);
 
     if (!self.wrap.isNative(coords)) {
-        options = self.options = TC.Util.extend(true, self.options, TC.Cfg.styles.line, options);
         self.wrap.createMultiPolyline(coords, options);
     }
 };

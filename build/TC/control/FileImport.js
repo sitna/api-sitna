@@ -20,6 +20,14 @@ TC.control.FileImport = function () {
             TC.Consts.format.GPX
         ];
     }
+    if (window.JSZip) {
+        if (window.JSZip instanceof Promise)
+            window.JSZip.then(function () {
+                self.formats.splice(1, 0, TC.Consts.format.KMZ);
+            });
+        else
+            self.formats.splice(1, 0, TC.Consts.format.KMZ);
+    }
 
     self.layers = [];
 
@@ -37,12 +45,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-file';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/FileImport.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "openFile" }).w("</h2><div><p>").h("i18n", ctx, {}, { "$key": "fileImport.instructions" }).w("</p><div class=\"tc-ctl-file-open\"><label class=\"tc-button tc-ctl-file-open-label tc-icon-button\"><input type=\"file\" class=\"tc-ctl-file-open-ipt tc-button\" accept=\"").s(ctx.get(["formats"], false), ctx, { "block": body_1 }, {}).w("\" />").h("i18n", ctx, {}, { "$key": "openFile" }).w("</label></div></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w(".").f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_2 }, {}); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w(","); } body_2.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/FileImport.html";
 
     ctlProto.register = function (map) {
         var self = this;
@@ -66,6 +69,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                 map.addLayer({
                     id: self.getUID(),
                     title: fileName,
+                    owner: self,
                     type: TC.Consts.layerType.VECTOR
                 }).then(function (layer) {
                     self.layers.push(layer);
@@ -95,7 +99,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                                 default:
                                     break;
                             }
-                            if (coordinates.every(function (coord) {
+                            if (coordinates && coordinates.every(function (coord) {
                                 return Math.abs(coord[0]) <= 180 && Math.abs(coord[1]) <= 90; // Parecen geográficas
                             })) {
                                 feature.setCoords(TC.Util.reproject(geom, geogCrs, self.map.crs));
@@ -201,6 +205,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                 layerPromises.push(self.map.addLayer({
                     id: self.getUID(),
                     title: layerData.title,
+                    owner: self,
                     type: TC.Consts.layerType.VECTOR
                 }));
             });

@@ -1,0 +1,3774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+		<title>Tipos</title>
+		<!--[if lt IE 9]>
+		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<link href="https://fonts.googleapis.com/css?family=PT+Mono" rel="stylesheet">
+		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
+		<link type="text/css" rel="stylesheet" href="css/prism.min.css">
+		<link type="text/css" rel="stylesheet" href="css/template.min.css">
+			<style>
+				.page-header,
+				pre.code-toolbar > .toolbar:hover {
+					background-color: #cc0000;
+				}
+				.callout-primary,
+				.toc .nav > li > a:hover,
+				.toc .nav > li > a:focus,
+				.toc .nav > li.active > a,
+				.toc .nav > li.active > a:hover,
+				.toc .nav > li.active > a:focus,
+				pre.code-toolbar > .toolbar:hover {
+					border-left-color: #cc0000;
+				}
+				pre.code-toolbar > .toolbar:hover {
+					border-bottom-color: #cc0000;
+				}
+				.callout-primary h5,
+				.symbol-title.collapsible-symbol .toggle-icon,
+				.breadcrumb li a,
+				.toc .nav > li > a:hover,
+				.toc .nav > li > a:focus,
+				.toc .nav > li.active > a,
+				.toc .nav > li.active > a:hover,
+				.toc .nav > li.active > a:focus {
+					color: #cc0000;
+				}
+			</style>
+		<script type="text/javascript">
+			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"DD/MM/YYYY","systemName":"API SITNA","systemSummary":"API JavaScript para la visualización de datos georreferenciados en aplicaciones web","systemLogo":"img/sitna-logo.png","systemColor":"#cc0000","navMembers":[{"kind":"class","title":"Clases"},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Tipos"},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Espacios de nombres"},{"kind":"tutorial","title":"Documentación"}],"footer":"","copyright":"© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.","linenums":true,"collapseSymbols":false,"inverseNav":false,"inlineNav":false,"outputSourceFiles":false,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":null,"methodHeadingReturns":true,"sort":"longname, version, since","search":true,"favicon":null,"stylesheets":[],"scripts":[],"monospaceLinks":false,"cleverLinks":true,"systemVersion":"v2.1.0"};
+			window.DOCLET_TOC_ENABLED = true;
+			window.DOCLET_AFILTER_ENABLED = false;
+		</script>
+</head>
+<body>
+	<!-- start:navbar.hbs -->
+	<header class="navbar navbar-default navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<a class="navbar-brand branding-logo" href="index.html" style="background-image: url(img/sitna-logo.png);">
+					API SITNA
+				</a>
+	            <a href="tutorial-4-changes.html" class="navbar-version">v2.1.0</a>
+				<!-- displayed on small devices -->
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse" id="topNavigation">
+				<ul class="nav navbar-nav">
+								<li class="dropdown">
+									<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Tipos<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></li>
+											<li><a href="global.html#CadastralSearchOptionsExt">CadastralSearchOptionsExt</a></li>
+											<li><a href="global.html#ClickOptions">ClickOptions</a></li>
+											<li><a href="global.html#ClusterOptions">ClusterOptions</a></li>
+											<li><a href="global.html#ClusterStyleOptions">ClusterStyleOptions</a></li>
+											<li><a href="global.html#ControlOptions">ControlOptions</a></li>
+											<li><a href="global.html#CoordinatesOptions">CoordinatesOptions</a></li>
+											<li><a href="global.html#DataLoaderOptions">DataLoaderOptions</a></li>
+											<li><a href="global.html#FeatureInfoOptions">FeatureInfoOptions</a></li>
+											<li><a href="global.html#LayerCatalogOptions">LayerCatalogOptions</a></li>
+											<li><a href="global.html#LayerOptions">LayerOptions</a></li>
+											<li><a href="global.html#LineStyleOptions">LineStyleOptions</a></li>
+											<li><a href="global.html#MapControlOptions">MapControlOptions</a></li>
+											<li><a href="global.html#MapOptions">MapOptions</a></li>
+											<li><a href="global.html#MarkerOptions">MarkerOptions</a></li>
+											<li><a href="global.html#MarkerStyleOptions">MarkerStyleOptions</a></li>
+											<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
+											<li><a href="global.html#OverviewMapOptions">OverviewMapOptions</a></li>
+											<li><a href="global.html#PointStyleOptions">PointStyleOptions</a></li>
+											<li><a href="global.html#PolygonStyleOptions">PolygonStyleOptions</a></li>
+											<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
+											<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+											<li><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></li>
+											<li><a href="global.html#SearchResultColor">SearchResultColor</a></li>
+											<li><a href="global.html#SearchResultColorDictionary">SearchResultColorDictionary</a></li>
+											<li><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></li>
+											<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
+											<li><a href="global.html#StreetViewOptions">StreetViewOptions</a></li>
+											<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+											<li><a href="global.html#TownSearchOptions">TownSearchOptions</a></li>
+											<li><a href="global.html#WFSQueryOptions">WFSQueryOptions</a></li>
+											<li><a href="global.html#WMSGroupOptions">WMSGroupOptions</a></li>
+											<li><a href="global.html#WMSOptions">WMSOptions</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_class.html" class="dropdown-toggle" data-toggle="dropdown">Clases<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="SITNA.Map.html">SITNA.Map</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_namespace.html" class="dropdown-toggle" data-toggle="dropdown">Espacios de nombres<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="SITNA.html">SITNA</a></li>
+											<li><a href="SITNA.Consts.html">SITNA.Consts</a></li>
+											<li><a href="SITNA.Consts.geom.html">SITNA.Consts.geom</a></li>
+											<li><a href="SITNA.Consts.layer.html">SITNA.Consts.layer</a></li>
+											<li><a href="SITNA.Consts.layerType.html">SITNA.Consts.layerType</a></li>
+											<li><a href="SITNA.Consts.mimeType.html">SITNA.Consts.mimeType</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_tutorial.html" class="dropdown-toggle" data-toggle="dropdown">Documentación<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="tutorial-1-addresses.html">Direcciones alternativas</a></li>
+											<li><a href="tutorial-2-configuration.html">Cómo configurar un mapa</a></li>
+											<li><a href="tutorial-3-css.html">Clases CSS para identificar elementos de la API</a></li>
+											<li><a href="tutorial-4-changes.html">Historial de cambios</a></li>
+									</ul>
+								</li>
+	                <li><a href="https://github.com/sitna/api-sitna">Ver en Github</a></li>
+				</ul>
+					<!-- start:lunr-search-navbar.hbs -->
+					<form class="navbar-form navbar-right" role="search">
+						<div class="input-group">
+							<input type="text" class="form-control" placeholder="Buscar" id="lunr-search-input">
+							<div class="input-group-btn">
+								<button class="btn btn-default" id="lunr-search-submit">
+									<i class="glyphicon glyphicon-search"></i>
+								</button>
+							</div>
+						</div>
+					</form>
+					<!-- start:lunr-search-navbar.hbs -->		</div>
+		</div>
+	</header>
+	<!-- end:navbar.hbs -->		<div class="page-header">
+			<div class="container">
+				<span class="kind">global</span>
+				<h1><span class="name">Tipos</span></h1>
+			</div>
+		</div>
+	<div class="container content">
+		<div class="row">
+			<div class="col-md-3 side-content">
+				<nav class="toc hidden-print hidden-sm hidden-xs"></nav>
+			</div>
+			<div class="col-md-9 main-content">
+						<ol class="breadcrumb">
+							<li><a href="index.html">Inicio</a></li>
+							<li class="active">Tipos</li>
+						</ol>
+					<section>
+							<article class="secondary">
+									<h3>Definiciones de tipos</h3>
+									<dl class="symbol">
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="CadastralSearchOptions" class="typedef public"><span class="name">CadastralSearchOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de configuración del origen de datos de la búsqueda de parcelas catastrales.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>featurePrefix</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Prefijo del nombre de la capa o capas a definir en la propiedad <code>featureType</code>. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featureType</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre de la capa o capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en <code>queryProperties</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>geometryName</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre del campo de la geometría de la parcela catastral.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>municipality</code></td>
+							<td><span class="param-type"><a href="global.html#CadastralSearchOptionsExt">CadastralSearchOptionsExt</a></span></td>
+							<td class="last">
+									<p>Definición de la fuente de datos para la búsqueda de parcela por nombre de municipio en lugar de por código del mismo.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>queryProperties</code></td>
+							<td><span class="param-type"><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></span></td>
+							<td class="last">
+									<p>Definición de los campos por los que filtrar la búsqueda de parcelas.</p>
+			<p>En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:</p>
+			<ul>
+			<li><code>firstQueryWord</code>: se indicará el campo o campos en los que buscar el código de municipio.</li>
+			<li><code>secondQueryWord</code>: se indicará el campo o campos en los que buscar el polígono.</li>
+			<li><code>thirdQueryWord</code>: se indicará el campo o campos en los que buscar la parcela.</li>
+			</ul>
+							</td>
+						</tr>
+						<tr>
+								<td><code>styles</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#StyleOptions">StyleOptions</a>></span></td>
+							<td class="last">
+									<p>Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en <code>featureType</code> y en <code>styles</code>, por tanto,
+			deberá haber tantas instancias como capas definidas en <code>featureType</code>.</p>
+			<p>No está disponible <code>cluster</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>suggestionListHead</code></td>
+							<td><span class="param-type"><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></span></td>
+							<td class="last">
+									<p>Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Dirección del servicio WFS (las búsquedas en el API SITNA están implementadas sobre el estándar <a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service</a>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Cfg.SearchCadastralSource.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">{       url:&#x27;//idena.navarra.es/ogc/wfs&#x27;,                    featurePrefix: &#x27;IDENA&#x27;,    geometryName: &#x27;the_geom&#x27;,            featureType: [&#x27;CATAST_Pol_ParcelaUrba&#x27;, &#x27;CATAST_Pol_ParcelaRusti&#x27;, &#x27;CATAST_Pol_ParcelaMixta&#x27;],    municipality: {        featureType: &#x27;CATAST_Pol_Municipio&#x27;,        labelProperty: &#x27;MUNICIPIO&#x27;,        idProperty: &#x27;CMUNICIPIO&#x27;    },    queryProperties: {        firstQueryWord: &#x27;CMUNICIPIO&#x27;,        secondQueryWord: &#x27;POLIGONO&#x27;,        thirdQueryWord: &#x27;PARCELA&#x27;    },    suggestionListHead: {        label: &quot;search.list.cadastral&quot;,        color: [            {                CATAST_Pol_ParcelaUrba: {                    title: &quot;search.list.cadastral.urban&quot;,                    color: {                        geomType: &quot;polygon&quot;,                        css: &quot;strokeColor&quot;                    }                }            },            {                CATAST_Pol_ParcelaRusti: {                    title: &quot;search.list.cadastral.rustic&quot;,                    color: {                        geomType: &quot;polygon&quot;,                        css: &quot;strokeColor&quot;                    }                }            },            {                CATAST_Pol_ParcelaMixta: {                    title: &quot;search.list.cadastral.mixed&quot;,                    color: {                        geomType: &quot;polygon&quot;,                        css: &quot;strokeColor&quot;                    }                }            }        ]    },    styles: [        {            polygon: {                fillColor: &#x27;#000000&#x27;,                fillOpacity: 0.1,                strokeColor: &#x27;#136278&#x27;,                strokeWidth: 2,                strokeOpacity: 1            }        },        {            polygon: {                fillColor: &#x27;#000000&#x27;,                fillOpacity: 0.1,                strokeColor: &#x27;#0c8b3d&#x27;,                strokeWidth: 2,                strokeOpacity: 1            }        },        {            polygon: {                fillColor: &#x27;#000000&#x27;,                fillOpacity: 0.1,                strokeColor: &#x27;#e5475f&#x27;,                strokeWidth: 2,                strokeOpacity: 1            },        }    ]}</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+												<li><a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service Standard</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="CadastralSearchOptionsExt" class="typedef public"><span class="name">CadastralSearchOptionsExt</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Configuración del origen de datos auxiliar a la búsqueda de parcelas catastrales para la codificación de los nombres de municipio.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>featureType</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección de nombre de capa o capas a consultar.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>idProperty</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre de campo que identifica unívocamente el municipio cuyos valores deben coincidir con los posibles valores del campo indicado en firstQueryWord.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>labelProperty</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre de campo en el que buscar el texto indicado.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">{    url: &#x27;//miServicioWFS/ogc/wfs&#x27;,    featurePrefix: &#x27;IDENA&#x27;,        featureType: [&#x27;Pol_ParcelaUrbana&#x27;, &#x27;Pol_ParcelaRustica&#x27;, &#x27;Pol_ParcelaMixta&#x27;],    municipality: {        featureType: &#x27;Pol_Municipio&#x27;,        labelProperty: &#x27;MUNICIPIO&#x27;,        idProperty: &#x27;COD_MUNICIPIO&#x27;          },    queryProperties: {        firstQueryWord: &#x27;COD_MUNICIPIO&#x27;,        secondQueryWord: &#x27;POLIGONO&#x27;,        thirdQueryWord: &#x27;PARCELA&#x27;    }}</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="ClickOptions" class="typedef public"><span class="name">ClickOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control de clics de usuario.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>active</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Si se establece a <code>true</code>, el control asociado está activo, es decir, responde a los clics hechos en el mapa desde el que se carga.
+			Como máximo puede haber solamente un control activo en el mapa en cada momento.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>callback</code></td>
+							<td><span class="param-type"><a href="SITNA.Map.html#~ClickCallback">SITNA.Map~ClickCallback</a></span></td>
+								<td class="attributes"></td>
+							<td class="last">
+									<p>Función de callback que gestiona la respuesta al clic.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="ClusterOptions" class="typedef public"><span class="name">ClusterOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de clustering de puntos de una capa, define si los puntos se tienen que agrupar cuando están más cerca entre sí que un valor umbral.</p>
+			<p>Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de esta propiedad
+			(para ver instrucciones de uso de maquetaciones, consultar <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>).</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>distance</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes"></td>
+							<td class="last">
+									<p>Distancia en píxels que tienen que tener como máximo los puntos entre sí para que se agrupen en un cluster.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>animate</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Si se establece a <code>true</code>, los puntos se agrupan y desagrupan con una transición animada.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>styles</code></td>
+							<td><span class="param-type"><a href="global.html#ClusterStyleOptions">ClusterStyleOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Opciones de estilo de los clusters.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.LayerOptions.cluster.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Creamos un mapa con una capa de puntos de un KML,    // clustering activado a 50 pixels y transiciones animadas.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        workLayers: [            {                id: &quot;cluster&quot;,                type: SITNA.Consts.layerType.KML,                url: &quot;data/PromocionesViviendas.kml&quot;,                title: &quot;Clusters&quot;,                cluster: {                    distance: 50,                    animate: true                }            }        ]    });&lt;/script&gt;</code></pre>
+					</div>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="ClusterStyleOptions" class="typedef public"><span class="name">ClusterStyleOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de estilo de cluster de puntos. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de esta propiedad
+			(para ver instrucciones de uso de maquetaciones, consultar <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>).</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>point</code></td>
+							<td><span class="param-type"><a href="global.html#PointStyleOptions">PointStyleOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Opciones de estilo del punto que representa el cluster.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.ClusterStyleOptions.point.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Creamos un mapa con una capa vectorial,    // clustering activado a 50 pixels y estilos personalizados.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        workLayers: [            {                id: &quot;cluster&quot;,                type: SITNA.Consts.layerType.VECTOR,                title: &quot;Clusters&quot;,                cluster: {                    distance: 50,                    styles: {                        point: {                            fillColor: &quot;#f90&quot;,                            fillOpacity: 1,                            strokeColor: &quot;#c60&quot;,                            strokeWidth: 2,                            fontColor: &quot;#f90&quot;                        }                    }                }            }        ]    });        map.loaded(function () {        // Añadimos puntos aleatorios        var extent &#x3D; TC.Cfg.initialExtent;        var dx &#x3D; extent[2] - extent[0];        var dy &#x3D; extent[3] - extent[1];                var randomPoint &#x3D; function () {            var x &#x3D; extent[0] + Math.random() * dx;            var y &#x3D; extent[1] + Math.random() * dy;            return [x, y];        }                    for (var i &#x3D; 0; i &lt; 200; i++) {            var point &#x3D; randomPoint();            map.addMarker(point, {                layer: &quot;cluster&quot;,                data: {                    x: point[0],                    y: point[1]                }            });        }    });&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+												<li><a href="tutorial-layout_cfg.html">Configurar por maquetación</a></li>
+												<li><a href="global.html#ClusterOptions">ClusterOptions</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="ControlOptions" class="typedef public"><span class="name">ControlOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones básicas de control.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>div</code></td>
+							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#MapControlOptions">MapControlOptions</a></li>
+												<li><a href="tutorial-2-configuration.html">Cómo configurar un mapa</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="CoordinatesOptions" class="typedef public"><span class="name">CoordinatesOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control de coordenadas.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>div</code></td>
+							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>showGeo</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Determina si se muestran coordenadas geográficas (en EPSG:4326) además de las del mapa, que por defecto son UTM (EPSG:25830).</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.CoordinatesOptions.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div id&#x3D;&quot;mapa&quot;/&gt;&lt;script&gt;    // Hacemos que el control que muestra las coordenadas en pantalla    // muestre también las coordenadas geográficas    SITNA.Cfg.controls.coordinates &#x3D; {        showGeo: true    };    var map &#x3D; new SITNA.Map(&#x27;map&#x27;);&lt;/script&gt;</code></pre>
+					</div>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="DataLoaderOptions" class="typedef public"><span class="name">DataLoaderOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control para añadir datos geográficos.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>div</code></td>
+							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>enableDragAndDrop</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Propiedad que establece si está permitido arrastrar y soltar archivos al área del mapa, además de abrirlos de la manera convencional abriendo el cuadro de diálogo de búsqueda de archivos.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>wmsSuggestions</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#WMSGroupOptions">WMSGroupOptions</a>></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Lista de grupos de sugerencias de servicios WMS ofrecidos por el control. Por ejemplo se puede establecer un grupo de servicios WMS estatales y otro de servicios WMS mundiales.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.DataLoaderOptions.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecemos un layout simplificado apto para hacer demostraciones de controles.    SITNA.Cfg.layout &#x3D; &quot;layout/ctl-container&quot;;    // Activamos el proxy para poder acceder a servicios de otro dominio.    SITNA.Cfg.proxy &#x3D; &quot;proxy.ashx?&quot;;    // Añadimos el control de tabla de contenidos en el primer contenedor.    SITNA.Cfg.controls.TOC &#x3D; {        div: &quot;slot1&quot;    };    // Añadimos el control de datos externos en el segundo contenedor.    SITNA.Cfg.controls.dataLoader &#x3D; {        div: &quot;slot2&quot;,        enableDragAndDrop: true,        wmsSuggestions: [            {                group: &quot;Estatales&quot;,                items: [                    {                        name: &quot;Mapa Base (IGN)&quot;,                        url: &quot;https://www.ign.es/wms-inspire/ign-base&quot;                    },                    {                        name: &quot;Unidades Administrativas (IGN)&quot;,                        url: &quot;https://www.ign.es/wms-inspire/unidades-administrativas&quot;                    },                    {                        name: &quot;Cartografía Topográfica (IGN)&quot;,                        url: &quot;https://www.ign.es/wms-inspire/mapa-raster&quot;                    },                    {                        name: &quot;Ortofotos PNOA Máxima Actualidad (IGN)&quot;,                        url: &quot;https://www.ign.es/wms-inspire/pnoa-ma&quot;                    }                ]            },            {                group: &quot;Comunidades limítrofes&quot;,                items: [                    {                        name: &quot;Aragón&quot;,                        url: &quot;http://idearagon.aragon.es/Visor2D&quot;                    },                    {                        name: &quot;La Rioja&quot;,                        url: &quot;https://ogc.larioja.org/wms/request.php&quot;                    },                    {                        name: &quot;País Vasco&quot;,                        url: &quot;http://www.geo.euskadi.eus/WMS_KARTOGRAFIA&quot;                    }                ]            }        ]    };    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+							<!-- augments -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Extiende</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#ControlOptions">ControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MapControlOptions">MapControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="FeatureInfoOptions" class="typedef public"><span class="name">FeatureInfoOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control de obtención de información de entidades de mapa por click.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>active</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Si se establece a <code>true</code>, el control asociado está activo, es decir, responde a los clics hechos en el mapa desde el que se carga.
+			Como máximo puede haber solamente un control activo en el mapa en cada momento.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>callback</code></td>
+							<td><span class="param-type"><a href="SITNA.Map.html#~ClickCallback">SITNA.Map~ClickCallback</a></span></td>
+								<td class="attributes"></td>
+							<td class="last">
+									<p>Función de callback que gestiona la respuesta al clic.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>persistentHighlights</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Cuando el control <code>featureInfo</code> muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
+			de las entidades geográficas de la respuesta. Si este valor es <code>true</code>, dichas geometrías se quedan resaltadas en el mapa indefinidamente. En caso contrario, las geometrías resaltadas se borran en el
+			momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.FeatureInfoOptions.persistentHighlights.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Añadimos el control featureInfo.    SITNA.Cfg.controls.featureInfo &#x3D; {        persistentHighlights: true    };    // Añadimos una capa WMS sobre la que hacer las consultas.    SITNA.Cfg.workLayers &#x3D; [        {            id: &quot;masas&quot;,            title: &quot;Masas de agua&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;https://servicios.idee.es/wms-inspire/hidrografia&quot;,            layerNames: [&quot;HY.PhysicalWaters.Waterbodies&quot;]        }    ];    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+							<!-- augments -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Extiende</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#ClickOptions">ClickOptions</a></p>
+								</div>
+							</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MapControlOptions">MapControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="LayerCatalogOptions" class="typedef public"><span class="name">LayerCatalogOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control de mapa de situación.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>div</code></td>
+							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>enableSearch</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Propiedad que establece si se puede buscar capas por texto. La búsqueda del texto se realiza en los títulos
+			y los resúmenes descriptivos de cada capa, que se publican en el <a href="https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities">documento de capacidades</a> del servicio.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>layers</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#LayerOptions">LayerOptions</a>></span></td>
+								<td class="attributes"></td>
+							<td class="last">
+									<p>Lista de objetos de definición de las con capas de servicios WMS que queremos añadir al catálogo.</p>
+			<p>En estos objetos, si se asigna un valor a la propiedad <code>layerNames</code>, solo las capas especificadas y sus hijas estarán disponibles para ser añadidas al mapa.
+			Sin embargo, si esta propiedad se deja sin asignar, todas las capas publicadas en el servicio WMS estarán disponibles para ser añadidas.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.MapControlOptions.layerCatalog_workLayerManager.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecemos un layout simplificado apto para hacer demostraciones de controles.    SITNA.Cfg.layout &#x3D; &quot;layout/ctl-container&quot;;    // Añadimos el control de capas cargadas en la primera posición.    SITNA.Cfg.controls.workLayerManager &#x3D; {        div: &quot;slot1&quot;    };    // Añadimos en la segunda posición el catálogo de capas con dos servicios.    SITNA.Cfg.controls.layerCatalog &#x3D; {        div: &quot;slot2&quot;,        enableSearch: true,        layers: [            {                id: &quot;idena&quot;,                title: &quot;IDENA&quot;,                hideTitle: true,                type: SITNA.Consts.layerType.WMS,                url: &quot;//idena.navarra.es/ogc/wms&quot;,                hideTree: false            },            {                id: &quot;sismica&quot;,                title: &quot;Información sísmica y volcánica&quot;,                type: SITNA.Consts.layerType.WMS,                url: &quot;//www.ign.es/wms-inspire/geofisica&quot;,                layerNames: [&quot;Ultimos10dias&quot;, &quot;Ultimos30dias&quot;, &quot;Ultimos365dias&quot;],                hideTree: false            }        ]    };    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+							<!-- augments -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Extiende</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#ControlOptions">ControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MapControlOptions">MapControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="LayerOptions" class="typedef public"><span class="name">LayerOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de capa. Este objeto se utiliza en al <a href="global.html#MapOptions">configurar un mapa</a>, el <a href="global.html#LayerCatalogOptions">control del catálogo de capas</a>
+			o como parámetro al <a href="SITNA.Map.html#addLayer">añadir una capa</a>.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>id</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes"></td>
+							<td class="last">
+									<p>Identificador único de capa. No puede haber en un mapa dos capas con el mismo valor de <code>id</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>cluster</code></td>
+							<td><span class="param-type"><a href="global.html#ClusterOptions">ClusterOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>La capa agrupa sus entidades puntuales cercanas entre sí en grupos (clusters).
+			Aplicable a capas de tipo <a href="SITNA.Consts.layerType.html#.VECTOR"><code>SITNA.Consts.layerType.VECTOR</code></a>, <a href="SITNA.Consts.layerType.html#.WFS"><code>SITNA.Consts.layerType.WFS</code></a> y <a href="SITNA.Consts.layerType.html#.KML"><code>SITNA.Consts.layerType.KML</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>format</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>En las capas de tipo <a href="SITNA.Consts.layerType.html#.WMS"><code>SITNA.Consts.layerType.WMS</code></a> y <a href="SITNA.Consts.layerType.html#.WMTS"><code>SITNA.Consts.layerType.WMTS</code></a>,
+			es el tipo MIME del formato de archivo de imagen a obtener del servicio. En las capas de tipo <a href="SITNA.Consts.layerType.html#.VECTOR"><code>SITNA.Consts.layerType.VECTOR</code></a>, es el tipo MIME
+			del formato de archivo de datos geográficos que queremos cargar (GeoJSON, KML, etc.).</p>
+			<p>Si esta propiedad no está definida, si la capa es un mapa de fondo (consultar propiedad <code>isBase</code>), se asume que el formato es <code>image/jpeg</code>, en caso contrario se asume que el formato es <code>image/png</code>.</p>
+			<p>Para asignar valor a esta propiedad se puede usar las constantes de definidas en <a href="SITNA.Consts.mimeType.html"><code>SITNA.Consts.mimeType</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>hideTree</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Aplicable a capas de tipo <a href="SITNA.Consts.layerType.html#.WMS"><code>SITNA.Consts.layerType.WMS</code></a> y <a href="SITNA.Consts.layerType.html#.KML"><code>SITNA.Consts.layerType.KML</code></a>.
+			Si se establece a <code>true</code>, la capa no muestra la jerarquía de grupos de capas en la tabla de contenidos ni en la leyenda.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>isBase</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Si se establece a <code>true</code>, la capa es un mapa de fondo.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>isDefault</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p><em><strong>Obsoleta</strong>: En lugar de esta propiedad es recomendable usar la propiedad <code>defaultBaseLayer</code>de <a href="global.html#MapOptions"><code>MapOptions</code></a>.</em></p>
+			<p>Si se establece a true, la capa se muestra por defecto si forma parte de los mapas de fondo.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>layerNames</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Lista separada por comas de los nombres de capa del servicio OGC. Aplicable a capas de tipo <a href="SITNA.Consts.layerType.html#.WMS"><code>SITNA.Consts.layerType.WMS</code></a> y <a href="SITNA.Consts.layerType.html#.WMTS"><code>SITNA.Consts.layerType.WMTS</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>matrixSet</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Nombre de grupo de matrices del servicio WMTS. Propiedad obligatoria para capas de tipo <a href="SITNA.Consts.layerType.html#.WMTS"><code>SITNA.Consts.layerType.WMTS</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>stealth</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Si se establece a <code>true</code>, la capa no aparece en la tabla de contenidos ni en la leyenda.
+			De este modo se puede añadir una superposición de capas de trabajo que el usuario la perciba como parte del mapa de fondo.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>thumbnail</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>URL de una imagen en miniatura a mostrar en el selector de mapas de fondo.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>title</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Título de capa. Este valor se mostrará en la tabla de contenidos y la leyenda.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>type</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Tipo de capa. Si no se especifica se considera que la capa es WMS. La lista de valores posibles está definida en <a href="SITNA.Consts.layerType.html"><code>SITNA.Consts.layerType</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>URL del servicio OGC o del archivo de datos geográficos que define la capa. Propiedad obligatoria en capas de tipo <a href="SITNA.Consts.layerType.html#.WMS"><code>SITNA.Consts.layerType.WMS</code></a>,
+			<a href="SITNA.Consts.layerType.html#.WMTS"><code>SITNA.Consts.layerType.WMTS</code></a>, <a href="SITNA.Consts.layerType.html#.WFS"><code>SITNA.Consts.layerType.WFS</code></a> y <a href="SITNA.Consts.layerType.html#.KML"><code>SITNA.Consts.layerType.KML</code></a>.</p>
+			<p>En las capas de tipo <a href="SITNA.Consts.layerType.html#.VECTOR"><code>SITNA.Consts.layerType.VECTOR</code></a> los archivos de datos geográficos soportados son KML, GeoJSON, GPX, GML, WKT y TopoJSON.
+			El formato se deduce de la extensión del nombre de archivo, pero también se puede especificar utilizando la propiedad <code>format</code>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p>Ejemplo de uso de la propiedad <code>url</code> - <a href="../examples/cfg.LayerOptions.url.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecemos un layout simplificado apto para hacer demostraciones de controles.    SITNA.Cfg.layout &#x3D; &quot;layout/ctl-container&quot;;    // Añadimos el control de tabla de contenidos en la primera posición.    SITNA.Cfg.controls.TOC &#x3D; {        div: &quot;slot1&quot;    };    // Añadimos una capa raster desde un servicio WMS y cuatro capas vectoriales    // a partir de archivos geográficos: GeoJSON, GPX, KML y GML.    SITNA.Cfg.workLayers &#x3D; [        {            id: &quot;wms&quot;,            title: &quot;Camino de Santiago&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;//idena.navarra.es/ogc/wms&quot;,            layerNames: &quot;IDENA:PATRIM_Lin_CaminoSantR&quot;,            format: SITNA.Consts.mimeType.PNG        },        {            id: &quot;geojson&quot;,            type: SITNA.Consts.layerType.VECTOR,            url: &quot;data/PARQUESNATURALES.json&quot;,            format: SITNA.Consts.mimeType.GEOJSON        },        {            id: &quot;gpx&quot;,            type: SITNA.Consts.layerType.VECTOR,            url: &quot;data/CAMINOFRANCES.gpx&quot;        },        {            id: &quot;kml&quot;,            type: SITNA.Consts.layerType.VECTOR,            url: &quot;data/MUSEOSNAVARRA.kml&quot;        },        {            id: &quot;gml&quot;,            type: SITNA.Consts.layerType.VECTOR,            url: &quot;data/ESTACIONESTREN.gml&quot;        },    ];    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#MapOptions">MapOptions</a></li>
+												<li><a href="global.html#LayerCatalogOptions">LayerCatalogOptions</a></li>
+												<li><a href="SITNA.Map.html#addLayer">SITNA.Map#addLayer</a></li>
+												<li><a href="SITNA.Map.html#setBaseLayer">SITNA.Map#setBaseLayer</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="LineStyleOptions" class="typedef public"><span class="name">LineStyleOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de estilo de línea. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de esta propiedad
+			(para ver instrucciones de uso de maquetaciones, consultar <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>).</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+							<th>Valor por defecto</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>strokeColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#ff0000&quot;</td>
+							<td class="last">
+									<p>Color de trazo de la línea, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>strokeOpacity</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>1</td>
+							<td class="last">
+									<p>Opacidad de trazo de la línea, valor de 0 a 1.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>strokeWidth</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>2</td>
+							<td class="last">
+									<p>Anchura de trazo en píxeles de la línea.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+												<li><a href="tutorial-layout_cfg.html">Configurar por maquetación</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="MapControlOptions" class="typedef public"><span class="name">MapControlOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de controles de mapa, define qué controles se incluyen en un mapa y qué opciones se pasan a cada control.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+							<th>Valor por defecto</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>attribution</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene atribución.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>basemapSelector</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un selector de mapas de fondo.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>click</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ClickOptions">ClickOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un control que gestiona los clics del usuario sobre su ventana de visualización.
+			La atribución es un texto superpuesto al mapa que actúa como reconocimiento de la procedencia de los datos que se muestran.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>coordinates</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#CoordinatesOptions">CoordinatesOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un indicador de coordenadas y de sistema de referencia espacial.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>dataLoader</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#DataLoaderOptions">DataLoaderOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>,  se muestra un control para añadir datos externos, en concreto servicios WMS y archivos locales de datos geográficos.</p>
+			<p>Se pueden añadir WMS escribiendo la dirección del servicio o eligiendo un servicio de la lista de sugerencias de servicios de interés.</p>
+			<p>Se pueden añadir datos de archivos buscándolos en el cuadro de diálogo que se abre tras pulsar “Abrir archivo” o arrastrándolos y soltándolos dentro del área del mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featureInfo</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#FeatureInfoOptions">FeatureInfoOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa responde a los clics con un información de las capas cargadas de tipo WMS. Se usa para ello la petición <code>getFeatureInfo</code> del standard WMS.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>layerCatalog</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#LayerCatalogOptions">LayerCatalogOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, se muestra un control para añadir capas de trabajo desde uno o varios servicios WMS.
+			Con este control se dispone de las siguientes funcionalidades:</p>
+			<ul>
+			<li>Consultar las capas disponibles en uno o varios WMS.</li>
+			<li>Buscar capas mediante texto libre. Se busca el texto en los títulos y los resúmenes descriptivos de cada capa, que se publican en el <a href="https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities">documento de capacidades</a> del servicio.</li>
+			<li>Añadir capas al mapa como capas de trabajo.</li>
+			</ul>
+			<p>Este control se usa habitualmente en combinación con <code>workLayerManager</code>, como se muestra en el ejemlo de <a href="global.html#LayerCatalogOptions"><code>LayerCatalogOptions</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>legend</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene leyenda.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>loadingIndicator</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un indicador de espera de carga.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>measure</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un medidor de longitudes, áreas y perímetros.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>navBar</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene una barra de navegación con control de zoom.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>overviewMap</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#OverviewMapOptions">OverviewMapOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un mapa de situación.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>popup</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa muestra los datos asociados a los marcadores cuando se pulsa sobre ellos.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>printMap</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, se muestra una herramienta para imprimir el mapa en PDF.</p>
+			<p>El control permite al usuario elegir entre varios tamaños de hoja y orientación horizontal o vertical, además se le puede poner un título al documento de impresión.</p>
+			<p>Al pulsar el botón de imprimir se abre una previsualización como paso previo a la impresión. Ahí el usuario puede realizar unos últimos ajustes a la extensión del mapa.</p>
+			<p>El PDF se generará al pulsar en el botón dentro de la previsualización.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>scale</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un indicador numérico de escala.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>scaleBar</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un indicador gráfico de escala.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>scaleSelector</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un selector numérico de escala.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>search</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#SearchOptions">SearchOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene un buscador.
+			El buscador localiza coordenadas y busca entidades geográficas tales como: municipios, cascos urbanos, vías, portales y parcelas catastrales de IDENA.
+			Es posible establecer un origen de datos distinto a IDENA en el que buscar, consultar la sección: 2.3.1. Objeto de configuración de opciones del buscador.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>streetView</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#StreetViewOptions">StreetViewOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el usuario podrá abrir una ventana de Google StreetView en la ubicación seleccionada en el mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>TOC</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, el mapa tiene una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.
+			Los controles <code>TOC</code> y <code>workLayerManager</code> realizan varias funciones comunes, así rara vez será necesario tener los dos a la vez en un visor.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>WFSQuery</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#WFSQueryOptions">WFSQueryOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, desde el control <code>workLayerManager</code> se pueden hacer consultas alfanuméricas a las capas del mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>workLayerManager</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#ControlOptions">ControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Si se establece a un valor <em>truthy</em>, se muestra un control para consultar y gestionar las capas de trabajo que están cargadas en el mapa.
+			Con este control se dispone de las siguientes funcionalidades:</p>
+			<ul>
+			<li>Consultar qué capas están cargadas en el mapa</li>
+			<li>Ver en qué orden están superpuestas y modificar ese orden</li>
+			<li>Comprobar si una capa es visible al nivel de zoom actual</li>
+			<li>Activar y desactivar la visibilidad de las capas</li>
+			<li>Establecer el grado de transparencia de cada capa</li>
+			<li>Borrar capas cargadas</li>
+			<li>Consultar metadatos asociados a la capa</li>
+			<li>Si está también el control <code>WFSQuery</code>, ejecutar consultas alfanuméricas sobre las capas cargadas en el mapa, si cuentan con un servicio WFS pareado al WMS.</li>
+			</ul>
+			<p>Los controles <code>workLayerManager</code> y <code>TOC</code> realizan varias funciones comunes, así rara vez será necesario tener los dos a la vez en un visor.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p>Ejemplo de uso de propiedad <code>featureInfo</code> - <a href="../examples/cfg.MapControlOptions.featureInfo.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Añadimos el control featureInfo.    SITNA.Cfg.controls.featureInfo &#x3D; true;    // Añadimos una capa WMS sobre la que hacer las consultas.    SITNA.Cfg.workLayers &#x3D; [        {            id: &quot;terremotos&quot;,            title: &quot;Terremotos últimos 365 días&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;https://www.ign.es/wms-inspire/geofisica&quot;,            layerNames: [&quot;Ultimos365dias&quot;]        }    ];    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+					</div>
+					<div class="example-caption"><p>Ejemplo de uso de propiedad <code>printMap</code> - <a href="../examples/cfg.MapControlOptions.printMap.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecemos un layout simplificado apto para hacer demostraciones de controles.    SITNA.Cfg.layout &#x3D; &quot;layout/ctl-container&quot;;    // Añadimos el control de impresión en el primer contenedor.    SITNA.Cfg.controls.printMap &#x3D; {        div: &quot;slot1&quot;    };    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+					</div>
+					<div class="example-caption"><p>Ejemplo de uso de propiedad <code>workLayerManager</code> - <a href="../examples/cfg.MapControlOptions.workLayerManager.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecemos un layout simplificado apto para hacer demostraciones de controles.    SITNA.Cfg.layout &#x3D; &quot;layout/ctl-container&quot;;    // Añadimos el control de capas cargadas en la primera posición.    SITNA.Cfg.controls.workLayerManager &#x3D; {        div: &quot;slot1&quot;    };    // Añadimos tres capas WMS.    SITNA.Cfg.workLayers &#x3D; [        {            id: &quot;relieve&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;//idena.navarra.es/ogc/wms&quot;,            layerNames: [&quot;IDENA:mapa_relieve_bn&quot;]        },        {            id: &quot;pefc&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;//idena.navarra.es/ogc/wms&quot;,            layerNames: [&quot;IDENA:FOREST_Pol_MontesPEFC&quot;]        },        {            id: &quot;pistas&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;//idena.navarra.es/ogc/wms&quot;,            layerNames: [&quot;IDENA:FOREST_Lin_PistasForP&quot;]        }    ];    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MapOptions">MapOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="MapOptions" class="typedef public"><span class="name">MapOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de configuración del mapa. Para más información de como usar objetos de este tipo, consultar <a href="tutorial-2-configuration.html">Cómo configurar un mapa</a>.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+							<th>Valor por defecto</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>baseLayers</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#LayerOptions">LayerOptions</a>></span> | <span class="param-type">Array.&lt;string></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td><a href="SITNA.Consts.layer.html#.IDENA_BASEMAP"><code>SITNA.Consts. layer. IDENA_BASEMAP</code></a>, <a href="SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO"><code>SITNA.Consts. layer. IDENA_ORTHOPHOTO</code></a>, <a href="SITNA.Consts.layer.html#.IDENA_CADASTER"><code>SITNA.Consts. layer. IDENA_CADASTER</code></a>, <a href="SITNA.Consts.layer.html#.IDENA_CARTO"><code>SITNA.Consts. layer. IDENA_CARTO</code></a></td>
+							<td class="last">
+									<p>Lista con cualquier combinación de objetos de definición de capa o de identificadores de capas de la API SITNA
+			(miembros de <a href="SITNA.Consts.layer.html"><code>SITNA.Consts.layer</code></a>) para incluir dichas capas como mapas de fondo.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>controls</code></td>
+							<td><span class="param-type"><a href="global.html#MapControlOptions">MapControlOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Opciones de controles de mapa, define qué controles se incluyen en un mapa y qué opciones se pasan a cada control.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>crossOrigin</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Valor del atributo <code>crossorigin</code> de las imágenes del mapa para habilitar CORS Es necesario establecer esta opción para poder utilizar el método <a href="SITNA.Map.html#exportImage"><code>SITNA.Map#exportImage</code></a>.</p>
+			<p>Los valores soportados son <code>anonymous</code> y <code>use-credentials</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>crs</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;EPSG:25830&quot;</td>
+							<td class="last">
+									<p>Código EPSG del sistema de referencia de coordenadas del mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>defaultBaseLayer</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td><a href="SITNA.Consts.layer.html#.IDENA_BASEMAP"><code>SITNA.Consts. layer. IDENA_BASEMAP</code></a></td>
+							<td class="last">
+									<p>Identificador de la capa base por defecto o índice de la capa base por defecto en la lista de capas base del mapa (Definida con la propiedad <code>baseLayers</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>initialExtent</code></td>
+							<td><span class="param-type">Array.&lt;number></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>[541084.221, 4640788.225, 685574.4632, 4796618.764]</td>
+							<td class="last">
+									<p>Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima, en las unidades del sistema de referencia de coordenadas del mapa (Ver propiedad <code>crs</code>). Por defecto la extensión es la de Navarra.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>layout</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;layout/responsive&quot;</td>
+							<td class="last">
+									<p>URL de la carpeta de maquetación. Para prescindir de maquetación, establecer esta propiedad a <code>null</code>. Para más información al respecto de esta propiedad,
+			consulte el tutorial <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>locale</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;es-ES&quot;</td>
+							<td class="last">
+									<p>Código de idioma de la interfaz de usuario. Este código debe obedecer la sintaxis definida por la IETF. Los valores posibles son <code>es-ES</code>, <code>eu-ES</code> y <code>en-US</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>maxExtent</code></td>
+							<td><span class="param-type">Array.&lt;number></span> | <span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>false</td>
+							<td class="last">
+									<p>Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima, de forma que el centro del mapa nunca saldrá fuera de estos límites.
+			Estos valores deben estar en las unidades definidas por el sistema de referencia de coordenadas del mapa (Ver propiedad <code>crs</code>).</p>
+			<p>Si en vez de un array el valor es <code>false</code>, el mapa no tiene limitada la extensión máxima.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>mouseWheelZoom</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Si se establece a <code>true</code>, la rueda de scroll del ratón se puede utilizar para hacer zoom en el mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>pixelTolerance</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>10</td>
+							<td class="last">
+									<p>Tolerancia en pixels a las consultas de información de capa.</p>
+			<p>En ciertas capas, por ejemplo las que representan geometrías de puntos, puede ser difícil pulsar precisamente en el punto donde está la entidad geográfica que interesa.</p>
+			<p>La propiedad <code>pixelTolerance</code> define un área de un número de pixels hacia cada lado del punto de pulsación, de forma que toda entidad geográfica que esté dentro de ese área, total o parcialmente, se incluye en el resultado de la consulta.</p>
+			<p>Por ejemplo, si el valor establecido es 10, toda entidad geográfica que esté dentro de un cuadrado de 21 pixels de lado (10 pixels por cuadrante más el pixel central)
+			centrado en el punto de pulsación se mostrará en el resultado. A tener en cuenta: Esta propiedad establece el valor de los llamados <em>parámetros de vendedor</em>
+			que los servidores de mapas admiten para modificar el comportamiento de las peticiones <code>getFeatureInfo</code> del standard WMS. Pero este comportamiento puede ser modificado también por otras circunstancias,
+			como los estilos aplicados a las capas en el servidor.</p>
+			<p>Como estas circunstancias están fuera del ámbito de alcance de esta API, es posible que los resultados obtenidos desde algún servicio WMS sean inesperados en lo referente a <code>pixelTolerance</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>proxy</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>URL del proxy utilizado para peticiones a dominios remotos.</p>
+			<p>Debido a restricciones de seguridad implementadas en Javascript, a través de <code>XMLHttpRequest</code> no es posible obtener información de dominios distintos al de la página web.</p>
+			<p>Hay dos maneras de solventar esta restricción. La primera es que el servidor remoto permita el acceso entre dominios estableciendo la cabecera <code>Access-Control-Allow-Origin</code> a la respuesta HTTP.
+			Dado que esta solución la implementan terceras personas (los administradores del dominio remoto), no siempre es aplicable.</p>
+			<p>La segunda solución es desplegar en el dominio propio un proxy. Un proxy es un servicio que recibe peticiones HTTP y las redirige a otra URL.</p>
+			<p>Si la propiedad <code>proxy</code> está establecida, todas las peticiones a dominios remotos las mandará al proxy para que este las redirija.
+			De esta manera no infringimos las reglas de seguridad de JavaScript, dado que el proxy está alojado en el dominio propio.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>styles</code></td>
+							<td><span class="param-type"><a href="global.html#StyleOptions">StyleOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Opciones de estilo de las entidades geográficas.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>workLayers</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#LayerOptions">LayerOptions</a>></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Lista de objetos de definición de capa para incluir dichas capas como contenido activo del mapa.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="tutorial-2-configuration.html">Cómo configurar un mapa</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="MarkerOptions" class="typedef public"><span class="name">MarkerOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de marcador (punto con un icono). Para determinar qué icono se va a asignar al marcador, se leen las propiedades <code>url</code>, <code>cssClass</code> <code>group</code>, en ese orden de preferencia.
+			Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de esta propiedad
+			(para ver instrucciones de uso de maquetaciones, consultar <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>).</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+							<th>Valor por defecto</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>data</code></td>
+							<td><span class="param-type">object</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Diccionario de pares clave-valor que representa los atributos alfanuméricos del marcador. Al pulsar sobre este, los atributos se mostrarán en un bocadillo.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>layer</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Esta propiedad se utiliza en <a href="SITNA.Map.html#addMarker"><code>SITNA.Map#addMarker</code></a>. Es el identificador de una capa de tipo <a href="SITNA.Consts.layerType.html#.VECTOR"><code>SITNA.Consts.layerType.VECTOR</code></a> en la que se añadirá el marcador.
+			Si no se especifica se creará una capa específica para los marcadores que se añadan por este método.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>showPopup</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Si se establece a <code>true</code>, el marcador se añade al mapa con el bocadillo de información asociada visible por defecto.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>anchor</code></td>
+							<td><span class="param-type">Array.&lt;number></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>[0.5, 1]</td>
+							<td class="last">
+									<p>Posicionamiento relativo del icono respecto al punto del mapa, representado por un array de dos números entre 0 y 1, siendo [0, 0] la esquina superior izquierda del icono y [1, 1] la esquina inferior derecha del icono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>classes</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>[&quot;tc-marker1&quot;, &quot;tc-marker2&quot;, &quot;tc-marker3&quot;, &quot;tc-marker4&quot;, &quot;tc-marker5&quot;]</td>
+							<td class="last">
+									<p>Lista de nombres de clase CSS a utilizar para los iconos de los marcadores. La API extraerá la URL de las imágenes del atributo <code>background-image</code> asociado a la clase.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>cssClass</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Nombre de una clase CSS. El marcador adoptará como icono el valor del atributo <code>background-image</code> de dicha clase.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>height</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>32</td>
+							<td class="last">
+									<p>Altura en píxeles del icono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>width</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>32</td>
+							<td class="last">
+									<p>Anchura en píxeles del icono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>URL de archivo de imagen que se utilizará para el icono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>group</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Nombre de grupo en el que incluir el marcador. Todos los marcadores con el mismo valor en esta propiedad se consideran en un mismo grupo, y
+			con ello comparten el mismo icono. El icono se selecciona por orden de la lista de clases CSS definida en <code>classes</code>. Los grupos se muestran en la tabla de contenidos y en la leyenda.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>angle</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Nombre del campo del cual extraer la rotación a aplicar a la etiqueta.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fontColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#000000&quot;</td>
+							<td class="last">
+									<p>Color del texto de la etiqueta descriptiva del marcador, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fontSize</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>10</td>
+							<td class="last">
+									<p>Tamaño de fuente del texto de la etiqueta descriptiva del marcador.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>label</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Colección de nombre de campo o campos de los cuales extraer el valor de la etiqueta.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>labelOutlineColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#ffffff&quot;</td>
+							<td class="last">
+									<p>Color del contorno del texto de la etiqueta descriptiva del marcador, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>labelOutlineWidth</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>2</td>
+							<td class="last">
+									<p>Anchura en píxeles del trazo del contorno del texto de la etiqueta.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+							<!-- augments -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Extiende</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MarkerStyleOptions">MarkerStyleOptions</a></p>
+								</div>
+							</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="SITNA.Map.html#addMarker">SITNA.Map#addMarker</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="MarkerStyleOptions" class="typedef public"><span class="name">MarkerStyleOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de estilo de marcador (punto con un icono). Para determinar qué icono se va a asignar al marcador, se leen las propiedades <code>url</code> y <code>cssClass</code>, en ese orden de preferencia.
+			Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de esta propiedad
+			(para ver instrucciones de uso de maquetaciones, consultar <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>).</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+							<th>Valor por defecto</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>anchor</code></td>
+							<td><span class="param-type">Array.&lt;number></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>[0.5, 1]</td>
+							<td class="last">
+									<p>Posicionamiento relativo del icono respecto al punto del mapa, representado por un array de dos números entre 0 y 1, siendo [0, 0] la esquina superior izquierda del icono y [1, 1] la esquina inferior derecha del icono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>classes</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>[&quot;tc-marker1&quot;, &quot;tc-marker2&quot;, &quot;tc-marker3&quot;, &quot;tc-marker4&quot;, &quot;tc-marker5&quot;]</td>
+							<td class="last">
+									<p>Lista de nombres de clase CSS a utilizar para los iconos de los marcadores. La API extraerá la URL de las imágenes del atributo <code>background-image</code> asociado a la clase.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>cssClass</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Nombre de una clase CSS. El marcador adoptará como icono el valor del atributo <code>background-image</code> de dicha clase.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>height</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>32</td>
+							<td class="last">
+									<p>Altura en píxeles del icono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>width</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>32</td>
+							<td class="last">
+									<p>Anchura en píxeles del icono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>URL de archivo de imagen que se utilizará para el icono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>angle</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Nombre del campo del cual extraer la rotación a aplicar a la etiqueta.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fontColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#000000&quot;</td>
+							<td class="last">
+									<p>Color del texto de la etiqueta descriptiva del marcador, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fontSize</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>10</td>
+							<td class="last">
+									<p>Tamaño de fuente del texto de la etiqueta descriptiva del marcador.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>label</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Colección de nombre de campo o campos de los cuales extraer el valor de la etiqueta.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>labelOutlineColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#ffffff&quot;</td>
+							<td class="last">
+									<p>Color del contorno del texto de la etiqueta descriptiva del marcador, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>labelOutlineWidth</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>2</td>
+							<td class="last">
+									<p>Anchura en píxeles del trazo del contorno del texto de la etiqueta.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+												<li><a href="tutorial-layout_cfg.html">Configurar por maquetación</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="MunicipalitySearchOptions" class="typedef public"><span class="name">MunicipalitySearchOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de configuración del origen de datos de la búsqueda de municipios.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>dataIdProperty</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a un municipio. Los campos definidos deben existir en la capa o capas definidas en la propiedad <code>featureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featurePrefix</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Prefijo del nombre de la capa o capas a definir en la propiedad <code>featureType</code>. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featureType</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre de la capa o capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en <code>queryProperties</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>geometryName</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre del campo de la geometría del municipio.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>outputFormatLabel</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección <code>outputProperties</code> con el valor del campo. Las llaves de cierre y apertura son necesarias.</p>
+			<p>Por ejemplo: <code>outputProperties</code> como <code>[NombreMunicipio]</code> y <code>outputFormatLabel</code> como <code>“{0}”</code> mostrará en la lista resultados del tipo: <em>Pamplona</em>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>outputProperties</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con los nombres de campos a mostrar (según el patrón indicando en <code>outputFormatLabel</code>) en la lista de sugerencias.
+			Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos.
+			Los campos definidos deben existir en la capa o capas definidas en la propiedad <code>featureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>queryProperties</code></td>
+							<td><span class="param-type"><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></span></td>
+							<td class="last">
+									<p>Definición de los campos por los que filtrar la búsqueda de municipios.</p>
+			<p>En este tipo de búsqueda es obligatorio dar un valor a la propiedad <code>firstQueryWord</code>: se indicará el campo o campos (tipo <code>string</code>) en los que buscar el nombre del municipio.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>styles</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#StyleOptions">StyleOptions</a>></span></td>
+							<td class="last">
+									<p>Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en <code>featureType</code> y en <code>styles</code>, por tanto,
+			deberá haber tantas instancias como capas definidas en <code>featureType</code>.</p>
+			<p>No está disponible <code>cluster</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>suggestionListHead</code></td>
+							<td><span class="param-type"><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></span></td>
+							<td class="last">
+									<p>Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Dirección del servicio WFS (las búsquedas en el API SITNA están implementadas sobre el estándar <a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service</a>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Cfg.SearchMunicipalitySource.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">{    url:&#x27;//idena.navarra.es/ogc/wfs&#x27;,            featurePrefix: &#x27;IDENA&#x27;,    geometryName: &#x27;the_geom&#x27;,    featureType: &#x27;CATAST_Pol_Municipio&#x27;,    dataIdProperty: [&#x27;CMUNICIPIO&#x27;],    queryProperties: {        firstQueryWord: [&#x27;MUNINOAC&#x27;, &#x27;MUNICIPIO&#x27;]    },    suggestionListHead: {        label: &quot;search.list.municipality&quot;,        color: &quot;strokeColor&quot;    },    outputProperties: [&#x27;MUNICIPIO&#x27;],    outputFormatLabel: &#x27;{0}&#x27;,            styles: [        {            polygon: {                fillColor: &#x27;#000000&#x27;,                fillOpacity: 0.1,                strokeColor: &#x27;#fe06a5&#x27;,                strokeWidth: 2,                strokeOpacity: 1            }        }    ]}</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+												<li><a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service Standard</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="OverviewMapOptions" class="typedef public"><span class="name">OverviewMapOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control de mapa de situación.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>div</code></td>
+							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>layer</code></td>
+							<td><span class="param-type">string</span> | <span class="param-type">object</span></td>
+								<td class="attributes"></td>
+							<td class="last">
+									<p>Identificador de capa para usar como mapa de fondo u objeto de opciones de capa.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+							<!-- augments -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Extiende</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#ControlOptions">ControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MapControlOptions">MapControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="PointStyleOptions" class="typedef public"><span class="name">PointStyleOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de estilo de punto. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de esta propiedad
+			(para ver instrucciones de uso de maquetaciones, consultar <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>).</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+							<th>Valor por defecto</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>angle</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Nombre del campo del cual extraer la rotación a aplicar a la etiqueta.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fillColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#000000&quot; (&quot;#333366&quot; en clusters)</td>
+							<td class="last">
+									<p>Color de relleno, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fillOpacity</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>0.3 (0.6 en clusters)</td>
+							<td class="last">
+									<p>Opacidad de relleno, valor de 0 a 1.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fontColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#000000&quot; (&quot;#ffffff&quot; en clusters)</td>
+							<td class="last">
+									<p>Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fontSize</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>10 (9 en clusters)</td>
+							<td class="last">
+									<p>Tamaño de fuente del texto de la etiqueta descriptiva del punto.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>label</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Colección de nombre de campo o campos de los cuales extraer el valor de la etiqueta.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>labelOutlineColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#ffffff&quot; (undefined en clusters)</td>
+							<td class="last">
+									<p>Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>labelOutlineWidth</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>2 (undefined en clusters)</td>
+							<td class="last">
+									<p>Anchura en píxeles del trazo del contorno del texto de la etiqueta.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>radius</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>6 (undefined en clusters)</td>
+							<td class="last">
+									<p>Radio en pixels del símbolo que representa el punto.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>strokeColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#ff0000&quot; (undefined en clusters)</td>
+							<td class="last">
+									<p>Color de trazo de la línea que delimita el símbolo del punto, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>strokeOpacity</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>1 (undefined en clusters)</td>
+							<td class="last">
+									<p>Opacidad de trazo de la línea que delimita el símbolo del punto, valor de 0 a 1.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>strokeWidth</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>2 (undefined en clusters)</td>
+							<td class="last">
+									<p>Anchura de trazo en píxeles de la línea que delimita el símbolo del punto.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+												<li><a href="tutorial-layout_cfg.html">Configurar por maquetación</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="PolygonStyleOptions" class="typedef public"><span class="name">PolygonStyleOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de estilo de polígono. Hay que tener en cuenta que el archivo <code>config.json</code> de una maquetación puede sobreescribir los valores por defecto de esta propiedad
+			(para ver instrucciones de uso de maquetaciones, consultar <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>).</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+							<th>Valor por defecto</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>fillColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#000000&quot;</td>
+							<td class="last">
+									<p>Color de relleno, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>fillOpacity</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>0.3</td>
+							<td class="last">
+									<p>Opacidad de relleno, valor de 0 a 1.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>strokeColor</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;#ff0000&quot;</td>
+							<td class="last">
+									<p>Color de trazo de los lados del polígono, representado en formato hex triplet (<code>#RRGGBB</code>).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>strokeOpacity</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>1</td>
+							<td class="last">
+									<p>Opacidad de trazo de los lados del polígono, valor de 0 a 1.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>strokeWidth</code></td>
+							<td><span class="param-type">number</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>2</td>
+							<td class="last">
+									<p>Anchura de trazo en de los lados del polígono.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+												<li><a href="tutorial-layout_cfg.html">Configurar por maquetación</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="PostalAddressSearchOptions" class="typedef public"><span class="name">PostalAddressSearchOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de configuración del origen de datos de la búsqueda de direcciones postales.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>dataIdProperty</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a la dirección postal. Los campos definidos deben existir en la capa o capas definidas en la propiedad <code>featureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featurePrefix</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Prefijo del nombre de la capa o capas a definir en la propiedad <code>featureType</code>. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featureType</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre de la capa o capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en <code>queryProperties</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>geometryName</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre del campo de la geometría de la dirección postal.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>outputFormatLabel</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección <code>outputProperties</code> con el valor del campo. Las llaves de cierre y apertura son necesarias.</p>
+			<p>Por ejemplo: <code>outputProperties</code> como <code>[EntidadPoblacion, Via, Numero]</code> y <code>outputFormatLabel</code> como <code>“{1} {2}, {0}”</code> mostrará en la lista resultados del tipo: <em>Calle Estafeta 13, Pamplona</em>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>outputProperties</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con los nombres de campos a mostrar (según el patrón indicando en <code>outputFormatLabel</code>) en la lista de sugerencias.
+			Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos.
+			Los campos definidos deben existir en la capa o capas definidas en la propiedad <code>featureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>queryProperties</code></td>
+							<td><span class="param-type"><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></span></td>
+							<td class="last">
+									<p>Definición de los campos por los que filtrar la búsqueda de direcciones postales.</p>
+			<p>En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:</p>
+			<ul>
+			<li><code>firstQueryWord</code>: se indicará el campo o campos (tipo <code>string</code>) en los que buscar el nombre de la entidad de población.</li>
+			<li><code>secondQueryWord</code>: se indicará el campo o campos (tipo <code>string</code>) en los que buscar el nombre de la vía.</li>
+			<li><code>thirdQueryWord</code>: se indicará el campo o campos (tipo <code>string</code>) en los que buscar el número de portal.</li>
+			</ul>
+							</td>
+						</tr>
+						<tr>
+								<td><code>styles</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#StyleOptions">StyleOptions</a>></span></td>
+							<td class="last">
+									<p>Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en <code>featureType</code> y en <code>styles</code>, por tanto,
+			deberá haber tantas instancias como capas definidas en <code>featureType</code>.</p>
+			<p>No está disponible cluster.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>suggestionListHead</code></td>
+							<td><span class="param-type"><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></span></td>
+							<td class="last">
+									<p>Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Dirección del servicio WFS (las búsquedas en el API SITNA están implementadas sobre el estándar <a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service</a>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Cfg.SearchPostalAddressSource.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">{    url: &#x27;//idena.navarra.es/ogc/wfs&#x27;,            featurePrefix: &#x27;IDENA&#x27;,    geometryName: &#x27;the_geom&#x27;,    featureType: &#x27;CATAST_Txt_Portal&#x27;,    dataIdProperty: [&#x27;CMUNICIPIO&#x27;, &#x27;CENTIDADC&#x27;, &#x27;CVIA&#x27;, &#x27;PORTAL&#x27;],    queryProperties: {        firstQueryWord: [&#x27;ENTIDADC&#x27;, &#x27;ENTINOAC&#x27;],        secondQueryWord: [&#x27;VIA&#x27;, &#x27;VIANOAC&#x27;],        thirdQueryWord: [&#x27;PORTAL&#x27;]    },    suggestionListHead: {        label: &quot;search.list.number&quot;,        color: &quot;fontColor&quot;    },    outputProperties: [&#x27;ENTIDADC&#x27;, &#x27;VIA&#x27;, &#x27;PORTAL&#x27;, &#x27;CVIA&#x27;, &#x27;CENTIDADC&#x27;, &#x27;CMUNICIPIO&#x27;],    outputFormatLabel: &#x27;{1} {2}, {0}&#x27;,    styles: [        {            point: {                radius: 0,                label: &quot;PORTAL&quot;,                angle: &quot;CADANGLE&quot;,                fontColor: &quot;#CB0000&quot;,                fontSize: 14,                labelOutlineColor: &quot;#FFFFFF&quot;,                labelOutlineWidth: 4            }        }    ]}</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+												<li><a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service Standard</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="SearchOptions" class="typedef public"><span class="name">SearchOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control de búsquedas. La configuración por defecto tiene como origen de datos el WFS de IDENA.
+			Es posible establecer un origen de datos distinto en el que consultar, para ello en lugar de asignar un booleano a la propiedad, que activa o desactiva la búsqueda,
+			se asignará un objeto con las propiedades a sobrescribir. Las propiedades a sobrescribir no siempre serán las mismas, variarán en función de la configuración que tenga la búsqueda que se quiera modificar.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+							<th>Valor por defecto</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>div</code></td>
+							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td></td>
+							<td class="last">
+									<p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>cadastralParcel</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Esta propiedad activa/desactiva la búsqueda de parcelas catastrales en el buscador del mapa. Formato: municipio, polígono, parcela.</p>
+			<p>Para configurar un origen de datos distinto a IDENA, establecer como valor una instancia de <a href="global.html#CadastralSearchOptions"><code>CadastralSearchOptions</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>coordinates</code></td>
+							<td><span class="param-type">boolean</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Esta propiedad activa/desactiva la localización de coordenadas en Sistema de Referencia ETRS89, bien UTM Huso 30 Norte (EPSG:25830) o latitud-longitud (EPSG:4258, EPSG:4326 o CRS:84) en el buscador del mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>instructions</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>&quot;Buscar municipio, casco urbano, calle, dirección, referencia catastral, coordenadas UTM o latitud-longitud&quot;</td>
+							<td class="last">
+									<p>Esta propiedad establece el atributo <code>title</code> del cajetín y del botón del buscador del mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>municipality</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Esta propiedad activa/desactiva la búsqueda de municipios en el buscador del mapa.</p>
+			<p>Para configurar un origen de datos distinto a IDENA, establecer como valor una instancia de <a href="global.html#MunicipalitySearchOptions"><code>MunicipalitySearchOptions</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>postalAddress</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Esta propiedad activa/desactiva la búsqueda de direcciones postales en el buscador del mapa. Formato: entidad de población, vía, portal.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>street</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Esta propiedad activa/desactiva la búsqueda de vías en el buscador del mapa. Formato: entidad de población, vía.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>town</code></td>
+							<td><span class="param-type">boolean</span> | <span class="param-type"><a href="global.html#TownSearchOptions">TownSearchOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+								<td>true</td>
+							<td class="last">
+									<p>Esta propiedad activa/desactiva de cascos urbanos en el buscador del mapa.</p>
+			<p>Para configurar un origen de datos distinto a IDENA, establecer como valor una instancia de <a href="global.html#TownSearchOptions"><code>TownSearchOptions</code></a>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.SearchOptions.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;    &lt;script&gt;    // Creamos un mapa con el control de búsquedas.     // Configuramos el buscador desactivando la búsqueda de parcelas y la localización de coordenadas.    // Indicamos un placeHolder y tooltip (propiedad &quot;instructions&quot;) acorde con las búsquedas configuradas.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        controls: {            search: {                coordinates: false,                cadastralParcel: false,                municipality: true,                town: true,                street: true,                postalAddress: true,                placeHolder: &quot;Municipio, casco urbano, calle o portal&quot;,                instructions: &quot;Buscar municipio, casco urbano, calle o portal&quot;            }        }    });&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+							<!-- augments -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Extiende</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#ControlOptions">ControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MapControlOptions">MapControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="SearchQueryPropertyOptions" class="typedef public"><span class="name">SearchQueryPropertyOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de configuración del origen de datos de una búsqueda.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>firstQueryWord</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección de nombre de campo o campos a consultar para el 1º término del criterio de búsqueda, deben existir en la capa o capas definidas en la propiedad <code>FeatureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>secondQueryWord</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección de nombre de campo o campos a consultar para el 2º término del criterio de búsqueda, deben existir en la capa o capas definidas en la propiedad <code>FeatureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>thirdQueryWord</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección de nombre de campo o campos a consultar para el 3º término del criterio de búsqueda, deben existir en la capa o capas definidas en la propiedad <code>FeatureType</code>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></li>
+												<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
+												<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
+												<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
+												<li><a href="global.html#TownSearchOptions">TownSearchOptions</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="SearchResultColor" class="typedef public"><span class="name">SearchResultColor</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Definición del color con el que se dibujará los resultados de la búsqueda en el mapa. Este color también se mostrará en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>css</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre de la propiedad de las sugerencias de la cual extraer el color. Ha de ser alguna de las distintas propiedades de colores presentes en <a href="global.html#PointStyleOptions"><code>PointStyleOptions</code></a>,
+			<a href="global.html#LineStyleOptions"><code>LineStyleOptions</code></a> o <a href="global.html#PolygonStyleOptions"><code>PolygonStyleOptions</code></a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>geomType</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre del tipo de geometría (el valor es un miembro de <a href="SITNA.Consts.geom.html"><code>SITNA.Consts.geom</code></a>).</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">color: {    geomType: &quot;point&quot;,    css: &quot;fontColor&quot;} </code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="SearchResultColorDictionary" class="typedef public"><span class="name">SearchResultColorDictionary</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Algunas búsquedas hacen la consulta sobre varias capas. Este objeto define el color de los resultados de la búsqueda de cada capa. Estos colores también se mostrarán en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>color</code></td>
+							<td><span class="param-type"><a href="global.html#SearchResultColor">SearchResultColor</a></span></td>
+							<td class="last">
+									<p>Configuración para obtener el color.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>title</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Title para identificar al color. Se define con la clave del diccionario de traducciones. Revisar la sección <strong>Soporte multiidioma</strong> en <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">CATAST_Pol_ParcelaUrba: {    title: &quot;search.list.cadastral.urban&quot;,    color: {        geomType: &quot;polygon&quot;,        css: &quot;strokeColor&quot;    } }</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="SearchSuggestionHeaderOptions" class="typedef public"><span class="name">SearchSuggestionHeaderOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de configuración para la composición de la cabecera de una lista de sugerencias de búsqueda.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>label</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… Revisar la sección <strong>Soporte multiidioma</strong> en <a href="tutorial-layout_cfg.html">Configurar por maquetación</a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>color</code></td>
+							<td><span class="param-type"><a href="global.html#SearchResultColorDictionary">SearchResultColorDictionary</a></span> | <span class="param-type"><a href="global.html#SearchResultColor">SearchResultColor</a></span> | <span class="param-type">string</span></td>
+							<td class="last">
+									<p>Configuración para obtener el color que representa al tipo de búsqueda.
+			Se establece como color la primera coincidencia en <code>styles</code> que cumpla con la configuración.</p>
+			<p>La definición como string ha de ser para indicar el nombre de una propiedad presente en <a href="global.html#PointStyleOptions"><code>PointStyleOptions</code></a>, <a href="global.html#LineStyleOptions"><code>LineStyleOptions</code></a> o <a href="global.html#PolygonStyleOptions"><code>PolygonStyleOptions</code></a>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">{    label: &quot;search.list.town&quot;,    color: &quot;strokeColor&quot;}</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></li>
+												<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
+												<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
+												<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
+												<li><a href="global.html#TownSearchOptions">TownSearchOptions</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="StreetSearchOptions" class="typedef public"><span class="name">StreetSearchOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de configuración del origen de datos de la búsqueda de vías.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>dataIdProperty</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a una vía. Los campos definidos deben existir en la capa o capas definidas en la propiedad <code>featureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featurePrefix</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Prefijo del nombre de la capa o capas a definir en la propiedad <code>featureType</code>. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featureType</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre de la capa o capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en <code>queryProperties</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>geometryName</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre del campo de la geometría de la vía.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>outputFormatLabel</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección <code>outputProperties</code> con el valor del campo. Las llaves de cierre y apertura son necesarias.</p>
+			<p>Por ejemplo: <code>outputProperties</code> como <code>[EntidadPoblacion, Via]</code> y <code>outputFormatLabel</code> como <code>“{1}, {0}”</code> mostrará en la lista resultados del tipo: <em>Calle Estafeta, Pamplona</em>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>outputProperties</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con los nombres de campos a mostrar (según el patrón indicando en <code>outputFormatLabel</code>) en la lista de sugerencias.
+			Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos.
+			Los campos definidos deben existir en la capa o capas definidas en la propiedad <code>featureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>queryProperties</code></td>
+							<td><span class="param-type"><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></span></td>
+							<td class="last">
+									<p>Definición de los campos por los que filtrar la búsqueda de vías.</p>
+			<p>En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:</p>
+			<ul>
+			<li><code>firstQueryWord</code>: se indicará el campo o campos (tipo <code>string</code>) en los que buscar el nombre de la entidad de población.</li>
+			<li><code>secondQueryWord</code>: se indicará el campo o campos (tipo <code>string</code>) en los que buscar el nombre de la vía.</li>
+			</ul>
+							</td>
+						</tr>
+						<tr>
+								<td><code>renderFeatureType</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en <code>dataIdProperty</code>.</p>
+			<p>No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en <code>featureType</code> y <code>renderFeatureType</code> y que ambas cuenten con los campos definidos en <code>dataIdProperty</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>styles</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#StyleOptions">StyleOptions</a>></span></td>
+							<td class="last">
+									<p>Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de <code>featureType</code>
+			y <code>renderFeatureType</code> y 2 <code>styles</code>, por tanto, deberá haber tantas instancias como la suma de las capas definidas en <code>featureType</code> y en <code>renderFeatureType</code>.</p>
+			<p>No está disponible cluster.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>suggestionListHead</code></td>
+							<td><span class="param-type"><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></span></td>
+							<td class="last">
+									<p>Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Dirección del servicio WFS (las búsquedas en el API SITNA están implementadas sobre el estándar <a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service</a>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Cfg.SearchStreetSource.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">{    url: &#x27;//idena.navarra.es/ogc/wfs&#x27;,            featurePrefix: &#x27;IDENA&#x27;,    geometryName: &#x27;the_geom&#x27;,    renderFeatureType: &#x27;CATAST_Txt_Calle&#x27;,    featureType: &#x27;CATAST_Lin_CalleEje&#x27;,    dataIdProperty: [&#x27;CVIA&#x27;],            queryProperties: {        firstQueryWord: [&#x27;ENTINOAC&#x27;, &#x27;ENTIDADC&#x27;],        secondQueryWord: [&#x27;VIA&#x27;, &#x27;VIANOAC&#x27;]    },    suggestionListHead: {        label: &quot;search.list.street&quot;,        color: &quot;strokeColor&quot;    },    outputProperties: [&#x27;ENTIDADC&#x27;, &#x27;VIA&#x27;, &#x27;CVIA&#x27;, &#x27;CENTIDADC&#x27;, &#x27;CMUNICIPIO&#x27;],    outputFormatLabel: &#x27;{1}, {0}&#x27;,    styles: [        {            line: {                strokeColor: &quot;#CB0000&quot;,                strokeOpacity: 1,                strokeWidth: 2,                strokeLinecap: &quot;round&quot;,                strokeDashstyle: &quot;solid&quot;            }        },        {            point: {                label: &quot;VIA&quot;,                angle: &quot;CADANGLE&quot;,                fontColor: &quot;#000000&quot;,                fontSize: 7,                labelOutlineColor: &quot;#ffffff&quot;,                labelOutlineWidth: 2            }        }    ]}</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+												<li><a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service Standard</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="StreetViewOptions" class="typedef public"><span class="name">StreetViewOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control de búsquedas.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>div</code></td>
+							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>googleMapsKey</code></td>
+							<td><span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>El control de StreetView hace uso de la API de Google Maps para funcionar.
+			Esta propiedad establece la clave de uso asociada al sitio donde está alojada la aplicación que usa la API SITNA.
+			No es necesaria para hacer funcionar el control pero es recomendable obtener una para garantizar el servicio por parte de Google.</p>
+			<p>Puede obtener más información en el <a href="https://developers.google.com/maps/documentation/javascript/get-api-key">sitio para desarrolladores de Google</a>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>viewDiv</code></td>
+							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Elemento del DOM en el que mostrar la vista de StreetView o valor de atributo id de dicho elemento.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.StreetViewOptions.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;/&gt;&lt;div id&#x3D;&quot;sv&quot;/&gt;&lt;script&gt;    // Creamos un mapa con el control de StreetView.    // La vista de StreetView se debe dibujar en el elemento con identificador &quot;sv&quot;.    // Se utilizará la clave de Google Maps para el SITNA.    // (Solamente es válida en el sitio web del SITNA, está aquí a título de ejemplo).    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        controls: {            streetView: {                viewDiv: &quot;sv&quot;,                googleMapsKey: &quot;AIzaSyDyXgqllcajbMjx8yQxEX28VgA9nQOhtCM&quot;            }        }    });&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+							<!-- augments -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Extiende</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#ControlOptions">ControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MapControlOptions">MapControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="StyleOptions" class="typedef public"><span class="name">StyleOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de estilo de entidades geográficas.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>point</code></td>
+							<td><span class="param-type"><a href="global.html#PointStyleOptions">PointStyleOptions</a></span></td>
+							<td class="last">
+									<p>Opciones de estilo de punto.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>line</code></td>
+							<td><span class="param-type"><a href="global.html#LineStyleOptions">LineStyleOptions</a></span></td>
+							<td class="last">
+									<p>Opciones de estilo de línea.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>polygon</code></td>
+							<td><span class="param-type"><a href="global.html#PolygonStyleOptions">PolygonStyleOptions</a></span></td>
+							<td class="last">
+									<p>Opciones de estilo de polígono.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>marker</code></td>
+							<td><span class="param-type"><a href="global.html#MarkerStyleOptions">MarkerStyleOptions</a></span></td>
+							<td class="last">
+									<p>Opciones de estilo de marcador (punto de mapa con icono).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>cluster</code></td>
+							<td><span class="param-type"><a href="global.html#ClusterStyleOptions">ClusterStyleOptions</a></span></td>
+							<td class="last">
+									<p>Opciones de estilo de cluster de puntos. Consultar la propiedad <code>cluster</code> de <a href="global.html#LayerOptions"><code>LayerOptions</code></a> para saber cómo mostrar clusters.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#MapOptions">MapOptions</a></li>
+												<li><a href="global.html#WFSQueryOptions">WFSQueryOptions</a></li>
+												<li><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></li>
+												<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
+												<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
+												<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
+												<li><a href="global.html#TownSearchOptions">TownSearchOptions</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="TownSearchOptions" class="typedef public"><span class="name">TownSearchOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de configuración del origen de datos de la búsqueda de vías.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>dataIdProperty</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a un casco urbano. Los campos definidos deben existir en la capa o capas definidas en la propiedad <code>featureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featurePrefix</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Prefijo del nombre de la capa o capas a definir en la propiedad <code>featureType</code>. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>featureType</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con el nombre de la capa o capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en <code>queryProperties</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>geometryName</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre del campo de la geometría del casco urbano.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>outputFormatLabel</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección <code>outputProperties</code> con el valor del campo. Las llaves de cierre y apertura son necesarias.</p>
+			<p>Por ejemplo: <code>outputProperties</code> como <code>[NombreMunicipio, NombreCascoUrbano]</code> y <code>outputFormatLabel</code> como <code>“{1} ({0})”</code> mostrará en la lista resultados del tipo: <em>Salinas de Pamplona (Galar)</em>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>outputProperties</code></td>
+							<td><span class="param-type">Array.&lt;string></span></td>
+							<td class="last">
+									<p>Colección con los nombres de campos a mostrar (según el patrón indicando en <code>outputFormatLabel</code>) en la lista de sugerencias.
+			Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos.
+			Los campos definidos deben existir en la capa o capas definidas en la propiedad <code>featureType</code>.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>queryProperties</code></td>
+							<td><span class="param-type"><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></span></td>
+							<td class="last">
+									<p>Definición de los campos por los que filtrar la búsqueda de vías.</p>
+			<p>En este tipo de búsqueda es obligatorio dar un valor a la propiedad <code>firstQueryWord</code>: se indicará el campo o campos (tipo <code>string</code>) en los que buscar el nombre del casco urbano.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>styles</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#StyleOptions">StyleOptions</a>></span></td>
+							<td class="last">
+									<p>La relación entre capa y estilo se hace mediante el índice en la colección en <code>featureType</code> y en <code>styles</code>, por tanto, deberá haber tantas instancias como capas definidas en <code>featureType</code>.</p>
+			<p>No está disponible cluster.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>suggestionListHead</code></td>
+							<td><span class="param-type"><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></span></td>
+							<td class="last">
+									<p>Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Dirección del servicio WFS (las búsquedas en el API SITNA están implementadas sobre el estándar <a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service</a>.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Cfg.SearchTownSource.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-javascript"><code class="language-javascript">{    url: &#x27;//idena.navarra.es/ogc/wfs&#x27;,            featurePrefix: &#x27;IDENA&#x27;,    geometryName: &#x27;the_geom&#x27;,    featureType: &#x27;ESTADI_Pol_EntidadPob&#x27;,            dataIdProperty: [&#x27;CMUNICIPIO&#x27;, &#x27;CENTIDAD&#x27;],            queryProperties: {        firstQueryWord: [&#x27;ENTINOAC&#x27;, &#x27;ENTIDAD&#x27;]    },    suggestionListHead: {        label: &quot;search.list.urban&quot;,        color: &quot;strokeColor&quot;    },    outputProperties: [&#x27;MUNICIPIO&#x27;, &#x27;ENTIDAD&#x27;],    outputFormatLabel: &#x27;{1} ({0})&#x27;,            styles: [        {            polygon: {                fillColor: &#x27;#000000&#x27;,                fillOpacity: 0.1,                strokeColor: &#x27;#feba1e&#x27;,                strokeWidth: 2,                strokeOpacity: 1            }        }    ]}</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<ul class="form-control-static">
+												<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+												<li><a href="http://www.opengeospatial.org/standards/wfs">OGC Web Feature Service Standard</a></li>
+										</ul>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="WFSQueryOptions" class="typedef public"><span class="name">WFSQueryOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de control de consultas alfanuméricas.</p>
+			<p>Algunos servidores tienen servicios WMS y WFS que actúan en paralelo, es decir, están alojados dentro del mismo nombre de host y publican las mismas capas.
+			Si el control <code>WFSQuery</code> está en el mapa, verifica si las capas de servicios WMS están asociadas a un WFS paralelo. Si es así, ofrece un interfaz de usuario
+			para poder hacer consultas a la capa en base a los valores de las propiedades de los elementos de la capa. Esta interfaz de usuario es accesible desde el control
+			<code>workLayerManager</code>.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+							<th>Atributos</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>styles</code></td>
+							<td><span class="param-type"><a href="global.html#StyleOptions">StyleOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Opciones de estilo de las geometrías de las entidades resultado de la consulta.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>highlightStyles</code></td>
+							<td><span class="param-type"><a href="global.html#StyleOptions">StyleOptions</a></span></td>
+								<td class="attributes">&lt;optional&gt;<br/></td>
+							<td class="last">
+									<p>Opciones de estilo de las geometrías de las entidades resaltadas.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.WFSQueryOptions.html">Ver en vivo</a></p></div>
+					<div class="example-code">
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot; /&gt;&lt;script&gt;    // Establecemos un layout simplificado apto para hacer demostraciones de controles.    SITNA.Cfg.layout &#x3D; &quot;layout/ctl-container&quot;;    // Añadimos el control de capas cargadas en la primera posición.    SITNA.Cfg.controls.workLayerManager &#x3D; {        div: &quot;slot1&quot;    };    //Si se añade el control WFSQuery, el control busca un servicio WFS pareado al WMS de cada capa añadida al mapa y si lo encuentra habilita la lupa que da acceso al constructor de consultas.    SITNA.Cfg.controls.WFSQuery &#x3D; {        //Establecemos el estilo de las geometrías de las entidades resultado de la consulta        styles: {            //Estilo de polígonos y multipolígonos            polygon: {                strokeColor: &quot;#057f28&quot;,                strokeWidth: 4,                fillColor: &quot;#057f28&quot;,                fillOpacity: 0.3            },            //Estilo de polilíneas y multipolilíneas            line: {                strokeColor: &quot;#057f28&quot;,                strokeWidth: 4            },            //Estilo de puntos y multipuntos            point: {                strokeColor: &quot;#057f28&quot;            }        },        //Establecemos el estilo de las geometrías de las entidades resaltadas        highlightStyles: {            //Estilo de polígonos y multipolígonos            polygon: {                strokeColor: &quot;#ff7f27&quot;,                strokeWidth: 4,                fillColor: &quot;#ff7f27&quot;,                fillOpacity: 0.3            },            //Estilo de polilíneas y multipolilíneas            line: {                strokeColor: &quot;#ff7f27&quot;,                strokeWidth: 4            },            //Estilo de puntos y multipuntos            point: {                strokeColor: &quot;#ff7f27&quot;            }        }    };    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        workLayers: [{            id: &quot;paisajes&quot;,            title: &quot;Paisajes singulares&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;//idena.navarra.es/ogc/wms&quot;,            layerNames: &quot;IDENA:BIODIV_Pol_PaisajesSing&quot;        },        {            id: &quot;meteorologia&quot;,            title: &quot;Meteorología&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;//idena.navarra.es/ogc/wms&quot;,            layerNames: &quot;IDENA:estacMeteor&quot;        },        {            id: &quot;plazaola&quot;,            title: &quot;Vía Verde del Plazaola&quot;,            type: SITNA.Consts.layerType.WMS,            url: &quot;//idena.navarra.es/ogc/wms&quot;,            layerNames: &quot;IDENA:DOTACI_Lin_VVPlazaola&quot;        }]    });&lt;/script&gt;</code></pre>
+					</div>
+			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#MapControlOptions">MapControlOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="WMSGroupOptions" class="typedef public"><span class="name">WMSGroupOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de grupo de sugerencias de servicios externos WMS.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>group</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre del grupo de sugerencias. Se mostrará como una sección en la lista de opciones del control.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>items</code></td>
+							<td><span class="param-type">Array.&lt;<a href="global.html#WMSOptions">WMSOptions</a>></span></td>
+							<td class="last">
+									<p>Lista de sugerencias de servicios externos WMS.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#DataLoaderOptions">DataLoaderOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+											<hr/>
+											<dt class="symbol-title typedef public">
+			<h4 id="WMSOptions" class="typedef public"><span class="name">WMSOptions</span></h4>
+		</dt>
+<dd class="symbol-details typedef public">
+	<div class="symbol-details-inner">
+			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Opciones de sugerencia de servicio externo WMS.</p></div>
+			</div>			<div class="callout callout-info">
+				<h5>Propiedades</h5>
+				<table class="params table table-striped">
+					<thead>
+					<tr>
+							<th>Nombre</th>
+						<th>Type</th>
+						<th class="last">Descripción</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr>
+								<td><code>name</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>Nombre del servicio WMS. Se mostrará como un elemento en la lista de opciones del control.</p>
+							</td>
+						</tr>
+						<tr>
+								<td><code>url</code></td>
+							<td><span class="param-type">string</span></td>
+							<td class="last">
+									<p>URL de acceso al servicio WMS.</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+							<!-- see -->
+							<div class="form-group">
+								<label class="col-sm-3 control-label">Ver</label>
+								<div class="col-sm-9">
+										<p class="form-control-static"><a href="global.html#WMSGroupOptions">WMSGroupOptions</a></p>
+								</div>
+							</div>
+			
+			
+					</form>
+			</div>	</div>
+</dd>
+									</dl>
+							</article>
+					</section>
+			</div>
+		</div>
+	</div>
+	<footer>
+				<div class="copyright">© 2019 Gobierno de Navarra. <a href="https://github.com/sitna/api-sitna/blob/master/LICENSE.md">Licencia BSD-2-Clause</a>.</div>
+			<div class="generated-by">Documentación generada por <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.3</a> a 16/03/2020 usando la <a href="https://github.com/steveush/foodoc">plantilla FooDoc</a>.</div>
+	</footer>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/clipboard.min.js"></script>
+	<script src="js/prism.min.js"></script>
+	<script src="js/template.min.js"></script>
+		<!-- start:lunr-search-modal.hbs -->
+		<div class="modal fade" id="lunr-search-modal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Resultados de la búsqueda</h4>
+					</div>
+					<div class="modal-body" id="lunr-search-body">
+					</div>
+					<div class="modal-footer" id="lunr-search-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+					</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div>
+		<!-- end:lunr-search-modal.hbs -->		<script src="js/lunr.min.js"></script>
+	
+</body>
+</html>

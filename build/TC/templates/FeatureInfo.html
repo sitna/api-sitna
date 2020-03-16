@@ -1,15 +1,15 @@
-{?displayElevation}
+
 <div class="tc-ctl-finfo-coords">
-    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-crs">CRS: <span class="tc-ctl-finfo-coords-val">{crs}</span></span> 
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-crs">CRS: <span class="tc-ctl-finfo-coords-val">{crs}</span></span>
     {?isGeo}
-    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lat">{@i18n $key="lat"/}: <span class="tc-ctl-finfo-coords-val">{coords[1]}</span></span> 
-    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lon">{@i18n $key="lon"/}: <span class="tc-ctl-finfo-coords-val">{coords[0]}</span></span> 
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lat">{@i18n $key="lat"/}: <span class="tc-ctl-finfo-coords-val">{coords[1]}</span></span>
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lon">{@i18n $key="lon"/}: <span class="tc-ctl-finfo-coords-val">{coords[0]}</span></span>
     {:else}
-    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">x: <span class="tc-ctl-finfo-coords-val">{coords[0]}</span></span> 
-    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">y: <span class="tc-ctl-finfo-coords-val">{coords[1]}</span></span> 
-    {/isGeo} <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-elev">{@i18n $key="ele"/}: <span class="tc-ctl-finfo-coords-val"></span></span>
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">x: <span class="tc-ctl-finfo-coords-val">{coords[0]}</span></span>
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">y: <span class="tc-ctl-finfo-coords-val">{coords[1]}</span></span>
+    {/isGeo}
+    {?displayElevation}<span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-elev">{@i18n $key="ele"/}: <span class="tc-ctl-finfo-coords-val"></span></span>{/displayElevation}
 </div>
-{/displayElevation}
 <ul class="tc-ctl-finfo-services">
     {#services}
     <li>
@@ -60,7 +60,9 @@
                                                         {#attributes}
                                                         <tr>
                                                             <th class="tc-ctl-finfo-attr">{name}</th>
-                                                            <td class="tc-ctl-finfo-val">{value}</td>
+                                                            <td class="tc-ctl-finfo-val">
+                                                                {>tc-ctl-finfo-object:value/}
+                                                            </td>
                                                         </tr>
                                                         {/attributes}
                                                     </tbody>
@@ -82,7 +84,9 @@
         </div>
     </li>
     {:else}
-        {^displayElevation}<li class="tc-ctl-finfo-empty">{@i18n $key="noData"/}</li>{/displayElevation}
+        {^loading}
+            {^displayElevation}<li class="tc-ctl-finfo-empty">{@i18n $key="noData"/}</li>{/displayElevation}
+        {/loading}
     {/services}
 </ul>
 {?featureCount}
