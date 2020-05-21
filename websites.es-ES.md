@@ -4,7 +4,7 @@
   * [IDENA (Infraestructura de Datos Espaciales de NAvarra)](https://idena.navarra.es/navegar/ "Portal de acceso a la Información Geográfica de Navarra (SITNA)")
   * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Información sobre el estado de las Carreteras de Navarra")
   * [Cartoteca y Fototeca](https://cartotecaYfototeca.navarra.es "Descarga de Cartografía e Imágenes Aéreas de Navarra")
-  * [Mapa de Fosas](http://fosas.navarra.es "Fosas y Lugares de la Memoria Histórica en Navarra")
+  * [Mapa de Fosas](https://fosas.navarra.es "Fosas y Lugares de la Memoria Histórica en Navarra")
   * [Toponimia](https://administracionelectronica.navarra.es/toponimia/ "Toponimia Oficial de Navarra")
 
 * Desarrollos de [Tracasa Instrumental](https://itracasa.es/) para ayuntamientos de Navarra:
