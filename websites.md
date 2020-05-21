@@ -4,7 +4,7 @@
   * [IDENA - Spatial Data Infrastructure of Navarre](https://idena.navarra.es/navegar/?lang=en)
   * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Estado de las carreteras. Gobierno de Navarra")
   * [Cartoteca y Fototeca](https://cartotecaYfototeca.navarra.es "Cartoteca y Fototeca. Gobierno de Navarra")
-  * [Mapa de Fosas](http://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
+  * [Mapa de Fosas](https://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
   * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en)
 
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for town councils in Navarre:
