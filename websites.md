@@ -31,6 +31,7 @@
     * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Informatika%2C%20Telekomunikazio%20eta%20Berrikuntza%20Publikoaren%20Zuzendaritza%20Nagusia%20%2F%20Direcci%C3%B3n%20General%20de%20Inform%C3%A1tica%2C%20Telecomunicaciones%20e%20Innovaci%C3%B3n%20P%C3%BAblica "Visor de puntos. Gobierno de Navarra")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Helpbidea. Gobierno de Navarra")
     * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Agencias de Empleo. Gobierno de Navarra")
+    * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Permisos de pesca")    
   * Authenticated access:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Carpeta personal de Salud. Gobierno de Navarra")
     * [Informes de Evaluación de Edificios. Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
