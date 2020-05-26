@@ -28,7 +28,7 @@
     * [Edificios de 50 años o más](https://administracionElectronica.navarra.es/InformeEdificios/VisualizacionGlobalEdificios.html)
     * [Informes de Evaluación de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ConsultaCiudadana.aspx)
     * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx)
-    * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Informatika%2C%20Telekomunikazio%20eta%20Berrikuntza%20Publikoaren%20Zuzendaritza%20Nagusia%20%2F%20Direcci%C3%B3n%20General%20de%20Inform%C3%A1tica%2C%20Telecomunicaciones%20e%20Innovaci%C3%B3n%20P%C3%BAblica "Visor de puntos. Gobierno de Navarra")
+    * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Visor de puntos. Gobierno de Navarra")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Direcciones de Navarra")
     * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Servicio Navarro de Empleo - Nafar Lansare")
     * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Permisos de pesca")
