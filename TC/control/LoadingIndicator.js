@@ -25,7 +25,7 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-load';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/LoadingIndicator.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-load.hbs";
 
     //var ctlProto.waits = {};
     
