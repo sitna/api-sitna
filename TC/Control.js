@@ -1,4 +1,26 @@
 ﻿TC.control = TC.control || {};
+
+// Carga de dust solamente si alguna plantilla lo usa
+(function () {
+    const parent = this;
+    let value;
+    Object.defineProperty(parent, 'dust', {
+        get: function () {
+            if (!TC._dustLoaded) {
+                TC._dustLoaded = true;
+                TC.syncLoadJS(TC.apiLocation + 'lib/dust/dust-full.min.js');
+                TC.syncLoadJS(TC.apiLocation + 'lib/dust/dust-helpers.min.js');
+                TC.syncLoadJS(TC.apiLocation + 'lib/dust/dust-i18n.min.js');
+                TC.syncLoadJS(TC.apiLocation + 'lib/dust/dust.overrides.js');
+                value = parent.dust;
+            }
+            return value;
+        },
+        set: function (newValue) { value = newValue; },
+    });
+})();
+/////////////////////////////////////////////////////
+
 TC.Control = function () {
     const self = this;
     TC.EventTarget.call(self);
@@ -17,7 +39,7 @@ TC.Control = function () {
     }
 
     self.div.classList.add(TC.Control.prototype.CLASS, self.CLASS);
-    
+
     self.template = self.options.template || self.template;
     self.exportsState = false;
 };
@@ -29,7 +51,7 @@ TC.inherit(TC.Control, TC.EventTarget);
 
     ctlProto.CLASS = 'tc-ctl';
 
-    ctlProto.template = '';
+    ctlProto.template = void(0);
 
     ctlProto.show = function () {
         this.div.style.display = '';
@@ -57,55 +79,131 @@ TC.inherit(TC.Control, TC.EventTarget);
         return promise;
     };
 
-    const processTemplates = function (ctl, data, templates) {
+    const processTemplates = function (ctl) {
         return new Promise(function (resolve, reject) {
-            const htmlPromises = [];
-            const templateKeys = [];
+            const templates = ctl.template;
+            let mustCompile = false;
+            // Verificamos si hay plantillas mezcladas de los dos motores
+            let hbsTemplates = false;
+            let dustTemplates = false;
+            const hbsTemplateKeys = [];
             for (var key in templates) {
-                var template = templates[key];
+                const template = templates[key];
                 if (typeof template === 'string') {
-                    if (dust.cache[ctl.CLASS]) {
-                        dust.render(ctl.CLASS, data, function (err, out) {
-                            ctl.div.innerHTML = out;
-                            if (err) {
-                                TC.error(err);
-                            }
-                        });
-                    } else {
-                        var prom = TC.ajax({
-                            url: template,
-                            method: "GET",
-                            responseType: 'text'
-                        });
-                        htmlPromises.push(prom);
-                        templateKeys.push(key);
+                    mustCompile = true;
+                    if (template.endsWith('.hbs')) {
+                        hbsTemplates = true;
+                        hbsTemplateKeys.push(key);
+                    }
+                    else {
+                        dustTemplates = true;
                     }
                 }
-                else if (TC.Util.isFunction(template)) {
-                    template();
+                else if (typeof template === 'object' || (template && template._isHbs)) {
+                    hbsTemplates = true;
+                    hbsTemplateKeys.push(key);
+                }
+                else if (typeof template === 'function') {
+                    dustTemplates = true;
                 }
             }
 
-            if (htmlPromises.length === 0) {
-                resolve();
-            }
-            else {
-                Promise.all(htmlPromises)
-                    .then(function (responseArray) {
-                        responseArray
-                            .map(response => response.data)
-                            .forEach(function (template, idx) {
-                            const tpl = dust.compile(template, templateKeys[idx]);
-                            dust.loadSource(tpl);
-                        });
-                        resolve();
-                    })
-                    .catch(function (err) {
-                        console.error("Error fetching templates: " + err);
-                        reject(err instanceof Error ? err : Error(err));
-                    });
+            if (hbsTemplates && dustTemplates) {
+                // Plantillas mezcladas, luego estamos en un visor legacy, entonces cambiamos las Handlebars por dust.
+                hbsTemplateKeys.forEach(function (key) {
+                    templates[key] = TC.apiLocation + "TC/templates/" + key + ".html";
+                });
+                // No quedan plantillas Handlebars por compilar
+                mustCompile = false;
             }
 
+            if (dustTemplates) {
+                // Si es la primera vez que pasamos por aquí, dust.i18n no está inicializado, inicializamos
+                if (!dust.i18n._done) {
+                    const locale = ctl.map.options.locale;
+                    dust.i18n.setLanguages([locale]);
+                    dust.i18n.add(locale, TC.i18n[locale]);
+                    dust.i18n._done = true;
+                }
+            }
+
+            const callback = function () {
+                const templatePromises = [];
+                for (var key in templates) {
+                    const templateName = key;
+                    let template = templates[templateName];
+                    if (typeof template === 'string') {
+                        templatePromises.push(new Promise(function (res, rej) {
+                            TC.ajax({
+                                url: template,
+                                method: 'GET',
+                                responseType: 'text'
+                            })
+                                .then(function (response) {
+                                    if (template.endsWith('.html')) {
+                                        // Plantilla dust
+                                        dust.loadSource(dust.compile(response.data, templateName));
+                                        templates[templateName] = template = dust.cache[templateName];
+                                        res(template);
+                                        /////////////////
+                                    }
+                                    else {
+                                        // Plantilla Handlebars
+                                        templates[templateName] = template = TC._hbs.compile(response.data); // TODO: add optimization options
+                                        template._isHbs = true;
+                                        res(template);
+                                    }
+                                })
+                                .catch(function (err) {
+                                    console.log("Error fetching template: " + err);
+                                    rej(err);
+                                });
+                        }));
+                    }
+                    else {
+                        if (typeof template === 'object') {
+                            templates[key] = template = TC._hbs.template(template);
+                            template._isHbs = true;
+                        }
+                        else {
+                            if (TC.Util.isFunction(template) && !template._isHbs) {
+                                // Plantilla dust
+                                if (!dust.cache[templateName]) {
+                                    template();
+                                    templates[templateName] = template = dust.cache[templateName];
+                                }
+                                /////////////////
+                            }
+                        }
+                        templatePromises.push(Promise.resolve(template));
+                    }
+                }
+
+                Promise.all(templatePromises).then(function () {
+                    for (var key in templates) {
+                        const t = templates[key];
+                        if (t && t._isHbs && key !== self.CLASS) {
+                            TC._hbs.registerPartial(key, templates[key]);
+                        }
+                    }
+                    resolve();
+                });
+            };
+
+            if (mustCompile) {
+                TC.loadJSInOrder(
+                    !TC._hbs || !TC._hbs.compile,
+                    TC.url.templatingFull,
+                    callback
+                );
+            }
+            else {
+                TC.loadJSInOrder(
+                    !TC._hbs,
+                    TC.url.templatingRuntime,
+                    callback
+                );
+            }
         });
     };
 
@@ -117,101 +215,82 @@ TC.inherit(TC.Control, TC.EventTarget);
             }
             self.div.classList.toggle(TC.Consts.classes.DISABLED, self.isDisabled);
 
-            TC.loadJSInOrder(
-                !window.dust,
-                TC.url.templating,
-                function () {
-                    var tplProm;
+            let template;
+            if (typeof self.template === 'object' && !self.template.compiler) {
+                template = self.template[self.CLASS];
+            }
+            else {
+                template = self.template;
+                self.template = {};
+                self.template[self.CLASS] = template;
+            };
 
-                    if (typeof self.template === 'object') {
-                        tplProm = processTemplates(self, data, self.template);
+            self.getRenderedHtml(self.CLASS, data)
+                .then(function (html) {
+                    self.div.innerHTML = html;
+                    if (self.map) {
+                        self.trigger(TC.Consts.event.CONTROLRENDER);
                     }
-                    else {
-                        var templates = {};
-
-                        if (self.template) templates[self.CLASS] = self.template;
-
-
-                        tplProm = processTemplates(self, data, templates);
+                    if (TC.Util.isFunction(callback)) {
+                        callback();
                     }
-
-                    tplProm
-                        .then(function () {
-                            if (dust.cache[self.CLASS]) {
-                                dust.render(self.CLASS, data, function (err, out) {
-                                    self.div.innerHTML = out;
-                                    if (err) {
-                                        reject(Error(err));
-                                        TC.error(err);
-                                    }
-                                });
-                            }
-
-                            self.trigger(TC.Consts.event.CONTROLRENDER);
-                            if (TC.Util.isFunction(callback)) {
-                                callback();
-                            }
-                            resolve();
-                        })
-                        .catch(function (err) {
-                            reject(err instanceof Error ? err : Error(err));
-                        });
-                }
-            );
+                    resolve();
+                });
         });
     };
 
     ctlProto.getRenderedHtml = function (templateId, data, callback) {
         const self = this;
         return new Promise(function (resolve, reject) {
-            var render = function () {
-                if (dust.cache[templateId]) {
-                    dust.render(templateId, data, function (err, out) {
-                        if (err) {
-                            TC.error(err);
-                            reject(Error(err));
-                        }
-                        else {
-                            if (TC.Util.isFunction(callback)) {
-                                callback(out);
-                            }
-                            resolve(out);
-                        }
-                    });
+
+            const endFn = function (template) {
+                if (typeof template === 'undefined') {
+                    resolve('');
+                    return;
                 }
-            };
-            TC.loadJSInOrder(
-                !window.dust,
-                TC.url.templating,
-                function () {
-                    if (!dust.cache[templateId]) {
-                        var template = self.template[templateId];
-                        if (typeof template === 'string') {
-                            TC.ajax({
-                                url: template,
-                                method: "GET",
-                                responseType: 'text'
-                            })
-                                .then(function (response) {
-                                    const html = response.data;
-                                    var tpl = dust.compile(html, templateId);
-                                    dust.loadSource(tpl);
-                                    render();
-                                })
-                                .catch(function (err) {
-                                    console.log("Error fetching template: " + err)
-                                });
-                        }
-                        else if (TC.Util.isFunction(template)) {
-                            template();
-                            render();
-                        }
+                if (template._isHbs) {
+                    // Es una plantilla Handlebars
+                    const html = template(data);
+                    if (TC.Util.isFunction(callback)) {
+                        callback(html);
+                    }
+                    resolve(html);
+                }
+                else {
+                    // Es una plantilla dust
+                    if (dust.cache[templateId]) {
+                        self.template[templateId] = template = dust.cache[templateId];
+                        dust.render(templateId, data || {}, function (err, out) {
+                            if (err) {
+                                TC.error(err);
+                                reject(Error(err));
+                            }
+                            else {
+                                if (TC.Util.isFunction(callback)) {
+                                    callback(out);
+                                }
+                                resolve(out);
+                            }
+                        });
                     }
                     else {
-                        render();
+                        processTemplates(self).then(function () {
+                            endFn(self.template[templateId]);
+                        })
                     }
+                    ////////////////////////
                 }
-            );
+            };
+            const template = self.template[templateId];
+
+            if (typeof template !== 'function') {
+                processTemplates(self).then(function () {
+                    endFn(self.template[templateId]);
+                })
+            }
+            else {
+                endFn(template);
+            }
         });
     };
 
@@ -330,4 +409,73 @@ TC.inherit(TC.Control, TC.EventTarget);
 
     ctlProto.importState = function (state) {
     };
+    
+    ctlProto.getDownloadDialog = function () {
+        const self = this;
+        self._downloadDialog = self._downloadDialog || self.map.getControlsByClass('TC.control.FeatureDownloadDialog')[0];
+        if (self._downloadDialog) {
+            self._downloadDialog.caller = self;
+            return Promise.resolve(self._downloadDialog);
+        }
+        return new Promise(function (resolve, reject) {
+            self.map.addControl('FeatureDownloadDialog').then(ctl => {
+                self._downloadDialog = ctl;
+                self._downloadDialog.caller = self;
+                resolve(ctl);
+            })
+        });
+    };
+
+    ctlProto.getElevationTool = function () {
+        const self = this;
+        if (!self.displayElevation && !self.options.displayElevation) {
+            return Promise.resolve(null);
+        }
+        if (self.elevation) {
+            return Promise.resolve(self.elevation);
+        }
+        return new Promise(function (resolve, reject) {
+            TC.loadJS(
+                !TC.tool || !TC.tool.Elevation,
+                TC.apiLocation + 'TC/tool/Elevation',
+                function () {
+                    if (typeof self.options.displayElevation === 'boolean') {
+                        if (self.map) {
+                            self.map.getElevationTool().then(function (mapElevation) {
+                                if (mapElevation) {
+                                    self.elevation = mapElevation;
+                                }
+                                else {
+                                    self.elevation = new TC.tool.Elevation();
+                                }
+                                resolve(self.elevation);
+                            });
+                        }
+                        else {
+                            self.elevation = new TC.tool.Elevation();
+                            resolve(self.elevation);
+                        }
+                    }
+                    else {
+                        if (self.map) {
+                            self.map.getElevationTool().then(function (mapElevation) {
+                                if (mapElevation) {
+                                    self.elevation = new TC.tool.Elevation(TC.Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
+                                }
+                                else {
+                                    self.elevation = new TC.tool.Elevation(self.options.displayElevation);
+                                }
+                                resolve(self.elevation);
+                            });
+                        }
+                        else {
+                            self.elevation = new TC.tool.Elevation(self.options.displayElevation);
+                            resolve(self.elevation);
+                        }
+                    }
+                }
+            );
+        });
+    };
+
 })();
