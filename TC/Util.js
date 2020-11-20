@@ -32,13 +32,6 @@
         return (r + '000').slice(0, 4).toUpperCase();
     }
 
-    // Polyfill para IE
-    Number.isInteger = Number.isInteger || function (value) {
-        return typeof value === "number" &&
-            isFinite(value) &&
-            Math.floor(value) === value;
-    };
-
     // GLS: Parche: Chrome no formatea correctamente los números en euskera, establece como separador de decimales el (.)
     var toLocaleString = Number.prototype.toLocaleString;
     Number.prototype.toLocaleString = function (locale, options) {
@@ -74,6 +67,78 @@
     const hasOwn = ({}).hasOwnProperty;
 
     var Util = {
+
+        getElevationGain: function (options) {
+            options = options || {};
+            const coords = options.coords;
+            if (coords && coords.length > 0 && coords[0].length > 2) { // si tenemos la Z
+                var uphill = 0;
+                var downhill = 0;
+                const hillDeltaThreshold = options.hillDeltaThreshold || 0;
+
+                var previousHeight;
+                var sectorMinHeight;
+                var sectorMaxHeight;
+                var previousUphill = true;
+
+                for (var c = 0; c < coords.length; c++) {
+                    var point = coords[c];
+                    var height = point[2];
+                    if (height !== null) {
+                        if (previousHeight === undefined) //--inicializar
+                        {
+                            previousHeight = height;
+                            sectorMinHeight = height;
+                            sectorMaxHeight = height;
+                        }
+
+                        sectorMinHeight = Math.min(sectorMinHeight, height); //--actualizar mínimo y máximo del sector
+                        sectorMaxHeight = Math.max(sectorMaxHeight, height);
+
+                        var delta = height - previousHeight; //--calcular desnivel del punto respecto al anterior
+                        // hillDeltaThreshold: altura de los dientes a despreciar
+                        if (delta > hillDeltaThreshold || (delta > 0 && c == coords.length - 1)) //--Si se sube más del filtro (o se acaba el segmento subiendo)
+                        {
+                            if (previousUphill) //--Si en el segmento anterior también se subía, incrementamos el desnivel positivo acumulado
+                            {
+                                uphill += delta;
+                            }
+                            else //--Si en el segmento anterior se bajaba, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
+                            {
+                                downhill -= sectorMinHeight - previousHeight;
+                                uphill += height - sectorMinHeight;
+                                previousUphill = true; //--preparar para el paso siguiente
+                            }
+                            previousHeight = height; //--preparar para el paso siguiente
+                            sectorMinHeight = height;
+                            sectorMaxHeight = height;
+                        }
+                        else if (delta < -hillDeltaThreshold || (delta < 0 && c == coords.length - 1)) //--Si se baja más del filtro (o se acaba el segmento bajando)
+                        {
+                            if (!previousUphill) //--Si en el segmento anterior también se bajaba, incrementamos el desnivel negativo acumulado
+                            {
+                                downhill -= delta;
+                            }
+                            else //--Si en el segmento anterior se subía, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
+                            {
+                                uphill += sectorMaxHeight - previousHeight;
+                                downhill -= height - sectorMaxHeight;
+                                previousUphill = false; //--preparar para el paso siguiente
+                            }
+                            previousHeight = height; //--preparar para el paso siguiente
+                            sectorMinHeight = height;
+                            sectorMaxHeight = height;
+                        }
+                    }
+                }
+
+                return {
+                    upHill: Math.round(uphill),
+                    downHill: Math.round(downhill)
+                };
+
+            } else { return null; }
+        },
 
         isPlainObject: function (obj) {
             // Not plain objects:
@@ -522,7 +587,7 @@
                     return { type: TC.Consts.GEOGRAPHIC, value: parseFloat(t.replace(',', '.')) };
                 }
                 // UTM
-                if (t.match(/^\d{6,7}([.,]\d+)?$/g)) {
+                if (t.match(/^[-+]?\d{6,7}([.,]\d+)?$/g)) {
                     return { type: TC.Consts.UTM, value: parseFloat(t.replace(',', '.')) };
                 }
                 return null;
@@ -579,14 +644,14 @@
                 poly.forEach(function (ring, ridx) {
                     const rr = rp[ridx] = [];
                     ring.forEach(function (coord, cidx) {
-                        var point = proj4(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
-                        if (targetPrj.oProj.units === TC.Consts.units.METERS) {
-                            rr[cidx] = [Math.round(point.x), Math.round(point.y)];
-                        } else {
+                        if (Array.isArray(coord) && coord.length > 1) {
+                            var point = proj4(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
                             rr[cidx] = [point.x, point.y];
-                        }
-                        if (coord.length > 2) {
-                            rr[cidx][2] = coord[2];
+                            if (coord.length > 2) {
+                                rr[cidx][2] = coord[2];
+                            }
+                        } else {
+                            rr[cidx] = coord;
                         }
                     });
                 });
@@ -604,14 +669,19 @@
         },
 
         getMetersPerDegree: function (extent) {
-            var result = undefined;
-            var R = 6370997; // m
+            let result = undefined;
+            const R = 6370997; // m
             if (Array.isArray(extent) && extent.length >= 4) {
-                var dLat = this.degToRad(extent[3] - extent[1]);
-                var sindlat2 = Math.sin(dLat / 2);
-                var a = sindlat2 * sindlat2;
-                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                result = R * c / (extent[3] - extent[1]);
+                if (extent[3] === extent[1]) {
+                    result = Math.PI * R * Math.cos(this.degToRad(extent[1])) / 180;
+                }
+                else {
+                    const dLat = this.degToRad(extent[3] - extent[1]);
+                    const sindlat2 = Math.sin(dLat / 2);
+                    const a = sindlat2 * sindlat2;
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    result = R * c / (extent[3] - extent[1]);
+                }
             }
             return result;
         },
@@ -705,7 +775,7 @@
         getParamString: function (obj) {
             const arr = [];
             for (var key in obj) {
-                arr[arr.length] = encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]);
+                arr.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
             }
             return arr.join('&').replace(/%20/g, '+');
         },
@@ -1027,9 +1097,9 @@
         swipe: function (target, options) {
             const addListeners = function (handlers) {
                 target.addEventListener('mousedown', handlers.start);
-                target.addEventListener('touchstart', handlers.start);
+                target.addEventListener('touchstart', handlers.start, { passive: true });
                 target.addEventListener('mouseup', handlers.end);
-                target.addEventListener('touchend', handlers.end);
+                target.addEventListener('touchend', handlers.end, { passive: true });
             };
 
             if (options === 'disable') {
@@ -1339,6 +1409,22 @@
             };
 
             return new Promise(function (resolve, reject) {
+                if (!outputFormat) {
+                    switch (src.substr(src.lastIndexOf('.') + 1).toLowerCase()) {
+                        case 'svg':
+                            outputFormat: 'image/svg+xml';
+                            break;
+                        case 'png':
+                            outputFormat: 'image/png';
+                            break;
+                        case 'gif':
+                            outputFormat: 'image/gif';
+                            break;
+                        default:
+                            outputFormat = 'image/jpeg';
+                    }
+                }
+
                 var img = new Image();
                 img.crossOrigin = 'anonymous';
                 img.onload = function () {
@@ -1347,7 +1433,7 @@
 
                     try {
                         dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
-                            type: outputFormat || 'image/jpeg',
+                            type: outputFormat,
                             encoderOptions: 1.0
                         });
                         resolve({ dataUrl: dataURL, canvas: canvas });
@@ -1478,7 +1564,7 @@
 
         },
 
-        replaceAccent: function (t) {
+        replaceSpecialCharacters: function (t) {
             var translate = {
                 "ä": "a", "ö": "o", "ü": "u",
                 "Ä": "A", "Ö": "O", "Ü": "U",
@@ -1567,11 +1653,10 @@
                 }
             }
             else {
-                download(url, data);
+                await download(url, data);
             }
         },
-
-        WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits, srsName, maxFeatures) {
+        WFSQueryBuilder: function (layers, filter, capabilities, outputFormat, onlyHits, srsName, maxFeatures, fields) {
             const getSRSAttribute = function () {
                 if (srsName) {
                     return ' srsName="' + srsName + '"'
@@ -1579,45 +1664,64 @@
                 else
                     return '';
             }
+            const getFields = function () {
+                if (!fields) return '';
+                var tagName = '';
+                switch (capabilities.version) {
+                    case "1.0.0":
+                        tagName = "ogc:PropertyName";
+                        break;
+                    case "1.1.0":
+                        tagName = "wfs:PropertyName";
+                        break;
+                    case "2.0.0":
+                        tagName = "wfs:PropertyName";
+                    default:
+
+                        break;
+                }
+                return (fields instanceof Array ? fields : [fields]).reduce(function (vi, va) {
+                    return (vi + '<' + tagName + '>' + va + '</' + tagName + '>')
+                }, '')
+
+            };
             if (!Array.isArray(layers) && !(layers instanceof Object))
                 layers = [layers];
 
-            var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
-                ' service="WFS" {resultType} {format} ';
-            switch (capabilities.version) {
-                case "1.0.0":
-                case "1.1.0":
-                    queryHeader += 'xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" ';
-                    break;
-                case "2.0.0":
-                    queryHeader += 'xmlns:wfs=\"http://www.opengis.net/wfs/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\" ';
-                    break;
-            }
-            for (var i in capabilities) {
-                if (typeof (capabilities[i]) === "string" && i.indexOf("gml") < 0 && capabilities[i].indexOf("wfs") < 0)
-                    queryHeader += (i + '="' + capabilities[i] + '" ');
-            }
-
-            var query = '<wfs:GetFeature ' + queryHeader.format({ resultType: (onlyHits ? 'resultType="hits"' : ''), format: 'outputFormat="' + outputFormat + '"' }) + (capabilities.version !== "2.0.0" && maxFeatures ? ' maxFeatures="' + maxFeatures + '"' : '') + '>';
+            var query = '<wfs:GetFeature ' + _queryHeaderConstructor(capabilities).format({ resultType: (onlyHits ? 'resultType="hits"' : ''), format: 'outputFormat="' + outputFormat + '"' }) + (capabilities.version !== "2.0.0" && maxFeatures ? ' maxFeatures="' + maxFeatures + '"' : '') + '>';
             var queryBody = '';
             if (Array.isArray(layers)) {
-                var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{filter}</wfs:Query>';
-                if (Array.isArray(layers))
-                    layers.forEach(function (value) {
-                        queryBody += queryItem.format({ typeName: value, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "") });
-                    });
+                var queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{fields}{filter}</wfs:Query>';
+                layers.forEach(function (value) {
+                    queryBody += queryItem.format({ typeName: value, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : ""), fields: getFields() });
+                });
             }
             else {
                 var queryItem = '';
                 for (var layer in layers) {
-                    var queryItem = ('<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{filter}</wfs:Query>');
+                    var queryItem = ('<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{fields}{filter}</wfs:Query>');
                     let filter = layers[layer]
-                    queryBody += queryItem.format({ typeName: layer, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "") });
+                    queryBody += queryItem.format({ typeName: layer, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : ""), fields: getFields() });
                 }
             }
 
             query += queryBody + '</wfs:GetFeature>'
             return query;
+        },
+
+        WFGetPropertyValue: function (layer, valueReference, filter, capabilities) {
+            /*if (capabilities.version === "2.0.0") {
+                var query = '<wfs:GetPropertyValue ' + _queryHeaderConstructor(capabilities).format({ resultType: '', format: '' }) + ' valueReference="' + valueReference + '" >';
+                var queryBody = '';
+                var queryItem = ('<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + '>{filter}</wfs:Query>');
+                queryBody += queryItem.format({ typeName: layer, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "") });
+                query += queryBody + '</wfs:GetPropertyValue>'
+                return query;
+            }
+            else*/
+                return TC.Util.WFSQueryBuilder([layer], filter, capabilities, "JSON", false, null, null, valueReference);
+
+            
         },
 
         WFSFilterBuilder: function (feature, version, srsName) {
@@ -1806,58 +1910,6 @@
             return link.href;
         },
 
-        //getRenderedHtml: function (templateId, template, data, callback) {
-        //    return new Promise(function (resolve, reject) {
-        //        var render = function () {
-        //            if (dust.cache[templateId]) {
-        //                dust.render(templateId, data, function (err, out) {
-        //                    if (err) {
-        //                        TC.error(err);
-        //                        reject(Error(err));
-        //                    }
-        //                    else {
-        //                        if (Util.isFunction(callback)) {
-        //                            callback(out);
-        //                        }
-        //                        resolve(out);
-        //                    }
-        //                });
-        //            }
-        //        };
-        //        TC.loadJSInOrder(
-        //            !window.dust,
-        //            TC.url.templating,
-        //            function () {
-        //                if (!dust.cache[templateId]) {
-        //                    if (typeof template === 'string') {
-        //                        TC.ajax({
-        //                            url: template,
-        //                            method: "GET",
-        //                            responseType: 'text'
-        //                        })
-        //                            .then(function (response) {
-        //                                const html = response.data;
-        //                                var tpl = dust.compile(html, templateId);
-        //                                dust.loadSource(tpl);
-        //                                render();
-        //                            })
-        //                            .catch(function (err) {
-        //                                console.log("Error fetching template: " + err)
-        //                            });
-        //                    }
-        //                    else if (Util.isFunction(template)) {
-        //                        template();
-        //                        render();
-        //                    }
-        //                }
-        //                else {
-        //                    render();
-        //                }
-        //            }
-        //        );
-        //    });
-        //},
-
         explodeGeometry: function (obj) {
             const origin = obj.origin;
             const iterationFunction = function (elm, idx, arr) {
@@ -1981,8 +2033,40 @@
 
             //result = result.replace(".", ",").replace(/\|/g, ".");
             //return result;
+        },
+
+        getWebWorkerCrossOriginURL: function (url) {
+            return new Promise(function (resolve, reject) {
+                if (window.hasOwnProperty('Worker')) {
+                    // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
+                    if (TC.Util.isSameOrigin(url)) {
+                        resolve(url);
+                    }
+                    else {
+                        TC.ajax({
+                            url: url,
+                            method: 'GET',
+                            responseType: 'text'
+                        }).then(
+                            function (response) {
+                                const data = response.data;
+                                var blob = new Blob([data], { type: "text/javascript" });
+                                var url = window.URL.createObjectURL(blob);
+                                resolve(url);
+                            },
+                            function (e) {
+                                reject(Error(e));
+                            }
+                        );
+                    }
+                }
+                else {
+                    reject(new Error('No support for service workers'));
+                }
+            });
         }
     };
+
     String.prototype.format = function () {
         var str = this.toString();
         if (!arguments.length)
@@ -1993,6 +2077,25 @@
             str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), args[arg]);
         return str;
     };
+    const _queryHeaderConstructor = function (capabilities) {
+        var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
+            ' service="WFS" {resultType} {format} ';
+        switch (capabilities.version) {
+            case "1.0.0":
+            case "1.1.0":
+                queryHeader += 'xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" ';
+                break;
+            case "2.0.0":
+                queryHeader += 'xmlns:wfs=\"http://www.opengis.net/wfs/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\" ';
+                break;
+        }
+        for (var i in capabilities) {
+            if (typeof (capabilities[i]) === "string" && i.indexOf("gml") < 0 && capabilities[i].indexOf("wfs") < 0)
+                queryHeader += (i + '="' + capabilities[i] + '" ');
+        }
+        return queryHeader
+    };
+    
     var fncOvelaps = function (elem1, elem2, comparisonFnc) {
         return comparisonFnc(elem1.getBoundingClientRect(), elem2.getBoundingClientRect());
     }
