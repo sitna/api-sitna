@@ -16,8 +16,8 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
     ctlProto.CLASS = 'tc-ctl-legend';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Legend.html";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/LegendNode.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-legend.hbs";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-legend-node.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
