@@ -24,7 +24,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-attrib';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/Attribution.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-attrib.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -40,7 +40,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
                     if (/IDENA/.test(attr.name) || /Tracasa Instrumental/.test(attr.name)) {
                         self.mainDataAttribution = {
                             name: 'IDENA',
-                            site: 'http://idena.navarra.es/'
+                            site: 'https://idena.navarra.es/'
                         };
                     }
                     else {
@@ -94,8 +94,11 @@ TC.inherit(TC.control.Attribution, TC.Control);
                                     (attr.name === toCheckName);
                         };
 
+                        // 07/10/2020 Validamos contra el mapa de fondo antes de cambiar de mapa de fondo así que no se borran cuando deberían.
+                        // Validamos que la capa a borrar no sea la de fondo actual
                         // Validamos si las atribuciones a borrar son también del mapa base
-                        if (self.map.baseLayer && self.map.baseLayer.wrap.getAttribution() && checkIsSameAttribution(self.map.baseLayer.wrap.getAttribution().name)) {
+                        if (self.map.baseLayer && self.map.baseLayer.wrap.getAttribution() && checkIsSameAttribution(self.map.baseLayer.wrap.getAttribution().name) && 
+                            obj.parent.id !== self.map.baseLayer.id) {
                             return;
                         } else {
                             // Validamos si las atribuciones a borrar son también de alguna de las capas raster cargadas
@@ -210,7 +213,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
             const cmd = self.div.querySelector('.' + self.CLASS + '-cmd');
             cmd && cmd.addEventListener(TC.Consts.event.CLICK, function () {
                 self.toggleOtherAttributions();
-            });
+            }, { passive: true });
 
             if (typeof callback === 'function') {
                 callback();
