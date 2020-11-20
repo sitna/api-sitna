@@ -140,6 +140,8 @@
                     }
                 }
                 _str += "</tbody></table>";
+            } else {
+                _str += obj;
             }
             return _str;
         }
@@ -257,28 +259,7 @@
 
 };
 TC.Util.ExcelExport.prototype.Save = function (filename, rows, title) {
-    var processRow = function (row) {
-        var finalVal = '';
-        for (var j = 0; j < row.length; j++) {
-            var innerValue = row[j] === null ? '' : row[j].toString();
-            if (row[j] instanceof Date) {
-                innerValue = row[j].toLocaleString();
-            };
-            var result = innerValue.replace(/"/g, '""');
-            if (result.search(/("|,|\n)/g) >= 0)
-                result = '"' + result + '"';
-            if (j > 0)
-                finalVal += '\t';
-            finalVal += result;
-        }
-        return finalVal + '\n';
-    };
-
-    var csvFile;
-    for (var i = 0; i < rows.length; i++) {
-        csvFile += processRow(rows[i]);
-    }
-
+    
     var exporter = this;
     csvFile = exporter.stringify(rows, { txtDelim: "\"", fieldSep: ";", title: title || "" });
 
@@ -299,29 +280,4 @@ TC.Util.ExcelExport.prototype.Save = function (filename, rows, title) {
         }
     }
 
-
-    //if (TC.Util.detectIE()) { //IE
-    //    if (document.execCommand) {
-    //        var downloadWin = window.open("about:blank", "_blank");
-    //        downloadWin.document.write(csvFile);
-    //        downloadWin.document.close();
-
-    //        var success = downloadWin.document.execCommand('SaveAs', true, filename)
-    //        downloadWin.close();
-    //    }
-    //} else { //Resto de navegadores
-    //    var uri = 'data:application/vnd.ms-excel;base64,';
-    //    var base64 = function (s) { return window.btoa(unescape(encodeURIComponent(s))) };
-    //    csvFile = uri + base64(csvFile);
-
-    //    var downloadLink = document.createElement('a');
-    //    downloadLink.setAttribute('href', csvFile);
-    //    downloadLink.setAttribute('download', filename);
-
-    //    document.body.appendChild(downloadLink);
-    //    window.setTimeout(function () {
-    //        downloadLink.click();
-    //        document.body.removeChild(downloadLink);
-    //    }, 0);
-    //}
 };
