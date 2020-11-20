@@ -11,6 +11,8 @@ TC.filter.Filter = function (tagName) {
     this._wfs2prefixNS = "fes";
     this._wfs2NSURL = "http://www.opengis.net/fes/2.0";
     this._wfs2FieldTitle = "ValueReference";
+    this._escapeAttrName = "escape";
+    this._wfs2EscapeAttrName = "escapeChar";
 };
 
 TC.filter.Filter.prototype.getTagName = function () {
@@ -70,6 +72,7 @@ TC.filter.Filter.prototype.getText = function (wfsVersion) {
         this._defaultPrefixNS = this._wfs2prefixNS;
         this._defaultNSURL = this._wfs2NSURL;
         this._fieldTitle = this._wfs2FieldTitle;
+        this._escapeAttrName = this._wfs2EscapeAttrName;
     }
     return this.writeFilterCondition_();
 };
@@ -208,7 +211,7 @@ TC.filter.Comparison.prototype.write = function () {
             UpperBoundary: this.upperBoundary
         });
     if (this.pattern)
-        values = '<{prefix}:Literal>{Pattern}</{prefix}:Literal>'.format({
+        values = '<{prefix}:Literal><![CDATA[{Pattern}]]></{prefix}:Literal>'.format({
             prefix: this._defaultPrefixNS,
             Pattern: this.pattern
         });
@@ -216,18 +219,18 @@ TC.filter.Comparison.prototype.write = function () {
         if (Array.isArray(this.params))
             values = this.params.reduce(function (a, b, i) {
                 var fmt = function (text) {
-                    return '<{prefix}:Literal>{value}</{prefix}:Literal>'.format({ prefix: this._defaultPrefixNS, value: text });
+                    return '<{prefix}:Literal><![CDATA[{value}]]></{prefix}:Literal>'.format({ prefix: this._defaultPrefixNS, value: text });
                 }
                 return (i > 0 ? a : fmt(a)) + fmt(b);
             });
         else
-            values = '<{prefix}:Literal>{value}</{prefix}:Literal>'.format({ prefix: this._defaultPrefixNS, value: this.params });
+            values = '<{prefix}:Literal><![CDATA[{value}]]></{prefix}:Literal>'.format({ prefix: this._defaultPrefixNS, value: this.params });
 
     return '<{prefix}:{tag}{matchCase}{escape}{singleChar}{wildCard}><{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>{values}</{prefix}:{tag}>'.format({
         prefix: this._defaultPrefixNS,
         tag: this.getTagName(),
         matchCase: (typeof (this.matchCase) !== "undefined" ? " matchCase=\"" + this.matchCase + "\"" : ""),
-        escape: (typeof (this.escapeChar) !== "undefined" ? " escape=\"" + this.escapeChar + "\"" : ""),
+        escape: (typeof (this.escapeChar) !== "undefined" ? (" " + this._escapeAttrName +"=\"" + this.escapeChar + "\"") : ""),
         singleChar: (typeof (this.singleChar) !== "undefined" ? " singleChar=\"" + this.singleChar + "\"" : ""),
         wildCard: (typeof (this.wildCard) !== "undefined" ? " wildCard=\"" + this.wildCard + "\"" : ""),
         name: this.propertyName,
@@ -248,7 +251,7 @@ TC.filter.ComparisonBinary = function (
 TC.inherit(TC.filter.ComparisonBinary, TC.filter.Comparison);
 
 TC.filter.ComparisonBinary.prototype.write = function () {
-    var _str = '<{prefix}:{tag}{matchCase}>' + (this.propertyName instanceof TC.filter.Filter ? '{name}' : '<{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>') + '<{prefix}:Literal>{value}</{prefix}:Literal></{prefix}:{tag}>';
+    var _str = '<{prefix}:{tag}{matchCase}>' + (this.propertyName instanceof TC.filter.Filter ? '{name}' : '<{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>') + '<{prefix}:Literal><![CDATA[{value}]]></{prefix}:Literal></{prefix}:{tag}>';
     return _str.format({
         prefix: this._defaultPrefixNS,
         tag: this.getTagName(),
@@ -330,7 +333,7 @@ TC.filter.Function.prototype.write = function () {
     if (this.params) {
         var _paramsToText = function (param, prefix) {
             if (typeof (param) === "string") {
-                return '<{prefix}:Literal>{value}</{prefix}:Literal>'.format({ prefix: prefix, value: param });
+                return '<{prefix}:Literal><![CDATA[{value}]]></{prefix}:Literal>'.format({ prefix: prefix, value: param });
             }
             if (typeof (param) === "object") {
                 var _text = '';
