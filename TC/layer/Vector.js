@@ -197,7 +197,7 @@ if (!TC.Layer) {
                 result.uid = self.id;
             }
             return result;
-        };        
+        };
 
         var addFeatureInternal = function (layer, multipleFeatureFunction, coord, options) {
             return new Promise(function (resolve, reject) {
@@ -241,9 +241,9 @@ if (!TC.Layer) {
                         }
                         feature.layer = layer;
                         features[i] = feature;
-                        layer.features[layer.features.length] = feature;
+                        layer.features.push(feature);
                         if (!isNative) {
-                            nativeFeatures[nativeFeatures.length] = feature.wrap.feature;
+                            nativeFeatures.push(feature.wrap.feature);
                         }
                         if (feature.options.showPopup) {
                             feature.showPopup();
@@ -463,14 +463,15 @@ if (!TC.Layer) {
             const self = this;
             if (feature.layer && self.features.indexOf(feature) >= 0) {
                 if (self.map) {
+                    const filterFn = ctl => ctl.currentFeature === feature && ctl.isVisible();
                     const popups = self.map.getControlsByClass('TC.control.Popup');
                     popups
-                        .filter(pu => pu.currentFeature === feature && pu.isVisible())
+                        .filter(filterFn)
                         .forEach(pu => pu.hide());
 
                     const panels = self.map.getControlsByClass('TC.control.ResultsPanel');
                     panels
-                        .filter(p => p.currentFeature === feature && p.isVisible())
+                        .filter(filterFn)
                         .forEach(p => p.close());
                 }
                 if (feature.layer) { // Volvemos a comprobar porque el cierre del popup puede haber borrado ya la feature
@@ -481,8 +482,9 @@ if (!TC.Layer) {
         };
 
         layerProto.getFeatureById = function (id) {
-            var result = null;
-            var olFeat = this.wrap.getFeatureById(id);
+            const self = this;
+            let result = null;
+            var olFeat = self.wrap.getFeatureById(id);
             if (olFeat) {
                 result = olFeat._wrap.parent;
             }
@@ -517,11 +519,11 @@ if (!TC.Layer) {
 
         layerProto.getDescribeFeatureTypeUrl = function (layerNames) {
             const self = this;
-            const version = self.options.version || '1.1.0';
+            const version = self.options.version || self.capabilities.version || '1.1.0';
             const featureType = Array.isArray(layerNames) ? layerNames : [layerNames];
-            return self.url + '?service=WFS&' + 'version=' + version + '&request=DescribeFeatureType&typename=' + featureType.join(',') + '&outputFormat=' + self.capabilities.Operations.DescribeFeatureType.outputFormat;
+            return self.url + '?service=WFS&' + 'version=' + version + '&request=DescribeFeatureType&typename=' + featureType.join(',') + '&outputFormat=' + encodeURIComponent(self.capabilities.Operations.DescribeFeatureType.outputFormat);
         };
-        
+
         const _getStoredFeatureTypes = function (layerName, collection) {
             if (!(layerName instanceof Array))
                 layerName = layerName.split(",");
@@ -604,6 +606,10 @@ if (!TC.Layer) {
                             }
                             const wwProcess = async function (layers, callback) {
                                 var data = await self.toolProxification.fetchXML(self.getDescribeFeatureTypeUrl(layers || self.featureType));
+                                //checkear si excepciones del servidor
+                                if (data.querySelector("Exception") || data.querySelector("exception")) {
+                                    throw (data.querySelector("Exception") || data.querySelector("exception")).textContent.trim()
+                                }
                                 self.WebWorkerDFT.postMessage({
                                     layerName: layers,
                                     xml: data.documentElement.outerHTML,
@@ -632,14 +638,19 @@ if (!TC.Layer) {
                                 }
                             }, {})).map(function (params) {
                                 var layers = params[1];
-                                return new Promise(function (resolve, reject) {
+                                return new Promise(async function (resolve, reject) {
                                     if (TC.describeFeatureType[layers]) {
                                         resolve(_getStoredFeatureTypes(layers, TC.describeFeatureType));
                                         return;
                                     }
-                                    wwProcess(layers, function (data) {
-                                        resolve(data);
-                                    });
+                                    try {
+                                        await wwProcess(layers, function (data) {
+                                            resolve(data);
+                                        });
+                                    }
+                                    catch (err) {
+                                        reject(err);
+                                    }
                                 })
                             }));
                             Promise.all(arrPromises).then(function (response) {
@@ -924,7 +935,7 @@ if (!TC.Layer) {
                     });
             });
         };
-        
+
         layerProto.getGetCapabilitiesUrl = function () {
             const self = this;
             if (self.type === TC.Consts.layerType.WFS) {
@@ -947,29 +958,31 @@ if (!TC.Layer) {
             const self = this;
             if (self.type === TC.Consts.layerType.WFS) {
                 return new Promise((resolve, reject) => {
-
                     const processedCapabilities = function (capabilities) {
                         // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
                         // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
                         self.capabilities = self.capabilities || capabilities;
-
-                        var actualUrl = self.getGetMapUrl();
-                        TC.capabilities[self.options.url] = TC.capabilities[self.options.url] || capabilities;
-                        TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
+                        TC.capabilitiesWFS[self.options.url || self.url] = TC.capabilitiesWFS[self.options.url || self.url] || capabilities;
+                        TC.capabilitiesWFS[actualUrl] = TC.capabilitiesWFS[actualUrl] || capabilities;
                         resolve(capabilities);
                     };
 
+                    var actualUrl = (self.options.url || self.url).replace(/https ?:/gi, '');
+
                     if (self.capabilities) {
-                        processedCapabilities(self.capabilities);
-                        self._capabilitiesPromise = Promise.resolve(self.capabilities);
                         resolve(self.capabilities);
-                        return;
+                        self._capabilitiesPromise = Promise.resolve(self.capabilities);
+                    }
+                    if (TC.capabilitiesWFS[actualUrl]) {
+                        resolve(TC.capabilitiesWFS[actualUrl]);
+                        self._capabilitiesPromise = Promise.resolve(TC.capabilitiesWFS[actualUrl]);
+
                     }
 
                     self.toolProxification = new TC.tool.Proxification(TC.proxify);
 
-                    const cachePromise = capabilitiesPromises[self.url];
-                    capabilitiesPromises[self.url] = self._capabilitiesPromise = cachePromise || new Promise(function (res, rej) {
+                    const cachePromise = capabilitiesPromises[actualUrl];
+                    capabilitiesPromises[actualUrl] = self._capabilitiesPromise = cachePromise || new Promise(function (res, rej) {
                         const onlinePromise = self.getCapabilitiesOnline();
                         const storagePromise = self.getCapabilitiesFromStorage();
 
@@ -993,7 +1006,7 @@ if (!TC.Layer) {
                             });
                     });
 
-                    capabilitiesPromises[self.url].then(function (capabilities) {
+                    capabilitiesPromises[actualUrl].then(function (capabilities) {
                         processedCapabilities(capabilities);
                     })
                         .catch(function (error) {
