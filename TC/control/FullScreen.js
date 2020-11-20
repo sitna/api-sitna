@@ -17,7 +17,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-fscreen';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/FullScreen.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-fscreen.hbs";
 
     const key = {
         fullscreenEnabled: 0,
@@ -88,29 +88,88 @@ TC.inherit(TC.control.FullScreen, TC.Control);
 
         result.then(function () {
             const btn = self.div.querySelector('.' + self.CLASS + '-btn');
-            
-            if (self.fscreen.fullscreenEnabled) {                
-                self.fscreen.addEventListener('fullscreenchange', function () {
-                    self.fscreen.inFullscreen = self.fscreen.fullscreenElement !== null;
+
+            if (self.fscreen.fullscreenEnabled) {
+
+                const doFullscreenChange = () => {
                     btn.classList.toggle(TC.Consts.classes.ACTIVE, self.fscreen.inFullscreen);
                     btn.setAttribute('title', self.fscreen.inFullscreen ? self.getLocaleString("fscreen.tip.return") : self.getLocaleString("fscreen.tip"));
+                };
+
+                self.fscreen.addEventListener('fullscreenchange', () => {
+                    self.fscreen.inFullscreen = self.fscreen.fullscreenElement !== null;
+                    doFullscreenChange();
                 }, false);
 
                 btn.addEventListener('click', function () {
+                    self.byBtn = true;
                     if (!self.fscreen.inFullscreen) {
-                        self.fscreen.requestFullscreen(self.map.div);
+                        self.fscreen.requestFullscreen(document.body);
                     } else {
                         self.fscreen.exitFullscreen();
                     }
                 }, false);
 
+                if (!TC.Util.detectMobile()) {
+                    window.addEventListener('resize', () => {
+                        if (self.byBtn) {
+                            self.byBtn = false;
+                            return;
+                        }
+
+                        const windowWidth = window.innerWidth * window.devicePixelRatio;
+                        const windowHeight = window.innerHeight * window.devicePixelRatio;
+                        const screenWidth = window.screen.width;
+                        const screenHeight = window.screen.height;
+
+                        if (((windowWidth / screenWidth) >= 0.95) && ((windowHeight / screenHeight) >= 0.95)) {
+                            self.fscreen.inFullscreen = true;
+                        } else {
+                            self.fscreen.inFullscreen = false;
+                        }
+
+                        doFullscreenChange();
+
+                        let header = document.body.getElementsByTagName('header');
+                        if (self.fscreen.inFullscreen) {
+                            btn.setAttribute('disabled', 'disabled');
+
+                            if (header.length > 0) {
+                                header[0].classList.add("tc-ctl-fscreenToHeader");
+                            }
+
+                            self.map.div.classList.add("tc-ctl-fscreenToMap");
+                            if (self.map.view3D) {
+                                self.map.view3D.container.classList.add("tc-ctl-fscreenToMap");
+                            }
+
+                        } else {
+                            btn.removeAttribute('disabled');
+
+                            if (header.length > 0) {
+                                header[0].classList.remove("tc-ctl-fscreenToHeader");
+                            }
+
+                            self.map.div.classList.remove("tc-ctl-fscreenToMap");
+                            if (self.map.view3D) {
+                                self.map.view3D.container.classList.remove("tc-ctl-fscreenToMap");
+                            }
+                        }
+
+                        btn.setAttribute('title', self.fscreen.inFullscreen ? self.getLocaleString('fscreen.tip.keyboard') : self.getLocaleString("fscreen.tip"));
+
+                        const resizeEvent = document.createEvent('HTMLEvents');
+                        resizeEvent.initEvent('resize', false, false);
+                        self.map.div.dispatchEvent(resizeEvent); // Para evitar que el mapa quede estirado o achatado después de gestionar la cabecera.
+                    });
+                }
             } else {
                 // GLS: 19/02/2019 en lugar de ocultar el botón, deshabilitamos el control para que no quede espacio de más entre los botones
                 self.disable();
-            }            
+            }
         });
 
         return result;
-    };    
+    };
 
 })();
