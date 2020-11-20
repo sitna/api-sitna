@@ -12,12 +12,18 @@ if (!TC.control.MapContents) {
 
         TC.control.MapContents.apply(self, arguments);
 
+        self.layerInfos = {};
+
         self._cssClasses = {
             LOAD_CRS_BUTTON: self.CLASS + '-crs-btn-load',
             CRS_DIALOG: self.CLASS + '-crs-dialog',
             CRS_LIST: self.CLASS + '-crs-list',
+            VIEW_BTN: self.CLASS + '-btn-view',
             CURRENT_CRS_NAME: self.CLASS + '-cur-crs-name',
-            CURRENT_CRS_CODE: self.CLASS + '-cur-crs-code'
+            CURRENT_CRS_CODE: self.CLASS + '-cur-crs-code',
+            TREE: self.CLASS + '-tree',
+            DETAILS: 'tc-details',
+            GRID: 'tc-grid'
         };
 
         self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
@@ -63,7 +69,7 @@ if (!TC.control.MapContents) {
                     }
                 }
             }
-        }));
+        }), { passive: true });
     };
 
     TC.inherit(TC.control.BasemapSelector, TC.control.MapContents);
@@ -73,9 +79,9 @@ if (!TC.control.MapContents) {
     ctlProto.CLASS = 'tc-ctl-bms';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/BasemapSelector.html";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/BasemapSelectorNode.html";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/BasemapSelectorDialog.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-bms.hbs";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-bms-node.hbs";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-bms-dialog.hbs";
 
     const getClosestParent = function (elm, selector) {
         while (elm && !elm.matches(selector)) {
@@ -176,42 +182,57 @@ if (!TC.control.MapContents) {
     ctlProto.register = function (map) {
         const self = this;
 
-        const result = TC.control.MapContents.prototype.register.call(self, map);
+        return new Promise(function (resolve, reject) {
+            TC.control.MapContents.prototype.register.call(self, map).then(function (ctl) {
+                self.div.querySelector(`.${self._cssClasses.VIEW_BTN}`).addEventListener(TC.Consts.event.CLICK, function (e) {
+                    self.toggleView();
+                    e.target.blur();
+                    self.div.classList.remove(TC.Consts.classes.COLLAPSED);
+                    e.stopPropagation();
+                }, { passive: true });
 
-        if (self.options.dialogMore) {
-            map.on(TC.Consts.event.VIEWCHANGE, function () {
-                self._getMoreBaseLayers();
+                if (self.options.dialogMore) {
+                    map.on(TC.Consts.event.VIEWCHANGE, function () {
+                        self._getMoreBaseLayers();
+                    });
+                }
+
+                map.on(TC.Consts.event.BASELAYERCHANGE + ' ' + TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.VIEWCHANGE, function (e) {
+                    self.update(self.div, e.layer);
+                });
+
+
+                self.div.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
+
+                    if (e.target.value === "moreLayers") {
+                        self.showMoreLayersDialog();
+                    } else {
+                        changeInputRadioBaseMap.call(self, e);
+                    }
+
+                    e.stopPropagation();
+                }));
+
+                resolve(ctl);
             });
-        }
-
-        map.on(TC.Consts.event.BASELAYERCHANGE + ' ' + TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.VIEWCHANGE, function (e) {
-            self.update(self.div, e.layer);
         });
-
-
-        self.div.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
-
-            if (e.target.value === "moreLayers") {
-                self.showMoreLayersDialog();
-            } else {
-                changeInputRadioBaseMap.call(self, e);
-            }
-
-            e.stopPropagation();
-        }));
-
-        return result;
     };
 
     ctlProto.render = function (callback) {
         const self = this;
-        const result = TC.control.MapContents.prototype.render.call(self, callback, self.options);
+        const result = TC.control.MapContents.prototype.render.call(self, callback, TC.Util.extend({}, self.options, { controlId: self.id }));
 
         self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
 
             if (self.options.dialogMore) {
                 const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
+
+                dialog.querySelector(`.${self._cssClasses.VIEW_BTN}`).addEventListener(TC.Consts.event.CLICK, function (e) {
+                    self.toggleMoreLayersDialogView();
+                    e.target.blur();
+                    e.stopPropagation();
+                }, { passive: true });
 
                 dialog.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
                     changeInputRadioBaseMap.call(self, e, function (close) {
@@ -281,7 +302,13 @@ if (!TC.control.MapContents) {
         if (layer.isBase && !layer.options.stealth) {
             TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
 
-            self.getRenderedHtml(self.CLASS + '-node', self.layerTrees[layer.id]).then(function (out) {
+            if (layer.getInfo) {
+                info = layer.getInfo(layer.names[0]);
+                self.layerInfos[layer.id] = info;
+            }
+
+
+            self.getRenderedHtml(self.CLASS + '-node', { layer: self.layerTrees[layer.id], info: self.layerInfos[layer.id], controlId: self.id }).then(function (out) {
                 const parser = new DOMParser();
                 const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
                 var uid = newLi.dataset.layerUid;
@@ -480,20 +507,82 @@ if (!TC.control.MapContents) {
             }.bind(self)
         });
 
-        dialog.querySelector('.tc-modal-window').classList.add(self.CLASS + '-more-dialog');
+        const parentTree = self.div.querySelector(`.${self._cssClasses.TREE}`);
+        const isGrid = parentTree.classList.contains(self._cssClasses.GRID);
+        const button = dialog.querySelector(`.${self._cssClasses.VIEW_BTN}`);
+        button.classList.toggle(self._cssClasses.DETAILS, isGrid);
+        button.classList.toggle(self._cssClasses.GRID, !isGrid);
+        button.setAttribute('title', self.getLocaleString(isGrid ? 'showDetailsView' : 'showGridView'));
 
-        self._getMoreBaseLayers().then(function () {
-
-            self.getRenderedHtml(self.CLASS, { baseLayers: self._moreBaseLayers }, function (html) {
+        const processLayer = bl => {
+            if (bl) {
+                const info = bl.getInfo ? bl.getInfo(bl.names[0]) : null;
+                return { layer: bl, info: info, controlId: self.id };
+            }
+            return {};
+        };
+        const renderBody = function () {
+            const isGrid = dialog.querySelector(`.${self._cssClasses.VIEW_BTN}`).classList.contains(self._cssClasses.DETAILS);
+            const moreBaseLayers = self._moreBaseLayers.slice();
+            for (var i = 0, ii = moreBaseLayers.length; i < ii; i++) {
+                if (!moreBaseLayers[i]) {
+                    moreBaseLayers[i] = false;
+                }
+            }
+            self.getRenderedHtml(self.CLASS, {
+                baseLayers: moreBaseLayers.map(processLayer),
+                controlId: self.id
+            }, function (html) {
                 modalBody.innerHTML = html;
+                const tree = modalBody.querySelector(`.${self._cssClasses.TREE}`);
+                tree.classList.toggle(self._cssClasses.DETAILS, !isGrid);
+                tree.classList.toggle(self._cssClasses.GRID, isGrid);
                 modalBody.classList.remove(TC.Consts.classes.LOADING);
-                modalBody.querySelectorAll('li').forEach(function (li, idx) {
-                    li.dataset.layerId = self._moreBaseLayers[idx].id;
-                });
 
                 self.update(modalBody);
             });
+        };
+        self._getMoreBaseLayers(function (layerIdx) {
+            if (modalBody.classList.contains(TC.Consts.classes.LOADING)) {
+                renderBody();
+            }
+            else {
+                const li = modalBody.querySelector(`li.${self.CLASS}-node:nth-child(${layerIdx + 1})`);
+                const bl = self._moreBaseLayers[layerIdx];
+                if (bl) {
+                    self.getRenderedHtml(self.CLASS + '-node', processLayer(bl), function (html) {
+                        li.insertAdjacentHTML('beforebegin', html);
+                        li.remove();
+                        self.update(modalBody);
+                    });
+                }
+            }
+        }).then(function () {
+            renderBody();
         });
+    };
+
+    const toggleUI = function (ctl, container) {
+        const tree = container.querySelector(`.${ctl._cssClasses.TREE}`);
+        if (tree) {
+            const btn = container.querySelector(`.${ctl._cssClasses.VIEW_BTN}`);
+            const isGrid = btn.classList.toggle(ctl._cssClasses.DETAILS);
+            btn.setAttribute('title', ctl.getLocaleString(btn.classList.toggle(ctl._cssClasses.GRID) ? 'showGridView' : 'showDetailsView'));
+            tree.classList.remove(ctl._cssClasses.DETAILS, ctl._cssClasses.GRID);
+            setTimeout(() => tree.classList.add(isGrid ? ctl._cssClasses.GRID : ctl._cssClasses.DETAILS), 20);
+        }
+    };
+
+    ctlProto.toggleView = function () {
+        const self = this;
+        toggleUI(self, self.div);
+    };
+
+    ctlProto.toggleMoreLayersDialogView = function () {
+        const self = this;
+        if (self._dialogDiv) {
+            toggleUI(self, self._dialogDiv);
+        }
     };
 
     ctlProto.getLayer = function (id) {
@@ -504,8 +593,6 @@ if (!TC.control.MapContents) {
     };
 
     const getTo3DVIew = function (baseLayer) {
-        const self = this;
-
         return new Promise(function (resolve, reject) {
             Promise.all([
                 baseLayer.getCapabilitiesPromise(),
@@ -516,7 +603,7 @@ if (!TC.control.MapContents) {
         });
     };
 
-    ctlProto._getMoreBaseLayers = function () {
+    ctlProto._getMoreBaseLayers = function (partialCallback) {
         const self = this;
 
         if (!self._moreBaseLayers && !self._moreBaseLayersPromise) {
@@ -565,6 +652,9 @@ if (!TC.control.MapContents) {
                     }
 
                     self._moreBaseLayers.splice(i, 1, baseLayer);
+                    if (TC.Util.isFunction(partialCallback)) {
+                        partialCallback(i);
+                    }
                 };
 
                 Promise.all(noDyn.map(function (baseLayer, i) {
@@ -578,6 +668,9 @@ if (!TC.control.MapContents) {
                                 },
                                 function (fail) {
                                     self._moreBaseLayers.splice(i, 1, null);
+                                    if (TC.Util.isFunction(partialCallback)) {
+                                        partialCallback(i);
+                                    }
                                     res();
                                 });
                         } else {
