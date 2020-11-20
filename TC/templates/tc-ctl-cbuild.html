@@ -1,0 +1,28 @@
+<h2>{@i18n $key="offlineMaps"/}</h2>
+<div class="tc-ctl-cbuild-content">
+    <div class="tc-ctl-cbuild-draw tc-hidden"></div>
+    <i class="tc-ctl-cbuild-map-search-icon"></i>
+    <input type="search" list="{listId}" class="tc-ctl-cbuild-map-available-srch tc-textbox" placeholder="{@i18n $key="cb.filter.plhr"/}"{?storedMaps}{:else} disabled{/storedMaps} maxlength="200" />                
+    <ul id="{listId}" class="tc-ctl-cbuild-list">
+        <li class="tc-ctl-cbuild-map-available-empty"{?storedMaps} hidden{/storedMaps}><span>{@i18n $key="cb.noMaps"/}</span></li>
+        <li class="tc-ctl-cbuild-map-not" hidden><span>{@i18n $key="noMatches"/}</span></li>
+        {#storedMaps}
+        {>tc-ctl-cbuild-map-node:./}
+        {/storedMaps}
+    </ul>
+    <div class="tc-ctl-cbuild-new">
+        <button class="tc-button tc-icon-button tc-ctl-cbuild-btn-new" disabled title="{@i18n $key="newofflinemap"/}">{@i18n $key="newOfflineMap"/}</button>
+    </div>
+    <div class="tc-ctl-cbuild-drawing tc-hidden">
+        <div class="tc-ctl-cbuild-tile-cmd">
+            <button class="tc-button tc-icon-button tc-ctl-cbuild-btn-cancel-draw" title="{@i18n $key="cancel"/}">{@i18n $key="cancel"/}</button>
+        </div>
+    </div>
+    <div class="tc-ctl-cbuild-progress tc-hidden">
+        <p>{@i18n $key="cb.DownloadingMap|s"/}: <span class="tc-ctl-cbuild-progress-count"></span></p>
+        <div class="tc-ctl-cbuild-progress-bar">
+            <div class="tc-ctl-cbuild-progress-ratio" style="width:0"></div>
+        </div>
+        <button class="tc-button tc-icon-button tc-ctl-cbuild-btn-cancel-dl" title="{@i18n $key="cancel"/}">{@i18n $key="cancel"/}</button>
+    </div>
+</div>
