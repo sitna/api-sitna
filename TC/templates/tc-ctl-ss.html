@@ -1,0 +1,5 @@
+<div class="ol-scale-line ol-unselectable"><nobr><select>
+{#scales}
+    <option value="{.}"{@eq key="{.}" value="{scale}"} selected="true"{/eq}>1:{@math key="{.}" method="round"/}</option>{~n}
+{/scales}
+</select> <input type="button" value="{screenSize}''" title="{@i18n $key="estimatedMapSize"/}" /></nobr></div>

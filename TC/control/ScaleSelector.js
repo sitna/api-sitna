@@ -19,7 +19,7 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
 
     ctlProto.CLASS = 'tc-ctl-ss';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/ScaleSelector.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-ss.hbs";
 
     ctlProto.render = function (callback) {
         var self = this;
@@ -36,7 +36,9 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
                             option.textContent = '1:' + self.format(option.textContent.substr(2));
                         });
 
-                        self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () { self.setScreenSize(); });
+                        self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () {
+                            self.setScreenSize();
+                        }, { passive: true });
 
                         self.div.querySelector('select').addEventListener('change', function () {
                             self.setScale(this.value);
