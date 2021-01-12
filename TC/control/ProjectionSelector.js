@@ -37,11 +37,11 @@ if (!TC.control.MapContents) {
                     allowFallbackLayer: true
                 });
             }
-        }));
+        }), { passive: true });
 
         self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function (e) {
             self.loadFallbackProjections();
-        }));
+        }), { passive: true });
     };
 
     TC.inherit(TC.control.ProjectionSelector, TC.Control);
@@ -49,11 +49,6 @@ if (!TC.control.MapContents) {
     const ctlProto = TC.control.ProjectionSelector.prototype;
 
     ctlProto.CLASS = 'tc-ctl-projs';
-
-    const _dataKeys = {
-        LAYER: 'tcLayer',
-        FALLBACK_LAYER: 'tcFallbackLayer'
-    };
 
     ctlProto.render = function (callback) {
         const self = this;
