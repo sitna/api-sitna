@@ -1,0 +1,56 @@
+<div class="tc-ctl-dldlog tc-modal {{cssClass}}">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{{title}}</h3>
+            <div class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            {{#if elevation}}
+            <div class="tc-ctl-dldlog-elev">
+                <input id="{{checkboxId}}" type="checkbox" {{#if elevation.checked}}checked{{/if}}>
+                <label for="{{checkboxId}}" class="tc-ctl-dldlog-elev-label">{{i18n "includeElevations"}}</label>
+            </div>
+            <div class="tc-ctl-dldlog-ext">
+            </div>
+            {{#if elevation.resolution}}
+            <div class="tc-ctl-dldlog-ip tc-hidden">
+                <h4>{{i18n "interpolateCoordsFromElevProfile"}}</h4>
+                <label>
+                    <input type="radio" name="{{controlId}}-finfo-ip-coords" value="0" checked />
+                    <span>{{i18n "no"}}</span>
+                </label>
+                <label>
+                    <input type="radio" name="{{controlId}}-finfo-ip-coords" value="1" />
+                    <span>{{i18n "yes"}}</span>
+                </label>
+                <div class="tc-ctl-dldlog-ip-m tc-hidden">{{i18n "interpolateEveryXMeters.1"}}<input type="number" min="1" step="1" class="tc-textbox" value="{{elevation.resolution}}" />{{i18n "interpolateEveryXMeters.2"}}</div>
+            </div>
+            {{/if}}
+            {{/if}}
+            <div class="tc-ctl-dldlog-dl">
+                <div>
+                    {{#each formats}}
+                    {{#if (eq this "KML")~}}
+                    <button class="tc-button tc-btn-dl tc-ctl-dldlog-btn-kml" data-format="KML" title="KML">KML</button>
+                    {{~else if (eq this "KMZ")~}}
+                    <button class="tc-button tc-btn-dl tc-ctl-dldlog-btn-kmz" data-format="KMZ" title="KML">KML</button>
+                    {{~else if (eq this "GML")~}}
+                    <button class="tc-button tc-btn-dl tc-ctl-dldlog-btn-gml" data-format="GML" title="GML">GML</button>
+                    {{~else if (eq this "GeoJSON")~}}
+                    <button class="tc-button tc-btn-dl tc-ctl-dldlog-btn-geojson" data-format="GeoJSON" title="GeoJSON">GeoJSON</button>
+                    {{~else if (eq this "WKT")~}}
+                    <button class="tc-button tc-btn-dl tc-ctl-dldlog-btn-wkt" data-format="WKT" title="WKT">WKT</button>
+                    {{~else if (eq this "GPX")~}}
+                    <button class="tc-button tc-btn-dl tc-ctl-dldlog-btn-gpx" data-format="GPX" title="GPX">GPX</button>
+                    {{~else if (eq this "SHP")~}}
+                    <button class="tc-button tc-btn-dl tc-ctl-dldlog-btn-shp" data-format="SHP" title="Shapefile">Shapefile</button>
+                    {{~else if (eq this "GPKG")~}}
+                    <button class="tc-button tc-btn-dl tc-ctl-dldlog-btn-gpkg" data-format="GPKG" title="GeoPackage">GeoPackage</button>
+                    {{~/if}}
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
