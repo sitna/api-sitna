@@ -20,10 +20,6 @@ if (!TC.Control) {
 
         TC.Control.apply(self, arguments);
 
-        if (self.options.googleMapsKey) {
-            gMapsUrl += '&key=' + self.options.googleMapsKey;
-        }
-
         self.viewDiv = null;
         self._startLonLat = null;
     };
@@ -35,8 +31,8 @@ if (!TC.Control) {
     ctlProto.CLASS = 'tc-ctl-sv';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/StreetView.html";
-    ctlProto.template[ctlProto.CLASS + '-view'] = TC.apiLocation + "TC/templates/StreetViewView.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-sv.hbs";
+    ctlProto.template[ctlProto.CLASS + '-view'] = TC.apiLocation + "TC/templates/tc-ctl-sv-view.hbs";
 
     const dispatchCanvasResize = function () {
         var event = document.createEvent('HTMLEvents');
@@ -121,6 +117,11 @@ if (!TC.Control) {
 
         const result = TC.Control.prototype.register.call(self, map);
 
+        const googleMapsKey = self.options.googleMapsKey || map.options.googleMapsKey;
+        if (googleMapsKey) {
+            gMapsUrl += '&key=' + googleMapsKey;
+        }
+
         self.layer = null;
         var layerId = self.getUID();
         for (var i = 0; i < map.workLayers.length; i++) {
@@ -165,7 +166,7 @@ if (!TC.Control) {
             view.querySelector('.' + self.CLASS + '-btn-close').addEventListener(TC.Consts.event.CLICK, function (e) {
                 e.stopPropagation();
                 self.closeView();
-            });
+            }, { passive: true });
         }
             , function (a, b, c) {
                 TC.error("Error de renderizado StreetView");
@@ -342,7 +343,8 @@ if (!TC.Control) {
                                         },
                                         panControlOptions: {
                                             position: google.maps.ControlPosition.LEFT_TOP
-                                        }
+                                        },
+                                        imageDateControl: true
                                     };
 
                                     if (!self._sv) {
