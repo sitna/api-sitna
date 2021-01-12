@@ -91,9 +91,9 @@ TC.UI = TC.UI || {};
                         var elm = data[i];
                         // are we working with objects or strings?
                         if (isPlainObject(elm)) {
-                            html[html.length] = '<li><a href="' + settings.link + encodeURIComponent(elm.id) + '">' + elm.label + '</a></li>';
+                            html.push(`<li><a href="${settings.link}${encodeURIComponent(elm.id)}">${elm.label}</a></li>`);
                         } else {
-                            html[html.length] = '<li><a href="' + settings.link + encodeURIComponent(elm) + '">' + elm + '</a></li>';
+                            html.push(`<li><a href="${settings.link}${encodeURIComponent(elm)}">${elm}</a></li>`);
                         }
                     }
 
