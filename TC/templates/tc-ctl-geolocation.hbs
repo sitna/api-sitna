@@ -11,10 +11,8 @@
         </div>
         <div class="tc-ctl-geolocation-track-mng">
             <div class="tc-ctl-geolocation-select">
-                <form>                    
-                    <label class="tc-ctl-geolocation-btn-track" title="{{i18n "geo.track.title"}}"><input type="radio" name="mode" checked value="tracks" /><span>{{i18n "geo.gps"}}</span></label><label 
-					class="tc-ctl-geolocation-btn-tracks" title="{{i18n "geo.tracks.title"}}"><input type="radio" name="mode" value="track-available" /><span>{{i18n "geo.tracks"}}</span></label>                    
-                </form>
+                <label class="tc-ctl-geolocation-btn-track" title="{{i18n "geo.track.title"}}"><input type="radio" name="{{controlId}}-mode" checked value="tracks" /><span>{{i18n "geo.gps"}}</span></label><label 
+				class="tc-ctl-geolocation-btn-tracks" title="{{i18n "geo.tracks.title"}}"><input type="radio" name="{{controlId}}-mode" value="track-available" /><span>{{i18n "geo.tracks"}}</span></label>                    
             </div>                        
             <div class="tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden">
                 <i class="tc-ctl-geolocation-track-search-icon"></i>
@@ -24,7 +22,7 @@
                     <li class="tc-ctl-geolocation-track-not" hidden><span>{{i18n "noMatches"}}</span></li>
                 </ol>
                 <div class="tc-ctl-geolocation-track-cnt">
-                    <input name="uploaded-file" id="uploaded-file-{{controlId}}" type="file" class="tc-ctl-geolocation-track-import tc-button" accept=".gpx,.kml" disabled />
+                    <input name="uploaded-file" id="uploaded-file-{{controlId}}" type="file" class="tc-ctl-geolocation-track-import tc-button" accept=".gpx,.kml,.kmz" disabled />
                     <label class="tc-button tc-icon-button" for="uploaded-file-{{controlId}}" title="{{i18n "geo.trk.import.upload" }}">{{i18n "geo.trk.import.lbl"}}</label>
                 </div>
             </div>
