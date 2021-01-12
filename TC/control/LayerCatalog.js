@@ -36,12 +36,12 @@ if (!TC.control.ProjectionSelector) {
     ctlProto.CLASS = 'tc-ctl-lcat';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/LayerCatalog.html";
-    ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/LayerCatalogBranch.html";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/LayerCatalogNode.html";
-    ctlProto.template[ctlProto.CLASS + '-info'] = TC.apiLocation + "TC/templates/LayerCatalogInfo.html";
-    ctlProto.template[ctlProto.CLASS + '-results'] = TC.apiLocation + "TC/templates/LayerCatalogResults.html";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/LayerCatalogDialog.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-lcat.hbs";
+    ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-branch.hbs";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-node.hbs";
+    ctlProto.template[ctlProto.CLASS + '-info'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-info.hbs";
+    ctlProto.template[ctlProto.CLASS + '-results'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-results.hbs";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-dialog.hbs";
 
     const showProjectionChangeDialog = function (ctl, layer) {
         ctl.showProjectionChangeDialog({
@@ -357,13 +357,14 @@ if (!TC.control.ProjectionSelector) {
                                 clearTimeout(TC._search.retryTimeout);
                             TC._search.retryTimeout = setTimeout(function () {
                                 var results = [];
-                                for (var index = 0; index < self.sourceLayers.length; index++) {
-                                    var _founds = self.sourceLayers[index].searchSubLayers(text);
+                                for (var i = 0, ii = self.sourceLayers.length; i < ii; i++) {
+                                    const sourceLayer = self.sourceLayers[i];
+                                    var _founds = sourceLayer.searchSubLayers(text);
                                     if (_founds.length) {
                                         results.push({
                                             service: {
-                                                index: index,
-                                                title: self.sourceLayers[index].title || self.sourceLayers[index].id
+                                                id: sourceLayer.id,
+                                                title: sourceLayer.title || sourceLayer.id
                                             },
                                             founds: _founds
                                         });
@@ -423,15 +424,16 @@ if (!TC.control.ProjectionSelector) {
 
         if (!self.searchInit) {
             //botón de la lupa para alternar entre búsqueda y árbol
-            self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2 button', function (e) {
-                const wasCollapsed = self.div.classList.contains(TC.Consts.classes.COLLAPSED);
+            self.div.querySelector('h2 button').addEventListener(TC.Consts.event.CLICK, function (e) {
+                e.target.blur();
                 self.div.classList.remove(TC.Consts.classes.COLLAPSED);
+                e.stopPropagation();
 
                 const searchPane = self.div.querySelector('.' + self.CLASS + '-search');
                 const treePane = self.div.querySelector('.' + self.CLASS + '-tree');
                 const infoPane = self.div.querySelector('.' + self.CLASS + '-info');
 
-                const searchPaneMustShow = !!(searchPane.classList.contains(TC.Consts.classes.HIDDEN) || wasCollapsed);
+                const searchPaneMustShow = searchPane.classList.contains(TC.Consts.classes.HIDDEN);
                 searchPane.classList.toggle(TC.Consts.classes.HIDDEN, !searchPaneMustShow);
                 treePane.classList.toggle(TC.Consts.classes.HIDDEN, searchPaneMustShow);
                 e.target.classList.toggle(self.CLASS + '-btn-tree', searchPaneMustShow);
@@ -455,7 +457,7 @@ if (!TC.control.ProjectionSelector) {
                         infoPane.classList.remove(TC.Consts.classes.HIDDEN);
                     }
                 }
-            }));
+            }, { passive: true });
 
 
             //evento de expandir nodo de info
@@ -470,7 +472,7 @@ if (!TC.control.ProjectionSelector) {
                         parent = parent.parentElement;
                     }
                     while (parent && parent.tagName !== 'LI');
-                    self.showLayerInfo(self.layers.length > 1 ? self.layers[parent.dataset.serviceIndex] : self.layers[0], li.dataset.layerName);
+                    self.showLayerInfo(self.layers.length > 1 ? self.layers.filter(l => l.id === parent.dataset.serviceId)[0] : self.layers[0], li.dataset.layerName);
                     target.classList.add(TC.Consts.classes.CHECKED);
 
                 } else {
@@ -514,15 +516,15 @@ if (!TC.control.ProjectionSelector) {
                     }
                     while (liParent && !liParent.matches('li.' + self.CLASS + '-search-group'));
 
-                    const layerIdx = !liParent ? 0 : liParent.dataset.serviceIndex;
-                    const url = self.layers[layerIdx].options.url;
-                    const title = self.layers[layerIdx].title;
+                    const ctlLayer = !liParent ? self.layers[0] : self.layers.filter(l => l.id === liParent.dataset.serviceId)[0];
+                    const url = ctlLayer.options.url;
+                    const title = ctlLayer.title;
 
                     const layer = new TC.layer.Raster({
                         id: self.getUID(),
                         url: url,
                         title: title,
-                        hideTitle: self.layers[layerIdx].hideTitle || self.layers[layerIdx].options.hideTitle,
+                        hideTitle: ctlLayer.hideTitle || ctlLayer.options.hideTitle,
                         hideTree: false,
                         layerNames: [layerName]
                     });
@@ -552,8 +554,7 @@ if (!TC.control.ProjectionSelector) {
 
     const getLayerTree = function (layer) {
         var result = layer.getTree();
-        var makeNodeVisible = function makeNodeVisible(node) {
-            var result = false;
+        const makeNodeVisible = function makeNodeVisible(node) {
             var childrenVisible = false;
             for (var i = 0; i < node.children.length; i++) {
                 if (makeNodeVisible(node.children[i])) {
@@ -565,7 +566,16 @@ if (!TC.control.ProjectionSelector) {
             }
             return node.isVisible;
         };
+        const expandNode = function (node, level) {
+            if (layer.options.expandedNodeLevel > level) {
+                node.expanded = true;
+                for (var i = 0; i < node.children.length; i++) {
+                    expandNode(node.children[i], level + 1);
+                }
+            }
+        }
         makeNodeVisible(result);
+        expandNode(result, 0);
         return result;
     };
 
@@ -628,13 +638,12 @@ if (!TC.control.ProjectionSelector) {
         
         node.dataset.layerId = layer.id;
 
-        var formatDescriptions = {};
         node.querySelectorAll('.' + self.CLASS + '-btn-info').forEach(function (a) {
             const span = a.parentElement.querySelector('span');
             const name = a.parentElement.dataset.layerName;
             if (name) {
                 span.classList.add(TC.Consts.classes.SELECTABLE);
-                var info = layer.wrap.getInfo(name);
+                var info = layer.getInfo(name);
                 if (!info.hasOwnProperty('abstract') && !info.hasOwnProperty('legend') && !info.hasOwnProperty('metadata')) {
                     a.parentElement.removeChild(a);
                 }
@@ -647,7 +656,7 @@ if (!TC.control.ProjectionSelector) {
                         } else {
                             self.hideLayerInfo();
                         }
-                    });
+                    }, { passive: true });
                 }
                 if (layer.compatibleLayers && layer.compatibleLayers.indexOf(name) < 0) {
                     span.classList.add(TC.Consts.classes.INCOMPATIBLE);
@@ -665,8 +674,15 @@ if (!TC.control.ProjectionSelector) {
                 }
             }
             else {
-                span.dataset.tooltip = '';
-                a.parentElement.removeChild(a);
+                a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    e.stopPropagation();
+                    const elm = this;
+                    if (elm.classList.toggle(TC.Consts.classes.CHECKED)) {
+                        self.showLayerInfo(layer, name, span.innerText);
+                    } else {
+                        self.hideLayerInfo();
+                    }
+                }, { passive: true });
             }
         });        
 
@@ -680,33 +696,33 @@ if (!TC.control.ProjectionSelector) {
     ctlProto.renderBranch = function (layer, callback, promiseRenderResolve) {
         const self = this;
 
+        self.sourceLayers.unshift(layer);
         layer.getCapabilitiesPromise()
             .then(function (result) {
-
-                self.sourceLayers.push(layer);
 
                 self.getRenderedHtml(self.CLASS + '-branch', getLayerTree(this), function (html) {
                     var template = document.createElement('template');
                     template.innerHTML = html;
 
+                    const branch = self.div.querySelector('.' + self.CLASS + '-branch');
                     var newChild = template.content ? template.content.firstChild : template.firstChild;
-                    var oldChild = self.div.querySelector('.' + self.CLASS + '-branch').querySelector('li.' + self.CLASS + '-loading-node[data-layer-id="' + this.id + '"]');
+                    var oldChild = branch.querySelector('li.' + self.CLASS + '-loading-node[data-layer-id="' + this.id + '"]');
 
                     if (oldChild) {
-                        self.div.querySelector('.' + self.CLASS + '-branch').replaceChild(newChild, oldChild);
+                        branch.replaceChild(newChild, oldChild);
                     } else {
-                        self.div.querySelector('.' + self.CLASS + '-branch').appendChild(newChild);
+                        branch.insertAdjacentElement('afterbegin', newChild);
                     }
 
                     addLogicToNode.call(self, newChild, this);
 
-                    if (self.div.querySelector('.' + self.CLASS + '-branch').childElementCount === 1) {
+                    if (branch.childElementCount === 1) {
                         promiseRenderResolve();
                     }
 
                     if (TC.Util.isFunction(callback)) {
                         // pasamos el callback el item 
-                        callback(self.sourceLayers[self.sourceLayers.map(function (l) { return l.id }).indexOf(this.id)]);
+                        callback(self.sourceLayers[self.sourceLayers.map(function (l) { return l && l.id }).indexOf(this.id)]);
                     }
 
                 }.bind(this));
@@ -781,16 +797,16 @@ if (!TC.control.ProjectionSelector) {
                 if (!liLayer) {
                     continue;
                 }
-                result[result.length] = liLayer;
+                result.push(liLayer);
                 liLayer.querySelectorAll('li').forEach(function (li) {
-                    result[result.length] = li;
+                    result.push(li);
                 });
             }
         }
         return result;
     };
 
-    ctlProto.showLayerInfo = function (layer, name) {
+    ctlProto.showLayerInfo = function (layer, name, title) {
         const self = this;
         var result = null;
 
@@ -812,7 +828,7 @@ if (!TC.control.ProjectionSelector) {
                         info.innerHTML = out;
                         info.querySelector('.' + self.CLASS + '-info-close').addEventListener(TC.Consts.event.CLICK, function () {
                             self.hideLayerInfo();
-                        })
+                        }, { passive: true })
                     })
                     .catch(function (err) {
                         TC.error(err);
@@ -824,7 +840,30 @@ if (!TC.control.ProjectionSelector) {
 
         self.div.querySelectorAll('.' + self.CLASS + '-btn-info, .' + self.CLASS + '-search-btn-info').forEach(function (btn) {
             btn.classList.remove(TC.Consts.classes.CHECKED);
-        });
+        });        
+
+        var fncRecursiva_ = function (layer, title) {
+            if (layer.Title === title) {
+                return {
+                    title:title,
+                    abstract: layer.Abstract, metadata: (!layer.MetadataURL ? null : layer.MetadataURL.reduce(function (vi, va) {
+                        vi.push({
+                            format: va.Format,
+                            formatDescription: TC.Util.getLocaleString(self.map.options.locale, TC.Util.getSimpleMimeType(va.Format)) ||
+                            TC.Util.getLocaleString(self.map.options.locale, 'viewMetadata'),
+                            type: va.type,
+                            url: va.OnlineResource
+                        });
+                        return vi;
+                    }, []))
+                }
+            }
+            else if (layer.Layer)
+                for (var i = 0; i < layer.Layer.length; i++) {
+                    const res = fncRecursiva_(layer.Layer[i], title);
+                    if (res) return res;
+                }
+        };
 
         const formatDescriptions = {};
         for (var i = 0, ii = self._roots.length; i < ii; i++) {
@@ -834,18 +873,19 @@ if (!TC.control.ProjectionSelector) {
                 for (var j = 0, jj = as.length; j < jj; j++) {
                     const a = as[j];
                     var n = a.parentElement.dataset.layerName;
-                    if (n === name) {
-                        const info = layer.wrap.getInfo(name);
-                        if (info.metadata) {
-                            info.metadata.forEach(function (md) {
-                                md.formatDescription = formatDescriptions[md.format] =
-                                    formatDescriptions[md.format] ||
-                                    self.getLocaleString(TC.Util.getSimpleMimeType(md.format)) ||
-                                    self.getLocaleString('viewMetadata');
-                            });
-                        }
+                    if (name && n === name) {
+                        const info = layer.getInfo(name);
                         const infoBtn = self.div.querySelector('li [data-layer-name="' + n + '"] > button.' + self.CLASS + '-btn-info');
                         infoBtn.classList.toggle(TC.Consts.classes.CHECKED, toggleInfo(n, info));
+                        result = info;
+                        break;
+                    }
+                    const t = a.parentElement.querySelector('span').innerText;
+                    if (!name && title && t === title){
+                        //buscar en el capapabilities por nombre de capa;
+                        const info = fncRecursiva_(layer.capabilities.Capability.Layer, title);
+                        //const infoBtn = self.div.querySelector('li [data-layer-name="' + n + '"] > button.' + self.CLASS + '-btn-info');
+                        a.classList.toggle(TC.Consts.classes.CHECKED, toggleInfo(t, info));
                         result = info;
                         break;
                     }
@@ -910,7 +950,7 @@ if (!TC.control.ProjectionSelector) {
                 });
 
             if (fromLayerCatalog.length == 0) {
-                self.layers.push(layer);
+                self.layers.unshift(layer);
                 layer.getCapabilitiesPromise().then(function () {
                     layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
                     layer.title = layer.title || layer.wrap.getServiceTitle();

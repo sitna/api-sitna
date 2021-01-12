@@ -1,0 +1,20 @@
+{{#if isVisible}}
+<li {{#if children}} class="tc-ctl-lcat-node{{#unless expanded}} tc-collapsed{{/unless}}" {{else}} class="tc-ctl-lcat-node tc-ctl-lcat-leaf" {{/if}} data-layer-name="{{name}}" data-layer-uid="{{uid}}">
+    {{#if children}}<button class="tc-ctl-lcat-collapse-btn"></button>{{/if}}
+    <span data-tooltip="{{#if name}}{{i18n "clickToAddToMap"}}{{/if}}">{{title}}</span>{{#if name}}<button title="{{i18n "infoFromThisLayer"}}" class="tc-ctl-lcat-btn-info"></button>
+    {{else}}
+        {{#if abstract}}            
+            <button title="{{i18n "infoFromThisLayer"}}" class="tc-ctl-lcat-btn-info"></button>
+        {{else}}
+            {{#if metadata}}            
+                <button title="{{i18n "infoFromThisLayer"}}" class="tc-ctl-lcat-btn-info"></button>
+            {{/if}}
+        {{/if}}
+    {{/if}}
+    <ul class="tc-ctl-lcat-branch{{#unless expanded}} tc-collapsed{{/unless}}">
+        {{#each children}}
+        {{> tc-ctl-lcat-node}}
+        {{/each}}
+    </ul>
+</li>
+{{/if}}

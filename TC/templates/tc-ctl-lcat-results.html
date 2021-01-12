@@ -1,0 +1,17 @@
+{#servicesFound}
+{@gt key=servicesLooked value=1}
+<li class="tc-ctl-lcat-search-group {?service.isCollapsed}tc-collapsed{/service.isCollapsed}" data-service-id="{service.id}">
+    <h5>{service.title}</h5><ul>
+{/gt}
+        {#founds}
+        <li data-layer-name="{Name}" {?alreadyAdded} class="tc-checked"{/alreadyAdded}>
+        <h5 class="tc-selectable"{?alreadyAdded} data-tooltip="{@i18n $key="layerAlreadyAdded"/}"{:else} data-tooltip="{@i18n $key="clickToAddToMap"/}"{/alreadyAdded}>{Title}</h5>
+        <button class="tc-ctl-lcat-search-btn-info" title="{@i18n $key="infoFromThisLayer"/}"></button>
+        </li>
+	    {/founds}
+{@gt key=servicesLooked value=1}
+</ul></li>
+{/gt}
+{:else}
+<li class="tc-ctl-lcat-no-results"><h5>{@i18n $key="noMatches"/}</h5></li>
+{/servicesFound}

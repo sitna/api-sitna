@@ -1,0 +1,9 @@
+<li {{#if children}}class="tc-ctl-lcat-node{{#unless expanded}} tc-collapsed{{/unless}}"{{else}}class="tc-ctl-lcat-node tc-ctl-lcat-leaf"{{/if}} data-layer-name="{{name}}" data-layer-uid="{{uid}}">
+    <button class="tc-ctl-lcat-collapse-btn"></button>
+    <span>{{title}}</span>
+    <ul class="tc-ctl-lcat-branch{{#unless expanded}} tc-collapsed{{/unless}}">
+        {{#each children}}
+            {{> tc-ctl-lcat-node}}
+        {{/each}}
+    </ul>
+</li>

@@ -1,6 +1,6 @@
 {{#each servicesFound}}
-    {{#if (gt servicesLooked 1)}}
-<li class="tc-ctl-lcat-search-group {{#if service.isCollapsed}}tc-collapsed{{/if}}" data-service-index="{{service.index}}">
+    {{#if (gt ../servicesLooked 1)}}
+<li class="tc-ctl-lcat-search-group {{#if service.isCollapsed}}tc-collapsed{{/if}}" data-service-id="{{service.id}}">
     <h5>{{service.title}}</h5><ul>
     {{/if}}
         {{#each founds}}
@@ -9,7 +9,7 @@
         <button class="tc-ctl-lcat-search-btn-info" title="{{i18n "infoFromThisLayer"}}"></button>
         </li>
 	    {{/each}}
-    {{#if (gt servicesLooked 1)}}
+    {{#if (gt ../servicesLooked 1)}}
 </ul></li>
     {{/if}}
 {{else}}
