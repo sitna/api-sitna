@@ -1,10 +1,8 @@
 <h2>{{i18n "drawAndMeasure"}}</h2>
 <div class="tc-ctl-meas-select">
-    <form>
-        <label class="tc-ctl-meas-btn-pt"><input type="radio" name="mode" value="point" /><span>{{i18n "points"}}</span></label><label 
-		class="tc-ctl-meas-btn-len"><input type="radio" name="mode" value="polyline" /><span>{{i18n "lines"}}</span></label><label 
-		class="tc-ctl-meas-btn-area"><input type="radio" name="mode" value="polygon" /><span>{{i18n "polygons"}}</span></label>
-    </form>
+    <label class="tc-ctl-meas-btn-pt"><input type="radio" name="{{controlId}}-mode" value="point" /><span>{{i18n "points"}}</span></label><label 
+	class="tc-ctl-meas-btn-len"><input type="radio" name="{{controlId}}-mode" value="polyline" /><span>{{i18n "lines"}}</span></label><label 
+	class="tc-ctl-meas-btn-area"><input type="radio" name="{{controlId}}-mode" value="polygon" /><span>{{i18n "polygons"}}</span></label>
 </div>
 <div class="tc-ctl-meas-mode tc-ctl-meas-pt tc-hidden">
     <div class="tc-ctl-meas-point"></div>
