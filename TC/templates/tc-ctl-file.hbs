@@ -1,0 +1,7 @@
+<h2>{{i18n "openFile"}}</h2>
+<div>
+    <p>{{i18n "fileImport.instructions"}}</p>
+    <div class="tc-ctl-file-open">
+        <label class="tc-button tc-ctl-file-open-label tc-icon-button"><input type="file" class="tc-ctl-file-open-ipt tc-button" multiple accept="{{#each formats}}{{#unless @first}},{{/unless}}.{{this}}{{/each}}" />{{i18n "openFile"}}</label>
+    </div>
+</div>
