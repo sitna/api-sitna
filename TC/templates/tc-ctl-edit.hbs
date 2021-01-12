@@ -1,0 +1,17 @@
+<h2>{{i18n "featureEditing"}}</h2>
+<div class="tc-ctl-edit-tools">
+    <div class="tc-ctl-edit-mode">
+        <label class="tc-ctl-edit-btn-modify" title="{{i18n "select"}}"><input type="radio" name="{{controlId}}-mode" value="modify" /><span>{{i18n "select"}}</span>
+        </label><label class="tc-ctl-edit-btn-point" title="{{i18n "newPoint"}}"><input type="radio" name="{{controlId}}-mode" value="addpoint" /><span>{{i18n "newPoint"}}</span>
+        </label><label class="tc-ctl-edit-btn-line" title="{{i18n "newLine"}}"><input type="radio" name="{{controlId}}-mode" value="addline" /><span>{{i18n "newLine"}}</span>
+        </label><label class="tc-ctl-edit-btn-polygon" title="{{i18n "newPolygon"}}"><input type="radio" name="{{controlId}}-mode" value="addpolygon" /><span>{{i18n "newPolygon"}}</span>
+        </label><label class="tc-ctl-edit-btn-other" title="{{i18n "otherTools"}}"><input type="radio" name="{{controlId}}-mode" value="other" /><span>{{i18n "otherTools"}}</span></label>
+    </div>
+    <div class="tc-ctl-edit-modify tc-hidden"></div>
+    <div class="tc-ctl-edit-point tc-hidden"></div>
+    <div class="tc-ctl-edit-line tc-hidden"></div>
+    <div class="tc-ctl-edit-polygon tc-hidden"></div>
+    <div class="tc-ctl-edit-other tc-hidden">
+        <button class="tc-button tc-ctl-edit-btn-import">{{i18n "importFromOtherLayer"}}</button><button class="tc-button tc-ctl-edit-btn-dl">{{i18n "download"}}</button>
+    </div>
+</div>

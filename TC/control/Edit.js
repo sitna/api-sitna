@@ -19,7 +19,7 @@ if (!TC.Control) {
         self._classSelector = '.' + self.CLASS;
 
         self._selectors = {
-            MODE_RADIO_BUTTON: 'input[type=radio][name=mode]'
+            MODE_RADIO_BUTTON: `input[type=radio][name="${self.id}-mode"]`
         };
 
 
@@ -60,11 +60,11 @@ if (!TC.Control) {
     ctlProto.CLASS = 'tc-ctl-edit';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Edit.html";
-    ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/EditAttributes.html";
-    ctlProto.template[ctlProto.CLASS + '-import'] = TC.apiLocation + "TC/templates/EditImport.html";
-    ctlProto.template[ctlProto.CLASS + '-import-layer'] = TC.apiLocation + "TC/templates/EditImportLayer.html";
-    ctlProto.template[ctlProto.CLASS + '-import-feature'] = TC.apiLocation + "TC/templates/EditImportFeature.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-edit.hbs";
+    ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/tc-ctl-edit-attr.hbs";
+    ctlProto.template[ctlProto.CLASS + '-import'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import.hbs";
+    ctlProto.template[ctlProto.CLASS + '-import-layer'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import-layer.hbs";
+    ctlProto.template[ctlProto.CLASS + '-import-feature'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import-feature.hbs";
 
     /* Extendemos el método register. 
        La lógica del control suele definirse aquí. */
@@ -183,7 +183,7 @@ if (!TC.Control) {
                                 jfa.forEach(function (jfaObj) {
                                     const val = jfaObj[attributeObj.name];
                                     if (val !== undefined && val !== '') {
-                                        attributeObj.availableValues[attributeObj.availableValues.length] = val;
+                                        attributeObj.availableValues.push(val);
                                     }
                                 });
                             });
@@ -234,11 +234,11 @@ if (!TC.Control) {
 
                                 contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-ok`).addEventListener(TC.Consts.event.CLICK, function (e) {
                                     self.modifyControl._onAttrOK();
-                                });
+                                }, { passive: true });
 
                                 contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(TC.Consts.event.CLICK, function () {
                                     self.modifyControl.closeAttributes();
-                                });
+                                }, { passive: true });
                             });
                         }
                     };
@@ -395,7 +395,7 @@ if (!TC.Control) {
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self._set1stRenderPromise(TC.Control.prototype.render.call(self, function () {
+        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { controlId: self.id}, function () {
 
             //control de renderizado enfunción del modo de edicion
             if (Array.isArray(self.options.modes) && self.options.modes.length > 0) {
@@ -423,7 +423,7 @@ if (!TC.Control) {
 
             self.div.querySelector(self._classSelector + '-btn-import').addEventListener(TC.Consts.event.CLICK, function (e) {
                 self.showFeatureImportPanel();
-            });
+            }, { passive: true });
 
             self.div.querySelector(self._classSelector + '-btn-dl').addEventListener(TC.Consts.event.CLICK, function (e) {
                 self.getDownloadDialog().then(function (dialog) {
@@ -434,7 +434,7 @@ if (!TC.Control) {
                     };
                     dialog.open(self.layer.features, options);
                 });
-            });
+            }, { passive: true });
 
             if (TC.Util.isFunction(callback)) {
                 callback();
@@ -764,7 +764,7 @@ if (!TC.Control) {
     //        self._joinedFeatureAttributes = [];
     //        if (features.length > 1) {
     //            var geometries = features.map(function (elm) {
-    //                self._joinedFeatureAttributes[self._joinedFeatureAttributes.length] = elm.getData();
+    //                self._joinedFeatureAttributes.push(elm.getData());
     //                return elm.geometry;
     //            });
     //            var newGeometry = geometries.reduce(function (a, b) {
@@ -798,7 +798,7 @@ if (!TC.Control) {
     //        var data = feature.getData();
     //        var geometry = geometries[i];
     //        for (var j = 0, jj = geometry.length; j < jj; j++) {
-    //            newFeatures[newFeatures.length] = new feature.constructor([geometry[j]], { data: data });
+    //            newFeatures.push(new feature.constructor([geometry[j]], { data: data }));
     //        }
     //    }
     //    for (var i = 0, len = complexFeatures.length; i < len; i++) {
@@ -1051,7 +1051,7 @@ if (!TC.Control) {
                 self.highlightFeatures([feature]);
             }
         };
-        li.addEventListener(TC.Consts.event.CLICK, highlightListener);
+        li.addEventListener(TC.Consts.event.CLICK, highlightListener, { passive: true });
         li.addEventListener('mouseover', highlightListener);
         li.querySelector('input').addEventListener('change', function (e) {
             handleCheck(self, this);
@@ -1076,7 +1076,7 @@ if (!TC.Control) {
                 container.querySelector(`.${self.CLASS}-import-btn-ok`).addEventListener(TC.Consts.event.CLICK, function (e) {
                     self.importFeatures();
                     self.featureImportPanel.close();
-                });
+                }, { passive: true });
             });
         });
     };
@@ -1112,19 +1112,6 @@ if (!TC.Control) {
             else {
                 resolve(null);
             }
-        });
-    };
-
-    ctlProto.getDownloadDialog = function () {
-        const self = this;
-        if (self._downloadDialog) {
-            return Promise.resolve(self._downloadDialog);
-        }
-        return new Promise(function (resolve, reject) {
-            self.map.addControl('FeatureDownloadDialog').then(ctl => {
-                self._downloadDialog = ctl;
-                resolve(ctl);
-            })
         });
     };
 
