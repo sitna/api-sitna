@@ -38,22 +38,16 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.register = function (map) {
         const self = this;
-        const result = TC.control.FeatureInfoCommons.prototype.register.call(self, map);
-
-        // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
-        document.createElement('div').appendChild(self.div);
-
-        if (self.options.displayElevation || self.map.options.elevation) {
-            TC.loadJS(
-                !TC.tool || !TC.tool.Elevation,
-                TC.apiLocation + 'TC/tool/Elevation',
-                function () {
-                    const elevationOptions = self.options.displayElevation ? (typeof self.options.displayElevation === 'boolean' ? {} : self.options.displayElevation) : (typeof self.map.options.elevation === 'boolean' ? {} : self.map.options.elevation);
-                    self.elevation = new TC.tool.Elevation(elevationOptions);
-                }
+        return new Promise(function (resolve, reject) {
+            TC.control.FeatureInfoCommons.prototype.register.call(self, map).then(
+                function (ctl) {
+                    // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
+                    document.createElement('div').appendChild(self.div);
+                    resolve(ctl);
+                },
+                error => reject(error)
             );
-        }        
-        return result;
+        });
     };
 
     ctlProto.callback = function (coords, xy) {
@@ -61,12 +55,15 @@ if (!TC.control.FeatureInfoCommons) {
 
         self.querying = true;
 
-        if (self.elevation) {
-            self.elevationRequest = self.elevation.getElevation({
-                crs: self.map.crs,
-                coordinates: coords
-            });
-        }
+        const elevationTool = self.getElevationTool();
+        elevationTool.then(function (tool) {
+            if (tool) {
+                self.elevationRequest = tool.getElevation({
+                    crs: self.map.crs,
+                    coordinates: [coords]
+                });
+            }
+        });
 
         if (self.map && self.filterLayer) {
             //aquí se pone el puntito temporal
@@ -75,7 +72,7 @@ if (!TC.control.FeatureInfoCommons) {
             self.filterLayer.clearFeatures();
             self.highlightedFeature = null;
             self.filterFeature = null;
-            self.filterLayer.addMarker(coords, markerOptions).then(function (marker) {
+            self.filterLayer.addMarker(coords, markerOptions).then(function afterMarkerAdd(marker) {
                 ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
                 ////o sea
                 ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
@@ -90,8 +87,10 @@ if (!TC.control.FeatureInfoCommons) {
                 self.map.putLayerOnTop(self.filterLayer);
                 self.filterFeature = marker;
 
-                self.renderResults({ coords: marker.geometry, displayElevation: self.elevation, loading: true }, function () {
-                    self.displayResults();
+                elevationTool.then(function (tool) {
+                    self.renderResults({ coords: marker.geometry, displayElevation: tool, loading: true }, function () {
+                        self.displayResults();
+                    });
                 });
 
                 var visibleLayers = false;
@@ -207,7 +206,7 @@ if (!TC.control.FeatureInfoCommons) {
                 self.div.querySelectorAll('ul.' + self.CLASS + '-services label, ul.' + self.CLASS + '-services a').forEach(function (label) {
                     label.addEventListener(TC.Consts.event.CLICK, function (e) {
                         e.stopPropagation();
-                    })
+                    }, { passive: true })
                 })
             });
         }
@@ -219,14 +218,14 @@ if (!TC.control.FeatureInfoCommons) {
 
         if (self.elevationRequest) {
             const ctl = self.getDisplayControl();
-            self.getDisplayTarget().querySelector(`.${self.CLASS}-elev`).classList.add(TC.Consts.classes.HIDDEN);
+            self.getDisplayTarget().querySelectorAll(`.${self.CLASS}-elev,.${self.CLASS}-height`).forEach(elm => elm.classList.add(TC.Consts.classes.HIDDEN));
             self.elevationRequest.then(function (elevationCoords) {
-                if (ctl.currentFeature) {
-                    const currentCoords = ctl.currentFeature.geometry;                    
-                    if (TC.Util.formatCoord(currentCoords[0], self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION) === TC.Util.formatCoord(elevationCoords[0][0], self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION) &&
-                        TC.Util.formatCoord(currentCoords[1], self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION) === TC.Util.formatCoord(elevationCoords[0][1], self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION)) {
-                        const elevationValue = elevationCoords.length ? elevationCoords[0][2] : null;
-                        self.displayElevation(elevationValue);
+                if (ctl.currentFeature && elevationCoords.length) {
+                    const currentCoords = ctl.currentFeature.geometry;
+                    const elevPoint = elevationCoords[0];
+                    if (currentCoords[0] === elevPoint[0] && currentCoords[1] === elevPoint[1]) {
+                        const elevationValues = elevationCoords.length ? elevationCoords[0].slice(2) : null;
+                        self.displayElevation(elevationValues);
                     }
                 }
                 //self.elevationRequest = null;
@@ -242,12 +241,12 @@ if (!TC.control.FeatureInfoCommons) {
         if (self.filterFeature) {
             const currentCoords = self.filterFeature.geometry;
             if (options.coords && currentCoords[0] === options.coords[0] && currentCoords[1] === options.coords[1]) {
-                const locale = self.map.options.locale || TC.Cfg.locale;
                 options.isGeo = self.map.wrap.isGeo();
                 if (options.coords) {
                     options.crs = self.map.crs;
                     options.coords = options.coords.map(function (value) {
-                        return TC.Util.formatNumber(value.toFixed(options.isGeo ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION), locale);
+                        const precision = options.isGeo ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION;
+                        return TC.Util.formatCoord(value, precision);
                     });
                 }
                 self.renderData(options, callback);
@@ -257,11 +256,24 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.displayElevation = function (value) {
         const self = this;
+        let tValue, sValue;
+        if (Array.isArray(value)) {
+            tValue = value[0];
+            sValue = value.length > 1 ? value[1] : null;
+        }
+        else {
+            tValue = value;
+            sValue = null;
+        }
         const locale = self.map.options.locale || TC.Cfg.locale;
-        const elevationString = value === null ? '-' : TC.Util.formatNumber(Math.round(value), locale) + ' m';
+        let elevationString = tValue === null ? '-' : TC.Util.formatNumber(Math.round(tValue), locale) + ' m';
+        let heightString = sValue ? sValue.toLocaleString(locale, { maximumFractionDigits: 1 }) + ' m' : '-';
         const elevationDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-elev`);
-        elevationDisplay.classList.toggle(TC.Consts.classes.HIDDEN, value === null);
+        const heightDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-height`);
+        elevationDisplay.classList.toggle(TC.Consts.classes.HIDDEN, tValue === null);
+        heightDisplay.classList.toggle(TC.Consts.classes.HIDDEN, !sValue);
         elevationDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = elevationString;
+        heightDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = heightString;
     };
 
     ctlProto.loadSharedFeature = function (featureObj) {
