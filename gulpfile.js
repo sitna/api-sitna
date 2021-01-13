@@ -6,7 +6,6 @@
     //convertEncoding = require('gulp-convert-encoding'),
     minify = require('gulp-minify'),
     cleanCSS = require('gulp-clean-css'),
-    dust = require('dustjs-linkedin'),
     handlebars = require('handlebars'),
     zip = require('gulp-zip'),
     jsonlint = require("gulp-jsonlint"),
@@ -41,26 +40,23 @@ var execSync = require('child_process').execSync;
 var sitnaBuild = {
     targetPath: 'build/',
     preSrc: [
-        'node_modules/dustjs-linkedin/dist/dust-full.js',
-        'node_modules/dustjs-helpers/dist/dust-helpers.js',
-        'lib/dust/dustjs-i18n.js',
-        'lib/dust/dust.overrides.js',
         'lib/jsnlog/jsnlog.min.js',
-        'node_modules/handlebars/dist/handlebars.runtime.min.js',
-        'node_modules/jszip/dist/jszip.js'
+        'node_modules/handlebars/dist/handlebars.runtime.min.js'
     ],
     postSrc: [
         'TC/ui/autocomplete.js',
         'lib/draggabilly/draggabilly.pkgd.min.js',
         'node_modules/sortablejs/Sortable.min.js',
         'lib/qrcode/qrcode.min.js',
-        'lib/jsonpack/jsonpack.min.js',
+        'lib/shp-write/shp-write.js',
+        'lib/shp-write/shp-write.min.js',
+        'lib/iconv-lite/iconv-lite.js',
         'node_modules/ua-parser-js/dist/ua-parser.min.js',
         'node_modules/proj4/dist/proj4.js',
         'TC/tool/Proxification.js',
         'TC/Map.js',
         'TC/Util.js',
-        'tcmap.js',
+        'sitna.js',
         'lib/handlebars/helpers.js',
         'node_modules/localforage/dist/localforage.min.js',
         'TC/Layer.js',
@@ -86,9 +82,6 @@ var sitnaBuild = {
         'TC/layer/**/*.js',
         'TC/Geometry.js'
     ],
-    sitnaSrc: [
-        'sitna.js'
-    ],
 
     unsetDebug: function (stream) {
         return stream.pipe(replace("TC.isDebug = true;", "TC.isDebug = false;"));
@@ -102,27 +95,17 @@ var sitnaBuild = {
 
     replaceTemplates: function (stream) {
         return stream
-            .pipe(replace(/(\w+)\.template = TC\.apiLocation \+ \"TC\/templates\/(.+)\.html\";/g, function (match, p1, p2) {
-                return p1 + ".template = " + sitnaBuild.templateFunctions[p2 + '.html'].replace("\"________\"", p1 + ".CLASS");
-            }))
-            .pipe(replace(/(\w+)\.template\[(.+)\] = TC\.apiLocation \+ \"TC\/templates\/(.+)\.html\";/g, function (match, p1, p2, p3) {
-                return p1 + ".template[" + p2 + "] = " + sitnaBuild.templateFunctions[p3 + '.html'].replace("\"________\"", p2);
-            }));
-    },
-
-    replaceTemplates_hbs: function (stream) {
-        return stream
             .pipe(replace(/(\w+)\.template = TC\.apiLocation \+ \"TC\/templates\/(.+)\.hbs\";/g, function (match, p1, p2) {
-                return p1 + ".template = " + sitnaBuild.templateFunctions[p2 + '.hbs'].replace("\"________\"", p1 + ".CLASS");
+                return p1 + ".template = " + sitnaBuild.templateFunctions[p2 + '.hbs'];
             }))
             .pipe(replace(/(\w+)\.template\[(.+)\] = TC\.apiLocation \+ \"TC\/templates\/(.+)\.hbs\";/g, function (match, p1, p2, p3) {
-                return p1 + ".template[" + p2 + "] = " + sitnaBuild.templateFunctions[p3 + '.hbs'].replace("\"________\"", p2);
+                return p1 + ".template[" + p2 + "] = " + sitnaBuild.templateFunctions[p3 + '.hbs'];
             }));
     },
 
     compiledTask: function () {
         const olSitnaJS = ['lib/ol/build/ol-sitna.min.js'];
-        const src = sitnaBuild.preSrc.concat(olSitnaJS, sitnaBuild.postSrc, sitnaBuild.sitnaSrc);
+        const src = sitnaBuild.preSrc.concat(olSitnaJS, sitnaBuild.postSrc);
         return sitnaBuild.setVersionDate(gulp.src(src).pipe(filter(sitnaBuild.projectFiles.concat(olSitnaJS))))
             .pipe(concat('sitna.ol.debug.js'))
             .pipe(gulp.dest(sitnaBuild.targetPath));
@@ -190,35 +173,19 @@ function copyLibraries(cb) {
         fs.mkdirSync('lib/sortable');
     }
     copyFile('node_modules/sortablejs/Sortable.js', 'lib/sortable/Sortable.js');
-    copyFile('node_modules/sortablejs/Sortable.min.js', 'lib/sortable/Sortable.min.js');
-    copyFile('node_modules/jszip/dist/jszip.js', 'lib/jszip/jszip.js');
+    copyFile('node_modules/sortablejs/Sortable.min.js', 'lib/sortable/Sortable.min.js');       
+    copyDir('node_modules/jszip/dist/', 'lib/jszip/');
+    copyDir('node_modules/@sitna/shpjs/dist/', 'lib/shpjs/');
     copyDir('node_modules/localforage/dist/', 'lib/localforage/');
     copyDir('node_modules/proj4/dist/', 'lib/proj4js/');
     copyDir('node_modules/draggabilly/dist/', 'lib/draggabilly/');
     copyDir('node_modules/ua-parser-js/dist/', 'lib/ua-parser/');
+    copyDir('node_modules/wkx/dist/', 'lib/wkx/');
 };
 
 sitnaBuild.templateFunctions = {};
-function compileTemplates(cb) {
-    const path = 'TC/templates/';
-    fs.readdir(path, function (err, files) {
-        if (err) {
-            return console.error(err);
-        }
-        files
-            .filter(f => f.endsWith('.html'))
-            .forEach(function (file) {
-                sitnaBuild.templateFunctions[file] = dust
-                    .compile(fs.readFileSync(path + file, "utf8"), "________")
-                    .toString()
-                    .replace("(function(dust)", "function()")
-                    .replace("(dust))", "");
-            });
-        cb();
-    });
-};
 
-function compileTemplates_hbs(cb) {
+function compileTemplates(cb) {
     const path = 'TC/templates/';
     fs.readdir(path, function (err, files) {
         if (err) {
@@ -236,9 +203,14 @@ function compileTemplates_hbs(cb) {
                             eq: true,
                             round: true,
                             lowerCase: true,
-                            startsWith: true,
+                            startsWith: true, 
                             numberSeparator: true,
-                            countif: true
+                            countif: true,
+                            isEmpty: true,
+                            getId: true,
+                            isArray: true,
+                            isObject: true,
+                            formatNumber: true
                         },
                         knownHelpersOnly: true
                     })
@@ -250,7 +222,6 @@ function compileTemplates_hbs(cb) {
 
 function bundle (cb) {
     sitnaBuild.onDemandTask(['sitna.js'], sitnaBuild.targetPath);
-    sitnaBuild.onDemandTask(['tcmap.js'], sitnaBuild.targetPath);
     sitnaBuild.onDemandTask(['TC/**/*.js'], sitnaBuild.targetPath + 'TC/');
     sitnaBuild.compiledTask();
     cb();
@@ -340,6 +311,9 @@ function layoutCss() {
         'TC/**/style.css'
     ])
         .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(cleanCSS({
+            level: 0
+        }))
         .pipe(gulp.dest(sitnaBuild.targetPath + 'TC/'));
 };
 
@@ -351,26 +325,107 @@ function jsonValidate() {
         .pipe(jsonlint.failOnError());
 };
 
-function bundleOLDebug () {
+function bundleOLDebug() {
+    const fileName = 'ol-sitna.js';
+    sitnaBuild.projectFiles.push('lib/ol/build/' + fileName);
     return gulp.src('batch/ol-webpack/main.js')
         .pipe(webpack({
             output: {
-                filename: 'ol-sitna.js',
+                filename: fileName,
                 library: 'ol'
             },
-            mode: 'development'
+            mode: 'development',
+            module: {
+                rules: [
+                    {
+                        use: ['source-map-loader']
+                    }
+                ]
+            }
         }))
         .pipe(gulp.dest('lib/ol/build'));
 };
 
+function BundleSHPwriteDebug() {   
+    sitnaBuild.projectFiles.push("lib/shp-write/shp-write.js");
+    return gulp.src('node_modules/@aleffabricio/shp-write/index.js')
+        .pipe(webpack({
+            output: {
+                filename: 'shp-write.js',
+                library: 'shpWrite'
+            },
+            mode: 'development'
+        })).pipe(gulp.dest('lib/shp-write/'))
+    
+};
+function BundleIconvDebug() {
+    sitnaBuild.projectFiles.push("lib/iconv-lite/iconv-lite.js");
+    return gulp.src('node_modules/iconv-lite/lib/index.js')
+        .pipe(webpack({
+            output: {
+                filename: 'iconv-lite.js',
+                library: 'iconv'
+            },
+            mode: 'development'
+        }))        
+        .pipe(gulp.dest('lib/iconv-lite/'));   
+
+};
+function BundleIconvRelease() {
+    sitnaBuild.projectFiles.push("lib/iconv-lite/iconv-lite.min.js");
+    return gulp.src('node_modules/iconv-lite/lib/index.js')
+        .pipe(webpack({
+            output: {
+                filename: 'iconv-lite.min.js',
+                library: 'iconv'
+            },
+            mode: 'production'
+        }))
+        .pipe(gulp.dest('lib/iconv-lite/'));
+
+};
+//function BundleGPKGConverter() {
+//    //sitnaBuild.projectFiles.push("lib/shp-write/shp-write.js");
+//    return gulp.src('node_modules/geojson/index.js')
+//        .pipe(webpack({
+//            output: {
+//                filename: 'geopackageConverter.js',
+//                library: 'GPKGConverter'
+//            },
+//            mode: 'development'
+//        })).pipe(gulp.dest('lib/GPKGConverter/'))
+
+//};
+function BundleSHPwriteRelease() {
+    sitnaBuild.projectFiles.push("lib/shp-write/shp-write.min.js");
+    return gulp.src('node_modules/@aleffabricio/shp-write/index.js')
+        .pipe(webpack({
+            output: {
+                filename: 'shp-write.min.js',
+                library: 'shpWrite'
+            },
+            mode: 'production'
+        })).pipe(gulp.dest('lib/shp-write/'))        
+}
+
+
 function bundleOLRelease () {
+    const fileName = 'ol-sitna.min.js';
+    sitnaBuild.projectFiles.push('lib/ol/build/' + fileName);
     return gulp.src('batch/ol-webpack/main.js')
         .pipe(webpack({
             output: {
-                filename: 'ol-sitna.min.js',
+                filename: fileName,
                 library: 'ol'
             },
-            mode: 'production'
+            mode: 'production',
+            module: {
+                rules: [
+                    {
+                        use: ['source-map-loader']
+                    }
+                ]
+            }
         }))
         .pipe(gulp.dest('lib/ol/build'));
 };
@@ -483,11 +538,13 @@ exports.bundleCesiumDebugMergeTerrain = bundleCesiumDebugMergeTerrain;
 exports.bundleCesiumReleaseMergeTerrain = bundleCesiumReleaseMergeTerrain;
 exports.noTests = gulp.series(
     clean,
-    buildCsprojFilter,
+    buildCsprojFilter,    
     compileTemplates,
     bundleOLDebug,
-    bundleOLRelease,
+    bundleOLRelease,    
     jsonValidate,
+    BundleSHPwriteDebug,
+    BundleSHPwriteRelease,
     copyLibraries,
     parallelTasks
 );
@@ -497,7 +554,12 @@ exports.default = gulp.series(
     compileTemplates,
     bundleOLDebug,
     bundleOLRelease,
+    //BundleGPKGConverter,
     jsonValidate,
+    BundleSHPwriteDebug,
+    BundleSHPwriteRelease,
+    BundleIconvDebug,
+    BundleIconvRelease,
     copyLibraries,
     unitTests,
     //e2eTests,
