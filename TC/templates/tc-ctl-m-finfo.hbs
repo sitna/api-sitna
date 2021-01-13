@@ -1,0 +1,8 @@
+<div class="tc-ctl-m-finfo-select">
+    <span>{{i18n "selectionBy"}}</span>
+    {{#if pointSelectValue}}<label class="tc-ctl-m-finfo-btn-point" title="{{i18n "selectionByPoint"}}"><input type="radio" name="{{controlId}}-mode" value="{{pointSelectValue}}" checked /><span class="tc-ctl-btn">{{i18n "byPoint"}}</span></label>{{/if}}
+    {{#if lineSelectValue}}<label class="tc-ctl-m-finfo-btn-line" title="{{i18n "selectionByLine"}}"><input type="radio" name="{{controlId}}-mode" value="{{lineSelectValue}}" /><span class="tc-ctl-btn">{{i18n "byLine"}}</span></label>{{/if}}
+    {{#if polygonSelectValue}}<label class="tc-ctl-m-finfo-btn-polygon" title="{{i18n "selectionByPrecinct"}}"><input type="radio" name="{{controlId}}-mode" value="{{polygonSelectValue}}" /><span class="tc-ctl-btn">{{i18n "byPrecinct"}}</span></label>{{/if}}
+    <button class="tc-icon-btn tc-ctl-m-finfo-btn-dl" disabled title="{{i18n "downloadFeatures"}}"></button>
+    <button class="tc-icon-btn tc-ctl-m-finfo-btn-remove" disabled title="{{i18n "deleteFeatures"}}"></button>
+</div>
