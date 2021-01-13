@@ -8,8 +8,8 @@
   * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en)
 
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for town councils in Navarre:
-  * IRUSKAN. [Pamplona City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
-  * IRUSKAN. [Pamplona Commerce Viewer](https://sig.pamplona.es/comercio/?lang=en "Economic Activity - Pamplona Town Council")
+  * GeoPamplona. [City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
+  * GeoPamplona. [Commerce Viewer](https://sig.pamplona.es/comercio/?lang=en "Economic Activity - Pamplona Town Council")
   * [Geo Andosilla](https://idena.navarra.es/municipios/andosilla/?lang=en "Spatial Data Infrastructure of Andosilla")
   * [Geo Huarte / Uharte](https://idena.navarra.es/municipios/huarte/?lang=en "Spatial Data Infrastructure of Huarte / Uharte")
   * [Geo Leitza](https://idena.navarra.es/municipios/leitza/?lang=en "Spatial Data Infrastructure of Leitza")
