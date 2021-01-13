@@ -1,0 +1,16 @@
+<div title="{{i18n "crs"}}"{{#if allowReprojection}} class="tc-active"{{/if}}>CRS: <span class="tc-ctl-coords-crs">{{crs}}</span>{{#if allowReprojection}}<button class="tc-ctl-coords-crs" title="{{i18n "changeCRS"}}">{{crs}}</button>{{/if}}</div>
+<div class="tc-ctl-coords-xy">
+    {{#if isGeo}}
+    {{i18n "lat"}}: <span class="tc-ctl-coords-lat">{{lat}}</span> {{i18n "lon"}}: <span class="tc-ctl-coords-lon">{{lon}}</span> {{#if ele}}{{i18n "ele"}}: <span class="tc-ctl-coords-elevation">{{ele}}</span> {{/if}}
+    {{else}}
+    x: <span class="tc-ctl-coords-x">{{x}}</span> y: <span class="tc-ctl-coords-y">{{y}}</span> {{#if ele}}z: <span class="tc-ctl-coords-elevation">{{ele}}</span> {{/if}}
+    {{/if}}
+</div>
+{{#if showGeo}}
+<div class="tc-ctl-coords-alt">
+    <div class="tc-ctl-coords-xy">
+        {{i18n "lat"}}: <span class="tc-ctl-coords-lat">{{lat}}</span> {{i18n "lon"}}: <span class="tc-ctl-coords-lon">{{lon}}</span> {{#if ele}}{{i18n "ele"}}: <span class="tc-ctl-coords-elevation">{{ele}}</span> {{/if}}
+    </div>
+</div>
+{{/if}}
+<span class="close"></span>

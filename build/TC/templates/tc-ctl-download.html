@@ -1,0 +1,55 @@
+<h2>{@i18n $key="download"/} </h2>
+<div class="tc-ctl-tctr tc-ctl-tctr-select">
+    <label class="tc-ctl-tctr-tab tc-ctl-download-image" style="width:calc(100%/2 - 1px)"><input type="radio" name="{controlId}-sel" value="image" /><span>{@i18n $key="dl.export.map"/}</span></label>
+    <label class="tc-ctl-tctr-tab tc-ctl-download-data" style="width:calc(100%/2 - 1px)"><input type="radio" name="{controlId}-sel" value="data" /><span>{@i18n $key="dl.export.vector"/}</span></label>
+</div>
+<div class="tc-ctl tc-ctl-tctr-elm tc-ctl-tctr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image tc-collapsed">
+    <div>
+        <label>{@i18n $key="format"/}:</label>
+        <select class="tc-combo">
+            <option value="image/png">PNG</option>
+            <option value="image/jpeg">JPEG</option>
+        </select>
+        <div class="tc-ctl-download-div">
+            <input id="tc-ctl-download-image-qr-{controlId}" class="tc-hidden" type="checkbox" checked />
+            <label for="tc-ctl-download-image-qr-{controlId}" class="tc-ctl-download-image-qr-label" title="{@i18n $key="createQrCodeToImage"/}">{@i18n $key="appendQRCode"/}</label>
+            <input id="tc-ctl-download-image-wld-{controlId}" class="tc-hidden" type="checkbox" />
+            <label for="tc-ctl-download-image-wld-{controlId}" class="tc-ctl-download-image-wld-label" title="{@i18n $key="appendWorldFile.explanation"/}">{@i18n $key="appendWorldFile"/}</label>
+        </div>
+
+        <div class="tc-group tc-group tc-ctl-download-cnt" style="text-align:right;">
+            <button type="button" class="tc-ctl-download-btn tc-button tc-icon-button" title="{@i18n $key="downloadImageFromCurrentMap"/}" name="descargar">{@i18n $key="download"/}</button>
+        </div>
+        <div class="tc-ctl-download-alert tc-alert alert-warning tc-hidden">
+            <p>{@i18n $key="qrAdvice|s"/}</p>
+        </div>
+    </div>
+</div>
+<div class="tc-ctl tc-ctl-tctr-elm tc-ctl-tctr-elm-data tc-group tc-ctl-download-cnt tc-collapsed">
+    <div>
+        <label>{@i18n $key="format"/}:</label>
+        <select class="tc-combo">
+            <option value="GML32">GML</option>
+            <option value="application/json">GeoJSON</option>
+            <option value="application/vnd.google-earth.kml+xml">KML (Google Earth)</option>
+            <option value="shape-zip">Shapefile (ESRI)</option>
+        </select>
+
+        <div class="tc-ctl-download-div">
+            <i class="tc-ctl-download-help icon-question-sign" data-toggle="tooltip" data-placement="top" title="{@i18n $key="showDownloadHelp"/}"></i>
+        </div>
+
+        <div class="tc-group tc-group tc-ctl-download-cnt" style="text-align:right;">
+            <button type="button" class="tc-ctl-download-btn tc-button tc-icon-button" title="{@i18n $key="downloadLayersFromCurrentExtent"/}" name="descargar">{@i18n $key="download"/}</button>
+        </div>
+
+        <div class="tc-alert alert-warning tc-hidden">
+            <p id="zoom-msg-{controlId}"><strong>{@i18n $key="tooManyFeatures"/}: </strong>{@i18n $key="tooManyFeatures.instructions"/}</p>
+            <p id="layers-msg-{controlId}"><strong>{@i18n $key="noLayersLoaded"/}: </strong>{@i18n $key="noLayersLoaded.instructions"/}</p>
+            <p id="url-msg-{controlId}"><strong>{@i18n $key="tooManySelectedLayers"/}: </strong>{@i18n $key="tooManySelectedLayers.instructions"/}</p>
+            <p id="noFeatures-msg-{controlId}"><strong>{@i18n $key="noData"/}: </strong>{@i18n $key="noData.instructions"/}</p>
+            <p id="novalid-msg-{controlId}"><strong>{@i18n $key="noValidService"/}: </strong>{@i18n $key="noValidService.instructions"/}</p>
+        </div>
+    </div>
+</div>
+

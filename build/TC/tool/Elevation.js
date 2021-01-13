@@ -6,8 +6,9 @@ TC.tool.Elevation = function (options) {
     self._servicePromises = [];
     const serviceOptions = self.options.services || [
         'elevationServiceIDENA',
-        //'elevationServiceIGNEs',
-        'elevationServiceIGNFr'
+        'elevationServiceIGNFr',
+        'elevationServiceIGNEs',
+        'elevationServiceGoogle'
     ];
 
     const abstractServicePromise = new Promise(function (resolve, reject) {
@@ -42,50 +43,30 @@ TC.tool.Elevation = function (options) {
 (function () {
     const toolProto = TC.tool.Elevation.prototype;
 
+    let requestUID = 0;
+    const getRequestUID = function () {
+        return requestUID++;
+    };
+
     toolProto.getService = function (idx) {
         return this._servicePromises[idx];
     };
 
-    const mergeResponses = function (responses) {
-        const numPoints = responses.length ? responses[0].length : 0;
-        const elevation = new Array(numPoints);
-        if (numPoints) {
-
-            // Función que aglutina resultados de elevación de los servicios
-            const reduceFnFactory = function (idx) {
-                return function (prev, cur, arr) {
-                    const point = cur[idx];
-                    const result = prev;
-                    if (prev[0] === null && point) {
-                        result[0] = point[0];
-                    }
-                    if (prev[1] === null && point) {
-                        result[1] = point[1];
-                    }
-                    if (prev[2] === null && point) {
-                        result[2] = point[2];
-                    }
-                    return result;
-                };
-            };
-
-            for (var i = 0; i < numPoints; i++) {
-                var fn = reduceFnFactory(i);
-                elevation[i] = responses.reduce(fn, [null, null, null]);
-            }
-        }
-        return elevation;
-    }
+    toolProto.getServices = function () {
+        return Promise.all(this._servicePromises);
+    };
 
     toolProto.getElevation = function (options) {
         const self = this;
         options = options || {};
+        options.id = getRequestUID();
         if (options.resolution === undefined) {
-            options.resolution = self.options.resolution
+            options.resolution = self.options.resolution;
         }
         if (options.sampleNumber === undefined) {
             options.sampleNumber = self.options.sampleNumber;
         }
+        let done = false;
         let partialResult;
         let partialCallback;
         if (TC.Util.isFunction(options.partialCallback)) {
@@ -93,51 +74,195 @@ TC.tool.Elevation = function (options) {
         }
 
         return new Promise(function (resolve, reject) {
-            const onError = function (msg, type) {
-                reject(msg, type);
-            };
-
             TC.loadJS(
                 !TC.Geometry,
                 TC.apiLocation + 'TC/Geometry',
                 function () {
-                    Promise.all(self._servicePromises).then(function (services) {
-                        // Creamos un array de promesas que se resuelven falle o no la petición
-                        const alwaysPromises = new Array(services.length);
+                    let coordinateList = options.coordinates;
+                    const isSinglePoint = coordinateList.length === 1;
+
+                    if (!isSinglePoint) {
+                        if (options.resolution) {
+                            const newCoordinateList = [];
+                            coordinateList.forEach(function (point, idx, arr) {
+                                if (idx) {
+                                    const prev = arr[idx - 1];
+                                    const distance = TC.Geometry.getDistance(prev, point);
+                                    if (distance > options.resolution) {
+                                        // posición en el segmento del primer punto interpolado
+                                        let pos = (distance % options.resolution) / 2;
+                                        // x··$·····|·····|··x
+                                        let n = Math.ceil(distance / options.resolution);
+                                        if (pos === 0) {
+                                            n = n - 1;
+                                            pos = options.resolution;
+                                        }
+                                        const x = point[0] - prev[0];
+                                        const y = point[1] - prev[1];
+                                        const sin = y / distance;
+                                        const cos = x / distance;
+                                        let xpos = prev[0] + pos * cos;
+                                        let ypos = prev[1] + pos * sin;
+                                        let dx = options.resolution * cos;
+                                        let dy = options.resolution * sin;
+                                        for (var i = 0; i < n; i++) {
+                                            newCoordinateList.push([xpos, ypos]);
+                                            xpos += dx;
+                                            ypos += dy;
+                                        }
+                                    }
+                                }
+                                newCoordinateList.push(point);
+                            });
+                            coordinateList = newCoordinateList;
+                            options.resolution = 0;
+                            options.sampleNumber = 0;
+                        }
+                        else if (options.sampleNumber) {
+                            const numPoints = coordinateList.length;
+                            if (numPoints > options.sampleNumber) {
+                                // Sobran puntos. Nos quedamos con los puntos más cercanos a los puntos kilométricos
+                                // de los intervalos definidos por sampleNumber.
+                                const milestones = [];
+                                let accumulatedDistance = 0;
+                                coordinateList.forEach(function (point, idx, arr) {
+                                    if (idx) {
+                                        accumulatedDistance += TC.Geometry.getDistance(arr[idx - 1], point);
+                                    }
+                                    milestones.push({
+                                        index: idx,
+                                        distance: accumulatedDistance
+                                    });
+                                });
+                                const intervalLength = accumulatedDistance / options.sampleNumber;
+                                let nextMilestoneDistance = 0;
+                                milestones.forEach(function (milestone, idx, arr) {
+                                    const dd = milestone.distance - nextMilestoneDistance;
+                                    if (dd === 0) {
+                                        milestone.included = true;
+                                    }
+                                    else if (dd > 0) {
+                                        if (milestone.index) {
+                                            const prevMilestone = arr[idx - 1];
+                                            if (nextMilestoneDistance - prevMilestone.distance < dd) {
+                                                prevMilestone.included = true;
+                                            }
+                                            else {
+                                                milestone.included = true;
+                                            }
+                                        }
+                                        while (milestone.distance > nextMilestoneDistance) {
+                                            nextMilestoneDistance += intervalLength;
+                                        }
+                                    }
+                                });
+                                milestones.filter(m => !m.included).forEach(function (m) {
+                                    coordinateList[m.index] = null;
+                                });
+                                coordinateList = coordinateList.filter(p => p !== null);
+                            }
+                            else if (numPoints < options.sampleNumber) {
+                                // Faltan puntos. Insertamos puntos en las segmentos más largos.
+                                const insertBefore = function (arr, idx, count) {
+                                    const p1 = arr[idx - 1];
+                                    const p2 = arr[idx];
+                                    const n = count + 1;
+                                    let x = p1[0];
+                                    let y = p1[1];
+                                    const dx = (p2[0] - x) / n;
+                                    const dy = (p2[1] - y) / n;
+                                    const spliceParams = new Array(count + 2);
+                                    spliceParams[0] = idx;
+                                    spliceParams[1] = 0;
+                                    for (var i = 2, ii = spliceParams.length; i < ii; i++) {
+                                        x += dx;
+                                        y += dy;
+                                        spliceParams[i] = [x, y];
+                                    }
+                                    arr.splice.apply(arr, spliceParams);
+                                };
+                                let totalDistance = 0;
+                                const distances = coordinateList.map(function (point, idx, arr) {
+                                    let distance = 0;
+                                    if (idx) {
+                                        distance = TC.Geometry.getDistance(arr[idx - 1], point);
+                                        totalDistance += distance;
+                                    }
+                                    return {
+                                        index: idx,
+                                        distance: distance
+                                    };
+                                });
+                                // Hacemos copia de la lista porque vamos a insertar puntos
+                                coordinateList = coordinateList.slice();
+                                const defaultCount = options.sampleNumber - numPoints;
+                                let leftCount = defaultCount;
+                                let insertionCount = 0;
+                                for (var i = 0, ii = distances.length; leftCount && i < ii; i++) {
+                                    const obj = distances[i];
+                                    if (obj.distance !== 0) {
+                                        const partialInsertionCount = Math.min(Math.round(defaultCount * obj.distance / totalDistance), leftCount) || 1;
+                                        leftCount -= partialInsertionCount;
+                                        insertBefore(coordinateList, obj.index + insertionCount, partialInsertionCount);
+                                        insertionCount += partialInsertionCount;
+                                    }
+                                }
+                            }
+                            options.resolution = 0;
+                            options.sampleNumber = 0;
+                        }
+                    }
+
+                    options.coordinates = coordinateList;
+                    partialResult = coordinateList.map(p => [p[0], p[1], null]);
+                    
+                    if (!options.hasOwnProperty('includeHeights')) {
+                        options.includeHeights = isSinglePoint;
+                    }
+                    self.getServices().then(function (services) {
+                        const responses = new Array(services.length);
+                        responses.fill(false);
                         services
                             .forEach(function (srv, idx) {
-                                alwaysPromises[idx] = new Promise(function (res, rej) {
+                                // Creamos una promesa que se resuelve falle o no la petición
+                                const alwaysPromise = new Promise(function (res, rej) {
                                     srv.request(options).then(
                                         function (response) {
-                                            res(srv.parseResponse(response, options));
+                                            if (done) {
+                                                res(null); // Ya no escuchamos a esta respuesta porque hemos terminado el proceso antes
+                                            }
+                                            else {
+                                                res(srv.parseResponse(response, options));
+                                            }
                                         },
                                         function () {
                                             res(null);
                                         }
                                     );
                                 });
-                                if (partialCallback) {
-                                    alwaysPromises[idx].then(function (response) {
+                                alwaysPromise.then(function (response) {
+                                    if (!done) {
+                                        responses[idx] = response;
                                         if (response !== null) {
-                                            if (partialResult) {
-                                                partialResult = mergeResponses([partialResult, response]);
+                                            if (self._updatePartialResult(partialResult, responses)) {
+                                                done = true;
                                             }
-                                            else {
-                                                partialResult = response;
+                                            if (partialCallback) {
+                                                partialCallback(partialResult);
                                             }
-                                            partialCallback(partialResult);
                                         }
-                                    });
-                                }
+                                        if (done) {
+                                            responses.forEach((r, ri) => r === false && services[ri].cancelRequest(options.id));
+                                            resolve(partialResult.some(p => p[2] !== null) ? partialResult : []);
+                                        }
+                                    }
+                                }, function (error) {
+                                    console.error(error);
+                                });
                             });
-                        Promise.all(alwaysPromises).then(
-                            function (responses) {
-                                // Eliminamos los servicios sin respuesta
-                                resolve(mergeResponses(responses.filter(r => r !== null)));
-                            },
-                            onError
-                        );
-                    }, onError);
+                    }, function (msg) {
+                        reject(msg);
+                    });
                 }
             );
         });
@@ -234,7 +359,7 @@ TC.tool.Elevation = function (options) {
                                 );
                                 break;
                             case TC.feature && TC.feature.Point && feature instanceof TC.feature.Point:
-                                self.getElevation(getElevOptions(feature.getCoords())).then(
+                                self.getElevation(getElevOptions([feature.getCoords()])).then(
                                     function (coords) {
                                         res(coords[0]);
                                     },
@@ -252,11 +377,39 @@ TC.tool.Elevation = function (options) {
 
                 Promise.all(coordPromises).then(
                     function (coordsArray) {
+                        const copyElevation = function (source, target) {
+                            if (TC.Geometry.isPoint(source)) {
+                                target[2] = source[2];
+                                if (source.length > 3) {
+                                    target[3] = source[3];
+                                }
+                            }
+                            else if (Array.isArray(source)) {
+                                source.forEach(function (node, idx) {
+                                    copyElevation(node, target[idx]);
+                                });
+                            }
+                        };
+                        const getNumVertices = function (coords) {
+                            if (TC.Geometry.isPoint(coords)) {
+                                return 1;
+                            }
+                            if (Array.isArray(coords)) {
+                                return coords.reduce((prev, cur) => prev + getNumVertices(cur), 0);
+                            }
+                        };
                         coordsArray.forEach(function (coords, idx) {
                             const feat = features[idx];
                             if (feat) {
                                 console.log("Estableciendo elevaciones a geometría de tipo " + feat.CLASSNAME);
-                                features[idx].setCoords(coords);
+                                const featCoords = feat.getCoords();
+                                if (getNumVertices(featCoords) === getNumVertices(coords)) {
+                                    copyElevation(coords, featCoords);
+                                    feat.setCoords(featCoords);
+                                }
+                                else {
+                                    feat.setCoords(coords);
+                                }
                             }
                         });
                         resolve(features);
@@ -272,6 +425,44 @@ TC.tool.Elevation = function (options) {
         }
     };
 
+    toolProto._updatePartialResult = function (coordinates, responses) {
+        let done = false;
+        let pending = false;
+        for (var i = 0, ii = coordinates.length; i < ii; i++) {
+            const point = coordinates[i];
+            let elevation = null;
+            let height = null;
+            const validResponses = responses.filter(r => r !== null);
+            for (var j = 0, jj = validResponses.length; j < jj; j++) {
+                const r = validResponses[j];
+                if (r === false) {
+                    pending = true;
+                }
+                if (Array.isArray(r)) {
+                    const rPoint = r[i];
+                    if (elevation === null && rPoint) {
+                        elevation = rPoint[2];
+                        if (rPoint.length > 3 && height === null) {
+                            height = rPoint[3];
+                        }
+                    }
+                }
+                if (elevation !== null) {
+                    point[2] = elevation;
+                    if (height !== null) {
+                        point[3] = height;
+                    }
+                    break;
+                }
+            }
+        }
+        // Condiciones para acabar:
+        // 1: Tengo todas las elevaciones y no hay peticiones más prioritarias pendientes
+        // 2: Han contestado todos los servicios
+        done = (!pending && coordinates.every(p => p[2] !== null)) || responses.every(r => r !== false);
+        return done;
+    };
+
 })();
 
 TC.tool.Elevation.errors = {
@@ -280,73 +471,5 @@ TC.tool.Elevation.errors = {
 };
 
 TC.tool.Elevation.getElevationGain = function (options) {
-    options = options || {};
-    const coords = options.coords;
-    if (coords && coords.length > 0 && coords[0].length > 2) { // si tenemos la Z
-        var uphill = 0;
-        var downhill = 0;
-        const hillDeltaThreshold = options.hillDeltaThreshold || 0;
-
-        var previousHeight;
-        var sectorMinHeight;
-        var sectorMaxHeight;
-        var previousUphill = true;
-
-        for (var c = 0; c < coords.length; c++) {
-            var point = coords[c];
-            var height = point[2];
-            if (height !== null) {
-                if (previousHeight === undefined) //--inicializar
-                {
-                    previousHeight = height;
-                    sectorMinHeight = height;
-                    sectorMaxHeight = height;
-                }
-
-                sectorMinHeight = Math.min(sectorMinHeight, height); //--actualizar mínimo y máximo del sector
-                sectorMaxHeight = Math.max(sectorMaxHeight, height);
-
-                var delta = height - previousHeight; //--calcular desnivel del punto respecto al anterior
-                // hillDeltaThreshold: altura de los dientes a despreciar
-                if (delta > hillDeltaThreshold || (delta > 0 && c == coords.length - 1)) //--Si se sube más del filtro (o se acaba el segmento subiendo)
-                {
-                    if (previousUphill) //--Si en el segmento anterior también se subía, incrementamos el desnivel positivo acumulado
-                    {
-                        uphill += delta;
-                    }
-                    else //--Si en el segmento anterior se bajaba, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
-                    {
-                        downhill -= sectorMinHeight - previousHeight;
-                        uphill += height - sectorMinHeight;
-                        previousUphill = true; //--preparar para el paso siguiente
-                    }
-                    previousHeight = height; //--preparar para el paso siguiente
-                    sectorMinHeight = height;
-                    sectorMaxHeight = height;
-                }
-                else if (delta < -hillDeltaThreshold || (delta < 0 && c == coords.length - 1)) //--Si se baja más del filtro (o se acaba el segmento bajando)
-                {
-                    if (!previousUphill) //--Si en el segmento anterior también se bajaba, incrementamos el desnivel negativo acumulado
-                    {
-                        downhill -= delta;
-                    }
-                    else //--Si en el segmento anterior se subía, incrementamos los desniveles acumulados que no habíamos contabilizado desde el último salto del filtro (sector) 
-                    {
-                        uphill += sectorMaxHeight - previousHeight;
-                        downhill -= height - sectorMaxHeight;
-                        previousUphill = false; //--preparar para el paso siguiente
-                    }
-                    previousHeight = height; //--preparar para el paso siguiente
-                    sectorMinHeight = height;
-                    sectorMaxHeight = height;
-                }
-            }
-        }
-
-        return {
-            upHill: Math.round(uphill),
-            downHill: Math.round(downhill)
-        };
-
-    } else { return null; }
+    return TC.Util.getElevationGain(options);
 };

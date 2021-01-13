@@ -1,0 +1,41 @@
+<h2>{@i18n $key="featureEditing"/}</h2>
+<div class="tc-ctl-wfsedit-layer">
+    <select class="tc-combo tc-ctl-wfsedit-layer-sel" disabled>
+        <option value="">{@i18n $key="selectLayerToEdit"/}</option>
+        {#layers}
+        <option value="{id}">{title}</option>
+        {/layers}
+    </select>
+</div>
+<div class="tc-ctl-wfsedit-view tc-hidden">
+    <table>
+        <tbody>
+            <tr>
+                <th><img class="tc-ctl-wfsedit-view-watch" /></th>
+                <td>{@i18n $key="featuresInEditedLayer"/}</td>
+            </tr>
+            <tr>
+                <th><img class="tc-ctl-wfsedit-view-original-watch" /></th>
+                <td><input type="checkbox" id="tc-ctl-wfsedit-view-original-cb-{controlId}"{?showOriginalFeatures} checked{/showOriginalFeatures} /><label class="tc-ctl-wfsedit-view-original" for="tc-ctl-wfsedit-view-original-cb-{controlId}">{@i18n $key="featuresAsBeforeEditing"/}</label></td>
+            </tr>
+            <tr>
+                <th><input type="color" id="tc-ctl-wfsedit-view-clr-added-{controlId}" class="tc-clt-wfsedit-view-clr-added" /><label for="tc-ctl-wfsedit-view-clr-added-{controlId}" title="{@i18n $key="clickToChangeColor"/}"><img class="tc-ctl-wfsedit-view-added-watch" /></label></th>
+                <td><input type="checkbox" id="tc-ctl-wfsedit-view-added-cb-{controlId}"{?highlightChanges} checked{/highlightChanges} /><label class="tc-ctl-wfsedit-view-added" for="tc-ctl-wfsedit-view-added-cb-{controlId}">{@i18n $key="unsyncedAdded"/}</label></td>
+            </tr>
+            <tr>
+                <th><input type="color" id="tc-ctl-wfsedit-view-clr-modified-{controlId}" class="tc-clt-wfsedit-view-clr-modified" /><label for="tc-ctl-wfsedit-view-clr-modified-{controlId}" title="{@i18n $key="clickToChangeColor"/}"><img class="tc-ctl-wfsedit-view-modified-watch" /></label></th>
+                <td><input type="checkbox" id="tc-ctl-wfsedit-view-modified-cb-{controlId}"{?highlightChanges} checked{/highlightChanges} /><label class="tc-ctl-wfsedit-view-modified" for="tc-ctl-wfsedit-view-modified-cb-{controlId}">{@i18n $key="unsyncedModified"/}</label></td>
+            </tr>
+            <tr>
+                <th><input type="color" id="tc-ctl-wfsedit-view-clr-removed-{controlId}" class="tc-clt-wfsedit-view-clr-removed" /><label for="tc-ctl-wfsedit-view-clr-removed-{controlId}" title="{@i18n $key="clickToChangeColor"/}"><img class="tc-ctl-wfsedit-view-removed-watch" /></label></th>
+                <td><input type="checkbox" id="tc-ctl-wfsedit-view-removed-cb-{controlId}"{?highlightChanges} checked{/highlightChanges} /><label class="tc-ctl-wfsedit-view-removed" for="tc-ctl-wfsedit-view-removed-cb-{controlId}">{@i18n $key="unsyncedRemoved"/}</label></td>
+            </tr>
+        </tbody>
+    </table>
+    <button class="tc-ctl-wfsedit-btn-crop tc-hidden" title="{@i18n $key="refreshLayerToCurrentExtent"/}">{@i18n $key="refreshLayerToCurrentExtent"/}</button>
+</div>
+<div class="tc-ctl-wfsedit-edit tc-hidden"></div>
+<div class="tc-ctl-wfsedit-save">
+    <button class="tc-button tc-icon-button tc-ctl-wfsedit-btn-save" disabled title="{@i18n $key=" syncChanges"/}">{@i18n $key="syncChanges"/}</button>
+    <button class="tc-button tc-icon-button tc-ctl-wfsedit-btn-discard" disabled title="{@i18n $key=" discardChanges"/}">{@i18n $key="discardChanges"/}</button>
+</div>

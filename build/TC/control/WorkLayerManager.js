@@ -9,6 +9,91 @@ TC.control.WorkLayerManager = function (options) {
     TC.control.TOC.apply(self, arguments);
     self.layers = [];
     self.layerTools = [];
+
+    self.addLayerTool({
+        renderFn: function (container, layerId) {
+            const className = self.CLASS + '-btn-info';
+
+            let button = container.querySelector('button.' + className);
+            if (!button) {
+                const layer = self.map.getLayer(layerId);
+                if (layer.isRaster()) {
+                    const info = layer.getInfo();
+                    if (info.hasOwnProperty('abstract') || info.hasOwnProperty('legend') || info.hasOwnProperty('metadata')) {
+                        const text = self.getLocaleString('infoFromThisLayer');
+                        button = document.createElement('button');
+                        button.innerHTML = text;
+                        button.setAttribute('title', text);
+                        button.classList.add(className);
+                        button.dataset.layerId = layerId;
+                        container.appendChild(button);
+                    }
+                }
+            }
+            return button;
+        },
+        actionFn: function () {
+            const button = this;
+            var li = button;
+            do {
+                li = li.parentElement;
+            }
+            while (li && li.tagName !== 'LI');
+            const info = li.querySelector('.' + self.CLASS + '-info');
+            const layer = self.map.getLayer(button.dataset.layerId);
+            // Cargamos la imagen de la leyenda
+            info.querySelectorAll('.' + self.CLASS + '-legend img').forEach(function (img) {
+                self.styleLegendImage(img, layer);
+            });
+            info.classList.toggle(TC.Consts.classes.HIDDEN);
+
+            if (li.querySelector('input[type="checkbox"]').checked) {
+                const dragHandle = li.querySelector('.' + self.CLASS + '-dd');
+                dragHandle.classList.toggle(TC.Consts.classes.HIDDEN, !info.classList.contains(TC.Consts.classes.HIDDEN));
+            }
+
+            button.classList.toggle(TC.Consts.classes.CHECKED);
+        }
+    });
+
+    self.addLayerTool({
+        renderFn: function (container, layerId) {
+            const className = self.CLASS + '-btn-dl';
+
+            let button = container.querySelector('button.' + className);
+            if (!button) {
+                const layer = self.map.getLayer(layerId);
+                if (TC.layer.Vector && layer instanceof TC.layer.Vector) {
+                    const text = self.getLocaleString('downloadFeatures');
+                    button = document.createElement('button');
+                    button.innerHTML = text;
+                    button.setAttribute('title', text);
+                    button.classList.add(className);
+                    button.dataset.layerId = layerId;
+                    container.appendChild(button);
+                }
+            }
+            return button;
+        },
+        actionFn: function () {
+            const button = this;
+            var li = button;
+            do {
+                li = li.parentElement;
+            }
+            while (li && li.tagName !== 'LI');
+            const layer = self.map.getLayer(button.dataset.layerId);
+            self.getDownloadDialog().then(function (control) {
+                const title = layer.title || '';
+                const options = {
+                    title: `${title} - ${self.getLocaleString('downloadFeatures')}`,
+                    fileName: /\.[a-z0-9]+$/i.test(title) ? title.substr(0, title.lastIndexOf('.')) : title,
+                    elevation: self.map.elevation && self.map.elevation.options
+                };
+                control.open(layer.features, options);
+            });
+        }
+    });
 };
 
 TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
@@ -25,11 +110,11 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
     TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/WorkLayerManager.html";
-    ctlProto.template[ctlProto.CLASS + '-elm'] = TC.apiLocation + "TC/templates/WorkLayerManagerElement.html";
-    ctlProto.template[ctlProto.CLASS + '-type-sgl'] = TC.apiLocation + "TC/templates/WorkLayerManagerTooltipSingle.html";
-    ctlProto.template[ctlProto.CLASS + '-type-grp'] = TC.apiLocation + "TC/templates/WorkLayerManagerTooltipGroup.html";
-    ctlProto.template[ctlProto.CLASS + '-type-grp-node'] = TC.apiLocation + "TC/templates/WorkLayerManagerTooltipGroupNode.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-wlm.hbs";
+    ctlProto.template[ctlProto.CLASS + '-elm'] = TC.apiLocation + "TC/templates/tc-ctl-wlm-elm.hbs";
+    ctlProto.template[ctlProto.CLASS + '-type-sgl'] = TC.apiLocation + "TC/templates/tc-ctl-wlm-type-sgl.hbs";
+    ctlProto.template[ctlProto.CLASS + '-type-grp'] = TC.apiLocation + "TC/templates/tc-ctl-wlm-type-grp.hbs";
+    ctlProto.template[ctlProto.CLASS + '-type-grp-node'] = TC.apiLocation + "TC/templates/tc-ctl-wlm-type-grp-node.hbs";
 
     const findLayerElement = function (ctl, layer) {
         return ctl.getLayerUIElements().filter(function (li) {
@@ -59,13 +144,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
         }
         const sourceLayer = ctl.map.getLayer(listItem.dataset.layerId);
         const targetLayer = ctl.map.getLayer(targetItem.dataset.layerId);
-        var newIdx = -1;
-        for (var i = 0; i < ctl.map.layers.length; i++) {
-            if (targetLayer === ctl.map.layers[i]) {
-                newIdx = i;
-                break;
-            }
-        }
+        const newIdx = ctl.map.layers.indexOf(targetLayer);
         if (newIdx >= 1 && newIdx < ctl.map.layers.length) {
             ctl.map.insertLayer(sourceLayer, newIdx, callback);
         }
@@ -260,28 +339,6 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             });
         }));
 
-        self.div.addEventListener(self.CLICKEVENT, TC.EventTarget.listenerBySelector('.' + self.CLASS + '-btn-info', function (e) {
-            const a = e.target;
-            var li = a;
-            do {
-                li = li.parentElement;
-            }
-            while (li && li.tagName !== 'LI');
-            const info = li.querySelector('.' + self.CLASS + '-info');
-            const layer = self.map.getLayer(li.dataset.layerId);
-            // Cargamos la imagen de la leyenda
-            info.querySelectorAll('.' + self.CLASS + '-legend img').forEach(function (img) {
-                self.styleLegendImage(img, layer);
-            });
-            info.classList.toggle(TC.Consts.classes.HIDDEN);
-
-            if (li.querySelector('input[type="checkbox"]').checked) {
-                const dragHandle = li.querySelector('.' + self.CLASS + '-dd');
-                dragHandle.classList.toggle(TC.Consts.classes.HIDDEN, !info.classList.contains(TC.Consts.classes.HIDDEN));
-            }
-
-            a.classList.toggle(TC.Consts.classes.CHECKED);
-        }));
     };
 
     ctlProto.updateLayerVisibility = function (layer) {
@@ -336,29 +393,19 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                 };
                 var isRaster = layer.isRaster();
                 if (isRaster) {
+                    layerData.hasExtent = !!layer.getExtent();
                     layerData.layerNames = layer.layerNames;
                     var path = layer.getPath();
                     path.shift();
                     layerData.path = path;
                     var name = layer.names[0];
-                    var info = layer.wrap.getInfo(name);
+                    var info = layer.getInfo(name);
                     layerData.legend = info.legend;
                     layerData['abstract'] = info['abstract'];
-                    var hasInfo = (info.hasOwnProperty('abstract') || info.hasOwnProperty('legend') || info.hasOwnProperty('metadata'));
-                    var metadata;
-                    if (layer.tree && layer.tree.children && layer.tree.children.length && layer.tree.children[0].children && layer.tree.children[0].children.length) {
-                        metadata = null;
-                    }
-                    else {
-                        metadata = info.metadata;
-                        if (metadata) {
-                            for (var j = 0, len = metadata.length; j < len; j++) {
-                                var md = metadata[j];
-                                md.formatDescription = self.getLocaleString(TC.Util.getSimpleMimeType(md.format)) || self.getLocaleString('viewMetadata');
-                            }
-                        }
-                    }
-                    layerData.metadata = metadata;
+                    layerData.metadata = info.metadata;
+                }
+                else {
+                    layerData.hasExtent = true;
                 }
 
 
@@ -393,8 +440,11 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                         const className = isGroup ? self.CLASS + '-type-grp' : self.CLASS + '-type-sgl';
                         typeElm.classList.add(className);
 
-                        if (!hasInfo) {
-                            li.querySelector('.' + self.CLASS + '-btn-info').classList.add(TC.Consts.classes.HIDDEN);
+                        const zoomBtn = li.querySelector(`.${self.CLASS}-btn-zoom`);
+                        if (zoomBtn) {
+                            zoomBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+                                self.map.zoomToLayer(li.dataset.layerId, { animate: true });
+                            }, { passive: true });
                         }
 
                         if (layerNode) {
@@ -546,9 +596,8 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             if (button) {
                 if (TC.Util.isFunction(tool.actionFn)) {
                     button.addEventListener(TC.Consts.event.CLICK, function (e) {
-                        e.preventDefault();
                         tool.actionFn.call(button);
-                    });
+                    }, { passive: true });
                 }
                 if (TC.Util.isFunction(tool.updateFn) && tool.updateEvents) {
                     map.on(tool.updateEvents.join(' '), function (e) {

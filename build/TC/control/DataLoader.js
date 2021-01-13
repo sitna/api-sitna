@@ -11,15 +11,11 @@ TC.control.DataLoader = function () {
 
     self.controlOptions = [
         {
-            name: 'externalWMS',
             title: 'addWMS',
-            options: {
-                suggestions: self.options.wmsSuggestions
-            }
+            externalWMS: { suggestions: self.options.wmsSuggestions }            
         },
         {
-            name: 'fileImport',
-            options: {
+            fileImport: {
                 enableDragAndDrop: self.options.enableDragAndDrop
             }
         }
@@ -34,6 +30,7 @@ TC.inherit(TC.control.DataLoader, TC.control.TabContainer);
 
     ctlProto.register = function (map) {
         const self = this;
+        self.map = map;
         self.title = self.getLocaleString('addMaps');
         return new Promise(function (resolve, reject) {
             TC.control.TabContainer.prototype.register.call(self, map).then(ctl => {

@@ -1,0 +1,19 @@
+<h2>{@i18n $key="backgroundMaps"/} <button class="tc-icon-btn tc-ctl-bms-btn-view tc-details" title="{@i18n $key="showDetailsView"/}"></button></h2>
+<div class="tc-ctl-bms-tree tc-grid">
+    <ul class="tc-ctl-bms-branch">
+        {#baseLayers}
+        {>tc-ctl-bms-node:. controlId=controlId /}
+        {/baseLayers}
+        {#dialogMore}
+        <li class="tc-ctl-bms-node">
+            <label class="tc-ctl-bms-more-node" title="{@i18n $key="moreBackgroundMaps"/}">
+            <input type="radio" name="{controlId}-bm" value="moreLayers">
+            <span></span>
+            </label>
+            <div class="tc-ctl-bms-info">
+                <h3>{@i18n $key="moreBackgroundMaps"/}</h3>
+            </div>
+        </li>
+        {/dialogMore}
+    </ul>
+</div>

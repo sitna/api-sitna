@@ -1,0 +1,22 @@
+<ul>
+    {{#if n}}
+    <li>
+        <span>{{i18n "geo.trk.snapping.name"}}:</span> {{n}}
+    </li>
+    {{/if}}
+    <li> <span>{{#if isGeo}}{{i18n "lon"}}{{else}}X{{/if}}:</span> {{x}}</li>
+    <li> <span>{{#if isGeo}}{{i18n "lat"}}{{else}}Y{{/if}}:</span> {{y}} </li>
+    {{#if z}}
+    {{#unless (eq z 0)}}
+    <li> <span>Z:</span> <span class="original"> {{z}} </span></li>
+    {{/unless}}
+    {{/if}}
+    {{#if mdtz}}
+    {{#unless (eq mdtz 0)}}
+    <li> <span>Z:</span> <span class="mdt"> {{mdtz}} </span> </li>
+    {{/unless}}
+    {{/if}}
+    {{#if m}}
+    <li> {{m}} </li>
+    {{/if}}
+</ul>

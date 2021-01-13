@@ -1,0 +1,17 @@
+<ul>
+    {?n}
+    <li>
+        <span>{@i18n $key="geo.trk.snapping.name"/}:</span> {n}
+    </li>
+    {/n}
+    <li> <span>{?isGeo}{@i18n $key="lon"/}{:else}X{/isGeo}:</span> {x}</li>
+    <li> <span>{?isGeo}{@i18n $key="lat"/}{:else}Y{/isGeo}:</span> {y} </li>
+    {?z}
+    {@ne key=z value=0}
+    <li> <span>Z:</span> {z} </li>
+    {/ne}
+    {/z}
+    {?m}
+    <li> {m} </li>
+    {/m}
+</ul>

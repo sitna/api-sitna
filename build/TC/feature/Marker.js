@@ -66,7 +66,7 @@ TC.feature.Marker = function (coords, options) {
 
     if (!self.wrap.isNative(coords)) {
         var locale = self.layer && self.layer.map ? self.layer.map.options.locale: TC.Cfg.locale;
-        self.title = options.title || TC.i18n[locale][TC.Consts.MARKER];
+        self.title = self.options.title || TC.i18n[locale][TC.Consts.MARKER];
         self.wrap.createMarker(coords, options);
     }
 };

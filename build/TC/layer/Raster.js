@@ -7,6 +7,8 @@ if (!TC.Layer) {
 
 TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7';
 
+const _urlWFS = {};
+
 (function () {
 
     var capabilitiesPromises = {};
@@ -59,6 +61,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var infoFormat = layer.getPreferredInfoFormat();
         if (infoFormat !== null) {
             params.INFO_FORMAT = infoFormat;
+        }
+        //filtro GML o CQL
+        if (options.filter) {
+            //primero miramos si es un objeto TC.filter
+            if (options.filter instanceof TC.filter.Filter) {
+                params["filter"] = options.filter.getText();
+            }
+            //se puede parsear a XML, asumimos que es GML
+            else if (!new DOMParser().parseFromString(options.filter, 'text/xml').querySelector("parsererror")) {
+                params["filter"] = options.filter;
+            }
+            //Si no, asumimos que es CQL
+            else {
+                params["cql_filter"] = options.filter;
+            }
         }
 
         return layer.wrap.createWMSLayer(layer.getGetMapUrl(), params, options);
@@ -167,6 +184,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     /**
      * Nombre de grupo de matrices del servicio WMTS. Propiedad obligatoria para capas de tipo WMTS.
      * @property matrixSet
+     * @type string|undefined
+     */
+    /**
+     * Filtro GML o CQL de la capa. Funciona unicamente con capas WMS. Se intenta parsear a GML y si no sepuede se asume que es CQL
+     * @property filter
      * @type string|undefined
      */
 
@@ -551,7 +573,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var sa = s.concat(a);
         for (var i = 0; i < sa.length; i++) {
             if (sa.indexOf(sa[i]) === i && r.indexOf(sa[i]) === -1) {
-                result[result.length] = sa[i];
+                result.push(sa[i]);
             }
         }
         return result;
@@ -634,6 +656,50 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     }
                 }
                 resolve(layer.names);
+            });
+        });
+    };
+
+    /**
+     * Establece el atributo filter o CQL_filter de una capa WMS.
+     * @method setFilter
+     * @param {TC.filter.Filter|string} filter Objeto de tipo TC.filter.Filter, un filtro GML como cadena de texto o filtro CQL como cadena de texto
+     */
+    /*
+     *  setFilter: sets the filter or CQL_filter attribute on WMS layer
+     *  Parameters: object instance of  TC.filter.Filter or a GML filter string
+     */
+    layerProto.setFilter = function (filter) {
+        var layer = this;
+        return new Promise(function (resolve, reject) {
+            layer.wrap.getLayer().then(function () {
+                var oldParams = layer.wrap.getParams();
+                delete oldParams["filter"];
+                delete oldParams["cql_filter"];
+
+                //if (layer.map) {
+                //    layer.map.trigger(TC.Consts.event.BEFOREUPDATEPARAMS, { layer: layer });
+                //}
+
+                //primero miramos si es un objeto TC.filter
+                if (filter instanceof TC.filter.Filter) {
+                    layer.filter=oldParams["filter"] = filter.getText();
+                }
+                //se puede parsear a XML, asumimos que es GML
+                else if (!new DOMParser().parseFromString(filter, 'text/xml').querySelector("parsererror")) {
+                    layer.filter =oldParams["filter"] = filter;
+                }
+                //Si no, asumimos que es CQL
+                else {
+                    layer.filter = oldParams["cql_filter"] = filter;
+                }
+                layer.wrap.setParams(oldParams);
+
+                //if (layer.map) {
+                //    layer.map.trigger(TC.Consts.event.UPDATEPARAMS, { layer: layer });
+                //}
+                
+                resolve(filter);
             });
         });
     };
@@ -726,10 +792,10 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 for (var i = 0; i < ln2t.length; i++) {
                     var l = ln2t[i];
                     if (currentLayerNames.indexOf(l) < 0) {
-                        ln2a[ln2a.length] = l;
+                        ln2a.push(l);
                     }
                     else {
-                        ln2r[ln2r.length] = l;
+                        ln2r.push(l);
                     }
                 }
                 var promises = [];
@@ -834,7 +900,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 })
                 .reduce(function (prev, cur) {
                     if (prev.indexOf(cur) < 0) {
-                        prev[prev.length] = cur;
+                        prev.push(cur);
                     }
                     return prev;
                 }, []) // códigos numéricos sin duplicados
@@ -1018,7 +1084,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 TC.Util.fastUnshift(node.children, child);
             }
             else {
-                node.children[node.children.length] = child;
+                node.children.push(child);
             }
         }
 
@@ -1037,7 +1103,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     self._capabilitiesNodes[uid] = capabilitiesNode;
                 }
                 var r = {
-                    name: self.wrap.getName(capabilitiesNode), title: capabilitiesNode.title || capabilitiesNode.Title, uid: uid, children: []
+                    name: self.wrap.getName(capabilitiesNode), title: capabilitiesNode.title || capabilitiesNode.Title, uid: uid, children: [], abstract: !!capabilitiesNode.Abstract, metadata: !!capabilitiesNode.MetadataURL
                 };
                 if (isRootNode) {
                     rootNode = r;
@@ -1263,17 +1329,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     layerProto.getChildrenLayers = function (layer) {
-        var self = this;
         var result = [];
-        var _fnRecursiva = function (lyr, arr) {
+        var _recursiveFn = function (lyr, arr) {
             if (lyr && lyr.Layer && lyr.Layer.length) {
                 for (var i = 0; i < lyr.Layer.length; i++) {
-                    arr[arr.length] = lyr.Layer[i];
-                    _fnRecursiva(lyr.Layer[i], arr)
+                    arr.push(lyr.Layer[i]);
+                    _recursiveFn(lyr.Layer[i], arr);
                 }
             }
         };
-        _fnRecursiva(layer, result);
+        _recursiveFn(layer, result);
         return result;
     };
 
@@ -1307,6 +1372,30 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         this.wrap.setResolutions(resolutions);
     };
 
+    layerProto.getExtent = function () {
+        return this.wrap.getExtent();
+    };
+
+    const formatDescriptions = {};
+    layerProto.getInfo = function (name) {
+        const self = this;
+        const info = self.wrap.getInfo(name);
+        if (info.metadata) {
+            info.metadata.forEach(function (md) {
+                if (self.map) {
+                    md.formatDescription = formatDescriptions[md.format] =
+                        formatDescriptions[md.format] ||
+                        TC.Util.getLocaleString(self.map.options.locale, TC.Util.getSimpleMimeType(md.format)) ||
+                        TC.Util.getLocaleString(self.map.options.locale, 'viewMetadata');
+                }
+                else {
+                    md.formatDescription = formatDescriptions[md.format];
+                }
+            });
+        }
+        return info;
+    };
+
     //Devuelve un array de subLayers cuyo nombre o descripción contenga el texto indicado
     //case insensitive
     layerProto.searchSubLayers = function (text) {
@@ -1338,7 +1427,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     for (var i = 0; i < self.availableNames.length; i++) {
                         var layer = self.getLayerNodeByName(self.availableNames[i]);
                         if (layer) {
-                            layers[layers.length] = layer;
+                            layers.push(layer);
                             layers = layers.concat(self.getChildrenLayers(layer));
                         }
                     }
@@ -1390,8 +1479,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 .sort(function (a, b) {
                     if (b.tcScore === a.tcScore) {
                         //si la puntuación es la misma reordenamos por título
-                        var titleA = TC.Util.replaceAccent(a.Title);
-                        var titleB = TC.Util.replaceAccent(b.Title);
+                        var titleA = TC.Util.replaceSpecialCharacters(a.Title);
+                        var titleB = TC.Util.replaceSpecialCharacters(b.Title);
                         if (titleA < titleB) return -1;
                         if (titleA > titleB) return 1;
                         return 0;
@@ -1752,19 +1841,54 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
         return null;
     };
-
-    layerProto.getWFSCapabilities = function () {
+    layerProto.getWFSURL = async function () {
         const self = this;
-        const newUrl = self.options.url.replace(/wms/gi, "wfs");
+        if (_urlWFS[self.options.url]) return await _urlWFS[self.options.url];
+        var url = new URL(self.url, document.location.href);
+        url.search = new URLSearchParams({ request: 'DescribeLayer', service: "WMS", version: "1.1.1", Layers: self.layerNames instanceof Array ? self.layerNames[0]:self.layerNames, outputFormat: "application/json" });
+        return _urlWFS[self.options.url] = new Promise(async function (resolve, reject) {
+            try {
+                var response = await self.toolProxification.fetch(url.toString(), {
+                    method: "GET"
 
-        return getWFSLayer(newUrl).then(function (layer) {
+                });
+                if (response.contentType.startsWith("application/json")) {
+                    var data = JSON.parse(response.responseText).layerDescriptions[0];
+                    var _url = data.owsURL.substr(0, (data.owsURL.length + (data.owsURL.endsWith('?') ? -1 : 0)));
+                    self.toolProxification.fetch(_url, {
+                        method: "HEAD"
+
+                    }).then(function () {
+                        resolve(_url);
+                    }).catch(function () {
+                        resolve(self.options.url.replace(/wms/gi, "wfs"));
+                    });
+                }
+                else  {
+                    let xmlDoc = new DOMParser().parseFromString(response.responseText, "text/xml");
+                    let error = xmlDoc.querySelector("Exception ExceptionText") || xmlDoc.querySelector("ServiceException");
+                    if (error) {
+                        resolve(self.options.url.replace(/wms/gi, "wfs"));
+                    };
+                }
+            }
+            catch (err) {
+                resolve(self.options.url.replace(/wms/gi, "wfs"));
+            }
+        });
+    };
+
+
+    layerProto.getWFSCapabilities = async function () {
+        const self = this;        
+        return getWFSLayer(await self.getWFSURL()).then(function (layer) {
             return layer.getCapabilitiesPromise();
         });
     };
 
     layerProto.getDescribeFeatureTypeUrl = function () {
         const self = this;
-        const newUrl = self.options.url.replace(/wms/gi, "wfs");
+        const newUrl = _getWFSURL(self)
 
         if (!TC.layer.Vector) {
             TC.syncLoadJS(TC.apiLocation + 'TC/layer/Vector');
@@ -1813,9 +1937,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
         return null;
     };
-    layerProto.describeFeatureType = function (layerName) {
+    layerProto.describeFeatureType = async function (layerName) {
         const self = this;
-        const newUrl = self.options.url.replace(/wms/gi, "wfs");
+        const newUrl = await self.getWFSURL();
 
         return getWFSLayer(newUrl).then(function (layer) {
             return layer.describeFeatureType(layerName || self.layerNames[0]);
@@ -1846,7 +1970,7 @@ var esriParser = {
                     }
                     var feature = new ol.Feature(attributes);
                     feature.setId(layerName + '.' + TC.getUID());
-                    result[result.length] = feature;
+                    result.push(feature);
                 }
             }
         }

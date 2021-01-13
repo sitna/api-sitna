@@ -1,0 +1,9 @@
+<li {?children}class="tc-ctl-toc-node"{:else}class="tc-ctl-toc-node tc-ctl-toc-leaf"{/children} data-layer-name="{name}" data-layer-uid="{uid}">
+    <button class="tc-ctl-toc-collapse-btn"></button>
+    <input type="checkbox" class="tc-ctl-toc-branch-cb" name="toc" value="{name}"{?isVisible} checked{/isVisible} /><span>{title}</span>
+    <ul class="tc-ctl-toc-branch">
+        {#children}
+            {>tc-ctl-toc-node:./}
+        {/children}
+    </ul>
+</li>

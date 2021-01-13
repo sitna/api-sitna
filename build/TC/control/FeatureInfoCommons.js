@@ -9,14 +9,19 @@ TC.Consts.event.POPUPHIDE = TC.Consts.event.POPUPHIDE || 'popuphide.tc';
 TC.Consts.event.DRAWCHART = TC.Consts.event.DRAWCHART || 'drawchart.tc';
 TC.Consts.event.DRAWTABLE = TC.Consts.event.DRAWTABLE || 'drawtable.tc';
 TC.Consts.event.RESULTSPANELCLOSE = TC.Consts.event.RESULTSPANELCLOSE || 'resultspanelclose.tc';
+TC.Consts.event.FEATUREHIGHLIGHT = 'featurehighlight.tc';
+TC.Consts.event.FEATUREDOWNPLAY = 'featuredownplay.tc';
 
 TC.control.FeatureInfoCommons = function () {
     const self = this;
     TC.control.Click.apply(self, arguments);
 
-    const cs = self._classSelector = '.' + self.CLASS;
     self._selectors = {
-        LIST_ITEM: 'ul' + cs + '-features li'
+        LIST_ITEM: `ul.${self.CLASS}-features li`,
+        SHOW_ALL_CHECKBOX: `.${self.CLASS}-btn input[type="checkbox"].${self.CLASS}-btn-show-all`,
+        SHOW_ALL_LABEL: `.${self.CLASS}-btn label.${self.CLASS}-btn-show-all`,
+        ZOOM_ALL_BUTTON: `.${self.CLASS}-btn .${self.CLASS}-btn-zoom-all`,
+        DEL_ALL_BUTTON: `.${self.CLASS}-btn .${self.CLASS}-btn-del-all`
     };
 
     self.resultsLayer = null;
@@ -29,11 +34,6 @@ TC.control.FeatureInfoCommons = function () {
     self.resultsPanel = null;
     self.lastFeatureCount = null;
     self.exportsState = true;
-};
-
-TC.control.FeatureInfoCommons.displayMode = {
-    POPUP: 'popup',
-    RESULTS_PANEL: 'resultsPanel'
 };
 
 (function () {
@@ -53,12 +53,43 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.CLASS = 'tc-ctl-finfo';
 
+    ctlProto.CURRENT_CLASS = 'tc-current';
+
     ctlProto.TITLE_SEPARATOR = ' • ';
     ctlProto.DEFAULT_STROKE_COLOR = '#0000ff';
-
+    
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureInfo.html";
-    ctlProto.template[ctlProto.CLASS + "-object"] = TC.apiLocation + "TC/templates/FeatureInfoObject.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-finfo.hbs";
+    ctlProto.template[ctlProto.CLASS + "-object"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-object.hbs";
+    ctlProto.template[ctlProto.CLASS + "-buttons"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-buttons.hbs";
+
+    const setShowAllUI = function () {
+        const self = this;
+        const menu = self.getMenuTarget();
+        const showAllCb = menu.querySelector(self._selectors.SHOW_ALL_CHECKBOX);
+        if (showAllCb) {
+            showAllCb.checked = true;
+            const text = self.getLocaleString('doNotShowOnMapAllResults');
+            menu.querySelector(self._selectors.SHOW_ALL_LABEL).setAttribute('title', text);
+            showAllCb.innerHTML = text;
+        }
+        menu.querySelector(self._selectors.ZOOM_ALL_BUTTON).classList.remove(TC.Consts.classes.HIDDEN);
+        menu.querySelector(self._selectors.DEL_ALL_BUTTON).classList.remove(TC.Consts.classes.HIDDEN);
+    };
+
+    const setNotShowAllUI = function () {
+        const self = this;
+        const menu = self.getMenuTarget();
+        const showAllCb = menu.querySelector(self._selectors.SHOW_ALL_CHECKBOX);
+        if (showAllCb) {
+            showAllCb.checked = false;
+            const text = self.getLocaleString('showOnMapAllResults');
+            showAllCb.innerHTML = text;
+            menu.querySelector(self._selectors.SHOW_ALL_LABEL).setAttribute('title', text);
+            menu.querySelector(self._selectors.ZOOM_ALL_BUTTON).classList.add(TC.Consts.classes.HIDDEN);
+            menu.querySelector(self._selectors.DEL_ALL_BUTTON).classList.add(TC.Consts.classes.HIDDEN);
+        }
+    };
 
     ctlProto.register = function (map) {
         const self = this;
@@ -72,10 +103,8 @@ TC.control.FeatureInfoCommons.displayMode = {
             if (shareCtl) {
                 self.loadSharedFeature(shareCtl.loadParamFeature());
             }
+            self.setDisplayMode(self.options.displayMode || map.defaultInfoContainer || TC.Consts.infoContainer.POPUP);
         });
-
-        self.displayMode = self.options.displayMode || TC.control.FeatureInfoCommons.displayMode.POPUP;
-        self.setDisplayMode(self.displayMode);
 
         map
             .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
@@ -89,9 +118,9 @@ TC.control.FeatureInfoCommons.displayMode = {
                     }
                 }
             })
-            .on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
-                self.highlightedFeature = null;
-            })
+            //.on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
+            //    self.highlightedFeature = null;
+            //})
             .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE + ' ' + TC.Consts.event.DRAWCHART, function (e) {
                 const control = e.control;
                 if (control.currentFeature !== self.filterFeature) {
@@ -198,13 +227,31 @@ TC.control.FeatureInfoCommons.displayMode = {
     };
 
     ctlProto.setDisplayMode = function (mode) {
-        var self = this;
+        const self = this;
         self.displayMode = mode;
-        var map = self.map;
+        const map = self.map;
         switch (mode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 if (!self.resultsPanel) {
-                    map.addControl('resultsPanel')
+                    let ctlPromise;
+                    const resultsPanelOptions = {
+                        content: "table",
+                        titles: {
+                            main: self.getLocaleString("threed.rs.panel.gfi"),
+                            max: self.getLocaleString("threed.rs.panel.gfi")
+                        }
+                    };
+                    const container = map.getControlsByClass('TC.control.ControlContainer')[0];
+                    if (container) {
+                        resultsPanelOptions.position = container.POSITION.RIGHT;
+                        ctlPromise = container.addControl('resultsPanel', resultsPanelOptions);
+                    }
+                    else {
+                        resultsPanelOptions.div = document.createElement('div');
+                        map.map.div.appendChild(resultsPanelOptions.div);
+                        ctlPromise = map.addControl('resultsPanel', resultsPanelOptions);
+                    }
+                    ctlPromise
                         .then(function (rp) {
                             self.resultsPanel = rp;
                             rp.caller = self;
@@ -212,7 +259,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                 }
                 break;
             default:
-                self.displayMode = TC.control.FeatureInfoCommons.displayMode.POPUP;
+                self.displayMode = TC.Consts.infoContainer.POPUP;
                 if (!self.popup) {
                     map.addControl('popup', {
                         closeButton: true,
@@ -239,7 +286,7 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.getDisplayControl = function () {
         var self = this;
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 return self.resultsPanel;
             default:
                 return self.popup;
@@ -260,7 +307,7 @@ TC.control.FeatureInfoCommons.displayMode = {
             }
         }
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 return self.resultsPanel.getInfoContainer();
             default:
                 return self.popup.getContainerElement();
@@ -270,7 +317,7 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.getMenuTarget = function () {
         var self = this;
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 return self.resultsPanel.getMenuElement();
             default:
                 return self.popup.getMenuElement();
@@ -283,7 +330,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         clone.classList.remove(TC.Consts.classes.HIDDEN);
         self.filterFeature.data = clone.outerHTML;
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 if (self.resultsPanel) {
                     // GLS: si contamos con el control de controles no es necesario cerrar los paneles visibles ya que no habría solape
                     if (self.map.getControlsByClass(TC.control.ControlContainer).length === 0) {
@@ -305,18 +352,9 @@ TC.control.FeatureInfoCommons.displayMode = {
                     self.resultsPanel.currentFeature = self.filterFeature;
                     self.resultsPanel.open(self.filterFeature.data, self.resultsPanel.getInfoContainer());
                     
-                    TC.loadJS(
-                        !TC.control.Print,
-                        [TC.apiLocation + 'TC/control/Print'],
-                        function () {
-                            // Eliminamos la impresora porque al pintar los resultados ya se añadirá
-                            const printBtn = self.getMenuTarget().querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn');
-                            if (printBtn.length > 0) {
-                                printBtn[0].remove();
-                            }
-
-                            self.displayResultsCallback();
-                        });
+                    self.getMenuTarget().innerHTML = "";
+                    self.displayResultsCallback();
+                   
                 }
 
                 break;
@@ -341,21 +379,26 @@ TC.control.FeatureInfoCommons.displayMode = {
         return result;
     };
 
+    const getFeatureFromListItem = function (ctl, li) {
+        const currentFeatureLi = li;
+        const currentLayerLi = getParentElement(li, 'LI');
+        const currentServiceLi = getParentElement(currentLayerLi, 'LI');
+        return ctl.getFeature(getElementIndex(currentServiceLi), getElementIndex(currentLayerLi), getElementIndex(currentFeatureLi));
+    };
+
     ctlProto.getFeatureElement = function (feature) {
         const self = this;
-        var result;
-        const getIndex = function (elm) {
-            return Array.from(elm.parentElement.childNodes).getIndex(elm);
-        };
-        self.getDisplayTarget().querySelectorAll(self._selectors.LIST_ITEM).forEach(function (li) {
-            const currentFeatureLi = li;
-            const currentLayerLi = getParentElement(li, 'LI');
-            const currentServiceLi = getParentElement(currentLayerLi, 'LI');
-            var feat = self.getFeature(getElementIndex(currentServiceLi), getElementIndex(currentLayerLi), getElementIndex(currentFeatureLi));
+        let result;
+
+        const lis = self.getDisplayTarget().querySelectorAll(self._selectors.LIST_ITEM);
+        for (let i = 0, ii = lis.length; i < ii; i++) {
+            const li = lis[i];
+            const feat = getFeatureFromListItem(self, li);
             if (feat === feature) {
-                result = currentFeatureLi;
+                result = li;
+                break;
             }
-        });
+        }
         return result;
     };
 
@@ -364,7 +407,7 @@ TC.control.FeatureInfoCommons.displayMode = {
         const lis = self.getDisplayTarget().querySelectorAll('ul.' + self.CLASS + '-features > li');
         const length = lis.length;
         for (var i = 0; i < length; i++) {
-            if (lis[i].matches('.' + TC.Consts.classes.CHECKED)) {
+            if (lis[i].matches('.' + self.CURRENT_CLASS)) {
                 return lis[(i + delta + length) % length]
             }
         }
@@ -397,7 +440,7 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.closeResults = function () {
         var self = this;
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 if (self.resultsPanel && self.resultsPanel.isVisible()) {
                     self.resultsPanel.close();
                 }
@@ -414,56 +457,100 @@ TC.control.FeatureInfoCommons.displayMode = {
         var self = this;
         const content = self.getDisplayTarget().querySelector('.' + self.CLASS);
 
-        var selector;
         // Evento para resaltar una feature
-        var eventType = 'click'; // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
-        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(self._selectors.LIST_ITEM, function (e) {
+        const onListItemClick = function (e) {
             self.highlightFeature(e.target);
-        }));
+        };
+        // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
+        content.querySelectorAll(self._selectors.LIST_ITEM).forEach(li => li.addEventListener('click', onListItemClick));
 
         // Evento para ir a la siguiente feature
-        eventType = TC.Consts.event.CLICK;
-        selector = '.' + self.CLASS + '-btn-next';
-        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
-            self.highlightFeature(self.getNextFeatureElement(1), 1);
-            return false;
-        }));
+        const nextBtn = content.querySelector(`.${self.CLASS}-btn-next`);
+        if (nextBtn) {
+            nextBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+                self.highlightFeature(self.getNextFeatureElement(1), 1);
+                return false;
+            }, { passive: true });
+        }
 
         // Evento para ir a la feature anterior
-        selector = '.' + self.CLASS + '-btn-prev';
-        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
-            self.highlightFeature(self.getNextFeatureElement(-1), -1);
-            return false;
-        }));
+        const prevBtn = content.querySelector(`.${self.CLASS}-btn-prev`);
+        if (prevBtn) {
+            prevBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+                self.highlightFeature(self.getNextFeatureElement(-1), -1);
+                return false;
+            }, { passive: true });
+        }
 
         // Evento para desplegar/replegar features de capa
-        selector = 'ul.' + self.CLASS + '-layers h4';
-
-        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
+        const onTitleClick = function (e) {
             const li = getParentElement(e.target, 'LI');
             if (li.classList.contains(TC.Consts.classes.CHECKED)) {
                 // Si no está en modo móvil ocultamos la capa (si hay más de una)
-                const anotherLayer = content.querySelector('.tc-ctl-finfo-layers li:not(.tc-checked)');
+                const anotherLayer = content.querySelector(`.${self.CLASS}-layers li:not(.tc-checked)`);
                 if (anotherLayer && getComputedStyle(anotherLayer).display !== 'none') {
                     self.downplayFeatures();
                 }
             }
             else {
                 self.highlightFeature(li.querySelector(self._selectors.LIST_ITEM));
-                if (self.displayMode === TC.control.FeatureInfoCommons.displayMode.POPUP) {
+                if (self.displayMode === TC.Consts.infoContainer.POPUP) {
                     self.popup.fitToView(true);
                 }
             }
-        }));
+        };
+        content.querySelectorAll(`ul.${self.CLASS}-layers h4`).forEach(h => h.addEventListener(TC.Consts.event.CLICK, onTitleClick, { passive: true }));
 
         // Evento para borrar la feature resaltada
-        selector = '.' + self.CLASS + '-del-btn';
-        content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
-            self.downplayFeatures();
-            self.closeResults();
-        }));
+        //selector = '.' + self.CLASS + '-del-btn';
+        //content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
+        //    self.downplayFeatures();
+        //    self.closeResults();
+        //}));
 
         if (self.info) {
+            const features = self.getFeatures();
+            if (features.length > 1) {
+                // Hay más de una feature
+                self.getRenderedHtml(`${self.CLASS}-buttons`, { id: self.id }).then(function (html) {
+                    const menu = self.getMenuTarget();
+                    if (!menu.querySelector(`.${self.CLASS}-btn-dl`)) {
+                        menu.insertAdjacentHTML('beforeend', html);
+                        menu.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(TC.Consts.event.CLICK, async function (e) {
+                            const downloadDialog = await self.getDownloadDialog();
+                            let options = {
+                                title: self.getLocaleString("featureInfo") + " - " + self.getLocaleString("download"),
+                                fileName: self._getFileName()
+                            };
+
+                            if (self.map.elevation || self.options.displayElevation) {
+                                options = Object.assign({}, options, {
+                                    elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation)
+                                });
+                            }
+                            downloadDialog.open(features, options);
+                        }, { passive: true });
+
+                        menu.querySelector(self._selectors.SHOW_ALL_CHECKBOX).addEventListener('change', function (e) {
+                            if (e.target.checked) {
+                                self.showAllFeatures();
+                            }
+                            else {
+                                self.hideAllFeatures();
+                            }
+                        }, { passive: true });
+
+                        menu.querySelector(self._selectors.ZOOM_ALL_BUTTON).addEventListener(TC.Consts.event.CLICK, function (e) {
+                            self.map.zoomToFeatures(features);
+                        }, { passive: true });
+
+                        menu.querySelector(self._selectors.DEL_ALL_BUTTON).addEventListener(TC.Consts.event.CLICK, function (e) {
+                            self.downplayFeatures();
+                            self.filterLayer.removeFeature(self.filterFeature);
+                        }, { passive: true });
+                    }
+                });
+            }
             if (self.info.defaultFeature && self.getFeatureElement(self.info.defaultFeature)) {
                 self.getFeatureElement(self.info.defaultFeature).classList.add(TC.Consts.classes.DEFAULT);
                 self.highlightFeature(self.info.defaultFeature);
@@ -481,7 +568,8 @@ TC.control.FeatureInfoCommons.displayMode = {
                 }
                 if (li.classList.contains(TC.Consts.classes.CHECKED)) {
                     // Si ya está seleccionada hacemos zoom
-                    if (self.resultsLayer.features[0] && window.getSelection() && window.getSelection().toString().trim().length === 0) {
+                    const feature = getFeatureFromListItem(self, li);
+                    if (feature && window.getSelection() && window.getSelection().toString().trim().length === 0) {
                         // Proceso para desactivar highlightFeature mientras hacemos zoom
                         var zoomHandler = function zoomHandler() {
                             self._zooming = false;
@@ -491,7 +579,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                         self._zooming = true;
                         ///////
 
-                        self.map.zoomToFeatures([self.resultsLayer.features[0]], { animate: true });
+                        self.map.zoomToFeatures([feature], { animate: true });
                     }
                 }
                 else {
@@ -499,15 +587,15 @@ TC.control.FeatureInfoCommons.displayMode = {
                     self.highlightFeature(li);
                 }
                 e.stopPropagation();
-            });
+            }, { passive: true });
         });
         content.querySelectorAll('table a, table label, table input').forEach(function (a) {
             a.addEventListener(TC.Consts.event.CLICK, function (e) {
                 e.stopPropagation();
-            });
+            }, { passive: true });
         });
 
-        if (TC.browserFeatures.touch() && self.displayMode === TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL) {
+        if (TC.browserFeatures.touch() && self.displayMode === TC.Consts.infoContainer.RESULTS_PANEL) {
             const prevBtn = content.querySelector('.' + self.CLASS + '-btn-prev');
             if (!prevBtn || prevBtn.style.display !== 'none') { // Si los botones de anterior/siguiente están visibles, montamos el swipe
                 if (self.resultsPanel) {
@@ -591,9 +679,11 @@ TC.control.FeatureInfoCommons.displayMode = {
             const historyLayer = historyService[layer.name] || [];
             historyService[layer.name] = historyLayer.concat(feature);
 
-            featureLi.classList.add(TC.Consts.classes.CHECKED);
-            layerLi.classList.add(TC.Consts.classes.CHECKED);
-            serviceLi.classList.add(TC.Consts.classes.CHECKED);
+            const displayTarget = self.getDisplayTarget();
+            displayTarget.querySelectorAll('li').forEach(elm => elm.classList.remove(self.CURRENT_CLASS));
+            featureLi.classList.add(TC.Consts.classes.CHECKED, self.CURRENT_CLASS);
+            layerLi.classList.add(TC.Consts.classes.CHECKED, self.CURRENT_CLASS);
+            serviceLi.classList.add(TC.Consts.classes.CHECKED, self.CURRENT_CLASS);
             if (delta > 0) {
                 featureLi.classList.add(TC.Consts.classes.FROMLEFT);
                 layerLi.classList.add(TC.Consts.classes.FROMLEFT);
@@ -609,43 +699,53 @@ TC.control.FeatureInfoCommons.displayMode = {
                 featureLi.querySelector('table').setAttribute('title', self.getLocaleString('clickToCenter'));
             }
 
-            self.highlightedFeature = feature;
-
-            if (self.getDisplayTarget().querySelector('.' + self.CLASS + '-counter-current')) {
-                self.getDisplayTarget().querySelector('.' + self.CLASS + '-counter-current').innerHTML = self.getFeatureIndex(serviceIdx, layerIdx, featureIdx) + 1;
+            // Añadida esta condición porque si el servicio no devuelve datos parseables como feature se devuelve una pseudofeature sin geometría
+            if (!(feature instanceof TC.Feature)) {
+                feature = null;
             }
 
-
-            var features = self.resultsLayer.features.slice();
-            var featureAlreadyHighlighted = features.filter(function (item) {
-                return feature && feature.id === item.id;
-            });
-
             //Si la feature a resaltar ya está resaltada, no hacemos nada. Así evitamos parpadeo
-            if (featureAlreadyHighlighted.length > 0) {
-                self.highlightedFeature = featureAlreadyHighlighted[0]; // Asignamos la original, la seleccionada inicialmente es un clon
+            if (feature && feature === self.highlightedFeature) {
                 return;
             }
 
+            self.highlightedFeature = feature;
+
+            const counter = displayTarget.querySelector('.' + self.CLASS + '-counter-current');
+            if (counter) {
+                counter.innerHTML = self.getFeatureIndex(serviceIdx, layerIdx, featureIdx) + 1;
+            }
+
+
             if (!self.options.persistentHighlights) {
-                features.forEach(f => {
-                    if (f !== self.filterFeature) {
+                self.resultsLayer.features.slice().forEach(f => {
+                    if (f !== self.filterFeature && f !== feature) {
                         self.downplayFeature(f);
                     }
                 });
             }
-            if (feature && feature.geometry) {
-                feature.showsPopup = self.options.persistentHighlights;
-                self.resultsLayer.addFeature(feature);
-            }
-            else {
-                featureLi.classList.add(TC.Consts.classes.DISABLED);
+            if (feature) {
+                const triggerEvent = () => self.map.trigger(TC.Consts.event.FEATUREHIGHLIGHT, { feature: feature, control: self });
+                if (feature.geometry) {
+                    feature.showsPopup = self.options.persistentHighlights;
+                    self.resultsLayer.addFeature(feature).then(function (f) {
+                        triggerEvent();
+                    });
+                }
+                else {
+                    featureLi.classList.add(TC.Consts.classes.DISABLED);
+                    triggerEvent();
+                }
             }
         }
     };
 
     ctlProto.downplayFeature = function (feature) {
         const self = this;
+        const li = self.getFeatureElement(feature);
+        if (li) {
+            li.classList.remove(TC.Consts.classes.CHECKED);
+        }
         self.resultsLayer.removeFeature(feature);
         for (url in self._infoHistory) {
             const service = self._infoHistory[url];
@@ -660,15 +760,24 @@ TC.control.FeatureInfoCommons.displayMode = {
                 }
             }
         }
+        if (self.highlightedFeature === feature) {
+            self.highlightedFeature = null;
+        }
+        self.map.trigger(TC.Consts.event.FEATUREDOWNPLAY, { feature: feature, control: self });
     };
 
     ctlProto.downplayFeatures = function (options) {
         const self = this;
         options = options || {};
-        if (self.highlightedFeature && self.highlightedFeature !== options.exception) {
-            self.downplayFeature(self.highlightedFeature);
+        const prevHlFeature = self.highlightedFeature;
+        if (prevHlFeature && prevHlFeature !== options.exception) {
+            self.downplayFeature(prevHlFeature);
             self.highlightedFeature = null;
         }
+        self.getFeatures()
+            .filter(f => f !== prevHlFeature)
+            .forEach(f => self.resultsLayer.removeFeature(f));
+
         const exceptionFLi = options.exception ? self.getFeatureElement(options.exception) : undefined;
         var exceptionLLi, exceptionSLi;
         if (exceptionFLi) {
@@ -691,6 +800,29 @@ TC.control.FeatureInfoCommons.displayMode = {
         target.querySelectorAll('.' + self.CLASS + '-features table:not(.complexAttr)').forEach(function (table) {
             table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
         });
+
+        setNotShowAllUI.call(self);
+    };
+
+    ctlProto.showAllFeatures = function () {
+        const self = this;
+        if (self.highlightedFeature) {
+            self.downplayFeature(self.highlightedFeature);
+        }
+        const features = self.getFeatures();
+        features.forEach(f => {
+            f.showsPopup = self.options.persistentHighlights;
+            if (self.resultsLayer.features.indexOf(f) < 0) {
+                self.resultsLayer.addFeature(f);
+            }
+        });
+        setShowAllUI.call(self);
+    };
+
+    ctlProto.hideAllFeatures = function () {
+        const self = this;
+        self.downplayFeatures();
+        setNotShowAllUI.call(self);
     };
 
     ctlProto._fitSize = function () {
@@ -727,6 +859,20 @@ TC.control.FeatureInfoCommons.displayMode = {
                     result = result.features[featureIdx];
                 }
             }
+        }
+        return result;
+    };
+
+    ctlProto.getFeatures = function () {
+        const self = this;
+        let result = [];
+        const info = self.info;
+        if (info && info.services) {
+            result = info.services.reduce((prev, cur) => {
+                return prev.concat(cur.layers.reduce((p, c) => {
+                    return p.concat(c.features);
+                }, []));
+            }, result);
         }
         return result;
     };
@@ -934,6 +1080,11 @@ TC.control.FeatureInfoCommons.displayMode = {
                 });
             });
         }
+    };
+
+    ctlProto._getFileName = function () {
+        const self = this;
+        return self.getLocaleString('featureInfo').toLowerCase().replace(/\s/gi, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
     };
 
 })();

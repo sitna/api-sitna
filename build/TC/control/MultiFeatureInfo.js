@@ -29,7 +29,7 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.CLASS = 'tc-ctl-m-finfo';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/MultiFeatureInfo.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-m-finfo.hbs";
 
     const mergeOptions = function (opt1, opt2) {
         if (opt1) {
@@ -54,7 +54,10 @@ if (!TC.control.FeatureInfoCommons) {
             const styles = self.options.styles || {};
             if (self.modes[TC.Consts.geom.POINT]) {
                 ctlPromises.push(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
-                    { displayMode: self.options.displayMode })).then(function (control) {
+                    {
+                        displayMode: self.options.displayMode,
+                        persistentHighlights: self.options.persistentHighlights
+                    })).then(function (control) {
                         self.featureInfoControl = control;
                         self.featureInfoControls.push(control);
                         return control;
@@ -62,7 +65,11 @@ if (!TC.control.FeatureInfoCommons) {
             }
             if (self.modes[TC.Consts.geom.POLYLINE]) {
                 ctlPromises.push(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
-                    { displayMode: self.options.displayMode, style: styles.line })).then(function (control) {
+                    {
+                        displayMode: self.options.displayMode,
+                        persistentHighlights: self.options.persistentHighlights,
+                        style: styles.line
+                    })).then(function (control) {
                         self.lineFeatureInfoControl = control;
                         self.featureInfoControls.push(control);
                         return control;
@@ -70,7 +77,11 @@ if (!TC.control.FeatureInfoCommons) {
             }
             if (self.modes[TC.Consts.geom.POLYGON]) {
                 ctlPromises.push(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
-                    { displayMode: self.options.displayMode, style: styles.polygon })).then(function (control) {
+                    {
+                        displayMode: self.options.displayMode,
+                        persistentHighlights: self.options.persistentHighlights,
+                        style: styles.polygon
+                    })).then(function (control) {
                         self.polygonFeatureInfoControl = control;
                         self.featureInfoControls.push(control);
                         return control;
@@ -101,7 +112,7 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.render = function (callback) {
         const self = this;
-        var renderData = {};
+        var renderData = { controlId: self.id };
         if (self.modes[TC.Consts.geom.POINT]) {
             renderData.pointSelectValue = TC.Consts.geom.POINT;
         }
@@ -138,15 +149,30 @@ if (!TC.control.FeatureInfoCommons) {
 
                 //URI bind del click del boton de borrar seleccionadas
                 const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
-                delFeaturesBtn.addEventListener(TC.Consts.event.CLICK, function (event) {
-                    event.preventDefault();
+                delFeaturesBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
                     self.featureInfoControls.forEach(ctl => {
                         ctl.info = null;
                         ctl._infoHistory = {};
                         ctl.resultsLayer.features.slice().forEach(f => ctl.downplayFeature(f));
                         ctl.filterLayer.features.slice().forEach(f => f.layer.removeFeature(f));
                     });
-                });
+                }, { passive: true });
+
+                self.div.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(TC.Consts.event.CLICK, async function (e) {
+                    const downloadDialog = await self.getDownloadDialog();
+                    let options = {
+                        title: self.getLocaleString("featureInfo") + " - " + self.getLocaleString("download"),
+                        fileName: self._getFileName()
+                    };
+
+                    if (self.map.elevation || self.options.displayElevation) {
+                        options = Object.assign({}, options, {
+                            elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation)
+                        });
+                    }
+                    downloadDialog.open(Array.prototype.concat.apply([], self.featureInfoControls.map(ctl => ctl.resultsLayer.features)), options);
+                }, { passive: true });
+
                 self.map
                     //.on(TC.Consts.event.FEATUREINFO, function () {
                     //    delFeaturesBtn.disabled = false;
@@ -210,10 +236,14 @@ if (!TC.control.FeatureInfoCommons) {
                 }
             }
 
+            const persistentHighlights = self.featureInfoControls.some(c => c.options.persistentHighlights);
+            const featuresUnavailable = self.featureInfoControls.every(ctl => ctl.resultsLayer && ctl.resultsLayer.features.length === 0 && ctl.filterLayer && ctl.filterLayer.features.length === 0);
             const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
-            delFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !self.featureInfoControls.some(c => c.options.persistentHighlights));
-            delFeaturesBtn.disabled = self.featureInfoControls.every(ctl => ctl.resultsLayer && ctl.resultsLayer.features.length === 0 && ctl.filterLayer && ctl.filterLayer.features.length === 0);
-
+            delFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !persistentHighlights);
+            delFeaturesBtn.disabled = featuresUnavailable;
+            const dlFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-dl`);
+            dlFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !persistentHighlights);
+            dlFeaturesBtn.disabled = featuresUnavailable;
 
             // Hack para compensar bug de Edge: no se actualiza el estilo al cambiar el estado del radio.
             const displayValue = self.div.style.display;

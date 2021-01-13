@@ -1,30 +1,22 @@
 TC.Cfg.acceptedBrowserVersions = [
-  {
-    "name": "Chrome",
-    "version": 68
-  },
-  {
-    "name": "Firefox",
-    "version": 60
-  },
-  {
-    "name": "IE",
-    "version": 11
-  },
-  {
-    "name": "Edge",
-    "version": 17
-  },
-  {
-    "name": "Safari",
-    "version": 11
-  },
-  {
-    "name": "Mobile Safari",
-    "version": 11
-  },
-  {
-    "name": "Opera mini",
-    "version": "all"
-  }
+    {
+        "name": "Chrome",
+        "version": 85
+    },
+    {
+        "name": "Edge",
+        "version": 85
+    },
+    {
+        "name": "Firefox",
+        "version": 78
+    },
+    {
+        "name": "Safari",
+        "version": 13
+    },
+    {
+        "name": "Mobile Safari",
+        "version": 13
+    }
 ];

@@ -1,0 +1,17 @@
+{{#each servicesFound}}
+    {{#if (gt ../servicesLooked 1)}}
+<li class="tc-ctl-lcat-search-group {{#if service.isCollapsed}}tc-collapsed{{/if}}" data-service-id="{{service.id}}">
+    <h5>{{service.title}}</h5><ul>
+    {{/if}}
+        {{#each founds}}
+        <li data-layer-name="{{Name}}" {{#if alreadyAdded}} class="tc-checked"{{/if}}>
+        <h5 class="tc-selectable"{{#if alreadyAdded}} data-tooltip="{{i18n "layerAlreadyAdded"}}"{{else}} data-tooltip="{{i18n "clickToAddToMap"}}"{{/if}}>{{Title}}</h5>
+        <button class="tc-ctl-lcat-search-btn-info" title="{{i18n "infoFromThisLayer"}}"></button>
+        </li>
+	    {{/each}}
+    {{#if (gt ../servicesLooked 1)}}
+</ul></li>
+    {{/if}}
+{{else}}
+<li class="tc-ctl-lcat-no-results"><h5>{{i18n "noMatches"}}</h5></li>
+{{/each}}

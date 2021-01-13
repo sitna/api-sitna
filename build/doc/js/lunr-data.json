@@ -686,6 +686,244 @@
           "sitna.const",
           "utilidad"
         ],
+        "SITNA.Consts.format.html": [
+          "colección",
+          "consts.format",
+          "de",
+          "format",
+          "formato",
+          "namespac",
+          "sitna.consts.format",
+          "tipo",
+          "utilidad"
+        ],
+        "SITNA.Consts.format.html#.GEOJSON": [
+          "consts.format.geojson",
+          "dato",
+          "en",
+          "escribir",
+          "format.geojson",
+          "formato",
+          "geojson",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.geojson",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.GML": [
+          "consts.format.gml",
+          "dato",
+          "en",
+          "escribir",
+          "format.gml",
+          "formato",
+          "gml",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.gml",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.GML2": [
+          "consts.format.gml2",
+          "dato",
+          "en",
+          "escribir",
+          "format.gml2",
+          "formato",
+          "gml2",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.gml2",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.GML3": [
+          "consts.format.gml3",
+          "dato",
+          "en",
+          "escribir",
+          "format.gml3",
+          "formato",
+          "gml3",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.gml3",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.GML32": [
+          "consts.format.gml32",
+          "dato",
+          "en",
+          "escribir",
+          "format.gml32",
+          "formato",
+          "gml3.2",
+          "gml32",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.gml32",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.GPKG": [
+          "consts.format.gpkg",
+          "dato",
+          "en",
+          "escribir",
+          "format.gpkg",
+          "formato",
+          "geopackag",
+          "gpkg",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.gpkg",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.GPX": [
+          "consts.format.gpx",
+          "dato",
+          "en",
+          "escribir",
+          "format.gpx",
+          "formato",
+          "gpx",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.gpx",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.JSON": [
+          "consts.format.json",
+          "dato",
+          "en",
+          "escribir",
+          "format.json",
+          "formato",
+          "json",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.json",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.KML": [
+          "consts.format.kml",
+          "dato",
+          "en",
+          "escribir",
+          "format.kml",
+          "formato",
+          "kml",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.kml",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.KMZ": [
+          "consts.format.kmz",
+          "dato",
+          "en",
+          "escribir",
+          "format.kmz",
+          "formato",
+          "kmz",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.kmz",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.SHP": [
+          "consts.format.shp",
+          "dato",
+          "en",
+          "escribir",
+          "format.shp",
+          "formato",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "shapefil",
+          "shp",
+          "sitna.consts.format.shp",
+          "string",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.TOPOJSON": [
+          "consts.format.topojson",
+          "dato",
+          "en",
+          "escribir",
+          "format.topojson",
+          "formato",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.topojson",
+          "string",
+          "topojson",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.WKT": [
+          "consts.format.wkt",
+          "dato",
+          "en",
+          "escribir",
+          "format.wkt",
+          "formato",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.wkt",
+          "string",
+          "wkt",
+          "y"
+        ],
+        "SITNA.Consts.format.html#.ZIP": [
+          "consts.format.zip",
+          "dato",
+          "en",
+          "escribir",
+          "format.zip",
+          "formato",
+          "leer",
+          "lt;static",
+          "member",
+          "readonly&gt",
+          "sitna.consts.format.zip",
+          "string",
+          "y",
+          "zip"
+        ],
         "SITNA.Consts.geom.html": [
           "colección",
           "consts.geom",
@@ -1331,10 +1569,16 @@
         "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": [
           "callejero",
           "capa",
+          "compat",
+          "con",
           "consts.layer.ign_es_basemap_grey",
           "de",
           "del",
+          "el",
           "en",
+          "epsg:3857",
+          "es",
+          "esta",
           "geográfico",
           "gri",
           "identificador",
@@ -1346,7 +1590,10 @@
           "member",
           "nacion",
           "readonly&gt",
+          "referencia",
+          "sistema",
           "sitna.consts.layer.ign_es_basemap_grey",
+          "solo",
           "string",
           "wmt"
         ],
@@ -2072,7 +2319,7 @@
           "xml"
         ]
       },
-      "length": 96
+      "length": 111
     },
     "tokenStore": {
       "root": {
@@ -2554,6 +2801,62 @@
                   "SITNA.Map.html#~SearchResultItem": {
                     "ref": "SITNA.Map.html#~SearchResultItem",
                     "tf": 4.166666666666666
+                  },
+                  "SITNA.Consts.format.html#.GEOJSON": {
+                    "ref": "SITNA.Consts.format.html#.GEOJSON",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GML": {
+                    "ref": "SITNA.Consts.format.html#.GML",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GML2": {
+                    "ref": "SITNA.Consts.format.html#.GML2",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GML3": {
+                    "ref": "SITNA.Consts.format.html#.GML3",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GML32": {
+                    "ref": "SITNA.Consts.format.html#.GML32",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GPKG": {
+                    "ref": "SITNA.Consts.format.html#.GPKG",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GPX": {
+                    "ref": "SITNA.Consts.format.html#.GPX",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.JSON": {
+                    "ref": "SITNA.Consts.format.html#.JSON",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.KML": {
+                    "ref": "SITNA.Consts.format.html#.KML",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.KMZ": {
+                    "ref": "SITNA.Consts.format.html#.KMZ",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.SHP": {
+                    "ref": "SITNA.Consts.format.html#.SHP",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.TOPOJSON": {
+                    "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.WKT": {
+                    "ref": "SITNA.Consts.format.html#.WKT",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.ZIP": {
+                    "ref": "SITNA.Consts.format.html#.ZIP",
+                    "tf": 7.142857142857142
                   }
                 }
               },
@@ -2654,6 +2957,10 @@
               "SITNA.Consts.html": {
                 "ref": "SITNA.Consts.html",
                 "tf": 10
+              },
+              "SITNA.Consts.format.html": {
+                "ref": "SITNA.Consts.format.html",
+                "tf": 21.428571428571427
               },
               "SITNA.Consts.geom.html": {
                 "ref": "SITNA.Consts.geom.html",
@@ -2773,7 +3080,7 @@
               },
               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                "tf": 3.571428571428571
+                "tf": 4
               },
               "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -3039,7 +3346,7 @@
                 },
                 "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                   "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                  "tf": 10.714285714285714
+                  "tf": 6
                 },
                 "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                   "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -3478,6 +3785,62 @@
                 "ref": "SITNA.html#.Cfg",
                 "tf": 0.7936507936507936
               },
+              "SITNA.Consts.format.html#.GEOJSON": {
+                "ref": "SITNA.Consts.format.html#.GEOJSON",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.GML": {
+                "ref": "SITNA.Consts.format.html#.GML",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.GML2": {
+                "ref": "SITNA.Consts.format.html#.GML2",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.GML3": {
+                "ref": "SITNA.Consts.format.html#.GML3",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.GML32": {
+                "ref": "SITNA.Consts.format.html#.GML32",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.GPKG": {
+                "ref": "SITNA.Consts.format.html#.GPKG",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.GPX": {
+                "ref": "SITNA.Consts.format.html#.GPX",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.JSON": {
+                "ref": "SITNA.Consts.format.html#.JSON",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.KML": {
+                "ref": "SITNA.Consts.format.html#.KML",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.KMZ": {
+                "ref": "SITNA.Consts.format.html#.KMZ",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.SHP": {
+                "ref": "SITNA.Consts.format.html#.SHP",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.TOPOJSON": {
+                "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.WKT": {
+                "ref": "SITNA.Consts.format.html#.WKT",
+                "tf": 7.142857142857142
+              },
+              "SITNA.Consts.format.html#.ZIP": {
+                "ref": "SITNA.Consts.format.html#.ZIP",
+                "tf": 7.142857142857142
+              },
               "SITNA.Consts.layer.html#.BLANK": {
                 "ref": "SITNA.Consts.layer.html#.BLANK",
                 "tf": 8.333333333333332
@@ -3488,7 +3851,7 @@
               },
               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                "tf": 3.571428571428571
+                "tf": 2
               },
               "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP_GREY": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP_GREY",
@@ -3701,6 +4064,10 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                 "tf": 2.272727272727273
               },
+              "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                "tf": 2
+              },
               "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                 "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
                 "tf": 2
@@ -3826,6 +4193,10 @@
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                 "tf": 2.272727272727273
+              },
+              "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                "tf": 2
               },
               "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                 "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
@@ -3965,6 +4336,10 @@
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                     "tf": 2.272727272727273
                   },
+                  "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                    "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                    "tf": 2
+                  },
                   "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                     "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
                     "tf": 2
@@ -4061,6 +4436,78 @@
                       "SITNA.Map.html#zoomToMarkers": {
                         "ref": "SITNA.Map.html#zoomToMarkers",
                         "tf": 4.166666666666666
+                      }
+                    }
+                  }
+                }
+              },
+              "r": {
+                "docs": {},
+                "i": {
+                  "docs": {},
+                  "b": {
+                    "docs": {},
+                    "i": {
+                      "docs": {},
+                      "r": {
+                        "docs": {
+                          "SITNA.Consts.format.html#.GEOJSON": {
+                            "ref": "SITNA.Consts.format.html#.GEOJSON",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.GML": {
+                            "ref": "SITNA.Consts.format.html#.GML",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.GML2": {
+                            "ref": "SITNA.Consts.format.html#.GML2",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.GML3": {
+                            "ref": "SITNA.Consts.format.html#.GML3",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.GML32": {
+                            "ref": "SITNA.Consts.format.html#.GML32",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.GPKG": {
+                            "ref": "SITNA.Consts.format.html#.GPKG",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.GPX": {
+                            "ref": "SITNA.Consts.format.html#.GPX",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.JSON": {
+                            "ref": "SITNA.Consts.format.html#.JSON",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.KML": {
+                            "ref": "SITNA.Consts.format.html#.KML",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.KMZ": {
+                            "ref": "SITNA.Consts.format.html#.KMZ",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.SHP": {
+                            "ref": "SITNA.Consts.format.html#.SHP",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.TOPOJSON": {
+                            "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.WKT": {
+                            "ref": "SITNA.Consts.format.html#.WKT",
+                            "tf": 7.142857142857142
+                          },
+                          "SITNA.Consts.format.html#.ZIP": {
+                            "ref": "SITNA.Consts.format.html#.ZIP",
+                            "tf": 7.142857142857142
+                          }
+                        }
                       }
                     }
                   }
@@ -4288,6 +4735,10 @@
                               "ref": "SITNA.Consts.layer.html#.CARTO_VOYAGER",
                               "tf": 2
                             },
+                            "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                              "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                              "tf": 2
+                            },
                             "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                               "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
                               "tf": 2
@@ -4428,7 +4879,7 @@
                               },
                               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                                "tf": 3.571428571428571
+                                "tf": 2
                               },
                               "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                                 "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -4502,6 +4953,50 @@
                                 "ref": "SITNA.Consts.layer.html#.IGN_FR_RELIEF",
                                 "tf": 2.083333333333333
                               }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "j": {
+                "docs": {},
+                "s": {
+                  "docs": {},
+                  "o": {
+                    "docs": {},
+                    "n": {
+                      "docs": {
+                        "SITNA.Consts.format.html#.GEOJSON": {
+                          "ref": "SITNA.Consts.format.html#.GEOJSON",
+                          "tf": 607.1428571428571
+                        },
+                        "SITNA.Consts.mimeType.html#.GEOJSON": {
+                          "ref": "SITNA.Consts.mimeType.html#.GEOJSON",
+                          "tf": 610
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "p": {
+                "docs": {},
+                "a": {
+                  "docs": {},
+                  "c": {
+                    "docs": {},
+                    "k": {
+                      "docs": {},
+                      "a": {
+                        "docs": {},
+                        "g": {
+                          "docs": {
+                            "SITNA.Consts.format.html#.GPKG": {
+                              "ref": "SITNA.Consts.format.html#.GPKG",
+                              "tf": 7.142857142857142
                             }
                           }
                         }
@@ -4601,23 +5096,6 @@
                               }
                             }
                           }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "j": {
-                "docs": {},
-                "s": {
-                  "docs": {},
-                  "o": {
-                    "docs": {},
-                    "n": {
-                      "docs": {
-                        "SITNA.Consts.mimeType.html#.GEOJSON": {
-                          "ref": "SITNA.Consts.mimeType.html#.GEOJSON",
-                          "tf": 610
                         }
                       }
                     }
@@ -4836,25 +5314,49 @@
               }
             }
           },
-          "r": {
-            "docs": {},
-            "i": {
-              "docs": {
-                "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
-                  "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                  "tf": 3.571428571428571
-                },
-                "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP_GREY": {
-                  "ref": "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP_GREY",
-                  "tf": 3.571428571428571
-                }
-              }
-            }
-          },
           "m": {
             "docs": {},
             "l": {
+              "2": {
+                "docs": {
+                  "SITNA.Consts.format.html#.GML2": {
+                    "ref": "SITNA.Consts.format.html#.GML2",
+                    "tf": 607.1428571428571
+                  }
+                }
+              },
+              "3": {
+                "2": {
+                  "docs": {
+                    "SITNA.Consts.format.html#.GML32": {
+                      "ref": "SITNA.Consts.format.html#.GML32",
+                      "tf": 600
+                    }
+                  }
+                },
+                "docs": {
+                  "SITNA.Consts.format.html#.GML3": {
+                    "ref": "SITNA.Consts.format.html#.GML3",
+                    "tf": 607.1428571428571
+                  }
+                },
+                ".": {
+                  "2": {
+                    "docs": {
+                      "SITNA.Consts.format.html#.GML32": {
+                        "ref": "SITNA.Consts.format.html#.GML32",
+                        "tf": 7.142857142857142
+                      }
+                    }
+                  },
+                  "docs": {}
+                }
+              },
               "docs": {
+                "SITNA.Consts.format.html#.GML": {
+                  "ref": "SITNA.Consts.format.html#.GML",
+                  "tf": 607.1428571428571
+                },
                 "SITNA.Consts.mimeType.html#.GML": {
                   "ref": "SITNA.Consts.mimeType.html#.GML",
                   "tf": 610
@@ -4864,11 +5366,41 @@
           },
           "p": {
             "docs": {},
+            "k": {
+              "docs": {},
+              "g": {
+                "docs": {
+                  "SITNA.Consts.format.html#.GPKG": {
+                    "ref": "SITNA.Consts.format.html#.GPKG",
+                    "tf": 600
+                  }
+                }
+              }
+            },
             "x": {
               "docs": {
+                "SITNA.Consts.format.html#.GPX": {
+                  "ref": "SITNA.Consts.format.html#.GPX",
+                  "tf": 607.1428571428571
+                },
                 "SITNA.Consts.mimeType.html#.GPX": {
                   "ref": "SITNA.Consts.mimeType.html#.GPX",
                   "tf": 610
+                }
+              }
+            }
+          },
+          "r": {
+            "docs": {},
+            "i": {
+              "docs": {
+                "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                  "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                  "tf": 2
+                },
+                "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP_GREY": {
+                  "ref": "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP_GREY",
+                  "tf": 3.571428571428571
                 }
               }
             }
@@ -5027,7 +5559,7 @@
                             },
                             "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                               "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                              "tf": 3.571428571428571
+                              "tf": 2
                             },
                             "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                               "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -5300,7 +5832,7 @@
                                     },
                                     "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                                       "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                                      "tf": 3.571428571428571
+                                      "tf": 2
                                     },
                                     "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                                       "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -6532,6 +7064,24 @@
               }
             }
           },
+          "s": {
+            "docs": {},
+            "o": {
+              "docs": {},
+              "n": {
+                "docs": {
+                  "SITNA.Consts.format.html#.JSON": {
+                    "ref": "SITNA.Consts.format.html#.JSON",
+                    "tf": 607.1428571428571
+                  },
+                  "SITNA.Consts.mimeType.html#.JSON": {
+                    "ref": "SITNA.Consts.mimeType.html#.JSON",
+                    "tf": 610
+                  }
+                }
+              }
+            }
+          },
           "p": {
             "docs": {},
             "e": {
@@ -6540,20 +7090,6 @@
                 "docs": {
                   "SITNA.Consts.mimeType.html#.JPEG": {
                     "ref": "SITNA.Consts.mimeType.html#.JPEG",
-                    "tf": 610
-                  }
-                }
-              }
-            }
-          },
-          "s": {
-            "docs": {},
-            "o": {
-              "docs": {},
-              "n": {
-                "docs": {
-                  "SITNA.Consts.mimeType.html#.JSON": {
-                    "ref": "SITNA.Consts.mimeType.html#.JSON",
                     "tf": 610
                   }
                 }
@@ -6754,7 +7290,7 @@
               },
               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                "tf": 3.571428571428571
+                "tf": 2
               },
               "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -8316,6 +8852,69 @@
                 "ref": "SITNA.Map.html#addLayer",
                 "tf": 1.1111111111111112
               }
+            },
+            "e": {
+              "docs": {},
+              "r": {
+                "docs": {
+                  "SITNA.Consts.format.html#.GEOJSON": {
+                    "ref": "SITNA.Consts.format.html#.GEOJSON",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GML": {
+                    "ref": "SITNA.Consts.format.html#.GML",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GML2": {
+                    "ref": "SITNA.Consts.format.html#.GML2",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GML3": {
+                    "ref": "SITNA.Consts.format.html#.GML3",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GML32": {
+                    "ref": "SITNA.Consts.format.html#.GML32",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GPKG": {
+                    "ref": "SITNA.Consts.format.html#.GPKG",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.GPX": {
+                    "ref": "SITNA.Consts.format.html#.GPX",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.JSON": {
+                    "ref": "SITNA.Consts.format.html#.JSON",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.KML": {
+                    "ref": "SITNA.Consts.format.html#.KML",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.KMZ": {
+                    "ref": "SITNA.Consts.format.html#.KMZ",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.SHP": {
+                    "ref": "SITNA.Consts.format.html#.SHP",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.TOPOJSON": {
+                    "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.WKT": {
+                    "ref": "SITNA.Consts.format.html#.WKT",
+                    "tf": 7.142857142857142
+                  },
+                  "SITNA.Consts.format.html#.ZIP": {
+                    "ref": "SITNA.Consts.format.html#.ZIP",
+                    "tf": 7.142857142857142
+                  }
+                }
+              }
             }
           },
           "t": {
@@ -8411,6 +9010,62 @@
                         "docs": {},
                         "c": {
                           "docs": {
+                            "SITNA.Consts.format.html#.GEOJSON": {
+                              "ref": "SITNA.Consts.format.html#.GEOJSON",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.GML": {
+                              "ref": "SITNA.Consts.format.html#.GML",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.GML2": {
+                              "ref": "SITNA.Consts.format.html#.GML2",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.GML3": {
+                              "ref": "SITNA.Consts.format.html#.GML3",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.GML32": {
+                              "ref": "SITNA.Consts.format.html#.GML32",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.GPKG": {
+                              "ref": "SITNA.Consts.format.html#.GPKG",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.GPX": {
+                              "ref": "SITNA.Consts.format.html#.GPX",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.JSON": {
+                              "ref": "SITNA.Consts.format.html#.JSON",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.KML": {
+                              "ref": "SITNA.Consts.format.html#.KML",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.KMZ": {
+                              "ref": "SITNA.Consts.format.html#.KMZ",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.SHP": {
+                              "ref": "SITNA.Consts.format.html#.SHP",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.TOPOJSON": {
+                              "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.WKT": {
+                              "ref": "SITNA.Consts.format.html#.WKT",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.format.html#.ZIP": {
+                              "ref": "SITNA.Consts.format.html#.ZIP",
+                              "tf": 25
+                            },
                             "SITNA.Consts.geom.html#.POINT": {
                               "ref": "SITNA.Consts.geom.html#.POINT",
                               "tf": 25
@@ -9294,6 +9949,62 @@
                             "docs": {},
                             "t": {
                               "docs": {
+                                "SITNA.Consts.format.html#.GEOJSON": {
+                                  "ref": "SITNA.Consts.format.html#.GEOJSON",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.GML": {
+                                  "ref": "SITNA.Consts.format.html#.GML",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.GML2": {
+                                  "ref": "SITNA.Consts.format.html#.GML2",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.GML3": {
+                                  "ref": "SITNA.Consts.format.html#.GML3",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.GML32": {
+                                  "ref": "SITNA.Consts.format.html#.GML32",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.GPKG": {
+                                  "ref": "SITNA.Consts.format.html#.GPKG",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.GPX": {
+                                  "ref": "SITNA.Consts.format.html#.GPX",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.JSON": {
+                                  "ref": "SITNA.Consts.format.html#.JSON",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.KML": {
+                                  "ref": "SITNA.Consts.format.html#.KML",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.KMZ": {
+                                  "ref": "SITNA.Consts.format.html#.KMZ",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.SHP": {
+                                  "ref": "SITNA.Consts.format.html#.SHP",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.TOPOJSON": {
+                                  "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.WKT": {
+                                  "ref": "SITNA.Consts.format.html#.WKT",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.format.html#.ZIP": {
+                                  "ref": "SITNA.Consts.format.html#.ZIP",
+                                  "tf": 25
+                                },
                                 "SITNA.Consts.geom.html#.POINT": {
                                   "ref": "SITNA.Consts.geom.html#.POINT",
                                   "tf": 25
@@ -9701,6 +10412,10 @@
                               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                                 "tf": 2.272727272727273
+                              },
+                              "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                                "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                                "tf": 2
                               },
                               "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                                 "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
@@ -11096,6 +11811,225 @@
                                       }
                                     }
                                   },
+                                  "f": {
+                                    "docs": {},
+                                    "o": {
+                                      "docs": {},
+                                      "r": {
+                                        "docs": {},
+                                        "m": {
+                                          "docs": {},
+                                          "a": {
+                                            "docs": {},
+                                            "t": {
+                                              "docs": {
+                                                "SITNA.Consts.format.html": {
+                                                  "ref": "SITNA.Consts.format.html",
+                                                  "tf": 1200
+                                                }
+                                              },
+                                              ".": {
+                                                "docs": {},
+                                                "g": {
+                                                  "docs": {},
+                                                  "e": {
+                                                    "docs": {},
+                                                    "o": {
+                                                      "docs": {},
+                                                      "j": {
+                                                        "docs": {},
+                                                        "s": {
+                                                          "docs": {},
+                                                          "o": {
+                                                            "docs": {},
+                                                            "n": {
+                                                              "docs": {
+                                                                "SITNA.Consts.format.html#.GEOJSON": {
+                                                                  "ref": "SITNA.Consts.format.html#.GEOJSON",
+                                                                  "tf": 1075
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "m": {
+                                                    "docs": {},
+                                                    "l": {
+                                                      "2": {
+                                                        "docs": {
+                                                          "SITNA.Consts.format.html#.GML2": {
+                                                            "ref": "SITNA.Consts.format.html#.GML2",
+                                                            "tf": 1075
+                                                          }
+                                                        }
+                                                      },
+                                                      "3": {
+                                                        "2": {
+                                                          "docs": {
+                                                            "SITNA.Consts.format.html#.GML32": {
+                                                              "ref": "SITNA.Consts.format.html#.GML32",
+                                                              "tf": 1075
+                                                            }
+                                                          }
+                                                        },
+                                                        "docs": {
+                                                          "SITNA.Consts.format.html#.GML3": {
+                                                            "ref": "SITNA.Consts.format.html#.GML3",
+                                                            "tf": 1075
+                                                          }
+                                                        }
+                                                      },
+                                                      "docs": {
+                                                        "SITNA.Consts.format.html#.GML": {
+                                                          "ref": "SITNA.Consts.format.html#.GML",
+                                                          "tf": 1075
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "p": {
+                                                    "docs": {},
+                                                    "k": {
+                                                      "docs": {},
+                                                      "g": {
+                                                        "docs": {
+                                                          "SITNA.Consts.format.html#.GPKG": {
+                                                            "ref": "SITNA.Consts.format.html#.GPKG",
+                                                            "tf": 1075
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "x": {
+                                                      "docs": {
+                                                        "SITNA.Consts.format.html#.GPX": {
+                                                          "ref": "SITNA.Consts.format.html#.GPX",
+                                                          "tf": 1075
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "j": {
+                                                  "docs": {},
+                                                  "s": {
+                                                    "docs": {},
+                                                    "o": {
+                                                      "docs": {},
+                                                      "n": {
+                                                        "docs": {
+                                                          "SITNA.Consts.format.html#.JSON": {
+                                                            "ref": "SITNA.Consts.format.html#.JSON",
+                                                            "tf": 1075
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "k": {
+                                                  "docs": {},
+                                                  "m": {
+                                                    "docs": {},
+                                                    "l": {
+                                                      "docs": {
+                                                        "SITNA.Consts.format.html#.KML": {
+                                                          "ref": "SITNA.Consts.format.html#.KML",
+                                                          "tf": 1075
+                                                        }
+                                                      }
+                                                    },
+                                                    "z": {
+                                                      "docs": {
+                                                        "SITNA.Consts.format.html#.KMZ": {
+                                                          "ref": "SITNA.Consts.format.html#.KMZ",
+                                                          "tf": 1075
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "s": {
+                                                  "docs": {},
+                                                  "h": {
+                                                    "docs": {},
+                                                    "p": {
+                                                      "docs": {
+                                                        "SITNA.Consts.format.html#.SHP": {
+                                                          "ref": "SITNA.Consts.format.html#.SHP",
+                                                          "tf": 1075
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "t": {
+                                                  "docs": {},
+                                                  "o": {
+                                                    "docs": {},
+                                                    "p": {
+                                                      "docs": {},
+                                                      "o": {
+                                                        "docs": {},
+                                                        "j": {
+                                                          "docs": {},
+                                                          "s": {
+                                                            "docs": {},
+                                                            "o": {
+                                                              "docs": {},
+                                                              "n": {
+                                                                "docs": {
+                                                                  "SITNA.Consts.format.html#.TOPOJSON": {
+                                                                    "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                                                                    "tf": 1075
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "w": {
+                                                  "docs": {},
+                                                  "k": {
+                                                    "docs": {},
+                                                    "t": {
+                                                      "docs": {
+                                                        "SITNA.Consts.format.html#.WKT": {
+                                                          "ref": "SITNA.Consts.format.html#.WKT",
+                                                          "tf": 1075
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "z": {
+                                                  "docs": {},
+                                                  "i": {
+                                                    "docs": {},
+                                                    "p": {
+                                                      "docs": {
+                                                        "SITNA.Consts.format.html#.ZIP": {
+                                                          "ref": "SITNA.Consts.format.html#.ZIP",
+                                                          "tf": 1075
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
                                   "g": {
                                     "docs": {},
                                     "e": {
@@ -12129,6 +13063,10 @@
                           "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                           "tf": 2.272727272727273
                         },
+                        "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                          "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                          "tf": 2
+                        },
                         "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                           "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
                           "tf": 2
@@ -12632,6 +13570,10 @@
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                     "tf": 2.272727272727273
                   },
+                  "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                    "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                    "tf": 2
+                  },
                   "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                     "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
                     "tf": 2
@@ -12677,6 +13619,62 @@
                       "SITNA.Map.html#exportImage": {
                         "ref": "SITNA.Map.html#exportImage",
                         "tf": 50
+                      },
+                      "SITNA.Consts.format.html#.GEOJSON": {
+                        "ref": "SITNA.Consts.format.html#.GEOJSON",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.GML": {
+                        "ref": "SITNA.Consts.format.html#.GML",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.GML2": {
+                        "ref": "SITNA.Consts.format.html#.GML2",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.GML3": {
+                        "ref": "SITNA.Consts.format.html#.GML3",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.GML32": {
+                        "ref": "SITNA.Consts.format.html#.GML32",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.GPKG": {
+                        "ref": "SITNA.Consts.format.html#.GPKG",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.GPX": {
+                        "ref": "SITNA.Consts.format.html#.GPX",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.JSON": {
+                        "ref": "SITNA.Consts.format.html#.JSON",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.KML": {
+                        "ref": "SITNA.Consts.format.html#.KML",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.KMZ": {
+                        "ref": "SITNA.Consts.format.html#.KMZ",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.SHP": {
+                        "ref": "SITNA.Consts.format.html#.SHP",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.TOPOJSON": {
+                        "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.WKT": {
+                        "ref": "SITNA.Consts.format.html#.WKT",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.format.html#.ZIP": {
+                        "ref": "SITNA.Consts.format.html#.ZIP",
+                        "tf": 25
                       },
                       "SITNA.Consts.geom.html#.POINT": {
                         "ref": "SITNA.Consts.geom.html#.POINT",
@@ -12988,6 +13986,40 @@
               }
             }
           },
+          "h": {
+            "docs": {},
+            "a": {
+              "docs": {},
+              "p": {
+                "docs": {},
+                "e": {
+                  "docs": {},
+                  "f": {
+                    "docs": {},
+                    "i": {
+                      "docs": {},
+                      "l": {
+                        "docs": {
+                          "SITNA.Consts.format.html#.SHP": {
+                            "ref": "SITNA.Consts.format.html#.SHP",
+                            "tf": 7.142857142857142
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "p": {
+              "docs": {
+                "SITNA.Consts.format.html#.SHP": {
+                  "ref": "SITNA.Consts.format.html#.SHP",
+                  "tf": 600
+                }
+              }
+            }
+          },
           "a": {
             "docs": {},
             "t": {
@@ -13196,6 +14228,17 @@
               }
             }
           },
+          "k": {
+            "docs": {},
+            "t": {
+              "docs": {
+                "SITNA.Consts.format.html#.WKT": {
+                  "ref": "SITNA.Consts.format.html#.WKT",
+                  "tf": 607.1428571428571
+                }
+              }
+            }
+          },
           "m": {
             "docs": {
               "SITNA.Consts.layer.html#.IDENA_BASEMAP_ORTHOPHOTO": {
@@ -13339,7 +14382,7 @@
                 },
                 "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                   "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                  "tf": 3.571428571428571
+                  "tf": 2
                 },
                 "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                   "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -13416,6 +14459,10 @@
                   "SITNA.Map.html#addLayer": {
                     "ref": "SITNA.Map.html#addLayer",
                     "tf": 3.3333333333333335
+                  },
+                  "SITNA.Consts.format.html": {
+                    "ref": "SITNA.Consts.format.html",
+                    "tf": 7.142857142857142
                   },
                   "SITNA.Consts.geom.html": {
                     "ref": "SITNA.Consts.geom.html",
@@ -13595,6 +14642,23 @@
               "docs": {},
               "o": {
                 "docs": {},
+                "j": {
+                  "docs": {},
+                  "s": {
+                    "docs": {},
+                    "o": {
+                      "docs": {},
+                      "n": {
+                        "docs": {
+                          "SITNA.Consts.format.html#.TOPOJSON": {
+                            "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                            "tf": 607.1428571428571
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
                 "g": {
                   "docs": {},
                   "r": {
@@ -13800,6 +14864,10 @@
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                   "tf": 2.272727272727273
                 },
+                "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                  "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                  "tf": 2
+                },
                 "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                   "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
                   "tf": 2
@@ -13963,6 +15031,225 @@
                     "docs": {},
                     ".": {
                       "docs": {},
+                      "f": {
+                        "docs": {},
+                        "o": {
+                          "docs": {},
+                          "r": {
+                            "docs": {},
+                            "m": {
+                              "docs": {},
+                              "a": {
+                                "docs": {},
+                                "t": {
+                                  "docs": {
+                                    "SITNA.Consts.format.html": {
+                                      "ref": "SITNA.Consts.format.html",
+                                      "tf": 100
+                                    }
+                                  },
+                                  ".": {
+                                    "docs": {},
+                                    "g": {
+                                      "docs": {},
+                                      "e": {
+                                        "docs": {},
+                                        "o": {
+                                          "docs": {},
+                                          "j": {
+                                            "docs": {},
+                                            "s": {
+                                              "docs": {},
+                                              "o": {
+                                                "docs": {},
+                                                "n": {
+                                                  "docs": {
+                                                    "SITNA.Consts.format.html#.GEOJSON": {
+                                                      "ref": "SITNA.Consts.format.html#.GEOJSON",
+                                                      "tf": 75
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "m": {
+                                        "docs": {},
+                                        "l": {
+                                          "2": {
+                                            "docs": {
+                                              "SITNA.Consts.format.html#.GML2": {
+                                                "ref": "SITNA.Consts.format.html#.GML2",
+                                                "tf": 75
+                                              }
+                                            }
+                                          },
+                                          "3": {
+                                            "2": {
+                                              "docs": {
+                                                "SITNA.Consts.format.html#.GML32": {
+                                                  "ref": "SITNA.Consts.format.html#.GML32",
+                                                  "tf": 75
+                                                }
+                                              }
+                                            },
+                                            "docs": {
+                                              "SITNA.Consts.format.html#.GML3": {
+                                                "ref": "SITNA.Consts.format.html#.GML3",
+                                                "tf": 75
+                                              }
+                                            }
+                                          },
+                                          "docs": {
+                                            "SITNA.Consts.format.html#.GML": {
+                                              "ref": "SITNA.Consts.format.html#.GML",
+                                              "tf": 75
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "p": {
+                                        "docs": {},
+                                        "k": {
+                                          "docs": {},
+                                          "g": {
+                                            "docs": {
+                                              "SITNA.Consts.format.html#.GPKG": {
+                                                "ref": "SITNA.Consts.format.html#.GPKG",
+                                                "tf": 75
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "x": {
+                                          "docs": {
+                                            "SITNA.Consts.format.html#.GPX": {
+                                              "ref": "SITNA.Consts.format.html#.GPX",
+                                              "tf": 75
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "j": {
+                                      "docs": {},
+                                      "s": {
+                                        "docs": {},
+                                        "o": {
+                                          "docs": {},
+                                          "n": {
+                                            "docs": {
+                                              "SITNA.Consts.format.html#.JSON": {
+                                                "ref": "SITNA.Consts.format.html#.JSON",
+                                                "tf": 75
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "k": {
+                                      "docs": {},
+                                      "m": {
+                                        "docs": {},
+                                        "l": {
+                                          "docs": {
+                                            "SITNA.Consts.format.html#.KML": {
+                                              "ref": "SITNA.Consts.format.html#.KML",
+                                              "tf": 75
+                                            }
+                                          }
+                                        },
+                                        "z": {
+                                          "docs": {
+                                            "SITNA.Consts.format.html#.KMZ": {
+                                              "ref": "SITNA.Consts.format.html#.KMZ",
+                                              "tf": 75
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "s": {
+                                      "docs": {},
+                                      "h": {
+                                        "docs": {},
+                                        "p": {
+                                          "docs": {
+                                            "SITNA.Consts.format.html#.SHP": {
+                                              "ref": "SITNA.Consts.format.html#.SHP",
+                                              "tf": 75
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "t": {
+                                      "docs": {},
+                                      "o": {
+                                        "docs": {},
+                                        "p": {
+                                          "docs": {},
+                                          "o": {
+                                            "docs": {},
+                                            "j": {
+                                              "docs": {},
+                                              "s": {
+                                                "docs": {},
+                                                "o": {
+                                                  "docs": {},
+                                                  "n": {
+                                                    "docs": {
+                                                      "SITNA.Consts.format.html#.TOPOJSON": {
+                                                        "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                                                        "tf": 75
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "w": {
+                                      "docs": {},
+                                      "k": {
+                                        "docs": {},
+                                        "t": {
+                                          "docs": {
+                                            "SITNA.Consts.format.html#.WKT": {
+                                              "ref": "SITNA.Consts.format.html#.WKT",
+                                              "tf": 75
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "z": {
+                                      "docs": {},
+                                      "i": {
+                                        "docs": {},
+                                        "p": {
+                                          "docs": {
+                                            "SITNA.Consts.format.html#.ZIP": {
+                                              "ref": "SITNA.Consts.format.html#.ZIP",
+                                              "tf": 75
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
                       "g": {
                         "docs": {},
                         "e": {
@@ -15564,6 +16851,10 @@
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                         "tf": 2.272727272727273
                       },
+                      "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
+                        "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
+                        "tf": 2
+                      },
                       "SITNA.Consts.layer.html#.IGN_FR_BASEMAP": {
                         "ref": "SITNA.Consts.layer.html#.IGN_FR_BASEMAP",
                         "tf": 2
@@ -15690,6 +16981,10 @@
                         "docs": {},
                         "n": {
                           "docs": {
+                            "SITNA.Consts.format.html": {
+                              "ref": "SITNA.Consts.format.html",
+                              "tf": 7.142857142857142
+                            },
                             "SITNA.Consts.geom.html": {
                               "ref": "SITNA.Consts.geom.html",
                               "tf": 7.142857142857142
@@ -15949,7 +17244,7 @@
                             },
                             "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                               "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                              "tf": 3.571428571428571
+                              "tf": 2
                             },
                             "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP": {
                               "ref": "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP",
@@ -16101,7 +17396,7 @@
                   },
                   "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                     "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                    "tf": 3.571428571428571
+                    "tf": 4
                   },
                   "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                     "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -17876,6 +19171,62 @@
                         "ref": "SITNA.html#.Cfg",
                         "tf": 110
                       },
+                      "SITNA.Consts.format.html#.GEOJSON": {
+                        "ref": "SITNA.Consts.format.html#.GEOJSON",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.GML": {
+                        "ref": "SITNA.Consts.format.html#.GML",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.GML2": {
+                        "ref": "SITNA.Consts.format.html#.GML2",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.GML3": {
+                        "ref": "SITNA.Consts.format.html#.GML3",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.GML32": {
+                        "ref": "SITNA.Consts.format.html#.GML32",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.GPKG": {
+                        "ref": "SITNA.Consts.format.html#.GPKG",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.GPX": {
+                        "ref": "SITNA.Consts.format.html#.GPX",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.JSON": {
+                        "ref": "SITNA.Consts.format.html#.JSON",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.KML": {
+                        "ref": "SITNA.Consts.format.html#.KML",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.KMZ": {
+                        "ref": "SITNA.Consts.format.html#.KMZ",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.SHP": {
+                        "ref": "SITNA.Consts.format.html#.SHP",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.TOPOJSON": {
+                        "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.WKT": {
+                        "ref": "SITNA.Consts.format.html#.WKT",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.format.html#.ZIP": {
+                        "ref": "SITNA.Consts.format.html#.ZIP",
+                        "tf": 110
+                      },
                       "SITNA.Consts.geom.html#.POINT": {
                         "ref": "SITNA.Consts.geom.html#.POINT",
                         "tf": 110
@@ -18734,6 +20085,10 @@
                             "ref": "SITNA.Consts.html",
                             "tf": 5
                           },
+                          "SITNA.Consts.format.html": {
+                            "ref": "SITNA.Consts.format.html",
+                            "tf": 7.142857142857142
+                          },
                           "SITNA.Consts.mimeType.html": {
                             "ref": "SITNA.Consts.mimeType.html",
                             "tf": 8.333333333333332
@@ -18925,6 +20280,10 @@
                             "ref": "SITNA.Consts.html",
                             "tf": 110
                           },
+                          "SITNA.Consts.format.html": {
+                            "ref": "SITNA.Consts.format.html",
+                            "tf": 110
+                          },
                           "SITNA.Consts.geom.html": {
                             "ref": "SITNA.Consts.geom.html",
                             "tf": 110
@@ -18962,7 +20321,7 @@
                       },
                       "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                         "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
-                        "tf": 3.571428571428571
+                        "tf": 2
                       },
                       "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
                         "ref": "SITNA.Consts.layer.html#.IGN_ES_CARTO",
@@ -19210,6 +20569,283 @@
                   }
                 }
               }
+            },
+            "r": {
+              "docs": {},
+              "m": {
+                "docs": {},
+                "a": {
+                  "docs": {},
+                  "t": {
+                    "docs": {
+                      "SITNA.Consts.format.html": {
+                        "ref": "SITNA.Consts.format.html",
+                        "tf": 600
+                      }
+                    },
+                    "o": {
+                      "docs": {
+                        "SITNA.Consts.format.html": {
+                          "ref": "SITNA.Consts.format.html",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.GEOJSON": {
+                          "ref": "SITNA.Consts.format.html#.GEOJSON",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.GML": {
+                          "ref": "SITNA.Consts.format.html#.GML",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.GML2": {
+                          "ref": "SITNA.Consts.format.html#.GML2",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.GML3": {
+                          "ref": "SITNA.Consts.format.html#.GML3",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.GML32": {
+                          "ref": "SITNA.Consts.format.html#.GML32",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.GPKG": {
+                          "ref": "SITNA.Consts.format.html#.GPKG",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.GPX": {
+                          "ref": "SITNA.Consts.format.html#.GPX",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.JSON": {
+                          "ref": "SITNA.Consts.format.html#.JSON",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.KML": {
+                          "ref": "SITNA.Consts.format.html#.KML",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.KMZ": {
+                          "ref": "SITNA.Consts.format.html#.KMZ",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.SHP": {
+                          "ref": "SITNA.Consts.format.html#.SHP",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.TOPOJSON": {
+                          "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.WKT": {
+                          "ref": "SITNA.Consts.format.html#.WKT",
+                          "tf": 7.142857142857142
+                        },
+                        "SITNA.Consts.format.html#.ZIP": {
+                          "ref": "SITNA.Consts.format.html#.ZIP",
+                          "tf": 7.142857142857142
+                        }
+                      }
+                    },
+                    ".": {
+                      "docs": {},
+                      "g": {
+                        "docs": {},
+                        "e": {
+                          "docs": {},
+                          "o": {
+                            "docs": {},
+                            "j": {
+                              "docs": {},
+                              "s": {
+                                "docs": {},
+                                "o": {
+                                  "docs": {},
+                                  "n": {
+                                    "docs": {
+                                      "SITNA.Consts.format.html#.GEOJSON": {
+                                        "ref": "SITNA.Consts.format.html#.GEOJSON",
+                                        "tf": 75
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "m": {
+                          "docs": {},
+                          "l": {
+                            "2": {
+                              "docs": {
+                                "SITNA.Consts.format.html#.GML2": {
+                                  "ref": "SITNA.Consts.format.html#.GML2",
+                                  "tf": 75
+                                }
+                              }
+                            },
+                            "3": {
+                              "2": {
+                                "docs": {
+                                  "SITNA.Consts.format.html#.GML32": {
+                                    "ref": "SITNA.Consts.format.html#.GML32",
+                                    "tf": 75
+                                  }
+                                }
+                              },
+                              "docs": {
+                                "SITNA.Consts.format.html#.GML3": {
+                                  "ref": "SITNA.Consts.format.html#.GML3",
+                                  "tf": 75
+                                }
+                              }
+                            },
+                            "docs": {
+                              "SITNA.Consts.format.html#.GML": {
+                                "ref": "SITNA.Consts.format.html#.GML",
+                                "tf": 75
+                              }
+                            }
+                          }
+                        },
+                        "p": {
+                          "docs": {},
+                          "k": {
+                            "docs": {},
+                            "g": {
+                              "docs": {
+                                "SITNA.Consts.format.html#.GPKG": {
+                                  "ref": "SITNA.Consts.format.html#.GPKG",
+                                  "tf": 75
+                                }
+                              }
+                            }
+                          },
+                          "x": {
+                            "docs": {
+                              "SITNA.Consts.format.html#.GPX": {
+                                "ref": "SITNA.Consts.format.html#.GPX",
+                                "tf": 75
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "j": {
+                        "docs": {},
+                        "s": {
+                          "docs": {},
+                          "o": {
+                            "docs": {},
+                            "n": {
+                              "docs": {
+                                "SITNA.Consts.format.html#.JSON": {
+                                  "ref": "SITNA.Consts.format.html#.JSON",
+                                  "tf": 75
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "k": {
+                        "docs": {},
+                        "m": {
+                          "docs": {},
+                          "l": {
+                            "docs": {
+                              "SITNA.Consts.format.html#.KML": {
+                                "ref": "SITNA.Consts.format.html#.KML",
+                                "tf": 75
+                              }
+                            }
+                          },
+                          "z": {
+                            "docs": {
+                              "SITNA.Consts.format.html#.KMZ": {
+                                "ref": "SITNA.Consts.format.html#.KMZ",
+                                "tf": 75
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "s": {
+                        "docs": {},
+                        "h": {
+                          "docs": {},
+                          "p": {
+                            "docs": {
+                              "SITNA.Consts.format.html#.SHP": {
+                                "ref": "SITNA.Consts.format.html#.SHP",
+                                "tf": 75
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "t": {
+                        "docs": {},
+                        "o": {
+                          "docs": {},
+                          "p": {
+                            "docs": {},
+                            "o": {
+                              "docs": {},
+                              "j": {
+                                "docs": {},
+                                "s": {
+                                  "docs": {},
+                                  "o": {
+                                    "docs": {},
+                                    "n": {
+                                      "docs": {
+                                        "SITNA.Consts.format.html#.TOPOJSON": {
+                                          "ref": "SITNA.Consts.format.html#.TOPOJSON",
+                                          "tf": 75
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "w": {
+                        "docs": {},
+                        "k": {
+                          "docs": {},
+                          "t": {
+                            "docs": {
+                              "SITNA.Consts.format.html#.WKT": {
+                                "ref": "SITNA.Consts.format.html#.WKT",
+                                "tf": 75
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "z": {
+                        "docs": {},
+                        "i": {
+                          "docs": {},
+                          "p": {
+                            "docs": {
+                              "SITNA.Consts.format.html#.ZIP": {
+                                "ref": "SITNA.Consts.format.html#.ZIP",
+                                "tf": 75
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           "r": {
@@ -19378,6 +21014,62 @@
               "ref": "SITNA.Map.html#zoomToMarkers",
               "tf": 4.166666666666666
             },
+            "SITNA.Consts.format.html#.GEOJSON": {
+              "ref": "SITNA.Consts.format.html#.GEOJSON",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GML": {
+              "ref": "SITNA.Consts.format.html#.GML",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GML2": {
+              "ref": "SITNA.Consts.format.html#.GML2",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GML3": {
+              "ref": "SITNA.Consts.format.html#.GML3",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GML32": {
+              "ref": "SITNA.Consts.format.html#.GML32",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GPKG": {
+              "ref": "SITNA.Consts.format.html#.GPKG",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GPX": {
+              "ref": "SITNA.Consts.format.html#.GPX",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.JSON": {
+              "ref": "SITNA.Consts.format.html#.JSON",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.KML": {
+              "ref": "SITNA.Consts.format.html#.KML",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.KMZ": {
+              "ref": "SITNA.Consts.format.html#.KMZ",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.SHP": {
+              "ref": "SITNA.Consts.format.html#.SHP",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.TOPOJSON": {
+              "ref": "SITNA.Consts.format.html#.TOPOJSON",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.WKT": {
+              "ref": "SITNA.Consts.format.html#.WKT",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.ZIP": {
+              "ref": "SITNA.Consts.format.html#.ZIP",
+              "tf": 7.142857142857142
+            },
             "SITNA.Consts.layer.html": {
               "ref": "SITNA.Consts.layer.html",
               "tf": 3.8461538461538463
@@ -19402,6 +21094,10 @@
                   "ref": "SITNA.Map.html#addLayer",
                   "tf": 1.1111111111111112
                 },
+                "SITNA.Consts.format.html#.KML": {
+                  "ref": "SITNA.Consts.format.html#.KML",
+                  "tf": 607.1428571428571
+                },
                 "SITNA.Consts.layerType.html#.KML": {
                   "ref": "SITNA.Consts.layerType.html#.KML",
                   "tf": 608.3333333333334
@@ -19409,6 +21105,14 @@
                 "SITNA.Consts.mimeType.html#.KML": {
                   "ref": "SITNA.Consts.mimeType.html#.KML",
                   "tf": 610
+                }
+              }
+            },
+            "z": {
+              "docs": {
+                "SITNA.Consts.format.html#.KMZ": {
+                  "ref": "SITNA.Consts.format.html#.KMZ",
+                  "tf": 607.1428571428571
                 }
               }
             }
@@ -19447,6 +21151,17 @@
                 }
               }
             }
+          },
+          "i": {
+            "docs": {},
+            "p": {
+              "docs": {
+                "SITNA.Consts.format.html#.ZIP": {
+                  "ref": "SITNA.Consts.format.html#.ZIP",
+                  "tf": 607.1428571428571
+                }
+              }
+            }
           }
         },
         "x": {
@@ -19464,7 +21179,7 @@
           }
         }
       },
-      "length": 1894
+      "length": 2111
     },
     "corpusTokens": [
       "1",
@@ -19528,6 +21243,21 @@
       "const",
       "constant",
       "constructor",
+      "consts.format",
+      "consts.format.geojson",
+      "consts.format.gml",
+      "consts.format.gml2",
+      "consts.format.gml3",
+      "consts.format.gml32",
+      "consts.format.gpkg",
+      "consts.format.gpx",
+      "consts.format.json",
+      "consts.format.kml",
+      "consts.format.kmz",
+      "consts.format.shp",
+      "consts.format.topojson",
+      "consts.format.wkt",
+      "consts.format.zip",
       "consts.geom",
       "consts.geom.point",
       "consts.geom.polygon",
@@ -19637,6 +21367,7 @@
       "epsg:3857",
       "es",
       "escala",
+      "escribir",
       "espacio",
       "est",
       "esta",
@@ -19651,6 +21382,22 @@
       "extensión",
       "field",
       "fondo",
+      "format",
+      "format.geojson",
+      "format.gml",
+      "format.gml2",
+      "format.gml3",
+      "format.gml32",
+      "format.gpkg",
+      "format.gpx",
+      "format.json",
+      "format.kml",
+      "format.kmz",
+      "format.shp",
+      "format.topojson",
+      "format.wkt",
+      "format.zip",
+      "formato",
       "francé",
       "función",
       "function",
@@ -19663,6 +21410,7 @@
       "geom.polygon",
       "geom.polylin",
       "geometría",
+      "geopackag",
       "georreferenciado",
       "gestiona",
       "getcommonwealth",
@@ -19672,6 +21420,11 @@
       "global",
       "global_cfg",
       "gml",
+      "gml2",
+      "gml3",
+      "gml3.2",
+      "gml32",
+      "gpkg",
       "gpx",
       "gri",
       "hace",
@@ -19736,6 +21489,7 @@
       "jpeg",
       "json",
       "kml",
+      "kmz",
       "la",
       "layer",
       "layer.blank",
@@ -19795,6 +21549,7 @@
       "layertype.wmt",
       "layout_cfg",
       "le",
+      "leer",
       "lidar",
       "light",
       "list",
@@ -19922,6 +21677,8 @@
       "ser",
       "servicio",
       "setbaselay",
+      "shapefil",
+      "shp",
       "si",
       "siempr",
       "sin",
@@ -19929,6 +21686,21 @@
       "sitna",
       "sitna.cfg",
       "sitna.const",
+      "sitna.consts.format",
+      "sitna.consts.format.geojson",
+      "sitna.consts.format.gml",
+      "sitna.consts.format.gml2",
+      "sitna.consts.format.gml3",
+      "sitna.consts.format.gml32",
+      "sitna.consts.format.gpkg",
+      "sitna.consts.format.gpx",
+      "sitna.consts.format.json",
+      "sitna.consts.format.kml",
+      "sitna.consts.format.kmz",
+      "sitna.consts.format.shp",
+      "sitna.consts.format.topojson",
+      "sitna.consts.format.wkt",
+      "sitna.consts.format.zip",
       "sitna.consts.geom",
       "sitna.consts.geom.point",
       "sitna.consts.geom.polygon",
@@ -20033,6 +21805,7 @@
       "todo",
       "toma",
       "topográfica",
+      "topojson",
       "travé",
       "tutori",
       "typedef",
@@ -20056,10 +21829,12 @@
       "voyag",
       "web",
       "wf",
+      "wkt",
       "wm",
       "wmt",
       "xml",
       "y",
+      "zip",
       "zoomtomark"
     ],
     "pipeline": [
@@ -20377,6 +22152,157 @@
       "description": "Espacio de nombres donde se encuentran las constantes de utilidad.",
       "body": ""
     },
+    "SITNA.Consts.format.html": {
+      "id": "SITNA.Consts.format.html",
+      "kind": "namespace",
+      "title": "SITNA.Consts.format",
+      "longname": "SITNA.Consts.format",
+      "name": "format",
+      "tags": "SITNA.Consts.format Consts.format format",
+      "summary": "",
+      "description": "Colección de tipos de formatos de utilidad.",
+      "body": ""
+    },
+    "SITNA.Consts.format.html#.GEOJSON": {
+      "id": "SITNA.Consts.format.html#.GEOJSON",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; GEOJSON :string",
+      "longname": "SITNA.Consts.format.GEOJSON",
+      "name": "GEOJSON",
+      "tags": "SITNA.Consts.format.GEOJSON Consts.format.GEOJSON format.GEOJSON GEOJSON",
+      "summary": "",
+      "description": "Leer y escribir datos en formato GeoJSON."
+    },
+    "SITNA.Consts.format.html#.GML": {
+      "id": "SITNA.Consts.format.html#.GML",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; GML :string",
+      "longname": "SITNA.Consts.format.GML",
+      "name": "GML",
+      "tags": "SITNA.Consts.format.GML Consts.format.GML format.GML GML",
+      "summary": "",
+      "description": "Leer y escribir datos en formato GML."
+    },
+    "SITNA.Consts.format.html#.GML2": {
+      "id": "SITNA.Consts.format.html#.GML2",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; GML2 :string",
+      "longname": "SITNA.Consts.format.GML2",
+      "name": "GML2",
+      "tags": "SITNA.Consts.format.GML2 Consts.format.GML2 format.GML2 GML2",
+      "summary": "",
+      "description": "Leer y escribir datos en formato GML2."
+    },
+    "SITNA.Consts.format.html#.GML3": {
+      "id": "SITNA.Consts.format.html#.GML3",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; GML3 :string",
+      "longname": "SITNA.Consts.format.GML3",
+      "name": "GML3",
+      "tags": "SITNA.Consts.format.GML3 Consts.format.GML3 format.GML3 GML3",
+      "summary": "",
+      "description": "Leer y escribir datos en formato GML3."
+    },
+    "SITNA.Consts.format.html#.GML32": {
+      "id": "SITNA.Consts.format.html#.GML32",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; GML32 :string",
+      "longname": "SITNA.Consts.format.GML32",
+      "name": "GML32",
+      "tags": "SITNA.Consts.format.GML32 Consts.format.GML32 format.GML32 GML32",
+      "summary": "",
+      "description": "Leer y escribir datos en formato GML3.2."
+    },
+    "SITNA.Consts.format.html#.GPKG": {
+      "id": "SITNA.Consts.format.html#.GPKG",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; GPKG :string",
+      "longname": "SITNA.Consts.format.GPKG",
+      "name": "GPKG",
+      "tags": "SITNA.Consts.format.GPKG Consts.format.GPKG format.GPKG GPKG",
+      "summary": "",
+      "description": "Leer y escribir datos en formato GeoPackage."
+    },
+    "SITNA.Consts.format.html#.GPX": {
+      "id": "SITNA.Consts.format.html#.GPX",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; GPX :string",
+      "longname": "SITNA.Consts.format.GPX",
+      "name": "GPX",
+      "tags": "SITNA.Consts.format.GPX Consts.format.GPX format.GPX GPX",
+      "summary": "",
+      "description": "Leer y escribir datos en formato GPX."
+    },
+    "SITNA.Consts.format.html#.JSON": {
+      "id": "SITNA.Consts.format.html#.JSON",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; JSON :string",
+      "longname": "SITNA.Consts.format.JSON",
+      "name": "JSON",
+      "tags": "SITNA.Consts.format.JSON Consts.format.JSON format.JSON JSON",
+      "summary": "",
+      "description": "Leer y escribir datos en formato JSON."
+    },
+    "SITNA.Consts.format.html#.KML": {
+      "id": "SITNA.Consts.format.html#.KML",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; KML :string",
+      "longname": "SITNA.Consts.format.KML",
+      "name": "KML",
+      "tags": "SITNA.Consts.format.KML Consts.format.KML format.KML KML",
+      "summary": "",
+      "description": "Leer y escribir datos en formato KML."
+    },
+    "SITNA.Consts.format.html#.KMZ": {
+      "id": "SITNA.Consts.format.html#.KMZ",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; KMZ :string",
+      "longname": "SITNA.Consts.format.KMZ",
+      "name": "KMZ",
+      "tags": "SITNA.Consts.format.KMZ Consts.format.KMZ format.KMZ KMZ",
+      "summary": "",
+      "description": "Leer y escribir datos en formato KMZ."
+    },
+    "SITNA.Consts.format.html#.SHP": {
+      "id": "SITNA.Consts.format.html#.SHP",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; SHP :string",
+      "longname": "SITNA.Consts.format.SHP",
+      "name": "SHP",
+      "tags": "SITNA.Consts.format.SHP Consts.format.SHP format.SHP SHP",
+      "summary": "",
+      "description": "Leer y escribir datos en formato ShapeFile."
+    },
+    "SITNA.Consts.format.html#.TOPOJSON": {
+      "id": "SITNA.Consts.format.html#.TOPOJSON",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; TOPOJSON :string",
+      "longname": "SITNA.Consts.format.TOPOJSON",
+      "name": "TOPOJSON",
+      "tags": "SITNA.Consts.format.TOPOJSON Consts.format.TOPOJSON format.TOPOJSON TOPOJSON",
+      "summary": "",
+      "description": "Leer y escribir datos en formato TopoJSON."
+    },
+    "SITNA.Consts.format.html#.WKT": {
+      "id": "SITNA.Consts.format.html#.WKT",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; WKT :string",
+      "longname": "SITNA.Consts.format.WKT",
+      "name": "WKT",
+      "tags": "SITNA.Consts.format.WKT Consts.format.WKT format.WKT WKT",
+      "summary": "",
+      "description": "Leer y escribir datos en formato WKT."
+    },
+    "SITNA.Consts.format.html#.ZIP": {
+      "id": "SITNA.Consts.format.html#.ZIP",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; ZIP :string",
+      "longname": "SITNA.Consts.format.ZIP",
+      "name": "ZIP",
+      "tags": "SITNA.Consts.format.ZIP Consts.format.ZIP format.ZIP ZIP",
+      "summary": "",
+      "description": "Leer y escribir datos en formato ZIP."
+    },
     "SITNA.Consts.geom.html": {
       "id": "SITNA.Consts.geom.html",
       "kind": "namespace",
@@ -20677,7 +22603,7 @@
       "name": "IGN_ES_BASEMAP_GREY",
       "tags": "SITNA.Consts.layer.IGN_ES_BASEMAP_GREY Consts.layer.IGN_ES_BASEMAP_GREY layer.IGN_ES_BASEMAP_GREY IGN_ES_BASEMAP_GREY",
       "summary": "",
-      "description": "Identificador de la capa del callejero en gris del WMTS del Instituto Geográfico Nacional."
+      "description": "Identificador de la capa del callejero en gris del WMTS del Instituto Geográfico Nacional. Esta capa solo es compatible con el sistema de referencia EPSG:3857."
     },
     "SITNA.Consts.layer.html#.IGN_ES_CARTO": {
       "id": "SITNA.Consts.layer.html#.IGN_ES_CARTO",

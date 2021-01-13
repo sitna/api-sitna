@@ -43,8 +43,8 @@ TC.inherit(TC.control.Modify, TC.Control);
     ctlProto.CLASS = 'tc-ctl-mod';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Modify.html";
-    ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/ModifyAttributes.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-mod.hbs";
+    ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/tc-ctl-mod-attr.hbs";
 
     const setFeatureSelectedState = function (ctl, features) {
         ctl._deleteBtn.disabled = features.length === 0;
@@ -199,21 +199,21 @@ TC.inherit(TC.control.Modify, TC.Control);
                         self.activate();
                     }
                 }
-            });
+            }, { passive: true });
             self._deleteBtn = self.div.querySelector('.' + self.CLASS + '-btn-delete');
             self._deleteBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.deleteSelectedFeatures();
-            });
+            }, { passive: true });
             self._textBtn = self.div.querySelector('.' + self.CLASS + '-btn-text');
             self._textBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.setTextMode(!self.textActive);
-            });
+            }, { passive: true });
             self._joinBtn = self.div.querySelector('.' + self.CLASS + '-btn-join');
             self._splitBtn = self.div.querySelector('.' + self.CLASS + '-btn-split');
             self._editAttrBtn = self.div.querySelector('.' + self.CLASS + '-btn-attr');
             self._editAttrBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.toggleAttributes();
-            });
+            }, { passive: true });
             self._textInput = self.div.querySelector('input.' + self.CLASS + '-txt');
             self._textInput.addEventListener('input', function (e) {
                 self.labelFeatures(e.target.value);
@@ -613,11 +613,11 @@ TC.inherit(TC.control.Modify, TC.Control);
 
                 attributesSection.querySelector(`${self.CLASS}-btn-attr-ok`).addEventListener(TC.Consts.event.CLICK, function (e) {
                     self._onAttrOK();
-                });
+                }, { passive: true });
 
                 attributesSection.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(TC.Consts.event.CLICK, function () {
                     self.closeAttributes();
-                });
+                }, { passive: true });
             });
         }
     };
@@ -660,7 +660,7 @@ TC.inherit(TC.control.Modify, TC.Control);
             self._joinedFeatureAttributes = [];
             if (features.length > 1) {
                 var geometries = features.map(function (elm) {
-                    self._joinedFeatureAttributes[self._joinedFeatureAttributes.length] = elm.getData();
+                    self._joinedFeatureAttributes.push(elm.getData());
                     return elm.geometry;
                 });
                 var newGeometry = geometries.reduce(function (a, b) {

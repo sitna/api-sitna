@@ -1,0 +1,59 @@
+<h3>{@i18n $key="attributeEdit"/}</h3>
+<div class="tc-ctl-mod-attr-body">
+    <table>
+        <tbody>
+            {#data}
+            <tr>
+                <th>{name}</th>
+                <td>
+                    {?readOnly}
+                        {value}
+                    {:else}
+                        {?availableValues}
+                        <select class="tc-combo" name="{name}">
+                            <option value=""></option>
+                            {#availableValues}
+                            <option value="{.}">{.}</option>
+                            {/availableValues}
+                        </select>
+                        {/availableValues}
+                        {@select key=type}
+                            {@none}{+inputText/}{/none}
+                            {@eq value="int"}{+inputNumber/}{/eq}
+                            {@eq value="integer"}{+inputNumber/}{/eq}
+                            {@eq value="double"}{+inputNumber/}{/eq}
+                            {@eq value="boolean"}{+inputCheckbox/}{/eq}
+                            {@eq value="date"}{+inputDate/}{/eq}
+                            {@eq value="time"}{+inputTime/}{/eq}
+                            {@eq value="dateTime"}{+inputDatetime/}{/eq}
+                            {@eq value="byte"}{+inputNumber/}{/eq}
+                            {@eq value="long"}{+inputNumber/}{/eq}
+                            {@eq value="negativeInteger"}{+inputNumber/}{/eq}
+                            {@eq value="nonNegativeInteger"}{+inputNumber/}{/eq}
+                            {@eq value="nonPositiveInteger"}{+inputNumber/}{/eq}
+                            {@eq value="positiveInteger"}{+inputNumber/}{/eq}
+                            {@eq value="short"}{+inputNumber/}{/eq}
+                            {@eq value="unsignedLong"}{+inputNumber/}{/eq}
+                            {@eq value="unsignedInt"}{+inputNumber/}{/eq}
+                            {@eq value="unsignedShort"}{+inputNumber/}{/eq}
+                            {@eq value="unsignedByte"}{+inputNumber/}{/eq}
+                            {@eq value="float"}{+inputNumber/}{/eq}
+                            {@eq value="decimal"}{+inputNumber/}{/eq}
+                        {/select}
+                        {<inputText}<input type="text" class="tc-textbox" name="{name}" value="{value}" />{/inputText}
+                        {<inputNumber}<input type="number" class="tc-textbox" name="{name}" value="{value}" />{/inputNumber}
+                        {<inputCheckbox}<input type="checkbox" name="{name}"{?value} checked{/value}/>{/inputCheckbox}
+                        {<inputDate}<input type="date" class="tc-textbox" name="{name}" value="{value}" />{/inputDate}
+                        {<inputTime}<input type="time" class="tc-textbox" name="{name}" value="{value}" />{/inputTime}
+                        {<inputDatetime}<input type="datetime" class="tc-textbox" name="{name}" value="{value}" />{/inputDatetime}
+                    {/readOnly}
+                </td>
+            </tr>
+            {/data}
+        </tbody>
+    </table>
+</div>
+<div class="tc-ctl-mod-attr-footer">
+    <button class="tc-button tc-ctl-mod-btn-attr-ok">{@i18n $key="ok"/}</button>
+    <button class="tc-button tc-ctl-mod-btn-attr-cancel">{@i18n $key="cancel"/}</button>
+</div>

@@ -102,39 +102,39 @@ TC.Consts.event.CHANGE = 'change';
         ctl._cancelBtn.disabled = false;
     };
 
-    ctlProto.template = TC.apiLocation + "TC/templates/Draw.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-draw.hbs";
 
     ctlProto.render = function (callback) {
-        var self = this;
-        var strToolTip;
-        var strokeColor;
-        var strokeWidth;
+        const self = this;
+        let strToolTip;
+        let strokeColor;
+        let strokeWidth;
         switch (self.options.mode) {
             case TC.Consts.geom.POLYLINE:
             case TC.Consts.geom.MULTIPOLYLINE:
                 strToolTip = self.getLocaleString('drawLine');
                 self.div.classList.add(self._lineClass);
-                strokeColor = TC.Cfg.styles.line.strokeColor;
-                strokeWidth = TC.Cfg.styles.line.strokeWidth;
+                strokeColor = self.styles.line.strokeColor;
+                strokeWidth = self.styles.line.strokeWidth;
                 break;
             case TC.Consts.geom.POLYGON:
             case TC.Consts.geom.MULTIPOLYGON:
                 strToolTip = self.getLocaleString('drawPolygon');
                 self.div.classList.add(self._polygonClass);
-                strokeColor = TC.Cfg.styles.polygon.strokeColor;
-                strokeWidth = TC.Cfg.styles.polygon.strokeWidth;
+                strokeColor = self.styles.polygon.strokeColor;
+                strokeWidth = self.styles.polygon.strokeWidth;
                 break;
             case TC.Consts.geom.POINT:
             case TC.Consts.geom.MULTIPOINT:
                 strToolTip = self.getLocaleString('drawPoint');
                 self.div.classList.add(self._pointClass);
-                strokeColor = TC.Cfg.styles.point.strokeColor;
-                strokeWidth = TC.Cfg.styles.point.strokeWidth;
+                strokeColor = self.styles.point.strokeColor;
+                strokeWidth = self.styles.point.strokeWidth;
                 break;
             default:
                 strToolTip = self.getLocaleString('draw');
-                strokeColor = TC.Cfg.styles.line.strokeColor;
-                strokeWidth = TC.Cfg.styles.line.strokeWidth;
+                strokeColor = self.styles.line.strokeColor;
+                strokeWidth = self.styles.line.strokeWidth;
                 break;
         }
         const renderObject = {
@@ -195,27 +195,27 @@ TC.Consts.event.CHANGE = 'change';
             self._newBtn = self.div.querySelector(self._classSelector + '-btn-new');
             self._newBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.new();
-            });
+            }, { passive: true });
 
             self._cancelBtn = self.div.querySelector(self._classSelector + '-btn-cancel');
             self._cancelBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.cancel();
-            });
+            }, { passive: true });
 
             self._endBtn = self.div.querySelector(self._classSelector + '-btn-end');
             self._endBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.end();
-            });
+            }, { passive: true });
 
             self._undoBtn = self.div.querySelector(self._classSelector + '-btn-undo');
             self._undoBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.undo();
-            });
+            }, { passive: true });
 
             self._redoBtn = self.div.querySelector(self._classSelector + '-btn-redo');
             self._redoBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.redo();
-            });
+            }, { passive: true });
 
             if (self.options.styleTools) {
                 self._strokeColorPicker = self.div.querySelector(self._classSelector + '-str-c');
@@ -238,16 +238,23 @@ TC.Consts.event.CHANGE = 'change';
 
     ctlProto.register = function (map) {
         const self = this;
+        self.styles = TC.Util.extend(true, {}, map.options.styles, self.options.styles);
         const result = TC.Control.prototype.register.call(self, map);
 
-        self.map.on(TC.Consts.event.VIEWCHANGE, function () {
-            if (self.map.view === TC.Consts.view.PRINTING) {
-                self.end();
+        self.map
+            .on(TC.Consts.event.VIEWCHANGE, function () {
+                if (self.map.view === TC.Consts.view.PRINTING) {
+                    self.end();
 
-                // No lanzo el evento porque da error al no llegar una feature
-                // self.trigger(TC.Consts.event.DRAWEND);
-            }
-        });
+                    // No lanzo el evento porque da error al no llegar una feature
+                    // self.trigger(TC.Consts.event.DRAWEND);
+                }
+            })
+            .on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+                self.history.forEach(function (point, idx, arr) {
+                    arr[idx] = TC.Util.reproject(point, e.oldCrs, e.newCrs);
+                });
+            });
 
         self._layerPromise = new Promise(function (resolve, reject) {
             map.loaded(function () {
@@ -269,9 +276,9 @@ TC.Consts.event.CHANGE = 'change';
                             owner: self,
                             type: TC.Consts.layerType.VECTOR,
                             styles: {
-                                point: map.options.styles.point,
-                                line: map.options.styles.line,
-                                polygon: map.options.styles.polygon
+                                point: self.styles.point,
+                                line: self.styles.line,
+                                polygon: self.styles.polygon
                             }
                         }).then(function (layer) {
                             map.putLayerOnTop(layer);
@@ -567,7 +574,7 @@ TC.Consts.event.CHANGE = 'change';
 
     ctlProto.exportState = function () {
         const self = this;
-        if (self.exportsState) {
+        if (self.exportsState && self.layer) {
             return {
                 id: self.id,
                 layer: self.layer.exportState()

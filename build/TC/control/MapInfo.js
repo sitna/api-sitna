@@ -23,21 +23,11 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const result = TC.Control.prototype.register.call(self, map);
 
         self.QR_MAX_URL_LENGTH = 150;
-        self.SHORTEN_URL_LENGTH = 32715;
+        self.SHORTEN_URL_LENGTH = 16000;
 
         self.exportsState = false;
 
-        self.includeControls = self.options.includeControls === undefined || self.options.includeControls;
-
-        map.ready(function () {
-            const controlStates = map.state && map.state.ctl;
-            if (controlStates) {
-                if (!map._controlStatesLoaded) { // Para evitar que si hay varios controles Share cargados, cada uno importe por su cuenta.
-                    self.importControlStates(controlStates);
-                    map._controlStatesLoaded = true;
-                }
-            }
-        });
+        self.includeControls = self.options.includeControls === undefined || self.options.includeControls;        
 
         return result;
     }
@@ -45,21 +35,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
     ctlProto.exportControlStates = function () {
         const self = this;
         if (self.map) {
-            return self.map.controls
-                .map(function (ctl) {
-                    return ctl.exportState();
-                })
-                .filter(function (state) {
-                    // Quitamos los estados nulos o vacíos
-                    if (state) {
-                        for (var key in state) {
-                            if (state.hasOwnProperty(key)) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                });
+            return self.map.exportControlStates();
         }
         return [];
     };
@@ -67,14 +43,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
     ctlProto.importControlStates = function (stateArray) {
         const self = this;
         if (self.map) {
-            stateArray.forEach(function (state) {
-                const ctl = self.map.getControlById(state.id);
-                if (ctl) {
-                    self.map.loaded(function () {
-                        ctl.importState(state);
-                    });
-                }
-            });
+            self.map.importControlStates(stateArray);
         }
     };
 
@@ -127,9 +96,9 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         throw "Falta implementación del método manageMaxLengthExceed";
     };
 
-    ctlProto.generateLink = function () {
+    ctlProto.generateLink = async function () {
         var self = this;
-
+        
         var currentUrl = window.location.href;
         var hashPosition = currentUrl.indexOf('#');
         if (hashPosition > 0) {
@@ -157,12 +126,12 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         }
 
         const controlStates = self.includeControls ? self.exportControlStates() : [];
-        if (self.exportsState && (self.featureToShare || self.sharedFeaturesLayer)) {
+        if (!self.includeControls && self.exportsState && (self.featureToShare || self.sharedFeaturesLayer)) {
             controlStates.push(self.exportState());
         }
         const extraStates = controlStates.length ? { ctl: controlStates } : undefined;
 
-        var hashState = self.map.getMapState(extraStates);
+        var hashState = await self.map.getMapState({ extraStates: extraStates, cacheResult: self.includeControls });
 
         var url = currentUrl.concat("#", hashState);
         self.manageMaxLengthExceed({ browser: url.length > TC.Consts.URL_MAX_LENGTH, qr: url.length > self.SHORTEN_URL_LENGTH });
@@ -173,8 +142,8 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const self = this;
         var wait;
 
-        const generateLinkWithoutParams = function () {
-            var url = self.generateLink();
+        const generateLinkWithoutParams = async function () {
+            var url = await self.generateLink();
             var start = url.indexOf('?');
             var end = url.indexOf('#');
 
@@ -217,27 +186,27 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                 resolve("");
             };
 
-            var url = generateLinkWithoutParams();
+            generateLinkWithoutParams().then(url => {
+                if (url.length > self.QR_MAX_URL_LENGTH && url.length < self.SHORTEN_URL_LENGTH) {
 
-            if (url.length > self.QR_MAX_URL_LENGTH && url.length < self.SHORTEN_URL_LENGTH) {
+                    wait = self.map.getLoadingIndicator().addWait();
 
-                wait = self.map.getLoadingIndicator().addWait();
-
-                shortenUrl(url).then(function (response) {
-                    if (response && response.responseText) {
-                        self.map.getLoadingIndicator().removeWait(wait);
-                        resolve(response.responseText.replace('http://', 'https://'));
-                    } else {
+                    shortenUrl(url).then(function (response) {
+                        if (response && response.responseText) {
+                            self.map.getLoadingIndicator().removeWait(wait);
+                            resolve(response.responseText.replace('http://', 'https://'));
+                        } else {
+                            onError();
+                        }
+                    }, onError);
+                } else {
+                    if (url.length >= self.SHORTEN_URL_LENGTH) {
                         onError();
                     }
-                }, onError);
-            } else {
-                if (url.length >= self.SHORTEN_URL_LENGTH) {
-                    onError();
-                }
 
-                resolve("");
-            }
+                    resolve("");
+                }
+            });
         });
     };
 
@@ -344,7 +313,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         if (options.setSize) {
             canvas.width = width;
             canvas.height = height;
-        }        
+        }
 
         boundingCR.left = options.left != undefined ? options.left : 15;
         boundingCR.top = options.top != undefined ? options.top : 15;
@@ -356,7 +325,6 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
         ctx.stroke();
 
-        var textMetrics = ctx.measureText(text);
         var textPosition = {
             x: boundingCR.left + width / 2,
             y: boundingCR.top + height / 2
@@ -381,10 +349,19 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const self = this;
 
         if (!self.registeredListeners) {
-            self.map.on(TC.Consts.event.LAYERADD, self.generateLink.bind(self))
-                .on(TC.Consts.event.LAYERREMOVE, self.generateLink.bind(self))
-                .on(TC.Consts.event.FEATUREADD, self.generateLink.bind(self))
-                .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, self.generateLink.bind(self));
+            let handlerTimeout;
+            const handler = function (e) {
+                clearTimeout(handlerTimeout);
+                // generateLink puede ser tardar mucho, así que no lo llamamos innecesariamente cuando se están cargando varias features
+                handlerTimeout = setTimeout(function () {
+                    delete self.map._controlStatesCache;
+                    self.generateLink();
+                }, 100);
+            };
+            self.map.on(TC.Consts.event.LAYERADD, handler)
+                .on(TC.Consts.event.LAYERREMOVE, handler)
+                .on(TC.Consts.event.FEATUREADD, handler)
+                .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, handler);
 
             self.registeredListeners = true;
         }

@@ -206,7 +206,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
     ctlProto.CLASS = 'tc-ctl-wfsedit';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/WFSEdit.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-wfsedit.hbs";
 
     ctlProto.LOCAL_STORAGE_KEY_PREFIX = "TC.offline.edit.";
     ctlProto.LOCAL_STORAGE_ADDED_KEY_PREFIX = ".added.";
@@ -314,7 +314,8 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                             const layer = e.layer;
                             if (layer.type === TC.Consts.layerType.WFS && !layer.options.readOnly) {
                                 self.getEditableLayer(layer)
-                                    .then(l => self.cacheLayer(l));
+                                    .then(l => self.cacheLayer(l))
+                                    .catch(err => console.log('Layer not editable: ' + layer.id));
                             }
                         })
                         .on(TC.Consts.event.ZOOM, function (e) {
@@ -546,15 +547,15 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
             };
 
             const addedColorInputId = `${self.CLASS}-view-clr-added-${self.id}`;
-            viewToolsDiv.querySelector(`label[for="${addedColorInputId}"]`).addEventListener(TC.Consts.event.CLICK, onColorClick);
+            viewToolsDiv.querySelector(`label[for="${addedColorInputId}"]`).addEventListener(TC.Consts.event.CLICK, onColorClick, { passive: true });
             document.getElementById(addedColorInputId).addEventListener('change', onColorChange);
 
             const modifiedColorInputId = `${self.CLASS}-view-clr-modified-${self.id}`;
-            viewToolsDiv.querySelector(`label[for="${modifiedColorInputId}"]`).addEventListener(TC.Consts.event.CLICK, onColorClick);
+            viewToolsDiv.querySelector(`label[for="${modifiedColorInputId}"]`).addEventListener(TC.Consts.event.CLICK, onColorClick, { passive: true });
             document.getElementById(modifiedColorInputId).addEventListener('change', onColorChange);
 
             const removedColorInputId = `${self.CLASS}-view-clr-removed-${self.id}`;
-            viewToolsDiv.querySelector(`label[for="${removedColorInputId}"]`).addEventListener(TC.Consts.event.CLICK, onColorClick);
+            viewToolsDiv.querySelector(`label[for="${removedColorInputId}"]`).addEventListener(TC.Consts.event.CLICK, onColorClick, { passive: true });
             document.getElementById(removedColorInputId).addEventListener('change', onColorChange);
 
             self._saveBtn = self.div.querySelector(self._classSelector + '-btn-save');
@@ -562,14 +563,14 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                 TC.confirm(self.getLocaleString('edit.applyEdits.confirm', { layerTitle: getLayerTitle(self.layer) }), function () {
                     self.applyEdits();
                 });
-            });
+            }, { passive: true });
             
             self._discardBtn = self.div.querySelector(self._classSelector + '-btn-discard');
             self._discardBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 TC.confirm(self.getLocaleString('edit.discardEdits.confirm', { layerTitle: getLayerTitle(self.layer) }), function () {
                     self.discardEdits();
                 });
-            });
+            }, { passive: true });
 
             self._recropBtn = self.div.querySelector(`.${self.CLASS}-view button.${self.CLASS}-btn-crop`);
             self._recropBtn.addEventListener(TC.Consts.event.CLICK, function () {
@@ -617,7 +618,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                     }
                     
                 }
-            });
+            }, { passive: true });
 
             if (TC.Util.isFunction(callback)) {
                 callback();
@@ -1041,11 +1042,11 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                                     TC.loadJS(
                                         !TC.layer.Vector,
                                         TC.apiLocation + 'TC/layer/Vector',
-                                        function () {
+                                        async function () {
                                             const wfsLayerOptions = {
                                                 id: self.getUID(),
                                                 type: TC.Consts.layerType.WFS,
-                                                url: layer.options.url.replace(/wms/gi, 'wfs'),
+                                                url: await layer.getWFSURL(),
                                                 properties: self.map ? new TC.filter.Bbox(null, map.getExtent(), map.getCRS()) : null,
                                                 outputFormat: TC.Consts.format.JSON,
                                                 title: `${layer.getPath().join(' • ')} - ${self.getLocaleString('featureEditing')}`,

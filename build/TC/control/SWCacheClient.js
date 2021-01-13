@@ -54,8 +54,25 @@ if (!TC.Control) {
         });
 
         self._swPromise.catch(() => {
-            if (location.protocol !== 'https:') {
+            let unsafeProtocol = false;
+            const isFrame = window.parent !== window;
+            for (var scope = window; !unsafeProtocol; scope = scope.parent) {
+                try {
+                    if (scope.location.protocol !== 'https:') {
+                        unsafeProtocol = true;
+                    }
+                }
+                catch (e) {
+                }
+                if (scope === scope.parent) {
+                    break;
+                }
+            }
+            if (unsafeProtocol) {
                 map.toast(self.getLocaleString('httpsRequired.warning', { url: location.href.replace(location.protocol, '') }), { type: TC.Consts.msgType.WARNING });
+            }
+            else if (isFrame) {
+                map.toast(self.getLocaleString('frameOrNotCompatible.warning'), { type: TC.Consts.msgType.WARNING });
             }
             else {
                 map.toast(self.getLocaleString('browserNotCompatible.warning'), { type: TC.Consts.msgType.WARNING });

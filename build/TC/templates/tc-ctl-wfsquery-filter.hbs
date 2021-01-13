@@ -1,0 +1,6 @@
+{{#each conditions}}
+<div class="tc-ctl-wfsquery-where-cond">
+    {{field}}&nbsp;{{opText}}&nbsp;{{formatNumber valueToShow}}{{#if isSpatial}} <button class="tc-icon-btn tc-ctl-wfsquery-where-cond-view">{{i18n "view"}}</button>{{/if}}
+</div>
+<div class="tc-ctl-wfsquery-del-cond" title="{{i18n "query.tooltipRemoveCond"}}"></div>	
+{{/each}}

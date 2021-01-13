@@ -1,0 +1,28 @@
+<table class="tc-ctl-geolocation-info-tracking">
+    <tr>
+        <th>{?isGeo}{@i18n $key="lon"/}{:else}X{/isGeo}:</th>
+        <td> {x} </td>
+        {?accuracy}
+        <th>{@i18n $key="geo.trk.accuracy"/}:</th>
+        <td> {accuracy} m </td>
+        {/accuracy}
+    </tr>
+    <tr>
+        <th>{?isGeo}{@i18n $key="lat"/}{:else}Y{/isGeo}:</th>
+        <td> {y} </td>
+        {?speed}
+        <th>{@i18n $key="geo.trk.speed"/}:</th>
+        <td>{speed} km/h</td>
+        {/speed}
+    </tr>
+    <tr>
+        {?z}
+        <th>{?isGeo}{@i18n $key="ele"/}{:else}Z{/isGeo}:</th>
+        <td> {z} m </td>
+        {/z}
+        {?mdt}
+        <th title="{@i18n $key=" mdt.title"/}">{@i18n $key="ele"/} ({@i18n $key="mdt"/}):</th>
+        <td>{mdt} m </td>
+        {/mdt }
+    </tr>    
+</table>

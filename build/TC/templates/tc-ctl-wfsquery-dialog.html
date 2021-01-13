@@ -1,0 +1,29 @@
+<div class="tc-ctl-wfsquery-dialog tc-modal">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window tc-ctl-wfsquery-modal-window" >
+        <div class="tc-modal-header">
+            <h3>{layerName}</h3>
+            <div title="{@i18n $key="query.tooltipCloseDialogBtn"/}" class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            
+            {@gt key=layers.length value=1}                      
+                <div>
+                    <select class="tc-combo" name="availableLayers">
+                        <option value="">{@i18n $key="query.chooseALayerCombo"/}</option>
+                        {#layers}
+                        <option value="{name}">{title}</option>
+                        {/layers}
+                    </select>
+                </div>            
+            {/gt}
+                <div class="tc-modal-form">
+                </div>
+                <div class="tc-ctl-wfsquery-message tc-hidden"></div>                 
+            </div>
+        <div class="tc-modal-footer">
+            <button type="button" title="{@i18n $key="query.tooltipSendQueryBtn"/}" class="tc-button tc-ctl-wlm-btn-launch">{@i18n $key="query.sendQueryBtnText"/}</button>
+            <button type="button" title="{@i18n $key="query.cancelQueryTooltip"/}" class="tc-button tc-modal-close">{@i18n $key="query.cancelQueryButton"/}</button>
+        </div>
+    </div>
+</div>

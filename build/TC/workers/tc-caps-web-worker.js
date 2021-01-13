@@ -499,7 +499,7 @@ console.log("MILLISECONDS",end2-start2);
             bbox = layer.BoundingBox.length ? layer.BoundingBox : [layer.BoundingBox];
             layer.BoundingBox = bbox.map(function (elm) {
                 return {
-                    crs: elm.CRS,
+                    crs: elm.CRS || elm.SRS,
                     extent: [
                         parseFloat(elm.minx),
                         parseFloat(elm.miny),

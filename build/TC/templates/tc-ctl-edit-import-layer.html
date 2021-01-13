@@ -1,0 +1,7 @@
+<li class="tc-layer" data-layer-id="{id}"><input type="checkbox" id="tc-ctl-edit-import-list-cb-{id}" value="{id}"> <label for="tc-ctl-edit-import-list-cb-{id}">{title}</label>
+    <ul class="tc-features">
+        {#features}
+            {>tc-ctl-edit-import-feature:./}
+        {/features}
+    </ul>
+</li>

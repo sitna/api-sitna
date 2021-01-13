@@ -1,0 +1,17 @@
+<div class="tc-ctl-draw-tools">
+    <button class="tc-ctl-btn tc-ctl-draw-btn-new" title="{tooltip}">{@i18n $key="new"/}</button>
+    <button class="tc-ctl-btn tc-ctl-draw-btn-undo" disabled title="{@i18n $key="undo"/}">{@i18n $key="undo"/}</button>
+    <button class="tc-ctl-btn tc-ctl-draw-btn-redo" disabled title="{@i18n $key="redo"/}">{@i18n $key="redo"/}</button>
+    <button class="tc-ctl-btn tc-ctl-draw-btn-end" disabled title="{@i18n $key="end"/}">{@i18n $key="end"/}</button>
+    <button class="tc-ctl-btn tc-ctl-draw-btn-cancel" title="{@i18n $key="cancel"/}">{@i18n $key="cancel"/}</button>
+</div>
+{?styleTools}
+<div class="tc-ctl-draw-style">
+    {@i18n $key="strokeColor"/}
+    <input type="color" class="tc-ctl-col tc-ctl-draw-str-c" value="{strokeColor}" title="{@i18n $key="selectColor"/}" />
+    {@i18n $key="strokeWidth"/}
+    <div class="tc-ctl-draw-str-w-watch" style="border-bottom-width:{strokeWidth}px;"> </div>
+    <input type="number" class="tc-ctl-draw-str-w tc-textbox" value="{strokeWidth}" min="1" max="15" />
+</div>
+{/styleTools}
+

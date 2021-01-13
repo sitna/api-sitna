@@ -1,0 +1,56 @@
+{@isObject object=. }
+<table class="complexAttr">
+    <tbody>
+        {@iterate on=.}
+        {@isKeyKalue on=.}
+        <tr class="keyValue">
+            <th class="key">{key}</th>
+            <td class="value tc-ctl-finfo-val">{>tc-ctl-finfo-object:value/}</td>
+        </tr>
+        {:else}
+        <tr>
+            <th style="display:none">{key}</th>
+            <td>
+                {@isObject object=value }
+                <!--object-->
+                <input type="checkbox" id="complexAttr_{.|objectId}">
+                <div>
+                    <label for="complexAttr_{.|objectId}" class="plus" title=""></label>
+                    <label for="complexAttr_{.|objectId}" class="title" title="">{key}</label><br />
+                {:array}
+                <!--array-->
+                <div>
+                    <label for="complexAttr_{.|objectId}" class="title" title="">{key}</label><br />
+                {:else}
+                <div>
+                    <!--native-->
+                {/isObject}
+                    {>tc-ctl-finfo-object:value/}
+                </div>
+            </td>
+        </tr>
+        {/isKeyKalue}
+        {/iterate}
+    </tbody>
+
+</table>
+{:array}
+<div class="complexAttr">
+    <input type="checkbox" id="complexAttr_{.|objectId}">
+    <div>
+        <label for="complexAttr_{.|objectId}" class="plus" title=""></label>
+        <label for="complexAttr_{.|objectId}" class="title" title="">{@size key=. /} {@i18n $key="featureInfo.complexData.array"/}</label><br />
+        <table class="complexAttr">
+            <tbody>
+                {@iterate on=.}
+                <tr>
+                    <td>{>tc-ctl-finfo-object:value/}</td>
+                </tr>
+                {/iterate}
+            </tbody>
+        </table>
+    </div>
+</div>
+{:else}
+	{.|s}
+{/isObject}

@@ -22,69 +22,21 @@ TC.inherit(TC.tool.ElevationServiceIGNFr, TC.tool.ElevationService);
     toolProto.request = function (options) {
         const self = this;
         options = options || {};
-        var coordinateListArray;
-        var isPolygon = false;
-        switch (true) {
-            case TC.Geometry.isPoint(options.coordinates):
-                coordinateListArray = [[options.coordinates]];
-                break;
-            case TC.Geometry.isRing(options.coordinates):
-                coordinateListArray = [options.coordinates];
-                break;
-            case TC.Geometry.isRingCollection(options.coordinates):
-                coordinateListArray = options.coordinates;
-                isPolygon = true;
-                break;
-            default:
-                break;
+        let coordinateList = options.coordinates;
+        if (options.crs && options.crs !== self.nativeCRS) {
+            coordinateList = TC.Util.reproject(coordinateList, options.crs, self.nativeCRS);
         }
-        if (options.crs && options.crs !== self.CRS) {
-            coordinateListArray = TC.Util.reproject(coordinateListArray, options.crs, self.nativeCRS);
-        }
-        const flatCoordinateListArray = [].concat.apply([], coordinateListArray);
         const dataInputs = {
-            lon: flatCoordinateListArray.map(function (coord) {
+            lon: coordinateList.map(function (coord) {
                 return coord[0];
             }).join('|'),
-            lat: flatCoordinateListArray.map(function (coord) {
+            lat: coordinateList.map(function (coord) {
                 return coord[1];
             }).join('|'),
             crs: 'crs:84',
             format: 'json'
         };
-        var process = self.process;
-        if (options.sampleNumber) {
-            process = self.profileProcess;
-            dataInputs.sampling = options.sampleNumber;
-        }
-        else if (options.resolution) {
-            process = self.profileProcess;
-            const getDistance = function (p1, p2) {
-                const dx = p2[0] - p1[0];
-                const dy = p2[1] - p1[1];
-                return Math.sqrt(dx * dx + dy * dy);
-            };
-            var totalDistance = 0;
-            coordinateListArray.forEach(function (coordList) {
-                totalDistance += coordList
-                    .map(function (coord, i, arr) {
-                        const prev = arr[i - 1];
-                        if (prev) {
-                            return getDistance(prev, coord);
-                        }
-                        return 0;
-                    })
-                    .reduce(function (prev, curr) {
-                        return prev + curr;
-                    }, 0);
-                if (isPolygon) {
-                    totalDistance += getDistance(coordList[coordList.length - 1], coordList[0]);
-                }
-            });
-
-            dataInputs.sampling = totalDistance / options.resolution;
-        }
-        return TC.tool.ElevationService.prototype.request.call(self, { dataInputs: dataInputs, process: process });
+        return TC.tool.ElevationService.prototype.request.call(self, { dataInputs: dataInputs, process: self.process });
     };
 
     toolProto.parseResponse = function (response, options) {

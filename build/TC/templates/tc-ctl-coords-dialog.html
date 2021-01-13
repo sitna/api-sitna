@@ -1,0 +1,21 @@
+<div class="tc-ctl-coords-crs-dialog tc-modal">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{@i18n $key="changeCRS"/}</h3>
+            <div class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <p>{@i18n $key="coords.currentProjection|h"/}</p>
+            <p class="tc-ctl-coords-no-change">{@i18n $key="coords.noCrs.warning|s"/}</p>
+            <div class="tc-ctl-coords-change">
+                <p>{@i18n $key="coords.instructions|s"/}</p>
+                <p class="tc-msg-warning tc-hidden">{@i18n $key="coords.instructions.warning|s"/}</p>
+            </div>
+            <ul class="tc-ctl-coords-crs-list tc-crs-list"></ul>
+        </div>
+        <div class="tc-modal-footer">
+            <button type="button" class="tc-button tc-modal-close">{@i18n $key="close"/}</button>
+        </div>
+    </div>
+</div>

@@ -288,11 +288,11 @@ if (!TC.control.SWCacheClient) {
     TC.Consts.event.MAPCACHEERROR = TC.Consts.event.MAPCACHEERROR || 'mapcacheerror.tc';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/CacheBuilder.html";
-    ctlProto.template[ctlProto.CLASS + '-map-node'] = TC.apiLocation + "TC/templates/CacheBuilderMapNode.html";
-    ctlProto.template[ctlProto.CLASS + '-bl-node'] = TC.apiLocation + "TC/templates/CacheBuilderBaseLayerNode.html";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/CacheBuilderDialog.html";
-    ctlProto.template[ctlProto.CLASS + '-off-panel'] = TC.apiLocation + "TC/templates/CacheBuilderOfflinePanel.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-cbuild.hbs";
+    ctlProto.template[ctlProto.CLASS + '-map-node'] = TC.apiLocation + "TC/templates/tc-ctl-cbuild-map-node.hbs";
+    ctlProto.template[ctlProto.CLASS + '-bl-node'] = TC.apiLocation + "TC/templates/tc-ctl-cbuild-bl-node.hbs";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-cbuild-dialog.hbs";
+    ctlProto.template[ctlProto.CLASS + '-off-panel'] = TC.apiLocation + "TC/templates/tc-ctl-cbuild-off-panel.hbs";
 
     const getExtentFromString = function (str) {
         return decodeURIComponent(str).split(',').map(function (elm) {
@@ -585,38 +585,37 @@ if (!TC.control.SWCacheClient) {
                 self.renderData(renderObject, function () {
                     self._dialogDiv.querySelector(self._selectors.OKBTN).addEventListener(TC.Consts.event.CLICK, function () {
                         self.generateCache();
-                    });
+                    }, { passive: true });
                     self._dialogDiv.querySelector(self._selectors.NAMETB).addEventListener('input', function () {
                         self._updateReadyState();
                     });
                     self.div.querySelector(self._selectors.NEWBTN).addEventListener(TC.Consts.event.CLICK, function () {
                         self.setEditState();
-                    });
+                    }, { passive: true });
                     self.div.querySelector(self._classSelector + '-btn-cancel-draw').addEventListener(TC.Consts.event.CLICK, function () {
                         self.setReadyState();
-                    });
+                    }, { passive: true });
 
                     self.div.querySelector(self._classSelector + '-btn-cancel-dl').addEventListener(TC.Consts.event.CLICK, function () {
                         self.cancelCacheRequest();
-                    });
+                    }, { passive: true });
 
                     const list = self.div.querySelector(self._selectors.LIST);
                     list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.DELETEBTN, function (e) {
                         self.startDeleteMap(e.target.parentElement.querySelector('a').innerHTML);
-                    }));
+                    }), { passive: true });
                     list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.EDITBTN, function (e) {
                         setNameEditingState(self, e.target.parentElement);
-                    }));
+                    }), { passive: true });
                     list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.CANCELBTN, function (e) {
                         const li = e.target.parentElement;
                         li.querySelector(self._selectors.TEXTBOX).value = li.querySelector('a').innerHTML;
                         setNameReadyState(self, li);
-                    }));
+                    }), { passive: true });
                     list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.SAVEBTN, function (e) {
                         const li = e.target.parentElement;
                         setNameReadyState(self, li);
                         const anchor = li.querySelector('a');
-                        const oldName = anchor.innerHTML;
                         const newName = li.querySelector(self._selectors.TEXTBOX).value;
                         const map = self.findStoredMap({ url: anchor.getAttribute('href') });
                         if (map) {
@@ -625,7 +624,7 @@ if (!TC.control.SWCacheClient) {
                             anchor.setAttribute('title', newName);
                             saveMapToStorage(self, map);
                         }
-                    }));
+                    }), { passive: true });
                     list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.VIEWBTN, function (e) {
                         const btn = e.target;
                         var showExtent = !btn.classList.contains(TC.Consts.classes.ACTIVE);
@@ -659,7 +658,7 @@ if (!TC.control.SWCacheClient) {
                                 }
                             }
                         }
-                    }));
+                    }), { passive: true });
 
                     var _filter = function (searchTerm) {
                         searchTerm = searchTerm.toLowerCase();
@@ -911,12 +910,17 @@ if (!TC.control.SWCacheClient) {
                         while (li && li.tagName !== 'LI') {
                             li = li.parentElement;
                         }
-                        const tml = self.wrap.getRequestSchemas({
-                            extent: self.extent,
-                            layers: [layer]
-                        })[0].tileMatrixLimits;
+                        if (layer.wrap.getCompatibleMatrixSets(map.crs).includes(layer.matrixSet)) {
+                            const tml = self.wrap.getRequestSchemas({
+                                extent: self.extent,
+                                layers: [layer]
+                            })[0].tileMatrixLimits;
 
-                        li.classList.toggle(TC.Consts.classes.HIDDEN, !tml.length);
+                            li.classList.toggle(TC.Consts.classes.HIDDEN, !tml.length);
+                        }
+                        else {
+                            li.classList.add(TC.Consts.classes.HIDDEN);
+                        }
                     });
                     const visibleLi = self._dialogDiv.querySelector(self._selectors.BLLISTITEM + ':not(.' + TC.Consts.classes.HIDDEN + ')');
                     self._dialogDiv.querySelector(self._selectors.BLLISTTEXT).innerHTML = self.getLocaleString(visibleLi ? 'selectAtLeastOne' : 'cb.noMapsAtSelectedExtent');
@@ -983,22 +987,26 @@ if (!TC.control.SWCacheClient) {
             return result;
         };
 
-        map
-            .on(TC.Consts.event.LAYERADD, function (e) {
-                if (e.layer.isBase && self.mapIsOffline) {
-                    // Capamos las resoluciones de la capa
-                    const resolutions = e.layer.getResolutions();
-                    if (resolutions) {
-                        const cachedResolutions = resolutions.filter(r => r >= self.currentMapDefinition.res);
-                        if (cachedResolutions.length) {
-                            e.layer.setResolutions(cachedResolutions);
-                        }
+        const addLayer = function (layer) {
+            if (layer.isBase && self.mapIsOffline) {
+                // Capamos las resoluciones de la capa
+                const resolutions = layer.getResolutions();
+                if (resolutions) {
+                    const cachedResolutions = resolutions.filter(r => r >= self.currentMapDefinition.res);
+                    if (cachedResolutions.length) {
+                        layer.setResolutions(cachedResolutions);
                     }
                 }
-                //14/03/2019 GLS: esperamos a que se haya renderizado el dialogo para obtener la lista
-                self.renderPromise().then(function () {
-                    addRenderedListNode(e.layer);
-                });
+            }
+            //14/03/2019 GLS: esperamos a que se haya renderizado el dialogo para obtener la lista
+            self.renderPromise().then(function () {
+                addRenderedListNode(layer);
+            });
+        };
+
+        map
+            .on(TC.Consts.event.LAYERADD, function (e) {
+                addLayer(e.layer);
             })
             .on(TC.Consts.event.LAYERREMOVE, function (e) {
                 //14/03/2019 GLS: esperamos a que se haya renderizado el dialogo para obtener la lista
@@ -1011,6 +1019,9 @@ if (!TC.control.SWCacheClient) {
                         li.parentElement.removeChild(li);
                     }
                 });
+            })
+            .on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+                map.baseLayers.forEach(l => addLayer(l));
             });
 
         map.ready(function () {
@@ -1475,12 +1486,22 @@ if (!TC.control.SWCacheClient) {
         if (total) {
             var percent = Math.min(Math.round(current * 100 / total), 100);
             var percentString = percent + '%';
-            self.div.querySelector(cs + '-progress-ratio').style.width = percentString;
-            count.innerHTML = percentString;
+            const pr = self.div.querySelector(cs + '-progress-ratio');
+            if (pr) {
+                pr.style.width = percentString;
+            }
+            if (count) {
+                count.innerHTML = percentString;
+            }
         }
         else {
-            self.div.querySelector(cs + '-progress-bar').classList.add(TC.Consts.classes.HIDDEN);
-            count.innerHTML = self.getLocaleString('xFiles', { quantity: current });
+            const pb = self.div.querySelector(cs + '-progress-bar');
+            if (pb) {
+                pb.classList.add(TC.Consts.classes.HIDDEN);
+            }
+            if (count) {
+                count.innerHTML = self.getLocaleString('xFiles', { quantity: current });
+            }
         }
     };
 

@@ -1,0 +1,29 @@
+<div class="tc-ctl-wfsquery-dialog tc-modal">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window tc-ctl-wfsquery-modal-window" >
+        <div class="tc-modal-header">
+            <h3>{{layerName}}</h3>
+            <div title="{{i18n "query.tooltipCloseDialogBtn"}}" class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            
+            {{#if (gt layers.length 1)}}                      
+                <div>
+                    <select class="tc-combo" name="availableLayers">
+                        <option value="">{{i18n "query.chooseALayerCombo"}}</option>
+                        {{#each layers}}
+                        <option value="{{name}}">{{title}}</option>
+                        {{/each}}
+                    </select>
+                </div>            
+            {{/if}}
+                <div class="tc-modal-form">
+                </div>
+                <div class="tc-ctl-wfsquery-message tc-hidden"></div>                 
+            </div>
+        <div class="tc-modal-footer">
+            <button type="button" title="{{i18n "query.tooltipSendQueryBtn"}}" class="tc-button tc-ctl-wlm-btn-launch">{{i18n "query.sendQueryBtnText"}}</button>
+            <button type="button" title="{{i18n "query.cancelQueryTooltip"}}" class="tc-button tc-modal-close">{{i18n "query.cancelQueryButton"}}</button>
+        </div>
+    </div>
+</div>

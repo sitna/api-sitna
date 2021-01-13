@@ -22,23 +22,23 @@ TC.inherit(TC.control.Container, TC.Control);
 
     ctlProto.register = function (map) {
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
+        const ctlRegister = TC.Control.prototype.register.call(self, map);
 
         self.uids = new Array(self.ctlCount);
         self.uids.forEach(function (elm, idx, arr) {
             arr[idx] = self.getUID();
         });
 
-        return new Promise(function (resolve, rejetc) {
-            Promise.all([result, self.renderPromise()]).then(function () {
-                self.onRenderPromise();
-
-                resolve(self);
+        return new Promise(function (resolve, reject) {
+            Promise.all([ctlRegister, self.renderPromise()]).then(function () {
+                self.onRender().then(ctl => resolve(ctl));
             });
         });        
     };
 
-    ctlProto.onRenderPromise = function () { };
+    ctlProto.onRender = function () {
+        return Promise.resolve(this);
+    };
 
     ctlProto.render = function (callback) { };
 

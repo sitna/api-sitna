@@ -1,0 +1,16 @@
+
+{#results}
+    <h4>{tableTitle}</h4>
+    <table class="table">            
+        <tbody>
+            {@iterate on=.}
+                <tr class="{css.trClass}">
+                    {@select key=key}                        
+                        <th class="{css.thClass}" title="{key}">{key}</th>
+                        <td class="{css.tdClass}" title="{value}">{value}</td>
+                    {/select}
+                </tr>
+            {/iterate}            
+        </tbody>
+    </table>
+{/results}    

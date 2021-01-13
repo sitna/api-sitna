@@ -1,0 +1,14 @@
+<button class="tc-ctl-btn tc-ctl-mod-btn-select" disabled title="{@i18n $key="select"/}">{@i18n $key="select"/}</button>
+<button class="tc-ctl-btn tc-ctl-mod-btn-delete" disabled title="{@i18n $key="deleteSelectedFeatures"/}">{@i18n $key="deleteSelectedFeatures"/}</button>
+<button class="tc-ctl-btn tc-ctl-mod-btn-join" disabled title="{@i18n $key="joinGeometries.tooltip"/}">{@i18n $key="joinGeometries"/}</button>
+<button class="tc-ctl-btn tc-ctl-mod-btn-split" disabled title="{@i18n $key="splitGeometry"/}">{@i18n $key="splitGeometry"/}</button>
+<button class="tc-ctl-btn tc-ctl-mod-btn-attr" disabled title="{@i18n $key="editAttributes"/}">{@i18n $key="editAttributes"/}</button>
+<button class="tc-ctl-btn tc-ctl-mod-btn-text" contenteditable="true" disabled title="{@i18n $key="addText"/}">{@i18n $key="addText"/}</button>
+<div class="tc-ctl-mod-style tc-hidden">
+    <input type="text" class="tc-ctl-mod-txt tc-textbox" placeholder="{@i18n $key="writeTextForSketch"/}" style="font-size:{fontSize}pt;font-color:{fontColor};text-shadow: 0 0 {labelOutlineWidth}px {labelOutlineColor};" />
+    {@i18n $key="textColor"/}
+    <input type="color" class="tc-ctl-mod-fnt-c" value="{fontColor}" />
+    {@i18n $key="fontSize"/}
+    <input type="number" class="tc-ctl-mod-fnt-s tc-textbox" value="{fontSize}" min="7" max="20" />
+</div>
+<div class="tc-ctl-mod-attr tc-hidden"></div>

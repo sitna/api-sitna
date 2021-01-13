@@ -513,6 +513,9 @@ TC.tool.Proxification = function (proxy, options) {
                         } else {
                             return false;
                         }
+                    })
+                    .catch(() => {
+                        console.log('Capturamos error que se produce en FF por configuración del navegador.');
                     });
 
                 return false;
@@ -1180,7 +1183,7 @@ TC.tool.Proxification = function (proxy, options) {
                 self.cacheHost.getAction(url, options).then(function (cache) {
                     resolve(_makeRequest(url, options, [cache.action]));
                 }).catch(function (error) {
-                    if (error.status > 400) {
+                    if (!error.status || error.status > 400) {
                         reject(new Error(error.text));
                     } else {
                         resolve(self.fetch(url, options));
@@ -1216,7 +1219,7 @@ TC.tool.Proxification = function (proxy, options) {
                                 // HTTP (sin intento) -> HTTPS -> (HTTP)Proxy
                                 _makeRequest(url, options, [self._actionHTTPS, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             } else {
-                                // HTTP -> HTTPS (si el visor no es HTTP) -> (HTTP)Proxy
+                                // HTTP (si el visor no es HTTPS) -> HTTPS -> (HTTP)Proxy
                                 _makeRequest(url, options, !self._isSecureURL(self._location) ? [self._actionDirect, self._actionHTTPS, self._actionProxy] : [self._actionHTTPS, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             }
                         } else {
@@ -1224,14 +1227,14 @@ TC.tool.Proxification = function (proxy, options) {
                                 // HTTPS -> (HTTPS)Proxy
                                 _makeRequest(url, options, [self._actionDirect, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             } else {
-                                // HTTPS -> HTTP -> (HTTPS)Proxy
-                                _makeRequest(url, options, [self._actionDirect, self._actionHTTP, self._actionProxy], cache).then(fnResolve).catch(fnReject);
+                                // HTTPS -> HTTP (si el visor no es HTTPS) -> (HTTPS)Proxy
+                                _makeRequest(url, options, !self._isSecureURL(self._location) ? [self._actionDirect, self._actionHTTP, self._actionProxy] : [self._actionDirect, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             }
                         }
                     }
                 });
                 cache._actionPromise.catch(function (error) {
-                    if (error.status > 400) {
+                    if (!error.status || error.status > 400) {
                         reject(new Error(error.text));
                     } else {
                         resolve(self.fetch(url, options));

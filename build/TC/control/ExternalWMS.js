@@ -11,7 +11,7 @@ TC.control.ExternalWMS = function (options) {
 
     TC.Control.apply(self, arguments);
 
-    self.allowReprojection = typeof self.options.allowReprojection === 'boolean' ? self.options.allowReprojection : true;
+    self.allowReprojection = self.options.hasOwnProperty('allowReprojection') ? self.options.allowReprojection : true;
 };
 
 TC.inherit(TC.control.ExternalWMS, TC.Control);
@@ -194,7 +194,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
     };
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ExternalWMS.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-xwms.hbs";
 
     ctlProto.render = function (callback) {
         const self = this;

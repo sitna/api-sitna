@@ -15,9 +15,11 @@ TC.control.FeatureDownloadDialog = function () {
     self._selectors = {
         ELEVATION_CHECKBOX: "." + self.CLASS + '-elev input[type=checkbox]',
         INTERPOLATION_PANEL: "." + self.CLASS + '-ip',
-        INTERPOLATION_RADIO: 'input[type=radio][name=finfo-ip-coords]',
+        INTERPOLATION_RADIO: `input[type=radio][name=${self.id}-finfo-ip-coords]`,
         INTERPOLATION_DISTANCE: "." + self.CLASS + '-ip-m'
     };
+    self.features = [];
+    self.options = {};
 };
 
 TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
@@ -26,37 +28,28 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
     const ctlProto = TC.control.FeatureDownloadDialog.prototype;
 
-    ctlProto.CLASS = 'tc-ctl-dwn-dialog';
+    ctlProto.CLASS = 'tc-ctl-dldlog';
 
-    var _formats= ["KML", "GML", "GeoJSON", "WKT", "GPX"];
-
-    //if (window.JSZip) {
-    //    if (window.JSZip instanceof Promise)
-    //        window.JSZip.then(function () {
-    //            _formats.splice(1, 0, "KMZ");
-    //        });
-    //    else
-    //        _formats.splice(1, 0, "KMZ");
-    //}
+    var _formats = ["KMZ",/*"KML",*/ "GML", "GeoJSON", "WKT", "GPX", "SHP", "GPKG"];
 
     var displayElevation, interpolation = false;
     var interpolationDistance = null;
 
-    ctlProto.template = {};   
+    ctlProto.template = {};
 
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureDownloadDialog.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-dldlog.hbs";
 
-    const addElevationAndInterpolation = function (featureOrFeatures, options) {
+    const addElevationAndInterpolation = function (features, options) {
         const self = this;
         options = options || {};
-        const features = Array.isArray(featureOrFeatures) ? featureOrFeatures : [featureOrFeatures];
         return new Promise(function (resolve, reject) {
-
             //si no se incluyen las elevaciones quito las Z de las geometrias que las tuvieran
             if (!options.displayElevation) {
                 resolve(features.map(function (feat) {
                     if (feat.getGeometryStride() > 2) {
                         const f = feat.clone();
+                        f.id = feat.id;
+                        f.layer = feat.layer;
                         f.getCoordsArray().forEach(coord => coord.length = 2);
                         f.setCoords(f.geometry);
                         return f;
@@ -68,8 +61,10 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
             let mustInterpolate = options.elevation && options.elevation.resolution;
             // Array con features sin altura y nulo donde habia feature con alturas
-            let featuresToAddElevation = mustInterpolate ? features.map(f => f.clone()) : features.map(f => f.getGeometryStride() > 2 ? null : f.clone());
-            
+            let featuresToAddElevation = mustInterpolate ? features.map(f => f.clone()) : features.map(f => {
+                return f.getCoordsArray().every(p => !p[2]) ? f.clone() : null
+            });
+
             if (mustInterpolate || featuresToAddElevation.some(f => f !== null)) {
                 const elevOptions = {
                     crs: self.map.crs,
@@ -77,8 +72,8 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                     maxCoordQuantity: options.elevation && options.elevation.maxCoordQuantity,
                     resolution: options.elevation.resolution,
                     sampleNumber: options.elevation.sampleNumber || 0
-                };                    
-                (self.map.elevation || new TC.tool.Elevation(typeof self.options.elevation === 'boolean' ? {} : self.options.elevation)).setGeometry(elevOptions).then(
+                };
+                (self.map.elevation || new TC.tool.Elevation(typeof options.elevation === 'boolean' ? {} : options.elevation)).setGeometry(elevOptions).then(
                     function (processedFeatures) {
                         // Recombinamos features procesadas y sin procesar
                         processedFeatures.forEach((f, index) => {
@@ -98,40 +93,71 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
             }
         });
     };
+    const hasPoints = function () {
+        return this.getFeatures().some(feature => (TC.feature.Point && feature instanceof TC.feature.Point) ||
+            (TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint));
+    };
+    const hasLines = function () {
+        return this.getFeatures().some(feature => (TC.feature.Polyline && feature instanceof TC.feature.Polyline) ||
+            (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline));
+    };
+    const hasPolygons = function () {
+        return this.getFeatures().some(feature => (TC.feature.Polygon && feature instanceof TC.feature.Polygon) ||
+            (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon));
+    };
 
     ctlProto.render = function (callback) {
         const self = this;
-        const result = TC.Control.prototype.render.call(self, callback);
+        const result = TC.Control.prototype.renderData.call(self, { controlId: self.id }, callback);
         return result;
-        
     };
 
-    ctlProto.open = function (features, options) {
+    ctlProto.close = function (callback) {
         const self = this;
 
-        ctlProto.getRenderedHtml(ctlProto.CLASS, Object.assign({}, {
+        if (self.modal && self.modal.parentElement) {
+            TC.Util.closeModal();
+            self.modal.parentElement.removeChild(self.modal);
+        }
+    };
+
+    ctlProto.open = function (featureOrFeatures, options) {
+        const self = this;
+
+        self.close();
+
+        self.setFeatures(featureOrFeatures);
+        options = options || {};
+        options = Object.assign({}, {
+            controlId: self.id,
             cssClass: self.cssClass,
             checkboxId: self.getUID(),
-            elevation: options.elevation,//options.elevation ? (options.elevation instanceof Object ? options.elevation : self.map.elevation.options) : options.elevation,
-            formats: _formats.filter(function (item) {
-                return (options && options.excludedFormats && options.excludedFormats.indexOf(item) < 0) | (!options | !options.excludedFormats)
-            })
-        }, options), function (html) {
-            var template = document.createElement('template');
-            template.innerHTML = html;
-            var modal = template.content ? template.content.firstChild : template.firstChild;            
-            document.body.appendChild(modal);
+            elevation: options.elevation//options.elevation ? (options.elevation instanceof Object ? options.elevation : self.map.elevation.options) : options.elevation,
+        }, options);
+        //si solo hay poligonos ocultamos el botón de formato GPX
+        const excludedFormats = options.excludedFormats ? options.excludedFormats.slice() : [];
+        if (!hasPoints.call(self) && !hasLines.call(self) && hasPolygons.call(self)) {
+            excludedFormats.push(TC.Consts.format.GPX);
+        }
+        options.formats = _formats.filter(item => excludedFormats.indexOf(item) < 0);
+        self.setOptions(options);
 
-            var modalBody = modal.getElementsByClassName("tc-modal-body")[0];
+        self.getRenderedHtml(ctlProto.CLASS, options, function (html) {
+            const template = document.createElement('template');
+            template.innerHTML = html;
+            self.modal = template.content ? template.content.firstChild : template.firstChild;
+            document.body.appendChild(self.modal);
+
+            const modalBody = self.modalBody = self.modal.getElementsByClassName("tc-modal-body")[0];
             modalBody.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
 
-                var resolution = displayElevation && interpolation ? parseFloat(modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || self.map.elevation.options).resolution : 0
+                var resolution = displayElevation && interpolation ? parseFloat(modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || (self.map.elevation && self.map.elevation.options)).resolution : 0
 
-                const endExport = async (features) => {
+                const endExport = async (features, opts) => {
 
                     //checkear si son features con datos complejos
                     var cancel = false;
-                    if (format !== TC.Consts.format.GEOJSON && options.format !== TC.Consts.format.WKT && (features instanceof Array ? features : [features]).some(function (feat) {
+                    if (format !== TC.Consts.format.GEOJSON && opts.format !== TC.Consts.format.WKT && features.some(function (feat) {
                         for (var attr in feat.getData()) {
                             if (feat.data[attr] instanceof Object)
                                 return true
@@ -152,17 +178,17 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                     addElevationAndInterpolation.apply(self, [features,
                         {
                             displayElevation: displayElevation,
-                            elevation: displayElevation ? Object.assign({}, options.elevation || self.map.elevation.options, { resolution: resolution }) : null
+                            elevation: displayElevation ? Object.assign({}, opts.elevation || (self.map.elevation && self.map.elevation.options), { resolution: resolution }) : null
                         }]).then(
                         function (features) {
-                            let fileName = (options ? (options.fileName || options.title.toLowerCase().replace(/ /g, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true) || "download_" + TC.Util.getFormattedDate(new Date().toString(), true)) : (options.title.toLowerCase().replace(/ /g, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true) || "download_" + TC.Util.getFormattedDate(new Date().toString(), true)));                            
+                            let fileName = (opts ? (opts.fileName || opts.title.toLowerCase().replace(/ /g, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true) || "download_" + TC.Util.getFormattedDate(new Date().toString(), true)) : (opts.title.toLowerCase().replace(/ /g, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true) || "download_" + TC.Util.getFormattedDate(new Date().toString(), true)));
                             self.map.exportFeatures(features, {
                                 fileName: fileName,
                                 format: format
                             });
                         },
                         function (error) {
-                            self.open(features, options)
+                            self.open(features, opts)
                             if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
                                 TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
                                 return;
@@ -172,43 +198,54 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                         ).finally(function () {
                             li && li.removeWait(waitId);
                         });
-                }
+                };
 
                 const format = e.target.dataset.format;
                 if (format === TC.Consts.format.GPX) {
-
-                    if ((features instanceof Array ? features : [features]).some(function (feature) {
-                        return TC.feature.Polygon && feature instanceof TC.feature.Polygon;
-                    })) {
+                    if (hasPolygons.call(self)) {
                         TC.confirm(self.getLocaleString('gpxNotCompatible.confirm'), function () {
-                            endExport((features instanceof Array ? features : [features]).filter((f) => { return TC.feature.Polygon && !(f instanceof TC.feature.Polygon); }));
+                            endExport(self.getFeatures().filter(function (feature) {
+                                return (!TC.feature.Polygon || !(feature instanceof TC.feature.Polygon)) &&
+                                    (!TC.feature.MultiPolygon || !(feature instanceof TC.feature.MultiPolygon));
+                            }), self.getOptions());
                         });
                     }
                     else {
-                        endExport(features);
+                        endExport(self.getFeatures(), self.getOptions());
                     }
                 }
                 else {
-                    endExport(features);
+                    endExport(self.getFeatures(), self.getOptions());
                 }
 
 
-            }));
+            }), { passive: true });
 
-            const hasLines = (features instanceof Array ? features : [features]).some(function (feature) {
-                return (TC.feature.Polyline && feature instanceof TC.feature.Polyline) ||
-                    (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline);
-            });
-            const hasPolygons = (features instanceof Array ? features : [features]).some(function (feature) {
-                return (TC.feature.Polygon && feature instanceof TC.feature.Polygon) ||
-                    (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon);
-            });
+            const interpolationPanel = modalBody.querySelector(self._selectors.INTERPOLATION_PANEL);
+            const elevationCheckbox = modalBody.querySelector(self._selectors.ELEVATION_CHECKBOX);
+
             if (options.elevation) {
-                modalBody.querySelector(self._selectors.ELEVATION_CHECKBOX).checked = (displayElevation == true);
-                if (displayElevation && (hasLines || hasPolygons) && options.elevation.resolution) {
-                    modalBody.querySelector(self._selectors.INTERPOLATION_PANEL).classList.remove(TC.Consts.classes.HIDDEN);                    
-                }
-                if (modalBody.querySelector(self._selectors.INTERPOLATION_PANEL)) {
+                displayElevation = options.elevation.checked ? options.elevation.checked : displayElevation;
+
+                elevationCheckbox.checked = displayElevation;
+
+                if (interpolationPanel) {
+                    if (displayElevation) {
+                        interpolationPanel.classList.remove(TC.Consts.classes.HIDDEN);
+                    } else {                        
+                        if (!interpolationPanel.classList.contains(TC.Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(TC.Consts.classes.HIDDEN);
+                        }                        
+                    }
+
+                    if (displayElevation && (hasLines.call(self) || hasPolygons.call(self)) && options.elevation.resolution) {
+                        interpolationPanel.classList.remove(TC.Consts.classes.HIDDEN);
+                    } else {
+                        if (!interpolationPanel.classList.contains(TC.Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(TC.Consts.classes.HIDDEN);
+                        }
+                    }
+
                     modalBody.querySelectorAll(self._selectors.INTERPOLATION_RADIO)[interpolation ? 1 : 0].checked = true;
                     if (interpolation) {
                         modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE).classList.remove(TC.Consts.classes.HIDDEN);
@@ -219,9 +256,27 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
             modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.ELEVATION_CHECKBOX, function (e) {
                 //self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
-                var ipPanel = modalBody.querySelector(self._selectors.INTERPOLATION_PANEL);
-                if (ipPanel) { ipPanel.classList.toggle(TC.Consts.classes.HIDDEN, displayElevation || !(hasLines || hasPolygons)); }
+
                 displayElevation = !displayElevation;
+
+                if (interpolationPanel) {
+                    if (displayElevation) {
+                        interpolationPanel.classList.remove(TC.Consts.classes.HIDDEN);
+                    } else {
+                        if (!interpolationPanel.classList.contains(TC.Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(TC.Consts.classes.HIDDEN);
+                        }
+                    }
+
+                    if (displayElevation && (hasLines.call(self) || hasPolygons.call(self))) {
+                        interpolationPanel.classList.remove(TC.Consts.classes.HIDDEN);
+                    } else {
+                        if (!interpolationPanel.classList.contains(TC.Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(TC.Consts.classes.HIDDEN);
+                        }
+                    }
+                }               
+                
             }));
             modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (e) {
                 const idDiv = modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE);
@@ -233,12 +288,34 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                 interpolationDistance = e.target.value;
             }));
 
-            TC.Util.showModal(modal, {
+            let modalOptions = {
                 closeCallback: function () {
-                    modal.parentElement.removeChild(modal);
+                    self.modal.parentElement.removeChild(self.modal);
                 }
-            });
+            };
+
+            if (options.openCallback) {
+                modalOptions.openCallback = options.openCallback;
+            }
+
+            TC.Util.showModal(self.modal, modalOptions);
         });
     };
-    
+
+    ctlProto.setFeatures = function (features) {
+        this.features = Array.isArray(features) ? features : [features];
+    };
+
+    ctlProto.getFeatures = function () {
+        return this.features;
+    };
+
+    ctlProto.setOptions = function (options) {
+        this.options = Object.assign(this.options, options);
+    };
+
+    ctlProto.getOptions = function () {
+        return this.options;
+    };
+
 })();

@@ -18,14 +18,9 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
     ctlProto.CLASS = 'tc-ctl-toc';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/TOC.html";
-    ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/TOCBranch.html";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/TOCNode.html";
-
-    var _dataKeys = {
-        layer: 'tcLayer',
-        layerUid: 'tcLayerUid'
-    };
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-toc.hbs";
+    ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/tc-ctl-toc-branch.hbs";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-toc-node.hbs";
 
     var CLICKEVENT = 'click';
 
@@ -178,21 +173,21 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
                         const ul = self.div.querySelector('.' + self.CLASS + '-wl');
                         ul.insertBefore(newLi, ul.firstChild);
                     }
+
+                    var wl = 'ul.' + self.CLASS + '-wl';
+                    var branch = 'ul.' + self.CLASS + '-branch';
+                    var node = 'li.' + self.CLASS + '-node';
+                    var leaf = 'li.' + self.CLASS + '-leaf';
+                    self.div.querySelectorAll(wl + ' ' + branch + ' ' + branch + ',' + wl + ' ' + branch + ' ' + node).forEach(function (node) {
+                        if (!node.matches(leaf)) {
+                            node.classList.add(TC.Consts.classes.COLLAPSED);
+                        }
+                    });
+                    self.update();
                 })
                 .catch(function (err) {
                     TC.error(err);
                 });
-
-            var wl = 'ul.' + self.CLASS + '-wl';
-            var branch = 'ul.' + self.CLASS + '-branch';
-            var node = 'li.' + self.CLASS + '-node';
-            var leaf = 'li.' + self.CLASS + '-leaf';
-            self.div.querySelectorAll(wl + ' ' + branch + ' ' + branch + ',' + wl + ' ' + branch + ' ' + node).forEach(function (node) {
-                if (!node.matches(leaf)) {
-                    node.classList.add(TC.Consts.classes.COLLAPSED);
-                }
-            });
-            self.update();
         }
     };
 
@@ -250,7 +245,7 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         for (var i = 0, len = children.length; i < len; i++) {
             child = children[i];
             if (child.tagName === 'LI') {
-                result[result.length] = child;
+                result.push(child);
             }
         }
         return result;

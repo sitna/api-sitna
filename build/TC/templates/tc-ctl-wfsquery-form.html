@@ -1,0 +1,64 @@
+<div>
+    {@countif key=attributes excludedKeys="FEATURE" }
+    <select class="tc-combo" name="attributes">
+        <option value="">{@i18n $key="query.chooseAttrCombo"/}</option>
+        {@iterate on=attributes excludedKeys="FEATURE"}
+        <option value="{key}">{key}</option>
+        {/iterate}
+    </select>
+    {:else}
+        <div class="tc-ctl-wfsquery-message tc-msg-warning">{@i18n $key="query.noAttributes"/}</div>
+    {/countif}
+    
+</div>
+<div class="tc-ctl-wfsquery-op tc-hidden">
+    <div class="tc-ctl-wfsquery tc-ctl-wfsquery-numeric tc-hidden">
+        <input type="radio" id="{controlId}-cond-1" name="{controlId}-condition" value="eq" /><label for="{controlId}-cond-1" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.eq.key/}</label>
+        <input type="radio" id="{controlId}-cond-2" name="{controlId}-condition" value="neq" /><label for="{controlId}-cond-2" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.neq.key/}</label>
+        <input type="radio" id="{controlId}-cond-3" name="{controlId}-condition" value="gt" /><label for="{controlId}-cond-3" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.gt.key/}</label>
+        <input type="radio" id="{controlId}-cond-4" name="{controlId}-condition" value="lt" /><label for="{controlId}-cond-4" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.lt.key/}</label>
+        <input type="radio" id="{controlId}-cond-5" name="{controlId}-condition" value="gte" /><label for="{controlId}-cond-5" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.gte.key/}</label>
+        <input type="radio" id="{controlId}-cond-6" name="{controlId}-condition" value="lte" /><label for="{controlId}-cond-6" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.lte.key/}</label>
+        <!--<input type="radio" id="{controlId}-cond-7" name="condition" value="like" /><label for="{controlId}-cond-7" class="tc-ctl-wfsquery-cond">es como</label>-->
+    </div>
+    <div class="tc-ctl-wfsquery tc-ctl-wfsquery-text tc-hidden">
+        <input type="radio" id="{controlId}-cond-8" name="{controlId}-condition" value="eq" /><label for="{controlId}-cond-8" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.eq.key/}</label>
+        <input type="radio" id="{controlId}-cond-9" name="{controlId}-condition" value="contains" /><label for="{controlId}-cond-9" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.contains.key/}</label>
+        <input type="radio" id="{controlId}-cond-10" name="{controlId}-condition" value="starts" /><label for="{controlId}-cond-10" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.starts.key/}</label>
+        <input type="radio" id="{controlId}-cond-11" name="{controlId}-condition" value="ends" /><label for="{controlId}-cond-11" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.ends.key/}</label>
+        <input type="radio" id="{controlId}-cond-20" name="{controlId}-condition" value="empty" /><label for="{controlId}-cond-20" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.empty.key/}</label>
+    </div>
+    <div class="tc-ctl-wfsquery tc-ctl-wfsquery-date tc-hidden">
+        <input type="radio" id="{controlId}-cond-12" name="{controlId}-condition" value="btw" /><label for="{controlId}-cond-12" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.eq.key/}</label>
+        <input type="radio" id="{controlId}-cond-13" name="{controlId}-condition" value="nbtw" /><label for="{controlId}-cond-13" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.nbtw.key/}</label>
+        <input type="radio" id="{controlId}-cond-14" name="{controlId}-condition" value="gt" /><label for="{controlId}-cond-14" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.gt.key/}</label>
+        <input type="radio" id="{controlId}-cond-15" name="{controlId}-condition" value="lt" /><label for="{controlId}-cond-15" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.lt.key/}</label>
+        <input type="radio" id="{controlId}-cond-16" name="{controlId}-condition" value="gte" /><label for="{controlId}-cond-16" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.gte.key/}</label>
+        <input type="radio" id="{controlId}-cond-17" name="{controlId}-condition" value="lte" /><label for="{controlId}-cond-17" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.lte.key/}</label>
+        <!--<input type="radio" id="{controlId}-cond-7" name="condition" value="like" /><label for="{controlId}-cond-7" class="tc-ctl-wfsquery-cond">es como</label>-->
+    </div>
+    <div class="tc-ctl-wfsquery tc-ctl-wfsquery-geom tc-hidden">
+        <input type="radio" id="{controlId}-cond-18" name="{controlId}-condition" value="intersects" /><label for="{controlId}-cond-18" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.intersects.key/}</label>
+        <input type="radio" id="{controlId}-cond-19" name="{controlId}-condition" value="within" /><label for="{controlId}-cond-19" class="tc-ctl-btn tc-ctl-wfsquery-cond">{@i18n $key=operators.within.key/}</label>
+    </div>
+    <div class="tc-ctl-wfsquery-where tc-hidden">
+        <div class="tc-ctl-wfsquery-value">
+            <input type="search" placeholder="{@i18n $key="query.searchFieldPhd" /}" class="tc-textbox" />
+            <button type="button" title="{@i18n $key="query.tooltipAddCondBtn"/}" class="tc-button">{@i18n $key="query.textAddCondBtn"/}</button>
+            <ul class="tc-ctl-wfsquery-list tc-ctl-search-list tc-hidden"></ul>
+        </div>
+        <div class="tc-ctl-wfsquery-geom">
+            <button class="tc-ctl-btn tc-ctl-wfsquery-geomtype-box-btn" name="geometry" value="rectangle">{@i18n $key="box"/}</button>
+            <button class="tc-ctl-btn tc-ctl-wfsquery-geomtype-line-btn" name="geometry" value="line">{@i18n $key="line"/}</button>
+            <button class="tc-ctl-btn tc-ctl-wfsquery-geomtype-polygon-btn" name="geometry" value="polygon">{@i18n $key="polygon"/}</button>
+        </div>
+        <div class="tc-ctl-wfsquery-key">
+            <label>{@i18n $key="query.logicalOpLbl"/}</label>
+        </div>
+        <div class="tc-ctl-wfsquery-log-ops">
+            <input type="radio" id="{controlId}-log-op-1" class="tc-ctl-wfsquery-logOpRadio" checked name="{controlId}-log-op" value="AND" /><label for="{controlId}-log-op-1" class="tc-ctl-btn tc-ctl-wfsquery-log-op">{@i18n $key="query.logicalOpAndLbl"/}</label>
+            <input type="radio" id="{controlId}-log-op-2" class="tc-ctl-wfsquery-logOpRadio" name="{controlId}-log-op" value="OR" /><label for="{controlId}-log-op-2" class="tc-ctl-btn tc-ctl-wfsquery-log-op">{@i18n $key="query.logicalOpOrLbl"/}</label>
+        </div>
+        <div class="tc-ctl-wfsquery-where-list"></div>
+    </div>
+</div>

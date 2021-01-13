@@ -15,9 +15,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 (function () {
     var ctlProto = TC.control.PrintMap.prototype;
 
-    ctlProto.CLASS = 'tc-ctl-printMap';
-
-    var self = this;
+    ctlProto.CLASS = 'tc-ctl-prnmap';
 
     const ORIENTATION = {
         PORTRAIT: 'portrait',
@@ -39,7 +37,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         La clave es mantener las dimensiones del mapa en px enteros (canvas sólo admite px enteros), ajustando el layout que está en puntos y que sí admite decimales
     */
 
-    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-printMap-portrait-a4 indicando el valor en px la sección del mapa   */
+    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-portrait-a4 indicando el valor en px la sección del mapa   */
     var a4_portrait = {
         logoWidth: 60,
         logoHeight: 30,
@@ -133,7 +131,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             ];
         }
     };
-    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-printMap-landscape-a4 indicando el valor en px la sección del mapa   */
+    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-landscape-a4 indicando el valor en px la sección del mapa   */
     var a4_landscape = {
         logoWidth: 60,
         logoHeight: 30,
@@ -228,7 +226,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         }
     };
 
-    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-printMap-portrait-a3 indicando el valor en px la sección del mapa   */
+    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-portrait-a3 indicando el valor en px la sección del mapa   */
     var a3_portrait = {
         logoWidth: 60,
         logoHeight: 30,
@@ -322,7 +320,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             ];
         }
     };
-    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-printMap-landscape-a3 indicando el valor en px la sección del mapa   */
+    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-landscape-a3 indicando el valor en px la sección del mapa   */
     var a3_landscape = {
         logoWidth: 60,
         logoHeight: 30,
@@ -468,9 +466,9 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
     };
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/PrintMap.html";
-    ctlProto.template[ctlProto.CLASS + '-view'] = TC.apiLocation + "TC/templates/PrintMapView.html";
-    ctlProto.template[ctlProto.CLASS + '-tools'] = TC.apiLocation + "TC/templates/PrintMapTools.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-prnmap.hbs";
+    ctlProto.template[ctlProto.CLASS + '-view'] = TC.apiLocation + "TC/templates/tc-ctl-prnmap-view.hbs";
+    ctlProto.template[ctlProto.CLASS + '-tools'] = TC.apiLocation + "TC/templates/tc-ctl-prnmap-tools.hbs";
 
     const hasLegend = function () {
         const self = this;
@@ -515,7 +513,8 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             self.map.setView(TC.Consts.view.PRINTING);
 
             var codeContainer = document.querySelector('.' + self.CLASS + '-qrcode');
-            if (document.querySelector("#" + self.CLASS + "-image-qr").checked) {
+            const cb = document.querySelector(`#${self.CLASS}-image-qr-${self.id}`);
+            if (!cb.disabled && cb.checked) {
                 if (!codeContainer) {
                     codeContainer = document.createElement('div');
                     codeContainer.classList.add(self.CLASS + '-qrcode');
@@ -621,16 +620,23 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
         self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.' + self.CLASS + '-btn', print));
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('#' + self.CLASS + '-image-qr', function (evt) {
+        self.div.addEventListener('click', TC.EventTarget.listenerBySelector(`#${self.CLASS}-image-qr-${self.id}`, function (evt) {
             self.generateLink();
         }));
 
         self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (evt) {
-            self.generateLink();
+            if (!self.registeredListeners) {
+                self.generateLink();
+            }
             self.registerListeners();
         }));
 
         return result;
+    };
+
+    ctlProto.render = function (callback) {
+        const self = this;
+        return TC.Control.prototype.renderData.call(self, { controlId: self.id }, callback);
     };
 
     ctlProto.createPdf = function () {
@@ -688,7 +694,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 };
 
                 if (self.options.logo) {
-                    return TC.Util.imgToDataUrl(self.options.logo, 'image/png').then(function (result) {
+                    return TC.Util.imgToDataUrl(self.options.logo).then(function (result) {
                         const canvas = result.canvas;
                         const dataUrl = result.dataUrl;
                         var size = TC.Util.calculateAspectRatioFit(canvas.width, canvas.height, layout.logoWidth, layout.logoHeight);
@@ -971,7 +977,8 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             const drawQR = function () {
                 // GLS: añadimos el QR
                 //QR
-                if (document.querySelector("#" + self.CLASS + "-image-qr").checked) {
+                const cb = document.querySelector(`#${self.CLASS}-image-qr-${self.id}`);
+                if (!cb.disabled && cb.checked) {
                     const qrTarget = document.querySelector('.' + self.CLASS + '-qrcode');
                     qrTarget.innerHTML = '';
                     return self.makeQRCode(qrTarget, options.qrCode.sideLength, options.qrCode.sideLength).then(function (qrCodeBase64) {
@@ -979,8 +986,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                             return TC.Util.addToCanvas(self.canvas, qrCodeBase64, { x: self.canvas.width - options.qrCode.sideLength, y: self.canvas.height - options.qrCode.sideLength }, {width: options.qrCode.sideLength, height: options.qrCode.sideLength }).then(function (mapCanvas) {
                                 return mapCanvas;
                             });
-                        } else {
-                            TC.error(self.getLocaleString('print.qr.error'));
+                        } else {                            
                             return self.canvas;
                         }
                     });
@@ -1008,15 +1014,13 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
                 mapPlace.image = canvas.toDataURL();
 
-                if (self.options.legend &&
-                    self.options.legend.visible &&
-                    hasLegendToPrint.call(self) && // GLS: validamos que haya capas visibles por escala 
+                if (hasLegendToPrint.call(self) && // GLS: validamos que haya capas visibles por escala 
                     printLayout.content.length == 2) { // GLS: es la primera descarga o hemos resetado la leyenda por algún zoom por lo que no tenemos la leyenda en el layout
 
                     const title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
                     printLayout.content.push({
                         pageBreak: 'before',
-                        pageOrientation: self.options.legend.orientation || 'portrait',
+                        pageOrientation: (self.options.legend && self.options.legend.orientation) || ORIENTATION.PORTRAIT,
                         text: title.length > 0 ? title : '',
                         fontSize: 14,
                         margin: [0, 20, 0, 10]
@@ -1035,13 +1039,27 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
     ctlProto.manageMaxLengthExceed = function (maxLengthExceed) {
         const self = this;
-
         const alertElm = self.div.querySelector('.' + self.CLASS + '-alert');
-        if (document.querySelector("#" + self.CLASS + "-image-qr").checked) {
+        const checkboxQR = document.querySelector(`#${self.CLASS}-image-qr-${self.id}`);
+
+        checkboxQR.disabled = maxLengthExceed.qr;
+
+        if (checkboxQR.checked) {
             alertElm.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.qr);
         } else {
             alertElm.classList.add(TC.Consts.classes.HIDDEN);
         }
+    };
+
+    ctlProto.generateLink = async function () {
+        const self = this;
+        const checkbox = self.div.querySelector(`.${self.CLASS}-div input[id|="${self.CLASS}-image-qr-${self.id}"]`);
+        const label = self.div.querySelector(`label[for="${checkbox.id}"]`);
+        checkbox.disabled = true;
+        label.classList.add(TC.Consts.classes.LOADING);
+        const result = await TC.control.MapInfo.prototype.generateLink.call(self);
+        label.classList.remove(TC.Consts.classes.LOADING);
+        return result;
     };
 
 })();

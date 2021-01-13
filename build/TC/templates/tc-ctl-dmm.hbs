@@ -1,0 +1,28 @@
+<h2>{{i18n "drawAndMeasure"}}</h2>
+<div class="tc-ctl-meas-select">
+    <label class="tc-ctl-meas-btn-pt"><input type="radio" name="{{controlId}}-mode" value="point" /><span>{{i18n "points"}}</span></label><label 
+	class="tc-ctl-meas-btn-len"><input type="radio" name="{{controlId}}-mode" value="polyline" /><span>{{i18n "lines"}}</span></label><label 
+	class="tc-ctl-meas-btn-area"><input type="radio" name="{{controlId}}-mode" value="polygon" /><span>{{i18n "polygons"}}</span></label>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-pt tc-hidden">
+    <div class="tc-ctl-meas-point"></div>
+    <div class="tc-ctl-meas-txt">{{i18n "search.list.coordinates"}} <span class="tc-ctl-meas-val-coord">
+           <span class="tc-ctl-meas-val-coord-1-t"></span> <span class="tc-ctl-meas-val-coord-1-v"></span> <span class="tc-ctl-meas-val-coord-2-t"></span> <span class="tc-ctl-meas-val-coord-2-v"></span> <span class="tc-ctl-meas-val-coord-ele-t"></span> <span class="tc-ctl-meas-val-coord-ele-v"></span>
+        </span>
+    </div>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-len tc-hidden">
+    <div class="tc-ctl-meas-line"></div>
+    <div class="tc-ctl-meas-txt">{{i18n "2dLength"}}: <span class="tc-ctl-meas-val-len"></span><button class="tc-ctl-meas-prof-btn tc-active" title="{{i18n "deactivateElevationProfile"}}">{{i18n "geo.trk.chart.chpe"}}</button></div>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-area tc-hidden">
+    <div class="tc-ctl-meas-polygon"></div>
+    <div class="tc-ctl-meas-txt">{{i18n "area"}}: <span class="tc-ctl-meas-val-area"></span>, {{i18n "2dPerimeter"}}: <span class="tc-ctl-meas-val-peri"></span></div>
+</div>
+<div class="tc-ctl-dmm-tool">
+    <div class="tc-ctl-dmm-mod"></div>
+    <div class="tc-ctl-dmm-cmd">
+        <button class="tc-ctl-dmm-btn-clr" disabled title="{{i18n "deleteAll"}}">{{i18n "deleteAll"}}</button><button 
+		class="tc-ctl-dmm-btn-dl" disabled title="{{i18n "download"}}">{{i18n "download"}}...</button>
+    </div>
+</div>

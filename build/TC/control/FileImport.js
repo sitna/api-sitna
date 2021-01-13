@@ -13,22 +13,20 @@ TC.control.FileImport = function () {
     else {
         self.formats = [
             TC.Consts.format.KML,
+            TC.Consts.format.KMZ,
             TC.Consts.format.GML,
             TC.Consts.format.GML2,
             TC.Consts.format.GEOJSON,
-            TC.Consts.format.WKT,
+            TC.Consts.format.JSON,
+            TC.Consts.format.WKT,            
+            'ZIP',
+            TC.Consts.format.GPKG,            
+            //ahora la lista de ficheros que componen un shape
+            'shp', 'dbf', 'prj', 'cst', 'cpg',
             TC.Consts.format.GPX
         ];
     }
-    if (window.JSZip) {
-        if (window.JSZip instanceof Promise)
-            window.JSZip.then(function () {
-                self.formats.splice(1, 0, TC.Consts.format.KMZ);
-            });
-        else
-            self.formats.splice(1, 0, TC.Consts.format.KMZ);
-    }
-
+    
     self.layers = [];
 
     self.apiAttribution = '';
@@ -45,7 +43,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-file';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/FileImport.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-file.hbs";
 
     ctlProto.register = function (map) {
         var self = this;
@@ -136,6 +134,9 @@ TC.inherit(TC.control.FileImport, TC.Control);
                 };
                 reader.readAsText(e.file);
             })
+            .on(TC.Consts.event.FEATURESIMPORTPARTIAL, function (e) {
+                self.map.toast(self.getLocaleString("fileImport.partial.problem", { fileName: e.file.name, table: e.table, reason: e.reason }), { type: TC.Consts.msgType.ERROR })
+            })
             .on(TC.Consts.event.FEATUREREMOVE, function (e) {
                 // Eliminamos la capa cuando ya no quedan features en ella
                 const layer = e.layer;
@@ -171,7 +172,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                 // Desenvolvemos el input del form
                 form.insertAdjacentElement('afterend', input);
                 parent.removeChild(form);
-            });
+            }, { passive: true });
             fileInput.addEventListener('change', function (e) {
                 if (self.map) {
                     console.log('salta el change');
@@ -183,7 +184,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
     ctlProto.exportState = function () {
         const self = this;
-        if (self.exportsState) {
+        if (self.exportsState && self.layers.length) {
             return {
                 id: self.id,
                 layers: self.layers.map(function (layer) {

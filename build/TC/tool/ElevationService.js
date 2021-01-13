@@ -37,7 +37,7 @@ TC.tool.ElevationService = function (options) {
                             resolve((options.responseCallback || self.parseResponse).call(self, response, options));
                         })
                         .catch(function (error) {
-                            reject(Error(error));
+                            reject(error instanceof Error ? error : Error(error));
                         });
                 }
             );
@@ -70,7 +70,7 @@ TC.tool.ElevationService = function (options) {
                         }).then(function (response) {
                             resolve(response.data);
                         }, function (error) {
-                            reject(Error(error));
+                            reject(error instanceof Error ? error : Error(error));
                         });
                     }
                 );
@@ -92,6 +92,10 @@ TC.tool.ElevationService = function (options) {
             });
         }
         return response.coordinates || [];
+    };
+
+    toolProto.cancelRequest = function (id) {
+
     };
 
 })();

@@ -25,17 +25,6 @@ TC.control.ResultsPanel = function () {
         SHOW_OUT: 'showOut'
     };
 
-    self.contentType = {
-        TABLE: {
-            fnOpen: TC.control.ResultsPanel.prototype.openTable,
-            collapsedClass: '.fa-list-alt'
-        },
-        CHART: {
-            fnOpen: TC.control.ResultsPanel.prototype.openChart,
-            collapsedClass: '.fa-area-chart'
-        }
-    };
-
     self.content = self.contentType.TABLE;
 
     if (TC.Util.isEmptyObject(self.options)) {
@@ -76,9 +65,9 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     };
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ResultsPanel.html";
-    ctlProto.template[ctlProto.CLASS + '-table'] = TC.apiLocation + "TC/templates/ResultsPanelTable.html";
-    ctlProto.template[ctlProto.CLASS + '-chart'] = TC.apiLocation + "TC/templates/ResultsPanelChart.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-p-results.hbs";
+    ctlProto.template[ctlProto.CLASS + '-table'] = TC.apiLocation + "TC/templates/tc-ctl-p-results-table.hbs";
+    ctlProto.template[ctlProto.CLASS + '-chart'] = TC.apiLocation + "TC/templates/tc-ctl-p-results-chart.hbs";
 
     const isElementVisible = function (elm) {
         const computedStyle = getComputedStyle(elm);
@@ -160,7 +149,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             self.maximizeButton = self.div.querySelector('.prcollapsed-max');
             self.maximizeButton.addEventListener('click', function () {
                 self.maximize();
-            });
+            });                     
 
             if (self.save) {
                 self.saveButton = self.div.querySelector('.prcollapsed-slide-submenu-csv');
@@ -173,12 +162,12 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 self.downloadButton = self.div.querySelector('.prcollapsed-slide-submenu-dwn');
                 self.downloadButton.addEventListener('click', function () {
                     if (TC.Util.isFunction(self.options.download)) {
-                        self.options.download.apply(self,[]);
+                        self.options.download.apply(self, []);
                     }
                 });
                 self.downloadButton.removeAttribute('hidden');
-            }           
-            
+            }
+
 
             if (self.content) {
                 self.content = self.content;
@@ -192,7 +181,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
                     if (self.options.titles.max) {
                         self.maximizeButton.setAttribute('title', self.options.titles.max);
-                    }
+                    }                    
                 } else {
                     self.mainTitleElm.setAttribute('title', self.getLocaleString("rsp.title"));
                     self.mainTitleElm.innerHTML = self.getLocaleString("rsp.title");
@@ -248,7 +237,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
             self.map.trigger(TC.Consts.event.RESULTSPANELMAX, { control: self });
         }
-    };
+    };    
 
     ctlProto.close = function () {
         const self = this;
@@ -293,6 +282,9 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
             if (data.msg) {
                 self.map.toast(data.msg);
+                if (self.isVisible()) {
+                    self.hide('prsidebar-body');
+                }
             }
             else {
                 self.elevationProfileChartData = data;
@@ -306,6 +298,11 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         }
     };
 
+    const formatYAxis = function (d, locale) {
+        let y = (parseInt(d.toFixed(0)) || 0);
+        return y.toLocaleString(locale) + ' m';
+    };
+
     ctlProto.renderElevationProfileChart = function (options) {
         const self = this;
         options = options || {};
@@ -315,11 +312,26 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 const data = options.data;
                 data.ele = data.ele.map(val => val === null ? 0 : val);
                 const div = options.div;
-                var locale = TC.Util.getMapLocale(self.map);
-                self.getRenderedHtml(ctlProto.CLASS + '-chart', {
+                let locale = TC.Util.getMapLocale(self.map);
+
+                var templateData = {
                     upHill: data.upHill ? data.upHill.toLocaleString(locale) : '0',
                     downHill: data.downHill ? data.downHill.toLocaleString(locale) : '0'
-                }, function (out) {
+                };
+
+                if (data.elevationFromServiceChartData) {
+                    templateData.min = formatYAxis(data.min, locale);
+                    templateData.max = formatYAxis(data.max, locale);
+
+                    templateData.secondChart = {
+                        upHill: data.elevationFromServiceChartData.upHill ? data.elevationFromServiceChartData.upHill.toLocaleString(locale) : '0',
+                        downHill: data.elevationFromServiceChartData.downHill ? data.elevationFromServiceChartData.downHill.toLocaleString(locale) : '0',
+                        min: formatYAxis(data.elevationFromServiceChartData.min, locale),
+                        max: formatYAxis(data.elevationFromServiceChartData.max, locale)
+                    };
+                }
+
+                self.getRenderedHtml(ctlProto.CLASS + '-chart', templateData, function (out) {
 
                     div.innerHTML = out;
                     div.style.display = '';
@@ -336,21 +348,48 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             self.div.querySelector('.prcollapsed-max').setAttribute('title', self.options.titles.max);
                         }
                     }
+
+                    var legendOptions = { show: false };
+                    if (data.elevationFromServiceChartData) {
+                        legendOptions = {
+                            position: 'inset',
+                            inset: {
+                                anchor: "bottom-left",
+                                x: -55,
+                                y: -30,
+                                step: 1
+                            }
+                        };
+                    }
+
                     var chartOptions = TC.Util.extend({
                         bindto: div.querySelector('.tc-chart'),
                         padding: {
-                            top: 0,
+                            top: 13, // por el nuevo diseño del tooltip añado 13  //data.elevationFromServiceChartData ? 10 : 0,
                             right: 15,
                             bottom: 0,
                             left: 45,
                         },
-                        legend: {
-                            show: false
-                        }
+                        legend: legendOptions
                     }, self.createChartOptions(data));
 
                     if (self.chart.tooltip) {
                         chartOptions.tooltip = {
+                            position: function (data, width, height, element) {
+                                let container = document.querySelector('.c3-tooltip-container');
+                                let chartOffsetX = document.querySelector(".c3").getBoundingClientRect().left;
+                                let graphOffsetX = document.querySelector(".c3 g.c3-axis-y").getBoundingClientRect().right;
+                                let tooltipWidth = container.clientWidth;
+                                let x = (parseInt(element.getAttribute('x'))) + graphOffsetX - chartOffsetX - Math.floor(tooltipWidth / 2);                                
+
+                                // alto del tooltipOnBottom
+                                let xAxisHeight = document.querySelector(".c3 g.c3-axis-x").getBoundingClientRect().height + 2;
+                                let onBottom = container.querySelector(".onBottom");
+                                if (onBottom && xAxisHeight) {
+                                    onBottom.style.height = xAxisHeight + 'px';
+                                }
+                                return { top: 0, left: x };
+                            },
                             contents: function (d) {
                                 var fn = self.chart.tooltip;
                                 if (typeof (fn) !== "function")
@@ -369,7 +408,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         };
                     }
 
-                    chartOptions.onrendered = function () {                        
+                    chartOptions.onrendered = function () {
                         if (TC.Util.isFunction(chartOptions._onrendered)) {
                             chartOptions._onrendered.call(this);
                         }
@@ -460,7 +499,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 return ctl !== self && ctl.isVisible();
             })
             .filter(function (ctl) {
-                return ctl.options.content !== self.contentType.CHART;
+                return ctl.options.content !== 'chart';
             })
             .forEach(function (ctl) {
                 ctl.close();
@@ -524,7 +563,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
     ctlProto.open = function (html, container) {
         const self = this;
-
+        
         self.div.classList.remove(TC.Consts.classes.HIDDEN);
 
         const toCheck = container || self.div.querySelector('.' + self.CLASS + '-table');
@@ -559,6 +598,17 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 tableElm.style.display = '';
             }
         }
+        else {
+            if (chartElm.childElementCount) {
+                chartElm.style.display = '';
+            }
+            else if (tableElm.childElementCount) {
+                tableElm.style.display = '';
+            }
+            else if (infoElm.childElementCount) {
+                infoElm.style.display = '';
+            }
+        }
 
         const maximizeElm = self.div.querySelector('.prcollapsed-max');
 
@@ -591,6 +641,23 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         self.hide('prcollapsed-max');
     };
 
+    ctlProto.loadDataOnChart = function (data) {
+        const self = this;
+
+        // puede llegar aquí después de borrar un track.
+        if (self.chart && self.chart.chart) {
+            self.chart.chart.unload({
+                done: function () {
+                    self.elevationProfileChartData = data;
+                    self.renderElevationProfileChart({
+                        data: data,
+                        div: self.div.querySelector('.' + ctlProto.CLASS + '-chart')
+                    });
+                }
+            });
+        }
+    };
+
     ctlProto.createChartOptions = function (options) {
         const self = this;
         var result = {};
@@ -614,9 +681,10 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         }
                         return r;
                     };
+                    const gradIds = ['grad' + TC.getUID()];
 
-                    var maxy = Number.NEGATIVE_INFINITY;
-                    var miny = Number.POSITIVE_INFINITY;
+                    let maxy = Number.NEGATIVE_INFINITY;
+                    let miny = Number.POSITIVE_INFINITY;
                     options.ele.forEach(function (y) {
                         if (typeof y === 'number') {
                             maxy = Math.max(y, maxy);
@@ -624,14 +692,21 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         }
                     });
 
-                    const gradId = 'grad' + TC.getUID();
+                    let xColumn = [...options.x];
+                    let eleColumn = [...options.ele];
 
                     result = {
                         data: {
                             x: 'x',
-                            columns: [['x'].concat(options.x), ['ele'].concat(options.ele)],
-                            types: { 'ele': 'area-spline' }, colors: {
-                                "ele": 'url(#' + gradId + ')'
+                            columns: [
+                                ['x'].concat(xColumn),
+                                ['ele'].concat(eleColumn)
+                            ],
+                            types: {
+                                'ele': 'area-spline'
+                            },
+                            colors: {
+                                "ele": 'url(#' + gradIds[0] + ')'
                             }
                         },
                         size: getChartSize(),
@@ -668,49 +743,112 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                 tick: {
                                     count: 2,
                                     format: function (d) {
-                                        return (parseInt(d.toFixed(0)) || 0).toLocaleString(locale) + 'm';
+                                        return formatYAxis(d, locale);
                                     }
                                 }
                             }
                         },
                         onresize: function () {
-                            this.api.resize(getChartSize());                            
+                            this.api.resize(getChartSize());
+                        }
+                    };
+
+                    if (options.elevationFromServiceChartData) {
+                        result.data.names = {
+                            ele: self.getLocaleString("geo.profile.fromTrack"),
+                            ele2: self.getLocaleString("mdt")
+                        };
+                        result.data.columns.push(['ele2'].concat(options.elevationFromServiceChartData.ele));
+
+                        result.data.types.ele2 = options.elevationFromServiceChartData.type;
+                        gradIds.push('grad' + TC.getUID());
+                        result.data.colors.ele2 = 'url(#' + gradIds[gradIds.length - 1] + ')';
+                        result.data.axes = {
+                            ele: 'y'
+                        };                        
+
+                        if (eleColumn.every((val) => val === 0)) {
+                            result.axis.y.min = Math.min(...options.elevationFromServiceChartData.ele);
+                            result.axis.y.max = Math.max(...options.elevationFromServiceChartData.ele);
+                        } else if (options.elevationFromServiceChartData.ele.every((val) => val === 0)) {
+                            result.axis.y.min = Math.min(...eleColumn);
+                            result.axis.y.max = Math.max(...eleColumn);
+                        } else {
+                            result.axis.y.min = Math.min(...eleColumn.concat(options.elevationFromServiceChartData.ele));
+                            result.axis.y.max = Math.max(...eleColumn.concat(options.elevationFromServiceChartData.ele));
                         }
                     }
 
                     if (options.time) result.time = ("00000" + options.time.h).slice(-2) + ':' + ("00000" + options.time.m).slice(-2) + ':' + ("00000" + options.time.s).slice(-2);
 
+                    var rendered = false;
                     result._onrendered = function () {
+                        if (!rendered) {
+                            rendered = true;
+
+                            if (options.elevationFromServiceChartData) {
+                                // redondeamos los cuadritos de la leyenda.
+                                document.querySelectorAll('.c3-legend-item-tile').forEach((item) => {
+                                    item.setAttribute('rx', 5);
+                                    item.setAttribute('ry', 1);
+                                });
+                                // añdimos title a los elementos de la leyenda
+                                document.querySelectorAll('.c3-legend-item').forEach((item) => {
+                                    var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                                    title.textContent = self.getLocaleString("hide");
+                                    item.appendChild(title);
+
+                                    item.addEventListener(TC.Consts.event.CLICK, function () {
+                                        if (item.classList.contains(TC.Consts.classes.HIDDEN)) {
+                                            item.querySelector('title').textContent = self.getLocaleString("hide");
+                                        } else {
+                                            item.querySelector('title').textContent = self.getLocaleString("show");
+                                        }
+
+                                        item.classList.toggle(TC.Consts.classes.HIDDEN);
+                                    }, { passive: true });
+                                });
+                            }
+                        }
+
                         const svg = this.svg[0][0];
                         var svgDefsElement = svg.getElementsByTagName('defs')[0];
                         var xmlns = "http://www.w3.org/2000/svg";
-                        var grad = document.createElementNS(xmlns, "linearGradient");
-                        grad.setAttributeNS(null, "id", gradId);
-                        grad.setAttributeNS(null, "x1", "0%");
-                        grad.setAttributeNS(null, "x2", "0%");
-                        grad.setAttributeNS(null, "y1", "0%");
-                        grad.setAttributeNS(null, "y2", "100%");
-                        grad.setAttributeNS(null, "gradientUnits", "userSpaceOnUse");
 
-                        const stop0 = document.createElementNS(xmlns, "stop");
-                        stop0.setAttributeNS(null, "offset", "0%");
-                        stop0.setAttributeNS(null, "stop-color", "red");
-                        stop0.setAttributeNS(null, "stop-opacity", "0.7");
-                        grad.appendChild(stop0);
+                        const createLinearGradient = function (id, colors) {
+                            var grad = document.createElementNS(xmlns, "linearGradient");
+                            grad.setAttributeNS(null, "id", id);
+                            grad.setAttributeNS(null, "x1", "0%");
+                            grad.setAttributeNS(null, "x2", "0%");
+                            grad.setAttributeNS(null, "y1", "0%");
+                            grad.setAttributeNS(null, "y2", "100%");
+                            grad.setAttributeNS(null, "gradientUnits", "userSpaceOnUse");
 
-                        const stop50 = document.createElementNS(xmlns, "stop");
-                        stop50.setAttributeNS(null, "offset", "50%");
-                        stop50.setAttributeNS(null, "stop-color", "orange");
-                        stop50.setAttributeNS(null, "stop-opacity", "0.9");
-                        grad.appendChild(stop50);
+                            const stop0 = document.createElementNS(xmlns, "stop");
+                            stop0.setAttributeNS(null, "offset", "0%");
+                            stop0.setAttributeNS(null, "stop-color", colors[0]);
+                            stop0.setAttributeNS(null, "stop-opacity", "0.7");
+                            grad.appendChild(stop0);
 
-                        const stop100 = document.createElementNS(xmlns, "stop");
-                        stop100.setAttributeNS(null, "offset", "100%");
-                        stop100.setAttributeNS(null, "stop-color", "green");
-                        stop100.setAttributeNS(null, "stop-opacity", "1");
-                        grad.appendChild(stop100);
+                            const stop50 = document.createElementNS(xmlns, "stop");
+                            stop50.setAttributeNS(null, "offset", "50%");
+                            stop50.setAttributeNS(null, "stop-color", colors[1]);
+                            stop50.setAttributeNS(null, "stop-opacity", "0.9");
+                            grad.appendChild(stop50);
 
-                        svgDefsElement.appendChild(grad);
+                            const stop100 = document.createElementNS(xmlns, "stop");
+                            stop100.setAttributeNS(null, "offset", "100%");
+                            stop100.setAttributeNS(null, "stop-color", colors[2]);
+                            stop100.setAttributeNS(null, "stop-opacity", "1");
+                            grad.appendChild(stop100);
+
+                            svgDefsElement.appendChild(grad);
+                        };
+
+                        createLinearGradient(gradIds[0], ["red", "orange", "green"]);
+                        if (options.elevationFromServiceChartData) {
+                            createLinearGradient(gradIds[gradIds.length - 1], ["blue", "cian", "green"]);
+                        }
 
                         const d3Node = d3.select(".c3-brush").node();
                         if (d3Node) {
@@ -722,8 +860,9 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             .style("cursor", "pointer")
                             .on("click", function (e) {
                                 d3.event.stopPropagation();
-                                const point = self.elevationProfileChartData.coords[e.index].slice(0, 2);
+                                let point = self.elevationProfileChartData.coords[e.index];
                                 if (point) {
+                                    point = point.slice(0, 2);
                                     TC.loadJS(!TC.feature || (TC.feature && !TC.feature.Point),
                                         [TC.apiLocation + 'TC/feature/Point'],
                                         function () {
@@ -733,18 +872,23 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                 }
                             });
 
-                        var pattern = d3.select('.c3-axis.c3-axis-x').select('path').attr('d');
-                        var match = /^M\d\,(\d)V\dH\d{3}V(\d)$/i.exec(pattern);
-                        if (match) { // quitamos las barritas de los extremos del axis-x
-                            pattern = pattern.replace(/(M\d\,)\d/i, "$10").replace(/(H\d{3}V)(\d)/i, "$10");
-                            d3.select('.c3-axis.c3-axis-x').select('path').attr('d', pattern);
-                        } else {
-                            var match = /^M\s\d\s(\d)\sV\s\d\sH\s\d{3}\sV\s(\d)$/i.exec(pattern);
+                        const path = d3.select('.c3-axis.c3-axis-x').select('path');
+                        if (!path.empty()) {
+                            let pattern = path.attr('d');
+                            let match = /^M\d\,(\d)V\dH\d{3}V(\d)$/i.exec(pattern);
                             if (match) { // quitamos las barritas de los extremos del axis-x
-                                pattern = pattern.replace(/(M\s\d\s)\d/i, "$10").replace(/(H\s\d{3}\sV\s)(\d)/i, "$10");
-                                d3.select('.c3-axis.c3-axis-x').select('path').attr('d', pattern);
+                                pattern = pattern.replace(/(M\d\,)\d/i, "$10").replace(/(H\d{3}V)(\d)/i, "$10");
+                                path.attr('d', pattern);
+                            } else {
+                                let match = /^M\s\d\s(\d)\sV\s\d\sH\s\d{3}\sV\s(\d)$/i.exec(pattern);
+                                if (match) { // quitamos las barritas de los extremos del axis-x
+                                    pattern = pattern.replace(/(M\s\d\s)\d/i, "$10").replace(/(H\s\d{3}\sV\s)(\d)/i, "$10");
+                                    path.attr('d', pattern);
+                                }
                             }
                         }
+                        
+
 
                         const svgRect = svg.getBoundingClientRect();
                         const chartSize = {
@@ -762,8 +906,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                             if (i == 0) return;
 
                                             d3text = d3.select(this);
-                                            
-                                            if (d3text.node().childNodes.length === 1) {                                                
+
+                                            if (d3text.node().childNodes.length === 1) {
                                                 var clone = d3text.select('tspan').node().cloneNode();
                                                 var words = d3text.text().split(' ');
 
@@ -811,6 +955,11 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             setMultilineLabels();
                         }
 
+                        // pasamos el perfil original adelante si no no se aprecian bien las diferencias por el color y si lo gestionamos antes afecta a la leyenda
+                        d3.select('svg').select(".c3-chart-lines").selectAll(".c3-target-ele").each(function () {
+                            this.parentNode.appendChild(this);
+                        });
+
                         if (!self.isMinimized()) {
                             self.show('prsidebar-body');
                             self.hide('prcollapsed-max');
@@ -852,31 +1001,40 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         return TC.Util.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
     };
 
-    ctlProto.getElevationChartTooltip = function (data) {
+    ctlProto.getElevationChartTooltip = function (data) {        
         const self = this;
+        const locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
         const coords = self.elevationProfileChartData.coords;
-        var distance = data[0].x;
-        distance = distance / 1000;
-
+        const getElevationByDataElem = function (dataElem) {
+            return dataElem.value ? parseInt(dataElem.value.toFixed(0)).toLocaleString(locale) : "0";
+        };
         const p = coords[data[0].index];
-        var doneTime;
-        if (coords[0].length == 4 && coords[0][3] > 0) {
+        let doneTime;
+        if (coords[0].length == 4 && coords[0][3] > 0 && p) {
             doneTime = getTime(coords[0][3], p[3]);
         }
+        let distance = data[0].x / 1000;
+        let distanceFormatted = (distance < 1 ? Math.round(distance * 1000) : Math.round(distance * 100) / 100).toLocaleString(locale) + (distance < 1 ? ' m' : ' km');
 
-        const locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
-        const ele = parseInt(data[0].value.toFixed(0)).toLocaleString(locale);
-        var dist;
-        var measure;
-        if (distance < 1) {
-            dist = Math.round(distance * 1000);
-            measure = ' m';
-        } else {
-            dist = Math.round(distance * 100) / 100;
-            measure = ' km';
-        }
-        dist = dist.toLocaleString(locale);
-        return '<div class="track-elevation-tooltip"><div><span>' + ele + ' m </span><br><span>' + dist + measure + ' </span></div>' + (doneTime ? '<span>' + doneTime.toString + '</span><div/>' : '');
+        let elevationDiv = '<div class="onTop">' +
+            '<span>' +
+            data.map((elem, index) => {
+                if (elem) {
+                    return (index === 0 ? '<span data-isNumber class="' + (elem.id === "ele" ? "original" : "mdt") + '">' + getElevationByDataElem(elem) + ' m' + '</span>' :
+                        '<span data-isNumber class="' + (elem.id === "ele" ? "original" : "mdt") + '">' + getElevationByDataElem(elem) + ' m ' + '</span>');
+                } else {
+                    return "";
+                }
+            }).join('') +
+            '</span >' +
+            '</div>';
+
+        let distanceAndTimeDiv = '<div class="onBottom">' +
+            '<span>' + distanceFormatted + ' </span>' +
+            (doneTime ? '<span>' + doneTime.toString + '</span>' + '<div/>' : '<div/>');
+
+
+        return elevationDiv + distanceAndTimeDiv;        
     };
 
     ctlProto.getTableContainer = function () {
@@ -964,6 +1122,17 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         }
         else {
             _fncSave(new TC.Util.ExcelExport());
+        }
+    };
+
+    ctlProto.contentType = {
+        TABLE: {
+            fnOpen: ctlProto.openTable,
+            collapsedClass: '.fa-list-alt'
+        },
+        CHART: {
+            fnOpen: ctlProto.openChart,
+            collapsedClass: '.fa-area-chart'
         }
     };
 })();

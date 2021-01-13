@@ -18,6 +18,7 @@ TC.control.Coordinates = function () {
     self.lon = 0;
     self.units = TC.Consts.units.METERS;
     self.isGeo = false;
+    self.allowReprojection = self.options.hasOwnProperty('allowReprojection') ? self.options.allowReprojection : true;
 
     TC.control.ProjectionSelector.apply(self, arguments);
 
@@ -44,8 +45,8 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
     ctlProto.CLASS = 'tc-ctl-coords';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Coordinates.html";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/CoordinatesDialog.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-coords.hbs";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-coords-dialog.hbs";
 
     ctlProto.register = function (map) {
         var self = this;
@@ -158,7 +159,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
     ctlProto.render = function (callback) {
         const self = this;
 
-        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function(html) {
             self._dialogDiv.innerHTML = html;
         }).then(function () {
             return TC.Control.prototype.renderData.call(self, {
@@ -170,11 +171,15 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                 crs: self.crs,
                 geoCrs: self.geoCrs,
                 isGeo: self.isGeo,
-                showGeo: !self.isGeo && self.options.showGeo
+                showGeo: !self.isGeo && self.options.showGeo,
+                allowReprojection: self.allowReprojection
             }, function () {
-                self.div.querySelector('button.' + self._cssClasses.CRS).addEventListener(TC.Consts.event.CLICK, function (e) {
-                    self.showProjectionChangeDialog();
-                });
+                const button = self.div.querySelector('button.' + self._cssClasses.CRS);
+                if (button) {
+                    button.addEventListener(TC.Consts.event.CLICK, function (e) {
+                        self.showProjectionChangeDialog();
+                    }, { passive: true });
+                }
 
                 //self.div.addEventListener('mousemove', function (e) {
                 //    self.setVisibility([e.clientX, e.clientY]);
@@ -254,7 +259,9 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
 
         delete self.currentCoordsMarker;
         self.getLayer().then(function (layer) {
-            layer.clearFeatures();
+            if (layer.features.length) {
+                layer.clearFeatures();
+            }
         });
     };
 

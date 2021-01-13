@@ -8,6 +8,9 @@ TC.Consts.event.POPUP = TC.Consts.event.POPUP || 'popup.tc';
 TC.Consts.event.POPUPHIDE = TC.Consts.event.POPUPHIDE || 'popuphide.tc';
 TC.Consts.event.DRAWCHART = TC.Consts.event.DRAWCHART || 'drawchart.tc';
 TC.Consts.event.DRAWTABLE = TC.Consts.event.DRAWTABLE || 'drawtable.tc';
+TC.Consts.event.DIALOG = TC.Consts.event.DIALOG || 'dialog.tc';
+TC.Consts.event.FEATUREHIGHLIGHT = TC.Consts.event.FEATUREHIGHLIGHT || 'featurehighlight.tc';
+TC.Consts.event.FEATUREDOWNPLAY = TC.Consts.event.FEATUREDOWNPLAY || 'featuredownplay.tc';
 
 TC.control.FeatureTools = function () {
     const self = this;
@@ -20,17 +23,6 @@ TC.control.FeatureTools = function () {
         INTERPOLATION_RADIO: 'input[type=radio][name=finfo-ip-coords]',
         INTERPOLATION_DISTANCE: cs + '-dialog-ip-m'
     };
-
-    if (self.options.displayElevation) {
-        TC.loadJS(
-            !TC.tool || !TC.tool.Elevation,
-            TC.apiLocation + 'TC/tool/Elevation',
-            function () {
-                const elevationOptions = typeof self.options.displayElevation === 'boolean' ? {} : self.options.displayElevation;
-                self.elevation = new TC.tool.Elevation(elevationOptions);
-            }
-        );
-    }
 
     self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
     if (window.$) {
@@ -52,47 +44,25 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
     ctlProto.FILE_TITLE_SEPARATOR = '__';
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/FeatureTools.html";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/FeatureToolsDialog.html";
-
-    var downloadDialog = null;
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-ftools.hbs";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-ftools-dialog.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
         map
             .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE + ' ' + TC.Consts.event.DRAWCHART, function (e) {
-                self.currentDisplay = e.control;              // caso feature compartida
-                if (self.currentDisplay.caller || (!self.currentDisplay.caller && self.currentDisplay.currentFeature)) {
-                    self.highlightedFeature = !(!self.currentDisplay.caller && self.currentDisplay.currentFeature) ? self.currentDisplay.caller.highlightedFeature : self.currentDisplay.currentFeature;
-                    self.addUI(self.currentDisplay);
+                const control = e.control;
+                if (control.caller || (!control.caller && control.currentFeature)) {
+                    self.addUI(control);
                 }
+                // TODO: ¿Y si miramos si la feature del control ya está asociada a otro control abierto para decir si decoramos o no?
             })
-            .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
-                self.currentDisplay = null;
+            .on(TC.Consts.event.FEATUREHIGHLIGHT, function (e) {
+                self.addUI(e.control.getDisplayControl());
             })
-            .on(TC.Consts.event.FEATUREADD, function (e) {
-                const feature = e.feature;
-                if (self.currentDisplay && self.currentDisplay.caller && feature === self.currentDisplay.caller.highlightedFeature) {
-                    self.highlightedFeature = feature;
-                }
+            .on(TC.Consts.event.FEATUREDOWNPLAY, function (e) {
+                self.updateUI(e.control.getDisplayControl());
             });
-        //.on(TC.Consts.event.FEATUREREMOVE, function (e) {
-        //    const feature = e.feature;
-        //    if (feature === self.highlightedFeature) {
-        //        const highlightedFeature = feature.clone();
-        //        highlightedFeature.showsPopup = true;
-        //        // Si la feature se eliminó por un cierre de popup provocado por la apertura de otro, 
-        //        // reasignamos la feature nueva al popup, ya que este está apuntando a una feature que ya no está en el mapa.
-        //        map.getControlsByClass('TC.control.Popup').concat(map.getControlsByClass('TC.control.ResultsPanel')).forEach(function (ctl) {
-        //            if (ctl.currentFeature === self.highlightedFeature) {
-        //                ctl.currentFeature = highlightedFeature;
-        //            }
-        //        });
-        //        self.getHighlightLayer().then(function (layer) {
-        //            layer.addFeature(highlightedFeature);
-        //        });
-        //    }
-        //});
 
         return new Promise(function (resolve, reject) {
             Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]).then(function () {
@@ -113,17 +83,15 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
     ctlProto.render = function () {
         const self = this;
 
-        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', {
-            checkboxId: self.getUID(),
-            elevation: self.options.displayElevation
-        }, function (html) {
-            self._dialogDiv.innerHTML = html;
-            if (!downloadDialog) {
-                self.map.addControl('FeatureDownloadDialog').then(ctl => {
-                    downloadDialog = ctl;
-                });
-            }
-        }));
+        return self._set1stRenderPromise(Promise.all([
+            self.renderData({ elevation: self.options.displayElevation }),
+            self.getRenderedHtml(self.CLASS + '-dialog', {
+                checkboxId: self.getUID(),
+                elevation: self.options.displayElevation
+            }, function (html) {
+                self._dialogDiv.innerHTML = html;
+            })
+        ]));
     };
 
     ctlProto.addUI = function (ctl) {
@@ -136,46 +104,47 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         if (menuIsMissing()) {
             // Añadimos los botones de herramientas
             self.getRenderedHtml(self.CLASS, null, function (html) {
-                if (menuIsMissing()) {                    
 
-                    const parser = new DOMParser();
-                    const tools = parser.parseFromString(html, 'text/html').body.firstChild;
-                    menuContainer.appendChild(tools);
-
-                    self.updateUI(ctl);
-
-                    if (!self.map.options.stateful) {
-                        // Compartir no funciona sin estado
-                        const shareBtn = tools.querySelector('.' + self.CLASS + '-share-btn');
-                        shareBtn.parentElement.removeChild(shareBtn);
-                    }
-                    self._setToolButtonHandlers(tools);
-
-                    const container = ctl.getContainerElement();
-                    self._decorateDisplay(container);
-
-                    // Añadimos botón de imprimir
-                    TC.loadJS(
-                        !TC.control.Print,
-                        [TC.apiLocation + 'TC/control/Print'],
-                        function () {
-                            var printTitle = "";
-
+                // Añadimos botón de imprimir
+                TC.loadJS(
+                    !TC.control.Print,
+                    [TC.apiLocation + 'TC/control/Print'],
+                    function () {
+                        if (menuIsMissing()) {
+                            let endAddUIPromise = Promise.resolve();
+                            const container = ctl.getContainerElement();
                             if (!container.querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
-                                if (self.highlightedFeature) {
-                                    printTitle = self.highlightedFeature.id;
-
-                                    if (self.highlightedFeature.showsPopup === true) {
-                                        new TC.control.Print({
-                                            target: menuContainer,
-                                            printableElement: container,
-                                            title: printTitle
-                                        });
-                                    }
+                                const highlightedFeature = (!ctl.caller && ctl.currentFeature) ? ctl.currentFeature : ctl.caller.highlightedFeature;
+                                if (highlightedFeature && highlightedFeature.showsPopup === true) {
+                                    self.printControl = new TC.control.Print({
+                                        target: menuContainer,
+                                        printableElement: container,
+                                        title: highlightedFeature.id
+                                    });
+                                    endAddUIPromise = self.printControl.renderPromise();
                                 }
                             }
-                        });
-                }
+
+                            endAddUIPromise.then(function endAddUI() {
+                                if (menuIsMissing()) {
+                                    const parser = new DOMParser();
+                                    const tools = parser.parseFromString(html, 'text/html').body.firstChild;
+                                    menuContainer.appendChild(tools);
+
+                                    self.updateUI(ctl);
+
+                                    if (!self.map.options.stateful) {
+                                        // Compartir no funciona sin estado
+                                        const shareBtn = tools.querySelector('.' + self.CLASS + '-share-btn');
+                                        shareBtn.parentElement.removeChild(shareBtn);
+                                    }
+                                    self._setToolButtonHandlers(ctl);
+
+                                    self._decorateDisplay(ctl);
+                                }
+                            });
+                        }
+                    });
             });
         }
         else {
@@ -183,22 +152,22 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         }
     };
 
-    ctlProto._decorateDisplay = function (container) {
+    ctlProto._decorateDisplay = function (displayControl) {
         const self = this;
 
-        if (self.highlightedFeature) {
+        if (!displayControl.caller && displayControl.currentFeature) { // Si es un popup/panel propio de la feature
 
             // Añadimos un zoom a la feature al pulsar en la tabla
-            const attributeTable = container.querySelector('table.tc-attr');
+            const attributeTable = displayControl.getContainerElement().querySelector('table.tc-attr');
             if (attributeTable) {
                 attributeTable.addEventListener(TC.Consts.event.CLICK, function (e) {
-                    self.zoomToCurrentFeature();
-                });
+                    self.zoomToFeature(self.getCurrentFeature(displayControl));
+                }, { passive: true });
 
                 attributeTable.querySelectorAll('a, table label, table input').forEach(function (a) {
                     a.addEventListener(TC.Consts.event.CLICK, function (e) {
                         e.stopPropagation(); // No queremos zoom si pulsamos en un enlace
-                    });
+                    }, { passive: true });
                 });
 
                 attributeTable.classList.add(self.CLASS + '-zoom');
@@ -210,66 +179,117 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
     ctlProto.updateUI = function (ctl) {
         const self = this;
         const uiDiv = ctl.getMenuElement().querySelector('.' + self.CLASS);
-        uiDiv.classList.remove(TC.Consts.classes.ACTIVE);
-        clearTimeout(self._uiUpdateTimeout);
-        self._uiUpdateTimeout = setTimeout(function () {
-            const currentFeature = self.getCurrentFeature();
-            uiDiv.classList.toggle(TC.Consts.classes.ACTIVE, currentFeature && currentFeature.layer.owner ? currentFeature.layer.owner.filterLayer !== currentFeature.layer : true);
-        }, 100);
+        const currentFeature = self.getCurrentFeature(ctl);
+        // Primer caso para que isActive == true: que esté resaltada una feature.
+        // Segundo caso: que la feature no sea de GFI.
+        // Se puede haber llamado a updateUI después de haber eliminado la feature(FEATUREDOWNPLAY)
+        // por es necesario que la feature tenga capa para considerar isActive == true.
+        const isActive = currentFeature && currentFeature.layer && currentFeature.layer.owner ?
+            currentFeature.layer.owner.filterLayer !== currentFeature.layer : currentFeature && !!currentFeature.layer;
+        if (isActive) {
+            if (currentFeature) {
+                uiDiv.dataset.layerId = currentFeature.layer.id;
+                uiDiv.dataset.featureId = currentFeature.id;
+                const profileBtn = uiDiv.querySelector(`.${self.CLASS}-prof-btn`);
+                if (profileBtn) {
+                    profileBtn.classList.toggle(TC.Consts.classes.HIDDEN,
+                        !(currentFeature instanceof TC.feature.Polyline || currentFeature instanceof TC.feature.MultiPolyline));
+                }
+            }
+            else {
+                delete uiDiv.dataset.layerId;
+                delete uiDiv.dataset.featureId;
+            }
+        }
+        if (self.printControl && currentFeature) {
+            self.printControl.title = currentFeature.id
+        }
+        if (uiDiv) {
+            uiDiv.classList.remove(TC.Consts.classes.ACTIVE);
+            setTimeout(function () {
+                uiDiv.classList.toggle(TC.Consts.classes.ACTIVE, !!isActive);
+            }, 100);
+        }
     };
 
-    ctlProto._setToolButtonHandlers = function (container) {
+    ctlProto._setToolButtonHandlers = function (ctl) {
         const self = this;
+
+        const container = ctl.getMenuElement();
 
         // Evento para mostrar diálogo modal de descarga
         container.querySelector('.' + self.CLASS + '-dl-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
-            self.showDownloadDialog();
-        });
+            self.showDownloadDialog(self.getFeatureFromElement(this.parentElement));
+        }, { passive: true });
 
         if (self.map.options.stateful) {
             // Evento para mostrar diálogo modal de compartir
             container.querySelector('.' + self.CLASS + '-share-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
-                self.showShareDialog();
-            });
+                self.showShareDialog(self.getFeatureFromElement(this.parentElement));
+            }, { passive: true });
         }
 
         // Evento para hacer zoom
         container.querySelector('.' + self.CLASS + '-zoom-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
-            self.zoomToCurrentFeature();
-        });
+            self.zoomToFeature(self.getFeatureFromElement(this.parentElement));
+        }, { passive: true });
+
+        // Evento para hacer ver perfil
+        const profileBtn = container.querySelector(`.${self.CLASS}-prof-btn`);
+        if (profileBtn) {
+            profileBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+                self.getElevationControl().then(elevCtl => elevCtl && elevCtl.displayElevationProfile(self.getCurrentFeature(ctl)));
+            }, { passive: true });
+        }
 
         // Evento para borrar la feature
         container.querySelector('.' + self.CLASS + '-del-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
-            self.removeCurrentFeature();
-        });
+            self.removeFeature(self.getFeatureFromElement(this.parentElement));
+        }, { passive: true });
     };
 
-    ctlProto.showDownloadDialog = function () {
+    ctlProto.getElevationControl = async function () {
+        const self = this;
+        if (!self.options.displayElevation) {
+            return null;
+        }
+        if (!self.elevationControl) {
+            self.elevationControl = await self.map.addControl('elevation');
+        }
+        return self.elevationControl;
+    };
+
+    ctlProto.showDownloadDialog = async function (feature) {
         const self = this;
 
-        const feature = self.getCurrentFeature();
+        const downloadDialog = await self.getDownloadDialog();
 
         var options = {
             title: self.getLocaleString("feature") + " - " + self.getLocaleString("download"),
             fileName: self._getFeatureFilename(feature)
         };
 
-        if (self.options.displayElevation !== true)
-            options = Object.assign({}, options, { elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation) });
-        else
-            options = Object.assign({}, options, { elevation: self.map.elevation && self.map.elevation.options });
+        if (self.map.elevation || self.options.displayElevation) {
+            options = Object.assign({}, options, {
+                elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation)
+            });
+        }
 
-        if (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon || TC.feature.Polygon && feature instanceof TC.feature.Polygon)
-            options = Object.assign({}, options, { excludedFormats: ["GPX"] });
+        options.openCallback = function () {
+            self.map.trigger(TC.Consts.event.DIALOG, { control: downloadDialog });
+        };
 
         downloadDialog.open(feature, options);
     };
 
-    ctlProto.showShareDialog = function () {
+    ctlProto.showShareDialog = function (feature) {
         const self = this;
-        TC.Util.showModal(self._dialogDiv.querySelector('.' + self.CLASS + '-share-dialog'), {
+        const shareDialog = self._dialogDiv.querySelector('.' + self.CLASS + '-share-dialog');
+        shareDialog.dataset.layerId = feature.layer.id;
+        shareDialog.dataset.featureId = feature.id;
+        TC.Util.showModal(shareDialog, {
             openCallback: function () {
-                self.onShowShareDialog();
+                self.onShowShareDialog(shareDialog);
             },
             closeCallback: function () {
                 self._shareCtl.featureToShare = null;
@@ -277,35 +297,48 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         });
     };
 
-    ctlProto.getCurrentFeature = function () {
-        const self = this;
-        return self.currentDisplay && ((self.currentDisplay.caller && self.currentDisplay.caller.highlightedFeature) ||
-            self.currentDisplay.currentFeature);
+    ctlProto.getCurrentFeature = function (ctl) {
+        return ctl && ((ctl.caller && ctl.caller.highlightedFeature) ||
+            ctl.currentFeature);
     };
 
-    ctlProto.zoomToCurrentFeature = function () {
+    ctlProto.getFeatureFromElement = function (elm) {
+        const self = this;
+        const layer = self.map.getLayer(elm.dataset.layerId);
+        if (layer) {
+            return layer.getFeatureById(elm.dataset.featureId);
+        }
+        return null;
+    }
+
+    ctlProto.zoomToFeature = function (feature) {
         const self = this;
         if (self.map) {
-            self.map.zoomToFeatures([self.getCurrentFeature()], { animate: true });
+            self.map.zoomToFeatures([feature], { animate: true });
         }
     };
 
-    ctlProto.removeCurrentFeature = function () {
+    ctlProto.removeFeature = function (feature) {
         const self = this;
-        const currentFeature = self.getCurrentFeature();
         const removeFeature = function () {
-            self.highlightedFeature = null;
-            if (currentFeature && currentFeature.layer) {
-                currentFeature.layer.removeFeature(currentFeature);
+            if (feature && feature.layer) {
+                feature.layer.removeFeature(feature);
             }
         };
         const closeDisplay = function () {
-            if (self.currentDisplay) {
-                self.currentDisplay.close ? self.currentDisplay.close() : self.currentDisplay.hide();
-            }
+            const filterFn = ctl => ctl.caller && ctl.caller.highlightedFeature === feature && ctl.isVisible();
+            const popups = self.map.getControlsByClass(TC.control.Popup);
+            popups
+                .filter(filterFn)
+                .forEach(pu => pu.hide());
+
+            const panels = self.map.getControlsByClass(TC.control.ResultsPanel);
+            panels
+                .filter(filterFn)
+                .forEach(p => p.close());
         };
         // No pedimos confirmación para borrar si es un resalte de GFI.
-        if (currentFeature && currentFeature.layer.owner && currentFeature.layer === currentFeature.layer.owner.resultsLayer) {
+        if (feature && feature.layer.owner && feature.layer === feature.layer.owner.resultsLayer) {
             removeFeature();
             closeDisplay();
         }
@@ -320,7 +353,7 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
     const prepareFeatureToShare = function (ctl, options) {
         options = options || {};
         return new Promise(function (resolve, reject) {
-            const currentFeature = ctl.getCurrentFeature();
+            const currentFeature = options.feature;
             if (currentFeature) {
                 const feature = currentFeature.clone();
                 feature.setId(currentFeature.id);
@@ -338,14 +371,16 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
                             resolution: options.elevation.resolution,
                             sampleNumber: 0 // No queremos determinar el número de muestras
                         };
-                        ctl.elevation.setGeometry(elevOptions).then(
-                            function (features) {
-                                resolve(features[0]);
-                            },
-                            function (error) {
-                                reject(error instanceof Error ? error : Error(error));
-                            }
-                        );
+                        ctl.getElevationToool().then(function (tool) {
+                            tool.setGeometry(elevOptions).then(
+                                function (features) {
+                                    resolve(features[0]);
+                                },
+                                function (error) {
+                                    reject(error instanceof Error ? error : Error(error));
+                                }
+                            );
+                        });
                     }
                     else {
                         resolve(feature);
@@ -369,21 +404,24 @@ TC.inherit(TC.control.FeatureTools, TC.Control);
         });
     };
 
-    ctlProto.onShowShareDialog = function () {
+    ctlProto.onShowShareDialog = function (dialog) {
         const self = this;
         const shareCtl = self._shareCtl;
         shareCtl.extraParams = null;
-        prepareFeatureToShare(self).then(function (feature) {
-            shareCtl.featureToShare = feature;
+        const feature = self.getFeatureFromElement(dialog);
+        prepareFeatureToShare(self, { feature: feature }).then(async function (f) {
+            shareCtl.featureToShare = f;
             const shareDiv = shareCtl.div;
-            const link = shareCtl.generateLink();
-            shareDiv.querySelector(".tc-url input[type=text]").value = link;
-            shareDiv.querySelector(".tc-iframe input[type=text]").value = shareCtl.generateIframe(link);
+            const link = await shareCtl.generateLink();
+            const input = shareDiv.querySelector(".tc-url input[type=text]");
+            input.value = link;
+            delete input.dataset["update"];
+            delete input.dataset["shortened"];
+            shareDiv.querySelector(".tc-iframe input[type=text]").value = await shareCtl.generateIframe(link);
         });
     };
 
     ctlProto.getFeatureTitle = function (feature) {
-        const self = this;
         var result = "";
         if (feature) {
             result = feature.id;

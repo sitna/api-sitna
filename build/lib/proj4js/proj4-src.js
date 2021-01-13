@@ -421,6 +421,13 @@
         obj[key] = v;
         return;
       }
+      if (key === 'AXIS') {
+        if (!(key in obj)) {
+          obj[key] = [];
+        }
+        obj[key].push(v);
+        return;
+      }
       if (!Array.isArray(key)) {
         obj[key] = {};
       }
@@ -513,6 +520,28 @@
           wkt.projName = wkt.PROJECTION;
         }
       }
+      if (wkt.AXIS) {
+        var axisOrder = '';
+        for (var i = 0, ii = wkt.AXIS.length; i < ii; ++i) {
+          var axis = wkt.AXIS[i];
+          var descriptor = axis[0].toLowerCase();
+          if (descriptor.indexOf('north') !== -1) {
+            axisOrder += 'n';
+          } else if (descriptor.indexOf('south') !== -1) {
+            axisOrder += 's';
+          } else if (descriptor.indexOf('east') !== -1) {
+            axisOrder += 'e';
+          } else if (descriptor.indexOf('west') !== -1) {
+            axisOrder += 'w';
+          }
+        }
+        if (axisOrder.length === 2) {
+          axisOrder += 'u';
+        }
+        if (axisOrder.length === 3) {
+          wkt.axis = axisOrder;
+        }
+      }
       if (wkt.UNIT) {
         wkt.units = wkt.UNIT.name.toLowerCase();
         if (wkt.units === 'metre') {
@@ -547,7 +576,7 @@
         if (wkt.datumCode === 'new_zealand_geodetic_datum_1949' || wkt.datumCode === 'new_zealand_1949') {
           wkt.datumCode = 'nzgd49';
         }
-        if (wkt.datumCode === 'wgs_1984') {
+        if (wkt.datumCode === 'wgs_1984' || wkt.datumCode === 'world_geodetic_system_1984') {
           if (wkt.PROJECTION === 'Mercator_Auxiliary_Sphere') {
             wkt.sphere = true;
           }
@@ -1750,11 +1779,20 @@
         }
         if (i === 0) {
           v = xin;
-          t = 'x';
+          if ("ew".indexOf(crs.axis[i]) !== -1) {
+            t = 'x';
+          } else {
+            t = 'y';
+          }
+
         }
         else if (i === 1) {
           v = yin;
-          t = 'y';
+          if ("ns".indexOf(crs.axis[i]) !== -1) {
+            t = 'y';
+          } else {
+            t = 'x';
+          }
         }
         else {
           v = zin;
@@ -1857,6 +1895,9 @@
           };
         }
         point = source.inverse(point); // Convert Cartesian to longlat
+        if (!point) {
+          return;
+        }
       }
       // Adjust for the prime meridian if necessary
       if (source.from_greenwich) {
@@ -4292,7 +4333,7 @@
           if (this.mode === this.N_POLE) {
             coslam = -coslam;
           }
-          if (Math.abs(phi + this.phi0) < EPSLN) {
+          if (Math.abs(phi + this.lat0) < EPSLN) {
             return null;
           }
           y = FORTPI - phi * 0.5;
@@ -4391,7 +4432,7 @@
           y = cosz * rh;
           break;
         case this.OBLIQ:
-          phi = (Math.abs(rh) <= EPSLN) ? this.phi0 : Math.asin(cosz * this.sinph0 + y * sinz * this.cosph0 / rh);
+          phi = (Math.abs(rh) <= EPSLN) ? this.lat0 : Math.asin(cosz * this.sinph0 + y * sinz * this.cosph0 / rh);
           x *= sinz * this.cosph0;
           y = (cosz - Math.sin(phi) * this.sinph0) * rh;
           break;
@@ -4412,8 +4453,8 @@
           y *= this.dd;
           rho = Math.sqrt(x * x + y * y);
           if (rho < EPSLN) {
-            p.x = 0;
-            p.y = this.phi0;
+            p.x = this.long0;
+            p.y = this.lat0;
             return p;
           }
           sCe = 2 * Math.asin(0.5 * rho / this.rq);
@@ -4436,8 +4477,8 @@
           }
           q = (x * x + y * y);
           if (!q) {
-            p.x = 0;
-            p.y = this.phi0;
+            p.x = this.long0;
+            p.y = this.lat0;
             return p;
           }
           ab = 1 - q / this.qp;
@@ -5719,7 +5760,7 @@
           //default case
           cos_c = this.sin_p12 * sinphi + this.cos_p12 * cosphi * Math.cos(dlon);
           c = Math.acos(cos_c);
-          kp = c / Math.sin(c);
+          kp = c ? c / Math.sin(c) : 1;
           p.x = this.x0 + this.a * kp * cosphi * Math.sin(dlon);
           p.y = this.y0 + this.a * kp * (this.cos_p12 * sinphi - this.sin_p12 * cosphi * Math.cos(dlon));
           return p;
@@ -5783,7 +5824,7 @@
     function inverse$24(p) {
       p.x -= this.x0;
       p.y -= this.y0;
-      var rh, z, sinz, cosz, lon, lat, con, e0, e1, e2, e3, Mlp, M, N1, psi, Az, cosAz, tmp, A, B, D, Ee, F;
+      var rh, z, sinz, cosz, lon, lat, con, e0, e1, e2, e3, Mlp, M, N1, psi, Az, cosAz, tmp, A, B, D, Ee, F, sinpsi;
       if (this.sphere) {
         rh = Math.sqrt(p.x * p.x + p.y * p.y);
         if (rh > (2 * HALF_PI * this.a)) {
@@ -5867,7 +5908,8 @@
           F = 1 - A * Ee * Ee / 2 - D * Ee * Ee * Ee / 6;
           psi = Math.asin(this.sin_p12 * Math.cos(Ee) + this.cos_p12 * Math.sin(Ee) * cosAz);
           lon = adjust_lon(this.long0 + Math.asin(Math.sin(Az) * Math.sin(Ee) / Math.cos(psi)));
-          lat = Math.atan((1 - this.es * F * this.sin_p12 / Math.sin(psi)) * Math.tan(psi) / (1 - this.es));
+          sinpsi = Math.sin(psi);
+          lat = Math.atan2((sinpsi - this.es * F * this.sin_p12) * Math.tan(psi), sinpsi * (1 - this.es));
           p.x = lon;
           p.y = lat;
           return p;
@@ -6520,6 +6562,172 @@
         names: names$30
     };
 
+    var mode = {
+      N_POLE: 0,
+      S_POLE: 1,
+      EQUIT: 2,
+      OBLIQ: 3
+    };
+
+    var params = {
+      h:     { def: 100000, num: true },           // default is Karman line, no default in PROJ.7
+      azi:   { def: 0, num: true, degrees: true }, // default is North
+      tilt:  { def: 0, num: true, degrees: true }, // default is Nadir
+      long0: { def: 0, num: true },                // default is Greenwich, conversion to rad is automatic
+      lat0:  { def: 0, num: true }                 // default is Equator, conversion to rad is automatic
+    };
+
+    function init$30() {
+      Object.keys(params).forEach(function (p) {
+        if (typeof this[p] === "undefined") {
+          this[p] = params[p].def;
+        } else if (params[p].num && isNaN(this[p])) {
+          throw new Error("Invalid parameter value, must be numeric " + p + " = " + this[p]);
+        } else if (params[p].num) {
+          this[p] = parseFloat(this[p]);
+        }
+        if (params[p].degrees) {
+          this[p] = this[p] * D2R;
+        }
+      }.bind(this));
+
+      if (Math.abs((Math.abs(this.lat0) - HALF_PI)) < EPSLN) {
+        this.mode = this.lat0 < 0 ? mode.S_POLE : mode.N_POLE;
+      } else if (Math.abs(this.lat0) < EPSLN) {
+        this.mode = mode.EQUIT;
+      } else {
+        this.mode = mode.OBLIQ;
+        this.sinph0 = Math.sin(this.lat0);
+        this.cosph0 = Math.cos(this.lat0);
+      }
+
+      this.pn1 = this.h / this.a;  // Normalize relative to the Earth's radius
+
+      if (this.pn1 <= 0 || this.pn1 > 1e10) {
+        throw new Error("Invalid height");
+      }
+      
+      this.p = 1 + this.pn1;
+      this.rp = 1 / this.p;
+      this.h1 = 1 / this.pn1;
+      this.pfact = (this.p + 1) * this.h1;
+      this.es = 0;
+
+      var omega = this.tilt;
+      var gamma = this.azi;
+      this.cg = Math.cos(gamma);
+      this.sg = Math.sin(gamma);
+      this.cw = Math.cos(omega);
+      this.sw = Math.sin(omega);
+    }
+
+    function forward$29(p) {
+      p.x -= this.long0;
+      var sinphi = Math.sin(p.y);
+      var cosphi = Math.cos(p.y);
+      var coslam = Math.cos(p.x);
+      var x, y;
+      switch (this.mode) {
+        case mode.OBLIQ:
+          y = this.sinph0 * sinphi + this.cosph0 * cosphi * coslam;
+          break;
+        case mode.EQUIT:
+          y = cosphi * coslam;
+          break;
+        case mode.S_POLE:
+          y = -sinphi;
+          break;
+        case mode.N_POLE:
+          y = sinphi;
+          break;
+      }
+      y = this.pn1 / (this.p - y);
+      x = y * cosphi * Math.sin(p.x);
+
+      switch (this.mode) {
+        case mode.OBLIQ:
+          y *= this.cosph0 * sinphi - this.sinph0 * cosphi * coslam;
+          break;
+        case mode.EQUIT:
+          y *= sinphi;
+          break;
+        case mode.N_POLE:
+          y *= -(cosphi * coslam);
+          break;
+        case mode.S_POLE:
+          y *= cosphi * coslam;
+          break;
+      }
+
+      // Tilt 
+      var yt, ba;
+      yt = y * this.cg + x * this.sg;
+      ba = 1 / (yt * this.sw * this.h1 + this.cw);
+      x = (x * this.cg - y * this.sg) * this.cw * ba;
+      y = yt * ba;
+
+      p.x = x * this.a;
+      p.y = y * this.a;
+      return p;
+    }
+
+    function inverse$29(p) {
+      p.x /= this.a;
+      p.y /= this.a;
+      var r = { x: p.x, y: p.y };
+
+      // Un-Tilt
+      var bm, bq, yt;
+      yt = 1 / (this.pn1 - p.y * this.sw);
+      bm = this.pn1 * p.x * yt;
+      bq = this.pn1 * p.y * this.cw * yt;
+      p.x = bm * this.cg + bq * this.sg;
+      p.y = bq * this.cg - bm * this.sg;
+
+      var rh = hypot(p.x, p.y);
+      if (Math.abs(rh) < EPSLN) {
+        r.x = 0;
+        r.y = p.y;
+      } else {
+        var cosz, sinz;
+        sinz = 1 - rh * rh * this.pfact;
+        sinz = (this.p - Math.sqrt(sinz)) / (this.pn1 / rh + rh / this.pn1);
+        cosz = Math.sqrt(1 - sinz * sinz);
+        switch (this.mode) {
+          case mode.OBLIQ:
+            r.y = Math.asin(cosz * this.sinph0 + p.y * sinz * this.cosph0 / rh);
+            p.y = (cosz - this.sinph0 * Math.sin(r.y)) * rh;
+            p.x *= sinz * this.cosph0;
+            break;
+          case mode.EQUIT:
+            r.y = Math.asin(p.y * sinz / rh);
+            p.y = cosz * rh;
+            p.x *= sinz;
+            break;
+          case mode.N_POLE:
+            r.y = Math.asin(cosz);
+            p.y = -p.y;
+            break;
+          case mode.S_POLE:
+            r.y = -Math.asin(cosz);
+            break;
+        }
+        r.x = Math.atan2(p.x, p.y);
+      }
+
+      p.x = r.x + this.long0;
+      p.y = r.y;
+      return p;
+    }
+
+    var names$31 = ["Tilted_Perspective", "tpers"];
+    var tpers = {
+      init: init$30,
+      forward: forward$29,
+      inverse: inverse$29,
+      names: names$31
+    };
+
     var includedProjections = function(proj4){
       proj4.Proj.projections.add(tmerc);
       proj4.Proj.projections.add(etmerc);
@@ -6548,6 +6756,7 @@
       proj4.Proj.projections.add(qsc);
       proj4.Proj.projections.add(robin);
       proj4.Proj.projections.add(geocent);
+      proj4.Proj.projections.add(tpers);
     };
 
     proj4$1.defaultDatum = 'WGS84'; //default datum
@@ -6558,7 +6767,7 @@
     proj4$1.defs = defs;
     proj4$1.transform = transform;
     proj4$1.mgrs = mgrs;
-    proj4$1.version = '2.6.0';
+    proj4$1.version = '2.6.3';
     includedProjections(proj4$1);
 
     return proj4$1;

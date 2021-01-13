@@ -3,27 +3,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const pre = document.createElement('pre');
     pre.classList.add('prettyprint');
-    pre.setAttribute('id', 'view-source')
+    pre.setAttribute('id', 'view-source');
+    const code = document.createElement('code');
+    code.classList.add('language-markup');
+    pre.appendChild(code);
     document.body.appendChild(pre);
 
     const a = document.createElement('a');
     a.id = 'close-source';
 
     const viewSource = function () {
-        if (!pre.innerHTML) {
+        if (!code.innerHTML) {
+            TC.loadCSS('../doc/css/prism.min.css');
             TC.ajax({ url: location.href }).then(function (response) {
                 const html = response.data;
-                pre.innerHTML = html.replace(/[<>]/g, function (m) { return { '<': '&lt;', '>': '&gt;' }[m] });
+                code.innerHTML = html.replace(/[<>]/g, function (m) { return { '<': '&lt;', '>': '&gt;' }[m] });
                 document.body.appendChild(hsLink);
                 pre.classList.add('fade-in');
                 hsLink.classList.add('fade-in');
-                TC.loadJS(!window.PR,
-                    '../doc/assets/vendor/prettify/prettify-min.js',
-                    function () {
-                        TC.loadCSS('../doc/assets/vendor/prettify/prettify-min.css');
-                        PR.prettyPrint();
-                    }
-                );
+                TC.loadJS(!window.Prism, '../doc/js/prism.min.js', function () {});
             })
         }
         else {

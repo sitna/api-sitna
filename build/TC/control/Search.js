@@ -1178,6 +1178,7 @@ TC.control.Search = function () {
             }
         ],
         parser: self.getStringPattern.bind(this, [TC.Consts.searchType.PLACENAMEMUNICIPALITY]),
+        stringPatternToCheck: [self.stringPatternsValidators.ts, self.stringPatternsValidators.st],
         goTo: self.goToStringPattern
     };
 
@@ -1506,7 +1507,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
     TC.Consts.event.SEARCHQUERYEMPTY = TC.Consts.event.SEARCHQUERYEMPTY || 'searchqueryempty.tc';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/Search.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-search.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -1868,18 +1869,11 @@ TC.inherit(TC.control.Search, TC.Control);
             var elm = data[i];
 
             if (dataRoles.indexOf(elm.dataRole) == -1) {
-                html[html.length] = self.getSearchTypeByRole(elm.dataRole).getSuggestionListHead();
+                html.push(self.getSearchTypeByRole(elm.dataRole).getSuggestionListHead());
                 dataRoles.push(elm.dataRole);
             }
 
-            html[html.length] = '<li dataRole="' + elm.dataRole + '">' +
-                '<a href="' + '#' + encodeURIComponent(elm.id) + '">' +
-                '<span hidden>' +
-                elm.label +
-                '</span>' +
-                highlighting.call(self, elm) +
-                '</a>' +
-                '</li>';
+            html.push(`<li dataRole="${elm.dataRole}"><a href="#${encodeURIComponent(elm.id)}"><span hidden>${elm.label}</span>${highlighting.call(self, elm)}</a></li>`);
         }
 
         Array.prototype.map.call(self.resultsList.querySelectorAll('li[dataRole]'), (elm) => {
@@ -1887,8 +1881,8 @@ TC.inherit(TC.control.Search, TC.Control);
         }).filter((dataRole, i, liDataRoles) => {
             return liDataRoles.indexOf(dataRole) === i && !dataRoles.includes(dataRole);
         }).forEach(dataRole => {
-            html[html.length] = self.getSearchTypeByRole(dataRole).getSuggestionListHead();
-            html[html.length] = '<li dataRole="' + dataRole + '"><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
+            html.push(self.getSearchTypeByRole(dataRole).getSuggestionListHead());
+            html.push(`<li dataRole="${dataRole}"><a class="tc-ctl-search-li-loading" href="#">${self.getLocaleString('searching')}<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>`);
         });
         
         return html.join('');
@@ -1942,7 +1936,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         self.textInput.dispatchEvent(new Event("keyup"));
                     }
                 });
-            });
+            }, { passive: true });
             if (self.options.instructions) {
                 self.textInput.setAttribute('title', self.options.instructions.trim());
                 self.button.setAttribute('title', self.options.instructions.trim());
@@ -1952,7 +1946,7 @@ TC.inherit(TC.control.Search, TC.Control);
             self.resultsList.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('a.tc-ctl-search-li-empty', function () {
                 self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
                 self.textInput.focus();
-            }));
+            }), { passive: true });
 
             self.textInput.addEventListener('keypress', function (e) {
                 if (e.which == 13) {
@@ -2258,7 +2252,7 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.getCoordinates = function (pattern) {
         const self = this;
         return new Promise(function (resolve, reject) {
-            var match = pattern.match(new RegExp('^' + self.UTMX_LABEL.trim().toLowerCase() + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim().toLowerCase() + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
+            var match = pattern.match(new RegExp('^' + self.UTMX_LABEL.trim().toLowerCase() + '*\\s*([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim().toLowerCase() + '*\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
             if (match) {
                 pattern = match[1] + ' ' + match[2];
             }
@@ -2268,7 +2262,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 pattern = match[1] + ' ' + match[3];
             }
 
-            if (/\d/.test(pattern) && (new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').test(pattern) || /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.test(pattern))) {
+            if (/\d/.test(pattern) && (new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').test(pattern) || /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.test(pattern))) {
                 match = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(pattern);
                 if (match && (match[1].indexOf(',') > -1 || match[3].indexOf(',') > -1)) {
                     match[1] = match[1].replace(',', '.');
@@ -2279,7 +2273,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
                 if (!match || match && ((match[1].indexOf(',') > -1 ? match[1].replace(',', '.') : match[1]) <= 180) && ((match[3].indexOf(',') > -1 ? match[3].replace(',', '.') : match[3]) <= 90)) {
 
-                    match = new RegExp('^([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').exec(pattern);
+                    match = new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').exec(pattern);
                     if (match && (match[1].indexOf(',') > -1 || match[2].indexOf(',') > -1)) {
                         match[1] = match[1].replace(',', '.');
                         match[2] = match[2].replace(',', '.');
@@ -2308,7 +2302,7 @@ TC.inherit(TC.control.Search, TC.Control);
                         }
 
                         if (point) {
-                            self.availableSearchTypes[TC.Consts.searchType.COORDINATES].label = /^X(\d+(?:\.\d+)?)Y(\d+(?:\.\d+)?)$/.test(id) ? self.getLocaleString('search.list.coordinates.utm') + self.map.crs : self.getLocaleString('search.list.coordinates.geo');
+                            self.availableSearchTypes[TC.Consts.searchType.COORDINATES].label = /^X([-+]?\d+(?:\.\d+)?)Y([-+]?\d+(?:\.\d+)?)$/.test(id) ? self.getLocaleString('search.list.coordinates.utm') + self.map.crs : self.getLocaleString('search.list.coordinates.geo');
 
                             //console.log('getCoordinates promise resuelta');
                             resolve([{
@@ -2346,7 +2340,7 @@ TC.inherit(TC.control.Search, TC.Control);
             if (!(/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(pattern)) && self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot)
                 _pattern = self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot + ', ' + pattern;
 
-            if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !(new RegExp('^([0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([0-9]{' + self.UTMY_LEN + '})$').test(pattern))) {
+            if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !(new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([-+]?[0-9]{' + self.UTMY_LEN + '})$').test(pattern))) {
                 self.getMunicipalities().then(function (list) {
                     var match = /^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.exec(_pattern);
                     if (match) {
@@ -2850,9 +2844,9 @@ TC.inherit(TC.control.Search, TC.Control);
                 return self.getSearchTypeByRole(dataRole);
             }).filter(function (searchType) {
                 return searchType.stringPatternToCheck;
-            }).map(function (searchType) {
+                }).map(function (searchType) {
                 return searchType.stringPatternToCheck;
-            });
+            }).flat();
 
             if (check.length === 0) {
                 check = [self.stringPatternsValidators.tsp, self.stringPatternsValidators.spt, self.stringPatternsValidators.tnsp, self.stringPatternsValidators.ts, self.stringPatternsValidators.st];
@@ -2919,15 +2913,13 @@ TC.inherit(TC.control.Search, TC.Control);
             let toQuery = [];
             let requestsQuery = [];
 
-            pattern = normalizedCriteria.call(self, pattern);
-
-            console.log('getStringPattern sartzen da: ' + pattern);
+            pattern = normalizedCriteria.call(self, pattern);            
 
             /* gestionamos:
                 Entidad de población: Irisarri Auzoa (Igantzi)
                 Topónimo: Aldabeko Bidea (Arbizu)
             */
-            let combinedCriteria = /(.*)\((.*)\)/.exec(pattern);
+            let combinedCriteria = /(.*)\((.*)\)?/.exec(pattern);            
             if (combinedCriteria && combinedCriteria.length > 2) {
                 // búsqueda de entidad de población
                 toQuery = getObjectsFromStringToQuery.call(self, allowedRoles, combinedCriteria[1]) || [];
@@ -2975,12 +2967,10 @@ TC.inherit(TC.control.Search, TC.Control);
                     self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
 
                     Promise.all(requestsQuery)
-                        .then((results) => {
-                            console.log('denei espiatzen duben promesan sartzen da');
+                        .then((results) => {                            
                             //console.log('getStringPattern promise resuelta');                                  
                             resolve([].concat.apply([], results));
-                        }).catch((error) => {
-                            console.log('denei espiatzen duben promesan catchien sartzen da');
+                        }).catch((error) => {                            
                             reject();
                         });
                 } else {
@@ -3014,35 +3004,35 @@ TC.inherit(TC.control.Search, TC.Control);
                         '<li dataRole="' + type.typeName + '"><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
                     self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
 
-                    console.log('getRoad new');
+                    //console.log('getRoad new');
                     fetch(type.url + '?' + type.filter.getParams({ t: _pattern }), {
                         signal: self.searchRequestsAbortController.signal
                     }).then((response) => {
                         if (response.ok) {
-                            return response.json();
+                            return response.text();
                         } else {
                             throw "Search: error getRoad";
                         }
                     }).then((response) => {
                         let result = [];
-
-                        if (response.totalFeatures > 0) {
-                            response.features.map(function (feature) {
+                        let data = type.parseFeatures(response);
+                        if (data.length > 0) {
+                            data.map(function (feature) {
                                 var properties = type.outputProperties;
                                 if (!result.some(function (elem) {
-                                    return (elem.text == feature.properties[properties[0]]);
+                                    return (elem.text == feature.data[properties[0]]);
                                 })) {
                                     var label = type.outputFormatLabel.tcFormat(type.outputProperties.map(function (outputProperty) {
-                                        return feature.properties[outputProperty];
+                                        return feature.data[outputProperty];
                                     }));
 
                                     var text = type.outputProperties.map(function (outputProperty) {
-                                        return feature.properties[outputProperty];
+                                        return feature.data[outputProperty];
                                     }).join('-');
 
                                     result.push({
                                         id: type.dataIdProperty.map(function (elem) {
-                                            return feature.properties[elem];
+                                            return feature.data[elem];
                                         }).join('#'),
                                         label: label,
                                         text: text,
@@ -3093,30 +3083,31 @@ TC.inherit(TC.control.Search, TC.Control);
                         '<li dataRole="' + type.typeName + '"><a class="tc-ctl-search-li-loading" href="#">' + self.getLocaleString('searching') + '<span class="tc-ctl-search-loading-spinner tc-ctl-search-loading"></span></a></li>';
                     self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
 
-                    console.log('getRoadPK new');
+                    //console.log('getRoadPK new');
 
                     fetch(type.url + '?' + type.filter.getParams({ t: _pattern, s: match[5].trim() }), {
                         signal: self.searchRequestsAbortController.signal
                     }).then((response) => {
                         if (response.ok) {
-                            return response.json();
+                            return response.text();
                         } else {
                             throw "Search: error getRoadPK";
                         }
                     }).then(function (response) {
                         let result = [];
-                        if (response.totalFeatures > 0) {
-                            response.features.map(function (feature) {
+                        let data = type.parseFeatures(response);
+                        if (data.length > 0) {
+                            data.map(function (feature) {
                                 var properties = type.outputProperties;
                                 if (!result.some(function (elem) {
-                                    return (elem.label == feature.properties[properties[0]]);
+                                    return (elem.label == feature.data[properties[0]]);
                                 })) {
                                     var text = type.outputFormatLabel.tcFormat(type.outputProperties.map(function (outputProperty) {
-                                        return feature.properties[outputProperty];
+                                        return feature.data[outputProperty];
                                     }));
                                     result.push({
                                         id: type.dataIdProperty.map(function (elem) {
-                                            return feature.properties[elem];
+                                            return feature.data[elem];
                                         }).join('#'),
                                         label: text,
                                         text: text,
@@ -3148,9 +3139,7 @@ TC.inherit(TC.control.Search, TC.Control);
 
         pattern = pattern.trim();
         if (pattern.length > 0) {
-            pattern = pattern.toLowerCase();
-
-            console.log('hasten ga: ' + pattern);
+            pattern = pattern.toLowerCase();            
 
             if (self.searchRequestsAbortController) {
                 self.searchRequestsAbortController.abort();
@@ -3162,9 +3151,7 @@ TC.inherit(TC.control.Search, TC.Control);
             self.searchRequestsResults = [];
 
             let isAborted = false;
-            let onAbort = () => {
-                console.log('bertan behera uzten du: ' + pattern);
-                
+            let onAbort = () => {                
                 isAborted = true;
                 self.searchRequestsAbortController.signal.removeEventListener('abort', onAbort);
             }
@@ -3232,7 +3219,7 @@ TC.inherit(TC.control.Search, TC.Control);
                 if (allowed.parser) {
                     toRender++;
 
-                    console.log('registramos promesa: ' + allowed.typeName);
+                    //console.log('registramos promesa: ' + allowed.typeName);
 
                     allowed.parser.call(self, pattern)
                         .then(function (dataRole, result) {
@@ -3248,7 +3235,7 @@ TC.inherit(TC.control.Search, TC.Control);
                                 }
                             };
 
-                            console.log('resulta promesa: ' + dataRole);
+                            //console.log('resulta promesa: ' + dataRole);
 
                             if (result && result.length > 0) {
 
@@ -3270,7 +3257,7 @@ TC.inherit(TC.control.Search, TC.Control);
                             //resolve(result);
                         }.bind(self, allowed.typeName)).catch(function (dataRole) {
                             //reject();
-                            console.log('reject promesa: ' + dataRole);
+                            //console.log('reject promesa: ' + dataRole);
                             renderingEnd();
                         }.bind(self, allowed.typeName));
                 } else {
@@ -3523,7 +3510,7 @@ TC.inherit(TC.control.Search, TC.Control);
     ctlProto.goToCoordinates = function (id) {
         var self = this;
         var goTo = {};
-        if (/^X(\d+(?:[\.\,]\d+)?)Y(\d+(?:[\.\,]\d+)?)$/.test(id) || /^Lat((?:[+-]?)\d+(?:[.,]\d+)?)Lon((?:[+-]?)\d+(?:[.,]\d+)?)$/.test(id)) {
+        if (/^X([-+]?\d+(?:[\.\,]\d+)?)Y([-+]?\d+(?:[\.\,]\d+)?)$/.test(id) || /^Lat((?:[+-]?)\d+(?:[.,]\d+)?)Lon((?:[+-]?)\d+(?:[.,]\d+)?)$/.test(id)) {
 
             goTo.params = {
                 type: TC.Consts.layerType.VECTOR,
@@ -3655,7 +3642,7 @@ TC.inherit(TC.control.Search, TC.Control);
         var self = this;
         var isMapGeo = self.map.wrap.isGeo();
         var point;
-        var match = /^X(\d+(?:\.\d+)?)Y(\d+(?:\.\d+)?)$/.exec(pattern);
+        var match = /^X([-+]?\d+(?:\.\d+)?)Y([-+]?\d+(?:\.\d+)?)$/.exec(pattern);
         if (match && match.length === 3) {
             point = [parseFloat(match[1]), parseFloat(match[2])];
             if (isMapGeo) {
@@ -3708,7 +3695,7 @@ TC.inherit(TC.control.Search, TC.Control);
         var result = id;
         var locale = TC.Util.getMapLocale(self.map);
 
-        if (id.match(new RegExp('^(?:' + self.LAT + '[-\\d])|(?:' + self.UTMX + '[\\d])'))) {
+        if (id.match(new RegExp('^(?:' + self.LAT + '[-\\d])|(?:' + self.UTMX + '[-+]?[\\d])'))) {
             result = result.replace(self.LAT, self.LAT_LABEL).replace(self.LON, ' ' + self.LON_LABEL).replace(self.UTMX, self.UTMX_LABEL).replace(self.UTMY, ' ' + self.UTMY_LABEL);
             var match = result.match(new RegExp('^' + self.LAT_LABEL.trim() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LON_LABEL.trim() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
             if (match) {
@@ -3717,7 +3704,7 @@ TC.inherit(TC.control.Search, TC.Control);
             }
 
             var localeDecimalSeparator = 1.1.toLocaleString(locale).substring(1, 2);
-            var match = result.match(new RegExp('^' + self.UTMX_LABEL.trim() + '*\\s*([0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim() + '*\\s*([0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
+            var match = result.match(new RegExp('^' + self.UTMX_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
             if (match) {
                 if (!Number.isInteger(parseFloat(match[1])))
                     result = result.replace(match[1], match[1].replace('.', localeDecimalSeparator));
@@ -3776,10 +3763,10 @@ TC.inherit(TC.control.Search, TC.Control);
 
     ctlProto.exportState = function () {
         const self = this;
-        if (self.exportsState) {
+        if (self.exportsState && self.layer) {
             return {
                 id: self.id,
-                searchText: self.textInput.value,
+                searchText: self.textInput && self.textInput.value,
                 layer: self.layer.exportState({
                     exportStyles: false
                 })

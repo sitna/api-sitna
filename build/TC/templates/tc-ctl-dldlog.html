@@ -1,0 +1,59 @@
+<div class="tc-ctl-dwn-dialog tc-modal {cssClass}">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{title}</h3>
+            <div class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            {#elevation}
+            <div class="tc-ctl-dwn-dialog-elev">
+                <input id="{checkboxId}" type="checkbox">
+                <label for="{checkboxId}" class="tc-ctl-dwn-dialog-elev-label">{@i18n $key="includeElevations"/}</label>
+            </div>
+            <div class="tc-ctl-dldlog-ext">
+            </div>
+            {?resolution}
+            <div class="tc-ctl-dwn-dialog-ip tc-hidden">
+                <h4>{@i18n $key="interpolateCoordsFromElevProfile"/}</h4>
+                <label>
+                    <input type="radio" name="{controlId}-finfo-ip-coords" value="0" checked />
+                    <span>{@i18n $key="no"/}</span>
+                </label>
+                <label>
+                    <input type="radio" name="{controlId}-finfo-ip-coords" value="1" />
+                    <span>{@i18n $key="yes"/}</span>
+                </label>
+                <div class="tc-ctl-dwn-dialog-ip-m tc-hidden">{@i18n $key="interpolateEveryXMeters.1"/}<input type="number" min="1" step="1" class="tc-textbox" value="{resolution}" />{@i18n $key="interpolateEveryXMeters.2"/}</div>
+            </div>
+            {/resolution}
+            {/elevation}
+            <div class="tc-ctl-dwn-dialog-dl">
+                <div>
+                    {#formats}
+                    {@select key=.}
+                    {@eq value="KML"}
+                    <button class="tc-button tc-btn-dl tc-ctl-dwn-dialog-btn-kml" data-format="KML" title="KML">KML</button>
+                    {/eq}
+                    {@eq value="KMZ"}
+                    <button class="tc-button tc-btn-dl tc-ctl-dwn-dialog-btn-kmz" data-format="KMZ" title="KMZ">KMZ</button>
+                    {/eq}
+                    {@eq value="GML"}
+                    <button class="tc-button tc-btn-dl tc-ctl-dwn-dialog-btn-gml" data-format="GML" title="GML">GML</button>
+                    {/eq}
+                    {@eq value="GeoJSON"}
+                    <button class="tc-button tc-btn-dl tc-ctl-dwn-dialog-btn-geojson" data-format="GeoJSON" title="GeoJSON">GeoJSON</button>
+                    {/eq}
+                    {@eq value="WKT"}
+                    <button class="tc-button tc-btn-dl tc-ctl-dwn-dialog-btn-wkt" data-format="WKT" title="WKT">WKT</button>
+                    {/eq}
+                    {@eq value="GPX"}
+                    <button class="tc-button tc-btn-dl tc-ctl-dwn-dialog-btn-gpx" data-format="GPX" title="GPX">GPX</button>
+                    {/eq}
+                    {/select}
+                    {/formats}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

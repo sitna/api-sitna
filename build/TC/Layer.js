@@ -389,34 +389,17 @@ TC.Layer.prototype.getBySSL_ = function (url) {
     return url.replace(self.PROTOCOL_REGEX, "https://");
 };
 
+TC.Layer.prototype.clip = function (geometry) {
+    this.wrap.clip(geometry);
+};
+
+TC.Layer.prototype.stroke = function (geometry, options) {
+    this.wrap.stroke(geometry, options);
+};
+
 (function () {
     const isWebWorkerEnabled = window.hasOwnProperty('Worker');
-    const wwPromise = new Promise(function (resolve, reject) {
-        if (isWebWorkerEnabled) {
-            // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
-            var wwLocation = TC.apiLocation + 'TC/workers/tc-caps-web-worker.js';
-            if (TC.Util.isSameOrigin(TC.apiLocation)) {
-                resolve(wwLocation);
-            }
-            else {
-                TC.ajax({
-                    url: wwLocation,
-                    method: 'GET',
-                    responseType: 'text'
-                }).then(
-                    function (response) {
-                        const data = response.data;
-                        var blob = new Blob([data], { type: "text/javascript" });
-                        var url = window.URL.createObjectURL(blob);
-                        resolve(url);
-                    },
-                    function (e) {
-                        reject(Error(e));
-                    }
-                    );
-            }
-        }
-    });
+    const wwPromise = TC.Util.getWebWorkerCrossOriginURL(TC.apiLocation + 'TC/workers/tc-caps-web-worker.js');
 
     const parseCapabilities = function (layer, data) {
         var capabilities;
@@ -498,7 +481,7 @@ TC.Layer.prototype.getBySSL_ = function (url) {
                             }
                             else {
                                 capabilities = {
-                                    error: 'Web worker error'
+                                    error: 'Web worker error: ' + layer.url
                                 }
                                 reject(capabilities.error);
                             }
@@ -523,7 +506,7 @@ TC.Layer.prototype.getBySSL_ = function (url) {
 
     const capabilitiesError = function (layer, reason) {
         return 'No se pudo obtener el documento de capacidades del servicio ' + layer.url + ': [' + reason + ']';
-    };
+    };    
 
     const getCapabilitiesOnline = function () {
         var layer = this;
@@ -549,18 +532,45 @@ TC.Layer.prototype.getBySSL_ = function (url) {
         });
     };
 
+    const srcToURL = function (src) {
+        const anchor = document.createElement('a');
+        anchor.href = src;
+
+        if (!anchor.origin) {
+
+            if (!(anchor.protocol && anchor.hostname)) {
+                var urlParts = /^(([^:\/?#]+):)?(\/\/([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/.exec(anchor.href);
+
+                anchor.protocol = urlParts[1];
+
+                if (urlParts[4].indexOf(':') > -1) {
+                    var hostname = urlParts[4].split(':');
+                    anchor.hostname = hostname[0];
+                    anchor.port = hostname[1];
+                } else {
+                    anchor.hostname = urlParts[4];
+                }
+            }
+
+            anchor.origin = (anchor.protocol.length === 0 ? window.location.protocol : anchor.protocol) + "//" + anchor.hostname + (anchor.port && (src.indexOf(anchor.port) > -1) ? ':' + anchor.port : '');
+        }
+
+        return anchor;
+    };
+
     const getCapabilitiesFromStorage = function () {
         var layer = this;
         return new Promise(function (resolve, reject) {
             // Obtenemos el capabilities almacenado en caché
             TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + layer.url)
+                const url = srcToURL(layer.url);
+                localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + layer.type + "." + url.href)
                     .then(function (value) {
                         if (value) {
                             resolve(value);
                         }
                         else {
-                            reject(Error('Capabilities not in storage: ' + layer.url));
+                            reject(Error('Capabilities not in storage: ' + url.href));
                         }
                     })
                     .catch(function () {
@@ -576,7 +586,8 @@ TC.Layer.prototype.getBySSL_ = function (url) {
             // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
             // Así evitamos que la operación, que es bastante pesada, ocupe tiempo de carga 
             // (con el efecto secundario de que LoadingIndicator esté un tiempo largo apagado durante la carga)
-            var capKey = layer.CAPABILITIES_STORE_KEY_PREFIX + layer.options.url;
+            const url = srcToURL(layer.options.url);
+            var capKey = layer.CAPABILITIES_STORE_KEY_PREFIX + layer.type + "." + url.href; 
             var setItem = function () {
                 // GLS: antes de guardar, validamos que es un capabilities sin error
                 if (capabilities.hasOwnProperty("error")) {

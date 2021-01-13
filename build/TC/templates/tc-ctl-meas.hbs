@@ -1,0 +1,12 @@
+<h2>{{i18n "measure"}}</h2>
+<div class="tc-ctl-meas-select">
+    <label class="tc-ctl-meas-btn-len"><input type="radio" name="{{controlId}}-mode" value="polyline" /><span>{{i18n "length"}}</span></label><label class="tc-ctl-meas-btn-area"><input type="radio" name="{{controlId}}-mode" value="polygon" /><span>{{i18n "areaAndPerimeter"}}</span></label>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-len tc-hidden">
+    <div class="tc-ctl-meas-line"></div>
+    <div class="tc-ctl-meas-txt">{{i18n "length"}}: <span class="tc-ctl-meas-val-len"></span></div>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-area tc-hidden">
+    <div class="tc-ctl-meas-polygon"></div>
+    <div class="tc-ctl-meas-txt">{{i18n "area"}}: <span class="tc-ctl-meas-val-area"></span>, {{i18n "perimeter"}}: <span class="tc-ctl-meas-val-peri"></span></div>
+</div>

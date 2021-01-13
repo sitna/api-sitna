@@ -41,6 +41,10 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
             }
         };
 
+        // En pantalla estrecha cambiamos el método de mostrar GFI.
+        if (window.matchMedia('screen and (max-width: 42em), screen and (max-height: 40em)').matches) {
+            map.defaultInfoContainer = TC.Consts.infoContainer.RESULTS_PANEL;
+        }
 
         map.ready(function () {
 
@@ -171,18 +175,6 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                 addSwipe('right');
                 addSwipe('left');
             }
-            //TC.loadJS(
-            //    Modernizr.touch,
-            //    TC.apiLocation + 'FastClick/fastclick.min.js',
-            //    function () {
-            //        if (Modernizr.touch) {
-            //            document.addEventListener('DOMContentLoaded', function () {
-            //                Origami.fastclick(document.body);
-            //            });
-            //        }
-            //    }
-            //);
-
         });
     }
     map._layoutDone = true;

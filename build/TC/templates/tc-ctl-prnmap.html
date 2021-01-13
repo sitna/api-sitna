@@ -1,0 +1,33 @@
+<h2>{@i18n $key="print"/}</h2>
+<div>
+    <div class="tc-ctl-prnmap-div">
+        <div class="tc-group tc-ctl-prnmap-cnt">
+            <label>{@i18n $key="title"/}:</label>
+            <input type="text" class="tc-ctl-prnmap-title tc-textbox" maxlength="30" placeholder="{@i18n $key="mapTitle"/}" />
+        </div>
+        <div class="tc-group tc-ctl-prnmap-cnt">
+            <label>{@i18n $key="layout"/}:</label>
+            <select id="print-design" class="tc-combo">
+                <option value="landscape">{@i18n $key="landscape"/}</option>
+                <option value="portrait">{@i18n $key="portrait"/}</option>
+            </select>
+        </div>
+        <div class="tc-group tc-ctl-prnmap-cnt">
+            <label>{@i18n $key="size"/}:</label>
+            <select id="print-size" class="tc-combo">
+                <option value="a4">A4</option>
+                <option value="a3">A3</option>
+            </select>
+        </div>
+        <div class="tc-group tc-ctl-prnmap-cnt tc-ctl-prnmap-cnt-btn">
+            <input id="tc-ctl-prnmap-image-qr-{controlId}" class="tc-hidden" type="checkbox" checked style="display:none;" />
+            <label for="tc-ctl-prnmap-image-qr-{controlId}" class="tc-ctl-prnmap-image-qr-label" title="{@i18n $key="createQrCodeToImage"/}">{@i18n $key="appendQRCode"/}</label>
+            <button class="tc-ctl-prnmap-btn tc-button tc-icon-button" title="{@i18n $key="printMap"/}">{@i18n $key="print"/}</button>
+        </div>
+        <div class="tc-group tc-ctl-prnmap-cnt">
+            <div class="tc-ctl-prnmap-alert tc-alert alert-warning tc-hidden">
+                <p>{@i18n $key="qrAdvice|s"/}</p>
+            </div>
+        </div>
+    </div>
+</div>

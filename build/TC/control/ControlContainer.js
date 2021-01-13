@@ -47,31 +47,34 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
     ctlProto.SIDE = ctlProto.POSITION;
 
     ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ControlContainer.html";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/ControlContainerNode.html";
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-cctr.hbs";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-cctr-node.hbs";
 
-    ctlProto.onRenderPromise = function () {
+    ctlProto.onRender = function () {
         const self = this;
 
-        var bufferPromises = new Array(self.ctlCount);
+        return new Promise(function (resolve, reject) {
+            const bufferPromises = new Array(self.ctlCount);
 
-        for (var i = 0, len = self.controlOptions.length; i < len; i++) {
-            var ctl = self.controlOptions[i];
+            for (var i = 0, len = self.controlOptions.length; i < len; i++) {
+                var ctl = self.controlOptions[i];
 
-            var ctlName = Object.keys(ctl).filter((key) => {
-                return ["position", "index"].indexOf(key) < 0;
-            })[0];
-            bufferPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
-                id: self.uids[i],
-                div: self.div.querySelector('.' + self.CLASS + '-elm-' + i).querySelector('div')
-            }, ctl[ctlName]));
-        }
-
-        Promise.all(bufferPromises).then(function () {
-            for (var i = 0, len = arguments.length; i < len; i++) {
-                var ctl = arguments[i];
-                ctl.containerControl = self;
+                var ctlName = Object.keys(ctl).filter((key) => {
+                    return ["position", "index"].indexOf(key) < 0;
+                })[0];
+                bufferPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
+                    id: self.uids[i],
+                    div: self.div.querySelector('.' + self.CLASS + '-elm-' + i).querySelector('div')
+                }, ctl[ctlName]));
             }
+
+            Promise.all(bufferPromises).then(function () {
+                for (var i = 0, len = arguments.length; i < len; i++) {
+                    var ctl = arguments[i];
+                    ctl.containerControl = self;
+                }
+                resolve(self);
+            });
         });
     };
 
@@ -89,14 +92,15 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
         options.position = options.position || options.side || self.POSITION.LEFT;
 
         return new Promise(function (resolve, reject) {
-            self.getRenderedHtml(self.CLASS + '-node', { index: ++self.ctlCount }, function (html) {
+            const idx = ++self.ctlCount;
+            self.getRenderedHtml(self.CLASS + '-node', { index: idx }, function (html) {
                 var template = document.createElement('template');
                 template.innerHTML = html.trim();
 
                 self.div.querySelector('ul.' + self.CLASS + '-' + options.position).appendChild(template.content ? template.content.firstChild : template.firstChild);
                 self.map.addControl(control, TC.Util.extend({
                     id: self.getUID(),
-                    div: self.div.querySelector('.' + self.CLASS + '-elm-' + self.ctlCount).querySelector('div')
+                    div: self.div.querySelector('.' + self.CLASS + '-elm-' + idx).querySelector('div')
                 }, options)).then(function (ctrl) {
                     resolve(ctrl);
                 });

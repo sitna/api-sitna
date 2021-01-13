@@ -1,0 +1,21 @@
+<div class="tc-ctl-mod-attr">
+    <h3>{{i18n "attributeEdit"}}</h3>
+    <div class="tc-ctl-mod-attr-body">
+        <table>
+            <tbody>
+                {{#each data}}
+                <tr>
+                    <th>{{name}}</th>
+                    <td>
+                        <input type="text" class="tc-textbox" name="{{name}}" value="{{value}}" />
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    <div class="tc-ctl-mod-attr-footer">
+        <button class="tc-button tc-ctl-mod-btn-attr-ok">{{i18n "ok"}}</button>
+        <button class="tc-button tc-ctl-mod-btn-attr-cancel">{{i18n "cancel"}}</button>
+    </div>
+</div>

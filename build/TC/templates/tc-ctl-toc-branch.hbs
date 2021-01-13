@@ -1,0 +1,9 @@
+<li {{#if children}}class="tc-ctl-toc-node"{{else}}class="tc-ctl-toc-node tc-ctl-toc-leaf"{{/if}} data-layer-name="{{name}}" data-layer-uid="{{uid}}">
+    <button class="tc-ctl-toc-collapse-btn"></button>
+    <input type="checkbox" class="tc-ctl-toc-branch-cb" name="toc" value="{{name}}"{{#if isVisible}} checked{{/if}} /><span>{{title}}</span>
+    <ul class="tc-ctl-toc-branch">
+        {{#each children}}
+            {{> tc-ctl-toc-node}}
+        {{/each}}
+    </ul>
+</li>

@@ -1,0 +1,5 @@
+<h2>{{i18n "loadedLayers"}}<span class="tc-ctl-wlm-n"></span><button class="tc-ctl-wlm-del-all tc-hidden" title="{{i18n "removeAllLayersFromMap"}}"></button></h2>
+<div class="tc-ctl-wlm-empty">{{i18n "noData"}}</div>
+<div class="tc-ctl-wlm-content tc-hidden">
+    <ul>{{#each workLayers}}{{> tc-ctl-wlm-elm}}{{/each}}</ul>
+</div>

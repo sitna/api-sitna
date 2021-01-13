@@ -17,7 +17,7 @@ TC.inherit(TC.control.Scale, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-scl';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/Scale.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-scl.hbs";
 
     ctlProto.render = function (callback) {
         const self = this;
@@ -26,7 +26,9 @@ TC.inherit(TC.control.Scale, TC.Control);
             const span = self.div.querySelector('span');
             span.textContent = '1:' + self.format(span.textContent.substr(2));
 
-            self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () { self.setScreenSize(); });
+            self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () {
+                self.setScreenSize();
+            }, { passive: true });
 
             if (TC.Util.isFunction(callback)) {
                 callback();

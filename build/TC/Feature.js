@@ -119,7 +119,7 @@ TC.Feature.prototype.getCoordsArray = function () {
     }
     const reduceFn = function (acc, elm) {
         if (isPoint(elm)) {
-            acc[acc.length] = elm;
+            acc.push(elm);
         }
         else {
             acc = acc.concat(flattenFn(elm));
@@ -219,69 +219,69 @@ TC.Feature.prototype.getInfo = function (options) {
             const openText = TC.Util.getLocaleString(locale, 'open');
             const titleText = TC.Util.getLocaleString(locale, 'linkInNewWindow');
             const formatValue = function (value) {
-                var html = [];
+                let result;
                 var isUrl = TC.Util.isURL(value);
                 if (isUrl) {
-                    html[html.length] = '<a href="';
-                    html[html.length] = value;
-                    html[html.length] = '" target="_blank" title="';
-                    html[html.length] = titleText;
-                    html[html.length] = '">';
-                    html[html.length] = openText;
-                    html[html.length] = '</a>';
+                    result = `<a href="${value}" target="_blank" title="${titleText}">${openText}</a>`;
                 }
                 else {
-                    html[html.length] = value !== undefined ? (typeof (value) === "number"?TC.Util.formatNumber(value, locale):value) : '&mdash;';
+                    result = value !== undefined ? (typeof (value) === "number" ? TC.Util.formatNumber(value, locale):value) : '&mdash;';
                 }
-                return html;
+                return result;
             }
-            const recursiva = function (data) {
+            const recursiveFn = function (data) {
                 var html = [];
                 if (data instanceof Array) {
-                    html[html.length] = '<div class="complexAttr">';
                     var id = 'complexAttr_' + TC.getUID()
-                    html[html.length] = '<input type="checkbox" id="' + id + '" />';
-                    html[html.length] = '<div>';
-                    html[html.length] = '<label for="' + id + '" title="" class="plus"></label>';
-                    html[html.length] = '<label for="' + id + '" title="" class="title">' + data.length + ' ' + TC.Util.getLocaleString(locale, 'featureInfo.complexData.array') + '</label><br/>';
-                    html[html.length] = '<table class="complexAttr"><tbody>';
+                    html.push(`<div class="complexAttr"><input type="checkbox" id="${id}" /><div><label for="${id}" title="" class="plus"></label>`);
+                    html.push(`<label for="${id}" title="" class="title">${data.length} ${TC.Util.getLocaleString(locale, 'featureInfo.complexData.array')}</label><br/>`);
+                    html.push('<table class="complexAttr"><tbody>');
                     for (var i = 0; i < data.length; i++) {
-                        html[html.length] = '<tr><td>';
-                        html = html.concat(recursiva(data[i]));
-                        html[html.length] = '</td></tr>';
+                        html.push('<tr><td>');
+                        html = html.concat(recursiveFn(data[i]));
+                        html.push('</td></tr>');
                     }
-                    html[html.length] = '</tbody></table></div></div>';
+                    html.push('</tbody></table></div></div>');
                 } else if (data instanceof Object) {
-                    html[html.length] = '<table class="complexAttr"><tbody>';
-                    for (var i in data) {
-                        html[html.length] = '<tr>';
-                        if (data[i] && data[i] instanceof Array) {
-                            html[html.length] = '<th style="display:none">' + i + '</th><td>'
-                            html[html.length] = '<label for="' + id + '" class="title">' + i + '</label><br/>';
-                            html = html.concat(recursiva(data[i]));
-                            html[html.length] = '</div></td>';
-                        }
-                        else if (data[i] && data[i] instanceof Object) {
-                            //if(data[i] && Object.entries(data[i]).some((item)=>{return item[1] instanceof Object})){						
-                            var id = 'complexAttr_' + TC.getUID()
-                            html[html.length] = '<th style="display:none">' + i + '</th><td>';
-                            html[html.length] = '<input type="checkbox" id="' + id + '" /><div>';
-                            html[html.length] = '<label for="' + id + '" title="" class="plus"></label>';
-                            html[html.length] = '<label for="' + id + '" title="" class="title">' + i + '</label><br/>';
-                            html = html.concat(recursiva(data[i]));
-                            html[html.length] = '</div></td>';
-                        }
-                        else {
-                            html[html.length] = '<th class="key">' + i + '</th>';
-                            html[html.length] = '<td class="value">';
-                            html = html.concat(recursiva(data[i]));
-                            html[html.length] = '</td>';
-                        }
-                        html[html.length] = '</tr>';
+                    if (data.getType) {
+                        const tttt = {
+                            type: data.getType(),
+                            coordinates: data.getCoordinates()
+                        };
+                        html = html.concat(recursiveFn(tttt));
                     }
-                    html[html.length] = '</tbody></table>';
+                    else {
+                        html.push('<table class="complexAttr"><tbody>');
+                        for (var i in data) {
+                            html.push('<tr>');
+                            if (data[i] && data[i] instanceof Array) {
+
+                                html.push(`<th style="display:none">${i}</th>
+                                           <td><label for="${id}" class="title">${i}</label><br/>`);
+                                html = html.concat(recursiveFn(data[i]));
+                                html.push('</div></td>');
+                            }
+                            else if (data[i] && data[i] instanceof Object) {
+                                //if(data[i] && Object.entries(data[i]).some((item)=>{return item[1] instanceof Object})){						
+                                var id = 'complexAttr_' + TC.getUID()
+                                html.push(`<th style="display:none">${i}</th>
+                                           <td><input type="checkbox" id="${id}" /><div><label for="${id}" title="" class="plus"></label>`);
+                                html.push(`<label for="${id}" title="" class="title">${i}</label><br/>`);
+                                html = html.concat(recursiveFn(data[i]));
+                                html.push('</div></td>');
+                            }
+                            else {
+                                html.push(`<th class="key">${i}</th>
+                                           <td class="value">`);
+                                html = html.concat(recursiveFn(data[i]));
+                                html.push('</td>');
+                            }
+                            html.push('</tr>');
+                        }
+                        html.push('</tbody></table>');
+                    }
                 } else {
-                    html = html.concat(formatValue(data));
+                    html.push(formatValue(data));
                 }
                 return html;
             };
@@ -293,18 +293,12 @@ TC.Feature.prototype.getInfo = function (options) {
                 }
                 else {
                     if (typeof value === 'string' || typeof value === 'number' || typeof value === 'undefined') {
-                        html[html.length] = '<tr><th>';
-                        html[html.length] = key;
-                        html[html.length] = '</th><td>';
-                        html = html.concat(formatValue(value));
-                        html[html.length] = '</td></tr>';
+                        html.push(`<tr><th>${key}</th><td>${formatValue(value)}</td></tr>`);
                     }
                     else {
-                        html[html.length] = '<tr><th>';
-                        html[html.length] = key;
-                        html[html.length] = '</th><td>';
-                        html = html.concat(recursiva(value))
-                        html[html.length] = '</td></tr>';
+                        html.push(`<tr><th>${key}</th><td>`);
+                        html = html.concat(recursiveFn(value))
+                        html.push('</td></tr>');
 
                     }
                 }
@@ -312,7 +306,7 @@ TC.Feature.prototype.getInfo = function (options) {
             const headers = hSlots
                 .map(function (val, idx) {
                     if (val) {
-                        return '<h' + idx + '>' + val + '</h' + idx + '>';
+                        return `<h${idx}>${val}</h${idx}>`;
                     }
                 })
                 .filter(function (val) {
@@ -323,7 +317,7 @@ TC.Feature.prototype.getInfo = function (options) {
             }
             if (html.length > 0) {
                 html.unshift('<table class="tc-attr">');
-                html[html.length] = '</table>';
+                html.push('</table>');
                 result = html.join('');
             }
         }
@@ -354,8 +348,10 @@ TC.Feature.prototype.getStyle = function () {
     return this.wrap.getStyle();
 };
 
-TC.Feature.prototype.showPopup = function (control) {
+TC.Feature.prototype.showPopup = function (options) {
     const self = this;
+    options = options || {};
+    const control = options && options instanceof TC.Control ? options : options.control;
     const map = (self.layer && self.layer.map) || (control && control.map);
     if (map) {
         var ctlPromise;
@@ -383,7 +379,7 @@ TC.Feature.prototype.showPopup = function (control) {
             map.getControlsByClass(TC.control.Popup)
                 .filter(p => p !== ctl && p.isVisible())
                 .forEach(p => p.hide());
-            self.wrap.showPopup(ctl);
+            self.wrap.showPopup(Object.assign({}, options, { control: ctl }));
             // Ajustamos el ancho del título al de la tabla de atributos
             const attrTable = ctl.contentDiv.querySelector("table.tc-attr");
             const headers = ctl.contentDiv.querySelectorAll("h1,h2,h3,h4,h5");
@@ -399,8 +395,10 @@ TC.Feature.prototype.showPopup = function (control) {
     }
 };
 
-TC.Feature.prototype.showResultsPanel = function (control) {
+TC.Feature.prototype.showResultsPanel = function (options) {
     const self = this;
+    options = options || {};
+    const control = options && options instanceof TC.Control ? options : options.control;
     const map = (self.layer && self.layer.map) || (control && control.map);
     if (map) {
         var ctlPromise;
@@ -450,6 +448,28 @@ TC.Feature.prototype.showResultsPanel = function (control) {
             };
             map.on(TC.Consts.event.VIEWCHANGE, onViewChange);
         });
+    }
+};
+
+TC.Feature.prototype.showInfo = function (options) {
+    const self = this;
+    options = options || {};
+    if (options.control && TC.control) {
+        const control = options.control;
+        if (control instanceof TC.control.Popup) {
+            self.showPopup(options);
+            return;
+        }
+        if (control instanceof TC.control.ResultsPanel) {
+            self.showResultsPanel(options);
+            return;
+        }
+    }
+    if (self.layer.map.on3DView || self.layer.map.defaultInfoContainer === TC.Consts.infoContainer.RESULTS_PANEL) {
+        self.showResultsPanel(options);
+    }
+    else {
+        self.showPopup(options);
     }
 };
 
