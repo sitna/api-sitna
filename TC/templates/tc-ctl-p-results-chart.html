@@ -1,0 +1,8 @@
+<div class="tc-track-chart">
+    {?msg}
+        {msg}
+    {:else}
+        <span id="elevationGain" >{@i18n $key="geo.trk.chart.elevationGain"/}: +{upHill}m, -{downHill}m</span>
+        <div class="tc-chart"></div>
+    {/msg}
+</div>
