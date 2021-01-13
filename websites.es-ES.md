@@ -8,8 +8,8 @@
   * [Toponimia](https://administracionelectronica.navarra.es/toponimia/ "Toponimia Oficial de Navarra")
 
 * Desarrollos de [Tracasa Instrumental](https://itracasa.es/) para ayuntamientos de Navarra:
-  * IRUSKAN. [Visor Ciudad Pamplona](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")
-  * IRUSKAN. [Visor Comercio Pamplona](https://sig.pamplona.es/comercio "Actividad Económica en Pamplona")
+  * GeoPamplona. [Visor Ciudad](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")
+  * GeoPamplona. [Visor Comercio](https://sig.pamplona.es/comercio "Actividad Económica en Pamplona")
   * [Geo Andosilla](https://idena.navarra.es/municipios/andosilla "Infraestructura de Datos Espaciales de Andosilla")
   * [Geo Huarte / Uharte](https://idena.navarra.es/municipios/huarte "Infraestructura de Datos Espaciales de Huarte / Uharte")
   * [Geo Leitza](https://idena.navarra.es/municipios/leitza "Infraestructura de Datos Espaciales de Leitza")
