@@ -2,12 +2,12 @@
     <div class="tc-ctl-wlm-lyr">{?path}{title}{/path}</div>
     <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}">{#path}{.}{@sep} &bull; {/sep}{:else}{title}{/path}</div>
     <div class="tc-ctl-wlm-buttons">
-        <div class="tc-ctl-wlm-btn-info" title="{@i18n $key="infoFromThisLayer"/}"></div>
         <div class="tc-ctl-wlm-tools"></div>
-        <input type="range" value="{opacity}" title="{@i18n $key="transparencyOfThisLayer"/}" />
+        {?hasExtent}<button class="tc-ctl-wlm-btn-zoom" title="{@i18n $key="zoomToLayerExtent"/}">{@i18n $key="zoomToLayerExtent"/}</button>{/hasExtent}
         <input id="tc-ctl-wlm-tools-visibility-{id}" type="checkbox" {^hide}checked="checked"{/hide} title="{@i18n $key="visibilityOfThisLayer"/}" />
         <label for="tc-ctl-wlm-tools-visibility-{id}" title="{@i18n $key="visibilityOfThisLayer"/}">{@i18n $key="visibilityOfThisLayer"/}</label>
         <button class="tc-ctl-wlm-btn-del" {?unremovable}disabled{:else}title="{@i18n $key="removeLayerFromMap"/}"{/unremovable}>{@i18n $key="removeLayerFromMap"/}</button>
+        <input type="range" value="{opacity}" title="{@i18n $key="transparencyOfThisLayer"/}" />
     </div>
         <div class="tc-ctl-wlm-info tc-hidden">
             {?abstract}

@@ -1,13 +1,13 @@
 <li class="tc-ctl-wlm-elm" tabindex="-1">
     <div class="tc-ctl-wlm-lyr">{{#if path}}{{title}}{{/if}}</div>
-    <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{{#each path}}{{this}}{{#unless @first}} &bull; {{/unless}}{{else}}{{title}}{{/each}}">{{#each path}}{{this}}{{#unless @first}} &bull; {{/unless}}{{else}}{{title}}{{/each}}</div>
+    <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{{#each path}}{{#unless @first}} &bull; {{/unless}}{{this}}{{else}}{{title}}{{/each}}">{{#each path}}{{#unless @first}} &bull; {{/unless}}{{this}}{{else}}{{title}}{{/each}}</div>
     <div class="tc-ctl-wlm-buttons">
-        <div class="tc-ctl-wlm-btn-info" title="{{i18n "infoFromThisLayer"}}"></div>
         <div class="tc-ctl-wlm-tools"></div>
-        <input type="range" value="{{opacity}}" title="{{i18n "transparencyOfThisLayer"}}" />
+        {{#if hasExtent}}<button class="tc-ctl-wlm-btn-zoom" title="{{i18n "zoomToLayerExtent"}}">{{i18n "zoomToLayerExtent"}}</button>{{/if}}
+        <button class="tc-ctl-wlm-btn-del" {{#if unremovable}}disabled{{else}}title="{{i18n "removeLayerFromMap"}}"{{/if}}>{{i18n "removeLayerFromMap"}}</button>
         <input type="checkbox" id="tc-ctl-wlm-tools-visibility-{{id}}" {{#unless hide}}checked="checked"{{/unless}} title="{{i18n "visibilityOfThisLayer"}}" />
         <label for="tc-ctl-wlm-tools-visibility-{{id}}" title="{{i18n "visibilityOfThisLayer"}}">{{i18n "visibilityOfThisLayer"}}</label>
-        <button class="tc-ctl-wlm-btn-del" {{#if unremovable}}disabled{{else}}title="{@i18n $key="removeLayerFromMap"/}"{{/if}}>{{i18n "removeLayerFromMap"}}</button>
+        <input type="range" value="{{opacity}}" title="{{i18n "transparencyOfThisLayer"}}" />
     </div>
         <div class="tc-ctl-wlm-info tc-hidden">
             {{#if abstract}}
