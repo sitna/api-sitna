@@ -20,6 +20,6 @@ Planned upgrades as on 01/13/2021:
 16.	~~New formats for uploads (KMZ, Shapefile, GeoPackage and ZIP) and downloads (KMZ, Shapefile and GeoPackage).~~ :sparkles:
 17.	~~Zoom to layer from *loaded layers* control.~~ :sparkles:
 18.	~~Link to metadata from *loaded layers* control.~~ :sparkles:
-19.	~~Link to abstract and metadata from *background maps* control.~~ :sparkles:
+19.	~~Access to abstract and metadata from *background maps* control.~~ :sparkles:
 
 :one: Upgrade fulfilled with [version 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
