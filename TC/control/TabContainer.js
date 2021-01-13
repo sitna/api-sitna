@@ -12,7 +12,7 @@ TC.control.TabContainer = function () {
     var cs = self._classSelector = '.' + self.CLASS;
     self._selectors = {
         TAB: cs + '-tab',
-        RADIOBUTTON: 'input[type=radio][name=sctnr-sel]',
+        RADIOBUTTON: `input[type=radio][name="${self.id}-sel"]`,
         ELEMENT: cs + '-elm'
     };    
 };
@@ -24,61 +24,69 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
 
     ctlProto.CLASS = 'tc-ctl-tctr';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/TabContainer.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-tctr.hbs";
 
-    ctlProto.onRenderPromise = function () {
+    ctlProto.onRender = function () {
         const self = this;
 
-        self.title = self.title || self.getLocaleString(self.options.title || 'moreControls');
-        self.div.querySelector('h2').innerHTML = self.title;
+        return new Promise(function (resolve, reject) {
+            self.title = self.title || self.getLocaleString(self.options.title || 'moreControls');
+            self.div.querySelector('h2').innerHTML = self.title;
 
-        var bufferPromises = new Array(self.ctlCount);
-        for (var i = 0, len = self.controlOptions.length; i < len; i++) {
-            var ctl = self.controlOptions[i];
-            var ctlName = "";
-            var ctlOptions = {};
+            var bufferPromises = new Array(self.ctlCount);
+            for (var i = 0, len = self.controlOptions.length; i < len; i++) {
+                var ctl = self.controlOptions[i];
+                var ctlName = "";
+                var ctlOptions = {};
 
-            // GLS: 20/01/2020 código compatibilidad hacia atrás
-            if (ctl["name"] !== undefined && ctl["options"] !== undefined) {
-                console.log('Gestionamos config de tabContainer antiguo');
+                // GLS: 20/01/2020 código compatibilidad hacia atrás
+                if (ctl["name"] !== undefined && ctl["options"] !== undefined) {
+                    console.log('Gestionamos config de tabContainer antiguo');
 
-                ctlName = ctl["name"];
-                ctlOptions = ctl["options"];
-            } else {
-                ctlName = Object.keys(ctl).filter((key) => {
-                    return key !== "title";
-                })[0];
-                ctlOptions = ctl[ctlName];
-            }
-            
-            bufferPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
-                id: self.uids[i],
-                div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
-            }, ctlOptions));
-        }
-        var writeTitle = function (ctl, idx) {
-            ctl.renderPromise().then(function () {
-                const title = self.getLocaleString(self.controlOptions[idx].title) || ctl.div.querySelector('h2').innerHTML;
-                var parent = ctl.div;
-                do {
-                    parent = parent.parentElement;
+                    ctlName = ctl["name"];
+                    ctlOptions = ctl["options"];
+                } else {
+                    ctlName = Object.keys(ctl).filter((key) => {
+                        return key !== "title";
+                    })[0];
+                    ctlOptions = ctl[ctlName];
                 }
-                while (parent && !parent.matches(self._classSelector));
-                parent.querySelector(self._selectors.TAB + '-' + idx + ' span').innerHTML = title;
-            });
-        };
-        Promise.all(bufferPromises).then(function (controls) {
-            for (var i = 0, len = controls.length; i < len; i++) {
-                var ctl = controls[i];
-                ctl.containerControl = self;
-                writeTitle(ctl, i);                
+
+                bufferPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
+                    id: self.uids[i],
+                    div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
+                }, ctlOptions));
             }
+            var writeTitle = function (ctl, idx) {
+                ctl.renderPromise().then(function () {
+                    const title = self.getLocaleString(self.controlOptions[idx].title) || ctl.div.querySelector('h2').innerHTML;
+                    var parent = ctl.div;
+                    do {
+                        parent = parent.parentElement;
+                    }
+                    while (parent && !parent.matches(self._classSelector));
+                    parent.querySelector(self._selectors.TAB + '-' + idx + ' span').innerHTML = title;
+                });
+            };
+            Promise.all(bufferPromises).then(function (controls) {
+                for (var i = 0, len = controls.length; i < len; i++) {
+                    var ctl = controls[i];
+                    ctl.containerControl = self;
+                    writeTitle(ctl, i);
+                }
+                resolve(self);
+            });
         });
     };
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self._set1stRenderPromise(self.renderData({ title: self.title, controls: self.controlOptions }, function () {
+        return self._set1stRenderPromise(self.renderData({
+            controlId: self.id,
+            title: self.title,
+            controls: self.controlOptions,
+            count: self.controlOptions.length
+        }, function () {
 
             var clickHandler = function (e) {
                 var closest = this;
@@ -135,7 +143,7 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
             };
 
             self.div.querySelectorAll('span').forEach(function (span) {
-                span.addEventListener(TC.Consts.event.CLICK, clickHandler);
+                span.addEventListener(TC.Consts.event.CLICK, clickHandler, { passive: true });
             });
 
             // GLS: Si en el register de control se llama a render, ¿por qué volvemos a llamarlo aquí?

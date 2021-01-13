@@ -1,0 +1,10 @@
+<h2>{title}</h2>
+<div class="tc-ctl-tctr-select">
+    {#controls}
+    <label class="tc-ctl-tctr-tab tc-ctl-tctr-tab-{$idx}" style="width:calc(100%/{$len} - 1px)"><input type="radio" name="{controlId}-sel" value="{$idx}" /><span>{title}</span></label>
+    {/controls}
+</div>
+{#controls}
+<div class="tc-ctl-tctr-elm tc-ctl-tctr-elm-{$idx} tc-hidden">
+</div>
+{/controls}
