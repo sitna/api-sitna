@@ -21,7 +21,7 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-ovmap';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/OverviewMap.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-ovmap.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
