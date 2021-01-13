@@ -33,10 +33,10 @@ TC.control.Measure = function () {
 };
 TC.control.Measure.units = {
     "m": { peso: 0, abbr: "m&sup2;" },
-    "dam": { peso: 1, abbr: "dam&sup2;" },
-    "hm": { peso: 2, abbr: "hm&sup2;" },
-    "ha": { peso: 2, abbr: "ha" },
-    "km": { peso: 3, abbr: "km&sup2;" }
+    "dam": { peso: 1, abbr: "dam&sup2;", precision: 2 },
+    "hm": { peso: 2, abbr: "hm&sup2;", precision: 2 },
+    "ha": { peso: 2, abbr: "ha", precision: 3 },
+    "km": { peso: 3, abbr: "km&sup2;", precision: 3 }
 }
 
 TC.inherit(TC.control.Measure, TC.Control);
@@ -46,11 +46,11 @@ TC.inherit(TC.control.Measure, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-meas';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/Measure.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-meas.hbs";
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self._set1stRenderPromise(TC.Control.prototype.render.call(self, function () {
+        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { controlId: self.id }, function () {
             TC.loadJS(
                 !TC.control.Draw,
                 TC.apiLocation + 'TC/control/Draw',
@@ -65,12 +65,12 @@ TC.inherit(TC.control.Measure, TC.Control);
                             while (label && label.tagName !== 'LABEL') {
                                 label = label.parentElement;
                             }
-                            var checkbox = label.querySelector('input[type=radio][name=mode]');
+                            var checkbox = label.querySelector(`input[type=radio][name="${self.id}-mode"]`);
                             var newMode = checkbox.value;
 
                             checkbox.checked = true;
                             self.setMode(newMode, true);
-                        });
+                        }, { passive: true });
                     });
 
                     if (TC.Util.isFunction(callback)) {
@@ -94,7 +94,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                 const drawLinesId = self.getUID();
                 const drawPolygonsId = self.getUID();
 
-                self.units = self.options.units ? self.options.units : "km";
+                self.units = self.options.units ? self.options.units : ["m", "km"];
 
                 self.layerPromise = map.addLayer({
                     id: layerId,
@@ -108,8 +108,6 @@ TC.inherit(TC.control.Measure, TC.Control);
                         polygon: map.options.styles.polygon
                     }
                 });
-
-                self.units = self.options.units ? self.options.units : "km";
 
                 Promise.all([self.layerPromise, self.renderPromise()]).then(function (objects) {
                     const layer = objects[0];
@@ -202,11 +200,11 @@ TC.inherit(TC.control.Measure, TC.Control);
         });
 
         if (mode) {
-            const radio = self.div.querySelector('input[type=radio][name=mode][value=' + mode + ']');
+            const radio = self.div.querySelector(`input[type=radio][name="${self.id}-mode"][value="${mode}"]`);
             radio.checked = true;
         }
         else {
-            self.div.querySelectorAll('input[type=radio][name=mode]').forEach(function (radio) {
+            self.div.querySelectorAll(`input[type=radio][name="${self.id}-mode"]`).forEach(function (radio) {
                 radio.checked = false;
             });
         }
@@ -271,15 +269,13 @@ TC.inherit(TC.control.Measure, TC.Control);
         const locale = self.map.options.locale || TC.Cfg.locale
         if (options.area) {
             var area = options.area;
-            let html = [];
-            (self.units instanceof Array ? self.units : self.units.split(",")).forEach(function (unit) {
+            (self.units instanceof Array ? self.units : self.units.split(",")).forEach(function (unit, index, array) {
                 const difPeso = TC.control.Measure.units[unit.trim()].peso - TC.control.Measure.units["m"].peso;
-                if (area > Math.pow(100, (difPeso - 1))) {
-                    let precision = unit === 'm' ? 0 : 3;
-                    html.push(TC.Util.formatNumber((area / Math.pow(100, (difPeso))).toFixed(precision), locale) + ' ' + TC.control.Measure.units[unit].abbr);
+                let precision = TC.control.Measure.units[unit.trim()].precision ? TC.control.Measure.units[unit.trim()].precision : 0;
+                if (array.length === 1 || area >= Math.pow(100, difPeso) / Math.pow(10, precision ? precision - 1 : precision)) {
+                    self._area.innerHTML = TC.Util.formatNumber((area / Math.pow(100, (difPeso))).toFixed(precision), locale) + ' ' + TC.control.Measure.units[unit].abbr;
                 }
-            })
-            self._area.innerHTML = html.join("/");
+            });
         }
         if (options.perimeter) {
             var perimeter = options.perimeter;
