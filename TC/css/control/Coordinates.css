@@ -29,7 +29,7 @@
     background-color: #fff;
     z-index: 9999;
     font-family: Arial, helvetica, sans-serif;
-    font-size: 0.6em;
+    font-size: 0.7em;
     padding: 0.5em;
     color: #999;
     width: intrinsic; /* Safari/WebKit uses a non-standard name */
@@ -53,19 +53,21 @@
 .tc-ctl-coords div {
     padding: 0;
     display: inline-block;
+    line-height: 20px;
 }
 
 div.tc-ctl-coords-xy {
     padding: 0 0 0 0.5em;
+    margin: auto;
 }
 
 .tc-ctl-coords-crs, .tc-ctl-coords-geocrs, .tc-ctl-coords-x, .tc-ctl-coords-y, .tc-ctl-coords-lat, .tc-ctl-coords-lon, .tc-ctl-coords-elevation {
-    color: #333;
+    color: var(--text-main-color);
     font-size: 1em;
 }
 
 .tc-ctl-coords span.close {
-    color: #000;
+    color: var(--win-btn-color);
     height: 2em;
     margin: 0 0.3em 0 0.5em;
 }
@@ -82,15 +84,15 @@ button.tc-ctl-coords-crs {
     margin-right: 0.5em;
 }
 
-.tc-ctl-coords span.tc-ctl-coords-crs {
+.tc-ctl-coords .tc-active span.tc-ctl-coords-crs {
     display: none;
 }
 
-.tc-ctl-coords.tc-threed span.tc-ctl-coords-crs {
+.tc-ctl-coords.tc-3d span.tc-ctl-coords-crs {
     display: inline;
 }
 
-.tc-ctl-coords.tc-threed button.tc-ctl-coords-crs {
+.tc-ctl-coords.tc-3d button.tc-ctl-coords-crs {
     display: none;
 }
 

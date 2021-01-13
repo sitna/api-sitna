@@ -24,10 +24,15 @@ div.tc-ctl-download-cnt label {
     box-sizing: border-box;
 }
 
-.tc-ctl-download-div label.tc-ctl-download-image-qr-label {
-    float: left;
+.tc-ctl-download-div input[type=checkbox] {
+    display: none;
+}
+
+.tc-ctl-download-div label.tc-ctl-download-image-qr-label,
+.tc-ctl-download-div label.tc-ctl-download-image-wld-label {
+    display: inline-block;
     line-height: 3em;
-    width: 50%;
+    width: calc(50% - 2px);
     font-weight: normal;
 }
 
@@ -41,6 +46,15 @@ div.tc-ctl-download-cnt label {
     content: "\2610";
     width: 18px;
 }
+
+    .tc-ctl-download-image input[type=checkbox] + label.tc-loading:after {
+        font-family: sitna;
+        content: '\e90f';
+        display: inline-block;
+        margin-left: 0.5em;
+        animation: spin 2s infinite linear;
+        -webkit-animation: spin 2s infinite linear;
+    }
 
 .tc-ctl-download-help {
     color: var(--glyph-sec-color);

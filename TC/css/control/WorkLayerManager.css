@@ -1,6 +1,6 @@
 ﻿.tc-ctl-wlm ul {
     list-style-type: none;
-    padding: 0;
+    padding: 0 0 3px 0;
     max-height: 24em;
     overflow: auto;
     padding-top: 1px;
@@ -52,16 +52,10 @@
     padding: 0.3em;
     margin-top: -1px;
     box-sizing: border-box;
-    -webkit-transition: none;
-    -moz-transition: none;
-    -o-transition: none;
     transition: none;
 }
 
     .tc-ctl-wlm li.tc-ctl-wlm-elm.tc-dragend {
-        -webkit-transition: all .1s linear;
-        -moz-transition: all .1s linear;
-        -o-transition: all .1s linear;
         transition: all .1s linear;
     }
 
@@ -69,7 +63,7 @@
         color: #ccc;
     }
 
-.tc-ctl-wlm.tc-threed li.tc-ctl-wlm-elm.tc-ctl-wlm-elm-notvisible {
+.tc-ctl-wlm.tc-3d li.tc-ctl-wlm-elm.tc-ctl-wlm-elm-notvisible {
     color: #000;
 }
 
@@ -89,11 +83,11 @@
 }
 
 .tc-ctl-wlm li:only-child .tc-ctl-wlm-path {
-    width: calc(100% - 17px);
+    width: calc(95% - 0.6em);
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-type {
-    width: 14px;
+    width: 5%;
     margin-right: 3px;
     display: inline-block;
     color: #600;
@@ -120,7 +114,7 @@
         right: 0;
         border: none;
         background: none;
-        color: #666;
+        color: var(--sec-btn-color);
         font-size: 1.4em;
     }
 
@@ -130,7 +124,7 @@
     height: 100%;
     top: 0;
     right: 0;
-    color: var(--tab-color);
+    color: var(--sec-btn-color);
     border-radius: var(--border-radius);
     text-align: center;
     vertical-align: middle;
@@ -169,6 +163,11 @@
 }
 
 
+.tc-ctl-wlm .tc-ctl-wlm-btn-zoom:after {
+    font-family: sitna;
+    content: '\e917';
+}
+
 .tc-ctl-wlm input[type=range] {
     flex-basis: 80%;
     padding: 0;
@@ -195,11 +194,11 @@
     margin-left: 0.5em;
     margin-right: 0.5em;
     text-indent: -1000vw;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
+    padding-left: 0.6em;
+    padding-right: 0.6em;
     border: 0;
     box-sizing: border-box;
-    background-color: transparent;
+    background-color: var(--sec-btn-bg-color);
     text-indent: -1000vw;
     outline: none;
     cursor: pointer;
@@ -216,22 +215,15 @@
         text-align: center;
     }
 
-.tc-ctl-wlm .tc-ctl-wlm-btn-info {    
-    color: var(--main-inactive-color);
-    cursor: pointer;
-    line-height: 1.5em;
-    font-size: 1.6em;
-    margin-right: 0.4em;
-}
-
 .tc-ctl-wlm .tc-ctl-wlm-btn-info.tc-checked {
-    color: var(--main-hl-color);
+    color: var(--sec-btn-hl-color);
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-btn-info:after {
     font-family: 'mapskin';
     content: '\e024';
 }
+
 .tc-ctl-wlm .tc-ctl-wlm-btn-info.tc-hidden {
     display: block;
     visibility: hidden;
@@ -239,6 +231,11 @@
 .tc-ctl-wlm .tc-ctl-wlm-info {
     width: 90%;
     color: #666;
+}
+
+.tc-ctl-wlm .tc-ctl-wlm-btn-dl:after {
+    font-family: sitna;
+    content: '\e903';
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-abstract {
@@ -310,7 +307,7 @@
 
 .tc-ctl-wlm-btn-del:disabled {
     cursor: default;
-    color: #ccc;
+    color: var(--sec-btn-disabled-color);
 }
 
 .tc-ctl-wlm-buttons input[type=checkbox] {
@@ -318,8 +315,16 @@
 }
 
     .tc-ctl-wlm-buttons input[type=checkbox] + label:after {
+        border-radius: calc(var(--border-radius) / 2);
         font-family: sitna;
-        content: '\e911';        
+        content: '\e911';
+        color: var(--cb-color);
+        background-color: var(--cb-bg-color);
+    }
+
+    .tc-ctl-wlm-buttons input[type=checkbox]:checked + label:after {
+        color: var(--cb-checked-color);
+        background-color: var(--cb-checked-bg-color);
     }
 
     .tc-ctl-wlm-buttons input[type=checkbox]:checked + label:after {
@@ -328,6 +333,7 @@
 
 .tc-ctl-wlm-tools {
     display: flex;
+    height: 1.5em;
 }
 
     .tc-ctl-wlm-tools:empty {
@@ -339,16 +345,16 @@
     }
 
 .tc-ctl-wlm .tc-ctl-wlm-tools button {
-    background-color: var(--main-bg-color);
-    color: var(--main-inactive-color);
+    background-color: var(--sec-btn-bg-color);
+    color: var(--sec-btn-color);
 }
 
     .tc-ctl-wlm .tc-ctl-wlm-tools button.tc-active {
-        color: var(--main-hl-color);
+        color: var(--sec-btn-hl-color);
     }
 
     .tc-ctl-wlm .tc-ctl-wlm-tools button:disabled {
-        color: var(--disabled-text-color);
+        color: var(--sec-btn-disabled-color);
     }
 
 @media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
@@ -367,7 +373,7 @@
         top: -2px;
         border: none;
         background: none;
-        color: #666;
+        color: var(--sec-btn-color);
         font-size: 14px;
         outline: none;
         padding: 0;

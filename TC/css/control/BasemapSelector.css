@@ -2,6 +2,50 @@
     z-index: 10004;
 }
 
+    .tc-ctl-bms h2 {
+        position: relative;
+    }
+
+        .tc-ctl-bms h2 button {
+            position: absolute;
+            top: -0.1em;
+            right: 0;
+            border: none;
+            background: none;
+            color: var(--sec-btn-color);
+            font-size: 1.4em;
+        }
+
+            .tc-ctl-bms h2 button:before, .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view:before {
+                font-family: sitna;
+                content: '\e914';
+                width: 1.2em;
+                height: 1.2em;
+            }
+
+            .tc-ctl-bms h2 button.tc-details:before, .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view.tc-details:before {
+                content: '\e914';
+            }
+
+            .tc-ctl-bms h2 button.tc-grid:before, .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view.tc-grid:before {
+                content: '\e913';
+            }
+
+.tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view {
+    position: relative;
+    border: none;
+    background: none;
+    color: var(--sec-btn-color);
+    font-size: 1.4em;
+    width: 1.4em;
+}
+
+    .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view:before {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
 ul.tc-ctl-bms-branch {
     list-style-type: none;
     margin: 0.5em 0 0 0;
@@ -33,6 +77,25 @@ ul.tc-ctl-bms-branch {
     background-size: 100% 100%;
     background-repeat: no-repeat;
 }
+    .tc-ctl-bms-node label.tc-loading {
+        cursor: default;
+    }
+
+        .tc-ctl-bms-node label.tc-loading:before {
+            content: " ";
+            border-radius: 50%;
+            box-shadow: #ccc 6em 0 0 0, #ccc 4.243em 4.243em 0 0, #ccc 0 6em 0 0, #ccc -4.243em 4.243em 0 0, #ccc -6em 0 0 0, #ccc -4.243em -4.243em 0 0, #ccc 0 -6em 0 0, #ccc 4.243em -4.243em 0 0;
+            position: absolute;
+            width: 3em;
+            height: 3em;
+            background-color: transparent;
+            left: 50%;
+            top: 50%;
+            margin-left: -1.5em;
+            margin-top: -1.5em;
+            font-size: 0.3em;
+            animation: spin 2s infinite linear;
+        }
 
     .tc-ctl-bms-node label span {
         position: absolute;
@@ -47,10 +110,111 @@ ul.tc-ctl-bms-branch {
         width: 4rem;
     }
 
+.tc-details,.tc-grid {
+    /*animation: fadein 0.5s ease;*/ /* con la animación el panel modal hace un efecto raro, reajustándose el ancho después de un segundo */
+}
+
+.tc-ctl-bms-tree.tc-details {
+    max-height: 20em;
+    overflow-y: auto;
+}
+
+.tc-modal-body .tc-ctl-bms-tree.tc-details {
+    max-height: none;
+}
+
+.tc-ctl-bms-node .tc-ctl-bms-info, .tc-ctl-bms-node .tc-ctl-bms-metadata {
+    display: none;
+}
+
+.tc-details .tc-ctl-bms-node .tc-ctl-bms-info {
+    display: block;
+    font-size: 1.2em;
+    vertical-align: top;
+    padding-right: 0.5em;
+    min-height: 4.5rem;
+}
+
+    .tc-details .tc-ctl-bms-node .tc-ctl-bms-info p {
+        margin-top: 0.5em;
+        margin-bottom: 0;
+    }
+
+.tc-details .tc-ctl-bms-node .tc-ctl-bms-metadata {
+    display: block;
+    font-size: 1.1em;
+}
+
+.tc-ctl-bms-metadata h4 {
+    display: inline-block;
+    font-size: 1em;
+    color: #666;
+    margin: 0.5em 0 0.2em 0;
+    text-transform: lowercase;
+}
+
+.tc-ctl-bms-metadata ul {
+    list-style-type: none;
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+}
+
+    .tc-ctl-bms-metadata li {
+        display: inline-block;
+        margin-left: 0.5em;
+    }
+
+.tc-ctl-bms-metadata a {
+    display: inline-block;
+    position: relative;
+    text-indent: -1000vw;
+    margin-right: 1.2em;
+    height: 1.5em;
+}
+
+    .tc-ctl-bms-metadata a:before {
+        font-family: 'FontAwesome';
+        font-size: 1.4em;
+        content: '\f016';
+        position: absolute;
+        text-indent: 0;
+        top: 0;
+        left: 0;
+    }
+
+    .tc-ctl-bms-metadata a[type='text/xml']:after, .tc-ctl-bms-metadata a[type='text/html']:after {
+        content: attr(title);
+        position: absolute;
+        text-indent: 0;
+        bottom: 0.2em;
+        left: 0.3em;
+        border-radius: 0.1em;
+        background-color: var(--main-hl-color);
+        color: #fff;
+        padding: 0 0.2em 0 0.2em;
+        font-size: 0.6em;
+    }
+
 .tc-ctl-bms-more-dialog .tc-ctl-bms-node label span {
     color: var(--thumb-text-color);
     text-shadow: var(--thumb-text-shadow-color) -0.06rem 0, var(--thumb-text-shadow-color) 0rem 0.08rem, var(--thumb-text-shadow-color) 0.08rem 0, var(--thumb-text-shadow-color) 0rem -0.06rem, var(--thumb-text-shadow-color) 0.06rem 0.08rem;
 }
+
+.tc-details .tc-ctl-bms-node label {
+    display: block;
+    float: left;
+    margin: 0 0.5em 0.5em 0;
+}
+
+    .tc-details .tc-ctl-bms-node label span {
+        color: transparent;
+        text-shadow: none;
+    }
+
+        .tc-details .tc-ctl-bms-node label span:after {
+            color: var(--thumb-text-color);
+        }
 
 .tc-ctl-bms-node input[type=radio] ~ span {
     border: var(--thumb-border-width) solid var(--thumb-border-color);
@@ -78,6 +242,11 @@ ul.tc-ctl-bms-branch {
     border-top-left-radius: 0.2em;
 }
 
+.tc-ctl-bms-more-dialog h3 {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 .tc-ctl-bms-more-dialog ul.tc-ctl-bms-branch {
     max-width: calc(4.8rem * 8);
     text-align: left;
@@ -100,15 +269,15 @@ ul.tc-ctl-bms-branch {
     transform: translate(-50%,-50%);
 }
 
-.tc-modal.tc-threed li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span:after,
-.tc-ctl-bms.tc-threed li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span:after {
+.tc-modal.tc-3d li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span:after,
+.tc-ctl-bms.tc-3d li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span:after {
     font-family: 'Segoe UI Symbol'; /* Requerido por FF */
     content: '\01F6AB';
     font-weight: bold;
 }
 
-.tc-modal.tc-threed li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span,
-.tc-ctl-bms.tc-threed li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span {
+.tc-modal.tc-3d li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span,
+.tc-ctl-bms.tc-3d li.tc-ctl-bms-node input[type=radio].tc-disabled ~ span {
     cursor: default;
 }
 
@@ -120,6 +289,15 @@ ul.tc-ctl-bms-branch > li {
     vertical-align: top;
     text-align: center;
     padding: 0.5em 0 0 0;
+}
+
+.tc-details ul.tc-ctl-bms-branch > li {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding-bottom: 1em;
+    padding-left: 0.4em;
+    box-sizing: border-box;
 }
 
 li.tc-ctl-bms-node.tc-hidden {
@@ -143,5 +321,17 @@ ul.tc-ctl-bms-branch input[type=radio] {
 @media screen and (min-width: 42em) {
     div.tc-modal-window.tc-ctl-bms-more-dialog {
         max-width: none;
+    }
+}
+
+@media screen and (min-height: 40em) and (pointer: fine), not all {
+    .tc-ctl-bms h2 button {
+        float: right;
+        position: relative;
+        top: 0;
+        border: none;
+        background: none;
+        font-size: 12px;
+        padding: 0;
     }
 }

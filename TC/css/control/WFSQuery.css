@@ -34,11 +34,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     /*Animacion para Firefox */
     -moz-animation: fadeIn .5s linear;
     /*top: 20%;    */
-    /*-moz-transform: translate(-50%, 0);
-    -ms-transform: translate(-50%, 0);
-    -o-transform: translate(-50%, 0);
-    -webkit-transform: translate(-50%, 0);
-    transform: translate(-50%, 0);*/
+    /*transform: translate(-50%, 0);*/
     transform: none;
     left: auto;
 }
@@ -61,15 +57,16 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     margin-bottom: 1em;
 }
 
-    .tc-ctl-wfsquery-modal-window.tc-modal-body div.tc-modal-form, .tc-ctl-wfsquery-modal-window .tc-modal-body div.tc-ctl-wfsquery-where, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-whereList, .tc-ctl-wfsquery-modal-window .tc-modal-body div:last-of-type, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-operacion {
-        margin-bottom: 0;
-    }
+.tc-ctl-wfsquery-modal-window.tc-modal-body div.tc-modal-form, .tc-ctl-wfsquery-modal-window .tc-modal-body div.tc-ctl-wfsquery-where, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where-list, .tc-ctl-wfsquery-modal-window .tc-modal-body div:last-of-type, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-op {
+    margin-bottom: 0;
+}
 
 .tc-ctl-wfsquery-dialog .tc-combo {
     width: 100%;
 }
 
-.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond {
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond,
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-geomtype button {
     float: left;
     padding: 6px 6px;
     text-align: center;
@@ -84,16 +81,25 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     justify-content: center;
     margin-left: 1px;
     color: white;
-    box-sizing:border-box;
+    box-sizing: border-box;
+    width: auto;
 }
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond {
+    flex-basis: 12%;
+}
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-geomtype button:disabled {
+        cursor: default;
+    }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond:first-of-type {
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond:first-of-type,
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-geomtype button:first-of-type {
         margin-left: 0;
         border-top-left-radius: .3em;
         border-bottom-left-radius: .3em;
     }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond:last-of-type {
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form label.tc-ctl-wfsquery-cond:last-of-type,
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-geomtype button:last-of-type {
         margin-right: 0;
         border-top-right-radius: .3em;
         border-bottom-right-radius: .3em;
@@ -105,14 +111,20 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
         line-height: normal;
     }
 
-.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-text, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-numeric, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-date {
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-text,
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-numeric,
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-date,
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-geom {
     display: -moz-flex;
     display: -webkit-flex;
     display: -ms-flex;
     display: flex;
 }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-text.tc-hidden, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-numeric.tc-hidden, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-date.tc-hidden {
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-text.tc-hidden,
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-numeric.tc-hidden,
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-date.tc-hidden,
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-geom.tc-hidden {
         display: none;
     }
 
@@ -130,10 +142,34 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     -ms-flex-wrap: wrap;
 }
 
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where .tc-ctl-wfsquery-geomtype {
+        display: none;
+    }
+
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where.tc-spatial .tc-ctl-wfsquery-geomtype {
+        display: flex;
+        width: 50%;
+        flex-basis: auto;
+    }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where.tc-spatial .tc-ctl-wfsquery-geomtype button {
+            height: 2em;
+        }
+
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where .tc-ctl-wfsquery-value {
+        display: inline-block;
+        flex-basis: auto;
+        width: 50%;
+    }
+
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where.tc-spatial .tc-ctl-wfsquery-value {
+        display: none;
+    }
+
     .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where input {
         display: block;
         float: left;
-        width: 35%;
+        width: 70%;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
         box-sizing: border-box;
@@ -161,17 +197,17 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
             appearance: textfield;
         }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where button {
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-value button {
         display: block;
         float: left;
-        width: 15%;
+        width: 30%;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
         height: 2em;
         font-size:100%;
     }
 
-.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-whereList {
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where-list {
     border: solid 1px #CCC;
     border-radius: 0.3em;
     min-height: 2em;
@@ -189,8 +225,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     box-sizing: border-box;
     align-items: baseline;
 }
-
-.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-whereList .tc-ctl-wfsquery-where-cond {
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where-list .tc-ctl-wfsquery-where-cond {
     -webkit-box-flex: 1;
     -ms-flex: 1;
     flex: 1;
@@ -204,17 +239,18 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     align-self: center;
 }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-whereList .tc-ctl-wfsquery-where-cond:first-child {
-        flex-basis: calc(100% - 2em);
-    }
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where-list .tc-ctl-wfsquery-where-cond:nth-of-type(odd) {
+    flex-basis: calc(100% - 2em);
+    width: 0px;
+}
 
-.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-whereList div.tc-ctl-wfsquery-whereList-op {
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where-list div.tc-ctl-wfsquery-where-list-op {
     flex-basis: 2em;
     margin-bottom: 0;
     align-self: center;
 }
 
-.tc-ctl-wfsquery-whereList div.tc-ctl-wfsquery-del-cond {
+.tc-ctl-wfsquery-where-list div.tc-ctl-wfsquery-del-cond {
     color: #666;
     width: 1em;
     cursor: pointer;
@@ -225,7 +261,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     margin-bottom: 0;
 }
 
-    .tc-ctl-wfsquery-whereList div.tc-ctl-wfsquery-del-cond:after {
+    .tc-ctl-wfsquery-where-list div.tc-ctl-wfsquery-del-cond:after {
         font-family: 'FontAwesome';
         content: '\f1f8';
     }
@@ -254,26 +290,31 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
         margin-top: -1.5vmin;
         font-size: 2vmin;
         animation: spin 2s infinite linear;
-        -moz-animation: spin 2s infinite linear;
         -webkit-animation: spin 2s infinite linear;
-        -o-animation: spin 2s infinite linear;
     }
 
     .tc-ctl-wfsquery-modal-window .tc-modal-body.tc-loading * {
         visibility: hidden;
     }
 
-.tc-ctl-wfsquery-value > div {
+.tc-ctl-wfsquery-log-ops > div {
     margin-bottom: 1em;
 }
 
 .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-key {
-    margin-left: 5%;
-    padding-top: 0.5em;
-    flex-basis: 25%;
+    margin-left: 0;
+    flex-basis: 30%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+.tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-key label {
+    display: inline-block;
+    text-align: center;
+    padding-right:1em;
 }
 
-.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where .tc-ctl-wfsquery-value {
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where .tc-ctl-wfsquery-log-ops {
     flex-basis: 20%;
     display: -moz-flex;
     display: -webkit-flex;
@@ -281,11 +322,11 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     display: flex;
     display: flex;
 }
-.tc-ctl-wfsquery-modal-window .tc-modal-form .tc-ctl-wfsquery-operacion input[type=radio] {
+.tc-ctl-wfsquery-modal-window .tc-modal-form .tc-ctl-wfsquery-op input[type=radio] {
     display: none;
 }
 
-.tc-modal-form label.tc-ctl-wfsquery-logOp {
+.tc-modal-form label.tc-ctl-wfsquery-log-op {
     float: left;
     text-align: center;
     cursor: pointer;
@@ -298,12 +339,12 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     box-sizing: border-box;
 }
 
-    .tc-modal-form label.tc-ctl-wfsquery-logOp:last-of-type {
+    .tc-modal-form label.tc-ctl-wfsquery-log-op:last-of-type {
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
     }
 
-    .tc-modal-form label.tc-ctl-wfsquery-logOp:first-of-type {
+    .tc-modal-form label.tc-ctl-wfsquery-log-op:first-of-type {
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
         margin-right: 1px;
@@ -365,17 +406,15 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 }*/
 
 .tc-ctl-wfsquery-btn-open:after {
-    font-family: 'FontAwesome';
-    content: '\f002';
+    font-family: sitna;
+    content: '\e916';
 }
 
 .tc-ctl-wfsquery-btn-open.tc-loading:before {
     font-size: 1.1em;
     cursor: default;
     animation: spin 1s infinite linear;
-    -moz-animation: spin 1s infinite linear; /* Firefox */
-    -webkit-animation: spin 1s infinite linear; /* Safari and Chrome */
-    -o-animation: spin 1s infinite linear;
+    -webkit-animation: spin 1s infinite linear;
     content: '\f1ce'
 }
 
@@ -399,211 +438,211 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     overflow-x: auto;
 }
 
+.tc-ctl-wfsquery-opt-geom {
+    color: var(--main-hl-color);
+}
 
-@media only screen and (max-width: 480px) {
-    .tc-modal.tc-ctl-wfsquery-dialog .tc-ctl-wfsquery-modal-window {
-        width: 100%;
-        max-width: 100%;
-        max-height: 100%
-    }
+.tc-modal.tc-ctl-wfsquery-dialog .tc-modal-form {
+    min-height: 300px;
+}
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body {
-        padding: 10px;
-        height: auto;
-        overflow-y: auto
-    }
 
-    .tc-modal-form .tc-ctl-wfsquery-text, .tc-modal-form .tc-ctl-wfsquery-numeric, .tc-modal-form .tc-ctl-wfsquery-date {
-        flex-wrap: wrap
-    }
 
-    .tc-modal.tc-ctl-wfsquery-dialog .tc-modal-form {
-        height: inherit;
-        width: inherit;
-        flex-wrap: wrap;
-    }
-
-    .tc-ctl-wfsquery-where {
-        display: flex;
-        flex-wrap: wrap
-    }
-
-        .tc-ctl-wfsquery-where input {
-            flex-basis: 75%; 
+    @media only screen and (max-width: 480px) {
+        .tc-modal.tc-ctl-wfsquery-dialog .tc-ctl-wfsquery-modal-window {
+            width: 100%;
+            max-width: 100%;
+            max-height: 100%
         }
 
-        .tc-ctl-wfsquery-where button {
+        .tc-ctl-wfsquery-modal-window .tc-modal-body {
+            padding: 10px;
+            height: auto;
+            overflow-y: auto
+        }
+
+        .tc-modal-form .tc-ctl-wfsquery-text, .tc-modal-form .tc-ctl-wfsquery-numeric, .tc-modal-form .tc-ctl-wfsquery-date {
+            flex-wrap: wrap
+        }
+
+        .tc-modal.tc-ctl-wfsquery-dialog .tc-modal-form {
+            height: inherit;
+            width: inherit;
+            flex-wrap: wrap;
+        }
+
+       
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form.tc-ctl-wfsquery-where .tc-ctl-wfsquery-where-list {
+            flex-basis: 100%
+        }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label, .tc-ctl-wfsquery.tc-ctl-wfsquery-date label {
+            flex-basis: 29%;
+        }
+
+            .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(1), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(1) {
+                margin-bottom: 1px;
+                border-bottom-left-radius: 0
+            }
+
+            .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(2), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(2) {
+                margin-bottom: 1px
+            }
+
+            .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(3), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(3) {
+                margin-bottom: 1px;
+                border-top-right-radius: 0.3em
+            }
+
+            .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(4), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(4) {
+                margin-left: 0px;
+                border-bottom-left-radius: 0.3em
+            }
+
+            .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(6), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(6) {
+                border-top-right-radius: 0
+            }
+    }
+
+    @media only screen and (max-width: 480px), only screen and (max-height: 480px) {
+        .tc-ctl-wfsquery-modal-window .tc-modal-header {
+            padding: 10px 20px 10px 10px;
+        }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-footer {
+            padding: 10px;
+        }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body {
+            padding: 10px;
+        }
+
+        .tc-ctl-wfsquery-modal-window label.tc-ctl-wfsquery-cond {
+            font-size: 75%;
+            min-height: 14px;
+        }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where input {
             display: block;
-            flex-basis: 25%
+            flex-basis: 75%;
         }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form.tc-ctl-wfsquery-where .tc-ctl-wfsquery-whereList {
-        flex-basis: 100%
-    }
-
-    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label, .tc-ctl-wfsquery.tc-ctl-wfsquery-date label {
-        flex-basis: 29%;
-    }
-
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(1), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(1) {
-            margin-bottom: 1px;
-            border-bottom-left-radius: 0
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where .tc-ctl-wfsquery-value {
+            flex-basis: 100%;
         }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(2), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(2) {
-            margin-bottom: 1px
+        .tc-ctl-wfsquery-where {
+            display: flex;
+            flex-wrap: wrap;
         }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(3), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(3) {
-            margin-bottom: 1px;
-            border-top-right-radius: 0.3em
+        .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-key, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where input {
+            flex-basis: 75%;
+            margin-left: 0;
+            margin-top: 0;
+        }
+        
+        .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-log-ops, .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-value button {
+            flex-basis: 25%;
         }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(4), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(4) {
-            margin-left: 0px;
-            border-bottom-left-radius: 0.3em
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where .tc-ctl-wfsquery-value {
+            flex-basis: 100%;
+            width: 0;
+            display: flex;
+        }
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where.tc-spatial .tc-ctl-wfsquery-geomtype {
+            flex-basis:100%;
         }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(6), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(6) {
-            border-top-right-radius: 0
+        .tc-ctl-wfsquery-list.tc-ctl-search-list {
+            display: block;
+            margin-top: 30px;
+            width: auto;
+            max-width: calc(100% - 1.8em);
+            min-width: calc((100% - 1.8em)*0.75);
         }
-}
-
-@media only screen and (max-width: 480px), only screen and (max-height: 480px) {
-    .tc-ctl-wfsquery-modal-window .tc-modal-header {
-        padding: 10px 20px 10px 10px;
     }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-footer {
-        padding: 10px;
+    @media only screen and (max-width: 500px) {
+        .tc-modal.tc-ctl-wfsquery-dialog .tc-ctl-wfsquery-modal-window {
+            width: 100%;
+            max-width: auto;
+            min-width:auto;
+            left: 0;
+        }
     }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body {
-        padding: 10px;
-    }
-
-    .tc-ctl-wfsquery-modal-window label.tc-ctl-wfsquery-cond {
-        font-size: 75%;
-        min-height: 14px;
-    }
-
-    .tc-ctl-wfsquery-where input {
-        display: block;
-        flex-basis: 75%;
-    }
-
-    .tc-ctl-wfsquery-where button {
-        display: block;
-        flex-basis: 25%;
-        height: 28px;
-    }
-
-    .tc-ctl-wfsquery-where {
-        display: flex;
-        flex-wrap: wrap;
-    }
-
-    .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-key {
-        flex-basis: 75%;
-        margin-left: 0%;
-        margin-top: 5px;
-    }
-
-    .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-value {
-        flex-basis: 25%;
-        margin-top: 5px;
-    }
-
-    .tc-ctl-wfsquery-list.tc-ctl-search-list {
-        display: block;
-        margin-top: 30px;
-        width: auto;
-        max-width: calc(100% - 1.8em);
-        min-width: calc((100% - 1.8em)*0.75);
-    }
-}
-
-@media only screen and (max-width: 500px) {
-    .tc-modal.tc-ctl-wfsquery-dialog .tc-ctl-wfsquery-modal-window {
-        width: 100%;
-        max-width: 100%;
-        left: 0;
-    }   
-}
-
-@media only screen and (min-width: 768px) {
-    /*.tc-ctl-wfsquery-where .tc-ctl-wfsquery-key {
+    @media only screen and (min-width: 768px) {
+        /*.tc-ctl-wfsquery-where .tc-ctl-wfsquery-key {
         flex-basis: 75%;
         margin-left: 0%;        
     }
-    .tc-ctl-wfsquery-where .tc-ctl-wfsquery-value{
+    .tc-ctl-wfsquery-where .tc-ctl-wfsquery-log-ops{
         flex-basis: 25%;
         display:flex;
     }*/
-}
-
-@media only screen and (min-width: 768px) and (orientation: portrait) {
-    .tc-modal.tc-ctl-wfsquery-dialog.tc-ctl-wfsquery-modal-window {
-        width: 500px;
-        max-height: 80%;
     }
 
-    .tc-modal.tc-ctl-wfsquery-dialog .tc-modal-form {
-        min-height: 200px;
+    @media only screen and (min-width: 768px) and (orientation: portrait) {
+        .tc-modal.tc-ctl-wfsquery-dialog.tc-ctl-wfsquery-modal-window {
+            width: 500px;
+            max-height: 80%;
+        }
+
+        
+        .tc-ctl-wfsquery-where input {
+            width: 35%;
+            flex-basis: 35%;
+            -webkit-appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        .tc-ctl-wfsquery-where button {
+            width: 15%;
+            flex-basis: 15%;
+            height: 29px;
+        }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-key {
+            flex-basis: 30%;
+            margin-top: 0;
+            margin-left: 0;
+        }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-log-ops {
+            flex-basis: 20%;
+            margin-top: 0;
+        }
+
+        .tc-modal-form label.tc-ctl-wfsquery-log-op {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
     }
 
-    .tc-ctl-wfsquery-where input {
-        width: 35%;
-        flex-basis: 35%;
-        -webkit-appearance: textfield;
-        -moz-appearance: textfield;
+    @media only screen and (max-height: 600px) {
+        .tc-modal.tc-ctl-wfsquery-dialog .tc-ctl-wfsquery-modal-window {
+            max-height: 100%;
+        }
     }
-
-    .tc-ctl-wfsquery-where button {
-        width: 15%;
-        flex-basis: 15%;
-        height: 29px;
-    }
-
-    .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-key {
-        flex-basis: 25%;
-        margin-top: 0;
-        margin-left: 5%;
-    }
-
-    .tc-ctl-wfsquery-modal-window .tc-modal-body div .tc-ctl-wfsquery-where .tc-ctl-wfsquery-value {
-        flex-basis: 20%;
-        margin-top: 0;
-    }
-
-    .tc-modal-form label.tc-ctl-wfsquery-logOp {
-        margin-top: 0;
-        margin-bottom: 0;
-    }
-}
-
-@media only screen and (max-height: 600px) {
-    .tc-modal.tc-ctl-wfsquery-dialog .tc-ctl-wfsquery-modal-window {
-        max-height: 100%;
-    }
-}
-/*
+    /*
 @media only screen and (min-width: 768px) and (orientation: portrait) {
     .tc-modal-form
     {
         min-height: 400px;
     }
 }*/
+    @media only screen and (min-width: 1024px) {
 
-@media only screen and (min-width: 1024px) {
-
-    .tc-modal.tc-ctl-wfsquery-dialog .tc-ctl-wfsquery-modal-window {
-        width: 500px;
-        max-height: 80%;
+        .tc-modal.tc-ctl-wfsquery-dialog .tc-ctl-wfsquery-modal-window {
+            max-height: 80%;
+        }
+        
     }
-
-    .tc-modal.tc-ctl-wfsquery-dialog .tc-modal-form {
-        min-height: 300px;
+@media screen and (min-width: 42em) {
+    .tc-modal .tc-modal-window.tc-ctl-wfsquery-modal-window {
+        width: 600px;
     }
 }
 /*Estilos del results panel*/
@@ -631,8 +670,6 @@ div.tc-ctl.tc-ctl-wfsquery-results .tc-ctl-p-results-table {
     max-width: 200px;
     white-space: nowrap;
     overflow: hidden;
-    -ms-text-overflow: ellipsis;
-    -o-text-overflow: ellipsis;
     text-overflow: ellipsis;    
 }
 
@@ -672,6 +709,7 @@ div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prcollapsed-slide-submenu-d
     .tc-ctl-wlm .tc-ctl-wlm-btn-query {
         font-size: 1.1em;
     }
+    
 }
 
 @media \0screen\,screen\9 {
@@ -785,4 +823,21 @@ div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prcollapsed-slide-submenu-d
 }
 .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .tc-ctl-p-results-table tr.tc-selectable > td > table > tbody > tr > th {
     margin-right:0.3em;
+}
+
+.tc-ctl-wfsquery-geom-draw.tc-hidden, .tc-ctl-wfsquery-geom-btn.tc-hidden {
+    display: none;
+}
+
+.tc-ctl-wfsquery-geom-btn {
+    padding: 0.5em;
+    width: 100%;
+}
+
+.tc-ctl-wfsquery-geom-btn-ok {
+    width: 100%;
+}
+
+.tc-ctl-wfsquery-where-cond-view:before {
+    content: '\e910';
 }

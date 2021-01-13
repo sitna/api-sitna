@@ -15,11 +15,11 @@
         height: 100%;
     }
 
-    .tc-ctl-ovmap.tc-threed .ol-overviewmap-box {
+    .tc-ctl-ovmap.tc-3d .ol-overviewmap-box {
         border: none;
     }
 
-        .tc-ctl-ovmap.tc-threed .ol-overviewmap-box:after {
+        .tc-ctl-ovmap.tc-3d .ol-overviewmap-box:after {
             position: absolute;
             color: #f00;
             content: '\e0c0';
@@ -35,7 +35,7 @@
             text-shadow: 1px 1px 0 #000;
         }
 
-        .tc-ctl-ovmap.tc-threed .ol-overviewmap-box.tc-active:after {
+        .tc-ctl-ovmap.tc-3d .ol-overviewmap-box.tc-active:after {
             color: #666;
         }
 
@@ -58,22 +58,10 @@
     height: 1em;
     background-color: var(--main-hl-color);
     z-index: 10000;
-    -moz-animation-name: bounce-fading-bar;
-    -moz-animation-duration: 1.3s;
-    -moz-animation-iteration-count: infinite;
-    -moz-animation-direction: normal;
-    -moz-transform: scale(.3);
     -webkit-animation-name: bounce-fading-bar;
     -webkit-animation-duration: 1.3s;
     -webkit-animation-iteration-count: infinite;
     -webkit-animation-direction: normal;
-    -webkit-transform: scale(.3);
-    -ms-transform: scale(.3);
-    -o-animation-name: bounce-fading-bar;
-    -o-animation-duration: 1.3s;
-    -o-animation-iteration-count: infinite;
-    -o-animation-direction: normal;
-    -o-transform: scale(.3);
     animation-name: bounce-fading-bar;
     animation-duration: 1.3s;
     animation-iteration-count: infinite;

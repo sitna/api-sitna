@@ -6,11 +6,8 @@
 .tc-ctl-m-finfo-select {
     font-size: 0.9em;
     line-height: 1.8em;
+    display: flex;
 }
-
-    .tc-ctl-m-finfo-select form {
-        display: flex;
-    }
 
     .tc-ctl-m-finfo-select label {
         position: relative;
@@ -25,7 +22,7 @@
         display: none;
     }
 
-    .tc-ctl-m-finfo-select form > span {
+    .tc-ctl-m-finfo-select > span {
         height: 2em;
         text-align: center;
         box-sizing: border-box;
@@ -78,22 +75,28 @@
         border-color: var(--btn-disabled-border-color);
         cursor: default;
     }
-    .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-remove {
-        border: none;
-        background: none;
+    
+    .tc-ctl-m-finfo-select .tc-icon-btn {
         font-size: 1.5em;
         padding: 1px 0px 1px 10px;
-        color: var(--btn-bg-color);
     }
-    .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-remove:disabled {
-        color: var(--btn-disabled-bg-color);
-    }
-    .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-remove::after {
-        content: '\e90d';
-        font-family: sitna;
-    }
+
+        .tc-ctl-m-finfo-select .tc-icon-btn:first-of-type {
+            margin-left: 0.5em;
+        }
+
+.tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-dl:before {
+    content: '\e903';
+    font-family: sitna;
+}
+
+.tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-remove:before {
+    content: '\e90d';
+    font-family: sitna;
+}
+
 @media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (min--moz-device-pixel-ratio:0) and (min-height: 40em) {
-    .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-remove {
+    .tc-ctl-m-finfo-select .tc-icon-btn {
         padding: 1px 0px 1px 3px;
     }
 }

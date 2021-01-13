@@ -2,9 +2,6 @@
     overflow: hidden;
     z-index: 10004;
     font-size: 1em;
-    -webkit-transition: all .2s ease;
-    -moz-transition: all .2s ease;
-    -o-transition: all .2s ease;
     transition: all .2s ease;
 }
 
@@ -25,9 +22,6 @@ ul.tc-ctl-lcat-branch {
     margin: 1px 0 0 0;
     padding: 0;
     margin-left: 10px;
-    -webkit-transition: all .3s ease;
-    -moz-transition: all .3s ease;
-    -o-transition: all .3s ease;
     transition: all .3s ease;
 }
 
@@ -62,9 +56,6 @@ li.tc-ctl-lcat-node {
         background-color: var(--main-bg-color);
         display: inline;
         position: relative;
-        -webkit-transition: all .2s ease;
-        -moz-transition: all .2s ease;
-        -o-transition: all .2s ease;
         transition: all .2s ease;
     }
 
@@ -101,9 +92,7 @@ li.tc-ctl-lcat-node.tc-loading > span {
     color: #bbb;
     cursor: default;
     animation: pulsation 0.75s infinite;
-    -moz-animation: pulsation 0.75s infinite; /* Firefox */
-    -webkit-animation: pulsation 0.75s infinite; /* Safari and Chrome */
-    -o-animation: pulsation 0.75s infinite; /* Opera */
+    -webkit-animation: pulsation 0.75s infinite;
 }
 
 li.tc-ctl-lcat-node.tc-checked > span {
@@ -114,7 +103,7 @@ li.tc-ctl-lcat-node.tc-checked > span {
 li.tc-ctl-lcat-node > button.tc-ctl-lcat-btn-info {
     right: 0;
     background: none;
-    color: #666;
+    color: var(--sec-btn-color);
     cursor: pointer;
     z-index: 10000;
     font-size: 100%;
@@ -226,9 +215,6 @@ ul.tc-ctl-lcat-branch.tc-collapsed {
     border: 1px solid #999;
     border-radius: var(--border-radius);
     padding: 0;
-    -webkit-transition: all .2s ease;
-    -moz-transition: all .2s ease;
-    -o-transition: all .2s ease;
     transition: all .2s ease;
     padding-right: 0.13em;
     position: relative;
@@ -296,9 +282,7 @@ div.tc-ctl-lcat-legend {
     margin: 0;
     color: #eee;
     animation: rotation 0.75s linear infinite;
-    -moz-animation: rotation 0.75s linear infinite; /* Firefox */
-    -webkit-animation: rotation 0.75s linear infinite; /* Safari and Chrome */
-    -o-animation: rotation 0.75s linear infinite; /* Opera */
+    -webkit-animation: rotation 0.75s linear infinite;
 }
 
     .tc-ctl-lcat-legend-wait.tc-hidden {
@@ -322,7 +306,7 @@ div.tc-ctl-lcat-legend {
         right: 0;
         border: none;
         background: none;
-        color: var(--title-color);
+        color: var(--sec-btn-color);
         font-size: 1.4em;
     }
 
@@ -336,23 +320,14 @@ div.tc-ctl-lcat-legend {
         color: rgb(249, 237, 20);
     }
 
-.tc-ctl-lcat h2 button.tc-ctl-lcat-btn-search:after {
+.tc-ctl-lcat h2 button.tc-ctl-lcat-btn-search:before {
     font-family: 'mapskin';
     content: '\e003';
-    color: var(--glyph-color);
 }
 
-.tc-ctl-lcat h2 button.tc-ctl-lcat-btn-tree {
-    background-image: url(../img/tree-list.svg);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 1em;
-    width: 1.2em;
-}
-
-    .tc-ctl-lcat h2 button.tc-ctl-lcat-btn-tree:after {
-        visibility: hidden;
+    .tc-ctl-lcat h2 button.tc-ctl-lcat-btn-tree:before {
+        font-family: sitna;
+        content: '\e91c';
     }
 
 .tc-ctl-lcat-search.tc-hidden {
@@ -462,9 +437,6 @@ div.tc-ctl-lcat-legend {
     }
 
     .tc-ctl-lcat-search li.tc-ctl-lcat-search-group > ul {
-        -webkit-transition: all .3s ease;
-        -moz-transition: all .3s ease;
-        -o-transition: all .3s ease;
         transition: all .3s ease;
     }
 
@@ -489,7 +461,7 @@ div.tc-ctl-lcat-legend {
     }
 
     .tc-ctl-lcat-search ul button:after {
-        color: var(--glyph-color);
+        color: var(--sec-btn-color);
     }
 
 
@@ -551,9 +523,7 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         margin-top: 2px;
         display: inline-block;
         animation: spin 2s infinite linear;
-        -moz-animation: spin 2s infinite linear;
         -webkit-animation: spin 2s infinite linear;
-        -o-animation: spin 2s infinite linear;        
     }
 
     .tc-ctl-lcat-loading-node.error {
@@ -562,9 +532,8 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
 
     .tc-ctl-lcat-loading-node.error:before {
         animation: none;
-        -moz-animation: none;
         -webkit-animation: none;
-        -o-animation: none;
+        font-family: FontAwesome;
         content: "\f057";
         color: #f00;
     }
@@ -580,17 +549,10 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         top: -2px;
         border: none;
         background: none;
-        color: #666;
         font-size: 14px;
         outline: none;
         padding: 0;
     }
-
-        .tc-ctl-lcat h2 button.tc-ctl-lcat-btn-tree {
-            margin-top: 0.25em;
-            height: 0.9em;
-            width: 1em;
-        }
 
     .tc-ctl-lcat-info-close {
         display: block;

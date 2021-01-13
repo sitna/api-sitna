@@ -25,7 +25,7 @@
     height: 100%;
     padding: 0;
     border: 0;
-    border-radius: 0.2em;
+    border-radius: calc(var(--border-radius) * 0.67);
     cursor: move;
     z-index: 10002;
     background-color: var(--map-btn-bg-color);
@@ -55,9 +55,6 @@
     height: 100%;
     z-index: 10011;
     background-color: #ccc;
-    -webkit-transition: all .2s ease;
-    -moz-transition: all .2s ease;
-    -o-transition: all .2s ease;
     transition: all .2s ease;
 }
 
@@ -98,7 +95,7 @@
         }
 
 /* 2019/01/24 GLS: el tc-disabled que asignamos cuando un control no está disponible en 3D ya se encarga de ocultarlo */
-/*.tc-threed div.tc-ctl-sv-btn {
+/*.tc-3d div.tc-ctl-sv-btn {
     display: none;
 }*/
 

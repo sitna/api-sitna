@@ -1,4 +1,13 @@
-﻿
+﻿@keyframes showIn {
+    from {
+        opacity: 0
+    }
+
+    to {
+        opacity: 1
+    }
+}
+
 @-webkit-keyframes showIn {
     from {
         opacity: 0
@@ -9,47 +18,17 @@
     }
 }
 
-@-moz-keyframes showIn {
+@keyframes showOut {
     from {
-        opacity: 0
+        opacity: 1
     }
 
     to {
-        opacity: 1
-    }
-}
-
-@keyframes showIn {
-    from {
         opacity: 0
-    }
-
-    to {
-        opacity: 1
     }
 }
 
 @-webkit-keyframes showOut {
-    from {
-        opacity: 1
-    }
-
-    to {
-        opacity: 0
-    }
-}
-
-@-moz-keyframes showOut {
-    from {
-        opacity: 1
-    }
-
-    to {
-        opacity: 0
-    }
-}
-
-@keyframes showOut {
     from {
         opacity: 1
     }
@@ -71,7 +50,7 @@ div.tc-map div.tc-ctl-p-results {
     min-width: 225px;
 }
 
-.tc-threed > .tc-ctl-p-results {
+.tc-3d > .tc-ctl-p-results {
     min-width: 260px;
 }
 
@@ -162,6 +141,11 @@ div.prpanel-heading-samehw {
     height: 2em;
 }
 
+.tc-ctl-p-results .table {
+    width: 100%;
+    display: block;
+}
+
 .prcollapsed:hover {
     cursor: pointer;
 }
@@ -175,7 +159,8 @@ div.prpanel-heading-samehw {
 }
 
 .prcollapsed.chart::before {
-    content: '\f1fe';
+    font-family: sitna;
+    content: '\e920';
 }
 
 .tc-ctl-p-results #results {
@@ -218,16 +203,17 @@ div.prpanel-heading-samehw {
     padding: 5px 10px 15px 10px
 }
 
-    .tc-ctl-p-results .prpanel-body div.tc-chart svg {
-        overflow-x: overlay !important;
-    }
+.tc-ctl-p-results .tc-ctl.tc-ctl-draw {
+    padding: 0.5em;
+    width: 100%;
+}
+
+.tc-ctl-p-results .prpanel-body div.tc-chart svg[style] {
+    overflow: visible !important;
+}
 
 .prpanel-default > .prpanel-heading + .prpanel-collapse > .prpanel-body {
     border-top-color: #ddd;
-}
-
-.prpanel-group .prpanel-heading + .prpanel-collapse > .list-group, .prpanel-group .prpanel-heading + .prpanel-collapse > .prpanel-body {
-    border-top: 1px solid #ddd;
 }
 
 .prpanel > .list-group, .prpanel > .prpanel-collapse > .list-group {
@@ -241,12 +227,17 @@ div.prpanel-heading-samehw {
 
 .tc-ctl-p-results-menu {
     order: 99;
-    border-top: 1px solid #ccc;
     text-align: right;
     display: flex;
     align-items: center;
-    justify-content: space-between;    
+    /*border-top: 1px solid var(--main-divider-color);*/
+    padding: 0.3em;
 }
+
+    .tc-ctl-p-results-menu:empty {
+        padding: 0;
+        border-top: none;
+    }
 
     .tc-ctl-p-results-menu .tc-ctl-ftools {
         padding-right: 0.5em;
@@ -281,33 +272,39 @@ div.prpanel-heading-samehw {
         margin: 0.8em;
     }
 
-div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
+div.tc-3d .tc-ctl-p-results .tc-ctl-p-results-table {
     flex-direction: column;
 }
 
-    div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table h3 {
+    div.tc-3d .tc-ctl-p-results .tc-ctl-p-results-table h3 {
         margin: 0.6em 0.3em;
         font-size: 1.1em;
         width: calc(100% - 2.2em);
     }
 
-    div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table h4 {
+    div.tc-3d .tc-ctl-p-results .tc-ctl-p-results-table h4 {
         margin: 0 0 0.3em 0.3em;
     }
 
-    div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table {
+    div.tc-3d .tc-ctl-p-results .tc-ctl-p-results-table table {
         width: 100%;
     }
 
-        div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking {
+        div.tc-3d .tc-ctl-p-results .tc-ctl-p-results-table table.tc-ctl-geolocation-info-tracking {
             width: auto;
         }
 
 .tc-ctl-p-results div.tc-ctl-finfo {
     display: block;
     max-width: 100%;
-    padding: 0.4em;
+    /* provisional */
+    /*padding: 0.4em;*/
+    padding: 0.4em 0.4em 0 0.4em;
     opacity: 0.9;
+}
+
+.tc-ctl-p-results .tc-ctl-finfo iframe {
+    height: auto;
 }
 
 .tc-ctl-p-results .tc-ctl-p-results-info {
@@ -350,9 +347,9 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
     position: relative; /* para que la impresora se mantega dentro del panel */
 }
 
-.prpanel-body.list-group.tc-ctl-p-results-table, .prpanel-body.list-group.tc-ctl-p-results-info {
-    padding: 0px;
-}
+    .prpanel-body.list-group.tc-ctl-p-results-table, .prpanel-body.list-group.tc-ctl-p-results-info {
+        padding: 0px;
+    }
 
 .tc-ctl-p-results .prpanel-title span.prpanel-title-text {
     margin-left: 0;
@@ -365,20 +362,21 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
 
 .tc-ctl-p-results .tc-ctl-ftools {
     width: auto;
-    font-size: 1.2em;
     flex: auto;
 }
 
-    .tc-ctl-p-results .tc-ctl-ftools button {
+    .tc-ctl-p-results .tc-ctl-ftools button.tc-icon-btn {
         margin-left: 0.5em;
-        margin-bottom: 0.5em;
+        margin-top: 0;
     }
 
 
 
 .tc-ctl-p-results a.tc-ctl-print-btn {
     font-size: 1.2em;
-    margin-left: 0.5em;
+    margin-left: 0.25em;
+    margin-right: 0.25em;
+    z-index: 10012;
 }
 
 
@@ -392,7 +390,7 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table {
     padding: 0.3em;
 }
 
-div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-attr th {
+div.tc-3d .tc-ctl-p-results .tc-ctl-p-results-table table.tc-attr th {
     width: 25%;
 }
 
@@ -401,7 +399,7 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-attr th {
 }
 
 .tc-ctl-p-results-table tbody tr {
-    cursor: zoom-in;    
+    cursor: zoom-in;
 }
 
 .tc-ctl-p-results-table tbody td.tc-numeric {
@@ -410,7 +408,7 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-attr th {
 
 .tc-ctl-p-results-table thead th {
     border-bottom: 1px solid #dee2e6;
-    text-align:center;
+    text-align: center;
 }
 
 .tc-ctl-p-results-table tbody td {
@@ -481,15 +479,13 @@ div.tc-threed .tc-ctl-p-results .tc-ctl-p-results-table table.tc-attr th {
 
 .showIn {
     -webkit-animation: showIn 0.5s normal forwards ease-in-out;
-    -moz-animation: showIn 0.5s normal forwards ease-in-out;
     animation: showIn 0.5s normal forwards ease-in-out;
     /*display:inline-block !important;*/
 }
 
 .showOut {
     -webkit-animation: showOut 0.5s normal forwards ease-in-out;
-    -moz-animation: showOut 0.5s normal forwards ease-in-out;
-    animation: showOut 0.5s normal forwards ease-in-out;    
+    animation: showOut 0.5s normal forwards ease-in-out;
 }
 
 .tc-ctl-p-results .tc-ctl-finfo-coords {

@@ -104,8 +104,8 @@ label.tc-ctl-meas-btn-area span:before {
 
     .tc-ctl-meas-prof-btn:before {
         position: absolute;
-        font-family: mapskin;
-        content: "\e06a";
+        font-family: sitna;
+        content: "\e920";
         text-indent: 0;
         left: 0;
         width: 2em;

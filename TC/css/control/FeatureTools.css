@@ -2,6 +2,8 @@
 .tc-ctl-ftools {
     z-index: 10011;
     display: none;
+    order: 3;
+    flex-grow: 3;
 }
 
     .tc-ctl-ftools.tc-active {
@@ -10,30 +12,28 @@
         transform-origin: top center;
     }
 
-    .tc-ctl-ftools button {
+    .tc-ctl-ftools button.tc-icon-btn {
         position: relative;
         text-indent: -1000vw;
-        width: 1em;
-        height: 1em;
+        width: 1.2em;
+        height: 1.2em;
         display: inline-block;
         background-color: transparent;
         color: var(--main-hl-color);
         padding: 0;
         border-width: 0;
-        margin-top: 0.5em;
+        margin-top: 0.15em;
         z-index: 10010;
-        -webkit-transition: all .2s ease;
-        -moz-transition: all .2s ease;
-        -o-transition: all .2s ease;
         transition: all .2s ease;
     }
 
-        .tc-ctl-ftools button:focus {
+        .tc-ctl-ftools button.tc-icon-btn:focus {
             outline: none;
         }
 
-        .tc-ctl-ftools button:after {
+        .tc-ctl-ftools button.tc-icon-btn:before {
             position: absolute;
+            color: var(--main-hl-color);
             font-size: 1em;
             height: 100%;
             width: 100%;
@@ -45,23 +45,38 @@
             top: 0;
         }
 
-        .tc-ctl-ftools button.tc-ctl-ftools-dl-btn:after {
-            content: "\2913";
-            font-weight: bolder;
+        .tc-ctl-ftools button.tc-icon-btn.tc-hidden {
+            display: none;
         }
 
-        .tc-ctl-ftools button.tc-ctl-ftools-share-btn:after {
+        /* Regla mientras esté aparcada la tarea del botón de perfil */
+        .tc-ctl-ftools button.tc-icon-btn.tc-ctl-ftools-prof-btn {
+            display: none;
+        }
+
+        .tc-ctl-ftools button.tc-ctl-ftools-dl-btn:before {
+            font-family: sitna;
+            content: "\e902";
+        }
+
+        .tc-ctl-ftools button.tc-ctl-ftools-share-btn:before {
             font-family: mapskin;
             content: "\e07b";
         }
 
-        .tc-ctl-ftools button.tc-ctl-ftools-zoom-btn:after {
-            font-family: mapskin;
-            content: "\e008";
+        .tc-ctl-ftools button.tc-ctl-ftools-zoom-btn:before {
+            font-family: sitna;
+            content: "\e91d";
         }
 
-        .tc-ctl-ftools button.tc-ctl-ftools-del-btn:after {
-            content: "\2702";
+        .tc-ctl-ftools button.tc-ctl-ftools-prof-btn:before {
+            font-family: sitna;
+            content: "\e920";
+        }
+
+        .tc-ctl-ftools button.tc-ctl-ftools-del-btn:before {
+            font-family: sitna;
+            content: "\e90d";
         }
 
 table.tc-ctl-ftools-zoom {

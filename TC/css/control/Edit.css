@@ -137,9 +137,6 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
         left: 0;
         width: 100%;
         overflow: hidden;
-        -webkit-transition: all .2s ease;
-        -moz-transition: all .2s ease;
-        -o-transition: all .2s ease;
         transition: all .2s ease;
     }
 

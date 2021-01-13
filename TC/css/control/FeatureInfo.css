@@ -1,0 +1,240 @@
+﻿
+.tc-ctl.tc-ctl-finfo {
+    padding: 0;
+}
+
+.tc-ctl-finfo-coords {
+    display: inline-block;
+    font-size: 0.7em;
+    margin: 0 0.8em 0.6em 0;
+    cursor: auto;
+    user-select: text;
+    line-height: 1.5em;
+}
+
+    .tc-ctl-finfo-coords.tc-hidden {
+        display: none;
+    }
+
+.tc-ctl-finfo-coords-pair {
+    display: inline-block;
+    color: #999;
+    white-space: nowrap;
+    margin-right: 0.5em;
+}
+
+    .tc-ctl-finfo-coords-pair.tc-hidden {
+        display: none;
+    }
+
+.tc-ctl-finfo-coords-val {
+    color: var(--text-main-color);
+}
+
+ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
+    padding: 0;
+    margin: 0;
+}
+
+    ul.tc-ctl-finfo-services > li {
+        width: 100%;
+    }
+
+    ul.tc-ctl-finfo-services > li, ul.tc-ctl-finfo-layers > li, ul.tc-ctl-finfo-features > li {
+        list-style-type: none;
+        display: inline-block;
+    }
+
+.tc-ctl-finfo h3 {
+    font-size: 1em;
+    border-bottom: 1px solid #ccc;
+    margin: 0 0 0.5em 0;
+}
+
+.tc-ctl-finfo h4 {
+    font-size: 0.9em;
+    margin: 0 0 0.5em 0;
+    color: var(--title-color);
+    text-shadow: 0 0 0.3em #fff;
+}
+
+.tc-ctl-finfo h5 {
+    display: none;
+}
+
+.tc-ctl-finfo table, .tc-ctl-finfo pre, .tc-ctl-finfo iframe {
+    border: 0.2em #eee solid;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+}
+
+.tc-ctl-finfo .tc-ctl-finfo-layer-content {
+    overflow-x: hidden;
+}
+
+.tc-ctl-finfo table {
+    margin: 0.5em;
+}
+
+.tc-ctl-finfo pre {
+    width: 40vw;
+    background-color: var(--main-bg-color);
+    margin: 0;
+}
+
+
+.tc-ctl-finfo iframe {
+    width: 40vw;
+    height: 40vh;
+    background-color: var(--main-bg-color);
+}
+
+.tc-ctl-finfo-share-dialog h2 {
+    display: none;
+}
+
+.tc-ctl-finfo-share-dialog .tc-modal-body {
+    font-size: 0.8em;
+}
+
+.tc-ctl-finfo-empty {
+    font-style: italic;
+    color: var(--disabled-text-color);
+    padding: 0.5em;
+    background-color: var(--main-bg-color);
+    list-style-type: none;
+    box-sizing: border-box;
+    border-radius: 0.2em;
+}
+
+.tc-ctl-finfo .tc-ctl-finfo-layer-n {
+    display: inline-block;
+    border-radius: 50%;
+    width: 1.5em;
+    height: 1.5em;
+    line-height: 1.6em;
+    text-align: center;
+    font-size: 0.67em;
+    font-weight: normal;
+    background-color: var(--main-hl-color);
+    color: var(--btn-hl-color);
+    vertical-align: top;
+}
+
+.tc-ctl-finfo-btn-prev, .tc-ctl-finfo-btn-next {
+    display: none;
+}
+
+.tc-ctl-finfo .tc-ctl-finfo-features pre {
+    cursor: text;
+}
+
+.tc-ctl-finfo ul.tc-ctl-finfo-features li {
+    position: relative;
+}
+
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li table {
+        transition: border .3s ease;
+    }
+
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table {
+        border: 0.2em solid;
+        border-color: var(--main-hl-color);
+    }
+
+/* Para hacer sitio al botón de herramientas */
+/*URI: Creo que esto sobra*/
+/*.tc-ctl-finfo-features tr:nth-child(1) td.tc-ctl-finfo-val {
+    padding-right: 2.1em;
+}*/
+
+.tc-ctl-finfo-counter {
+    display: none;
+}
+
+.tc-ctl-finfo-elev:before {
+    margin-right: 0.5em;
+    font-family: sitna;
+    content: '\e918';    
+}
+
+.tc-ctl-finfo-height:before {
+    margin-right: 0.5em;
+    font-family: sitna;
+    content: '\e919';    
+}
+
+div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-height:before {
+    display: inline-block;
+    vertical-align: top;
+    line-height: normal;
+}
+
+.tc-ctl-finfo-val a[target=_blank]:after {
+    content: ' \21aa';
+}
+
+.tc-ctl-finfo-btn {
+    order: 2;
+}
+
+.tc-ctl-finfo-btn button,
+.tc-ctl-finfo-btn label {
+    display: inline-block;
+    font-size: 1.2em;
+    width: 1.2em;
+    height: 1.2em;
+    line-height: 1.2em;
+    padding: 0;
+    text-align: right;
+    font-size: 1em;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+    .tc-ctl-finfo-btn button.tc-hidden,
+    .tc-ctl-finfo-btn label.tc-hidden {
+        display: none;
+    }
+
+.tc-icon-btn.tc-ctl-finfo-btn-dl:before {
+    font-family: 'sitna';
+    content: '\e903';
+}
+
+.tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] {
+    display: none;
+}
+
+    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] + label {
+        display: inline-flex;
+    }
+
+        .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] + label:before {
+            box-sizing: border-box;
+            border-radius: calc(var(--border-radius) / 2);
+            color: var(--cb-color);
+            background-color: var(--cb-bg-color);
+            font-family: sitna;
+            content: '\e91f';
+        }
+
+    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:checked + label:before {
+        content: '\e91e';
+        color: var(--cb-checked-color);
+        background-color: var(--cb-checked-bg-color);
+    }
+
+    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:checked + label:before {
+        color: #ffffff;
+        background-color: var(--win-btn-color);
+    }
+
+.tc-icon-btn.tc-ctl-finfo-btn-zoom-all:before {
+    font-family: 'sitna';
+    content: '\e90e';
+}
+
+.tc-icon-btn.tc-ctl-finfo-btn-del-all:before {
+    font-family: 'sitna';
+    content: '\e90d';
+}

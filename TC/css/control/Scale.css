@@ -55,6 +55,6 @@
     display: none;
 }
 
-.tc-map.tc-ctl-printMap-printing .tc-ctl.tc-ctl-sb {
+.tc-map.tc-ctl-prnmap-printing .tc-ctl.tc-ctl-sb {
     z-index: 100000;
 }

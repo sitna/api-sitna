@@ -124,9 +124,7 @@
     font-size: 1.1em;
     cursor: default;
     animation: spin 1s infinite linear;
-    -moz-animation: spin 1s infinite linear; /* Firefox */
-    -webkit-animation: spin 1s infinite linear; /* Safari and Chrome */
-    -o-animation: spin 1s infinite linear;
+    -webkit-animation: spin 1s infinite linear;
     content: '\2b6e';
     line-height: 1.25em;
     height: 1em;

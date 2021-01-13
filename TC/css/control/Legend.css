@@ -35,7 +35,7 @@
     display: none;
 }
 
-.tc-ctl-legend.tc-threed li.tc-ctl-legend-node.tc-ctl-legend-node-outofscale {
+.tc-ctl-legend.tc-3d li.tc-ctl-legend-node.tc-ctl-legend-node-outofscale {
     display: block;
 }
 
@@ -56,9 +56,6 @@ ul.tc-ctl-legend-branch {
     margin: 0;
     padding: 0;
     font-size: 1.1em;
-    -webkit-transition: all .3s ease;
-    -moz-transition: all .3s ease;
-    -o-transition: all .3s ease;
     transition: all .3s ease;
 }
 

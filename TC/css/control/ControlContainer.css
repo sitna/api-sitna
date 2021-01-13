@@ -92,10 +92,6 @@ div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results {
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .prsidebar-body {
         display: inline-block;
     }
-
-    div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results #results {
-        height: auto;
-    }
     
     div.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results div.prcollapsed {
         top: auto;

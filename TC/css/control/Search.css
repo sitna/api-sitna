@@ -50,7 +50,6 @@
 .tc-ctl-search-loading {
     float: right;
     -webkit-animation: spin 2s linear infinite;
-    -moz-animation: spin 2s linear infinite;
     animation: spin 2s linear infinite;
     position: relative;
     right: 1em;
@@ -105,7 +104,7 @@ button.tc-ctl-btn.tc-ctl-search-btn {
     text-indent: -1000vw;
 }
 
-    button.tc-ctl-btn.tc-ctl-search-btn:after {
+    button.tc-ctl-btn.tc-ctl-search-btn:before {
         position: absolute;
         font-size: 1em;
         height: 100%;
@@ -159,8 +158,6 @@ button.tc-ctl-btn.tc-ctl-search-btn {
     margin: 0;
     padding: 0.2em;
     line-height: 1.8em;
-    -webkit-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
-    -moz-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
     max-height: 20em;
     overflow: auto;

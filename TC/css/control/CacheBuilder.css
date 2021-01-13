@@ -116,9 +116,7 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 
 .tc-ctl-cbuild .tc-ctl-cbuild-list li.tc-disabled {
     animation: pulsation 2s infinite;
-    -moz-animation: pulsation 2s infinite; /* Firefox */
-    -webkit-animation: pulsation 2s infinite; /* Safari and Chrome */
-    -o-animation: pulsation 2s infinite; /* Opera */
+    -webkit-animation: pulsation 2s infinite;
 }
 
 .tc-ctl-cbuild .tc-ctl-cbuild-list li button {
@@ -307,10 +305,8 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 }
 
     .tc-ctl-cbuild .tc-ctl-cbuild-list > li > span {
-        width: 74%;
+        width: 72%;
         float: left;
-        -ms-text-overflow: ellipsis;
-        -o-text-overflow: ellipsis;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
@@ -348,7 +344,8 @@ ul.tc-ctl-cbuild-bl-list input[type=checkbox] {
 .tc-ctl-cbuild-map-search-icon {
     position: relative;
     margin-top: 4px;
-    right: 21px;
+    right: 1em;
+    line-height: 1em;
     color: #ccc;
     font-style: normal;
     width: 1em;

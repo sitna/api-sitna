@@ -1,8 +1,8 @@
-﻿.tc-view-threed-marker {
+﻿.tc-view-3d-marker {
     background-image: url(../img/marker_i32-shadow.png);
 }
 
-.tc-view-threed-cm-ctls {
+.tc-view-3d-cm-ctls {
     position: fixed;
     bottom: 2em;
     z-index: 1;
@@ -11,51 +11,33 @@
     left: 0;
     right: 0;
     margin: 0 auto;
-    -webkit-transition-property: opacity;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
     transition-property: opacity;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
-    -moz-transition-transition-property: opacity;
-    -moz-transition-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-transition-property: opacity;
-    -o-transition-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
 }
 
-    .tc-view-threed-cm-ctls.outfocus {
+    .tc-view-3d-cm-ctls.outfocus {
         opacity: 0.4;
     }
 
-    .tc-view-threed-cm-ctls > div {
+    .tc-view-3d-cm-ctls > div {
         position: relative;
     }
 
-.tc-view-threed-cm-tilt-inner {
+.tc-view-3d-cm-tilt-inner {
     cursor: pointer;
     transform-origin: center;
     fill: rgba(204,0,0,0);
-    -webkit-transition-property: fill-opacity;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: fill-opacity;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: fill-opacity;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: fill-opacity;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
 }
 
-    .tc-view-threed-cm-tilt-inner.disabled {
+    .tc-view-3d-cm-tilt-inner.disabled {
         cursor: not-allowed;
     }
 
-.tc-view-threed-cm-tilt-inner-image {
+.tc-view-3d-cm-tilt-inner-image {
     cursor: pointer;
     fill: #343434;
     fill-opacity: 1;
@@ -63,96 +45,51 @@
     transform-origin: center;
 }
 
-    .tc-view-threed-cm-tilt-inner-image.outfocus {
+    .tc-view-3d-cm-tilt-inner-image.outfocus {
         fill-opacity: 0.8;
     }
 
-.tc-view-threed-cm-tilt-outer {
+.tc-view-3d-cm-tilt-outer {
     cursor: pointer;
 }
 
-.tc-view-threed-cm-tilt-outer-circle {
+.tc-view-3d-cm-tilt-outer-circle {
     fill: #ffffff;
     fill-opacity: 0.5;
-    -webkit-transition-property: stroke-opacity;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: stroke-opacity;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: stroke-opacity;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: stroke-opacity;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
-    -webkit-transition-property: stroke-width;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: stroke-width;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: stroke-width;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: stroke-width;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
 }
 
-    .tc-view-threed-cm-tilt-outer-circle.outfocus {
+    .tc-view-3d-cm-tilt-outer-circle.outfocus {
         stroke: white;
         stroke-width: 2;
         stroke-opacity: 0.4;
     }
 
-    .tc-view-threed-cm-tilt-outer-circle.highlighted {
+    .tc-view-3d-cm-tilt-outer-circle.highlighted {
         fill: #cc0000;
         fill-opacity: 0.3;
     }
 
-.tc-view-threed-cm-tilt-outer-shell-circle {
+.tc-view-3d-cm-tilt-outer-shell-circle {
     fill: #343434;
     fill-opacity: 1;
-    -webkit-transition-property: fill;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: fill;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: fill;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: fill;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
-    -webkit-transition-property: stroke-width;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: stroke-width;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: stroke-width;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: stroke-width;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
-    -webkit-transition-property: stroke;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: stroke;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: stroke;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: stroke;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
 }
 
-    .tc-view-threed-cm-tilt-outer-shell-circle.outfocus {
+    .tc-view-3d-cm-tilt-outer-shell-circle.outfocus {
         fill: #ffffff;
         stroke: white;
     }
@@ -163,7 +100,7 @@
     cursor: not-allowed;
 }
 
-.tc-view-threed-cm-tilt-up {
+.tc-view-3d-cm-tilt-up {
     cursor: pointer;
     fill: #343434;
     fill-opacity: 1;
@@ -177,7 +114,7 @@
     paint-order: stroke fill markers;
 }
 
-.tc-view-threed-cm-tilt-down {
+.tc-view-3d-cm-tilt-down {
     cursor: pointer;
     fill: #343434;
     fill-opacity: 1;
@@ -192,25 +129,16 @@
 }
 
 
-.tc-view-threed-cm-rotate-inner {
+.tc-view-3d-cm-rotate-inner {
     cursor: pointer;
     transform-origin: center;
     fill: rgba(204,0,0,0);
-    -webkit-transition-property: fill-opacity;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: fill-opacity;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: fill-opacity;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: fill-opacity;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
 }
 
-.tc-view-threed-cm-rotate-inner-image {
+.tc-view-3d-cm-rotate-inner-image {
     cursor: pointer;
     fill: #343434;
     fill-opacity: 1;
@@ -218,100 +146,55 @@
     transform-origin: center;
 }
 
-    .tc-view-threed-cm-rotate-inner-image.outfocus {
+    .tc-view-3d-cm-rotate-inner-image.outfocus {
         fill-opacity: 0.8;
     }
 
-.tc-view-threed-cm-rotate-outer {
+.tc-view-3d-cm-rotate-outer {
     cursor: pointer;
 }
 
-.tc-view-threed-cm-rotate-outer-circle {
+.tc-view-3d-cm-rotate-outer-circle {
     fill: #ffffff;
     fill-opacity: 0.5;
-    -webkit-transition-property: stroke-opacity;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: stroke-opacity;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: stroke-opacity;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: stroke-opacity;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
-    -webkit-transition-property: stroke-width;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: stroke-width;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: stroke-width;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: stroke-width;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
 }
 
-.tc-view-threed-cm-rotate-outer-circle.outfocus {
+.tc-view-3d-cm-rotate-outer-circle.outfocus {
     stroke: white;
     stroke-width: 2;
     stroke-opacity: 0.4;
 }
 
-.tc-view-threed-cm-rotate-outer-circle.highlighted {
+.tc-view-3d-cm-rotate-outer-circle.highlighted {
     fill: #cc0000;
     fill-opacity: 0.3;
 }
 
-.tc-view-threed-cm-rotate-outer-shell-circle {
+.tc-view-3d-cm-rotate-outer-shell-circle {
     fill: #343434;
-    -webkit-transition-property: fill;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: fill;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: fill;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: fill;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
-    -webkit-transition-property: stroke-width;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: stroke-width;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: stroke-width;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: stroke-width;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
-    -webkit-transition-property: stroke;
-    -webkit-transition-duration: 0.5s;
-    -webkit-transition-timing-function: ease-in-out;
-    -moz-transition-property: stroke;
-    -moz-transition-duration: 0.5s;
-    -moz-transition-timing-function: ease-in-out;
-    -o-transition-property: stroke;
-    -o-transition-duration: 0.5s;
-    -o-transition-timing-function: ease-in-out;
     transition-property: stroke;
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out;
 }
 
-    .tc-view-threed-cm-rotate-outer-shell-circle.outfocus {
+    .tc-view-3d-cm-rotate-outer-shell-circle.outfocus {
         fill: #ffffff;
         stroke: white;
     }
 
-.tc-view-threed-cm-rotate-right {
+.tc-view-3d-cm-rotate-right {
     cursor: pointer;
     fill: #343434;
     fill-opacity: 1;
@@ -325,7 +208,7 @@
     paint-order: stroke fill markers;
 }
 
-.tc-view-threed-cm-rotate-left {
+.tc-view-3d-cm-rotate-left {
     cursor: pointer;
     fill: #343434;
     fill-opacity: 1;
@@ -339,25 +222,19 @@
     paint-order: stroke fill markers;
 }
 
-.tc-view-threed-divMap-fadeOut {
+.tc-view-3d-divMap-fadeOut {
     visibility: hidden;
     opacity: 0;
     transition: visibility 0s linear 300ms, opacity 300ms;
-    -moz-transition: visibility 0s linear 300ms, opacity 300ms;
-    -webkit-transition: visibility 0s linear 300ms, opacity 300ms;
-    -o-transition: visibility 0s linear 300ms, opacity 300ms;
 }
 
-.tc-view-threed-divMap-fadeIn {
+.tc-view-3d-divMap-fadeIn {
     visibility: visible;
     opacity: 1;
     transition: visibility 0s linear 0s, opacity 300ms;
-    -moz-transition: visibility 0s linear 0s, opacity 300ms;
-    -webkit-transition: visibility 0s linear 0s, opacity 300ms;
-    -o-transition: visibility 0s linear 0s, opacity 300ms;
 }
 
-.tc-view-threed-overlay {
+.tc-view-3d-overlay {
     position: fixed;
     width: 100%;
     height: 100%;
@@ -366,7 +243,7 @@
     z-index: 10008;
 }
 
-.tc-view-threed-overlay-svg {
+.tc-view-3d-overlay-svg {
     width: 100%;
     height: 100%;
 }

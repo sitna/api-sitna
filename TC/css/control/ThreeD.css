@@ -1,20 +1,20 @@
 ﻿
-.tc-ctl.tc-ctl-threed {
+.tc-ctl.tc-ctl-3d {
     top: calc(1.5em + 2em + 10em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em); /* margen antes del +, el +, el alto de la barra, el - y el margen inferior, la casita, el margen inferior, btn streetView, el margen inferior, btn fullScreen, el margen inferior */
     position: absolute;
     left: 0.7em;
     padding: 0;
 }
 
-.tc-ctl-threed {
+.tc-ctl-3d {
     width: 2em;
     height: 2em;    
     position: absolute;
 }
 
-    .tc-ctl-threed button {
+    .tc-ctl-3d button {
         color: var(--map-btn-color);
-        border-radius: 0.2em;
+        border-radius: calc(var(--border-radius) * 0.67);
         border: 0;
         background-color: var(--map-btn-bg-color);
         width: 100%;
@@ -24,26 +24,26 @@
         font-size: 0.9em;
     }
 
-        .tc-ctl-threed button:before {
+        .tc-ctl-3d button:before {
             content: '3D';
         }
 
-        .tc-ctl-threed button.active:before {
+        .tc-ctl-3d button.active:before {
             content: '2D';
         }
 
-        .tc-ctl-threed button:focus {
+        .tc-ctl-3d button:focus {
             outline: none;
         }
 
-        .tc-ctl-threed button[disabled] {
+        .tc-ctl-3d button[disabled] {
             background-color: rgba(156, 156, 156, 0.5);
         }
 
-/*.tc-ctl-threed button[disabled]:before {
+/*.tc-ctl-3d button[disabled]:before {
         content: '';
     }
 
-    .tc-ctl-threed button[disabled].active:before {
+    .tc-ctl-3d button[disabled].active:before {
         content: '';
     }*/

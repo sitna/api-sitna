@@ -257,8 +257,6 @@ label.tc-ctl-geolocation-track-available-label {
     }
 
         .tc-ctl-geolocation-track-available-lst > li > span {
-            -ms-text-overflow: ellipsis;
-            -o-text-overflow: ellipsis;
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
@@ -313,8 +311,8 @@ ol.tc-ctl-geolocation-track-available-lst > li.tc-ctl-geolocation-track-not > sp
     }
 
     .tc-ctl-geolocation-track-available-lst > li > button#elevation:before {
-        font-family: FontAwesome;
-        content: "\f1fe";
+        font-family: sitna;
+        content: "\e920";
     }
 
     .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete:before {
@@ -575,6 +573,14 @@ div.tc-ctl-geolocation-track-render {
                 font-weight: bold;
             }
 
+                .tc-ctl-geolocation-track-snap-info ul li span.original {
+                    color: var(--track-profile-original-color);
+                }
+
+                .tc-ctl-geolocation-track-snap-info ul li span.mdt {
+                    color: var(--track-profile-mdt-color);
+                }
+
 .tc-ctl-geolocation-track-available-lst > li, .tc-modal .tc-crs-list > li {
     padding: 0.25em 0 0.2em 0.5%;
     border-bottom: 0.1em solid rgba(0,0,0,0.1);
@@ -583,41 +589,41 @@ div.tc-ctl-geolocation-track-render {
     box-sizing: content-box;
 }
 
-    .tc-ctl-geolocation-track-available-lst > li > input {                
-        width:85%;
+    .tc-ctl-geolocation-track-available-lst > li > input {
+        width: 85%;
     }
 
 
     .tc-ctl-geolocation-track-available-lst > li > .tc-btn-simulate:before {
         font-family: FontAwesome;
         content: "\f008";
-    }    
+    }
 
-        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop:before {
-            font-family: FontAwesome;
-            content: "\f04d";
-        }
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop:before {
+        font-family: FontAwesome;
+        content: "\f04d";
+    }
 
-    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause:before {        
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause:before {
         font-family: FontAwesome;
         content: "\f04c";
     }
-    
 
-        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause.play:before {
-            font-family: FontAwesome;
-            content: "\f04b";
-        }    
 
-        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-forward:before {
-            font-family: FontAwesome;
-            content: "\f04e";
-        }    
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause.play:before {
+        font-family: FontAwesome;
+        content: "\f04b";
+    }
 
-        .tc-ctl-geolocation-track-available-lst > li > .tc-btn-backward:before {
-            font-family: FontAwesome;
-            content: "\f04a";
-        }
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-forward:before {
+        font-family: FontAwesome;
+        content: "\f04e";
+    }
+
+    .tc-ctl-geolocation-track-available-lst > li > .tc-btn-backward:before {
+        font-family: FontAwesome;
+        content: "\f04a";
+    }
 
     .tc-ctl-geolocation-track-available-lst > li > .tc-spn-speed {
         font-weight: bold;
@@ -629,15 +635,15 @@ div.tc-ctl-geolocation-track-render {
         white-space: nowrap;
     }
 
-    .tc-ctl-geolocation-track-available-lst > li > select.tc-sel-speed {        
+    .tc-ctl-geolocation-track-available-lst > li > select.tc-sel-speed {
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
     }
 
     .tc-ctl-geolocation-track-available-lst > li > #elevation:before {
-        font-family: FontAwesome;
-        content: "\f1fe";
+        font-family: sitna;
+        content: "\e920";
     }
 
     .tc-ctl-geolocation-track-available-lst > li > .tc-btn-edit:before {
@@ -704,11 +710,86 @@ table.tc-ctl-geolocation-info-tracking {
 }
 
 
+.tc-ctl-geolocation-ext-dldlog {
+    text-align: center;
+}
 
+    .tc-ctl-geolocation-ext-dldlog.tc-hidden {
+        display: none;
+    }
+
+    .tc-ctl-geolocation-ext-dldlog label {
+        position: relative;
+        display: inline-block;
+        height: 2em;
+        margin: 0.2em 0;
+        width: calc(40% - 1px);
+    }
+
+    .tc-ctl-geolocation-ext-dldlog input[type=radio] {
+        display: none;
+    }
+
+        .tc-ctl-geolocation-ext-dldlog input[type=radio] ~ span {
+            position: absolute;
+            display: block;
+            width: 100%;
+            height: 100%;
+            line-height: 2em;
+            text-align: center;
+            border: 1px solid var(--btn-border-color);
+            background-color: var(--btn-bg-color);
+            color: var(--btn-color);
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tc-ctl-geolocation-ext-dldlog input[type=radio]:checked ~ span {
+            color: var(--btn-hl-color);
+            background-color: var(--btn-hl-bg-color);
+            border-color: var(--btn-hl-border-color);
+            z-index: 10007;
+        }
+
+        .tc-ctl-geolocation-ext-dldlog input[type=radio].tc-disabled ~ span {
+            color: var(--btn-disabled-color);
+            background-color: var(--btn-disabled-bg-color);
+            border-color: var(--btn-disabled-border-color);
+            cursor: default;
+        }
+
+        .tc-ctl-geolocation-ext-dldlog input[type=radio].tc-disabled:checked ~ span {
+            color: var(--btn-disabled-color);
+            background-color: var(--btn-disabled-bg-color);
+            border-color: var(--btn-disabled-border-color);
+            cursor: default;
+        }
+
+    .tc-ctl-geolocation-ext-dldlog label:first-child input[type=radio] ~ span {
+        border-top-left-radius: var(--border-radius);
+        border-bottom-left-radius: var(--border-radius);
+    }
+
+    .tc-ctl-geolocation-ext-dldlog label:last-child input[type=radio] ~ span {
+        border-top-right-radius: var(--border-radius);
+        border-bottom-right-radius: var(--border-radius);
+    }
+
+/*.tc-ctl-geolocation-ext-dldlog label:first-child input[type=radio]:checked ~ span {
+        border-bottom-left-radius: 0;
+        border-bottom-color: transparent;
+    }
+
+    .tc-ctl-geolocation-ext-dldlog label:last-child input[type=radio]:checked ~ span {
+        border-bottom-right-radius: 0;
+        border-bottom-color: transparent;
+    }*/
 
 
 /* GPS y rutas - mostrar NOVEDAD en 3D */
-.tc-ctl-geolocation.tc-threed h2 span.tc-beta {
+.tc-ctl-geolocation.tc-3d h2 span.tc-beta {
     visibility: visible;
     opacity: 1;
     display: inline-block;
