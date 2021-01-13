@@ -12,13 +12,13 @@
 
     var ctlProto = TC.control.ThreeD.prototype;
 
-    ctlProto.CLASS = 'tc-ctl-threed';
+    ctlProto.CLASS = 'tc-ctl-3d';
     ctlProto.classes = {
         BETA: 'tc-beta-button',
         BTNACTIVE: 'active'
     };
 
-    ctlProto.template = TC.apiLocation + "TC/templates/ThreeD.html";
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-3d.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -61,7 +61,7 @@
                         }
                     });
                 }
-            });
+            }, { passive: true });
 
             if (TC.Util.isFunction(callback)) {
                 callback();
@@ -72,7 +72,9 @@
     ctlProto.activate = function () {
         var self = this;
 
-        self.button.disabled = true;
+        if (!self.map.on3DView) {
+            self.button.disabled = true;
+        }
 
         self.browserSupportWebGL.call(self);
 
