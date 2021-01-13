@@ -9,7 +9,7 @@
         <tr title="{{i18n "zoomToFeature" }}" data-id="{{Id}}" data-index="{{@index}}" class="tc-selectable">
         {{#each this}}
     <td class="{{lowerCase @key}}">
-            {{#if (startsWith . "http")}}<a href="{{.}}" target="_blank" title="{{i18n "query.linkOpenAtNewTab" }}">{{i18n "query.linkText" }}</a>{{else}}{{> tc-ctl-wfsquery-table-object }}{{/if}}
+            {{#if (startsWith . "http")}}<a href="{{.}}" target="_blank" title="{{i18n "linkInNewWindow" }}">{{i18n "open" }}</a>{{else}}{{> tc-ctl-wfsquery-table-object }}{{/if}}
     </td>
         {{/each}}
     </tr>
