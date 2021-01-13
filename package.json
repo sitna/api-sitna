@@ -35,21 +35,29 @@
     "mocha": "~3.2.0",
     "mochawesome": "^2.1.0",
     "ncp": "^2.0.0",
-    "ol": "^5.3.2",
+    "ol": "^5.3.3",
+    "resize-observer-polyfill": "^1.5.1",
     "sinon": "~2.1.0",
+    "source-map-loader": "^1.1.0",
     "webpack-stream": "^5.2.1",
     "yuidocjs": "^0.3.50"
   },
   "dependencies": {
-    "acorn": "^7.0.0",
+    "@aleffabricio/shp-write": "^1.0.3",
+    "@sitna/parsedbf": "^1.0.2",
+    "@sitna/shpjs": "^3.4.9",
+    "acorn": "^7.1.1",
+    "acorn-dynamic-import": "^4.0.0",
     "draggabilly": "^2.2.0",
     "dustjs-helpers": "^1.7.4",
-    "dustjs-linkedin": "2.7.1",
+    "dustjs-linkedin": "^2.7.5",
     "handlebars": "^4.5.3",
-    "jszip": "^3.2.2",
+    "iconv-lite": "^0.5.1",
+    "jszip": "^3.4.0",
     "localforage": "^1.7.3",
     "proj4": "^2.6.0",
     "sortablejs": "^1.10.1",
-    "ua-parser-js": "^0.7.20"
+    "ua-parser-js": "^0.7.20",
+    "wkx": "^0.5.0"
   }
 }
