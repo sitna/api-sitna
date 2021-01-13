@@ -1,0 +1,39 @@
+<h2>{{i18n "share"}} </h2>
+<div>
+    <div class="ga-share-icons"><a class="ga-share-icon share-email" target="_blank" data-toggle="tooltip" data-placement="top" title="{{i18n "sendMapByEmail"}}"
+        href="#">
+        <i class="icon-envelope-alt"></i>
+        </a><a class="ga-share-icon qr-generator" target="_blank" data-toggle="tooltip" data-placement="top" title="{{i18n "createQrCode"}}"
+        href="#">
+        <i class="icon-qrcode"></i>
+        </a><a class="ga-share-icon share-fb" target="_blank" data-toggle="tooltip" data-placement="top" title="{{i18n "shareMapToFacebook"}}"
+        href="#">
+        <i class="icon-facebook"></i>
+        </a><a class="ga-share-icon share-twitter" target="_blank" data-toggle="tooltip" data-placement="top" title="{{i18n "shareMapToTwitter"}}"
+        href="#">
+        <i class="icon-twitter"></i>
+        </a><a class="ga-share-icon share-whatsapp" target="_blank" data-toggle="tooltip" data-placement="top" title="{{i18n "shareMapToWhatsapp"}}"
+        href="#">
+        <i class="icon-whatsapp"></i>
+        </a><a class="ga-share-icon share-star" target="_blank" data-toggle="tooltip" data-placement="top" title="{{i18n "addToBookmarks"}}"
+        href="#">
+        <i class="icon-star"></i>
+        </a>
+    </div>
+    <div class="tc-ctl-share-select">
+        <label class="tc-ctl-share-btn-url" title="{{i18n "shareLink"}}"><input type="radio" checked="checked" name="{{controlId}}-format" value="url" /><span>{{i18n "shareLink"}}</span></label><label 
+		class="tc-ctl-share-btn-iframe" title="{{i18n "embedMap"}}"><input type="radio" name="{{controlId}}-format" value="iframe" /><span>{{i18n "embedMap"}}</span></label>
+    </div>
+    <div class="tc-ctl-share-url-box tc-group tc-url">
+        <input type="text" class="tc-textbox tc-url" readonly data-toggle="tooltip" data-placement="top" title="{{i18n "shareLink.tip.1"}}" />
+        <button class="tc-button hide shorten" title="{{i18n "shareLink.tip.3"}}">{{i18n "shorten"}}</button>
+        <button class="tc-button hide" title="{{i18n "shareLink.tip.2"}}">{{i18n "copy"}}</button>
+    </div>
+    <div class="tc-ctl-share-url-box tc-group tc-iframe tc-hidden">
+        <input type="text" class="tc-textbox tc-iframe" readonly data-toggle="tooltip" data-placement="top" title="{{i18n "embedMap.tip.1"}}" />
+        <button class="tc-button hide" title="{{i18n "embedMap.tip.2"}}">{{i18n "copy"}}</button>
+    </div>
+    <div class="tc-ctl-share-alert tc-alert alert-warning tc-hidden">
+        <p>{{i18n "tooManyLayersLoaded" true}}</p>
+    </div>    
+</div>
