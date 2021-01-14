@@ -23,4 +23,5 @@ Mejoras planeadas a día de 13/01/2021:
 19.	~~Acceso a abstract y metadatos en el control *Mapas de Fondo*.~~ :sparkles: :two:
 
 :one: Mejora añadida en la [versión 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
+
 :two: Mejora añadida en la [versión 2.1.0](https://github.com/sitna/api-sitna/releases/tag/v2.1.0).
