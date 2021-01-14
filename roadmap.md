@@ -17,9 +17,11 @@ Planned upgrades as on 01/13/2021:
 13.	New search types: road, milestone, toponym, available at [IDENA](https://idena.navarra.es/navegar/?lang=en "Spatial Data Infrastructure of Navarre"). :sparkles:
 14.	Possibility of setting background map at overview map according to main map, as done at [IDENA](https://idena.navarra.es/navegar/?lang=en "Spatial Data Infrastructure of Navarre"). :sparkles:
 15.	Possibility of defining a heatmap from markers, in a similar way as current [cluster](http://sitna.navarra.es/api/examples/cfg.ClusterStyleOptions.point.html) marker view. :sparkles:
-16.	~~New formats for uploads (KMZ, Shapefile, GeoPackage and ZIP) and downloads (KMZ, Shapefile and GeoPackage).~~ :sparkles:
-17.	~~Zoom to layer from *loaded layers* control.~~ :sparkles:
-18.	~~Link to metadata from *loaded layers* control.~~ :sparkles:
-19.	~~Access to abstract and metadata from *background maps* control.~~ :sparkles:
+16.	~~New formats for uploads (KMZ, Shapefile, GeoPackage and ZIP) and downloads (KMZ, Shapefile and GeoPackage).~~ :sparkles: :two:
+17.	~~Zoom to layer from *loaded layers* control.~~ :sparkles: :two:
+18.	~~Link to metadata from *loaded layers* control.~~ :sparkles: :two:
+19.	~~Access to abstract and metadata from *background maps* control.~~ :sparkles: :two:
 
 :one: Upgrade fulfilled with [version 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
+
+:two: Upgrade fulfilled with [version 2.1.0](https://github.com/sitna/api-sitna/releases/tag/v2.1.0).
