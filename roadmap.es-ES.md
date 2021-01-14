@@ -17,9 +17,10 @@ Mejoras planeadas a día de 13/01/2021:
 13.	Nuevas búsquedas: carretera, punto kilométrico y topónimo, disponibles en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 14.	Posibilidad de establecer el mapa de fondo del mapa de situación en función del mapa principal, como ocurre en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 15.	Posibilidad de definir un mapa de calor de marcadores análogo al actual [cluster](http://sitna.navarra.es/api/examples/cfg.ClusterStyleOptions.point.html) de los mismos. :sparkles:
-16.	~~Nuevos formatos de carga local (KMZ, Shapefile, GeoPackage y ZIP) y de descarga local (KMZ, Shapefile y GeoPackage).~~ :sparkles:
-17.	~~Zoom a la capa en el control *Capas cargadas*.~~ :sparkles:
-18.	~~Enlace a metadatos en el control *Capas cargadas*.~~ :sparkles:
-19.	~~Acceso a abstract y metadatos en el control *Mapas de Fondo*.~~ :sparkles:
+16.	~~Nuevos formatos de carga local (KMZ, Shapefile, GeoPackage y ZIP) y de descarga local (KMZ, Shapefile y GeoPackage).~~ :sparkles: :two:
+17.	~~Zoom a la capa en el control *Capas cargadas*.~~ :sparkles: :two:
+18.	~~Enlace a metadatos en el control *Capas cargadas*.~~ :sparkles: :two:
+19.	~~Acceso a abstract y metadatos en el control *Mapas de Fondo*.~~ :sparkles: :two:
 
 :one: Mejora añadida en la [versión 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
+:two: Mejora añadida en la [versión 2.1.0](https://github.com/sitna/api-sitna/releases/tag/v2.1.0).
