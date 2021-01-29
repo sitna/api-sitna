@@ -12,7 +12,7 @@ Mejoras planeadas a día de 29/01/2021:
 8.	Control *GPS y rutas* disponible en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 9.	Control *mapas sin conexión* disponible en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 10.	Control *pantalla completa* disponible en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
-11.	Control *3D* disponible en IDENA. :sparkles:
+11.	Control *3D* disponible en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 12.	Control *dibujar y medir* disponible en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 13.	Nuevas búsquedas: carretera, punto kilométrico y topónimo, disponibles en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 14.	Posibilidad de establecer el mapa de fondo del mapa de situación en función del mapa principal, como ocurre en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
