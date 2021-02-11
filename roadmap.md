@@ -1,7 +1,7 @@
 # Roadmap
 *Leer esto en [español](./roadmap.es-ES.md).*
 
-Planned upgrades as on 01/13/2021:
+Planned upgrades as on 01/29/2021:
 1.	~~Removal of jQuery dependency.~~ :heavy_minus_sign: :one:
 2.	~~Removal of Modernizr dependency.~~ :heavy_minus_sign: :one:
 3.	~~Migration to OpenLayers 5.~~ :arrow_up: :one:
@@ -21,6 +21,12 @@ Planned upgrades as on 01/13/2021:
 17.	~~Zoom to layer from *loaded layers* control.~~ :sparkles: :two:
 18.	~~Link to metadata from *loaded layers* control.~~ :sparkles: :two:
 19.	~~Access to abstract and metadata from *background maps* control.~~ :sparkles: :two:
+20. ~~WFS query control.~~ :sparkles:
+21. Attribute naming convention for image and video embedding by URL :sparkles:
+22. Multiple spatial selection control (WFS). :sparkles:
+23. Edit control. :sparkles:
+24. Basic map attributes, such as CRS, etc. :sparkles:
+25. Migration to OpenLayers 6. :arrow_up:
 
 :one: Upgrade fulfilled with [version 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
 
