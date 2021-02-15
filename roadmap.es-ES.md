@@ -11,7 +11,7 @@ Mejoras planeadas a día de 15/02/2021:
 7.	~~Zoom a la capa en el control *Capas cargadas*.~~ :sparkles: :two:
 8.	~~Enlace a metadatos en el control *Capas cargadas*.~~ :sparkles: :two:
 9.	~~Acceso a abstract y metadatos en el control *Mapas de Fondo*.~~ :sparkles: :two:
-10. ~~Control de consultas WFS.~~ :sparkles:
+10. ~~Control de consultas WFS.~~ :sparkles: :two:
 11.	Control *descargar* disponible en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 12.	Control *compartir* disponible en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
 13.	Control *GPS y rutas* disponible en [IDENA](https://idena.navarra.es/navegar/ "Infraestructura de Datos Espaciales de Navarra"). :sparkles:
