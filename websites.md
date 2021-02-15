@@ -6,7 +6,7 @@
   * [Cartoteca y Fototeca](https://cartotecaYfototeca.navarra.es "Cartoteca y Fototeca. Gobierno de Navarra")
   * [Mapa de Fosas](https://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
   * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en)
-  * [Comparador de mapas](https://comparamapas.navarra.es/)
+  * [Comparador de Mapas](https://comparamapas.navarra.es/)
 
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for town councils in Navarre:
   * GeoPamplona. [City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
