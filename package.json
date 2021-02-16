@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs": "jsdoc -c ./batch/jsdoc/conf.json"
+    "docs": "jsdoc -c ./batch/jsdoc/conf.json",
+    "build": "gulp"
   },
   "author": "Fernando Lacunza",
   "license": "BSD-2-Clause",
