@@ -34,6 +34,8 @@
     * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Agencias de Empleo. Gobierno de Navarra")
     * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Permisos de pesca")    
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI)
+    * [Centros de Salud](https://centrossanitarios.navarra.es/)
+    * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
   * Authenticated access:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Carpeta personal de Salud. Gobierno de Navarra")
     * [Informes de Evaluación de Edificios. Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
@@ -43,3 +45,6 @@
   
 * [ANIMSA](https://www.animsa.es/)'s developments for the Town Council of Pamplona:
   * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Eventos en la vía pública. Policía Municipal de Pamplona")
+
+* Other developments:
+  * Rutas Navarra - [Senderos homologados](http://www.rutasnavarra.com/Navarra/Senderos.aspx)
