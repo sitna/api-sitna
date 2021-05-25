@@ -34,6 +34,8 @@
     * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Servicio Navarro de Empleo - Nafar Lansare")
     * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Permisos de pesca")
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI)   
+    * [Centros de Salud](https://centrossanitarios.navarra.es/)
+    * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
   * Acceso autenticado:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio)
     * [Informes de Evaluación de Edificios. Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx)
@@ -43,3 +45,6 @@
   
 * Desarrollos de [ANIMSA](https://www.animsa.es/) para el Ayuntamiento de Pamplona:
   * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Policía Municipal de Pamplona")
+
+* Otros desarrollos:
+  * Rutas Navarra - [Senderos homologados](http://www.rutasnavarra.com/Navarra/Senderos.aspx)
