@@ -1,12 +1,12 @@
 # Websites developed with API SITNA
 *Leer esto en [español](./websites.es-ES.md).*
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for the Government of Navarre:
-  * [IDENA - Spatial Data Infrastructure of Navarre](https://idena.navarra.es/navegar/?lang=en)
-  * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Estado de las carreteras. Gobierno de Navarra")
-  * [Map/Orthophoto Library](https://cartotecayfototeca.navarra.es/?lang=en "Cartoteca y Fototeca. Gobierno de Navarra")
-  * [Mapa de Fosas](https://fosas.navarra.es "Mapa de Fosas. Gobierno de Navarra")
-  * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en)
-  * [Map Comparator](https://comparamapas.navarra.es/?lang=en)
+  * [IDENA - Spatial Data Infrastructure of Navarre](https://idena.navarra.es/navegar/?lang=en "Access Portal to Geographical Information in Navarre (SITNA)")
+  * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Information about the State of the Roads in Navarre")
+  * [Map/Photo Library](https://cartotecayfototeca.navarra.es/?lang=en "Downloads for Maps and Aerial Images in Navarre")
+  * [Mapa de Fosas](https://fosas.navarra.es "Pits and Historical Memory Places in Navarre")
+  * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en "Official Toponymy of Navarre)
+  * [Map Comparator](https://comparamapas.navarra.es/?lang=en "Navarre Maps and Orthophotos Comparison")
 
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for town councils in Navarre:
   * GeoPamplona. [City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
