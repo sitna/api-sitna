@@ -6,7 +6,7 @@
   * [Cartoteca y Fototeca](https://cartotecaYfototeca.navarra.es "Descarga de Cartografía e Imágenes Aéreas de Navarra")
   * [Mapa de Fosas](https://fosas.navarra.es "Fosas y Lugares de la Memoria Histórica en Navarra")
   * [Toponimia](https://administracionelectronica.navarra.es/toponimia/ "Toponimia Oficial de Navarra")
-  * [Comparador de Mapas](https://comparamapas.navarra.es/)
+  * [Comparador de Mapas](https://comparamapas.navarra.es/ "Comparación de mapas y ortofotografías de Navarra")
 
 * Desarrollos de [Tracasa Instrumental](https://itracasa.es/) para ayuntamientos de Navarra:
   * GeoPamplona. [Visor Ciudad](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")
@@ -24,6 +24,7 @@
   * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Presupuesto y Cuentas")
   * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Presupuesto y Cuentas")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
+  * [Actúa - Centros de Interpretación de la Naturaleza y Observatorios](https://www.navarra.es/home_es/Temas/Medio+Ambiente/Actua/Centros+de+Interpretacion+de+la+Naturaleza+y+Observatorios.htm)
 
 * Desarrollos propios del Gobierno de Navarra:
   * Acceso anónimo:
