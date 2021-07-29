@@ -5,7 +5,7 @@
   * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Information about the State of the Roads in Navarre")
   * [Map/Photo Library](https://cartotecayfototeca.navarra.es/?lang=en "Downloads for Maps and Aerial Images in Navarre")
   * [Mapa de Fosas](https://fosas.navarra.es "Pits and Historical Memory Places in Navarre")
-  * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en "Official Toponymy of Navarre)
+  * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en "Official Toponymy of Navarre")
   * [Map Comparator](https://comparamapas.navarra.es/?lang=en "Navarre Maps and Orthophotos Comparison")
 
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for town councils in Navarre:
@@ -20,9 +20,9 @@
 * Government of Navarre's KML viewer applications:
   * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/ "Cámaras de tráfico. Gobierno de Navarra")
   * [Zonas de baño](http://www.navarra.es/home_es/Temas/Medio+Ambiente/Patrimonio+natural/Banos+Naturales/ "Zonas de baño. Gobierno de Navarra")
-  * [Listados contables: Municipios](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Listados contables: Municipios. Gobierno de Navarra")
-  * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Listados contables: Concejos. Presupuesto y Cuentas. Gobierno de Navarra")
-  * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Listados contables: Mancomunidades. Presupuesto y Cuentas. Gobierno de Navarra")
+  * [Listados contables: Municipios](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Budget and Accounting")
+  * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Budget and Accounting")
+  * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Budget and Accounting")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
 
 * Govenment of Navarre's own developments:
@@ -31,9 +31,9 @@
     * [Informes de Evaluación de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ConsultaCiudadana.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
     * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx "Registro de Viviendas. Gobierno de Navarra")
     * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Visor de puntos. Gobierno de Navarra")
-    * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Helpbidea. Gobierno de Navarra")
-    * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Agencias de Empleo. Gobierno de Navarra")
-    * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Permisos de pesca")    
+    * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Postal Addresses in Navarre")
+    * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Navarre Employment Service")
+    * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Fishing Permits")    
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI)
     * [Centros de Salud](https://centrossanitarios.navarra.es/)
     * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
