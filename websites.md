@@ -24,6 +24,7 @@
   * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Budget and Accounting")
   * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Budget and Accounting")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
+  * [Actúa - Centros de Interpretación de la Naturaleza y Observatorios](https://www.navarra.es/home_es/Temas/Medio+Ambiente/Actua/Centros+de+Interpretacion+de+la+Naturaleza+y+Observatorios.htm)
 
 * Govenment of Navarre's own developments:
   * Anonymous access:
