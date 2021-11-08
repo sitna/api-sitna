@@ -7,6 +7,7 @@
   * [Mapa de Fosas](https://fosas.navarra.es "Pits and Historical Memory Places in Navarre")
   * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en "Official Toponymy of Navarre")
   * [Map Comparator](https://comparamapas.navarra.es/?lang=en "Navarre Maps and Orthophotos Comparison")
+  * [Forest Planning](https://administracionelectronica.navarra.es/VisorOrdenacionForestal/default.aspx?lang=en)
 
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for town councils in Navarre:
   * GeoPamplona. [City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
