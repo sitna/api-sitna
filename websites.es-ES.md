@@ -7,6 +7,7 @@
   * [Mapa de Fosas](https://fosas.navarra.es "Fosas y Lugares de la Memoria Histórica en Navarra")
   * [Toponimia](https://administracionelectronica.navarra.es/toponimia/ "Toponimia Oficial de Navarra")
   * [Comparador de Mapas](https://comparamapas.navarra.es/ "Comparación de mapas y ortofotografías de Navarra")
+  * [Ordenación Forestal](https://administracionelectronica.navarra.es/VisorOrdenacionForestal/default.aspx)
 
 * Desarrollos de [Tracasa Instrumental](https://itracasa.es/) para ayuntamientos de Navarra:
   * GeoPamplona. [Visor Ciudad](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")
