@@ -390,30 +390,6 @@ TC.tool.Proxification = function (proxy, options) {
                     };
                 }
             });
-        },
-        addHost: function (host, action) {
-
-            if (this.database) {
-                var transaction = this.database.transaction(this.objectStoreName, "readwrite");
-                try {
-                    // the transaction could abort because of a QuotaExceededError error
-                    var guid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0, v = c == 'x' ? r : r & 0x3 | 0x8; return v.toString(16); });
-                    transaction.objectStore(this.objectStoreName).add({ id: guid, host: host, action: action });
-                }
-                catch (ex) {
-                    console.log(ex);
-                }
-
-            }
-            else {
-                console.log("addHost no database");
-            }
-        },
-        removeHost: function (host) {
-            this.getHost(host).then(function (host) {
-                var transaction = this.database.transaction(this.objectStoreName, "readwrite");
-                transaction.objectStore(this.objectStoreName).delete(host.data.id);
-            });
         }
     };
 
@@ -645,16 +621,21 @@ TC.tool.Proxification = function (proxy, options) {
             CORS: 'cors',
             PROTOCOL: 'protocol',
             NOTFOUNDED: 'notfounded',
-            UNEXPECTED: 'unexpected'
+            UNEXPECTED: 'unexpected',
+            OFFLINE: 'offline'
         },
         checkHttpStatus: function (src) {
             const self = this;
+            if (!navigator.onLine) {
+                return Promise.reject({ statusText: self.ErrorType.OFFLINE });
+            }
+
             return fetch(src, { credentials: 'omit' })
                 .then(function (response) {
                     return { status: response.status, statusText: response.statusText };
                 })
                 .catch(function (error) {
-                    return self.ErrorType.UNEXPECTED;
+                    return { statusText: self.ErrorType.UNEXPECTED };
                 });
         },
         getImgTag: function (src, options) {
@@ -793,10 +774,12 @@ TC.tool.Proxification = function (proxy, options) {
 
     toolProto._fetch = {
         Headers: {
-            CONTENTTYPE: "content-type"
+            CONTENTTYPE: "content-type",
+            CONTENTDISPOSITION:"content-disposition"
         },
         ErrorType: {
             CORS: 'cors',
+            PROTOCOL: 'protocol',
             NOTFOUNDED: 'Not_Founded',
             UNEXPECTED: 'Un_Expected',
             UNEXPECTEDCONTENTTYPE: 'Un_Expected_ContentType'
@@ -840,7 +823,7 @@ TC.tool.Proxification = function (proxy, options) {
                     }, function (error) {
                         reject(error);
                     });
-                });
+                }).catch(error => reject(error));
             } else {
                 var cache = self.cacheHost.addKey(src, options);
                 cache._actionPromise = new Promise(function (resolveActionPromise, rejectActionPromise) {
@@ -855,6 +838,8 @@ TC.tool.Proxification = function (proxy, options) {
                     };
 
                     const _reject = function (error) {
+                        rejectActionPromise(error);
+
                         if (error.status == 200) {
                             //options.useCredentials = true;
 
@@ -921,7 +906,7 @@ TC.tool.Proxification = function (proxy, options) {
                     makeRequest(options);
                 });
             }
-        });
+        });        
     };
 
     toolProto.fetchRetry = function (url, options, n) {
@@ -1079,7 +1064,8 @@ TC.tool.Proxification = function (proxy, options) {
                     }
 
                     const contentType = response.headers.get(self._fetch.Headers.CONTENTTYPE);
-
+                    if (options.nomanage)
+                        return Promise.resolve(response);
                     //if (!options.responseType) {
                     //    if (contentType) {
                     //        options.responseType = contentType;
@@ -1100,23 +1086,24 @@ TC.tool.Proxification = function (proxy, options) {
                                 The response is always decoded using UTF-8.
                             */
 
-                        return response.blob().then(function (blob) {
-                            const reader = new FileReader();
+                        return response.blob()
+                            .then(function (blob) {
+                                const reader = new FileReader();
 
-                            return new Promise(function (resolve, reject) {
+                                return new Promise(function (resolve, reject) {
 
-                                reader.addEventListener("error", function () {
-                                    reader.abort();
-                                    reject(new DOMException("Problem decoding"));
+                                    reader.addEventListener("error", function () {
+                                        reader.abort();
+                                        reject(new DOMException("Problem decoding"));
+                                    });
+
+                                    reader.addEventListener("loadend", function () {
+                                        resolve(reader.result);
+                                    });
+
+                                    reader.readAsText(blob, charset);
                                 });
-
-                                reader.addEventListener("loadend", function () {
-                                    resolve(reader.result);
-                                });
-
-                                reader.readAsText(blob, charset);
-                            });
-                        });
+                            }).catch(function (error) { throw error; });
                     };
 
                     switch (true) {
@@ -1127,19 +1114,24 @@ TC.tool.Proxification = function (proxy, options) {
                             if (hasCharset && hasCharset.length === 2 && hasCharset[1] !== "UTF-8") {
                                 return responseWithCharsetToDecodedString(hasCharset[1]).then(function (text) {
                                     return (new window.DOMParser()).parseFromString(text, "text/xml");
-                                });
+                                }).catch(function (error) { throw error; });
                             } else {
                                 return response.text().then(function (data) {
                                     return (new window.DOMParser()).parseFromString(data, "text/xml");
-                                });
+                                }).catch(function (error) { throw error; });
                             }
-                        case options.responseType.indexOf('arraybuffer') > -1:
+                        case options.responseType.indexOf('arraybuffer') > -1:                        
                             return response.arrayBuffer();
                         case options.responseType.indexOf('image') > -1:
-                        case options.responseType.indexOf('blob') > -1:
+                        case options.responseType.indexOf('blob') > -1:                        
+                        case options.responseType.indexOf('application/zip') > -1:
+                        case options.responseType.indexOf('application/x-zip-compressed') > -1:
+                        case options.responseType.indexOf('application/vnd.google-earth.kmz') > -1:
+                        case options.responseType.indexOf('application/octet-stream') > -1:
+                        case options.responseType.indexOf('application/geopackage+sqlite3') > -1:
                             return response.blob().then(function (blob) {
                                 return new Blob([blob], { type: contentType });
-                            });
+                            }).catch(function (error) { throw error; });
                         case options.responseType.indexOf('document') > -1:
                             throw new DeveloperError('Unhandled responseType: ' + options.responseType);
                         case options.responseType.indexOf(TC.Consts.mimeType.JSON) > -1:
@@ -1155,7 +1147,7 @@ TC.tool.Proxification = function (proxy, options) {
                                     } else {
                                         return text;
                                     }
-                                });
+                                }).catch(function (error) { throw error; });
                             } else {
                                 return response.text().then(function (text) {
                                     if (options.responseType == '') {
@@ -1163,7 +1155,7 @@ TC.tool.Proxification = function (proxy, options) {
                                     } else {
                                         return text;
                                     }
-                                });
+                                }).catch(function (error) { throw error; });
                             }
                     }
                 })
@@ -1183,13 +1175,13 @@ TC.tool.Proxification = function (proxy, options) {
                 self.cacheHost.getAction(url, options).then(function (cache) {
                     resolve(_makeRequest(url, options, [cache.action]));
                 }).catch(function (error) {
-                    if (!error.status || error.status > 400) {
+                    if (!error.status || error.status >= 400) {
                         reject(new Error(error.text));
                     } else {
                         resolve(self.fetch(url, options));
                     }
                 });
-            });            
+            });
         } else {
             var cache = self.cacheHost.addKey(url, options);
             return new Promise(function (resolve, reject) {
@@ -1197,14 +1189,12 @@ TC.tool.Proxification = function (proxy, options) {
 
                     url = srcToURL(url).href;
 
-                    const fnResolve = function (data) {
-                        //self.cacheHost.hostCacheService.addHost(cache.key, cache.action);
+                    const fnResolve = function (data) {                        
                         resolveActionPromise({ action: cache.action });
                         resolve(data);
                     };
 
-                    const fnReject = function (error) {
-                        //self.cacheHost.hostCacheService.removeHost(cache.key);
+                    const fnReject = function (error) {                        
                         self.cacheHost.removeKey(url, options);
 
                         rejectActionPromise(error);
@@ -1234,7 +1224,7 @@ TC.tool.Proxification = function (proxy, options) {
                     }
                 });
                 cache._actionPromise.catch(function (error) {
-                    if (!error.status || error.status > 400) {
+                    if (!error.status || error.status >= 400) {
                         reject(new Error(error.text));
                     } else {
                         resolve(self.fetch(url, options));
@@ -1243,4 +1233,30 @@ TC.tool.Proxification = function (proxy, options) {
             });
         }
     };
+
+    toolProto.fetchFile = function (url, options) {
+        const self = this;
+
+        options = options || {};
+        options.nomanage = true;
+        return new Promise(function (resolve, reject) {
+            self.fetch(url, options).then(function (response) {
+                const contentDisposition = response.headers.get(self._fetch.Headers.CONTENTDISPOSITION);
+                var filename = new RegExp(/\w+.\w{1,}$/gi).exec(url)[0];
+                if (contentDisposition && /(attachment);([^;]*)/gi.test(contentDisposition)) {
+                    try {
+                        filename = /filename\*?=\"?([\w|-]*\'\')?(.*\.\w*)\"?/gi.exec(contentDisposition)[2];                        
+                    } catch (ex) {
+                        try {
+                            filename = contentDisposition.substring((contentDisposition.lastIndexOf("'") || contentDisposition.indexOf("=")) + 1);
+                        } catch (ex2) { }                        
+                    }
+                }
+                response.blob().then(function (blob) {
+                    resolve(new File([blob], filename, { type: response.headers.get(self._fetch.Headers.CONTENTTYPE) }));
+                })
+                
+            }).catch(reject);
+        });
+    }
 })();
