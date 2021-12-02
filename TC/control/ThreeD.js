@@ -1,4 +1,54 @@
-﻿TC.control = TC.control || {};
+﻿/**
+  * Configuración adicional necesaria del control 3D en el mapa.  
+  * @typedef ThreeDOptions
+  * @extends ViewOptions
+  * @see MapViewOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.  
+  *
+  * @example <caption>[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang html}
+  * <div id="mapa"/>
+  * <div id="vista3d"/>
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos el control de selector de mapa de fondos en el primer DIV del marcado markup.html contenido en el layout configurado en la propiedad SITNA.Cfg.layout.
+  *     SITNA.Cfg.controls.basemapSelector = {
+  *         div: "slot1"
+  *     };
+  *     // Añadimos el control de tabla de contenidos en el segundo DIV del marcado markup.html contenido en el layout configurado en la propiedad SITNA.Cfg.layout.
+  *     SITNA.Cfg.controls.TOC = {
+  *         div: "slot2"
+  *     };
+  *     // Añadimos una capa raster desde un servicio WMS y una capa vectorial
+  *     // a partir de un archivo geográfico en formato GML.
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "wms",
+  *             title: "Camino de Santiago",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "//idena.navarra.es/ogc/wms",
+  *             layerNames: "IDENA:PATRIM_Lin_CaminoSantR",
+  *             format: SITNA.Consts.mimeType.PNG
+  *         },
+  *         {
+  *             id: "gml",
+  *             type: SITNA.Consts.layerType.VECTOR,
+  *             url: "data/ESTACIONESTREN.gml"
+  *         }
+  *     ];
+  *     // Añadimos el control 3D.
+  *     SITNA.Cfg.controls.threeD = true;
+  *     // Configuramos en la propiedad `views` del mapa la vista `threeD` que requiere el control threeD para el correcto funcionamiento.
+  *     SITNA.Cfg.views = {
+  *         threeD: {
+  *             div: "vista3d" // Indicamos el identificador del DIV en el marcado en el cual cargar la vista 3D.
+  *         }
+  *     };
+  *     var map = new SITNA.Map("mapa");
+  * </script>
+  */
+
+TC.control = TC.control || {};
 
 (function () {
 

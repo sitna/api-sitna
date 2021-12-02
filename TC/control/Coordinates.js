@@ -1,4 +1,21 @@
-﻿TC.control = TC.control || {};
+﻿/**
+  * Opciones de control de coordenadas.
+  * @typedef CoordinatesOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {boolean} [showGeo] - Determina si se muestran coordenadas geográficas (en EPSG:4326) además de las del mapa, que por defecto son UTM (EPSG:25830).
+  * @example <caption>[Ver en vivo](../examples/cfg.CoordinatesOptions.html)</caption> {@lang html} 
+  * <div id="mapa"/>
+  * <script>
+  *     // Hacemos que el control que muestra las coordenadas en pantalla
+  *     // muestre también las coordenadas geográficas
+  *     SITNA.Cfg.controls.coordinates = {
+  *         showGeo: true
+  *     };
+  *     var map = new SITNA.Map('map');
+  * </script>
+  */
+
+TC.control = TC.control || {};
 
 if (!TC.control.ProjectionSelector) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/ProjectionSelector');
