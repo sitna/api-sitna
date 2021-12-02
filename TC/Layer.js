@@ -189,6 +189,8 @@ TC.Layer.state = {
     LOADING: 'loading'
 };
 
+TC.Layer.prototype.CAPABILITIES_STORE_KEY_PREFIX = 'TC.capabilities.';
+
 /**
  * Establece la visibilidad de la capa en el mapa.
  * @method setVisibility
@@ -383,6 +385,12 @@ TC.Layer.prototype.getResolutions = function () {
 TC.Layer.prototype.setProjection = function () {
 };
 
+TC.Layer.prototype.clone = function () {
+    const self = this;
+    const options = TC.Util.extend(true, {}, self.options, { id: self.id + '_clone' });
+    return new self.constructor(options);
+};
+
 TC.Layer.prototype.getBySSL_ = function (url) {
     var self = this;
 
@@ -509,8 +517,8 @@ TC.Layer.prototype.stroke = function (geometry, options) {
     };    
 
     const getCapabilitiesOnline = function () {
-        var layer = this;
-        return new Promise(function (resolve, reject) {
+        const layer = this;
+        const result = layer._onlineCapabilitiesPromise = layer._onlineCapabilitiesPromise || new Promise(function (resolve, reject) {
             const url = layer.getGetCapabilitiesUrl();
 
             layer.toolProxification.fetch(url, { retryAttempts: 2 }).then(function (data) {
@@ -523,13 +531,16 @@ TC.Layer.prototype.stroke = function (geometry, options) {
                         resolve(capabilities);
                     })
                     .catch(function (error) {
+                        delete layer._onlineCapabilitesPromise;
                         reject(Error(error));
                     });
             }).catch(function (dataError) {
+                delete layer._onlineCapabilitesPromise;
                 reject(Error(capabilitiesError(layer, dataError)));
             });
 
         });
+        return result;
     };
 
     const srcToURL = function (src) {
