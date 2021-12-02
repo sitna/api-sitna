@@ -1,4 +1,5 @@
-﻿// https://developers.google.com/maps/documentation/javascript/elevation?hl=es
+﻿
+// https://developers.google.com/maps/documentation/javascript/elevation?hl=es
 
 TC.tool = TC.tool || {};
 
@@ -31,18 +32,34 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
     const toolProto = TC.tool.ElevationServiceGoogle.prototype;
 
     let googleElevator;
-    const currentRequestIds = new Set();
+    const currentRequestIds = new Map();
+
+    const upRequestId = function (id, count) {
+        let currentCount = currentRequestIds.get(id) || 0;
+        currentCount += count;
+        currentRequestIds.set(id, currentCount);
+    };
+
+    const downRequestId = function (id) {
+        let currentCount = currentRequestIds.get(id);
+        if (currentCount) {
+            currentCount -= 1;
+            if (currentCount <= 0) {
+                currentRequestIds.delete(id);
+            }
+            return true;
+        }
+        return false;
+    };
 
     toolProto.request = function (options) {
         const self = this;
         options = options || {};
-        //if (self.serviceIsDisabled) {
-        //    return Promise.reject(Error('Google elevation service is disabled'));
-        //}
-        let requestId = options.id;
-        if (requestId) {
-            currentRequestIds.add(requestId);
+        if (!self.options.googleMapsKey) {
+            return Promise.reject(Error('Missing Google Maps key'));
         }
+        const requestId = options.id;
+
         const cancelledResponse = { status: 'CANCELLED' };
         let geomType;
         let coordinateList = options.coordinates;
@@ -64,9 +81,10 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
                 for (i = 0, ii = coordinateList.length; i < ii; i += self.maxCoordinateCountPerRequest) {
                     chunks.push(coordinateList.slice(i, i + self.maxCoordinateCountPerRequest));
                 }
+                upRequestId(requestId, chunks.length);
                 let retries = 0;
                 const subrequests = chunks.map(function subrequest(chunk) {
-                    const requestOptions = TC.Util.extend({}, options, { coordinates: chunk, id: 0 });
+                    const requestOptions = TC.Util.extend({}, options, { coordinates: chunk, id: requestId });
                     return new Promise(function (res, rej) {
                         if (!currentRequestIds.has(requestId)) {
                             res(cancelledResponse);
@@ -75,6 +93,7 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
                             self.request(requestOptions)
                                 .then(function (result) {
                                     if (result.status === 'OVER_QUERY_LIMIT') {
+                                        console.log("OVER_QUERY_LIMIT status reached for request " + requestId);
                                         if (!currentRequestIds.has(requestId)) {
                                             res(cancelledResponse);
                                         }
@@ -105,7 +124,7 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
                     const results = Array.prototype.concat.apply([], responses
                         .filter(r => r.status === 'OK')
                         .map(r => r.elevations));
-                    currentRequestIds.delete(requestId);
+                    downRequestId(requestId);
                     resolve({
                         status: 'OK',
                         elevations: results
@@ -133,9 +152,7 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
                     googleElevator.getElevationForLocations({
                         locations: coords
                     }, function (elevations, status) {
-                        if (requestId) {
-                            currentRequestIds.delete(requestId);
-                        }
+                        downRequestId(requestId);
                         resolve({
                             elevations: elevations,
                             status: status
