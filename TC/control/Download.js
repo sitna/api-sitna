@@ -64,7 +64,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                         const checkbox = tab.querySelector(self._selectors.RADIOBUTTON);
                         const newValue = checkbox.value;
                         const elms = self.div.querySelectorAll(self._selectors.ELEMENT);
-                        if (self._oldValue === newValue && self.options.deselectable) {
+                        if (self._oldValue === newValue && self.options.deselectableTabs) {
                             setTimeout(function () {
                                 checkbox.checked = false;
                             }, 0);
@@ -126,8 +126,8 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
             const wait = li && li.addWait();
             const extent = self.map.getExtent();
             const doneQR = new Promise(function (resolve, reject) {
-                var canvas = self.map.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
-                var newCanvas = TC.Util.cloneCanvas(canvas);
+                var canvases = self.map.wrap.getCanvas();
+                var newCanvas = TC.Util.mergeCanvases(canvases);
 
                 var sb = self.map.getControlsByClass(TC.control.ScaleBar);
                 if (sb) {
@@ -212,7 +212,7 @@ ${toFixed(yOrigin)}`);
         };
 
 
-        /**
+        /*
          * Descarga las features de las capas de trabajo actualmente seleccionadas. Comprueba que el número de features a descargar
          * no excede el límite impuesto por el servidor.
          */
