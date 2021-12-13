@@ -21,7 +21,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-xwms';
 
-    /**
+    /*
      * Marca como seleccionadas aquellas opciones del desplegable correspondientes a servicios WMS ya añadidos al TOC.
      */
     ctlProto.markServicesAsSelected = function (options) {
@@ -47,7 +47,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
             }
         }));
 
-        /**
+        /*
          * Borra parámetros no necesarios de la URL del servicio WMS.
          */
         var _removeParamsFromUrl = function (url, unwantedParams) {
