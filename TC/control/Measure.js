@@ -120,7 +120,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                         mode: TC.Consts.geom.POLYLINE,
                         measure: true,
                         persistent: self.persistentDrawControls,
-                        styleTools: self.persistentDrawControls,
+                        styling: self.persistentDrawControls,
                         layer: self.layer
                     });
                     self._polygonDrawControlPromise = map.addControl('draw', {
@@ -129,7 +129,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                         mode: TC.Consts.geom.POLYGON,
                         measure: true,
                         persistent: self.persistentDrawControls,
-                        styleTools: self.persistentDrawControls,
+                        styling: self.persistentDrawControls,
                         layer: self.layer
                     });
 
@@ -141,7 +141,7 @@ TC.inherit(TC.control.Measure, TC.Control);
                             self.drawControls.push(ctl);
                             ctl
                                 .on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
-                                    self.showMeasures(e);
+                                    self.showMeasurements(e);
                                 })
                                 .on(TC.Consts.event.DRAWCANCEL, function (e) {
                                     // Alerta de condición de carrera si no ponemos un timeout:
@@ -261,7 +261,7 @@ TC.inherit(TC.control.Measure, TC.Control);
         return this;
     }
 
-    ctlProto.showMeasures = function (options) {
+    ctlProto.showMeasurements = function (options) {
         const self = this;
         options = options || {};
         var units = options.units;
@@ -327,6 +327,13 @@ TC.inherit(TC.control.Measure, TC.Control);
         const self = this;
         self.layerPromise.then(function (layer) {
             layer.importState(state.layer);
+            //establecer el ultimo id utilizado
+            if (layer.features.length) {
+                //ordenamos por ID descendente y nos quedamos con el primero
+                const _lastAssignedID = layer.features.sort(function (f1, f2) { return (f2.id > f1.id ? 1 : -1); })[0].id;
+                //Establecemos cual va a ser el proximo id para el prefijo de las features de dibujo 
+                TC.setPrefixUID(_lastAssignedID.substring(0, _lastAssignedID.lastIndexOf(".") + 1), parseInt(_lastAssignedID.substring(_lastAssignedID.lastIndexOf(".") + 1), 10) + 1);
+            }                
         });
     };
 
