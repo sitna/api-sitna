@@ -249,21 +249,28 @@ if (!TC.control.MapContents) {
         return result;
     };
 
-    ctlProto.update = function (div, baseLayer) {
+    ctlProto.update = async function (div, baseLayer) {
         const self = this;
 
         div = div || self.div;
 
-        div.querySelectorAll(`ul.${self.CLASS}-branch li`).forEach(function (li) {
+        await (self._moreBaseLayersPromise || self._getMoreBaseLayers());
+        Array.from(div.querySelectorAll(`ul.${self.CLASS}-branch li`)).forEach(function (li, idx, arr) {
             const layer = self.getLayer(li.dataset.layerId);
             if (layer) {
                 const curBaseLayer = baseLayer || self.map.baseLayer;
                 const radio = li.querySelector('input[type=radio]');
-                const checked = curBaseLayer && (curBaseLayer === layer || curBaseLayer.id === layer.id ||
-                    (layer.getFallbackLayer && (curBaseLayer === layer.getFallbackLayer() || (layer.getFallbackLayer() && curBaseLayer.id === layer.getFallbackLayer().id))));
+                const fbLayer = layer.getFallbackLayer && layer.getFallbackLayer();
+                let checked = curBaseLayer && (curBaseLayer === layer || curBaseLayer.id === layer.id);
+                if (!checked) {
+                    const otherLayerIsFallback = fbLayer && arr
+                        .filter(elm => elm !== li)
+                        .some(elm => elm.dataset.layerId === fbLayer.id);
+                    checked = !otherLayerIsFallback && curBaseLayer && (curBaseLayer === fbLayer || (fbLayer && curBaseLayer.id === fbLayer.id));
+                }
 
-                if (self.map.on3DView && layer.mustReproject && layer.fallbackLayer && layer.getFallbackLayer) {
-                    layer.getFallbackLayer().getCapabilitiesPromise().then(function () {
+                if (self.map.on3DView && layer.mustReproject && fbLayer) {
+                    fbLayer.getCapabilitiesPromise().then(function () {
                         var mustReproject = !layer.getFallbackLayer().isCompatible(self.map.getCRS());
 
                         radio.checked = checked;
@@ -299,16 +306,21 @@ if (!TC.control.MapContents) {
 
     ctlProto.updateLayerTree = function (layer) {
         const self = this;        
-        if (layer.isBase && !layer.options.stealth) {
+        // Actuamos cuando la capa es base y es visible en tablas de contenidos o es hija de una visible
+        if (layer.isBase && (!layer.options.stealth || (layer.firstOption && !layer.firstOption.options.stealth))) {
             TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
 
-            if (layer.getInfo) {
-                info = layer.getInfo(layer.names[0]);
-                self.layerInfos[layer.id] = info;
+            const displayLayer = layer.firstOption || layer;
+
+            if (displayLayer !== layer) {
+                self.layerTrees[displayLayer.id] = displayLayer.getTree();
             }
 
+            if (displayLayer.getInfo) {
+                self.layerInfos[displayLayer.id] = displayLayer.getInfo(displayLayer.names[0]);
+            }
 
-            self.getRenderedHtml(self.CLASS + '-node', { layer: self.layerTrees[layer.id], info: self.layerInfos[layer.id], controlId: self.id }).then(function (out) {
+            self.getRenderedHtml(self.CLASS + '-node', { layer: self.layerTrees[displayLayer.id], info: self.layerInfos[displayLayer.id], controlId: self.id }).then(function (out) {
                 const parser = new DOMParser();
                 const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
                 var uid = newLi.dataset.layerUid;
@@ -318,13 +330,14 @@ if (!TC.control.MapContents) {
                     currentLi.innerHTML = newLi.innerHTML;
                 }
                 else {
-                    newLi.dataset.layerId = layer.id;
+                    newLi.dataset.layerId = displayLayer.id;
 
                     // Insertamos elemento en el lugar correcto, según indica la colección baseLayers
                     const setLayerIds = self.map.baseLayers
+                        .map(baseLayer => baseLayer.firstOption || baseLayer)
                         .filter(baseLayer => baseLayer && !baseLayer.stealth) // Buscamos capas que deban mostrarse
                         .map(baseLayer => baseLayer.id);
-                    const idx = setLayerIds.indexOf(layer.id);
+                    const idx = setLayerIds.indexOf(displayLayer.id);
                     let inserted = false;
                     for (let i = idx - 1; i >= 0; i--) {
                         const curLi = ul.querySelector(`li[data-layer-id="${setLayerIds[i]}"]`);
@@ -392,9 +405,11 @@ if (!TC.control.MapContents) {
         const filterFn = function (layer) {
             return layer.fallbackLayer && layer.fallbackLayer.id === id;
         };
-        var result = self.map.baseLayers.filter(filterFn)[0].fallbackLayer;
+        let baseLayersWithFallback = self.map.baseLayers.filter(filterFn);
+        let result = baseLayersWithFallback.length ? baseLayersWithFallback[0].fallbackLayer : null;
         if (!result && self._moreBaseLayers) {
-            result = self._moreBaseLayers.filter(filterFn)[0].fallbackLayer;
+            baseLayersWithFallback = self._moreBaseLayers.filter(filterFn);
+            result = baseLayersWithFallback.length ? baseLayersWithFallback[0].fallbackLayer : null;
         }
         return result;
     };
