@@ -50,26 +50,47 @@ TC.inherit(TC.control.FileImport, TC.Control);
         const result = TC.Control.prototype.register.call(self, map);
 
         if (self.options.enableDragAndDrop) {
-            map.wrap.enableDragAndDrop(self.options);
+            var ddInteraction = map.wrap.enableDragAndDrop(self.options);
+            ctlProto.loadFile = (file) => {
+                ddInteraction.ProcessFile(file);
+            }
         }
-
+        
+        map._bufferFeatures = [];
+        var _timer = null;
+        map._fileDropLoadingIndicator = null;
+             
+        document.addEventListener('paste', (e) => {
+            if (e.clipboardData.files && e.clipboardData.files.length) {
+                for (var i = 0; i < e.clipboardData.files.length; i++) {
+                    self.loadFile(e.clipboardData.files[i]);
+                }
+            }
+            else {
+                if (!e.clipboardData.items.length) {
+                    map.toast(self.getLocaleString('fileImport.pasteNotSupported'), { type: TC.Consts.msgType.WARNING });
+                }
+            }
+        });
         map
             .on(TC.Consts.event.FEATURESIMPORT, function (e) {
                 const fileName = e.fileName;
                 const target = e.dropTarget;
                 const features = e.features;
+                const timeStamp = e.timeStamp;
                 // Ignoramos los GPX (se supone que los gestionará Geolocation)
                 var gpxPattern = '.' + TC.Consts.format.GPX.toLowerCase();
                 if (fileName.toLowerCase().indexOf(gpxPattern) === fileName.length - gpxPattern.length || target !== self.map.div && target !== self) {
                     return;
-                }
-                
+                }               
+                if (!map._fileDropLoadingIndicator) map._fileDropLoadingIndicator = map.getLoadingIndicator().addWait();
                 map.addLayer({
                     id: self.getUID(),
                     title: fileName,
                     owner: self,
                     type: TC.Consts.layerType.VECTOR
                 }).then(function (layer) {
+                    layer._timeStamp = timeStamp;
                     self.layers.push(layer);
                     var geogCrs = 'EPSG:4326';
                     const flatten = function (prev, cur) {
@@ -111,9 +132,18 @@ TC.inherit(TC.control.FileImport, TC.Control);
                         var projectedFeature = projectGeom(features[i]);
                         layer.addFeature(projectedFeature);
                     }
-                    setTimeout(function () {
-                        map.zoomToFeatures(layer.features);
-                    }, 100);
+                    map._bufferFeatures = map._bufferFeatures.concat(layer.features);
+                    window.dropFilesCounter--;
+                    if (dropFilesCounter === 0) {
+                        map.zoomToFeatures(map._bufferFeatures);
+                        map._bufferFeatures = [];
+                        delete window.dropFilesCounter;
+                        var li = self.map.getLoadingIndicator();
+                        if (li) {
+                            li.removeWait(map._fileDropLoadingIndicator);
+                            map._fileDropLoadingIndicator = null;
+                        }
+                    }                    
                 });
             })
             .on(TC.Consts.event.FEATURESIMPORTERROR, function (e) {
@@ -126,13 +156,21 @@ TC.inherit(TC.control.FileImport, TC.Control);
                     dictKey = 'fileImport.error.reasonUnknown';
                 }
 
-                TC.error(self.getLocaleString(dictKey, { fileName: fileName }), TC.Consts.msgErrorMode.TOAST);
+                TC.error(e.message ? self.getLocaleString(e.message) : self.getLocaleString(dictKey, { fileName: fileName }), TC.Consts.msgErrorMode.TOAST);
 
                 var reader = new FileReader();
                 reader.onload = function (event) {
                     TC.error("Nombre del archivo: " + fileName + " \n Contenido del archivo: \n\n" + event.target.result, TC.Consts.msgErrorMode.EMAIL, "Error en la subida de un archivo");
                 };
+                window.dropFilesCounter--;
                 reader.readAsText(e.file);
+                if (dropFilesCounter === 0) {                    
+                    delete window.dropFilesCounter;
+                    var li = self.map.getLoadingIndicator();
+                    if (li) {
+                        li.removeWait(self.map.wrap._featureImportWaitId);
+                    }
+                }
             })
             .on(TC.Consts.event.FEATURESIMPORTPARTIAL, function (e) {
                 self.map.toast(self.getLocaleString("fileImport.partial.problem", { fileName: e.file.name, table: e.table, reason: e.reason }), { type: TC.Consts.msgType.ERROR })
@@ -158,7 +196,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
 
     ctlProto.render = function () {
         const self = this;
-        return self._set1stRenderPromise(self.renderData({ formats: self.formats }, function () {            
+        return self._set1stRenderPromise(self.renderData({ formats: self.formats}, function () {            
             const fileInput = self.div.querySelector('input[type=file]');
             // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
             fileInput.addEventListener(TC.Consts.event.CLICK, function (e) {
@@ -190,7 +228,7 @@ TC.inherit(TC.control.FileImport, TC.Control);
                 layers: self.layers.map(function (layer) {
                     return {
                         title: layer.title,
-                        state: layer.exportState()
+                        state: TC.Util.extend(layer.exportState(), { path: layer.features ? layer.features[0].getPath() : undefined })
                     };
                 })
             };
@@ -214,7 +252,12 @@ TC.inherit(TC.control.FileImport, TC.Control);
             Promise.all(layerPromises).then(function (layers) {
                 for (var i = 0, len = layers.length; i < len; i++) {
                     const layer = layers[i];
-                    layer.importState(state.layers[i].state);
+                    const ii = i;
+                    layer.importState(state.layers[i].state).then(function () {
+                        for (var j = 0; j < layer.features.length; j++) {
+                            layer.features[j].folders = state.layers[ii].state.path;
+                        }
+                    })
                     self.layers.push(layer);
                 }
             });
