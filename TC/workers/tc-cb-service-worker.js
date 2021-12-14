@@ -149,4 +149,24 @@
         }
     });
 
+    self.addEventListener('notificationclick', function (event) {
+        var notification = event.notification;
+        var action = event.action;
+        if (action === "back") {
+            notification.close();
+            var promise = Promise.resolve();
+            promise =
+                promise.then(function () { return firstWindowClient(notification.data.url); })
+                    .then(function (client) { return client ? client.focus() : null; });
+            event.waitUntil(promise);
+        }
+    });
+    function firstWindowClient(url) {
+        return self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then(function (windowClients) {
+            return windowClients.length ? windowClients.find(function (wc) {
+                return wc.url === url;
+            }) : null;
+        });
+    }
+
 })();
