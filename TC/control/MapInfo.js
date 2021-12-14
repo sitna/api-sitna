@@ -27,7 +27,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
         self.exportsState = false;
 
-        self.includeControls = self.options.includeControls === undefined || self.options.includeControls;        
+        self.includeControls = self.options.includeControls === undefined || self.options.includeControls;
 
         return result;
     }
@@ -60,8 +60,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                     layerState = self.featureToShare.layer.exportState({
                         features: [featureToShare]
                     });
-                }
-                else {
+                } else {
                     layerState = self.sharedFeaturesLayer.exportState();
                 }
                 state.features = layerState.features;
@@ -98,7 +97,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
     ctlProto.generateLink = async function () {
         var self = this;
-        
+
         var currentUrl = window.location.href;
         var hashPosition = currentUrl.indexOf('#');
         if (hashPosition > 0) {
@@ -115,19 +114,23 @@ TC.inherit(TC.control.MapInfo, TC.Control);
             }
             currentUrl = currentUrl.concat('?', TC.Util.getParamString(params));
         }
+        else {
+            //eliminamos todos los paramaertos por querystring
+            var start = currentUrl.indexOf('?');
 
-        // eliminamos el parámetro del idioma, si no lo arrastramos al compartir
-        if (TC.Util.getParameterByName('lang').length > 0) {
-            if (currentUrl.indexOf('&') > -1) { // tenemos más parámetros en la url
-                currentUrl = currentUrl.replace("lang" + "=" + TC.Util.getParameterByName('lang') + '&', '');
-            } else {
-                currentUrl = currentUrl.replace('?' + "lang" + "=" + TC.Util.getParameterByName('lang'), '');
+            //Borramos los parámetros de la URL y dejamos sólo el hash
+            if (start > 0) {
+                currentUrl = currentUrl.replace(currentUrl.substring(start), '');
             }
-        }
+        }       
 
         const controlStates = self.includeControls ? self.exportControlStates() : [];
-        if (!self.includeControls && self.exportsState && (self.featureToShare || self.sharedFeaturesLayer)) {
-            controlStates.push(self.exportState());
+        if (!self.includeControls && self.exportsState && (self.featureToShare || self.sharedFeaturesLayer || (self.caller && self.caller.toShare))) {
+            if (self.caller && self.caller.toShare) {
+                controlStates.push(self.caller.exportState());
+            } else {
+                controlStates.push(self.exportState());
+            }
         }
         const extraStates = controlStates.length ? { ctl: controlStates } : undefined;
 
@@ -142,22 +145,22 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const self = this;
         var wait;
 
-        const generateLinkWithoutParams = async function () {
-            var url = await self.generateLink();
-            var start = url.indexOf('?');
-            var end = url.indexOf('#');
+        //const generateLinkWithoutParams = async function () {
+        //    var url = await self.generateLink();
+        //    var start = url.indexOf('?');
+        //    var end = url.indexOf('#');
 
-            //Borramos los parámetros de la URL y dejamos sólo el hash
-            if (start > 0) {
-                if (start < end) {
-                    url = url.replace(url.substring(start, end), '');
-                } else {
-                    url = url.replace(url.substring(start, url.length - 1), '');
-                }
-            }
+        //    //Borramos los parámetros de la URL y dejamos sólo el hash
+        //    if (start > 0) {
+        //        if (start < end) {
+        //            url = url.replace(url.substring(start, end), '');
+        //        } else {
+        //            url = url.replace(url.substring(start, url.length - 1), '');
+        //        }
+        //    }
 
-            return url;
-        };
+        //    return url;
+        //};
         const shortenUrl = function (url) {
             var shortenServiceUrl = "https://tinyurl.com/api-create.php";
 
@@ -185,8 +188,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                 self.map.getLoadingIndicator().removeWait(wait);
                 resolve("");
             };
-
-            generateLinkWithoutParams().then(url => {
+            self.generateLink().then(url => {
                 if (url.length > self.QR_MAX_URL_LENGTH && url.length < self.SHORTEN_URL_LENGTH) {
 
                     wait = self.map.getLoadingIndicator().addWait();
@@ -347,7 +349,6 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
     ctlProto.registerListeners = function () {
         const self = this;
-
         if (!self.registeredListeners) {
             let handlerTimeout;
             const handler = function (e) {
@@ -355,7 +356,9 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                 // generateLink puede ser tardar mucho, así que no lo llamamos innecesariamente cuando se están cargando varias features
                 handlerTimeout = setTimeout(function () {
                     delete self.map._controlStatesCache;
-                    self.generateLink();
+                    self.renderPromise().then(function () {
+                        self.generateLink();
+                    });
                 }, 100);
             };
             self.map.on(TC.Consts.event.LAYERADD, handler)
