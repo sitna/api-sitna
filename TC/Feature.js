@@ -2,22 +2,26 @@
 TC.Feature = function (coords, options) {
     var self = this;
 
+    let olFeatureId;
     self.wrap = new TC.wrap.Feature();
     self.wrap.parent = self;
     if (self.wrap.isNative(coords)) {
         self.wrap.feature = coords;
         coords._wrap = self.wrap;
-        self.id = self.wrap.getId();
+        olFeatureId = self.wrap.getId();
         self.geometry = self.wrap.getGeometry();
         if (coords._folders) {
             self.folders = coords._folders;
         }
-        self.data = self.wrap.getData();
+        self.setData(self.wrap.getData());
     }
 
     var opts = self.options = TC.Util.extend(true, {}, options);
 
-    self.id = self.id || opts.id || TC.getUID();
+    self.id = olFeatureId || opts.id || TC.getUID();
+    if (self.wrap.feature && !olFeatureId) {
+        self.wrap.feature.setId(self.id);
+    }
     self.data = opts.data || self.data || null;
     self._visibilityState = TC.Consts.visibility.VISIBLE;
     if (opts.showsPopup === undefined) {
@@ -71,6 +75,10 @@ TC.Feature.prototype.setVisibility = function (visible) {
         self._visibilityState = visible ? TC.Consts.visibility.VISIBLE : TC.Consts.visibility.NOT_VISIBLE;
         self.layer.wrap.setFeatureVisibility(self, visible);
     }
+};
+
+TC.Feature.prototype.getId = function () {
+    return this.wrap.getId();
 };
 
 TC.Feature.prototype.setId = function (id) {
@@ -182,19 +190,39 @@ TC.Feature.prototype.getData = function () {
 
 TC.Feature.prototype.setData = function (data) {
     const self = this;
-    self.data = TC.Util.extend(self.data, data);
-    self.wrap.setData(data);
+    if (typeof data === 'string') {
+        self.data = data;
+    }
+    else {
+        self.data = TC.Util.extend(self.data, data);
+        self.attributes = self.attributes || [];
+        for (var key in data) {
+            let attr = self.attributes.filter(attr => attr.name === key)[0];
+            if (attr) {
+                attr.value = data[key];
+            }
+            else {
+                self.attributes.push({ name: key, value: data[key] });
+            }
+        }
+        self.wrap.setData(data);
+    }
 };
 
 TC.Feature.prototype.unsetData = function (key) {
     const self = this;
     delete self.data[key];
+    const attr = (self.attributes || []).filter(attr => attr.name === key)[0];
+    if (attr) {
+        self.attributes.splice(self.attributes.indexOf(attr), 1);
+    }
     self.wrap.unsetData(key);
 };
 
 TC.Feature.prototype.clearData = function () {
     const self = this;
     self.data = {};
+    self.attributes = [];
     self.wrap.clearData();
 };
 
@@ -337,6 +365,15 @@ TC.Feature.prototype.getInfo = function (options) {
     return result;
 };
 
+TC.Feature.prototype.getTemplate = function () {
+    const self = this;
+    let result = self.wrap.getTemplate();
+    if (result) {
+        return result;
+    }
+    return null;
+};
+
 TC.Feature.prototype.clone = function () {
     var self = this;
     var nativeClone = self.wrap.cloneFeature();
@@ -348,14 +385,13 @@ TC.Feature.prototype.getStyle = function () {
     return this.wrap.getStyle();
 };
 
-TC.Feature.prototype.showPopup = function (options) {
+TC.Feature.prototype.showPopup = async function (options) {
     const self = this;
     options = options || {};
     const control = options && options instanceof TC.Control ? options : options.control;
     const map = (self.layer && self.layer.map) || (control && control.map);
     if (map) {
-        var ctlPromise;
-        var popup = control || self.popup;
+        let popup = control || self.popup;
         if (!popup) {
             // Buscamos un popup existente que no esté asociado a un control.
             var popups = map.getControlsByClass('TC.control.Popup');
@@ -367,41 +403,29 @@ TC.Feature.prototype.showPopup = function (options) {
                 }
             }
         }
-        if (popup) {
-            popup.currentFeature = self;
-            ctlPromise = Promise.resolve(popup);
+        if (!popup) {
+            popup = await map.addControl('popup');
         }
-        else {
-            ctlPromise = map.addControl('popup');
-        }
-        ctlPromise.then(function (ctl) {
-            ctl.currentFeature = self;
-            map.getControlsByClass(TC.control.Popup)
-                .filter(p => p !== ctl && p.isVisible())
-                .forEach(p => p.hide());
-            self.wrap.showPopup(Object.assign({}, options, { control: ctl }));
-            // Ajustamos el ancho del título al de la tabla de atributos
-            const attrTable = ctl.contentDiv.querySelector("table.tc-attr");
-            const headers = ctl.contentDiv.querySelectorAll("h1,h2,h3,h4,h5");
-            if (attrTable && headers.length) {
-                const maxWidth = attrTable.getBoundingClientRect().width + 'px';
-                headers.forEach(function (h) {
-                    h.style.maxWidth = maxWidth;
-                });
-            }
-            map.trigger(TC.Consts.event.POPUP, { control: ctl });
-            ctl.fitToView(true);
-        });
+        popup.currentFeature = self;
+        map.getControlsByClass(TC.control.Popup)
+            .filter(p => p !== popup && p.isVisible())
+            .forEach(p => p.hide());
+        self.wrap.showPopup(Object.assign({}, options, { control: popup }));
+        map.trigger(TC.Consts.event.POPUP, { control: popup });
+        popup.fitToView(true);
+        popup.contentDiv.querySelectorAll('img').forEach(img => img.addEventListener('load', () => popup.fitToView()));
+        return popup;
     }
+    return null;
 };
 
-TC.Feature.prototype.showResultsPanel = function (options) {
+TC.Feature.prototype.showResultsPanel = async function (options) {
     const self = this;
     options = options || {};
     const control = options && options instanceof TC.Control ? options : options.control;
     const map = (self.layer && self.layer.map) || (control && control.map);
     if (map) {
-        var ctlPromise;
+        let panel;
 
         var resultsPanelOptions = {
             content: "table",
@@ -413,64 +437,87 @@ TC.Feature.prototype.showResultsPanel = function (options) {
         var controlContainer = map.getControlsByClass('TC.control.ControlContainer')[0];
         if (controlContainer) {
             resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
-            ctlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
+            panel = await controlContainer.addControl('resultsPanel', resultsPanelOptions);
         } else {
             resultsPanelOptions.div = document.createElement('div');
             map.div.appendChild(resultsPanelOptions.div);
-            ctlPromise = map.addControl('resultsPanel', resultsPanelOptions);
+            panel = await map.addControl('resultsPanel', resultsPanelOptions);
         }
 
-        ctlPromise.then(function (ctl) {
-            ctl.currentFeature = self;
+        panel.currentFeature = self;
 
-            // GLS: si contamos con el contenedor de controles no es necesario cerra el resto de paneles ya que no habrá solape excepto los paneles
-            if (map.getControlsByClass(TC.control.ControlContainer).length === 0) {
-                map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctrl) { return ctrl.options.content === "table" }).forEach(function (p) {
-                    p.close();
-                });
-            }
-
-            // cerramos los paneles con feature asociada que no sean gráfico
-            const panels = map.getControlsByClass('TC.control.ResultsPanel');
-            panels.forEach(function (p) {
-                if (p.currentFeature && !p.chart) {
-                    p.close();
-                }
+        // GLS: si contamos con el contenedor de controles no es necesario cerra el resto de paneles ya que no habrá solape excepto los paneles
+        if (map.getControlsByClass(TC.control.ControlContainer).length === 0) {
+            map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctrl) { return ctrl.options.content === "table" }).forEach(function (p) {
+                p.close();
             });
+        }
 
-            ctl.menuDiv.innerHTML = '';
-            ctl.open(self.getInfo({ locale: map.options.locale }), ctl.getInfoContainer());
-
-            var onViewChange = function (e) {
-                map.off(TC.Consts.event.VIEWCHANGE, onViewChange);
-
-                ctl.close();
-            };
-            map.on(TC.Consts.event.VIEWCHANGE, onViewChange);
+        // cerramos los paneles con feature asociada que no sean gráfico
+        const panels = map.getControlsByClass('TC.control.ResultsPanel');
+        panels.forEach(function (p) {
+            if (p.currentFeature && !p.chart) {
+                p.close();
+            }
         });
+
+        panel.menuDiv.innerHTML = '';
+        panel.open(options.html || self.getInfo({ locale: map.options.locale }), panel.getInfoContainer());
+
+        var onViewChange = function (e) {
+            map.off(TC.Consts.event.VIEWCHANGE, onViewChange);
+
+            panel.close();
+        };
+        map.on(TC.Consts.event.VIEWCHANGE, onViewChange);
+        return panel;
     }
+    return null;
 };
 
 TC.Feature.prototype.showInfo = function (options) {
     const self = this;
     options = options || {};
-    if (options.control && TC.control) {
-        const control = options.control;
-        if (control instanceof TC.control.Popup) {
-            self.showPopup(options);
-            return;
+
+    TC.loadJS(
+        !TC.control || !TC.control.FeatureInfoCommons,
+        TC.apiLocation + 'TC/control/FeatureInfoCommons',
+        async function () {
+            let html;
+            if (self.getTemplate()) {
+                html = self.getInfo();
+            }
+            else {
+                if (typeof self.data === 'string') {
+                    html = self.data;
+                }
+                else {
+                    html = await TC.control.FeatureInfoCommons.renderFeatureAttributeTable({ attributes: self.attributes, singleFeature: true });
+                }
+            }
+            const opts = TC.Util.extend({}, options, { html: html });
+            let control;
+            if (options.control && TC.control) {
+                const optionsControl = options.control;
+                if (optionsControl instanceof TC.control.Popup) {
+                    control = await self.showPopup(opts);
+                }
+                else if (optionsControl instanceof TC.control.ResultsPanel) {
+                    control = await self.showResultsPanel(opts);
+                }
+            }
+            else {
+                if (self.layer.map.on3DView || self.layer.map.defaultInfoContainer === TC.Consts.infoContainer.RESULTS_PANEL) {
+                    control = await self.showResultsPanel(opts);
+                }
+                else {
+                    control = await self.showPopup(opts);
+                }
+            }
+
+            TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(control.getContainerElement());
         }
-        if (control instanceof TC.control.ResultsPanel) {
-            self.showResultsPanel(options);
-            return;
-        }
-    }
-    if (self.layer.map.on3DView || self.layer.map.defaultInfoContainer === TC.Consts.infoContainer.RESULTS_PANEL) {
-        self.showResultsPanel(options);
-    }
-    else {
-        self.showPopup(options);
-    }
+    );
 };
 
 
