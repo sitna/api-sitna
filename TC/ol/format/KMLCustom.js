@@ -391,7 +391,14 @@
                     source = namespaceURISmanage(source, 'KML');
                 }
             }
-            return ol.format.KML.prototype.readFeatures.call(this, source, opt_options);
+            const result = ol.format.KML.prototype.readFeatures.call(this, source, opt_options);
+            // El parser no pone id si la entidad del archivo no lo tiene. Añadimos uno.
+            result.forEach(function (f) {
+                if (!f.getId()) {
+                    f.setId(TC.getUID());
+                }
+            });
+            return result;
         }
 
         readDocumentOrFolder_(node, objectStack) {
@@ -434,7 +441,7 @@
                 PLACEMARK_PARSERS, node, objectStack);
             if (!object) {
                 return undefined;
-            }
+            }  
             const feature = new ol.Feature();
             const id = node.getAttribute('id');
             if (id !== null) {
@@ -455,11 +462,12 @@
                 const styleFunction = createFeatureStyleFunction(
                     style, styleUrl, this.defaultStyle_, this.sharedStyles_,
                     this.showPointNames_);
-                feature.setStyle(styleFunction);
+                feature.setStyle(styleFunction);                
             }
             delete object['Style'];
             // we do not remove the styleUrl property from the object, so it
             // gets stored on feature when setProperties is called
+            delete object.styleUrl;//URI:Me veo obligado a eliminar el atributo styleUrl porque se muestra en el bocadillo de las features
 
             feature.setProperties(object, true);
 
@@ -896,6 +904,11 @@
             anchor = [0.5, 0];
             anchorXUnits = ol.style.IconAnchorUnits.FRACTION;
             anchorYUnits = ol.style.IconAnchorUnits.FRACTION;
+        }
+
+        // Añadimos este control para evitar problemas CORS en Firefox
+        if (/Firefox/.test(navigator.userAgent) && location.protocol === 'https:' && src.startsWith("http:")) {
+            src = src.replace("http:", "https:");
         }
 
         let offset;
