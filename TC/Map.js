@@ -6,6 +6,10 @@ TC.inherit = function (childCtor, parentCtor) {
     childCtor._super = parentCtor.prototype;
 };
 
+TC.mix = function (targetCtor, ...mixins) {
+    Object.assign(targetCtor.prototype, ...mixins);
+};
+
 (function () {
 
     // Polyfill de CustomEvent
@@ -843,21 +847,6 @@ TC.inherit = function (childCtor, parentCtor) {
          * @event BEFOREUPDATE
          */
 
-        // Si no hay tamaño definido en el div, lo ponemos a pantalla completa
-        const setSize = function () {
-            const divRect = self.div.getBoundingClientRect();
-            if (divRect.height === 0) {
-                document.querySelectorAll('html,body').forEach(elm => elm.classList.add('tc-fullscreen'));
-                self.div.classList.add('tc-fullscreen');
-            }
-        };
-        if (document.readyState === 'complete') {
-            setSize();
-        }
-        else {
-            window.addEventListener('load', setSize);
-        }
-
         self.div.classList.add(TC.Consts.classes.LOADING, TC.Consts.classes.MAP);
 
         // Para gestionar zoomToMarkers
@@ -1058,9 +1047,7 @@ TC.inherit = function (childCtor, parentCtor) {
 
         var init = async function () {
 
-            if (self.options.stateful) {
-                self.state = await self.checkLocation();
-            }
+            self.state = await self.checkLocation();
 
             if (self.options.layout) {
                 self.trigger(TC.Consts.event.LAYOUTLOAD, { map: self });
@@ -1113,7 +1100,7 @@ TC.inherit = function (childCtor, parentCtor) {
             self.crs = self.options.crs;
             self.initialExtent = self.options.initialExtent;
             self.maxExtent = self.options.maxExtent;
-            self.defaultInfoContainer = self.options.defaultInfoContainer;
+            self.defaultInfoContainer = self.defaultInfoContainer || self.options.defaultInfoContainer;
 
             self.wrap = new TC.wrap.Map(self);
 
@@ -1135,6 +1122,7 @@ TC.inherit = function (childCtor, parentCtor) {
                                 callback: function () {
                                     self.wrap.setMap();
                                     const ctlPromises = [];
+
                                     for (var name in self.options.controls) {
                                         var ctlOptions = self.options.controls[name];
                                         if (ctlOptions) {
@@ -1148,6 +1136,7 @@ TC.inherit = function (childCtor, parentCtor) {
 
                                     self.on(TC.Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
                                     self.on(TC.Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
+                                    self.on(TC.Consts.event.LAYERERROR, _triggerLayersUpdateEvent);
 
                                     var i;
                                     var lyrCfg;
@@ -1213,12 +1202,15 @@ TC.inherit = function (childCtor, parentCtor) {
                                             }.bind(stateLayer))
                                                 .catch(function (error) {
                                                     // no hacemos nada porque al llegar a este punto ya hemos gestionado el error en la instrucción crsLayerError(self, lyr); en la línea 4888														
+
+                                                    //URI:Si que hacemos ya que si falla el getCapabilities no hay CRS que valga
+                                                    self.toast(error.message, { type: TC.Consts.msgType.ERROR });
                                                 });
                                         });
                                     }
                                     Promise.all(ctlPromises).finally(function () {
                                         // 13/03/2020 si el mapa mantiene estado y tenemos estado de controles, pasamos a establecer los estados
-                                        if (self.options.stateful && self.state && self.state.ctl) {
+                                        if (self.state && self.state.ctl) {
                                             self.importControlStates(self.state.ctl);
                                         }
 
@@ -1350,9 +1342,6 @@ TC.inherit = function (childCtor, parentCtor) {
             return;
         };
 
-        var _checkIntegrity = function () {
-        };
-
         /*
         *  _triggerLayersBeforeUpdateEvent: Triggers map beforeupdate event (jQuery.Event) when any layer starts loading
         *  Parameters: OpenLayers.Layer, event name ('loadstart', 'loadend')
@@ -1389,6 +1378,7 @@ TC.inherit = function (childCtor, parentCtor) {
                             TC.i18n[locale] = TC.i18n[locale] || {};
                             TC.Util.extend(TC.i18n[locale], data);
                             TC.i18n.currentLocale = TC.i18n[locale];
+                            TC.i18n.currentLocaleKey=locale
                             resolve();
                         })
                         .catch(function (err) {
@@ -1405,6 +1395,13 @@ TC.inherit = function (childCtor, parentCtor) {
         const locale = self.options.locale;
 
         TC.i18n.loadResources(!TC.i18n[locale], TC.apiLocation + 'TC/resources/', locale).finally(function () {
+            // Si no hay tamaño definido en el div, lo ponemos a pantalla completa
+            // Lo ponemos aquí porque es poco antes de cargar markup.html
+            const divRect = self.div.getBoundingClientRect();
+            if (divRect.height === 0) {
+                document.querySelectorAll('html,body').forEach(elm => elm.classList.add('tc-fullscreen'));
+                self.div.classList.add('tc-fullscreen');
+            }
             // 22/03/2019 GLS: siempre vamos a tener layout porque en sitna.js (1757) se establece por defecto layout/responsive
             //                 si el usuario define otro se sobrescribe
             if (self.options.layout) {
@@ -1489,29 +1486,34 @@ TC.inherit = function (childCtor, parentCtor) {
                 layoutPromises.push(i18nLayoutPromise);
 
                 if (layoutURLs.style) {
-                    // Añadimos una clase para hacer más fáciles las reglas del layout
-                    self.div.classList.add('tc-lo');
+                    layoutPromises.push(new Promise(function (resolve, reject) {
+                        // Añadimos una clase para hacer más fáciles las reglas del layout
+                        self.div.classList.add('tc-lo');
 
-                    // GLS: 28/03/2019 Necesito hacer el HEAD para validar si existe porque si lo hago directamente y lo cargo como BLOB, 
-                    // las referencias a las fuentes son relativas al blob por lo que no funcionan, así que HEAD y si existe lo cargo por href
-                    fetch(layoutURLs.style, {
-                        method: navigator.onLine ? 'HEAD' : 'GET' // FLP: Las peticiones HEAD no se guardan en la cache, así que offline fallan, por eso la opción GET.
-                    }).then(function (response) {
-                        if (!response.ok) { // status no está en el rango 200-299
-                            throw new ResponseError(response.status, layoutURLs.style);
-                        }
-                        return response;
-                    }).then(function () {
-                        var linkElement = document.createElement('link');
-                        linkElement.rel = 'stylesheet';
-                        linkElement.href = layoutURLs.style;
+                        // GLS: 28/03/2019 Necesito hacer el HEAD para validar si existe porque si lo hago directamente y lo cargo como BLOB, 
+                        // las referencias a las fuentes son relativas al blob por lo que no funcionan, así que HEAD y si existe lo cargo por href
+                        fetch(layoutURLs.style, {
+                            method: navigator.onLine ? 'HEAD' : 'GET' // FLP: Las peticiones HEAD no se guardan en la cache, así que offline fallan, por eso la opción GET.
+                        }).then(function (response) {
+                            if (!response.ok) { // status no está en el rango 200-299
+                                throw new ResponseError(response.status, layoutURLs.style);
+                            }
+                            return response;
+                        }).then(function () {
+                            var linkElement = document.createElement('link');
+                            linkElement.rel = 'stylesheet';
+                            linkElement.href = layoutURLs.style;
 
-                        document.head.appendChild(linkElement);
-                    }).catch(function (error) {
-                        if (error.status) {
-                            onError(error);
-                        }
-                    });
+                            document.head.appendChild(linkElement);
+                            resolve();
+                        }).catch(function (error) {
+                            if (error.status) {
+                                onError(error);
+                            }
+
+                            resolve();
+                        });
+                    }));
                 }
 
                 if (layoutURLs.markup) {
@@ -1776,6 +1778,10 @@ TC.inherit = function (childCtor, parentCtor) {
         errorMessage += TC.Util.getLocaleString(map.options.locale, reason);
         TC.error(errorMessage);
         map.trigger(TC.Consts.event.LAYERERROR, { layer: layer, reason: reason });
+
+        const error = Error(errorMessage);
+        error.layerId = layer.id;
+        return error;
     };
 
     mapProto.getCRS = function () {
@@ -1789,8 +1795,8 @@ TC.inherit = function (childCtor, parentCtor) {
     };
 
     const appendRasterEvents = function (layer) {
-        layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
-            if (event.error.code != '404') {
+        layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {            
+            if ((event.error.code && event.error.code.toString() != '404') && (event.error.text != 'offline')) {
                 const wrap = this;
                 if (!wrap._tileloaderror) {
                     const path = layer.getPath();
@@ -1824,7 +1830,6 @@ TC.inherit = function (childCtor, parentCtor) {
 
         const result = new Promise(function (resolve, reject) {
 
-            const isLayerRaster = isRaster(layer);
             if (typeof layer === 'object' && !layer.id) {
                 layer.id = TC.getUID();
             }
@@ -1899,67 +1904,77 @@ TC.inherit = function (childCtor, parentCtor) {
                             callback: function () {
                                 const isCompatible = lyr.isCompatible(currentCrs);
                                 if (lyr.isBase) {
-                                    if (!isCompatible) {
-                                        if (!lyr.type === TC.Consts.layerType.WMTS) {
-                                            lyr.mustReproject = true;
+                                    const baseLayerEndFn = function () {
+                                        if (self.state) {
+                                            lyr.isDefault = (self.state.base === lyr.id) || (self.state.base === lyr.options.fallbackLayer);
                                         }
-                                        else {
-                                            const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
-                                            if (compatibleMatrixSet) {
-                                                lyr.wrap.setMatrixSet(compatibleMatrixSet);
+                                        else if (typeof self.options.defaultBaseLayer === 'string') {
+                                            lyr.isDefault = self.options.defaultBaseLayer === lyr.id;
+                                        }
+                                        else if (typeof self.options.defaultBaseLayer === 'number') {
+                                            lyr.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                        }
+                                        if (lyr.isDefault) {
+                                            var fit;
+                                            if (lyr.mustReproject && !lyr.type === TC.Consts.layerType.WMTS ||
+                                                lyr.mustReproject && lyr.type === TC.Consts.layerType.WMTS && !lyr.wrap.getCompatibleMatrixSets(currentCrs)[0]) {
+                                                if (lyr.options.fallbackLayer && lyr.getFallbackLayer) {
+
+                                                    self.addLayer(lyr.getFallbackLayer()).then(function (l) {
+                                                        self.wrap.setBaseLayer(l.wrap.layer);
+                                                        self.baseLayer = l.wrap.parent;
+                                                        // GLS: Tema casita + initialExtent
+                                                        fitToExtent(fit);
+
+                                                        resolve(lyr);
+                                                    });
+                                                } else {
+                                                    reject(crsLayerError(self, lyr));
+                                                }
                                             }
                                             else {
-                                                lyr.mustReproject = true;
-                                            }
-                                        }
-                                    }
-                                    if (self.state) {
-                                        lyr.isDefault = (self.state.base === lyr.id) || (self.state.base === lyr.options.fallbackLayer);
-                                    }
-                                    else if (typeof self.options.defaultBaseLayer === 'string') {
-                                        lyr.isDefault = self.options.defaultBaseLayer === lyr.id;
-                                    }
-                                    else if (typeof self.options.defaultBaseLayer === 'number') {
-                                        lyr.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
-                                    }
-                                    if (lyr.isDefault) {
-                                        var fit;
-                                        if (lyr.mustReproject && !lyr.type === TC.Consts.layerType.WMTS ||
-                                            lyr.mustReproject && lyr.type === TC.Consts.layerType.WMTS && !lyr.wrap.getCompatibleMatrixSets(currentCrs)[0]) {
-                                            if (lyr.options.fallbackLayer && lyr.getFallbackLayer) {
+                                                fit = self.baseLayer === null;
 
-                                                self.addLayer(lyr.getFallbackLayer()).then(function (l) {
-                                                    self.wrap.setBaseLayer(l.wrap.layer);
-                                                    self.baseLayer = l.wrap.parent;
+                                                lyr.wrap.getLayer().then(function (ollyr) {
+                                                    self.wrap.setBaseLayer(ollyr);
+                                                    self.baseLayer = lyr;
+
                                                     // GLS: Tema casita + initialExtent
                                                     fitToExtent(fit);
 
                                                     resolve(lyr);
                                                 });
-                                            } else {
-                                                crsLayerError(self, lyr);
-                                                const error = Error('Layer ' + lyr.id + ' incompatible with CRS');
-                                                error.layerId = layer.id;
-                                                reject(error);
                                             }
                                         }
                                         else {
-                                            fit = self.baseLayer === null;
-
-                                            lyr.wrap.getLayer().then(function (ollyr) {
-                                                self.wrap.setBaseLayer(ollyr);
-                                                self.baseLayer = lyr;
-
-                                                // GLS: Tema casita + initialExtent
-                                                fitToExtent(fit);
-
-                                                resolve(lyr);
-                                            });
+                                            //self.baseLayers.push(lyr);
+                                            resolve(lyr);
                                         }
+                                    };
+                                    if (isCompatible) {
+                                        baseLayerEndFn();
                                     }
                                     else {
-                                        //self.baseLayers.push(lyr);
-                                        resolve(lyr);
+                                        // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
+                                        // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
+                                        lyr.getCapabilitiesOnline().then(function (onlineCapabilities) {
+                                            lyr.capabilities = onlineCapabilities;
+                                            if (!lyr.isCompatible(currentCrs)) {
+                                                if (!lyr.type === TC.Consts.layerType.WMTS) {
+                                                    lyr.mustReproject = true;
+                                                }
+                                                else {
+                                                    const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
+                                                    if (compatibleMatrixSet) {
+                                                        lyr.wrap.setMatrixSet(compatibleMatrixSet);
+                                                    }
+                                                    else {
+                                                        lyr.mustReproject = true;
+                                                    }
+                                                }
+                                            }
+                                            baseLayerEndFn();
+                                        });
                                     }
                                 }
                                 else {
@@ -1969,26 +1984,27 @@ TC.inherit = function (childCtor, parentCtor) {
                                         });
                                     }
                                     else {
-                                        crsLayerError(self, lyr);
-                                        //URI: Si la capa no existe ne el capabilities se crea un falso negativo como capa no compatible con el CRS
-                                        //y se enviaba un correo de log con ese error
-                                        if (lyr.isValidFromNames()) {
-                                            const error = Error('Layer ' + lyr.id + ' incompatible with CRS');
-                                            error.layerId = layer.id;
-                                            reject(error);
-                                        }
-                                        else {
-                                            const error = Error('Layer ' + (lyr.layerNames ? lyr.layerNames.join(' ') : lyr.id) + ' not in capabilities');
-                                            error.layerId = layer.id;
-                                            reject(error);
-                                        }
+                                        // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
+                                        // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
+                                        lyr.getCapabilitiesOnline().then(function (onlineCapabilities) {
+                                            lyr.capabilities = onlineCapabilities;
+                                            if (lyr.isCompatible(currentCrs)) {
+                                                lyr.wrap.getLayer().then(function (l) {
+                                                    resolve(lyr);
+                                                });
+                                            }
+                                            else {
+                                                reject(crsLayerError(self, lyr));
+                                            }
+                                        })
                                     }
                                 }
                             }
                         });
                     }, function (error) {
-                        error.layerId = layer.id;
-                        reject(error);
+                        var err = new Error(error)
+                        err.layerId = layer.id;
+                        reject(err);
                     });
                 }
             );
@@ -2144,13 +2160,15 @@ TC.inherit = function (childCtor, parentCtor) {
     };
 
     mapProto.setLayerIndex = function (layer, idx) {
-        this.wrap.setLayerIndex(layer.wrap.layer, idx);
+        const self = this;
+        const olIdx = idx - self.baseLayers.length + 1;
+        self.wrap.setLayerIndex(layer.wrap.layer, olIdx);
     };
 
     mapProto.putLayerOnTop = function (layer) {
         var self = this;
         var n = self.wrap.getLayerCount();
-        self.setLayerIndex(layer, n - 1);
+        self.wrap.setLayerIndex(layer.wrap.layer, n - 1);
     };
 
     /*
@@ -2175,7 +2193,7 @@ TC.inherit = function (childCtor, parentCtor) {
             if (!found) {
                 layer = getAvailableBaseLayer.call(self, layer);
                 if (layer) {
-                    layer = await self.addLayer(TC.Util.extend(true, {}, layer, { isDefault: true, map: self }));
+                    layer = await self.addLayer(TC.Util.extend(true, {}, layer, { isDefault: true, isBase:true, map: self }));
                     found = true;
                 }
             }
@@ -2183,6 +2201,7 @@ TC.inherit = function (childCtor, parentCtor) {
         else {
             if (self.layers.indexOf(layer) < 0) {
                 layer.isDefault = true;
+                layer.isBase = true;
                 layer.map = self;
                 self.addLayer(layer);
                 // GLS: comento lo siguiente porque ya se va a tratar en la línea 1838, si no, se lanza el evento 2 veces
@@ -2704,8 +2723,35 @@ TC.inherit = function (childCtor, parentCtor) {
             }
             self.wrap.setExtent(bounds, opts);
 
+            if (self.on3DView) { // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
+                self._on3DZoomTo({ extent: bounds });
+            }
+        }
+    };
+
+    mapProto._on3DZoomTo = function (options) {
+        const self = this;
+        
+        options = options || {};
+
+        if (self.on3DView && options.extent && options.extent.length === 4) {
             // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
-            self.trigger(TC.Consts.event.ZOOMTO, { extent: bounds });
+            if (options.reprojected) {
+                self.trigger(TC.Consts.event.ZOOMTO, options);
+            } else {
+                let extent = options.extent;
+                let coordsXY = self.view3D.view2DCRS !== self.view3D.crs ?
+                    TC.Util.reproject(extent.slice(0, 2), self.view3D.view2DCRS, self.view3D.crs) :
+                    extent.slice(0, 2);
+
+                let coordsXY2 = self.view3D.view2DCRS !== self.view3D.crs ?
+                    TC.Util.reproject(extent.slice(2), self.view3D.view2DCRS, self.view3D.crs) :
+                    extent.slice(2);
+
+                options.extent = coordsXY.concat(coordsXY2);
+
+                self.trigger(TC.Consts.event.ZOOMTO, options);
+            }
         }
     };
 
@@ -2746,6 +2792,14 @@ TC.inherit = function (childCtor, parentCtor) {
                     options.extentMargin = self.options.extentMargin;
                 }
                 self.setExtent(extent, options);
+
+                if (self.on3DView) { // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
+                    self._on3DZoomTo({ extent: extent, reprojected: true });
+                    /* reprojected: true:
+                        Al obtener el extent de la capa desde el capabilities ya se gestiona que el CRS del mapa está en 4326
+                        porque map.getCRS ya gestiona si estamos en 3D o no por lo que el extent ya llega en geográficas.
+                    */
+                }                
             }
         }
         else {
@@ -2782,7 +2836,7 @@ TC.inherit = function (childCtor, parentCtor) {
         var result;
         if (!map.vectors) {
             result = map.addLayer({
-                id: TC.getUID(), title: TC.i18n[map.options.locale]['vectors'], type: TC.Consts.layerType.VECTOR
+                id: TC.getUID(), title: TC.i18n[map.options.locale]['vectorLayer'], type: TC.Consts.layerType.VECTOR
             });
             map.vectors = result;
             result.then(function (vectors) {
@@ -2808,7 +2862,7 @@ TC.inherit = function (childCtor, parentCtor) {
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                layer.addPoint(coord, options);
+                layer.addPoint(coord, TC.Util.extend(true, {}, options, { layer: layer }));
             }
             else {
                 throw new Error('Layer "' + options.layer + '" not found');
@@ -2834,8 +2888,7 @@ TC.inherit = function (childCtor, parentCtor) {
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                self._markerPromises.push(layer.addMarker(coord, options));
-
+                self._markerPromises.push(layer.addMarker(coord, TC.Util.extend(true, {}, options, { layer: layer })));
             }
             else {
                 self._markerPromises.push(Promise.reject(new Error('Layer "' + options.layer + '" not found')));
@@ -2866,7 +2919,7 @@ TC.inherit = function (childCtor, parentCtor) {
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                options.layer.addPolyline(coords, options);
+                layer.addPolyline(coords, TC.Util.extend(true, {}, options, { layer: layer }));
             }
             else {
                 throw new Error('Layer "' + options.layer + '" not found');
@@ -2893,7 +2946,7 @@ TC.inherit = function (childCtor, parentCtor) {
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                options.layer.addPolygon(coords, options);
+                layer.addPolygon(coords, TC.Util.extend(true, {}, options, { layer: layer }));
             }
             else {
                 throw new Error('Layer "' + options.layer + '" not found');
@@ -2922,7 +2975,7 @@ TC.inherit = function (childCtor, parentCtor) {
     };
 
     mapProto.setResolution = function (resolution) {
-        this.wrap.setResolution(resolution);
+        return this.wrap.setResolution(resolution);
     };
 
     mapProto.exportFeatures = async function (features, options) {
@@ -3007,11 +3060,14 @@ TC.inherit = function (childCtor, parentCtor) {
                         const _group = group;
                         const _features = groups[_group];
                         const data = _features.reduce(function (prev, curr) {
+                            const data = {};
                             for (var key in curr.data) {
                                 const val = curr.data[key];
-                                curr.data[key] = typeof val === 'string' ? val.replace(/\•/g, "&bull;") : val;
+                                data[key] = typeof val === 'string' ? val.replace(/\•/g, "&bull;") : val;
                             }
-                            return prev.concat([curr.data])
+                            if (curr.getStyle().label && !curr.data["name"])
+                                data["name"] = curr.getStyle().label;
+                            return prev.concat([data])
                         }, []);
                         const geometries = _features.reduce(function (prev, curr) {
                             //No se porque no le gusta las geometrias polyline de la herramienta draw por tanto las convierto a multipolyline
@@ -3057,7 +3113,7 @@ TC.inherit = function (childCtor, parentCtor) {
                 })
             });
             return;
-        }
+        }        
         if (format === TC.Consts.format.GPKG) {
             const fieldDataType = function (value) {
                 var name = ''
@@ -3082,7 +3138,7 @@ TC.inherit = function (childCtor, parentCtor) {
             }
 
             const currentCrs = self.crs;
-            TC.loadJS(!window.geopackage, [TC.apiLocation + 'lib/geopackage/geopackage.min.js'], function () {
+            TC.loadJS(!window.geopackage, [TC.apiLocation + 'lib/geopackage/geopackage'], function () {
                 TC.loadJS(!window.require || !require('wkx'), [TC.apiLocation + 'lib/wkx/wkx'], async function () {
                     geopackage.create().then(async function (myPackage) {
                         
@@ -3106,9 +3162,9 @@ TC.inherit = function (childCtor, parentCtor) {
                         //agrupar por capa
                         const timestamp = options.fileName.substring(options.fileName.lastIndexOf("_", options.fileName.lastIndexOf("_") - 1) + 1); 
                         var layers = features.reduce(function (rv, x) {
-                            var id = x.id.substr(0, x.id.lastIndexOf("."));
+                            var id = typeof (x.id) === "string" ? x.id.substr(0, x.id.lastIndexOf(".")) : options.fileName;
                             //var id = x.layer ? (typeof (x.layer) === "string" ? x.layer : x.layer.id) : x.id.substr(0, x.id.lastIndexOf("."));
-                            (rv[id] = rv[id] || []).push(x);
+                            (rv[id] = rv[id] || []).push(x);                            
                             return rv;
                         }, {});
                         for (var layerId in layers) {
@@ -3126,12 +3182,14 @@ TC.inherit = function (childCtor, parentCtor) {
                                     var i = 0;
 
                                     const geometryType = _features[0].CLASSNAME.substr(_features[0].CLASSNAME.lastIndexOf(".") + 1).replace("Polyline", "LineString").replace("Marker", "Point");
-                                    const tableName = layerId + (Object.keys(groups).length > 1 ? "_" + geometryType : "") + (timestamp ? "_" + timestamp : "");
+                                    const tableName = layerId + (Object.keys(groups).length > 1 ? "_" + geometryType : "")// + (timestamp ? "_" + timestamp : "");
                                     var columns = [];
-                                    if (!features[0].data.hasOwnProperty("id") && !features[0].data.hasOwnProperty("ID"))
-                                        columns.push(FeatureColumn.createPrimaryKeyColumnWithIndexAndName(i++, 'id'));
-                                    columns.push(FeatureColumn.createGeometryColumn(i++, 'geometry', geometryType.toUpperCase(), true, null));
+                                    var dataColumns = [];
+                                    var pkColumnName = "id";
 
+                                    if (features[0].hasOwnProperty("id") || features[0].hasOwnProperty("ID"))
+                                        columns.push(FeatureColumn.createPrimaryKeyColumnWithIndexAndName(i++, pkColumnName));
+                                    columns.push(FeatureColumn.createGeometryColumn(i++, 'geometry', geometryType.toUpperCase(), true, null));                                    
 
                                     var bounds = [Infinity, Infinity, -Infinity, -Infinity];
                                     for (var j = 0; j < _features.length; j++) {
@@ -3146,10 +3204,18 @@ TC.inherit = function (childCtor, parentCtor) {
 
                                     for (var x in (_features[0].data || _features[0].attributes)) {
                                         var fieldName = _features[0].attributes && _features[0].attributes[x] ? _features[0].attributes[x].name : x;
-                                        //if (fieldName.toLowerCase() === 'id') continue;
+                                        if (fieldName.toLowerCase() === 'id') continue;
                                         var fieldValue = _features[0].data[fieldName];
-                                        columns.push(FeatureColumn.createColumnWithIndex(i++, fieldName, fieldDataType(fieldValue)));
+                                        var c = FeatureColumn.createColumnWithIndex(i++, fieldName, fieldDataType(fieldValue));
+                                        columns.push(c);
+                                        //dataColumns.push(c);
                                     }
+                                    //si alguna feature tiene simbología de tipo texto se añade como una columna más a la tabla llamada "name"
+                                    if (_features.some(function (f) { return f.getStyle().label && ! f.data.name})) {
+                                        var c = FeatureColumn.createColumnWithIndex(i++, "name", geopackage.DataTypes.GPKG_DT_TEXT_NAME);
+                                        columns.push(c);
+                                    }
+
 
                                     var geometryColumns = new GeometryColumns();
                                     geometryColumns.table_name = tableName;
@@ -3160,7 +3226,9 @@ TC.inherit = function (childCtor, parentCtor) {
                                     geometryColumns.srs_id = srs_id;
                                     i = 0;
                                     const boundingBox = new geopackage.BoundingBox(bounds[0], bounds[2], bounds[1], bounds[3]);
-                                    geopackage.createFeatureTableWithDataColumnsAndBoundingBox(myPackage, tableName, geometryColumns, columns, null, boundingBox, srs_id).then(function () {
+                                    myPackage.createFeatureTableWithGeometryColumns(geometryColumns, boundingBox, srs_id, columns)
+                                    //geopackage.createFeatureTableWithDataColumnsAndBoundingBox(myPackage, tableName, geometryColumns, columns, null, boundingBox, srs_id)
+                                    .then(function () {
                                         const featureDao = myPackage.getFeatureDao(tableName);
                                         var wkx = require('wkx');
                                         for (let i = 0; i < _features.length; i++) {
@@ -3171,14 +3239,20 @@ TC.inherit = function (childCtor, parentCtor) {
                                             const geometry = wkx.Geometry.parse('SRID=' + srs_id + ';' + (new ol.format.WKT().writeFeature(feature.wrap.feature)));
                                             geometryData.setGeometry(geometry);
                                             featureRow.setGeometry(geometryData);
-                                            if (!feature.data.hasOwnProperty("id") && !feature.data.hasOwnProperty("ID"))
-                                                featureRow.setValueWithColumnName("id", i);
+                                            if (_features[i].hasOwnProperty("id") || _features[i].hasOwnProperty("ID"))
+                                                featureRow.setValueWithColumnName(pkColumnName, typeof (feature.id) === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);    
+                                            else if (_features[i].data.hasOwnProperty("id") || _features[i].data.hasOwnProperty("ID"))
+                                                featureRow.setValueWithColumnName(pkColumnName, typeof (feature.id) === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);
                                             for (var y in (feature.data || feature.attributes)) {
                                                 var fieldName = _features[0].attributes && _features[0].attributes[y] ? _features[0].attributes[x].name : y;
-                                                //if (fieldName.toLowerCase() === 'id') continue;
+                                                if (fieldName.toLowerCase() === 'id') continue;
                                                 var fieldValue = feature.data[fieldName];
                                                 featureRow.setValueWithColumnName(fieldName, fieldValue);
                                             }
+                                            if (featureDao.columns.indexOf("name")>=0 && !feature.data["name"]) {
+                                                featureRow.setValueWithColumnName("name", feature.getStyle().label);
+                                            }
+
                                             featureDao.create(featureRow);
                                         }
                                         resolve();
@@ -3201,22 +3275,22 @@ TC.inherit = function (childCtor, parentCtor) {
             });
             return
         }
-        const text = self.wrap.exportFeatures(features, options);
+        const data = self.wrap.exportFeatures(features, options);
         const mimeType = TC.Consts.mimeType[options.format];
         if (format === TC.Consts.format.KMZ) {
             TC.loadJS(!window.JSZip, TC.apiLocation + 'lib/jszip/jszip', async function () {
                 const zip = new JSZip();
                 let fileName = TC.Util.replaceSpecialCharacters(options.fileName || TC.getUID());
-                zip.file(fileName + ".kml", text);
+                zip.file(fileName + ".kml", data);
                 zip.generateAsync({ type: "blob", mimeType: mimeType }).then(function (blob) {
                     filename = fileName + ".kmz";
                     TC.Util.downloadBlob(filename, blob);
                     loadingCtl && loadingCtl.removeWait(waitId);
-                });
+                });            
             });
         }
         else {
-            TC.Util.downloadFile((options.fileName || TC.getUID()) + '.' + format.toLowerCase(), mimeType, text);
+            TC.Util.downloadFile((options.fileName || TC.getUID()) + '.' + format.toLowerCase(), mimeType, data);
             loadingCtl && loadingCtl.removeWait(waitId);
         }
     };
