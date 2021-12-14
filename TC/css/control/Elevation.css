@@ -1,0 +1,30 @@
+﻿@keyframes flip {
+    0% {
+        transform: scaleY(0);
+    }
+    99% {
+        transform: scaleY(1);
+    }
+    100% {
+        transform: none;
+    }
+}
+
+.tc-ctl-popup table tr.tc-ctl-elev-pair-elev,
+.tc-ctl-popup table tr.tc-ctl-elev-pair-elev-orig,
+.tc-ctl-popup table tr.tc-ctl-elev-pair-height {
+    animation: flip 0.3s;
+}
+
+.tc-ctl-elev-pair-elev th:before,
+.tc-ctl-elev-pair-elev-orig th:before {
+    margin-right: 0.5em;
+    font-family: sitna;
+    content: '\e918';
+}
+
+.tc-ctl-elev-pair-height th:before {
+    margin-right: 0.5em;
+    font-family: sitna;
+    content: '\e919';
+}

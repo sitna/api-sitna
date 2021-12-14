@@ -424,6 +424,17 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     }
 
 .tc-ctl-wfsquery-list.tc-ctl-search-list {
+    background-color: var(--main-bg-color);
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    list-style-type: none;
+    padding: 0.2em;
+    line-height: 1.8em;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+    max-height: 20em;
+    overflow: auto;
+    z-index: 10011;
+    flex: 1 1 100%;
     margin-left: 0;
     margin-top: 30px;
     width: auto;
@@ -431,6 +442,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     min-width: calc((100% - 1.8em)*0.35);
     box-sizing: border-box;
     left: 0.9em;
+    position: absolute;
 }
 .tc-ctl-wfsquery-results .tc-ctl-p-results-table {
     max-height: 200px;
@@ -662,8 +674,7 @@ div.tc-ctl.tc-ctl-wfsquery-results .tc-ctl-p-results-table {
 .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prpanel-title span.prpanel-title-text {
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
-    display: inline-block;
+    text-overflow: ellipsis;    
     cursor: text;
 }
 -tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .tc-ctl-p-results-table th, .tc-ctl-p-results-table td {    
@@ -671,10 +682,6 @@ div.tc-ctl.tc-ctl-wfsquery-results .tc-ctl-p-results-table {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;    
-}
-
-div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prpanel-title span.prpanel-title-text {
-    width: calc(100% - 105px);
 }
 
 div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
@@ -691,17 +698,55 @@ div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
 .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .table tbody td {
     padding: .3em .5em;
 }
-div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prcollapsed-slide-submenu-dwn {
-    margin-right:1px;
+.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results th.tc-ctl-wfsquery-results-sortable{
+    cursor:pointer;
+    padding-right:30px;
+    position:relative;
+}
+    .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results th.tc-ctl-wfsquery-results-sortable:before {
+        content: "\2191";
+        right: 1em;
+        display: block;
+        position: absolute;
+        top: 2px;
+        opacity: 0.3;
+    }
+    .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results th.tc-ctl-wfsquery-results-sortable:after {
+        content: "\2193";
+        right: 0.5em;
+        display: block;
+        position: absolute;
+        top: 2px;
+        opacity: 0.3;
+    }
+    .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results th.tc-ctl-wfsquery-results-sortable.tc-ctl-wfsquery-results-sorting-asc:before {
+        opacity: 1;
+    }
+
+
+    .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results th.tc-ctl-wfsquery-results-sortable.tc-ctl-wfsquery-results-sorting-desc:after {
+        opacity: 1;
+    }
+
+.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .table tbody td.tc-multimedia {
+    max-width: unset;
+    padding: 0;
+}
+.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results td.tc-multimedia > img, .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results td.tc-multimedia > iframe, .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results td.tc-multimedia > video, .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results td.tc-multimedia > audio {
+    margin: 0 auto;
+    display:block;
+    border:0;
+}
+.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .table tbody td.tc-multimedia div {
+    padding:0.3em 0.5em 0 0.5em;
+}
+.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .table tbody td.tc-multimedia div ~ iframe {
+    margin-top: 0.5em;
 }
 @media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
     div .tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
         font-size: 1em;
-    }
-
-    div.tc-ctl.tc-ctl-p-results.tc-ctl-wfsquery-results .prpanel-title span.prpanel-title-text {
-        width: calc(100% - 80px);
-    }
+    }    
 
     .tc-ctl-wfsquery-results .tc-ctl-p-results-table {
         max-height: 400px;

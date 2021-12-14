@@ -74,7 +74,7 @@ ul.tc-ctl-bms-branch {
     border-radius: var(--border-radius);
     height: 4rem;
     width: 4rem;
-    background-size: 100% 100%;
+    background-size: cover;
     background-repeat: no-repeat;
 }
     .tc-ctl-bms-node label.tc-loading {

@@ -4,7 +4,7 @@
     visibility: hidden;
     width: 0;
     height: 0;
-    position: relative;
+    position: absolute;
     color: var(--overlay-color);
     background-color: var(--overlay-bg-color);
     font-family: Arial, helvetica, sans-serif;
@@ -68,6 +68,7 @@
 }
 
 .tc-ctl-popup.tc-visible {
+    position: relative;
     display: flex;
     align-items: stretch;
     width: auto;
@@ -122,6 +123,7 @@
     -moz-user-select: text;
     -ms-user-select: text;
     -webkit-user-select: text;
+    cursor: default;
     user-select: text;
 }
 
@@ -154,6 +156,11 @@
         margin-right: -0.1em;
         color: var(--win-btn-color);
     }
+
+.tc-ctl-popup .tc-icon-btn.tc-ctl-popup-share:before {
+    font-family: sitna;
+    content: "\e924";
+}
 
 .olPopup th, .olPopup td {
     padding: 0.3em;

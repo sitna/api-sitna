@@ -3,10 +3,19 @@
     display: none;
 }
 
+.tc-ctl-dmm .tc-ctl-meas-select.tc-hidden {
+    margin-top: 0.5em;
+}
+
 .tc-ctl-dmm .tc-ctl-meas-select label {
     width: calc(33.33% - 1px);
 }
-
+.tc-ctl-dmm .tc-ctl-meas-select label:first-of-type {
+    width: 33.33%
+}
+.tc-ctl-dmm .tc-ctl-dmm-tool {
+    display:flex;
+}
 .tc-ctl-dmm-tool button {
     margin: 0 0.1em 0 0.1em;
     position: relative;
@@ -27,28 +36,26 @@
     }
 
     .tc-ctl-dmm-tool button:first-child {
-        margin-left: 0.05em;
+        margin-left: 0;
         border-top-left-radius: var(--border-radius);
         border-bottom-left-radius: var(--border-radius);
     }
 
     .tc-ctl-dmm-tool button:last-child {
-        margin-right: 0.05em;
-        width: calc(50% - 0.1em);
+        margin-right:0;
         border-top-right-radius: var(--border-radius);
         border-bottom-right-radius: var(--border-radius);
     }
 
 
 .tc-ctl-dmm .tc-ctl-dmm-mod {
-    display: block;
-    width: 100%;
+    flex-basis: 60%;
     padding: 0;
 }
 
-    .tc-ctl-dmm .tc-ctl-dmm-mod > button {
-        width: calc(20% - 0.2em);
-    }
+.tc-ctl-dmm .tc-ctl-dmm-mod > button {
+    flex-basis:20%;
+}
 
 .tc-ctl-dmm .tc-ctl-mod-btn-delete {
     border-top-right-radius: var(--border-radius);
@@ -76,7 +83,7 @@
 }
 
     .tc-ctl-dmm-cmd button {
-        width: calc(50% - 0.2em);
+        width: calc(50% - 0.1em);
         text-indent: -1000vw;
         position: relative;
         margin: 0 0.1em 0 0.1em;
@@ -90,6 +97,4 @@
         background-color: var(--btn-disabled-bg-color);
         border-color: var(--btn-disabled-border-color);
     }
-.tc-ctl-ftools-dialog .tc-ctl {
-    padding: 0;
-}
+

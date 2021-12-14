@@ -1,0 +1,82 @@
+﻿.tc-ctl-tctr-select {
+    padding-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+    .tc-ctl-tctr-select label {
+        position: relative;
+        display: inline-block;
+        height: 2em;
+        margin: 0.2em 0;
+        width: calc(50% - 1px);
+    }
+
+    .tc-ctl-tctr-select input[type=radio] {
+        display: none;
+    }
+
+        .tc-ctl-tctr-select input[type=radio] ~ span {
+            position: absolute;
+            display: block;
+            width: 100%;
+            height: 100%;
+            line-height: 2em;
+            text-align: center;
+            border: 1px solid var(--tab-border-color);
+            background-color: var(--main-bg-color);
+            color: var(--tab-color);
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+    .tc-ctl-tctr-select label.tc-ctl-tctr-tab:first-child input[type=radio]:checked ~ span {
+        border-bottom-left-radius: 0;
+        border-bottom-color: transparent;
+    }
+
+    .tc-ctl-tctr-select label.tc-ctl-tctr-tab:last-child input[type=radio]:checked ~ span {
+        border-bottom-right-radius: 0;
+        border-bottom-color: transparent;
+    }
+
+.tc-ctl-tctr .tc-ctl h2 {
+    display: none;
+}
+
+.tc-ctl-tctr .tc-hidden {
+    padding-top: 0;
+    display: block;
+    height: 0;
+}
+
+.tc-ctl-tctr-select {
+    padding-top: 0.5em;
+}
+
+.tc-ctl.tc-ctl-tctr-elm {
+    padding: 0;
+}
+
+    .tc-ctl.tc-ctl-tctr-elm.tc-hidden {
+        position: absolute;
+        transition: none;
+    }
+
+.tc-ctl-tctr label:first-child input[type=radio] ~ span {
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+.tc-ctl-tctr label:last-child input[type=radio] ~ span {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+.tc-ctl-tctr-select input[type=radio]:checked ~ span {
+    border-color: var(--main-hl-color);
+    color: var(--main-hl-color);
+    z-index: 10007;
+    border-bottom-color: var(--main-bg-color);
+}

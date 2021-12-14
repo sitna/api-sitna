@@ -1,8 +1,4 @@
 ﻿
-.tc-ctl-dldlog .tc-ctl {
-    padding: 0;
-}
-
 .tc-ctl-dldlog-dl {
     padding: 0.5em;
     background-image: linear-gradient(45deg, #ffffff 25%, #cccccc 25%, #cccccc 50%, #ffffff 50%, #ffffff 75%, #cccccc 75%, #cccccc 100%);

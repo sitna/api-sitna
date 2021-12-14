@@ -8,37 +8,25 @@
 
 .tc-ctl-3d {
     width: 2em;
-    height: 2em;    
+    height: 2em;
     position: absolute;
 }
 
-    .tc-ctl-3d button {
-        color: var(--map-btn-color);
-        border-radius: calc(var(--border-radius) * 0.67);
-        border: 0;
-        background-color: var(--map-btn-bg-color);
-        width: 100%;
-        height: 100%;
-        padding: 0;
+    .tc-ctl-3d button:before {
         font-weight: bold;
         font-size: 0.9em;
+        content: '3D';
     }
 
-        .tc-ctl-3d button:before {
-            content: '3D';
-        }
+    .tc-ctl-3d button.active:before {
+        font-weight: bold;
+        font-size: 0.9em;
+        content: '2D';
+    }
 
-        .tc-ctl-3d button.active:before {
-            content: '2D';
-        }
-
-        .tc-ctl-3d button:focus {
-            outline: none;
-        }
-
-        .tc-ctl-3d button[disabled] {
-            background-color: rgba(156, 156, 156, 0.5);
-        }
+    .tc-ctl-3d button[disabled] {
+        background-color: rgba(156, 156, 156, 0.5);
+    }
 
 /*.tc-ctl-3d button[disabled]:before {
         content: '';

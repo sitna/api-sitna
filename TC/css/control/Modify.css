@@ -4,7 +4,13 @@
 }
 
 .tc-ctl-mod-style {
+    position: absolute;
+    margin-top: 2em;
     text-align: center;
+}
+
+.tc-ctl-mod .tc-ctl-mod-style.tc-hidden {
+    margin-top: -5em;
 }
 
 .tc-ctl-mod .tc-ctl-mod-txt {
@@ -36,6 +42,16 @@
 .tc-ctl-mod .tc-ctl-btn:last-child {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
+}
+
+.tc-ctl-mod.tc-ctl-dmm-mod .tc-ctl-btn.tc-ctl-mod-btn-join,
+.tc-ctl-mod.tc-ctl-dmm-mod .tc-ctl-btn.tc-ctl-mod-btn-split,
+.tc-ctl-mod.tc-ctl-dmm-mod .tc-ctl-btn.tc-ctl-mod-btn-attr {
+    display: none;
+}
+
+.tc-ctl-mod .tc-ctl-btn.tc-ctl-mod-btn-text.tc-active {
+    margin-bottom: 5em;
 }
 
 .tc-ctl-mod-attr {

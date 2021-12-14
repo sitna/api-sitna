@@ -9,7 +9,7 @@
 @import url(control/Legend.css);
 @import url(control/LayerCatalog.css);
 @import url(control/FeatureInfo.css);
-@import url(control/CacheBuilder.css);
+@import url(control/OfflineMapMaker.css);
 @import url(control/WorkLayerManager.css);
 @import url(control/NavBar.css);
 @import url(control/Search.css);
@@ -37,6 +37,7 @@
 @import url(control/Edit.css);
 @import url(control/WFSEdit.css);
 @import url(control/FeatureDownloadDialog.css);
+@import url(control/Elevation.css);
 
 /*! normalize.css v1.0.0 | MIT License | git.io/normalize */
 article, aside, details, figcaption, figure, footer, header, hgroup, nav, section, summary {
@@ -115,7 +116,7 @@ body {
     --btn-hl-color: var(--color-1);
     --btn-hl-bg-color: var(--color-3);
     --btn-hl-border-color: var(--color-3);
-    --sec-btn-color: var(--color-6);
+    --sec-btn-color: var(--color-2);
     --sec-btn-bg-color: var(--color-1);
     --sec-btn-border-color: var(--color-1);
     --sec-btn-disabled-color: var(--color-4);
@@ -778,6 +779,10 @@ html, body {
     border-radius: var(--border-radius);
 }
 
+    .ol-control button.tc-float-btn {
+        border-radius: calc(var(--border-radius) * 0.67);
+    }
+
 .tc-modal .tc-crs-list li.tc-hidden {
     display: none;
 }
@@ -878,8 +883,11 @@ button.tc-msg-warning:after {
     margin-left: 0.2em;
     margin-right: 0.5em;
     cursor: pointer;
-    outline: none;
 }
+
+    .tc-ctl input[type=color]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
 
     .tc-ctl input[type=color]::-webkit-color-swatch {
         height: 1em;
@@ -1011,344 +1019,6 @@ a:hover.olButton {
         background-color: var(--list-bg-color);
     }
 
-.c3 .c3-axis-x path, .c3 .c3-axis-x line {
-    stroke: #000;
-}
-
-.c3 .c3-axis-x tspan {
-    fill: #000;
-    font-weight: bold;
-}
-
-/*.c3 .c3-axis-y path, .c3 .c3-axis-y line {
-    stroke: var(--track-profile-original-color);
-}*/
-
-.c3 .c3-axis-y tspan {
-    /*fill: var(--track-profile-original-color);*/
-    font-weight: bold;
-}
-
-.c3 .c3-axis-y2 path, .c3 .c3-axis-y2 line {
-    stroke: var(--track-profile-mdt-color);
-}
-
-.c3 .c3-axis-y2 tspan {
-    fill: var(--track-profile-mdt-color);
-    font-weight: bold;
-}
-
-/* remarcamos la línea de los perfiles porque con el gradiente no se aprecian las diferencias */
-.c3-line-ele {
-    stroke-width: 1.5px !important;
-    stroke: var(--track-profile-original-color) !important;
-}
-
-.c3-line-ele2 {
-    stroke-width: 1.5px !important;
-    stroke: var(--track-profile-mdt-color) !important;
-}
-
-.tc-chart {
-    clear: both;
-}
-
-.tc-track-chart.tc-loading:before {
-    content: "..." attr(data-content) "...";
-    position: absolute;
-    font-size: 1.8vmin;
-    color: #c52939;
-    animation: text 2s infinite cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
-}
-
-.tc-track-chart .tc-track-chart-elevation-minmax {
-    display: flex;
-    flex-direction: row;
-    flex-flow: wrap;
-    font-weight: bold;
-    font-size: 10px;
-    color: #000;
-}
-
-.tc-track-chart-elevationGain, .tc-track-chart-minmax {
-    font-weight: bold;
-    font-size: 10px;
-    color: #000;
-    width: 50%;
-    display: flex;
-}
-
-.tc-track-chart-minmax {
-    justify-content: flex-start;
-}
-
-.tc-track-chart-elevationGain {
-    justify-content: flex-end;
-}
-
-span.tc-track-chart-elevationGain {
-    width: 100%;
-}
-
-.tc-track-chart .tc-track-chart-elevationGain div, .tc-track-chart-minmax div {
-    display: flex;
-    flex-wrap: wrap;
-    flex-flow: column;
-}
-
-    .tc-track-chart .tc-track-chart-elevationGain div span:nth-child(1), .tc-track-chart-minmax div span:nth-child(1) {
-        color: var(--track-profile-original-color);
-    }
-
-    .tc-track-chart .tc-track-chart-elevationGain div span:nth-child(2), .tc-track-chart-minmax div span:nth-child(2) {
-        color: var(--track-profile-mdt-color);
-    }
-
-.tc-track-chart p {
-    width: 337px;
-    color: rgba(0,0,0,0.9);
-    font-size: 75%;
-}
-
-.c3-tooltip-container {
-    z-index: 10;
-    width: fit-content;
-}
-
-    .c3-tooltip-container > div span {
-        color: #000;
-        font-weight: bold;
-    }
-
-        .c3-tooltip-container > div span[data-isnumber].original {
-            color: var(--track-profile-original-color);
-        }
-
-        .c3-tooltip-container > div span[data-isnumber].mdt {
-            color: var(--track-profile-mdt-color);            
-        }
-
-            .c3-tooltip-container > div span[data-isnumber].mdt:before {
-                content: " - "
-            } 
-            
-            .c3-tooltip-container > div.onBottom span {
-                display: block;
-            }
-
-/* la librería c3js añade estilos en línea al tooltip para mostrar/ocultar lo que sobrescribe el display flex, 
-    con esta regla sobrescribimos nosotros cuando se muestra el tooltip  */
-.c3-tooltip-container[style*="display: block;"] {
-    display: flex !important;    
-}
-
-.c3-tooltip-container {
-    font-size: 0.9em;
-    text-align: center;    
-    height: 100%;
-    display: flex;
-    flex-flow: column nowrap;
-}
-
-    .c3-tooltip-container div.onTop {
-        display: inline-block;
-        padding: 0.2em;
-        background-image: linear-gradient(45deg, #ffffff 25%, #eaeaea 25%, #eaeaea 50%, #ffffff 50%, #ffffff 75%, #eaeaea 75%, #eaeaea 100%);
-        background-size: 5.66px 5.66px;
-    }
-
-    .c3-tooltip-container div.onBottom {
-        margin-top: auto;        
-        background-image: linear-gradient(45deg, #ffffff 25%, #eaeaea 25%, #eaeaea 50%, #ffffff 50%, #eaeaea 75%, #eaeaea 75%, #eaeaea 100%);
-        background-size: 5.66px 5.66px;        
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-    }
-    
-    .track-elevation-tooltip > span {
-        color: #2f2f2f;
-        /*font-size: 70%;*/
-    }
-
-/* estilos de c3.js */
-.c3 svg {
-    font: 10px sans-serif;
-}
-
-.c3 line, .c3 path {
-    fill: none;
-    stroke: #000;
-}
-
-.c3 text {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
-}
-
-.c3-bars path, .c3-event-rect, .c3-legend-item-tile, .c3-xgrid-focus, .c3-ygrid {
-    shape-rendering: crispEdges;
-}
-
-.c3-chart-arc path {
-    stroke: #fff;
-}
-
-.c3-chart-arc text {
-    fill: #fff;
-    font-size: 13px;
-}
-
-.c3-grid line {
-    stroke: #aaa;
-}
-
-.c3-grid text {
-    fill: #aaa;
-}
-
-.c3-xgrid, .c3-ygrid {
-    stroke-dasharray: 3 3;
-}
-
-.c3-text.c3-empty {
-    fill: gray;
-    font-size: 2em;
-}
-
-.c3-line {
-    stroke-width: 1px;
-}
-
-.c3-circle._expanded_ {
-    stroke-width: 1px;
-    stroke: #fff;
-}
-
-.c3-selected-circle {
-    fill: #fff;
-    stroke-width: 2px;
-}
-
-.c3-bar {
-    stroke-width: 0;
-}
-
-    .c3-bar._expanded_ {
-        fill-opacity: .75;
-    }
-
-.c3-target.c3-focused {
-    opacity: 1;
-}
-
-    .c3-target.c3-focused path.c3-line, .c3-target.c3-focused path.c3-step {
-        stroke-width: 2px;
-    }
-
-.c3-target.c3-defocused {
-    opacity: .3 !important;
-}
-
-.c3-region {
-    fill: #4682b4;
-    fill-opacity: .1;
-}
-
-.c3-brush .extent {
-    fill-opacity: .1;
-}
-
-.c3-legend-item {
-    font-size: 10px;
-    font-weight: bold;
-}
-
-.c3-legend-item-hidden {
-    opacity: 0.60;
-}
-
-.c3-legend-item-tile {
-    shape-rendering: geometricprecision;
-}
-
-.c3-legend-background {
-    opacity: 0;
-    fill: #fff;
-    stroke: #d3d3d3;
-    stroke-width: 1;
-}
-
-.c3-tooltip {
-    border-collapse: collapse;
-    border-spacing: 0;
-    background-color: #fff;
-    empty-cells: show;
-    box-shadow: 7px 7px 12px -9px #777;
-    opacity: .9;
-}
-
-    .c3-tooltip tr {
-        border: 1px solid #CCC;
-    }
-
-    .c3-tooltip th {
-        background-color: #aaa;
-        font-size: 14px;
-        padding: 2px 5px;
-        text-align: left;
-        color: #FFF;
-    }
-
-    .c3-tooltip td {
-        font-size: 13px;
-        padding: 3px 6px;
-        background-color: #fff;
-        border-left: 1px dotted #999;
-    }
-
-        .c3-tooltip td > span {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            margin-right: 6px;
-        }
-
-        .c3-tooltip td.value {
-            text-align: right;
-        }
-
-.c3-area {
-    stroke-width: 0;
-    opacity: .2;
-}
-
-.c3-chart-arcs-title {
-    dominant-baseline: middle;
-    font-size: 1.3em;
-}
-
-.c3-chart-arcs .c3-chart-arcs-background {
-    fill: #e0e0e0;
-    stroke: none;
-}
-
-.c3-chart-arcs .c3-chart-arcs-gauge-unit {
-    fill: #000;
-    font-size: 16px;
-}
-
-.c3-chart-arcs .c3-chart-arcs-gauge-max, .c3-chart-arcs .c3-chart-arcs-gauge-min {
-    fill: #777;
-}
-
-.c3-chart-arc .c3-gauge-value {
-    fill: #000;
-}
-/* fin estilos c3.js*/
-
-
 .tc-group {
     margin: 6px 4px 6px 8px;
 }
@@ -1385,7 +1055,12 @@ span.tc-track-chart-elevationGain {
     padding: 6px 10px;
     cursor: pointer;
     font-size: 13px;
+    outline: none;
 }
+
+    .tc-button:focus {
+        outline: none;
+    }
 
     .tc-button.disabled {
         cursor: not-allowed;
@@ -1403,6 +1078,7 @@ span.tc-track-chart-elevationGain {
     width: 1.2em;
     height: 1.2em;
     box-sizing: border-box;
+    outline: none;
 }
 
     .tc-icon-btn:before {
@@ -1426,6 +1102,29 @@ span.tc-track-chart-elevationGain {
         .tc-icon-btn:disabled:before {
             color: var(--sec-btn-disabled-color);
         }
+
+    .tc-icon-btn:focus {
+        outline: none;
+    }
+
+.tc-float-btn {
+    position: absolute;
+    width: 2em;
+    height: 2em;
+    z-index: 10002;
+    color: var(--map-btn-color);
+    border-radius: calc(var(--border-radius) * 0.67);
+    border: 0;
+    background-color: var(--map-btn-bg-color);
+    padding: 0;
+    font-size: initial;
+    outline: none;
+    cursor: pointer;
+}
+
+    .tc-float-btn:focus {
+        outline: none;
+    }
 
 button.tc-new:before {
     content: '';
@@ -1511,8 +1210,9 @@ div.tc-alert.tc-hidden {
 
     .tc-modal.tc-visible {
         animation: fadein 0.25s;
-        display: block;
         visibility: visible;
+        display: grid;
+        grid-template-areas: "topleft top topright" "left center right" "bottomleft bottom bottomright";
     }
 
     .tc-modal .tc-modal-background {
@@ -1530,14 +1230,17 @@ body .tc-map .tc-modal .tc-modal-background {
 .tc-modal .tc-modal-window {
     max-width: 60%;
     position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translate(-50%, 0);
     background-color: var(--main-bg-color);
     border: 1px solid var(--sec-divider-color);
     border-radius: var(--border-radius);
     box-shadow: 0 5px 15px rgba(0,0,0,.5);
     z-index: 100011;
+    grid-row-start: 2;
+    grid-row-end: 3;
+    grid-column-start: 2;
+    grid-column-end: 3;
+    align-self: center;
+    justify-self: center;
 }
 
 .tc-modal .tc-modal-header {
@@ -1907,3 +1610,13 @@ label:last-of-type input[type=radio] ~ span {
         visibility: visible;
     }
 
+/*ocultamos ellipse título de un control que section muestra dento de un diálogo*/
+.tc-modal .tc-modal-body .tc-ctl h2 {
+    display: none;
+    padding: 0;
+    margin: 0;
+}
+/*eliminamos el padding que los controles tienen por defecto cuando se muestra en un diálogo*/
+.tc-modal .tc-modal-body .tc-ctl {
+    padding: 0;
+}

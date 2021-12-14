@@ -24,7 +24,6 @@ ul.tc-ctl-lcat-branch {
     margin-left: 10px;
     transition: all .3s ease;
 }
-
     ul.tc-ctl-lcat-branch > li.tc-ctl-lcat-empty {
         font-style: italic;
         color: #ccc;
@@ -37,51 +36,49 @@ li.tc-ctl-lcat-node {
     line-height: 1.2em;
     font-family: Arial, helvetica, sans-serif;
     margin: 0;
-    padding: 3px 0 2px 20px;
-    padding-right: 0;
+    padding: 0 0 2px 20px;
     /* img/node.png */
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALDwAACw8BkvkDpQAAAAd0SU1FB9YIBhQIJYVaFGwAAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAEFJREFUOE9jmDlz5n8GZgYGXPj///948agB9DAAJI8LDyIDCGFsACo+WLyATSMMo2tCxkQZAFKED48aMPAG/GcAAFySJ1PSNmZLAAAAAElFTkSuQmCC) no-repeat;
 }
 
-    li.tc-ctl-lcat-node > button.tc-ctl-lcat-collapse-btn {
-        position: absolute;
-        left: 0;
-        width: 20px;
-        height: 15px;
-        background-color: transparent;
-        border: 0;
-    }
+li.tc-ctl-lcat-node > button.tc-ctl-lcat-collapse-btn {
+    position: absolute;
+    left: 0;
+    width: 22px;
+    height: 22px;
+    background-color: transparent;
+    border: 0;
+}
 
-    li.tc-ctl-lcat-node > span {
-        background-color: var(--main-bg-color);
-        display: inline;
-        position: relative;
-        transition: all .2s ease;
-    }
+li.tc-ctl-lcat-node > span {
+    background-color: var(--main-bg-color);
+    position: relative;
+    transition: all .2s ease;
+}
 
-        li.tc-ctl-lcat-node > span.tc-selectable {
-            cursor: pointer;
-            color: var(--main-inactive-color);
-        }
+li.tc-ctl-lcat-node > span.tc-selectable {
+    cursor: pointer;
+    color: var(--main-inactive-color);
+}
 
-            li.tc-ctl-lcat-node > span.tc-selectable:hover {
-                color: var(--main-hl-color);
-            }
-                li.tc-ctl-lcat-node > span.tc-selectable:hover:after, div.tc-ctl-lcat-search > ul > li > h5:hover:after, div.tc-ctl-lcat-search > ul > li > ul > li > h5:hover:after {
-                    padding: 0;
-                    content: attr(data-tooltip);
-                    left: 0;
-                    position: absolute;
-                    z-index: 10008;
-                    background-color: #eee;
-                    border-radius: var(--border-radius);
-                    color: #666;
-                    text-align: center;
-                    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
-                    font-size: 13px;
-                    width: 13em;
-                    top: -1.4em;
-                }
+li.tc-ctl-lcat-node > span.tc-selectable:hover {
+    color: var(--main-hl-color);
+}
+li.tc-ctl-lcat-node > span.tc-selectable:hover:after, div.tc-ctl-lcat-search > ul > li > h5:hover:after, div.tc-ctl-lcat-search > ul > li > ul > li > h5:hover:after {
+    padding: 0;
+    content: attr(data-tooltip);
+    left: 0;
+    position: absolute;
+    z-index: 10008;
+    background-color: #eee;
+    border-radius: var(--border-radius);
+    color: #666;
+    text-align: center;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+    font-size: 13px;
+    width: 13em;
+    top: -1.4em;
+}
 
 div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
     content: none;
@@ -300,7 +297,8 @@ div.tc-ctl-lcat-legend {
     position: relative;
 }
 
-    .tc-ctl-lcat h2 button {
+    .tc-ctl-lcat h2 button.tc-ctl-lcat-btn-search,
+    .tc-ctl-lcat h2 button.tc-ctl-lcat-btn-tree {
         position: absolute;
         top: -0.1em;
         right: 0;
@@ -533,17 +531,23 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     .tc-ctl-lcat-loading-node.error:before {
         animation: none;
         -webkit-animation: none;
-        font-family: FontAwesome;
-        content: "\f057";
+        content: "\2bbf";
         color: #f00;
     }
+@media screen and (pointer:coarse) and (min-device-width: 1024px),(pointer:coarse) and (min-device-height: 1024px) {
+    li.tc-ctl-lcat-node > button.tc-ctl-lcat-collapse-btn {
+        width: 20px;
+        height: 18px;
+        left: 13px;
+    }
+}
 
 @media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
     li.tc-ctl-lcat-node > .tc-ctl-lcat-btn-info {
         font-size: 1em;
     }
 
-    .tc-ctl-lcat h2 button {
+    .tc-ctl-lcat h2 button.tc-icon-btn {
         float: right;
         position: relative;
         top: -2px;
@@ -562,5 +566,10 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         margin: -0.11em;
         cursor: pointer;
         font-size: 1.3em;
+    }
+    li.tc-ctl-lcat-node > button.tc-ctl-lcat-collapse-btn {        
+        left: 0;
+        width: 20px;
+        height: 15px;        
     }
 }

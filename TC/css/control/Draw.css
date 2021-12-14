@@ -23,6 +23,9 @@
 }
 
 .tc-ctl-draw-style {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
     margin-top: 0.3em;
     width: 100%;
     text-align: center;
@@ -65,11 +68,11 @@
         cursor: pointer;
     }
         .tc-ctl-draw-tools > button:first-child {
-            margin-left: 0.05em;
+            margin-left: 0;
         }
 
         .tc-ctl-draw-tools > button:last-child {
-            margin-right: 0.05em;
+            margin-right: 0;
             border-right-color: var(--btn-border-color);
         }
 

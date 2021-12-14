@@ -46,29 +46,28 @@ li.tc-ctl-toc-node {
 
     li.tc-ctl-toc-node > button.tc-ctl-toc-collapse-btn {
         position: absolute;
-        left: 0;
-        width: 20px;
-        height: 20px;
+        left: 23px;
+        width: 22px;
+        height: 22px;
         background-color: transparent;
         border: 0;
     }
 
     li.tc-ctl-toc-node > span {
         vertical-align: top;
-        line-height: 1.4em;
         background-color: var(--main-bg-color);
     }
 
     li.tc-ctl-toc-node input[type=checkbox] {
         float: right;
-        margin-right: 0.3em;
+        margin-right: 0.3em;        
     }
 
-        li.tc-ctl-toc-node input[type=checkbox].tc-ctl-toc-branch-cb {
-            float: none;
-            vertical-align: top;
-            margin: 0.2em;
-        }
+li.tc-ctl-toc-node input[type=checkbox].tc-ctl-toc-branch-cb {
+    float: none;
+    vertical-align: top;
+    margin: 0.1em 0.2em 0.2em 0.2em;
+}
 
 li.tc-ctl-toc-leaf {
     /* img/leaf.png */
@@ -115,4 +114,48 @@ ul.tc-ctl-toc-branch.tc-collapsed {
 
 .tc-ctl-toc .tc-hidden {
     display: none;
+}
+@media screen and (pointer: coarse), (max-device-width: 768px), (max-device-height: 768px){
+    .tc-ctl-toc-branch li.tc-ctl-toc-node {
+        padding-left:50px;
+    }
+    .tc-ctl-toc-branch li.tc-ctl-toc-node span{
+        display:block;
+        padding-top:3px;
+    }
+    li.tc-ctl-toc-node input[type=checkbox]:not(.tc-ctl-toc-branch-cb) {
+        margin-top: 2px;
+        width: 18px;
+        height: 18px;
+    }
+    li.tc-ctl-toc-node input[type=checkbox].tc-ctl-toc-branch-cb {
+        display: inline-block;
+        float: left;
+        margin-top: 3px;
+        width: 18px;
+        height: 18px;
+    }
+    /*li.tc-ctl-toc-node > button.tc-ctl-toc-collapse-btn {
+        width: 20px;
+        height: 18px;
+        left: 13px;
+    }*/
+}
+@media screen and (pointer:coarse) and (min-device-width: 1024px),(pointer:coarse) and (min-device-height: 1024px) {
+    .tc-ctl-toc-branch li.tc-ctl-toc-node {
+        padding-left: 33px;
+    }
+    li.tc-ctl-toc-node > button.tc-ctl-toc-collapse-btn {
+        width: 20px;
+        height: 18px;
+        left: 13px;
+    }
+    
+}
+@media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
+    li.tc-ctl-toc-node > button.tc-ctl-toc-collapse-btn {
+        left: 0;
+        width: 20px;
+        height: 15px;
+    }
 }

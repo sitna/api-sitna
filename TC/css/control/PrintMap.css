@@ -38,6 +38,11 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
     overflow-x: auto;
 }
 
+.tc-ctl-prnmap-view-right {
+    left: auto;
+    right: 0;
+}
+
 .tc-ctl-prnmap-printing .tc-ctl-prnmap-tools {
     position: fixed;
     top: 0;
@@ -113,6 +118,16 @@ div.tc-map.tc-ctl-prnmap-printing {
     z-index: 100000;
 }
 
+.tc-map.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *,
+.tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, 
+.tc-toast, .tc-toast *,
+.tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)) {
+    visibility: hidden;
+}
+
+.tc-map.tc-ctl-prnmap-printing .tc-ctl-coords {
+    display: none;
+}
 
 .tc-map.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode {
     position: absolute;

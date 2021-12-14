@@ -7,6 +7,10 @@
     margin-bottom: 0.5em;
 }
 
+.tc-ctl-meas .tc-ctl-meas-select.tc-hidden {
+    margin-top: 0.5em;
+}
+
     .tc-ctl-meas-select label {
         position: relative;
         display: inline-block;

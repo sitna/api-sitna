@@ -1,4 +1,4 @@
-﻿.tc-ctl-wlm ul {
+﻿.tc-ctl-wlm .tc-ctl-wlm-content ul {
     list-style-type: none;
     padding: 0 0 3px 0;
     max-height: 24em;
@@ -77,10 +77,24 @@
 
 .tc-ctl-wlm .tc-ctl-wlm-path {
     width: 85%;
-    text-overflow: ellipsis;
     display: inline-block;
+    text-overflow: ellipsis;
     overflow: hidden;
 }
+
+.tc-ctl-wlm .tc-ctl-wlm-path span {
+    display: block;
+    margin-top: 0.3em;
+}
+
+    .tc-ctl-wlm .tc-ctl-wlm-path span:first-child {
+        display: block;
+        margin-top: 0;
+    }
+
+    .tc-ctl-wlm .tc-ctl-wlm-path span:only-child {
+        display: inline;
+    }
 
 .tc-ctl-wlm li:only-child .tc-ctl-wlm-path {
     width: calc(95% - 0.6em);
@@ -173,6 +187,7 @@
     padding: 0;
     margin-left: 0.6em;
     margin-right: 0.6em;
+    min-width: 0; /* Parche para Firefox, que no comprime elementos flex más que su min-width o su ancho por defecto */
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-buttons {
@@ -180,6 +195,7 @@
     align-items: center;
     justify-content: space-between;
     width: 90%;
+    margin-top:3px;
 }
 
 .tc-ctl-wlm li:only-child .tc-ctl-wlm-buttons {
@@ -219,15 +235,6 @@
     color: var(--sec-btn-hl-color);
 }
 
-.tc-ctl-wlm .tc-ctl-wlm-btn-info:after {
-    font-family: 'mapskin';
-    content: '\e024';
-}
-
-.tc-ctl-wlm .tc-ctl-wlm-btn-info.tc-hidden {
-    display: block;
-    visibility: hidden;
-}
 .tc-ctl-wlm .tc-ctl-wlm-info {
     width: 90%;
     color: #666;
@@ -244,6 +251,10 @@
 
     .tc-ctl-wlm .tc-ctl-wlm-abstract h4 {
         display: none;
+    }
+
+    .tc-ctl-wlm .tc-ctl-wlm-abstract div {
+        margin-top: 0.5em;
     }
 
     .tc-ctl-wlm .tc-ctl-wlm-abstract pre {
@@ -316,8 +327,6 @@
 
     .tc-ctl-wlm-buttons input[type=checkbox] + label:after {
         border-radius: calc(var(--border-radius) / 2);
-        font-family: sitna;
-        content: '\e911';
         color: var(--cb-color);
         background-color: var(--cb-bg-color);
     }
@@ -327,8 +336,18 @@
         background-color: var(--cb-checked-bg-color);
     }
 
-    .tc-ctl-wlm-buttons input[type=checkbox]:checked + label:after {
+    .tc-ctl-wlm-buttons input[type=checkbox] + label.tc-ctl-wlm-tools-visibility-label:after {
+        font-family: sitna;
+        content: '\e911';
+    }
+
+    .tc-ctl-wlm-buttons input[type=checkbox]:checked + label.tc-ctl-wlm-tools-visibility-label:after {
         content: '\e910';
+    }
+
+    .tc-ctl-wlm-buttons input[type=checkbox] + label.tc-ctl-wlm-cb-info-label:after {
+        font-family: sitna;
+        content: '\e923';
     }
 
 .tc-ctl-wlm-tools {
@@ -344,7 +363,9 @@
         outline: none;
     }
 
-.tc-ctl-wlm .tc-ctl-wlm-tools button {
+.tc-ctl-wlm .tc-ctl-wlm-tools button,
+.tc-ctl-wlm button.tc-ctl-wlm-btn-zoom,
+.tc-ctl-wlm button.tc-ctl-wlm-btn-del {
     background-color: var(--sec-btn-bg-color);
     color: var(--sec-btn-color);
 }
@@ -356,6 +377,10 @@
     .tc-ctl-wlm .tc-ctl-wlm-tools button:disabled {
         color: var(--sec-btn-disabled-color);
     }
+
+.tc-ctl-wlm .tc-ctl-m-finfo-select {
+    margin: 0;
+}
 
 @media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
     .tc-ctl-wlm .tc-ctl-wlm-btn-info {

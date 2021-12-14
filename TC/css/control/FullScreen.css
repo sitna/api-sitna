@@ -10,26 +10,9 @@
     width: 2em;
     height: 2em;
 }
-
-    .tc-ctl-fscreen button {
-        position: absolute;
-        width: 2em;
-        height: 2em;
-        z-index: 10002;
-        color: var(--map-btn-color);
-        border-radius: calc(var(--border-radius) * 0.67);
-        border: 0;
-        background-color: var(--map-btn-bg-color);
-        padding: 0;
-    }
-
         .tc-ctl-fscreen button:after {
             content: 'Pantalla completa';
-        }
-
-        .tc-ctl-fscreen button:focus {
-            outline: none;
-        }
+        }        
 
 /* GLS: en Safari IOS no pasa a ocupar toda la pantalla, así que aplicamos por CSS */
 html:fullscreen .tc-map {

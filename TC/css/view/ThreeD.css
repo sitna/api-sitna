@@ -222,13 +222,13 @@
     paint-order: stroke fill markers;
 }
 
-.tc-view-3d-divMap-fadeOut {
+.tc-view-3d-div-fadeOut {
     visibility: hidden;
     opacity: 0;
     transition: visibility 0s linear 300ms, opacity 300ms;
 }
 
-.tc-view-3d-divMap-fadeIn {
+.tc-view-3d-div-fadeIn {
     visibility: visible;
     opacity: 1;
     transition: visibility 0s linear 0s, opacity 300ms;
