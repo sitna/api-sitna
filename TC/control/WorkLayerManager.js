@@ -12,47 +12,53 @@ TC.control.WorkLayerManager = function (options) {
 
     self.addLayerTool({
         renderFn: function (container, layerId) {
-            const className = self.CLASS + '-btn-info';
+            const className = self.CLASS + '-cb-info';
 
-            let button = container.querySelector('button.' + className);
-            if (!button) {
+            let checkbox = container.querySelector('input[type="checkbox"].' + className);
+            if (!checkbox) {
                 const layer = self.map.getLayer(layerId);
                 if (layer.isRaster()) {
                     const info = layer.getInfo();
                     if (info.hasOwnProperty('abstract') || info.hasOwnProperty('legend') || info.hasOwnProperty('metadata')) {
                         const text = self.getLocaleString('infoFromThisLayer');
-                        button = document.createElement('button');
-                        button.innerHTML = text;
-                        button.setAttribute('title', text);
-                        button.classList.add(className);
-                        button.dataset.layerId = layerId;
-                        container.appendChild(button);
+                        checkbox = document.createElement('input');
+                        checkbox.setAttribute('type', 'checkbox');
+                        const checkboxId = className + '-' + layerId;
+                        checkbox.setAttribute('id', checkboxId);
+                        checkbox.setAttribute('title', text);
+                        checkbox.classList.add(className);
+                        checkbox.dataset.layerId = layerId;
+                        const label = document.createElement('label');
+                        label.innerHTML = text;
+                        label.setAttribute('title', text);
+                        label.setAttribute('for', checkboxId);
+                        label.classList.add(className + '-label');
+                        container.appendChild(checkbox);
+                        container.appendChild(label);
                     }
                 }
             }
-            return button;
+            return checkbox;
         },
         actionFn: function () {
-            const button = this;
-            var li = button;
+            const checkbox = this;
+            var li = checkbox;
             do {
                 li = li.parentElement;
             }
             while (li && li.tagName !== 'LI');
             const info = li.querySelector('.' + self.CLASS + '-info');
-            const layer = self.map.getLayer(button.dataset.layerId);
+            const layer = self.map.getLayer(checkbox.dataset.layerId);
             // Cargamos la imagen de la leyenda
             info.querySelectorAll('.' + self.CLASS + '-legend img').forEach(function (img) {
                 self.styleLegendImage(img, layer);
             });
-            info.classList.toggle(TC.Consts.classes.HIDDEN);
+            info.classList.toggle(TC.Consts.classes.HIDDEN, !checkbox.checked);
 
-            if (li.querySelector('input[type="checkbox"]').checked) {
+            if (li.querySelector('input[type="checkbox"].tc-ctl-wlm-tools-visibility').checked) {
                 const dragHandle = li.querySelector('.' + self.CLASS + '-dd');
                 dragHandle.classList.toggle(TC.Consts.classes.HIDDEN, !info.classList.contains(TC.Consts.classes.HIDDEN));
             }
-
-            button.classList.toggle(TC.Consts.classes.CHECKED);
         }
     });
 
@@ -289,7 +295,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
     ctlProto.addUIEventListeners = function () {
         const self = this;
 
-        self.div.addEventListener(self.CLICKEVENT, TC.EventTarget.listenerBySelector('input[type=checkbox]', function (e) {
+        self.div.addEventListener(self.CLICKEVENT, TC.EventTarget.listenerBySelector(`input.${self.CLASS}-tools-visibility[type="checkbox"]`, function (e) {
             // al estar en ipad el evento pasa a ser touchstart en la constante: TC.Consts.event.CLICK, los checkbox no funcionan bien con este evento
             const checkbox = e.target;
             var li = checkbox;
@@ -346,7 +352,7 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
         const li = findLayerElement(self, layer);
         if (li) {
             const visible = layer.getVisibility();
-            li.querySelector('input[type="checkbox"]').checked = visible;
+            li.querySelector(`input.${self.CLASS}-tools-visibility[type="checkbox"]`).checked = visible;
         }
     };
 
@@ -382,7 +388,8 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                 self.layers.push(layer);
 
                 var domReadyPromise;
-                var layerTitle = layer.title || layer.wrap.getServiceTitle();
+                var layerTitle = layer.title || (layer.wrap.getServiceTitle && layer.wrap.getServiceTitle());                
+                layer._title = layerTitle;
                 var layerData = {
                     title: layer.options.hideTitle ? '' : layerTitle,
                     hide: layer.renderOptions && layer.renderOptions.hide ? true : false,
@@ -395,14 +402,18 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                 if (isRaster) {
                     layerData.hasExtent = !!layer.getExtent();
                     layerData.layerNames = layer.layerNames;
-                    var path = layer.getPath();
-                    path.shift();
+                    const path = layer.names.map(n => layer.getPath(n));
+                    path.forEach(p => p.shift());
                     layerData.path = path;
-                    var name = layer.names[0];
-                    var info = layer.getInfo(name);
-                    layerData.legend = info.legend;
-                    layerData['abstract'] = info['abstract'];
-                    layerData.metadata = info.metadata;
+                    layerData.legend = [];
+                    layerData.abstract = [];
+                    layerData.metadata = [];
+                    layer.names.forEach(function (name) {
+                        var info = layer.getInfo(name);
+                        layerData.legend.push(info.legend);
+                        layerData.abstract.push(info.abstract);
+                        layerData.metadata.push(info.metadata);
+                    });
                 }
                 else {
                     layerData.hasExtent = true;
@@ -518,6 +529,25 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                 const deleteAllElm = self.div.querySelector('.' + self.CLASS + '-del-all');
                 deleteAllElm.classList.toggle(TC.Consts.classes.HIDDEN, !shouldBeDelAllVisible(self));
             }
+            else {
+                var layerTitle = layer.title || layer.wrap.getServiceTitle();
+                //comprobar si hay capas con títulos repetidos                 
+                while (self.layers.filter(function (l) { return l !== layer && (layer._timeStamp !== l._timeStamp) }).find(function (l) { return (l._title || l.title) === layerTitle; })) {
+                    var nameRegExp = new RegExp(/(.+\.\w+ )\(([0-9]+)\)$/gi).exec(layerTitle)
+                    layerTitle = !nameRegExp ? layerTitle + " (2)" : nameRegExp[1] + "(" + (parseInt(nameRegExp[2], 10) + 1) + ")";
+                }
+                layer._title = layerTitle;
+                const prevLi = self.div.querySelector("ul li[data-layer-id='" + layer.id + "']");
+                if (layer.features && layer.features.length) {
+                    if (layer.features[0].getPath().length) {
+                        prevLi.querySelector(".tc-ctl-wlm-lyr").innerHTML = layerTitle;
+                        prevLi.querySelector(".tc-ctl-wlm-path").innerHTML = layer.features[0].getPath().join(' &bull; ');
+                    }
+                    else
+                        prevLi.querySelector(".tc-ctl-wlm-path").innerHTML = layerTitle
+
+                }
+            }
         }
     };
 
@@ -536,6 +566,47 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
                 li.classList.toggle(self.CLASS + '-elm-notvisible', !isVisible);
             }
         });
+    };
+
+    ctlProto.update = function () {
+        var self = this;
+
+        var _getCheckbox = function (li) {
+            return li.querySelector(`input.${self.CLASS}-tools-visibility[type="checkbox"]`);
+        };
+
+        self.getLayerUIElements().forEach(function (li) {
+            const layer = self.map.getLayer(li.dataset.layerId);
+            if (layer) {
+                _getCheckbox(li).checked = layer.getVisibility();
+
+                layer.tree = null;
+
+                //li.querySelectorAll('li').forEach(function (l) {
+                //    const checkbox = _getCheckbox(l);
+                //    const uid = l.dataset.layerUid;
+                //    switch (layer.getNodeVisibility(uid)) {
+                //        case TC.Consts.visibility.VISIBLE:
+                //            checkbox.checked = true;
+                //            checkbox.indeterminate = false;
+                //            break;
+                //        case TC.Consts.visibility.NOT_VISIBLE_AT_RESOLUTION:
+                //            checkbox.checked = true;
+                //            checkbox.indeterminate = false;
+                //            break;
+                //        case TC.Consts.visibility.HAS_VISIBLE:
+                //            checkbox.checked = false;
+                //            checkbox.indeterminate = true;
+                //            break;
+                //        default:
+                //            checkbox.checked = false;
+                //            checkbox.indeterminate = false;
+                //    }
+                //});
+            }
+        });
+
+        self.updateScale();
     };
 
     ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
@@ -595,7 +666,8 @@ TC.inherit(TC.control.WorkLayerManager, TC.control.TOC);
             const button = tool.renderFn(elm.querySelector(`.${self.CLASS}-tools`), elm.dataset.layerId);
             if (button) {
                 if (TC.Util.isFunction(tool.actionFn)) {
-                    button.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    const eventName = button.getAttribute('type') === 'checkbox' ? 'change' : TC.Consts.event.CLICK;
+                    button.addEventListener(eventName, function (e) {
                         tool.actionFn.call(button);
                     }, { passive: true });
                 }
