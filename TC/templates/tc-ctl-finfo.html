@@ -55,7 +55,7 @@
                                             <span class="tc-ctl-finfo-errors">{@i18n $key="fi.error"/}<span class="tc-ctl-finfo-error-text">{error}</span></span>
                                         {:else}
                                             <h5>{id}</h5>
-                                                <table{?geometry} title="{@i18n $key="clickToShowOnMap"/}"{/geometry}>
+                                                <table class="tc-attr"{?geometry} title="{@i18n $key="clickToShowOnMap"/}"{/geometry}>
                                                     <tbody>
                                                         {#attributes}
                                                         <tr>
@@ -91,8 +91,8 @@
 </ul>
 {?featureCount}
 {@gt key=featureCount value="1" type="number"}
-<a class="tc-ctl-btn tc-ctl-finfo-btn-prev">{@i18n $key="previous"/}</a>
+<button class="tc-ctl-btn tc-ctl-finfo-btn-prev">{@i18n $key="previous"/}</button>
 <div class="tc-ctl-finfo-counter"><span class="tc-ctl-finfo-counter-current"></span>/{featureCount}</div>
-<a class="tc-ctl-btn tc-ctl-finfo-btn-next">{@i18n $key="next"/}</a>
+<button class="tc-ctl-btn tc-ctl-finfo-btn-next">{@i18n $key="next"/}</button>
 {/gt}
 {/featureCount}

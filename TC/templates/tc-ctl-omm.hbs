@@ -1,0 +1,28 @@
+<h2>{{i18n "offlineMaps"}}</h2>
+<div class="tc-ctl-omm-content">
+    <div class="tc-ctl-omm-draw tc-hidden"></div>
+    <i class="tc-ctl-omm-map-search-icon"></i>
+    <input type="search" list="{{listId}}" class="tc-ctl-omm-map-available-srch tc-textbox" placeholder="{{i18n "cb.filter.plhr"}}"{{#unless storedMaps}} disabled{{/unless}} maxlength="200" />                
+    <ul id="{{listId}}" class="tc-ctl-omm-list">
+        <li class="tc-ctl-omm-map-available-empty"{{#if storedMaps}} hidden{{/if}}><span>{{i18n "cb.noMaps"}}</span></li>
+        <li class="tc-ctl-omm-map-not" hidden><span>{{i18n "noMatches"}}</span></li>
+        {{#each storedMaps}}
+        {{> tc-ctl-omm-map-node }}
+        {{/each}}
+    </ul>
+    <div class="tc-ctl-omm-new">
+        <button class="tc-button tc-icon-button tc-ctl-omm-btn-new" disabled title="{{i18n "newofflinemap"}}">{{i18n "newOfflineMap"}}</button>
+    </div>
+    <div class="tc-ctl-omm-drawing tc-hidden">
+        <div class="tc-ctl-omm-tile-cmd">
+            <button class="tc-button tc-icon-button tc-ctl-omm-btn-cancel-draw" title="{{i18n "cancel"}}">{{i18n "cancel"}}</button>
+        </div>
+    </div>
+    <div class="tc-ctl-omm-progress tc-hidden">
+        <p>{{i18n "cb.DownloadingMap" true}}: <span class="tc-ctl-omm-progress-count"></span></p>
+        <div class="tc-ctl-omm-progress-bar">
+            <div class="tc-ctl-omm-progress-ratio" style="width:0"></div>
+        </div>
+        <button class="tc-button tc-icon-button tc-ctl-omm-btn-cancel-dl" title="{{i18n "cancel"}}">{{i18n "cancel"}}</button>
+    </div>
+</div>

@@ -6,9 +6,9 @@
         {{#if legend}}
         <div class="tc-ctl-legend-watch">
             {{#if legend.src}}
-            <img src="" data-img="{{legend.src}}" {{#if legend.width}}style="width:{{legend.width}}px;height:{{legend.height}}px;" {{/if}} />
+            <img src="" data-img="{{legend.src}}" style="{{#if legend.width}}width:{{legend.width}}px;height:{{legend.height}}px;{{/if}}{{#if legend.scale}}transform:scale({{legend.scale}});transform-origin:0 50% 0;{{/if}}" />
             {{else}}
-                {{#if legend.width}}
+                {{#if legend.strokeColor}}
                     <div class="tc-ctl-legend-img" style="border:solid {{legend.strokeWidth}}px {{legend.strokeColor}};background-color:{{legend.fillColor}}{{#if legend.width}};width:{{legend.width}}px;height:{{legend.height}}px;border-radius:50%{{/if}}"></div>
                 {{/if}}
             {{/if}}

@@ -47,15 +47,7 @@
                                                 <span class="tc-ctl-finfo-errors">{{i18n "fi.error"}}<span class="tc-ctl-finfo-error-text">{{error}}</span></span>
                                             {{else}}
                                                 <h5>{{id}}</h5>
-                                                    <table{{#if geometry}} title="{{i18n "clickToShowOnMap"}}"{{/if}}>
-                                                        <tbody>
-                                                            {{#each attributes}}
-                                                            <tr>
-                                                                <th class="tc-ctl-finfo-attr">{{name}}</th><td class="tc-ctl-finfo-val">{{#if (eq value null)}}{{else}}{{> tc-ctl-finfo-object value }}{{/if}}</td>                                                               
-                                                            </tr>                                                            
-                                                            {{/each}}
-                                                        </tbody>
-                                                    </table>
+                                                {{> tc-ctl-finfo-attr }}
                                             {{/if}}
                                         {{/if}}
                                     </li>
@@ -73,16 +65,18 @@
             </div>
         </li>
         {{else}}
+        {{#if displayElevation}}
             {{#unless loading}}
                 {{#unless displayElevation}}<li class="tc-ctl-finfo-empty">{{i18n "noData"}}</li>{{/unless}}
             {{/unless}}
+        {{/if}}
         {{/each}}
     </ul>
 </div>
 {{#if featureCount}}
     {{#if (gt featureCount 1)}}
-<a class="tc-ctl-btn tc-ctl-finfo-btn-prev">{{i18n "previous"}}</a>
+<button class="tc-ctl-btn tc-ctl-finfo-btn-prev">{{i18n "previous"}}</button>
 <div class="tc-ctl-finfo-counter"><span class="tc-ctl-finfo-counter-current"></span>/{{featureCount}}</div>
-<a class="tc-ctl-btn tc-ctl-finfo-btn-next">{{i18n "next"}}</a>
+<button class="tc-ctl-btn tc-ctl-finfo-btn-next">{{i18n "next"}}</button>
     {{/if}}
 {{/if}}

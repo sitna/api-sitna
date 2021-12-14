@@ -1,9 +1,7 @@
 <h2>{@i18n $key="geo"/}</h2>
 <div class="tc-ctl-geolocation-content">    
     <div class="tc-ctl-geolocation-track">
-        <div class="tc-ctl-geolocation-track-snap-info"></div>        
-        <!-- img se insertan en el div del mapa-->        
-        <div id="tc-ctl-geolocation-track-elevation-marker" class="tc-ctl-geolocation-trackMarker elevation" style="display: none;"></div>
+        <div class="tc-ctl-geolocation-track-snap-info"></div>                
         <div class="tc-ctl-geolocation-track-panel-block" >
             <input id="tc-ctl-geolocation-track-panel-opened-{controlId}" type="checkbox" checked/>
             <label for="tc-ctl-geolocation-track-panel-opened-{controlId}" title="{@i18n $key="geo.trk.panel.help.1"/}">{@i18n $key="geo.trk.panel.help.2"/}</label>
@@ -57,7 +55,7 @@
     </div>
 </div>
 <div class="tc-ctl-geolocation-track-center tc-hidden">
-    <button title="{@i18n $key="geo.trk.center"/}"></button>
+    <button class="tc-float-btn" title="{@i18n $key="geo.trk.center"/}"></button>
 </div>
 
 

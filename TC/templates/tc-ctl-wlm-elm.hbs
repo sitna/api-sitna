@@ -1,19 +1,21 @@
 <li class="tc-ctl-wlm-elm" tabindex="-1">
     <div class="tc-ctl-wlm-lyr">{{#if path}}{{title}}{{/if}}</div>
-    <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{{#each path}}{{#unless @first}} &bull; {{/unless}}{{this}}{{else}}{{title}}{{/each}}">{{#each path}}{{#unless @first}} &bull; {{/unless}}{{this}}{{else}}{{title}}{{/each}}</div>
+    <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{{#each path}}{{#unless @first}} &bull; {{/unless}}{{#each this}}{{#unless @first}} &rsaquo; {{/unless}}{{this}}{{/each}}{{else}}{{title}}{{/each}}">{{#each path}}<span>{{#each this}}{{#unless @first}} &rsaquo; {{/unless}}{{this}}{{/each}}</span>{{else}}{{title}}{{/each}}</div>
     <div class="tc-ctl-wlm-buttons">
         <div class="tc-ctl-wlm-tools"></div>
         {{#if hasExtent}}<button class="tc-ctl-wlm-btn-zoom" title="{{i18n "zoomToLayerExtent"}}">{{i18n "zoomToLayerExtent"}}</button>{{/if}}
         <button class="tc-ctl-wlm-btn-del" {{#if unremovable}}disabled{{else}}title="{{i18n "removeLayerFromMap"}}"{{/if}}>{{i18n "removeLayerFromMap"}}</button>
-        <input type="checkbox" id="tc-ctl-wlm-tools-visibility-{{id}}" {{#unless hide}}checked="checked"{{/unless}} title="{{i18n "visibilityOfThisLayer"}}" />
-        <label for="tc-ctl-wlm-tools-visibility-{{id}}" title="{{i18n "visibilityOfThisLayer"}}">{{i18n "visibilityOfThisLayer"}}</label>
+        <input type="checkbox" id="tc-ctl-wlm-tools-visibility-{{id}}" class="tc-ctl-wlm-tools-visibility" {{#unless hide}}checked="checked"{{/unless}} title="{{i18n "visibilityOfThisLayer"}}" />
+        <label for="tc-ctl-wlm-tools-visibility-{{id}}" title="{{i18n "visibilityOfThisLayer"}}" class="tc-ctl-wlm-tools-visibility-label">{{i18n "visibilityOfThisLayer"}}</label>
         <input type="range" value="{{opacity}}" title="{{i18n "transparencyOfThisLayer"}}" />
     </div>
         <div class="tc-ctl-wlm-info tc-hidden">
-            {{#if abstract}}
+            {{#if abstract.length}}
             <div class="tc-ctl-wlm-abstract">
                 <h4>{{i18n "abstract"}}</h4>
-                <div><pre>{{{abstract}}}</pre></div>
+                {{#each abstract}}
+                <div><pre>{{{this}}}</pre></div>
+                {{/each}}
             </div>
             {{/if}}
             {{#if customLegend}}
@@ -21,21 +23,29 @@
                 {{{customLegend}}}
             </ul>
             {{else}}
-                {{#if legend}}
+                {{#if legend.length}}
                 <div class="tc-ctl-wlm-legend" data-layer-name="{{layerNames}}">
                     <h4>{{i18n "content"}}</h4>
                     {{#each legend}}
+                        {{#each this}}
                     <div><p>{{title}}</p><img data-img="{{src}}" /></div>
+                        {{/each}}
                     {{/each}}
                 </div>
                 {{/if}}
             {{/if}}
-            {{#if metadata}}
+            {{#if metadata.length}}
             <div class="tc-ctl-wlm-metadata">
                 <h4>{{i18n "metadata"}}</h4>
                 <ul>
                     {{#each metadata}}
-                    <li><a href="{{{url}}}" type="{{format}}" title="{{formatDescription}}" target="_blank">{{formatDescription}}</a></li>
+                    <li>
+                        <ul>
+                        {{#each this}}
+                            <li><a href="{{{url}}}" type="{{format}}" title="{{formatDescription}}" target="_blank">{{formatDescription}}</a></li>
+                        {{/each}}
+                        </ul>
+                    </li>
                     {{/each}}
                 </ul>
             </div>

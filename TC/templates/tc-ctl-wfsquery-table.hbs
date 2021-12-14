@@ -1,18 +1,30 @@
 <table class="table">
     <thead>
-    {{#each columns}}
-    <th>{{this}}</th>
-    {{/each}}
-    </thead>
-    <tbody>
-    {{#each results}}
-        <tr title="{{i18n "zoomToFeature" }}" data-id="{{Id}}" data-index="{{@index}}" class="tc-selectable">
-        {{#each this}}
-    <td class="{{lowerCase @key}}">
-            {{#if (startsWith . "http")}}<a href="{{.}}" target="_blank" title="{{i18n "linkInNewWindow" }}">{{i18n "open" }}</a>{{else}}{{> tc-ctl-wfsquery-table-object }}{{/if}}
-    </td>
+        {{#each columns}}
+        {{#unless (startsWith this "h3_")}}
+        {{#unless (startsWith this "h4_")}}
+        <th{{#if ../sort}} title="{{i18n "wfs.QuerySortTitle"}}" class="tc-ctl-wfsquery-results-sortable{{#if (eq this ../sort.field)}} {{#if ../sort.order}}tc-ctl-wfsquery-results-sorting-asc{{else}}tc-ctl-wfsquery-results-sorting-desc{{/if}}{{/if}}" {{/if}}>
+            {{this}}</th>
+        {{/unless}}
+        {{/unless}}
         {{/each}}
-    </tr>
+
+</thead>
+    <tbody>
+        {{#each results}}
+        <tr title="{{i18n "zoomToFeature" }}" data-id="{{Id}}" data-index="{{#if (gt index -1)}}{{index}}{{else}}{{@index}}{{/if}}" class="tc-selectable">
+            {{#each this}}
+            {{#unless (eq @key 'index')}}
+            {{#unless (startsWith @key "h3_")}}
+            {{#unless (startsWith @key "h4_")}}
+            <td class="{{lowerCase @key}}">
+                {{> tc-ctl-finfo-attr-val name=@key value=. }}
+            </td>
+            {{/unless}}
+            {{/unless}}
+            {{/unless}}
+            {{/each}}
+        </tr>
     {{/each}}
     </tbody>
 </table>

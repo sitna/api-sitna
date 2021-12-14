@@ -54,6 +54,10 @@
     </div>
 </div>
     {{else}}
-{{{this}}}
+        {{#if (isUrl this)}}
+<a href="{{this}}" target="_blank" title="{{i18n "linkInNewWindow"}}">{{i18n "open"}}</a>
+        {{else}}
+{{{formatDateOrNumber this }}}
+        {{/if}}
     {{/if}}
 {{/if}}
