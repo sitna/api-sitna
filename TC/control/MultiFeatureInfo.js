@@ -1,4 +1,77 @@
-﻿TC.control = TC.control || {};
+﻿
+/**
+  * Opciones de control de obtención de información de entidades de mapa en el que el método de selección es dibujar una 
+  * geometría en el mapa. El control ofrece como resultados todas las entidades que se intersecan con esa geometría.
+  * Las geometrías de selección pueden ser puntos, líneas o polígonos.
+  * 
+  * Este control utiliza las funcionalidades de los servicios OGC para realizar su cometido. En concreto, la selección por punto 
+  * hace uso de la petición `GetFeatureInfo` de los servicios WMS. Por otro lado, las selecciones por línea y polígono emplean la petición
+  * `GetFeature` de los servicios WFS. Esto implica que en este caso debe existir un servicio WFS asociado al servicio WMS que ofrezca 
+  * los mismos datos que este. Servidores de mapas como GeoServer tienen este comportamiento por defecto. El control intenta inferir 
+  * la URL del servicio WFS a partir de la URL del servicio WMS de la capa del mapa.
+  * @typedef MultiFeatureInfoOptions
+  * @ignore
+  * @extends FeatureInfoOptions
+  * @see MapControlOptions
+  * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a las pulsaciones hechas en el mapa desde el que se carga.
+  * Como máximo puede haber solamente un control activo en el mapa en cada momento.
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {MultiFeatureInfoModeOptions} [modes] - Colección de modos disponibles de selección.
+  * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
+  * de las entidades geográficas de la respuesta. Si el valor de esta propiedad es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
+  * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
+  * @example <caption>[Ver en vivo](../examples/cfg.MultiFeatureInfoOptions.html)</caption> {@lang html} 
+  * <div id="mapa"></div>
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos el control multiFeatureInfo.
+  *     SITNA.Cfg.controls.multiFeatureInfo = {
+  *         div: "slot1",
+  *         modes: {
+  *             point: true,
+  *             polyline: {
+  *                 filterStyle: {
+  *                     strokeColor: "#00cccc",
+  *                     strokeWidth: 4
+  *                 }
+  *             },
+  *             polygon: {
+  *                 filterStyle: {
+  *                     strokeColor: "#6633cc",
+  *                     strokeWidth: 3,
+  *                     fillColor: "#6633cc",
+  *                     fillOpacity: 0.5
+  *                 }
+  *             }
+  *         },
+  *         persistentHighlights: true
+  *     };
+  *     // Añadimos una capa WMS sobre la que hacer las consultas.
+  *     // El servicio WMS de IDENA tiene un servicio WFS asociado (imprescindible para consultas por línea o recinto).
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "cp",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "https://idena.navarra.es/ogc/wms",
+  *             layerNames: ["IDENA:DIRECC_Pol_CodPostal"]
+  *         }
+  *     ];
+  *     var map = new SITNA.Map("mapa");
+  * </script> 
+  */
+
+/**
+  * Opciones de control de obtención de información de entidades de mapa por click, por línea o por recinto.
+  * @typedef MultiFeatureInfoModeOptions
+  * @ignore
+  * @see MultiFeatureInfoOptions
+  * @property {boolean|FeatureInfoOptions} [point=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por punto.
+  * @property {boolean|GeometryFeatureInfoOptions} [polyline] - Si se establece a un valor verdadero, el control permite la selección de entidades por línea.
+  * @property {boolean|GeometryFeatureInfoOptions} [polygon=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por polígono.
+  */
+
+TC.control = TC.control || {};
 
 if (!TC.control.FeatureInfoCommons) {
     TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
@@ -52,11 +125,16 @@ if (!TC.control.FeatureInfoCommons) {
         return new Promise(function (resolve, reject) {
             const ctlPromises = [TC.Control.prototype.register.call(self, map)]
             const styles = self.options.styles || {};
-            if (self.modes[TC.Consts.geom.POINT]) {
+            const pointMode = self.modes[TC.Consts.geom.POINT];
+            const polylineMode = self.modes[TC.Consts.geom.POLYLINE];
+            const polygonMode = self.modes[TC.Consts.geom.POLYGON];
+            if (pointMode) {
                 ctlPromises.push(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
                     {
+                        id: self.getUID(),
                         displayMode: self.options.displayMode,
-                        persistentHighlights: self.options.persistentHighlights
+                        persistentHighlights: self.options.persistentHighlights,
+                        share: self.options.share
                     })).then(function (control) {
                         self.featureInfoControl = control;
                         self.featureInfoControls.push(control);
@@ -66,9 +144,12 @@ if (!TC.control.FeatureInfoCommons) {
             if (self.modes[TC.Consts.geom.POLYLINE]) {
                 ctlPromises.push(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
                     {
+                        id: self.getUID(),
+                        active: polylineMode.active,
                         displayMode: self.options.displayMode,
                         persistentHighlights: self.options.persistentHighlights,
-                        style: styles.line
+                        share: self.options.share,
+                        style: polylineMode.filterStyle || styles.line
                     })).then(function (control) {
                         self.lineFeatureInfoControl = control;
                         self.featureInfoControls.push(control);
@@ -78,9 +159,12 @@ if (!TC.control.FeatureInfoCommons) {
             if (self.modes[TC.Consts.geom.POLYGON]) {
                 ctlPromises.push(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
                     {
+                        id: self.getUID(),
+                        active: polygonMode.active,
                         displayMode: self.options.displayMode,
                         persistentHighlights: self.options.persistentHighlights,
-                        style: styles.polygon
+                        share: self.options.share,
+                        style: polygonMode.filterStyle || styles.polygon
                     })).then(function (control) {
                         self.polygonFeatureInfoControl = control;
                         self.featureInfoControls.push(control);
@@ -151,8 +235,6 @@ if (!TC.control.FeatureInfoCommons) {
                 const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
                 delFeaturesBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
                     self.featureInfoControls.forEach(ctl => {
-                        ctl.info = null;
-                        ctl._infoHistory = {};
                         ctl.resultsLayer.features.slice().forEach(f => ctl.downplayFeature(f));
                         ctl.filterLayer.features.slice().forEach(f => f.layer.removeFeature(f));
                     });
