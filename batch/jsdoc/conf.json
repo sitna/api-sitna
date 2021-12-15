@@ -7,7 +7,7 @@
   "plugins": [ "plugins/markdown" ],
   "recurseDepth": 10,
   "source": {
-    "include": [ "./batch/jsdoc/README.md", "sitna.js" ]
+    "include": [ "./batch/jsdoc/README.md", "sitna.js", "./TC/Control.js", "./TC/control/" ]
   },
   "sourceType": "module",
   "tags": {
@@ -18,7 +18,7 @@
     "includeDate": true,
     "dateFormat": "DD/MM/YYYY",
     "systemName": "API SITNA",
-    "systemVersion": "v2.1.0",
+    "systemVersion": "v2.2.0",
     "systemSummary": "API JavaScript para la visualización de datos georreferenciados en aplicaciones web",
     "systemLogo": "./tc/css/img/sitna-logo.png",
     "systemColor": "#cc0000",
@@ -74,7 +74,7 @@
     "showAccessFilter": false,
     "sort": "longname, version, since",
     "search": true,
-    "stylesheets": [],
+    "stylesheets": ["css/sitnaCSS.css"],
     "scripts": []
   }
 }
