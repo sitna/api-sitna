@@ -1,4 +1,4 @@
-﻿.instructions,.controls {
+﻿.instructions, .controls {
     position: fixed;
     z-index: 10000;
     border: 1px solid #ccc;
@@ -6,9 +6,8 @@
     left: 60px;
     padding: 0.3em;
     font-size: 0.8em;
+    font-family: sans-serif;
     border-radius: 0.3em;
-    -webkit-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
-    -moz-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
 }
 
@@ -24,34 +23,34 @@
         transition: visibility 0s .1s, opacity .1s linear;
     }
 
-.instructions p {
-    margin: 0.2em 0 0.2em 0;
-}
+    .instructions p {
+        margin: 0.2em 0 0.2em 0;
+    }
 
-.instructions a {
-    color:#c00;
-}
+    .instructions a {
+        color: #c00;
+    }
 
-.instructions a:visited {
-    color:#700;
-}
+        .instructions a:visited {
+            color: #700;
+        }
 
-.instructions a:hover { 
-    color:#f00;
-    text-decoration:none;
-}
+        .instructions a:hover {
+            color: #f00;
+            text-decoration: none;
+        }
 
 .controls {
     top: 140px;
 }
 
-.controls div {
-    margin: 0.2em;
-}
+    .controls div {
+        margin: 0.2em;
+    }
 
-.controls input[type=number] {
-    width: 4em;
-}
+    .controls input[type=number] {
+        width: 4em;
+    }
 
 .close-btn {
     position: absolute;
@@ -77,6 +76,7 @@ body > pre.prettyprint {
     overflow: auto;
     background-color: white;
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+    font-size: 0.9em;
 }
 
 #view-source {
@@ -105,7 +105,7 @@ body > pre.prettyprint {
     position: absolute;
     font-style: italic;
     top: 3vh;
-    right: 6vw;
+    right: 8em;
     z-index: 10011;
 }
 
@@ -121,3 +121,19 @@ body > pre.prettyprint {
         opacity: 0;
         transition: visibility 0s .25s, opacity .25s linear;
     }
+
+div.tc-map.tc-lo div.tc-ctl-p-results {
+    top: 26em;
+}
+
+    div.tc-map.tc-lo div.tc-ctl-p-results div.prcollapsed {
+        top: 26em;
+    }
+
+    div.tc-map.tc-lo div.tc-ctl-p-results.tc-resizable {
+        top: 10em;
+    }
+
+        div.tc-map.tc-lo div.tc-ctl-p-results.tc-resizable div.prcollapsed {
+            top: 10em;
+        }

@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.Map.html#method_getMunicipalities">SITNA.Map.getMunicipalities</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#getMunicipalities">SITNA.Map.getMunicipalities</a>.</p>
         <p>Opciones del método.</p>
     </div>
     <script src="../"></script>
@@ -49,7 +49,7 @@
 
     // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
     function applyFilter() {
-        var id = document.querySelector("#council").querySelector("option:checked").value;
+        var id = document.querySelector("#municipality").querySelector("option:checked").value;
         if (id == -1)
             map.removeSearch();
         else {

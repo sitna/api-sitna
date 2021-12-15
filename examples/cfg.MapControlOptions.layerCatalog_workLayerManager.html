@@ -3,13 +3,13 @@
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <title>SITNA - Ejemplo de SITNA.cfg.MapControlOptions.layerCatalog y SITNA.cfg.MapControlOptions.workLayerManager</title>
+    <title>SITNA - Ejemplo de LayerCatalogOptions y SITNA.cfg.MapControlOptions.workLayerManager</title>
     <link rel="stylesheet" href="examples.css" />
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.cfg.MapControlOptions.html#property_layerCatalog">SITNA.cfg.MapControlOptions.layerCatalog</a> y 
-        <a href="../doc/classes/SITNA.cfg.MapControlOptions.html#property_workLayerManager">SITNA.cfg.MapControlOptions.workLayerManager</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/global.html#LayerCatalogOptions">LayerCatalogOptions</a> y 
+        la opción <code>workLayerManager</code> de <a href="../doc/global.html#MapControlOptions.html">MapControlOptions</a>.</p>
         <p><strong>layerCatalog</strong>: Control de administración de capas de WMS. Sus funcionalidades son:</p>
         <ul>
             <li>Consultar las capas disponibles en uno o varios WMS.</li>
@@ -26,6 +26,7 @@
             <li>Establecer el grado de transparencia de cada capa.</li>
             <li>Borrar capas cargadas.</li>
             <li>Consultar metadatos asociados a la capa.</li>
+            <li>Si está también el control <strong>WFSQuery</strong>, ejecutar consultas alfanuméricas sobre las capas cargadas en el mapa, si cuentan con un servicio WFS pareado al WMS.</li>
         </ul>
     </div>
     <script src="../"></script>
@@ -39,6 +40,8 @@
         SITNA.Cfg.controls.workLayerManager = {
             div: "slot1"
         };
+        // Establecemos un proxy porque se hacen peticiones a otro dominio.
+        SITNA.Cfg.proxy = "proxy/proxy.ashx?";
         // Añadimos en la segunda posición el catálogo de capas con dos servicios.
         SITNA.Cfg.controls.layerCatalog = {
             div: "slot2",

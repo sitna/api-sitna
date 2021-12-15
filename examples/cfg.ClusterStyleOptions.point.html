@@ -3,12 +3,12 @@
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <title>SITNA - Ejemplo de SITNA.cfg.ClusterStyleOptions.point</title>
+    <title>SITNA - Ejemplo de ClusterStyleOptions</title>
     <link rel="stylesheet" href="examples.css" />
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.cfg.ClusterStyleOptions.html#property_point">SITNA.cfg.ClusterStyleOptions.point</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/global.html#ClusterStyleOptions">ClusterStyleOptions</a>.</p>
         <p>Visor con una capa de puntos y clustering con estilos personalizados.</p>
     </div>
     <script src="../"></script>
@@ -24,15 +24,24 @@
                     id: "cluster",
                     type: SITNA.Consts.layerType.VECTOR,
                     title: "Clusters",
+                    styles: {
+                        point: {
+                            strokeColor: "#0000ff",
+                            strokeWidth: 2,
+                            fillColor: "#0000ff",
+                            fillOpacity: 0.2,
+                            radius: 6
+                        }
+                    },
                     cluster: {
                         distance: 50,
                         styles: {
                             point: {
-                                fillColor: "#f90",
+                                fillColor: "#ff9900",
                                 fillOpacity: 1,
-                                strokeColor: "#c60",
+                                strokeColor: "#cc6600",
                                 strokeWidth: 2,
-                                fontColor: "#f90"
+                                fontColor: "#ff9900"
                             }
                         }
                     }
