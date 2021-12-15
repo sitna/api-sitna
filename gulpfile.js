@@ -16,8 +16,9 @@
     filter = require('gulp-filter'),
     webpack = require('webpack-stream'),
     ncp = require('ncp'),
-    fs = require('fs');
-var execSync = require('child_process').execSync;
+    fs = require('fs'),
+    fse = require('fs-extra'),
+    execSync = require('child_process').execSync;
 
 ////////// Gestión de errores ////////
 //var plumber = require('gulp-plumber');
@@ -73,6 +74,7 @@ var sitnaBuild = {
         'TC/control/FeatureInfoCommons.js',
         'TC/control/Scale.js',
         'TC/control/SWCacheClient.js',
+        'TC/control/OfflineMapMaker.js',
         'TC/control/Measure.js',
         'TC/control/ProjectionSelector.js',
         'TC/control/Container.js',
@@ -105,6 +107,7 @@ var sitnaBuild = {
 
     compiledTask: function () {
         const olSitnaJS = ['lib/ol/build/ol-sitna.min.js'];
+        //const olSitnaJS = ['lib/ol/build/ol-sitna.js'];
         const src = sitnaBuild.preSrc.concat(olSitnaJS, sitnaBuild.postSrc);
         return sitnaBuild.setVersionDate(gulp.src(src).pipe(filter(sitnaBuild.projectFiles.concat(olSitnaJS))))
             .pipe(concat('sitna.ol.debug.js'))
@@ -114,7 +117,7 @@ var sitnaBuild = {
     onDemandTask: function (src, dest) {
         var stream = sitnaBuild.setVersionDate(gulp.src(src, { sourcemaps: true }))
             .pipe(filter(sitnaBuild.projectFiles))
-            .pipe(gulp.dest(dest));
+            .pipe(gulp.dest(dest));        
         return sitnaBuild.replaceTemplates(sitnaBuild.unsetDebug(stream))
             .pipe(minify({
                 ext: {
@@ -181,6 +184,29 @@ function copyLibraries(cb) {
     copyDir('node_modules/draggabilly/dist/', 'lib/draggabilly/');
     copyDir('node_modules/ua-parser-js/dist/', 'lib/ua-parser/');
     copyDir('node_modules/wkx/dist/', 'lib/wkx/');
+
+    if (!fs.existsSync('lib/interactjs')) {
+        fs.mkdirSync('lib/interactjs');
+    }
+    copyFile('node_modules/interactjs/dist/interact.min.js', 'lib/interactjs/interact.min.js');
+        
+    const copyDirSyncRecursive = function (src, dest) {
+        try {
+            fse.copySync(src, dest);            
+            sitnaBuild.projectFiles.push(src + '**/*');
+            sitnaBuild.projectFiles.push(dest + '**/*');
+            sitnaBuild.projectFiles.push(src + '**/**/*');
+            sitnaBuild.projectFiles.push(dest + '**/**/*');
+            sitnaBuild.projectFiles.push(src + '**/**/**/*');
+            sitnaBuild.projectFiles.push(dest + '**/**/**/*');            
+        } catch (err) {
+            console.error(err);
+        }        
+    };    
+
+    copyDirSyncRecursive('node_modules/cesium/Build/Cesium/Workers', 'lib/cesium/build/Workers');        
+    copyDirSyncRecursive('node_modules/cesium/Build/Cesium/ThirdParty', 'lib/cesium/build/ThirdParty');       
+    copyDirSyncRecursive('node_modules/cesium/Build/Cesium/Assets', 'lib/cesium/build/Assets');
 };
 
 sitnaBuild.templateFunctions = {};
@@ -201,6 +227,7 @@ function compileTemplates(cb) {
                             gt: true,
                             lt: true,
                             eq: true,
+                            every: true,
                             round: true,
                             lowerCase: true,
                             startsWith: true, 
@@ -210,7 +237,18 @@ function compileTemplates(cb) {
                             getId: true,
                             isArray: true,
                             isObject: true,
-                            formatNumber: true
+                            formatNumber: true,
+                            isUrl: true,
+                            getYoutubeId: true,
+                            isVideoAttribute: true,
+                            isAudioAttribute: true,
+                            isImageAttribute: true,
+                            isEmbedAttribute: true,
+                            getTagWidth: true,
+                            getTagHeight: true,
+                            getHeader: true,
+                            removeSpecialAttributeTag: true,
+                            formatDateOrNumber: true
                         },
                         knownHelpersOnly: true
                     })
@@ -254,6 +292,7 @@ function resources() {
         '!build/**/*',
         '!doc/**/*',
         '!examples/**/*.html',
+        '!examples/**/*.appcache',
         '!kml/**/*',
         '!images/**/*',
         '!screenshots/**/*',
@@ -261,9 +300,8 @@ function resources() {
         '!obj/**/*',
         '!Properties/**/*',
         '!pruebas/**/*',
-        '!TC/**/*.js',
-        '!lib/cesium/debug/CesiumSrc.js',
-        '!lib/cesium/release/CesiumSrc.js',
+        '!TC/**/*.js',                
+        '!lib/ol/*', // TO DO: borrar al reubicar DragAndDrop.js
         '!TC/**/*.css',
         '!test/**/*',
         '!**/*.cs',
@@ -278,9 +316,17 @@ function resources() {
 
 function examples() {
     return gulp.src([
-        'examples/**/*.html'
+        'examples/**/*.html',
+        'examples/**/*.appcache'
     ], { removeBOM: false })
         .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(sitnaBuild.targetPath + 'examples/'));
+};
+
+function exampleSW() {
+    return gulp.src([
+        'TC/workers/tc-cb-service-worker.js'
+    ])
         .pipe(gulp.dest(sitnaBuild.targetPath + 'examples/'));
 };
 
@@ -344,6 +390,56 @@ function bundleOLDebug() {
             }
         }))
         .pipe(gulp.dest('lib/ol/build'));
+};
+
+function bundleCesiumDebug() {
+    const fileName = 'cesium-sitna.js';
+    sitnaBuild.projectFiles.push('lib/cesium/build/' + fileName);
+    return gulp.src('batch/cesium-webpack/main.js')
+        .pipe(webpack({
+            output: {
+                filename: fileName,
+                library: 'cesium',
+                // Needed to compile multiline strings in Cesium
+                sourcePrefix: ''
+            },
+            mode: 'development',
+            devtool: 'eval',
+            amd: {
+                // Enable webpack-friendly use of require in Cesium
+                toUrlUndefined: true
+            },
+            node: {
+                // Resolve node module use of fs
+                fs: "empty",
+                Buffer: false,
+                http: "empty",
+                https: "empty",
+                zlib: "empty"
+            },
+            resolve: {
+                mainFields: ['module', 'main']
+            },
+            module: {
+                rules: [
+                    {
+                        test: /\.css$/,
+                        use: ['style-loader', 'css-loader']
+                    }, {
+                        test: /\.(png|gif|jpg|jpeg|svg|xml|json)$/,
+                        use: ['url-loader']
+                    },
+                    {
+                        use: ['source-map-loader']
+                    }
+                ],
+                // Removes these errors: "Critical dependency: require function is used in a way in which dependencies cannot be statically extracted"
+                // https://github.com/AnalyticalGraphicsInc/cesium-webpack-example/issues/6
+                //unknownContextCritical: false,
+                //unknownContextRegExp: /\/cesium\/cesium\/Source\/Core\/buildModuleUrl\.js/
+            }
+        }))
+        .pipe(gulp.dest('lib/cesium/build'));
 };
 
 function BundleSHPwriteDebug() {   
@@ -430,6 +526,71 @@ function bundleOLRelease () {
         .pipe(gulp.dest('lib/ol/build'));
 };
 
+function bundleCesiumRelease() {
+    const fileName = 'cesium-sitna.min.js';
+    sitnaBuild.projectFiles.push('lib/cesium/build/' + fileName);
+    return gulp.src('batch/cesium-webpack/main.js')
+        .pipe(webpack({
+            output: {
+                filename: fileName,
+                library: 'cesium',
+                // Needed to compile multiline strings in Cesium
+                sourcePrefix: ''
+            },
+            amd: {
+                // Enable webpack-friendly use of require in Cesium
+                toUrlUndefined: true
+            },
+            mode: 'production',            
+            node: {
+                // Resolve node module use of fs
+                fs: "empty",
+                Buffer: false,
+                http: "empty",
+                https: "empty",
+                zlib: "empty"
+            },
+            resolve: {
+                mainFields: ['module', 'main']
+            },
+            module: {
+                rules: [{
+                    test: /\.css$/,
+                    use: ['style-loader', { loader: 'css-loader' }],
+                    sideEffects: true
+                }, {
+                    test: /\.(png|gif|jpg|jpeg|svg|xml|json)$/,
+                    use: ['url-loader']
+                }, {
+                    // Remove pragmas
+                    test: /\.js$/,
+                    enforce: 'pre',
+                    //include: path.resolve(__dirname, 'node_modules/cesium/Source'),
+                    sideEffects: false,
+                    use: [{
+                        loader: 'strip-pragma-loader',
+                        options: {
+                            pragmas: {
+                                debug: false
+                            }
+                        }
+                    }]
+                },
+                {
+                    use: ['source-map-loader']
+                }],
+                // Removes these errors: "Critical dependency: require function is used in a way in which dependencies cannot be statically extracted"
+                // https://github.com/AnalyticalGraphicsInc/cesium-webpack-example/issues/6
+                //unknownContextCritical: false,
+                //unknownContextRegExp: /\/cesium\/cesium\/Source\/Core\/buildModuleUrl\.js/
+            },
+            optimization: {
+                usedExports: true
+            }
+        }))
+        .pipe(gulp.dest('lib/cesium/build'));
+};
+
 function clean (cb) {
     del([
         sitnaBuild.targetPath + '**/*',
@@ -490,30 +651,27 @@ function _olddoc (cb) {
     cb();
 };
 
-function bundleCesiumDebugMergeTerrain () {
-    return gulp.src(['lib/cesium/debug/CesiumSrc.js', 'TC/cesium/mergeTerrainProvider/MergeTerrainProvider.js'])
-        .pipe(concat('Cesium.js'))
-        .pipe(gulp.dest('lib/cesium/debug'));
-};
-
-function bundleCesiumReleaseMergeTerrain () {
-    gulp.src(['TC/cesium/mergeTerrainProvider/MergeTerrainProvider.js'])
-        .pipe(minify({
-            compress: { sequences: false },
-            output: { ascii_only: true }
-        }))
-        .pipe(gulp.dest('TC/cesium/mergeTerrainProvider'));
-
-    return gulp.src(['lib/cesium/release/CesiumSrc.js', 'TC/cesium/mergeTerrainProvider/MergeTerrainProvider-min.js'])
-        .pipe(concat('Cesium.js'))
-        .pipe(gulp.dest('lib/cesium/release'));
-};
-
-function doc (cb) {
+function docsite (cb) {
     var config = require('./batch/jsdoc/conf.json');
     return gulp.src(['./batch/jsdoc/README.md'], { read: false })
         .pipe(jsdoc(config, cb));
 };
+
+function docfiles() {
+    return gulp.src(['./batch/jsdoc/img/*'])
+        .pipe(gulp.dest(sitnaBuild.targetPath + 'doc/img'));    
+};
+
+function docCSS() {
+    return gulp.src(['./batch/jsdoc/css/*'])
+        .pipe(gulp.dest(sitnaBuild.targetPath + 'doc/css'));
+};
+
+const doc = gulp.series(
+    docsite,
+    docfiles,
+    docCSS
+);
 
 const bundleAPI = gulp.series(
     bundle,
@@ -527,6 +685,7 @@ const parallelTasks = gulp.parallel(
     baseCss,
     layoutCss,
     examples,
+    exampleSW,
     bundleAPI
 );
 
@@ -534,24 +693,24 @@ exports.clean = clean;
 exports.unitTests = unitTests;
 exports.e2eTests = e2eTests;
 exports.doc = doc;
-exports.bundleCesiumDebugMergeTerrain = bundleCesiumDebugMergeTerrain;
-exports.bundleCesiumReleaseMergeTerrain = bundleCesiumReleaseMergeTerrain;
 exports.noTests = gulp.series(
     clean,
     buildCsprojFilter,    
-    compileTemplates,
+    compileTemplates,    
     bundleOLDebug,
     bundleOLRelease,    
     jsonValidate,
     BundleSHPwriteDebug,
     BundleSHPwriteRelease,
-    copyLibraries,
+    bundleCesiumDebug,
+    bundleCesiumRelease,
+    copyLibraries,    
     parallelTasks
 );
 exports.default = gulp.series(
     clean,
     buildCsprojFilter,
-    compileTemplates,
+    compileTemplates,    
     bundleOLDebug,
     bundleOLRelease,
     //BundleGPKGConverter,
@@ -560,7 +719,9 @@ exports.default = gulp.series(
     BundleSHPwriteRelease,
     BundleIconvDebug,
     BundleIconvRelease,
-    copyLibraries,
+    bundleCesiumDebug,
+    bundleCesiumRelease,
+    copyLibraries,    
     unitTests,
     //e2eTests,
     parallelTasks
