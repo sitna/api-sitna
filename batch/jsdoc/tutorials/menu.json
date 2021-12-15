@@ -1,35 +1,38 @@
 {
-	"1-addresses": {
-		"title": "Direcciones alternativas"
-	},
-	"2-configuration": {
-		"title": "Cómo configurar un mapa",
-		"children": {
-			"parameters_cfg": {
-				"title": "Configurar por parámetros del constructor"
-			},
-			"layout_cfg": {
-				"title": "Configurar por maquetación"
-			},
-			"global_cfg": {
-				"title": "Configurar por objeto global",
-				"children": {
-					"search_cfg": {
-						"title": "Objeto de configuración de opciones del buscador"
-					}
-				}
-			}
-		}
-	},
-	"3-css": {
-		"title": "Clases CSS para identificar elementos de la API",
-		"children": {
-			"layercatalog_css": {
-				"title": "Clases CSS de layerCatalog"
-			}
-		}
-	},
-	"4-changes": {
-		"title": "Historial de cambios"
-	}
+  "1-addresses": {
+    "title": "Direcciones alternativas"
+  },
+  "2-configuration": {
+    "title": "Cómo configurar un mapa",
+    "children": {
+      "parameters_cfg": {
+        "title": "Configurar por parámetros del constructor"
+      },
+      "layout_cfg": {
+        "title": "Configurar por maquetación"
+      },
+      "global_cfg": {
+        "title": "Configurar por objeto global",
+        "children": {
+          "search_cfg": {
+            "title": "Objeto de configuración de opciones del buscador"
+          }
+        }
+      }
+    }
+  },
+  "3-css": {
+    "title": "Clases CSS para identificar elementos de la API",
+    "children": {
+      "layercatalog_css": {
+        "title": "Clases CSS de layerCatalog"
+      }
+    }
+  },
+  "4-embedding": {
+    "title": "Cómo añadir multimedia y páginas web incrustadas"
+  },
+  "5-changes": {
+    "title": "Historial de cambios"
+  }
 }

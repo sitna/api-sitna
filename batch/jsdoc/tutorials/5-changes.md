@@ -1,7 +1,19 @@
+### 2.2.0
+
+- Añadida la [ortofoto 2020]{@linkplain SITNA.Consts.layer.IDENA_ORTHOPHOTO2020} a la lista de capas disponibles.
+- Añadida la [ortofoto 2020 de la comarca de Pamplona]{@linkplain SITNA.Consts.layer.IDENA_PAMPLONA_ORTHOPHOTO2020} a la lista de capas disponibles.
+- Añadida herramienta para obtener datos de elevación de entidades puntuales. Si estas tienen datos de elevación, se muestran junto con las obtenidas de servicios MDT.
+- Añadida herramienta para obtener perfil de elevación de entidades lineales. Si estas tienen datos de elevación, se permite la representación simultánea de perfiles de elevaciones propias y obtenidas de servicios MDT.
+- El [control de búsquedas]{@linkplain SearchOptions} ahora permite compartir búsquedas por criterio.
+- Definida [convención de nombres de atributo de entidad](tutorial-4-embedding.html) para incrustar imágenes, vídeos y otros recursos.
+- Corrección de errores.
+
 ### 2.1.0
 
-- Añadido el control de [consultas alfanuméricas]{@linkplain WFSQueryOptions}.
+- Añadido el control de [consultas]{@linkplain WFSQueryOptions}.
 - Rediseño de la interfaz de usuario del control de capas cargadas.
+- Añadidas herramientas a los controles de información de entidades del mapa: mostrar, borrar, descargar y hacer zoom a todos los resultados.
+- Cambiado el motor de plantillas a Handlebars.
 - Corrección de errores.
 
 ### 2.0.1
