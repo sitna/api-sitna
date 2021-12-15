@@ -27,16 +27,20 @@ import { deflateCoordinates } from 'ol/geom/flat/deflate';
 import { inflateCoordinates } from 'ol/geom/flat/inflate';
 import { linearRingLength } from 'ol/geom/flat/length';
 import { xhr } from 'ol/featureloader';
-import { GeoJSON, GML, GPX, KML, WFS, WKT, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
+import { GML, GPX, KML, WFS, WKT, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
+import GeoJSON from '../../lib/ol/GeoJSON';
+//import { GeoJSON, GML, GPX, KML, WFS, WKT, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
 import { transformWithOptions } from 'ol/format/Feature';
 import GMLBase from 'ol/format/GMLBase';
 import GML2 from 'ol/format/GML2';
 import GML3 from 'ol/format/GML3';
 import GML32 from 'ol/format/GML32';
-import { defaults, Draw, Pointer, Translate, Snap, Select, Modify, DragAndDrop, DoubleClickZoom } from 'ol/interaction';
-import { Layer, Tile, Image as l_Image, Vector as l_Vector } from 'ol/layer';
+import { defaults, Draw, Pointer, Translate, Snap, Select, Modify, /*DragAndDrop,*/ DoubleClickZoom } from 'ol/interaction';
+import DragAndDrop from '../../lib/ol/DragAndDrop';
+import { Layer, Tile, Image as l_Image, Vector as l_Vector, Heatmap } from 'ol/layer';
 import { unByKey } from 'ol/Observable';
-import { getChangeEventType } from 'ol/Object';
+
+import BaseObject, { getChangeEventType } from 'ol/Object';
 import { METERS_PER_UNIT, Projection, addEquivalentProjections, get, getTransform, transform, transformExtent } from 'ol/proj';
 import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from 'ol/proj/epsg4326';
 import Units from 'ol/proj/Units';
@@ -84,6 +88,7 @@ import {
     writeNonNegativeIntegerTextNode
 } from 'ol/format/xsd';
 import Image from 'ol/Image';
+import sphere from 'ol/sphere';
 
 export { VERSION };
 export { Map };
@@ -163,6 +168,8 @@ geom.flat = {
     linearRingLength: linearRingLength
 };
 export { geom };
+const Sphere =sphere;
+export { Sphere };
 
 const featureloader = {};
 featureloader.xhr = xhr;
@@ -209,6 +216,7 @@ interaction.Select = Select;
 interaction.Modify = Modify;
 interaction.DragAndDrop = DragAndDrop;
 interaction.DoubleClickZoom = DoubleClickZoom;
+//interaction.TapAndDragZoom = TapAndDragZoom;
 export { interaction };
 
 const layer = {};
@@ -216,13 +224,14 @@ layer.Layer = Layer;
 layer.Tile = Tile;
 layer.Image = l_Image;
 layer.Vector = l_Vector;
+layer.Heatmap = Heatmap;
 export { layer };
 
 const Observable = {};
 Observable.unByKey = unByKey;
 export { Observable };
 
-const Object = {};
+const Object = BaseObject;
 Object.getChangeEventType = getChangeEventType;
 export { Object };
 
