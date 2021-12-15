@@ -1,5 +1,17 @@
+/**
+  * Opciones básicas de vista.  
+  * @typedef ViewOptions  
+  * @see MapViewOptions
+  * @see 2-configuration
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.   
+  */
+
+
 var TC = TC || {};
 TC.view = TC.view || {};
+
+TC.Consts = TC.Consts || {};
+TC.Consts.CESIUMNS = 'cesium';
 
 if (!TC.control.MapContents) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -41,10 +53,6 @@ if (!TC.control.MapContents) {
             return TC.Control.prototype.getRenderedHtml.call(this, templateId, data, callback);
         }
     };
-
-    if (TC.isDebug) {
-        TC.Consts.url.CESIUM = TC.apiLocation + 'lib/cesium/debug/Cesium.js';
-    }
 
     TC.Consts.classes.THREED = TC.Consts.classes.THREED || "tc-3d";
     TC.Consts.classes.THREED_HIDDEN = TC.Consts.classes.THREED_HIDDEN || "tc-3d-hidden";
@@ -124,14 +132,14 @@ if (!TC.control.MapContents) {
 
 
     //  Funciones compatibilidad CRS
-    var isCompatible = function (layer, crs) {
+    const isCompatible = function (layer, crs) {
         return layer.type === TC.Consts.layerType.WMTS ?
             layer.wrap.getCompatibleMatrixSets(crs).length > 0 :
             layer.isCompatible(crs);
     };
 
     // Funciones para cálculo de FOV
-    var getFarCoords = function (origin, nearPoint) {
+    const getFarCoords = function (origin, nearPoint) {
         var radius = 1000000; // 1000 km
         var dx = nearPoint[0] - origin[0];
         var dy = nearPoint[1] - origin[1];
@@ -143,13 +151,13 @@ if (!TC.control.MapContents) {
         return [origin[0] + radius * Math.cos(angle), origin[1] + radius * Math.sin(angle)];
     };
 
-    var distanceSquared = function (p1, p2) {
+    const distanceSquared = function (p1, p2) {
         var dx = p2[0] - p1[0];
         var dy = p2[1] - p1[1];
         return dx * dx + dy * dy;
     };
 
-    var getFarMapCoords = function (obj) {
+    const getFarMapCoords = function (obj) {
         // Calculamos puntos lejanos cuando no los tenemos (cuando estamos mirando al horizonte).
         // Cogemos un punto proyectado desde la esquina inferior del canvas, 
         // cogemos un segundo punto en el lateral del canvas inmediatamente por encima 
@@ -172,22 +180,22 @@ if (!TC.control.MapContents) {
         return null;
     };
 
-    var pickMapCoords = function (pixel) {
+    const pickMapCoords = function (pixel) {
         var self = this;
         var pickPoint = pickOnTerrainOrEllipsoid(self.viewer.scene, pixel);
         if (pickPoint) {
-            pickPoint = Cesium.Cartographic.fromCartesian(pickPoint);
+            pickPoint = cesium.Cartographic.fromCartesian(pickPoint);
             if (self.view3D.crs !== self.view3D.view2DCRS) {
-                return TC.Util.reproject([Cesium.Math.toDegrees(pickPoint.longitude), Cesium.Math.toDegrees(pickPoint.latitude)], self.view3D.crs, self.view3D.view2DCRS);
+                return TC.Util.reproject([cesium.Math.toDegrees(pickPoint.longitude), cesium.Math.toDegrees(pickPoint.latitude)], self.view3D.crs, self.view3D.view2DCRS);
             } else {
-                return [Cesium.Math.toDegrees(pickPoint.longitude), Cesium.Math.toDegrees(pickPoint.latitude)];
+                return [cesium.Math.toDegrees(pickPoint.longitude), cesium.Math.toDegrees(pickPoint.latitude)];
             }
         }
         return null;
     }
 
     // Funciones utilidades cámara
-    var calcDistanceForResolution = function (resolution, latitude) {
+    const calcDistanceForResolution = function (resolution, latitude) {
         var self = this;
 
         var fovy = self.viewer.camera.frustum.fovy;
@@ -198,7 +206,7 @@ if (!TC.control.MapContents) {
         return (visibleMeters / 2) / Math.tan(fovy / 2);
     };
 
-    var calcResolutionForDistance = function (distance, latitude) {
+    const calcResolutionForDistance = function (distance, latitude) {
         var self = this;
 
         var canvas = self.viewer.scene.canvas;
@@ -235,9 +243,9 @@ if (!TC.control.MapContents) {
         return resolution;
     };
 
-    var rotateAroundAxis = function (camera, angle, axis, transform, opt_options) {
-        var clamp = Cesium.Math.clamp;
-        var defaultValue = Cesium.defaultValue;
+    const rotateAroundAxis = function (camera, angle, axis, transform, opt_options) {
+        var clamp = cesium.Math.clamp;
+        var defaultValue = cesium.defaultValue;
 
         var options = opt_options || {};
         var duration = defaultValue(options.duration, 500); // ms
@@ -250,7 +258,7 @@ if (!TC.control.MapContents) {
 
         var start;
         var lastProgress = 0;
-        var oldTransform = new Cesium.Matrix4();
+        var oldTransform = new cesium.Matrix4();
 
         return new Promise(function (resolve, reject) {
 
@@ -283,7 +291,7 @@ if (!TC.control.MapContents) {
         });
     };
 
-    var pickOnTerrainOrEllipsoid = function (scene, pixel) {
+    const pickOnTerrainOrEllipsoid = function (scene, pixel) {
         var self = this;
 
         var ray = scene.camera.getPickRay(pixel);
@@ -291,82 +299,82 @@ if (!TC.control.MapContents) {
         return target || scene.camera.pickEllipsoid(pixel);
     };
 
-    var pickCenterPoint = function (scene) {
+    const pickCenterPoint = function (scene) {
         var self = this;
 
         var canvas = scene.canvas;
-        var center = new Cesium.Cartesian2(
+        var center = new cesium.Cartesian2(
             canvas.clientWidth / 2,
             canvas.clientHeight / 2);
         return pickOnTerrainOrEllipsoid(scene, center);
     };
 
-    var pickBottomPoint = function (scene) {
+    const pickBottomPoint = function (scene) {
         var self = this;
 
         var canvas = scene.canvas;
-        var bottom = new Cesium.Cartesian2(
+        var bottom = new cesium.Cartesian2(
             canvas.clientWidth / 2, canvas.clientHeight);
         return pickOnTerrainOrEllipsoid(scene, bottom);
     };
 
-    var bottomFovRay = function (scene) {
+    const bottomFovRay = function (scene) {
         var self = this;
 
         var camera = scene.camera;
         var fovy2 = camera.frustum.fovy / 2;
         var direction = camera.direction;
-        var rotation = Cesium.Quaternion.fromAxisAngle(camera.right, fovy2);
-        var matrix = Cesium.Matrix3.fromQuaternion(rotation);
-        var vector = new Cesium.Cartesian3();
-        Cesium.Matrix3.multiplyByVector(matrix, direction, vector);
-        return new Cesium.Ray(camera.position, vector);
+        var rotation = cesium.Quaternion.fromAxisAngle(camera.right, fovy2);
+        var matrix = cesium.Matrix3.fromQuaternion(rotation);
+        var vector = new cesium.Cartesian3();
+        cesium.Matrix3.multiplyByVector(matrix, direction, vector);
+        return new cesium.Ray(camera.position, vector);
     };
 
-    var setHeadingUsingBottomCenter = function (scene, heading, bottomCenter, opt_options) {
+    const setHeadingUsingBottomCenter = function (scene, heading, bottomCenter, opt_options) {
         var self = this;
 
         var camera = scene.camera;
         // Compute the camera position to zenith quaternion
         var angleToZenith = computeAngleToZenith(scene, bottomCenter);
         var axis = camera.right;
-        var quaternion = Cesium.Quaternion.fromAxisAngle(axis, angleToZenith);
-        var rotation = Cesium.Matrix3.fromQuaternion(quaternion);
+        var quaternion = cesium.Quaternion.fromAxisAngle(axis, angleToZenith);
+        var rotation = cesium.Matrix3.fromQuaternion(quaternion);
 
         // Get the zenith point from the rotation of the position vector
-        var vector = new Cesium.Cartesian3();
-        Cesium.Cartesian3.subtract(camera.position, bottomCenter, vector);
-        var zenith = new Cesium.Cartesian3();
-        Cesium.Matrix3.multiplyByVector(rotation, vector, zenith);
-        Cesium.Cartesian3.add(zenith, bottomCenter, zenith);
+        var vector = new cesium.Cartesian3();
+        cesium.Cartesian3.subtract(camera.position, bottomCenter, vector);
+        var zenith = new cesium.Cartesian3();
+        cesium.Matrix3.multiplyByVector(rotation, vector, zenith);
+        cesium.Cartesian3.add(zenith, bottomCenter, zenith);
 
         // Actually rotate around the zenith normal
-        var transform = Cesium.Matrix4.fromTranslation(zenith);
+        var transform = cesium.Matrix4.fromTranslation(zenith);
         rotateAroundAxis(camera, heading, zenith, transform, opt_options);
     };
 
-    var signedAngleBetween = function (first, second, normal) {
+    const signedAngleBetween = function (first, second, normal) {
         var self = this;
 
         // We are using the dot for the angle.
         // Then the cross and the dot for the sign.
-        var a = new Cesium.Cartesian3();
-        var b = new Cesium.Cartesian3();
-        var c = new Cesium.Cartesian3();
-        Cesium.Cartesian3.normalize(first, a);
-        Cesium.Cartesian3.normalize(second, b);
-        Cesium.Cartesian3.cross(a, b, c);
+        var a = new cesium.Cartesian3();
+        var b = new cesium.Cartesian3();
+        var c = new cesium.Cartesian3();
+        cesium.Cartesian3.normalize(first, a);
+        cesium.Cartesian3.normalize(second, b);
+        cesium.Cartesian3.cross(a, b, c);
 
-        var cosine = Cesium.Cartesian3.dot(a, b);
-        var sine = Cesium.Cartesian3.magnitude(c);
+        var cosine = cesium.Cartesian3.dot(a, b);
+        var sine = cesium.Cartesian3.magnitude(c);
 
         // Sign of the vector product and the orientation normal
-        var sign = Cesium.Cartesian3.dot(normal, c);
+        var sign = cesium.Cartesian3.dot(normal, c);
         var angle = Math.atan2(sine, cosine);
         return sign >= 0 ? angle : -angle;
     };
 
-    var computeAngleToZenith = function (scene, pivot) {
+    const computeAngleToZenith = function (scene, pivot) {
         var self = this;
 
         // This angle is the sum of the angles 'fy' and 'a', which are defined
@@ -379,32 +387,32 @@ if (!TC.control.MapContents) {
         var camera = scene.camera;
         var fy = camera.frustum.fovy / 2;
         var ray = bottomFovRay(scene);
-        var direction = Cesium.Cartesian3.clone(ray.direction);
-        Cesium.Cartesian3.negate(direction, direction);
+        var direction = cesium.Cartesian3.clone(ray.direction);
+        cesium.Cartesian3.negate(direction, direction);
 
-        var normal = new Cesium.Cartesian3();
-        Cesium.Ellipsoid.WGS84.geocentricSurfaceNormal(pivot, normal);
+        var normal = new cesium.Cartesian3();
+        cesium.Ellipsoid.WGS84.geocentricSurfaceNormal(pivot, normal);
 
-        var left = new Cesium.Cartesian3();
-        Cesium.Cartesian3.negate(camera.right, left);
+        var left = new cesium.Cartesian3();
+        cesium.Cartesian3.negate(camera.right, left);
 
         var a = signedAngleBetween(normal, direction, left);
         return a + fy;
     };
 
-    var computeSignedTiltAngleOnGlobe = function (scene) {
+    const computeSignedTiltAngleOnGlobe = function (scene) {
         var self = this;
 
         var camera = scene.camera;
-        var ray = new Cesium.Ray(camera.position, camera.direction);
+        var ray = new cesium.Ray(camera.position, camera.direction);
         var target = scene.globe.pick(ray, scene);
 
         if (!target) {
             // no tiles in the area were loaded?
-            var ellipsoid = Cesium.Ellipsoid.WGS84;
-            var obj = Cesium.IntersectionTests.rayEllipsoid(ray, ellipsoid);
+            var ellipsoid = cesium.Ellipsoid.WGS84;
+            var obj = cesium.IntersectionTests.rayEllipsoid(ray, ellipsoid);
             if (obj) {
-                target = Cesium.Ray.getPoint(ray, obj.start);
+                target = cesium.Ray.getPoint(ray, obj.start);
             }
         }
 
@@ -412,16 +420,16 @@ if (!TC.control.MapContents) {
             return undefined;
         }
 
-        var normal = new Cesium.Cartesian3();
-        Cesium.Ellipsoid.WGS84.geocentricSurfaceNormal(target, normal);
+        var normal = new cesium.Cartesian3();
+        cesium.Ellipsoid.WGS84.geocentricSurfaceNormal(target, normal);
 
         var angleBetween = signedAngleBetween;
         var angle = angleBetween(camera.direction, normal, camera.right) - Math.PI;
-        return Cesium.Math.convertLongitudeRange(angle);
+        return cesium.Math.convertLongitudeRange(angle);
     };
 
     // Funciones CZML    
-    var toCZML = function (coordinates, layout, name, pointStyle, lineStyle, walkingSpeed) {
+    const toCZML = function (coordinates, layout, name, pointStyle, lineStyle, walkingSpeed) {
         const self = this;
 
         return new Promise(function (resolve, reject) {
@@ -430,10 +438,10 @@ if (!TC.control.MapContents) {
                 if (self.view3D.view2DCRS !== self.view3D.crs) {
                     reprojected = TC.Util.reproject(coordinate, self.view3D.view2DCRS, self.view3D.crs);
                 }
-                return Cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1]);
+                return cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1]);
             });
 
-            Cesium.when(self.viewer.terrainProvider.sampleTerrainMostDetailed(positions), function (updatedPositions) {
+            cesium.when(self.viewer.terrainProvider.sampleTerrainMostDetailed(positions), function (updatedPositions) {
                 var startTime, stopTime, totalDistance = 0;
 
                 if (layout === ol.geom.GeometryLayout.XYZM) {
@@ -458,7 +466,7 @@ if (!TC.control.MapContents) {
                             previuos_next = updatedPositions.slice(i - 1);
                         }
 
-                        done = new Cesium.EllipsoidGeodesic(previuos_next[0], previuos_next[1]).surfaceDistance;
+                        done = new cesium.EllipsoidGeodesic(previuos_next[0], previuos_next[1]).surfaceDistance;
 
                         totalDistance += done;
 
@@ -479,7 +487,7 @@ if (!TC.control.MapContents) {
                             previuos_next = updatedPositions.slice(i - 1);
                         }
 
-                        totalDistance += new Cesium.EllipsoidGeodesic(previuos_next[0], previuos_next[1]).surfaceDistance;
+                        totalDistance += new cesium.EllipsoidGeodesic(previuos_next[0], previuos_next[1]).surfaceDistance;
                     }
                 }
 
@@ -574,9 +582,9 @@ if (!TC.control.MapContents) {
                 self.disableTilt(5);
 
                 if (view.view3D.crs !== view.view3D.view2DCRS) {
-                    self._coordsXY = TC.Util.reproject([Cesium.Math.toDegrees(position.longitude), Cesium.Math.toDegrees(position.latitude)], view.view3D.crs, view.view3D.view2DCRS);
+                    self._coordsXY = TC.Util.reproject([cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)], view.view3D.crs, view.view3D.view2DCRS);
                 } else {
-                    self._coordsXY = [Cesium.Math.toDegrees(position.longitude), Cesium.Math.toDegrees(position.latitude)];
+                    self._coordsXY = [cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)];
                 }
 
                 view.mapView.setCenter(self._coordsXY);
@@ -593,13 +601,13 @@ if (!TC.control.MapContents) {
                     view._ovMap.renderPromise().then(function () {
                         var scene = view.viewer.scene;
                         var canvas = scene.canvas;
-                        var bottomLeft = new Cesium.Cartesian2(0, canvas.clientHeight - 1);
-                        var bottomRight = new Cesium.Cartesian2(canvas.clientWidth - 1, canvas.clientHeight - 1);
+                        var bottomLeft = new cesium.Cartesian2(0, canvas.clientHeight - 1);
+                        var bottomRight = new cesium.Cartesian2(canvas.clientWidth - 1, canvas.clientHeight - 1);
                         var fovCoords = [
                             bottomLeft,
                             bottomRight,
-                            new Cesium.Cartesian2(canvas.clientWidth - 1, 0),
-                            new Cesium.Cartesian2(0, 0)
+                            new cesium.Cartesian2(canvas.clientWidth - 1, 0),
+                            new cesium.Cartesian2(0, 0)
                         ].map(function (elm) {
                             return pickMapCoords.call(view, elm);
                         }).filter(function (elm) {
@@ -632,7 +640,7 @@ if (!TC.control.MapContents) {
         };
         var cssRotate = function (element, angle) {
             var coord = element.getBBox();
-            value = 'rotate(' + Cesium.Math.toDegrees(angle) + ' ' + (coord.x + (coord.width / 2)) + ' ' + (coord.y + (coord.height / 2)) + ')';
+            value = 'rotate(' + cesium.Math.toDegrees(angle) + ' ' + (coord.x + (coord.width / 2)) + ' ' + (coord.y + (coord.height / 2)) + ')';
             document.getElementsByClassName(element.className.baseVal)[0].setAttribute('transform', value);
         };
 
@@ -656,8 +664,8 @@ if (!TC.control.MapContents) {
             upArrow: '-up'
         };
 
-        self.MIN_TILT = Cesium.Math.toRadians(-89);
-        self.MAX_TILT = Cesium.Math.toRadians(-1);
+        self.MIN_TILT = cesium.Math.toRadians(-89);
+        self.MAX_TILT = cesium.Math.toRadians(-1);
 
         self.render();
     };
@@ -731,7 +739,7 @@ if (!TC.control.MapContents) {
 
             var bottomCenter = pickBottomPoint(self.parent.viewer.scene);
             if (bottomCenter) {
-                var distance = Cesium.Cartesian3.distance(camera.position, bottomCenter);
+                var distance = cesium.Cartesian3.distance(camera.position, bottomCenter);
 
                 return {
                     cp: [cameraPosition.longitude, cameraPosition.latitude, cameraPosition.height],
@@ -775,12 +783,12 @@ if (!TC.control.MapContents) {
                     if (e.stopPropagation) e.stopPropagation();
                     if (e.preventDefault) e.preventDefault();
 
-                    var vectorScratch = new Cesium.Cartesian2();
+                    var vectorScratch = new cesium.Cartesian2();
                     var element = e.currentTarget;
                     var rectangle = e.currentTarget.getBoundingClientRect();
-                    var center = new Cesium.Cartesian2((rectangle.right - rectangle.left) / 2.0, (rectangle.bottom - rectangle.top) / 2.0);
-                    var clickLocation = new Cesium.Cartesian2(e.clientX - rectangle.left, e.clientY - rectangle.top);
-                    var vector = Cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
+                    var center = new cesium.Cartesian2((rectangle.right - rectangle.left) / 2.0, (rectangle.bottom - rectangle.top) / 2.0);
+                    var clickLocation = new cesium.Cartesian2(e.clientX - rectangle.left, e.clientY - rectangle.top);
+                    var vector = cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
 
                     self.draggingTilt.call(self, element, vector);
 
@@ -898,12 +906,12 @@ if (!TC.control.MapContents) {
                     if (e.stopPropagation) e.stopPropagation();
                     if (e.preventDefault) e.preventDefault();
 
-                    var vectorScratch = new Cesium.Cartesian2();
+                    var vectorScratch = new cesium.Cartesian2();
                     var element = e.currentTarget;
                     var rectangle = e.currentTarget.getBoundingClientRect();
-                    var center = new Cesium.Cartesian2((rectangle.right - rectangle.left) / 2.0, (rectangle.bottom - rectangle.top) / 2.0);
-                    var clickLocation = new Cesium.Cartesian2(e.clientX - rectangle.left, e.clientY - rectangle.top);
-                    var vector = Cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
+                    var center = new cesium.Cartesian2((rectangle.right - rectangle.left) / 2.0, (rectangle.bottom - rectangle.top) / 2.0);
+                    var clickLocation = new cesium.Cartesian2(e.clientX - rectangle.left, e.clientY - rectangle.top);
+                    var vector = cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
 
                     self.draggingRotate.call(self, element, vector);
 
@@ -991,7 +999,7 @@ if (!TC.control.MapContents) {
     CameraControls.prototype.disableTilt = function (angle) {
         var self = this;
 
-        var theta = Cesium.Math.toRadians(angle);
+        var theta = cesium.Math.toRadians(angle);
         var tilt = self.getCamera().pitch;
 
         self.isTiltDownDisabled = (tilt + -theta) < self.MIN_TILT;
@@ -1013,9 +1021,9 @@ if (!TC.control.MapContents) {
 
         var scene = self.parent.viewer.scene;
         var canvas = scene.canvas;
-        var bottomLeft = new Cesium.Cartesian2(0, canvas.clientHeight - 1);
-        var bottomRight = new Cesium.Cartesian2(canvas.clientWidth - 1, canvas.clientHeight - 1);
-        var fovCoords = [bottomLeft, bottomRight, new Cesium.Cartesian2(canvas.clientWidth - 1, 0), new Cesium.Cartesian2(0, 0)]
+        var bottomLeft = new cesium.Cartesian2(0, canvas.clientHeight - 1);
+        var bottomRight = new cesium.Cartesian2(canvas.clientWidth - 1, canvas.clientHeight - 1);
+        var fovCoords = [bottomLeft, bottomRight, new cesium.Cartesian2(canvas.clientWidth - 1, 0), new cesium.Cartesian2(0, 0)]
             .map(function (elm) {
                 return pickMapCoords.call(this, elm);
             }.bind(self.parent))
@@ -1045,23 +1053,23 @@ if (!TC.control.MapContents) {
 
         self.disableTilt(angle);
 
-        if (this.parent.viewer && this.parent.viewer.trackedEntity) {
-            self.getCamera().rotateUp(Cesium.Math.toRadians(angle));
+        if (self.parent.viewer && self.parent.viewer.trackedEntity) {
+            self.getCamera().rotateUp(cesium.Math.toRadians(angle));
         } else {
             if (pickCenterPoint(self.parent.viewer.scene) == undefined) {
                 if (angle > 0) self.getCamera().lookUp();
                 else self.getCamera().lookDown();
             }
 
-            if ((angle >= Cesium.Math.PI_OVER_TWO && self.isTiltUpDisabled) ||
-                (angle <= -Cesium.Math.PI_OVER_TWO && self.isTiltDownDisabled)) {
+            if ((angle >= cesium.Math.PI_OVER_TWO && self.isTiltUpDisabled) ||
+                (angle <= -cesium.Math.PI_OVER_TWO && self.isTiltDownDisabled)) {
                 return;
             }
 
-            var _angle = Cesium.Math.toRadians(angle);
+            var _angle = cesium.Math.toRadians(angle);
             var pivot = pickCenterPoint(self.parent.viewer.scene);
             if (pivot) {
-                var transform = Cesium.Matrix4.fromTranslation(pivot);
+                var transform = cesium.Matrix4.fromTranslation(pivot);
                 self.parent.view3D.rotateAroundAxis(self.getCamera(), -_angle, self.getCamera().right, transform, { duration: 100 });
             }
         }
@@ -1069,9 +1077,9 @@ if (!TC.control.MapContents) {
     CameraControls.prototype.rotate = function (angle) {
         var self = this;
 
-        angle = Cesium.Math.toRadians(angle);
+        angle = cesium.Math.toRadians(angle);
 
-        if (this.parent.viewer && this.parent.viewer.trackedEntity) {
+        if (self.parent.viewer && self.parent.viewer.trackedEntity) {
             self.getCamera().rotateRight(-angle);
         } else {
             var bottom = pickBottomPoint(self.parent.viewer.scene);
@@ -1087,9 +1095,9 @@ if (!TC.control.MapContents) {
 
         self.tiltIndicatorOuterCircle.classList.add(self.parent.classes.HIGHLIGHTED);
 
-        var oldTransformScratch = new Cesium.Matrix4();
-        var newTransformScratch = new Cesium.Matrix4();
-        var vectorScratch = new Cesium.Cartesian2();
+        var oldTransformScratch = new cesium.Matrix4();
+        var newTransformScratch = new cesium.Matrix4();
+        var vectorScratch = new cesium.Cartesian2();
 
         document.removeEventListener('mousemove', self.tiltMouseMoveFunction, false);
         document.removeEventListener('mouseup', self.tiltMouseUpFunction, false);
@@ -1104,16 +1112,16 @@ if (!TC.control.MapContents) {
 
         var pivot = pickCenterPoint(scene);
         if (!pivot) {
-            self.tiltFrame = Cesium.Transforms.northUpEastToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
+            self.tiltFrame = cesium.Transforms.northUpEastToFixedFrame(camera.positionWC, cesium.Ellipsoid.WGS84, newTransformScratch);
             self.tiltIsLook = true;
         } else {
-            self.tiltFrame = Cesium.Transforms.northUpEastToFixedFrame(pivot, Cesium.Ellipsoid.WGS84, newTransformScratch);
+            self.tiltFrame = cesium.Transforms.northUpEastToFixedFrame(pivot, cesium.Ellipsoid.WGS84, newTransformScratch);
             self.tiltIsLook = false;
         }
 
         self.startCursorAngle = Math.atan2(-cursorVector.y, cursorVector.x);
 
-        var oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+        var oldTransform = cesium.Matrix4.clone(camera.transform, oldTransformScratch);
         camera.lookAtTransform(self.tiltFrame);
 
         self.initialCameraAngle = Math.atan2(camera.position.y, camera.position.x);
@@ -1127,18 +1135,18 @@ if (!TC.control.MapContents) {
             camera = scene.camera;
 
             var tiltRectangle = tiltElement.getBoundingClientRect();
-            center = new Cesium.Cartesian2((tiltRectangle.right - tiltRectangle.left) / 2.0, (tiltRectangle.bottom - tiltRectangle.top) / 2.0);
-            var clickLocation = new Cesium.Cartesian2(e.clientX - tiltRectangle.left, e.clientY - tiltRectangle.top);
-            var vector = Cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
+            center = new cesium.Cartesian2((tiltRectangle.right - tiltRectangle.left) / 2.0, (tiltRectangle.bottom - tiltRectangle.top) / 2.0);
+            var clickLocation = new cesium.Cartesian2(e.clientX - tiltRectangle.left, e.clientY - tiltRectangle.top);
+            var vector = cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
 
             console.log('Entra: ' + vector.toString());
 
             var angle = Math.atan2(-vector.y, vector.x);
             var angleDifference = angle - self.startCursorAngle;
-            var newCameraAngle = Cesium.Math.zeroToTwoPi(self.initialCameraAngle - angleDifference);
+            var newCameraAngle = cesium.Math.zeroToTwoPi(self.initialCameraAngle - angleDifference);
 
             try {
-                oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+                oldTransform = cesium.Matrix4.clone(camera.transform, oldTransformScratch);
                 camera.lookAtTransform(self.tiltFrame);
                 var currentCameraAngle = Math.atan2(camera.position.y, camera.position.x);
                 var theta = newCameraAngle - currentCameraAngle;
@@ -1189,18 +1197,18 @@ if (!TC.control.MapContents) {
 
         self.rotateMouseMoveFunction = function (e) {
             var rotateRectangle = rotateElement.getBoundingClientRect();
-            var center = new Cesium.Cartesian2((rotateRectangle.right - rotateRectangle.left) / 2.0, (rotateRectangle.bottom - rotateRectangle.top) / 2.0);
-            var clickLocation = new Cesium.Cartesian2(e.clientX - rotateRectangle.left, e.clientY - rotateRectangle.top);
-            var vector = Cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
+            var center = new cesium.Cartesian2((rotateRectangle.right - rotateRectangle.left) / 2.0, (rotateRectangle.bottom - rotateRectangle.top) / 2.0);
+            var clickLocation = new cesium.Cartesian2(e.clientX - rotateRectangle.left, e.clientY - rotateRectangle.top);
+            var vector = cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
             var angle = Math.atan2(-vector.y, vector.x);
 
             var angleDifference = angle - self.rotateInitialCursorAngle;
-            var newCameraAngle = Cesium.Math.zeroToTwoPi(self.rotateInitialCameraAngle - angleDifference);
+            var newCameraAngle = cesium.Math.zeroToTwoPi(self.rotateInitialCameraAngle - angleDifference);
 
             camera = self.parent.viewer.scene.camera;
 
             try {
-                oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+                oldTransform = cesium.Matrix4.clone(camera.transform, oldTransformScratch);
                 camera.lookAtTransform(self.rotateFrame);
                 var currentCameraAngle = Math.atan2(camera.position.y, camera.position.x);
                 camera.rotateRight(newCameraAngle - currentCameraAngle);
@@ -1229,9 +1237,9 @@ if (!TC.control.MapContents) {
 
         self.rotateIndicatorOuterCircle.classList.add(self.parent.classes.HIGHLIGHTED);
 
-        var oldTransformScratch = new Cesium.Matrix4();
-        var newTransformScratch = new Cesium.Matrix4();
-        var vectorScratch = new Cesium.Cartesian2();
+        var oldTransformScratch = new cesium.Matrix4();
+        var newTransformScratch = new cesium.Matrix4();
+        var vectorScratch = new cesium.Cartesian2();
 
         self.isRotating = true;
         self.rotateInitialCursorAngle = Math.atan2(-cursorVector.y, cursorVector.x);
@@ -1243,22 +1251,22 @@ if (!TC.control.MapContents) {
         if (viewCenter == null || viewCenter == undefined) {
             viewCenter = pickBottomPoint(self.parent.viewer.scene);
             if (viewCenter == null || viewCenter == undefined) {
-                self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(camera.positionWC, Cesium.Ellipsoid.WGS84, newTransformScratch);
+                self.rotateFrame = cesium.Transforms.eastNorthUpToFixedFrame(camera.positionWC, cesium.Ellipsoid.WGS84, newTransformScratch);
                 self.rotateIsLook = true;
             } else {
-                self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, Cesium.Ellipsoid.WGS84, newTransformScratch);
+                self.rotateFrame = cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, cesium.Ellipsoid.WGS84, newTransformScratch);
                 self.rotateIsLook = false;
             }
         } else {
-            self.rotateFrame = Cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, Cesium.Ellipsoid.WGS84, newTransformScratch);
+            self.rotateFrame = cesium.Transforms.eastNorthUpToFixedFrame(viewCenter, cesium.Ellipsoid.WGS84, newTransformScratch);
             self.rotateIsLook = false;
         }
 
         try {
-            var oldTransform = Cesium.Matrix4.clone(camera.transform, oldTransformScratch);
+            var oldTransform = cesium.Matrix4.clone(camera.transform, oldTransformScratch);
             camera.lookAtTransform(self.rotateFrame);
             self.rotateInitialCameraAngle = Math.atan2(camera.position.y, camera.position.x);
-            self.rotateInitialCameraDistance = Cesium.Cartesian3.magnitude(new Cesium.Cartesian3(camera.position.x, camera.position.y, 0.0));
+            self.rotateInitialCameraDistance = cesium.Cartesian3.magnitude(new cesium.Cartesian3(camera.position.x, camera.position.y, 0.0));
             camera.lookAtTransform(oldTransform);
         } catch (e) {
             self.rotateMouseUpFunction();
@@ -1270,8 +1278,8 @@ if (!TC.control.MapContents) {
     CameraControls.prototype.resetTilt = function () {
         var self = this;
         // lo dejamos como al principio a 50 grados
-        var angle = -self.getCamera().pitch - Cesium.Math.toRadians(50);
-        self.tilt(Cesium.Math.toDegrees(angle));
+        var angle = -self.getCamera().pitch - cesium.Math.toRadians(50);
+        self.tilt(cesium.Math.toDegrees(angle));
     };
     CameraControls.prototype.resetRotation = function (options) {
         const self = this;
@@ -1294,22 +1302,20 @@ if (!TC.control.MapContents) {
                 };
             }
 
-            if (this.parent.viewer && this.parent.viewer.trackedEntity) {
-                var camera = self.getCamera();
-                camera.rotate(Cesium.Cartesian3.fromDegrees(0, 90), currentRotation);
-            } else {
-                var bottom = pickBottomPoint(self.parent.viewer.scene);
-                if (bottom) {
-                    setHeadingUsingBottomCenter(self.parent.viewer.scene, currentRotation, bottom, options);
-                }
+            if (self.parent.viewer && self.parent.viewer.trackedEntity) {
+                self.parent.view3D.linked2DControls.geolocation.videoControls.call(self, { target: { className: 'stop' }, custom: true });                
+            }
+            var bottom = pickBottomPoint(self.parent.viewer.scene);
+            if (bottom) {
+                setHeadingUsingBottomCenter(self.parent.viewer.scene, currentRotation, bottom, options);
             }
         });
     };
     CameraControls.prototype.customCollisionDetection = function () {
         var self = this;
 
-        var scratchAdjustHeightTransform = new Cesium.Matrix4();
-        var scratchAdjustHeightCartographic = new Cesium.Cartographic();
+        var scratchAdjustHeightTransform = new cesium.Matrix4();
+        var scratchAdjustHeightCartographic = new cesium.Cartographic();
 
         var scene = self.parent.viewer.scene;
         var camera = self.parent.viewer.scene.camera;
@@ -1325,10 +1331,10 @@ if (!TC.control.MapContents) {
 
         var transform;
         var mag;
-        if (!Cesium.Matrix4.equals(camera.transform, Cesium.Matrix4.IDENTITY)) {
-            transform = Cesium.Matrix4.clone(camera.transform, scratchAdjustHeightTransform);
-            mag = Cesium.Cartesian3.magnitude(camera.position);
-            camera._setTransform(Cesium.Matrix4.IDENTITY);
+        if (!cesium.Matrix4.equals(camera.transform, cesium.Matrix4.IDENTITY)) {
+            transform = cesium.Matrix4.clone(camera.transform, scratchAdjustHeightTransform);
+            mag = cesium.Cartesian3.magnitude(camera.position);
+            camera._setTransform(cesium.Matrix4.IDENTITY);
         }
 
         var cartographic = scratchAdjustHeightCartographic;
@@ -1350,12 +1356,12 @@ if (!TC.control.MapContents) {
         if (transform !== undefined && transform !== null) {
             camera._setTransform(transform);
             if (heightUpdated) {
-                Cesium.Cartesian3.normalize(camera.position, camera.position);
-                Cesium.Cartesian3.negate(camera.position, camera.direction);
-                Cesium.Cartesian3.multiplyByScalar(camera.position, Math.max(mag, minimumZoomDistance), camera.position);
-                Cesium.Cartesian3.normalize(camera.direction, camera.direction);
-                Cesium.Cartesian3.cross(camera.direction, camera.up, camera.right);
-                Cesium.Cartesian3.cross(camera.right, camera.direction, camera.up);
+                cesium.Cartesian3.normalize(camera.position, camera.position);
+                cesium.Cartesian3.negate(camera.position, camera.direction);
+                cesium.Cartesian3.multiplyByScalar(camera.position, Math.max(mag, minimumZoomDistance), camera.position);
+                cesium.Cartesian3.normalize(camera.direction, camera.direction);
+                cesium.Cartesian3.cross(camera.direction, camera.up, camera.right);
+                cesium.Cartesian3.cross(camera.right, camera.direction, camera.up);
             }
         }
     };
@@ -1376,7 +1382,7 @@ if (!TC.control.MapContents) {
             pos.longitude = Math.min(self.initExtent.east + padding, pos.longitude);
             pos.latitude = Math.min(self.initExtent.north + padding, pos.latitude);
             self.viewer.camera.setView({
-                destination: Cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),
+                destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),
                 orientation: {
                     heading: self.viewer.camera.heading,
                     pitch: self.viewer.camera.pitch
@@ -1388,7 +1394,7 @@ if (!TC.control.MapContents) {
         self.viewer.scene.screenSpaceCameraController.minimumZoomDistance = pos.height > 1800 ? 400 : 200;
     };
 
-    var TwoDLinkedFeatureInfo = function (map) {
+    const TwoDLinkedFeatureInfo = function (map) {
         var pending = false;
         var marker = null;
         var ctlResultsPanel = null;
@@ -1431,15 +1437,13 @@ if (!TC.control.MapContents) {
         };
         var setMarker = function (pickedPosition) {
             if (!marker) {
-                var markerStyle = TC.control.FeatureInfoCommons.prototype.markerStyle;
-
                 var billboard = {
                     position: pickedPosition,
                     billboard: { /* revisar: no está bien la URL de la imagen - también revisar el GFI que salta en móvil sólo con navegar */
                         image: TC.Util.getBackgroundUrlFromCss(map.CLASS + '-marker'),
-                        eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                        eyeOffset: new cesium.Cartesian3(0, 0, -100),
+                        verticalOrigin: cesium.VerticalOrigin.BOTTOM,
+                        heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                     }
                 };
 
@@ -1500,13 +1504,13 @@ if (!TC.control.MapContents) {
                 setMarker(pickedPosition);
 
                 getResultsPanelCtl(ctlFeatureInfo).then(function () {
-                    var pickedLocation = Cesium.Ellipsoid.WGS84.cartesianToCartographic(pickedPosition);
+                    var pickedLocation = cesium.Ellipsoid.WGS84.cartesianToCartographic(pickedPosition);
 
                     var reprojected;
                     if (map.view3D.crs !== map.view3D.view2DCRS) {
-                        reprojected = TC.Util.reproject([Cesium.Math.toDegrees(pickedLocation.longitude), Cesium.Math.toDegrees(pickedLocation.latitude)], map.view3D.crs, map.view3D.view2DCRS);
+                        reprojected = TC.Util.reproject([cesium.Math.toDegrees(pickedLocation.longitude), cesium.Math.toDegrees(pickedLocation.latitude)], map.view3D.crs, map.view3D.view2DCRS);
                     } else {
-                        reprojected = [Cesium.Math.toDegrees(pickedLocation.longitude), Cesium.Math.toDegrees(pickedLocation.latitude)];
+                        reprojected = [cesium.Math.toDegrees(pickedLocation.longitude), cesium.Math.toDegrees(pickedLocation.latitude)];
                     }
 
 
@@ -1518,7 +1522,7 @@ if (!TC.control.MapContents) {
 
                     for (var textureIndex = 0; !pickedTile && textureIndex < tilesRendered.length; ++textureIndex) {
                         var tile = tilesRendered[textureIndex];
-                        if (Cesium.Rectangle.contains(tile.rectangle, pickedLocation)) {
+                        if (cesium.Rectangle.contains(tile.rectangle, pickedLocation)) {
                             pickedTile = tile;
                         }
                     }
@@ -1592,7 +1596,7 @@ if (!TC.control.MapContents) {
         };
     };
 
-    var RasterConverter = function (crsPattern) {
+    const RasterConverter = function (crsPattern) {
         this.layerCrs = null;
 
         var crsPattern = crsPattern;
@@ -1619,6 +1623,7 @@ if (!TC.control.MapContents) {
                 } else return obj[p[i]];
             }
         };
+
         var getTileMatrixSetLabelByLayerOnCapabilities = function (layer, crs) {
             if ((capsURL = TC.Util.isOnCapabilities(layer.url))) {
                 if ((caps = TC.capabilities[capsURL])) {
@@ -1637,30 +1642,74 @@ if (!TC.control.MapContents) {
         var wmtsLayer = function (layer) {
             const self = this;
             return new Promise(function (resolve, reject) {
-                var tileMatrixSetLabels = getTileMatrixSetLabelByLayerOnCapabilities(layer, self.layerCrs);
+                let tileMatrixSetLabels = getTileMatrixSetLabelByLayerOnCapabilities(layer, self.layerCrs);
+                let resource;
+                let resourceURL;
+                if (TC.Consts.WMTSEncoding.KVP === layer.encoding) {
+                    resource = new cesium.Resource({
+                        url: layer.url,
+                        request: new cesium.Request({
+                            type: cesium.RequestType.IMAGERY
+                        })
+                    });
+                } else if (TC.Consts.WMTSEncoding.RESTFUL === layer.encoding) {
+                    const wmtsLayer = layer.wrap.getWMTSLayer({ crs: self.layerCrs });
+                    if (wmtsLayer && wmtsLayer.ResourceURL && wmtsLayer.ResourceURL.length > 0) {
+                        resourceURL = wmtsLayer.ResourceURL[0];
+                        resource = new cesium.Resource({
+                            url: resourceURL.template,
+                            request: new cesium.Request({
+                                type: cesium.RequestType.IMAGERY
+                            })
+                        });
+                    }
+                }
+                if (resource && tileMatrixSetLabels) {
+                    resource.tcLayer = layer;
+                    let options = {
+                        url: resource,
+                        layer: layer.layerNames,
+                        style: 'default',
+                        format: resourceURL && resourceURL.format || layer.format || layer.options.format,
+                        tilingScheme: new cesium.GeographicTilingScheme()
+                    };
 
-                var options = {
-                    url: new CustomResource({
-                        url: layer.options.urlPattern
-                    }, layer),
-                    layer: layer.layerNames,
-                    style: 'default',
-                    format: layer.format || layer.options.format,
-                    tileMatrixSetID: tileMatrixSetLabels.id,
-                    tileMatrixLabels: tileMatrixSetLabels.labels,
-                    tilingScheme: new Cesium.GeographicTilingScheme()
-                };
+                    if (TC.Consts.WMTSEncoding.RESTFUL === layer.encoding) {
+                        options.tileMatrixSetID = tileMatrixSetLabels.id;
+                    } else if (TC.Consts.WMTSEncoding.KVP === layer.encoding && tileMatrixSetLabels) {
+                        options.tileMatrixSetID = tileMatrixSetLabels.id;
+                        options.tileMatrixLabels = tileMatrixSetLabels.labels;
+                    }
 
-                resolve(new Cesium.WebMapTileServiceImageryProvider(options));
+                    if (tileMatrixSetLabels && tileMatrixSetLabels.labels) {
+                        options.maximumLevel = parseInt(tileMatrixSetLabels.labels[tileMatrixSetLabels.labels.length - 1]);
+                    }
+
+                    // cuando un WMTS no tenga el matrixset de 0 a 21 requeriremos de la siguiente instrucción
+                    // Cesium requiere que los niveles vayan de 0 a 21 aunque físicamente no sea así
+                    //if (tileMatrixSetLabels && tileMatrixSetLabels.labels[0] !== 0) {
+                    //    options.tileMatrixLabels = [...Array(21/*tileMatrixSetLabels.labels.length*/).keys()];
+                    //}
+
+                    resolve(new cesium.WebMapTileServiceImageryProvider(options));
+
+                } else {
+                    reject('Faltan datos para instanciar la capa');
+                }
             });
         }
 
         var wmsLayer = function (layer) {
             return new Promise(function (resolve, reject) {
-                var options = {
-                    url: new CustomResource({
-                        url: layer.url
-                    }, layer),
+                let resource = new cesium.Resource({
+                    url: layer.url,
+                    request: new cesium.Request({
+                        type: cesium.RequestType.IMAGERY
+                    })
+                });
+                resource.tcLayer = layer;
+                let options = {
+                    url: resource,
                     layers: layer.layerNames,
                     parameters: {
                         version: "1.3.0",
@@ -1703,7 +1752,7 @@ if (!TC.control.MapContents) {
                     layer.geoBBox = exBoundingBox;
                 }
 
-                resolve(new Cesium.WebMapServiceImageryProvider(options));
+                resolve(new cesium.WebMapServiceImageryProvider(options));
             });
         };
 
@@ -1713,17 +1762,17 @@ if (!TC.control.MapContents) {
             Desde la version 1.42 han cambiado la definición de un proxy en las capas raster: si configuras con proxy, pide directamente desde el proxy y si da error no gestiona nada, 
             y si no configuras proxy, pide directamente sin tampoco gestionar los errores. Además la creación de una capa raster es síncrona, por lo que no encaja con el algoritmo de proxificación */
             CustomResource = function (options, layer) {
-                Cesium.Resource.call(this, options);
+                cesium.Resource.call(this, options);
 
                 this.layer = layer;
             };
             CustomResource.prototype.constructor = CustomResource;
-            CustomResource.prototype = Object.create(Cesium.Resource.prototype, {});
+            CustomResource.prototype = Object.create(cesium.Resource.prototype, {});
             CustomResource.prototype.clone = function (result) {
 
-                var cloned = Cesium.Resource.prototype.clone.call(this, result);
+                var cloned = cesium.Resource.prototype.clone.call(this, result);
 
-                if (!Cesium.defined(result)) {
+                if (!cesium.defined(result)) {
                     result = new CustomResource({
                         url: this._url
                     }, this.layer);
@@ -1760,11 +1809,11 @@ if (!TC.control.MapContents) {
         })();
 
         function checkAndResetRequest(request) {
-            if (request.state === Cesium.RequestState.ISSUED || request.state === Cesium.RequestState.ACTIVE) {
-                throw new Cesium.RuntimeError('The Resource is already being fetched.');
+            if (request.state === cesium.RequestState.ISSUED || request.state === cesium.RequestState.ACTIVE) {
+                throw new cesium.RuntimeError('The Resource is already being fetched.');
             }
 
-            request.state = Cesium.RequestState.UNISSUED;
+            request.state = cesium.RequestState.UNISSUED;
             request.deferred = undefined;
         }
 
@@ -1781,7 +1830,7 @@ if (!TC.control.MapContents) {
                 }.bind(image, layer);
 
                 if (crossOrigin) {
-                    if (Cesium.TrustedServers.contains(url)) {
+                    if (cesium.TrustedServers.contains(url)) {
                         image.crossOrigin = 'use-credentials';
                     } else {
                         image.crossOrigin = '';
@@ -1808,30 +1857,30 @@ if (!TC.control.MapContents) {
                     crossOrigin = resource.isCrossOriginUrl;
                 }
 
-                var deferred = Cesium.when.defer();
+                var deferred = cesium.when.defer();
 
                 createImage(resource.layer, url, crossOrigin && allowCrossOrigin, deferred);
 
                 return deferred.promise;
             };
 
-            var promise = Cesium.RequestScheduler.request(request);
-            if (!Cesium.defined(promise)) {
+            var promise = cesium.RequestScheduler.request(request);
+            if (!cesium.defined(promise)) {
                 return;
             }
 
             return promise.otherwise(function (e) {
-                return Cesium.when.reject(e);
+                return cesium.when.reject(e);
             });
         }
 
         var customFetchImage = function (preferBlob, allowCrossOrigin) {
-            if (Cesium.defined(allowCrossOrigin)) {
-                Cesium.deprecationWarning('Resource.fetchImage.allowCrossOrigin', 'The allowCrossOrigin parameter has been deprecated and will be removed in Cesium 1.44. It no longer needs to be specified.');
+            if (cesium.defined(allowCrossOrigin)) {
+                cesium.deprecationWarning('Resource.fetchImage.allowCrossOrigin', 'The allowCrossOrigin parameter has been deprecated and will be removed in cesium 1.44. It no longer needs to be specified.');
             }
 
-            preferBlob = Cesium.defaultValue(preferBlob, false);
-            allowCrossOrigin = Cesium.defaultValue(allowCrossOrigin, true);
+            preferBlob = cesium.defaultValue(preferBlob, false);
+            allowCrossOrigin = cesium.defaultValue(allowCrossOrigin, true);
 
             checkAndResetRequest(this.request);
 
@@ -1845,7 +1894,7 @@ if (!TC.control.MapContents) {
             }
 
             var blobPromise = this.fetchBlob();
-            if (!Cesium.defined(blobPromise)) {
+            if (!cesium.defined(blobPromise)) {
                 return;
             }
 
@@ -1853,19 +1902,19 @@ if (!TC.control.MapContents) {
             var generatedBlob;
             return blobPromise
                 .then(function (blob) {
-                    if (!Cesium.defined(blob)) {
+                    if (!cesium.defined(blob)) {
                         return;
                     }
                     generatedBlob = blob;
                     var blobUrl = window.URL.createObjectURL(blob);
-                    generatedBlobResource = new Cesium.Resource({
+                    generatedBlobResource = new cesium.Resource({
                         url: blobUrl
                     });
 
                     return fetchImage(generatedBlobResource);
                 })
                 .then(function (image) {
-                    if (!Cesium.defined(image)) {
+                    if (!cesium.defined(image)) {
                         return;
                     }
                     window.URL.revokeObjectURL(generatedBlobResource.url);
@@ -1876,11 +1925,11 @@ if (!TC.control.MapContents) {
                     return image;
                 })
                 .otherwise(function (error) {
-                    if (Cesium.defined(generatedBlobResource)) {
+                    if (cesium.defined(generatedBlobResource)) {
                         window.URL.revokeObjectURL(generatedBlobResource.url);
                     }
 
-                    return Cesium.when.reject(error);
+                    return cesium.when.reject(error);
                 });
         };
         /* fin cesium Resource override */
@@ -1901,13 +1950,13 @@ if (!TC.control.MapContents) {
             }
         };
     };
-    var FeatureConverter = function () {
+    const FeatureConverter = function () {
         var scene = null;
         var toCesiumColor = function (hexStringColor, alpha) {
             if (hexStringColor instanceof Array) {
                 hexStringColor = "rgba(" + hexStringColor[0] + ", " + hexStringColor[1] + ", " + hexStringColor[2] + ", " + hexStringColor[3] + ")";
             }
-            var color = Cesium.Color.fromCssColorString(hexStringColor);
+            var color = cesium.Color.fromCssColorString(hexStringColor);
             if (alpha !== undefined) {
                 return color.withAlpha(alpha);
             }
@@ -1936,19 +1985,19 @@ if (!TC.control.MapContents) {
                 var point = coords[0];
                 var delta = 1000;
                 var minx, miny, maxx, maxy;
-                minx = new Cesium.Cartesian3(point.x - delta, point.y, point.z);
-                miny = new Cesium.Cartesian3(point.x, point.y - delta, point.z);
-                maxx = new Cesium.Cartesian3(point.x + delta, point.y, point.z);
-                maxy = new Cesium.Cartesian3(point.x, point.y + delta, point.z);
+                minx = new cesium.Cartesian3(point.x - delta, point.y, point.z);
+                miny = new cesium.Cartesian3(point.x, point.y - delta, point.z);
+                maxx = new cesium.Cartesian3(point.x + delta, point.y, point.z);
+                maxy = new cesium.Cartesian3(point.x, point.y + delta, point.z);
 
-                rectangle = Cesium.Rectangle.fromCartesianArray([minx, miny, maxx, maxy], Cesium.Ellipsoid.WGS84);
+                rectangle = cesium.Rectangle.fromCartesianArray([minx, miny, maxx, maxy], cesium.Ellipsoid.WGS84);
             } else {
-                rectangle = Cesium.Rectangle.fromCartesianArray(coords, Cesium.Ellipsoid.WGS84);
+                rectangle = cesium.Rectangle.fromCartesianArray(coords, cesium.Ellipsoid.WGS84);
             }
 
             var neededCameraPosition = scene.camera.getRectangleCameraCoordinates(rectangle);
-            var distance = Cesium.Cartesian3.distance(neededCameraPosition, Cesium.BoundingSphere.fromPoints(coords).center);
-            var pixelSize = scene.camera.frustum.getPixelDimensions(scene.drawingBufferWidth, scene.drawingBufferHeight, distance, new Cesium.Cartesian2());
+            var distance = cesium.Cartesian3.distance(neededCameraPosition, cesium.BoundingSphere.fromPoints(coords).center);
+            var pixelSize = scene.camera.frustum.getPixelDimensions(scene.drawingBufferWidth, scene.drawingBufferHeight, distance, scene.pixelRatio, new cesium.Cartesian2());
             pixelSize = Math.max(pixelSize.x, pixelSize.y);
             return Math.round(pixelSize) == 0 ? 1 : pixelSize;
         };
@@ -1973,7 +2022,7 @@ if (!TC.control.MapContents) {
         }
 
         function createLine(id, coords, options, callback) {
-            var entity = new Cesium.Entity({
+            var entity = new cesium.Entity({
                 name: id,
                 polyline: {
                     positions: coords,
@@ -2012,7 +2061,7 @@ if (!TC.control.MapContents) {
                     }
                 }
 
-                opt.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+                opt.color = cesium.ColorGeometryInstanceAttribute.fromColor(color);
 
                 if (properties.outlineColor.hasOwnProperty('val')) {
                     if (properties.outlineOpacity.hasOwnProperty('val')) {
@@ -2022,7 +2071,7 @@ if (!TC.control.MapContents) {
                     }
                 }
 
-                opt.outlineColor = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+                opt.outlineColor = cesium.ColorGeometryInstanceAttribute.fromColor(color);
 
                 if (properties.width.hasOwnProperty('val')) {
                     opt.width = properties.width.val;
@@ -2033,11 +2082,11 @@ if (!TC.control.MapContents) {
 
             circle.geometryType = function (coords, options) {
 
-                return new Cesium.GroundPrimitive({
+                return new cesium.GroundPrimitive({
                     releaseGeometryInstances: false,
-                    geometryInstances: new Cesium.GeometryInstance({
+                    geometryInstances: new cesium.GeometryInstance({
                         id: feature.id,
-                        geometry: new Cesium.CircleGeometry({
+                        geometry: new cesium.CircleGeometry({
                             center: coords[0],
                             radius: feature.geometry[1]
                         }),
@@ -2049,35 +2098,35 @@ if (!TC.control.MapContents) {
 
                 // Para obtener el contorno de círculo 
                 //var radius = feature.geometry[1];
-                //var outlineEllipse = Cesium.EllipseGeometryLibrary.computeEllipsePositions({
+                //var outlineEllipse = cesium.EllipseGeometryLibrary.computeEllipsePositions({
                 //    semiMinorAxis: radius,
                 //    semiMajorAxis: radius,
                 //    rotation: 0,
                 //    center: coords[0],
-                //    granularity: Cesium.Math.toRadians(0.5)
+                //    granularity: cesium.Math.toRadians(0.5)
                 //}, false, true);
 
-                //var outerPositions = Cesium.Cartesian3.unpackArray(outlineEllipse.outerPositions);
+                //var outerPositions = cesium.Cartesian3.unpackArray(outlineEllipse.outerPositions);
 
                 //var outlineSize = getPixelSize(outerPositions);
-                //var metersPerPixel = scene.camera.getPixelSize(Cesium.BoundingSphere.fromPoints(outerPositions), scene.drawingBufferWidth, scene.drawingBufferHeight);
+                //var metersPerPixel = scene.camera.getPixelSize(cesium.BoundingSphere.fromPoints(outerPositions), scene.drawingBufferWidth, scene.drawingBufferHeight);
                 //var outlineInMeters = metersPerPixel * outlineSize;
 
-                //var outlineHoleEllipse = Cesium.EllipseGeometryLibrary.computeEllipsePositions({
+                //var outlineHoleEllipse = cesium.EllipseGeometryLibrary.computeEllipsePositions({
                 //    semiMinorAxis: radius - outlineInMeters,
                 //    semiMajorAxis: radius - outlineInMeters,
                 //    rotation: 0,
                 //    center: coords[0],
-                //    granularity: Cesium.Math.toRadians(0.5)
+                //    granularity: cesium.Math.toRadians(0.5)
                 //}, false, true);
 
-                //var innerPositions = Cesium.Cartesian3.unpackArray(outlineHoleEllipse.outerPositions);
+                //var innerPositions = cesium.Cartesian3.unpackArray(outlineHoleEllipse.outerPositions);
 
-                //var outlineCircleGeom = new Cesium.GroundPrimitive({
-                //    geometryInstances: new Cesium.GeometryInstance({
+                //var outlineCircleGeom = new cesium.GroundPrimitive({
+                //    geometryInstances: new cesium.GeometryInstance({
                 //        id: feature.id + 'outline',
-                //        geometry: new Cesium.PolygonGeometry({
-                //            polygonHierarchy: new Cesium.PolygonHierarchy(outerPositions, [new Cesium.PolygonHierarchy(innerPositions)])
+                //        geometry: new cesium.PolygonGeometry({
+                //            polygonHierarchy: new cesium.PolygonHierarchy(outerPositions, [new cesium.PolygonHierarchy(innerPositions)])
                 //        }),
                 //        attributes: {
                 //            color: options.outlineColor
@@ -2113,7 +2162,7 @@ if (!TC.control.MapContents) {
                     }
                 }
 
-                opt.color = Cesium.ColorGeometryInstanceAttribute.fromColor(color);
+                opt.color = cesium.ColorGeometryInstanceAttribute.fromColor(color);
 
                 if (properties.outlineColor.hasOwnProperty('val')) {
                     if (properties.outlineOpacity.hasOwnProperty('val')) {
@@ -2141,9 +2190,9 @@ if (!TC.control.MapContents) {
                         var geomOutlines = [];
 
                         var getPolyGeom = function (polygonHierarchy) {
-                            return new Cesium.GeometryInstance({
+                            return new cesium.GeometryInstance({
                                 id: feature.id,
-                                geometry: new Cesium.PolygonGeometry({
+                                geometry: new cesium.PolygonGeometry({
                                     polygonHierarchy: polygonHierarchy
                                 }),
                                 attributes: {
@@ -2166,10 +2215,10 @@ if (!TC.control.MapContents) {
                                 var hierarchy;
                                 if (j == 0) {
                                     getting.push(getOutlineGeom.call(this, coords[i][0]));
-                                    hierarchy = new Cesium.PolygonHierarchy(coords[i][0]);
+                                    hierarchy = new cesium.PolygonHierarchy(coords[i][0]);
                                 } else {
                                     getting.push(getOutlineGeom.call(this, coords[i][j]));
-                                    hierarchy.holes.push(new Cesium.PolygonHierarchy(coords[i][j]));
+                                    hierarchy.holes.push(new cesium.PolygonHierarchy(coords[i][j]));
                                 }
                             }
 
@@ -2180,11 +2229,11 @@ if (!TC.control.MapContents) {
                             getting = [];
 
                             resolve(
-                                [new Cesium.GroundPrimitive({
+                                [new cesium.GroundPrimitive({
                                     releaseGeometryInstances: false,
                                     geometryInstances: geomPolys
                                 }), geomOutlines]);
-                        });
+                        }).catch(reject);
                     });
                 };
             }
@@ -2200,12 +2249,12 @@ if (!TC.control.MapContents) {
                         }, function (entity) {
 
                             resolve([
-                                new Cesium.GroundPrimitive({
+                                new cesium.GroundPrimitive({
                                     releaseGeometryInstances: false,
-                                    geometryInstances: new Cesium.GeometryInstance({
+                                    geometryInstances: new cesium.GeometryInstance({
                                         id: feature.id,
-                                        geometry: new Cesium.PolygonGeometry({
-                                            polygonHierarchy: new Cesium.PolygonHierarchy(coords)
+                                        geometry: new cesium.PolygonGeometry({
+                                            polygonHierarchy: new cesium.PolygonHierarchy(coords)
                                         }),
                                         attributes: {
                                             color: options.color
@@ -2300,7 +2349,7 @@ if (!TC.control.MapContents) {
                             getting = [];
 
                             resolve(geomInstances);
-                        });
+                        }).catch(reject);
                     });
                 };
             }
@@ -2428,36 +2477,36 @@ if (!TC.control.MapContents) {
                             image: options.url,
                             width: options.width,
                             height: options.height,
-                            eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                            eyeOffset: new cesium.Cartesian3(0, 0, -100),
+                            verticalOrigin: cesium.VerticalOrigin.BOTTOM,
+                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                         }
                     };
 
                     if (options.anchor && options.anchor.length > 0) {
-                        billboard.billboard.pixelOffset = new Cesium.Cartesian2(options.anchor[0], options.anchor[1]);
+                        billboard.billboard.pixelOffset = new cesium.Cartesian2(options.anchor[0], options.anchor[1]);
                     }
 
                     if (!options.label) {
-                        return new Cesium.Entity(billboard);
+                        return new cesium.Entity(billboard);
                     } else {
                         billboard.label = {
                             text: options.label,
                             font: '14pt sans-serif',
-                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
+                            horizontalOrigin: cesium.HorizontalOrigin.LEFT,
+                            verticalOrigin: cesium.VerticalOrigin.BOTTOM,
                             fillColor: options.fontColor,
                             showBackground: true,
-                            eyeOffset: new Cesium.Cartesian3(3000, 0, -100)
+                            eyeOffset: new cesium.Cartesian3(3000, 0, -100)
                         };
 
-                        return new Cesium.Entity(billboard);
+                        return new cesium.Entity(billboard);
                     }
                 };
             }
             else if (TC.feature.Point && feature.CLASSNAME == "TC.feature.Point") {
-                var pinBuilder = new Cesium.PinBuilder();
+                var pinBuilder = new cesium.PinBuilder();
 
                 point.geometryType = function (coords, options) {
                     var text = options.label;
@@ -2466,33 +2515,33 @@ if (!TC.control.MapContents) {
                         case (text && /^([A-Z])\w+$/gi.test(text)):
                         case (text && !/^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)):
 
-                            return new Cesium.Entity({
+                            return new cesium.Entity({
                                 name: feature.id,
                                 position: coords[0],
                                 label: {
                                     text: options.label,
-                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                                    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-                                    verticalOrigin: Cesium.VerticalOrigin.BASELINE,
+                                    eyeOffset: new cesium.Cartesian3(0, 0, -100),
+                                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
+                                    horizontalOrigin: cesium.HorizontalOrigin.CENTER,
+                                    verticalOrigin: cesium.VerticalOrigin.BASELINE,
                                     font: '16' + 'px san-serif Helvetica',
-                                    fillColor: Cesium.Color.BLACK,
-                                    outlineColor: Cesium.Color.WHITE,
+                                    fillColor: cesium.Color.BLACK,
+                                    outlineColor: cesium.Color.WHITE,
                                     outlineWidth: 5,
-                                    style: Cesium.LabelStyle.FILL_AND_OUTLINE
+                                    style: cesium.LabelStyle.FILL_AND_OUTLINE
                                 }
                             });
 
                             break;
                         case (/^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)):
-                            return new Cesium.Entity({
+                            return new cesium.Entity({
                                 name: feature.id,
                                 position: coords[0],
                                 billboard: {
                                     image: pinBuilder.fromText(text, options.fontColor, 48).toDataURL(),
-                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                                    eyeOffset: new cesium.Cartesian3(0, 0, -100),
+                                    verticalOrigin: cesium.VerticalOrigin.BOTTOM,
+                                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                                 }
                             });
                             break;
@@ -2501,7 +2550,7 @@ if (!TC.control.MapContents) {
 
                             const drawPin = function (context2D, color, size) {
 
-                                color = color.darken(0.15, new Cesium.Color());
+                                color = color.darken(0.15, new cesium.Color());
                                 var rgbaColor = color.toCssColorString().replace("rgb", "rgba").replace(")", ",0)");
 
                                 context2D.save();
@@ -2593,27 +2642,27 @@ if (!TC.control.MapContents) {
                                 return canvas;
                             }
 
-                            return new Cesium.Entity({
+                            return new cesium.Entity({
                                 name: feature.id,
                                 position: coords[0],
                                 billboard: {
-                                    image: createPin(Cesium.Color.fromCssColorString(feature.options.strokeColor ? feature.options.strokeColor : TC.Cfg.styles.point.strokeColor), 48).toDataURL(),
-                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                                    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                                    image: createPin(cesium.Color.fromCssColorString(feature.options.strokeColor ? feature.options.strokeColor : TC.Cfg.styles.point.strokeColor), 48).toDataURL(),
+                                    eyeOffset: new cesium.Cartesian3(0, 0, -100),
+                                    verticalOrigin: cesium.VerticalOrigin.BOTTOM,
+                                    horizontalOrigin: cesium.HorizontalOrigin.CENTER,
+                                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                                 }
                             });
                         default:
-                            return new Cesium.Entity({
+                            return new cesium.Entity({
                                 name: feature.id,
                                 position: coords[0],
                                 billboard: {
-                                    image: pinBuilder.fromColor(Cesium.Color.fromCssColorString(feature.options.fillColor ? feature.options.fillColor : TC.Cfg.styles.point.fillColor), 32).toDataURL(),
-                                    eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                                    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                                    image: pinBuilder.fromColor(cesium.Color.fromCssColorString(feature.options.fillColor ? feature.options.fillColor : TC.Cfg.styles.point.fillColor), 32).toDataURL(),
+                                    eyeOffset: new cesium.Cartesian3(0, 0, -100),
+                                    verticalOrigin: cesium.VerticalOrigin.BOTTOM,
+                                    horizontalOrigin: cesium.HorizontalOrigin.CENTER,
+                                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                                 }
                             });
                     }
@@ -2638,8 +2687,8 @@ if (!TC.control.MapContents) {
                 }
 
                 arr.push(coord.length > 2 ?
-                    Cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]) :
-                    Cesium.Cartesian3.fromDegrees(coord[0], coord[1]));
+                    cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]) :
+                    cesium.Cartesian3.fromDegrees(coord[0], coord[1]));
             };
 
             var obj;
@@ -2734,7 +2783,7 @@ if (!TC.control.MapContents) {
             obj = {
                 id: feature.id,
                 attributes: feature.data,
-                boundigSphere: Cesium.BoundingSphere.fromPoints(cartesians)
+                boundigSphere: cesium.BoundingSphere.fromPoints(cartesians)
             };
 
             if (!byPromise) { // si estamos pintando líneas, obtenemos posiciones con altura
@@ -2793,14 +2842,16 @@ if (!TC.control.MapContents) {
                 })).then(function (results) {
                     if (results.length > 0) {
                         for (var i = 0; i < map.baseLayers.length; i++) {
-                            map.baseLayers[i].mustReproject = results[i];
+                            if (map.baseLayers[i]) {
+                                map.baseLayers[i].mustReproject = results[i];
+                            }
                         }
 
                         //map.trigger(TC.Consts.event.VIEWCHANGE, { view: TC.Consts.view.THREED });
                     }
 
                     resolve();
-                });
+                }).catch(reject);
             }
 
             currentMapCfg.baseMap = isBaseRaster ? map.baseLayer : self.Consts.BLANK_BASE;
@@ -2813,13 +2864,20 @@ if (!TC.control.MapContents) {
         self.events = self.map.$events;
 
         self.selectors = {
-            divThreedMap: options.divMap
+            divThreedMap: options.div
         };
 
         if (options.terrain) {
             self.terrain = options.terrain;
         } else {
-            throw Error("Falta configuración del terreno");
+            self.terrain = {
+                url: "//idena.navarra.es/cesiumTerrain/2017/epsg4326/5m/",
+                noDataValue: 0,
+                attributions: {
+                    name: "Álvaro Huarte",
+                    site: "https://github.com/ahuarte47"
+                }
+            };
         }
 
         if (options.terrainFallback && options.terrainFallback.url && options.terrainFallback.coverageName && options.terrainFallback.noDataValue) {
@@ -2830,7 +2888,12 @@ if (!TC.control.MapContents) {
                 noDataValue: options.terrainFallback.noDataValue
             };
         } else if (options.terrainFallback && (!options.terrainFallback.url || !options.terrainFallback.coverageName || !options.terrainFallback.noDataValue)) {
-            throw Error("Faltan datos sobre el terreno de respaldo");
+            self.terrainFallback = {
+                url: "https://image.discomap.eea.europa.eu/arcgis/services/Elevation/EUElev_DEM_V11/MapServer/WCSServer",
+                coverageName: "1",
+                format: "GeoTIFF",
+                noDataValue: -32767
+            };
         }
 
         if (options.controls) {
@@ -2892,6 +2955,10 @@ if (!TC.control.MapContents) {
                 var ctl = self.allowedControls[i];
                 ctl = ctl.substr(0, 1).toUpperCase() + ctl.substr(1);
                 var ctlsOnMap = self.map.getControlsByClass('TC.control.' + ctl);
+                if (ctlsOnMap.length === 0) {
+                    ctl = ctl.toUpperCase();
+                    ctlsOnMap = self.map.getControlsByClass('TC.control.' + ctl);
+                }
                 if (ctlsOnMap.length === 0) { // si un control soportado aún no está en el mapa, nos suscribimos al addcontrol para controlarlo
                     self.map.on(TC.Consts.event.CONTROLADD, function (ctrlClass, e) {
                         try {
@@ -2933,10 +3000,10 @@ if (!TC.control.MapContents) {
             self.view3D.loadViewer.call(self)
                 .then(function () {
 
-                    self.divThreedMap.classList.remove(self.CLASS + '-divMap-fadeOut');
-                    self.divThreedMap.classList.add(self.CLASS + '-divMap-fadeIn');
-                    self.mapView.viewHTML.classList.remove(self.CLASS + '-divMap-fadeIn');
-                    self.mapView.viewHTML.classList.add(self.CLASS + '-divMap-fadeOut');
+                    self.divThreedMap.classList.remove(self.CLASS + '-div-fadeOut');
+                    self.divThreedMap.classList.add(self.CLASS + '-div-fadeIn');
+                    self.mapView.viewHTML.classList.remove(self.CLASS + '-div-fadeIn');
+                    self.mapView.viewHTML.classList.add(self.CLASS + '-div-fadeOut');
 
                     if (!options.state) {
                         self.divThreedMap.classList.remove(self.classes.LOADING);
@@ -2945,7 +3012,6 @@ if (!TC.control.MapContents) {
                     // mapas de fondo y capas
                     setMustReprojectOfBaseLayers.call(self, self.map)
                         .then(function () {
-
                             // extent
                             self.view3D.setCameraFromMapView.call(self);
 
@@ -2974,7 +3040,7 @@ if (!TC.control.MapContents) {
 
                                     var camera = self.view3D.cameraControls.getCamera();
                                     camera.flyTo({
-                                        destination: Cesium.Cartesian3.fromRadians(options.state.cp[0], options.state.cp[1], options.state.cp[2]),
+                                        destination: cesium.Cartesian3.fromRadians(options.state.cp[0], options.state.cp[1], options.state.cp[2]),
                                         orientation: {
                                             heading: options.state.chpr[0],
                                             pitch: options.state.chpr[1],
@@ -2984,11 +3050,11 @@ if (!TC.control.MapContents) {
                                     });
 
                                 } else if (options.animateRendering) {
-                                    let angle = Cesium.Math.toRadians(50);
+                                    let angle = cesium.Math.toRadians(50);
                                     let pickBP = pickBottomPoint(self.viewer.scene);
 
                                     const readyPickBP = function (_pickBP) {
-                                        let matrixPickBP = Cesium.Matrix4.fromTranslation(_pickBP);
+                                        let matrixPickBP = cesium.Matrix4.fromTranslation(_pickBP);
 
                                         self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle,
                                             self.viewer.scene.camera.right, matrixPickBP, {
@@ -2998,8 +3064,8 @@ if (!TC.control.MapContents) {
                                     };
 
                                     const animationCallback = function () {
-                                        Cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.view3D.initialRectangle = self.viewer.camera.computeViewRectangle();
-                                        Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+                                        cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.view3D.initialRectangle = self.viewer.camera.computeViewRectangle();
+                                        cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
 
                                         applyEnd();
                                     };
@@ -3031,7 +3097,7 @@ if (!TC.control.MapContents) {
                                             }
                                         };
 
-                                        checkPickBPProcess = setInterval(checkPickBottomPoint, 50);                                        
+                                        checkPickBPProcess = setInterval(checkPickBottomPoint, 50);
                                     }
 
                                 } else {
@@ -3043,7 +3109,7 @@ if (!TC.control.MapContents) {
                                 self.events.on(TC.Consts.event.TERRAINLOADED, function () {
 
                                     const addHeight = function (position) {
-                                        var cartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
+                                        var cartographic = cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
                                         var height = self.viewer.scene.globe.getHeight(cartographic) || 0;
                                         var finalCartographic = {
                                             longitude: cartographic.longitude,
@@ -3051,7 +3117,7 @@ if (!TC.control.MapContents) {
                                             height: cartographic.height + height
                                         };
 
-                                        return Cesium.Ellipsoid.WGS84.cartographicToCartesian(finalCartographic);
+                                        return cesium.Ellipsoid.WGS84.cartographicToCartesian(finalCartographic);
                                     };
 
                                     var markers = self.viewer.entities.values.filter(function (entity) {
@@ -3060,7 +3126,7 @@ if (!TC.control.MapContents) {
 
                                     if (markers.length > 0) {
                                         markers.forEach(function (marker) {
-                                            marker.position = addHeight(Cesium.Property.getValueOrUndefined(marker.position, Cesium.JulianDate.now));
+                                            marker.position = addHeight(cesium.Property.getValueOrUndefined(marker.position, cesium.JulianDate.now));
                                         });
                                     }
 
@@ -3097,51 +3163,60 @@ if (!TC.control.MapContents) {
         self.map.on3DView = false;
 
         //self.map.view3D = null;
+        if (self.viewer && self.viewer.trackedEntity) {
+            self.view3D.linked2DControls.geolocation.wrap.simulateTrackEnd();
+        }
 
-        self.view3D.cameraControls.resetRotation({ duration: 1000 }).then(function () {
+        self.view3D.cameraControls.resetRotation({ duration: 1000 })
+            .then(function () {
 
-            var animationCallback = function () {
+                var animationCallback = function () {
 
-                self.map.div.classList.remove(TC.Consts.classes.THREED);
+                    self.map.div.classList.remove(TC.Consts.classes.THREED);
 
-                /* atribuciones del terreno */
-                self.map.trigger(TC.Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: self.viewer.scene.terrainProvider });
+                    /* atribuciones del terreno */
+                    self.map.trigger(TC.Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: self.viewer.scene.terrainProvider });
 
-                if (self.viewer.scene.terrainProvider.fallbackProvider) {
-                    self.viewer.scene.terrainProvider.fallbackProvider.forEach(function (provider) {
-                        self.map.trigger(TC.Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: provider });
-                    });
-                }
-
-                self.view3D.setViewFromCameraView.call(self).then(function () {
-                    self.divThreedMap.classList.remove(self.classes.MAP3D, self.CLASS + '-divMap-fadeIn');
-                    self.divThreedMap.classList.add(self.CLASS + '-divMap-fadeOut');
-                    self.mapView.viewHTML.classList.remove(self.CLASS + '-divMap-fadeOut');
-                    self.mapView.viewHTML.classList.add(self.CLASS + '-divMap-fadeIn');
-
-                    self.view3D.destroy.call(self);
-
-                    self.map.getLoadingIndicator().removeWait(self.waiting);
-                    delete self.waiting;
-
-                    if (options.callback) {
-                        options.callback();
+                    if (self.viewer.scene.terrainProvider.fallbackProvider) {
+                        self.viewer.scene.terrainProvider.fallbackProvider.forEach(function (provider) {
+                            self.map.trigger(TC.Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: provider });
+                        });
                     }
+
+                    self.view3D.setViewFromCameraView.call(self).then(function () {
+                        self.divThreedMap.classList.remove(self.classes.MAP3D, self.CLASS + '-div-fadeIn');
+                        self.divThreedMap.classList.add(self.CLASS + '-div-fadeOut');
+                        self.mapView.viewHTML.classList.remove(self.CLASS + '-div-fadeOut');
+                        self.mapView.viewHTML.classList.add(self.CLASS + '-div-fadeIn');
+
+                        self.view3D.destroy.call(self);
+
+                        self.map.getLoadingIndicator().removeWait(self.waiting);
+                        delete self.waiting;
+
+                        if (options.callback) {
+                            options.callback();
+                        }
+                    });
+
+                    self.mapView.setRotation(0);
+                    if (self._ovMap) {
+                        self._ovMap.wrap.draw3DCamera(null);
+                    }
+                };
+
+                var bottom = pickBottomPoint(self.viewer.scene);
+                var transform = cesium.Matrix4.fromTranslation(bottom);
+                var angle = computeAngleToZenith(self.viewer.scene, bottom);
+
+                self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, transform, {
+                    duration: 1500,
+                    callback: animationCallback
                 });
-
-                self.mapView.setRotation(0);
-                self._ovMap.wrap.draw3DCamera(null);
-            };
-
-            var bottom = pickBottomPoint(self.viewer.scene);
-            var transform = Cesium.Matrix4.fromTranslation(bottom);
-            var angle = computeAngleToZenith(self.viewer.scene, bottom);
-
-            self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, transform, {
-                duration: 1500,
-                callback: animationCallback
+            })
+            .catch(function (e) {
+                throw (e);
             });
-        });
     };
 
     viewProto.view3D = (function () {
@@ -3197,40 +3272,40 @@ if (!TC.control.MapContents) {
                     self.eventHandlers = {};
                 }
 
-                self.eventHandlers.handlerOfMouse = new Cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
+                self.eventHandlers.handlerOfMouse = new cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
                 self.eventHandlers.handlerOfMouse.setInputAction(function (event) {
                     self.view3D._lastMousePosition = event;
-                }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                }, cesium.ScreenSpaceEventType.MOUSE_MOVE);
                 self.eventHandlers.handlerOfMouse.setInputAction(function (wheelZoomAmount) {
                     self.view3D.zoomToCartesian.call(self, self.view3D._lastMousePosition, wheelZoomAmount);
-                }, Cesium.ScreenSpaceEventType.WHEEL);
-                var pinchCenterPosition = new Cesium.Cartesian2();
+                }, cesium.ScreenSpaceEventType.WHEEL);
+                var pinchCenterPosition = new cesium.Cartesian2();
                 var pinchAmount = 0;
                 self.eventHandlers.handlerOfMouse.setInputAction(function (event) {
-                    Cesium.Cartesian2.lerp(event.position1, event.position2, 0.5, pinchCenterPosition);
-                }, Cesium.ScreenSpaceEventType.PINCH_START);
+                    cesium.Cartesian2.lerp(event.position1, event.position2, 0.5, pinchCenterPosition);
+                }, cesium.ScreenSpaceEventType.PINCH_START);
                 self.eventHandlers.handlerOfMouse.setInputAction(function (event) {
                     var diff = event.distance.endPosition.y - event.distance.startPosition.y;
                     var rangeWindowRatio = diff / self.viewer.scene.canvas.clientHeight;
                     rangeWindowRatio = Math.min(rangeWindowRatio, self.viewer.scene.screenSpaceCameraController.maximumMovementRatio);
                     pinchAmount = rangeWindowRatio;
-                }, Cesium.ScreenSpaceEventType.PINCH_MOVE);
+                }, cesium.ScreenSpaceEventType.PINCH_MOVE);
                 self.eventHandlers.handlerOfMouse.setInputAction(function (event) {
                     self.view3D.zoomToCartesian.call(self, { endPosition: pinchCenterPosition }, pinchAmount);
-                }, Cesium.ScreenSpaceEventType.PINCH_END);
+                }, cesium.ScreenSpaceEventType.PINCH_END);
             }
         };
 
         const addFeature = function (csFeature) {
             var addedFeature = csFeature;
             switch (true) {
-                case csFeature instanceof Cesium.GroundPrimitive: {
+                case csFeature instanceof cesium.GroundPrimitive: {
                     this.viewer.scene.groundPrimitives.add(csFeature);
                     break;
                 }
                 case csFeature instanceof Object && csFeature.hasOwnProperty('billboard'): {
                     if (!this.viewer.billboardCollection) {
-                        this.viewer.billboardCollection = this.viewer.scene.primitives.add(new Cesium.BillboardCollection({
+                        this.viewer.billboardCollection = this.viewer.scene.primitives.add(new cesium.BillboardCollection({
                             scene: this.viewer.scene
                         }));
                     }
@@ -3412,10 +3487,7 @@ if (!TC.control.MapContents) {
                     }
                     self.lastZoom = performance.now();
 
-                    var coordsXY = self.view3D.view2DCRS !== self.view3D.crs ? TC.Util.reproject(e.extent.slice(0, 2), self.view3D.view2DCRS, self.view3D.crs) : e.extent.slice(0, 2);
-                    var coordsXY2 = self.view3D.view2DCRS !== self.view3D.crs ? TC.Util.reproject(e.extent.slice(2), self.view3D.view2DCRS, self.view3D.crs) : e.extent.slice(2);
-                    var rectangle = Cesium.Rectangle.fromDegrees(coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]);
-
+                    let rectangle = cesium.Rectangle.fromDegrees(...e.extent);
                     self.view3D.flyToRectangle.call(self, rectangle);
                     break;
                 }
@@ -3439,7 +3511,7 @@ if (!TC.control.MapContents) {
                 if (track && track.length > 0) {
 
                     var positions = [];
-                    const positionCallback = new Cesium.CallbackProperty(function (time, result) {
+                    const positionCallback = new cesium.CallbackProperty(function (time, result) {
                         if (track[0].geometry.length > positions.length) {
                             var newCartographicPositions = track[0].geometry.slice(positions.length).map(function (coordinate) {
                                 var reprojected = coordinate;
@@ -3448,14 +3520,14 @@ if (!TC.control.MapContents) {
                                     reprojected = TC.Util.reproject(coordinate, this.view3D.view2DCRS, this.view3D.crs);
                                 }
 
-                                return Cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1], coordinate[2]);
+                                return cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1], coordinate[2]);
                             }.bind(this));
 
                             var updatedPositions = [];
                             if (newCartographicPositions instanceof Array) {
-                                updatedPositions = Cesium.Ellipsoid.WGS84.cartographicArrayToCartesianArray(newCartographicPositions);
+                                updatedPositions = cesium.Ellipsoid.WGS84.cartographicArrayToCartesianArray(newCartographicPositions);
                             } else {
-                                updatedPositions = [Cesium.Ellipsoid.WGS84.cartographicToCartesian(newCartographicPositions)];
+                                updatedPositions = [cesium.Ellipsoid.WGS84.cartographicToCartesian(newCartographicPositions)];
                             }
 
                             positions = positions.concat(updatedPositions);
@@ -3466,18 +3538,18 @@ if (!TC.control.MapContents) {
 
                     }.bind(this), false);
 
-                    var entityTracking = new Cesium.Entity({
+                    var entityTracking = new cesium.Entity({
                         id: "trackingEntity",
                         polyline: {
                             positions: positionCallback,
                             clampToGround: true,
                             width: 3,
-                            material: new Cesium.PolylineDashMaterialProperty({
-                                color: new Cesium.CallbackProperty(function (time, result) {
+                            material: new cesium.PolylineDashMaterialProperty({
+                                color: new cesium.CallbackProperty(function (time, result) {
                                     self.viewer.scene.requestRender();
-                                    return Cesium.Color.fromAlpha(new Cesium.Color(0, 255, 209), geolocation2D.track.renderTrack.checked ? 1 : 0);
+                                    return cesium.Color.fromAlpha(new cesium.Color(0, 255, 209), geolocation2D.track.renderTrack.checked ? 1 : 0);
                                 }.bind(this), false),
-                                gapColor: Cesium.Color.TRANSPARENT
+                                gapColor: cesium.Color.TRANSPARENT
                             })
                         }
                     });
@@ -3499,7 +3571,7 @@ if (!TC.control.MapContents) {
 
                     if (self.map.on3DView) {
                         self.viewer.clock.shouldAnimate = false;
-                        self.viewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date());
+                        self.viewer.clock.currentTime = cesium.JulianDate.fromDate(new Date());
                     }
 
                     if (self.view3D.trackDataSource) {
@@ -3537,7 +3609,6 @@ if (!TC.control.MapContents) {
 
         const alterAllowedControls = function (view) {
             var self = this;
-
             const ctrlsToMngCLASS = self.ctrlsToMng.map(function (ctrl) { return ctrl.CLASS });
 
             self.map.controls.forEach(function (mapCtrl) {
@@ -3589,7 +3660,7 @@ if (!TC.control.MapContents) {
 
                 var pickedFeature = self.viewer.scene.pick(movement.position);
                 if (pickedFeature && pickedFeature.id) {
-                    var id = pickedFeature.id instanceof Cesium.Entity ? pickedFeature.id.name : pickedFeature.id;
+                    var id = pickedFeature.id instanceof cesium.Entity ? pickedFeature.id.name : pickedFeature.id;
 
                     var founded = false;
                     for (var layerId in self.view3D.vector2DFeatures) {
@@ -3612,9 +3683,9 @@ if (!TC.control.MapContents) {
                                         position: position,
                                         billboard: {
                                             image: TC.Util.getBackgroundUrlFromCss(self.CLASS + '-marker'),
-                                            eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                                            eyeOffset: new cesium.Cartesian3(0, 0, -100),
+                                            verticalOrigin: cesium.VerticalOrigin.BOTTOM,
+                                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                                         }
                                     });
 
@@ -3664,7 +3735,9 @@ if (!TC.control.MapContents) {
 
             if (TC.Consts.view.THREED === view) {
 
-                if (!self.view3D.linked2DControls.featureInfo) {
+                if (!self.view3D.linked2DControls.featureInfo &&
+                    Object.keys(self.map.options.controls).indexOf("featureInfo") > -1 &&
+                    self.allowedControls.indexOf("featureInfo") > -1) {
                     self.view3D.linked2DControls.featureInfo = new TwoDLinkedFeatureInfo(self);
                 }
 
@@ -3672,9 +3745,9 @@ if (!TC.control.MapContents) {
                     self.eventHandlers = {};
                 }
 
-                self.eventHandlers.handlerOfFeatures = new Cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
-                self.eventHandlers.handlerOfFeatures.setInputAction(onLeftClickOnCanvas, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-                self.eventHandlers.handlerOfFeatures.setInputAction(onMouseMoveOnCanvas, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                self.eventHandlers.handlerOfFeatures = new cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
+                self.eventHandlers.handlerOfFeatures.setInputAction(onLeftClickOnCanvas, cesium.ScreenSpaceEventType.LEFT_CLICK);
+                self.eventHandlers.handlerOfFeatures.setInputAction(onMouseMoveOnCanvas, cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
             } else if (TC.Consts.view.DEFAULT === view) {
                 if (self.eventHandlers.handlerOfFeatures) {
@@ -3682,7 +3755,9 @@ if (!TC.control.MapContents) {
                 }
             }
 
-            if (!self.view3D.linked2DControls.geolocation && self.allowedControls.indexOf("geolocation") > -1) {
+            if (!self.view3D.linked2DControls.geolocation &&
+                Object.keys(self.map.options.controls).indexOf("geolocation") > -1 &&
+                self.allowedControls.indexOf("geolocation") > -1) {
                 self.view3D.linked2DControls.geolocation = self.ctrlsToMng.filter(function (ctrl) {
                     return ctrl instanceof TC.control.Geolocation;
                 })[0];
@@ -3700,6 +3775,7 @@ if (!TC.control.MapContents) {
                     geolocation2D.Const.Selector.FORWARD,
                     geolocation2D.Const.Selector.DRAW];
                     var geolocation_videoControls_ = geolocation_videoControls.bind(self);
+                    self.view3D.linked2DControls.geolocation.videoControls = geolocation_videoControls_;
 
                     var lstEventListener = function (e) {
                         var classes = commands;
@@ -3714,8 +3790,6 @@ if (!TC.control.MapContents) {
 
                         TC.wrap.control.Geolocation.prototype.setTracking = geolocation2D._setTracking;
                         TC.wrap.control.Geolocation.prototype.simulateTrack = geolocation2D._wrap_simulateTrack;
-                        TC.wrap.control.Geolocation.prototype.showElevationMarker = geolocation2D._wrap_showElevationMarker;
-                        TC.wrap.control.Geolocation.prototype.hideElevationMarker = geolocation2D._wrap_hideElevationMarker;
 
                         geolocation2D.simulateTrack = geolocation2D._simulateTrack;
                         geolocation2D.elevationTrack = geolocation2D._elevationTrack;
@@ -3793,8 +3867,8 @@ if (!TC.control.MapContents) {
                                     toCZML.call(this, track.geometry, track.wrap.feature.getGeometry().layout, "track", self.markerStyle, self.lineStyle, self.walkingSpeed).then(function (result) {
                                         var czml = result.czml, totalDistance = result.totalDistance, coordinates2D = result.coordinates2D;
 
-                                        this.view3D.trackDataSource = new Cesium.DataSourceCollection();
-                                        var dataSourceDisplay = new Cesium.DataSourceDisplay({
+                                        this.view3D.trackDataSource = new cesium.DataSourceCollection();
+                                        var dataSourceDisplay = new cesium.DataSourceDisplay({
                                             scene: this.viewer.scene,
                                             dataSourceCollection: this.view3D.trackDataSource
                                         });
@@ -3803,7 +3877,7 @@ if (!TC.control.MapContents) {
                                             dataSourceDisplay.update(time);
                                         });
 
-                                        this.view3D.trackDataSource.add(Cesium.CzmlDataSource.load(czml)).then(function (layout, coordinates2D, czmlDataSource) {
+                                        this.view3D.trackDataSource.add(cesium.CzmlDataSource.load(czml)).then(function (layout, coordinates2D, czmlDataSource) {
 
                                             this.viewer.clock.shouldAnimate = false;
 
@@ -3814,8 +3888,8 @@ if (!TC.control.MapContents) {
                                             this.viewer.clock.startTime = start.clone();
                                             this.viewer.clock.stopTime = stop.clone();
                                             this.viewer.clock.currentTime = start.clone();
-                                            this.viewer.clock.clockStep = Cesium.ClockStep.TICK_DEPENDENT
-                                            this.viewer.clock.clockRange = Cesium.ClockRange.CLAMPED;
+                                            this.viewer.clock.clockStep = cesium.ClockStep.TICK_DEPENDENT
+                                            this.viewer.clock.clockRange = cesium.ClockRange.CLAMPED;
                                             this.viewer.clock.multiplier = 1;
 
                                             var trackEntity = czmlDataSource.entities.values[0];
@@ -3824,7 +3898,7 @@ if (!TC.control.MapContents) {
 
                                             trackEntity.tagLI = li; // tengo que guardar la relación con el HTML porque puede eliminar la selección del track mientras estamos creando la simulación del mismo, y no tengo forma de validarlo
 
-                                            trackEntity.availability = new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
+                                            trackEntity.availability = new cesium.TimeIntervalCollection([new cesium.TimeInterval({
                                                 start: start,
                                                 stop: stop
                                             })]);
@@ -3846,13 +3920,13 @@ if (!TC.control.MapContents) {
                                                     var doneDistance = 0;
 
                                                     var reprojected = this.view3D.view2DCRS !== this.view3D.crs ? TC.Util.reproject(coordinates2D[0], this.view3D.view2DCRS, this.view3D.crs) : coordinates2D[0];
-                                                    var previous = new Cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1]);
+                                                    var previous = new cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1]);
 
                                                     for (var i = 1; i < coordinates2D.length; i++) {
                                                         reprojected = this.view3D.view2DCRS !== this.view3D.crs ? TC.Util.reproject(coordinates2D[i], this.view3D.view2DCRS, this.view3D.crs) : coordinates2D[i];
-                                                        var current = new Cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1]);
+                                                        var current = new cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1]);
 
-                                                        doneDistance += new Cesium.EllipsoidGeodesic(previous, current).surfaceDistance;
+                                                        doneDistance += new cesium.EllipsoidGeodesic(previous, current).surfaceDistance;
                                                         previous = current;
 
                                                         if (doneDistance > distanceCurrent) {
@@ -3879,7 +3953,7 @@ if (!TC.control.MapContents) {
                                                     const selectedTrack = this.view3D.linked2DControls.geolocation.getSelectedTrack();
                                                     if (!selectedTrack || selectedTrack.getAttribute('data-id') !== trackEntity.tagLI.getAttribute('data-id') ||
                                                         // o hemos llegado al final
-                                                        Cesium.JulianDate.greaterThanOrEquals(currentTime, trackEntity.availability.stop)) {
+                                                        cesium.JulianDate.greaterThanOrEquals(currentTime, trackEntity.availability.stop)) {
 
                                                         simulationOnPreUpdate();
                                                         geolocation_videoControls.call(this, { target: { className: 'stop' }, custom: true });
@@ -3888,9 +3962,9 @@ if (!TC.control.MapContents) {
 
                                                         // gestionamos las posiciones anterior y actual
                                                         if (!previousPosition) {
-                                                            previousPosition = Cesium.Cartographic.fromCartesian(Cesium.Property.getValueOrUndefined(trackEntity.position, trackEntity.availability.start));
+                                                            previousPosition = cesium.Cartographic.fromCartesian(cesium.Property.getValueOrUndefined(trackEntity.position, trackEntity.availability.start));
                                                         }
-                                                        currentPosition = Cesium.Cartographic.fromCartesian(Cesium.Property.getValueOrUndefined(trackEntity.position, currentTime));
+                                                        currentPosition = cesium.Cartographic.fromCartesian(cesium.Property.getValueOrUndefined(trackEntity.position, currentTime));
 
                                                         // progreso en el perfil (si lo hay)
                                                         if (this.view3D.linked2DControls.geolocation.hasElevation) {
@@ -3904,11 +3978,11 @@ if (!TC.control.MapContents) {
                                                                 [currentPosition.longitude, currentPosition.latitude, get2DHeightAtProgress.call(this, coordinates2D, distanceCurrent)],
                                                                 totalDistance, (trackEntity.layout === ol.geom.GeometryLayout.XYZM ||
                                                                     trackEntity.layout === ol.geom.GeometryLayout.XYM ?
-                                                                    this.view3D.linked2DControls.geolocation._getTime(Cesium.JulianDate.toDate(trackEntity.availability.start), Cesium.JulianDate.toDate(currentTime)) : false));
+                                                                    this.view3D.linked2DControls.geolocation._getTime(cesium.JulianDate.toDate(trackEntity.availability.start), cesium.JulianDate.toDate(currentTime)) : false));
                                                         }
 
                                                         // gestionamos las posiciones anterior y actual y la distancia
-                                                        distanceCurrent += new Cesium.EllipsoidGeodesic(previousPosition, currentPosition).surfaceDistance;
+                                                        distanceCurrent += new cesium.EllipsoidGeodesic(previousPosition, currentPosition).surfaceDistance;
                                                         previousPosition = currentPosition;
 
                                                         this.viewer.scene.requestRender();
@@ -3933,66 +4007,7 @@ if (!TC.control.MapContents) {
                     geolocation2D._wrap_simulateTrack = TC.wrap.control.Geolocation.prototype.simulateTrack;
                     TC.wrap.control.Geolocation.prototype.simulateTrack = function () {
                         var self = this;
-
-                        //if (self.parent.hasElevation) {
-                        //    self.parent.chartProgressInit();
-                        //}
                     };
-
-                    geolocation2D._wrap_showElevationMarker = TC.wrap.control.Geolocation.prototype.showElevationMarker;
-                    TC.wrap.control.Geolocation.prototype.showElevationMarker = function (data) {
-                        const self = this.view3D.linked2DControls.geolocation;
-                        const coords = self.elevationChartData.coords;
-
-                        // GLS: si la capa del track está visible mostramos marcamos punto del gráfico en el mapa
-                        if (self.layerTrack.getVisibility() && self.layerTrack.getOpacity() > 0) {
-
-                            var camera = this.viewer.camera;
-                            var elevationMarkerPosition = this.view3D.view2DCRS !== this.view3D.crs ? TC.Util.reproject(coords[data[0].index], this.view3D.view2DCRS, this.view3D.crs) : coords[data[0].index];
-
-                            if (!self.elevationMarker) {
-
-                                var billboard = new Cesium.Entity({
-                                    position: Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1]),
-                                    name: 'elevationMarker',
-                                    billboard: {
-                                        image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AcdDDMq7Am38gAAAaFJREFUWMPtlj9rwkAYh3+R0lgKRSi4FCFmczBzp2i+gaMgmK0I3Tq0Y6HDDd0L0tJBSyGbAT9AxI+goFskumUUrDq9XVRi6WkS/xXquyRc7nie++XuOOBYx/rvJYQdqKoqNE1barMsC81mc/cCqqri+eWVfvt2f3sjBJE4CSMwn/kkXVpqj7bL0DQtUAqRTf9hhixkyAo9PnLoRbhWQNd1KIoSGqAoysrxkXXwh8cnMsw6McYCwxljMMw6GWadeBIrBSRJwnA0hivryOULgSQYY8jlC+TKOoajMWKx2Ga7wJV15OwKARCm06lv+FYX4TwJURS5fURR9A0PJBC3q0sSvH5eeLRd3t5BlEomALsKVy6CN7tJuoSJR3g4+tpeAt3eAKlkYpHEurRSycTmArVaDRfnZ7Poi74k5vBub4DT6zsAwFX8Eo7jBBdotVowjU8hbld8SXjhrlyctVXw8f4m8AR87+mO7VADWWogSx27T0S0eHrfO3bf088JdYAFkvDWzuB+JHYOXyWxNzhPYq9wfhJ7hP+UOAjc74XjWH++vgFLJ1bBWXZtUAAAAABJRU5ErkJggg==",
-                                        eyeOffset: new Cesium.Cartesian3(0, 0, -100),
-                                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                                    }
-                                });
-
-                                self.elevationMarker = this.view3D.addNativeFeature.call(this, billboard);
-                            } else {
-                                self.elevationMarker.position = Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1], camera.positionCartographic.height);
-                                this.viewer.scene.requestRender();
-                            }
-
-                            // No ubicar la camara en el marker
-                            //var rectangle = camera.computeViewRectangle();
-                            //if (elevationMarkerPosition[0] >= rectangle.west && elevationMarkerPosition[0] <= rectangle.east && elevationMarkerPosition[1] >= rectangle.south && elevationMarkerPosition[1] <= rectangle.north) { }
-                            //else {
-                            //    var distance = Cesium.Cartesian3.distance(camera.position, Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1]));
-                            //    camera.setView({
-                            //        destination: Cesium.Cartesian3.fromDegrees(elevationMarkerPosition[0], elevationMarkerPosition[1])
-                            //    });
-
-                            //    camera.moveBackward(distance);
-                            //}
-                        }
-                    }.bind(self);
-
-                    geolocation2D._wrap_hideElevationMarker = TC.wrap.control.Geolocation.prototype.hideElevationMarker;
-                    TC.wrap.control.Geolocation.prototype.hideElevationMarker = function () {
-                        const self = this.view3D.linked2DControls.geolocation;
-
-                        this.view3D.removeFeature.call(this, self.elevationMarker);
-                        self.elevationMarker = null;
-                    }.bind(self);
-
-
-
                 } else {
                     // Si en el paso de 3D a 2D hay perfil dibujado, lanzamos el resize
                     const selectedTrack = self.view3D.linked2DControls.geolocation.getSelectedTrack();
@@ -4007,7 +4022,6 @@ if (!TC.control.MapContents) {
 
         const draw2DDrawedFeatures = function () {
             var self = this;
-
             self.map.workLayers.filter(function (layer) {
                 return layer instanceof TC.layer.Vector;
             }).forEach(function (vectorLayer) {
@@ -4026,7 +4040,7 @@ if (!TC.control.MapContents) {
             var zoom = function (amount) {
                 var self = this;
 
-                var center = new Cesium.Cartesian2(
+                var center = new cesium.Cartesian2(
                     self.viewer.scene.canvas.clientWidth / 2,
                     self.viewer.scene.canvas.clientHeight / 2);
 
@@ -4064,7 +4078,7 @@ if (!TC.control.MapContents) {
 
                     var coordsXY = TC.Util.reproject(self.map.options.initialExtent.slice(0, 2), sourceCRS, self.view3D.crs);
                     var coordsXY2 = TC.Util.reproject(self.map.options.initialExtent.slice(2), sourceCRS, self.view3D.crs);
-                    var rectangle = Cesium.Rectangle.fromDegrees(coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]);
+                    var rectangle = cesium.Rectangle.fromDegrees(coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]);
 
                     self.view3D.flyToRectangle.call(self, rectangle, { duration: 0.1 });
 
@@ -4105,9 +4119,9 @@ if (!TC.control.MapContents) {
 
         const fromTCtoCesiumEvent = function (eventTC) {
             if (TC.Consts.event.MOUSEMOVE === eventTC) {
-                return TC.Util.detectMobile() ? Cesium.ScreenSpaceEventType.LEFT_CLICK : Cesium.ScreenSpaceEventType.MOUSE_MOVE;
+                return TC.Util.detectMobile() ? cesium.ScreenSpaceEventType.LEFT_CLICK : cesium.ScreenSpaceEventType.MOUSE_MOVE;
             } else if (TC.Consts.event.CLICK === eventTC) {
-                return Cesium.ScreenSpaceEventType.LEFT_CLICK;
+                return cesium.ScreenSpaceEventType.LEFT_CLICK;
             }
 
             return eventTC;
@@ -4128,11 +4142,9 @@ if (!TC.control.MapContents) {
 
             workLayers: [],
             vector2DLayers: [],
-            vector2DFeatures: {
-            },
+            vector2DFeatures: {},
 
-            linked2DControls: {
-            },
+            linked2DControls: {},
 
             isLoadingTiles: function () {
                 var self = this;
@@ -4149,181 +4161,185 @@ if (!TC.control.MapContents) {
                 const self = this;
                 return new Promise(function (resolve, reject) {
                     if (!self.viewer) {
+                        TC.loadJSInOrder(
+                            !window[TC.Consts.CESIUMNS],
+                            [
+                                TC.apiLocation + TC.Consts.url.CESIUM,
+                                TC.apiLocation + TC.Consts.url.CESIUM_CONNECTOR
+                            ],
+                            function () {
+                                var resourceBoundaries = cesium.Resource.fetchJson({ url: TC.apiLocation + "/dataSource/contornoNavarra.json" }).then(function (bounds) {
+                                    if (bounds && bounds.features && bounds.features.length > 0) {
+                                        return bounds.features[0].geometry.coordinates[0];
+                                    } else {
+                                        return [];
+                                    }
+                                });
 
-                        TC.loadJS(!window.Cesium, TC.Consts.url.CESIUM, function () {
+                                cesium.when.all([cesium.ApproximateTerrainHeights.initialize(), resourceBoundaries], function () {
 
-                            var resourceBoundaries = Cesium.Resource.fetchJson({ url: TC.apiLocation + "/dataSource/contornoNavarra.json" }).then(function (bounds) {
-                                if (bounds && bounds.features && bounds.features.length > 0) {
-                                    return bounds.features[0].geometry.coordinates[0];
-                                } else {
-                                    return [];
-                                }
-                            });
+                                    var boundaries = Array.prototype.slice.call(arguments[0])[1];
 
-                            Cesium.when.all([Cesium.ApproximateTerrainHeights.initialize(), resourceBoundaries], function () {
+                                    var terrainFallback;
+                                    if (self.terrainFallback) {
+                                        terrainFallback = {
+                                            url: self.terrainFallback.url.trim(),
+                                            layerName: self.terrainFallback.layerName,
+                                            format: self.terrainFallback.format,
+                                            noDataValue: self.terrainFallback.noDataValue
+                                        };
+                                    }
 
-                                var boundaries = Array.prototype.slice.call(arguments[0])[1];
+                                    var terrainProvider;
+                                    if (terrainFallback) {
+                                        terrainProvider = new cesium.MergeTerrainProvider(self.terrain, self, {
+                                            boundaries: boundaries,
+                                            fallback: [terrainFallback]
+                                        });
+                                    } else {
+                                        terrainProvider = new cesium.CesiumTerrainProvider({
+                                            url: self.terrain.url.trim()
+                                        });
 
-                                var terrainFallback;
-                                if (self.terrainFallback) {
-                                    terrainFallback = {
-                                        url: self.terrainFallback.url.trim(),
-                                        layerName: self.terrainFallback.layerName,
-                                        format: self.terrainFallback.format,
-                                        noDataValue: self.terrainFallback.noDataValue
-                                    };
-                                }
-
-                                var terrainProvider;
-                                if (terrainFallback) {
-                                    terrainProvider = new Cesium.MergeTerrainProvider(self.terrain, self, {
-                                        boundaries: boundaries,
-                                        fallback: [terrainFallback]
-                                    });
-                                } else {
-                                    terrainProvider = new Cesium.CesiumTerrainProvider({
-                                        url: self.terrain.url.trim()
-                                    });
-
-                                    terrainProvider.sampleTerrainMostDetailed = function (positions) {
-                                        return Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
-                                    };
-
-                                    terrainProvider.attributions = {
-                                    };
-
-                                    if (self.terrain.attributions) {
-
-                                        terrainProvider.getAttribution = function () {
-                                            return terrainProvider.attributions;
+                                        terrainProvider.sampleTerrainMostDetailed = function (positions) {
+                                            return cesium.sampleTerrainMostDetailed(terrainProvider, positions);
                                         };
 
-                                        terrainProvider.attributions = self.terrain.attributions;
-                                        self.map.trigger(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: terrainProvider });
-                                    }
-                                }
+                                        terrainProvider.attributions = {
+                                        };
 
-                                var globe = new Cesium.Globe();
-                                globe.baseColor = Cesium.Color.WHITE;
-                                globe.enableLighting = false;
+                                        if (self.terrain.attributions) {
 
-                                /* carga más rápido pero consume RAM a cascoporro */
-                                globe.tileCacheSize = 1000;
+                                            terrainProvider.getAttribution = function () {
+                                                return terrainProvider.attributions;
+                                            };
 
-                                /* por defecto 2, a mayor número mayor rendimiento y peor calidad visual */
-                                globe.maximumScreenSpaceError = 5;
-
-                                self.viewer = self.view3D.viewer = new Cesium.Viewer(self.selectors.divThreedMap, {
-                                    terrainProvider: terrainProvider,
-                                    terrainExaggeration: 1.0,
-
-                                    animation: false,
-                                    timeline: false,
-                                    fullscreenButton: false,
-                                    baseLayerPicker: false,
-                                    imageryProvider: false,
-                                    navigationInstructionsInitiallyVisible: false,
-                                    navigationHelpButton: false,
-                                    geocoder: false,
-                                    homeButton: false,
-                                    infoBox: false,
-                                    sceneModePicker: false,
-                                    selectionIndicator: false,
-                                    globe: globe,
-
-                                    skyBox: false,
-                                    skyAtmosphere: false,
-
-                                    requestRenderMode: true,
-                                    maximumRenderTimeChange: Infinity
-                                });
-
-                                // personalización de la escena
-                                self.viewer.scene.backgroundColor = Cesium.Color.WHITE;
-                                self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
-                                self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 1000000;
-
-                                //// con false las líneas se manetienen sobre el terreno
-                                //self.viewer.scene.globe.depthTestAgainstTerrain = false;
-
-                                // borramos cualquier capa que haya
-                                self.viewer.scene.imageryLayers.removeAll();
-
-                                // registramos listeners para capturar errores del terreno y del render
-                                self.viewer.terrainProvider.errorEvent.addEventListener(function (e) {
-                                    var self = this;
-                                    if (e.error) {
-                                        switch (e.error.statusCode) {
-                                            case 403:
-                                            case 404:
-                                                console.log('es un 404 de terreno');
-                                                break;
+                                            terrainProvider.attributions = self.terrain.attributions;
+                                            self.map.trigger(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: terrainProvider });
                                         }
                                     }
-                                }, self);
-                                self.viewer.scene.renderError.addEventListener(function (target, error) {
-                                    var self = this;
 
-                                    if (error && error.code === 18) { // GLS: 18 - SECURITY_ERR                              
+                                    var globe = new cesium.Globe();
+                                    globe.baseColor = cesium.Color.WHITE;
+                                    globe.enableLighting = false;
 
-                                    } else {
-                                        self.divThreedMap.classList.remove(self.classes.LOADING);
-                                        self.map.toast(self.getLocaleString("fi.error"), { type: TC.Consts.msgType.ERROR });
+                                    /* carga más rápido pero consume RAM a cascoporro */
+                                    globe.tileCacheSize = 1000;
 
-                                        self.unapply();
-                                    }
-                                }, self);
+                                    /* por defecto 2, a mayor número mayor rendimiento y peor calidad visual */
+                                    globe.maximumScreenSpaceError = 5;
 
-                                self.viewer.readyPromise = new Promise(function (resolve, reject) {
+                                    self.viewer = self.view3D.viewer = new cesium.Viewer(self.selectors.divThreedMap, {
+                                        terrainProvider: terrainProvider,
+                                        terrainExaggeration: 1.0,
 
-                                    // controlamos la carga de tiles para mostrar loading cuando pida tiles
-                                    self.view3D.tileLoadingHandler = new Cesium.EventHelper();
-                                    self.view3D.tileLoadingHandler.add(self.viewer.scene.globe.tileLoadProgressEvent, function (data) {
-                                        if (!self.waiting)
-                                            self.waiting = self.map.getLoadingIndicator().addWait();
+                                        animation: false,
+                                        timeline: false,
+                                        fullscreenButton: false,
+                                        baseLayerPicker: false,
+                                        imageryProvider: false,
+                                        navigationInstructionsInitiallyVisible: false,
+                                        navigationHelpButton: false,
+                                        geocoder: false,
+                                        homeButton: false,
+                                        infoBox: false,
+                                        sceneModePicker: false,
+                                        selectionIndicator: false,
+                                        globe: globe,
 
-                                        if ((self.viewer.scene.terrainProvider.allReady ||
-                                            (!self.viewer.scene.terrainProvider.allReady && self.viewer.scene.terrainProvider.ready))
-                                            && data === 0) {
-                                            self.map.getLoadingIndicator().removeWait(self.waiting);
-                                            delete self.waiting;
+                                        //skyBox: false,
+                                        //skyAtmosphere: false,
 
-                                            resolve();
+                                        requestRenderMode: true,
+                                        maximumRenderTimeChange: Infinity
+                                    });
 
-                                            self.events.trigger(TC.Consts.event.TERRAINLOADED, {});
+                                    // personalización de la escena
+                                    self.viewer.scene.backgroundColor = cesium.Color.WHITE;
+                                    self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
+                                    self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 1000000;
+
+                                    //// con false las líneas se manetienen sobre el terreno
+                                    //self.viewer.scene.globe.depthTestAgainstTerrain = false;
+
+                                    // borramos cualquier capa que haya
+                                    self.viewer.scene.imageryLayers.removeAll();
+
+                                    // registramos listeners para capturar errores del terreno y del render
+                                    self.viewer.terrainProvider.errorEvent.addEventListener(function (e) {
+                                        var self = this;
+                                        if (e.error) {
+                                            switch (e.error.statusCode) {
+                                                case 403:
+                                                case 404:
+                                                    console.log('es un 404 de terreno');
+                                                    break;
+                                            }
+                                        }
+                                    }, self);
+                                    self.viewer.scene.renderError.addEventListener(function (target, error) {
+                                        var self = this;
+
+                                        if (error && error.code === 18) { // GLS: 18 - SECURITY_ERR                              
+
                                         } else {
-                                            self.events.trigger(TC.Consts.event.TERRAINRECEIVING, {});
+                                            self.divThreedMap.classList.remove(self.classes.LOADING);
+                                            self.map.toast(self.getLocaleString("fi.error"), { type: TC.Consts.msgType.ERROR });
+
+                                            self.unapply();
                                         }
-                                    }.bind(self));
+                                    }, self);
+
+                                    self.viewer.readyPromise = new Promise(function (resolve, reject) {
+
+                                        // controlamos la carga de tiles para mostrar loading cuando pida tiles
+                                        self.view3D.tileLoadingHandler = new cesium.EventHelper();
+                                        self.view3D.tileLoadingHandler.add(self.viewer.scene.globe.tileLoadProgressEvent, function (data) {
+                                            if (!self.waiting)
+                                                self.waiting = self.map.getLoadingIndicator().addWait();
+
+                                            if ((self.viewer.scene.terrainProvider.allReady ||
+                                                (!self.viewer.scene.terrainProvider.allReady && self.viewer.scene.terrainProvider.ready))
+                                                && data === 0) {
+                                                self.map.getLoadingIndicator().removeWait(self.waiting);
+                                                delete self.waiting;
+
+                                                resolve();
+
+                                                self.events.trigger(TC.Consts.event.TERRAINLOADED, {});
+                                            } else {
+                                                self.events.trigger(TC.Consts.event.TERRAINRECEIVING, {});
+                                            }
+                                        }.bind(self));
+                                    });
+
+                                    // deshabilitamos el zoom por defecto y manejamos nosotros zoom con rueda
+                                    //overrideDesktopZoom.call(self);
+                                    // sobrescribimos el comportamiento de lo botones + /- y la casita
+                                    override2DZoom.call(self, true);
+
+                                    // eliminamos los creditos de cesium (no encuentro la manera de que no los ponga)
+                                    document.querySelectorAll('.cesium-viewer-bottom').forEach(function (elm) {
+                                        elm.parentElement.removeChild(elm);
+                                    });
+
+                                    // enlazamos con los eventos del mapa 2D
+                                    self.view3D._event2DHandler = event2DHandler.bind(self);
+                                    self.map.on(listenTo.join(' '), self.view3D._event2DHandler);
+
+                                    // modificamos los controles disponibles
+                                    alterAllowedControls.call(self, TC.Consts.view.THREED);
+
+                                    self.viewer.readyPromise.then(function () {
+                                        // pintamos las features que están en el mapa 2D
+                                        draw2DDrawedFeatures.call(self);
+                                    });
+
+                                    resolve(self.viewer);
+
                                 });
-
-                                // deshabilitamos el zoom por defecto y manejamos nosotros zoom con rueda
-                                //overrideDesktopZoom.call(self);
-                                // sobrescribimos el comportamiento de lo botones + /- y la casita
-                                override2DZoom.call(self, true);
-
-                                // eliminamos los creditos de cesium (no encuentro la manera de que no los ponga)
-                                document.querySelectorAll('.cesium-viewer-bottom').forEach(function (elm) {
-                                    elm.parentElement.removeChild(elm);
-                                });
-
-                                // enlazamos con los eventos del mapa 2D
-                                self.view3D._event2DHandler = event2DHandler.bind(self);
-                                self.map.on(listenTo.join(' '), self.view3D._event2DHandler);
-
-                                // modificamos los controles disponibles
-                                alterAllowedControls.call(self, TC.Consts.view.THREED);
-
-                                self.viewer.readyPromise.then(function () {
-                                    // pintamos las features que están en el mapa 2D
-                                    draw2DDrawedFeatures.call(self);
-                                });
-
-                                resolve(self.viewer);
 
                             });
-
-                        });
 
                     } else {
                         resolve(self.viewer);
@@ -4503,8 +4519,9 @@ if (!TC.control.MapContents) {
                     case TC.Consts.layerType.WMTS == layer.type:
                     case TC.Consts.layerType.WMS == layer.type: {
                         for (var i = 0; i < self.view3D.workLayers.length; i++) {
-                            if (layer.names && self.view3D.workLayers[i].imageryProvider.layers.join(',') === layer.names.join(',') ||
-                                layer.title && self.view3D.workLayers[i].imageryProvider.layers.join(',') === layer.title) {
+                            const imageryLayerNames = Array.isArray(self.view3D.workLayers[i].imageryProvider.layers) ? self.view3D.workLayers[i].imageryProvider.layers.join(',') : self.view3D.workLayers[i].imageryProvider.layers;
+                            if (layer.names && imageryLayerNames === layer.names.join(',') ||
+                                layer.title && imageryLayerNames === layer.title) {
 
                                 if (options.hasOwnProperty('visibility')) {
                                     self.view3D.workLayers[i].show = options.visibility;
@@ -4526,7 +4543,7 @@ if (!TC.control.MapContents) {
                 var self = this;
 
                 var lonlat = self.view3D.view2DCRS !== self.view3D.crs ? TC.Util.reproject(coords, self.view3D.view2DCRS, self.view3D.crs) : coords;
-                var destination = Cesium.Cartesian3.fromDegrees(lonlat[0], lonlat[1], self.viewer.camera.positionCartographic.height);
+                var destination = cesium.Cartesian3.fromDegrees(lonlat[0], lonlat[1], self.viewer.camera.positionCartographic.height);
 
                 var camera = self.viewer.camera;
                 camera.flyTo({
@@ -4546,7 +4563,7 @@ if (!TC.control.MapContents) {
                     options = options || {
                     };
 
-                    var epsilon = Cesium.Math.EPSILON3;
+                    var epsilon = cesium.Math.EPSILON3;
                     if (rectangle.east === rectangle.west) {
                         rectangle.east += epsilon;
                         rectangle.west -= epsilon;
@@ -4569,9 +4586,9 @@ if (!TC.control.MapContents) {
                     var camera = scene.camera;
 
                     var destinationCartesian = camera.getRectangleCameraCoordinates(rectangle);
-                    var destination = Cesium.Ellipsoid.WGS84.cartesianToCartographic(destinationCartesian);
+                    var destination = cesium.Ellipsoid.WGS84.cartesianToCartographic(destinationCartesian);
 
-                    Cesium.when(scene.globe.terrainProvider.sampleTerrainMostDetailed([Cesium.Rectangle.center(rectangle)]), function (updatedPositions) {
+                    cesium.when(scene.globe.terrainProvider.sampleTerrainMostDetailed([cesium.Rectangle.center(rectangle)]), function (updatedPositions) {
 
                         var finalDestinationCartographic = {
                             longitude: destination.longitude,
@@ -4581,11 +4598,11 @@ if (!TC.control.MapContents) {
 
                         camera.flyTo({
                             duration: options.duration || 1,
-                            destination: Cesium.Ellipsoid.WGS84.cartographicToCartesian(finalDestinationCartographic),
+                            destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(finalDestinationCartographic),
                             complete: function () {
-                                var angle = Cesium.Math.toRadians(50);
+                                var angle = cesium.Math.toRadians(50);
                                 var pickBP = pickBottomPoint(this.viewer.scene);
-                                pickBP = Cesium.Matrix4.fromTranslation(pickBP);
+                                pickBP = cesium.Matrix4.fromTranslation(pickBP);
 
                                 this.view3D.rotateAroundAxis(this.viewer.scene.camera, -angle, this.viewer.scene.camera.right, pickBP, {
                                     duration: 250,
@@ -4605,7 +4622,7 @@ if (!TC.control.MapContents) {
 
                 if (!position || !position.endPosition) {
                     var canvas = scene.canvas;
-                    var center = new Cesium.Cartesian2(
+                    var center = new cesium.Cartesian2(
                         canvas.clientWidth / 2,
                         canvas.clientHeight / 2);
                     position = {
@@ -4617,7 +4634,7 @@ if (!TC.control.MapContents) {
                 var intersection = scene.globe.pick(pickRay, scene);
                 if (intersection) {
 
-                    var distanceMeasure = Cesium.Cartesian3.distance(pickRay.origin, intersection);
+                    var distanceMeasure = cesium.Cartesian3.distance(pickRay.origin, intersection);
                     if (distanceMeasure < 1) {
                         return;
                     }
@@ -4641,7 +4658,7 @@ if (!TC.control.MapContents) {
                     var intersection = scene.globe.pick(pickRay, scene);
                     if (intersection) {
 
-                        var distanceMeasure = Cesium.Cartesian3.distance(pickRay.origin, intersection);
+                        var distanceMeasure = cesium.Cartesian3.distance(pickRay.origin, intersection);
                         if (distanceMeasure < 1) {
                             return;
                         }
@@ -4650,11 +4667,11 @@ if (!TC.control.MapContents) {
                             var cameraPosition = scene.camera.position;
                             var cameraDirection = scene.camera.direction;
 
-                            var toMove = toGo = new Cesium.Cartesian3();
-                            Cesium.Cartesian3.multiplyByScalar(pickRay.direction, data.direction == 1 ? data.amount : -data.amount, toMove);
-                            Cesium.Cartesian3.add(cameraPosition, toMove, toGo);
+                            var toMove = toGo = new cesium.Cartesian3();
+                            cesium.Cartesian3.multiplyByScalar(pickRay.direction, data.direction == 1 ? data.amount : -data.amount, toMove);
+                            cesium.Cartesian3.add(cameraPosition, toMove, toGo);
 
-                            var ray = new Cesium.Ray(toGo, pickRay.direction);
+                            var ray = new cesium.Ray(toGo, pickRay.direction);
                             var intersectionToGo = scene.globe.pick(ray, scene);
                             if (intersectionToGo) {
 
@@ -4668,8 +4685,8 @@ if (!TC.control.MapContents) {
                                     return;
                                 };
 
-                                if (Cesium.Cartesian3.distance(toGo, intersectionToGo) < 1 ||
-                                    Math.abs(Cesium.Ellipsoid.WGS84.cartesianToCartographic(toGo).height) < scene.screenSpaceCameraController.minimumZoomDistance) {
+                                if (cesium.Cartesian3.distance(toGo, intersectionToGo) < 1 ||
+                                    Math.abs(cesium.Ellipsoid.WGS84.cartesianToCartographic(toGo).height) < scene.screenSpaceCameraController.minimumZoomDistance) {
                                     reset.call(self);
                                 }
                                 else {
@@ -4681,14 +4698,14 @@ if (!TC.control.MapContents) {
                                             roll: scene.camera.roll
                                         },
                                         duration: 1,
-                                        easingFunction: Cesium.EasingFunction.LINEAR_NONE,
+                                        easingFunction: cesium.EasingFunction.LINEAR_NONE,
                                         complete: function (distance) {
                                             this.view3D._zoomTo = {
                                                 direction: 1,
                                                 amount: 0,
                                                 endPosition: {}
                                             };
-                                        }.bind(self, Cesium.Cartesian3.distance(toGo, intersectionToGo))
+                                        }.bind(self, cesium.Cartesian3.distance(toGo, intersectionToGo))
                                     });
                                 }
                             }
@@ -4709,6 +4726,7 @@ if (!TC.control.MapContents) {
                 var self = this;
 
                 var add = function () {
+                    // TODO: el convert debería ser uno o varios webworker, si son muchas features se colapsa.
                     var csfeature = featureConverter.convert(self.viewer.scene, feature, self.view2DCRS, self.crs);
                     if (csfeature) {
                         if (typeof csfeature.geometry === 'function') {
@@ -4769,10 +4787,10 @@ if (!TC.control.MapContents) {
                 if (self.viewer) {
                     if (feature) {
                         switch (true) {
-                            case feature instanceof Cesium.GroundPrimitive:
+                            case feature instanceof cesium.GroundPrimitive:
                                 self.viewer.scene.groundPrimitives.remove(feature);
                                 break;
-                            case feature instanceof Cesium.Billboard:
+                            case feature instanceof cesium.Billboard:
                                 self.viewer.billboardCollection.remove(feature);
                                 break;
                             case feature instanceof Object:
@@ -4805,19 +4823,19 @@ if (!TC.control.MapContents) {
                     }
 
                     var latlon = self.view3D.view2DCRS !== self.view3D.crs ? TC.Util.reproject(center, self.view3D.view2DCRS, self.view3D.crs) : center;
-                    var distance = calcDistanceForResolution.call(self, self.mapView.getResolution() || 0, Cesium.Math.toRadians(latlon[0]));
+                    var distance = calcDistanceForResolution.call(self, self.mapView.getResolution() || 0, cesium.Math.toRadians(latlon[0]));
 
                     var latlon = self.view3D.view2DCRS !== self.view3D.crs ? TC.Util.reproject(center, self.view3D.view2DCRS, self.view3D.crs) : center;
-                    var carto = new Cesium.Cartographic(Cesium.Math.toRadians(latlon[0]), Cesium.Math.toRadians(latlon[1]));
+                    var carto = new cesium.Cartographic(cesium.Math.toRadians(latlon[0]), cesium.Math.toRadians(latlon[1]));
                     if (self.viewer.scene.globe) {
                         carto.height = self.viewer.scene.globe.getHeight(carto) || 0;
                     }
 
                     var setCamera = function () {
                         if (self.map.on3DView) {
-                            var destination = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
+                            var destination = cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
                             var orientation = {
-                                pitch: Cesium.Math.toRadians(-90),
+                                pitch: cesium.Math.toRadians(-90),
                                 heading: -self.mapView.getRotation(),
                                 roll: 0.0
                             };
@@ -4853,7 +4871,7 @@ if (!TC.control.MapContents) {
                 const self = this;
 
 
-                var ellipsoid = Cesium.Ellipsoid.WGS84;
+                var ellipsoid = cesium.Ellipsoid.WGS84;
                 var scene = self.viewer.scene;
                 var target = target_ = pickCenterPoint(scene);
 
@@ -4862,16 +4880,16 @@ if (!TC.control.MapContents) {
                     var carto = self.viewer.camera.positionCartographic.clone();
                     var height = globe.getHeight(carto);
                     carto.height = height || 0;
-                    target_ = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
+                    target_ = cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
                 }
 
 
-                var distance = Cesium.Cartesian3.distance(target_, self.viewer.camera.position);
+                var distance = cesium.Cartesian3.distance(target_, self.viewer.camera.position);
                 var targetCartographic = ellipsoid.cartesianToCartographic(target_);
 
                 var centerMapCRS = self.view3D.crs !== self.view3D.view2DCRS ? TC.Util.reproject(
-                    [Cesium.Math.toDegrees(targetCartographic.longitude), Cesium.Math.toDegrees(targetCartographic.latitude)],
-                    self.view3D.crs, self.view3D.view2DCRS) : [Cesium.Math.toDegrees(targetCartographic.longitude), Cesium.Math.toDegrees(targetCartographic.latitude)];
+                    [cesium.Math.toDegrees(targetCartographic.longitude), cesium.Math.toDegrees(targetCartographic.latitude)],
+                    self.view3D.crs, self.view3D.view2DCRS) : [cesium.Math.toDegrees(targetCartographic.longitude), cesium.Math.toDegrees(targetCartographic.latitude)];
 
                 self.mapView.setCenter(centerMapCRS);
 
@@ -4881,19 +4899,19 @@ if (!TC.control.MapContents) {
                 //if (target) {
                 //    var pos = self.viewer.camera.position;
 
-                //    var targetNormal = new Cesium.Cartesian3();
+                //    var targetNormal = new cesium.Cartesian3();
                 //    ellipsoid.geocentricSurfaceNormal(target, targetNormal);
 
-                //    var targetToCamera = new Cesium.Cartesian3();
-                //    Cesium.Cartesian3.subtract(pos, target, targetToCamera);
-                //    Cesium.Cartesian3.normalize(targetToCamera, targetToCamera);
+                //    var targetToCamera = new cesium.Cartesian3();
+                //    cesium.Cartesian3.subtract(pos, target, targetToCamera);
+                //    cesium.Cartesian3.normalize(targetToCamera, targetToCamera);
 
                 //    // HEADING
                 //    var up = self.viewer.camera.up;
                 //    var right = self.viewer.camera.right;
-                //    var normal = new Cesium.Cartesian3(-target.y, target.x, 0);
-                //    var heading = Cesium.Cartesian3.angleBetween(right, normal);
-                //    var cross = Cesium.Cartesian3.cross(target, up, new Cesium.Cartesian3());
+                //    var normal = new cesium.Cartesian3(-target.y, target.x, 0);
+                //    var heading = cesium.Cartesian3.angleBetween(right, normal);
+                //    var cross = cesium.Cartesian3.cross(target, up, new cesium.Cartesian3());
                 //    var orientation = cross.z;
 
                 //    self.mapView.setRotation((orientation < 0 ? heading : -heading));
@@ -4913,10 +4931,10 @@ if (!TC.control.MapContents) {
                 var camera = self.viewer.camera;
                 var positionCartographic = camera.positionCartographic;
                 var height = positionCartographic.height;
-                var cartographic = new Cesium.Cartographic(Cesium.Math.toRadians(coords[0]), Cesium.Math.toRadians(coords[1]), height)
+                var cartographic = new cesium.Cartographic(cesium.Math.toRadians(coords[0]), cesium.Math.toRadians(coords[1]), height)
 
                 camera.flyTo({
-                    destination: Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height),
+                    destination: cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height),
                     duration: 1.0
                 });
             },
@@ -4948,11 +4966,11 @@ if (!TC.control.MapContents) {
                         var ray = self.viewer.camera.getPickRay(movement.endPosition || movement.position);
                         var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
                         if (position) {
-                            var positionCartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
+                            var positionCartographic = cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
 
                             var lat, lon, ele;
-                            lat = Cesium.Math.toDegrees(positionCartographic.latitude);
-                            lon = Cesium.Math.toDegrees(positionCartographic.longitude);
+                            lat = cesium.Math.toDegrees(positionCartographic.latitude);
+                            lon = cesium.Math.toDegrees(positionCartographic.longitude);
                             ele = Math.round(positionCartographic.height);
 
                             return { lon: lon, lat: lat, ele: ele };
@@ -4966,7 +4984,7 @@ if (!TC.control.MapContents) {
                     self.eventHandlers = {};
                 }
 
-                self.eventHandlers.handlerOfMovementConversion = new Cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
+                self.eventHandlers.handlerOfMovementConversion = new cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
                 self.eventHandlers.handlerOfMovementConversion.setInputAction(function (event) {
                     if (event.endPosition || event.position) {
                         // Si estamos anclados a una entidad ignoro los click en el terreno
@@ -4985,8 +5003,60 @@ if (!TC.control.MapContents) {
             getHeightFromMDT: function (geoCoords) {
                 const self = this;
 
-                var cartesian = new Cesium.Cartographic(Cesium.Math.toRadians(geoCoords[0]), Cesium.Math.toRadians(geoCoords[1]));
+                var cartesian = new cesium.Cartographic(cesium.Math.toRadians(geoCoords[0]), cesium.Math.toRadians(geoCoords[1]));
                 return self.viewer.scene.globe.getHeight(cartesian) || 0;
+            },
+
+            // darle una vuelta cuando esté mejor. no se me ocurre nada mejor
+            addElevationMarker: function (coords, context) {
+                const self = this;
+                if (self.viewer && !self.viewer.view3DElevationMarkerPromise) {
+                    self.viewer.view3DElevationMarkerPromise = true;
+                    self.viewer.readyPromise.then(function () {
+                        delete self.viewer.view3DElevationMarkerPromise;
+                        const position = self.view2DCRS !== self.crs ? TC.Util.reproject(coords, self.view2DCRS, self.crs) : coords;
+                        let entity = new cesium.Entity({
+                            position: cesium.Cartesian3.fromDegrees(position[0], position[1]),
+                            name: 'elevationMarker',
+                            point: {
+                                show: true,
+                                color: cesium.Color.RED.withAlpha(0.5),
+                                pixelSize: 10,
+                                outlineColor: cesium.Color.WHITE,
+                                outlineWidth: 2,
+                                heightReference: cesium.HeightReference.CLAMP_TO_GROUND
+                            }
+                        });
+
+                        context.view3DElevationMarker = addFeature.call(self, entity);
+                    });
+                }
+            },
+            setElevationMarker: function (coords, context) {
+                const self = this;
+                if (self.viewer) {
+                    self.viewer.readyPromise.then(function () {
+                        if (context.view3DElevationMarker) {
+                            const position = self.view2DCRS !== self.crs ? TC.Util.reproject(coords, self.view2DCRS, self.crs) : coords;
+                            context.view3DElevationMarker.position = cesium.Cartesian3.fromDegrees(position[0], position[1], self.viewer.camera.positionCartographic.height);
+                            if (!context.view3DElevationMarker.show) {
+                                context.view3DElevationMarker.show = true;
+                            }
+                            self.viewer.scene.requestRender();
+                        } else {
+                            self.addElevationMarker(coords, context);
+                        }
+                    });
+                }
+            },
+            hideElevationMarker: function (context) {
+                const self = this;
+                if (self.viewer && context.view3DElevationMarker) {
+                    self.viewer.readyPromise.then(function () {
+                        self.removeFeature.call(self, context.view3DElevationMarker);
+                        delete context.view3DElevationMarker;
+                    });
+                }
             },
 
             destroy: function () {
@@ -5019,7 +5089,9 @@ if (!TC.control.MapContents) {
                             if (!defaultBaseLayer && !results[i]) {
                                 defaultBaseLayer = self.map.baseLayers[i];
                             }
-                            self.map.baseLayers[i].mustReproject = results[i];
+                            if (self.map.baseLayers[i]) {
+                                self.map.baseLayers[i].mustReproject = results[i];
+                            }
                         }
                         var triggerEvent = true;
                         const showReprojectDialog = function (haveToChange, baseLayer, fallbackLayer) {

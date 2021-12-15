@@ -11,7 +11,7 @@ const _urlWFS = {};
 
 (function () {
 
-    var capabilitiesPromises = {};
+    const capabilitiesPromises = new Map();
 
     var wfsLayer = null;//capa WFS de respaldo
 
@@ -309,28 +309,44 @@ const _urlWFS = {};
       * @type object
       */
         self.wrap._promise = new Promise(function (resolve, reject) {
+            const endCreateLayerFn = function (ollyr) {
+                self.wrap.setLayer(ollyr);
+                if (ollyr) {
+                    resolve(ollyr);
+                }
+                else {
+                    reject(Error('Could not create native layer for "' + self.id + '"'));
+                }
+            };
             /*
              *  _createOLLayer: Crea la capa nativa correspondiente según el tipo
              */
-            var _createOLLayer = function () {
-                var ollyr;
+            const _createOLLayer = function () {
+                let ollyr;
                 if (!self.wrap.layer) {
                     switch (self.type) {
                         case TC.Consts.layerType.GROUP:
+                            endCreateLayerFn(ollyr);
                             break;
                         case TC.Consts.layerType.WMTS:
                             ollyr = _createWMTSLayer(self);
+                            // Ha fallado la creación. Puede que sea por capabilities cacheado obsoleto, así que 
+                            // reintentamos online
+                            if (!ollyr) {
+                                self.getCapabilitiesOnline().then(function (onlineCapabilities) {
+                                    self.capabilities = onlineCapabilities;
+                                    ollyr = _createWMTSLayer(self);
+                                    endCreateLayerFn(ollyr);
+                                });
+                            }
+                            else {
+                                endCreateLayerFn(ollyr);
+                            }
                             break;
                         default:
                             ollyr = _createWMSLayer(self);
+                            endCreateLayerFn(ollyr);
                             break;
-                    }
-                    self.wrap.setLayer(ollyr);
-                    if (ollyr) {
-                        resolve(ollyr);
-                    }
-                    else {
-                        reject(Error('Could not create native layer for "' + self.id + '"'));
                     }
                 }
             };
@@ -353,8 +369,7 @@ const _urlWFS = {};
                 return;
             }
 
-            const cachePromise = capabilitiesPromises[self.url];
-            capabilitiesPromises[self.url] = self._capabilitiesPromise = cachePromise || new Promise(function (res, rej) {
+            self._capabilitiesPromise = capabilitiesPromises.get(self.url) || new Promise(function (res, rej) {
                 const onlinePromise = self.getCapabilitiesOnline();
                 const storagePromise = self.getCapabilitiesFromStorage();
 
@@ -367,6 +382,7 @@ const _urlWFS = {};
                             rej(error);
                         });
                     });
+
                 storagePromise
                     .then(function (capabilities) {
                         res(capabilities);
@@ -377,6 +393,7 @@ const _urlWFS = {};
                         });
                     });
             });
+            capabilitiesPromises.set(self.url, self._capabilitiesPromise);
 
             self.getCapabilitiesPromise()
                 .then(function (capabilities) {
@@ -406,8 +423,6 @@ const _urlWFS = {};
         DONE: 1
     };
 
-    layerProto.CAPABILITIES_STORE_KEY_PREFIX = 'TC.capabilities.';
-
     layerProto.getByProxy_ = function (url) {
         return TC.proxify(url);
     };
@@ -424,45 +439,6 @@ const _urlWFS = {};
         layer._cache.visibilityStates = {
         };
         TC.Layer.prototype.setVisibility.call(layer, visible);
-    };
-
-    /*
-     *  _getLimitedMatrixSet: devuelve un array de tileMatrixSets limitados por su correspondiente TileMatrixSetLimits (si es que lo tiene)
-     */
-    var _getLimitedMatrixSet = function (layer) {
-        var layerId = layer.layerNames;
-        var matrixId = layer.matrixSet;
-        var cap = layer.capabilities;
-
-        var ret = [];
-
-        var tset = cap.Contents.TileMatrixSet.filter(function (elto) {
-            return elto.Identifier == matrixId;
-        });
-        if (tset.length) {
-            tset = tset[0];
-            var ly = cap.Contents.Layer.filter(function (elto) { return elto.Identifier == layerId; })[0];
-            if (ly.TileMatrixSetLink && ly.TileMatrixSetLink.length && ly.TileMatrixSetLink[0].TileMatrixSetLimits) {
-                var limit, limits = ly.TileMatrixSetLink[0].TileMatrixSetLimits;
-                for (var i = 0; i < limits.length; i++) {
-                    limit = limits[i];
-                    var matrix = tset.TileMatrix.filter(function (elto) {
-                        return elto.Identifier == limit.TileMatrix
-                    });
-                    if (matrix.length) {
-                        var combi = TC.Util.extend({ matrixIndex: tset.TileMatrix.indexOf(matrix[0]) }, matrix[0], limit);
-                        ret.push(combi);
-                    }
-                }
-
-                return ret;
-            }
-            else {
-                return tset.TileMatrix;
-            }
-        }
-        else
-            return null;
     };
 
 
@@ -604,9 +580,47 @@ const _urlWFS = {};
         }).length > 0;
     };
 
-
+    /*
+     *  getLimitedMatrixSet: devuelve un array de tileMatrixSets limitados por su correspondiente TileMatrixSetLimits (si es que lo tiene)
+     */
     layerProto.getLimitedMatrixSet = function () {
-        return _getLimitedMatrixSet(this);
+        const self = this;
+        const layerId = self.layerNames;
+        const matrixId = self.matrixSet;
+        var capabilities = self.capabilities;
+
+        const tset = capabilities.Contents.TileMatrixSet.filter(function (elm) {
+            return elm.Identifier == matrixId;
+        })[0];
+
+        if (tset) {
+            var ly = capabilities.Contents.Layer.filter(function (elm) { return elm.Identifier == layerId; })[0];
+            if (ly.TileMatrixSetLink) {
+                const tmsl = ly.TileMatrixSetLink.filter(elm => elm.TileMatrixSet === matrixId)[0];
+                if (tmsl && tmsl.TileMatrixSetLimits) {
+                    const ret = [];
+                    let limit, limits = tmsl.TileMatrixSetLimits;
+                    for (var i = 0; i < limits.length; i++) {
+                        limit = limits[i];
+                        const matrix = tset.TileMatrix.filter(function (elm) {
+                            return elm.Identifier == limit.TileMatrix
+                        });
+                        if (matrix.length) {
+                            ret.push(TC.Util.extend({ matrixIndex: tset.TileMatrix.indexOf(matrix[0]) }, matrix[0], limit));
+                        }
+                    }
+
+                    return ret;
+                }
+                else {
+                    return tset.TileMatrix;
+                }
+            }
+            else {
+                return tset.TileMatrix;
+            }
+        }
+        return null;
     };
 
     /**
@@ -1021,8 +1035,8 @@ const _urlWFS = {};
      *  Parameter: WMS layer name
      */
     layerProto.isVisibleByName = function (name, looseComparison) {
-        var self = this;
-        var result = false;
+        const self = this;
+        let result = false;
         switch (self.type) {
             case TC.Consts.layerType.WMTS:
                 if (self.wrap.getWMTSLayer()) {
@@ -1031,38 +1045,65 @@ const _urlWFS = {};
                 }
                 break;
             case TC.Consts.layerType.WMS:
-                var _getLayerPath = function _getLayerPath(name) {
-                    return __getLayerPath(name, self.wrap.getRootLayerNode());
+                const getPathLayerNames = function getPathLayerNames(name) {
+                    return getPathLayerNamesForNode(name, self.wrap.getRootLayerNode());
                 };
 
-                var __getLayerPath = function __getLayerPath(name, capabilitiesNode) {
-                    var result = null;
-                    var n = self.wrap.getName(capabilitiesNode);
+                const getPathLayerNamesForNode = function getPathLayerNamesForNode(name, capabilitiesNode) {
+                    let result = [];
+                    const n = self.wrap.getName(capabilitiesNode);
                     if (self.compareNames(n, name, looseComparison)) {
-                        result = [n];
+                        result.push(n);
                     }
                     else {
-                        var layerNodes = self.wrap.getLayerNodes(capabilitiesNode);
+                        const layerNodes = self.wrap.getLayerNodes(capabilitiesNode);
+                        let mustPushName = false;
                         for (var i = 0; i < layerNodes.length; i++) {
-                            var item = layerNodes[i];
-                            var r = __getLayerPath(name, item);
-                            if (r) {
-                                TC.Util.fastUnshift(r, n);
-                                result = r;
-                                break;
+                            const item = layerNodes[i];
+                            const r = getPathLayerNamesForNode(name, item);
+                            if (r.length) {
+                                mustPushName = true;
+                                result = result.concat(r);
                             }
+                        }
+                        if (mustPushName) {
+                            result.push(n);
                         }
                     }
                     return result;
                 };
 
-                var path = _getLayerPath(name);
-                if (path) {
-                    for (var i = 0; i < path.length; i++) {
-                        if (_isNameInArray(self, path[i], self.names)) {
-                            result = true;
-                            break;
-                        }
+                result = getPathLayerNames(name).some(n => _isNameInArray(self, n, self.names));
+                break;
+            default:
+                result = true;
+                break;
+        }
+        return result;
+    };
+
+    layerProto.isVisibleByNode = function (node) {
+        const self = this;
+        let result = false;
+        switch (self.type) {
+            case TC.Consts.layerType.WMTS:
+                if (self.wrap.getWMTSLayer()) {
+                    result = true;
+                    break;
+                }
+                break;
+            case TC.Consts.layerType.WMS:
+                const isChildOrItself = function (potentialParent, potentialChild) {
+                    if (potentialParent === potentialChild) {
+                        return true;
+                    }
+                    return potentialParent.Layer && potentialParent.Layer.some(child => isChildOrItself(child, potentialChild));
+                };
+                for (var i = 0, ii = self.names.length; i < ii; i++) {
+                    const nodes = self.getLayerNodesByName(self.names[i]);
+                    if (nodes.some(n => isChildOrItself(n, node))) {
+                        result = true;
+                        break;
                     }
                 }
                 break;
@@ -1119,6 +1160,7 @@ const _urlWFS = {};
                     }
                     else {
                         r.isVisible = self.isVisibleByName(r.name);
+                        //r.isVisible = self.isVisibleByNode(capabilitiesNode);
                     }
                     var i;
                     var layerNodes = self.wrap.getLayerNodes(capabilitiesNode);
@@ -1314,18 +1356,26 @@ const _urlWFS = {};
         });
     };
 
-    layerProto.getLayerNodeByName = function (name) {
-        var result = null;
-        var self = this;
-        var getName = self.wrap.getServiceType() === TC.Consts.layerType.WMTS ? self.wrap.getIdentifier : self.wrap.getName
-        var nodes = self.wrap.getAllLayerNodes();
+    layerProto.getLayerNodesByName = function (name) {
+        const result = [];
+        const self = this;
+        const getName = self.wrap.getServiceType() === TC.Consts.layerType.WMTS ? self.wrap.getIdentifier : self.wrap.getName
+        const nodes = self.wrap.getAllLayerNodes();
         for (var i = 0, len = nodes.length; i < len; i++) {
             if (self.compareNames(getName(nodes[i]), name)) {
-                result = nodes[i];
-                break;
+                result.push(nodes[i]);
             }
         }
         return result;
+    };
+
+    layerProto.getLayerNodeByName = function (name) {
+        const self = this;
+        const nodes = self.getLayerNodesByName(name);
+        if (nodes.length) {
+            return nodes[0];
+        }
+        return null;
     };
 
     layerProto.getChildrenLayers = function (layer) {
@@ -1639,13 +1689,18 @@ const _urlWFS = {};
                 };
 
                 self.toolProxification.fetchImage(_src, options).then(function () {
-                    self.toolProxification.cacheHost.getAction(_src, options).then(function (cache) {
-                        if (cache && cache.action) {
-                            resolve(cache.action.call(self.toolProxification, _src));
-                        }
-                    });
+                    let action = self.toolProxification.cacheHost.getAction(_src, options);
+                    if (action) {
+                        action.then(function (cache) {
+                            if (cache && cache.action) {
+                                resolve(cache.action.call(self.toolProxification, _src));
+                            }
+                        });
+                    } else {
+                        reject('No action to ' + _src);
+                    }
                 }).catch(function (e) {
-                    reject(Error(e));
+                    reject(e);
                 });
             }
 
@@ -1723,7 +1778,7 @@ const _urlWFS = {};
         // Viene sin nombre desde el control TOC, si es así lo ignoramos.
         if (self.names && self.names.length > 0) {
 
-            const error = function (error) {
+            const errorFn = function (error) {
                 _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
                 setSRC({ src: TC.Consts.BLANK_IMAGE });
             };
@@ -1799,13 +1854,13 @@ const _urlWFS = {};
                         URL.revokeObjectURL(imageUrl);
                     };
                     setSRC({ src: imageUrl });
-                }).catch(error);
+                }).catch(errorFn);
 
             } else {
                 if (!self.ignoreProxification) {
                     self.toolProxification.fetchImage(src, { exportable: !self.map || (self.map && self.map.mustBeExportable) }).then(function (img) {
                         setSRC(img);
-                    }).catch(error);
+                    }).catch(errorFn);
                 } else {
                     setSRC({ src: src });
                     var img = image.getImage();
@@ -1845,7 +1900,7 @@ const _urlWFS = {};
         const self = this;
         if (_urlWFS[self.options.url]) return await _urlWFS[self.options.url];
         var url = new URL(self.url, document.location.href);
-        url.search = new URLSearchParams({ request: 'DescribeLayer', service: "WMS", version: "1.1.1", Layers: self.layerNames instanceof Array ? self.layerNames[0]:self.layerNames, outputFormat: "application/json" });
+        url.search = new URLSearchParams({ request: 'DescribeLayer', service: "WMS", version: "1.1.1", Layers: self.layerNames instanceof Array ? self.layerNames[0] : self.layerNames, outputFormat: "application/json" });
         return _urlWFS[self.options.url] = new Promise(async function (resolve, reject) {
             try {
                 var response = await self.toolProxification.fetch(url.toString(), {
@@ -1854,6 +1909,10 @@ const _urlWFS = {};
                 });
                 if (response.contentType.startsWith("application/json")) {
                     var data = JSON.parse(response.responseText).layerDescriptions[0];
+                    if (data.owsType !== "WFS") {
+                        resolve(self.options.url.replace(/wms/gi, "wfs"));
+                        return;
+                    }
                     var _url = data.owsURL.substr(0, (data.owsURL.length + (data.owsURL.endsWith('?') ? -1 : 0)));
                     self.toolProxification.fetch(_url, {
                         method: "HEAD"
@@ -1869,7 +1928,10 @@ const _urlWFS = {};
                     let error = xmlDoc.querySelector("Exception ExceptionText") || xmlDoc.querySelector("ServiceException");
                     if (error) {
                         resolve(self.options.url.replace(/wms/gi, "wfs"));
-                    };
+                    } else {
+                        const layerDescription = xmlDoc.querySelector("LayerDescription");                        
+                        resolve(layerDescription ? (layerDescription.getAttribute("wfs") || layerDescription.getAttribute("owsURL") || self.options.url.replace(/wms/gi, "wfs")):self.options.url.replace(/wms/gi, "wfs"))
+                    }
                 }
             }
             catch (err) {

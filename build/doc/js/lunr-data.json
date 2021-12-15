@@ -60,7 +60,7 @@
           "tipo"
         ],
         "undefined": [
-          "4",
+          "5",
           "cambio",
           "chang",
           "de",
@@ -1377,6 +1377,25 @@
           "string",
           "wm"
         ],
+        "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": [
+          "2020",
+          "capa",
+          "consts.layer.idena_dynorthophoto2020",
+          "de",
+          "del",
+          "idena",
+          "idena_dynorthophoto2020",
+          "identificador",
+          "la",
+          "layer.idena_dynorthophoto2020",
+          "lt;static",
+          "member",
+          "ortofoto",
+          "readonly&gt",
+          "sitna.consts.layer.idena_dynorthophoto2020",
+          "string",
+          "wm"
+        ],
         "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": [
           "actualidad",
           "capa",
@@ -1542,6 +1561,85 @@
           "referencia",
           "sistema",
           "sitna.consts.layer.idena_orthophoto2019",
+          "solo",
+          "string",
+          "wmt"
+        ],
+        "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": [
+          "2020",
+          "capa",
+          "compat",
+          "con",
+          "consts.layer.idena_orthophoto2020",
+          "de",
+          "del",
+          "el",
+          "epsg:25830",
+          "es",
+          "esta",
+          "idena",
+          "idena_orthophoto2020",
+          "identificador",
+          "la",
+          "layer.idena_orthophoto2020",
+          "lt;static",
+          "member",
+          "ortofoto",
+          "readonly&gt",
+          "referencia",
+          "sistema",
+          "sitna.consts.layer.idena_orthophoto2020",
+          "solo",
+          "string",
+          "wmt"
+        ],
+        "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": [
+          "2020",
+          "capa",
+          "comarca",
+          "consts.layer.idena_pamplona_dynorthophoto2020",
+          "de",
+          "del",
+          "idena",
+          "idena_pamplona_dynorthophoto2020",
+          "identificador",
+          "la",
+          "layer.idena_pamplona_dynorthophoto2020",
+          "lt;static",
+          "member",
+          "ortofoto",
+          "pamplona",
+          "readonly&gt",
+          "sitna.consts.layer.idena_pamplona_dynorthophoto2020",
+          "string",
+          "wm"
+        ],
+        "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": [
+          "2020",
+          "capa",
+          "comarca",
+          "compat",
+          "con",
+          "consts.layer.idena_pamplona_orthophoto2020",
+          "de",
+          "del",
+          "el",
+          "epsg:25830",
+          "es",
+          "esta",
+          "idena",
+          "idena_pamplona_orthophoto2020",
+          "identificador",
+          "la",
+          "layer.idena_pamplona_orthophoto2020",
+          "lt;static",
+          "member",
+          "ortofoto",
+          "pamplona",
+          "readonly&gt",
+          "referencia",
+          "sistema",
+          "sitna.consts.layer.idena_pamplona_orthophoto2020",
           "solo",
           "string",
           "wmt"
@@ -2319,7 +2417,7 @@
           "xml"
         ]
       },
-      "length": 111
+      "length": 115
     },
     "tokenStore": {
       "root": {
@@ -2403,6 +2501,29 @@
               },
               "docs": {}
             },
+            "2": {
+              "0": {
+                "docs": {
+                  "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                    "tf": 4.545454545454546
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                    "tf": 2.272727272727273
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                    "tf": 3.125
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                    "tf": 1.8518518518518516
+                  }
+                }
+              },
+              "docs": {}
+            },
             "docs": {}
           },
           "docs": {
@@ -2419,6 +2540,13 @@
           }
         },
         "4": {
+          "docs": {
+            "undefined": {
+              "tf": 900
+            }
+          }
+        },
+        "5": {
           "docs": {
             "undefined": {
               "tf": 900
@@ -2619,6 +2747,38 @@
               }
             }
           },
+          "ñ": {
+            "docs": {},
+            "a": {
+              "docs": {},
+              "d": {
+                "docs": {
+                  "SITNA.Map.html#addLayer": {
+                    "ref": "SITNA.Map.html#addLayer",
+                    "tf": 1.1111111111111112
+                  },
+                  "SITNA.Map.html#addMarker": {
+                    "ref": "SITNA.Map.html#addMarker",
+                    "tf": 5
+                  },
+                  "SITNA.Map.html#loaded": {
+                    "ref": "SITNA.Map.html#loaded",
+                    "tf": 2.5
+                  }
+                },
+                "i": {
+                  "docs": {},
+                  "r": {
+                    "docs": {
+                      "undefined": {
+                        "tf": 14.285714285714285
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "s": {
             "docs": {},
             "í": {
@@ -2720,28 +2880,6 @@
                         }
                       }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "ñ": {
-            "docs": {},
-            "a": {
-              "docs": {},
-              "d": {
-                "docs": {
-                  "SITNA.Map.html#addLayer": {
-                    "ref": "SITNA.Map.html#addLayer",
-                    "tf": 1.1111111111111112
-                  },
-                  "SITNA.Map.html#addMarker": {
-                    "ref": "SITNA.Map.html#addMarker",
-                    "tf": 5
-                  },
-                  "SITNA.Map.html#loaded": {
-                    "ref": "SITNA.Map.html#loaded",
-                    "tf": 2.5
                   }
                 }
               }
@@ -3050,6 +3188,10 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                 "tf": 13.636363636363635
               },
+              "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                "tf": 13.636363636363635
+              },
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                 "tf": 10.416666666666668
@@ -3073,6 +3215,18 @@
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                 "tf": 9.090909090909092
+              },
+              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                "tf": 9.090909090909092
+              },
+              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                "tf": 15.625
+              },
+              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                "tf": 11.11111111111111
               },
               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP",
@@ -3316,6 +3470,10 @@
                   "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                   "tf": 4.545454545454546
                 },
+                "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                  "tf": 4.545454545454546
+                },
                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                   "tf": 2.083333333333333
@@ -3339,6 +3497,18 @@
                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                   "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                  "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                  "tf": 3.125
+                },
+                "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                  "tf": 1.8518518518518516
                 },
                 "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
                   "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP",
@@ -4064,6 +4234,14 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                 "tf": 2.272727272727273
               },
+              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                "tf": 2.272727272727273
+              },
+              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                "tf": 1.8518518518518516
+              },
               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
                 "tf": 2
@@ -4144,6 +4322,22 @@
               }
             }
           },
+          "m": {
+            "docs": {},
+            "b": {
+              "docs": {},
+              "e": {
+                "docs": {},
+                "d": {
+                  "docs": {
+                    "undefined": {
+                      "tf": 900
+                    }
+                  }
+                }
+              }
+            }
+          },
           "s": {
             "docs": {
               "SITNA.Map.html": {
@@ -4193,6 +4387,14 @@
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                 "tf": 2.272727272727273
+              },
+              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                "tf": 2.272727272727273
+              },
+              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                "tf": 1.8518518518518516
               },
               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
@@ -4335,6 +4537,14 @@
                   "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                     "tf": 2.272727272727273
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                    "tf": 2.272727272727273
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                    "tf": 1.8518518518518516
                   },
                   "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                     "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
@@ -4707,6 +4917,14 @@
                               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                                 "tf": 2.272727272727273
+                              },
+                              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                "tf": 2.272727272727273
+                              },
+                              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                                "tf": 1.8518518518518516
                               }
                             }
                           },
@@ -5444,6 +5662,34 @@
                 }
               }
             },
+            "c": {
+              "docs": {},
+              "r": {
+                "docs": {},
+                "u": {
+                  "docs": {},
+                  "s": {
+                    "docs": {},
+                    "t": {
+                      "docs": {},
+                      "a": {
+                        "docs": {},
+                        "d": {
+                          "docs": {},
+                          "a": {
+                            "docs": {
+                              "undefined": {
+                                "tf": 14.285714285714285
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
             "i": {
               "docs": {},
               "c": {
@@ -5802,6 +6048,10 @@
                                       "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                                       "tf": 4.545454545454546
                                     },
+                                    "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                                      "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                                      "tf": 4.545454545454546
+                                    },
                                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                                       "tf": 2.083333333333333
@@ -5825,6 +6075,18 @@
                                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                                       "tf": 2.272727272727273
+                                    },
+                                    "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                                      "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                      "tf": 2.272727272727273
+                                    },
+                                    "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                                      "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                                      "tf": 3.125
+                                    },
+                                    "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                                      "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                                      "tf": 1.8518518518518516
                                     },
                                     "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
                                       "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP",
@@ -6058,6 +6320,10 @@
                       "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                       "tf": 4.545454545454546
                     },
+                    "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                      "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                      "tf": 4.545454545454546
+                    },
                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                       "tf": 2.083333333333333
@@ -6081,6 +6347,18 @@
                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                       "tf": 2.272727272727273
+                    },
+                    "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                      "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                      "tf": 2.272727272727273
+                    },
+                    "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                      "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                      "tf": 3.125
+                    },
+                    "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                      "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                      "tf": 1.8518518518518516
                     }
                   },
                   "_": {
@@ -6331,6 +6609,17 @@
                                                     },
                                                     "docs": {}
                                                   },
+                                                  "2": {
+                                                    "0": {
+                                                      "docs": {
+                                                        "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                                                          "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                                                          "tf": 600
+                                                        }
+                                                      }
+                                                    },
+                                                    "docs": {}
+                                                  },
                                                   "docs": {}
                                                 },
                                                 "docs": {}
@@ -6418,6 +6707,17 @@
                                               },
                                               "docs": {}
                                             },
+                                            "2": {
+                                              "0": {
+                                                "docs": {
+                                                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                                                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                                    "tf": 600
+                                                  }
+                                                }
+                                              },
+                                              "docs": {}
+                                            },
                                             "docs": {}
                                           },
                                           "docs": {}
@@ -6426,6 +6726,136 @@
                                           "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                                             "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                                             "tf": 600
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "p": {
+                      "docs": {},
+                      "a": {
+                        "docs": {},
+                        "m": {
+                          "docs": {},
+                          "p": {
+                            "docs": {},
+                            "l": {
+                              "docs": {},
+                              "o": {
+                                "docs": {},
+                                "n": {
+                                  "docs": {},
+                                  "a": {
+                                    "docs": {},
+                                    "_": {
+                                      "docs": {},
+                                      "d": {
+                                        "docs": {},
+                                        "y": {
+                                          "docs": {},
+                                          "n": {
+                                            "docs": {},
+                                            "o": {
+                                              "docs": {},
+                                              "r": {
+                                                "docs": {},
+                                                "t": {
+                                                  "docs": {},
+                                                  "h": {
+                                                    "docs": {},
+                                                    "o": {
+                                                      "docs": {},
+                                                      "p": {
+                                                        "docs": {},
+                                                        "h": {
+                                                          "docs": {},
+                                                          "o": {
+                                                            "docs": {},
+                                                            "t": {
+                                                              "docs": {},
+                                                              "o": {
+                                                                "2": {
+                                                                  "0": {
+                                                                    "2": {
+                                                                      "0": {
+                                                                        "docs": {
+                                                                          "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                                                                            "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                                                                            "tf": 600
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "docs": {}
+                                                                    },
+                                                                    "docs": {}
+                                                                  },
+                                                                  "docs": {}
+                                                                },
+                                                                "docs": {}
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "o": {
+                                        "docs": {},
+                                        "r": {
+                                          "docs": {},
+                                          "t": {
+                                            "docs": {},
+                                            "h": {
+                                              "docs": {},
+                                              "o": {
+                                                "docs": {},
+                                                "p": {
+                                                  "docs": {},
+                                                  "h": {
+                                                    "docs": {},
+                                                    "o": {
+                                                      "docs": {},
+                                                      "t": {
+                                                        "docs": {},
+                                                        "o": {
+                                                          "2": {
+                                                            "0": {
+                                                              "2": {
+                                                                "0": {
+                                                                  "docs": {
+                                                                    "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                                                                      "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                                                                      "tf": 600
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "docs": {}
+                                                              },
+                                                              "docs": {}
+                                                            },
+                                                            "docs": {}
+                                                          },
+                                                          "docs": {}
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
                                           }
                                         }
                                       }
@@ -7260,6 +7690,10 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                 "tf": 4.545454545454546
               },
+              "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                "tf": 4.545454545454546
+              },
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                 "tf": 2.083333333333333
@@ -7283,6 +7717,18 @@
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                 "tf": 2.272727272727273
+              },
+              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                "tf": 2.272727272727273
+              },
+              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                "tf": 6.25
+              },
+              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                "tf": 3.7037037037037033
               },
               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP",
@@ -7814,6 +8260,17 @@
                                                                 },
                                                                 "docs": {}
                                                               },
+                                                              "2": {
+                                                                "0": {
+                                                                  "docs": {
+                                                                    "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                                                                      "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                                                                      "tf": 75
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "docs": {}
+                                                              },
                                                               "docs": {}
                                                             },
                                                             "docs": {}
@@ -7901,6 +8358,17 @@
                                                           },
                                                           "docs": {}
                                                         },
+                                                        "2": {
+                                                          "0": {
+                                                            "docs": {
+                                                              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                                                                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                                                "tf": 75
+                                                              }
+                                                            }
+                                                          },
+                                                          "docs": {}
+                                                        },
                                                         "docs": {}
                                                       },
                                                       "docs": {}
@@ -7909,6 +8377,136 @@
                                                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                                                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                                                         "tf": 75
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "p": {
+                                  "docs": {},
+                                  "a": {
+                                    "docs": {},
+                                    "m": {
+                                      "docs": {},
+                                      "p": {
+                                        "docs": {},
+                                        "l": {
+                                          "docs": {},
+                                          "o": {
+                                            "docs": {},
+                                            "n": {
+                                              "docs": {},
+                                              "a": {
+                                                "docs": {},
+                                                "_": {
+                                                  "docs": {},
+                                                  "d": {
+                                                    "docs": {},
+                                                    "y": {
+                                                      "docs": {},
+                                                      "n": {
+                                                        "docs": {},
+                                                        "o": {
+                                                          "docs": {},
+                                                          "r": {
+                                                            "docs": {},
+                                                            "t": {
+                                                              "docs": {},
+                                                              "h": {
+                                                                "docs": {},
+                                                                "o": {
+                                                                  "docs": {},
+                                                                  "p": {
+                                                                    "docs": {},
+                                                                    "h": {
+                                                                      "docs": {},
+                                                                      "o": {
+                                                                        "docs": {},
+                                                                        "t": {
+                                                                          "docs": {},
+                                                                          "o": {
+                                                                            "2": {
+                                                                              "0": {
+                                                                                "2": {
+                                                                                  "0": {
+                                                                                    "docs": {
+                                                                                      "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                                                                                        "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                                                                                        "tf": 75
+                                                                                      }
+                                                                                    }
+                                                                                  },
+                                                                                  "docs": {}
+                                                                                },
+                                                                                "docs": {}
+                                                                              },
+                                                                              "docs": {}
+                                                                            },
+                                                                            "docs": {}
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "o": {
+                                                    "docs": {},
+                                                    "r": {
+                                                      "docs": {},
+                                                      "t": {
+                                                        "docs": {},
+                                                        "h": {
+                                                          "docs": {},
+                                                          "o": {
+                                                            "docs": {},
+                                                            "p": {
+                                                              "docs": {},
+                                                              "h": {
+                                                                "docs": {},
+                                                                "o": {
+                                                                  "docs": {},
+                                                                  "t": {
+                                                                    "docs": {},
+                                                                    "o": {
+                                                                      "2": {
+                                                                        "0": {
+                                                                          "2": {
+                                                                            "0": {
+                                                                              "docs": {
+                                                                                "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                                                                                  "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                                                                                  "tf": 75
+                                                                                }
+                                                                              }
+                                                                            },
+                                                                            "docs": {}
+                                                                          },
+                                                                          "docs": {}
+                                                                        },
+                                                                        "docs": {}
+                                                                      },
+                                                                      "docs": {}
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
                                                       }
                                                     }
                                                   }
@@ -9146,6 +9744,10 @@
                               "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                               "tf": 25
                             },
+                            "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                              "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                              "tf": 25
+                            },
                             "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                               "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                               "tf": 25
@@ -9168,6 +9770,18 @@
                             },
                             "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                               "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                              "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                              "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                              "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                               "tf": 25
                             },
                             "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
@@ -9539,6 +10153,33 @@
                   }
                 }
               }
+            },
+            "m": {
+              "docs": {},
+              "p": {
+                "docs": {},
+                "l": {
+                  "docs": {},
+                  "o": {
+                    "docs": {},
+                    "n": {
+                      "docs": {},
+                      "a": {
+                        "docs": {
+                          "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                            "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                            "tf": 3.125
+                          },
+                          "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                            "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                            "tf": 1.8518518518518516
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           "o": {
@@ -9642,6 +10283,25 @@
                             "tf": 8.333333333333332
                           }
                         }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "á": {
+            "docs": {},
+            "g": {
+              "docs": {},
+              "i": {
+                "docs": {},
+                "n": {
+                  "docs": {},
+                  "a": {
+                    "docs": {
+                      "undefined": {
+                        "tf": 14.285714285714285
                       }
                     }
                   }
@@ -10085,6 +10745,10 @@
                                   "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                                   "tf": 25
                                 },
+                                "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                                  "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                                  "tf": 25
+                                },
                                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                                   "tf": 25
@@ -10107,6 +10771,18 @@
                                 },
                                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                                  "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                                  "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                                  "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                                   "tf": 25
                                 },
                                 "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
@@ -10412,6 +11088,14 @@
                               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                                 "tf": 2.272727272727273
+                              },
+                              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                "tf": 2.272727272727273
+                              },
+                              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                                "tf": 1.8518518518518516
                               },
                               "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                                 "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
@@ -11067,6 +11751,17 @@
                                                                                           },
                                                                                           "docs": {}
                                                                                         },
+                                                                                        "2": {
+                                                                                          "0": {
+                                                                                            "docs": {
+                                                                                              "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                                                                                                "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                                                                                                "tf": 1075
+                                                                                              }
+                                                                                            }
+                                                                                          },
+                                                                                          "docs": {}
+                                                                                        },
                                                                                         "docs": {}
                                                                                       },
                                                                                       "docs": {}
@@ -11154,6 +11849,17 @@
                                                                                     },
                                                                                     "docs": {}
                                                                                   },
+                                                                                  "2": {
+                                                                                    "0": {
+                                                                                      "docs": {
+                                                                                        "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                                                                                          "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                                                                          "tf": 1075
+                                                                                        }
+                                                                                      }
+                                                                                    },
+                                                                                    "docs": {}
+                                                                                  },
                                                                                   "docs": {}
                                                                                 },
                                                                                 "docs": {}
@@ -11162,6 +11868,136 @@
                                                                                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                                                                                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                                                                                   "tf": 1075
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "p": {
+                                                            "docs": {},
+                                                            "a": {
+                                                              "docs": {},
+                                                              "m": {
+                                                                "docs": {},
+                                                                "p": {
+                                                                  "docs": {},
+                                                                  "l": {
+                                                                    "docs": {},
+                                                                    "o": {
+                                                                      "docs": {},
+                                                                      "n": {
+                                                                        "docs": {},
+                                                                        "a": {
+                                                                          "docs": {},
+                                                                          "_": {
+                                                                            "docs": {},
+                                                                            "d": {
+                                                                              "docs": {},
+                                                                              "y": {
+                                                                                "docs": {},
+                                                                                "n": {
+                                                                                  "docs": {},
+                                                                                  "o": {
+                                                                                    "docs": {},
+                                                                                    "r": {
+                                                                                      "docs": {},
+                                                                                      "t": {
+                                                                                        "docs": {},
+                                                                                        "h": {
+                                                                                          "docs": {},
+                                                                                          "o": {
+                                                                                            "docs": {},
+                                                                                            "p": {
+                                                                                              "docs": {},
+                                                                                              "h": {
+                                                                                                "docs": {},
+                                                                                                "o": {
+                                                                                                  "docs": {},
+                                                                                                  "t": {
+                                                                                                    "docs": {},
+                                                                                                    "o": {
+                                                                                                      "2": {
+                                                                                                        "0": {
+                                                                                                          "2": {
+                                                                                                            "0": {
+                                                                                                              "docs": {
+                                                                                                                "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                                                                                                                  "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                                                                                                                  "tf": 1075
+                                                                                                                }
+                                                                                                              }
+                                                                                                            },
+                                                                                                            "docs": {}
+                                                                                                          },
+                                                                                                          "docs": {}
+                                                                                                        },
+                                                                                                        "docs": {}
+                                                                                                      },
+                                                                                                      "docs": {}
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            },
+                                                                            "o": {
+                                                                              "docs": {},
+                                                                              "r": {
+                                                                                "docs": {},
+                                                                                "t": {
+                                                                                  "docs": {},
+                                                                                  "h": {
+                                                                                    "docs": {},
+                                                                                    "o": {
+                                                                                      "docs": {},
+                                                                                      "p": {
+                                                                                        "docs": {},
+                                                                                        "h": {
+                                                                                          "docs": {},
+                                                                                          "o": {
+                                                                                            "docs": {},
+                                                                                            "t": {
+                                                                                              "docs": {},
+                                                                                              "o": {
+                                                                                                "2": {
+                                                                                                  "0": {
+                                                                                                    "2": {
+                                                                                                      "0": {
+                                                                                                        "docs": {
+                                                                                                          "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                                                                                                            "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                                                                                                            "tf": 1075
+                                                                                                          }
+                                                                                                        }
+                                                                                                      },
+                                                                                                      "docs": {}
+                                                                                                    },
+                                                                                                    "docs": {}
+                                                                                                  },
+                                                                                                  "docs": {}
+                                                                                                },
+                                                                                                "docs": {}
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
                                                                                 }
                                                                               }
                                                                             }
@@ -13063,6 +13899,14 @@
                           "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                           "tf": 2.272727272727273
                         },
+                        "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                          "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                          "tf": 2.272727272727273
+                        },
+                        "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                          "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                          "tf": 1.8518518518518516
+                        },
                         "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                           "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
                           "tf": 2
@@ -13570,6 +14414,14 @@
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                     "tf": 2.272727272727273
                   },
+                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                    "tf": 2.272727272727273
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                    "tf": 1.8518518518518516
+                  },
                   "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                     "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
                     "tf": 2
@@ -13756,6 +14608,10 @@
                         "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                         "tf": 25
                       },
+                      "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                        "tf": 25
+                      },
                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                         "tf": 25
@@ -13778,6 +14634,18 @@
                       },
                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                         "tf": 25
                       },
                       "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
@@ -14224,6 +15092,9 @@
                 "index.html": {
                   "ref": "index.html",
                   "tf": 6.363636363636364
+                },
+                "undefined": {
+                  "tf": 14.285714285714285
                 }
               }
             }
@@ -14284,6 +15155,14 @@
               "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                 "tf": 4.545454545454546
+              },
+              "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                "tf": 4.545454545454546
+              },
+              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                "tf": 3.125
               },
               "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP": {
                 "ref": "SITNA.Consts.layer.html#.IGN_ES_DYNBASEMAP",
@@ -14375,6 +15254,14 @@
                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                   "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                  "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                  "tf": 1.8518518518518516
                 },
                 "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
                   "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP",
@@ -14863,6 +15750,14 @@
                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                   "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                  "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                  "tf": 1.8518518518518516
                 },
                 "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                   "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
@@ -15694,6 +16589,17 @@
                                                                               },
                                                                               "docs": {}
                                                                             },
+                                                                            "2": {
+                                                                              "0": {
+                                                                                "docs": {
+                                                                                  "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                                                                                    "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                                                                                    "tf": 75
+                                                                                  }
+                                                                                }
+                                                                              },
+                                                                              "docs": {}
+                                                                            },
                                                                             "docs": {}
                                                                           },
                                                                           "docs": {}
@@ -15781,6 +16687,17 @@
                                                                         },
                                                                         "docs": {}
                                                                       },
+                                                                      "2": {
+                                                                        "0": {
+                                                                          "docs": {
+                                                                            "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                                                                              "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                                                              "tf": 75
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "docs": {}
+                                                                      },
                                                                       "docs": {}
                                                                     },
                                                                     "docs": {}
@@ -15789,6 +16706,136 @@
                                                                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                                                                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                                                                       "tf": 75
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "p": {
+                                                "docs": {},
+                                                "a": {
+                                                  "docs": {},
+                                                  "m": {
+                                                    "docs": {},
+                                                    "p": {
+                                                      "docs": {},
+                                                      "l": {
+                                                        "docs": {},
+                                                        "o": {
+                                                          "docs": {},
+                                                          "n": {
+                                                            "docs": {},
+                                                            "a": {
+                                                              "docs": {},
+                                                              "_": {
+                                                                "docs": {},
+                                                                "d": {
+                                                                  "docs": {},
+                                                                  "y": {
+                                                                    "docs": {},
+                                                                    "n": {
+                                                                      "docs": {},
+                                                                      "o": {
+                                                                        "docs": {},
+                                                                        "r": {
+                                                                          "docs": {},
+                                                                          "t": {
+                                                                            "docs": {},
+                                                                            "h": {
+                                                                              "docs": {},
+                                                                              "o": {
+                                                                                "docs": {},
+                                                                                "p": {
+                                                                                  "docs": {},
+                                                                                  "h": {
+                                                                                    "docs": {},
+                                                                                    "o": {
+                                                                                      "docs": {},
+                                                                                      "t": {
+                                                                                        "docs": {},
+                                                                                        "o": {
+                                                                                          "2": {
+                                                                                            "0": {
+                                                                                              "2": {
+                                                                                                "0": {
+                                                                                                  "docs": {
+                                                                                                    "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                                                                                                      "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                                                                                                      "tf": 75
+                                                                                                    }
+                                                                                                  }
+                                                                                                },
+                                                                                                "docs": {}
+                                                                                              },
+                                                                                              "docs": {}
+                                                                                            },
+                                                                                            "docs": {}
+                                                                                          },
+                                                                                          "docs": {}
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "o": {
+                                                                  "docs": {},
+                                                                  "r": {
+                                                                    "docs": {},
+                                                                    "t": {
+                                                                      "docs": {},
+                                                                      "h": {
+                                                                        "docs": {},
+                                                                        "o": {
+                                                                          "docs": {},
+                                                                          "p": {
+                                                                            "docs": {},
+                                                                            "h": {
+                                                                              "docs": {},
+                                                                              "o": {
+                                                                                "docs": {},
+                                                                                "t": {
+                                                                                  "docs": {},
+                                                                                  "o": {
+                                                                                    "2": {
+                                                                                      "0": {
+                                                                                        "2": {
+                                                                                          "0": {
+                                                                                            "docs": {
+                                                                                              "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                                                                                                "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                                                                                                "tf": 75
+                                                                                              }
+                                                                                            }
+                                                                                          },
+                                                                                          "docs": {}
+                                                                                        },
+                                                                                        "docs": {}
+                                                                                      },
+                                                                                      "docs": {}
+                                                                                    },
+                                                                                    "docs": {}
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
                                                                     }
                                                                   }
                                                                 }
@@ -16851,6 +17898,14 @@
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                         "tf": 2.272727272727273
                       },
+                      "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                        "tf": 2.272727272727273
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                        "tf": 1.8518518518518516
+                      },
                       "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY": {
                         "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP_GREY",
                         "tf": 2
@@ -16882,6 +17937,27 @@
                       "SITNA.Consts.layer.html#.OSM": {
                         "ref": "SITNA.Consts.layer.html#.OSM",
                         "tf": 2.083333333333333
+                      }
+                    }
+                  }
+                }
+              },
+              "a": {
+                "docs": {},
+                "r": {
+                  "docs": {},
+                  "c": {
+                    "docs": {},
+                    "a": {
+                      "docs": {
+                        "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                          "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                          "tf": 3.125
+                        },
+                        "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                          "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                          "tf": 1.8518518518518516
+                        }
                       }
                     }
                   }
@@ -17102,7 +18178,7 @@
               "o": {
                 "docs": {
                   "undefined": {
-                    "tf": 25
+                    "tf": 14.285714285714285
                   }
                 }
               }
@@ -17366,6 +18442,10 @@
                     "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                     "tf": 4.545454545454546
                   },
+                  "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                    "tf": 4.545454545454546
+                  },
                   "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                     "tf": 4.166666666666666
@@ -17389,6 +18469,18 @@
                   "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                     "tf": 4.545454545454546
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                    "tf": 4.545454545454546
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                    "tf": 3.125
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                    "tf": 3.7037037037037033
                   },
                   "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
                     "ref": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP",
@@ -18073,6 +19165,10 @@
                             "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                             "tf": 4.545454545454546
                           },
+                          "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                            "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                            "tf": 4.545454545454546
+                          },
                           "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                             "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                             "tf": 2.083333333333333
@@ -18096,6 +19192,18 @@
                           "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                             "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
                             "tf": 2.272727272727273
+                          },
+                          "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                            "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                            "tf": 2.272727272727273
+                          },
+                          "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                            "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                            "tf": 3.125
+                          },
+                          "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                            "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+                            "tf": 1.8518518518518516
                           },
                           "SITNA.Consts.layer.html#.IGN_FR_DYNORTHOPHOTO": {
                             "ref": "SITNA.Consts.layer.html#.IGN_FR_DYNORTHOPHOTO",
@@ -19143,6 +20251,67 @@
               }
             }
           },
+          "u": {
+            "docs": {},
+            "l": {
+              "docs": {},
+              "t": {
+                "docs": {},
+                "i": {
+                  "docs": {},
+                  "m": {
+                    "docs": {},
+                    "e": {
+                      "docs": {},
+                      "d": {
+                        "docs": {},
+                        "i": {
+                          "docs": {},
+                          "a": {
+                            "docs": {
+                              "undefined": {
+                                "tf": 14.285714285714285
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "n": {
+              "docs": {},
+              "i": {
+                "docs": {},
+                "c": {
+                  "docs": {},
+                  "i": {
+                    "docs": {},
+                    "p": {
+                      "docs": {},
+                      "i": {
+                        "docs": {},
+                        "o": {
+                          "docs": {
+                            "SITNA.Map.html#getMunicipalities": {
+                              "ref": "SITNA.Map.html#getMunicipalities",
+                              "tf": 3.8461538461538463
+                            },
+                            "SITNA.Map.html#searchMunicipality": {
+                              "ref": "SITNA.Map.html#searchMunicipality",
+                              "tf": 2.5
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "e": {
             "docs": {},
             "n": {
@@ -19307,6 +20476,10 @@
                         "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2019",
                         "tf": 110
                       },
+                      "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+                        "tf": 110
+                      },
                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                         "tf": 110
@@ -19329,6 +20502,18 @@
                       },
                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2019",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                         "tf": 110
                       },
                       "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
@@ -19534,39 +20719,6 @@
                       "SITNA.html#.Cfg": {
                         "ref": "SITNA.html#.Cfg",
                         "tf": 0.7936507936507936
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "u": {
-            "docs": {},
-            "n": {
-              "docs": {},
-              "i": {
-                "docs": {},
-                "c": {
-                  "docs": {},
-                  "i": {
-                    "docs": {},
-                    "p": {
-                      "docs": {},
-                      "i": {
-                        "docs": {},
-                        "o": {
-                          "docs": {
-                            "SITNA.Map.html#getMunicipalities": {
-                              "ref": "SITNA.Map.html#getMunicipalities",
-                              "tf": 3.8461538461538463
-                            },
-                            "SITNA.Map.html#searchMunicipality": {
-                              "ref": "SITNA.Map.html#searchMunicipality",
-                              "tf": 2.5
-                            }
-                          }
-                        }
                       }
                     }
                   }
@@ -20131,6 +21283,117 @@
                   }
                 }
               }
+            }
+          }
+        },
+        "y": {
+          "docs": {
+            "undefined": {
+              "tf": 14.285714285714285
+            },
+            "SITNA.Map.html": {
+              "ref": "SITNA.Map.html",
+              "tf": 0.4629629629629629
+            },
+            "SITNA.Map.html#addLayer": {
+              "ref": "SITNA.Map.html#addLayer",
+              "tf": 1.1111111111111112
+            },
+            "SITNA.Map.html#loaded": {
+              "ref": "SITNA.Map.html#loaded",
+              "tf": 2.5
+            },
+            "SITNA.Map.html#searchCommonwealth": {
+              "ref": "SITNA.Map.html#searchCommonwealth",
+              "tf": 2.631578947368421
+            },
+            "SITNA.Map.html#searchCouncil": {
+              "ref": "SITNA.Map.html#searchCouncil",
+              "tf": 2.5
+            },
+            "SITNA.Map.html#searchFeature": {
+              "ref": "SITNA.Map.html#searchFeature",
+              "tf": 3.571428571428571
+            },
+            "SITNA.Map.html#searchMunicipality": {
+              "ref": "SITNA.Map.html#searchMunicipality",
+              "tf": 2.5
+            },
+            "SITNA.Map.html#searchUrbanArea": {
+              "ref": "SITNA.Map.html#searchUrbanArea",
+              "tf": 2.380952380952381
+            },
+            "SITNA.Map.html#zoomToMarkers": {
+              "ref": "SITNA.Map.html#zoomToMarkers",
+              "tf": 4.166666666666666
+            },
+            "SITNA.Consts.format.html#.GEOJSON": {
+              "ref": "SITNA.Consts.format.html#.GEOJSON",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GML": {
+              "ref": "SITNA.Consts.format.html#.GML",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GML2": {
+              "ref": "SITNA.Consts.format.html#.GML2",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GML3": {
+              "ref": "SITNA.Consts.format.html#.GML3",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GML32": {
+              "ref": "SITNA.Consts.format.html#.GML32",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GPKG": {
+              "ref": "SITNA.Consts.format.html#.GPKG",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.GPX": {
+              "ref": "SITNA.Consts.format.html#.GPX",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.JSON": {
+              "ref": "SITNA.Consts.format.html#.JSON",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.KML": {
+              "ref": "SITNA.Consts.format.html#.KML",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.KMZ": {
+              "ref": "SITNA.Consts.format.html#.KMZ",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.SHP": {
+              "ref": "SITNA.Consts.format.html#.SHP",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.TOPOJSON": {
+              "ref": "SITNA.Consts.format.html#.TOPOJSON",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.WKT": {
+              "ref": "SITNA.Consts.format.html#.WKT",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.format.html#.ZIP": {
+              "ref": "SITNA.Consts.format.html#.ZIP",
+              "tf": 7.142857142857142
+            },
+            "SITNA.Consts.layer.html": {
+              "ref": "SITNA.Consts.layer.html",
+              "tf": 3.8461538461538463
+            },
+            "SITNA.Consts.layer.html#.IDENA_BASEMAP_ORTHOPHOTO": {
+              "ref": "SITNA.Consts.layer.html#.IDENA_BASEMAP_ORTHOPHOTO",
+              "tf": 2.631578947368421
+            },
+            "SITNA.Consts.layer.html#.IDENA_BW_RELIEF": {
+              "ref": "SITNA.Consts.layer.html#.IDENA_BW_RELIEF",
+              "tf": 3.571428571428571
             }
           }
         },
@@ -20976,114 +22239,6 @@
             }
           }
         },
-        "y": {
-          "docs": {
-            "SITNA.Map.html": {
-              "ref": "SITNA.Map.html",
-              "tf": 0.4629629629629629
-            },
-            "SITNA.Map.html#addLayer": {
-              "ref": "SITNA.Map.html#addLayer",
-              "tf": 1.1111111111111112
-            },
-            "SITNA.Map.html#loaded": {
-              "ref": "SITNA.Map.html#loaded",
-              "tf": 2.5
-            },
-            "SITNA.Map.html#searchCommonwealth": {
-              "ref": "SITNA.Map.html#searchCommonwealth",
-              "tf": 2.631578947368421
-            },
-            "SITNA.Map.html#searchCouncil": {
-              "ref": "SITNA.Map.html#searchCouncil",
-              "tf": 2.5
-            },
-            "SITNA.Map.html#searchFeature": {
-              "ref": "SITNA.Map.html#searchFeature",
-              "tf": 3.571428571428571
-            },
-            "SITNA.Map.html#searchMunicipality": {
-              "ref": "SITNA.Map.html#searchMunicipality",
-              "tf": 2.5
-            },
-            "SITNA.Map.html#searchUrbanArea": {
-              "ref": "SITNA.Map.html#searchUrbanArea",
-              "tf": 2.380952380952381
-            },
-            "SITNA.Map.html#zoomToMarkers": {
-              "ref": "SITNA.Map.html#zoomToMarkers",
-              "tf": 4.166666666666666
-            },
-            "SITNA.Consts.format.html#.GEOJSON": {
-              "ref": "SITNA.Consts.format.html#.GEOJSON",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.GML": {
-              "ref": "SITNA.Consts.format.html#.GML",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.GML2": {
-              "ref": "SITNA.Consts.format.html#.GML2",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.GML3": {
-              "ref": "SITNA.Consts.format.html#.GML3",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.GML32": {
-              "ref": "SITNA.Consts.format.html#.GML32",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.GPKG": {
-              "ref": "SITNA.Consts.format.html#.GPKG",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.GPX": {
-              "ref": "SITNA.Consts.format.html#.GPX",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.JSON": {
-              "ref": "SITNA.Consts.format.html#.JSON",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.KML": {
-              "ref": "SITNA.Consts.format.html#.KML",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.KMZ": {
-              "ref": "SITNA.Consts.format.html#.KMZ",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.SHP": {
-              "ref": "SITNA.Consts.format.html#.SHP",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.TOPOJSON": {
-              "ref": "SITNA.Consts.format.html#.TOPOJSON",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.WKT": {
-              "ref": "SITNA.Consts.format.html#.WKT",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.format.html#.ZIP": {
-              "ref": "SITNA.Consts.format.html#.ZIP",
-              "tf": 7.142857142857142
-            },
-            "SITNA.Consts.layer.html": {
-              "ref": "SITNA.Consts.layer.html",
-              "tf": 3.8461538461538463
-            },
-            "SITNA.Consts.layer.html#.IDENA_BASEMAP_ORTHOPHOTO": {
-              "ref": "SITNA.Consts.layer.html#.IDENA_BASEMAP_ORTHOPHOTO",
-              "tf": 2.631578947368421
-            },
-            "SITNA.Consts.layer.html#.IDENA_BW_RELIEF": {
-              "ref": "SITNA.Consts.layer.html#.IDENA_BW_RELIEF",
-              "tf": 3.571428571428571
-            }
-          }
-        },
         "k": {
           "docs": {},
           "m": {
@@ -21179,7 +22334,7 @@
           }
         }
       },
-      "length": 2111
+      "length": 2211
     },
     "corpusTokens": [
       "1",
@@ -21189,8 +22344,10 @@
       "2017",
       "2018",
       "2019",
+      "2020",
       "3",
       "4",
+      "5",
       "acaba",
       "actualidad",
       "addlay",
@@ -21205,6 +22362,7 @@
       "asociado",
       "asíncrona",
       "añad",
+      "añadir",
       "base",
       "blanco",
       "blank",
@@ -21231,6 +22389,7 @@
       "clic",
       "clickcallback",
       "colección",
+      "comarca",
       "combinación",
       "como",
       "compat",
@@ -21280,12 +22439,16 @@
       "consts.layer.idena_dynorthophoto2017",
       "consts.layer.idena_dynorthophoto2018",
       "consts.layer.idena_dynorthophoto2019",
+      "consts.layer.idena_dynorthophoto2020",
       "consts.layer.idena_orthophoto",
       "consts.layer.idena_orthophoto2012",
       "consts.layer.idena_orthophoto2014",
       "consts.layer.idena_orthophoto2017",
       "consts.layer.idena_orthophoto2018",
       "consts.layer.idena_orthophoto2019",
+      "consts.layer.idena_orthophoto2020",
+      "consts.layer.idena_pamplona_dynorthophoto2020",
+      "consts.layer.idena_pamplona_orthophoto2020",
       "consts.layer.ign_es_basemap",
       "consts.layer.ign_es_basemap_grey",
       "consts.layer.ign_es_carto",
@@ -21359,6 +22522,7 @@
       "el",
       "elemento",
       "elimina",
+      "embed",
       "en",
       "encontrada",
       "encuentran",
@@ -21448,12 +22612,16 @@
       "idena_dynorthophoto2017",
       "idena_dynorthophoto2018",
       "idena_dynorthophoto2019",
+      "idena_dynorthophoto2020",
       "idena_orthophoto",
       "idena_orthophoto2012",
       "idena_orthophoto2014",
       "idena_orthophoto2017",
       "idena_orthophoto2018",
       "idena_orthophoto2019",
+      "idena_orthophoto2020",
+      "idena_pamplona_dynorthophoto2020",
+      "idena_pamplona_orthophoto2020",
       "identfificador",
       "identificador",
       "identificar",
@@ -21478,6 +22646,7 @@
       "ign_fr_orthophoto",
       "ign_fr_relief",
       "imagen",
+      "incrustada",
       "index",
       "indicado",
       "inicialización",
@@ -21509,12 +22678,16 @@
       "layer.idena_dynorthophoto2017",
       "layer.idena_dynorthophoto2018",
       "layer.idena_dynorthophoto2019",
+      "layer.idena_dynorthophoto2020",
       "layer.idena_orthophoto",
       "layer.idena_orthophoto2012",
       "layer.idena_orthophoto2014",
       "layer.idena_orthophoto2017",
       "layer.idena_orthophoto2018",
       "layer.idena_orthophoto2019",
+      "layer.idena_orthophoto2020",
+      "layer.idena_pamplona_dynorthophoto2020",
+      "layer.idena_pamplona_orthophoto2020",
       "layer.ign_es_basemap",
       "layer.ign_es_basemap_grey",
       "layer.ign_es_carto",
@@ -21610,6 +22783,7 @@
       "mimetype.xml",
       "modelo",
       "modo",
+      "multimedia",
       "municipio",
       "máxima",
       "método",
@@ -21630,6 +22804,7 @@
       "ortofoto",
       "osm",
       "otro",
+      "pamplona",
       "para",
       "parameters_cfg",
       "parámetro",
@@ -21653,6 +22828,7 @@
       "proporcionado",
       "pued",
       "punto",
+      "página",
       "que",
       "queryid",
       "raster",
@@ -21723,12 +22899,16 @@
       "sitna.consts.layer.idena_dynorthophoto2017",
       "sitna.consts.layer.idena_dynorthophoto2018",
       "sitna.consts.layer.idena_dynorthophoto2019",
+      "sitna.consts.layer.idena_dynorthophoto2020",
       "sitna.consts.layer.idena_orthophoto",
       "sitna.consts.layer.idena_orthophoto2012",
       "sitna.consts.layer.idena_orthophoto2014",
       "sitna.consts.layer.idena_orthophoto2017",
       "sitna.consts.layer.idena_orthophoto2018",
       "sitna.consts.layer.idena_orthophoto2019",
+      "sitna.consts.layer.idena_orthophoto2020",
+      "sitna.consts.layer.idena_pamplona_dynorthophoto2020",
+      "sitna.consts.layer.idena_pamplona_orthophoto2020",
       "sitna.consts.layer.ign_es_basemap",
       "sitna.consts.layer.ign_es_basemap_grey",
       "sitna.consts.layer.ign_es_carto",
@@ -21869,9 +23049,9 @@
     "undefined": {
       "kind": "tutorial",
       "title": "Historial de cambios",
-      "longname": "4-changes",
-      "name": "4-changes",
-      "tags": "4-changes",
+      "longname": "5-changes",
+      "name": "5-changes",
+      "tags": "5-changes",
       "summary": "",
       "description": "",
       "body": ""
@@ -22525,6 +23705,16 @@
       "summary": "",
       "description": "Identificador de la capa de ortofoto 2019 del WMS de IDENA."
     },
+    "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020": {
+      "id": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; IDENA_DYNORTHOPHOTO2020 :string",
+      "longname": "SITNA.Consts.layer.IDENA_DYNORTHOPHOTO2020",
+      "name": "IDENA_DYNORTHOPHOTO2020",
+      "tags": "SITNA.Consts.layer.IDENA_DYNORTHOPHOTO2020 Consts.layer.IDENA_DYNORTHOPHOTO2020 layer.IDENA_DYNORTHOPHOTO2020 IDENA_DYNORTHOPHOTO2020",
+      "summary": "",
+      "description": "Identificador de la capa de ortofoto 2020 del WMS de IDENA."
+    },
     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
       "id": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
       "kind": "member",
@@ -22584,6 +23774,36 @@
       "tags": "SITNA.Consts.layer.IDENA_ORTHOPHOTO2019 Consts.layer.IDENA_ORTHOPHOTO2019 layer.IDENA_ORTHOPHOTO2019 IDENA_ORTHOPHOTO2019",
       "summary": "",
       "description": "Identificador de la capa de ortofoto 2019 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830."
+    },
+    "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
+      "id": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; IDENA_ORTHOPHOTO2020 :string",
+      "longname": "SITNA.Consts.layer.IDENA_ORTHOPHOTO2020",
+      "name": "IDENA_ORTHOPHOTO2020",
+      "tags": "SITNA.Consts.layer.IDENA_ORTHOPHOTO2020 Consts.layer.IDENA_ORTHOPHOTO2020 layer.IDENA_ORTHOPHOTO2020 IDENA_ORTHOPHOTO2020",
+      "summary": "",
+      "description": "Identificador de la capa de ortofoto 2020 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830."
+    },
+    "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
+      "id": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; IDENA_PAMPLONA_DYNORTHOPHOTO2020 :string",
+      "longname": "SITNA.Consts.layer.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+      "name": "IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+      "tags": "SITNA.Consts.layer.IDENA_PAMPLONA_DYNORTHOPHOTO2020 Consts.layer.IDENA_PAMPLONA_DYNORTHOPHOTO2020 layer.IDENA_PAMPLONA_DYNORTHOPHOTO2020 IDENA_PAMPLONA_DYNORTHOPHOTO2020",
+      "summary": "",
+      "description": "Identificador de la capa de ortofoto de la comarca de Pamplona 2020 del WMS de IDENA."
+    },
+    "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
+      "id": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; IDENA_PAMPLONA_ORTHOPHOTO2020 :string",
+      "longname": "SITNA.Consts.layer.IDENA_PAMPLONA_ORTHOPHOTO2020",
+      "name": "IDENA_PAMPLONA_ORTHOPHOTO2020",
+      "tags": "SITNA.Consts.layer.IDENA_PAMPLONA_ORTHOPHOTO2020 Consts.layer.IDENA_PAMPLONA_ORTHOPHOTO2020 layer.IDENA_PAMPLONA_ORTHOPHOTO2020 IDENA_PAMPLONA_ORTHOPHOTO2020",
+      "summary": "",
+      "description": "Identificador de la capa de ortofoto de la comarca de Pamplona 2020 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830."
     },
     "SITNA.Consts.layer.html#.IGN_ES_BASEMAP": {
       "id": "SITNA.Consts.layer.html#.IGN_ES_BASEMAP",

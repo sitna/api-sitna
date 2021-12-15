@@ -17,14 +17,17 @@
     <div id="mapa"></div>
     <script>
         // Establecer un proxy porque se hacen peticiones a otro dominio.
-        SITNA.Cfg.proxy = "proxy.ashx?";
+        SITNA.Cfg.proxy = "proxy/proxy.ashx?";
 
-        SITNA.Cfg.workLayers = [{
-            id: "csantiago",
-            title: "Camino de Santiago",
-            url: "http://www.ign.es/wms-inspire/camino-santiago",
-            layerNames: "PS.ProtectedSite,GN.GeographicalNames,AU.AdministrativeUnit"
-        }];
+        SITNA.Cfg.workLayers = [
+            {
+                id: "terremotos",
+                title: "Terremotos últimos 365 días",
+                type: SITNA.Consts.layerType.WMS,
+                url: "https://www.ign.es/wms-inspire/geofisica",
+                layerNames: ["Ultimos365dias"]
+            }
+        ];  
         var map = new SITNA.Map("mapa");
     </script>
 	

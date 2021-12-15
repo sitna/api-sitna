@@ -43,11 +43,16 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
         const self = this;
         options = options || {};
         return new Promise(function (resolve, reject) {
+            const cloneWithId = function (feat) {
+                const result = feat.clone();
+                result.id = feat.id;
+                return result;
+            };
             //si no se incluyen las elevaciones quito las Z de las geometrias que las tuvieran
             if (!options.displayElevation) {
                 resolve(features.map(function (feat) {
                     if (feat.getGeometryStride() > 2) {
-                        const f = feat.clone();
+                        const f = cloneWithId(feat);
                         f.id = feat.id;
                         f.layer = feat.layer;
                         f.getCoordsArray().forEach(coord => coord.length = 2);
@@ -61,8 +66,8 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
             let mustInterpolate = options.elevation && options.elevation.resolution;
             // Array con features sin altura y nulo donde habia feature con alturas
-            let featuresToAddElevation = mustInterpolate ? features.map(f => f.clone()) : features.map(f => {
-                return f.getCoordsArray().every(p => !p[2]) ? f.clone() : null
+            let featuresToAddElevation = mustInterpolate ? features.map(f => cloneWithId(f)) : features.map(f => {
+                return f.getCoordsArray().every(p => !p[2]) ? cloneWithId(f) : null
             });
 
             if (mustInterpolate || featuresToAddElevation.some(f => f !== null)) {

@@ -68,17 +68,17 @@
             "format": "image/jpeg",
             "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-basemap_ign.png"
         },
-        {
-            "id": "ign-mtn",
-			"title": "Relieve (IGN)",
-            "type": "WMTS",
-            "url": "//www.ign.es/wmts/mdt",
-            "encoding": "KVP",
-            "layerNames": "Relieve",
-            "matrixSet": "EPSG:25830",
-            "format": "image/jpeg",
-            "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-relief_ign.jpg"
-        },
+      {
+        "id": "ign-mtn",
+        "title": "Relieve (IGN)",
+        "type": "WMTS",
+        "url": "//servicios.idee.es/wmts/mdt",
+        "encoding": "KVP",
+        "layerNames": "Relieve",
+        "matrixSet": "EPSG:25830",
+        "format": "image/jpeg",
+        "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-relief_ign.jpg"
+      },
         {
             "id": "ign-pnoa",
 			"title": "Ortofoto PNOA",

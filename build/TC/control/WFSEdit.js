@@ -1,3 +1,51 @@
+
+/**
+  * Opciones del editor de capas WFS.
+  * 
+  * Si se desea que este control pueda funcionar en sesiones sin acceso a Internet, es necesario instalar 
+  * en el ámbito de la aplicación que contiene el visor el _[Service Worker](https://developer.mozilla.org/es/docs/Web/API/Service_Worker_API)_ 
+  * creado para el funcionamiento de este control en modo desconectado.
+  * Para ello basta con copiar el archivo [tc-cb-service-worker.js](https://raw.githubusercontent.com/sitna/api-sitna/master/TC/workers/tc-cb-service-worker.js) a la carpeta raíz de dicha aplicación.
+  * @typedef WFSEditOptions
+  * @extends ControlOptions
+  * @ignore
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {ElevationOptions|boolean} [downloadElevation=false] - Si se establece a un valor verdadero, el control ofrecerá la opción de añadir elevaciones 
+  * a las geometrías cuando se descarguen las entidades.
+  * @property {boolean} [highlightChanges=true] - Si se establece a un valor verdadero, se resaltarán en el mapa con estilo distintivo
+  * las entidades modificadas, con un estilo distinto según el tipo de edición (entidad añadida, modificada o eliminada).
+  * @property {boolean} [showOriginalFeatures=false] - Si se establece a un valor verdadero, se mostrarán en el mapa las entidades
+  * modificadas junto con las mismas entidades antes de ser modificadas, para poder establecer comparaciones.
+  * @property {boolean} [snapping=true] - Si se establece a un valor verdadero, la edición de geometrías tendrá un comportamiento 
+  * en el que los vértices se "pegarán" y alinearán con otros vértices y aristas al acercarlos a ellos, a la manera de imanes.
+  * @property {StyleOptions} [styles] - Opciones de los estilos de las entidades editadas, por tipo de geometría.
+  * @example <caption>[Ver en vivo](../examples/cfg.WFSEditOptions.html)</caption> {@lang html}
+  * <div id="mapa"></div>
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos el control multiFeatureInfo.
+  *     SITNA.Cfg.controls.WFSEdit = {
+  *         div: "slot1",
+  *         downloadElevation: { // Si se desacargan las entidades, se ofrece la opción de añadirles elevaciones
+  *             resolution: 20 // Si se interpolan puntos intermedios, por defecto se añadirán cada 20 metros
+  *         }
+  *     };
+  *     // Añadimos una capa WMS sobre la que hacer las consultas.
+  *     // El servicio WMS de IDENA tiene un servicio WFS asociado (imprescindible para consultas por línea o recinto).
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "cp",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "https://idena.navarra.es/ogc/wms",
+  *             layerNames: ["IDENA:PATRIM_Pol_Merindades"]
+  *         }
+  *     ];
+  *     var map = new SITNA.Map("mapa");
+  * </script>
+  */
+
 TC.control = TC.control || {};
 
 if (!TC.control.SWCacheClient) {
@@ -8,6 +56,7 @@ TC.control.WFSEdit = function () {
     const self = this;
 
     TC.control.SWCacheClient.apply(this, arguments);
+    self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || false;
 
     self._classSelector = '.' + self.CLASS;
 
@@ -826,7 +875,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
         const self = this;
         return new Promise(function (resolve, reject) {
             layer = layer || self.layer;
-            const li = map.getLoadingIndicator();
+            const li = self.map.getLoadingIndicator();
             const waitId = li && li.addWait();
             layer.describeFeatureType()
                 .then(function (attributes) {
@@ -862,6 +911,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
     ctlProto._addAuxLayersToMap = function (layer) {
         const self = this;
         return new Promise(function (resolve, reject) {
+            const map = self.map;
             layer = layer || self.layer;
             const layerEditData = self.getLayerEditData(layer);
             const beLayer = layerEditData.beforeEditLayer;
@@ -881,7 +931,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                         afLayer.setVisibility(self.highlightsAdded);
                         mfLayer.setVisibility(self.highlightsModified);
                         rfLayer.setVisibility(self.highlightsRemoved);
-                        self.map.insertLayer(beLayer, ++idx, function () {
+                        map.insertLayer(beLayer, ++idx, function () {
                             const newIdx = idx + 1;
                             map.insertLayer(afLayer, newIdx);
                             map.insertLayer(mfLayer, newIdx);
@@ -1020,7 +1070,8 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
         const self = this;
         return new Promise(function (resolve, reject) {
             const notEditableErrorMsg = `Layer ${layer.id} not editable`;
-            layer = self.map ? map.getLayer(layer) : layer;
+            const map = self.map;
+            layer = map ? map.getLayer(layer) : layer;
             if (layer) {
                 if (layer.type === TC.Consts.layerType.WFS && (layer.wmsLayer || (!layer.options.stealth && !layer.options.readOnly))) {
                     layer.getCapabilitiesPromise().then(() => resolve(layer));
@@ -1042,23 +1093,29 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                                     TC.loadJS(
                                         !TC.layer.Vector,
                                         TC.apiLocation + 'TC/layer/Vector',
-                                        async function () {
-                                            const wfsLayerOptions = {
-                                                id: self.getUID(),
-                                                type: TC.Consts.layerType.WFS,
-                                                url: await layer.getWFSURL(),
-                                                properties: self.map ? new TC.filter.Bbox(null, map.getExtent(), map.getCRS()) : null,
-                                                outputFormat: TC.Consts.format.JSON,
-                                                title: `${layer.getPath().join(' • ')} - ${self.getLocaleString('featureEditing')}`,
-                                                geometryName: 'geom',
-                                                featureType: [fullLayerName],
-                                                featureNS: prefix,
-                                                styles: self.styles,
-                                                stealth: true
-                                            };
-                                            layer.wfsLayer = new TC.layer.Vector(wfsLayerOptions);
-                                            layer.wfsLayer.wmsLayer = layer;
-                                            resolve(layer.wfsLayer);
+                                        function () {
+                                            TC.loadJS(
+                                                !TC.filter,
+                                                TC.apiLocation + 'TC/filter',
+                                                async function () {
+                                                    const wfsLayerOptions = {
+                                                        id: self.getUID(),
+                                                        type: TC.Consts.layerType.WFS,
+                                                        url: await layer.getWFSURL(),
+                                                        properties: map ? new TC.filter.Bbox(null, map.getExtent(), map.getCRS()) : null,
+                                                        outputFormat: TC.Consts.format.JSON,
+                                                        title: `${layer.getPath().join(' • ')} - ${self.getLocaleString('featureEditing')}`,
+                                                        geometryName: 'geom',
+                                                        featureType: [fullLayerName],
+                                                        featureNS: prefix,
+                                                        styles: self.styles,
+                                                        stealth: true
+                                                    };
+                                                    layer.wfsLayer = new TC.layer.Vector(wfsLayerOptions);
+                                                    layer.wfsLayer.wmsLayer = layer;
+                                                    resolve(layer.wfsLayer);
+                                                }
+                                            );
                                         }
                                     );
                                 }
@@ -1369,7 +1426,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                                     self.layer.refresh();
                                 }
                                 self.deleteCache(getStoragePrefix(self)).then(function () {
-                                    self.cacheLayer(l).then(function () {
+                                    self.cacheLayer(l).finally(function () {
                                         self.isSyncing = false;
                                         li && li.removeWait(waitId);
                                         // Las acciones a realizar a partir de este punto son las mismas que al descartar una edición
@@ -1381,7 +1438,8 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                             .catch(function (obj) {
                                 self.isSyncing = false;
                                 setSyncState(self);
-                                TC.error(self.getLocaleString('errorSyncingChanges', { code: obj.code, reason: obj.reason }), { type: TC.Consts.msgType.ERROR });
+                                li && li.removeWait(waitId);
+                                TC.error(self.getLocaleString('errorSyncingChanges', { code: obj.code, reason: obj.reason }), [TC.Consts.msgErrorMode.TOAST, TC.Consts.msgErrorMode.CONSOLE]);
                             });
                     });
             }

@@ -1,3 +1,60 @@
+
+/**
+  * Opciones de control de catálogo de capas disponibles. 
+  * 
+  * Con este control se dispone de las siguientes funcionalidades:
+  *
+  *    - Consultar las capas disponibles en uno o varios WMS.
+  *    - Buscar capas mediante texto libre. Se busca el texto en los títulos y los resúmenes descriptivos de cada capa, que se publican en el [documento de capacidades](https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities) del servicio.
+  *    - Añadir capas al mapa como capas de trabajo.
+  * @typedef LayerCatalogOptions
+  * @extends ControlOptions
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {boolean} [enableSearch] - Propiedad que establece si se puede buscar capas por texto. La búsqueda del texto se realiza en los títulos 
+  * y los resúmenes descriptivos de cada capa, que se publican en el [documento de capacidades](https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities) del servicio.
+  * @property {LayerOptions[]} layers - Lista de objetos de definición de las con capas de servicios WMS que queremos añadir al catálogo.
+  * 
+  * En estos objetos, si se asigna un valor a la propiedad `layerNames`, solo las capas especificadas y sus hijas estarán disponibles para ser añadidas al mapa. 
+  * Sin embargo, si esta propiedad se deja sin asignar, todas las capas publicadas en el servicio WMS estarán disponibles para ser añadidas.
+  * @example <caption>[Ver en vivo](../examples/cfg.MapControlOptions.layerCatalog_workLayerManager.html)</caption> {@lang html}
+  * <div id="mapa"></div>
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos el control de capas cargadas en la primera posición.
+  *     SITNA.Cfg.controls.workLayerManager = {
+  *         div: "slot1"
+  *     };
+  *     // Establecemos un proxy porque se hacen peticiones a otro dominio.
+  *     SITNA.Cfg.proxy = "proxy/proxy.ashx?";
+  *     // Añadimos en la segunda posición el catálogo de capas con dos servicios.
+  *     SITNA.Cfg.controls.layerCatalog = {
+  *         div: "slot2",
+  *         enableSearch: true,
+  *         layers: [
+  *             {
+  *                 id: "idena",
+  *                 title: "IDENA",
+  *                 hideTitle: true,
+  *                 type: SITNA.Consts.layerType.WMS,
+  *                 url: "//idena.navarra.es/ogc/wms",
+  *                 hideTree: false
+  *             },
+  *             {
+  *                 id: "sismica",
+  *                 title: "Información sísmica y volcánica",
+  *                 type: SITNA.Consts.layerType.WMS,
+  *                 url: "//www.ign.es/wms-inspire/geofisica",
+  *                 layerNames: ["Ultimos10dias", "Ultimos30dias", "Ultimos365dias"],
+  *                 hideTree: false
+  *             }
+  *         ]
+  *     };
+  *     var map = new SITNA.Map("mapa");
+  * </script>
+  */
+
 TC.control = TC.control || {};
 
 if (!TC.control.ProjectionSelector) {
@@ -124,7 +181,7 @@ if (!TC.control.ProjectionSelector) {
             return result;
         };
 
-        /**
+        /*
          * Marca todas las capas del TOC como añadidas excepto la que se está borrando que se recibe como parámetro.
          */
         const _markWorkLayersAsAdded = function (layerRemoved) {
@@ -778,7 +835,7 @@ if (!TC.control.ProjectionSelector) {
             if (self._roots) {
                 self._roots.forEach(function (li) {
                     const lyr = self.getLayer(li.dataset.layerId);
-                    if (lyr && lyr.type === layer.type && lyr.options.url === url) {
+                    if (lyr && lyr.type === layer.type && lyr.options.url.toLowerCase() === url.toLowerCase()) {
                         result = li;
                     }
                 });
@@ -989,6 +1046,7 @@ if (!TC.control.ProjectionSelector) {
         layerOptions.id = self.getUID();
         layerOptions.layerNames = [layerName];
         layerOptions.title = layer.title;
+        layerOptions.hideTree = true;
         const newLayer = new TC.layer.Raster(layerOptions);
         if (newLayer.isCompatible(self.map.crs)) {
             self.map.addLayer(layerOptions);

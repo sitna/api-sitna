@@ -73,8 +73,8 @@ TC.Consts.event.CHANGE = 'change';
 
                 e.feature.setId(TC.getUID(self.getLocaleString('sketch') + '.'));
 
-                if (self.callBack) {
-                    self.callBack(e.feature);
+                if (self.callback) {
+                    self.callback(e.feature);
                 }
             });
 
@@ -141,7 +141,7 @@ TC.Consts.event.CHANGE = 'change';
             tooltip: strToolTip,
             strokeColor: formatColor(strokeColor),
             strokeWidth: strokeWidth,
-            styleTools: self.options.styleTools
+            styling: self.options.styling
         };
         return self._set1stRenderPromise(self.renderData(renderObject, function () {
             if (!TC.browserFeatures.inputTypeColor()) {
@@ -173,7 +173,7 @@ TC.Consts.event.CHANGE = 'change';
                 }
             }
             self.reset = true;
-            self.callBack = null;
+            self.callback = null;
             self.measure = false;
             self._cancelClick = false;
 
@@ -182,7 +182,7 @@ TC.Consts.event.CHANGE = 'change';
             if (self.options.measure)
                 self.measure = self.options.measure
             if (TC.Util.isFunction(self.options.callback))
-                self.callBack = self.options.callback;
+                self.callback = self.options.callback;
             if (self.options.persistent === undefined) {
                 self.persistent = true;
             }
@@ -217,7 +217,7 @@ TC.Consts.event.CHANGE = 'change';
                 self.redo();
             }, { passive: true });
 
-            if (self.options.styleTools) {
+            if (self.options.styling) {
                 self._strokeColorPicker = self.div.querySelector(self._classSelector + '-str-c');
                 self._strokeColorPicker.addEventListener(TC.Consts.event.CHANGE, function (e) {
                     self.setStrokeColor(e.target.value);
@@ -469,7 +469,7 @@ TC.Consts.event.CHANGE = 'change';
 
     ctlProto.setStrokeColorWatch = function (color) {
         const self = this;
-        if (self.options.styleTools) {
+        if (self.options.styling) {
             if (color === undefined) {
                 color = self.getModeStyle().strokeColor;
             }
@@ -506,7 +506,7 @@ TC.Consts.event.CHANGE = 'change';
 
     ctlProto.setStrokeWidthWatch = function (width) {
         const self = this;
-        if (self.options.styleTools) {
+        if (self.options.styling) {
             if (width === undefined) {
                 width = self.getModeStyle().strokeWidth;
             }

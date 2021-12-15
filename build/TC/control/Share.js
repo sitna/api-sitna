@@ -81,7 +81,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
         });
     };
 
-    /**
+    /*
      * Obtiene una URL "limpia" para compartir el mapa.
      */
     ctlProto.getLocation = function () {
@@ -147,242 +147,258 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
         return result;
     };
 
+    ctlProto.update = async function () {
+        const self = this;
+        const input = self.div.querySelector('.tc-url input[type=text]');
+        if (input.value.trim().length === 0) {
+            const link = await self.generateLink();
+            self.registerListeners();
+            input.value = link;
+            self.div.querySelector('.tc-iframe input[type=text]').value = await self.generateIframe(link);
+        }
+    };
+
     ctlProto.register = function (map) {
         const self = this;
 
         const result = TC.control.MapInfo.prototype.register.call(self, map);
+        
+        result.then(function () {
 
-        self.exportsState = true;
+            self.exportsState = true;
 
-        self.MOBILEFAV = self.getLocaleString('mobileBookmarks.instructions');
-        self.NAVALERT = self.getLocaleString('bookmarks.instructions');
+            self.MOBILEFAV = self.getLocaleString('mobileBookmarks.instructions');
+            self.NAVALERT = self.getLocaleString('bookmarks.instructions');
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', async function (evt) {
-            const input = self.div.querySelector('.tc-url input[type=text]');
-            if (input.value.trim().length === 0) {
-                const link = await self.generateLink();
-                self.registerListeners();
-                input.value = link;
-                self.div.querySelector('.tc-iframe input[type=text]').value = await self.generateIframe(link);
-            }            
-        }));
+            self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (evt) {
+                self.update();
+            }));
 
-        self.map.on(TC.Consts.event.MAPCHANGE, function (e) {
-            const self = this;
-            const input = self.div.querySelector('.tc-url input[type=text]');
-            if (input) {
-                input.dataset["update"] = true;
-            }
-        });
-
-        var selectInputField = async function (elm, shorten) {
-            const input = elm.parentElement.querySelector("input[type=text]");
-
-            if (shorten) {
-                if (input.dataset["update"] || !input.dataset["shortened"]) {
-                    self.shortenedLink()
-                        .then(async function (value) {
-                            if (value && value.trim().length > 0) {
-
-                                elm.textContent = self.getLocaleString('shortened');
-                                setTimeout(function () {
-                                    elm.textContent = self.getLocaleString('shorten');
-                                    unselectInputField();
-                                }, 1000);                                
-
-                                delete input.dataset["update"];
-                                input.dataset["shortened"] = true;
-                                input.value = value;
-
-                                input.select();
-
-                            } else {
-                                delete input.dataset["update"];
-                                delete input.dataset["shortened"];
-                                input.value = await self.generateLink();
-                            }
-                        });
+            self.map.on(TC.Consts.event.MAPCHANGE, function (e) {
+                const self = this;
+                const input = self.div.querySelector('.tc-url input[type=text]');
+                if (input) {
+                    input.dataset["update"] = true;
                 }
-            } else {
-                if (!input.classList.contains('tc-url')) {
-                    input.value = await self.generateIframe();
-                } else {
-                    if (input.dataset["update"]) {
-                        delete input.dataset["update"];
-                        delete input.dataset["shortened"];
-                        input.value = await self.generateLink();
+
+                delete self.map._controlStatesCache;
+            }.bind(self));
+
+            var selectInputField = async function (elm, shorten) {
+                const input = elm.parentElement.querySelector("input[type=text]");
+
+                if (shorten) {
+                    if (input.dataset["update"] || !input.dataset["shortened"]) {
+                        self.shortenedLink()
+                            .then(async function (value) {
+                                if (value && value.trim().length > 0) {
+
+                                    elm.textContent = self.getLocaleString('shortened');
+                                    setTimeout(function () {
+                                        elm.textContent = self.getLocaleString('shorten');
+                                        unselectInputField();
+                                    }, 1000);
+
+                                    delete input.dataset["update"];
+                                    input.dataset["shortened"] = true;
+                                    input.value = value;
+
+                                    input.select();
+
+                                } else {
+                                    delete input.dataset["update"];
+                                    delete input.dataset["shortened"];
+                                    input.value = await self.generateLink();
+                                }
+                            });
                     }
+                } else {
+                    if (!input.classList.contains('tc-url')) {
+                        input.value = await self.generateIframe();
+                    } else {
+                        if (input.dataset["update"]) {
+                            delete input.dataset["update"];
+                            delete input.dataset["shortened"];
+                            input.value = await self.generateLink();
+                        }
+                    }
+
+                    input.select();
                 }
-
-                input.select();
-            }            
-        };
-
-        var unselectInputField = function () {
-            document.getSelection().removeAllRanges();
-            document.getSelection().addRange(document.createRange());
-        };
-
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.tc-ctl-share-url-box button', function (evt) {
-            const btn = evt.target;
-            const isCopyBtn = !(btn.classList.contains('shorten'));
-
-            const copy = async function (value) {
-                await selectInputField(btn);
-
-                document.execCommand('copy');
-
-                btn.textContent = self.getLocaleString('copied');
-
-                setTimeout(function () {
-                    btn.textContent = self.getLocaleString((isCopyBtn ? 'copy' : 'shorten'));
-                    unselectInputField();
-                }, 1000);
             };
 
-            if (!isCopyBtn) {                
-                selectInputField(btn, true);
-            } else {
-                copy();
-            }
-        }));
+            var unselectInputField = function () {
+                document.getSelection().removeAllRanges();
+                document.getSelection().addRange(document.createRange());
+            };
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('input[type=text]', function (evt) {
-            selectInputField(evt.target);
-        }));
+            self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.tc-ctl-share-url-box button', function (evt) {
+                const btn = evt.target;
+                const isCopyBtn = !(btn.classList.contains('shorten'));
 
-        //Deshabilitar el click de ratón en los enlaces de compartir cuando están deshabilitados
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.ga-share-icon.tc-disabled', function (evt) {
-            evt.stopImmediatePropagation();
-            evt.preventDefault();
-            return false;
-        }));
+                const copy = async function (value) {
+                    await selectInputField(btn);
 
-        //Enviar por e-mail
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('a.share-email', async function (evt) {
-            evt.preventDefault();
-            var url = await self.generateLink();
+                    document.execCommand('copy');
 
-            if (url) {
-                const body = encodeURIComponent(url + "\n");
-                if (body.length > self.MAILTO_MAX_LENGTH) {
-                    map.toast(self.getLocaleString('urlTooLongForMailto'), { type: TC.Consts.msgType.WARNING });
+                    btn.textContent = self.getLocaleString('copied');
+
+                    setTimeout(function () {
+                        btn.textContent = self.getLocaleString((isCopyBtn ? 'copy' : 'shorten'));
+                        unselectInputField();
+                    }, 1000);
+                };
+
+                if (!isCopyBtn) {
+                    selectInputField(btn, true);
+                } else {
+                    copy();
                 }
-                window.location.href = 'mailto:?body=' + body;
-            }
-        }));
+            }));
 
-        //Generar código QR        
-        self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.qr-generator", function (evt) {
-            evt.preventDefault();
-            const qrContainer = self._dialogDiv.querySelector(".qrcode");
-            qrContainer.innerHTML = '';
+            self.div.addEventListener('click', TC.EventTarget.listenerBySelector('input[type=text]', function (evt) {
+                selectInputField(evt.target);
+            }));
 
-            if (self._dialogDiv.querySelector('.' + self.CLASS + '-qr-alert').classList.contains(TC.Consts.classes.HIDDEN)) {
-                self.makeQRCode(qrContainer, 256, 256).then(function (qrCodeBase64) {
-                    if (qrCodeBase64) {
-                        TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-qr-dialog'));
+            //Deshabilitar el click de ratón en los enlaces de compartir cuando están deshabilitados
+            self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.ga-share-icon.tc-disabled', function (evt) {
+                evt.stopImmediatePropagation();
+                evt.preventDefault();
+                return false;
+            }));
+
+            //Enviar por e-mail
+            self.div.addEventListener('click', TC.EventTarget.listenerBySelector('a.share-email', async function (evt) {
+                evt.preventDefault();
+                self.shortenedLink().then(function (url) {
+                    if (url) {
+                        const body = encodeURIComponent(url + "\n");
+                        if (body.length > self.MAILTO_MAX_LENGTH) {
+                            map.toast(self.getLocaleString('urlTooLongForMailto'), { type: TC.Consts.msgType.WARNING });
+                        }
+                        window.location.href = 'mailto:?body=' + body;
                     }
                 });
-            } else {
-                TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-qr-dialog'));
-            }
-        }));
+            }));
+
+            //Generar código QR        
+            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.qr-generator", function (evt) {
+                evt.preventDefault();
+                const qrContainer = self._dialogDiv.querySelector(".qrcode");
+                qrContainer.innerHTML = '';
+
+                if (self._dialogDiv.querySelector('.' + self.CLASS + '-qr-alert').classList.contains(TC.Consts.classes.HIDDEN)) {
+                    self.makeQRCode(qrContainer, 256, 256).then(function (qrCodeBase64) {
+                        if (qrCodeBase64) {
+                            TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-qr-dialog'));
+                        }
+                    });
+                } else {
+                    TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-qr-dialog'));
+                }
+            }));
 
 
-        const openSocialMedia = function (win, url, process) {
-            if (url && url.trim().length > 0) {
-                win.location.href = process(url);
-            } else {
-                TC.error(self.getLocaleString('urlTooLongForShortener'));
-                win.close();
-            }
-        };
+            const openSocialMedia = function (win, url, process) {
+                if (url && url.trim().length > 0) {
+                    win.location.href = process(url);
+                } else {
+                    TC.error(self.getLocaleString('urlTooLongForShortener'));
+                    win.close();
+                }
+            };
 
-        //Compartir en Facebook
-        self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.share-fb", function (evt) {
-            evt.preventDefault();
-
-            const w = window.open();
-            self.shortenedLink().then(function (url) {
-                openSocialMedia(w, url, function (url) {
-                    return "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url)
-                });
-            });
-
-            return false;
-        }));
-
-        //Compartir en Twitter
-        self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.share-twitter", function (evt) {
-            evt.preventDefault();
-
-            const w = window.open();
-            self.shortenedLink().then(function (url) {
-                openSocialMedia(w, url, function (url) {
-                    var titulo = encodeURIComponent(window.document.title ? window.document.title : "Visor API SITNA");
-                    return "https://twitter.com/intent/tweet?text=" + titulo + "&url=" + encodeURIComponent(url);
-                });
-            });
-
-            return false;
-        }));
-
-        //Compartir en Whatsapp
-        if (TC.Util.detectMobile()) {
-            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.share-whatsapp", function (evt) {
+            //Compartir en Facebook
+            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.share-fb", function (evt) {
                 evt.preventDefault();
 
-                self.shortenedLink().then(async function (url) {
-                    var waText = 'whatsapp://send?text=';
-                    if (url !== undefined) {
-                        location.href = waText + encodeURIComponent(url);
-                    } else {
-                        location.href = waText + encodeURIComponent(await self.generateLink());
-                    }
+                const w = window.open();
+                self.shortenedLink().then(function (url) {
+                    openSocialMedia(w, url, function (url) {
+                        return "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url)
+                    });
                 });
 
                 return false;
             }));
-        }
 
-        //Guardar en marcadores
-        self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.share-star", async function (evt) {
-            evt.preventDefault();
+            //Compartir en Twitter
+            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.share-twitter", function (evt) {
+                evt.preventDefault();
 
-            var bookmarkURL = await self.generateLink();
-            var bookmarkTitle = document.title;
+                const w = window.open();
+                self.shortenedLink().then(function (url) {
+                    openSocialMedia(w, url, function (url) {
+                        var titulo = encodeURIComponent(window.document.title ? window.document.title : "Visor API SITNA");
+                        return "https://twitter.com/intent/tweet?text=" + titulo + "&url=" + encodeURIComponent(url);
+                    });
+                });
 
+                return false;
+            }));
+
+            //Compartir en Whatsapp
             if (TC.Util.detectMobile()) {
-                // Mobile browsers
-                alert(ctlProto.MOBILEFAV);
-            } else if (window.sidebar && window.sidebar.addPanel) {
-                // Firefox version < 23
-                window.sidebar.addPanel(bookmarkTitle, bookmarkURL, '');
-            } else if ((window.sidebar && /Firefox/i.test(navigator.userAgent)) || (window.opera && window.print)) {
-                // Firefox version >= 23 and Opera Hotlist                
+                self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.share-whatsapp", function (evt) {
+                    evt.preventDefault();
 
-                window.location.href = bookmarkURL;
-                alert((/Mac/i.test(navigator.userAgent) ? 'Cmd' : 'Ctrl') + ctlProto.NAVALERT);
+                    self.shortenedLink().then(async function (url) {
+                        var waText = 'whatsapp://send?text=';
+                        if (url !== undefined) {
+                            location.href = waText + encodeURIComponent(url);
+                        } else {
+                            location.href = waText + encodeURIComponent(await self.generateLink());
+                        }
+                    });
 
-            } else if (window.external && ('AddFavorite' in window.external)) {
-                // IE Favorite
-                window.external.AddFavorite(bookmarkURL, bookmarkTitle);
-            } else {
-                // Other browsers (mainly WebKit - Chrome/Safari)                
-                window.location.href = bookmarkURL;
-                alert((/Mac/i.test(navigator.userAgent) ? 'Cmd' : 'Ctrl') + ctlProto.NAVALERT);
+                    return false;
+                }));
             }
 
-            return false;
-        }));
+            //Guardar en marcadores
+            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("a.share-star", async function (evt) {
+                evt.preventDefault();
 
-        //Cuando se añada o borre una capa, comprobamos de nuevo si la URL cumple los requisitos de longitud para habilitar el control
-        //map.on(TC.Consts.event.MAPLOAD, function () {
-        //    map.on(TC.Consts.event.LAYERREMOVE + ' ' + TC.Consts.event.LAYERADD, function (e) {
-        //        self.generateLink();
-        //    });
-        //});        
+                var bookmarkURL = await self.generateLink();
+                var bookmarkTitle = document.title;
+
+                if (TC.Util.detectMobile()) {
+                    // Mobile browsers
+                    alert(ctlProto.MOBILEFAV);
+                } else if (window.sidebar && window.sidebar.addPanel) {
+                    // Firefox version < 23
+                    window.sidebar.addPanel(bookmarkTitle, bookmarkURL, '');
+                } else if ((window.sidebar && /Firefox/i.test(navigator.userAgent)) || (window.opera && window.print)) {
+                    // Firefox version >= 23 and Opera Hotlist                
+
+                    window.location.href = bookmarkURL;
+                    alert((/Mac/i.test(navigator.userAgent) ? 'Cmd' : 'Ctrl') + ctlProto.NAVALERT);
+
+                } else if (window.external && ('AddFavorite' in window.external)) {
+                    // IE Favorite
+                    window.external.AddFavorite(bookmarkURL, bookmarkTitle);
+                } else {
+                    // Other browsers (mainly WebKit - Chrome/Safari)                
+                    window.location.href = bookmarkURL;
+                    alert((/Mac/i.test(navigator.userAgent) ? 'Cmd' : 'Ctrl') + ctlProto.NAVALERT);
+                }
+
+                return false;
+            }));
+
+            //Cuando se añada o borre una capa, comprobamos de nuevo si la URL cumple los requisitos de longitud para habilitar el control
+            //map.on(TC.Consts.event.MAPLOAD, function () {
+            //    map.on(TC.Consts.event.LAYERREMOVE + ' ' + TC.Consts.event.LAYERADD, function (e) {
+            //        self.generateLink();
+            //    });
+            //});     
+
+            map.loaded(() => {
+                if (!self.div.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                    self.update();
+                }
+            });
+        });
 
         return result;
     };

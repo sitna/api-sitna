@@ -17,7 +17,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.Cfg.html#property_layout">SITNA.Cfg.layout</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/tutorial-layout_cfg.html">una maquetación</a>.</p>
         <p>Establecer un maquetado distinto al que existe por defecto.</p>
     </div>
     <script src="../"></script>
@@ -28,7 +28,7 @@
         // Obtener el idioma de interfaz de usuario
         var selectedLocale = location.search.substr(location.search.indexOf("?lang=") + 6) || "es-ES";
         // Establecer un proxy porque se hacen peticiones a otro dominio.
-        SITNA.Cfg.proxy = "proxy.ashx?";
+        SITNA.Cfg.proxy = "proxy/proxy.ashx?";
 
         SITNA.Cfg.layout = "layout/example";
         var map = new SITNA.Map("mapa", {

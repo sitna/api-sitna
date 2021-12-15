@@ -77,14 +77,15 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     .on(TC.Consts.event.VECTORUPDATE + ' ' + TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
                         const layer = e.layer;
                         // Se introduce un timeout porque pueden venir muchos eventos de este tipo seguidos y no tiene sentido actualizar con cada uno
-                        if (self._updateLayerTreeTimeout) {
-                            clearTimeout(self._updateLayerTreeTimeout);
+                        self._updateLayerTreeTimeouts = self._updateLayerTreeTimeouts || {};
+                        if (self._updateLayerTreeTimeouts[layer.id]) {
+                            clearTimeout(self._updateLayerTreeTimeouts[layer.id]);
                         }
-                        self._updateLayerTreeTimeout = setTimeout(function () {
+                        self._updateLayerTreeTimeouts[layer.id] = setTimeout(function () {
                             if (self.map.workLayers.indexOf(layer) > -1) {
                                 // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
                                 self.updateLayerTree(layer);
-                                delete self._updateLayerTreeTimeout;
+                                delete self._updateLayerTreeTimeouts[layer.id];
                             }
                         }, 100);
                     })
@@ -173,7 +174,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
         return /[&?]REQUEST=getLegendGraphic/i.test(url);
     };
 
-    /**
+    /*
      * Carga y le da estilo a la imagen de la leyenda.
      * @param {string} requestMethod Si queremos pedir la imagen de la leyenda por POST, podemos especificarlo utilizando el parámetro requestMethod.
      */
@@ -230,7 +231,11 @@ TC.inherit(TC.control.MapContents, TC.Control);
                 toolProxification.fetchImage(imgSrc).then(function (i) {
                     img.src = i.src;
                 }).catch(function (err) {
-                    TC.error(err.statusText);
+                    if (err.status && (err.status === 404 || err.status === 401))
+                        TC.error(TC.Util.getLocaleString(layer.map.options.locale, 'simbologyImgNotFound',
+                            { url: imgSrc }));
+                    else
+                        TC.error(err);
                 });                
             }
         }

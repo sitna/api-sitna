@@ -1,7 +1,34 @@
-/// <reference path="../feature/Marker.js" />
-/// <reference path="../feature/Point.js" />
-/// <reference path="../ol/ol.js" />
 
+/**
+  * Opciones de control de StreetView.
+  * @typedef StreetViewOptions
+  * @extends ControlOptions
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {string} [googleMapsKey] - El control de StreetView hace uso de la API de Google Maps para funcionar. 
+  * Esta propiedad establece la clave de uso asociada al sitio donde está alojada la aplicación que usa la API SITNA. 
+  * No es necesaria para hacer funcionar el control pero es recomendable obtener una para garantizar el servicio por parte de Google.
+  * 
+  * Puede obtener más información en el [sitio para desarrolladores de Google](https://developers.google.com/maps/documentation/javascript/get-api-key).
+  * @property {HTMLElement|string} [viewDiv] - Elemento del DOM en el que mostrar la vista de StreetView o valor de atributo id de dicho elemento.
+  * @example <caption>[Ver en vivo](../examples/cfg.StreetViewOptions.html)</caption> {@lang html}
+  * <div id="mapa"/>
+  * <div id="sv"/>
+  * <script>
+  *     // Creamos un mapa con el control de StreetView.
+  *     // La vista de StreetView se debe dibujar en el elemento con identificador "sv".
+  *     // Se utilizará la clave de Google Maps para el SITNA.
+  *     // (Solamente es válida en el sitio web del SITNA, está aquí a título de ejemplo).
+  *     var map = new SITNA.Map("mapa", {
+  *         controls: {
+  *             streetView: {
+  *                 viewDiv: "sv",
+  *                 googleMapsKey: "AIzaSyDyXgqllcajbMjx8yQxEX28VgA9nQOhtCM"
+  *             }
+  *         }
+  *     });
+  * </script>
+  */
 
 if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
@@ -359,8 +386,6 @@ if (!TC.Control) {
                                                 delete pegmanMarker.options.url;
                                                 pegmanMarker.options.cssClass = 'tc-marker-sv-' + ((Math.round(16.0 * self._sv.getPov().heading / 360) + 16) % 16);
                                                 pegmanMarker.setStyle(pegmanMarker.options);
-
-                                                self.layer.refresh();
                                             }
                                         });
                                         google.maps.event.addListener(self._sv, 'status_changed', function () {

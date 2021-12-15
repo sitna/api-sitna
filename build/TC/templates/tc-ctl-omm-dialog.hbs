@@ -1,0 +1,27 @@
+<div class="tc-ctl-omm-dialog tc-modal">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{{i18n "newOfflineMap"}}</h3>
+            <div class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <input type="text" class="tc-ctl-omm-txt-name" placeholder="{{i18n "nameRequired"}}" required />
+            <div class="tc-ctl-omm-bl-panel">
+                <h4>{{i18n "availableOfflineMaps"}}</h4>
+                <p class="tc-ctl-omm-bl-panel-txt">{{i18n "selectAtLeastOne"}}</p>
+                <ul class="tc-ctl-omm-bl-list"></ul>
+            </div>
+            <div class="tc-ctl-omm-res-panel tc-hidden">
+                <h4>{{i18n "maxRes"}}</h4>
+                <div class="tc-ctl-omm-res"></div>
+                <input type="range" class="tc-ctl-omm-rng-maxres" disabled value="0" title="{{i18n "maxRes"}}">
+            </div>
+            <div class="tc-ctl-omm-tile-count tc-hidden"></div>
+        </div>
+        <div class="tc-modal-footer">
+            <button class="tc-button tc-modal-close tc-ctl-omm-btn-ok" disabled>{{i18n "ok"}}</button>
+            <button type="button" class="tc-button tc-modal-close tc-ctl-omm-btn-cancel">{{i18n "cancel"}}</button>
+        </div>
+    </div>
+</div>

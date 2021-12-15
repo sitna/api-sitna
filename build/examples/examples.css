@@ -23,34 +23,34 @@
         transition: visibility 0s .1s, opacity .1s linear;
     }
 
-.instructions p {
-    margin: 0.2em 0 0.2em 0;
-}
+    .instructions p {
+        margin: 0.2em 0 0.2em 0;
+    }
 
-.instructions a {
-    color:#c00;
-}
+    .instructions a {
+        color: #c00;
+    }
 
-.instructions a:visited {
-    color:#700;
-}
+        .instructions a:visited {
+            color: #700;
+        }
 
-.instructions a:hover { 
-    color:#f00;
-    text-decoration:none;
-}
+        .instructions a:hover {
+            color: #f00;
+            text-decoration: none;
+        }
 
 .controls {
     top: 140px;
 }
 
-.controls div {
-    margin: 0.2em;
-}
+    .controls div {
+        margin: 0.2em;
+    }
 
-.controls input[type=number] {
-    width: 4em;
-}
+    .controls input[type=number] {
+        width: 4em;
+    }
 
 .close-btn {
     position: absolute;
@@ -121,3 +121,19 @@ body > pre.prettyprint {
         opacity: 0;
         transition: visibility 0s .25s, opacity .25s linear;
     }
+
+div.tc-map.tc-lo div.tc-ctl-p-results {
+    top: 26em;
+}
+
+    div.tc-map.tc-lo div.tc-ctl-p-results div.prcollapsed {
+        top: 26em;
+    }
+
+    div.tc-map.tc-lo div.tc-ctl-p-results.tc-resizable {
+        top: 10em;
+    }
+
+        div.tc-map.tc-lo div.tc-ctl-p-results.tc-resizable div.prcollapsed {
+            top: 10em;
+        }

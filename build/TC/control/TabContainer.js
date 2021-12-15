@@ -1,3 +1,38 @@
+
+/**
+  * Opciones de un control que contiene pestañas de selección.
+  * @typedef TabContainerOptions
+  * @ignore
+  * @extends ControlOptions
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {boolean} [deselectableTabs=false] - Si se establece a `true`, las pestañas se pueden deseleccionar pulsando sobre ellas 
+  * cuando ya estaban seleccionadas previamente.
+  * @example <caption>[Ver en vivo](../examples/cfg.TabContainerOptions.html)</caption> {@lang html}
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos una capa WMS que tenga un WFS asociado del que poder descargar datos.
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "cp",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "https://idena.navarra.es/ogc/wms",
+  *             layerNames: ["IDENA:DIRECC_Pol_CodPostal"]
+  *         }
+  *     ];
+  *     // Creamos un mapa con el control de descargas en el que se pueden deseleccionar las pestañas.
+  *     var map = new SITNA.Map("mapa", {
+  *         controls: {
+  *             download: {
+  *                 div: "slot1",
+  *                 deselectableTabs: true
+  *             }
+  *         }
+  *     });
+  * </script>
+  */
+
 TC.control = TC.control || {};
 
 if (!TC.control.Container) {
@@ -97,7 +132,7 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
                 const checkbox = closest.querySelector(self._selectors.RADIOBUTTON);
                 const newValue = checkbox.value;
                 const elms = self.div.querySelectorAll(self._selectors.ELEMENT);
-                if (self._oldValue === newValue && self.options.deselectable) {
+                if (self._oldValue === newValue && self.options.deselectableTabs) {
                     setTimeout(function () {
                         checkbox.checked = false;
                     }, 0);

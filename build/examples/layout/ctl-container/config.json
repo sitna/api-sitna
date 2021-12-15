@@ -2,6 +2,7 @@
   "i18n": true,
   "controls": {
     "navBar": true,
+    "search": false,
     "coordinates": false,
     "legend": {
       "div": "legend"

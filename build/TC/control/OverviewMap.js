@@ -1,3 +1,13 @@
+
+/**
+  * Opciones de control de mapa de situación.
+  * @typedef OverviewMapOptions
+  * @extends ControlOptions
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {string|object} layer - Identificador de capa para usar como mapa de fondo u objeto de opciones de capa.
+  */
+
 TC.control = TC.control || {};
 
 if (!TC.Control) {

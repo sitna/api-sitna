@@ -1,3 +1,36 @@
+
+/**
+  * Opciones del control de dibujo, medida y modificación de geometrías en el mapa.
+  * @typedef DrawMeasureModifyOptions
+  * @ignore
+  * @extends ControlOptions
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {boolean|ElevationOptions} [displayElevation=false] - Si se establece a un valor verdadero, los puntos dibujados mostrarán la elevación del mapa en las 
+  * coordenadas del punto, y las líneas dibujadas mostrarán un gráfico con su perfil de elevación.
+  * @property {string} [mode] - Modo de dibujo, es decir, qué tipo de geometría se va a dibujar.
+  * 
+  * Para establecer el modo hay que darle un valor de {@link SITNA.Consts.geom}. Este control tiene tres modos: 
+  * punto, línea y polígono, correspondientes con los valores {@link SITNA.Consts.geom.POINT}, 
+  * {@link SITNA.Consts.geom.POLYLINE} y {@link SITNA.Consts.geom.POLYGON}.
+  * 
+  * Si esta opción no se especifica, se mostrarán los tres modos en tres pestañas de la interfaz de usuario del control.
+  * @example <caption>[Ver en vivo](../examples/cfg.DrawMeasureModifyOptions.html)</caption> {@lang html}
+  * <div id="mapa"/>
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos el control de dibujo, medida y modificación de geometrías en el primer contenedor.
+  *     SITNA.Cfg.controls.drawMeasureModify = {
+  *         div: "slot1",
+  *         displayElevation: { // Se mostrarán elevaciones en los resultados de medida
+  *             resolution: 10 // se mostrará un punto en el perfil cada 10 metros
+  *         }
+  *     };
+  *     var map = new SITNA.Map("mapa");
+  * </script>
+  */
+
 TC.control = TC.control || {};
 
 if (!TC.control.Measure) {
@@ -109,7 +142,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                     }
                                     const feature = e.features[e.features.length - 1];
                                     if (feature) {
-                                        self.showMeasures(self.getFeatureMeasureData(feature));
+                                        self.showMeasurements(self.getFeatureMeasureData(feature));
                                         const style = feature._originalStyle || feature.getStyle();
                                         switch (true) {
                                             case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
@@ -158,7 +191,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                 if (e.layer === self.layer) {
                                     const setMeasures = function (feature) {
                                         const measureData = self.getFeatureMeasureData(feature);
-                                        self.showMeasures(measureData);
+                                        self.showMeasurements(measureData);
                                         self.setFeatureMeasureData(feature);
                                     };
                                     setMeasures(e.feature);
@@ -295,14 +328,13 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                             .on(TC.Consts.event.STYLECHANGE, function (e) {
                                 self.onStyleChange(e);
                             });
-                    });
-
+                    });  
                     self._pointDrawControlPromise = map.addControl('draw', {
                         id: pointDrawControlId,
                         div: self.div.querySelector('.' + TC.control.Measure.prototype.CLASS + '-point'),
                         mode: TC.Consts.geom.POINT,
                         persistent: self.persistentDrawControls,
-                        styleTools: true,
+                        styling: true,
                         layer: self.layer
                     });
 
@@ -317,7 +349,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                         pointDrawControl
                             .on(TC.Consts.event.DRAWEND, function (e) {
                                 const updateChanges = function (feat) {
-                                    self.showMeasures({ coords: feat.geometry, units: map.wrap.isGeo() ? 'degrees' : 'm' });
+                                    self.showMeasurements({ coords: feat.geometry, units: map.wrap.isGeo() ? 'degrees' : 'm' });
                                     self.setFeatureMeasureData(feat);
                                 };
                                 updateChanges(e.feature);
@@ -411,9 +443,14 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
     ctlProto.setMode = function (mode) {
         const self = this;
         if (mode === TC.Consts.geom.POINT) {
-            self.pointDrawControl.activate();
+            self._pointDrawControlPromise.then(function (ctl) {
+                ctl.activate();
+                TC.control.Measure.prototype.setMode.call(self, mode);
+            });
         }
-        return TC.control.Measure.prototype.setMode.call(self, mode);
+        else {
+            TC.control.Measure.prototype.setMode.call(self, mode);
+        }
     };
 
     ctlProto.setFeatureMeasureData = function (feature) {
@@ -483,9 +520,9 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         return result;
     };
 
-    ctlProto.showMeasures = function (options) {
+    ctlProto.showMeasurements = function (options) {
         const self = this;
-        TC.control.Measure.prototype.showMeasures.call(self, options);
+        TC.control.Measure.prototype.showMeasurements.call(self, options);
         options = options || {};
         const locale = self.map.options.locale || TC.Cfg.locale
         if (options.coords) {

@@ -10,6 +10,7 @@ if (!TC.Control) {
         const self = this;
         TC.Control.apply(this, arguments);
         self.serviceWorkerEnabled = false;
+        self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || true;
     };
 
     TC.inherit(TC.control.SWCacheClient, TC.Control);
@@ -75,7 +76,9 @@ if (!TC.Control) {
                 map.toast(self.getLocaleString('frameOrNotCompatible.warning'), { type: TC.Consts.msgType.WARNING });
             }
             else {
-                map.toast(self.getLocaleString('browserNotCompatible.warning'), { type: TC.Consts.msgType.WARNING });
+                if (self.serviceWorkerIsRequired) {
+                    map.toast(self.getLocaleString('browserNotCompatible.warning'), { type: TC.Consts.msgType.WARNING });
+                }
             }
         });
         return result;

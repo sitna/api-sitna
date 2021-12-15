@@ -43,9 +43,11 @@ TC.tool.Elevation = function (options) {
 (function () {
     const toolProto = TC.tool.Elevation.prototype;
 
-    let requestUID = 0;
+    let requestUID = 1;
     const getRequestUID = function () {
-        return requestUID++;
+        const result = requestUID.toString();
+        requestUID++;
+        return result;
     };
 
     toolProto.getService = function (idx) {
@@ -397,6 +399,7 @@ TC.tool.Elevation = function (options) {
                             if (Array.isArray(coords)) {
                                 return coords.reduce((prev, cur) => prev + getNumVertices(cur), 0);
                             }
+                            return 0;
                         };
                         coordsArray.forEach(function (coords, idx) {
                             const feat = features[idx];
@@ -407,7 +410,7 @@ TC.tool.Elevation = function (options) {
                                     copyElevation(coords, featCoords);
                                     feat.setCoords(featCoords);
                                 }
-                                else {
+                                else if (coords) {
                                     feat.setCoords(coords);
                                 }
                             }

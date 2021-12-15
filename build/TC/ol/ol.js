@@ -991,7 +991,7 @@
             }
             wrap.$events.on(TC.Consts.event.BEFORETILELOAD, beforeTileLoadHandler);
 
-            wrap.$events.on(TC.Consts.event.TILELOAD, function (e) {
+            wrap.$events.on(TC.Consts.event.TILELOAD + ' ' + TC.Consts.event.TILELOADERROR, function (e) {
                 loadingTileCount = loadingTileCount - 1;
                 if (loadingTileCount <= 0) {
                     loadingTileCount = 0;
@@ -1145,17 +1145,22 @@
             // URI: si la animacion no existe ponemos duracion 0
             // flacunza: en caso de que animate=undefined, se anima
             const center = [((extent[0] + extent[2]) / 2), ((extent[1] + extent[3]) / 2)];
-            if (options.animate === void (0) || options.animate) {
-                view.animate({
-                    resolution: res,
-                    center: center,
-                    duration: TC.Consts.ZOOM_ANIMATION_DURATION
-                }, resolve);
+            if (Number.isNaN(center[0]) || Number.isNaN(center[1])) {
+                reject(new Error("Extent not valid: " + extent));
             }
             else {
-                view.setCenter(center);
-                view.setResolution(res);
-                resolve();
+                if (options.animate === void (0) || options.animate) {
+                    view.animate({
+                        resolution: res,
+                        center: center,
+                        duration: TC.Consts.ZOOM_ANIMATION_DURATION
+                    }, resolve);
+                }
+                else {
+                    view.setCenter(center);
+                    view.setResolution(res);
+                    resolve();
+                }
             }
         };
 
@@ -1243,10 +1248,10 @@
         return this.map.getView().getResolution();
     };
 
-    TC.wrap.Map.prototype.setResolution = function (resolution) {
-        this.getMap().then(function (olMap) {
-            olMap.getView().setResolution(resolution);
-        });
+    TC.wrap.Map.prototype.setResolution = async function (resolution) {
+        const olMap = await this.getMap();
+        olMap.getView().setResolution(resolution);
+        return resolution;
     };
 
     TC.wrap.Map.prototype.setRotation = function (rotation) {
@@ -1289,6 +1294,11 @@
         return result;
     };
 
+    TC.wrap.Map.prototype.getCanvas = function () {
+        const self = this;
+        return Array.from(self.parent.div.querySelectorAll('.ol-viewport canvas:not(.tc-ctl-ovmap canvas)'));
+    };
+
     TC.wrap.Map.prototype.isNative = function (map) {
         return map instanceof ol.Map;
     };
@@ -1307,24 +1317,10 @@
                 [TC.apiLocation + TC.Consts.url.DRAGGABILLY],
                 function () {
                     self.getMap().then(function (olMap) {
-                        if (!popupCtl.popupDiv) {
+                        if (!popupCtl.wrap.popup) {
                             // No popups yet
-                            const popupDiv = TC.Util.getDiv();
-                            popupCtl.popupDiv = popupDiv;
-                            if (window.$) {
-                                popupCtl.$popupDiv = $(popupDiv);
-                            }
-                            popupDiv.classList.add(TC.control.Popup.prototype.CLASS);
-                            popupCtl.contentDiv = TC.Util.getDiv();
-                            popupCtl.contentDiv.classList.add(TC.control.Popup.prototype.CLASS + '-content');
-                            popupCtl.popupDiv.appendChild(popupCtl.contentDiv);
-                            popupCtl.menuDiv = TC.Util.getDiv();
-                            popupCtl.menuDiv.classList.add(TC.control.Popup.prototype.CLASS + '-menu');
-                            popupCtl.popupDiv.appendChild(popupCtl.menuDiv);
-                            self.parent.div.appendChild(popupDiv);
-
                             var popup = new ol.Overlay({
-                                element: popupDiv,
+                                element: popupCtl.popupDiv,
                                 positioning: ol.OverlayPositioning.BOTTOM_LEFT
                             });
                             olMap.addOverlay(popup);
@@ -1481,8 +1477,11 @@
             }
 
             if (idealWidth !== bounding.width || idealHeight !== bounding.height) {
-                var newSize = [idealWidth, idealHeight];
-                event.target.setSize(newSize);
+                const oldSize = event.target.getSize();
+                if (oldSize[0] != idealWidth || oldSize[1] != idealHeight) {
+                    var newSize = [idealWidth, idealHeight];
+                    event.target.setSize(newSize);
+                }
             }
         };
 
@@ -1491,13 +1490,14 @@
         }
     };
 
-    var getFormatFromName = function (name) {
+    var getFormatFromName = function (name, extractStyles) {
         switch (name) {
             case TC.Consts.layerType.KML:
             case TC.Consts.mimeType.KML:
             case TC.Consts.format.KMZ:
                 return new ol.format.KMLCustom({
-                    showPointNames: false
+                    showPointNames: false,
+                    extractStyles: extractStyles !== undefined ? extractStyles : true
                 });
             case TC.Consts.layerType.GPX:
             case TC.Consts.mimeType.GPX:
@@ -1551,7 +1551,7 @@
                 }
             }
             return result;
-        });
+        });        
         var format = getFormatFromName(options.format);
 
         if (format instanceof ol.format.KML) {
@@ -1581,6 +1581,7 @@
                             vectorContext.setStyle(style);
                             vectorContext.drawGeometry(new ol.geom.Point([position, position]));
                             const newFeature = new ol.Feature(geom);
+                            newFeature.setId(feature.getId());
                             newFeature.setProperties(feature.getProperties());
                             newFeature.setStyle(new ol.style.Style({
                                 image: new ol.style.Icon({
@@ -1776,6 +1777,7 @@
                 ol.format.GML3CRS84,
                 ol.format.GML2CRS84,
                 ol.format.GML3,
+                //ol.format.GML32,
                 ol.format.GeoJSON,
                 function () {
                     return new ol.format.WKT({
@@ -1786,7 +1788,7 @@
             ]
         };
         if (opts.dropTarget) {
-            ddOptions.target = TC.getDiv(opts.dropTarget);
+            ddOptions.target = TC.Util.getDiv(opts.dropTarget);
         }
         else {
             ddOptions.target = self.parent.div;
@@ -1806,9 +1808,9 @@
                     li.removeWait(self._featureImportWaitId);
                 }
                 const featuresWithGeometry = features.filter(f => f.geometry);
-                if (featuresWithGeometry.length) {
+                if (featuresWithGeometry.length) {                    
                     self.parent.trigger(TC.Consts.event.FEATURESIMPORT, {
-                        features: featuresWithGeometry, fileName: e.file.name, dropTarget: e.target.target
+                        features: featuresWithGeometry, fileName: e.file.name, dropTarget: e.target.target, timeStamp: e.file.lastModified
                     });
                 }
                 if (!features.length || features.some(f => !f.geometry)) {
@@ -1861,93 +1863,19 @@
                     })
                 }
             }
-
+            
             ddInteraction.handleResult_ = async function (file, evt) {
                 var _self = this;
                 //URI: si el fichero es ZIP o KMZ lo proceso sino llamo a la función original con los datos originales
                 zipFiles = null;
-                const defaultEncoding = "ISO-8859-1"
-                if (file.type === "application/x-zip-compressed" || file.type === "application/vnd.google-earth.kmz" || (!file.type && file.name.match(/\.kmz|\.zip$/ig))) {
-                    TC.loadJS(!window.JSZip, [TC.apiLocation + 'lib/jszip/jszip', TC.apiLocation + 'lib/iconv-lite/iconv-lite'], function () {
-                        (async function (file) {
-                            var zip = new JSZip();
-                            try {
-                                var zipContent = await zip.loadAsync(file, {
-                                    decodeFileName: function (bytes) {
-                                        return iconv.decode(bytes, 'cp858');
-                                    }
-                                });
-                            }
-                            catch (err) {
-                                throw err;
-                            }
-                            const zipFileName = file.name;
-                            //busco archivos shape
-                            var shpFiles = zip.file(/\.shp$/ig);
-                            if (shpFiles.length === 0) {
-                                // si está vacio lanzo un error
-                                if (!Object.keys(zipContent.files).length)
-                                    self.parent.trigger(TC.Consts.event.FEATURESIMPORTERROR, {
-                                        file: file
-                                    });
-                                //URI:Leo el contenido del zip e itero por cada fichero
-                                zipContent.forEach(async function (fileName, file) {
-                                    if (file.dir) return;
-                                    zipFiles = { total: Object.keys(zipContent.files).length, failed: 0, zipName: zipFileName };
-                                    //TODO: Desestimar fichero no geográficos
-                                    file.async("blob").then(function (data) {
-                                        const newFile = new File([data], fileName);
-                                        //URI: El contenid del fichero lo manejo con un filereader que es lo que usa internamente la función original para leer las features 
-                                        const reader = new FileReader();
-                                        reader.onload = function (evt) {
-                                            console.log(newFile.name);
-                                            //URI: una vez que he cargado los datos nuevos en el filereader llamo a la función original pasando el nuevo File y el nuevo FileReader
-                                            //originalFnc.apply(_self, [newFile, evt]);
-                                            //flacunza: mejora de lo anterior: se llama al nuevo handleResult_ en vez de a la función original, así admite GeoPackage zipeados y zips anidados.
-                                            _self.handleResult_(newFile, evt);
-                                        };
-                                        reader.readAsText(newFile);
-                                    });
-                                });
-                            }
-                            else {
-                                //si es un shape uso la libreria shp.js
-                                TC.loadJS(!window.shp, TC.apiLocation + 'lib/shpjs/shp', async function () {
-                                    for (let i = 0; i < shpFiles.length; i++) {
-                                        let shapeBaseNameMatch = /(.*\/)*(.+?)(\.[^.]*$|$)/i.exec(shpFiles[i].name)
-                                        let shapeBaseName = shapeBaseNameMatch[2] || shapeBaseNameMatch[1];
-
-                                        var shpFile = zipContent.file(new RegExp(shapeBaseName + ".shp$", "g"))[0];
-                                        var prj = zipContent.file(new RegExp(shapeBaseName + ".prj$", "g"))[0];
-                                        var encoding = zipContent.file(new RegExp("(" + shapeBaseName + ".cst)|(" + shapeBaseName + ".cpg)$", "g"))[0];
-                                        var dbf = zipContent.file(new RegExp(shapeBaseName + ".dbf$", "g"))[0];
-
-                                        var shapes;
-                                        try {
-                                            shapes = await shp.combine([
-                                                shp.parseShp(await getFileData(await shpFile.async("blob")), await getFileText(await prj.async("blob"))),
-                                                shp.parseDbf(await getFileData(await dbf.async("blob")), encoding ? await getFileText(await encoding.async("blob")) : defaultEncoding)])
-                                        }
-                                        catch (err) {
-                                            self.parent.trigger(TC.Consts.event.FEATURESIMPORTERROR, {
-                                                file: file
-                                            });
-                                            originalFnc.apply(_self, [file, { target: { result: null } }]);
-                                        }
-                                        var newFile = new File([], shapeBaseName + '.shp');
-                                        originalFnc.apply(_self, [newFile, { target: { result: JSON.stringify(shapes) } }]);
-                                    }
-                                })
-                            }
-
-                        })(file);
-                    });
-                }
-                else if (/\.gpkg$/ig.test(file.name))
-                    TC.loadJS(true, TC.apiLocation + 'lib/geopackage/geopackage.min.js', async function () {
+                const defaultEncoding = "ISO-8859-1";
+                //_self.getMap()._wrap.parent.dropFilesCounter = 0;
+                if (/\.gpkg$/ig.test(file.name) || (file.type === "application/geopackage+sqlite3") )
+                    TC.loadJS(true, TC.apiLocation + 'lib/geopackage/geopackage', async function () {
                         const manageError = function (err) {
                             if (err)
                                 TC.error(err, TC.Consts.msgErrorMode.CONSOLE);
+
                             originalFnc.apply(_self, [file, { target: { result: null } }]);
                         };
                         const loadFile = async function (array) {
@@ -1970,6 +1898,7 @@
                                     }
                                 }
                                 self.parent.on(TC.Consts.event.FEATURESIMPORT, manageLoad);
+                                if (vectorLayers.length > 1) window.dropFilesCounter = window.dropFilesCounter + vectorLayers.length - 1;
                                 for (var i = 0; i < vectorLayers.length; i++) {
                                     //vamos a ver si construimos en JSON
 
@@ -1979,6 +1908,8 @@
 
                                         var arr = [];
                                         for (const f of obj.results) {
+                                            if (f.hasOwnProperty("id"))
+                                                f.id = vectorLayers[i] + "." + f.id;
                                             if (f.geometry)
                                                 arr[arr.length] = f;
                                         }
@@ -1989,7 +1920,8 @@
                                             "features": arr
                                         }
                                         var newFile = new File([], vectorLayers[i]);
-                                        originalFnc.apply(_self, [newFile, { target: { result: JSON.stringify(jsonObj) } }]);
+                                        //window.dropFilesCounter = (window.dropFilesCounter ? window.dropFilesCounter + 1 : 1);
+                                        originalFnc.apply(_self, [newFile, { target: { result: jsonObj } }]);
 
                                     } catch (err) {
                                         notLoaded++;
@@ -2010,41 +1942,74 @@
                             manageError(ex);
                         }
                     });
-                else if (/\.(shp|dbf|prj|cst|cpg|dbf|sbn|sbx|shx)$/ig.test(file.name)) {
-                    const fileName = file.name.substring(0, file.name.lastIndexOf("."));
+                else if (!(/\.(json|geojson|kml|wkt|gml|gml2|gpx)$/ig.test(file.name))) {
+                    if (!/\.(shp)$/ig.test(file.name)) {
+                        window.dropFilesCounter--;
+                    }
+                    //const fileName = new RegExp(/(spaSITNA)*(\w+)(\.\w{2,})+$/gi).exec(file.name)[2];
+
+                    const fileName = /(spaSITNA)*((\w|\-)+)(\.\w{2,})/gi.test(file.name)?new RegExp(/(spaSITNA)*((\w|\-)+)(\.\w{2,})/gi).exec(file.name)[2]:file.name;
+
                     const extension = file.name.substring(file.name.lastIndexOf(".") + 1);
                     if (!zipUncompressed.hasOwnProperty(fileName)) {
-                        zipUncompressed[fileName] = {};
+                        zipUncompressed[fileName] = { isSHP: false };
                     }
-                    if (/\.(cst|cpg|prj)$/ig.test(file.name))
+                    if (/\.(cst|cpg|prj)$/ig.test(file.name)) {
                         zipUncompressed[fileName][extension] = await getFileText(file);
-                    else
+                        zipUncompressed[fileName]["isSHP"] = true;
+                    }
+                    else if (/\.(shp|dbf|str)$/ig.test(file.name)) {
                         zipUncompressed[fileName][extension] = await getFileData(file);
+                        zipUncompressed[fileName]["isSHP"] = true;
+                    }
+
                     clearTimeout(zipUncompressed[fileName].timer);
                     zipUncompressed[fileName].timer = setTimeout(function () {
-                        TC.loadJS(!window.shp, TC.apiLocation + 'lib/shpjs/shp', async function () {
-                            var shapes;
-                            try {
-                                shapes = await shp.combine([
-                                    shp.parseShp(zipUncompressed[fileName]["shp"], zipUncompressed[fileName]["prj"], zipUncompressed[fileName]["str"]),
-                                    shp.parseDbf(zipUncompressed[fileName]["dbf"], zipUncompressed[fileName]["cst"] || zipUncompressed[fileName]["cpg"] || defaultEncoding)])
-                                delete zipUncompressed[fileName];
-                            }
-                            catch (err) {
+                        if (!zipUncompressed[fileName].isSHP) {
+                            //si el fichero se llama wfsRequest.txt y no hay ningún SHP
+                            if (file.name.toLowerCase() !== "wfsrequest.txt" || (file.name.toLowerCase() === "wfsrequest.txt" && !Object.keys(zipUncompressed).some((k) => { return zipUncompressed[k].isSHP }))) {
+                                window.dropFilesCounter++;
                                 self.parent.trigger(TC.Consts.event.FEATURESIMPORTERROR, {
                                     file: file
                                 });
-                                originalFnc.apply(_self, [file, { target: { result: null } }]);
                             }
-                            (shapes instanceof Array ? shapes : [shapes]).forEach(function (collection) {
-                                var newFile = new File([], fileName + '.shp');
-                                originalFnc.apply(_self, [newFile, { target: { result: JSON.stringify(collection) } }]);
+                            delete zipUncompressed[fileName];
+                        }
+                        else
+                            TC.loadJS(!window.shp, TC.apiLocation + 'lib/shpjs/shp', async function () {
+                                var shapes;
+                                try {
+                                    //window.dropFilesCounter = (window.dropFilesCounter ? window.dropFilesCounter + 1 : 1);
+                                    if (!zipUncompressed[fileName]["shp"] || !zipUncompressed[fileName]["prj"] || !zipUncompressed[fileName]["dbf"]) {
+                                        if (!zipUncompressed[fileName]["shp"]) window.dropFilesCounter++;
+                                        self.parent.trigger(TC.Consts.event.FEATURESIMPORTERROR, {
+                                            file: file,
+                                            message: "fileImport.shapeImcomplete"
+                                        });
+                                        delete zipUncompressed[fileName];
+                                        return;
+                                    }
+                                    shapes = await shp.combine([
+                                        shp.parseShp(zipUncompressed[fileName]["shp"], zipUncompressed[fileName]["prj"], zipUncompressed[fileName]["str"]),
+                                        shp.parseDbf(zipUncompressed[fileName]["dbf"], zipUncompressed[fileName]["cst"] || zipUncompressed[fileName]["cpg"] || defaultEncoding)])
+                                    delete zipUncompressed[fileName];
+                                }
+                                catch (err) {
+                                    self.parent.trigger(TC.Consts.event.FEATURESIMPORTERROR, {
+                                        file: file
+                                    });
+                                    return;
+                                }
+                                (shapes instanceof Array ? shapes : [shapes]).forEach(function (collection) {
+                                    var newFile = new File([], fileName + '.shp');
+                                    originalFnc.apply(_self, [newFile, { target: { result: JSON.stringify(collection) } }]);
+                                });
                             });
-                        });
                     }, 1000);
 
                 }
                 else {
+                    //window.dropFilesCounter = (window.dropFilesCounter ? window.dropFilesCounter + 1 : 1);
                     originalFnc.apply(_self, [file, evt]);
                 }
             }
@@ -2054,9 +2019,11 @@
                 if (isFileDrag(e)) { // Solo hay gestión si lo que se arrastra es un archivo
                     var map = self.parent;
                     if (ddInteraction.target === e.target) {
-                        var li = map.getLoadingIndicator();
-                        if (li) {
-                            self._featureImportWaitId = li.addWait();
+                        if (!isEmpty(e.dataTransfer.items)) {
+                            var li = map.getLoadingIndicator();
+                            if (li) {
+                                self._featureImportWaitId = li.addWait();
+                            }
                         }
                         e.stopPropagation();
                     }
@@ -2066,6 +2033,20 @@
                     map.div.classList.remove(TC.Consts.classes.DROP);
                 }
             };
+            var isEmpty = function (items) {
+                for (var i = 0, ii = items.length; i < ii; ++i) {
+                    for (var i = 0, ii = items.length; i < ii; ++i) {
+                        if (items[i].kind === "file") {
+                            if (items[i].isFile) return false;
+                            else
+                                return isEmpty(items[i].webkitGetAsEntry());
+                        }
+
+
+                    }
+                }
+                return true;
+            }
             ddInteraction.dropListenKeys_.push(
                 ol.events.listen(dropArea, DRAGENTER,
                     handleDragEnter, ddInteraction)
@@ -2145,9 +2126,7 @@
         }
         for (let i = 0, ii = files.length; i < ii; ++i) {
             const file = files.item(i);
-            const reader = new FileReader();
-            reader.addEventListener(ol.events.EventType.LOAD, ddInteraction.handleResult_.bind(ddInteraction, file));
-            reader.readAsText(file);
+            ddInteraction.ProcessFile(file);
         }
     };
 
@@ -2162,7 +2141,8 @@
                 }
             }, 100);
         };
-        map.on('change:view', onChangeView);
+        map.wrap.map.on('change:view', onChangeView);
+        self.map.on('change:view', onChangeView);
         onChangeView();
     };
 
@@ -2244,12 +2224,8 @@
         }
     };
 
-    const createPathFromGeometry = function (geometry, pixelRatio) {
+    const createPathFromGeometry = function (geometry) {
         const result = new Path2D();
-        geometry.forEach(p => {
-            p[0] *= pixelRatio;
-            p[1] *= pixelRatio;
-        })
         const p0 = geometry[0];
         result.moveTo(p0[0], p0[1]);
         for (var i = 1, ii = geometry.length; i < ii; i++) {
@@ -2258,6 +2234,20 @@
         }
         result.closePath();
         return result;
+    };
+
+    const getPixelRatioScalePath = function (path) {
+        // flacunza:
+        // En desktop escalamos la geometría según devicePixelRatio porque hemos escalado el mapa previamente
+        // (ver TC.wrap.Map.prototype.manageSize)
+        if (TC.Util.detectMobile()) {
+            return path;
+        }
+        else {
+            const result = new Path2D();
+            result.addPath(path, new DOMMatrix('scale(' + window.devicePixelRatio + ')'));
+            return result;
+        }
     };
 
     const execCanvasOperation = function (geometry, operationName, precomposeHandler, postcomposeHandler) {
@@ -2290,8 +2280,9 @@
                 geom = geometry.call(self._wrap);
             }
             if (!(geom instanceof Path2D)) {
-                geom = createPathFromGeometry(geom, e.frameState.pixelRatio);
+                geom = createPathFromGeometry(geom);
             }
+            geom = getPixelRatioScalePath(geom);
             const ctx = e.context;
             ctx.save();
             ctx.clip(geom, 'evenodd');
@@ -2309,8 +2300,9 @@
                 geom = geometry.call(self._wrap);
             }
             if (!(geom instanceof Path2D)) {
-                geom = createPathFromGeometry(geom, e.frameState.pixelRatio);
+                geom = createPathFromGeometry(geom);
             }
+            geom = getPixelRatioScalePath(geom);
             const ctx = e.context;
             if (style.strokeWidth) {
                 ctx.lineWidth = style.strokeWidth;
@@ -2383,17 +2375,30 @@
         'text/xml'
     ];
 
-    TC.wrap.layer.Raster.prototype.getWMTSLayer = function () {
+    TC.wrap.layer.Raster.prototype.getWMTSLayer = function (options) {
         var result = null;
         var self = this;
         var capabilities = self.parent.capabilities;
+        options = options || {};
+        let tileMatrixSetByCRS;
+        if (options.crs) {
+            tileMatrixSetByCRS = capabilities.Contents.TileMatrixSet.filter(tms => TC.Util.CRSCodesEqual(options.crs, tms.SupportedCRS));
+        }
         if (capabilities && capabilities.Contents) {
             for (var i = 0; i < capabilities.Contents.Layer.length; i++) {
                 var layer = capabilities.Contents.Layer[i];
-                for (var j = 0; j < layer.TileMatrixSetLink.length; j++) {
-                    if (self.parent.options.matrixSet === layer.TileMatrixSetLink[j].TileMatrixSet) {
-                        result = layer;
-                        break;
+                if (self.parent.options.layerNames === layer.Identifier) {
+                    for (var j = 0; j < layer.TileMatrixSetLink.length; j++) {
+                        if (options.crs) {
+                            let tms = tileMatrixSetByCRS.filter(tmsCRS => tmsCRS.Identifier === layer.TileMatrixSetLink[j].TileMatrixSet);
+                            if (tms.length > 0) {
+                                result = layer;
+                                break;
+                            }
+                        } else if ((options.matrixSetId || self.parent.options.matrixSet) === layer.TileMatrixSetLink[j].TileMatrixSet) {
+                            result = layer;
+                            break;
+                        }
                     }
                 }
             }
@@ -2908,21 +2913,22 @@
             imageLoadFunction: self.parent.getImageLoad.bind(self.parent)
         });
 
-        source.on('imageloadstart', function (e) {
-            self.trigger(TC.Consts.event.BEFORETILELOAD, {
-                tile: e.image.getImage()
-            });
-        });
-        source.on('imageloadend', function (e) {
-            self.trigger(TC.Consts.event.TILELOAD, {
-                tile: e.image.getImage()
-            });
-        });
-        source.on('imageloaderror', function (e) {
-            self.trigger(TC.Consts.event.TILELOAD, {
-                tile: e.image.getImage()
-            });
-        });
+        // flacunza: Aparentemente esta gestión de eventos es redundante, porque ya se están lanzando en Raster.getImageLoad
+        //source.on('imageloadstart', function (e) {
+        //    self.trigger(TC.Consts.event.BEFORETILELOAD, {
+        //        tile: e.image.getImage()
+        //    });
+        //});
+        //source.on('imageloadend', function (e) {
+        //    self.trigger(TC.Consts.event.TILELOAD, {
+        //        tile: e.image.getImage()
+        //    });
+        //});
+        //source.on('imageloaderror', function (e) {
+        //    self.trigger(TC.Consts.event.TILELOAD, {
+        //        tile: e.image.getImage()
+        //    });
+        //});
 
 
         var layerOptions = {
@@ -2969,21 +2975,22 @@
             result = new ol.source.WMTS(sourceOptions);
             result.setTileLoadFunction(self.parent.getImageLoad.bind(self.parent));
 
-            result.on(TILELOADSTART, function (e) {
-                self.trigger(TC.Consts.event.BEFORETILELOAD, {
-                    tile: e.tile.getImage()
-                });
-            });
-            result.on(TILELOADEND, function (e) {
-                self.trigger(TC.Consts.event.TILELOAD, {
-                    tile: e.tile.getImage()
-                });
-            });
-            result.on(TILELOADERROR, function (e) {
-                self.trigger(TC.Consts.event.TILELOAD, {
-                    tile: e.tile.getImage()
-                });
-            });
+            // flacunza: Aparentemente esta gestión de eventos es redundante, porque ya se están lanzando en Raster.getImageLoad
+            //result.on(TILELOADSTART, function (e) {
+            //    self.trigger(TC.Consts.event.BEFORETILELOAD, {
+            //        tile: e.tile.getImage()
+            //    });
+            //});
+            //result.on(TILELOADEND, function (e) {
+            //    self.trigger(TC.Consts.event.TILELOAD, {
+            //        tile: e.tile.getImage()
+            //    });
+            //});
+            //result.on(TILELOADERROR, function (e) {
+            //    self.trigger(TC.Consts.event.TILELOAD, {
+            //        tile: e.tile.getImage()
+            //    });
+            //});
 
             var prevFn = result.getResolutions.bind(result);
             result.getResolutions = function () {
@@ -3051,7 +3058,6 @@
 
     TC.wrap.layer.Raster.prototype.setMatrixSet = function (matrixSet) {
         const self = this;
-        const oldResolutions = self.layer.getSource().getResolutions();
         if (self.parent.type === TC.Consts.layerType.WMTS) {
             const newSource = createWmtsSource.call(self, TC.Util.extend({}, self.parent.options, { matrixSet: matrixSet }));
             const newResolutions = newSource.getResolutions();
@@ -3107,7 +3113,7 @@
 
         const mapCrs = parent.map && parent.map.getCRS();
         const mapCrsCode = TC.Util.getCRSCode(mapCrs);
-        const extent = [Number.MAX_VALUE, Number.MAX_VALUE, Number.MIN_VALUE, Number.MIN_VALUE];
+        const extent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
         layerNodes
             .map(function (node) {
                 const bboxes = Array.isArray(node.BoundingBox) ? node.BoundingBox : [node.BoundingBox];
@@ -3222,15 +3228,24 @@
         return result;
     };
 
+    const mergeMapAndGeneralStyles = function (layer) {
+        const result = TC.Util.extend(true, {}, TC.Cfg.styles);
+        if (layer && layer.map) {
+            TC.Util.extend(true, result, layer.map.options.styles);
+        }
+        return result;
+    }
+
     // Transformación de opciones de estilo en un estilo nativo OL3.
-    var createNativeStyle = function (options, olFeat) {
-        var nativeStyleOptions = {
+    const createNativeStyle = function (options, olFeat) {
+        const nativeStyleOptions = {
         };
 
         var feature;
         var isPoint, isLine, isPolygon;
         if (olFeat) {
-            switch (olFeat.getGeometry().getType()) {
+            const olGeom = olFeat.getGeometry();
+            switch (olGeom && olGeom.getType()) {
                 case 'Point':
                 case 'MultiPoint':
                     isPoint = true;
@@ -3266,11 +3281,12 @@
         }
         var isCluster = feature && Array.isArray(feature.features) && feature.features.length > 1;
         var styles;
+        const externalStyles = mergeMapAndGeneralStyles(options.layer);
         if (isCluster) {
-            styles = TC.Util.extend(true, {}, TC.Cfg.styles.cluster, (options && options.styles && options.styles.cluster) ? options.styles.cluster : {});
+            styles = TC.Util.extend(true, {}, externalStyles.cluster, (options && options.styles && options.styles.cluster) ? options.styles.cluster : {});
         }
         else {
-            styles = options.styles || TC.Cfg.styles;
+            styles = TC.Util.extend(true, {}, externalStyles, options.styles);
         }
 
         var styleOptions = {};
@@ -3299,7 +3315,7 @@
             styleOptions = styles.point;
             var circleOptions = {
                 radius: getStyleValue(styleOptions.radius, feature) ||
-                (getStyleValue(styleOptions.height, feature) + getStyleValue(styleOptions.width, feature)) / 4
+                    (getStyleValue(styleOptions.height, feature) + getStyleValue(styleOptions.width, feature)) / 4
             };
             if (styleOptions.fillColor) {
                 circleOptions.fill = new ol.style.Fill({
@@ -3569,6 +3585,7 @@
             }
         };
 
+        const isHeatmap = options.styles && options.styles.heatmap;
         if (Array.isArray(options.url) || options.urls) {
             var urls = options.urls || options.url;
             urls = urls.map(function (elm, idx) {
@@ -3577,7 +3594,8 @@
             vectorOptions = {
                 url: urls,
                 format: new ol.format.KMLCustom({
-                    showPointNames: false
+                    showPointNames: false,
+                    extractStyles: !isHeatmap
                 }),
                 projection: options.crs
             };
@@ -3587,7 +3605,9 @@
                 url: TC.proxify(options.url),
                 projection: options.crs
             };
-            vectorOptions.format = getFormatFromName(options.format) || getFormatFromName(getMimeTypeFromUrl(options.url)) || getFormatFromName(options.type);
+            vectorOptions.format = getFormatFromName(options.format, !isHeatmap) ||
+                getFormatFromName(getMimeTypeFromUrl(options.url), !isHeatmap) ||
+                getFormatFromName(options.type, !isHeatmap);
             vectorOptions.loader = createGenericLoader(vectorOptions.url, vectorOptions.format);
             usesGenericLoader = true;
         }
@@ -3660,6 +3680,9 @@
                             layer: self.parent
                         });
 
+                        const isFilterText = function () {
+                            return typeof options.properties === "string";
+                        };
                         const manageResponse = (response) => {
                             const data = response.data;
                             let feats;
@@ -3681,8 +3704,8 @@
                                 }
                             };
                             if (feats && feats.length) {
-                                sOrigin.addFeatures(feats);
                                 self.parent.map.on(TC.Consts.event.FEATURESADD, onFeaturesAdd);
+                                sOrigin.addFeatures(feats);
                             }
                             else {
                                 triggerLayerUpdate();
@@ -3709,14 +3732,23 @@
                                         return filter.conditions.some(f => isSpatial(f));
                                     case filter instanceof TC.filter.Spatial:
                                         return true;
+                                    case typeof (filter) === "string":
+                                        return Object.keys(window["TC"]["filter"]).filter(f => new TC.filter[f]() instanceof TC.filter.Spatial).some(f => filter.indexOf(f) > -1);
                                     default:
                                         return false;
                                 }
                             }
-                            if (options.properties && (isSpatial(options.properties) || options.properties.getText(capabilities.version).length > TC.Consts.URL_MAX_LENGTH)) {
+                            const filterText = isFilterText();
+                            // flacunza: quitamos temporalmente la condicion isSpatial para no romper WFSEdit.
+                            //if (options.properties && (isSpatial(options.properties) || (filterText ? options.properties.length > TC.Consts.URL_MAX_LENGTH : options.properties.getText(capabilities.version).length > TC.Consts.URL_MAX_LENGTH))) {
+                            if (options.properties && (filterText ? options.properties.length > TC.Consts.URL_MAX_LENGTH : options.properties.getText(capabilities.version).length > TC.Consts.URL_MAX_LENGTH)) {
                                 ajaxOptions.method = 'POST';
                                 ajaxOptions.url = url;
-                                ajaxOptions.data = TC.Util.WFSQueryBuilder(featureType, options.properties, capabilities, onlyHits ? null : options.outputFormat, onlyHits, crs, options.maxFeatures)
+                                ajaxOptions.data = filterText ? options.properties : TC.Util.WFSQueryBuilder(featureType, options.properties, capabilities, onlyHits ? null : options.outputFormat, onlyHits, crs, options.maxFeatures)
+
+                                if (!filterText) {
+                                    self.parent.map.trigger(TC.Consts.event.BEFOREAPPLYQUERY, { layer: self.parent, query: ajaxOptions.data });
+                                }
                             }
                             else {
                                 ajaxOptions.method = 'GET';
@@ -3740,8 +3772,12 @@
                                         });
                                     else
                                         ajaxOptions.data = Object.assign(ajaxOptions.data, {
-                                            filter: options.properties.getText()
+                                            filter: filterText ? options.properties : options.properties.getText(version).replace(/(fes\:|ogc\:)/g, "")
                                         });
+
+                                    if (!filterText && !onlyHits) {
+                                        self.parent.map.trigger(TC.Consts.event.BEFOREAPPLYQUERY, { layer: self.parent, query: options.properties.getText() });
+                                    }
                                 }
                                 if (options.maxFeatures)
                                     ajaxOptions.data = Object.assign(ajaxOptions.data, {
@@ -3772,7 +3808,12 @@
                             }
                             if (numMaxFeatures) {
                                 if (!options.maxFeatures) options.maxFeatures = numMaxFeatures;
-                                makeAjaxCall(true, capabilities).then((response) => {
+                                let filterText = isFilterText();
+                                makeAjaxCall(filterText ? false : true, capabilities).then((response) => {
+                                    if (filterText) {
+                                        manageResponse(response);
+                                        return;
+                                    }
                                     var firstNode = response.data.children[0];
                                     if (firstNode.tagName.toLowerCase().indexOf("exception") >= 0) {
                                         self.parent.map.trigger(TC.Consts.event.LAYERERROR, { layer: self.parent, reason: firstNode.querySelector("ExceptionText").innerHTML })
@@ -3804,6 +3845,11 @@
                 //strategy: ol.loadingstrategy.all(),
                 projection: options.crs
             };
+        }
+
+        if (options.features) {
+            vectorOptions = vectorOptions || {};
+            vectorOptions.features = options.features.map(f => f instanceof TC.Feature ? f.wrap.feature : f);
         }
 
         source = new ol.source.Vector(vectorOptions);
@@ -4040,7 +4086,8 @@
         else {
             options = TC.Util.extend({}, options);
             options.crs = options.crs || TC.Cfg.crs;
-            options.styles = options.styles || TC.Cfg.styles;
+            const externalStyles = mergeMapAndGeneralStyles(self.parent);
+            options.styles = TC.Util.extend(true, externalStyles, options.styles);
             var isDynamicStyle = function isDynamicStyle(obj) {
                 for (var key in obj) {
                     var prop = obj[key];
@@ -4074,6 +4121,7 @@
                 opts.styles = Object.assign({}, opts.styles, { cluster: options.cluster.styles });
             }
             self.styleFunction = function (olFeat) {
+                opts.layer = self.parent;
                 return createNativeStyle(opts, olFeat);
             };
         }
@@ -4086,19 +4134,47 @@
     TC.wrap.layer.Vector.prototype.setStyles = function (options) {
         const self = this;
         self.getLayer().then(function (olLayer) {
-            olLayer.setStyle(self.createStyles({ styles: options }));
+            if ((options && options.heatmap) ||
+                olLayer instanceof ol.layer.Heatmap) {
+                const features = olLayer.getSource().getFeatures();
+                features.forEach(f => f.setStyle(null));
+                const newOptions = TC.Util.extend(true, { features: features }, self.parent.options);
+                delete newOptions.styles;
+                self.layer = self.createVectorLayer(TC.Util.extend(newOptions, { styles: options }));
+                if (self.parent.map) {
+                    const mapWrap = self.parent.map.wrap;
+                    mapWrap.insertLayer(self.layer, mapWrap.getLayerIndex(olLayer));
+                    mapWrap.removeLayer(olLayer);
+                }
+            }
+            else {
+                olLayer.setStyle(self.createStyles({ styles: options }));
+            }
         });
     };
 
-    TC.wrap.layer.Vector.prototype.createVectorLayer = function () {
+    TC.wrap.layer.Vector.prototype.createVectorLayer = function (options) {
         const self = this;
         var result = null;
 
-        var options = self.parent.options;
+        options = options || self.parent.options;
 
-        var layerOptions = self.createVectorSource(options, self.createStyles(options));
-        layerOptions.declutter = self.parent.options.declutter || false;
-        result = new ol.layer.Vector(layerOptions);
+        const layerOptions = self.createVectorSource(options, self.createStyles(options));
+
+        layerOptions.declutter = options.declutter || false;
+        if (options.styles && options.styles.heatmap) {
+            const hmOptions = TC.Util.extend({}, options.styles.heatmap);
+            if (TC.Util.isFunction(hmOptions.weight)) {
+                const oldWeightFn = hmOptions.weight;
+                hmOptions.weight = function (olFeat) {
+                    return oldWeightFn(olFeat._wrap.parent);
+                };
+            }
+            result = new ol.layer.Heatmap(TC.Util.extend({ source: layerOptions.source }, hmOptions));
+        }
+        else {
+            result = new ol.layer.Vector(layerOptions);
+        }
         result._wrap = self;
 
         self.addCommonEvents(result);
@@ -4109,6 +4185,9 @@
     TC.wrap.layer.Vector.prototype.addFeatures = function (features) {
         const self = this;
         const commit = function (l) {
+            if (l instanceof ol.layer.Heatmap) {
+                features.forEach(f => f.setStyle(null));
+            }
             var source = l;
             while (TC.Util.isFunction(source.getSource)) {
                 source = source.getSource();
@@ -4151,6 +4230,10 @@
                 let id = feature.wrap.feature.getId();
                 if (id && source.getFeatureById(id)) {
                     source.removeFeature(feature.wrap.feature);
+                    if (source.getSource && Array.isArray(feature.features)) {
+                        const subSource = source.getSource();
+                        feature.features.slice().forEach(f => subSource.removeFeature(f.wrap.feature));
+                    }
                 }
             }
         };
@@ -4278,10 +4361,12 @@
                                 resolve(transactionResponse);
                             }
                         })
-                        .catch(function () {
-                            reject({
-                                code: '', reason: 'unknown'
-                            });
+                        .catch(function (err) {
+                            const errObj = {
+                                code: err.status || '',
+                                reason: err.msg || 'unknown'
+                            };
+                            reject(errObj);
                         });
                 });
             }
@@ -4498,7 +4583,7 @@
             olMap.addControl(self.zCtl);
 
             div.querySelectorAll('button').forEach(function (button) {
-                button.classList.add('tc-ctl-btn', self.parent.CLASS + '-btn');
+                button.classList.add('tc-ctl-btn', 'tc-float-btn', self.parent.CLASS + '-btn');                
                 button.style.display = 'block';
                 button.innerHTML = '';
                 if (button.matches('.ol-zoom-in')) {
@@ -4570,7 +4655,7 @@
                 button.innerHTML = '';
             });
             const homeBtn = div.querySelector('.ol-zoom-extent button');
-            homeBtn.classList.add('tc-ctl-btn', self.parent.CLASS + '-btn');
+            homeBtn.classList.add('tc-ctl-btn', 'tc-float-btn', self.parent.CLASS + '-btn');
             homeBtn.setAttribute('title', self.parent.getLocaleString('zoomToInitialExtent'));
         });
     };
@@ -4669,20 +4754,7 @@
 
         return TC.Util.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
     };
-    TC.wrap.control.Geolocation.prototype.showElevationMarker = function (d) {
-        var self = this;
-
-        TC.wrap.control.ResultsPanel.prototype.showElevationMarker.call(self, {
-            data: d,
-            layer: self.parent.layerTrack,
-            coords: self.parent.elevationChartData.coords
-        })
-    };
-
-    TC.wrap.control.Geolocation.prototype.hideElevationMarker = function () {
-        TC.wrap.control.ResultsPanel.prototype.hideElevationMarker.call(this);
-    };
-
+        
     TC.wrap.control.Geolocation.prototype.addWaypoint = function (position, properties) {
         var self = this;
 
@@ -4745,6 +4817,9 @@
 
                 if (self.parent.layerTracking) {
                     var position_ = [geoposition.coords && geoposition.coords.longitude || geoposition[0], geoposition.coords && geoposition.coords.latitude || geoposition[1]];
+                    if (!position_.every((c) => c)) { // al menos desde las herramientas de desarrollo puede llegar con lat/lon a undefined lo que provoca un error de OL: TypeError: coordinates must be finite numbers
+                        resolve(null);
+                    }
                     var projectedPosition = TC.Util.reproject(position_, 'EPSG:4326', self.parent.map.crs);
 
                     self.addPosition(projectedPosition, heading, new Date().getTime(), speed, accuracy, altitudeAccuracy, altitude);
@@ -5019,11 +5094,11 @@
 
         self.deactivateSnapping.call(self);
     };
-    var vectorCtx;
+
     TC.wrap.control.Geolocation.prototype.duringTrackSnap = function (e) {
         var self = this;
 
-        var vectorContext = vectorCtx = e.vectorContext;
+        var vectorContext = e.vectorContext;
 
         if (vectorContext && self.snapLine) {
             if (typeof (vectorContext.setFillStrokeStyle) === 'function')
@@ -5067,19 +5142,24 @@
                 var closestPoint = geometry.getClosestPoint(coordinate);
 
                 // preparamos las Z del MDT si hay datos del MDT
-                if (self.parent.elevationChartData && self.parent.elevationChartData.elevationFromServiceChartData &&
-                    self.parent.elevationChartData.elevationFromServiceChartData.ele &&
-                    !self.parent.elevationChartData.elevationFromServiceChartData.eleCoordinates) {
-                    let coords = [...closestFeature.getGeometry().getCoordinates()];
+                if (self.parent.elevationChartData &&
+                    Array.isArray(self.parent.elevationChartData.secondaryElevationProfileChartData) &&
+                    self.parent.elevationChartData.secondaryElevationProfileChartData.length > 0 && 
+                    self.parent.elevationChartData.secondaryElevationProfileChartData[0]) {
+                    let profileChartData = self.parent.elevationChartData.secondaryElevationProfileChartData[0];
+                    if (profileChartData.hasOwnProperty("ele") &&
+                        Array.isArray(profileChartData.ele) && !profileChartData.hasOwnProperty("eleCoordinates")) {
+                        let coords = [...closestFeature.getGeometry().getCoordinates()];
 
-                    if (Array.isArray(coords) && Array.isArray(coords[0])) {
-                        coords.forEach((c, i) => {
-                            c.splice(2, 1, self.parent.elevationChartData.elevationFromServiceChartData.ele[i])
-                        });
+                        if (Array.isArray(coords) && Array.isArray(coords[0])) {
+                            coords.forEach((c, i) => {
+                                c.splice(2, 1, self.parent.elevationChartData.secondaryElevationProfileChartData[0].ele[i])
+                            });
 
-                        self.parent.elevationChartData.elevationFromServiceChartData.eleCoordinates = coords;
-                    }                    
-                }
+                            self.parent.elevationChartData.secondaryElevationProfileChartData[0].eleCoordinates = coords;
+                        }
+                    }
+                }               
 
                 const pixel = self.parent.map.getPixelFromCoordinate(closestPoint);
                 const distance = Math.sqrt(
@@ -5146,9 +5226,9 @@
 
                     if (data) {
                         // Z del MDT si hay datos del MDT
-                        if (self.parent.elevationChartData && self.parent.elevationChartData.elevationFromServiceChartData &&
-                            self.parent.elevationChartData.elevationFromServiceChartData.eleCoordinates) {
-                            let mdtClosestPoint = TC.wrap.Geometry.getNearest(coordinate, self.parent.elevationChartData.elevationFromServiceChartData.eleCoordinates);
+                        if (self.parent.elevationChartData && self.parent.elevationChartData.secondaryElevationProfileChartData[0] &&
+                            self.parent.elevationChartData.secondaryElevationProfileChartData[0].eleCoordinates) {
+                            let mdtClosestPoint = TC.wrap.Geometry.getNearest(coordinate, self.parent.elevationChartData.secondaryElevationProfileChartData[0].eleCoordinates);
                             let mdtZ = (Math.round(mdtClosestPoint[2] * 100) / 100).toLocaleString(locale);
                             data.mdtz = mdtZ;
                         }
@@ -5191,7 +5271,9 @@
                         self.parent.layerTrack.addFeature(feat);
                     }
                 });
-                self.parent.map.zoomToFeatures(self.parent.layerTrack.features);
+                if (!(self.parent.toShare) || (self.parent.toShare && self.parent.toShare.doZoom)) {
+                    self.parent.map.zoomToFeatures(self.parent.layerTrack.features);
+                }
 
                 resolve();
             });
@@ -5537,12 +5619,8 @@
     var idRequestAnimationFrame;
     TC.wrap.control.Geolocation.prototype.simulateTrackEnd = function (resized) {
         var self = this;
-
-        // mostramos el perfil del MDT si es que está        
-        if (!resized &&
-            self.parent.elevationChartData && self.parent.elevationChartData.elevationFromServiceChartData) {
-            self.parent.resultsPanelChart.chart.chart.show('ele2', { withLegend: true });
-
+        
+        if (!resized) {
             // revertimos: establecemos a false para que no muestra el progreso en el perfil ya que siempre será elevación 0
             self.hasElevation = true;
         }
@@ -5712,11 +5790,6 @@
                     }
                 });
                 hasD3.then(function () {
-                    // ocultamos el perfil del MDT si es que está y si contamos con elevación original porque si no se queda el perfil vacío
-                    if (!d3.select('.c3-legend-item-ele2').empty() && self.parent.hasElevation) {
-                        self.parent.resultsPanelChart.chart.chart.hide('ele2', { withLegend: true });
-                    }
-
                     idRequestAnimationFrame = requestAnimationFrame(animationFrameFraction);
                 });
             });
@@ -5858,10 +5931,11 @@
         if (!self.elevationMarker) {
             const elm = document.createElement('div');
             elm.style.display = 'none';
-            elm.classList.add('tc-ctl-geolocation-trackMarker', 'elevation');
+            elm.classList.add(self.parent.CLASS + '-overlay', 'elevation');
             self.elevationMarker = new ol.Overlay({
+                id: 'ovElevationMarker',
                 element: elm,
-                offset: [0, -11],
+                offset: [0, 0],
                 positioning: ol.OverlayPositioning.CENTER_CENTER,
                 stopEvent: false
             });
@@ -5869,23 +5943,29 @@
 
         // GLS: si la capa del track está visible mostramos marcamos punto del gráfico en el mapa
         if (!layer || (layer.getVisibility() && layer.getOpacity() > 0)) {
+            let position = coords[data[0].index];
             self.elevationMarker.getElement().style.display = '';
-            self.olMap.addOverlay(self.elevationMarker);
-            self.elevationMarker.setPosition(coords[data[0].index]);
+            if (!self.olMap.getOverlayById(self.elevationMarker.getId())) {
+                self.olMap.addOverlay(self.elevationMarker);
+                if (self.map.on3DView) {
+                    self.map.view3D.addElevationMarker(position, self.parent);
+                }
+            }
+            self.elevationMarker.setPosition(position);
+            if (self.map.on3DView) {
+                self.map.view3D.setElevationMarker(position, self.parent);
+            }
         }
-
-        // No centrar en el marker
-        //var extent = self.map.getExtent();
-        //var p = coords[data[0].index];
-        //if (p[0] >= extent[0] && p[0] <= extent[2] && p[1] >= extent[1] && p[1] <= extent[3]) { }
-        //else {
-        //    self.map.setCenter(p.slice(0, 2), { animate: true });
-        //}
     };
 
     TC.wrap.control.ResultsPanel.prototype.hideElevationMarker = function () {
-        if (this.elevationMarker) {
-            this.elevationMarker.getElement().style.display = 'none';
+        const self = this;
+        if (self.elevationMarker) {
+            self.elevationMarker.getElement().style.display = 'none';
+
+            if (self.map.on3DView) {
+                self.map.view3D.hideElevationMarker(self.parent);
+            }
         }
     };
 
@@ -6370,397 +6450,408 @@
         var self = this;
         var opts = options || {};
         var map = self.parent.map;
-        map.wrap.getMap().then(function (olMap) {
-            var targetServices = {};
-            var auxInfo = {};
-            const requestPromises = [];
-            const requestDataArray = [];
-            var featurePromises = [];
-            var services = [];
+        return new Promise(function (resolve, reject) {
+            map.wrap.getMap().then(function (olMap) {
+                var targetServices = {};
+                var auxInfo = {};
+                const requestPromises = [];
+                const requestDataArray = [];
+                var featurePromises = [];
+                var services = [];
 
-            //var infoFormats = [];
-            var layers = olMap.getLayers().getArray();
+                //var infoFormats = [];
+                var layers = olMap.getLayers().getArray();
 
-            // GLS: filtro el array de capas para quedarnos con las capas que son raster y visibles.
-            layers = layers.filter(function (elem) { return elem instanceof ol.layer.Image && elem.getVisible(); });
+                // GLS: filtro el array de capas para quedarnos con las capas que son raster y visibles.
+                layers = layers.filter(function (elem) { return elem instanceof ol.layer.Image && elem.getVisible(); });
 
-            for (var j = 0; j < layers.length; j++) {
-                var olLayer = layers[j];
-                var layer = olLayer._wrap.parent;
-                var source = olLayer.getSource();
-                //console.log("Source: " + layer.layerNames.join(","));
-                //Por qué en workLayers están el vectorial de medición, y cosas así?
-                if (source.getGetFeatureInfoUrl && map.workLayers.indexOf(layer) >= 0 && layer.names.length > 0
-                    && (!opts.serviceUrl || opts.serviceUrl === layer.url)) { // Mirar si en las opciones pone que solo busque en un servicio
+                for (var j = 0; j < layers.length; j++) {
+                    var olLayer = layers[j];
+                    var layer = olLayer._wrap.parent;
+                    var source = olLayer.getSource();
+                    //console.log("Source: " + layer.layerNames.join(","));
+                    //Por qué en workLayers están el vectorial de medición, y cosas así?
+                    if (source.getGetFeatureInfoUrl && map.workLayers.indexOf(layer) >= 0 && layer.names.length > 0
+                        && (!opts.serviceUrl || opts.serviceUrl === layer.url)) { // Mirar si en las opciones pone que solo busque en un servicio
 
-                    //
-                    var targetService;
-                    if (!targetServices[layer.url]) {
-                        targetService = {
-                            url: layer.url,
-                            layers: [],
-                            mapLayers: [],
-                            title: layer.title,
-                            request: null
-                        };
-                        targetServices[layer.url] = targetService;
-                        auxInfo[layer.url] = {
-                            source: TC.Util.extend(true, {}, source),
-                            layers: []
-                        };
-                    }
-                    else {
-                        targetService = targetServices[layer.url];
-                        auxInfo[layer.url].source.updateParams(TC.Util.extend(auxInfo[layer.url].source.getParams(), source.getParams()));
-                    }
-                    targetService.mapLayers.push(layer);
-
-                    //var targetService = {
-                    //    layers: [], mapLayers: [layer]
-                    //};
-                    var disgregatedNames = layer.getDisgregatedLayerNames();
-                    if (opts.layerName) { // Mirar si en las opciones pone que solo busque en una capa
-                        if (disgregatedNames.indexOf(opts.layerName) >= 0 && olLayer._wrap.getInfo(opts.layerName).queryable) {
-                            addLayerToService(targetService, layer, opts.layerName);
-                            auxInfo[layer.url].layers.push(opts.layerName);
+                        //
+                        var targetService;
+                        if (!targetServices[layer.url]) {
+                            targetService = {
+                                url: layer.url,
+                                layers: [],
+                                mapLayers: [],
+                                title: layer.title,
+                                request: null
+                            };
+                            targetServices[layer.url] = targetService;
+                            auxInfo[layer.url] = {
+                                source: TC.Util.extend(true, {}, source),
+                                layers: []
+                            };
                         }
-                    }
-                    else {
-                        for (var i = 0; i < disgregatedNames.length; i++) {
-                            var name = disgregatedNames[i];
-                            if (olLayer._wrap.getInfo(name).queryable) {
-                                addLayerToService(targetService, layer, name);
-                            }
-                            else {
-                                TC.Util.consoleRegister('Capa "' + disgregatedNames[i] + '" no queryable, la eliminamos de la petición GFI');
-                                disgregatedNames.splice(i, 1);
-                                i = i - 1;
-                            }
+                        else {
 
+                            targetService = targetServices[layer.url];
+                            auxInfo[layer.url].source.updateParams(TC.Util.extend(auxInfo[layer.url].source.getParams(), source.getParams()));
                         }
+                        targetService.mapLayers.push(layer);
 
-                        // GLS: validamos si nos queda alguna capa a la cual consultar
-                        if (disgregatedNames.length > 0) {
-                            auxInfo[layer.url].layers = auxInfo[layer.url].layers.concat(disgregatedNames);
-                        }
-                    }
-                }
-            }
-
-            for (var serviceUrl in targetServices) {
-                services.push(targetServices[serviceUrl]);
-                var targetService = targetServices[serviceUrl];
-                var source = auxInfo[serviceUrl].source;
-                var layers = auxInfo[serviceUrl].layers;
-
-                // GLS: validamos si hay capas a las cuales consultar, si no hay continuamos con el siguiente servicio
-                if (!layers || (layers && layers.length === 0)) {
-                    continue;
-                }
-
-                var params = source.getParams();
-                if (params.filter) params.filter = targetService.layers.map(function (i) { return "(" + (!i.filter ? "" : (i.filter instanceof TC.filter.Filter ? i.filter.getText() : i.filter)) + ")"; }).join("");
-                if (params.cql_filter) params.cql_filter = targetService.layers.map(function (i) { return !i.filter ? "INCLUDE" : i.filter; }).join(";");
-                source.params_.LAYERS = layers.join(',');
-                var gfiURL = source.getGetFeatureInfoUrl(coords, resolution, map.crs, {
-                    'QUERY_LAYERS': layers.join(','),
-                    'INFO_FORMAT': params.INFO_FORMAT,
-                    'FEATURE_COUNT': 1000,
-                    'radius': map.options.pixelTolerance,
-                    'buffer': map.options.pixelTolerance
-                });
-
-                gfiURL = gfiURL.replace(/sld_body=[a-zA-Z%0-9._]*/); // Quitamos el parámetro sld_body
-
-
-                var expUrl = gfiURL;
-                const requestData = {
-                    serviceUrl: serviceUrl,
-                    requestedFormat: params.INFO_FORMAT,
-                    expandUrl: expUrl
-                };
-                requestDataArray.push(requestData);
-                requestPromises.push(new Promise(function (resolve, reject) {
-                    const mapLayer = targetService.mapLayers[0];
-                    mapLayer.toolProxification.fetch(gfiURL)
-                        .then(function (data) {
-                            mapLayer.toolProxification.cacheHost.getAction(requestData.expandUrl).then(function (cache) {
-                                requestData.originalUrl = cache.action.call(mapLayer.toolProxification, requestData.expandUrl);
-                                resolve(TC.Util.extend({}, data, requestData));
-                            });
-                        })
-                        .catch(function (error) {
-                            reject(Error(error));
-                        });
-                }));
-                TC.Util.consoleRegister("Lanzamos GFI");
-            }
-
-            if (requestPromises.length > 0) {
-                Promise.all(requestPromises).then(function (responses) {
-                    var someSuccess = false;
-                    var featureCount = 0;
-                    var featureInsertionPoints = [];
-                    for (var i = 0; i < responses.length; i++) {
-                        var featureInfo = responses[i];
-                        var service = targetServices[requestDataArray[i].serviceUrl];
-                        someSuccess = true;
-                        service.text = featureInfo.responseText;
-                        var format;
-                        var iFormat = featureInfo.contentType;
-                        if (iFormat && iFormat.indexOf(";") > -1)
-                            iFormat = iFormat.substr(0, iFormat.indexOf(";")).trim();
-
-                        if (!iFormat) iFormat = featureInfo.requestedFormat;
-
-                        if (iFormat === featureInfo.requestedFormat) {
-                            switch (iFormat) {
-                                case 'application/json':
-                                    format = new ol.format.GeoJSON();
-                                    break;
-                                case 'application/vnd.ogc.gml':
-                                    if (featureInfo.responseText.indexOf("FeatureCollection") > -1) {
-                                        format = new ol.format.WFS({
-                                            gmlFormat: new ol.format.GML2({
-                                                srsName: map.crs
-                                            })
-                                        });
-                                    }
-                                    else {
-                                        format = new ol.format.WMSGetFeatureInfo();
-                                    }
-                                    break;
-                                case 'application/vnd.ogc.gml/3.1.1':
-                                    format = new ol.format.GML3({
-                                        srsName: map.crs
-                                    });
-                                    break;
-                                case 'application/vnd.esri.wms_featureinfo_xml':
-                                    format = esriXmlParser;
-                                    break;
-                                default:
-                                    format = null;
-                                    break;
+                        //var targetService = {
+                        //    layers: [], mapLayers: [layer]
+                        //};
+                        var disgregatedNames = layer.getDisgregatedLayerNames();
+                        if (opts.layerName) { // Mirar si en las opciones pone que solo busque en una capa
+                            if (disgregatedNames.indexOf(opts.layerName) >= 0 && olLayer._wrap.getInfo(opts.layerName).queryable) {
+                                addLayerToService(targetService, layer, opts.layerName);
+                                auxInfo[layer.url].layers.push(opts.layerName);
                             }
-
-                            if (format) {
-                                var features;
-                                try {
-                                    features = format.readFeatures(featureInfo.responseText, {
-                                        featureProjection: ol.proj.get(map.crs)
-                                    });
+                        }
+                        else {
+                            for (var i = 0; i < disgregatedNames.length; i++) {
+                                var name = disgregatedNames[i];
+                                if (olLayer._wrap.getInfo(name).queryable) {
+                                    addLayerToService(targetService, layer, name);
                                 }
-                                catch (e) {
-                                    TC.error(self.parent.getLocaleString('featureInfo.error.badResponse', { url: featureInfo.serviceUrl }) + ': ' + e.message);
-                                    features = [];
-                                    continue;
-                                };
-                                featureCount = featureCount + features.length;
-                                var isParentOrSame = function (layer, na, nb) {
-                                    var result = false;
-                                    if (na === nb) {
-                                        result = true;
-                                    }
-                                    else {
-                                        var pa = layer.getNodePath(na);
-                                        var pb = layer.getNodePath(nb);
-                                        if (pa.length > 0 && pb.length >= pa.length) {
-                                            result = true;
-                                            for (var i = 0; i < pa.length; i++) {
-                                                if (layer.wrap.getName(pa[i]) !== layer.wrap.getName(pb[i])) {
-                                                    result = false;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    return result;
-                                };
-
-                                var fakeLayers = {
-                                };
-
-                                for (var j = 0; j < features.length; j++) {
-                                    var feature = features[j];
-                                    if (feature instanceof ol.Feature) {
-                                        var fid = feature.getId() || TC.getUID();
-                                        var found = false;
-                                        var layerName = fid.substr(0, fid.lastIndexOf('.'));
-                                        for (var k = 0; k < service.layers.length; k++) {
-                                            var l = service.layers[k];
-                                            var lName = l.name.substr(l.name.indexOf(':') + 1);
-                                            if (service.mapLayers.some(function (mapLayer) { return isParentOrSame(mapLayer, lName, layerName) })) {
-                                                found = true;
-                                                if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
-                                                    featurePromises.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
-                                                    featureInsertionPoints.push(l.features);
-                                                }
-                                                break;
-                                            }
-                                        }
-
-                                        //si llegamos aquí y no he encontrado su layer, es que no cuadraba el prefijo del fid con el id del layer
-                                        //esto pasa, p.ej, en cartociudad
-                                        if (!found) {
-                                            //así que creo un layer de palo para la respuesta del featInfo
-                                            var fakeLayer;
-                                            if (fakeLayers[layerName]) fakeLayer = fakeLayers[layerName];
-                                            else {
-                                                fakeLayer = {
-                                                    name: layerName, title: layerName, path: [layerName], features: []
-                                                };
-                                                fakeLayers[layerName] = fakeLayer;
-                                                service.layers.push(fakeLayer);
-                                            }
-
-                                            if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
-                                                featurePromises.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
-                                                featureInsertionPoints.push(fakeLayer.features);
-                                            }
-                                        }
-                                    }
-                                }//iteración sobre las features de esta respuesta
-
+                                else {
+                                    TC.Util.consoleRegister('Capa "' + disgregatedNames[i] + '" no queryable, la eliminamos de la petición GFI');
+                                    disgregatedNames.splice(i, 1);
+                                    i = i - 1;
+                                }
 
                             }
-                            else {
-                                //si no hay formato reconocido y parseable, metemos un iframe con la respuesta
-                                //y prau
-                                //para eso, creo una falsa entrada de tipo feature, con un campo especial rawUrl o rawContent
 
-                                const compoundLayer = {
-                                    name: 'layer' + TC.getUID(), title: 'Datos en el punto', features: [{
-                                        rawUrl: featureInfo.originalUrl, expandUrl: featureInfo.expandUrl, rawContent: featureInfo.responseText, rawFormat: iFormat
-                                    }]
-                                };
-
-                                service.layers.push(compoundLayer);
-                                featureCount = featureCount + 1;
+                            // GLS: validamos si nos queda alguna capa a la cual consultar
+                            if (disgregatedNames.length > 0) {
+                                auxInfo[layer.url].layers = auxInfo[layer.url].layers.concat(disgregatedNames);
                             }
                         }
-                        else { // iFormat !== featureInfo.requestedFormat
-
-                            // GLS:
-                            TC.Util.consoleRegister("Respuesta GFI: lo más probable es que el servidor esté devolviendo una excepción");
-                            TC.Util.consoleRegister("Lanzamos los eventos que corresponde y mostramos tostada");
-
-                            // En este caso lo más probable es que el servidor esté devolviendo una excepción
-                            self.parent.responseError({
-                                message: featureInfo.responseText,
-                                status: featureInfo.status
-                            });
-                            // GLS: misma gestión de error que en ol.js - > function (a, b, c) { // error...
-                            map.toast(self.parent.getLocaleString('featureInfo.error'), {
-                                type: TC.Consts.msgType.ERROR
-                            });
-                        }
-
                     }
-                    if (someSuccess) {
-                        var finfoPromises = featurePromises;
-                        if (featurePromises.length) {
-                            finfoPromises = finfoPromises.concat(new Promise(function (resolve, reject) {
-                                // Si hay features cargamos el módulo de geometria para encontrar una que se interseque con el punto
-                                TC.loadJS(
-                                    !TC.Geometry,
-                                    TC.apiLocation + 'TC/Geometry',
-                                    function () {
-                                        resolve();
-                                    }
-                                );
-                            }));
-                        }
-                        Promise.all(finfoPromises).then(function afterFeatureInfoPromises(features) {
-                            var defaultFeature;
-                            features.forEach(function (feat, idx) {
-                                if (feat) {
-                                    feat.attributes = [];
-                                    for (var key in feat.data) {
-                                        var value = feat.data[key];
-                                        if (typeof value !== 'object') {
-                                            feat.attributes.push({
-                                                name: key,
-                                                value: typeof (value) == "number" ? value.toLocaleString(TC.Util.getMapLocale(self.parent.map)) : value
+                }
+                const _isGMLFilter = function (filter) {
+                    return filter && (/<ogc:Filter.*<\/ogc:Filter>/.test(filter) || filter instanceof TC.filter.Filter)
+                }
+                for (var serviceUrl in targetServices) {
+                    services.push(targetServices[serviceUrl]);
+                    var targetService = targetServices[serviceUrl];
+                    var source = auxInfo[serviceUrl].source;
+                    var layers = auxInfo[serviceUrl].layers;
+
+                    // GLS: validamos si hay capas a las cuales consultar, si no hay continuamos con el siguiente servicio
+                    if (!layers || (layers && layers.length === 0)) {
+                        continue;
+                    }
+
+                    var params = source.getParams();
+                    if (params.filter) params.filter = targetService.layers.map(function (i) { return "(" + (!_isGMLFilter(i.filter) ? "" : (i.filter instanceof TC.filter.Filter ? i.filter.getText() : i.filter)) + ")"; }).join("");
+                    if (params.cql_filter) params.cql_filter = targetService.layers.map(function (i) { return !i.filter || _isGMLFilter(i.filter) ? "INCLUDE" : i.filter; }).join(";");
+                    source.params_.LAYERS = layers.join(',');
+                    var gfiURL = source.getGetFeatureInfoUrl(coords, resolution, map.crs, {
+                        'QUERY_LAYERS': layers.join(','),
+                        'INFO_FORMAT': params.INFO_FORMAT,
+                        'FEATURE_COUNT': 1000,
+                        'radius': map.options.pixelTolerance,
+                        'buffer': map.options.pixelTolerance
+                    });
+
+                    gfiURL = gfiURL.replace(/sld_body=[a-zA-Z%0-9._]*/); // Quitamos el parámetro sld_body
+
+
+                    var expUrl = gfiURL;
+                    const requestData = {
+                        serviceUrl: serviceUrl,
+                        requestedFormat: params.INFO_FORMAT,
+                        expandUrl: expUrl
+                    };
+                    requestDataArray.push(requestData);
+                    requestPromises.push(new Promise(function (resolve, reject) {
+                        const mapLayer = targetService.mapLayers[0];
+                        mapLayer.toolProxification.fetch(gfiURL)
+                            .then(function (data) {
+                                mapLayer.toolProxification.cacheHost.getAction(requestData.expandUrl).then(function (cache) {
+                                    requestData.originalUrl = cache.action.call(mapLayer.toolProxification, requestData.expandUrl);
+                                    resolve(TC.Util.extend({}, data, requestData));
+                                });
+                            })
+                            .catch(function (error) {
+                                reject(Error(error));
+                            });
+                    }));
+                    TC.Util.consoleRegister("Lanzamos GFI");
+                }
+
+                if (requestPromises.length > 0) {
+                    Promise.all(requestPromises).then(function (responses) {
+                        var someSuccess = false;
+                        var featureCount = 0;
+                        var featureInsertionPoints = [];
+                        for (var i = 0; i < responses.length; i++) {
+                            var featureInfo = responses[i];
+                            var service = targetServices[requestDataArray[i].serviceUrl];
+                            someSuccess = true;
+                            service.text = featureInfo.responseText;
+                            var format;
+                            var iFormat = featureInfo.contentType;
+                            if (iFormat && iFormat.indexOf(";") > -1)
+                                iFormat = iFormat.substr(0, iFormat.indexOf(";")).trim();
+
+                            if (!iFormat) iFormat = featureInfo.requestedFormat;
+
+                            if (iFormat === featureInfo.requestedFormat) {
+                                switch (iFormat) {
+                                    case 'application/json':
+                                        format = new ol.format.GeoJSON();
+                                        break;
+                                    case 'application/vnd.ogc.gml':
+                                        if (featureInfo.responseText.indexOf("FeatureCollection") > -1) {
+                                            format = new ol.format.WFS({
+                                                gmlFormat: new ol.format.GML2({
+                                                    srsName: map.crs
+                                                })
                                             });
                                         }
                                         else {
-                                            feat.attributes.push({
-                                                name: key,
-                                                value: value//"objeto complejo"
-                                            });
+                                            format = new ol.format.WMSGetFeatureInfo();
+                                        }
+                                        break;
+                                    case 'application/vnd.ogc.gml/3.1.1':
+                                        format = new ol.format.GML3({
+                                            srsName: map.crs
+                                        });
+                                        break;
+                                    case 'application/vnd.esri.wms_featureinfo_xml':
+                                        format = esriXmlParser;
+                                        break;
+                                    default:
+                                        format = null;
+                                        break;
+                                }
+
+                                if (format) {
+                                    var features;
+                                    try {
+                                        features = format.readFeatures(featureInfo.responseText, {
+                                            featureProjection: ol.proj.get(map.crs)
+                                        });
+                                    }
+                                    catch (e) {
+                                        TC.error(self.parent.getLocaleString('featureInfo.error.badResponse', { url: featureInfo.serviceUrl }) + ': ' + e.message);
+                                        features = [];
+                                        continue;
+                                    };
+                                    featureCount = featureCount + features.length;
+                                    var isParentOrSame = function (layer, na, nb) {
+                                        var result = false;
+                                        if (na === nb) {
+                                            result = true;
+                                        }
+                                        else {
+                                            var pa = layer.getNodePath(na);
+                                            var pb = layer.getNodePath(nb);
+                                            if (pa.length > 0 && pb.length >= pa.length) {
+                                                result = true;
+                                                for (var i = 0; i < pa.length; i++) {
+                                                    if (layer.wrap.getName(pa[i]) !== layer.wrap.getName(pb[i])) {
+                                                        result = false;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        return result;
+                                    };
+
+                                    var fakeLayers = {
+                                    };
+
+                                    for (var j = 0; j < features.length; j++) {
+                                        var feature = features[j];
+                                        if (feature instanceof ol.Feature) {
+                                            var fid = feature.getId() || TC.getUID();
+                                            var found = false;
+                                            var layerName = fid.substr(0, fid.lastIndexOf('.'));
+                                            for (var k = 0; k < service.layers.length; k++) {
+                                                var l = service.layers[k];
+                                                var lName = l.name.substr(l.name.indexOf(':') + 1);
+                                                if (service.mapLayers.some(function (mapLayer) { return isParentOrSame(mapLayer, lName, layerName) })) {
+                                                    found = true;
+                                                    if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
+                                                        featurePromises.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
+                                                        featureInsertionPoints.push(l.features);
+                                                    }
+                                                    break;
+                                                }
+                                            }
+
+                                            //si llegamos aquí y no he encontrado su layer, es que no cuadraba el prefijo del fid con el id del layer
+                                            //esto pasa, p.ej, en cartociudad
+                                            if (!found) {
+                                                //así que creo un layer de palo para la respuesta del featInfo
+                                                var fakeLayer;
+                                                if (fakeLayers[layerName]) fakeLayer = fakeLayers[layerName];
+                                                else {
+                                                    fakeLayer = {
+                                                        name: layerName, title: layerName, path: [layerName], features: []
+                                                    };
+                                                    fakeLayers[layerName] = fakeLayer;
+                                                    service.layers.push(fakeLayer);
+                                                }
+
+                                                if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
+                                                    featurePromises.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
+                                                    featureInsertionPoints.push(fakeLayer.features);
+                                                }
+                                            }
+                                        }
+                                    }//iteración sobre las features de esta respuesta
+
+
+                                }
+                                else {
+                                    //si no hay formato reconocido y parseable, metemos un iframe con la respuesta
+                                    //y prau
+                                    //para eso, creo una falsa entrada de tipo feature, con un campo especial rawUrl o rawContent
+
+                                    const compoundLayer = {
+                                        name: 'layer' + TC.getUID(), title: 'Datos en el punto', features: [{
+                                            rawUrl: featureInfo.originalUrl, expandUrl: featureInfo.expandUrl, rawContent: featureInfo.responseText, rawFormat: iFormat
+                                        }]
+                                    };
+
+                                    service.layers.push(compoundLayer);
+                                    featureCount = featureCount + 1;
+                                }
+                            }
+                            else { // iFormat !== featureInfo.requestedFormat
+
+                                // GLS:
+                                TC.Util.consoleRegister("Respuesta GFI: lo más probable es que el servidor esté devolviendo una excepción");
+                                TC.Util.consoleRegister("Lanzamos los eventos que corresponde y mostramos tostada");
+
+                                // En este caso lo más probable es que el servidor esté devolviendo una excepción
+                                self.parent.responseError({
+                                    message: featureInfo.responseText,
+                                    status: featureInfo.status
+                                });
+                                // GLS: misma gestión de error que en ol.js - > function (a, b, c) { // error...
+                                map.toast(self.parent.getLocaleString('featureInfo.error'), {
+                                    type: TC.Consts.msgType.ERROR
+                                });
+                            }
+
+                        }
+                        if (someSuccess) {
+                            var finfoPromises = featurePromises;
+                            if (featurePromises.length) {
+                                finfoPromises = finfoPromises.concat(new Promise(function (resolve, reject) {
+                                    // Si hay features cargamos el módulo de geometria para encontrar una que se interseque con el punto
+                                    TC.loadJS(
+                                        !TC.Geometry,
+                                        TC.apiLocation + 'TC/Geometry',
+                                        function () {
+                                            resolve();
+                                        }
+                                    );
+                                }));
+                            }
+                            Promise.all(finfoPromises).then(function afterFeatureInfoPromises(features) {
+                                var defaultFeature;
+                                features.forEach(function (feat, idx) {
+                                    if (feat) {
+                                        feat.attributes = [];
+                                        for (var key in feat.data) {
+                                            var value = feat.data[key];
+                                            if (typeof value !== 'object') {
+                                                feat.attributes.push({
+                                                    name: key,
+                                                    value: typeof (value) == "number" ? value.toLocaleString(TC.Util.getMapLocale(self.parent.map)) : value
+                                                });
+                                            }
+                                            else {
+                                                feat.attributes.push({
+                                                    name: key,
+                                                    value: value//"objeto complejo"
+                                                });
+                                            }
+                                        }
+                                        if (!defaultFeature && TC.Geometry.isInside(coords, feat.geometry)) {
+                                            defaultFeature = feat;
+                                        }
+                                        const featureInsertionPoint = featureInsertionPoints[idx];
+                                        // Añadimos la feature si no ha sido ya añadida (por ejemplo porque hay dos capas en el 
+                                        // mapa que tienen features coincidentes)
+                                        if (!featureInsertionPoint.some(f => f.id === feat.id)) {
+                                            featureInsertionPoint.push(feat);
                                         }
                                     }
-                                    if (!defaultFeature && TC.Geometry.isInside(coords, feat.geometry)) {
-                                        defaultFeature = feat;
-                                    }
-                                    const featureInsertionPoint = featureInsertionPoints[idx];
-                                    // Añadimos la feature si no ha sido ya añadida (por ejemplo porque hay dos capas en el 
-                                    // mapa que tienen features coincidentes)
-                                    if (!featureInsertionPoint.some(f => f.id === feat.id)) {
-                                        featureInsertionPoint.push(feat);
+                                });
+
+                                var services = [];
+                                for (var serviceUrl in targetServices) {
+                                    if (targetServices.hasOwnProperty(serviceUrl)) {
+                                        services.push(targetServices[serviceUrl]);
                                     }
                                 }
-                            });
 
-                            var services = [];
-                            for (var serviceUrl in targetServices) {
-                                if (targetServices.hasOwnProperty(serviceUrl)) {
+                                self.parent.responseCallback({
+                                    coords: coords,
+                                    resolution: resolution,
+                                    services: services,
+                                    featureCount: featureCount,
+                                    defaultFeature: defaultFeature
+                                });
+                                resolve();
+                            });
+                        }
+                        else {
+                            resolve();
+                        }
+                    },
+                        function (a, b, c) { // error
+                            if (services && services.length == 0) {
+                                for (var serviceUrl in targetServices) {
                                     services.push(targetServices[serviceUrl]);
                                 }
                             }
 
                             self.parent.responseCallback({
-                                coords: coords,
-                                resolution: resolution,
-                                services: services,
-                                featureCount: featureCount,
-                                defaultFeature: defaultFeature
+                                coords: coords, resolution: resolution, services: services, featureCount: 0
                             });
+                            map.toast(self.parent.getLocaleString('featureInfo.error'), {
+                                type: TC.Consts.msgType.ERROR
+                            });
+                            resolve();
+                        });
+                }
+                else {
+
+                    if (map.workLayers.filter(function (layer) {
+                        return layer instanceof TC.layer.Raster;
+                    }).length > 0) {
+                        map.toast(self.parent.getLocaleString('featureInfo.notQueryableLayers'), {
+                            type: TC.Consts.msgType.INFO
                         });
                     }
-                },
-                    function (a, b, c) { // error
-                        if (services && services.length == 0) {
-                            for (var serviceUrl in targetServices) {
-                                services.push(targetServices[serviceUrl]);
-                            }
-                        }
 
+                    if (services && services.length == 0) {
+                        for (var serviceUrl in targetServices) {
+                            services.push(targetServices[serviceUrl]);
+                        }
+                    }
+
+                    // GLS: nos suscribimos TC.Consts.event.BEFOREFEATUREINFO y lanzamos el mismo evento de zero resultados ya que puede darse que la resolución se lance antes del before.
+                    map.on(TC.Consts.event.BEFOREFEATUREINFO, function () {
                         self.parent.responseCallback({
                             coords: coords, resolution: resolution, services: services, featureCount: 0
                         });
-                        map.toast(self.parent.getLocaleString('featureInfo.error'), {
-                            type: TC.Consts.msgType.ERROR
-                        });
                     });
-            }
-            else {
 
-                if (map.workLayers.filter(function (layer) {
-                    return layer instanceof TC.layer.Raster;
-                }).length > 0) {
-                    map.toast(self.parent.getLocaleString('featureInfo.notQueryableLayers'), {
-                        type: TC.Consts.msgType.INFO
-                    });
-                }
-
-                if (services && services.length == 0) {
-                    for (var serviceUrl in targetServices) {
-                        services.push(targetServices[serviceUrl]);
-                    }
-                }
-
-                // GLS: nos suscribimos TC.Consts.event.BEFOREFEATUREINFO y lanzamos el mismo evento de zero resultados ya que puede darse que la resolución se lance antes del before.
-                map.on(TC.Consts.event.BEFOREFEATUREINFO, function () {
                     self.parent.responseCallback({
                         coords: coords, resolution: resolution, services: services, featureCount: 0
                     });
-                });
-
-                self.parent.responseCallback({
-                    coords: coords, resolution: resolution, services: services, featureCount: 0
-                });
-            }
+                    resolve();
+                }
+            });
         });
     };
 
@@ -6823,20 +6914,32 @@
                         olGeometryType = ol.geom.GeometryType.POLYGON;
                         break;
                 }
+                const layerStyle = olLayer.getStyle();
+                // Si la geometría es del tipo correcto, cogemos el estilo de la capa
+                const styleFunction = function (olFeature) {
+                    if (olFeature && olFeature.getGeometry().getType() === olGeometryType) {
+                        if (TC.Util.isFunction(layerStyle)) {
+                            return layerStyle(olFeature);
+                        }
+                        return layerStyle;
+                    }
+                    return null;
+                };
                 self.drawCtrl = new ol.interaction.Draw({
                     source: olLayer.getSource(),
-                    type: olGeometryType
-                    , style: olLayer.getStyle()
+                    type: olGeometryType,
+                    style: styleFunction
                 });
                 var setShowsPopup = function (wrap) {
                     wrap.parent.showsPopup = false;
                 };
                 olLayer.getSource().on(ADDFEATURE, function (event) {
-                    if (event.feature._wrap) {
-                        setShowsPopup(event.feature._wrap);
+                    const olFeat = event.feature;
+                    if (olFeat._wrap) {
+                        setShowsPopup(olFeat._wrap);
                     }
                     else {
-                        event.feature._wrapPromise.then(setShowsPopup);
+                        TC.wrap.Feature.createFeature(olFeat).then(f => setShowsPopup(f.wrap));
                     }
                 });
                 self.drawCtrl.handleEvent = function (event) {
@@ -6879,11 +6982,15 @@
                     setTimeout(function () {
                         self.parent._drawToken = false;
                     }, 500);
-                    if (callback) {
-                        TC.wrap.Feature.createFeature(event.feature, { showsPopup: false }).then(function (feat) {
+                    event.feature.setId(self.parent.getUID());
+
+                    TC.wrap.Feature.createFeature(event.feature, { showsPopup: false }).then(function (feat) {
+                        self.parent.filterFeature = feat;
+                        feat.layer = self.parent.filterLayer;
+                        if (callback) {
                             callback(feat);
-                        });
-                    }
+                        }
+                    });
                 });
             });
 
@@ -7054,95 +7161,94 @@
     TC.wrap.control.GeometryFeatureInfo.prototype.getFeaturesByGeometry = function (feature, xy) {
 
         var self = this;
-        var map = self.parent.map;
-        self.parent.filterFeature = feature;
-        feature.layer = self.parent.filterLayer;
+        return new Promise(function (resolve, reject) {
+            var map = self.parent.map;
 
-        map.wrap.getMap().then(function (olMap) {
+            map.wrap.getMap().then(function (olMap) {
 
-            var olGeometry = feature.wrap.feature.getGeometry();
-            var stride = olGeometry.stride;
-            var flatCoordinates = olGeometry.getFlatCoordinates();
-            //calcular el punto mas alto
-            if (!xy) {
-                var bestPoint = null;
-                for (var i = 1, len = flatCoordinates.length; i < len; i += stride) {
-                    if (!bestPoint || bestPoint[1] < flatCoordinates[i]) {
-                        bestPoint = [flatCoordinates[i - 1], flatCoordinates[i]];
-                    }
-                }
-                xy = olMap.getPixelFromCoordinate(new ol.geom.Point(bestPoint).getCoordinates());
-            }
-
-            self.parent.beforeRequest({ xy: xy });
-
-            var arrRequests = map.extractFeatures({ filter: new TC.filter.intersects(feature, map.crs), outputFormat: TC.Consts.format.JSON });
-
-            const arrPromises = [];
-            Promise.all(arrRequests).then(function (responses) {
-                var targetServices = [];
-                var featureCount = 0;
-                var hayError = false;
-
-                for (var i = 0; i < responses.length; i++) {
-                    const responseObj = responses[i];
-                    if (!responseObj) continue;
-                    arrPromises.push(new Promise(function (resolve, reject) {
-                        if (responseObj.errors && responseObj.errors.length) {
-                            for (var j = 0; j < responseObj.errors.length; j++) {
-                                var errorMsg, errorType = TC.Consts.msgType.WARNING;
-                                hayError = true;
-                                var error = responseObj.errors[j];
-                                switch (error.key) {
-                                    case TC.Consts.WFSErrors.MAX_NUM_FEATURES:
-                                        errorMsg = self.parent.getLocaleString("wfs.tooManyFeatures", error.params);
-                                        break;
-                                        /*case TC.Consts.WFSErrors.NO_LAYERS:
-                                            errorMsg = self.parent.getLocaleString('noLayersLoaded');*/
-                                        break;
-                                    case TC.Consts.WFSErrors.GETCAPABILITIES:
-                                        errorMsg = self.parent.getLocaleString('wfsGFI.inValidService', error.params);
-                                        break;
-                                    case TC.Consts.WFSErrors.NO_FEATURES:
-                                        //si no hay features nos callamos. Quizas en un futuro se muestre una alerta
-                                        hayError = false;
-                                        continue;
-                                        break;
-                                    case TC.Consts.WFSErrors.INDETERMINATE:
-                                        errorMsg = self.parent.getLocaleString("wfs.IndeterminateError");
-                                        TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
-                                        errorType = TC.Consts.msgType.ERROR;
-                                        break;
-                                    default:
-                                        errorMsg = self.parent.getLocaleString("wfsGFI." + error.key, error.params);
-                                        break;
-                                }
-
-                                map.toast(errorMsg, { type: errorType });
-                            }
-                            if (!responseObj.response) {
-                                resolve();
-                            }
+                var olGeometry = feature.wrap.feature.getGeometry();
+                var stride = olGeometry.stride;
+                var flatCoordinates = olGeometry.getFlatCoordinates();
+                //calcular el punto mas alto
+                if (!xy) {
+                    var bestPoint = null;
+                    for (var i = 1, len = flatCoordinates.length; i < len; i += stride) {
+                        if (!bestPoint || bestPoint[1] < flatCoordinates[i]) {
+                            bestPoint = [flatCoordinates[i - 1], flatCoordinates[i]];
                         }
-                    }));
-
-                    // Puede no haber response porque la URL no es correcta, metemos un condicional
-                    var featuresFound = responseObj.response ? readFeaturesFromResponse(map, responseObj.response.responseText, responseObj.response.contentType) : [];
-                    //ahora se distribuye la features por servicio y capa
-                    arrPromises[arrPromises.length - 1] = featureToServiceDistributor(featuresFound, responseObj.service);
-                    if (responseObj.service) {
-                        targetServices.push(responseObj.service);
                     }
-                    featureCount = featureCount + featuresFound.length;
+                    xy = olMap.getPixelFromCoordinate(new ol.geom.Point(bestPoint).getCoordinates());
                 }
-                Promise.all(arrPromises).then(function () {
-                    self.parent.responseCallback({
-                        xy: xy || null, services: targetServices, featureCount: featureCount
+
+                self.parent.beforeRequest({ xy: xy });
+
+                var arrRequests = map.extractFeatures({ filter: new TC.filter.intersects(feature, map.crs), outputFormat: TC.Consts.format.JSON });
+
+                const arrPromises = [];
+                Promise.all(arrRequests).then(function (responses) {
+                    var targetServices = [];
+                    var featureCount = 0;
+
+                    for (var i = 0; i < responses.length; i++) {
+                        const responseObj = responses[i];
+                        if (!responseObj) continue;
+                        arrPromises.push(new Promise(function (res, rej) {
+                            if (responseObj.errors && responseObj.errors.length) {
+                                for (var j = 0; j < responseObj.errors.length; j++) {
+                                    var errorMsg, errorType = TC.Consts.msgType.WARNING;
+                                    var error = responseObj.errors[j];
+                                    switch (error.key) {
+                                        case TC.Consts.WFSErrors.MAX_NUM_FEATURES:
+                                            errorMsg = self.parent.getLocaleString("wfs.tooManyFeatures", error.params);
+                                            break;
+                                            /*case TC.Consts.WFSErrors.NO_LAYERS:
+                                                errorMsg = self.parent.getLocaleString('noLayersLoaded');*/
+                                            break;
+                                        case TC.Consts.WFSErrors.GETCAPABILITIES:
+                                            errorMsg = self.parent.getLocaleString('wfsGFI.inValidService', error.params);
+                                            break;
+                                        case TC.Consts.WFSErrors.NO_FEATURES:
+                                            //si no hay features nos callamos. Quizas en un futuro se muestre una alerta
+                                            continue;
+                                            break;
+                                        case TC.Consts.WFSErrors.INDETERMINATE:
+                                            errorMsg = self.parent.getLocaleString("wfs.IndeterminateError");
+                                            TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
+                                            errorType = TC.Consts.msgType.ERROR;
+                                            break;
+                                        default:
+                                            errorMsg = self.parent.getLocaleString("wfsGFI." + error.key, error.params);
+                                            break;
+                                    }
+
+                                    map.toast(errorMsg, { type: errorType });
+                                }
+                                if (!responseObj.response) {
+                                    res();
+                                }
+                            }
+                        }));
+
+                        // Puede no haber response porque la URL no es correcta, metemos un condicional
+                        var featuresFound = responseObj.response ? readFeaturesFromResponse(map, responseObj.response.responseText, responseObj.response.contentType) : [];
+                        //ahora se distribuye la features por servicio y capa
+                        arrPromises[arrPromises.length - 1] = featureToServiceDistributor(featuresFound, responseObj.service);
+                        if (responseObj.service) {
+                            targetServices.push(responseObj.service);
+                        }
+                        featureCount = featureCount + featuresFound.length;
+                    }
+                    Promise.all(arrPromises).then(function () {
+                        self.parent.responseCallback({
+                            xy: xy || null, services: targetServices, featureCount: featureCount
+                        });
+                        resolve();
                     });
-                });
-            }, function (e) {
-                self.parent.responseCallback({});
-            })
+                }, function (e) {
+                    self.parent.responseCallback({});
+                    resolve();
+                })
+            });
         });
     };
 
@@ -7285,12 +7391,20 @@
                 if (image instanceof ol.style.Icon) {
                     result.src = image.getSrc();
                     var scale = image.getScale();
+                    var img = image.getImage();
                     if (scale) {
-                        result.scale = scale;
-                        var img = image.getImage();
                         if (img.width) {
                             result.width = img.width * scale;
                             result.height = img.height * scale;
+                        }
+                        else {
+                            result.scale = scale;
+                        }
+                    }
+                    else {
+                        if (img.width) {
+                            result.width = img.width;
+                            result.height = img.height;
                         }
                     }
                 }
@@ -7306,25 +7420,41 @@
                 }
             }
             else {
+                let geometryType;
+                switch (self.feature.getGeometry().getType()) {
+                    case ol.geom.GeometryType.MULTI_POLYGON:
+                    case ol.geom.GeometryType.POLYGON:
+                        geometryType = TC.Consts.geom.POLYGON;
+                        break;
+                    case ol.geom.GeometryType.MULTI_LINE_STRING:
+                    case ol.geom.GeometryType.LINE_STRING:
+                        geometryType = TC.Consts.geom.POLYLINE;
+                        break;
+                    default:
+                        geometryType = TC.Consts.geom.POINT;
+                        break;
+                }
+
+                result.src = TC.Util.getLegendImageFromStyle(getStyleFromNative(style), { geometryType: geometryType });
                 // No image, find stroke and fill
-                var stroke = style.getStroke();
-                var fill = style.getFill();
-                if (stroke) {
-                    var strokeColor = stroke.getColor();
-                    if (strokeColor) {
-                        result.strokeColor = ol.color.asString(strokeColor);
-                    }
-                    var strokeWidth = stroke.getWidth();
-                    if (strokeWidth) {
-                        result.strokeWidth = strokeWidth;
-                    }
-                }
-                if (fill) {
-                    var fillColor = fill.getColor();
-                    if (fillColor) {
-                        result.fillColor = ol.color.asString(fillColor);
-                    }
-                }
+                //var stroke = style.getStroke();
+                //var fill = style.getFill();
+                //if (stroke) {
+                //    var strokeColor = stroke.getColor();
+                //    if (strokeColor) {
+                //        result.strokeColor = ol.color.asString(strokeColor);
+                //    }
+                //    var strokeWidth = stroke.getWidth();
+                //    if (strokeWidth) {
+                //        result.strokeWidth = strokeWidth;
+                //    }
+                //}
+                //if (fill) {
+                //    var fillColor = fill.getColor();
+                //    if (fillColor) {
+                //        result.fillColor = ol.color.asString(fillColor);
+                //    }
+                //}
             }
         }
 
@@ -7342,10 +7472,19 @@
         }
         self.feature._wrap = self;
         self.parent.setCoords(coords);
-        self.setData(self.parent.data);
+        self.parent.setData(self.parent.data);
     };
 
     TC.wrap.Feature.prototype.createPoint = function (coords, options) {
+        const self = this;
+        options = options || {};
+        createFeatureBasics.call(self, coords, options);
+        if (TC.Util.hasStyleOptions(options)) {
+            self.feature.setStyle(createNativeStyle({ styles: { point: options } }, self.feature));
+        }
+    };
+
+    TC.wrap.Feature.prototype.createMultiPoint = function (coords, options) {
         const self = this;
         options = options || {};
         createFeatureBasics.call(self, coords, options);
@@ -7441,6 +7580,7 @@
                 let geomStr;
                 switch (true) {
                     case olGeometry instanceof ol.geom.Point:
+                    case olGeometry instanceof ol.geom.MultiPoint:
                         if (TC.Util.isFunction(olStyle)) {
                             olStyle = olStyle(olFeat);
                         }
@@ -7453,6 +7593,14 @@
                             }
                         }
                         geomStr = geomStr || 'Point';
+                        if (olGeometry instanceof ol.geom.MultiPoint) {
+                            if (geomStr === 'Point') {
+                                geomStr = 'MultiPoint';
+                            }
+                            if (geomStr === 'Marker') {
+                                geomStr = 'MultiMarker';
+                            }
+                        }
                         break;
                     case olGeometry instanceof ol.geom.LineString:
                         geomStr = 'Polyline';
@@ -7634,9 +7782,9 @@
                     if (Array.isArray(ringsOrPolylines)) {
                         points = ringsOrPolylines[0];
                     }
-                case (TC.feature.Polyline && self.parent instanceof TC.feature.Polyline):
+                case (TC.feature.Polyline && self.parent instanceof TC.feature.Polyline) || TC.feature.MultiPoint && self.parent instanceof TC.feature.MultiPoint:
                     isLineString = true;
-                    ctor = ctor || ol.geom.LineString;
+                    ctor = ctor || ((TC.feature.Polyline && self.parent instanceof TC.feature.Polyline) ? ol.geom.LineString : ol.geom.MultiPoint);
                     points = isPolygonOrMultiLineString ? points : geometry;
                     if (Array.isArray(points)) {
                         point = points[0];
@@ -8088,28 +8236,8 @@
 
                 self._innerCentroid = self.getInnerPoint({ clipBox: currentExtent });
 
-                popupCtl.contentDiv.innerHTML = self.parent.getInfo({ locale: map.options.locale });
-                popupCtl.menuDiv.innerHTML = '';
-                if (popupCtl.options.closeButton || popupCtl.options.closeButton === undefined) {
-                    const btn = document.createElement('button');
-                    btn.classList.add(popupCtl.CLASS + '-close', 'tc-icon-btn');
-                    btn.setAttribute('title', popupCtl.getLocaleString('close'));
-                    popupCtl.menuDiv.insertAdjacentElement('afterbegin', btn);
-                    btn.addEventListener(TC.Consts.event.CLICK, function () {
-                        popupCtl.hide();
-                    }, { passive: true });
-                    popupCtl.contentDiv.classList.add(popupCtl.CLASS + '-has-btn');
-                    // En OL2 los featureInfo en versión "baraja de cartas" salen sin tamaño.
-                    // Para evitar esto, la clase tc-ctl-finfo tiene ancho y alto establecidos.
-                    // Pero eso hace que en el popup salgan barras de scroll, porque contentDiv se crea demasiado pequeño.
-                    // Rehacemos el tamaño de tc-ctl-finfo para eliminarlas.
-                    const finfo = popupCtl.contentDiv.querySelector('.tc-ctl-finfo');
-                    if (finfo) {
-                        finfo.width = 'auto';
-                        finfo.height = 'auto';
-                    }
-                }
-
+                popupCtl.contentDiv.innerHTML = options.html || self.parent.getInfo({ locale: map.options.locale });
+               
                 var parentOptions = self.parent.options;
                 if (TC.Util.isEmptyObject(parentOptions) && self.parent.layer &&
                     self.parent.layer.options && self.parent.layer.options.styles) {
@@ -8477,9 +8605,15 @@
                             const parentStyles = self.parent.styles || {};
                             switch (mode) {
                                 case TC.Consts.geom.RECTANGLE:
-                                    drawOptions.style = createNativeStyle({
-                                        styles: { line: self.parent.styles.line }
-                                    });
+                                    if (parentStyles.line) {
+                                        drawOptions.style = createNativeStyle({
+                                            styles: {
+                                                line: parentStyles.line,
+                                                point: false,
+                                                polygon: false
+                                            }
+                                        });
+                                    }
                                     drawOptions.type = ol.geom.GeometryType.LINE_STRING;
                                     drawOptions.maxPoints = 2;
                                     drawOptions.geometryFunction = function (coordinates, geometry) {
@@ -8499,7 +8633,11 @@
                                 case TC.Consts.geom.MULTIPOLYGON:
                                     if (parentStyles.polygon) {
                                         drawOptions.style = createNativeStyle({
-                                            styles: { polygon: parentStyles.polygon }
+                                            styles: {
+                                                polygon: parentStyles.polygon,
+                                                line: false,
+                                                point: false
+                                            }
                                         });
                                     }
                                     break;
@@ -8507,7 +8645,11 @@
                                 case TC.Consts.geom.MULTIPOINT:
                                     if (parentStyles.point) {
                                         drawOptions.style = createNativeStyle({
-                                            styles: { point: parentStyles.point }
+                                            styles: {
+                                                point: parentStyles.point,
+                                                line: false,
+                                                polygon: false
+                                            }
                                         });
                                     }
                                     break;
@@ -8515,7 +8657,11 @@
                                 default:
                                     if (parentStyles.line) {
                                         drawOptions.style = createNativeStyle({
-                                            styles: { line: parentStyles.line }
+                                            styles: {
+                                                line: parentStyles.line,
+                                                point: false,
+                                                polygon: false
+                                            }
                                         });
                                     }
                                     break;
@@ -8787,14 +8933,15 @@
         }
     };
 
-    TC.wrap.control.CacheBuilder.prototype.getRequestSchemas = function (options) {
+    TC.wrap.control.OfflineMapMaker.prototype.getRequestSchemas = function (options) {
         var extent = options.extent;
         var layers = options.layers;
         var result = new Array(layers.length);
         for (var i = 0, len = result.length; i < len; i++) {
             var layer = layers[i];
             var schema = {
-                layerId: layer.id
+                layerId: layer.id,
+                tileMatrixSet: layer.matrixSet
             };
             var olSource = layer.wrap.layer.getSource();
             if (olSource.getUrls) {
@@ -8848,7 +8995,7 @@
         return result;
     };
 
-    TC.wrap.control.CacheBuilder.prototype.getGetTilePattern = function (layer) {
+    TC.wrap.control.OfflineMapMaker.prototype.getGetTilePattern = function (layer) {
         var result = "";
         var olSource = layer.wrap.layer.getSource();
         if (olSource.getUrls) {
@@ -9209,6 +9356,9 @@
                 break;
             case TC.Consts.geom.MULTIPOLYGON:
                 geometry = new ol.geom.MultiPolygon(options.coordinates);
+                break;
+            case TC.Consts.geom.MULTIPOINT:
+                geometry = new ol.geom.MultiPoint(options.coordinates);
                 break;
             case TC.Consts.geom.POINT:
             default:

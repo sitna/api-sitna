@@ -154,7 +154,7 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
             TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
 
             self.div.querySelector('.' + self.CLASS + '-empty').classList.add(TC.Consts.classes.HIDDEN);
-
+             
             self.getRenderedHtml(self.CLASS + '-branch', self.layerTrees[layer.id])
                 .then(function (out) {
                     const parser = new DOMParser();

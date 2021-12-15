@@ -9,7 +9,7 @@
 <body>
     <div class="instructions">
         <p>Ejemplo de uso de <a href="../doc/global.html#LayerCatalogOptions">LayerCatalogOptions</a> y 
-        <a href="../doc/classes/SITNA.cfg.MapControlOptions.html#property_workLayerManager">SITNA.cfg.MapControlOptions.workLayerManager</a>.</p>
+        la opción <code>workLayerManager</code> de <a href="../doc/global.html#MapControlOptions.html">MapControlOptions</a>.</p>
         <p><strong>layerCatalog</strong>: Control de administración de capas de WMS. Sus funcionalidades son:</p>
         <ul>
             <li>Consultar las capas disponibles en uno o varios WMS.</li>
@@ -40,6 +40,8 @@
         SITNA.Cfg.controls.workLayerManager = {
             div: "slot1"
         };
+        // Establecemos un proxy porque se hacen peticiones a otro dominio.
+        SITNA.Cfg.proxy = "proxy/proxy.ashx?";
         // Añadimos en la segunda posición el catálogo de capas con dos servicios.
         SITNA.Cfg.controls.layerCatalog = {
             div: "slot2",

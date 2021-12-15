@@ -562,7 +562,7 @@ console.log("MILLISECONDS",end2-start2);
             if (layer.ResourceURL && !layer.ResourceURL.length) {
                 layer.ResourceURL = [layer.ResourceURL];
             }
-            if (!layer.Style.length) {
+            if (layer.Style && !Array.isArray(layer.Style)) {
                 layer.Style = [layer.Style];
             }
             if (!layer.TileMatrixSetLink.length) {

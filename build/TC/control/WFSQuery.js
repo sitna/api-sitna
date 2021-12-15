@@ -1,3 +1,92 @@
+/// <reference path="popup.js" />
+
+/**
+  * Opciones de control de consultas.
+  * 
+  * Algunos servidores tienen servicios WMS y WFS que actúan en paralelo, es decir, están alojados dentro del mismo nombre de host y publican las mismas capas.
+  * Si el control `WFSQuery` está en el mapa, verifica si las capas de servicios WMS están asociadas a un WFS paralelo. Si es así, ofrece un interfaz de usuario
+  * para poder hacer consultas a la capa en base a los valores de las propiedades de los elementos de la capa. Esta interfaz de usuario es accesible desde el control
+  * `workLayerManager`.
+  * @typedef WFSQueryOptions
+  * @see MapControlOptions
+  * @property {StyleOptions} [styles] - Opciones de estilo de las geometrías de las entidades resultado de la consulta.
+  * @property {StyleOptions} [highlightStyles] - Opciones de estilo de las geometrías de las entidades resaltadas.
+  * @example <caption>[Ver en vivo](../examples/cfg.WFSQueryOptions.html)</caption> {@lang html}
+  * <div id="mapa" />
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos el control de capas cargadas en la primera posición.
+  *     SITNA.Cfg.controls.workLayerManager = {
+  *         div: "slot1"
+  *     };
+  *     //Si se añade el control WFSQuery, el control busca un servicio WFS pareado al WMS de cada capa añadida al mapa y si lo encuentra habilita la lupa que da acceso al constructor de consultas.
+  *     SITNA.Cfg.controls.WFSQuery = {
+  *         //Establecemos el estilo de las geometrías de las entidades resultado de la consulta
+  *         styles: {
+  *             //Estilo de polígonos y multipolígonos
+  *             polygon: {
+  *                 strokeColor: "#057f28",
+  *                 strokeWidth: 4,
+  *                 fillColor: "#057f28",
+  *                 fillOpacity: 0.3
+  *             },
+  *             //Estilo de polilíneas y multipolilíneas
+  *             line: {
+  *                 strokeColor: "#057f28",
+  *                 strokeWidth: 4
+  *             },
+  *             //Estilo de puntos y multipuntos
+  *             point: {
+  *                 strokeColor: "#057f28"
+  *             }
+  *         },
+  *         //Establecemos el estilo de las geometrías de las entidades resaltadas
+  *         highlightStyles: {
+  *             //Estilo de polígonos y multipolígonos
+  *             polygon: {
+  *                 strokeColor: "#ff7f27",
+  *                 strokeWidth: 4,
+  *                 fillColor: "#ff7f27",
+  *                 fillOpacity: 0.3
+  *             },
+  *             //Estilo de polilíneas y multipolilíneas
+  *             line: {
+  *                 strokeColor: "#ff7f27",
+  *                 strokeWidth: 4
+  *             },
+  *             //Estilo de puntos y multipuntos
+  *             point: {
+  *                 strokeColor: "#ff7f27"
+  *             }
+  *         }
+  *     };
+  *     var map = new SITNA.Map("mapa", {
+  *         workLayers: [{
+  *             id: "paisajes",
+  *             title: "Paisajes singulares",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "//idena.navarra.es/ogc/wms",
+  *             layerNames: "IDENA:BIODIV_Pol_PaisajesSing"
+  *         },
+  *         {
+  *             id: "meteorologia",
+  *             title: "Meteorología",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "//idena.navarra.es/ogc/wms",
+  *             layerNames: "IDENA:estacMeteor"
+  *         },
+  *         {
+  *             id: "plazaola",
+  *             title: "Vía Verde del Plazaola",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "//idena.navarra.es/ogc/wms",
+  *             layerNames: "IDENA:DOTACI_Lin_VVPlazaola"
+  *         }]
+  *     });
+  * </script>
+  */
+
 TC.control = TC.control || {};
 
 /*pollyfill*/
@@ -37,6 +126,10 @@ if (!TC.Control) {
     TC.syncLoadJS(TC.apiLocation + 'TC/Control');
 }
 
+if (!TC.control.infoShare) {
+    TC.syncLoadJS(TC.apiLocation + 'TC/control/infoShare');
+}
+
 if (!TC.filter) {
     TC.syncLoadJS(TC.apiLocation + 'TC/filter');
 }
@@ -64,6 +157,14 @@ TC.control.WFSQuery = function (options) {
     var self = this;
 
     TC.Control.apply(this, arguments);
+
+    self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+    if (!self.options.dialogDiv) {
+        document.body.appendChild(self._dialogDiv);
+    }
+
+    self.exportsState = true;
+
     self.styles = self.options.styles;
     self.highlightStyles = self.options.highlightStyles || self.options.highLightStyles;
     self.download = self.options.download;
@@ -91,6 +192,7 @@ TC.control.WFSQuery = function (options) {
 };
 
 TC.inherit(TC.control.WFSQuery, TC.Control);
+TC.mix(TC.control.WFSQuery, TC.control.infoShare);
 
 (function () {
     const ctlProto = TC.control.WFSQuery.prototype;
@@ -165,7 +267,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
             key: 'query.equalTo'
         },
         nbtw: {
-            key: 'query.equalTo'
+            key: 'query.notEqualTo'
         },
         intersects: {
             Ctor: TC.filter.like,
@@ -177,6 +279,10 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
         },
         empty: {
             Ctor: TC.filter.equalTo,
+            key: 'query.empty'
+        },
+        null: {
+            Ctor: TC.filter.isNull,
             key: 'query.empty'
         }
     };
@@ -197,8 +303,10 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
     ctlProto.template[ctlProto.CLASS + "-form"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-form.hbs";
     ctlProto.template[ctlProto.CLASS + "-filter"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-filter.hbs";
     ctlProto.template[ctlProto.CLASS + "-table"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-table.hbs";
-    ctlProto.template[ctlProto.CLASS + "-table-object"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-table-object.hbs";
+    ctlProto.template["tc-ctl-finfo-attr-val"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-val.hbs";
+    ctlProto.template["tc-ctl-finfo-object"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-object.hbs";
     ctlProto.template[ctlProto.CLASS + "-geom"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-geom.hbs";
+    ctlProto.template[ctlProto.CLASS + "-share-dialog"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-share-dialog.hbs";
 
 
     var checkInput = function (type) {
@@ -262,7 +370,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
             return dateInputMask.value;
         }
         else if (input.type === "date") {
-            return new Date(input.value).toLocaleDateString(locale)
+            return new Date(input.value).toLocaleDateString(locale,{timeZone: "UTC" })
         }
         else if (input.type === "number") {
             var dotOrComma = 1.1.toLocaleString(locale).substring(1, 2);
@@ -397,6 +505,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
         const whereSection = form.querySelector(`.${ctlProto.CLASS}-where`);
         const opSection = form.querySelector(`.${ctlProto.CLASS}-op`);
         var valueField = whereSection.querySelector(".tc-textbox");
+        valueField.disabled = false;
         if (valueField.dataset["autocomplete"]) {
             TC.UI.autocomplete.call(valueField, "clear");
         }
@@ -411,7 +520,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
         }
         type = data[this.selectedOptions[0].value.substring(this.selectedOptions[0].value.indexOf(":") + 1)].type;
         opSection.classList.remove(hiddenCssClass);
-        TC.UI.autocomplete.call(valueField, "clear");
+        TC.UI.autocomplete.call(valueField, "destroy");
         //$(valueField).unbind("keydown");
         destroyNumberMask();
         valueField.type = "search";
@@ -471,8 +580,8 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                     }
                 }
                 break
-            case type.indexOf("dateTime") >= 0:
-            case type.indexOf("date") >= 0:
+                        case type.indexOf("dateTime") >= 0:
+            case type.indexOf("date") >= 0:            
 
                 dateSection.classList.remove(hiddenCssClass);
                 whereSection.classList.remove(hiddenCssClass, spatialCssClass);
@@ -481,7 +590,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                     dateSection.firstElementChild.checked = true;
                 }
                 _createDateMask(valueField);
-                break;
+                break;            
             case type.indexOf("string") >= 0:
                 textSection.classList.remove(hiddenCssClass);
                 whereSection.classList.remove(hiddenCssClass, spatialCssClass);
@@ -497,12 +606,6 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
     };
 
     const _renderFilterConditions = function (ctl) {
-
-        if (TC._hbs && !TC._hbs.helpers.formatNumber) {
-            TC._hbs.registerHelper("formatNumber", function (value) {
-                return value.toLocaleString(locale);
-            });
-        }
         const form = ctl.getForm();
         const whereDiv = form.querySelector(`.${ctl.CLASS}-where-list`);
         empty(whereDiv);
@@ -548,7 +651,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 _showMessage(getLocaleString("query.msgNoValidNumber"));
             return false;
         }
-        if (form.querySelector('input.tc-textbox').value.trim() === "" && opcion.value!=="empty") {
+        if (form.querySelector('input.tc-textbox').value.trim() === "" && (opcion.value !== "empty" && opcion.value !== "null")) {
             _showMessage(getLocaleString("query.msgNoValueCondition"));
             return false;
         }
@@ -587,14 +690,18 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                     save: {
                         fileName: _layerName + ".xls"
                     },
-                    download: () => _downloadClickHandler(self, _getLayerName)
+                    download: () => _downloadClickHandler(self, _getLayerName),
+                    share: true,
+                    resize: true
                 };
                 if (ccontainer.length == 0) {
                     self.resultsPanel = await self.map.addControl('resultsPanel', panelOptions);
+                    self.resultsPanel.caller = self;
                 }
                 else {
                     panelOptions.position = "right";
                     self.resultsPanel = await ccontainer[0].addControl('resultsPanel', panelOptions);
+                    self.resultsPanel.caller = self;
                 }
                 self.resultsPanel.template[self.resultsPanel.CLASS + "-table"] = self.template[self.CLASS + "-table"];
             }
@@ -605,7 +712,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
             resolve();
         });
     };
-    
+
     var _showMessage = function (Message, type) {
         var messageDiv = modalBody.getElementsByClassName("tc-ctl-wfsquery-message")[0];
         if (timer) {
@@ -635,14 +742,14 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
     var _getPossibleValues = async function (field, value) {
         var _capabilities = Object.assign({}, _currentLayercapabilities);
         switch (document.querySelector(".tc-ctl-wfsquery.tc-ctl-wfsquery-text input:checked").value) {
-            case "start":
+            case "starts":
                 value = (value + "*");
                 break;
             case "contains":
             case "eq":
                 value = ("*" + value + "*");
                 break;
-            case "end":
+            case "ends":
                 value = ("*" + value);
                 break;
         }
@@ -656,7 +763,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
         try {
             var data = await _currentLayer.toolProxification.fetch(_currentLayerURL, {
                 //URI:si el valor de field contiene "/" se supone que es un dato compuesto entonces no establezco propiedades a devolver sino que se deja vacío para que devuelva todos.
-                data: TC.Util.WFGetPropertyValue(_currentLayerName, field.indexOf("/")>=0 ? false : field, TC.filter.like(field, value, undefined, undefined, undefined, false), _capabilities),//TC.Util.WFSQueryBuilder([_currentLayerName], TC.filter.like(field, value, undefined, undefined, undefined, false), _capabilities, "JSON", false),
+                data: TC.Util.WFGetPropertyValue(_currentLayerName, field.indexOf("/") >= 0 ? false : field, TC.filter.like(field, value, undefined, undefined, undefined, false), _capabilities),//TC.Util.WFSQueryBuilder([_currentLayerName], TC.filter.like(field, value, undefined, undefined, undefined, false), _capabilities, "JSON", false),
                 contentType: "application/xml",
                 method: "POST",
                 signal: signal
@@ -671,9 +778,9 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 }
                 //parser de features XML
                 var arr = [];
-                xmlDoc.querySelectorAll("member > *").forEach(function (item) { if (arr.indexOf(item.innerHTML)<0)arr[arr.length] = item.innerHTML });
+                xmlDoc.querySelectorAll("member > *").forEach(function (item) { if (arr.indexOf(item.innerHTML) < 0) arr[arr.length] = item.innerHTML });
                 return arr;
-                
+
             }
             if (data.contentType.startsWith("application/json")) {
                 data = JSON.parse(data.responseText);
@@ -697,7 +804,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 return [];
         }
         catch (err) {
-            if (err instanceof DOMException && err.name !=="AbortError")
+            if (err instanceof DOMException && err.name !== "AbortError")
                 _showMessage(err, TC.Consts.msgType.ERROR);
             return null
         }
@@ -714,11 +821,11 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 if (timerAutocomplete)
                     window.clearTimeout(timerAutocomplete);
                 timerAutocomplete = window.setTimeout(async function () {
-                    if (!document.querySelector(".tc-ctl-wfsquery.tc-ctl-wfsquery-text").classList.contains(TC.Consts.classes.HIDDEN)) {                        
+                    if (!document.querySelector(".tc-ctl-wfsquery.tc-ctl-wfsquery-text").classList.contains(TC.Consts.classes.HIDDEN)) {
                         var data = await _getPossibleValues(property, text)
                         if (data) {
                             if (data.length)
-                                callback(data);
+                                callback(data.sort());
                             else
                                 _self.target.classList.add(hiddenCssClass);
                         }
@@ -809,17 +916,24 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
     };
     ctlProto.render = function (callback) {
         const self = this;
-        const result = TC.Control.prototype.render.call(self, callback);
-        return result;
+
+        return self._set1stRenderPromise(Promise.all([
+            TC.Control.prototype.render.call(self, callback),
+            self.getRenderedHtml(self.CLASS + '-share-dialog', {}, function (html) {
+                self._dialogDiv.innerHTML = html;
+            })
+        ]));
     };
 
     ctlProto.register = function (map) {
         const self = this;
-        return new Promise(function (resolve) {
+        return new Promise(function (resolve, reject) {
 
             map.on(TC.Consts.event.LAYERERROR, (e) => {
                 if (e.layer === self.resultsLayer) {
-                    self.modalDialog.getElementsByClassName("tc-modal-body")[0].classList.remove(loadingCssClass)
+                    if (self.modalDialog) {
+                        self.modalDialog.getElementsByClassName("tc-modal-body")[0].classList.remove(loadingCssClass);
+                    }
                     if (e.reason === TC.Consts.WFSErrors.MAX_NUM_FEATURES) {
                         _showMessage(getLocaleString("query.msgTooManyResults", { limit: e.data.limit }), TC.Consts.msgType.WARNING)
                     }
@@ -832,6 +946,13 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
 
             TC.Control.prototype.register.call(self, map).then(function (ctrl) {
                 var self = ctrl;
+
+                if (TC._hbs && !TC._hbs.helpers.formatNumber) {
+                    TC._hbs.registerHelper("formatNumber", function (value) {
+                        return value.toLocaleString(locale);
+                    });
+                }
+
                 _getStyles = function () {
                     var styleFN = function (geomType, property) {
                         return this.options.styles && this.options.styles[geomType] ? (this.options.styles[geomType][property] || TC.Cfg.styles[geomType][property]) : TC.Cfg.styles[geomType][property]
@@ -948,14 +1069,18 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                     });
                 });
 
-                resolve(self);
+                self.getShareDialog().then(function () {
+                    resolve(self);
+                }).catch(function (err) {
+                    reject(err instanceof Error ? err : Error(err));
+                });
             });
         });
     };
 
     const _onFeaturesUpdate = function (e) {
         const ctl = e.layer.owner;
-        if (ctl && e.layer == ctl.resultsLayer) {
+        if (ctl && e.layer == ctl.resultsLayer) {            
             if (e.newData && e.newData.totalFeatures === 0) {
                 ctl.modalDialog.getElementsByClassName("tc-modal-body")[0].classList.remove(loadingCssClass);
                 _showMessage(getLocaleString("query.msgNoResults"), TC.Consts.msgType.INFO);
@@ -963,7 +1088,25 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
             }
             var features = e.layer.features;
             if (features.length > 0) {
-                ctl.map.zoomToFeatures(features);
+                if (ctl.toShare && ctl.toShare.doZoom) {                    
+                    ctl._setQueryToSearch({ doZoom: false });
+                    ctl.map.zoomToFeatures(features);
+                }
+                const serviceAttrName = 'h3_' + ctl.getLocaleString('service');
+                const layerAttrName = 'h4_' + ctl.getLocaleString('layer');
+                const title_separator = ctl.map.getControlsByClass(TC.control.Click).some((c) => { return c.TITLE_SEPARATOR }) ? ctl.map.getControlsByClass(TC.control.Click).find((c) => { return c.TITLE_SEPARATOR }).TITLE_SEPARATOR : ' • ';
+                
+				for(var i=0;i<features.length;i++){
+					const path = _currentLayer.getPath(_currentLayerName).slice(1)
+					if (path) {
+						const newData = {};
+						newData[serviceAttrName] = _currentLayer.title;
+                        newData[layerAttrName] = path.join(title_separator);						
+						const allData = TC.Util.extend(newData, features[i].getData());
+						features[i].clearData();
+						features[i].setData(allData);
+					}
+				}
                 ctl.showResultsPanel(
                     (features.length > 1 ?
                         features.reduce(function (vi, va, index) {
@@ -975,6 +1118,79 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
             }
 
             e.layer.map.off(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+        }
+    };
+
+    const _onBeforeApplyQuery = function (e) {
+        const ctl = e.layer.owner;
+        if (ctl && e.layer == ctl.resultsLayer && e.query) {
+            ctl._setQueryToSearch({ filter: e.query });
+        }
+    };
+
+    ctlProto._sendQuery = async function (filter) {
+        const self = this;
+
+        if (_currentLayer && _currentLayerName && _currentLayerTitle && filter) {
+            var _url = await _currentLayer.getWFSURL();
+            await _createResultPanel.apply(self, [_currentLayerTitle]);
+            _currentLayer.toolProxification.cacheHost.getAction(_url).then(function (cacheHost) {
+                const url = cacheHost.action(_url);
+                if (self.resultsLayer && self.resultsLayer.url !== url) {
+                    self.map.removeLayer(self.resultsLayer);
+                    self.resultsLayer = null;
+                }
+                if (!self.resultsLayer) {
+                    self.map.on(TC.Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
+                    self.map
+                        .addLayer({
+                            id: "WFSQueryResults",
+                            type: TC.Consts.layerType.WFS,
+                            url: url,
+                            owner: self,
+                            stealth: true,
+                            geometryName: "the_geom",
+                            featurePrefix: _currentLayerName.substring(0, _currentLayerName.indexOf(":")),
+                            featureType: _currentLayerName.substring(_currentLayerName.indexOf(":") + 1),
+                            properties: filter,
+                            outputFormat: TC.Consts.format.JSON,
+                            styles: _getStyles()
+                        })
+                        .then(function (layer) {
+                            self.resultsLayer = layer;                            
+                            layer.map.on(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+                        });
+
+                    self.map.on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
+                        if (e.control !== self.resultsPanel)
+                            return;
+                        if (TC.browserFeatures.touch()) {
+                            TC.Util.swipe(e.control.div, "enable");
+                        }
+                        self.resultsLayer.clearFeatures();
+                        self.resultsLayer.setVisibility(false);
+                        self.clearFilters();
+                        self.map.off(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+                        self.map.off(TC.Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
+                        delete self.toShare;
+                    });
+                }
+                else {
+                    self.map.off(TC.Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
+                    self.map.on(TC.Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
+                    self.resultsLayer.setVisibility(false);
+                    self.resultsLayer.clearFeatures();
+                    //borro el evento featureUpdate por si hago una búsqueda sin cerra el panel previamente
+                    self.map.off(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+                    self.map.on(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+                    self.resultsLayer.url = url;
+                    self.resultsLayer.featurePrefix = _currentLayerName.substring(0, _currentLayerName.indexOf(":"));
+                    self.resultsLayer.featureType = _currentLayerName.substring(_currentLayerName.indexOf(":") + 1);
+                    self.resultsLayer.properties = filter;
+                    self.resultsLayer.setVisibility(true);
+                    self.resultsLayer.refresh();
+                }
+            });
         }
     };
 
@@ -995,57 +1211,90 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
             filter = self.filters[0];
         }
 
-        await _createResultPanel.apply(self, [_currentLayerTitle]);
-        var _url = await _currentLayer.getWFSURL();
+        self._sendQuery.call(self, filter);
+    };
 
-        _currentLayer.toolProxification.cacheHost.getAction(_url).then(function (cacheHost) {
-            const url = cacheHost.action(_url);
-            if (!self.resultsLayer) {
-                self.map
-                    .addLayer({
-                        id: "WFSQueryResults",
-                        type: TC.Consts.layerType.WFS,
-                        url: url,
-                        owner: self,
-                        stealth: true,
-                        geometryName: "the_geom",
-                        featurePrefix: _currentLayerName.substring(0, _currentLayerName.indexOf(":")),
-                        featureType: _currentLayerName.substring(_currentLayerName.indexOf(":") + 1),
-                        properties: filter,
-                        outputFormat: TC.Consts.format.JSON,
-                        styles: _getStyles()
-                    })
-                    .then(function (layer) {
-                        self.resultsLayer = layer;
-                        layer.map.on(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
-                    });
+    ctlProto._setQueryToSearch = function (options) {
+        const self = this;
+        if (Object.keys(options).length === 1 && options.hasOwnProperty("doZoom")) {
+            self.toShare = TC.Util.extend(self.toShare, { doZoom: options.doZoom });
+        } else if (options.filter || self.resultsLayer && self.resultsLayer.properties instanceof TC.filter.Filter) {
+            self.toShare = TC.Util.extend(self.toShare, {
+                wms: {
+                    url: _currentLayer.url, names: _currentLayer.names
+                },
+                title: _currentLayerTitle,
+                name: _currentLayerName,
+                filter: options.filter ? options.filter : self.resultsLayer.properties.getText(),
+                doZoom: options.hasOwnProperty('doZoom') ? options.doZoom : true
+            });
+        }   
+    };
 
-                self.map.on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
-                    if (e.control !== self.resultsPanel)
-                        return;
-                    if (TC.browserFeatures.touch()) {
-                        TC.Util.swipe(e.control.div, "enable");
+    ctlProto._getQueryToSearch = function () {
+        const self = this;
+        return self.toShare;
+    };
+
+    ctlProto.exportState = function () {
+        const self = this;
+        if (self.toShare) {
+            return {
+                id: self.id,
+                queryResult: JSON.stringify(self.toShare)
+            };
+        }
+        //else if (self.exportsState && self.resultsLayer) {
+        //    return {
+        //        id: self.id,
+        //        layer: self.resultsLayer.exportState({
+        //            exportStyles: false
+        //        })
+        //    };
+        //}
+        return null;
+    };
+
+    ctlProto.importState = function (state) {
+        const self = this;        
+
+        if (state.queryResult) {
+            let wait = self.map.getLoadingIndicator().addWait();
+            self.map.loaded(function () {
+                let sharedQueryToSearch = JSON.parse(state.queryResult);
+                if (sharedQueryToSearch.wms && sharedQueryToSearch.filter) {
+                    let wmsLayer = self.map.workLayers.filter(l => l.url && l.url === sharedQueryToSearch.wms.url &&
+                        l.names.join() === sharedQueryToSearch.wms.names.join());
+                    if (wmsLayer.length > 0) {
+                        _currentLayer = wmsLayer[0];
+                        _currentLayerName = sharedQueryToSearch.name;
+                        _currentLayerTitle = sharedQueryToSearch.title;
+
+                        self._setQueryToSearch({ doZoom: sharedQueryToSearch.doZoom });
+
+                        _currentLayer.describeFeatureType(_currentLayerName).then(function (data) {
+                            _manageDescribeFeature(data, self, false);
+                            self._sendQuery(sharedQueryToSearch.filter);
+                            // registramos el estado compartido por si se comparte de nuevo sin hacer uso del control
+                            self._setQueryToSearch({ filter: sharedQueryToSearch.filter, doZoom: sharedQueryToSearch.doZoom });
+
+                            self.map.getLoadingIndicator().removeWait(wait);
+                        });
                     }
-                    self.resultsLayer.clearFeatures();
-                    self.resultsLayer.setVisibility(false);
-                    self.clearFilters();
-                    self.map.off(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
-                });
-            }
-            else {
-                self.resultsLayer.setVisibility(false);
-                self.resultsLayer.clearFeatures();
-                //borro el evento featureUpdate por si hago una búsqueda sin cerra el panel previamente
-                self.map.off(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
-                self.map.on(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
-                self.resultsLayer.url = url;
-                self.resultsLayer.featurePrefix = _currentLayerName.substring(0, _currentLayerName.indexOf(":"));
-                self.resultsLayer.featureType = _currentLayerName.substring(_currentLayerName.indexOf(":") + 1);
-                self.resultsLayer.properties = filter;
-                self.resultsLayer.setVisibility(true);
-                self.resultsLayer.refresh();
-            }
-        });
+                } else {
+                    alert('shared query error');
+                }
+            });
+        }
+        //else if (self.resultsLayer) {
+        //    self.resultsLayer.then(function () {
+        //        self.resultsLayer.importState(state.layer).then(function () {
+        //            self.resultsLayer.features.forEach(function (f) {
+        //                f.setStyle(null); // Los estilos vienen dados exclusivamente por la capa, borramos estilos propios de la feature
+        //            });
+        //        });
+        //    });
+        //}
     };
 
     ctlProto.validateQuery = function () {
@@ -1053,9 +1302,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
     };
 
     ctlProto.showResultsPanel = function (data, layername) {
-        const self = this;
-
-        //self.map.$events.trigger(TC.Consts.event.SEARCHDONE, { data: data } );
+        const self = this;        
 
         //en funcion del número de elementos cargo un título en singular o plural
 
@@ -1063,8 +1310,12 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
 
         self.resultsPanel.div.classList.add("tc-ctl-wfsquery-results");
 
-        self.modalDialog.parentElement.removeChild(self.modalDialog);
+        if (self.modalDialog) {
+            self.modalDialog.parentElement.removeChild(self.modalDialog);
+        }
 
+        const dataTypes = _getDataTypes();
+        
         self.resultsPanel.openTable({
             data: data,
             css: {
@@ -1072,12 +1323,12 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 tdClass: "tdClass",
                 thClass: "thClass",
             },
+            sort:true,
             callback: function (tabla) {
 
                 self.resultsPanel.maximize();
                 console.log("render del panel de resultados");
-                var col = tabla.querySelectorAll(".table>tbody>tr")
-                var dataTypes = _getDataTypes();
+                var col = tabla.querySelectorAll(".table>tbody>tr");                
                 var j = 1;
                 for (var i in data[0]) {
                     if (dataTypes.hasOwnProperty(i)) {
@@ -1091,12 +1342,12 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                                 for (var k = 0; k < tdNumeric.length; k++) {
                                     tdNumeric[k].classList.add("tc-numeric");
                                 }
-                            }
+                            }                            
                         if (dataTypes[i].type && (dataTypes[i].type instanceof Object)) {
                             console.log("aki lo que sea");
                         }
-                    }
-                    j++;
+                        j++;
+                    }                    
                 }
 
                 for (var i = 0; i < col.length; i++) {
@@ -1156,6 +1407,12 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                     })
                 });
 
+                TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(tabla);
+                tabla.querySelectorAll("td > img, td > video, td > audio, td > iframe").forEach((e) => { e.parentNode.classList.add("tc-multimedia") })
+                tabla.querySelectorAll("video").forEach((v) => { v.addEventListener(TC.Consts.event.CLICK, function(e) {
+                        e.stopPropagation(); // No queremos zoom si pulsamos en un enlace
+                    }, { passive: true });})
+
                 ////se deshabilita el swipe para que se pueda hacer scroll horizontal del panel de resultados
                 if (TC.browserFeatures.touch()) {
                     TC.Util.swipe(self.resultsPanel.div, 'disable');
@@ -1204,7 +1461,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 self.drawControl.on(TC.Consts.event.DRAWEND, function (e) {
                     e.feature.showsPopup = false;
                     self.geometryPanel.close();
-                    
+
                     const op = self.modalDialog.querySelector(`input[name="${self.id}-condition"]:checked`).value;
                     let filter;
                     switch (op) {
@@ -1244,8 +1501,10 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
         }
     };
 
-    const _manageDescribeFeature = function (data, ctl) {
-        ctl.clearFilters();
+    const _manageDescribeFeature = function (data, ctl, renderForm) {
+        let entries = Object.entries(data);
+        entries = entries.length > 1 ? data : entries[0][1];
+
         _internalGetDataTypes = function () {
             return data;
         };
@@ -1255,111 +1514,135 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 value.isGeometry = true;
             }
         }
-        ctlProto.getRenderedHtml(ctlProto.CLASS + "-form",
-            {
-                operators: filterByOperation,
-                attributes: data,
-                controlId: ctl.id
-            }, function (html) {
-                const dialog = ctl.modalDialog;
-                const form = ctl.getForm();
-                empty(form);
-                form.insertAdjacentHTML('beforeend', html);
-                modalBody.classList.remove(loadingCssClass);
-                TC.loadJS(
-                    true,
-                    [TC.apiLocation + 'TC/ui/autocomplete.js'],
-                    function () {
-                        console.log("autocomplete loaded");
-                    });
-                var combo = form.getElementsByClassName("tc-combo");
-                if (combo.length == 0)
-                    dialog.getElementsByClassName("tc-button tc-ctl-wlm-btn-launch")[0].setAttribute("disabled", "");
-                else {
-                    dialog.getElementsByClassName("tc-button tc-ctl-wlm-btn-launch")[0].removeAttribute("disabled");
-                    combo[0].addEventListener("change", function () {
-                        _changeAttributeEvent.apply(this, [form, data]);
-                    });
-                    form.querySelectorAll(`input[name="${ctl.id}-condition"]`).forEach(ipt => {
-                        ipt.addEventListener('change', function (e) {
-                            form.querySelector(`.${ctlProto.CLASS}-geomtype-line-btn`).disabled = e.target.value === 'within';
+
+        if (renderForm) {
+            ctl.clearFilters();
+            ctlProto.getRenderedHtml(ctlProto.CLASS + "-form",
+                {
+                    operators: filterByOperation,
+                    attributes: data,
+                    controlId: ctl.id
+                }, function (html) {
+                    const dialog = ctl.modalDialog;
+                    const form = ctl.getForm();
+                    empty(form);
+                    form.insertAdjacentHTML('beforeend', html);
+                    modalBody.classList.remove(loadingCssClass);
+                    TC.loadJS(
+                        true,
+                        [TC.apiLocation + 'TC/ui/autocomplete.js'],
+                        function () {
+                            console.log("autocomplete loaded");
                         });
-                    });
-                    form.querySelectorAll(`.tc-ctl-wfsquery-where input[type="radio"][name="${ctl.id}-log-op"]`).forEach(radio => radio.addEventListener("change", function () {
-                        logicalOperator = this.value === "OR" ? TC.Consts.logicalOperator.OR : TC.Consts.logicalOperator.AND
-                        //reemplazar en la lista
-                        //form.getElementsByClassName("tc-ctl-wfsquery-where-list-op")[0].innerHTML = this.nextElementSibling.innerHTML;
-                    }));
+                    var combo = form.getElementsByClassName("tc-combo");
+                    if (combo.length == 0)
+                        dialog.getElementsByClassName("tc-button tc-ctl-wlm-btn-launch")[0].setAttribute("disabled", "");
+                    else {
+                        dialog.getElementsByClassName("tc-button tc-ctl-wlm-btn-launch")[0].removeAttribute("disabled");
+                        combo[0].addEventListener("change", function () {
+                            _changeAttributeEvent.apply(this, [form, data]);
+                        });
+                        form.querySelectorAll(`input[name="${ctl.id}-condition"]`).forEach(ipt => {
+                            ipt.addEventListener('change', async function (e) {
+                                form.querySelector(`.${ctlProto.CLASS}-geomtype-line-btn`).disabled = e.target.value === 'within';
+                                const valueField = modalBody.querySelector(".tc-ctl-wfsquery-value input");
+                                valueField.disabled = false;
+                                if (this.parentElement.classList.contains("tc-ctl-wfsquery-text") && this.value === "empty") {
+                                    valueField.value = "";
+                                    valueField.disabled = true;
+                                    TC.UI.autocomplete.call(valueField, "clear");
+                                }
+                                if (this.parentElement.classList.contains("tc-ctl-wfsquery-date") && this.value === "null") {
+                                    valueField.value = "";
+                                    valueField.disabled = true;
+                                }
+                                if (valueField.value.trim() != "") {
+                                    if (this.parentElement.classList.contains("tc-ctl-wfsquery-text") && this.value !== "empty") {
+                                        var e = document.createEvent('HTMLEvents');
+                                        e.initEvent("keyup", false, true);
+                                        valueField.dispatchEvent(e);
+                                    }
+                                }
+                            });
+                        });
+                        form.querySelectorAll(`.tc-ctl-wfsquery-where input[type="radio"][name="${ctl.id}-log-op"]`).forEach(radio => radio.addEventListener("change", function () {
+                            logicalOperator = this.value === "OR" ? TC.Consts.logicalOperator.OR : TC.Consts.logicalOperator.AND                            
+                        }));
 
-                    form.querySelector(".tc-button").addEventListener(TC.Consts.event.CLICK, function () {
-                        var valueField = form.querySelector('input.tc-textbox');
-                        TC.UI.autocomplete.call(valueField, "clear");
-                        if (inputMaskNumber)
-                            inputMaskNumber.masked.remove();
-                        if (!_validate(form)) {
-                            return;
-                        }
-                        var field = [].reduce.call(form.querySelectorAll('.tc-combo'), function (vi, va) {
-                            return vi + (vi ? "/" : "") + va.value;
-                        }, '');
-                        const checkedOp = form.querySelector('.tc-ctl-wfsquery input[type="radio"]:checked');
-                        var op = checkedOp.value;
+                        form.querySelector(".tc-button").addEventListener(TC.Consts.event.CLICK, function () {
+                            var valueField = form.querySelector('input.tc-textbox');
+                            TC.UI.autocomplete.call(valueField, "clear");
+                            if (inputMaskNumber)
+                                inputMaskNumber.masked.remove();
+                            if (!_validate(form)) {
+                                return;
+                            }
+                            var field = [].reduce.call(form.querySelectorAll('.tc-combo'), function (vi, va) {
+                                return vi + (vi ? "/" : "") + va.value;
+                            }, '');
+                            const checkedOp = form.querySelector('.tc-ctl-wfsquery input[type="radio"]:checked');
+                            var op = checkedOp.value;
 
-                        var value = _getValue(valueField);
-                        let valueToShow = _getValueToShow(valueField);
-                        switch (true) {
-                            case type.indexOf("int") >= 0:
-                                valueToShow = parseInt(value, 10)
-                                break;
-                            case type.indexOf("float") >= 0:
-                            case type.indexOf("double") >= 0:
-                            case type.indexOf("long") >= 0:
-                            case type.indexOf("decimal") >= 0:
-                                valueToShow = parseFloat(value, 10)
-                                break;
-                            case type.indexOf("string") >= 0 && op!=="empty":
-                                valueToShow = '"' + valueToShow + '"';
-                                break;
-                        }
+                            var value = _getValue(valueField);
+                            let valueToShow = _getValueToShow(valueField);
+                            switch (true) {
+                                case type.indexOf("int") >= 0:
+                                    valueToShow = parseInt(value, 10)
+                                    break;
+                                case type.indexOf("float") >= 0:
+                                case type.indexOf("double") >= 0:
+                                case type.indexOf("long") >= 0:
+                                case type.indexOf("decimal") >= 0:
+                                    valueToShow = parseFloat(value, 10)
+                                    break;
+                                case type.indexOf("string") >= 0 && op !== "empty":
+                                    valueToShow = '"' + valueToShow + '"';
+                                    break;
+                                case type.indexOf("date") >= 0 && op === "null":
+                                    valueToShow = '';
+                                    break;
+                            }
 
-
-                        //reemplazo < y > por y &lt;&gt;
-                        //value = value.replace("<", "&lt;").replace(">", "&gt;");
-                        //escapo los caracteres no alfamericos                    
-                        //value = value.replace(/[^a-z\dáéíóúü]/gi, '!' + '$&');
-                        //se añade asterisco al principio y/o final del valor para las busquedas: "empieza por", "termina en" o "contiene"
-                        var f;
-                        if (type.indexOf("dateTime") >= 0 || type.indexOf("date") >= 0) {
-                            const from = value + "T00:00:00Z";
-                            const to = value + "T23:59:59Z";
-                            if (op === "nbtw") {
-                                //el not bettween es un caso es especial por que concatena un filtro not y otro between
-                                f = new TC.filter.not(TC.filter.between(field, from, to));
+                            //se añade asterisco al principio y/o final del valor para las busquedas: "empieza por", "termina en" o "contiene"
+                            var f;
+                            if (type.indexOf("dateTime") >= 0 || type.indexOf("date") >= 0) {
+                                if (value) {
+                                    const from = new Date(value + "T00:00:00").toISOString();
+                                    const to = new Date(value + "T23:59:59").toISOString();
+                                    if (op === "nbtw") {
+                                        //el not bettween es un caso es especial por que concatena un filtro not y otro between
+                                        f = new TC.filter.not(TC.filter.between(field, from, to));
+                                    }
+                                    else {
+                                        f = new filterByOperation[op].Ctor(field, from, to);
+                                    }
+                                }
+                                else {
+                                    f = new filterByOperation[op].Ctor(field);
+                                }
+                                
                             }
                             else {
-                                f = new filterByOperation[op].Ctor(field, from, to);
+                                f = new filterByOperation[op].Ctor(
+                                    field,
+                                    (((op === "ends" || op === "contains") ? '*' : '') + value + ((op === "starts" || op === "contains") ? '*' : '')));
                             }
-                        }
-                        else {
-                            f = new filterByOperation[op].Ctor(
-                                field,
-                                (((op === "ends" || op === "contains") ? '*' : '') + value + ((op === "starts" || op === "contains") ? '*' : '')));
-                        }
-                        f.matchCase = false;
-                        f._abbr = op;
-                        f._valueToShow = valueToShow;
-                        ctl.filters.push(f);
+                            f.matchCase = false;
+                            f._abbr = op;
+                            f._valueToShow = valueToShow;
+                            ctl.filters.push(f);
 
-                        _renderFilterConditions(ctl);
-                        valueField.value = "";
-                    }, { passive: true });
+                            _renderFilterConditions(ctl);
+                            valueField.value = "";
+                        }, { passive: true });
 
-                    const onGeomClick = function (e) {
-                        ctl.showGeometryPanel(e.target.value);
-                    };
-                    form.querySelectorAll("button[name='geometry']").forEach(btn => btn.addEventListener(TC.Consts.event.CLICK, onGeomClick, { passive: true }));
-                }
-            });
+                        const onGeomClick = function (e) {
+                            ctl.showGeometryPanel(e.target.value);
+                        };
+                        form.querySelectorAll("button[name='geometry']").forEach(btn => btn.addEventListener(TC.Consts.event.CLICK, onGeomClick, { passive: true }));
+                    }
+                });
+        }
     };
 
     const _renderQueryForm = function (args) {
@@ -1368,7 +1651,8 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
         _currentLayer = layer;
         _currentLayercapabilities = capabilities;
         _currentLayerURL = capabilities.Operations.DescribeFeatureType.DCP.HTTP.Get["href"];
-        _currentLayerURL = _currentLayerURL.substring(_currentLayerURL.indexOf(":") + 1);
+        if (new URL(_currentLayerURL).host === document.location.host)
+            _currentLayerURL = _currentLayerURL.substring(_currentLayerURL.indexOf(":") + 1);
         if (capabilities.Operations.GetFeature.CountDefault)
             _maxRecordCount = capabilities.Operations.GetFeature.CountDefault.DefaultValue;
         else
@@ -1395,8 +1679,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 modalBody.classList.add(loadingCssClass);
                 _currentLayerName = this.value;
                 _currentLayer.describeFeatureType(this.value).then(function (data) {
-                    var entries = Object.entries(data);
-                    _manageDescribeFeature(entries.length > 1 ? data : entries[0][1], self);
+                    _manageDescribeFeature(data, self, true);
                 }, function (err) {
                     var tbody = dialog.getElementsByClassName("tc-modal-body")[0];
                     tbody.classList.remove(loadingCssClass);
@@ -1414,8 +1697,7 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
                 _currentLayerTitle = capabilities.FeatureTypes[layers[0].substring(layers[0].indexOf(":") + 1)].Title;
                 _currentLayerName = layers[0];
                 _currentLayer.describeFeatureType(layers[0]).then(function (data) {
-                    var entries = Object.entries(data);
-                    _manageDescribeFeature(entries.length > 1 ? data : entries[0][1], self);
+                    _manageDescribeFeature(data, self, true);
                 }, function (err) {
                     var tbody = dialog.getElementsByClassName("tc-modal-body")[0];
                     tbody.classList.remove(loadingCssClass);
@@ -1561,6 +1843,6 @@ TC.inherit(TC.control.WFSQuery, TC.Control);
     ctlProto.getForm = function () {
         const self = this;
         return self.modalDialog && self.modalDialog.querySelector('.tc-modal-form');
-    };
+    };   
 
 })();

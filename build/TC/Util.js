@@ -65,6 +65,14 @@
     const swipeHandlers = new WeakMap();
     const modalCloseHandlers = new WeakMap();
     const hasOwn = ({}).hasOwnProperty;
+    const templateCache = new Map();
+
+    const countDecimals = (value)=> {
+        if (Math.floor(value) !== value)
+            return value.toString().split(".")[1].length || 0;
+        return 0;
+    }
+
 
     var Util = {
 
@@ -239,14 +247,14 @@
 
         isOnCapabilities: function (url) {
             var withProtocol = arguments.length == 2 ? arguments[1] : true;
-            var testUrl = !withProtocol ? url.replace(TC.Util.regex.PROTOCOL, "") : url;
+            var testUrl = !withProtocol ? url.replace(Util.regex.PROTOCOL, "") : url;
 
             if (withProtocol) {
                 if (TC.capabilities[testUrl])
                     return url;
             } else {
                 for (var c in TC.capabilities) {
-                    if (c.replace(TC.Util.regex.PROTOCOL, "") == testUrl)
+                    if (c.replace(Util.regex.PROTOCOL, "") == testUrl)
                         return c;
                 }
             }
@@ -255,7 +263,7 @@
                 var u = getOnPath(TC.capabilities[c], path1, 0) || getOnPath(TC.capabilities[c], path2, 0);
 
                 if (u && withProtocol && url == u) return u;
-                else if (u && url.replace(TC.Util.regex.PROTOCOL, "") == u.replace(TC.Util.regex.PROTOCOL, "")) return u;
+                else if (u && url.replace(Util.regex.PROTOCOL, "") == u.replace(Util.regex.PROTOCOL, "")) return u;
             }
 
             return url;
@@ -263,12 +271,12 @@
 
         reqGetMapOnCapabilities: function (url) {
             var withProtocol = arguments.length == 2 ? arguments[1] : true;
-            var testUrl = !withProtocol ? url.replace(TC.Util.regex.PROTOCOL, "") : url;
+            var testUrl = !withProtocol ? url.replace(Util.regex.PROTOCOL, "") : url;
 
             var _get = function (caps) {
                 var u = getOnPath(caps, path1, 0) || getOnPath(caps, path2, 0);
                 if (u)
-                    return !withProtocol ? u.split('?')[0].replace(TC.Util.regex.PROTOCOL, "") : u.split('?')[0];
+                    return !withProtocol ? u.split('?')[0].replace(Util.regex.PROTOCOL, "") : u.split('?')[0];
 
                 return null;
             };
@@ -322,12 +330,12 @@
         formatNumber: function (value, locale) {
             var t = typeof value;
             if (t === 'number') {
-                return value.toLocaleString(locale);
+                return value.toLocaleString(locale, { maximumFractionDigits: Math.min(6,countDecimals(value)) });
             }
             else if (t === 'string') {
                 n = parseFloat(value);
                 if (n === new Number(value).valueOf()) {
-                    return n.toLocaleString(locale);
+                    return n.toLocaleString(locale,{ maximumFractionDigits: Math.min(6, countDecimals(n)) });
                 }
             }
             return value;
@@ -432,7 +440,7 @@
                         className = markerGroupClassCache[options.group];
                     }
                 }
-                result = TC.Util.getBackgroundUrlFromCss(className);
+                result = Util.getBackgroundUrlFromCss(className);
             }
             if (!result && options !== TC.Cfg.styles.point && options.cssClass !== '') {
                 result = getPointIconUrl(TC.Cfg.styles.point);
@@ -451,6 +459,8 @@
                 let height = options.height || 16;
                 const strokeWidth = style.strokeWidth || 0;
                 const strokeHalfWidth = strokeWidth / 2;
+                const fillColor = style.fillColor || 'transparent';
+                const fillOpacity = style.fillOpacity || 1;
                 const diameter = (style.radius || 0) * 2 + strokeWidth;
                 const lineDashText = style.lineDash ? `stroke-dasharray="${style.lineDash.join(' ')}" ` : '';
                 let body;
@@ -458,7 +468,7 @@
                 height = Math.max(height, diameter);
                 switch (options.geometryType) {
                     case TC.Consts.geom.POINT:
-                        body = `<circle cx="${width / 2}" cy="${height / 2}" r="${style.radius}" stroke="${style.strokeColor}" stroke-width="${strokeWidth}" fill="${style.fillColor}" fill-opacity="${style.fillOpacity}" ${lineDashText}/>`;
+                        body = `<circle cx="${width / 2}" cy="${height / 2}" r="${style.radius}" stroke="${style.strokeColor}" stroke-width="${strokeWidth}" fill="${fillColor}" fill-opacity="${fillOpacity}" ${lineDashText}/>`;
                         break;
                     case TC.Consts.geom.POLYLINE:
                         const xStart = strokeHalfWidth;
@@ -476,10 +486,10 @@
                         const y3 = strokeHalfWidth;
                         const x4 = width - strokeHalfWidth;
                         const y4 = height - strokeHalfWidth;
-                        body = `<polygon points="${x1},${y1} ${x2},${y2} ${x3},${y3} ${x4},${y4}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth};fill:${style.fillColor};fill-opacity:${style.fillOpacity}" ${lineDashText}/>`;
+                        body = `<polygon points="${x1},${y1} ${x2},${y2} ${x3},${y3} ${x4},${y4}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth};fill:${fillColor};fill-opacity:${fillOpacity}" ${lineDashText}/>`;
                         break;
                     default:
-                        body = `<rect x="${strokeHalfWidth}" x="${strokeHalfWidth}" width="${width - strokeWidth}" height="${height - strokeWidth}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth};fill:${style.fillColor};fill-opacity:${style.fillOpacity}" ${lineDashText}/>`;
+                        body = `<rect x="${strokeHalfWidth}" x="${strokeHalfWidth}" width="${width - strokeWidth}" height="${height - strokeWidth}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth};fill:${fillColor};fill-opacity:${fillOpacity}" ${lineDashText}/>`;
                         break;
                 }
                 result = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${body}</svg>`);
@@ -488,7 +498,7 @@
         },
 
         /* 
-        * addPathToTree: añade a un array a un árbol, cada elemento en un nivel anidado
+        * addArrayToTree: añade a un array a un árbol, cada elemento en un nivel anidado
         * Parameters: array, nodo de árbol, [índice]
         * Returns: último nodo insertado, null si ya existía la ruta
         */
@@ -503,7 +513,7 @@
                     n = treeNode.children[i];
                     if (n.name === name) {
                         found = true;
-                        var r = addArrayToTree(path, n, index + 1);
+                        const r = addArrayToTree(path, n, index + 1);
                         if (r) {
                             result = r;
                         }
@@ -512,8 +522,14 @@
                 }
                 if (!found) {
                     n = { name: name, title: name, uid: '/' + path.slice(0, index + 1).join('/'), children: [] };
+                    const r = addArrayToTree(path, n, index + 1);
+                    if (r) {
+                        result = r;
+                    }
+                    else {
+                        result = n;
+                    }
                     treeNode.children.push(n);
-                    result = n;
                 }
             }
             return result;
@@ -735,6 +751,63 @@
             return result;
         },
 
+        getRenderedHtml: function (templateOrId, data, callback) {
+            const compileTemplate = function (templateId, txt) {
+                template = TC._hbs.compile(txt); // TODO: add optimization options
+                TC._hbs.registerPartial(templateId, template);
+                templateCache.set(templateId, template);
+                return template;
+            };
+            const fetchTemplate = function (templateId) {
+                return new Promise(function (resolve, reject) {
+                    let template = templateCache.get(templateId);
+                    if (template) {
+                        resolve(template);
+                    }
+                    else {
+                        templateCache.set(templateId, true);
+                        TC.ajax({
+                            url: TC.apiLocation + `TC/templates/${templateId}.hbs`,
+                            method: 'GET',
+                            responseType: 'text'
+                        })
+                            .then(function (response) {
+                                const matches = response.data.match(/{{> ([a-zA-Z\-]+)(?:(?:\s[a-zA-Z]+)\s*)?}}/);
+                                if (matches) {
+                                    Promise.all(matches.slice(1).map(str => fetchTemplate(str.trim()))).then(function () {
+                                        resolve(compileTemplate(templateId, response.data));
+                                    });
+                                }
+                                else {
+                                    resolve(compileTemplate(templateId, response.data));
+                                }
+                            })
+                            .catch(function (err) {
+                                console.log("Error fetching template: " + err);
+                                reject(err);
+                            });
+                    }
+                });
+            };
+            return new Promise(function (resolve, reject) {
+                const endFn = function (template) {
+                    const html = template(data);
+                    if (Util.isFunction(callback)) {
+                        callback(html);
+                    }
+                    resolve(html);
+                };
+                if (Util.isFunction(templateOrId)) {
+                    endFn(templateOrId);
+                }
+                else {
+                    fetchTemplate(templateOrId)
+                        .then((template) => endFn(template))
+                        .catch(err => reject(err));
+                }
+            });
+        },
+
         getSimpleMimeType: function (mimeType) {
             var result = '';
             if (mimeType) {
@@ -802,7 +875,7 @@
                     result = localStorage.getItem(key);
                 }
                 else {
-                    result = TC.Util.storage.getCookie(key);
+                    result = Util.storage.getCookie(key);
                 }
                 return result;
             },
@@ -820,10 +893,10 @@
                     if (value === undefined) {
                         var exDate = new Date();
                         exDate.setDate(exDate.getDate() - 1);
-                        TC.Util.storage.setCookie(key, "", { expires: exDate });
+                        Util.storage.setCookie(key, "", { expires: exDate });
                     }
                     else {
-                        TC.Util.storage.setCookie(key, value);
+                        Util.storage.setCookie(key, value);
                     }
                 }
                 return key;
@@ -834,7 +907,7 @@
                     result = sessionStorage.getItem(key);
                 }
                 else {
-                    result = TC.Util.storage.getCookie(key);
+                    result = Util.storage.getCookie(key);
                 }
                 return result;
             },
@@ -852,10 +925,10 @@
                     if (value === undefined) {
                         var exDate = new Date();
                         exDate.setDate(exDate.getDate() - 1);
-                        TC.Util.storage.setCookie(key, "", { expires: exDate });
+                        Util.storage.setCookie(key, "", { expires: exDate });
                     }
                     else {
-                        TC.Util.storage.setCookie(key, value);
+                        Util.storage.setCookie(key, value);
                     }
                 }
                 return key;
@@ -954,7 +1027,7 @@
             return navigator.userAgent.match(/IEMobile/i);
         },
         detectMobile: function () {
-            return (TC.Util.detectAndroid() || TC.Util.detectIOS() || TC.Util.detectMobileWindows() || TC.Util.detectBlackBerry());
+            return (Util.detectAndroid() || Util.detectIOS() || Util.detectMobileWindows() || Util.detectBlackBerry());
         },
         getBrowser: function () {
             if (!window.UAParser) {
@@ -1031,7 +1104,7 @@
             options = options || {};
 
             contentNode.hidden = false;
-            if (window.$ && contentNode instanceof $) {
+            if (window.jQuery && contentNode instanceof jQuery) {
                 contentNode = contentNode.get(0);
             }
             contentNode.classList.add(TC.Consts.classes.VISIBLE);
@@ -1050,11 +1123,12 @@
                         modalCloseHandlers.set(closeButton[i], closeCallback);
                     }
                     modalCloseHandlers.set(closeButton[i], closeCallback);
-                    closeButton[i].addEventListener('click', closeCallback);
-                    if (Util.isFunction(options.openCallback)) {
-                        options.openCallback();
-                    }
+                    closeButton[i].addEventListener('click', closeCallback);                    
                 }
+            }
+
+            if (Util.isFunction(options.openCallback)) {
+                options.openCallback();
             }
         },
 
@@ -1190,10 +1264,11 @@
         },
 
         getParameterByName: function (name) {
-            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)", "i"),
-                results = regex.exec(location.search);
-            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            const filter = ([key, value]) => key.toLowerCase() == name.toLowerCase();
+            const params = new URLSearchParams(location.search);
+            const paramsArray = Array.from(params);
+            const result = paramsArray.find(filter);            
+            return result ? result[1] : "";
         },
 
         getLocaleUserChoice: function (options) {
@@ -1550,6 +1625,42 @@
             return newCanvas;
         },
 
+        mergeCanvases: function (canvases) {
+            const rects = canvases.map(c => c.getBoundingClientRect());
+            const bbox = rects.reduce(function (prev, rect) {
+                return [
+                    Math.min(prev[0], rect.left),
+                    Math.min(prev[1], rect.top),
+                    Math.max(prev[2], rect.right),
+                    Math.max(prev[3], rect.bottom)
+                ];
+            }, [
+                    Number.POSITIVE_INFINITY,
+                    Number.POSITIVE_INFINITY,
+                    Number.NEGATIVE_INFINITY,
+                    Number.NEGATIVE_INFINITY
+                ]);
+            const left = bbox[0];
+            const top = bbox[1];
+
+            //create a new canvas
+            const newCanvas = document.createElement('canvas');
+            const context = newCanvas.getContext('2d');
+
+            //set dimensions
+            newCanvas.width = bbox[2] - left;
+            newCanvas.height = bbox[3] - top;
+
+            //apply the old canvases to the new one
+            canvases.forEach(function (canvas, idx) {
+                const rect = rects[idx];
+                context.drawImage(canvas, rect.left - left, rect.top - top);
+            });
+
+            //return the new canvas
+            return newCanvas;
+        },
+
         calculateAspectRatioFit: function (srcWidth, srcHeight, maxWidth, maxHeight) {
             var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
 
@@ -1636,7 +1747,6 @@
                 TC.Util.downloadFile((response.filename ? response.filename : TC.getUID()) + format, response.contentType, response.data);
 
             };
-            var htmlObj = [];
             var _err;
             if (Array.isArray(url)) {
                 var arrDownloads = url;

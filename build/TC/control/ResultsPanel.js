@@ -10,6 +10,7 @@ TC.Consts.event.DRAWTABLE = 'drawtable.tc';
 TC.Consts.event.RESULTSPANELMIN = 'resultspanelmin.tc';
 TC.Consts.event.RESULTSPANELMAX = 'resultspanelmax.tc';
 TC.Consts.event.RESULTSPANELCLOSE = 'resultspanelclose.tc';
+TC.Consts.event.RESULTSPANELRESIZE = 'resultspanelresize.tc';
 
 TC.control.ResultsPanel = function () {
     var self = this;
@@ -22,7 +23,8 @@ TC.control.ResultsPanel = function () {
     self.classes = {
         FA: 'fa',
         SHOW_IN: 'showIn',
-        SHOW_OUT: 'showOut'
+        SHOW_OUT: 'showOut',
+        RESIZABLE: 'tc-resizable'
     };
 
     self.content = self.contentType.TABLE;
@@ -44,6 +46,9 @@ TC.control.ResultsPanel = function () {
         if (self.options.save)
             self.save = self.options.save;
 
+        if (self.options.share)
+            self.share = self.options.share;
+
     }
 };
 
@@ -54,6 +59,13 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     const ctlProto = TC.control.ResultsPanel.prototype;
 
     ctlProto.CLASS = 'tc-ctl-p-results';
+
+    ctlProto.COLLIDING_PRIORITY = {
+        IGNORE: 0,
+        LOW: 1,
+        MEDIUM: 2,
+        HIGH: 3
+    };
 
     ctlProto.CHART_SIZE = {
         MIN_HEIGHT: 75,
@@ -144,12 +156,22 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             self.closeButton = self.div.querySelector('.prcollapsed-slide-submenu-close');
             self.closeButton.addEventListener('click', function () {
                 self.close();
+                const resizedTarget = self.div.querySelector('.' + self.classes.RESIZABLE + '.prpanel-default');
+                if (resizedTarget) {
+                    // si el usuario cierra el panel desde el aspa, eliminamos el rastro del redimensionado para empezar de cero
+                    delete resizedTarget.style.removeProperty("width");
+                    delete resizedTarget.style.removeProperty("height");
+                    delete resizedTarget.dataset.chartSizeWidth;
+                    delete resizedTarget.dataset.chartSizeHeight;
+                    delete resizedTarget.dataset.panelSizeWidth;
+                    delete resizedTarget.dataset.panelSizeHeight;
+                }
             });
 
             self.maximizeButton = self.div.querySelector('.prcollapsed-max');
             self.maximizeButton.addEventListener('click', function () {
                 self.maximize();
-            });                     
+            });
 
             if (self.save) {
                 self.saveButton = self.div.querySelector('.prcollapsed-slide-submenu-csv');
@@ -167,8 +189,15 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 });
                 self.downloadButton.removeAttribute('hidden');
             }
-
-
+            if (self.options.share) {
+                self.shareButton = self.div.querySelector('.' + self.CLASS + "-share-btn");
+                self.shareButton.addEventListener('click', function () {
+                    if (self.caller) {
+                        self.caller.showShareDialog();
+                    }
+                });
+                self.shareButton.removeAttribute('hidden');
+            }
             if (self.content) {
                 self.content = self.content;
 
@@ -181,7 +210,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
                     if (self.options.titles.max) {
                         self.maximizeButton.setAttribute('title', self.options.titles.max);
-                    }                    
+                    }
                 } else {
                     self.mainTitleElm.setAttribute('title', self.getLocaleString("rsp.title"));
                     self.mainTitleElm.innerHTML = self.getLocaleString("rsp.title");
@@ -204,9 +233,179 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     }
                 });
             }
+            const hideResizeHandlers = function () {
+                document.querySelectorAll('.' + self.CLASS + '-resize-handler').forEach((el) => {
+                    el.classList.add(TC.Consts.classes.HIDDEN);
+                });
+            };
+            if (!TC.Util.detectMobile()) {
+                const doResizable = !(self.options.hasOwnProperty("resize") && !self.options.resize);
+                let isResizable;
+                switch (true) {
+                    case self.options.content === "chart" && doResizable: // si es un perfil de elevación
+                    case self.options.resize: // si está configurado a true
+                    case self.options.content === "table" && self.infoDiv && self.infoDiv.childElementCount > 0 && doResizable: // si es una tabla y es el renderizado de GFI
+                        isResizable = true;
+                        self.div.classList.add(self.classes.RESIZABLE);
+                        break;
+                    default:
+                        isResizable = false;
+                        break;
+                }
+                self.map.on(TC.Consts.event.DRAWCHART + ' ' + TC.Consts.event.DRAWTABLE, function (e) {
+                    if (e.control === self) {
+                        if (isResizable) {
+                            self.renderPanelResizable({ target: self.div, preserveAspectRatio: true });
+                        }
+                        else {
+                            hideResizeHandlers();
+                        }
+                    }
+                });
+            } else {
+                hideResizeHandlers();
+            }
 
             if (callback && typeof (callback) === "function")
                 callback.call();
+        });
+    };
+
+    ctlProto.renderPanelResizable = function (options) {
+        const self = this;
+        options = options || {};
+        TC.loadJS(
+            !window.interact,
+            [TC.apiLocation + TC.Consts.url.INTERACTJS],
+            function () {
+                const target = "." + self.classes.RESIZABLE;
+                const targetNode = options.target && options.target.querySelector(".prpanel.prpanel-default") || document.querySelector(".prpanel.prpanel-default");
+                if (!interact.isSet(target)) {
+                    targetNode.classList.add(self.classes.RESIZABLE);
+                    targetNode.closest('.' + self.CLASS).classList.add(self.classes.RESIZABLE);
+                    const svg = document.querySelector('.tc-chart.c3 svg');
+                    if (svg) {
+                        svg.parentElement.style.maxHeight = 'unset';
+                        svg.removeAttribute('max-height');
+                        svg.removeAttribute('max-width');
+                        svg.removeAttribute('min-height');
+                        svg.removeAttribute('min-width');
+                    }
+                    const interactable = interact(target)
+                        .resizable({
+                            preserveAspectRatio: options.preserveAspectRatio || true,
+                            edges: {
+                                right: '.tc-ctl-p-results-resize-handler',
+                                bottom: '.tc-ctl-p-results-resize-handler'
+                            },
+                            cursorChecker(action, interactable, element, interacting) {
+                                let cursor = "";
+                                let currentHandlers = element.querySelectorAll(':hover');
+                                currentHandlers.forEach(function (handler) {
+                                    switch (true) {
+                                        case handler.classList.value.indexOf("tc-resizable-grid-handlerRight") > -1:
+                                            cursor = 'w-resize';
+                                            break;
+                                        case handler.classList.value.indexOf("tc-resizable-grid-handlerBottom") > -1:
+                                            cursor = 'n-resize';
+                                            break;
+                                        case handler.classList.value.indexOf("tc-resizable-grid-handlerDiagonal") > -1:
+                                            cursor = 'nw-resize';
+                                            break;
+                                        default:
+                                            cursor = 'pointer';
+                                    }
+                                });
+                                return cursor;
+                            },
+                            listeners: {
+                                end: function (event) {
+                                    self.onResize(event);
+                                },
+                                move(event) {
+                                    switch (true) {
+                                        case event.target.style.cursor === 'w-resize':
+                                            Object.assign(event.target.style, {
+                                                width: `${event.rect.width}px`,
+                                                height: `${event.target.getBoundingClientRect().height}px`
+                                            });
+                                            break;
+                                        case event.target.style.cursor === 'nw-resize':
+                                            Object.assign(event.target.style, {
+                                                width: `${event.rect.width}px`,
+                                                height: `${event.rect.height}px`
+                                            });
+                                            break;
+                                        case event.target.style.cursor === 'n-resize':
+                                            Object.assign(event.target.style, {
+                                                width: `${event.target.getBoundingClientRect().width}px`,
+                                                height: `${event.rect.height}px`
+                                            });
+                                        default:
+                                            break;
+                                    }
+
+                                    if (event.target.querySelector('.tc-chart.c3')) {
+                                        event.target.classList.add(TC.Consts.classes.LOADING);
+                                    }
+                                }
+                            },
+                            modifiers: [
+                                interact.modifiers.restrict({
+                                    restriction: 'body'
+                                })
+                            ]
+                        });
+
+                    if (options.callback && TC.Util.isFunction(options.callback)) {
+                        options.callback();
+                    }
+                }
+            });
+    };
+
+    ctlProto.getResizableChartSize = function (target) {
+        if (target) {
+            let chartWrapperBounding = target.querySelector('.tc-chart.c3').getBoundingClientRect();
+            const newSize = {
+                width: chartWrapperBounding.width,
+                height: chartWrapperBounding.height
+            }
+            return newSize;
+        }
+    };
+
+    ctlProto.getResultsPanelFromElement = function (element) {
+        const self = this;
+
+        let resultsPanels = self.map.getControlsByClass(TC.control.ResultsPanel);
+        for (var i = 0; i < resultsPanels.length; i++) {
+            if (resultsPanels[i].div.querySelector('.' + self.classes.RESIZABLE + '.prpanel-default') === element) {
+                return resultsPanels[i];
+            }
+        }
+
+        return null;
+    };
+
+    ctlProto.onResize = function (e) {
+        const self = this;
+        const target = e.target;
+        if (target.querySelector('.tc-chart.c3')) {
+            target.classList.remove(TC.Consts.classes.LOADING);
+            const newSize = self.getResizableChartSize(target);
+            if (newSize) {
+                let resultsPanel = self.getResultsPanelFromElement(target);
+                if (resultsPanel) {
+                    resultsPanel.chart.chart.resize(newSize);
+                }
+            }
+        }
+        self.map.trigger(TC.Consts.event.RESULTSPANELRESIZE, {
+            control: self, size: {
+                width: target.getBoundingClientRect().width,
+                height: target.getBoundingClientRect().height
+            }
         });
     };
 
@@ -237,7 +436,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
             self.map.trigger(TC.Consts.event.RESULTSPANELMAX, { control: self });
         }
-    };    
+    };
 
     ctlProto.close = function () {
         const self = this;
@@ -245,17 +444,36 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         self.div.classList.add(TC.Consts.classes.HIDDEN);
 
         if (self.chart && self.chart.chart) {
+            // preservamos el tamaño redimensionado por el usuario
+            const resizedTarget = self.div.querySelector('.' + self.classes.RESIZABLE + '.prpanel-default');
+            if (resizedTarget && resizedTarget.style && resizedTarget.style.width && resizedTarget.style.height) {
+                const chartElement = resizedTarget.querySelector('.tc-chart');
+                const chartBounding = chartElement.getBoundingClientRect();
+                // cuando el panel está colapsado no tenemos disponible el tamaño del perfil
+                if (parseInt(chartBounding.width) > 0 && parseInt(chartBounding.height) > 0) {
+                    resizedTarget.dataset.chartSizeWidth = chartBounding.width;
+                    resizedTarget.dataset.chartSizeHeight = chartBounding.height;
+                }
+                resizedTarget.dataset.panelSizeWidth = resizedTarget.style.width;
+                resizedTarget.dataset.panelSizeHeight = resizedTarget.style.height;
+            }
             self.chart.chart = self.chart.chart.destroy();
         }
 
-        const body = self.div.querySelector('.prsidebar-body');
+        const body = self.getContainerElement();
         if (body) {
             body.style.display = 'none';
             self.div.querySelector('.prcollapsed-max').style.display = 'none';
+            body.querySelectorAll('video,audio,iframe').forEach(elm => elm.remove());
 
             const collapsedElm = self.div.querySelector(self.content.collapsedClass);
             collapsedElm.hidden = true;
             collapsedElm.classList.remove(self.classes.FA);
+
+            let resizable = document.querySelector("." + self.classes.RESIZABLE);
+            if (resizable) {
+                resizable.style = "";
+            }
 
             self.map.trigger(TC.Consts.event.RESULTSPANELCLOSE, { control: self });
         }
@@ -319,18 +537,21 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     downHill: data.downHill ? data.downHill.toLocaleString(locale) : '0'
                 };
 
-                if (data.elevationFromServiceChartData) {
+                const hasSecondaryElevationProfileChartData = data.secondaryElevationProfileChartData &&
+                    Array.isArray(data.secondaryElevationProfileChartData) &&
+                    data.secondaryElevationProfileChartData.length > 0 && data.secondaryElevationProfileChartData[0];
+
+                if (hasSecondaryElevationProfileChartData) {
                     templateData.min = formatYAxis(data.min, locale);
                     templateData.max = formatYAxis(data.max, locale);
 
                     templateData.secondChart = {
-                        upHill: data.elevationFromServiceChartData.upHill ? data.elevationFromServiceChartData.upHill.toLocaleString(locale) : '0',
-                        downHill: data.elevationFromServiceChartData.downHill ? data.elevationFromServiceChartData.downHill.toLocaleString(locale) : '0',
-                        min: formatYAxis(data.elevationFromServiceChartData.min, locale),
-                        max: formatYAxis(data.elevationFromServiceChartData.max, locale)
+                        upHill: data.secondaryElevationProfileChartData[0].upHill ? data.secondaryElevationProfileChartData[0].upHill.toLocaleString(locale) : '0',
+                        downHill: data.secondaryElevationProfileChartData[0].downHill ? data.secondaryElevationProfileChartData[0].downHill.toLocaleString(locale) : '0',
+                        min: formatYAxis(data.secondaryElevationProfileChartData[0].min, locale),
+                        max: formatYAxis(data.secondaryElevationProfileChartData[0].max, locale)
                     };
                 }
-
                 self.getRenderedHtml(ctlProto.CLASS + '-chart', templateData, function (out) {
 
                     div.innerHTML = out;
@@ -350,7 +571,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     }
 
                     var legendOptions = { show: false };
-                    if (data.elevationFromServiceChartData) {
+                    if (hasSecondaryElevationProfileChartData) {
                         legendOptions = {
                             position: 'inset',
                             inset: {
@@ -361,11 +582,10 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             }
                         };
                     }
-
-                    var chartOptions = TC.Util.extend({
+                    let chartOptions = TC.Util.extend({
                         bindto: div.querySelector('.tc-chart'),
                         padding: {
-                            top: 13, // por el nuevo diseño del tooltip añado 13  //data.elevationFromServiceChartData ? 10 : 0,
+                            top: 13, // por el nuevo diseño del tooltip añado 13  //data.secondaryElevationProfileChartData[0] ? 10 : 0,
                             right: 15,
                             bottom: 0,
                             left: 45,
@@ -373,6 +593,19 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         legend: legendOptions
                     }, self.createChartOptions(data));
 
+                    // preservamos el tamaño redimensionado por el usuario
+                    const resizedTarget = self.div.querySelector('.' + self.classes.RESIZABLE + '.prpanel-default');
+                    if (resizedTarget &&
+                        resizedTarget.dataset.chartSizeWidth && parseInt(resizedTarget.dataset.chartSizeWidth) > 0 &&
+                        resizedTarget.dataset.chartSizeHeight && parseInt(resizedTarget.dataset.chartSizeHeight) > 0) {
+                        TC.Util.extend(chartOptions.size, { width: resizedTarget.dataset.chartSizeWidth, height: resizedTarget.dataset.chartSizeHeight });
+
+                        if (resizedTarget.dataset.panelSizeWidth && parseInt(resizedTarget.dataset.panelSizeWidth) > 0 &&
+                            resizedTarget.dataset.panelSizeHeight && parseInt(resizedTarget.dataset.panelSizeHeight) > 0) {
+                            resizedTarget.style.width = resizedTarget.dataset.panelSizeWidth;
+                            resizedTarget.style.height = resizedTarget.dataset.panelSizeHeight;
+                        }
+                    }
                     if (self.chart.tooltip) {
                         chartOptions.tooltip = {
                             position: function (data, width, height, element) {
@@ -380,7 +613,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                 let chartOffsetX = document.querySelector(".c3").getBoundingClientRect().left;
                                 let graphOffsetX = document.querySelector(".c3 g.c3-axis-y").getBoundingClientRect().right;
                                 let tooltipWidth = container.clientWidth;
-                                let x = (parseInt(element.getAttribute('x'))) + graphOffsetX - chartOffsetX - Math.floor(tooltipWidth / 2);                                
+                                let x = (parseInt(d3.mouse(element)[0])) + graphOffsetX - chartOffsetX - Math.floor(tooltipWidth / 2);
 
                                 // alto del tooltipOnBottom
                                 let xAxisHeight = document.querySelector(".c3 g.c3-axis-x").getBoundingClientRect().height + 2;
@@ -531,27 +764,68 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 }
 
                 //deleteColumns();
-
+                
                 self.tableData = {
                     columns: columns,
                     results: data,
                     css: css,
-                    callback: callback
+                    callback: callback,
+                    sort: data.sort ? {} : null
                 }
-                self.getRenderedHtml(self.CLASS + '-table', self.tableData).then(function (html) {
-                    const table = self.div.querySelector('.' + self.CLASS + '-table');
-                    const parent = table.parentElement;
-                    parent.removeChild(table);
-                    table.innerHTML = html;
-                    parent.appendChild(table);
-                    if (self.tableData.callback) {
-                        self.tableData.callback(table);
+                var scrollPosition = null;
+                const _sort = (tableData, field, order) => {
+                    var sortedDataTable = tableData;
+                    if (field) {
+                        const mappedArr = self.tableData.results.map(function (el, i) {
+                            return { index: i, properties: el };
+                        });
+                        mappedArr.sort((a, b) => {
+                            const valorA = a.properties[field] || "";
+                            const valorB = b.properties[field] || "";
+                            if (order)
+                                return valorA < valorB ? -1 : (valorA == valorB ? 0 : 1);
+                            else
+                                return valorA < valorB ? 1 : (valorA == valorB ? 0 : -1);
+                        });
+						
+                        sortedDataTable =Object.assign({},tableData,{results: mappedArr.map(function (el, i) {
+                            return Object.assign({}, el.properties, { index:el.index});
+                        })}); 
+                        sortedDataTable.sort = { field: field, order: order }; 
                     }
+                    self.getRenderedHtml(self.CLASS + '-table', sortedDataTable).then(function (html) {
+                        const table = self.div.querySelector('.' + self.CLASS + '-table');
+                        const parent = table.parentElement;
+                        parent.removeChild(table);
+                        table.innerHTML = html;
+                        parent.appendChild(table);
+                        if (tableData.callback) {
+                            tableData.callback(table);
+                        }
+                        table.querySelectorAll("thead th").forEach((th) => {
+                            th.addEventListener("click", (e) => {
+                                scrollPosition = e.target.offsetParent.scrollLeft;
+                                if (sortedDataTable.sort) {
+                                    if (sortedDataTable.sort.field === e.target.innerText && sortedDataTable.sort.order)
+                                        _sort(tableData, e.target.innerText, false);
+                                    else if (sortedDataTable.sort.field === e.target.innerText && !sortedDataTable.sort.order) {
+                                        _sort(tableData, e.target.innerText, true);
+                                    } else {
+                                        _sort(tableData, e.target.innerText, true);
+                                    }
 
-                    closeOpenedTableResultsPanel.call(self);
+                                } else _sort(tableData, e.target.innerText, true);
+                            })
+                        })
+                        closeOpenedTableResultsPanel.call(self);
 
-                    self.map.trigger(TC.Consts.event.DRAWTABLE, { control: self });
-                });
+                        self.map.trigger(TC.Consts.event.DRAWTABLE, { control: self });
+                        if (scrollPosition) {
+                            table.scrollLeft = scrollPosition;
+                        }
+                    });
+                }
+                _sort(self.tableData);                
 
                 self.div.querySelector('.' + self.CLASS + '-chart').style.display = 'none';
                 self.div.querySelector('.' + self.CLASS + '-info').style.display = 'none';
@@ -643,18 +917,21 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
     ctlProto.loadDataOnChart = function (data) {
         const self = this;
-
+        const endFn = function () {
+            self.elevationProfileChartData = data;
+            self.renderElevationProfileChart({
+                data: data,
+                div: self.div.querySelector('.' + ctlProto.CLASS + '-chart')
+            });
+        };
         // puede llegar aquí después de borrar un track.
         if (self.chart && self.chart.chart) {
             self.chart.chart.unload({
-                done: function () {
-                    self.elevationProfileChartData = data;
-                    self.renderElevationProfileChart({
-                        data: data,
-                        div: self.div.querySelector('.' + ctlProto.CLASS + '-chart')
-                    });
-                }
+                done: endFn
             });
+        }
+        else {
+            endFn();
         }
     };
 
@@ -749,18 +1026,31 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             }
                         },
                         onresize: function () {
-                            this.api.resize(getChartSize());
+                            let size;
+                            let targetNode = this.config.bindto.closest('.' + self.classes.RESIZABLE + '.prpanel-default');
+                            if (targetNode) {
+                                size = self.getResizableChartSize(targetNode);
+                            } else {
+                                size = getChartSize();
+                            }
+                            if (size) {
+                                this.api.resize(size);
+                            }
                         }
                     };
 
-                    if (options.elevationFromServiceChartData) {
+                    const hasSecondaryElevationProfileChartData = options.secondaryElevationProfileChartData &&
+                        Array.isArray(options.secondaryElevationProfileChartData) &&
+                        options.secondaryElevationProfileChartData.length > 0 && options.secondaryElevationProfileChartData[0];
+
+                    if (hasSecondaryElevationProfileChartData) {
                         result.data.names = {
                             ele: self.getLocaleString("geo.profile.fromTrack"),
                             ele2: self.getLocaleString("mdt")
                         };
-                        result.data.columns.push(['ele2'].concat(options.elevationFromServiceChartData.ele));
+                        result.data.columns.push(['ele2'].concat(options.secondaryElevationProfileChartData[0].ele));
 
-                        result.data.types.ele2 = options.elevationFromServiceChartData.type;
+                        result.data.types.ele2 = result.data.types.ele;
                         gradIds.push('grad' + TC.getUID());
                         result.data.colors.ele2 = 'url(#' + gradIds[gradIds.length - 1] + ')';
                         result.data.axes = {
@@ -768,14 +1058,14 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         };                        
 
                         if (eleColumn.every((val) => val === 0)) {
-                            result.axis.y.min = Math.min(...options.elevationFromServiceChartData.ele);
-                            result.axis.y.max = Math.max(...options.elevationFromServiceChartData.ele);
-                        } else if (options.elevationFromServiceChartData.ele.every((val) => val === 0)) {
+                            result.axis.y.min = options.secondaryElevationProfileChartData[0].min;
+                            result.axis.y.max = options.secondaryElevationProfileChartData[0].max;
+                        } else if (options.secondaryElevationProfileChartData[0].ele.every((val) => val === 0)) {
                             result.axis.y.min = Math.min(...eleColumn);
                             result.axis.y.max = Math.max(...eleColumn);
                         } else {
-                            result.axis.y.min = Math.min(...eleColumn.concat(options.elevationFromServiceChartData.ele));
-                            result.axis.y.max = Math.max(...eleColumn.concat(options.elevationFromServiceChartData.ele));
+                            result.axis.y.min = Math.min(...eleColumn.concat(options.secondaryElevationProfileChartData[0].min));
+                            result.axis.y.max = Math.max(...eleColumn.concat(options.secondaryElevationProfileChartData[0].max));
                         }
                     }
 
@@ -786,7 +1076,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         if (!rendered) {
                             rendered = true;
 
-                            if (options.elevationFromServiceChartData) {
+                            if (hasSecondaryElevationProfileChartData) {
                                 // redondeamos los cuadritos de la leyenda.
                                 document.querySelectorAll('.c3-legend-item-tile').forEach((item) => {
                                     item.setAttribute('rx', 5);
@@ -809,6 +1099,10 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                     }, { passive: true });
                                 });
                             }
+                        }
+
+                        if (!this.svg) {
+                            return; // es posible que lleguemos aquí y el usuario justo haya deseleccionado el track de la lista.
                         }
 
                         const svg = this.svg[0][0];
@@ -846,7 +1140,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         };
 
                         createLinearGradient(gradIds[0], ["red", "orange", "green"]);
-                        if (options.elevationFromServiceChartData) {
+                        if (options.secondaryElevationProfileChartData) {
                             createLinearGradient(gradIds[gradIds.length - 1], ["blue", "cian", "green"]);
                         }
 
@@ -895,6 +1189,12 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             width: svgRect.width,
                             height: svgRect.height
                         };
+
+                        // revisar
+                        //svg.removeAttribute('height');
+                        //svg.removeAttribute('width');
+
+                        //svg.setAttribute('viewbox', '0 0 ' + chartSize.width + ' ' + chartSize.height);
 
                         // ¿es necesario pasar los labels a multiline?
                         var setMultilineLabels = function () {
@@ -1001,8 +1301,9 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         return TC.Util.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
     };
 
-    ctlProto.getElevationChartTooltip = function (data) {        
+    ctlProto.getElevationChartTooltip = function (data) {
         const self = this;
+
         const locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
         const coords = self.elevationProfileChartData.coords;
         const getElevationByDataElem = function (dataElem) {
@@ -1034,7 +1335,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             (doneTime ? '<span>' + doneTime.toString + '</span>' + '<div/>' : '<div/>');
 
 
-        return elevationDiv + distanceAndTimeDiv;        
+        return elevationDiv + distanceAndTimeDiv;
     };
 
     ctlProto.getTableContainer = function () {
@@ -1050,7 +1351,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     };
 
     ctlProto.getContainerElement = function () {
-        return this.div.querySelector('.prsidebar-body') || null;
+        return this.div.querySelector('.prsidebar-body');
     };
 
     ctlProto.register = function (map) {
@@ -1083,6 +1384,18 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 self.close();
             });
         }
+
+        map
+            .on(TC.Consts.event.FEATUREREMOVE, function (e) {
+                if (self.currentFeature === e.feature && self.isVisible()) {
+                    self.close();
+                }
+            })
+            .on(TC.Consts.event.FEATURESCLEAR + ' ' + TC.Consts.event.LAYERREMOVE, function (e) {
+                if (self.currentFeature && self.currentFeature.layer === e.layer && self.isVisible()) {
+                    self.close();
+                }
+            });
 
         //map.on(TC.Consts.event.VIEWCHANGE, function () {
 

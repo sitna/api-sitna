@@ -57,7 +57,7 @@
 	    {{#if (startsWith this "http")}}
         <a href="{{this}}" target="_blank" title="{{i18n "linkInNewWindow" }}">{{i18n "open" }}</a>
         {{else}}
-        <div>{{formatNumber this}}</div>
+        <div>{{formatDateOrNumber this}}</div>
         {{/if}}
     {{/if}}
 {{/if}}

@@ -157,12 +157,31 @@ if (!TC.Layer) {
     (function () {
         var layerProto = TC.layer.Vector.prototype;
 
+        const getMergedLegendImage = function (images) {
+            let offset = 0;
+            const margin = 2;
+            const svgs = images
+                .map(str => str.replace('data:image/svg+xml,', ''))
+                .map(str => decodeURIComponent(str));
+            const widths = svgs.map(str => parseFloat(str.match(/ width="([\d\.]*)"/)[1]));
+            const heights = svgs.map(str => parseFloat(str.match(/ height="([\d\.]*)"/)[1]));
+            const width = widths.reduce((acc, cur) => acc + cur + margin, 0);
+            const height = Math.max.apply(Math, heights);
+            const offsetSvgs = svgs
+                .map((str, idx) => {
+                    const result = str.replace('<svg xmlns="http://www.w3.org/2000/svg"', `<svg x="${offset}" y="${(height - heights[idx]) / 2}" `);
+                    offset += widths[idx] + margin;
+                    return result;
+                });
+            return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${offsetSvgs.join('')}</svg>`);
+        };
+
         /*
          *  getTree: returns service layer tree { name, title, children }
          */
         layerProto.getTree = function () {
             const self = this;
-            var result = null;
+            let result = null;
             if (!self.options.stealth) {
                 result = {};
                 result.children = [];
@@ -175,21 +194,26 @@ if (!TC.Layer) {
                         }
                     }
                 }
-                if (self.styles) {
-                    const multiGeom = Object.keys(self.styles).length > 1;
-                    const locale = self.map ? self.map.options.locale : null;
+                if (self.styles || self.cluster) {
+                    const legendImages = [];
+                    if (self.cluster) {
+                        legendImages.push(TC.Util.getLegendImageFromStyle(
+                            TC.Util.extend({}, self.cluster.styles.point, { radius: TC.Cfg.styles.point.radius + 2, offset: [0, 6] }),
+                            { geometryType: TC.Consts.geom.POINT }
+                        ));
+                    }
                     if (self.styles.point) {
-                        const node = multiGeom ? TC.Util.addArrayToTree([TC.Util.getLocaleString(locale, 'points')], result) : result;
-                        node.legend = { src: TC.Util.getLegendImageFromStyle(self.styles.point, { geometryType: TC.Consts.geom.POINT }) };
+                        legendImages.push(TC.Util.getLegendImageFromStyle(self.styles.point, { geometryType: TC.Consts.geom.POINT }));
                     }
                     if (self.styles.line) {
-                        const node = multiGeom ? TC.Util.addArrayToTree([TC.Util.getLocaleString(locale, 'lines')], result) : result;
-                        node.legend = { src: TC.Util.getLegendImageFromStyle(self.styles.line, { geometryType: TC.Consts.geom.POLYLINE }) };
+                        legendImages.push(TC.Util.getLegendImageFromStyle(self.styles.line, { geometryType: TC.Consts.geom.POLYLINE }));
                     }
                     if (self.styles.polygon) {
-                        const node = multiGeom ? TC.Util.addArrayToTree([TC.Util.getLocaleString(locale, 'polygons')], result) : result;
-                        node.legend = { src: TC.Util.getLegendImageFromStyle(self.styles.polygon, { geometryType: TC.Consts.geom.POLYGON }) };
+                        legendImages.push(TC.Util.getLegendImageFromStyle(self.styles.polygon, { geometryType: TC.Consts.geom.POLYGON }));
                     }
+                    result.legend = {
+                        src: getMergedLegendImage(legendImages)
+                    };
                 }
                 result.name = self.name || result.name;
                 result.customLegend = self.options.customLegend; //Atributo para pasar una plantilla HTML diferente a la por defecto (LegendNode.html)
@@ -234,7 +258,8 @@ if (!TC.Layer) {
                                 const layerStyle = layer.styles && layer.styles[styleType];
                                 if (TC.Util.hasStyleOptions(opts) || !layerStyle) {
                                     // Si las opciones tienen estilos, o la capa no los tiene, creamos un objeto de estilos para la feature
-                                    TC.Util.extend(true, opts, TC.Cfg.styles[styleType], layerStyle || {}, options);
+                                    const externalStyles = TC.Util.extend(true, {}, TC.Cfg.styles, layer.map ? layer.map.options.styles : null);
+                                    TC.Util.extend(true, opts, externalStyles[styleType], layerStyle || {}, options);
                                 }
                                 feature = new FeatureConstructor(coords, opts);
                             }
@@ -246,7 +271,7 @@ if (!TC.Layer) {
                             nativeFeatures.push(feature.wrap.feature);
                         }
                         if (feature.options.showPopup) {
-                            feature.showPopup();
+                            feature.showInfo();
                         }
                         // Este evento mata el rendimiento
                         //self.map.trigger(TC.Consts.event.FEATUREADD, { layer: self, feature: marker });
@@ -294,6 +319,15 @@ if (!TC.Layer) {
             return addFeaturesInternal(this, coordsArray, 'Point', TC.Consts.geom.POINT, options);
         };
 
+        layerProto.addMultiPoint = function (coords, options) {
+            return addFeatureInternal(this, this.addMultiPoints, coords, options);
+        };
+
+
+        layerProto.addMultiPoints = function (coordsArray, options) {
+            return addFeaturesInternal(this, coordsArray, 'MultiPoint', "point", options);
+        };
+
         /**
          * Añade un marcador a la capa.
          * @method addMarker
@@ -316,6 +350,15 @@ if (!TC.Layer) {
          */
         layerProto.addMarkers = function (coordsArray, options) {
             return addFeaturesInternal(this, coordsArray, 'Marker', 'marker', options);
+        };
+
+        layerProto.addMultiMarker = function (coords, options) {
+            return addFeatureInternal(this, this.addMultiMarkers, coords, options);
+        };
+
+
+        layerProto.addMultiMarkers = function (coordsArray, options) {
+            return addFeaturesInternal(this, coordsArray, 'MultiMarker', "marker", options);
         };
 
         /**
@@ -462,21 +505,7 @@ if (!TC.Layer) {
         layerProto.removeFeature = function (feature) {
             const self = this;
             if (feature.layer && self.features.indexOf(feature) >= 0) {
-                if (self.map) {
-                    const filterFn = ctl => ctl.currentFeature === feature && ctl.isVisible();
-                    const popups = self.map.getControlsByClass('TC.control.Popup');
-                    popups
-                        .filter(filterFn)
-                        .forEach(pu => pu.hide());
-
-                    const panels = self.map.getControlsByClass('TC.control.ResultsPanel');
-                    panels
-                        .filter(filterFn)
-                        .forEach(p => p.close());
-                }
-                if (feature.layer) { // Volvemos a comprobar porque el cierre del popup puede haber borrado ya la feature
-                    self.wrap.removeFeature(feature);
-                }
+                self.wrap.removeFeature(feature);
                 feature.layer = null;
             }
         };
@@ -520,7 +549,8 @@ if (!TC.Layer) {
         layerProto.getDescribeFeatureTypeUrl = function (layerNames) {
             const self = this;
             const version = self.options.version || self.capabilities.version || '1.1.0';
-            const featureType = Array.isArray(layerNames) ? layerNames : [layerNames];
+            let featureType = layerNames || self.featureType;
+            featureType = Array.isArray(featureType) ? featureType : [featureType];
             return self.url + '?service=WFS&' + 'version=' + version + '&request=DescribeFeatureType&typename=' + featureType.join(',') + '&outputFormat=' + encodeURIComponent(self.capabilities.Operations.DescribeFeatureType.outputFormat);
         };
 
@@ -584,13 +614,15 @@ if (!TC.Layer) {
                                         }
                                         if (e.data.state === 'success') {
                                             let key = Object.keys(e.data.DFTCollection).join(",");
-                                            if (promsObj.hasOwnProperty(key)) {
-                                                promsObj[key].call(null, e.data.DFTCollection);
+                                            if (TC.describeFeatureType[key]) {
+												if(typeof(TC.describeFeatureType[key]) === "function")
+													TC.describeFeatureType[key].call(null, e.data.DFTCollection);											
+                                                
                                             }
                                             else {
                                                 throw "No se encuentra la clave " + key + " en la colección";
                                             }
-                                            TC.describeFeatureType = Object.assign(TC.describeFeatureType, e.data.DFTCollection);
+											TC.describeFeatureType = Object.assign(TC.describeFeatureType, e.data.DFTCollection);
                                         }
                                         else {
                                             throw "Ha habido problemas procesando el Describe feature type";
@@ -615,7 +647,7 @@ if (!TC.Layer) {
                                     xml: data.documentElement.outerHTML,
                                     url: (TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation)
                                 });
-                                promsObj[layers instanceof Array ? layers.join(",") : layers] = callback;
+                                TC.describeFeatureType[layers instanceof Array ? layers.join(",") : layers] = callback;
                             }
                             try {
                                 wwInit();
@@ -682,8 +714,6 @@ if (!TC.Layer) {
             );
             return result;
         };
-
-        layerProto.CAPABILITIES_STORE_KEY_PREFIX = 'TC.capabilities.';
 
         layerProto.import = function (options) {
             this.wrap.import(options);
@@ -766,7 +796,9 @@ if (!TC.Layer) {
         };
 
         layerProto.refresh = function () {
-            return this.wrap.reloadSource();
+            const self = this;
+            self.clearFeatures();
+            return self.wrap.reloadSource();
         };
 
         layerProto.getFeaturesInCurrentExtent = function (tolerance) {
@@ -826,9 +858,9 @@ if (!TC.Layer) {
                             fObj.type = TC.Consts.geom.POINT;
                             layerStyle = self.options.styles && self.options.styles.point;
                             break;
-                        //case TC.feature.MultiPoint && f instanceof TC.feature.MultiPoint:
-                        //    fObj.type = TC.Consts.geom.MULTIPOINT;
-                        //    break;
+                        case TC.feature.MultiPoint && f instanceof TC.feature.MultiPoint:
+                            fObj.type = TC.Consts.geom.MULTIPOINT;
+                            break;
                         case TC.feature.Polyline && f instanceof TC.feature.Polyline:
                             fObj.type = TC.Consts.geom.POLYLINE;
                             layerStyle = self.options.styles && self.options.styles.line;
@@ -894,6 +926,14 @@ if (!TC.Layer) {
                         case TC.Consts.geom.CIRCLE:
                             addFn = self.addCircle;
                             break;
+                        case TC.Consts.geom.MULTIPOINT:
+                            if (f.style && (f.style.url || f.style.className)) {
+                                addFn = self.addMultiMarker;
+                            }
+                            else {
+                                addFn = self.addMultiPoint;
+                            }
+                            break;
                         case TC.Consts.geom.POINT:
                             if (f.style && (f.style.url || f.style.className)) {
                                 addFn = self.addMarker;
@@ -934,6 +974,13 @@ if (!TC.Layer) {
                         reject(err instanceof Error ? err : Error(err));
                     });
             });
+        };
+
+        layerProto.clone = function () {
+            const self = this;
+            const clone = TC.Layer.prototype.clone.call(self);
+            self.features.forEach(f => clone.addFeature(f.clone()));
+            return clone;
         };
 
         layerProto.getGetCapabilitiesUrl = function () {

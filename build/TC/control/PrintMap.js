@@ -1,3 +1,22 @@
+
+/**
+  * Opciones de control de impresión.
+  * @typedef PrintMapOptions
+  * @extends ControlOptions
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {string} [logo] - URL del archivo de imagen del logo a añadir a la hoja de impresión.
+  * @property {PrintMapLegendOptions} [legend] - Opciones de configuración para mostrar la leyenda del mapa en una segunda página de impresión.
+  */
+
+/**
+  * Opciones de leyenda para la impresión.
+  * @typedef PrintMapLegendOptions
+  * @see PrintMapOptions
+  * @property {boolean} [visible=false] - Determina si junto a la página del mapa se imprime una segunda página con la leyenda.
+  * @property {string} [orientation="portrait"] - Determina la orientación de la página de impresión que contiene la leyenda. Puede tomar el valor `portrait` (vertical) o `landscape` (horizontal).
+  */
+
 TC.control = TC.control || {};
 
 if (!TC.control.MapInfo) {
@@ -550,7 +569,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             const updateCanvas = function (printFormat) {
                 if (printFormat) {
                     self.map.div.classList.add(printFormat);
-                    /**
+                    /*
                      * Validamos que el resultado en pixels sean valores enteros, si no lo son, redondeamos y establecemos evitando estiramiento del canvas /
                      */
                     var bounding = self.map.div.getBoundingClientRect();
@@ -560,6 +579,11 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     if (!Number.isInteger(bounding.height)) {
                         self.map.div.style.height = Math.round(bounding.height) + 'px';
                     }
+
+                    const newWidth = `calc(50% - ${bounding.width / 2}px)`;
+                    self._viewDiv.querySelector(`.${self.CLASS}-view-left`).style.width = newWidth;
+                    self._viewDiv.querySelector(`.${self.CLASS}-view-right`).style.width = newWidth;
+                    self._viewDiv.querySelector(`.${self.CLASS}-view-bottom`).style.top = bounding.height + 'px';
 
                     self.map.toast(self.getLocaleString('print.advice.title') + ': ' + self.getLocaleString('print.advice.desc'), { type: TC.Consts.msgType.INFO, duration: 7000 });
                 }
@@ -646,14 +670,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         var hasWait = loadingCtrl.addWait();
 
         TC.loadJS(!window.pdfMake, [TC.Consts.url.PDFMAKE], function () {
-            const olViewport = self.map.div.querySelectorAll('.ol-viewport');
-            for (var i = 0, len = olViewport.length; i < len; i++) {
-                const elm = olViewport[i];
-                if (!elm.parentElement.classList.contains('ol-overviewmap-map')) {
-                    self.canvas = elm.querySelector('canvas');
-                    break;
-                }
-            }
+            self.canvas = TC.Util.mergeCanvases(self.map.wrap.getCanvas());
 
             var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
             var printLayout = layout.layoutPDF;
@@ -690,6 +707,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     var logoColumn = getLogoColumn(layout);
                     delete logoColumn.image;
                     logoColumn.text = "";
+                    logoColumn.width = 0;
                     return logoColumn;
                 };
 
@@ -697,7 +715,6 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     return TC.Util.imgToDataUrl(self.options.logo).then(function (result) {
                         const canvas = result.canvas;
                         const dataUrl = result.dataUrl;
-                        var size = TC.Util.calculateAspectRatioFit(canvas.width, canvas.height, layout.logoWidth, layout.logoHeight);
 
                         var logoColumn = getLogoColumn(layout);
                         //URI: si no se define la anchura en el layout calcula la anchura en función de proporción entre ancho y alto de la imagen y el alto de su posición en el PDF
@@ -724,7 +741,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     return scaleBarColumn;
                 };
 
-                var scaleCtrl = self.map.getControlsByClass(TC.control.ScaleBar)[0];
+                let scaleCtrl = self.map.getControlsByClass(TC.control.ScaleBar)[0];
                 if (scaleCtrl) {
                     var elem = document.getElementsByClassName("ol-scale-line-inner"); // no cogemos el DIV del control ya que contiene los bordes y suman al ancho total
                     var bounding = elem[0].getBoundingClientRect();
@@ -763,7 +780,6 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     return layer.type === TC.Consts.layerType.WMS && layer.getVisibility();
                 });
                 var legendByGroup = [];
-                var indentationIncrement = 7;
 
                 var _process = function (value, parentLayer, treeLevel) {
                     if (parentLayer.isVisibleByScale(value.name)) { //Si la capa es visible, la mostramos en la leyenda
@@ -1006,7 +1022,17 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             })).then(function (basicsDone) {
 
                 if (basicsDone[2].table) { // GLS: ajustamos el ancho del título para arrinconar la escala
-                    layout.layoutPDF.content[0].columns[1].width = layout.layoutPDF.pageSize.width - (layout.layoutPDF.pageMargins[0] + layout.layoutPDF.pageMargins[2]) - layout.layoutPDF.content[0].columns[0].width - (layout.layoutPDF.content[0].columns[2].table.widths[0] + 2);
+                    const totalWidth = layout.layoutPDF.pageSize.width - (layout.layoutPDF.pageMargins[0] + layout.layoutPDF.pageMargins[2]);
+                    const logoWidth = layout.layoutPDF.content[0].columns[0].width || 0;
+                    const scaleBarColumn = layout.layoutPDF.content[0].columns[2];
+                    const scaleBarWidth = scaleBarColumn.table.widths[0] + 2;
+                    const titleColumn = layout.layoutPDF.content[0].columns[1];
+                    titleColumn.width = totalWidth - logoWidth - scaleBarWidth;
+                    if (logoWidth === 0) {
+                        // Si no hay logo reajustamos texto de título y margen de barra de escala
+                        titleColumn.alignment = "left";
+                        scaleBarColumn.margin[3] = 2;
+                    }
                 }
 
                 var mapPlace = getMap(layout);

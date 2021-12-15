@@ -1,6 +1,5 @@
 /* MergeTerrainProvider */
-(function () {
-
+(function () {    
     /* d3-polygon: para validar si un punto está dentro de la cobertura de Navarra */
     // https://d3js.org/d3-polygon/ Version 1.0.3. Copyright 2017 Mike Bostock.
     !function (n, r) { "object" == typeof exports && "undefined" != typeof module ? r(exports) : "function" == typeof define && define.amd ? define(["exports"], r) : r(n.d3 = n.d3 || {}) }(this, function (n) { "use strict"; function r(n, r) { return n[0] - r[0] || n[1] - r[1] } function e(n) { for (var r = n.length, e = [0, 1], t = 2, o = 2; o < r; ++o) { for (; t > 1 && f(n[e[t - 2]], n[e[t - 1]], n[o]) <= 0;)--t; e[t++] = o } return e.slice(0, t) } var t = function (n) { for (var r, e = -1, t = n.length, o = n[t - 1], f = 0; ++e < t;) r = o, o = n[e], f += r[1] * o[0] - r[0] * o[1]; return f / 2 }, o = function (n) { for (var r, e, t = -1, o = n.length, f = 0, u = 0, l = n[o - 1], i = 0; ++t < o;) r = l, l = n[t], i += e = r[0] * l[1] - l[0] * r[1], f += (r[0] + l[0]) * e, u += (r[1] + l[1]) * e; return i *= 3, [f / i, u / i] }, f = function (n, r, e) { return (r[0] - n[0]) * (e[1] - n[1]) - (r[1] - n[1]) * (e[0] - n[0]) }, u = function (n) { if ((o = n.length) < 3) return null; var t, o, f = new Array(o), u = new Array(o); for (t = 0; t < o; ++t) f[t] = [+n[t][0], +n[t][1], t]; for (f.sort(r), t = 0; t < o; ++t) u[t] = [f[t][0], -f[t][1]]; var l = e(f), i = e(u), g = i[0] === l[0], a = i[i.length - 1] === l[l.length - 1], c = []; for (t = l.length - 1; t >= 0; --t) c.push(n[f[l[t]][2]]); for (t = +g; t < i.length - a; ++t) c.push(n[f[i[t]][2]]); return c }, l = function (n, r) { for (var e, t, o = n.length, f = n[o - 1], u = r[0], l = r[1], i = f[0], g = f[1], a = !1, c = 0; c < o; ++c) f = n[c], e = f[0], t = f[1], t > l != g > l && u < (i - e) * (l - t) / (g - t) + e && (a = !a), i = e, g = t; return a }, i = function (n) { for (var r, e, t = -1, o = n.length, f = n[o - 1], u = f[0], l = f[1], i = 0; ++t < o;) r = u, e = l, f = n[t], u = f[0], l = f[1], r -= u, e -= l, i += Math.sqrt(r * r + e * e); return i }; n.polygonArea = t, n.polygonCentroid = o, n.polygonHull = u, n.polygonContains = l, n.polygonLength = i, Object.defineProperty(n, "__esModule", { value: !0 }) });
@@ -11,19 +10,19 @@
         this.view = view;
 
         this.commutingProvidersReady = false;
-        this.commutingProvidersPromises = Cesium.when.defer();
+        this.commutingProvidersPromises = cesium.when.defer();
 
-        this.surfaceHasTilesToRender = Cesium.when.defer();
+        this.surfaceHasTilesToRender = cesium.when.defer();
         this.surfaceTilesToRender = 0;
 
         this.fallback = fallbackOptions.fallback || [];
         this.fallbackProvider = [];
 
         this.fallbackProvider = this.fallback.map(function (options) {
-            return new Cesium.WCSTerrainProvider(options, view);
+            return new cesium.WCSTerrainProvider(options, view);
         });
 
-        this.defaultFallbackProvider = new Cesium.EllipsoidTerrainProvider();
+        this.defaultFallbackProvider = new cesium.EllipsoidTerrainProvider();
         
         this.attributions = {};
         
@@ -32,23 +31,23 @@
             this.view.map.trigger(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: this });
         }
 
-        if (!(options.url instanceof Cesium.Resource)) {
-            options.url = new Cesium.Resource({
+        if (!(options.url instanceof cesium.Resource)) {
+            options.url = new cesium.Resource({
                 url: options.url.trim()
             });
         }
 
-        Cesium.CesiumTerrainProvider.call(this, options);
+        cesium.CesiumTerrainProvider.call(this, options);
 
         this.boundaries = fallbackOptions.boundaries;
 
-        Cesium.when.all([this._readyPromise, this.fallbackProvider[0].readyPromise, this.surfaceHasTilesToRender], function () {
+        cesium.when.all([this._readyPromise, this.fallbackProvider[0].readyPromise, this.surfaceHasTilesToRender], function () {
             this.commutingProvidersReady = true;
             this.commutingProvidersPromises.resolve();            
         }.bind(this))
     }
 
-    MergeTerrainProvider.prototype = Object.create(Cesium.CesiumTerrainProvider.prototype, {
+    MergeTerrainProvider.prototype = Object.create(cesium.CesiumTerrainProvider.prototype, {
         fallback: { /* array con las opciones de los servicios WCS */
             value: null,
             enumerable: true,
@@ -90,12 +89,8 @@
             loadPolygonContains();
         }
 
-        if (!d3.polygonContains(this.boundaries, [Cesium.Math.toDegrees(cartographic.longitude), Cesium.Math.toDegrees(cartographic.latitude)])) {
-            console.log('No está en el recinto por defecto');
-
+        if (!d3.polygonContains(this.boundaries, [cesium.Math.toDegrees(cartographic.longitude), cesium.Math.toDegrees(cartographic.latitude)])) {            
             return false;
-        } else {
-            console.log('Sí está en el recinto por defecto');
         }
 
         return true;
@@ -107,10 +102,10 @@
         var toCheck = [];
         var rectangle = this.tilingScheme.tileXYToRectangle(x, y, level);
 
-        toCheck.push(new Cesium.Cartographic(rectangle.west, rectangle.south));
-        toCheck.push(new Cesium.Cartographic(rectangle.west, rectangle.north));
-        toCheck.push(new Cesium.Cartographic(rectangle.east, rectangle.south));
-        toCheck.push(new Cesium.Cartographic(rectangle.east, rectangle.north));
+        toCheck.push(new cesium.Cartographic(rectangle.west, rectangle.south));
+        toCheck.push(new cesium.Cartographic(rectangle.west, rectangle.north));
+        toCheck.push(new cesium.Cartographic(rectangle.east, rectangle.south));
+        toCheck.push(new cesium.Cartographic(rectangle.east, rectangle.north));
 
         for (var i = 0; i < toCheck.length; i++) {
             if (!self.isPointInDefaultBoundaries(toCheck[i])) {
@@ -131,7 +126,7 @@
         this.surfaceTilesToRender++;
 
         /* Si estamos en Navarra y el nivel que se va a pedir es mayor que el disponible en nuestro terreno nos ahorramos la petición */
-        if (level > this._availability._maximumLevel - 1 && this.isInDefaultBoundaries(x, y, level)) {
+        if (level > this._availability._maximumLevel && this.isInDefaultBoundaries(x, y, level)) {
             return false;
         }
 
@@ -145,45 +140,55 @@
     };
 
     MergeTerrainProvider.prototype.requestTileGeometry = function (x, y, level) {
-        var self = this;
-        var promise = Cesium.when.defer();
+        const self = this;
+        let promise = cesium.when.defer();
 
-        var manageAttributions = function (provider) {
+        const manageAttributions = function (provider) {
             self.view.map.trigger(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: provider });
         };
 
-        Cesium.CesiumTerrainProvider.prototype.requestTileGeometry.apply(self, [x, y, level])
-            .then(function (args, terrainData) {
-                if (terrainData._minimumHeight === self.noDataValue) {
-                    if (self.fallbackProvider && self.fallbackProvider[0].ready) {
-                        self.fallbackProvider[0].requestTileGeometry.apply(self, args)
-                            .then(function (terrainData) {
-                                manageAttributions(self.fallbackProvider[0]);
-                                promise.resolve(terrainData);
-                            }).otherwise(function () {
-                                promise.resolve(self.defaultFallbackProvider.requestTileGeometry([x, y, level]));
-                            });
-                    } else {
+        const otherwise = function () {
+            if (self.fallbackProvider && self.fallbackProvider[0].ready) {
+                self.fallbackProvider[0].requestTileGeometry.apply(self, [x, y, level])
+                    .then(function (terrainData) {
+                        manageAttributions(self.fallbackProvider[0]);
+                        promise.resolve(terrainData);
+                    }).otherwise(function () {
                         promise.resolve(self.defaultFallbackProvider.requestTileGeometry([x, y, level]));
-                    }
-                } else {
-                    manageAttributions(self);
-                    promise.resolve(terrainData);
-                }
-            }.bind(this, arguments))
-            .otherwise(function (e) {
-                if (self.fallbackProvider && self.fallbackProvider[0].ready) {
-                    self.fallbackProvider[0].requestTileGeometry.apply(self, [x, y, level])
-                        .then(function (terrainData) {
-                            manageAttributions(self.fallbackProvider[0]);
-                            promise.resolve(terrainData);
-                        }).otherwise(function () {
+                    });
+            } else {
+                promise.resolve(self.defaultFallbackProvider.requestTileGeometry([x, y, level]));
+            }
+        };
+
+        // así controlamos que las peticiones fuera de Navarra y mayor nivel que el soportado no se pidan y
+        // vamos directamente al proveedor de respaldo.
+        if (level > this._availability._maximumLevel) {
+            otherwise();
+        } else if (!this.isInDefaultBoundaries(x, y, level)) {
+            otherwise();
+        } else {
+            cesium.CesiumTerrainProvider.prototype.requestTileGeometry.apply(self, [x, y, level])
+                .then(function (args, terrainData) {
+                    if (terrainData._minimumHeight === self.noDataValue) {
+                        if (self.fallbackProvider && self.fallbackProvider[0].ready) {
+                            self.fallbackProvider[0].requestTileGeometry.apply(self, args)
+                                .then(function (terrainData) {
+                                    manageAttributions(self.fallbackProvider[0]);
+                                    promise.resolve(terrainData);
+                                }).otherwise(function () {
+                                    promise.resolve(self.defaultFallbackProvider.requestTileGeometry([x, y, level]));
+                                });
+                        } else {
                             promise.resolve(self.defaultFallbackProvider.requestTileGeometry([x, y, level]));
-                        });
-                } else {
-                    promise.resolve(self.defaultFallbackProvider.requestTileGeometry([x, y, level]));
-                }
-            });
+                        }
+                    } else {
+                        manageAttributions(self);
+                        promise.resolve(terrainData);
+                    }
+                }.bind(this, arguments))
+                .otherwise(otherwise);
+        }
 
         return promise.then(function (terrainData) {
             return terrainData;
@@ -191,50 +196,49 @@
     };
 
     MergeTerrainProvider.prototype.sampleTerrainMostDetailed = function (positions) {
-        var rectangle = Cesium.Rectangle.fromCartographicArray(positions);
-        var toCheck = [Cesium.Rectangle.center(rectangle),
-					   Cesium.Rectangle.northeast(rectangle),
-					   Cesium.Rectangle.northwest(rectangle),
-					   Cesium.Rectangle.southeast(rectangle),
-					   Cesium.Rectangle.southwest(rectangle)];
+        var rectangle = cesium.Rectangle.fromCartographicArray(positions);
+        var toCheck = [cesium.Rectangle.center(rectangle),
+					   cesium.Rectangle.northeast(rectangle),
+					   cesium.Rectangle.northwest(rectangle),
+					   cesium.Rectangle.southeast(rectangle),
+					   cesium.Rectangle.southwest(rectangle)];
 
         if (toCheck.filter(function (position) { return !this.isPointInDefaultBoundaries(position); }.bind(this)).length === 0) {
-            return Cesium.sampleTerrainMostDetailed(this, positions);
+            return cesium.sampleTerrainMostDetailed(this, positions);
         } else {
             return this.fallbackProvider[0].sampleTerrainMostDetailed(positions);
         }
 
     }
 
-    Cesium.MergeTerrainProvider = MergeTerrainProvider;
+    cesium.MergeTerrainProvider = MergeTerrainProvider;
 })();
 /*
 https://github.com/xlhomme/WCSTerrainProvider/tree/master/
 Modificado por GLS
 WCSTerrainProvider  */
 (function () {
-
     var WCSTerrainProvider = function WCSTerrainProvider(description, view) {
 
         this.view = view;
 
-        var deferred = Cesium.when.defer();
+        var deferred = cesium.when.defer();
         this._ready = false;
         this._readyPromise = deferred;
 
         this.url = description.url;
         this.layerName = description.layerName;
 
-        if (!Cesium.defined(description)) {
-            throw new Cesium.DeveloperError('description is required.');
+        if (!cesium.defined(description)) {
+            throw new cesium.DeveloperError('description is required.');
         }
-        var errorEvent = new Cesium.Event();
+        var errorEvent = new cesium.Event();
 
-        this._eventHelper = new Cesium.EventHelper();
+        this._eventHelper = new cesium.EventHelper();
 
         var credit = description.credit;
         if (typeof credit === 'string') {
-            credit = new Cesium.Credit(credit);
+            credit = new cesium.Credit(credit);
         }
 
         this.tileCacheService = new TileCacheService('WCSTiles');
@@ -243,9 +247,9 @@ WCSTerrainProvider  */
         this.lastTile = undefined;
         this.ready = false;
 
-        this.DefaultProvider = new Cesium.EllipsoidTerrainProvider();
+        this.DefaultProvider = new cesium.EllipsoidTerrainProvider();
 
-        Cesium.defineProperties(this, {
+        Object.defineProperties(this, {
             errorEvent: {
                 get: function () {
                     return errorEvent;
@@ -273,7 +277,7 @@ WCSTerrainProvider  */
         this.noDataValue = description.noDataValue;
 
         // atribuciones
-        if (Cesium.defined(this.url)) {
+        if (cesium.defined(this.url)) {
             var urlofServer = this.url;
             var index = urlofServer.lastIndexOf("?");
             if (index > -1) {
@@ -282,7 +286,7 @@ WCSTerrainProvider  */
         }
 
         var urlGetCapabilities = urlofServer + '?SERVICE=WCS&VERSION=1.0.0&request=GetCapabilities';
-        Cesium.when(Cesium.Resource.fetchXML({
+        cesium.when(cesium.Resource.fetchXML({
             url: urlGetCapabilities
         }), function (xml) {
             if (xml.querySelector('Service')) {
@@ -298,7 +302,7 @@ WCSTerrainProvider  */
             }
         }.bind(this));
 
-        description = Cesium.defaultValue(description, Cesium.defaultValue.EMPTY_OBJECT);
+        description = cesium.defaultValue(description, cesium.defaultValue.EMPTY_OBJECT);
         var promise = OGCHelper.WCSParser.generate(description);
         TerrainParser(promise, this);
     };
@@ -349,7 +353,7 @@ WCSTerrainProvider  */
                     var res = parser.PCSToImage(lon, lat);
                     if (res[0] == 1) {
                         var pixelValue = parser.getPixelValueOnDemand(res[1], res[2]);
-                        if (pixelValue[0] <= noDataValue) {
+                        if (!pixelValue || (pixelValue && pixelValue[0] <= noDataValue)) {
                             heightBuffer[index] = 0.0;
                         } else {
                             heightBuffer[index] = pixelValue[0];
@@ -365,7 +369,7 @@ WCSTerrainProvider  */
             for (var j = 0; j < size.height; j++)
                 for (var i = 0; i < size.width; i++) {
                     var pixelValue = parser.getPixelValueOnDemand(i, j);
-                    if (pixelValue[0] <= noDataValue) {
+                    if (!pixelValue || (pixelValue && pixelValue[0] <= noDataValue)) {
                         heightBuffer[index] = 0.0;
                     } else {
                         heightBuffer[index] = pixelValue[0];
@@ -382,8 +386,8 @@ WCSTerrainProvider  */
             size = { width: size, height: size };
         }
 
-        if (!Cesium.defined(heightBuffer)) {
-            throw new Cesium.DeveloperError("no good size");
+        if (!cesium.defined(heightBuffer)) {
+            throw new cesium.DeveloperError("no good size");
         }
         var optionsHeihtmapTerrainData = {
             buffer: heightBuffer,
@@ -392,7 +396,7 @@ WCSTerrainProvider  */
             childTileMask: childrenMask
         };
 
-        return new Cesium.HeightmapTerrainData(optionsHeihtmapTerrainData);
+        return new cesium.HeightmapTerrainData(optionsHeihtmapTerrainData);
     };
 
     WCSTerrainProvider.prototype.getAttribution = function () {
@@ -402,13 +406,13 @@ WCSTerrainProvider  */
     };
 
     function TerrainParser(promise, provider) {
-        Cesium.when(promise, function (resultat) {
+        cesium.when(promise, function (resultat) {
 
-            if (Cesium.defined(resultat) && (resultat.ready)) {
+            if (cesium.defined(resultat) && (resultat.ready)) {
                 provider._ready = true;
                 provider._readyPromise.resolve(true);
 
-                if (Cesium.defined(resultat.urlGetCoverage)) {
+                if (cesium.defined(resultat.urlGetCoverage)) {
 
                     resultat.getHeightmapTerrainDataFromWCS = function (x, y, level) {
                         var retour;
@@ -435,7 +439,7 @@ WCSTerrainProvider  */
 
                             // If the requested tile is in the TileCacheService then return it
                             // Otherwise use WCS Get Coverage to request the tile                              
-                            retour = Cesium.when(provider.tileCacheService.getTileData(x, y, level), function (tileData) {
+                            retour = cesium.when(provider.tileCacheService.getTileData(x, y, level), function (tileData) {
 
                                 var myHeightmapTerrainData = WCSTerrainProvider.HeightmapTerrainData(tileData.data, {
                                     width: provider._heightmapWidth,
@@ -448,7 +452,7 @@ WCSTerrainProvider  */
 
                             }).otherwise(function (evt) {
 
-                                return Cesium.when(Cesium.Resource.fetchArrayBuffer({ url: urlGetCoverage }), function (image) {
+                                return cesium.when(cesium.Resource.fetchArrayBuffer({ url: urlGetCoverage }), function (image) {
 
                                     var myHeightmapBuffer = WCSTerrainProvider.GeotiffToHeightmapTerrainData(provider.noDataValue, image, {
                                         width: provider._heightmapWidth,
@@ -483,9 +487,9 @@ WCSTerrainProvider  */
                 provider.requestTileGeometry = function (x, y, level) {
                     var retour;
 
-                    if (Cesium.defined(resultat.getHeightmapTerrainDataFromWCS)) {
+                    if (cesium.defined(resultat.getHeightmapTerrainDataFromWCS)) {
 
-                        if (!provider.adviced && level > 14) {
+                        if (!provider.adviced && level > 14) {                            
                             provider.view.map.toast(TC.Util.getLocaleString(provider.view.map.options.locale, "threed.terrainAdvice"), { type: TC.Consts.msgType.INFO });
                             provider.adviced = true;
                         }
@@ -493,24 +497,22 @@ WCSTerrainProvider  */
                         if (level <= resultat.minLevel &&
                             level >= resultat.maxLevel) {
 
-                            if (resultat.isTileInside(x, y, level, provider) == true) {
-                                console.log("Terrain Get Tile ", x, y, level);
+                            if (resultat.isTileInside(x, y, level, provider) == true) {                                
                                 retour = resultat.getHeightmapTerrainDataFromWCS(x, y, level);
-                            } else {
-                                console.log('isTileInside es false: cargo desde ellipsoid');
-                                retour = Cesium.when.defer().reject();
+                            } else {                                
+                                retour = cesium.when.defer().reject();
                             }
                         } else {
-                            retour = Cesium.when.defer().reject();
+                            retour = cesium.when.defer().reject();
                         }
                     } else {
-                        retour = Cesium.when.defer().reject();
+                        retour = cesium.when.defer().reject();
                     }
 
                     return retour;
                 }
 
-                Cesium.defineProperties(provider, {
+                Object.defineProperties(provider, {
                     tilingScheme: {
                         get: function () {
                             return resultat.tilingScheme;
@@ -563,9 +565,9 @@ WCSTerrainProvider  */
                 if (resultat.minLevel == undefined || resultat.maxLevel == undefined) {
                     // Test pour savoir dans quelle tuile se trouve mon WCS
                     var bbox = resultat.bbox;
-                    var pgeo = new Cesium.Cartographic(
-                        Cesium.Math.toRadians(bbox.coord[bbox.ulidx][0]),
-                        Cesium.Math.toRadians(bbox.coord[bbox.ulidx][1]),
+                    var pgeo = new cesium.Cartographic(
+                        cesium.Math.toRadians(bbox.coord[bbox.ulidx][0]),
+                        cesium.Math.toRadians(bbox.coord[bbox.ulidx][1]),
                         0);
                     resultat.minLevel = 30;
                     resultat.maxLevel = 0;
@@ -577,17 +579,14 @@ WCSTerrainProvider  */
                         var xSpacing = (rect.east - rect.west) / (provider.heightMapWidth - 1);
                         var ySpacing = (rect.north - rect.south) / (provider.heightMapHeight - 1);
                         var scalingX = provider.pixelSize[0] / xSpacing
-                        var scalingY = provider.pixelSize[1] / ySpacing;
-                        // console.log("Show Tile of my UL DTM Level " + j, tile.x, tile.y, scalingX, scalingY);
-                        console.log(" DTM Level " + j, 0, 0, scalingX, scalingY);
+                        var scalingY = provider.pixelSize[1] / ySpacing;                        
 
                         if (scalingX < 10 && scalingX > 1 / 10 && Math.abs(scalingY) < 10 && Math.abs(scalingY) > 1 / 10) {
                             if (j < resultat.minLevel) resultat.minLevel = j;
                             if (j > resultat.maxLevel) resultat.maxLevel = j;
 
                         }
-                    }
-                    console.log("Show DTM Between evel ", resultat.minLevel, resultat.maxLevel);
+                    }                    
                 }
             } else {
                 console.log("Error al obtener terreno fuera de Navarra");
@@ -643,11 +642,11 @@ WCSTerrainProvider  */
         for (i = 0; i < tileRequests.length; ++i) {
             var tileRequest = tileRequests[i];
             var requestPromise = tileRequest.terrainProvider.requestTileGeometry(tileRequest.x, tileRequest.y, tileRequest.level, false);
-            var tilePromise = Cesium.when(requestPromise, createInterpolateFunction(tileRequest), createMarkFailedFunction(tileRequest));
+            var tilePromise = cesium.when(requestPromise, createInterpolateFunction(tileRequest), createMarkFailedFunction(tileRequest));
             tilePromises.push(tilePromise);
         }
 
-        return Cesium.when.all(tilePromises, function () {
+        return cesium.when.all(tilePromises, function () {
             return positions;
         });
     }
@@ -676,11 +675,11 @@ WCSTerrainProvider  */
     WCSTerrainProvider.prototype.sampleTerrainMostDetailed = function (positions) {
         var self = this;
 
-        var deferred = Cesium.when.defer();
+        var deferred = cesium.when.defer();
 
         function doSamplingWhenReady() {
             if (self.ready) {/* provisional: el nivel se puede extraer ¿? */
-                Cesium.when(doSampling(self, 16, positions), function (updatedPositions) {
+                cesium.when(doSampling(self, 16, positions), function (updatedPositions) {
                     deferred.resolve(updatedPositions);
                 });
             } else {
@@ -693,7 +692,7 @@ WCSTerrainProvider  */
         return deferred;
     }
 
-    Cesium.WCSTerrainProvider = WCSTerrainProvider;
+    cesium.WCSTerrainProvider = WCSTerrainProvider;
 
     function TileCacheService(objectStoreName) {
         this.database = null;
@@ -756,7 +755,7 @@ WCSTerrainProvider  */
         /* get the requested tile */
         getTileData: function (column, row, level) {
 
-            var deferred = Cesium.when.defer();
+            var deferred = cesium.when.defer();
 
             if (!this.database) {
                 console.log("getTileData no database", this.database);
@@ -2717,33 +2716,33 @@ WCSTerrainProvider  */
      */
     OGCHelper.CRS = [{
         name: "CRS:84",
-        ellipsoid: Cesium.Ellipsoid.WGS84,
+        ellipsoid: cesium.Ellipsoid.WGS84,
         firstAxeIsLatitude: false,
-        tilingScheme: Cesium.GeographicTilingScheme,
+        tilingScheme: cesium.GeographicTilingScheme,
         supportedCRS: "urn:ogc:def:crs:OGC:2:84"
     }, {
         name: "EPSG:4258",
-        ellipsoid: Cesium.Ellipsoid.WGS84,
+        ellipsoid: cesium.Ellipsoid.WGS84,
         firstAxeIsLatitude: true,
-        tilingScheme: Cesium.GeographicTilingScheme,
+        tilingScheme: cesium.GeographicTilingScheme,
         SupportedCRS: "urn:ogc:def:crs:EPSG::4258"
     }, {
         name: "EPSG:4326",
-        ellipsoid: Cesium.Ellipsoid.WGS84,
+        ellipsoid: cesium.Ellipsoid.WGS84,
         firstAxeIsLatitude: true,
-        tilingScheme: Cesium.GeographicTilingScheme,
+        tilingScheme: cesium.GeographicTilingScheme,
         SupportedCRS: "urn:ogc:def:crs:EPSG::4326"
     }, {
         name: "EPSG:3857",
-        ellipsoid: Cesium.Ellipsoid.WGS84,
+        ellipsoid: cesium.Ellipsoid.WGS84,
         firstAxeIsLatitude: false,
-        tilingScheme: Cesium.WebMercatorTilingScheme,
+        tilingScheme: cesium.WebMercatorTilingScheme,
         SupportedCRS: "urn:ogc:def:crs:EPSG::3857"
     }, {
         name: "OSGEO:41001",
-        ellipsoid: Cesium.Ellipsoid.WGS84,
+        ellipsoid: cesium.Ellipsoid.WGS84,
         firstAxeIsLatitude: false,
-        tilingScheme: Cesium.WebMercatorTilingScheme,
+        tilingScheme: cesium.WebMercatorTilingScheme,
         SupportedCRS: "urn:ogc:def:crs:EPSG::3857"
     }];
 
@@ -2766,39 +2765,39 @@ WCSTerrainProvider  */
 
     OGCHelper.WCSParser.generate = function (description) {
         var resultat;
-        description = Cesium.defaultValue(description,
-            Cesium.defaultValue.EMPTY_OBJECT);
-        if (Cesium.defined(description.url)) {
+        description = cesium.defaultValue(description,
+            cesium.defaultValue.EMPTY_OBJECT);
+        if (cesium.defined(description.url)) {
             var urlofServer = description.url;
             var index = urlofServer.lastIndexOf("?");
             if (index > -1) {
                 urlofServer = urlofServer.substring(0, index);
             }
             // get version of wcs
-            if (!Cesium.defined(description.layerName)) {
-                throw new Cesium.DeveloperError(
+            if (!cesium.defined(description.layerName)) {
+                throw new cesium.DeveloperError(
                     'description.layerName is required.');
             }
 
             var urlDescribeCoverage = urlofServer + '?SERVICE=WCS&VERSION=1.0.0&request=DescribeCoverage&CoverageId=' + description.layerName;
 
-            if (Cesium.defined(description.proxy)) {
+            if (cesium.defined(description.proxy)) {
                 urlDescribeCoverage = description.proxy.getURL(urlDescribeCoverage);
             }
 
-            resultat = Cesium.when(Cesium.Resource.fetchXML({
+            resultat = cesium.when(cesium.Resource.fetchXML({
                 url: urlDescribeCoverage
             }), function (xml) {
                 return OGCHelper.WCSParser.getDescribeCoverage(xml, description);
             }).otherwise(function () {
-                return Cesium.when.defer.resolve(null);
+                return cesium.when.defer.resolve(null);
             });
 
 
-        } else if (Cesium.defined(description.xml)) {
+        } else if (cesium.defined(description.xml)) {
             resultat = OGCHelper.WCSParser.getDescribeCoverage(description.xml, description);
         } else {
-            throw new Cesium.DeveloperError(
+            throw new cesium.DeveloperError(
                 'either description.url or description.xml are required.');
         }
         return resultat;
@@ -2824,17 +2823,17 @@ WCSTerrainProvider  */
 
         var resultat = {};
 
-        if (!Cesium.defined(description.layerName)) {
-            throw new Cesium.DeveloperError(
+        if (!cesium.defined(description.layerName)) {
+            throw new cesium.DeveloperError(
                 'description.layerName is required.');
         }
 
         var layerName = description.layerName;
-        resultat.minLevel = Cesium.defaultValue(description.minLevel, undefined);
-        resultat.maxLevel = Cesium.defaultValue(description.maxLevel, undefined);
+        resultat.minLevel = cesium.defaultValue(description.minLevel, undefined);
+        resultat.maxLevel = cesium.defaultValue(description.maxLevel, undefined);
 
-        resultat.heightMapWidth = Cesium.defaultValue(description.heightMapWidth, 65);
-        resultat.heightMapHeight = Cesium.defaultValue(description.heightMapHeight, resultat.heightMapWidth);
+        resultat.heightMapWidth = cesium.defaultValue(description.heightMapWidth, 65);
+        resultat.heightMapHeight = cesium.defaultValue(description.heightMapHeight, resultat.heightMapWidth);
 
         var corner = coverage.querySelector('lonLatEnvelope').textContent.trim().split(' ').filter(function (elm) { return elm.trim().length > 0 });
 
@@ -2861,7 +2860,7 @@ WCSTerrainProvider  */
 
         resultat.pixelSize = [65, 65];
 
-        resultat.levelZeroMaximumGeometricError = Cesium.TerrainProvider.getEstimatedLevelZeroGeometricErrorForAHeightmap(resultat.tilingScheme._ellipsoid,
+        resultat.levelZeroMaximumGeometricError = cesium.TerrainProvider.getEstimatedLevelZeroGeometricErrorForAHeightmap(resultat.tilingScheme._ellipsoid,
             Math.min(resultat.heightMapWidth, resultat.heightMapHeight),
             resultat.tilingScheme.getNumberOfXTilesAtLevel(0));
 

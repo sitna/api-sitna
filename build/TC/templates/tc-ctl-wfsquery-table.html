@@ -12,7 +12,7 @@
     <td class="{key|removeAccents|downcase}">
         {@startsWith key=value value="http"}<a href="{value}" target="_blank" title="{@i18n $key="linkInNewWindow" /}">{@i18n $key="open" /}</a>
         {:else}
-        {>tc-ctl-wfsquery-table-object:value/}
+        {>tc-ctl-finfo-object:value/}
         {/startsWith}
     </td>
     {/select}

@@ -147,8 +147,10 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
             TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
 
             self.div.querySelector('.' + self.CLASS + '-empty').classList.add(TC.Consts.classes.HIDDEN);            
-
-            self.getRenderedHtml(self.CLASS + '-node', self.layerTrees[layer.id])
+            var params = self.layerTrees[layer.id];
+            if (layer._title && layer._title !== layer.title)
+                params = Object.assign(params,{ "title": layer._title });
+            self.getRenderedHtml(self.CLASS + '-node', params)
                 .then(function (out) {
                     const parser = new DOMParser();
                     const newLi = parser.parseFromString(out, 'text/html').body.firstChild;

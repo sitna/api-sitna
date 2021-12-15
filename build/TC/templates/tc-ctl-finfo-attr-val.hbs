@@ -1,0 +1,17 @@
+{{#if (isVideoAttribute name value)}}
+    {{> tc-ctl-finfo-attr-video name=name value=value }}
+{{else}}
+    {{#if (isImageAttribute name value)}}
+        {{> tc-ctl-finfo-attr-image name=name value=value }}
+    {{else}}
+        {{#if (isAudioAttribute name value)}}
+            {{> tc-ctl-finfo-attr-audio name=name value=value }}
+        {{else}}
+            {{#if (isEmbedAttribute name value)}}
+                {{> tc-ctl-finfo-attr-embed name=name value=value }}
+            {{else}}
+                {{#unless (eq value null)}}{{> tc-ctl-finfo-object value }}{{/unless}}
+            {{/if}}
+        {{/if}}
+    {{/if}}
+{{/if}}

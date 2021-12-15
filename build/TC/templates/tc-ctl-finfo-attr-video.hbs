@@ -1,0 +1,5 @@
+{{#if (getYoutubeId (removeSpecialAttributeTag value))}}
+    <iframe src="https://www.youtube.com/embed/{{getYoutubeId (removeSpecialAttributeTag value)}}" class="tc-video-attr" style="width:{{getTagWidth name value}};{{#unless (eq (getTagWidth name value) 'auto')}}max-width:none;{{/unless}}height:{{getTagHeight name value}};{{#unless (eq (getTagHeight name value) 'auto')}}max-height:none;{{/unless}};" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{{else}}
+    <video src="{{removeSpecialAttributeTag value}}" class="tc-video-attr" style="width:{{getTagWidth name value}};height:{{getTagHeight name value}};{{#unless (every (eq (getTagHeight name value) 'auto') (eq (getTagWidth name value) 'auto'))}}max-width:none;max-height:none;{{/unless}}" controls crossorigin="anonymous" playsinline="true" title="">{{i18n "videoFormatNotCompatible"}}</video>
+{{/if}}

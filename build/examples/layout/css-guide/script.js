@@ -58,9 +58,8 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
             };
 
             TC.loadJS(!window.PR,
-                '../doc/assets/vendor/prettify/prettify-min.js',
+                'https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js',
                 function () {
-                    TC.loadCSS('../doc/assets/vendor/prettify/prettify-min.css');
                     setInterval(function () {
                         if (selectedArticle) {
                             render(selectedArticle);

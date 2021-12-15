@@ -1,3 +1,34 @@
+
+/**
+  * Opciones de control de obtención de información de entidades de mapa por click.
+  * @typedef FeatureInfoOptions
+  * @see MapControlOptions
+  * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a los clics hechos en el mapa desde el que se carga.
+  * Como máximo puede haber solamente un control activo en el mapa en cada momento.
+  * @property {boolean} [persistentHighlights] - Cuando el control `featureInfo` muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
+  * de las entidades geográficas de la respuesta. Si este valor es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. En caso contrario, las geometrías resaltadas se borran en el 
+  * momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
+  * @example <caption>[Ver en vivo](../examples/cfg.FeatureInfoOptions.persistentHighlights.html)</caption> {@lang html} 
+  * <div id="mapa"></div>
+  * <script>
+  *     // Añadimos el control featureInfo.
+  *     SITNA.Cfg.controls.featureInfo = {
+  *         persistentHighlights: true
+  *     };
+  *     // Añadimos una capa WMS sobre la que hacer las consultas.
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "masas",
+  *             title: "Masas de agua",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "https://servicios.idee.es/wms-inspire/hidrografia",
+  *             layerNames: ["HY.PhysicalWaters.Waterbodies"]
+  *         }
+  *     ];
+  *     var map = new SITNA.Map("mapa");
+  * </script> 
+  */
+
 TC.control = TC.control || {};
 
 if (!TC.control.FeatureInfoCommons) {
@@ -54,67 +85,78 @@ if (!TC.control.FeatureInfoCommons) {
         const self = this;
 
         self.querying = true;
-
-        const elevationTool = self.getElevationTool();
-        elevationTool.then(function (tool) {
-            if (tool) {
-                self.elevationRequest = tool.getElevation({
-                    crs: self.map.crs,
-                    coordinates: [coords]
-                });
-            }
-        });
-
-        if (self.map && self.filterLayer) {
-            //aquí se pone el puntito temporal
-            var title = self.getLocaleString('featureInfo');
-            var markerOptions = TC.Util.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title, showsPopup: false });
-            self.filterLayer.clearFeatures();
-            self.highlightedFeature = null;
-            self.filterFeature = null;
-            self.filterLayer.addMarker(coords, markerOptions).then(function afterMarkerAdd(marker) {
-                ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
-                ////o sea
-                ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
-                ////pero en el caso raro (la primera vez), ocurre al revés. Entonces, ya se habrá establecido lastFeatureCount (no será null)
-                //if (self.lastFeatureCount === null) {
-                //    self.map.putLayerOnTop(self.filterLayer);
-                //    self.filterFeature = marker;
-                //}
-                //else {
-                //    self.filterLayer.clearFeatures();
-                //}
-                self.map.putLayerOnTop(self.filterLayer);
-                self.filterFeature = marker;
-
-                elevationTool.then(function (tool) {
-                    self.renderResults({ coords: marker.geometry, displayElevation: tool, loading: true }, function () {
-                        self.displayResults();
-                    });
-                });
-
-                var visibleLayers = false;
-                for (var i = 0; i < self.map.workLayers.length; i++) {
-                    var layer = self.map.workLayers[i];
-                    if (layer.type === TC.Consts.layerType.WMS) {
-                        if (layer.getVisibility() && layer.names.length > 0) {
-                            visibleLayers = true;
-                            break;
-                        }
-                    }
-                }
-                var resolution = self.map.getResolution();
-                if (visibleLayers) {
-                    self.wrap.getFeatureInfo(coords, resolution);
-                }
-                else {
-                    // Metemos setTimeout para salirnos del hilo. Sin él se corre el riesgo de que se ejecute esto antes del evento BEFOREFEATUREINFO
-                    setTimeout(function () {
-                        self.responseCallback({ coords: coords });
+        return new Promise(function (resolve, reject) {
+            const elevationTool = self.getElevationTool();
+            elevationTool.then(function (tool) {
+                if (tool) {
+                    self.elevationRequest = tool.getElevation({
+                        crs: self.map.crs,
+                        coordinates: [coords]
                     });
                 }
             });
-        }
+
+            if (self.map && self.filterLayer) {
+                //aquí se pone el puntito temporal
+                var title = self.getLocaleString('featureInfo');
+                var markerOptions = TC.Util.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title, showsPopup: false });
+                self.filterLayer.clearFeatures();
+                self.highlightedFeature = null;
+                self.filterFeature = null;
+                self.filterLayer.addMarker(coords, markerOptions).then(function afterMarkerAdd(marker) {
+                    ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
+                    ////o sea
+                    ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
+                    ////pero en el caso raro (la primera vez), ocurre al revés. Entonces, ya se habrá establecido lastFeatureCount (no será null)
+                    //if (self.lastFeatureCount === null) {
+                    //    self.map.putLayerOnTop(self.filterLayer);
+                    //    self.filterFeature = marker;
+                    //}
+                    //else {
+                    //    self.filterLayer.clearFeatures();
+                    //}
+                    self.map.putLayerOnTop(self.filterLayer);
+                    self.filterFeature = marker;
+
+                    elevationTool.then(function (tool) {
+                        self.renderResults({ coords: marker.geometry, displayElevation: tool, loading: true }, function () {
+                            self.displayResults();
+                        });
+                    });
+
+                    var visibleLayers = false;
+                    for (var i = 0; i < self.map.workLayers.length; i++) {
+                        var layer = self.map.workLayers[i];
+                        if (layer.type === TC.Consts.layerType.WMS) {
+                            if (layer.getVisibility() && layer.names.length > 0) {
+                                visibleLayers = true;
+                                break;
+                            }
+                        }
+                    }
+                    self.queryResolution = self.map.getResolution();
+                    if (visibleLayers) {
+                        self.wrap.getFeatureInfo(coords, self.queryResolution).then(() => resolve());
+                    }
+                    else {
+                        // Metemos setTimeout para salirnos del hilo. Sin él se corre el riesgo de que se ejecute esto antes del evento BEFOREFEATUREINFO
+                        setTimeout(function () {
+                            self.responseCallback({ coords: coords });
+                            resolve();
+                        });
+                    }
+                });
+            }
+
+            else {
+                resolve();
+            }
+        });
+    };
+
+    ctlProto.sendRequest = function (filter) {
+        const self = this;
+        return self.callback(filter.getCoords());
     };
 
     ctlProto.responseCallback = function (options) {
@@ -225,15 +267,17 @@ if (!TC.control.FeatureInfoCommons) {
                     const elevPoint = elevationCoords[0];
                     if (currentCoords[0] === elevPoint[0] && currentCoords[1] === elevPoint[1]) {
                         const elevationValues = elevationCoords.length ? elevationCoords[0].slice(2) : null;
-                        self.displayElevation(elevationValues);
+                        self.displayElevationValues(elevationValues);
                     }
                 }
                 //self.elevationRequest = null;
             });
         }
-        else if (!self.querying && (!self.info || !self.info.services)) {
-            self.closeResults();
-        }
+
+        // 26/04/2021 ahora siempre mostramos XY aunque no haya elevación o resultado GFI
+        //else if (!self.querying && (!self.info || !self.info.services)) {
+        //    self.closeResults();
+        //}
     };
 
     ctlProto.renderResults = function (options, callback) {
@@ -254,7 +298,7 @@ if (!TC.control.FeatureInfoCommons) {
         }
     };
 
-    ctlProto.displayElevation = function (value) {
+    ctlProto.displayElevationValues = function (value) {
         const self = this;
         let tValue, sValue;
         if (Array.isArray(value)) {
@@ -270,10 +314,12 @@ if (!TC.control.FeatureInfoCommons) {
         let heightString = sValue ? sValue.toLocaleString(locale, { maximumFractionDigits: 1 }) + ' m' : '-';
         const elevationDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-elev`);
         const heightDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-height`);
-        elevationDisplay.classList.toggle(TC.Consts.classes.HIDDEN, tValue === null);
-        heightDisplay.classList.toggle(TC.Consts.classes.HIDDEN, !sValue);
-        elevationDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = elevationString;
-        heightDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = heightString;
+        if (elevationDisplay && heightDisplay) {
+            elevationDisplay.classList.toggle(TC.Consts.classes.HIDDEN, tValue === null);
+            heightDisplay.classList.toggle(TC.Consts.classes.HIDDEN, !sValue);
+            elevationDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = elevationString;
+            heightDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = heightString;
+        }
     };
 
     ctlProto.loadSharedFeature = function (featureObj) {
@@ -308,6 +354,21 @@ if (!TC.control.FeatureInfoCommons) {
                     });
                 }
             );
+        }
+    };
+
+    ctlProto.exportQuery = function () {
+        const self = this;
+        const result = TC.control.FeatureInfoCommons.prototype.exportQuery.call(self);
+        result.res = self.queryResolution;
+        return result;
+    };
+
+    ctlProto.importQuery = function (query) {
+        const self = this;
+        if (query.filter) {
+            self.map.setResolution(query.res)
+                .then(() => TC.control.FeatureInfoCommons.prototype.importQuery.call(self, query));
         }
     };
 

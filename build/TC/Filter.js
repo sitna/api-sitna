@@ -18,16 +18,20 @@ TC.filter.Filter = function (tagName) {
 TC.filter.Filter.prototype.getTagName = function () {
     return this.tagName_;
 };
+TC.filter.Filter.prototype.setTagName = function (text) {    
+    return this.tagName_;
+};
 
 TC.filter.Filter.prototype.writeFilterCondition_ = function () {
 
     //return '<{prefix}:{tag}>{childs}</{prefix}:{tag}>'.format({prefix:"ogc",tag:filter.getTagName(),childs:""});
     var filter = this;
-    return '<{prefix}:Filter xmlns:{prefix}=\"{NSURL}">{inner}</{prefix}:Filter>'.format({
+    return '<{prefix}:Filter xmlns:{prefix}=\"{NSURL}" xmlns:gml=\"http://www.opengis.net/gml{gmlversion}">{inner}</{prefix}:Filter>'.format({
         prefix: this._defaultPrefixNS,
         NSURL: this._defaultNSURL,
         tag: filter.getTagName(),
-        inner: this.writeInnerCondition_(filter)
+        inner: this.writeInnerCondition_(filter),
+        gmlVersion: (this._defaultNSURL === this._wfs2NSURL ? '/3.2' : '')
     });
 
     /*ol.xml.pushSerializeAndPop(item,
@@ -67,7 +71,7 @@ TC.filter.Filter.prototype.writeInnerArrayCondition_ = function (filters) {
     });
 }
 
-TC.filter.Filter.prototype.getText = function (wfsVersion) {
+TC.filter.Filter.prototype.getText = function (wfsVersion) {    
     if (wfsVersion && parseFloat(wfsVersion,10) >= 2) {
         this._defaultPrefixNS = this._wfs2prefixNS;
         this._defaultNSURL = this._wfs2NSURL;
@@ -75,6 +79,48 @@ TC.filter.Filter.prototype.getText = function (wfsVersion) {
         this._escapeAttrName = this._wfs2EscapeAttrName;
     }
     return this.writeFilterCondition_();
+};
+
+TC.filter.Filter.prototype.readText = function (text) {
+    if (text.indexOf(this._wfs2prefixNS) > -1 && 
+        text.indexOf(this._wfs2NSURL) > -1 &&
+        text.indexOf(this._wfs2FieldTitle) > -1 &&
+        text.indexOf(this._wfs2EscapeAttrName) > -1) {
+        this._defaultPrefixNS = this._wfs2prefixNS;
+        this._defaultNSURL = this._wfs2NSURL;
+        this._fieldTitle = this._wfs2FieldTitle;
+        this._escapeAttrName = this._wfs2EscapeAttrName;
+    }
+
+    return this.readFilterCondition_(text);    
+};
+
+TC.filter.Filter.prototype.readFilterCondition_ = function (text) {
+    this.setTagName(text);
+    return this.readInnerCondition_(text);    
+}
+TC.filter.Filter.prototype.readInnerCondition_ = function (text) {
+    //if (filter != this) {        
+    //    filter._fieldTitle = this._fieldTitle;
+    //}
+
+    //if (filter instanceof TC.filter.LogicalNary) {
+    //    return filter.write()
+    //}
+    //else if (filter instanceof TC.filter.ComparisonBinary) {
+    //    return filter.write();
+    //}
+    //else if (filter instanceof TC.filter.Comparison) {
+    //    return filter.write();
+    //}
+    //else if (filter instanceof TC.filter.Spatial) {
+    //    return filter.write();
+    //}
+    //else if (filter instanceof TC.filter.Function) {
+    //    return filter.write();
+    //}
+    //else
+        return filter.read(text);
 };
 
 TC.filter.and = function (conditions) {

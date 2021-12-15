@@ -11,6 +11,7 @@
 		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
 		<link type="text/css" rel="stylesheet" href="css/prism.min.css">
 		<link type="text/css" rel="stylesheet" href="css/template.min.css">
+			<link type="text/css" rel="stylesheet" href="css/sitnaCSS.css">
 			<style>
 				.page-header,
 				pre.code-toolbar > .toolbar:hover {
@@ -40,7 +41,7 @@
 				}
 			</style>
 		<script type="text/javascript">
-			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"DD/MM/YYYY","systemName":"API SITNA","systemSummary":"API JavaScript para la visualización de datos georreferenciados en aplicaciones web","systemLogo":"img/sitna-logo.png","systemColor":"#cc0000","navMembers":[{"kind":"class","title":"Clases"},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Tipos"},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Espacios de nombres"},{"kind":"tutorial","title":"Documentación"}],"footer":"","copyright":"© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.","linenums":true,"collapseSymbols":false,"inverseNav":false,"inlineNav":false,"outputSourceFiles":false,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":null,"methodHeadingReturns":true,"sort":"longname, version, since","search":true,"favicon":null,"stylesheets":[],"scripts":[],"monospaceLinks":false,"cleverLinks":true,"systemVersion":"v2.1.0"};
+			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"DD/MM/YYYY","systemName":"API SITNA","systemSummary":"API JavaScript para la visualización de datos georreferenciados en aplicaciones web","systemLogo":"img/sitna-logo.png","systemColor":"#cc0000","navMembers":[{"kind":"class","title":"Clases"},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Tipos"},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Espacios de nombres"},{"kind":"tutorial","title":"Documentación"}],"footer":"","copyright":"© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.","linenums":true,"collapseSymbols":false,"inverseNav":false,"inlineNav":false,"outputSourceFiles":false,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":null,"methodHeadingReturns":true,"sort":"longname, version, since","search":true,"favicon":null,"stylesheets":["css/sitnaCSS.css"],"scripts":[],"monospaceLinks":false,"cleverLinks":true,"systemVersion":"v2.2.0"};
 			window.DOCLET_TOC_ENABLED = true;
 			window.DOCLET_AFILTER_ENABLED = false;
 		</script>
@@ -53,7 +54,7 @@
 				<a class="navbar-brand branding-logo" href="index.html" style="background-image: url(img/sitna-logo.png);">
 					API SITNA
 				</a>
-	            <a href="tutorial-4-changes.html" class="navbar-version">v2.1.0</a>
+	            <a href="tutorial-5-changes.html" class="navbar-version">v2.2.0</a>
 				<!-- displayed on small devices -->
 				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
 					<span class="icon-bar"></span>
@@ -75,20 +76,28 @@
 											<li><a href="global.html#CoordinatesOptions">CoordinatesOptions</a></li>
 											<li><a href="global.html#DataLoaderOptions">DataLoaderOptions</a></li>
 											<li><a href="global.html#FeatureInfoOptions">FeatureInfoOptions</a></li>
+											<li><a href="global.html#GeolocationOptions">GeolocationOptions</a></li>
+											<li><a href="global.html#HeatmapStyleOptions">HeatmapStyleOptions</a></li>
 											<li><a href="global.html#LayerCatalogOptions">LayerCatalogOptions</a></li>
 											<li><a href="global.html#LayerOptions">LayerOptions</a></li>
 											<li><a href="global.html#LineStyleOptions">LineStyleOptions</a></li>
 											<li><a href="global.html#MapControlOptions">MapControlOptions</a></li>
 											<li><a href="global.html#MapOptions">MapOptions</a></li>
+											<li><a href="global.html#MapViewOptions">MapViewOptions</a></li>
 											<li><a href="global.html#MarkerOptions">MarkerOptions</a></li>
 											<li><a href="global.html#MarkerStyleOptions">MarkerStyleOptions</a></li>
 											<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
+											<li><a href="global.html#OfflineMapMakerOptions">OfflineMapMakerOptions</a></li>
 											<li><a href="global.html#OverviewMapOptions">OverviewMapOptions</a></li>
+											<li><a href="global.html#PlaceNameMunicipalitySearchOptions">PlaceNameMunicipalitySearchOptions</a></li>
+											<li><a href="global.html#PlaceNameSearchOptions">PlaceNameSearchOptions</a></li>
 											<li><a href="global.html#PointStyleOptions">PointStyleOptions</a></li>
 											<li><a href="global.html#PolygonStyleOptions">PolygonStyleOptions</a></li>
 											<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
 											<li><a href="global.html#PrintMapLegendOptions">PrintMapLegendOptions</a></li>
 											<li><a href="global.html#PrintMapOptions">PrintMapOptions</a></li>
+											<li><a href="global.html#RoadMilestoneSearchOptions">RoadMilestoneSearchOptions</a></li>
+											<li><a href="global.html#RoadSearchOptions">RoadSearchOptions</a></li>
 											<li><a href="global.html#SearchOptions">SearchOptions</a></li>
 											<li><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></li>
 											<li><a href="global.html#SearchResultColor">SearchResultColor</a></li>
@@ -97,6 +106,7 @@
 											<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
 											<li><a href="global.html#StreetViewOptions">StreetViewOptions</a></li>
 											<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+											<li><a href="global.html#ThreeDOptions">ThreeDOptions</a></li>
 											<li><a href="global.html#UrbanAreaSearchOptions">UrbanAreaSearchOptions</a></li>
 											<li><a href="global.html#WFSQueryOptions">WFSQueryOptions</a></li>
 											<li><a href="global.html#WMSGroupOptions">WMSGroupOptions</a></li>
@@ -127,7 +137,8 @@
 											<li><a href="tutorial-1-addresses.html">Direcciones alternativas</a></li>
 											<li><a href="tutorial-2-configuration.html">Cómo configurar un mapa</a></li>
 											<li><a href="tutorial-3-css.html">Clases CSS para identificar elementos de la API</a></li>
-											<li><a href="tutorial-4-changes.html">Historial de cambios</a></li>
+											<li><a href="tutorial-4-embedding.html">Cómo añadir multimedia y páginas web incrustadas</a></li>
+											<li><a href="tutorial-5-changes.html">Historial de cambios</a></li>
 									</ul>
 								</li>
 	                <li><a href="https://github.com/sitna/api-sitna">Ver en Github</a></li>
@@ -210,7 +221,7 @@
 			(consultar el tutorial <a href="tutorial-layout_cfg.html">Configurar por maquetación</a> para ver instrucciones de uso de maquetaciones).</p></div>
 			</div>			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p>Configuración de capas base - <a href="../examples/Cfg.baseLayers.html">Ver en vivo</a></p></div>
 					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecer un proxy porque se hacen peticiones a otro dominio.    SITNA.Cfg.proxy &#x3D; &quot;proxy.ashx?&quot;;    // Añadir PNOA y establecerla como mapa de fondo por defecto.    SITNA.Cfg.baseLayers.push({        id: &quot;PNOA&quot;,        url: &quot;http://www.ign.es/wms-inspire/pnoa-ma&quot;,        layerNames: &quot;OI.OrthoimageCoverage&quot;,        isBase: true    });    SITNA.Cfg.defaultBaseLayer &#x3D; &quot;PNOA&quot;;    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecer un proxy porque se hacen peticiones a otro dominio.    SITNA.Cfg.proxy &#x3D; &quot;proxy/proxy.ashx?&quot;;    // Añadir PNOA y establecerla como mapa de fondo por defecto.    SITNA.Cfg.baseLayers.push({        id: &quot;PNOA&quot;,        url: &quot;http://www.ign.es/wms-inspire/pnoa-ma&quot;,        layerNames: &quot;OI.OrthoimageCoverage&quot;,        isBase: true    });    SITNA.Cfg.defaultBaseLayer &#x3D; &quot;PNOA&quot;;    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
 					</div>
 					<div class="example-caption"><p>Configuración de CRS - <a href="../examples/Cfg.crs.html">Ver en vivo</a></p></div>
 					<div class="example-code">
@@ -218,7 +229,7 @@
 					</div>
 					<div class="example-caption"><p>Configuración de capas de trabajo - <a href="../examples/Cfg.workLayers.html">Ver en vivo</a></p></div>
 					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecer un proxy porque se hacen peticiones a otro dominio.    SITNA.Cfg.proxy &#x3D; &quot;proxy.ashx?&quot;;    SITNA.Cfg.workLayers &#x3D; [{        id: &quot;csantiago&quot;,        title: &quot;Camino de Santiago&quot;,        url: &quot;http://www.ign.es/wms-inspire/camino-santiago&quot;,        layerNames: &quot;PS.ProtectedSite,GN.GeographicalNames,AU.AdministrativeUnit&quot;    }];    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
+						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Establecer un proxy porque se hacen peticiones a otro dominio.    SITNA.Cfg.proxy &#x3D; &quot;proxy/proxy.ashx?&quot;;    SITNA.Cfg.workLayers &#x3D; [{             id: &quot;terremotos&quot;,             title: &quot;Terremotos últimos 365 días&quot;,             type: SITNA.Consts.layerType.WMS,             url: &quot;https://www.ign.es/wms-inspire/geofisica&quot;,             layerNames: [&quot;Ultimos365dias&quot;]         }    ];    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
 					</div>
 					<div class="example-caption"><p>Configuración de uso de proxy</p></div>
 					<div class="example-code">
@@ -234,7 +245,7 @@
 	</div>
 	<footer>
 				<div class="copyright">© 2019 Gobierno de Navarra. <a href="https://github.com/sitna/api-sitna/blob/master/LICENSE.md">Licencia BSD-2-Clause</a>.</div>
-			<div class="generated-by">Documentación generada por <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> a 12/01/2021 usando la <a href="https://github.com/steveush/foodoc">plantilla FooDoc</a>.</div>
+			<div class="generated-by">Documentación generada por <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.3</a> a 02/12/2021 usando la <a href="https://github.com/steveush/foodoc">plantilla FooDoc</a>.</div>
 	</footer>
 	<script src="js/jquery.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>

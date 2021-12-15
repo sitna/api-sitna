@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    TC.Cfg.notifyApplicationErrors = true;
+    TC.Cfg.notifyApplicationErrors = true;    
 
     const pre = document.createElement('pre');
     pre.classList.add('prettyprint');
@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var sourceTimer = setInterval(function () {
             if (window.location.hash != '#view-source') {
                 clearInterval(sourceTimer);
-                document.body.className = '';
             }
         }, 200);
     };

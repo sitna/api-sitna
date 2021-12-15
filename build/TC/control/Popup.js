@@ -26,17 +26,30 @@ TC.inherit(TC.control.Popup, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-popup';
 
-    ctlProto.render = function () {
+    ctlProto.template = {};
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-popup.hbs";
+
+    ctlProto.render = function (callback) {
         const self = this;
         return self._set1stRenderPromise(new Promise(function (resolve, reject) {
-            self.map.wrap.addPopup(self)
-                .then(function () {
-                    self.trigger(TC.Consts.event.CONTROLRENDER);
-                    resolve();
-                },
-                function (err) {
-                    reject(err instanceof Error ? err : Error(err));
-                });
+            TC.Control.prototype.renderData.call(self, {
+                closeButton: self.options.closeButton || self.options.closeButton === undefined,
+                shareButton: self.options.share
+            })
+                .then(function addPopup() {
+                    self.popupDiv = self.div.querySelector(`.${ctlProto.CLASS}`);
+                    self.contentDiv = self.popupDiv.querySelector(`.${ctlProto.CLASS}-content`);
+                    self.menuDiv = self.popupDiv.querySelector(`.${ctlProto.CLASS}-menu`);
+                    self.addUIEventListeners();
+
+                    self.map.wrap.addPopup(self).then(function endRender() {
+                        if (TC.Util.isFunction(callback)) {
+                            callback();
+                        }
+                        resolve();
+                    });
+                })
+                .catch(err => reject(err instanceof Error ? err : Error(err)));
         }));
     };
 
@@ -61,7 +74,7 @@ TC.inherit(TC.control.Popup, TC.Control);
                     }
                 });
 
-                map.on(TC.Consts.event.LAYERREMOVE, function (e) {
+                map.on(TC.Consts.event.LAYERREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
                     if (self.currentFeature && self.currentFeature.layer === e.layer) {
                         if (self.isVisible()) {
                             self.hide();
@@ -85,7 +98,7 @@ TC.inherit(TC.control.Popup, TC.Control);
                     }
                 });
 
-                /**
+                /*
                     GLS: Controlamos el ancla del popup cuando hay zoom in/out de pantalla o navegador, debería hacerlo OL pero no lo gestiona.
                     No funciona, sólo salta la primera vez, paso a sobrescribir el método de OL
                  */
@@ -126,6 +139,24 @@ TC.inherit(TC.control.Popup, TC.Control);
         })
     };
 
+    ctlProto.addUIEventListeners = function () {
+        const self = this;
+        const closeBtn = self.menuDiv.querySelector(`.${self.CLASS}-close`)
+        if (closeBtn) {
+            closeBtn.addEventListener(TC.Consts.event.CLICK, function () {
+                self.hide();
+            }, { passive: true });
+        }
+        const shareBtn = self.menuDiv.querySelector(`.${self.CLASS}-share`)
+        if (shareBtn) {
+            shareBtn.addEventListener(TC.Consts.event.CLICK, function () {
+                if (self.caller) {
+                    self.caller.showShareDialog();
+                }
+            }, { passive: true });
+        }
+    };
+
     ctlProto.fitToView = function (delayed) {
         var self = this;
         if (delayed) {
@@ -146,6 +177,7 @@ TC.inherit(TC.control.Popup, TC.Control);
                 feature: self.currentFeature
             };
             self.map.wrap.hidePopup(self);
+            self.getContainerElement().innerHTML = '';
             self.setDragged(false);
             self.map.trigger(TC.Consts.event.POPUPHIDE, data);
         }
