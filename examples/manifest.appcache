@@ -1,0 +1,27 @@
+﻿CACHE MANIFEST
+# Documento de manifiesto para el ejemplo de uso del control offlineMapMaker
+
+CACHE:
+cfg.OfflineMapMakerOptions.html
+examples.css
+examples.js
+../
+../TC/css/tcmap.css
+../TC/resources/es-ES.json
+../TC/config/browser-versions.js
+../TC/layout/responsive/style.css
+../TC/workers/tc-caps-web-worker.js
+../TC/css/fonts/sitna.woff
+../TC/css/fonts/mapskin.woff
+../TC/layout/responsive/fonts/fontawesome-webfont.woff?v=4.5.0
+../TC/css/img/thumb-orthophoto.jpg
+../TC/css/img/thumb-bta.png
+../TC/css/img/thumb-basemap.png
+../TC/css/img/thumb-cadaster.png
+layout/ctl-container/config.json
+layout/ctl-container/style.css
+layout/ctl-container/script.js
+layout/ctl-container/markup.html
+layout/ctl-container/resources/es-ES.json
+https://idena.navarra.es/ogc/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities
+https://idena.navarra.es/ogc/wmts/1.0.0/WMTSCapabilities.xml?

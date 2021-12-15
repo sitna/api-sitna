@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de WFSQueryOptions</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#WFSQueryOptions">WFSQueryOptions</a>.</p>
+        <p>Configuración del color de la geometría de las entidades resultado de la consulta y del color de resalte de las mismas.</p>
+
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa" />
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de capas cargadas en la primera posición.
+        SITNA.Cfg.controls.workLayerManager = {
+            div: "slot1"
+        };
+        //Si se añade el control WFSQuery, el control busca un servicio WFS pareado al WMS de cada capa añadida al mapa y si lo encuentra habilita la lupa que da acceso al constructor de consultas.
+        SITNA.Cfg.controls.WFSQuery = {
+            //Establecemos el estilo de las geometrías de las entidades resultado de la consulta
+            styles: {
+                //Estilo de polígonos y multipolígonos
+                polygon: {
+                    strokeColor: "#057f28",
+                    strokeWidth: 4,
+                    fillColor: "#057f28",
+                    fillOpacity: 0.3
+                },
+                //Estilo de polilíneas y multipolilíneas
+                line: {
+                    strokeColor: "#057f28",
+                    strokeWidth: 4
+                },
+                //Estilo de puntos y multipuntos
+                point: {
+                    strokeColor: "#057f28"
+                }
+            },
+            //Establecemos el estilo de las geometrías de las entidades resaltadas
+            highlightStyles: {
+                //Estilo de polígonos y multipolígonos
+                polygon: {
+                    strokeColor: "#ff7f27",
+                    strokeWidth: 4,
+                    fillColor: "#ff7f27",
+                    fillOpacity: 0.3
+                },
+                //Estilo de polilíneas y multipolilíneas
+                line: {
+                    strokeColor: "#ff7f27",
+                    strokeWidth: 4
+                },
+                //Estilo de puntos y multipuntos
+                point: {
+                    strokeColor: "#ff7f27"
+                }
+            }
+        };
+        var map = new SITNA.Map("mapa", {
+            workLayers: [{
+                id: "paisajes",
+                title: "Paisajes singulares",
+                type: SITNA.Consts.layerType.WMS,
+                url: "//idena.navarra.es/ogc/wms",
+                layerNames: "IDENA:BIODIV_Pol_PaisajesSing"
+            },
+            {
+                id: "meteorologia",
+                title: "Meteorología",
+                type: SITNA.Consts.layerType.WMS,
+                url: "//idena.navarra.es/ogc/wms",
+                layerNames: "IDENA:estacMeteor"
+            },
+            {
+                id: "plazaola",
+                title: "Vía Verde del Plazaola",
+                type: SITNA.Consts.layerType.WMS,
+                url: "//idena.navarra.es/ogc/wms",
+                layerNames: "IDENA:DOTACI_Lin_VVPlazaola"
+            }]
+        });
+    </script>
+
+</body>
+</html>
