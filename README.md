@@ -28,9 +28,6 @@ The API is based on various third-party JavaScript libraries, but it is complete
 
 Some documentation and examples have been developed and made available [here](http://sitna.navarra.es/api/doc/) in order to facilitate the understanding of the presented API.
 
-- API SITNA geographical viewer's [user manual](https://sitna.navarra.es/geoportal/recursos/Manual%20usuario%20Visor%20API%20SITNA.pdf).
-- API SITNA's [technical utilization manual](http://sitna.navarra.es/api/doc/).
-
 ## Websites developed with API SITNA
 You can get to a list of websites that have been developed with API SITNA in [this document](./websites.md).
 
