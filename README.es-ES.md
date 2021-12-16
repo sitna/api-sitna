@@ -27,9 +27,6 @@ La API está basada en diversas bibliotecas JavaScript de terceros, pero está c
 
 Con el fin de facilitar la comprensión de la API consulte la documentación y ejemplos disponibles en [este recurso](http://sitna.navarra.es/api/doc/).
 
-- [Manual de usuario](https://sitna.navarra.es/geoportal/recursos/Manual%20usuario%20Visor%20API%20SITNA.pdf) del visor geográfico de la API SITNA.
-- [Manual técnico de uso](http://sitna.navarra.es/api/doc/) de la API SITNA.
-
 ## Sitios web desarrollados con la API SITNA
 Puede acceder a una lista de sitios web que contienen visores desarrollados con la API SITNA en [este documento](./websites.es-ES.md).
 
