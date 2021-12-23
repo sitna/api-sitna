@@ -296,6 +296,7 @@
     <Content Include="TC\css\img\thumb-ortho2018.jpg" />
     <Content Include="TC\css\img\thumb-ortho2019.jpg" />
     <Content Include="TC\css\img\thumb-ortho2020.jpg" />
+    <Content Include="TC\css\img\thumb-ortho2021.jpg" />
     <Content Include="TC\css\img\thumb-orthophoto.jpg" />
     <Content Include="TC\css\img\thumb-orthophoto_pnoa.jpg" />
     <Content Include="TC\css\img\thumb-base_ortho.png" />

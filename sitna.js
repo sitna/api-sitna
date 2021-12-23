@@ -1,6 +1,6 @@
 ﻿/**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 2.2.0
+ * @version 2.2.1
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
@@ -17,7 +17,7 @@ var TC = TC || {};
 /*
  * Initialization
  */
-TC.version = '2.2.0';
+TC.version = '2.2.1';
 (function () {
     if (!TC.apiLocation) {
         var src;
@@ -210,6 +210,13 @@ if (!TC.Consts) {
          */
         IDENA_CARTO: 'cartografia',
         /**
+         * Identificador de la capa de ortofoto 2021 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
+         * @var {string}
+         * @memberof SITNA.Consts.layer
+         * @readonly
+         */
+        IDENA_ORTHOPHOTO2021: 'ortofoto2021',
+        /**
          * Identificador de la capa de ortofoto 2020 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
          * @var {string}
          * @memberof SITNA.Consts.layer
@@ -272,6 +279,13 @@ if (!TC.Consts) {
          * @readonly
          */
         IDENA_DYNORTHOPHOTO: 'ortofoto_dinamico',
+        /**
+         * Identificador de la capa de ortofoto 2021 del WMS de IDENA.
+         * @var {string}
+         * @memberof SITNA.Consts.layer
+         * @readonly
+         */
+        IDENA_DYNORTHOPHOTO2021: 'ortofoto2021_dinamico',
         /**
          * Identificador de la capa de ortofoto 2020 del WMS de IDENA.
          * @var {string}
@@ -1020,6 +1034,21 @@ if (!TC.Consts) {
                     overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
                 },
                 {
+                    id: TC.Consts.layer.IDENA_ORTHOPHOTO2021,
+                    title: 'Ortofoto 2021',
+                    type: TC.Consts.layerType.WMTS,
+                    url: '//idena.navarra.es/ogc/wmts/',
+                    matrixSet: 'epsg25830',
+                    layerNames: 'ortofoto2021',
+                    encoding: TC.Consts.WMTSEncoding.RESTFUL,
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2021.jpg',
+                    fallbackLayer: TC.Consts.layer.IDENA_DYNORTHOPHOTO2020,
+                    overviewMapLayer: TC.Consts.layer.IDENA_BASEMAP
+                },
+                {
                     id: TC.Consts.layer.IDENA_ORTHOPHOTO2020,
                     title: 'Ortofoto 2020',
                     type: TC.Consts.layerType.WMTS,
@@ -1197,6 +1226,18 @@ if (!TC.Consts) {
                     isDefault: false,
                     hideTree: true,
                     thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
+                    overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
+                },
+                {
+                    id: TC.Consts.layer.IDENA_DYNORTHOPHOTO2021,
+                    title: 'Ortofoto 2021',
+                    type: TC.Consts.layerType.WMS,
+                    url: '//idena.navarra.es/ogc/wms',
+                    layerNames: 'ortofoto_5000_2021',
+                    format: 'image/jpeg',
+                    isDefault: false,
+                    hideTree: true,
+                    thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2021.jpg',
                     overviewMapLayer: TC.Consts.layer.IDENA_DYNBASEMAP
                 },
                 {
