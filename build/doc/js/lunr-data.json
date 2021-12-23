@@ -1396,6 +1396,25 @@
           "string",
           "wm"
         ],
+        "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": [
+          "2021",
+          "capa",
+          "consts.layer.idena_dynorthophoto2021",
+          "de",
+          "del",
+          "idena",
+          "idena_dynorthophoto2021",
+          "identificador",
+          "la",
+          "layer.idena_dynorthophoto2021",
+          "lt;static",
+          "member",
+          "ortofoto",
+          "readonly&gt",
+          "sitna.consts.layer.idena_dynorthophoto2021",
+          "string",
+          "wm"
+        ],
         "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": [
           "actualidad",
           "capa",
@@ -1589,6 +1608,34 @@
           "referencia",
           "sistema",
           "sitna.consts.layer.idena_orthophoto2020",
+          "solo",
+          "string",
+          "wmt"
+        ],
+        "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": [
+          "2021",
+          "capa",
+          "compat",
+          "con",
+          "consts.layer.idena_orthophoto2021",
+          "de",
+          "del",
+          "el",
+          "epsg:25830",
+          "es",
+          "esta",
+          "idena",
+          "idena_orthophoto2021",
+          "identificador",
+          "la",
+          "layer.idena_orthophoto2021",
+          "lt;static",
+          "member",
+          "ortofoto",
+          "readonly&gt",
+          "referencia",
+          "sistema",
+          "sitna.consts.layer.idena_orthophoto2021",
           "solo",
           "string",
           "wmt"
@@ -2417,7 +2464,7 @@
           "xml"
         ]
       },
-      "length": 115
+      "length": 117
     },
     "tokenStore": {
       "root": {
@@ -2519,6 +2566,18 @@
                   "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
                     "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                     "tf": 1.8518518518518516
+                  }
+                }
+              },
+              "1": {
+                "docs": {
+                  "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                    "tf": 4.545454545454546
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
+                    "tf": 2.272727272727273
                   }
                 }
               },
@@ -3192,6 +3251,10 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                 "tf": 13.636363636363635
               },
+              "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                "tf": 13.636363636363635
+              },
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                 "tf": 10.416666666666668
@@ -3218,6 +3281,10 @@
               },
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                "tf": 9.090909090909092
+              },
+              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                 "tf": 9.090909090909092
               },
               "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -3474,6 +3541,10 @@
                   "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                   "tf": 4.545454545454546
                 },
+                "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                  "tf": 4.545454545454546
+                },
                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                   "tf": 2.083333333333333
@@ -3500,6 +3571,10 @@
                 },
                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                  "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                   "tf": 2.272727272727273
                 },
                 "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -4238,6 +4313,10 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
                 "tf": 2.272727272727273
               },
+              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
+                "tf": 2.272727272727273
+              },
               "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                 "tf": 1.8518518518518516
@@ -4392,6 +4471,10 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
                 "tf": 2.272727272727273
               },
+              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
+                "tf": 2.272727272727273
+              },
               "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                 "tf": 1.8518518518518516
@@ -4540,6 +4623,10 @@
                   },
                   "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                    "tf": 2.272727272727273
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                     "tf": 2.272727272727273
                   },
                   "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
@@ -4920,6 +5007,10 @@
                               },
                               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                "tf": 2.272727272727273
+                              },
+                              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                                 "tf": 2.272727272727273
                               },
                               "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
@@ -6052,6 +6143,10 @@
                                       "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                                       "tf": 4.545454545454546
                                     },
+                                    "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                                      "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                                      "tf": 4.545454545454546
+                                    },
                                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                                       "tf": 2.083333333333333
@@ -6078,6 +6173,10 @@
                                     },
                                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                      "tf": 2.272727272727273
+                                    },
+                                    "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                                      "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                                       "tf": 2.272727272727273
                                     },
                                     "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -6324,6 +6423,10 @@
                       "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                       "tf": 4.545454545454546
                     },
+                    "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                      "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                      "tf": 4.545454545454546
+                    },
                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                       "tf": 2.083333333333333
@@ -6350,6 +6453,10 @@
                     },
                     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                       "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                      "tf": 2.272727272727273
+                    },
+                    "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                      "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                       "tf": 2.272727272727273
                     },
                     "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -6618,6 +6725,14 @@
                                                         }
                                                       }
                                                     },
+                                                    "1": {
+                                                      "docs": {
+                                                        "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                                                          "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                                                          "tf": 600
+                                                        }
+                                                      }
+                                                    },
                                                     "docs": {}
                                                   },
                                                   "docs": {}
@@ -6712,6 +6827,14 @@
                                                 "docs": {
                                                   "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                                                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                                    "tf": 600
+                                                  }
+                                                }
+                                              },
+                                              "1": {
+                                                "docs": {
+                                                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                                                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                                                     "tf": 600
                                                   }
                                                 }
@@ -7694,6 +7817,10 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                 "tf": 4.545454545454546
               },
+              "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                "tf": 4.545454545454546
+              },
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                 "tf": 2.083333333333333
@@ -7720,6 +7847,10 @@
               },
               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                "tf": 2.272727272727273
+              },
+              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                 "tf": 2.272727272727273
               },
               "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -8269,6 +8400,14 @@
                                                                     }
                                                                   }
                                                                 },
+                                                                "1": {
+                                                                  "docs": {
+                                                                    "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                                                                      "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                                                                      "tf": 75
+                                                                    }
+                                                                  }
+                                                                },
                                                                 "docs": {}
                                                               },
                                                               "docs": {}
@@ -8363,6 +8502,14 @@
                                                             "docs": {
                                                               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                                                                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                                                "tf": 75
+                                                              }
+                                                            }
+                                                          },
+                                                          "1": {
+                                                            "docs": {
+                                                              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                                                                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                                                                 "tf": 75
                                                               }
                                                             }
@@ -9748,6 +9895,10 @@
                               "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                               "tf": 25
                             },
+                            "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                              "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                              "tf": 25
+                            },
                             "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                               "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                               "tf": 25
@@ -9774,6 +9925,10 @@
                             },
                             "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                               "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                              "tf": 25
+                            },
+                            "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                              "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                               "tf": 25
                             },
                             "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -10749,6 +10904,10 @@
                                   "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                                   "tf": 25
                                 },
+                                "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                                  "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                                  "tf": 25
+                                },
                                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                                   "tf": 25
@@ -10775,6 +10934,10 @@
                                 },
                                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                  "tf": 25
+                                },
+                                "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                                  "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                                   "tf": 25
                                 },
                                 "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -11091,6 +11254,10 @@
                               },
                               "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                                 "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                "tf": 2.272727272727273
+                              },
+                              "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                                "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                                 "tf": 2.272727272727273
                               },
                               "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
@@ -11760,6 +11927,14 @@
                                                                                               }
                                                                                             }
                                                                                           },
+                                                                                          "1": {
+                                                                                            "docs": {
+                                                                                              "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                                                                                                "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                                                                                                "tf": 1075
+                                                                                              }
+                                                                                            }
+                                                                                          },
                                                                                           "docs": {}
                                                                                         },
                                                                                         "docs": {}
@@ -11854,6 +12029,14 @@
                                                                                       "docs": {
                                                                                         "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                                                                                           "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                                                                          "tf": 1075
+                                                                                        }
+                                                                                      }
+                                                                                    },
+                                                                                    "1": {
+                                                                                      "docs": {
+                                                                                        "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                                                                                          "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                                                                                           "tf": 1075
                                                                                         }
                                                                                       }
@@ -13903,6 +14086,10 @@
                           "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
                           "tf": 2.272727272727273
                         },
+                        "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                          "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
+                          "tf": 2.272727272727273
+                        },
                         "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
                           "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                           "tf": 1.8518518518518516
@@ -14418,6 +14605,10 @@
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
                     "tf": 2.272727272727273
                   },
+                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
+                    "tf": 2.272727272727273
+                  },
                   "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
                     "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                     "tf": 1.8518518518518516
@@ -14612,6 +14803,10 @@
                         "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                         "tf": 25
                       },
+                      "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                        "tf": 25
+                      },
                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                         "tf": 25
@@ -14638,6 +14833,10 @@
                       },
                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                        "tf": 25
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                         "tf": 25
                       },
                       "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -15160,6 +15359,10 @@
                 "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                 "tf": 4.545454545454546
               },
+              "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                "tf": 4.545454545454546
+              },
               "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
                 "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",
                 "tf": 3.125
@@ -15257,6 +15460,10 @@
                 },
                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                  "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                   "tf": 2.272727272727273
                 },
                 "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
@@ -15753,6 +15960,10 @@
                 },
                 "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                   "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                  "tf": 2.272727272727273
+                },
+                "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                  "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                   "tf": 2.272727272727273
                 },
                 "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
@@ -16598,6 +16809,14 @@
                                                                                   }
                                                                                 }
                                                                               },
+                                                                              "1": {
+                                                                                "docs": {
+                                                                                  "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                                                                                    "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                                                                                    "tf": 75
+                                                                                  }
+                                                                                }
+                                                                              },
                                                                               "docs": {}
                                                                             },
                                                                             "docs": {}
@@ -16692,6 +16911,14 @@
                                                                           "docs": {
                                                                             "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                                                                               "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                                                                              "tf": 75
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "1": {
+                                                                          "docs": {
+                                                                            "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                                                                              "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                                                                               "tf": 75
                                                                             }
                                                                           }
@@ -17902,6 +18129,10 @@
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
                         "tf": 2.272727272727273
                       },
+                      "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
+                        "tf": 2.272727272727273
+                      },
                       "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_ORTHOPHOTO2020",
                         "tf": 1.8518518518518516
@@ -18446,6 +18677,10 @@
                     "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                     "tf": 4.545454545454546
                   },
+                  "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                    "tf": 4.545454545454546
+                  },
                   "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                     "tf": 4.166666666666666
@@ -18472,6 +18707,10 @@
                   },
                   "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                     "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                    "tf": 4.545454545454546
+                  },
+                  "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                    "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                     "tf": 4.545454545454546
                   },
                   "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -19169,6 +19408,10 @@
                             "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                             "tf": 4.545454545454546
                           },
+                          "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                            "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                            "tf": 4.545454545454546
+                          },
                           "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                             "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                             "tf": 2.083333333333333
@@ -19195,6 +19438,10 @@
                           },
                           "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                             "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                            "tf": 2.272727272727273
+                          },
+                          "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                            "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                             "tf": 2.272727272727273
                           },
                           "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -20480,6 +20727,10 @@
                         "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2020",
                         "tf": 110
                       },
+                      "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+                        "tf": 110
+                      },
                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
                         "tf": 110
@@ -20506,6 +20757,10 @@
                       },
                       "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020": {
                         "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2020",
+                        "tf": 110
+                      },
+                      "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+                        "ref": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
                         "tf": 110
                       },
                       "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
@@ -22334,7 +22589,7 @@
           }
         }
       },
-      "length": 2211
+      "length": 2254
     },
     "corpusTokens": [
       "1",
@@ -22345,6 +22600,7 @@
       "2018",
       "2019",
       "2020",
+      "2021",
       "3",
       "4",
       "5",
@@ -22440,6 +22696,7 @@
       "consts.layer.idena_dynorthophoto2018",
       "consts.layer.idena_dynorthophoto2019",
       "consts.layer.idena_dynorthophoto2020",
+      "consts.layer.idena_dynorthophoto2021",
       "consts.layer.idena_orthophoto",
       "consts.layer.idena_orthophoto2012",
       "consts.layer.idena_orthophoto2014",
@@ -22447,6 +22704,7 @@
       "consts.layer.idena_orthophoto2018",
       "consts.layer.idena_orthophoto2019",
       "consts.layer.idena_orthophoto2020",
+      "consts.layer.idena_orthophoto2021",
       "consts.layer.idena_pamplona_dynorthophoto2020",
       "consts.layer.idena_pamplona_orthophoto2020",
       "consts.layer.ign_es_basemap",
@@ -22613,6 +22871,7 @@
       "idena_dynorthophoto2018",
       "idena_dynorthophoto2019",
       "idena_dynorthophoto2020",
+      "idena_dynorthophoto2021",
       "idena_orthophoto",
       "idena_orthophoto2012",
       "idena_orthophoto2014",
@@ -22620,6 +22879,7 @@
       "idena_orthophoto2018",
       "idena_orthophoto2019",
       "idena_orthophoto2020",
+      "idena_orthophoto2021",
       "idena_pamplona_dynorthophoto2020",
       "idena_pamplona_orthophoto2020",
       "identfificador",
@@ -22679,6 +22939,7 @@
       "layer.idena_dynorthophoto2018",
       "layer.idena_dynorthophoto2019",
       "layer.idena_dynorthophoto2020",
+      "layer.idena_dynorthophoto2021",
       "layer.idena_orthophoto",
       "layer.idena_orthophoto2012",
       "layer.idena_orthophoto2014",
@@ -22686,6 +22947,7 @@
       "layer.idena_orthophoto2018",
       "layer.idena_orthophoto2019",
       "layer.idena_orthophoto2020",
+      "layer.idena_orthophoto2021",
       "layer.idena_pamplona_dynorthophoto2020",
       "layer.idena_pamplona_orthophoto2020",
       "layer.ign_es_basemap",
@@ -22900,6 +23162,7 @@
       "sitna.consts.layer.idena_dynorthophoto2018",
       "sitna.consts.layer.idena_dynorthophoto2019",
       "sitna.consts.layer.idena_dynorthophoto2020",
+      "sitna.consts.layer.idena_dynorthophoto2021",
       "sitna.consts.layer.idena_orthophoto",
       "sitna.consts.layer.idena_orthophoto2012",
       "sitna.consts.layer.idena_orthophoto2014",
@@ -22907,6 +23170,7 @@
       "sitna.consts.layer.idena_orthophoto2018",
       "sitna.consts.layer.idena_orthophoto2019",
       "sitna.consts.layer.idena_orthophoto2020",
+      "sitna.consts.layer.idena_orthophoto2021",
       "sitna.consts.layer.idena_pamplona_dynorthophoto2020",
       "sitna.consts.layer.idena_pamplona_orthophoto2020",
       "sitna.consts.layer.ign_es_basemap",
@@ -23715,6 +23979,16 @@
       "summary": "",
       "description": "Identificador de la capa de ortofoto 2020 del WMS de IDENA."
     },
+    "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021": {
+      "id": "SITNA.Consts.layer.html#.IDENA_DYNORTHOPHOTO2021",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; IDENA_DYNORTHOPHOTO2021 :string",
+      "longname": "SITNA.Consts.layer.IDENA_DYNORTHOPHOTO2021",
+      "name": "IDENA_DYNORTHOPHOTO2021",
+      "tags": "SITNA.Consts.layer.IDENA_DYNORTHOPHOTO2021 Consts.layer.IDENA_DYNORTHOPHOTO2021 layer.IDENA_DYNORTHOPHOTO2021 IDENA_DYNORTHOPHOTO2021",
+      "summary": "",
+      "description": "Identificador de la capa de ortofoto 2021 del WMS de IDENA."
+    },
     "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO": {
       "id": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO",
       "kind": "member",
@@ -23784,6 +24058,16 @@
       "tags": "SITNA.Consts.layer.IDENA_ORTHOPHOTO2020 Consts.layer.IDENA_ORTHOPHOTO2020 layer.IDENA_ORTHOPHOTO2020 IDENA_ORTHOPHOTO2020",
       "summary": "",
       "description": "Identificador de la capa de ortofoto 2020 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830."
+    },
+    "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021": {
+      "id": "SITNA.Consts.layer.html#.IDENA_ORTHOPHOTO2021",
+      "kind": "member",
+      "title": "&lt;static, readonly&gt; IDENA_ORTHOPHOTO2021 :string",
+      "longname": "SITNA.Consts.layer.IDENA_ORTHOPHOTO2021",
+      "name": "IDENA_ORTHOPHOTO2021",
+      "tags": "SITNA.Consts.layer.IDENA_ORTHOPHOTO2021 Consts.layer.IDENA_ORTHOPHOTO2021 layer.IDENA_ORTHOPHOTO2021 IDENA_ORTHOPHOTO2021",
+      "summary": "",
+      "description": "Identificador de la capa de ortofoto 2021 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830."
     },
     "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020": {
       "id": "SITNA.Consts.layer.html#.IDENA_PAMPLONA_DYNORTHOPHOTO2020",

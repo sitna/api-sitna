@@ -1022,9 +1022,9 @@ TC.control.FeatureInfoCommons = function () {
         const self = this;
         if (self.exportsState && self.resultsLayer) {
             const exportStateOptions = {};
-            // Si exportamos una consulta, tenemos que quitar la entidad resaltada para evitar exportarla dos veces
+            // Si exportamos una consulta, tenemos que quitar las entidades resaltadas para evitar exportarlas dos veces
             if (self.toShare) {
-                exportStateOptions.features = self.resultsLayer.features.filter(f => f !== self.highlightedFeature);
+                exportStateOptions.features = [];
             }
             return {
                 id: self.id,
@@ -1192,15 +1192,6 @@ TC.control.FeatureInfoCommons = function () {
         return TC.control.infoShare.showShareDialog.call(self, dialogDiv);
     };
 
-    ctlProto.getShareDialog = async function (divElement) {
-        const self = this;
-        const shareCtl = await TC.control.infoShare.getShareDialog.call(self, divElement);
-        if (shareCtl) {
-            shareCtl.includeControls = true;
-        }
-        return shareCtl;
-    };
-
     ctlProto.exportQuery = function () {
         const self = this;
         const result = {};
@@ -1208,7 +1199,9 @@ TC.control.FeatureInfoCommons = function () {
             const filterLayerState = self.filterLayer.exportState();
             filterLayerState.features.forEach(f => delete f.data);
             result.filter = filterLayerState;
-            result.hlf = self.highlightedFeature.getId();
+            if (self.highlightedFeature) {
+                result.hlf = self.highlightedFeature.getId();
+            }
         }
         return result;
     };
@@ -1226,6 +1219,12 @@ TC.control.FeatureInfoCommons = function () {
                             const feature = self.getFeatures().find(f => f.getId() === query.hlf);
                             if (feature) {
                                 self.highlightFeature(feature);
+                            }
+                            else {
+                                if (!query.hasOwnProperty("hlf")) {
+                                    // timeout porque se está generando asíncronamente el botón de mostrar todas
+                                    setTimeout(() => self.showAllFeatures(), 100);
+                                }
                             }
                             self.map.off(TC.Consts.event.FEATUREHIGHLIGHT, onFeatureHighlight);
                         }
