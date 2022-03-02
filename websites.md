@@ -4,7 +4,7 @@
   * [IDENA - Spatial Data Infrastructure of Navarre](https://idena.navarra.es/navegar/?lang=en "Access Portal to Geographical Information in Navarre (SITNA)")
   * [Incidencias en Carreteras](https://administracionelectronica.navarra.es/IncCarreteras/Mapa.aspx "Information about the State of the Roads in Navarre")
   * [Map/Photo Library](https://cartotecayfototeca.navarra.es/?lang=en "Downloads for Maps and Aerial Images in Navarre")
-  * [Mapa de Fosas](https://fosas.navarra.es "Pits and Historical Memory Places in Navarre")
+  * [Mapa de Fosas](https://fosas.navarra.es "Graves and Historical Memory Places in Navarre")
   * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en "Official Toponymy of Navarre")
   * [Map Comparator](https://comparamapas.navarra.es/?lang=en "Navarre Maps and Orthophotos Comparison")
   * [Forest Planning](https://administracionelectronica.navarra.es/VisorOrdenacionForestal/default.aspx?lang=en)
@@ -19,8 +19,8 @@
   * [Geo Noáin (Valle de Elorz) / Noain (Elortzibar)](https://idena.navarra.es/municipios/noain/?lang=en "Spatial Data Infrastructure of Noáin (Valle de Elorz) / Noain (Elortzibar)")
 
 * Government of Navarre's KML viewer applications:
-  * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/ "Cámaras de tráfico. Gobierno de Navarra")
-  * [Zonas de baño](http://www.navarra.es/home_es/Temas/Medio+Ambiente/Patrimonio+natural/Banos+Naturales/ "Zonas de baño. Gobierno de Navarra")
+  * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/ "Traffic Cameras. Government of Navarre")
+  * [Zonas de baño](http://www.navarra.es/home_es/Temas/Medio+Ambiente/Patrimonio+natural/Banos+Naturales/ "Bathing Sites. Government of Navarre")
   * [Listados contables: Municipios](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Budget and Accounting")
   * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Budget and Accounting")
   * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Budget and Accounting")
@@ -29,10 +29,10 @@
 
 * Govenment of Navarre's own developments:
   * Anonymous access:
-    * [Edificios de 50 años o más](https://administracionElectronica.navarra.es/InformeEdificios/VisualizacionGlobalEdificios.html "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
-    * [Informes de Evaluación de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ConsultaCiudadana.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
-    * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx "Registro de Viviendas. Gobierno de Navarra")
-    * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Visor de puntos. Gobierno de Navarra")
+    * [Edificios de 50 años o más](https://administracionElectronica.navarra.es/InformeEdificios/VisualizacionGlobalEdificios.html "Building Evaluation Report Registry. Government of Navarre")
+    * [Informes de Evaluación de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ConsultaCiudadana.aspx "Building Evaluation Report Registry. Government of Navarre")
+    * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx "Dwelling Registry. Government of Navarre")
+    * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Point Viewer. Government of Navarre")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Postal Addresses in Navarre")
     * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Navarre Employment Service")
     * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Fishing Permits")    
@@ -44,10 +44,10 @@
     * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
 
 * [SILME](http://www.silme.es/)'s developments for Consell Insular de Menorca:
-  * [IDE Menorca](http://ide.cime.es/visor/?lang=en-US)
+  * [IDE Menorca](http://ide.cime.es/visor/?lang=en-US "Spatial Data Infrastructure of Minorca")
   
 * [ANIMSA](https://www.animsa.es/)'s developments for the Town Council of Pamplona:
-  * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Eventos en la vía pública. Policía Municipal de Pamplona")
+  * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Events on Public Roads. Pamplona Police Department")
 
 * Other developments:
   * Rutas Navarra - [Senderos homologados](http://www.rutasnavarra.com/Navarra/Senderos.aspx)
