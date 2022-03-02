@@ -40,8 +40,8 @@
     * [Centros de Salud](https://centrossanitarios.navarra.es/)
     * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
   * Authenticated access:
-    * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Carpeta personal de Salud. Gobierno de Navarra")
-    * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
+    * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Personal Health Folder. Government of Navarre")
+    * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Building Evaluation Report Registry. Government of Navarre")
 
 * [SILME](http://www.silme.es/)'s developments for Consell Insular de Menorca:
   * [IDE Menorca](http://ide.cime.es/visor/?lang=en-US "Spatial Data Infrastructure of Minorca")
