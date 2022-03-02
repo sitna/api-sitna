@@ -19,8 +19,8 @@
   * [Geo Noáin (Valle de Elorz) / Noain (Elortzibar)](https://idena.navarra.es/municipios/noain "Infraestructura de Datos Espaciales de Noáin (Valle de Elorz) / Noain (Elortzibar)")
 
 * Usos en Gobierno de Navarra del visor de KMLs:
-  * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/)
-  * [Zonas de baño](http://www.navarra.es/home_es/Temas/Medio+Ambiente/Patrimonio+natural/Banos+Naturales/)
+  * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/ "Cámaras de tráfico. Gobierno de Navarra")
+  * [Zonas de baño](http://www.navarra.es/home_es/Temas/Medio+Ambiente/Patrimonio+natural/Banos+Naturales/ "Zonas de baño. Gobierno de Navarra")
   * [Listados contables: Municipios](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Presupuesto y Cuentas")
   * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Presupuesto y Cuentas")
   * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Presupuesto y Cuentas")
@@ -29,9 +29,9 @@
 
 * Desarrollos propios del Gobierno de Navarra:
   * Acceso anónimo:
-    * [Edificios de 50 años o más](https://administracionElectronica.navarra.es/InformeEdificios/VisualizacionGlobalEdificios.html)
-    * [Informes de Evaluación de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ConsultaCiudadana.aspx)
-    * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx)
+    * [Edificios de 50 años o más](https://administracionElectronica.navarra.es/InformeEdificios/VisualizacionGlobalEdificios.html "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
+    * [Informes de Evaluación de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ConsultaCiudadana.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
+    * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx "Registro de Viviendas. Gobierno de Navarra")
     * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Visor de puntos. Gobierno de Navarra")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Direcciones de Navarra")
     * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Servicio Navarro de Empleo - Nafar Lansare")
@@ -47,7 +47,7 @@
   * [IDE Menorca](http://ide.cime.es/visor/?lang=es-ES "Infraestructura de Datos Espaciales de Menorca")
   
 * Desarrollos de [ANIMSA](https://www.animsa.es/) para el Ayuntamiento de Pamplona:
-  * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Policía Municipal de Pamplona")
+  * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Eventos en la vía pública. Policía Municipal de Pamplona")
 
 * Otros desarrollos:
   * Rutas Navarra - [Senderos homologados](http://www.rutasnavarra.com/Navarra/Senderos.aspx)
