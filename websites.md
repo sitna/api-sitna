@@ -39,6 +39,7 @@
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI)
     * [Centros de Salud](https://centrossanitarios.navarra.es/)
     * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
+    * [Air Quality](https://www.navarra.es/es/calidaddelaire)
   * Authenticated access:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Personal Health Folder. Government of Navarre")
     * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Building Evaluation Report Registry. Government of Navarre")
