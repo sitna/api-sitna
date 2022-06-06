@@ -36,9 +36,9 @@
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Postal Addresses in Navarre")
     * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Navarre Employment Service")
     * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Fishing Permits")    
-    * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI)
-    * [Centros de Salud](https://centrossanitarios.navarra.es/)
-    * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
+    * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI "Registry for Navarre's I+D+i System")
+    * [Centros de Salud](https://centrossanitarios.navarra.es/ "Health Centers")
+    * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/ "Navarre Employment Service Training Offers")
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire "Air Quality")
   * Authenticated access:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Personal Health Folder. Government of Navarre")
