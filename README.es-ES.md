@@ -21,7 +21,7 @@ Entre otras capacidades, la API SITNA:
 
 Este es el aspecto del mapa básico que se obtiene con la configuración por defecto de la API SITNA ([ver en vivo](http://sitna.tracasa.es/api/examples/Map.1.html)).
 
-![Captura de pantalla de un visor básico](https://sitna.navarra.es/geoportal/galeria/ejemploAPI1.jpg)
+![Captura de pantalla de un visor básico](img/apiExample01.jpg)
 
 La API está basada en diversas bibliotecas JavaScript de terceros, pero está completamente autocontenida y simplemente cargando en la página el script de la API se cargan dinámicamente los recursos que necesita. El objetivo ha sido facilitar su uso para un desarrollador sin grandes conocimientos GIS.
 
