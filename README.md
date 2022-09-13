@@ -22,7 +22,7 @@ Among other ones, API SITNA provides the following functionalities:
 
 This is the aspect of a basic map that it has been created with the default configuration of API SITNA ([see live](http://sitna.tracasa.es/api/examples/Map.1.html)).
 
-![Screenshot of a basic viewer](https://sitna.navarra.es/geoportal/galeria/ejemploAPI1.jpg)
+![Screenshot of a basic viewer](img/apiExample01.jpg)
 
 The API is based on various third-party JavaScript libraries, but it is completely self-contained. All the related resources are dynamically loaded by simply inserting the API script in the page. This development approach had as main goal to make it accessible for a developer with a limited GIS knowledge.
 
