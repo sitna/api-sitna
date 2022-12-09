@@ -55,14 +55,16 @@
         border-bottom-right-radius: var(--border-radius);
     }
 
+.tc-ctl-meas-select label input[type=radio]:checked ~ span {
+    border-bottom-color: transparent;
+}
+
     .tc-ctl-meas-select label:first-child input[type=radio]:checked ~ span {
         border-bottom-left-radius: 0;
-        border-bottom-color: transparent;
     }
 
     .tc-ctl-meas-select label:last-child input[type=radio]:checked ~ span {
         border-bottom-right-radius: 0;
-        border-bottom-color: transparent;
     }
 
     .tc-ctl-meas-select input[type=radio] ~ span:before {
@@ -108,8 +110,8 @@ label.tc-ctl-meas-btn-area span:before {
 
     .tc-ctl-meas-prof-btn:before {
         position: absolute;
-        font-family: sitna;
-        content: "\e920";
+        font-family: var(--icon-font-family);
+        content: var(--icon-profile);
         text-indent: 0;
         left: 0;
         width: 2em;

@@ -39,12 +39,12 @@ body:fullscreen {
         height: 0;
     }
 
-    body:fullscreen > div.tc-map {
+    body:fullscreen > .tc-map {
         top: 0;
         height: 100%;
     }
 
-    body:fullscreen > div.tc-map-3d {
+    body:fullscreen > .tc-map-3d {
         top: 0;
         height: 100%;
     }

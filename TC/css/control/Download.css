@@ -47,14 +47,14 @@ div.tc-ctl-download-cnt label {
     width: 18px;
 }
 
-    .tc-ctl-download-image input[type=checkbox] + label.tc-loading:after {
-        font-family: sitna;
-        content: '\e90f';
-        display: inline-block;
-        margin-left: 0.5em;
-        animation: spin 2s infinite linear;
-        -webkit-animation: spin 2s infinite linear;
-    }
+.tc-ctl-download-image input[type=checkbox] + label.tc-loading:after {
+    font-family: var(--icon-font-family);
+    content: var(--icon-spinner);
+    display: inline-block;
+    margin-left: 0.5em;
+    animation: spin 2s infinite linear;
+    -webkit-animation: spin 2s infinite linear;
+}
 
 .tc-ctl-download-help {
     color: var(--glyph-sec-color);

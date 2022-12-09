@@ -14,47 +14,37 @@
     width: 33.33%
 }
 .tc-ctl-dmm .tc-ctl-dmm-tool {
-    display:flex;
+    display: flex;
+    gap:0.2em;    
 }
-.tc-ctl-dmm-tool button {
-    margin: 0 0.1em 0 0.1em;
-    position: relative;
-    flex-grow: 1;
-    display: inline-block;
-    border-radius: 0;
-    border: 0;
-    height: 2em;
-    vertical-align: top;
-    text-align: center;
-    color: var(--btn-color);
-}
+    .tc-ctl-dmm .tc-ctl-dmm-tool button {
+        position: relative;
+        display: inline-block;
+        border-radius: 0;
+        border: 0;
+        height: 2em;
+        vertical-align: top;
+        text-align: center;
+        color: var(--btn-color);
+    }
 
-    .tc-ctl-dmm-tool button:disabled {
+    .tc-ctl-dmm .tc-ctl-dmm-tool button:disabled {
         color: var(--btn-disabled-color);
         background-color: var(--btn-disabled-bg-color);
         border-color: var(--btn-disabled-border-color);
     }
 
-    .tc-ctl-dmm-tool button:first-child {
-        margin-left: 0;
-        border-top-left-radius: var(--border-radius);
-        border-bottom-left-radius: var(--border-radius);
-    }
-
-    .tc-ctl-dmm-tool button:last-child {
-        margin-right:0;
+    .tc-ctl-dmm .tc-ctl-dmm-tool button:last-of-type {
         border-top-right-radius: var(--border-radius);
         border-bottom-right-radius: var(--border-radius);
     }
 
 
 .tc-ctl-dmm .tc-ctl-dmm-mod {
-    flex-basis: 60%;
+    display: flex;
+    gap: 0.2em;
     padding: 0;
-}
-
-.tc-ctl-dmm .tc-ctl-dmm-mod > button {
-    flex-basis:20%;
+    flex-grow:1;
 }
 
 .tc-ctl-dmm .tc-ctl-mod-btn-delete {
@@ -66,35 +56,70 @@
         border-right-color: var(--btn-disabled-border-color);
     }
 
-.tc-ctl-dmm .tc-ctl-mod-btn-join, .tc-ctl-dmm .tc-ctl-mod-btn-split, .tc-ctl-dmm .tc-ctl-mod-btn-attr {
+.tc-ctl-dmm button.tc-ctl-mod-btn-join, .tc-ctl-dmm button.tc-ctl-mod-btn-split, .tc-ctl-dmm button.tc-ctl-mod-btn-attr {
     display: none;
-}
-
-
-.tc-ctl-dmm .tc-ctl-mod .tc-ctl-btn:last-child {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+    flex-grow: 0;
 }
 
 .tc-ctl-dmm-cmd {
-    position: absolute;
-    top: 0;
-    left: 60%;
+    display: flex;
+    gap: 0.2em;
+    flex-grow:1;
 }
 
-    .tc-ctl-dmm-cmd button {
-        width: calc(50% - 0.1em);
-        text-indent: -1000vw;
-        position: relative;
-        margin: 0 0.1em 0 0.1em;
-        color: var(--btn-color);
-        background-color: var(--btn-bg-color);
-        border-color: var(--btn-border-color);
+.tc-ctl-dmm .tc-ctl-dmm-cmd button {
+    flex-grow:1;   
+    text-indent: -1000vw;
+    position: relative;
+    color: var(--btn-color);
+    background-color: var(--btn-bg-color);
+    border-color: var(--btn-border-color);
+}
+
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button:after {
+        position: absolute;
+        font-size: 1em;
+        height: 100%;
+        width: 100%;
+        text-align: center;
+        text-indent: 0;
+        line-height: 2em;
+        font-family: var(--icon-font-family);
+        left: 0;
+        top: 0;
     }
 
-    .tc-ctl-dmm-cmd button:disabled {
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button:disabled {
         color: var(--btn-disabled-color);
         background-color: var(--btn-disabled-bg-color);
         border-color: var(--btn-disabled-border-color);
     }
+
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr:after {
+        content: var(--icon-delete);
+    }
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide.tc-active:after {
+        content: var(--icon-visible);
+    }
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide:after {
+        content: var(--icon-invisible);
+    }
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide.tc-active:not(:disabled) {
+        background-color: var(--btn-hl-bg-color);
+        border-color: var(--btn-hl-border-color);
+    }
+
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button:first-of-type {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl:after {
+    content: var(--icon-download-all);
+}
+
+.tc-ctl-dmm .tc-ctl-dmm-mod button.tc-ctl-mod-btn-text {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
 

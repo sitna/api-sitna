@@ -140,13 +140,19 @@ div.tc-ctl-coords-xy {
         content: '\2716';
     }
 
-button.tc-ctl-coords-crs {
+.tc-ctl-coords button.tc-ctl-coords-crs {
     border: 0.1em solid #666;
     border-radius: 0.2em;
     background-color: transparent;
     padding: 0.1em 0.2em;
     margin-right: 0.5em;
 }
+
+    .tc-ctl-coords button.tc-ctl-coords-crs:before {
+        font-family: mapskin;
+        content: '\e01a';
+        margin-right: 0.3em;
+    }
 
 .tc-ctl-coords .tc-active span.tc-ctl-coords-crs {
     display: none;
@@ -158,12 +164,6 @@ button.tc-ctl-coords-crs {
 
 .tc-ctl-coords.tc-3d button.tc-ctl-coords-crs {
     display: none;
-}
-
-button.tc-ctl-coords-crs:before {
-    font-family: mapskin;
-    content: '\e01a';
-    margin-right: 0.3em;
 }
 
 .tc-ctl-coords-alt {

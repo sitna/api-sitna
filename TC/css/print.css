@@ -37,3 +37,12 @@ body.tc-ctl-print-page .tc-ctl-finfo-coords-lat,
 body.tc-ctl-print-page .tc-ctl-finfo-layer-n {
     display: none;
 }
+
+span.tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev {
+    margin-right: 0.5em;
+}
+
+span.tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev.tc-hidden, 
+span.tc-ctl-finfo-coords-pair.tc-ctl-finfo-height.tc-hidden {
+    display: none;
+}

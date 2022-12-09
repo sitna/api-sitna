@@ -51,25 +51,26 @@ div.tc-ctl-legend-tree li.tc-ctl-legend-empty {
         display: none;
     }
 
-ul.tc-ctl-legend-branch {
+.tc-ctl-legend ul.tc-ctl-legend-branch {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    font-size: 1.1em;
     transition: all .3s ease;
 }
 
-li.tc-ctl-legend-node {
+.tc-ctl-legend li.tc-ctl-legend-node {
     font-family: Arial, helvetica, sans-serif;
     font-weight: bold;
     margin-top: 0.5em;
     padding: 0 10px;
     border: 1px solid #eee;
     border-radius: var(--border-radius);
-    font-size: 0.85em;
 }
 
-    li.tc-ctl-legend-node li.tc-ctl-legend-node {
-        font-weight: normal;
-        border: 0;
+.tc-ctl-legend li.tc-ctl-legend-node li.tc-ctl-legend-node {
+    font-weight: normal;
+    border: 0;
     }
+.tc-ctl-legend li.tc-ctl-legend-node li.tc-ctl-legend-node li.tc-ctl-legend-node{
+    font-size: calc(max(0.85em, 0.75rem));
+}

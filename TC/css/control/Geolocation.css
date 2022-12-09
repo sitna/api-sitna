@@ -125,10 +125,19 @@
     .tc-ctl-geolocation-track-center.tc-ctl {
         padding: 0;
     }
-        .tc-ctl-geolocation-track-center button:after {
-            font-family: mapskin;
-            content: "\e029";
-        }
+
+.tc-map .tc-ctl-geolocation-track-center button.tc-unplugged {
+    cursor: pointer;
+}
+
+.tc-ctl-geolocation-track-center button:after {
+    font-family: mapskin;
+    content: "\e925";
+}
+
+.tc-ctl-geolocation-track-center button.tc-unplugged:after {
+    content: "\e926";
+}
 
 .tc-ctl-geolocation i.tc-ctl-geolocation-track-panel-help.icon-question-sign {
     font-family: FontAwesome;
@@ -207,9 +216,9 @@
             display: inline-block;
             cursor: pointer; /* "hand" cursor */
             border: 1px solid;
-            border-color: var(--main-hl-color);
+            border-color: var(--btn-hl-border-color);
             border-radius: var(--border-radius);
-            background-color: var(--main-hl-color);
+            background-color: var(--btn-hl-border-color);
             height: 2em;
             padding: 0 18px;
             box-sizing: border-box;
@@ -240,7 +249,7 @@
         color: var(--list-color);
         background-color: var(--list-bg-color);
         display: flex;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         justify-content: space-between;
     }
 
@@ -249,7 +258,7 @@
             white-space: nowrap;
             overflow: hidden;
             height: 2em;
-            width: 85%;
+            flex-basis: calc(100% - 10.1em);
             padding-left: 0.1em;
         }
 
@@ -274,7 +283,7 @@
     cursor: auto;
 }
 
-.tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button {
+.tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button {
     background-color: transparent;
     border: 0;
     padding: 0;
@@ -282,7 +291,7 @@
     width: 2.5em;
 }
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button:before {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button:before {
         display: block;
         position: relative;
         color: var(--glyph-color);
@@ -290,28 +299,28 @@
         padding: 0 0.3em;
     }
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button:disabled:before {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button:disabled:before {
         color: #ccc;
     }
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-simulate:before {
+    /*.tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-simulate:before {
         font-family: FontAwesome;
         content: "\f008";
-    }
+    }*/
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button#elevation:before {
-        font-family: sitna;
-        content: "\e920";
+        font-family: var(--icon-font-family);
+        content: var(--icon-profile);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-delete:before {
-        font-family: sitna;
-        content: "\e90d";
+        font-family: var(--icon-font-family);
+        content: var(--icon-delete);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-edit:before {
-        font-family: FontAwesome;
-        content: "\f040";
+        font-family: var(--icon-font-family);
+        content: var(--icon-edit);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-save:before {
@@ -325,17 +334,17 @@
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-export:before {
-        font-family: sitna;
-        content: "\e902";
+        font-family: var(--icon-font-family);
+        content: var(--icon-download);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-share:before {
-        font-family: sitna;
-        content: "\e924";
+        font-family: var(--icon-font-family);
+        content: var(--icon-share);
     }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li span.tc-hidden [title] {
-    display:none;
+    display: none;
 }
 
 input#tc-ctl-geolocation-track-available-srch {
@@ -473,10 +482,21 @@ div.tc-ctl-geolocation-continue-track-dialog > div > div > button.tc-button {
     color: var(--list-hl-color);
     background-color: var(--list-hl-bg-color);
 }
-
-.tc-ctl-geolocation-track-advertisement.p {
-    text-align: center;
+.tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li:not(.selectedTrack) div {
+    transition: height 0.3s ease;
+    height: 0;
 }
+
+.tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li.selectedTrack div {
+    flex-basis: 100%;
+    clear: both;
+    transition: height 0.3s linear;
+    height: 2.1em;
+}
+
+    .tc-ctl-geolocation-track-advertisement.p {
+        text-align: center;
+    }
 
     .tc-ctl-geolocation-track-advertisement.p > label > input[type="checkbox"] {
         vertical-align: middle;
@@ -561,49 +581,52 @@ div.tc-ctl-geolocation-track-snap-info {
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li, .tc-modal .tc-crs-list > li {
     padding: 0.25em 0 0.2em 0.5%;
-    border-bottom: 0.1em solid rgba(0,0,0,0.1);
+    border-bottom: 0.1em solid #ccc;
     overflow: hidden;
     line-height: 2em;
     box-sizing: content-box;
 }
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li:last-of-type {
+        border-bottom:none;
+    }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > input {
-        width: 85%;
+        flex-basis: calc(100% - 5em);
     }
 
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > .tc-btn-simulate:before {
+    /*.tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > .tc-btn-simulate:before {
         font-family: FontAwesome;
         content: "\f008";
-    }
+    }*/
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > .tc-btn-stop:before {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-btn-stop:before {
         font-family: FontAwesome;
         content: "\f04d";
     }
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause:before {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-btn-pause:before {
         font-family: FontAwesome;
         content: "\f04c";
     }
 
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > .tc-btn-pause.play:before {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-btn-pause.play:before {
         font-family: FontAwesome;
         content: "\f04b";
     }
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > .tc-btn-forward:before {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-btn-forward:before {
         font-family: FontAwesome;
         content: "\f04e";
     }
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > .tc-btn-backward:before {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-btn-backward:before {
         font-family: FontAwesome;
         content: "\f04a";
     }
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > .tc-spn-speed {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-spn-speed {
         font-weight: bold;
         font-family: Arial;
         font-size: 85%;
@@ -612,8 +635,23 @@ div.tc-ctl-geolocation-track-snap-info {
         cursor: auto;
         white-space: nowrap;
     }
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-chk-track-visibility {
+        float: right;
+        margin: 0.4em 0.75em 0;
+        font-size: 1em;
+    }
 
-    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > select.tc-sel-speed {
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-chk-track-visibility:before {
+        font-family: sitna;
+        content: var(--icon-invisible);
+        LINE-HEIGHT: 1.3EM;
+    }
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > .tc-chk-track-visibility:checked:before {
+        font-family: sitna;
+        content: var(--icon-visible);
+    }
+
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > div > select.tc-sel-speed {
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
         box-sizing: border-box;

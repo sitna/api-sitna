@@ -22,19 +22,19 @@
 }
 
     .tc-ctl-wfsedit-view input[type=checkbox] + label:before {
-        font-family: sitna;
+        font-family: var(--icon-font-family);
         font-size: 1.2em;
         margin-left: 0.5em;
         display: inline-block;
-        content: '\e911';
+        content: var(--icon-invisible);
         width: 1.2em;
     }
 
     .tc-ctl-wfsedit-view input[type=checkbox]:checked + label:before {
-        content: '\e910';
+        content: var(--icon-visible);
     }
 
-.tc-ctl-wfsedit-layer-sel {
+.tc-ctl-wfsedit .tc-ctl-wfsedit-layer-sel {
     display: inline-block;
     margin-top: 0.5em;
     width: 100%;

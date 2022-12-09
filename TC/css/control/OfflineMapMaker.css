@@ -118,63 +118,43 @@
     animation: pulsation 2s infinite;
     -webkit-animation: pulsation 2s infinite;
 }
+    .tc-ctl-omm .tc-ctl-omm-list li button.tc-toggle {
+        font-size: 1.5em;
+    }
 
-.tc-ctl-omm .tc-ctl-omm-list li button {
-    width: 7.5%;
-    height: 2em;
-    background-color: transparent;
-    color: transparent;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: clip;
-    font-size: 1em;
-    border: 0;
-    padding: 0;
-    outline: none;
+    .tc-ctl-omm .tc-ctl-omm-list li button.tc-icon-btn:before {
+        font-family: Mapskin;
+    }
+
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-edit:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-edit);
 }
 
-    .tc-ctl-omm .tc-ctl-omm-list li button:before {
-        display: inline-block;
-        position: relative;
-        color: var(--glyph-color);
-        font-family: Mapskin;
-        width: 100%;
-        height: 2em;
-        line-height: 2em;
-    }
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-view:before {
+    font-family: var(--icon-font-family);
+    content: "\e912";
+}
 
-    .tc-ctl-omm .tc-ctl-omm-list li button.tc-active:before {
-        color: var(--glyph-hl-color);
-    }
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-delete:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-delete);
+}
 
-    .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-edit:before {
-        font-family: sitna;
-        content: "\e909";
-    }
-
-    .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-view:before {
-        font-family: sitna;
-        content: "\e912";
-    }
-
-    .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-delete:before {
-        font-family: sitna;
-        content: '\e90d';
-    }
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-cancel:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-close);
+}
 
     .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-save:before {
         font-family: initial;
         content: "\2714";
-        width: auto;
-        height: auto;
     }
 
-    .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-cancel:before {
-        font-family: sitna;
-        content: "\e908";
-        width: auto;
-        height: auto;
-    }
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-cancel:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-close);
+}
 
 .tc-ctl-omm .tc-ctl-omm-btn-new, .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl {
     position: relative;
@@ -207,8 +187,8 @@
 
 .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw:before, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl:before {
     display: inline-block;
-    font-family: sitna;
-    content: "\e908";
+    font-family: var(--icon-font-family);
+    content: var(--icon-close);
     height: 1em;
     width: 1em;
     line-height: 1em;
@@ -314,7 +294,7 @@
 }
 
     .tc-ctl-omm .tc-ctl-omm-list > li > span {
-        width: 72%;
+        width: calc(100% - 1.2em - 1.2em - 1.2em - 2em);
         float: left;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -327,22 +307,6 @@
         color: inherit;
         cursor: auto;
     }
-
-    .tc-ctl-omm .tc-ctl-omm-list > li > button.tc-btn-save, .tc-ctl-omm .tc-ctl-omm-list > li > button.tc-btn-cancel {
-        position: relative;
-        background-color: transparent;
-        border: 0;
-        padding: 0;
-        width: 7.5%;
-        outline: none;
-    }
-
-        .tc-ctl-omm .tc-ctl-omm-list > li > button.tc-btn-save:before, .tc-ctl-omm .tc-ctl-omm-list > li > button.tc-btn-cancel:before {
-            width: auto;
-            height: auto;
-            padding: 0 0.3em;
-            line-height: normal;
-        }
 
 .tc-ctl-omm-map-available-srch {
     width: 100%;
@@ -362,21 +326,28 @@
 }
 
     .tc-ctl-omm-map-search-icon:before {
-        font-family: sitna;
+        font-family: var(--icon-font-family);
         content: '\e90e';
     }
 
 .tc-ctl-omm .tc-ctl-omm-list > li {
-    padding: 0.25em 0 0.2em 0.5%;
+    padding: 0.2em;
     border-bottom: 0.1em solid rgba(0,0,0,0.1);
     overflow: hidden;
     line-height: 2em;
     box-sizing: content-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
+    .tc-ctl-omm .tc-ctl-omm-list > li[hidden] {
+        display: none;
+    }
+
 .tc-ctl-omm .tc-ctl-omm-list li .tc-textbox {
-    margin-right: 1%;
     padding-left: 0.5em;
-    width: 81.5%;
+    margin-right: 0.5em;
+    width: calc(100% - 1.2em - 1.2em - 1.5em);
     float: left;
 }

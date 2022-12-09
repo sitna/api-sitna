@@ -1,82 +1,84 @@
 ﻿.tc-ctl-edit-mode {
     padding-top: 0.5em;
+    display: flex;
 }
 
-    .tc-ctl-edit-mode label {
-        position: relative;
-        display: inline-block;
-        width: 20%;
-        height: 2em;
-        margin: 0.2em 0;
+.tc-ctl-edit .tc-ctl-edit-mode label {
+    position: relative;
+    display: inline-block;
+    height: 2em;
+    flex-grow: 1;
+    margin: 0.2em 0;
+}
+
+.tc-ctl-edit .tc-ctl-edit-mode input[type=radio] {
+    display: none;
+}
+
+    .tc-ctl-edit .tc-ctl-edit-mode input[type=radio] ~ span {
+        position: absolute;
+        display: block;
+        width: 100%;
+        height: 100%;
+        line-height: 2em;
+        text-align: center;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--tab-border-color);
+        background-color: var(--main-bg-color);
+        color: var(--tab-color);
+        cursor: pointer;
     }
 
-    .tc-ctl-edit-mode input[type=radio] {
-        display: none;
+    .tc-ctl-edit .tc-ctl-edit-mode input[type=radio]:disabled ~ span {
+        color: var(--tab-disabled-color);
+        border-top: 1px solid var(--tab-disabled-border-color);
+        border-bottom: 1px solid var(--tab-disabled-border-color);
+        cursor: default;
     }
 
-        .tc-ctl-edit-mode input[type=radio] ~ span {
-            position: absolute;
-            display: block;
-            width: 100%;
-            height: 100%;
-            line-height: 2em;
-            text-align: center;
-            border-radius: var(--border-radius);
-            border: 1px solid var(--tab-border-color);
-            background-color: var(--main-bg-color);
-            color: var(--tab-color);
-            cursor: pointer;
-        }
-
-        .tc-ctl-edit-mode input[type=radio]:disabled ~ span {
-            color: var(--tab-disabled-color);
-            border-top: 1px solid var(--tab-disabled-border-color);
-            border-bottom: 1px solid var(--tab-disabled-border-color);
-            cursor: default;
-        }
-
-        .tc-ctl-edit-mode input[type=radio] ~ span:before {
-            position: absolute;
-            font-family: mapskin;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-modify input[type=radio] ~ span:before {
-        text-indent: 0;
-        content: '\e00f';
+    .tc-ctl-edit .tc-ctl-edit-mode input[type=radio] ~ span:before {
+        position: absolute;
+        font-family: mapskin;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
     }
 
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-point input[type=radio] ~ span:before {
-        text-indent: 0;
-        letter-spacing: 0.2em;
-        font-size: 1.2em;
-        font-family: sitna;
-        content: '\e90a';
-    }
+.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-modify input[type=radio] ~ span:before {
+    text-indent: 0;
+    font-family: var(--icon-font-family);
+    content: var(--icon-select);
+}
 
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-line input[type=radio] ~ span:before {
-        text-indent: 0;
-        letter-spacing: 0.2em;
-        font-size: 1.2em;
-        font-family: sitna;
-        content: '\e90b';
-    }
+.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-point input[type=radio] ~ span:before {
+    text-indent: 0;
+    letter-spacing: 0.2em;
+    font-size: 1.2em;
+    font-family: var(--icon-font-family);
+    content: '\e90a';
+}
 
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-polygon input[type=radio] ~ span:before {
-        text-indent: 0;
-        letter-spacing: 0.2em;
-        font-size: 1.2em;
-        font-family: sitna;
-        content: '\e90c';
-    }
+.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-line input[type=radio] ~ span:before {
+    text-indent: 0;
+    letter-spacing: 0.2em;
+    font-size: 1.2em;
+    font-family: var(--icon-font-family);
+    content: '\e90b';
+}
 
-    .tc-ctl-edit-mode label.tc-ctl-edit-btn-other input[type=radio] ~ span:before {
-        text-indent: 0;
-        content: '\e032'
-    }
+.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-polygon input[type=radio] ~ span:before {
+    text-indent: 0;
+    letter-spacing: 0.2em;
+    font-size: 1.2em;
+    font-family: var(--icon-font-family);
+    content: '\e90c';
+}
+
+.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-other input[type=radio] ~ span:before {
+    text-indent: 0;
+    content: '\e032'
+}
 
 .tc-ctl-edit-btn-new {
     border-top-left-radius: var(--border-radius);
@@ -120,7 +122,7 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
     text-align: center;
 }
 
-    .tc-ctl-edit h2 {
+    .tc-ctl.tc-ctl-edit h2 {
         text-align: left;
     }
 
@@ -157,7 +159,7 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
     padding-bottom: 0;
 }
 
-.tc-ctl-edit-modify > button {
+.tc-ctl-edit-modify > button.tc-ctl-btn {
     width: calc(33.333% - 0.2em);
 }
 
@@ -207,7 +209,7 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
 }
 
     .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-import:before {
-        font-family: sitna;
+        font-family: var(--icon-font-family);
         content: '\e901';
     }
 
@@ -218,8 +220,8 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
 }
 
     .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-dl:before {
-        font-family: sitna;
-        content: '\e902';
+        font-family: var(--icon-font-family);
+        content: var(--icon-download);
     }
 
 .tc-ctl-edit-import {
@@ -305,7 +307,7 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
         }
 
             .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox] + label:before {
-                font-family: sitna;
+                font-family: var(--icon-font-family);
                 font-size: 1.2em;
                 margin-left: 0.5em;
                 display: inline-block;

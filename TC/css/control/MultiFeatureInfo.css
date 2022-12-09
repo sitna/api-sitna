@@ -7,6 +7,7 @@
     font-size: 0.9em;
     line-height: 1.8em;
     display: flex;
+    margin: 0.2em;
 }
 
     .tc-ctl-m-finfo-select label {
@@ -85,14 +86,18 @@
             margin-left: 0.5em;
         }
 
+        .tc-map .tc-ctl-m-finfo-select .tc-icon-btn.tc-hidden {
+            display: none;
+        }
+
 .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-dl:before {
-    content: '\e903';
-    font-family: sitna;
+    font-family: var(--icon-font-family);
+    content: var(--icon-download-all);
 }
 
 .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-remove:before {
-    content: '\e90d';
-    font-family: sitna;
+    font-family: var(--icon-font-family);
+    content: var(--icon-delete);
 }
 
 @media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (min--moz-device-pixel-ratio:0) and (min-height: 40em) {

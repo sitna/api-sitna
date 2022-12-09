@@ -21,7 +21,7 @@
         position: absolute;
         width: 1.2em;
         height: 1.2em;
-        font-family: 'sitna';
+        font-family: var(--icon-font-family);
         content: '\e91b';
         margin-right: 0.2em;
     }

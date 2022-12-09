@@ -31,16 +31,16 @@
     color: var(--text-main-color);
 }
 
-ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
+.tc-ctl-finfo ul.tc-ctl-finfo-services, .tc-ctl-finfo ul.tc-ctl-finfo-layers, .tc-ctl-finfo ul.tc-ctl-finfo-features {
     padding: 0;
     margin: 0;
 }
 
-    ul.tc-ctl-finfo-services > li {
+    .tc-ctl-finfo ul.tc-ctl-finfo-services > li {
         width: 100%;
     }
 
-    ul.tc-ctl-finfo-services > li, ul.tc-ctl-finfo-layers > li, ul.tc-ctl-finfo-features > li {
+    .tc-ctl-finfo ul.tc-ctl-finfo-services > li, .tc-ctl-finfo ul.tc-ctl-finfo-layers > li, .tc-ctl-finfo ul.tc-ctl-finfo-features > li {
         list-style-type: none;
         display: inline-block;
     }
@@ -75,7 +75,7 @@ ul.tc-ctl-finfo-services, ul.tc-ctl-finfo-layers, ul.tc-ctl-finfo-features {
     overflow-x: hidden;
 }
 
-.tc-ctl-finfo .tc-ctl-finfo-result table {
+.tc-ctl-finfo .tc-ctl-finfo-result table:not(.complexAttr) {
     margin: 0.5em;
 }
 
@@ -198,13 +198,14 @@ audio.tc-audio-attr {
 
 .tc-ctl-finfo ul.tc-ctl-finfo-features li {
     position: relative;
+    padding-top: 0.2em;
 }
 
     .tc-ctl-finfo ul.tc-ctl-finfo-features li table {
         transition: border .3s ease;
     }
 
-    .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table {
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table:not(.complexAttr) {
         cursor: zoom-in;
         outline: 0.2em var(--main-hl-color) solid;
     }
@@ -221,13 +222,13 @@ audio.tc-audio-attr {
 
 .tc-ctl-finfo-elev:before {
     margin-right: 0.5em;
-    font-family: sitna;
-    content: '\e918';
+    font-family: var(--icon-font-family);
+    content: var(--icon-elevation);
 }
 
 .tc-ctl-finfo-height:before {
     margin-right: 0.5em;
-    font-family: sitna;
+    font-family: var(--icon-font-family);
     content: '\e919';
 }
 
@@ -243,12 +244,16 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
 
 .tc-ctl-finfo-btn {
     order: 2;
+    display: flex;
+}
+
+.tc-ctl-popup-menu .tc-ctl-finfo-btn {
+    flex-direction: column;
 }
 
     .tc-ctl-finfo-btn button,
-    .tc-ctl-finfo-btn label {
+    .tc-ctl-finfo-btn input[type=checkbox] {
         display: inline-block;
-        font-size: 1.2em;
         width: 1.2em;
         height: 1.2em;
         line-height: 1.2em;
@@ -260,51 +265,40 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
     }
 
         .tc-ctl-finfo-btn button.tc-hidden,
-        .tc-ctl-finfo-btn label.tc-hidden {
+        .tc-ctl-finfo-btn input[type=checkbox].tc-hidden {
             display: none;
         }
 
 .tc-icon-btn.tc-ctl-finfo-btn-dl:before {
-    font-family: 'sitna';
-    content: '\e903';
+    font-family: var(--icon-font-family);
+    content: var(--icon-download-all);
 }
 
 .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] {
     display: none;
 }
 
-    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] + label {
+    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] {
         display: inline-flex;
     }
 
-        .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] + label:before {
-            box-sizing: border-box;
-            border-radius: calc(var(--border-radius) / 2);
-            color: var(--cb-color);
-            background-color: var(--cb-bg-color);
-            font-family: sitna;
+        .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:before {
+            font-family: var(--icon-font-family);
             content: '\e91f';
         }
 
-    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:checked + label:before {
+    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:checked:before {
         content: '\e91e';
-        color: var(--cb-checked-color);
-        background-color: var(--cb-checked-bg-color);
-    }
-
-    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:checked + label:before {
-        color: #ffffff;
-        background-color: var(--win-btn-color);
     }
 
 .tc-icon-btn.tc-ctl-finfo-btn-zoom-all:before {
-    font-family: 'sitna';
+    font-family: var(--icon-font-family);
     content: '\e90e';
 }
 
 .tc-icon-btn.tc-ctl-finfo-btn-del-all:before {
-    font-family: 'sitna';
-    content: '\e90d';
+    font-family: var(--icon-font-family);
+    content: var(--icon-delete);
 }
 
 .tc-modal.tc-ctl-finfo-img-dialog.tc-visible {
