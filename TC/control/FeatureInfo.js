@@ -3,6 +3,7 @@
   * Opciones de control de obtención de información de entidades de mapa por click.
   * @typedef FeatureInfoOptions
   * @see MapControlOptions
+  * @see MultiFeatureInfoModeOptions
   * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a los clics hechos en el mapa desde el que se carga.
   * Como máximo puede haber solamente un control activo en el mapa en cada momento.
   * @property {boolean} [persistentHighlights] - Cuando el control `featureInfo` muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
@@ -29,11 +30,13 @@
   * </script> 
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import FeatureInfoCommons from './FeatureInfoCommons';
 
-if (!TC.control.FeatureInfoCommons) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
 (function () {
     TC.control.FeatureInfo = function () {
@@ -51,7 +54,6 @@ if (!TC.control.FeatureInfoCommons) {
 
     var roundCoordinates = function roundCoordinates(obj, precision) {
         var result;
-        var n = 20;
         if (Array.isArray(obj)) {
             result = obj.slice();
             for (var i = 0, len = result.length; i < len; i++) {
@@ -81,11 +83,11 @@ if (!TC.control.FeatureInfoCommons) {
         });
     };
 
-    ctlProto.callback = function (coords, xy) {
+    ctlProto.callback = function (coords, _xy) {
         const self = this;
 
         self.querying = true;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             const elevationTool = self.getElevationTool();
             elevationTool.then(function (tool) {
                 if (tool) {
@@ -147,7 +149,6 @@ if (!TC.control.FeatureInfoCommons) {
                     }
                 });
             }
-
             else {
                 resolve();
             }
@@ -156,7 +157,7 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.sendRequest = function (filter) {
         const self = this;
-        return self.callback(filter.getCoords());
+        return self.callback(filter.getCoordinates());
     };
 
     ctlProto.responseCallback = function (options) {
@@ -194,12 +195,12 @@ if (!TC.control.FeatureInfoCommons) {
                 if (self.sharedFeatureInfo) {
                     self.div.querySelectorAll('ul.' + self.CLASS + '-services li').forEach(function (li) {
                         li.classList.add(TC.Consts.classes.CHECKED);
-                    })
+                    });
                     var sharedFeature;
                     var featureObj = self.sharedFeatureInfo;
                     for (var i = 0, ii = self.info.services.length; i < ii; i++) {
                         var service = self.info.services[i];
-                        if (service.mapLayers.some(function (ml) { return ml.url === featureObj.s })) {
+                        if (service.mapLayers.some(ml => ml.url === featureObj.s)) {
                             for (var j = 0, jj = service.layers.length; j < jj; j++) {
                                 var layer = service.layers[j];
                                 if (layer.name === featureObj.l) {
@@ -248,8 +249,8 @@ if (!TC.control.FeatureInfoCommons) {
                 self.div.querySelectorAll('ul.' + self.CLASS + '-services label, ul.' + self.CLASS + '-services a').forEach(function (label) {
                     label.addEventListener(TC.Consts.event.CLICK, function (e) {
                         e.stopPropagation();
-                    }, { passive: true })
-                })
+                    }, { passive: true });
+                });                
             });
         }
     };
@@ -273,6 +274,21 @@ if (!TC.control.FeatureInfoCommons) {
                 //self.elevationRequest = null;
             });
         }
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                entry.target.querySelectorAll('ul.' + self.CLASS + '-services label, ul.' + self.CLASS + '-services h4, ul.' + self.CLASS + '-services h3 span').forEach(function (h4) {
+                    h4.addEventListener("mouseenter", function (e) {
+                        if (this.offsetWidth < this.scrollWidth) {
+                            this.title = this.childNodes.item(this.tagName === "H4" ? 2 : 0).textContent;
+                        }
+                        else {
+                            this.title = "";
+                        }
+                    }, { passive: true });
+                });
+            }
+        });
+        resizeObserver.observe(self.getDisplayTarget());        
 
         // 26/04/2021 ahora siempre mostramos XY aunque no haya elevación o resultado GFI
         //else if (!self.querying && (!self.info || !self.info.services)) {
@@ -327,8 +343,8 @@ if (!TC.control.FeatureInfoCommons) {
         const self = this;
         if (featureObj) {
             //buscamos si la feature compartida pertenece a alguna de las capas añadidas
-            if (self.map.workLayers.filter(function (item, i) {
-                return item.type === TC.Consts.layerType.WMS && item.url === featureObj.s && item.getDisgregatedLayerNames().indexOf(featureObj.l) >= 0
+            if (self.map.workLayers.filter(function (item, _i) {
+                return item.type === TC.Consts.layerType.WMS && item.url === featureObj.s && item.getDisgregatedLayerNames().indexOf(featureObj.l) >= 0;
             }).length === 0) {
                 TC.error(self.getLocaleString('sharedFeatureNotValid'), TC.Consts.msgErrorMode.TOAST);
                 return;
@@ -373,3 +389,6 @@ if (!TC.control.FeatureInfoCommons) {
     };
 
 })();
+
+const FeatureInfo = TC.control.FeatureInfo;
+export default FeatureInfo;
