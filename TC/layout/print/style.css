@@ -86,7 +86,7 @@ body {
     display: none;
 }
 
-div.tc-map {
+.tc-map {
     overflow: visible;
 }
 
