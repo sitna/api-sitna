@@ -1,7 +1,6 @@
-﻿TC.control = TC.control || {};
-
-if (!TC.control.OfflineMapMaker) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/OfflineMapMaker');
-}
-
-TC.control.CacheBuilder = TC.control.OfflineMapMaker;
+﻿import TC from '../../TC';
+import OfflineMapMaker from './OfflineMapMaker';
+TC.control = TC.control || {};
+TC.control.CacheBuilder = OfflineMapMaker;
+const CacheBuilder = TC.control.CacheBuilder;
+export default CacheBuilder;
