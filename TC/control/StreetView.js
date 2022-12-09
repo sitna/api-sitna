@@ -30,9 +30,13 @@
   * </script>
   */
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 (function () {
     TC.Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
@@ -120,8 +124,8 @@ if (!TC.Control) {
             /////////////////////
             // Activamos StreetView
             var mapRect = ctl.map.div.getBoundingClientRect();
-            var xpos = (((dragRect.left * window.devicePixelRatio) + (dragRect.right * window.devicePixelRatio)) / 2) - (mapRect.left * window.devicePixelRatio);
-            var ypos = (dragRect.bottom * window.devicePixelRatio) - (mapRect.top * window.devicePixelRatio);
+            var xpos = (dragRect.left * window.devicePixelRatio + dragRect.right * window.devicePixelRatio) / 2 - mapRect.left * window.devicePixelRatio;
+            var ypos = dragRect.bottom * window.devicePixelRatio - mapRect.top * window.devicePixelRatio;
             var coords = ctl.map.wrap.getCoordinateFromPixel([xpos, ypos]);
             ctl.callback(coords);
         }
@@ -179,10 +183,10 @@ if (!TC.Control) {
                     const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
                         containment: self.map.div
                     });
-                    drag.on('dragStart', function (e) {
+                    drag.on('dragStart', function (_e) {
                         preset(self);
                     });
-                    drag.on('dragEnd', function (e) {
+                    drag.on('dragEnd', function (_e) {
                         resolve(self);
                         drag.setPosition(0, 0);
                     });
@@ -195,7 +199,7 @@ if (!TC.Control) {
                 self.closeView();
             }, { passive: true });
         }
-            , function (a, b, c) {
+            , function () {
                 TC.error("Error de renderizado StreetView");
             });
 
@@ -207,7 +211,7 @@ if (!TC.Control) {
     ctlProto.render = function () {
         const self = this;
 
-        return self._set1stRenderPromise(new Promise(function (resolve, reject) {
+        return self._set1stRenderPromise(new Promise(function (resolve, _reject) {
             self.renderData(null, function () {
                 self.getRenderedHtml(self.CLASS + '-view', null).then(function (out) {
                     //lo normal sería hacer el resolve después de volcar out en viewDiv
@@ -246,18 +250,18 @@ if (!TC.Control) {
 
         var ondrop = function (feature) {
             if (self._sv) {
-                var bounds = feature.getBounds();                
-                lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.crs, geogCrs);                
+                var bounds = feature.getBounds();
+                const lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.crs, geogCrs);
                 self._sv.setPosition({ lng: lonLat[0], lat: lonLat[1] });
             }
-        }
+        };
 
         var ondrag = function (feature) {
             if (self._sv) {
                 var bounds = feature.getBounds();
                 self._startLonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.crs, geogCrs);
             }
-        }
+        };
 
         var li = self.map.getLoadingIndicator();
         if (li) {
@@ -384,7 +388,7 @@ if (!TC.Control) {
                                                 var pegmanMarker = self.layer.features[0];
 
                                                 delete pegmanMarker.options.url;
-                                                pegmanMarker.options.cssClass = 'tc-marker-sv-' + ((Math.round(16.0 * self._sv.getPov().heading / 360) + 16) % 16);
+                                                pegmanMarker.options.cssClass = 'tc-marker-sv-' + (Math.round(16.0 * self._sv.getPov().heading / 360) + 16) % 16;
                                                 pegmanMarker.setStyle(pegmanMarker.options);
                                             }
                                         });
@@ -501,3 +505,6 @@ if (!TC.Control) {
         }
     };
 })();
+
+const StreetView = TC.control.StreetView;
+export default StreetView;
