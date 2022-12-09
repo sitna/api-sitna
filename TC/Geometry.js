@@ -1,13 +1,4 @@
-﻿; var TC = TC || {};
-(function (root, factory) {
-    if (typeof exports === "object") { // CommonJS
-        module.exports = factory();
-    } else if (typeof define === "function" && define.amd) { // AMD
-        define([], factory);
-    } else {
-        root.Geometry = factory();
-    }
-})(TC, function () {
+﻿import TC from '../TC';
 
     // intersect a segment against one of the 4 lines that make up the bbox
     const intersectBox = function (a, b, edge, bbox) {
@@ -63,8 +54,8 @@
                         var xi = ring[i][0], yi = ring[i][1];
                         var xj = ring[j][0], yj = ring[j][1];
 
-                        var intersect = ((yi > point[1]) != (yj > point[1]))
-                            && (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
+                        var intersect = yi > point[1] !== yj > point[1] && 
+                            point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi;
                         if (intersect) result = !result;
                     }
                 }
@@ -74,7 +65,7 @@
                     if (isInside(point, ring[0])) {
                         var insideHole = false;
                         // miramos si está en un agujero
-                        for (var i = 1; i < ring.length; i++) {
+                        for (i = 1; i < ring.length; i++) {
                             if (isInside(point, ring[i])) {
                                 insideHole = true;
                                 break;
@@ -88,7 +79,7 @@
                 else if (Geometry.isMultiRingCollection(ring) && ring.length > 0) {
                     // multipolígono
                     // miramos si está en alguno de los polígonos
-                    for (var i = 0, len = ring.length; i < len; i++) {
+                    for (i = 0; i < ring.length; i++) {
                         if (isInside(point, ring[i])) {
                             result = true;
                             break;
@@ -131,7 +122,7 @@
                     }
                 }
                 return false;
-            }
+            };
             if (flatIntersects(Geometry.getFlatCoordinates(geom1), geom2) || flatIntersects(Geometry.getFlatCoordinates(geom2), geom1)) {
                 return true;
             }
@@ -225,5 +216,5 @@
             return result;
         }
     };
-    return Geometry;
-});
+
+export default Geometry;
