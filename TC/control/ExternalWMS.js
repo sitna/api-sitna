@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.Control = Control;
 
 TC.control.ExternalWMS = function (options) {
     const self = this;
@@ -58,7 +60,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                 url = url.substr(0, url.length - 1);
             }
             return url;
-        }
+        };
 
         const addWMS = function () {
             var url = self.div.querySelector('input').value.trim();
@@ -71,7 +73,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
             }
             else {
                 if (self._addedUrls.some(function (addedUrl) {
-                    return addedUrl.replace(/https?:\/\/|\/\//, '') === url.replace(/https?:\/\/|\/\//, '')
+                    return addedUrl.replace(/https?:\/\/|\/\//, '') === url.replace(/https?:\/\/|\/\//, '');
                 })) {
                     TC.alert(self.getLocaleString('serviceAlreadyAdded'));
                 }
@@ -95,6 +97,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                     }
 
                     const addButton = self.div.querySelector('button');
+                    addButton.setAttribute('type', 'button');
                     addButton.disabled = true;
 
                     var obj = {
@@ -107,25 +110,23 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                     };
                     //URI: recorremos las opciones buscando el servicio que se va a agregar a ver si tiene parametro layerNames
                     for (var i = 0; i < self.options.suggestions.length; i++) {
-                        var _current = self.options.suggestions[i].items.filter(function (item, i) {
-                            return item.url === url;
-                        });
+                        var _current = self.options.suggestions[i].items.filter(item => item.url === url);
                         if (_current.length > 0 && _current[0].layerNames) {
-                            obj["layerNames"] = _current[0].layerNames;
+                            obj.layerNames = _current[0].layerNames;
                             break;
                         }
                     }
 
                     var layer = new TC.layer.Raster(obj);
                     layer.getCapabilitiesPromise().then(function (cap) {
-                        if (typeof (cap.Capability) === 'undefined') {
+                        if (typeof cap.Capability === 'undefined') {
                             TC.alert(self.getLocaleString('noLayersFoundInService'));
                             loadingCtrl.hide();
                             addButton.disabled = false;
                             return;
                         } else {
                             var root = cap.Capability.Layer;
-                            if (root.CRS && root.CRS.indexOf(self.map.crs) == -1 && !self.allowReprojection) {
+                            if (root.CRS && root.CRS.indexOf(self.map.crs) === -1 && !self.allowReprojection) {
                                 //no soportado. avisar y fallar
                                 TC.alert(self.getLocaleString('serviceSrsNotCompatible'));
                                 loadingCtrl.hide();
@@ -219,3 +220,6 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
 
 
 })();
+
+const ExternalWMS = TC.control.ExternalWMS;
+export default ExternalWMS;
