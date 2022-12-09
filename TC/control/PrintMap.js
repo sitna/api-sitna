@@ -17,11 +17,18 @@
   * @property {string} [orientation="portrait"] - Determina la orientación de la página de impresión que contiene la leyenda. Puede tomar el valor `portrait` (vertical) o `landscape` (horizontal).
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+import MapInfo from './MapInfo';
+import Proxification from '../tool/Proxification';
+TC.tool = TC.tool || {};
+TC.tool.Proxification = Proxification;
 
-if (!TC.control.MapInfo) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapInfo');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
+TC.control.MapInfo = MapInfo;
 
 TC.control.PrintMap = function () {
     var self = this;
@@ -99,10 +106,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         ]
                     },
                     layout: {
-                        paddingLeft: function (i, node) { return 0; },
-                        paddingRight: function (i, node) { return 0; },
-                        paddingTop: function (i, node) { return 0; },
-                        paddingBottom: function (i, node) { return 0; }
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
                     }
                 }
             ]
@@ -141,10 +148,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         ]
                     },
                     layout: {
-                        paddingLeft: function (i, node) { return 0; },
-                        paddingRight: function (i, node) { return 0; },
-                        paddingTop: function (i, node) { return 0; },
-                        paddingBottom: function (i, node) { return 0; }
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
                     }
                 }
             ];
@@ -193,10 +200,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         ]
                     },
                     layout: {
-                        paddingLeft: function (i, node) { return 0; },
-                        paddingRight: function (i, node) { return 0; },
-                        paddingTop: function (i, node) { return 0; },
-                        paddingBottom: function (i, node) { return 0; }
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
                     }
                 }
             ]
@@ -235,10 +242,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         ]
                     },
                     layout: {
-                        paddingLeft: function (i, node) { return 0; },
-                        paddingRight: function (i, node) { return 0; },
-                        paddingTop: function (i, node) { return 0; },
-                        paddingBottom: function (i, node) { return 0; }
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
                     }
                 }
             ];
@@ -288,10 +295,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         ]
                     },
                     layout: {
-                        paddingLeft: function (i, node) { return 0; },
-                        paddingRight: function (i, node) { return 0; },
-                        paddingTop: function (i, node) { return 0; },
-                        paddingBottom: function (i, node) { return 0; }
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
                     }
                 }
             ]
@@ -330,10 +337,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         ]
                     },
                     layout: {
-                        paddingLeft: function (i, node) { return 0; },
-                        paddingRight: function (i, node) { return 0; },
-                        paddingTop: function (i, node) { return 0; },
-                        paddingBottom: function (i, node) { return 0; }
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
                     }
                 }
             ];
@@ -382,10 +389,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         ]
                     },
                     layout: {
-                        paddingLeft: function (i, node) { return 0; },
-                        paddingRight: function (i, node) { return 0; },
-                        paddingTop: function (i, node) { return 0; },
-                        paddingBottom: function (i, node) { return 0; }
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
                     }
                 }
             ]
@@ -424,10 +431,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         ]
                     },
                     layout: {
-                        paddingLeft: function (i, node) { return 0; },
-                        paddingRight: function (i, node) { return 0; },
-                        paddingTop: function (i, node) { return 0; },
-                        paddingBottom: function (i, node) { return 0; }
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
                     }
                 }
             ];
@@ -520,7 +527,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         const result = TC.control.MapInfo.prototype.register.call(self, map);
 
         // GLS: Añado el flag al mapa para tenerlo en cuenta cuando se establece la función de carga de imágenes
-        self.map.mustBeExportable = true;
+        self.map.crossOrigin = 'anonymous';
 
         const manageLegendOnZoom = function () {
             var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
@@ -586,12 +593,53 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     self._viewDiv.querySelector(`.${self.CLASS}-view-bottom`).style.top = bounding.height + 'px';
 
                     self.map.toast(self.getLocaleString('print.advice.title') + ': ' + self.getLocaleString('print.advice.desc'), { type: TC.Consts.msgType.INFO, duration: 7000 });
+
+                    // En móviles no se ve el mapa entero, así que escalamos el viewport
+                    bounding = self.map.div.getBoundingClientRect();
+                    if (window.screen.width < bounding.width) {
+                        const zoomOut = window.screen.width / bounding.width;
+                        const zoomIn = bounding.width / window.screen.width;
+                        const viewportMeta = document.querySelector('meta[name="viewport"]');
+                        self._viewportMeta = viewportMeta.getAttribute('content');
+                        viewportMeta.setAttribute('content', `user-scalable=yes, initial-scale=${zoomOut}, minimum-scale=${zoomOut}`);
+                        const toolsStyle = self.getToolsElement().style;
+                        self._toolsTransform = toolsStyle.transform;
+                        self._toolsTransformOrigin = toolsStyle.transformOrigin;
+                        toolsStyle.transform = `scale(${zoomIn}, ${zoomIn})`;
+                        toolsStyle.transformOrigin = '100% 0%';
+                        const toast = document.querySelector('.' + TC.Consts.classes.TOAST_CONTAINER);
+                        if (toast) {
+                            const toastStyle = toast.style;
+                            self._toastTransform = toastStyle.transform;
+                            self._toastTransformOrigin = toastStyle.transformOrigin;
+                            toastStyle.transform = `scale(${zoomIn}, ${zoomIn})`;
+                            toastStyle.transformOrigin = '0% 100%';
+                        }
+                    }
                 }
 
                 self.map.wrap.map.updateSize();
             };
 
             const resetPrinting = function () {
+
+                // Deshacemos el reescalado para la previsualización en móviles
+                if (Object.prototype.hasOwnProperty.call(self, '_viewportMeta')) {
+                    document.querySelector('meta[name="viewport"]').setAttribute('content', self._viewportMeta);
+                    delete self._viewportMeta;
+                    const toolsStyle = self.getToolsElement().style;
+                    toolsStyle.transform = self._toolsTransform;
+                    toolsStyle.transformOrigin = self._toolsTransformOrigin;
+                    delete self._toolsTransform;
+                    delete self._toolsTransformOrigin;
+                    const toast = document.querySelector('.' + TC.Consts.classes.TOAST_CONTAINER);
+                    if (toast) {
+                        toast.style.transform = self._toastTransform;
+                        toast.style.transformOrigin = self._toastTransformOrigin;
+                    }
+                    delete self._toastTransform;
+                    delete self._toastTransformOrigin;
+                }
 
                 var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
                 layout.reset();
@@ -644,11 +692,11 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
         self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.' + self.CLASS + '-btn', print));
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector(`#${self.CLASS}-image-qr-${self.id}`, function (evt) {
+        self.div.addEventListener('click', TC.EventTarget.listenerBySelector(`#${self.CLASS}-image-qr-${self.id}`, function (_evt) {
             self.generateLink();
         }));
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (evt) {
+        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (_evt) {
             if (!self.registeredListeners) {
                 self.generateLink();
             }
@@ -660,406 +708,418 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
     ctlProto.render = function (callback) {
         const self = this;
-        return TC.Control.prototype.renderData.call(self, { controlId: self.id }, callback);
+        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { controlId: self.id }, callback));
     };
 
-    ctlProto.createPdf = function () {
+    ctlProto.createPdf = async function () {
         var self = this;
 
         var loadingCtrl = self.map.getControlsByClass(TC.control.LoadingIndicator)[0];
-        var hasWait = loadingCtrl.addWait();
+        var hasWait = loadingCtrl.addWait();        
+        await import("pdfmake/build/pdfmake");
+        let pdfFonts = await import("pdfmake/build/vfs_fonts");
+        pdfMake.vfs = pdfFonts.pdfMake.vfs;        
+        let result;
+        self.canvas = TC.Util.mergeCanvases(self.map.wrap.getCanvas());
+        var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
+        var printLayout = layout.layoutPDF;
 
-        TC.loadJS(!window.pdfMake, [TC.Consts.url.PDFMAKE], function () {
-            self.canvas = TC.Util.mergeCanvases(self.map.wrap.getCanvas());
+        const createPDF = function (printLayout) {
+            var filename = window.location.host + '_';
+            var title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
 
-            var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
-            var printLayout = layout.layoutPDF;
+            if (title) {
+                filename += title;
+            } else {
+                var currentDate = TC.Util.getFormattedDate(new Date().toString(), true);
+                filename += currentDate;
+            }
 
-            const createPDF = function (printLayout) {
-                var filename = window.location.host + '_';
-                var title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
+            try {
+                pdfMake.createPdf(printLayout).download(filename.replace(/[\\\/:*?"<>\|]/g, "") + '.pdf');
+            } catch (error) {
+                self.map.toast(self.getLocaleString('print.error'), { type: TC.Consts.msgType.ERROR });
+                TC.error(error.message + '  ' + error.stack, TC.Consts.msgErrorMode.EMAIL);
+            }
 
-                if (title) {
-                    filename += title;
-                } else {
-                    var currentDate = TC.Util.getFormattedDate(new Date().toString(), true);
-                    filename += currentDate;
-                }
+            loadingCtrl.removeWait(hasWait);
+        };
 
-                try {
-                    pdfMake.createPdf(printLayout).download(filename.replace(/[\\\/:*?"<>\|]/g, "") + '.pdf');
-                } catch (error) {
-                    self.map.toast(self.getLocaleString('print.error'), { type: TC.Consts.msgType.ERROR });
-                    TC.error(error.message + '  ' + error.stack, TC.Consts.msgErrorMode.EMAIL);
-                }
+        const imageErrorHandling = function (imageUrl) {
+            TC.error(self.getLocaleString('print.error'));
+            TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, TC.Consts.msgErrorMode.EMAIL, 'Error en la impresión'); //Correo de error
+        };
 
-                loadingCtrl.removeWait(hasWait);
+        const getLogo = function () {
+
+            const onLogoError = function () {
+                var logoColumn = getLogoColumn(layout);
+                delete logoColumn.image;
+                logoColumn.text = "";
+                logoColumn.width = 0;
+                return logoColumn;
             };
 
-            const imageErrorHandling = function (imageUrl) {
-                TC.error(self.getLocaleString('print.error'));
-                TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, TC.Consts.msgErrorMode.EMAIL, 'Error en la impresión'); //Correo de error
-            };
+            if (self.options.logo) {
+                return TC.Util.imgToDataUrl(self.options.logo).then(function (result) {
+                    const canvas = result.canvas;
+                    const dataUrl = result.dataUrl;
 
-            const getLogo = function () {
-
-                const onLogoError = function () {
                     var logoColumn = getLogoColumn(layout);
-                    delete logoColumn.image;
-                    logoColumn.text = "";
-                    logoColumn.width = 0;
+                    //URI: si no se define la anchura en el layout calcula la anchura en función de proporción entre ancho y alto de la imagen y el alto de su posición en el PDF
+                    if (!logoColumn.width)
+                        logoColumn.width = (canvas.width / canvas.height) * logoColumn.height;
+                    logoColumn.image = dataUrl;
                     return logoColumn;
-                };
 
-                if (self.options.logo) {
-                    return TC.Util.imgToDataUrl(self.options.logo).then(function (result) {
-                        const canvas = result.canvas;
-                        const dataUrl = result.dataUrl;
+                }, function () {
+                    imageErrorHandling(self.options.logo);
 
-                        var logoColumn = getLogoColumn(layout);
-                        //URI: si no se define la anchura en el layout calcula la anchura en función de proporción entre ancho y alto de la imagen y el alto de su posición en el PDF
-                        if (!logoColumn.width)
-                            logoColumn.width = (canvas.width / canvas.height) * logoColumn.height;
-                        logoColumn.image = dataUrl;
-                        return logoColumn;
-
-                    }, function () {
-                        imageErrorHandling(self.options.logo);
-
-                        return onLogoError();
-                    });
-                } else {
                     return onLogoError();
-                }
+                });
+            } else {
+                return onLogoError();
+            }
+        };
+        const getScaleBar = function () {
+            const onError = function () {
+                var scaleBarColumn = getScaleBarColumn(layout);
+                delete scaleBarColumn.image;
+                scaleBarColumn.text = "";
+                scaleBarColumn.width = "auto";
+                return scaleBarColumn;
             };
-            const getScaleBar = function () {
-                const onError = function () {
+
+            let scaleCtrl = self.map.getControlsByClass(TC.control.ScaleBar)[0];
+            if (scaleCtrl) {
+                var elem = document.getElementsByClassName("ol-scale-line-inner"); // no cogemos el DIV del control ya que contiene los bordes y suman al ancho total
+                var bounding = elem[0].getBoundingClientRect();
+                if (bounding) {
+                    var styling = getComputedStyle(elem[0], null);
+                    var leftBorder = parseInt(styling.getPropertyValue('border-left-width').replace('px', '')) || 0;
+                    var rightBorder = parseInt(styling.getPropertyValue('border-right-width').replace('px', '')) || 0;
+
                     var scaleBarColumn = getScaleBarColumn(layout);
-                    delete scaleBarColumn.image;
-                    scaleBarColumn.text = "";
-                    scaleBarColumn.width = "auto";
+
+                    scaleBarColumn.table = {
+                        widths: [((bounding.width > bounding.height ? bounding.width : bounding.height) - leftBorder - rightBorder) * 0.75], // lo pasamos a pt
+                        body: [
+                            [{ border: [true, false, true, true], text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
+                        ]
+                    };
+
+                    scaleBarColumn.layout = {
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
+                    };
+
                     return scaleBarColumn;
-                };
-
-                let scaleCtrl = self.map.getControlsByClass(TC.control.ScaleBar)[0];
-                if (scaleCtrl) {
-                    var elem = document.getElementsByClassName("ol-scale-line-inner"); // no cogemos el DIV del control ya que contiene los bordes y suman al ancho total
-                    var bounding = elem[0].getBoundingClientRect();
-                    if (bounding) {
-                        var styling = getComputedStyle(elem[0], null);
-                        var leftBorder = parseInt(styling.getPropertyValue('border-left-width').replace('px', '')) || 0;
-                        var rightBorder = parseInt(styling.getPropertyValue('border-right-width').replace('px', '')) || 0;
-
-                        var scaleBarColumn = getScaleBarColumn(layout);
-
-                        scaleBarColumn.table = {
-                            widths: [((bounding.width > bounding.height ? bounding.width : bounding.height) - leftBorder - rightBorder) * 0.75], // lo pasamos a pt
-                            body: [
-                                [{ border: [true, false, true, true], text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
-                            ]
-                        };
-
-                        scaleBarColumn.layout = {
-                            paddingLeft: function (i, node) { return 0; },
-                            paddingRight: function (i, node) { return 0; },
-                            paddingTop: function (i, node) { return 0; },
-                            paddingBottom: function (i, node) { return 0; }
-                        };
-
-                        return scaleBarColumn;
-                    } else {
-                        return onError();
-                    }
                 } else {
                     return onError();
                 }
+            } else {
+                return onError();
+            }
+        };
+        const getLegend = function () {
+            var content = [];
+            var layers = self.map.workLayers.filter(function (layer) {
+                return layer.type === TC.Consts.layerType.WMS && layer.getVisibility();
+            });
+            var legendByGroup = [];
+
+            var _process = function (value, parentLayer, treeLevel) {
+                if (parentLayer.isVisibleByScale(value.name)) { //Si la capa es visible, la mostramos en la leyenda
+                    var src,
+                        srcBase64;
+
+                    //Para las capas cargadas por POST (por ejemplo la búsquedas de Comercio Pamplona)
+                    if (parentLayer.options && parentLayer.options.params && parentLayer.options.params.base64LegendSrc) {
+                        srcBase64 = parentLayer.options.params.base64LegendSrc;
+                    }
+                    else if (value.legend) {
+                        src = value.legend.src;
+                    }
+
+                    result.push({ src: src, title: value.title, level: treeLevel, srcBase64: srcBase64 });
+                }
             };
-            const getLegend = function () {
-                var content = [];
-                var layers = self.map.workLayers.filter(function (layer) {
-                    return layer.type === TC.Consts.layerType.WMS && layer.getVisibility();
-                });
-                var legendByGroup = [];
-
-                var _process = function (value, parentLayer, treeLevel) {
-                    if (parentLayer.isVisibleByScale(value.name)) { //Si la capa es visible, la mostramos en la leyenda
-                        var src,
-                            srcBase64;
-
-                        //Para las capas cargadas por POST (por ejemplo la búsquedas de Comercio Pamplona)
-                        if (parentLayer.options && parentLayer.options.params && parentLayer.options.params.base64LegendSrc) {
-                            srcBase64 = parentLayer.options.params.base64LegendSrc;
-                        }
-                        else if (value.legend) {
-                            src = value.legend.src;
-                        }
-
-                        result.push({ src: src, title: value.title, level: treeLevel, srcBase64: srcBase64 });
+            var _traverse = function (o, func, parentLayer, treeLevel) {
+                if (Array.isArray(o)) {
+                    for (var i = 0; i < o.length; i++) {
+                        _traverse(o[i], func, parentLayer, treeLevel);
                     }
-                };
-                var _traverse = function (o, func, parentLayer, treeLevel) {
-                    if (Array.isArray(o)) {
-                        for (var i = 0; i < o.length; i++) {
-                            _traverse(o[i], func, parentLayer, treeLevel);
+                } else {
+                    if (o && Object.prototype.hasOwnProperty.call(o, 'children') && o.children.length > 0) {
+                        if (o.title || o.name) {
+                            result.push({ header: o.title || o.name, level: treeLevel });
                         }
-                    } else {
-                        if (o && o.hasOwnProperty('children') && o.children.length > 0) {
-                            if (o.title && o.name) {
-                                result.push({ header: o.title, level: treeLevel });
-                            }
-                            _traverse(o.children, func, parentLayer, ++treeLevel);
-                        }
+                        _traverse(o.children, func, parentLayer, ++treeLevel);
                     }
+                }
 
-                    if (o && o.hasOwnProperty('children') && o.children.length == 0) {
-                        func.apply(this, [o, parentLayer, treeLevel]);
-                        treeLevel--;
-                    }
-                };
-                var _getLegendImages = function () {
-                    var imagePromises = [];
+                if (o && Object.prototype.hasOwnProperty.call(o, 'children') && o.children.length === 0) {
+                    func.apply(this, [o, parentLayer, treeLevel]);
+                    treeLevel--;
+                }
+            };
+            var _getLegendImages = function () {
+                var imagePromises = [];
 
-                    for (var i = 0; i < legendByGroup.length; i++) {
-                        var layers = legendByGroup[i].layers;
+                for (var i = 0; i < legendByGroup.length; i++) {
+                    var layers = legendByGroup[i].layers;
 
-                        for (var j = 0; j < layers.length; j++) {
-                            (function (k, l) {
-                                var layer = legendByGroup[k].layers[l];
-                                var src = layer.src || layer.srcBase64;
+                    for (var j = 0; j < layers.length; j++) {
+                        (function (k, l) {
+                            var layer = legendByGroup[k].layers[l];
+                            var src = layer.src || layer.srcBase64;
 
-                                if (src) {
+                            if (src) {
 
-                                    if (!TC.tool || !TC.tool.Proxification) {
-                                        TC.syncLoadJS(TC.apiLocation + 'TC/tool/Proxification');
-                                    }
+                                if (!TC.tool || !TC.tool.Proxification) {
+                                    TC.syncLoadJS(TC.apiLocation + 'TC/tool/Proxification');
+                                }
 
-                                    imagePromises.push(new Promise(function (resolve, reject) {
-                                        var toolProxification = new TC.tool.Proxification(TC.proxify, { allowedMixedContent: true });
-                                        toolProxification.fetchImage(src, { exportable: true }).then(function (img) {
-                                            if (img.complete) {
-                                                var imageDetail = TC.Util.imgTagToDataUrl(img, 'image/png');
-                                                layer.image = { base64: imageDetail.base64, canvas: imageDetail.canvas };
-                                            } else {
-                                                imageErrorHandling(src);
-                                            }
-
-                                            resolve();
-
-                                        }, function (error) {
+                                imagePromises.push(new Promise(function (resolve, reject) {
+                                    var toolProxification = new TC.tool.Proxification(TC.proxify, { allowedMixedContent: true });
+                                    toolProxification.fetchImage(src, { exportable: true }).then(function (img) {
+                                        if (img.complete) {
+                                            var imageDetail = TC.Util.imgTagToDataUrl(img, 'image/png');
+                                            layer.image = { base64: imageDetail.base64, canvas: imageDetail.canvas, height: img.height, width: img.width };
+                                        } else {
                                             imageErrorHandling(src);
-                                            reject(error);
-                                        });
-                                    }));
-                                }
-                            })(i, j);
-                        }
-                    }
-
-                    return imagePromises;
-                };
-
-                layers.forEach(function (layer) {
-                    result = [];
-
-                    var hideTree = layer.options.hideTree;
-
-                    layer.tree = null;
-                    layer.options.hideTree = true;
-
-                    _traverse(layer.getTree(), _process, layer, 0);
-
-                    layer.options.hideTree = hideTree;
-
-                    if (result.length > 0) {
-                        legendByGroup.push({ title: layer.title, layers: result });
-                    }
-                });
-
-                return new Promise(function (resolve, reject) {
-                    Promise.all(_getLegendImages()).then(function () {
-
-                        const getGroupTable = function (group, index) {                            
-                            var rows = [[{ text: group.title, colSpan: 2, alignment: 'left', fontSize: 11, margin: [0, index > 0 ? 10 : 0, 0, 5] }, {}]];
-                            var indentation = 10;
-
-                            rows = rows.concat(group.layers.filter(function (item) {
-                                return item.hasOwnProperty('header') && item.header.trim().toLowerCase() !== group.title.trim().toLowerCase();
-                            }).map(function (item) {
-                                return [{ text: item.header.trim(), colSpan: 2, alignment: 'left', margin: [indentation * item.level, 0, 0, 3] }, {}];
-                            }));
-
-                            const headerRows = rows.length;
-                            var headerItem = null;
-                            var itemIndex = null;
-
-                            const getLayerTable = function (item, index) {
-                                if (item.header) {
-                                    headerItem = item;
-
-                                    if (itemIndex) {
-                                        itemIndex = null;
-                                    }
-                                } else {
-                                    if (!itemIndex) {
-                                        itemIndex = 1;
-                                    }
-
-                                    var position;
-                                    if (headerItem) {
-                                        var headerIndex = rows.map(function (item) { return item[0].text }).indexOf(headerItem.header);
-                                        position = headerIndex + itemIndex++;
-                                    }
-
-                                    if (item.image) {
-                                        var imageWidth = item.image.canvas.width / 2;
-                                        var imageHeight = (imageWidth * item.image.canvas.height / item.image.canvas.width);
-
-                                        var data = [{
-                                            text: item.title,
-                                            fontSize: 9,
-                                            width: 'auto',
-                                            margin: [indentation * item.level, 0, 0, 2]
-                                        }, {
-                                            image: item.image.base64,
-                                            width: imageWidth,
-                                            height: imageHeight,
-                                            margin: [indentation * item.level, 0, 0, 2]
-                                        }];
-
-                                        if (position) {
-                                            rows.splice(position, 0, data);
-                                        } else {
-                                            rows.push(data);
                                         }
 
-                                    } else {
-                                        var data = [{
-                                            text: item.title,
-                                            fontSize: 9,
-                                            colSpan: 2,
-                                            margin: [indentation * item.level, 0, 0, 2]
-                                        }, {}];
+                                        resolve();
 
-                                        if (position) {
-                                            rows.splice(position, 0, data);
-                                        } else {
-                                            rows.push(data);
-                                        }
-                                    }
-                                }
-                            };
-
-                            group.layers.forEach(getLayerTable);
-
-                            content.push({
-                                layout: 'noBorders',
-                                table: {
-                                    dontBreakRows: true,
-                                    keepWithHeaderRows: 1,
-                                    headerRows: headerRows,
-                                    body: rows
-                                }
-                            });
-                        };
-
-                        legendByGroup.map(function (group, index) {
-                            return {
-                                groupIndex: index,
-                                height: group.layers.filter(function (item) {
-                                    return item.image && item.image.canvas;
-                                }).reduce(function (prev, current, index, vector) {
-                                    return prev + vector[index].image.canvas.height;
-                                }, 0)
+                                    }, function (error) {
+                                        imageErrorHandling(src);
+                                        reject(error);
+                                    });
+                                }));
                             }
-                        }).sort(function (a, b) {
-                            if (a.height > b.height) {
-                                return 1;
-                            }
-                            if (a.height < b.height) {
-                                return -1;
-                            }
-                            return 0;
-                        }).forEach(function (groupWithHeight, index) {
-                            getGroupTable(legendByGroup[groupWithHeight.groupIndex], index)
-                        });
-
-                        resolve(content);
-
-                    }, function () {
-                        reject([]);
-                    });
-                });
-            };
-            const drawQR = function () {
-                // GLS: añadimos el QR
-                //QR
-                const cb = document.querySelector(`#${self.CLASS}-image-qr-${self.id}`);
-                if (!cb.disabled && cb.checked) {
-                    const qrTarget = document.querySelector('.' + self.CLASS + '-qrcode');
-                    qrTarget.innerHTML = '';
-                    return self.makeQRCode(qrTarget, options.qrCode.sideLength, options.qrCode.sideLength).then(function (qrCodeBase64) {
-                        if (qrCodeBase64) {
-                            return TC.Util.addToCanvas(self.canvas, qrCodeBase64, { x: self.canvas.width - options.qrCode.sideLength, y: self.canvas.height - options.qrCode.sideLength }, {width: options.qrCode.sideLength, height: options.qrCode.sideLength }).then(function (mapCanvas) {
-                                return mapCanvas;
-                            });
-                        } else {                            
-                            return self.canvas;
-                        }
-                    });
-                } else {
-                    return self.canvas;
-                }
-            };
-
-            const basics = [getLogo, function () {
-                var titleColumn = getTitleColumn(layout);
-                titleColumn.text = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
-                return titleColumn;
-            }, getScaleBar, drawQR];
-
-            Promise.all(basics.map(function (fn) {
-                return fn();
-            })).then(function (basicsDone) {
-
-                if (basicsDone[2].table) { // GLS: ajustamos el ancho del título para arrinconar la escala
-                    const totalWidth = layout.layoutPDF.pageSize.width - (layout.layoutPDF.pageMargins[0] + layout.layoutPDF.pageMargins[2]);
-                    const logoWidth = layout.layoutPDF.content[0].columns[0].width || 0;
-                    const scaleBarColumn = layout.layoutPDF.content[0].columns[2];
-                    const scaleBarWidth = scaleBarColumn.table.widths[0] + 2;
-                    const titleColumn = layout.layoutPDF.content[0].columns[1];
-                    titleColumn.width = totalWidth - logoWidth - scaleBarWidth;
-                    if (logoWidth === 0) {
-                        // Si no hay logo reajustamos texto de título y margen de barra de escala
-                        titleColumn.alignment = "left";
-                        scaleBarColumn.margin[3] = 2;
+                        })(i, j);
                     }
                 }
 
-                var mapPlace = getMap(layout);
-                var canvas = basicsDone[3] || self.canvas;
+                return imagePromises;
+            };
+            layers.forEach(function (layer) {
+                result = [];
+                if (!layer.layerNames || layer.layerNames.length === 0) return;
+                var hideTree = layer.options.hideTree;
 
-                mapPlace.image = canvas.toDataURL();
+                layer.tree = null;
+                layer.options.hideTree = true;
 
-                if (hasLegendToPrint.call(self) && // GLS: validamos que haya capas visibles por escala 
-                    printLayout.content.length == 2) { // GLS: es la primera descarga o hemos resetado la leyenda por algún zoom por lo que no tenemos la leyenda en el layout
+                _traverse(layer.getNestedTree(), _process, layer, 0);
 
-                    const title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
-                    printLayout.content.push({
-                        pageBreak: 'before',
-                        pageOrientation: (self.options.legend && self.options.legend.orientation) || ORIENTATION.PORTRAIT,
-                        text: title.length > 0 ? title : '',
-                        fontSize: 14,
-                        margin: [0, 20, 0, 10]
-                    });
+                layer.options.hideTree = hideTree;
 
-                    getLegend().then(function (content) {
-                        printLayout.content = printLayout.content.concat(content);
-                        createPDF(printLayout);
-                    });
-                } else {
-                    createPDF(printLayout);
+                if (result.length > 0) {
+                    legendByGroup.push({ title: layer.title, layers: result });
                 }
             });
+
+            return new Promise(function (resolve, reject) {
+                Promise.all(_getLegendImages()).then(function () {
+
+                    const getGroupTable = function (group, index) {
+                        var rows = [[{ text: group.title, fontSize:13, style: ["tablegroup"], margin: [0, index > 0 ? 10 : 0, 0, 2] }]];
+                        var indentation = 10;
+                        rows = rows.concat(group.layers.filter(function (item) {
+                            return Object.prototype.hasOwnProperty.call(item, 'header') && item.header.trim().toLowerCase() !== group.title.trim().toLowerCase();
+                        }).map(function (item, _index) {
+                            return [{ text: item.header.trim(), fontSize: Math.max(9, 14 - item.level), margin: [indentation * item.level, 0, 0, 2] }];
+                        }));
+
+                        const headerRows = rows.length;
+                        var headerItem = null;
+                        var itemIndex = null;
+
+                        const getLayerTable = function (item, _index) {
+                            if (item.header) {
+                                headerItem = item;
+
+                                if (itemIndex) {
+                                    itemIndex = null;
+                                }
+                            } else {
+                                if (!itemIndex) {
+                                    itemIndex = 1;
+                                }
+
+                                var position;
+                                if (headerItem) {
+                                    var headerIndex = rows.map(item => item[0].text || "").indexOf(headerItem.header);
+                                    position = headerIndex + itemIndex++;
+                                }
+
+                                if (item.image) {
+                                    itemIndex++;
+                                    var imageWidth = item.image.width* 0.75;//item.image.canvas.width / 2;
+                                    var imageHeight = item.image.height * 0.75;//(imageWidth * item.image.canvas.height / item.image.canvas.width);
+
+                                    const dataLayer = [{
+                                        "ul": [{
+                                            "text": item.title,
+                                            "fontSize": Math.max(9, 14 - item.level),
+                                            "margin": [0 - indentation, 0, 0, 5]
+                                        }, {
+                                            "image": item.image.base64,
+                                            "width": imageWidth,
+                                            "height": imageHeight,
+                                            "margin": [0, 0, 0, 2]
+                                        }
+                                        ],
+                                        "type": "none",
+                                        "margin": [indentation * item.level, 0, 0, 2],
+                                    }];
+
+                                    if (position) {
+                                        rows.splice(position, 0, dataLayer);
+                                        //rows.splice(position + 1, 0, imageLayer);
+                                    } else {
+                                        rows.push(dataLayer);
+                                        //rows.push(imageLayer);
+                                    }
+
+                                } else {
+                                    const data = [{
+                                        text: item.title,
+                                        fontSize: 11,
+                                        margin: [indentation * item.level, 0, 0, 2]
+                                    }];
+
+                                    if (position) {
+                                        rows.splice(position, 0, data);
+                                    } else {
+                                        rows.push(data);
+                                    }
+                                }
+                            }
+                        };
+
+                        group.layers.forEach(getLayerTable);
+
+                        content.push({
+                            layout: 'noBorders',
+                            table: {
+                                dontBreakRows: true,
+                                keepWithHeaderRows: 1,
+                                headerRows: headerRows,
+                                body: rows
+                            }
+                        });
+                    };
+
+                    legendByGroup.map(function (group, index) {
+                        return {
+                            groupIndex: index,
+                            height: group.layers.filter(function (item) {
+                                return item.image && item.image.canvas;
+                            }).reduce(function (prev, current, index, vector) {
+                                return prev + vector[index].image.canvas.height;
+                            }, 0)
+                        }
+                    }).sort(function (a, b) {
+                        if (a.height > b.height) {
+                            return 1;
+                        }
+                        if (a.height < b.height) {
+                            return -1;
+                        }
+                        return 0;
+                    }).forEach(function (groupWithHeight, index) {
+                        getGroupTable(legendByGroup[groupWithHeight.groupIndex], index)
+                    });
+
+                    resolve(content);
+
+                }, function () {
+                    reject([]);
+                });
+            });
+        };
+        const drawQR = function () {
+            // GLS: añadimos el QR
+            //QR
+            const cb = document.querySelector(`#${self.CLASS}-image-qr-${self.id}`);
+            if (!cb.disabled && cb.checked) {
+                const qrTarget = document.querySelector('.' + self.CLASS + '-qrcode');
+                qrTarget.innerHTML = '';
+                return self.makeQRCode(qrTarget, options.qrCode.sideLength, options.qrCode.sideLength).then(function (qrCodeBase64) {
+                    if (qrCodeBase64) {
+                        return TC.Util.addToCanvas(self.canvas, qrCodeBase64, { x: self.canvas.width - options.qrCode.sideLength, y: self.canvas.height - options.qrCode.sideLength }, {width: options.qrCode.sideLength, height: options.qrCode.sideLength }).then(function (mapCanvas) {
+                            return mapCanvas;
+                        });
+                    } else {
+                        return self.canvas;
+                    }
+                });
+            } else {
+                return self.canvas;
+            }
+        };
+
+        const basics = [getLogo, function () {
+            var titleColumn = getTitleColumn(layout);
+            titleColumn.text = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
+            return titleColumn;
+        }, getScaleBar, drawQR];
+
+        Promise.all(basics.map(function (fn) {
+            return fn();
+        })).then(function (basicsDone) {
+
+            if (basicsDone[2].table) { // GLS: ajustamos el ancho del título para arrinconar la escala
+                const totalWidth = layout.layoutPDF.pageSize.width - (layout.layoutPDF.pageMargins[0] + layout.layoutPDF.pageMargins[2]);
+                const logoWidth = layout.layoutPDF.content[0].columns[0].width || 0;
+                const scaleBarColumn = layout.layoutPDF.content[0].columns[2];
+                const scaleBarWidth = scaleBarColumn.table.widths[0] + 2;
+                const titleColumn = layout.layoutPDF.content[0].columns[1];
+                titleColumn.width = totalWidth - logoWidth - scaleBarWidth;
+                if (logoWidth === 0) {
+                    // Si no hay logo reajustamos texto de título y margen de barra de escala
+                    titleColumn.alignment = "left";
+                    scaleBarColumn.margin[3] = 2;
+                }
+            }
+
+            var mapPlace = getMap(layout);
+            var canvas = basicsDone[3] || self.canvas;
+
+            mapPlace.image = canvas.toDataURL();
+
+            if (hasLegendToPrint.call(self) && // GLS: validamos que haya capas visibles por escala 
+                printLayout.content.length === 2) { // GLS: es la primera descarga o hemos resetado la leyenda por algún zoom por lo que no tenemos la leyenda en el layout
+
+                const title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
+                printLayout.content.push({
+                    pageBreak: 'before',
+                    pageOrientation: (self.options.legend && self.options.legend.orientation) || ORIENTATION.PORTRAIT,
+                    text: title.length > 0 ? title : '',
+                    fontSize: 14,
+                    margin: [0, 20, 0, 10]
+                });
+                printLayout.styles = {
+                    "tablegroup": {
+                        bold: true
+                    }
+                }
+                printLayout.defaultStyle={
+                    alignment: 'left'
+                }
+
+                getLegend().then(function (content) {
+                    printLayout.content = printLayout.content.concat(content);
+                    createPDF(printLayout);
+                });
+            } else {
+                createPDF(printLayout);
+            }
         });
     };
 
@@ -1088,4 +1148,12 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         return result;
     };
 
+    ctlProto.getToolsElement = function () {
+        const self = this;
+        return self.map.div.querySelector(`.${self.CLASS}-tools`);
+    };
+
 })();
+
+const PrintMap = TC.control.PrintMap;
+export default PrintMap;
