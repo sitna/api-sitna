@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 (function () {
 
@@ -39,7 +41,7 @@ if (!TC.control.MapContents) {
             }
         }), { passive: true });
 
-        self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function (e) {
+        self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function () {
             self.loadFallbackProjections();
         }), { passive: true });
     };
@@ -61,7 +63,7 @@ if (!TC.control.MapContents) {
     };
 
     ctlProto.getAvailableCRS = function (options) {
-        return this.map.getCompatibleCRS(TC.Util.extend(options || {}, { includeFallbacks: true }))
+        return this.map.getCompatibleCRS(TC.Util.extend(options || {}, { includeFallbacks: true }));
     };
 
     ctlProto.showProjectionChangeDialog = function (options) {
@@ -92,8 +94,8 @@ if (!TC.control.MapContents) {
                     .map((layer) => {
                         return layer.getCompatibleCRS({ normalized: true, includeFallback: true });
                     })
-                    .reduce((prev, current, index, array) => {
-                        return prev.concat(current.filter((l) => { return prev.indexOf(l) < 0 }));
+                    .reduce((prev, current) => {
+                        return prev.concat(current.filter(l => prev.indexOf(l) < 0));
                     });
 
                 const crsLists = (options.layer ? self.map.workLayers.concat(options.layer) : self.map.workLayers)
@@ -126,12 +128,13 @@ if (!TC.control.MapContents) {
                         }
                         else {
                             const button = document.createElement('button');
+                            button.setAttribute('type', 'button');
                             button.textContent = projObj.name + ' (' + projObj.code + ')';
                             button.dataset.crsCode = projObj.code;
                             const li = document.createElement('li');
                             li.appendChild(button);
                             if (blCRSList.filter(function (crs) {
-                                return TC.Util.CRSCodesEqual(crs, projObj.code)
+                                return TC.Util.CRSCodesEqual(crs, projObj.code);
                             }).length === 0) {
                                 // Es un CRS del fallback
                                 hasFallbackCRS = true;
@@ -144,6 +147,7 @@ if (!TC.control.MapContents) {
                 if (hasFallbackCRS) {
                     const li = document.createElement('li');
                     const button = document.createElement('button');
+                    button.setAttribute('type', 'button');
                     button.classList.add(self._cssClasses.LOAD_CRS_BUTTON);
                     button.innerHTML = self.getLocaleString('showOnTheFlyProjections');
                     li.appendChild(button);
@@ -202,7 +206,7 @@ if (!TC.control.MapContents) {
         });
         self._dialogDiv.querySelectorAll('p.' + TC.Consts.classes.WARNING).forEach(function (p) {
             p.classList.remove(TC.Consts.classes.HIDDEN);
-        })
+        });
         self._dialogDiv.querySelectorAll('.' + self._cssClasses.CHANGE).forEach(function (elm) {
             elm.style.display = lis.length > 1 ? '' : 'none';
         });
@@ -212,3 +216,6 @@ if (!TC.control.MapContents) {
     };
 
 })();
+
+const ProjectionSelector = TC.control.ProjectionSelector;
+export default ProjectionSelector;
