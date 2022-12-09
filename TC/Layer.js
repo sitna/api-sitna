@@ -1,4 +1,7 @@
-﻿
+import TC from '../TC';
+import Util from './Util';
+import localforage from 'localforage';
+TC.Util = Util;
 
 /**
  * Opciones de capa.
@@ -101,7 +104,6 @@
  * Capa de mapa. Esta clase no debería instanciarse directamente, sino mediante alguna de las clases que heredan de ella.
  * @class TC.Layer
  * @constructor
- * @async
  * @param {TC.cfg.LayerOptions} [options] Objeto de opciones de configuración de la capa.
  */
 TC.Layer = function (options) {
@@ -163,10 +165,6 @@ TC.Layer = function (options) {
     if (_layer.options.hideTitle === undefined) {
         _layer.options.hideTitle = false;
     }
-
-    _layer._cache = {
-        visibilityStates: {}
-    };
 
     /**
      * Árbol de los componentes de la capa. Estos componentes son distintos según el tipo de capa: así, en una capa WMS son las distintas capas del servicio, 
@@ -251,7 +249,7 @@ TC.Layer.prototype.setOpacity = function (opacity, mute) {
     });
 };
 
-/**
+/*
  * Determina si la capa se puede mostrar en el CRS especificado.
  * @method isCompatible
  * @param {string} crs Cadena con el well-known ID (WKID) del CRS.
@@ -261,7 +259,7 @@ TC.Layer.prototype.isCompatible = function (crs) {
     return true;
 };
 
-/**
+/*
  * Determina si la capa tiene nombres válidos.
  * @method isValidFromNames
  * @return {boolean}
@@ -270,7 +268,7 @@ TC.Layer.prototype.isValidFromNames = function () {
     return true;
 };
 
-/**
+/*
  * Determina si la capa es de tipo raster.
  * @method isRaster
  * @return {boolean}
@@ -291,7 +289,7 @@ TC.Layer.prototype.isRaster = function () {
     return result;
 };
 
-/**
+/*
  * Determina si la capa es visible a la resolución actual. Para ello consulta el documento de capabilities en los casos en que exista.
  * @method isVisibleByScale
  * @return {boolean}
@@ -301,7 +299,7 @@ TC.Layer.prototype.isVisibleByScale = function (name) {
 };
 
 
-/**
+/*
  * Determina si una capa del servicio está establecida en el mapa como visible.
  * @method isVisibleByName
  * @return {boolean}
@@ -310,7 +308,7 @@ TC.Layer.prototype.isVisibleByName = function (name) {
     return true;
 };
 
-/**
+/*
  * <p>Devuelve un árbol de información de la capa. Como mínimo devuelve un nodo raíz con el título de la capa.</p>
  * <p>En capas de servicios WMS es la jerarquía de capas obtenida del documento capabilities. Dependiendo del valor de la propiedad TC.cfg.LayerOptions.{{#crossLink "TC.cfg.LayerOptions/hideTree:property"}}{{/crossLink}}, 
  * puede mostrar un árbol de todas las capas del servicio o solo un árbol de las capas visibles inicialmente.</p>
@@ -350,7 +348,7 @@ TC.Layer.prototype.findNode = function findNode(id, parent) {
 };
 
 
-/**
+/*
  * Establece la visibilidad en el mapa de un elemento asociado a un nodo de árbol de la capa. Dependiendo del tipo de capa este elemento 
  * es una entidad u otra, así, en capas de tipo WMS son capas de servicio, en KML son carpetas y en capas vectoriales genéricas son grupos de marcadores.
  * @method setNodeVisibility
@@ -358,18 +356,68 @@ TC.Layer.prototype.findNode = function findNode(id, parent) {
  * @param {boolean} visible <code>true</code> si se quiere mostrar el elemento, <code>false</code> si se quiere ocultar.
  */
 TC.Layer.prototype.setNodeVisibility = function (id, visible) {
-    this.setVisibility(visible);
+    const self = this;
+    const tree = self.getTree(true);
+
+    const node = self.findNode(id, tree);
+    if (!self.isRoot(node)) {
+        const setState = function (n, state) {
+            n.visibilityState = state;
+            n.children && n.children.forEach(c => setState(c, state));
+        };
+        if (visible) {
+            setState(node, TC.Consts.visibility.VISIBLE);
+
+            let n = node.parent;
+            do {
+                if (n.visibilityState !== TC.Consts.visibility.VISIBLE) {
+                    n.visibilityState = TC.Consts.visibility.HAS_VISIBLE;
+                }
+                n = n.parent;
+            }
+            while (n);
+        }
+        else {
+            setState(node, TC.Consts.visibility.NOT_VISIBLE);
+
+            let n = node.parent;
+            do {
+                if (n.visibilityState === TC.Consts.visibility.HAS_VISIBLE &&
+                    n.children.every(c => c.visibilityState === TC.Consts.visibility.NOT_VISIBLE)) {
+                    n.visibilityState = TC.Consts.visibility.NOT_VISIBLE;
+                }
+                n = n.parent;
+            }
+            while (n);
+        }
+    }
+    return node;
 };
 
-/**
+TC.Layer.prototype.isRoot = function (node) {
+    const self = this;
+    const tree = self.tree || self.getTree(true);
+    return node.uid === tree.uid
+}
+
+/*
  * Obtiene la visibilidad en el mapa de un elemento asociado a un nodo de árbol de la capa. Dependiendo del tipo de capa este elemento 
  * es una entidad u otra, así, en capas de tipo WMS son capas de servicio, en KML son carpetas y en capas vectoriales genéricas son grupos de marcadores.
  * @method getNodeVisibility
  * @param {string} id Identificador del nodo.
  * @return {TC.consts.Visibility}
  */
-TC.Layer.prototype.getNodeVisibility = function (id) {
-    return TC.Consts.visibility.VISIBLE;
+TC.Layer.prototype.getNodeVisibility = function (id, opt_tree) {
+    const self = this;
+    let tree = opt_tree || self.tree;
+    if (!tree) {
+        tree = self.getTree(true);
+    }
+    const node = self.findNode(id, tree);
+    if (node) {
+        return node.visibilityState;
+    }
+    return node;
 };
 
 
@@ -419,7 +467,7 @@ TC.Layer.prototype.stroke = function (geometry, options) {
                 capabilities = { error: serviceException.textContent };
             }
             else {
-                var format = (layer.type === TC.Consts.layerType.WMTS) ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
+                var format = layer.type === TC.Consts.layerType.WMTS ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
                 capabilities = format.read(data);
 
                 //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
@@ -439,7 +487,7 @@ TC.Layer.prototype.stroke = function (geometry, options) {
                                 capLy = capLy[0];
                                 for (var j = 0; j < capLy.TileMatrixSetLink.length; j++) {
                                     var capLink = capLy.TileMatrixSetLink[j];
-                                    matrixId = capLink.TileMatrixSet;
+                                    let matrixId = capLink.TileMatrixSet;
 
                                     var xmlLink;
                                     const xmlLinks = curXmlLy.getElementsByTagName('TileMatrixSetLink');
@@ -490,7 +538,7 @@ TC.Layer.prototype.stroke = function (geometry, options) {
                             else {
                                 capabilities = {
                                     error: 'Web worker error: ' + layer.url
-                                }
+                                };
                                 reject(capabilities.error);
                             }
 
@@ -500,9 +548,9 @@ TC.Layer.prototype.stroke = function (geometry, options) {
                         worker.postMessage({
                             type: layer.type,
                             text: data,
-                            url: (TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation)
+                            url: TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation
                         });
-                    })
+                    });
                 }
                 else {
                     capabilities = data;
@@ -563,7 +611,8 @@ TC.Layer.prototype.stroke = function (geometry, options) {
                 }
             }
 
-            anchor.origin = (anchor.protocol.length === 0 ? window.location.protocol : anchor.protocol) + "//" + anchor.hostname + (anchor.port && (src.indexOf(anchor.port) > -1) ? ':' + anchor.port : '');
+            anchor.origin = anchor.protocol.length === 0 ? window.location.protocol : anchor.protocol +
+                "//" + anchor.hostname + (anchor.port && src.indexOf(anchor.port) > -1 ? ':' + anchor.port : '');
         }
 
         return anchor;
@@ -573,50 +622,45 @@ TC.Layer.prototype.stroke = function (geometry, options) {
         var layer = this;
         return new Promise(function (resolve, reject) {
             // Obtenemos el capabilities almacenado en caché
-            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                const url = srcToURL(layer.url);
-                localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + layer.type + "." + url.href)
-                    .then(function (value) {
-                        if (value) {
-                            resolve(value);
-                        }
-                        else {
-                            reject(Error('Capabilities not in storage: ' + url.href));
-                        }
-                    })
-                    .catch(function () {
-                        reject(Error('Undefined storage error'));
-                    });
-            });
+            const url = srcToURL(layer.url);
+            localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + layer.type + "." + url.href)
+                .then(function (value) {
+                    if (value) {
+                        resolve(value);
+                    }
+                    else {
+                        reject(Error('Capabilities not in storage: ' + url.href));
+                    }
+                })
+                .catch(function () {
+                    reject(Error('Undefined storage error'));
+                });
         });
     };
 
     const storeCapabilities = function (layer, capabilities) {
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
+        // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
+        // Así evitamos que la operación, que es bastante pesada, ocupe tiempo de carga 
+        // (con el efecto secundario de que LoadingIndicator esté un tiempo largo apagado durante la carga)
+        const url = srcToURL(layer.options.url);
+        var capKey = layer.CAPABILITIES_STORE_KEY_PREFIX + layer.type + "." + url.href;
+        var setItem = function () {
+            // GLS: antes de guardar, validamos que es un capabilities sin error
+            if (capabilities.hasOwnProperty("error")) {
+                return;
+            } else {
 
-            // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
-            // Así evitamos que la operación, que es bastante pesada, ocupe tiempo de carga 
-            // (con el efecto secundario de que LoadingIndicator esté un tiempo largo apagado durante la carga)
-            const url = srcToURL(layer.options.url);
-            var capKey = layer.CAPABILITIES_STORE_KEY_PREFIX + layer.type + "." + url.href; 
-            var setItem = function () {
-                // GLS: antes de guardar, validamos que es un capabilities sin error
-                if (capabilities.hasOwnProperty("error")) {
-                    return;
-                } else {
-
-                    layer.getCapabilitiesPromise().then(function () {
-                        localforage.setItem(capKey, capabilities).catch(err => console.log(err));
-                    });
-                }
-            };
-            if (layer.map) {
-                layer.map.loaded(setItem);
+                layer.getCapabilitiesPromise().then(function () {
+                    localforage.setItem(capKey, capabilities).catch(err => console.log(err));
+                });
             }
-            else {
-                setItem();
-            }
-        });
+        };
+        if (layer.map) {
+            layer.map.loaded(setItem);
+        }
+        else {
+            setItem();
+        }
     };
 
     const cleanOgcUrl = function (url) {
@@ -633,9 +677,9 @@ TC.Layer.prototype.stroke = function (geometry, options) {
         return cleanOgcUrl(this.wrap.getGetMapUrl());
     };
 
-    TC.Layer.prototype.getCapabilitiesOnline = getCapabilitiesOnline
-    TC.Layer.prototype.getCapabilitiesFromStorage = getCapabilitiesFromStorage
+    TC.Layer.prototype.getCapabilitiesOnline = getCapabilitiesOnline;
+    TC.Layer.prototype.getCapabilitiesFromStorage = getCapabilitiesFromStorage;
 })();
 
-
-
+const Layer = TC.Layer;
+export default Layer;
