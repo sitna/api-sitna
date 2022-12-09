@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.Consts.event.BEFOREFEATUREMODIFY = "beforefeaturemodify.tc";
 TC.Consts.event.FEATUREMODIFY = "featuremodify.tc";
@@ -145,7 +147,7 @@ TC.inherit(TC.control.Modify, TC.Control);
                             self.unselectFeatures();
                         }
                         setFeatureSelectedState(self, self.getSelectedFeatures());
-                        if (self.layer.features.length === 0) {
+                        if (layer.features.length === 0) {
                             self.setSelectableState(false);
                             self.setTextMode(false);
                         }
@@ -261,11 +263,11 @@ TC.inherit(TC.control.Modify, TC.Control);
                 };
 
                 // Evitamos que salga el teclado virtual en iOS
-                input.onfocus = function (e) {
+                input.onfocus = function (_e) {
                     this.blur();
                 };
 
-                input.onchange = function (e) {
+                input.onchange = function (_e) {
                     this.style.backgroundColor = this.value;
                 };
                 self.map.loaded(function () {
@@ -296,15 +298,11 @@ TC.inherit(TC.control.Modify, TC.Control);
         if (self.wrap) {
             self.wrap.deactivate();
         }
-        //self.trigger(TC.Consts.event.DRAWCANCEL, { ctrl: self });
         if (self._selectBtn) {
             self._selectBtn.classList.remove(TC.Consts.classes.ACTIVE);
             if (self.layer) {
-                self.layer.features.forEach(function (feature) {
-                    feature.toggleSelectedStyle(false);
-                });
+                self.unselectFeatures(self.getSelectedFeatures());
             }
-            //setFeatureUnselectedStyle(self, self.getSelectedFeatures());
         }
     };
 
@@ -360,7 +358,7 @@ TC.inherit(TC.control.Modify, TC.Control);
         const self = this;
         if (self.map) {
             self.setSelectedFeatures([]);
-            self._layerPromise = new Promise(function (resolve, reject) {
+            self._layerPromise = new Promise(function (resolve, _reject) {
                 if (typeof (layer) === "string") {
                     self.map.loaded(function () {
                         self.layer = self.map.getLayer(layer);
@@ -424,7 +422,7 @@ TC.inherit(TC.control.Modify, TC.Control);
         return self;
     };
 
-    ctlProto.styleFunction = function (feature, resolution) {
+    ctlProto.styleFunction = function (feature, _resolution) {
         const self = this;
         var result;
         const mapStyles = self.map.options.styles.selection;
@@ -658,6 +656,7 @@ TC.inherit(TC.control.Modify, TC.Control);
             self.geometryType === TC.Consts.geom.MULTIPOLYGON ||
             self.geometryType === TC.Consts.geom.MULTIPOINT) {
             self._joinedFeatureAttributes = [];
+            let newFeature;
             if (features.length > 1) {
                 var geometries = features.map(function (elm) {
                     self._joinedFeatureAttributes.push(elm.getData());
@@ -666,7 +665,7 @@ TC.inherit(TC.control.Modify, TC.Control);
                 var newGeometry = geometries.reduce(function (a, b) {
                     return a.concat(b);
                 });
-                var newFeature = new features[0].constructor(newGeometry);
+                newFeature = new features[0].constructor(newGeometry);
                 for (var i = 0, len = features.length; i < len; i++) {
                     var feature = features[i];
                     self.layer.removeFeature(feature);
@@ -683,3 +682,6 @@ TC.inherit(TC.control.Modify, TC.Control);
     };
 
 })();
+
+const Modify = TC.control.Modify;
+export default Modify;
