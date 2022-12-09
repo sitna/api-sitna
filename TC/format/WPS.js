@@ -32,7 +32,7 @@ TC.format = TC.format || {};
                 var dataInputs = options.dataInputs;
                 if (dataInputs) {
                     for (var key in dataInputs) {
-                        if (dataInputs.hasOwnProperty(key)) {
+                        if (Object.prototype.hasOwnProperty.call(dataInputs, key)) {
                             var data = dataInputs[key];
                             if (data !== void (0)) {
                                 xml.push(
@@ -79,7 +79,7 @@ TC.format = TC.format || {};
                 var dataInputs = options.dataInputs;
                 if (dataInputs) {
                     for (var key in dataInputs) {
-                        if (dataInputs.hasOwnProperty(key)) {
+                        if (Object.prototype.hasOwnProperty.call(dataInputs, key)) {
                             var data = dataInputs[key];
                             if (data !== void (0)) {
                                 xml.push(
