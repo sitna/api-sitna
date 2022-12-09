@@ -138,11 +138,12 @@ function tXml(S, options) {
 
         // parsing attributes
         var attrFound = false;
+        let name;
         while (S.charCodeAt(pos) !== closeBracketCC) {
             var c = S.charCodeAt(pos);
             if ((c > 64 && c < 91) || (c > 96 && c < 123)) {
                 //if('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(S[pos])!==-1 ){
-                var name = parseName();
+                name = parseName();
                 // search beginning of the string
                 var code = S.charCodeAt(pos);
                 while (code !== singleQuoteCC && code !== doubleQuoteCC && !((code > 64 && code < 91) || (code > 96 && code < 123)) && code !== closeBracketCC) {
@@ -153,8 +154,9 @@ function tXml(S, options) {
                     node.attributes = {};
                     attrFound = true;
                 }
+                let value;
                 if (code === singleQuoteCC || code === doubleQuoteCC) {
-                    var value = parseString();
+                    value = parseString();
                 } else {
                     value = null;
                     pos--;
@@ -167,12 +169,12 @@ function tXml(S, options) {
         // optional parsing of children
         if (S.charCodeAt(pos - 1) !== slashCC) {
             if (node.tagName == "script") {
-                var start = pos + 1;
+                const start = pos + 1;
                 pos = S.indexOf('</script>', pos);
                 node.children = [S.slice(start, pos - 1)];
                 pos += 8;
             } else if (node.tagName == "style") {
-                var start = pos + 1;
+                const start = pos + 1;
                 pos = S.indexOf('</style>', pos);
                 node.children = [S.slice(start, pos - 1)];
                 pos += 7;
@@ -211,7 +213,7 @@ function tXml(S, options) {
     var out = null;
     if (options.attrValue !== undefined) {
         options.attrName = options.attrName || 'id';
-        var out = [];
+        out = [];
 
         while ((pos = findElements()) !== -1) {
             pos = S.lastIndexOf('<', pos);
@@ -444,11 +446,11 @@ console.log("MILLISECONDS",end2-start2);
     };
 
     var flattenOnlineResource = function (olr) {
-        return olr['href'];
+        return olr.href;
     };
 
     var flattenLayerUrls = function (layer, tag) {
-        if (layer.hasOwnProperty(tag)) {
+        if (Object.prototype.hasOwnProperty.call(layer, tag)) {
             var tagObj = layer[tag];
             var urls = tagObj.length ? tagObj : [tagObj];
             for (var i = 0, len = urls.length; i < len; i++) {
@@ -479,12 +481,12 @@ console.log("MILLISECONDS",end2-start2);
     var booleanValues = [false, true];
     var processWMSLayer = function processWMSLayer(layer, crsList) {
         // Transformamos booleanos
-        if (layer.hasOwnProperty('queryable')) {
+        if (Object.prototype.hasOwnProperty.call(layer, 'queryable')) {
             layer.queryable = booleanValues[layer.queryable];
         }
         var bbox;
         // Convertimos EX_GeographicBoundingBox a array
-        if (layer.hasOwnProperty('EX_GeographicBoundingBox')) {
+        if (Object.prototype.hasOwnProperty.call(layer, 'EX_GeographicBoundingBox')) {
             bbox = layer.EX_GeographicBoundingBox;
             layer.EX_GeographicBoundingBox = [
                 parseFloat(bbox.westBoundLongitude),
@@ -494,7 +496,7 @@ console.log("MILLISECONDS",end2-start2);
             ]
         }
         // Convertimos BoundingBox a array
-        if (layer.hasOwnProperty('BoundingBox')) {
+        if (Object.prototype.hasOwnProperty.call(layer, 'BoundingBox')) {
             bbox = layer.BoundingBox;
             bbox = layer.BoundingBox.length ? layer.BoundingBox : [layer.BoundingBox];
             layer.BoundingBox = bbox.map(function (elm) {
@@ -511,7 +513,7 @@ console.log("MILLISECONDS",end2-start2);
             });
         }
         // Convertimos OnlineResource a string
-        if (layer.hasOwnProperty('Attribution') && layer.Attribution.OnlineResource) {
+        if (Object.prototype.hasOwnProperty.call(layer, 'Attribution') && layer.Attribution.OnlineResource) {
             layer.Attribution.OnlineResource = flattenOnlineResource(layer.Attribution.OnlineResource);
         }
         flattenLayerUrls(layer, 'AuthorityURL');
@@ -537,6 +539,7 @@ console.log("MILLISECONDS",end2-start2);
             var children = layer.Layer[1] ? layer.Layer : [layer.Layer];
             layer.Layer = children;
             for (var i = 0, len = children.length; i < len; i++) {
+                children[i].parent = layer;
                 processWMSLayer(children[i], newCrsList);
             }
         }
@@ -580,9 +583,6 @@ console.log("MILLISECONDS",end2-start2);
                         tmslm.MinTileRow = parseInt(tmslm.MinTileRow);
                     }
                 }
-                else {
-                    tmsl.TileMatrixSetLimits = [];
-                }
             }
             if (layer.WGS84BoundingBox) {
                 var lowerCorner = parseCorner(layer.WGS84BoundingBox.LowerCorner);
@@ -602,19 +602,27 @@ console.log("MILLISECONDS",end2-start2);
             contents.TileMatrixSet = [contents.TileMatrixSet];
         }
         var tileMatrixSets = contents.TileMatrixSet;
-        for (var i = 0, len = tileMatrixSets.length; i < len; i++) {
-            var tms = tileMatrixSets[i];
-            tms.SupportedCRS = tms.SupportedCRS.trim();
-            for (var j = 0, lenj = tms.TileMatrix.length; j < lenj; j++) {
-                var tm = tms.TileMatrix[j];
-                tm.MatrixHeight = parseInt(tm.MatrixHeight);
-                tm.MatrixWidth = parseInt(tm.MatrixWidth);
-                tm.TileHeight = parseInt(tm.TileHeight);
-                tm.TileWidth = parseInt(tm.TileWidth);
-                tm.ScaleDenominator = parseFloat(tm.ScaleDenominator);
-                tm.TopLeftCorner = parseCorner(tm.TopLeftCorner);
+        tileMatrixSets.forEach(function (tileMatrixSet) {
+            tileMatrixSet.SupportedCRS = tileMatrixSet.SupportedCRS.trim();
+            if (tileMatrixSet.BoundingBox) {
+                var lowerCorner = parseCorner(tileMatrixSet.BoundingBox.LowerCorner);
+                var upperCorner = parseCorner(tileMatrixSet.BoundingBox.UpperCorner);
+                tileMatrixSet.BoundingBox = [
+                    lowerCorner[0],
+                    lowerCorner[1],
+                    upperCorner[0],
+                    upperCorner[1]
+                ];
             }
-        }
+            tileMatrixSet.TileMatrix.forEach(function (tileMatrix) {
+                tileMatrix.MatrixHeight = parseInt(tileMatrix.MatrixHeight);
+                tileMatrix.MatrixWidth = parseInt(tileMatrix.MatrixWidth);
+                tileMatrix.TileHeight = parseInt(tileMatrix.TileHeight);
+                tileMatrix.TileWidth = parseInt(tileMatrix.TileWidth);
+                tileMatrix.ScaleDenominator = parseFloat(tileMatrix.ScaleDenominator);
+                tileMatrix.TopLeftCorner = parseCorner(tileMatrix.TopLeftCorner);
+            });
+        });
     };
 
     var processDCPVerb = function (dcpVerb) {
@@ -633,7 +641,7 @@ console.log("MILLISECONDS",end2-start2);
             }
             result[i] = {
                 Constraint: verb.Constraint,
-                href: verb['href']
+                href: verb.href
             };
         }
         return result;
@@ -661,11 +669,11 @@ console.log("MILLISECONDS",end2-start2);
             parameters = ["Parameter", "Constraint"],
             a2o = function (a) {
                 return a.reduce(function (result, item, index) {
-                    if (keys.some((k) => { return item.hasOwnProperty(k); })) {
-                        var key = keys.find((k) => { return item.hasOwnProperty(k); });
+                    if (keys.some(k => { return Object.prototype.hasOwnProperty.call(item, k); })) {
+                        var key = keys.find(k => { return Object.prototype.hasOwnProperty.call(item, k); });
                         var objName = (item[key].substring(item[key].indexOf(":") + 1));
                         delete item[key];
-                        result[objName] = item.hasOwnProperty("AllowedValues") && item.AllowedValues.Value || item
+                        result[objName] = Object.prototype.hasOwnProperty.call(item, "AllowedValues") && item.AllowedValues.Value || item
                         return result;
                     }
                     else {
@@ -678,8 +686,11 @@ console.log("MILLISECONDS",end2-start2);
                 if (p instanceof Array) {
                     o = a2o(p);
                 }
-                else
-                    o = p.hasOwnProperty("AllowedValues") && p.AllowedValues.Value && keys.find((k) => { return p.hasOwnProperty(k) }) && (o[p[keys.find((k) => { return p.hasOwnProperty(k) })]] = p.AllowedValues.Value) && o || p
+                else {
+                    o = Object.prototype.hasOwnProperty.call(p, "AllowedValues") &&
+                        p.AllowedValues.Value && keys.find(k => { return Object.prototype.hasOwnProperty.call(p, k) }) &&
+                        (o[p[keys.find(k => { return Object.prototype.hasOwnProperty.call(p, k) })]] = p.AllowedValues.Value) && o || p
+                }
                 return o;
 
             },
@@ -735,7 +746,7 @@ console.log("MILLISECONDS",end2-start2);
                                     var r = {};
                                     if (o instanceof Array)
                                         return a2o(o);
-                                    for (k in o) {
+                                    for (var k in o) {
                                         if (parameters.find((i) => { return k === i })) {
                                             r = Object.assign(r, pp(o[parameters.find((i) => { return k === i })]));
                                         }
@@ -797,73 +808,14 @@ console.log("MILLISECONDS",end2-start2);
                         return a
                 }
                 return {}
-            },
-            n = function (e) {
-                var e = e,
-                    t = e.substring(e.indexOf("://") < 0 ? 0 : e.indexOf("://") + 3);
-                if (TC.capabilities[t]) return Promise.resolve(TC.capabilities[t]);
-                var a = {};
-                return a.SERVICE = "WFS", a.VERSION = "2.0.0", a.REQUEST = "GetCapabilities", new Promise(function (x, y) {
-                    TC.ajax({
-                        url: TC.proxify(e) + "?" + TC.Util.getParamString(a),
-                        method: "GET"
-                    }).then(function (response) {
-                        var e = WFSCapabilities.Parse(response.data),
-                            a = e.Operations.GetCapabilities.DCP && e.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"] || e.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource;
-                        TC.capabilities[a] = e, TC.capabilities[t] = e, x(WFSCapabilities.Parse(response.data))
-                    })
-                })
-            };
+            }
         return {
-            Promises: n,
             Parse: r
         }
     }();
 
-
-    var processFeatureTypesWFS = function (capabilities) {
-        capabilities["FeatureTypes"] = arrayToObject(capabilities.FeatureTypeList.FeatureType, "Name");
-        delete capabilities.FeatureTypeList;
-    };
-
-    var processOperationsWFS = function (capabilities) {
-        capabilities["Operations"] = arrayToObject(capabilities.OperationsMetadata.Operation, "name");
-        delete capabilities.OperationsMetadata;
-    };
-
-    var processFiltersWFS = function (capabilities) {
-        const _keyName = "name";
-        const fncRecursiva = function (obj, objDestino) {
-            if (!isPlainObject(obj)) {
-                for (var key in obj) {
-                    var chdObj = obj[key];
-                    if (chdObj instanceof Array) {
-                        objDestino[key] = Object.assign(objDestino[key] || {}, arrayToObject(chdObj, _keyName));
-                    }
-                    else
-                        fncRecursiva(chdObj, objDestino);
-                }
-            }
-            else {
-                if (obj.hasOwnProperty(_keyName)) {
-                    delete obj[_keyName];
-                    objDestino[_keyName] = obj;
-                }
-                else
-                    objDestino = obj;
-            }
-
-        }
-        capabilities["Filters"] = {};
-        for (var key in capabilities.Filter_Capabilities) {
-            capabilities["Filters"][key] = {};
-            fncRecursiva(capabilities.Filter_Capabilities[key], capabilities["Filters"][key]);
-        }
-        delete capabilities.Filter_Capabilities;
-    };
-
     var postprocessWMS = function (xml) {
-        var capabilities = xml['WMS_Capabilities'] || (xml['?xml'] && (xml['?xml']['WMS_Capabilities'] || xml['?xml']['WMT_MS_Capabilities']));
+        var capabilities = xml.WMS_Capabilities || (xml['?xml'] && (xml['?xml'].WMS_Capabilities || xml['?xml'].WMT_MS_Capabilities));
         if (capabilities) {
             processWMSLayer(capabilities.Capability.Layer);
             var request = capabilities.Capability.Request;
@@ -876,7 +828,7 @@ console.log("MILLISECONDS",end2-start2);
     };
 
     var postprocessWMTS = function (xml) {
-        var capabilities = xml['?xml'] && xml['?xml']['Capabilities'];
+        var capabilities = xml['?xml'] && xml['?xml'].Capabilities;
         if (capabilities) {
             processWMTSLayers(capabilities.Contents);
             processTMS(capabilities.Contents);
@@ -885,7 +837,7 @@ console.log("MILLISECONDS",end2-start2);
         return capabilities;
     };
     var postprocessWFS = function (xml) {
-        var capabilities = xml['WFS_Capabilities'] || (xml['?xml'] && (xml['?xml']['WFS_Capabilities']));
+        var capabilities = xml.WFS_Capabilities || (xml['?xml'] && (xml['?xml'].WFS_Capabilities));
         if (capabilities) {
             capabilities = wfsParser.Parse(capabilities);
             //añadir prefijo a los atributos simples y pue empiecen por http
