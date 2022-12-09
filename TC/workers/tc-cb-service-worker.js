@@ -70,6 +70,7 @@
 
         const action = event.data.action;
         const name = event.data.name;
+        const requestId = event.data.requestId;
         const silent = event.data.silent;
         const urlList = event.data.list;
         switch (action) {
@@ -87,6 +88,7 @@
                                         postMessage({
                                             action: action,
                                             name: name,
+                                            requestId: requestId,
                                             event: 'cached'
                                         });
                                     }
@@ -101,6 +103,7 @@
                                                 postMessage({
                                                     action: action,
                                                     name: name,
+                                                    requestId: requestId,
                                                     event: 'progress',
                                                     count: count,
                                                     total: urlList.length
@@ -111,6 +114,7 @@
                                             postMessage({
                                                 action: action,
                                                 name: name,
+                                                requestId: requestId,
                                                 event: 'error',
                                                 url: url
                                             });
@@ -132,6 +136,7 @@
                             postMessage({
                                 action: action,
                                 name: name,
+                                requestId: requestId,
                                 event: 'deleted'
                             });
                         }
@@ -140,6 +145,7 @@
                         postMessage({
                             action: action,
                             name: name,
+                            requestId: requestId,
                             event: 'error'
                         });
                     }
