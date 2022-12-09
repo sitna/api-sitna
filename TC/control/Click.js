@@ -28,11 +28,13 @@
   * </script>
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import wrap from '../ol/ol';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.control = TC.control || {};
+TC.Control = Control;
+TC.wrap = wrap;
 
 TC.control.Click = function () {
     var self = this;
@@ -75,3 +77,6 @@ TC.inherit(TC.control.Click, TC.Control);
         console.log('[Click][' + coord[0] + ', ' + coord[1] + '][' + point[0] + ', ' + point[1] + ']');
     };
 })();
+
+const Click = TC.control.Click;
+export default Click;
