@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import GeometryFeatureInfo from './GeometryFeatureInfo';
 
-if (!TC.control.GeometryFeatureInfo) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/GeometryFeatureInfo');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.GeometryFeatureInfo = GeometryFeatureInfo;
 
 (function () {
     TC.control.PolygonFeatureInfo = function () {
@@ -19,3 +21,6 @@ if (!TC.control.GeometryFeatureInfo) {
     ctlProto.CLASS = 'tc-ctl-finfo';
 
 })();
+
+const PolygonFeatureInfo = TC.control.PolygonFeatureInfo;
+export default PolygonFeatureInfo;
