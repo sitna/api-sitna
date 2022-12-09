@@ -1,4 +1,8 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Util from '../Util';
+
+TC.Util = Util;
+TC.control = TC.control || {};
 
 // Mixin
 TC.control.infoShare = {
@@ -14,7 +18,7 @@ TC.control.infoShare = {
         if (self._shareCtl) {
             return Promise.resolve(self._shareCtl);
         }
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             self.map.addControl('share', {
                 id: self.getUID(),
                 div: dialogDiv.querySelector('.tc-modal-body .' + self.CLASS + '-share-dialog-ctl'),
@@ -24,7 +28,7 @@ TC.control.infoShare = {
                 self._shareCtl.caller = self;
                 self._shareCtl.extraParams = null;
                 resolve(ctl);
-            })
+            });
         });
     },
 
@@ -39,8 +43,8 @@ TC.control.infoShare = {
         const link = await shareCtl.generateLink();
         const input = shareDiv.querySelector(".tc-url input[type=text]");
         input.value = link;
-        delete input.dataset["update"];
-        delete input.dataset["shortened"];
+        delete input.dataset.update;
+        delete input.dataset.shortened;
         shareDiv.querySelector(".tc-iframe input[type=text]").value = await shareCtl.generateIframe(link);
     },
 
@@ -69,3 +73,6 @@ TC.control.infoShare = {
     }
 
 };
+
+const infoShare = TC.control.infoShare;
+export default infoShare;
