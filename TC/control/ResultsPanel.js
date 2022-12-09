@@ -1,9 +1,13 @@
-﻿
-TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+import Point from '../feature/Point';
+TC.feature = TC.feature || {};
+TC.feature.Point = Point;
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.Consts.event.DRAWCHART = 'drawchart.tc';
 TC.Consts.event.DRAWTABLE = 'drawtable.tc';
@@ -21,7 +25,6 @@ TC.control.ResultsPanel = function () {
 
     self.data = {};
     self.classes = {
-        FA: 'fa',
         SHOW_IN: 'showIn',
         SHOW_OUT: 'showOut',
         RESIZABLE: 'tc-resizable'
@@ -83,7 +86,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
     const isElementVisible = function (elm) {
         const computedStyle = getComputedStyle(elm);
-        return (elm && !elm.hidden && computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden');
+        return elm && !elm.hidden && computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden';
     };
 
     ctlProto.isVisible = function () {
@@ -137,6 +140,12 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         self.div.classList.remove(TC.Consts.classes.HIDDEN);
         self.show('prsidebar-body');
+    };
+
+    const hideResizeHandlers = function (ctl) {
+        document.querySelectorAll('.' + ctl.CLASS + '-resize-handler').forEach((el) => {
+            el.classList.add(TC.Consts.classes.HIDDEN);
+        });
     };
 
     ctlProto.render = function (callback) {
@@ -217,10 +226,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 }
             }
 
-            const collapsedElm = self.div.querySelector(self.content.collapsedClass);
-            //collapsedElm.hidden = false;
-            collapsedElm.classList.add(self.classes.FA);
-
             self.infoDiv = self.div.querySelector('.' + self.CLASS + '-info');
             self.tableDiv = self.div.querySelector('.' + self.CLASS + '-table');
             //self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
@@ -233,41 +238,27 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     }
                 });
             }
-            const hideResizeHandlers = function () {
-                document.querySelectorAll('.' + self.CLASS + '-resize-handler').forEach((el) => {
-                    el.classList.add(TC.Consts.classes.HIDDEN);
-                });
-            };
+
             if (!TC.Util.detectMobile()) {
-                const doResizable = !(self.options.hasOwnProperty("resize") && !self.options.resize);
-                let isResizable;
+                const doResizable = !(Object.prototype.hasOwnProperty.call(self.options, "resize") && !self.options.resize);
                 switch (true) {
                     case self.options.content === "chart" && doResizable: // si es un perfil de elevación
                     case self.options.resize: // si está configurado a true
                     case self.options.content === "table" && self.infoDiv && self.infoDiv.childElementCount > 0 && doResizable: // si es una tabla y es el renderizado de GFI
-                        isResizable = true;
+                        self.resizable = true;
                         self.div.classList.add(self.classes.RESIZABLE);
                         break;
                     default:
-                        isResizable = false;
+                        self.resizable = false;
                         break;
                 }
-                self.map.on(TC.Consts.event.DRAWCHART + ' ' + TC.Consts.event.DRAWTABLE, function (e) {
-                    if (e.control === self) {
-                        if (isResizable) {
-                            self.renderPanelResizable({ target: self.div, preserveAspectRatio: true });
-                        }
-                        else {
-                            hideResizeHandlers();
-                        }
-                    }
-                });
             } else {
-                hideResizeHandlers();
+                hideResizeHandlers(self);
             }
 
-            if (callback && typeof (callback) === "function")
-                callback.call();
+            if (callback && typeof callback === "function") {
+                callback();
+            }
         });
     };
 
@@ -298,7 +289,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                 right: '.tc-ctl-p-results-resize-handler',
                                 bottom: '.tc-ctl-p-results-resize-handler'
                             },
-                            cursorChecker(action, interactable, element, interacting) {
+                            cursorChecker(_action, _interactable, element, _interacting) {
                                 let cursor = "";
                                 let currentHandlers = element.querySelectorAll(':hover');
                                 currentHandlers.forEach(function (handler) {
@@ -341,6 +332,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                                 width: `${event.target.getBoundingClientRect().width}px`,
                                                 height: `${event.rect.height}px`
                                             });
+                                            break;
                                         default:
                                             break;
                                     }
@@ -370,7 +362,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             const newSize = {
                 width: chartWrapperBounding.width,
                 height: chartWrapperBounding.height
-            }
+            };
             return newSize;
         }
     };
@@ -413,9 +405,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         const self = this;
 
         const collapsedElm = self.div.querySelector(self.content.collapsedClass);
-        if (!isElementVisible(collapsedElm)) { // ya está minimizado
-            collapsedElm.classList.add(self.classes.FA);
-            collapsedElm.hidden = false;
+        if (collapsedElm.classList.contains(TC.Consts.classes.HIDDEN)) { // ya está minimizado
+            collapsedElm.classList.remove(TC.Consts.classes.HIDDEN);
 
             self.hide('prsidebar-body');
             self.show('prcollapsed-max');
@@ -428,8 +419,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         const self = this;
 
         const collapsedElm = self.div.querySelector(self.content.collapsedClass);
-        if (isElementVisible(collapsedElm)) { // ya está maximizado
-            collapsedElm.hidden = true;
+        if (!collapsedElm.classList.contains(TC.Consts.classes.HIDDEN)) { // ya está maximizado
+            collapsedElm.classList.add(TC.Consts.classes.HIDDEN);
 
             self.show('prsidebar-body');
             self.hide('prcollapsed-max');
@@ -467,21 +458,21 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             body.querySelectorAll('video,audio,iframe').forEach(elm => elm.remove());
 
             const collapsedElm = self.div.querySelector(self.content.collapsedClass);
-            collapsedElm.hidden = true;
-            collapsedElm.classList.remove(self.classes.FA);
+            collapsedElm.classList.add(TC.Consts.classes.HIDDEN);
 
             let resizable = document.querySelector("." + self.classes.RESIZABLE);
             if (resizable) {
                 resizable.style = "";
             }
 
-            self.map.trigger(TC.Consts.event.RESULTSPANELCLOSE, { control: self });
+            self.map.trigger(TC.Consts.event.RESULTSPANELCLOSE, { control: self, feature: self.currentFeature });
         }
     };
 
     ctlProto.openChart = function (data) {
         const self = this;
 
+        self.onOpen();
         self.div.classList.remove(TC.Consts.classes.HIDDEN);
 
         // Cerramos el resto de los perfiles
@@ -511,13 +502,11 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     div: self.div.querySelector('.' + ctlProto.CLASS + '-chart')
                 });
             }
-        } else {
-            self.map.toast(options.msg);
         }
     };
 
     const formatYAxis = function (d, locale) {
-        let y = (parseInt(d.toFixed(0)) || 0);
+        let y = parseInt(d.toFixed(0)) || 0;
         return y.toLocaleString(locale) + ' m';
     };
 
@@ -588,7 +577,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             top: 13, // por el nuevo diseño del tooltip añado 13  //data.secondaryElevationProfileChartData[0] ? 10 : 0,
                             right: 15,
                             bottom: 0,
-                            left: 45,
+                            left: 45
                         },
                         legend: legendOptions
                     }, self.createChartOptions(data));
@@ -608,12 +597,12 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                     }
                     if (self.chart.tooltip) {
                         chartOptions.tooltip = {
-                            position: function (data, width, height, element) {
+                            position: function (_data, _width, _height, element) {
                                 let container = document.querySelector('.c3-tooltip-container');
                                 let chartOffsetX = document.querySelector(".c3").getBoundingClientRect().left;
                                 let graphOffsetX = document.querySelector(".c3 g.c3-axis-y").getBoundingClientRect().right;
                                 let tooltipWidth = container.clientWidth;
-                                let x = (parseInt(d3.mouse(element)[0])) + graphOffsetX - chartOffsetX - Math.floor(tooltipWidth / 2);
+                                let x = parseInt(d3.mouse(element)[0]) + graphOffsetX - chartOffsetX - Math.floor(tooltipWidth / 2);
 
                                 // alto del tooltipOnBottom
                                 let xAxisHeight = document.querySelector(".c3 g.c3-axis-x").getBoundingClientRect().height + 2;
@@ -625,17 +614,17 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             },
                             contents: function (d) {
                                 var fn = self.chart.tooltip;
-                                if (typeof (fn) !== "function")
+                                if (typeof fn !== "function")
                                     fn = TC.Util.getFnFromString(self.chart.tooltip);
                                 return fn.call(eval(self.chart.ctx), d);
                             }
-                        }
+                        };
                     }
 
                     if (self.chart && self.chart.onmouseout) {
                         chartOptions.onmouseout = function () {
                             var fn = self.chart.onmouseout;
-                            if (typeof (fn) !== "function")
+                            if (typeof fn !== "function")
                                 fn = TC.Util.getFnFromString(self.chart.onmouseout);
                             fn.call(eval(self.chart.ctx));
                         };
@@ -742,6 +731,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     ctlProto.openTable = function () {
         var self = this;
 
+        self.onOpen();
         self.div.classList.remove(TC.Consts.classes.HIDDEN);
 
         var data = arguments[0];
@@ -752,26 +742,26 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 css = data.css;
             }
             var callback = data.callback;
-            var columns = data.columns, data = data.data;
+            var columns = data.columns;
 
-            if (data && data.length > 0) {
+            if (data.data && data.data.length > 0) {
                 //Si no recibe columnas, las extrae de las claves del primer objeto de la colección de datos
                 if (!columns) {
                     columns = [];
-                    for (var k in data[0]) {
+                    for (var k in data.data[0]) {
                         columns.push(k);
                     }
                 }
 
                 //deleteColumns();
-                
+
                 self.tableData = {
                     columns: columns,
-                    results: data,
+                    results: data.data,
                     css: css,
                     callback: callback,
                     sort: data.sort ? {} : null
-                }
+                };
                 var scrollPosition = null;
                 const _sort = (tableData, field, order) => {
                     var sortedDataTable = tableData;
@@ -783,15 +773,23 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             const valorA = a.properties[field] || "";
                             const valorB = b.properties[field] || "";
                             if (order)
-                                return valorA < valorB ? -1 : (valorA == valorB ? 0 : 1);
+                                if (typeof (valorA) === "string")
+                                    return valorA.localeCompare(valorB)
+                                else
+                                    return valorA < valorB ? -1 : (valorA == valorB ? 0 : 1);
                             else
-                                return valorA < valorB ? 1 : (valorA == valorB ? 0 : -1);
+                                if (typeof (valorB) === "string")
+                                    return valorB.localeCompare(valorA)
+                                else
+                                    return valorA < valorB ? 1 : (valorA == valorB ? 0 : -1);
                         });
-						
-                        sortedDataTable =Object.assign({},tableData,{results: mappedArr.map(function (el, i) {
-                            return Object.assign({}, el.properties, { index:el.index});
-                        })}); 
-                        sortedDataTable.sort = { field: field, order: order }; 
+
+                        sortedDataTable = Object.assign({}, tableData, {
+                            results: mappedArr.map(function (el) {
+                                return Object.assign({}, el.properties, { index: el.index });
+                            })
+                        });
+                        sortedDataTable.sort = { field: field, order: order };
                     }
                     self.getRenderedHtml(self.CLASS + '-table', sortedDataTable).then(function (html) {
                         const table = self.div.querySelector('.' + self.CLASS + '-table');
@@ -802,21 +800,22 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         if (tableData.callback) {
                             tableData.callback(table);
                         }
-                        table.querySelectorAll("thead th").forEach((th) => {
-                            th.addEventListener("click", (e) => {
-                                scrollPosition = e.target.offsetParent.scrollLeft;
-                                if (sortedDataTable.sort) {
-                                    if (sortedDataTable.sort.field === e.target.innerText && sortedDataTable.sort.order)
-                                        _sort(tableData, e.target.innerText, false);
-                                    else if (sortedDataTable.sort.field === e.target.innerText && !sortedDataTable.sort.order) {
-                                        _sort(tableData, e.target.innerText, true);
-                                    } else {
-                                        _sort(tableData, e.target.innerText, true);
-                                    }
+                        if (sortedDataTable.sort) {
+                            table.querySelectorAll("thead th").forEach(th => {
+                                th.addEventListener("click", e => {
+                                    scrollPosition = e.target.offsetParent.scrollLeft;
+                                    const field = e.target.dataset.orderField || e.target.innerText
 
-                                } else _sort(tableData, e.target.innerText, true);
-                            })
-                        })
+                                    if (sortedDataTable.sort.field === field && sortedDataTable.sort.order)
+                                        _sort(tableData, field, false);
+                                    else if (sortedDataTable.sort.field === field && !sortedDataTable.sort.order) {
+                                        _sort(tableData, field, true);
+                                    } else {
+                                        _sort(tableData, field, true);
+                                    }
+                                });
+                            });
+                        }
                         closeOpenedTableResultsPanel.call(self);
 
                         self.map.trigger(TC.Consts.event.DRAWTABLE, { control: self });
@@ -824,8 +823,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             table.scrollLeft = scrollPosition;
                         }
                     });
-                }
-                _sort(self.tableData);                
+                };
+                _sort(self.tableData);
 
                 self.div.querySelector('.' + self.CLASS + '-chart').style.display = 'none';
                 self.div.querySelector('.' + self.CLASS + '-info').style.display = 'none';
@@ -837,7 +836,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
     ctlProto.open = function (html, container) {
         const self = this;
-        
+
+        self.onOpen();
         self.div.classList.remove(TC.Consts.classes.HIDDEN);
 
         const toCheck = container || self.div.querySelector('.' + self.CLASS + '-table');
@@ -901,7 +901,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         if (self.options.classes) {
             if (self.options.classes.collapsed) {
-                maximizeElm.querySelector('i.fa-list-alt').classList.add(self.options.classes.collapsed);
+                maximizeElm.querySelector('span.prcollapsed-max-table').classList.add(self.options.classes.collapsed);
             }
         }
 
@@ -913,6 +913,16 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         self.show('prsidebar-body');
         self.hide('prcollapsed-max');
+    };
+
+    ctlProto.onOpen = function () {
+        const self = this;
+        if (self.resizable) {
+            self.renderPanelResizable({ target: self.div, preserveAspectRatio: true });
+        }
+        else {
+            hideResizeHandlers(self);
+        }
     };
 
     ctlProto.loadDataOnChart = function (data) {
@@ -954,7 +964,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                             r.width = parseFloat(panelStyle.width) * 0.95;
                         }
                         else {
-                            r.width = docWidth > 445 ? options.maxWidth || self.CHART_SIZE.MAX_WIDTH : docWidth > 310 ? options.mediumWidth || self.CHART_SIZE.MEDIUM_WIDTH : options.minWidth || self.CHART_SIZE.MIN_WIDTH
+                            r.width = docWidth > 445 ? options.maxWidth || self.CHART_SIZE.MAX_WIDTH : docWidth > 310 ? options.mediumWidth || self.CHART_SIZE.MEDIUM_WIDTH : options.minWidth || self.CHART_SIZE.MIN_WIDTH;
                         }
                         return r;
                     };
@@ -1055,7 +1065,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         result.data.colors.ele2 = 'url(#' + gradIds[gradIds.length - 1] + ')';
                         result.data.axes = {
                             ele: 'y'
-                        };                        
+                        };
 
                         if (eleColumn.every((val) => val === 0)) {
                             result.axis.y.min = options.secondaryElevationProfileChartData[0].min;
@@ -1157,12 +1167,10 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                 let point = self.elevationProfileChartData.coords[e.index];
                                 if (point) {
                                     point = point.slice(0, 2);
-                                    TC.loadJS(!TC.feature || (TC.feature && !TC.feature.Point),
-                                        [TC.apiLocation + 'TC/feature/Point'],
-                                        function () {
-                                            self.map.zoomToFeatures([new TC.feature.Point(point, {})]);
-                                        }
-                                    );
+                                    if (self.map.crs !== self.map.options.utmCrs) {
+                                        point = TC.Util.reproject(point, self.map.options.utmCrs, self.map.crs);
+                                    }
+                                    self.map.zoomToFeatures([new TC.feature.Point(point, {})]);
                                 }
                             });
 
@@ -1181,7 +1189,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                 }
                             }
                         }
-                        
 
 
                         const svgRect = svg.getBoundingClientRect();
@@ -1200,12 +1207,14 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         var setMultilineLabels = function () {
                             var x = d3.scale.ordinal().rangeRoundBands([0, chartSize.width], .1, .3);
                             d3.select('.c3-axis-x').selectAll('text:not(.c3-axis-x-label)')
-                                .call(function (textNode, width) {
+                                .call(function (textNode, _width) {
                                     textNode.each(function () {
                                         textNode.each(function (d, i) {
-                                            if (i == 0) return;
+                                            if (i === 0) {
+                                                return;
+                                            }
 
-                                            d3text = d3.select(this);
+                                            const d3text = d3.select(this);
 
                                             if (d3text.node().childNodes.length === 1) {
                                                 var clone = d3text.select('tspan').node().cloneNode();
@@ -1223,36 +1232,45 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                                     });
                                 }, x.rangeBand());
                         };
-                        if (!d3.select('.c3-axis-x').node().getBoundingClientRect().width) {
+
+                        const xAxisNodeRect = d3.select('.c3-axis-x').node().getBoundingClientRect();
+                        if (!xAxisNodeRect.width) {
 
                             if (self.elevationChartLabelsRAF) {
                                 window.cancelAnimationFrame(self.elevationChartLabelsRAF);
                                 self.elevationChartLabelsRAF = undefined;
                             }
 
-                            function hasSize() {
-                                if (d3.select('.c3-axis-x').length && !(d3.select('.c3-axis-x').node())) {
+                            const hasSize = function () {
+                                const xAxis = d3.select('.c3-axis-x');
+                                const xAxisNode = xAxis.node();
+                                if (xAxis.length && !xAxisNode) {
                                     self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
                                 }
-                                else if (d3.select('.c3-axis-x').length && d3.select('.c3-axis-x').node() &&
-                                    !d3.select('.c3-axis-x').node().getBoundingClientRect().width) {
+                                else if (xAxis.length && xAxisNode &&
+                                    !xAxisNode.getBoundingClientRect().width) {
                                     self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
                                 } else {
                                     window.cancelAnimationFrame(self.elevationChartLabelsRAF);
                                     self.elevationChartLabelsRAF = undefined;
 
-                                    if (((d3.select('.c3-axis-x').node().getBoundingClientRect().width >= chartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) ||
-                                        (d3.select('.c3-axis-x').node().getBoundingClientRect().width * 100 / (chartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) > 90))) {
+                                    const _xAxisNodeRect = xAxisNode.getBoundingClientRect();
+                                    const _yAxisNodeRect = d3.select('.c3-axis-y').node().getBoundingClientRect();
+                                    if (_xAxisNodeRect.width >= chartSize.width - _yAxisNodeRect.width ||
+                                        _xAxisNodeRect.width * 100 / (chartSize.width - _yAxisNodeRect.width) > 90) {
                                         setMultilineLabels();
                                     }
                                 }
-                            }
+                            };
 
                             self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
                         }
-                        else if (((d3.select('.c3-axis-x').node().getBoundingClientRect().width >= chartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) ||
-                            (d3.select('.c3-axis-x').node().getBoundingClientRect().width * 100 / (chartSize.width - d3.select('.c3-axis-y').node().getBoundingClientRect().width) > 90))) {
-                            setMultilineLabels();
+                        else {
+                            const yAxisNodeRect = d3.select('.c3-axis-y').node().getBoundingClientRect();
+                            if (xAxisNodeRect.width >= chartSize.width - yAxisNodeRect.width ||
+                                xAxisNodeRect.width * 100 / (chartSize.width - yAxisNodeRect.width) > 90) {
+                                setMultilineLabels();
+                            }
                         }
 
                         // pasamos el perfil original adelante si no no se aprecian bien las diferencias por el color y si lo gestionamos antes afecta a la leyenda
@@ -1268,7 +1286,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
                         self.div.querySelector('.' + self.CLASS + '-table').style.display = '';
                         self.div.querySelector('.' + self.CLASS + '-info').style.display = '';
-                    }
+                    };
                 }
                 else {
                     result = {
@@ -1289,7 +1307,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         var hoursDifference = Math.floor(diff / 1000 / 60 / 60);
         diff -= hoursDifference * 1000 * 60 * 60;
 
-        d.h = hoursDifference + (daysDifference * 24);
+        d.h = hoursDifference + daysDifference * 24;
 
         var minutesDifference = Math.floor(diff / 1000 / 60);
         diff -= minutesDifference * 1000 * 60;
@@ -1311,7 +1329,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         };
         const p = coords[data[0].index];
         let doneTime;
-        if (coords[0].length == 4 && coords[0][3] > 0 && p) {
+        if (coords[0].length === 4 && coords[0][3] > 0 && p) {
             doneTime = getTime(coords[0][3], p[3]);
         }
         let distance = data[0].x / 1000;
@@ -1321,8 +1339,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             '<span>' +
             data.map((elem, index) => {
                 if (elem) {
-                    return (index === 0 ? '<span data-isNumber class="' + (elem.id === "ele" ? "original" : "mdt") + '">' + getElevationByDataElem(elem) + ' m' + '</span>' :
-                        '<span data-isNumber class="' + (elem.id === "ele" ? "original" : "mdt") + '">' + getElevationByDataElem(elem) + ' m ' + '</span>');
+                    return index === 0 ? '<span data-isNumber class="' + (elem.id === "ele" ? "original" : "mdt") + '">' + getElevationByDataElem(elem) + ' m' + '</span>' :
+                        '<span data-isNumber class="' + (elem.id === "ele" ? "original" : "mdt") + '">' + getElevationByDataElem(elem) + ' m ' + '</span>';
                 } else {
                     return "";
                 }
@@ -1362,25 +1380,25 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         self.wrap.register(map);
 
         if (self.openOn) {
-            self.map.one(self.openOn, function (e, args) {
+            self.map.one(self.openOn, function (e, _args) {
                 self.content.fnOpen.call(self, e.data);
             });
         }
 
         if (self.closeOn) {
-            self.map.one(self.closeOn, function (e, args) {
+            self.map.one(self.closeOn, function (_e, _args) {
                 self.close();
             });
         }
 
         if (self.options.openOn) {
-            self.map.on(self.options.openOn, function (e, args) {
+            self.map.on(self.options.openOn, function (e, _args) {
                 self.content.fnOpen.call(self, e.data);
             });
         }
 
         if (self.options.closeOn) {
-            self.map.on(self.options.closeOn, function (e, args) {
+            self.map.on(self.options.closeOn, function (_e, _args) {
                 self.close();
             });
         }
@@ -1410,42 +1428,38 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     };
 
     ctlProto.exportToExcel = function () {
-        var _ctl = this;
+        const self = this;
 
-        var rows = [_ctl.tableData.columns];
+        var rows = [self.tableData.columns];
 
-        _ctl.tableData.results.forEach(function (value) {
+        self.tableData.results.forEach(function (value) {
             var row = [];
             for (var k in value) {
-                if (value.hasOwnProperty(k) && k !== "Id" && k !== "Geom") { //Las columnas ID y Geom no aparece en la exportaci\u00f3n
+                if (Object.prototype.hasOwnProperty.call(value, k) && k !== "Id" && k !== "Geom") { //Las columnas ID y Geom no aparece en la exportaci\u00f3n
                     row.push(value[k]);
                 }
             }
             rows.push(row);
         });
-        var _fncSave = function (exporter) {
-            var fileName = _ctl.save.fileName ? _ctl.save.fileName : 'resultados.xls';
-            var title = (_ctl.options.titles && _ctl.options.titles.main ? _ctl.options.titles.main : null);
+        TC.loadJS(!TC.tool || !TC.tool.ExcelExport, TC.apiLocation + 'TC/tool/ExcelExport', function saveToExcel() {
+            const exporter = new TC.tool.ExcelExport();
+            var fileName = self.save.fileName ? self.save.fileName : 'resultados.xls';
+            var title = self.options.titles && self.options.titles.main ? self.options.titles.main : null;
             exporter.Save(fileName, rows, title);
-        }
-        if (!TC.Util.ExcelExport) {
-            TC.loadJS(true, TC.apiLocation + 'TC/Util.ExcelExport', function () {
-                _fncSave(new TC.Util.ExcelExport());
-            });
-        }
-        else {
-            _fncSave(new TC.Util.ExcelExport());
-        }
+        });
     };
 
     ctlProto.contentType = {
         TABLE: {
             fnOpen: ctlProto.openTable,
-            collapsedClass: '.fa-list-alt'
+            collapsedClass: '.prcollapsed-max-table'
         },
         CHART: {
             fnOpen: ctlProto.openChart,
-            collapsedClass: '.fa-area-chart'
+            collapsedClass: '.prcollapsed-max-chart'
         }
     };
 })();
+
+const ResultsPanel = TC.control.ResultsPanel;
+export default ResultsPanel;
