@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.Consts.event.POPUP = TC.Consts.event.POPUP || 'popup.tc';
 TC.Consts.event.POPUPHIDE = TC.Consts.event.POPUPHIDE || 'popuphide.tc';
@@ -136,18 +138,18 @@ TC.inherit(TC.control.Popup, TC.Control);
             }).catch(function (err) {
                 reject(err instanceof Error ? err : Error(err));
             });
-        })
+        });
     };
 
     ctlProto.addUIEventListeners = function () {
         const self = this;
-        const closeBtn = self.menuDiv.querySelector(`.${self.CLASS}-close`)
+        const closeBtn = self.menuDiv.querySelector(`.${self.CLASS}-close`);
         if (closeBtn) {
             closeBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.hide();
             }, { passive: true });
         }
-        const shareBtn = self.menuDiv.querySelector(`.${self.CLASS}-share`)
+        const shareBtn = self.menuDiv.querySelector(`.${self.CLASS}-share`);
         if (shareBtn) {
             shareBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 if (self.caller) {
@@ -176,9 +178,9 @@ TC.inherit(TC.control.Popup, TC.Control);
                 control: self,
                 feature: self.currentFeature
             };
+            self.setDragged(false);
             self.map.wrap.hidePopup(self);
             self.getContainerElement().innerHTML = '';
-            self.setDragged(false);
             self.map.trigger(TC.Consts.event.POPUPHIDE, data);
         }
     };
@@ -218,3 +220,6 @@ TC.inherit(TC.control.Popup, TC.Control);
     };
 
 })();
+
+const Popup = TC.control.Popup;
+export default Popup;
