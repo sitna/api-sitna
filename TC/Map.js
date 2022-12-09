@@ -1,4 +1,136 @@
-﻿var TC = TC || {};
+import TC from '../TC';
+import Consts from './Consts';
+import EventTarget from './EventTarget';
+import i18n from './i18n';
+import Control from './Control';
+import Raster from './layer/Raster';
+import Vector from './layer/Vector';
+import wrap from './ol/ol';
+import Attribution from './control/Attribution';
+import BasemapSelector from './control/BasemapSelector';
+import CacheBuilder from './control/CacheBuilder';
+import Click from './control/Click';
+import Container from './control/Container';
+import ControlContainer from './control/ControlContainer';
+import Coordinates from './control/Coordinates';
+import DataLoader from './control/DataLoader';
+import Download from './control/Download';
+import Draw from './control/Draw';
+import DrawMeasureModify from './control/DrawMeasureModify';
+import Edit from './control/Edit';
+import Elevation from './control/Elevation';
+import ExternalWMS from './control/ExternalWMS';
+import FeatureDownloadDialog from './control/FeatureDownloadDialog';
+import FeatureInfo from './control/FeatureInfo';
+import FeatureInfoCommons from './control/FeatureInfoCommons';
+import FeatureTools from './control/FeatureTools';
+import FileImport from './control/FileImport';
+import FullScreen from './control/FullScreen';
+import Geolocation from './control/Geolocation';
+import GeometryFeatureInfo from './control/GeometryFeatureInfo';
+import infoShare from './control/infoShare';
+import LayerCatalog from './control/LayerCatalog';
+import Legend from './control/Legend';
+import LineFeatureInfo from './control/LineFeatureInfo';
+import ListTOC from './control/ListTOC';
+import LoadingIndicator from './control/LoadingIndicator';
+import MapContents from './control/MapContents';
+import MapInfo from './control/MapInfo';
+import Measure from './control/Measure';
+import Modify from './control/Modify';
+import MultiFeatureInfo from './control/MultiFeatureInfo';
+import NavBar from './control/NavBar';
+import NavBarHome from './control/NavBarHome';
+import OfflineMapMaker from './control/OfflineMapMaker';
+import OverviewMap from './control/OverviewMap';
+import PolygonFeatureInfo from './control/PolygonFeatureInfo';
+import Popup from './control/Popup';
+import Print from './control/Print';
+import PrintMap from './control/PrintMap';
+import ProjectionSelector from './control/ProjectionSelector';
+import ResultsPanel from './control/ResultsPanel';
+import Scale from './control/Scale';
+import ScaleBar from './control/ScaleBar';
+import ScaleSelector from './control/ScaleSelector';
+import Search from './control/Search';
+import SelectContainer from './control/SelectContainer';
+import Share from './control/Share';
+import StreetView from './control/StreetView';
+import SWCacheClient from './control/SWCacheClient';
+import TabContainer from './control/TabContainer';
+import ThreeD from './control/ThreeD';
+import TOC from './control/TOC';
+import WFSEdit from './control/WFSEdit';
+import WFSQuery from './control/WFSQuery';
+import WorkLayerManager from './control/WorkLayerManager';
+import { JL } from 'jsnlog';
+
+TC.Consts = Consts;
+TC.EventTarget = EventTarget;
+TC.i18n = TC.i18n || i18n;
+TC.Control = Control;
+TC.wrap = wrap;
+TC.control = TC.control || {};
+TC.control.Attribution = Attribution;
+TC.control.BasemapSelector = BasemapSelector;
+TC.control.CacheBuilder = CacheBuilder;
+TC.control.Click = Click;
+TC.control.Container = Container;
+TC.control.ControlContainer = ControlContainer;
+TC.control.Coordinates = Coordinates;
+TC.control.DataLoader = DataLoader;
+TC.control.Download = Download;
+TC.control.Draw = Draw;
+TC.control.DrawMeasureModify = DrawMeasureModify;
+TC.control.Edit = Edit;
+TC.control.Elevation = Elevation;
+TC.control.ExternalWMS = ExternalWMS;
+TC.control.FeatureDownloadDialog = FeatureDownloadDialog;
+TC.control.FeatureInfo = FeatureInfo;
+TC.control.FeatureInfoCommons = FeatureInfoCommons;
+TC.control.FeatureTools = FeatureTools;
+TC.control.FileImport = FileImport;
+TC.control.FullScreen = FullScreen;
+TC.control.Geolocation = Geolocation;
+TC.control.GeometryFeatureInfo = GeometryFeatureInfo;
+TC.control.infoShare = infoShare;
+TC.control.LayerCatalog = LayerCatalog;
+TC.control.Legend = Legend;
+TC.control.LineFeatureInfo = LineFeatureInfo;
+TC.control.ListTOC = ListTOC;
+TC.control.LoadingIndicator = LoadingIndicator;
+TC.control.MapContents = MapContents;
+TC.control.MapInfo = MapInfo;
+TC.control.Measure = Measure;
+TC.control.Modify = Modify;
+TC.control.MultiFeatureInfo = MultiFeatureInfo;
+TC.control.NavBar = NavBar;
+TC.control.NavBarHome = NavBarHome;
+TC.control.OfflineMapMaker = OfflineMapMaker;
+TC.control.OverviewMap = OverviewMap;
+TC.control.PolygonFeatureInfo = PolygonFeatureInfo;
+TC.control.Popup = Popup;
+TC.control.Print = Print;
+TC.control.PrintMap = PrintMap;
+TC.control.ProjectionSelector = ProjectionSelector;
+TC.control.ResultsPanel = ResultsPanel;
+TC.control.Scale = Scale;
+TC.control.ScaleBar = ScaleBar;
+TC.control.ScaleSelector = ScaleSelector;
+TC.control.Search = Search;
+TC.control.SelectContainer = SelectContainer;
+TC.control.Share = Share;
+TC.control.StreetView = StreetView;
+TC.control.SWCacheClient = SWCacheClient;
+TC.control.TabContainer = TabContainer;
+TC.control.ThreeD = ThreeD;
+TC.control.TOC = TOC;
+TC.control.WFSEdit = WFSEdit;
+TC.control.WFSQuery = WFSQuery;
+TC.control.WorkLayerManager = WorkLayerManager;
+TC.layer = TC.layer || {};
+TC.layer.Raster = Raster;
+TC.layer.Vector = Vector;
 
 TC.inherit = function (childCtor, parentCtor) {
     childCtor.prototype = Object.create(parentCtor.prototype);
@@ -36,177 +168,6 @@ TC.mix = function (targetCtor, ...mixins) {
             Element.prototype.oMatchesSelector ||
             Element.prototype.webkitMatchesSelector;
     }
-
-    const getNativeListener = function (evt, callback) {
-        const result = function (evt) {
-            const cbParameter = {
-                type: evt.type,
-                target: this,
-                currentTarget: this
-            };
-            if (evt.detail) {
-                Object.keys(evt.detail).forEach(function (key) {
-                    if (!(key in cbParameter)) {
-                        cbParameter[key] = evt.detail[key];
-                    }
-                });
-            }
-            return callback.call(this, cbParameter);
-        }.bind(this);
-        const stack = this._listeners[evt] = this._listeners[evt] || new Map();
-        stack.set(callback, result);
-        return result;
-    };
-
-    const onInternal = function (events, callback, options) {
-        const self = this;
-        events.split(' ').forEach(function (evt) {
-            self.$events.addEventListener(evt, getNativeListener.call(self, evt, callback), options);
-        });
-        return self;
-    };
-
-    TC.EventTarget = function () {
-        const self = this;
-        self._listeners = {};
-        self.$events = document.createDocumentFragment();
-
-        const delegate = function (method) {
-            this[method] = self.$events[method].bind(self.$events);
-        };
-        const methods = [
-            'addEventListener',
-            'dispatchEvent',
-            'removeEventListener'
-        ];
-        methods.forEach(delegate, self);
-
-        const fill$events = function (method) {
-            self.$events[method] = self[method].bind(self);
-        };
-        methods.push('on');
-        methods.push('one');
-        methods.push('off');
-        methods.push('trigger');
-        methods.forEach(fill$events, self);
-    };
-
-    const etProto = TC.EventTarget.prototype;
-
-    etProto.on = function (events, callback) {
-        return onInternal.call(this, events, callback);
-    };
-
-    if (navigator.userAgent.indexOf("Trident") >= 0 || navigator.userAgent.indexOf("MSIE") >= 0) {
-        // Parche para IE
-        etProto.one = function (events, callback) {
-            const self = this;
-            const newCallback = function (e) {
-                self.off(events, newCallback);
-                callback.call(this, e);
-            };
-            self.on(events, newCallback);
-            return self;
-        };
-    } else {
-        etProto.one = function (events, callback) {
-            return onInternal.call(this, events, callback, { once: true });
-        };
-    }
-
-    etProto.off = function (events, callback) {
-        const self = this;
-        const eventList = events.split(' ');
-        if (callback) {
-            eventList.forEach(function (evt) {
-                const stack = self._listeners[evt];
-                if (stack && stack.has(callback)) {
-                    self.$events.removeEventListener(evt, stack.get(callback));
-                }
-            });
-        }
-        else {
-            eventList.forEach(function (evt) {
-                const stack = self._listeners[evt];
-                if (stack) {
-                    stack.forEach(function (cb) {
-                        self.$events.removeEventListener(evt, cb);
-                    });
-                    stack.clear();
-                }
-            });
-        }
-        return self;
-    };
-
-    etProto.trigger = function (type, options) {
-        const self = this;
-        //Compatibilidad hacia atrás
-        if (window.$ && $.Event && type instanceof $.Event) {
-            options = {};
-            Object.keys(type).forEach(function (key) {
-                if (key !== 'type') {
-                    options[key] = type[key];
-                }
-            });
-            type = type.type;
-        }
-        var ceOptions;
-        if (options) {
-            ceOptions = {
-                detail: options
-            };
-        }
-        const event = new CustomEvent(type, ceOptions);
-        self.dispatchEvent(event);
-    };
-
-    TC.EventTarget._onBySelectorMap = new WeakMap();
-
-    TC.EventTarget.listenerBySelector = function (selector, callback) {
-        // Crea una estructura a partir de un mapa cuyas claves son los elementos.
-        // Los valores son objetos cuyas claves son tipos de eventos
-        // y cuyos valores son objetos que tienen como claves los selectores
-        // y cuyos valores son las funciones de callback.
-        // Se crea una función que va buscando la primera correspondencia con un selector.
-        // En cuanto la encuentra, ejecuta el callback y deja de procesar.
-        return function (e) {
-            const element = this;
-            const eventType = e.type;
-            var eventTypes = TC.EventTarget._onBySelectorMap.get(element);
-            if (!eventTypes) {
-                eventTypes = {};
-                TC.EventTarget._onBySelectorMap.set(element, eventTypes);
-            }
-            var selectors = eventTypes[eventType];
-            if (!selectors) {
-                eventTypes[eventType] = selectors = {};
-            }
-            if (!selectors[selector]) {
-                selectors[selector] = callback;
-            }
-            // Para cada evento en cada elemento hay que llamar una sola vez al callback que toque.
-            // Así que si se ejecuta un callback, prohibimos al resto de los listeners resolverse.
-            if (!e._listenerBySelectorCalled) {
-                var matches = false;
-                var elm = e.target;
-                var result;
-                while (elm && elm !== element) {
-                    for (selector in selectors) {
-                        if (elm.matches && elm.matches(selector)) {
-                            matches = true;
-                            result = selectors[selector].call(element, e);
-                            e._listenerBySelectorCalled = true;
-                        }
-                    }
-                    if (matches) {
-                        return result;
-                    }
-                    elm = elm.parentNode;
-                }
-            }
-        };
-    };
 
     /**
      * <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
@@ -292,7 +253,9 @@ TC.mix = function (targetCtor, ...mixins) {
             //TC.Consts.event.LAYEROPACITY, // Este evento lo vamos a tratar por separado, para evitar exceso de actualizaciones de estado.
             TC.Consts.event.LAYERVISIBILITY,
             TC.Consts.event.ZOOM,
-            TC.Consts.event.BASELAYERCHANGE].join(' ');
+            TC.Consts.event.BASELAYERCHANGE,
+            TC.Consts.event.UPDATEPARAMS
+        ].join(' ');
 
         // gestión siguiente - anterior
 
@@ -302,7 +265,8 @@ TC.mix = function (targetCtor, ...mixins) {
             TC.Consts.event.FEATUREREMOVE,
             TC.Consts.event.FEATUREMODIFY,
             TC.Consts.event.FEATURESADD,
-            TC.Consts.event.FEATURESCLEAR
+            TC.Consts.event.FEATURESCLEAR,
+            TC.Consts.event.UPDATEPARAMS
         ].join(' ');
 
         self.on(eventsToMapChange, () => self.trigger(TC.Consts.event.MAPCHANGE));
@@ -389,6 +353,8 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
+    const supportsFileSystemAccess = TC.Util.isFunction(DataTransferItem.prototype.getAsFileSystemHandle);
+
     const _addToHistory = async function (e) {
         const self = this;
 
@@ -417,15 +383,23 @@ TC.mix = function (targetCtor, ...mixins) {
                 self.lastEventType = e.type;
 
                 switch (true) {
-                    case (e.type == TC.Consts.event.BASELAYERCHANGE):
-                    case (e.type == TC.Consts.event.LAYERORDER):
-                    case (e.type == TC.Consts.event.ZOOM):
+                    case e.type === TC.Consts.event.BASELAYERCHANGE:
+                    case e.type === TC.Consts.event.LAYERORDER:
+                    case e.type === TC.Consts.event.ZOOM:
                         saveState();
                         break;
-                    case (e.type.toLowerCase().indexOf("LAYER".toLowerCase()) > -1):
+                    case e.type === TC.Consts.event.UPDATEPARAMS:
                         // unicamente modifico el hash si la capa es WMS
-                        if (e.layer.type == TC.Consts.layerType.WMS)
+                        if (e.layer.type === TC.Consts.layerType.WMS) {
                             saveState();
+                        }
+                        break;
+                    case e.type.toLowerCase().indexOf("LAYER".toLowerCase()) > -1:
+                        // unicamente modifico el hash si la capa es WMS o vectorial de archivos locales
+                        if (e.layer.type === TC.Consts.layerType.WMS ||
+                            supportsFileSystemAccess && e.layer.type === TC.Consts.layerType.VECTOR && e.layer.options.file) {
+                            saveState();
+                        }
                         break;
                 }
 
@@ -469,19 +443,18 @@ TC.mix = function (targetCtor, ...mixins) {
 
             if (baseLayerData.length > 0) {
                 state.base = baseLayerData[0].baseLayer.id;
-            } else if (self.baseLayer || (self.baseLayers && self.baseLayers[0])) {
+            } else if (self.baseLayer || self.baseLayers && self.baseLayers[0]) {
                 state.base = (self.baseLayer || self.baseLayers[0]).id;
             }
 
             //capas cargadas
             state.layers = [];
 
-            var layer, entry;
-            for (var i = 0; i < self.workLayers.length; i++) {
-                layer = self.workLayers[i];
-                if (layer.type == "WMS" && !layer.options.stateless) {
-                    if (layer.layerNames && layer.layerNames.length) {
-                        entry = {
+            self.workLayers.forEach(function addLayerState(layer) {
+                if (layer.type === TC.Consts.layerType.WMS && !layer.options.stateless) {
+                    layer.layerNames = layer.names || layer.layerNames;
+                    if (layer.layerNames && layer.layerNames.length || layer.hideTree === false) {
+                        const entry = {
                             u: TC.Util.isOnCapabilities(layer.url),
                             n: Array.isArray(layer.names) ? layer.names.join(',') : layer.names,
                             o: layer.getOpacity(),
@@ -490,12 +463,29 @@ TC.mix = function (targetCtor, ...mixins) {
                             ur: layer.unremovable,
                             f: layer.filter && (layer.filter instanceof TC.filter.Filter ? layer.filter.getText() : layer.filter),
                             t: layer.title,
+                            i: layer.id
                         };
+                        //24/11/2021 URI: Añadir el hidetree si no tiene el valor por defecto que es true
+                        if (layer.hideTree === false) {
+                            entry.x = 0;
+                        }
 
                         state.layers.push(entry);
                     }
                 }
-            }
+                else if (supportsFileSystemAccess && layer.type === TC.Consts.layerType.VECTOR && layer.options.file) {
+                    const entry = {
+                        o: layer.getOpacity(),
+                        v: layer.getVisibility(),
+                        h: layer.options.hideTitle,
+                        ur: layer.unremovable,
+                        fn: layer.options.file,
+                        t: layer.title,
+                        i: layer.id
+                    };
+                    state.layers.push(entry);
+                }
+            });
 
             if (self.on3DView && self.view3D.cameraControls) {
                 state.vw3 = self.view3D.cameraControls.getCameraState();
@@ -524,18 +514,6 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
-    const _clearMap = function () {
-        const self = this;
-
-        self.workLayers.filter(function (layer) {
-            return !(layer instanceof (TC.layer.Vector));
-        }).forEach(function (layer) {
-            if (layer.unremovable) {
-                layer.unremovable = false;
-            }
-            self.removeLayer(layer);
-        });
-    };
     const _loadIntoMap = function (stringOrJson) {
         const self = this;
         const promises = [];
@@ -553,7 +531,7 @@ TC.mix = function (targetCtor, ...mixins) {
         }
 
         // GLS lo añado para poder gestionar el final de la actualización de estado y volver a suscribirme a los eventos del mapa
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             var resolved = function () {
                 self.loadingCtrl && self.loadingCtrl.removeWait(self.hasWait);
                 delete self.hasWait;
@@ -561,11 +539,11 @@ TC.mix = function (targetCtor, ...mixins) {
             };
 
             let objPromise;
-            if (typeof (stringOrJson) == "string") {
+            if (typeof stringOrJson === "string") {
                 objPromise = new Promise(function (res, rej) {
                     jsonpackProcess('unpack', stringOrJson)
                         .then(obj => res(obj))
-                        .catch(err => res(JSON.parse(stringOrJson)))
+                        .catch(_err => res(JSON.parse(stringOrJson)))
                         .catch(err => {
                             TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'));
                             rej(err);
@@ -577,7 +555,8 @@ TC.mix = function (targetCtor, ...mixins) {
 
             objPromise.then(function (obj) {
                 // CRS
-                if ((obj.crs && obj.crs !== self.crs) || (typeof obj.crs === 'undefined' && self.crs !== self.options.crs)) {
+                if (obj.crs && obj.crs !== self.crs ||
+                    typeof obj.crs === 'undefined' && self.crs !== self.options.crs) {
                     promises.push(self.setProjection({
                         crs: obj.crs || self.options.crs,
                         oldCrs: self.crs,
@@ -609,47 +588,59 @@ TC.mix = function (targetCtor, ...mixins) {
                     }
                 }
 
-                //capas cargadas        
-                //borrar primero
-                _clearMap.call(self);
-
                 obj.layers = obj.layers || obj.capas || [];
 
                 if (obj.layers.length > 0) {
 
                     for (var i = 0; i < obj.layers.length; i++) {
-                        var capa = obj.layers[i];
+                        var stateLayer = obj.layers[i];
 
                         var layerInConfig = false;
+                        let lyrCfg;
+                        for (var j = 0; j < self.options.workLayers.length; j++) {
 
-                        for (j = 0; j < self.options.workLayers.length; j++) {
-                            var lyrCfg = TC.Util.extend({}, self.options.workLayers[j], { map: self });
+                            lyrCfg = TC.Util.extend({}, self.options.workLayers[j], { map: self });
 
-                            if (capa.u === lyrCfg.url && lyrCfg.layerNames.indexOf(capa.n) >= 0) {
+                            if (stateLayer.u === lyrCfg.url &&
+                                (!lyrCfg.layerNames ||
+                                    lyrCfg.layerNames.length ||
+                                    lyrCfg.layerNames.indexOf(stateLayer.n) >= 0)) {
                                 layerInConfig = true;
-                                lyrCfg.renderOptions = { "opacity": capa.o, "hide": !capa.v };
-                                lyrCfg.unremovable = capa.ur;
-                                lyrCfg.title = capa.t;
-                                promises.push(self.addLayer(lyrCfg).then(function (layer) {
+                                lyrCfg.renderOptions = { "opacity": stateLayer.o, "hide": !stateLayer.v };
+                                lyrCfg.unremovable = stateLayer.ur;
+                                lyrCfg.title = stateLayer.t;
+                                lyrCfg.hideTree = Object.prototype.hasOwnProperty.call(stateLayer, "x") ? !!stateLayer.x : true;
+                                if (stateLayer.n)
+                                    lyrCfg.layerNames = stateLayer.n;
+                                promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
                                     layer.setVisibility(this.v);
                                     layer.setOpacity(this.o, true);
-                                }.bind(capa)));
+                                }.bind(stateLayer)));
                             }
                         }
 
                         if (!layerInConfig) {
-                            promises.push(self.addLayer({
-                                id: TC.getUID(),
-                                url: TC.Util.isOnCapabilities(capa.u, capa.u.indexOf(window.location.protocol) < 0) || capa.u,
-                                hideTitle: capa.h,
-                                layerNames: capa.n ? capa.n.split(',') : "",
-                                unremovable: capa.ur,
-                                title: capa.t,
+                            const lyrCfg = {
+                                id: stateLayer.i || TC.getUID(),
+                                hideTitle: stateLayer.h,
+                                unremovable: stateLayer.ur,
+                                title: stateLayer.t,
+                                hideTree: Object.prototype.hasOwnProperty.call(stateLayer, "x") ? !!stateLayer.x : true,
                                 renderOptions: {
-                                    opacity: capa.o,
-                                    hide: !capa.v
+                                    opacity: stateLayer.o,
+                                    hide: !stateLayer.v
                                 }
-                            }).then(function (layer) {
+                            };
+                            if (stateLayer.fn) {
+                                // Capa de archivo serializada
+                                lyrCfg.type = TC.Consts.layerType.VECTOR;
+                                lyrCfg.file = stateLayer.fn;
+                            }
+                            else {
+                                lyrCfg.url = TC.Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
+                                lyrCfg.layerNames = stateLayer.n ? stateLayer.n.split(',') : [];
+                            }
+                            promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
                                 var rootNode = layer.wrap.getRootLayerNode();
                                 layer.title = rootNode.Title || rootNode.title;
                                 /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
@@ -657,10 +648,16 @@ TC.mix = function (targetCtor, ...mixins) {
                                 este evento y producía un push en el state innecesario*/
                                 layer.setOpacity(this.o, true);
                                 layer.setVisibility(this.v);
-                            }.bind(capa)));
+                            }.bind(stateLayer)));
                         }
                     }
                 }
+
+                //eliinar las capas añadidas al mapa que desaparecen en el nuevo estado
+                self.workLayers.filter(l => l.type === TC.Consts.layerType.WMS && !obj.layers.some(l2 => l2.i === l.id)).forEach(
+                    function (layer) {
+                        self.removeLayer(layer);
+                    });
 
                 Promise.all(promises)
                     .then(function () {
@@ -670,7 +667,10 @@ TC.mix = function (targetCtor, ...mixins) {
                         resolved();
                     });
             })
-                .catch(err => resolved());
+                //.catch(err => resolved());
+                .catch(function () {
+                    resolved();
+                });
         });
     };
 
@@ -789,9 +789,6 @@ TC.mix = function (targetCtor, ...mixins) {
          * @type HTMLElement
          */
         self.div = TC.Util.getDiv(div);
-        if (TC._jQueryIsLoaded) {
-            self._$div = $(self.div);
-        }
         /**
          * El mapa ha cargado todas sus capas iniciales y todos sus controles
          * @event MAPLOAD
@@ -890,9 +887,9 @@ TC.mix = function (targetCtor, ...mixins) {
                         map.baseLayers = new Array(map.options.baseLayers.length);
                     }
 
-                    var index = map.options.baseLayers.map(function (l) { return l.id }).indexOf(layer.id);
+                    var index = map.options.baseLayers.map(l => l.id).indexOf(layer.id);
                     if (index < 0) {
-                        var index = map.baseLayers.map(function (l) { return l.type }).indexOf(TC.Consts.layerType.VECTOR);
+                        index = map.baseLayers.map(l => l.type).indexOf(TC.Consts.layerType.VECTOR);
                         if (index < 0) {
                             map.baseLayers.push(layer);
                         } else {
@@ -918,9 +915,9 @@ TC.mix = function (targetCtor, ...mixins) {
                     map.baseLayers.splice(index, 1);
                 }
             },
-            getResolvedWorkLayerIndex: function (map, id) {
+            getResolvedWorkLayerIndex: function (_map, id) {
                 return this.layers.filter(function (l) {
-                    return l.id === id || (!l.isBase && l.pending === false);
+                    return l.id === id || !l.isBase && l.pending === false;
                 }).reduce(getReduceByValueFunction('id', id), -1);
             },
             getResolvedVisibleLayerIndex: function (map, id) {
@@ -943,7 +940,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     !this.layers.some(function (layer) {
                         return layer.pending === true; // Si ya se han terminado de procesar
                     })) {
-                    const throwMapLoad = function () {
+                    const throwMapLoad = async function () {
                         if (!map.isLoaded) {
                             const setLoaded = function () {
 
@@ -955,7 +952,9 @@ TC.mix = function (targetCtor, ...mixins) {
                                 }
 
                                 map.isLoaded = true;
-                                map.div.classList.remove(TC.Consts.classes.LOADING);
+                                // Si hay datos en cache es posible que salte el evento MAPREADY después de MAPLOAD.
+                                // Por eso quitamos la clase LOADING en un callback de ready().
+                                map.ready(() => map.div.classList.remove(TC.Consts.classes.LOADING));
                                 map.trigger(TC.Consts.event.MAPLOAD);
                             };
                             // tenemos estado 3d
@@ -963,19 +962,18 @@ TC.mix = function (targetCtor, ...mixins) {
                                 if (!map.div.classList.contains(TC.Consts.classes.THREED)) {
                                     map.div.classList.add(TC.Consts.classes.THREED);
 
-                                    TC.loadJS(
-                                        !TC.view || !TC.view.ThreeD,
-                                        TC.apiLocation + 'TC/view/ThreeD',
-                                        function () {
-                                            TC.view.ThreeD.apply({
-                                                map: map, state: map.state.vw3, callback: function () {
-                                                    setLoaded();
+                                    if (!TC.view || !TC.view.ThreeD) {
+                                        const module = await import('./view/ThreeD');
+                                        TC.view = TC.view || {};
+                                        TC.view.ThreeD = module.default;
+                                    }
+                                    TC.view.ThreeD.apply({
+                                        map: map, state: map.state.vw3, callback: function () {
+                                            setLoaded();
 
-                                                    map.getControlsByClass(TC.control.ThreeD)[0].button.removeAttribute("disabled");
-                                                }
-                                            });
+                                            map.getControlsByClass(TC.control.ThreeD)[0].button.removeAttribute("disabled");
                                         }
-                                    );
+                                    });
                                 }
                             } else {
                                 setLoaded();
@@ -990,12 +988,12 @@ TC.mix = function (targetCtor, ...mixins) {
                         //GLS: Si no hay mapa de fondo cargado es posible que se haya añadido desde diálogo modal, lo comprobamos en todos los mapas de fondo disponibles del API
                         var onAvailables = [];
                         if (map.state && map.state.base) {
-                            onAvailables = TC.Cfg.availableBaseLayers.filter(function (l) { return l.id === map.state.base });
+                            onAvailables = TC.Cfg.availableBaseLayers.filter(l => l.id === map.state.base);
                         }
 
                         if (onAvailables.length > 0) {
                             onAvailables[0].isBase = true;
-                            map.addLayer(onAvailables[0]).then(function (layer) {
+                            map.addLayer(onAvailables[0]).then(function (_layer) {
                                 throwMapLoad();
                             });
                         }
@@ -1021,6 +1019,8 @@ TC.mix = function (targetCtor, ...mixins) {
 
         self._layerBuffer.layers = [];
 
+        self._fileHandles = new WeakMap();
+
         if (!TC.ready) {
             TC.Cfg = TC.Util.extend({}, TC.Defaults, TC.Cfg);
             TC.ready = true;
@@ -1029,7 +1029,7 @@ TC.mix = function (targetCtor, ...mixins) {
         // GLS: mergeOptions es inclusivo, para poder sobrescribir los tipos de búsqueda, añado con valor a false las que el usuario no haya configurado.
         if (options && options.controls && options.controls.search && options.controls.search.allowedSearchTypes) {
             for (var allowed in TC.Cfg.controls.search.allowedSearchTypes) {
-                if (!options.controls.search.allowedSearchTypes.hasOwnProperty(allowed)) {
+                if (!Object.prototype.hasOwnProperty.call(options.controls.search.allowedSearchTypes, allowed)) {
                     options.controls.search.allowedSearchTypes[allowed] = false;
                 }
             }
@@ -1044,6 +1044,10 @@ TC.mix = function (targetCtor, ...mixins) {
          */
         options = options || {};
         mergeOptions.call(self, options);
+
+        self.id = options.id || TC.getUID({ prefix: 'map-' });
+
+        self.crossOrigin = self.options.crossOrigin;
 
         var init = async function () {
 
@@ -1073,7 +1077,9 @@ TC.mix = function (targetCtor, ...mixins) {
                 self.on(TC.Consts.event.FEATURESADD, handleFeaturesAdd);
             }
             var _handleLayerAdd = function _handleLayerAdd(e) {
-                if (e.layer.isBase && (e.layer === self.baseLayer || (self.baseLayer && e.layer.fallbackLayer && e.layer.fallbackLayer.id === self.baseLayer.id))) {
+                if (e.layer.isBase &&
+                    (e.layer === self.baseLayer ||
+                        self.baseLayer && e.layer.fallbackLayer && e.layer.fallbackLayer.id === self.baseLayer.id)) {
                     if (typeof self.state !== "undefined") {
                         if (self.state.crs) {
                             self.loaded(function () {
@@ -1100,130 +1106,129 @@ TC.mix = function (targetCtor, ...mixins) {
             self.crs = self.options.crs;
             self.initialExtent = self.options.initialExtent;
             self.maxExtent = self.options.maxExtent;
+
             self.defaultInfoContainer = self.defaultInfoContainer || self.options.defaultInfoContainer;
+            // Si no se ha especificado, definimos defaultInfoContainer en base al espacio disponible en pantalla.
+            if (!self.defaultInfoContainer && window.matchMedia('screen and (max-width: 40em), screen and (max-height: 40em)').matches) {
+                self.defaultInfoContainer = TC.Consts.infoContainer.RESULTS_PANEL;
+            }
+
 
             self.wrap = new TC.wrap.Map(self);
 
-            TC.loadJS(
-                !window[TC.Consts.PROJ4JSOBJ],
-                [
-                    TC.url.proj4js
-                ],
-                function () {
-                    TC.loadJSInOrder(
-                        !window[TC.Consts.OLNS],
-                        [
-                            TC.url.ol,
-                            TC.url.olConnector
-                        ],
-                        function () {
-                            TC.loadProjDef({
-                                crs: self.options.crs,
-                                callback: function () {
-                                    self.wrap.setMap();
-                                    const ctlPromises = [];
+            TC.loadProjDef({
+                crs: self.options.crs,
+                callback: function () {
+                    self.wrap.setMap();
+                    const ctlPromises = [];
 
-                                    for (var name in self.options.controls) {
-                                        var ctlOptions = self.options.controls[name];
-                                        if (ctlOptions) {
-                                            ctlOptions = typeof ctlOptions === 'boolean' ? {} : TC.Util.extend(true, {}, ctlOptions);
-                                            if (typeof ctlOptions.div === 'string') {
-                                                ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
-                                            }
-                                            ctlPromises.push(self.addControl(name, ctlOptions));
-                                        }
-                                    }
-
-                                    self.on(TC.Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
-                                    self.on(TC.Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
-                                    self.on(TC.Consts.event.LAYERERROR, _triggerLayersUpdateEvent);
-
-                                    var i;
-                                    var lyrCfg;
-                                    for (i = 0; i < self.options.baseLayers.length; i++) {
-                                        lyrCfg = self.options.baseLayers[i];
-                                        if (typeof lyrCfg === 'string') {
-                                            lyrCfg = getAvailableBaseLayer.call(self, lyrCfg);
-                                        }
-                                        self.addLayer(TC.Util.extend({}, lyrCfg, { isBase: true, map: self }));
-                                    }
-
-                                    var setVisibility = function (layer) {
-                                        if (layer.isRaster() && !layer.names) {
-                                            layer.setVisibility(false);
-                                        }
-                                    };
-                                    const workLayersNotInState = self.options.workLayers
-                                        .map(function (workLayer) {
-                                            return TC.Util.extend({}, workLayer, { map: self });
-                                        })
-                                        .filter(function (workLayer) {
-                                            if (!self.state || !self.state.layers) {
-                                                return true;
-                                            }
-                                            return !self.state.layers.some(function (stateLayer) {
-                                                const result = stateLayer.u === workLayer.url && workLayer.layerNames.indexOf(stateLayer.n) >= 0;
-                                                if (result) {
-                                                    stateLayer.id = workLayer.id; // Hemos identificado la capa, le damos el id que le corresponde
-                                                }
-                                                return result;
-                                            });
-                                        });
-                                    workLayersNotInState.forEach(function (workLayer) {
-                                        self.addLayer(workLayer).then(setVisibility);
-                                    });
-
-                                    if (self.state && self.state.layers) {
-
-                                        self.state.layers.forEach(function (stateLayer) {
-
-                                            // añado como promesa cada una de las capas que se añaden
-                                            self.addLayer({
-                                                id: stateLayer.id || TC.getUID(),
-                                                url: TC.Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u,
-                                                hideTitle: stateLayer.h,
-                                                layerNames: stateLayer.n ? stateLayer.n.split(',') : "",
-                                                unremovable: stateLayer.ur,
-                                                title: stateLayer.t,
-                                                filter: stateLayer.f,
-                                                renderOptions: {
-                                                    opacity: stateLayer.o,
-                                                    hide: !stateLayer.v
-                                                }
-                                            }).then(function (layer) {
-                                                var rootNode = layer.wrap.getRootLayerNode();
-                                                layer.title = stateLayer.t || rootNode.Title || rootNode.title;
-                                                if (this.o < 1) {
-                                                    layer.setOpacity(this.o);
-                                                }
-                                                if (!this.v) {
-                                                    layer.setVisibility(this.v);
-                                                }
-                                            }.bind(stateLayer))
-                                                .catch(function (error) {
-                                                    // no hacemos nada porque al llegar a este punto ya hemos gestionado el error en la instrucción crsLayerError(self, lyr); en la línea 4888														
-
-                                                    //URI:Si que hacemos ya que si falla el getCapabilities no hay CRS que valga
-                                                    self.toast(error.message, { type: TC.Consts.msgType.ERROR });
-                                                });
-                                        });
-                                    }
-                                    Promise.all(ctlPromises).finally(function () {
-                                        // 13/03/2020 si el mapa mantiene estado y tenemos estado de controles, pasamos a establecer los estados
-                                        if (self.state && self.state.ctl) {
-                                            self.importControlStates(self.state.ctl);
-                                        }
-
-                                        self.isReady = true;
-                                        self.trigger(TC.Consts.event.MAPREADY);
-                                    })
-                                    setHeightFix(self.div);
-                                }
-                            });
+                    for (var name in self.options.controls) {
+                        var ctlOptions = self.options.controls[name];
+                        if (ctlOptions) {
+                            ctlOptions = typeof ctlOptions === 'boolean' ? {} : TC.Util.extend(true, {}, ctlOptions);
+                            if (typeof ctlOptions.div === 'string') {
+                                ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
+                            }
+                            ctlPromises.push(self.addControl(name, ctlOptions));
                         }
-                    );
+                    }
+
+                    self.on(TC.Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
+                    self.on(TC.Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
+                    self.on(TC.Consts.event.LAYERERROR, _triggerLayersUpdateEvent);
+
+                    var i;
+                    var lyrCfg;
+                    for (i = 0; i < self.options.baseLayers.length; i++) {
+                        lyrCfg = self.options.baseLayers[i];
+                        if (typeof lyrCfg === 'string') {
+                            lyrCfg = getAvailableBaseLayer.call(self, lyrCfg);
+                        }
+                        self.addLayer(TC.Util.extend({}, lyrCfg, { isBase: true, map: self }));
+                    }
+
+                    var setVisibility = function (layer) {
+                        if (layer.isRaster() && !layer.names) {
+                            layer.setVisibility(false);
+                        }
+                    };
+                    const workLayersNotInState = self.options.workLayers
+                        .map(function (workLayer) {
+                            return TC.Util.extend({}, workLayer, { map: self });
+                        })
+                        .filter(function (workLayer) {
+                            if (!self.state || !self.state.layers) {
+                                return true;
+                            }
+                            return !self.state.layers.some(function (stateLayer) {
+                                const result = stateLayer.u === workLayer.url && (!workLayer.layerNames || !workLayer.layerNames.length || workLayer.layerNames.indexOf(stateLayer.n) >= 0);
+                                if (result) {
+                                    stateLayer.id = workLayer.id; // Hemos identificado la capa, le damos el id que le corresponde
+                                }
+                                return result;
+                            });
+                        });
+                    workLayersNotInState.forEach(function (workLayer) {
+                        self.addLayer(workLayer).then(setVisibility);
+                    });
+
+                    if (self.state && self.state.layers) {
+
+                        self.state.layers.forEach(function (stateLayer) {
+
+                            const lyrCfg = {
+                                id: stateLayer.i || TC.getUID(),
+                                hideTitle: stateLayer.h,
+                                unremovable: stateLayer.ur,
+                                title: stateLayer.t,
+                                filter: stateLayer.f,
+                                hideTree: stateLayer.x !== 0,
+                                renderOptions: {
+                                    opacity: stateLayer.o,
+                                    hide: !stateLayer.v
+                                }
+                            };
+                            if (stateLayer.u) {
+                                lyrCfg.url = TC.Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
+                                lyrCfg.layerNames = stateLayer.n ? stateLayer.n.split(',') : undefined;
+                            }
+                            else {
+                                lyrCfg.type = TC.Consts.layerType.VECTOR;
+                                lyrCfg.file = stateLayer.fn;
+                            }
+                            // añado como promesa cada una de las capas que se añaden
+                            self.addLayer(lyrCfg).then(function (layer) {
+                                if (layer.wrap.getRootLayerNode) {
+                                    var rootNode = layer.wrap.getRootLayerNode();
+                                }
+                                layer.title = stateLayer.t || rootNode && (rootNode.Title || rootNode.title);
+                                if (this.o < 1) {
+                                    layer.setOpacity(this.o);
+                                }
+                                if (!this.v) {
+                                    layer.setVisibility(this.v);
+                                }
+                            }.bind(stateLayer))
+                                .catch(function (error) {
+                                    // no hacemos nada porque al llegar a este punto ya hemos gestionado el error en la instrucción crsLayerError(self, lyr); en la línea 4888														
+
+                                    //URI:Si que hacemos ya que si falla el getCapabilities no hay CRS que valga
+                                    self.toast(error.message, { type: TC.Consts.msgType.ERROR });
+                                });
+                        });
+                    }
+                    Promise.all(ctlPromises).finally(function () {
+                        // 13/03/2020 si tenemos estado de controles, pasamos a establecer los estados
+                        if (self.state && self.state.ctl) {
+                            self.importControlStates(self.state.ctl);
+                        }
+
+                        self.isReady = true;
+                        self.trigger(TC.Consts.event.MAPREADY);
+                    });
+                    setHeightFix(self.div);
                 }
-            );
+            });
 
             self.on(TC.Consts.event.FEATURECLICK, function (e) {
                 if (!self.activeControl || !self.activeControl.isExclusive()) {
@@ -1292,42 +1297,47 @@ TC.mix = function (targetCtor, ...mixins) {
                 if (obj) {
                     var inValidState = false;
                     //chequeo la integriadad del objeto restaurado del State
-                    if (!obj.hasOwnProperty("ext")) {
+                    if (!Object.prototype.hasOwnProperty.call(obj, "ext")) {
                         inValidState = true;
                         obj.ext = self.options.initialExtent;
                     }
-                    if (!obj.hasOwnProperty("base")) {
+                    if (!Object.prototype.hasOwnProperty.call(obj, "base")) {
                         inValidState = true;
                         obj.base = self.options.defaultBaseLayer;
                     }
-                    if (!obj.hasOwnProperty("layers")) {
+                    if (!Object.prototype.hasOwnProperty.call(obj, "layers")) {
                         inValidState = true;
                         obj.layers = [];
                     }
                     else {
                         for (var i = obj.layers.length - 1; i >= 0; i--) {
-                            if (!obj.layers[i] || !obj.layers[i].hasOwnProperty("u") || !obj.layers[i].hasOwnProperty("n")) {
+                            const stateLayer = obj.layers[i];
+                            if (!stateLayer ||
+                                !(Object.prototype.hasOwnProperty.call(stateLayer, "u") && Object.prototype.hasOwnProperty.call(stateLayer, "n") ||
+                                    Object.prototype.hasOwnProperty.call(stateLayer, "fn"))) {
                                 inValidState = true;
                                 obj.layers.length = obj.layers.length - 1;
                                 continue;
                             }
-                            else if (!obj.layers[i].hasOwnProperty("o") || !obj.layers[i].hasOwnProperty("v") || !obj.layers[i].hasOwnProperty("h")) {
-                                inValidState = true
-                                TC.Util.extend(obj.layers[i], {
-                                    o: (obj.layers[i].o || 1),
-                                    v: (obj.layers[i].v || true),
-                                    h: (obj.layers[i].h || false)
+                            else if (!Object.prototype.hasOwnProperty.call(stateLayer, "o") ||
+                                !Object.prototype.hasOwnProperty.call(stateLayer, "v") ||
+                                !Object.prototype.hasOwnProperty.call(stateLayer, "h")) {
+                                inValidState = true;
+                                TC.Util.extend(stateLayer, {
+                                    o: stateLayer.o || 1,
+                                    v: stateLayer.v || true,
+                                    h: stateLayer.h || false
                                 });
                             }
                         }
                     }
 
-                    if (obj.hasOwnProperty("vw3")) {
+                    if (Object.prototype.hasOwnProperty.call(obj, "vw3")) {
 
                         if (!obj.vw3) {
                             inValidState = true;
-                        } else if (!obj.vw3.cp || (obj.vw3.cp && obj.vw3.cp.length != 3) ||
-                            !obj.vw3.chpr || (obj.vw3.chpr && obj.vw3.chpr.length != 3) ||
+                        } else if (!obj.vw3.cp || obj.vw3.cp.length !== 3 ||
+                            !obj.vw3.chpr || obj.vw3.chpr.length !== 3 ||
                             !obj.vw3.bcpd) {
                             inValidState = true;
                         }
@@ -1346,7 +1356,7 @@ TC.mix = function (targetCtor, ...mixins) {
         *  _triggerLayersBeforeUpdateEvent: Triggers map beforeupdate event (jQuery.Event) when any layer starts loading
         *  Parameters: OpenLayers.Layer, event name ('loadstart', 'loadend')
         */
-        var _triggerLayersBeforeUpdateEvent = function (e) {
+        var _triggerLayersBeforeUpdateEvent = function (_e) {
             if (loadingLayerCount <= 0) {
                 loadingLayerCount = 0;
                 self.trigger(TC.Consts.event.BEFOREUPDATE);
@@ -1354,42 +1364,12 @@ TC.mix = function (targetCtor, ...mixins) {
             loadingLayerCount = loadingLayerCount + 1;
         };
 
-        var _triggerLayersUpdateEvent = function (e) {
+        var _triggerLayersUpdateEvent = function (_e) {
             loadingLayerCount = loadingLayerCount - 1;
             if (loadingLayerCount <= 0) {
                 loadingLayerCount = 0;
                 self.trigger(TC.Consts.event.UPDATE);
             }
-        };
-
-        TC.i18n = TC.i18n || {};
-        // i18n: carga de recursos si no está cargados previamente
-        TC.i18n.loadResources = TC.i18n.loadResources || function (condition, path, locale) {
-            var result;
-            if (condition) {
-                result = new Promise(function (resolve, reject) {
-                    TC.ajax({
-                        url: path + locale + '.json',
-                        method: 'GET',
-                        responseType: TC.Consts.mimeType.JSON
-                    })
-                        .then(function (response) {
-                            const data = response.data;
-                            TC.i18n[locale] = TC.i18n[locale] || {};
-                            TC.Util.extend(TC.i18n[locale], data);
-                            TC.i18n.currentLocale = TC.i18n[locale];
-                            TC.i18n.currentLocaleKey=locale
-                            resolve();
-                        })
-                        .catch(function (err) {
-                            reject(err);
-                        });
-                });
-            } else {
-                TC.i18n.currentLocale = TC.i18n[locale];
-                result = Promise.resolve();
-            }
-            return result;
         };
 
         const locale = self.options.locale;
@@ -1427,12 +1407,12 @@ TC.mix = function (targetCtor, ...mixins) {
                     ignoreError = true;
                 }
                 else if (
-                    layout.hasOwnProperty('config') ||
-                    layout.hasOwnProperty('markup') ||
-                    layout.hasOwnProperty('style') ||
-                    layout.hasOwnProperty('script') ||
-                    layout.hasOwnProperty('href') ||
-                    layout.hasOwnProperty('i18n')
+                    Object.prototype.hasOwnProperty.call(layout, 'config') ||
+                    Object.prototype.hasOwnProperty.call(layout, 'markup') ||
+                    Object.prototype.hasOwnProperty.call(layout, 'style') ||
+                    Object.prototype.hasOwnProperty.call(layout, 'script') ||
+                    Object.prototype.hasOwnProperty.call(layout, 'href') ||
+                    Object.prototype.hasOwnProperty.call(layout, 'i18n')
                 ) {
                     layoutURLs = TC.Util.extend({}, layout);
                 }
@@ -1459,7 +1439,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     }
                 };
 
-                const i18nLayoutPromise = new Promise(function (resolve, reject) {
+                const i18nLayoutPromise = new Promise(function (resolve, _reject) {
                     if (layoutURLs.config) {
 
                         layoutPromises.push(fetch(layoutURLs.config)
@@ -1486,7 +1466,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 layoutPromises.push(i18nLayoutPromise);
 
                 if (layoutURLs.style) {
-                    layoutPromises.push(new Promise(function (resolve, reject) {
+                    layoutPromises.push(new Promise(function (resolve, _reject) {
                         // Añadimos una clase para hacer más fáciles las reglas del layout
                         self.div.classList.add('tc-lo');
 
@@ -1517,7 +1497,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 }
 
                 if (layoutURLs.markup) {
-                    layoutPromises.push(new Promise(function (resolve, reject) {
+                    layoutPromises.push(new Promise(function (resolve, _reject) {
 
                         fetch(layoutURLs.markup)
                             .then(function (response) {
@@ -1530,7 +1510,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                 i18nLayoutPromise.then(function (i18n) {
                                     if (i18n && locale && layoutURLs.i18n) {
                                         TC.i18n.loadResources(true, layoutURLs.i18n, locale).finally(function () {
-                                            const replacerFn = function (match, grp1, grp2, grp3) {
+                                            const replacerFn = function (_match, grp1, grp2, grp3) {
                                                 return TC.Util.getLocaleString(locale, grp1 || grp2 || grp3);
                                             };
                                             //data = data.replace(/\{\{([^\}\{]+)\}\}/g, replacerFn); // Estilo {{key}}
@@ -1631,22 +1611,23 @@ TC.mix = function (targetCtor, ...mixins) {
                             if (TC.Cfg.loggingErrorsEnabled) {
                                 JL("onerrorLogger").fatalException(!subject ? text : {
                                     "msg": subject,
-                                    "errorMsg": text,
+                                    "errorMsg": text
                                 }, null);
                             }
                             break;
                         case TC.Consts.msgErrorMode.CONSOLE:
                         default:
-                            console.error(text)
+                            console.error(text);
                             break;
                     }
-                }
+                };
                 if (!Array.isArray(options)) {
-                    fnc(text, options, subject)
+                    fnc(text, options, subject);
                 }
                 else {
-                    for (var i = 0; i < options.length; i++)
-                        fnc(text, options[i], subject)
+                    for (var i = 0; i < options.length; i++) {
+                        fnc(text, options[i], subject);
+                    }
                 }
             }
 
@@ -1672,11 +1653,12 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
-    /**
+    /*
      * Función que mezcla opciones de mapa relativos a capa, teniendo cuidado de que puede haber objetos de opciones de capa o identificadores de capa.
      * En este último caso, si no son la opción prioritaria, hay que sustituirlos por los objetos de definiciones de capa.
      */
     var mergeLayerOptions = function (optionsArray, propertyName) {
+        const self = this;
         // lista de opciones de capa de los argumentos
         var layerOptions = Array.prototype.slice.call(optionsArray).map(function (elm) {
             var result = {};
@@ -1695,9 +1677,9 @@ TC.mix = function (targetCtor, ...mixins) {
         if (propertyName === 'baseLayers' && layerOptions[1]['baseLayers']) {
             layerOption = layerOptions[1];
 
-            for (var i = 0; i < layerOption['baseLayers'].length; i++) {
-                if (typeof layerOption['baseLayers'][i] === 'object') {
-                    TC.Util.extend(layerOption['baseLayers'][i], getAvailableBaseLayer.call(this, layerOption['baseLayers'][i].id));
+            for (var i = 0; i < layerOption.baseLayers.length; i++) {
+                if (typeof layerOption.baseLayers[i] === 'object') {
+                    TC.Util.extend(layerOption.baseLayers[i], getAvailableBaseLayer.call(self, layerOption.baseLayers[i].id));
                 }
             }
         } else {
@@ -1731,11 +1713,11 @@ TC.mix = function (targetCtor, ...mixins) {
                 // GLS compatibilidad hacia atrás
 
                 Object.keys(controlOptions).filter(function (key) {
-                    return Object.keys(controlOptions.controlContainer.controls).indexOf(key) > -1
+                    return Object.keys(controlOptions.controlContainer.controls).indexOf(key) > -1;
                 }).forEach(function (key) {
                     const containerControl = controlOptions.controlContainer.controls[key];
                     if (typeof containerControl.options === 'boolean') {
-                        containerControl.options = {}
+                        containerControl.options = {};
                     }
                     TC.Util.extend(containerControl.options, controlOptions[key]);
                     delete controlOptions[key];
@@ -1744,7 +1726,7 @@ TC.mix = function (targetCtor, ...mixins) {
         }
 
         return controlOptions;
-    }
+    };
 
     const mergeOptions = function () {
         const argArray = [true, {}, TC.Cfg].concat(Array.prototype.slice.call(arguments));
@@ -1771,7 +1753,7 @@ TC.mix = function (targetCtor, ...mixins) {
         var errorMessage = 'Layer "' + layer.title + '" ("' + layer.names + '"): ';
         var reason;
         if (layer.isValidFromNames()) {
-            reason = 'layerSrsNotCompatible'
+            reason = 'layerSrsNotCompatible';
         } else {
             reason = 'layerNameNotValid';
         }
@@ -1784,7 +1766,7 @@ TC.mix = function (targetCtor, ...mixins) {
         return error;
     };
 
-    mapProto.getCRS = function () {
+    mapProto.getCrs = mapProto.getCRS = function () {
         const self = this;
 
         if (!self.on3DView) {
@@ -1794,8 +1776,17 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
+    mapProto.setCrs = async function (crs, callback) {
+        const self = this;
+        await self.setProjection({ crs: crs });
+        if (TC.Util.isFunction(callback)) {
+            callback(crs);
+        }
+        return crs;
+    };
+
     const appendRasterEvents = function (layer) {
-        layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {            
+        layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
             if ((event.error.code && event.error.code.toString() != '404') && (event.error.text != 'offline')) {
                 const wrap = this;
                 if (!wrap._tileloaderror) {
@@ -1830,8 +1821,16 @@ TC.mix = function (targetCtor, ...mixins) {
 
         const result = new Promise(function (resolve, reject) {
 
-            if (typeof layer === 'object' && !layer.id) {
-                layer.id = TC.getUID();
+            if (typeof layer === 'object') {
+                if (!layer.id)
+                    layer.id = TC.getUID();
+                else {
+                    //URI expresion regular para sacar el prefijo y el número del ID de la capa y setear  lista de prefijos
+                    const groups = /(?<ctl>[-_\p{Letter}]+(\u002D\d)?\u002D)?(?<num>[\d]*)?/gu.exec(layer.id).groups;
+                    if (groups["num"] && groups["ctl"])
+                        TC.setUIDStart(parseInt(groups["num"]) + 1, { prefix: groups["ctl"] });
+                }
+
             }
 
             let zIndex = layer.options ? layer.options.zIndex : layer.zIndex;
@@ -1850,164 +1849,148 @@ TC.mix = function (targetCtor, ...mixins) {
             }
 
             var lyr;
-            var test;
-            var objUrl;
-
-            if (isRaster(layer)) {
-                test = !TC.layer || !TC.layer.Raster;
-                objUrl = TC.apiLocation + 'TC/layer/Raster';
+            if (typeof layer === 'string') {
+                lyr = new TC.layer.Raster(TC.Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
             }
             else {
-                test = !TC.layer || !TC.layer.Vector;
-                objUrl = TC.apiLocation + 'TC/layer/Vector';
-            }
-            TC.loadJS(
-                test,
-                [objUrl],
-                function () {
-                    if (typeof layer === 'string') {
-                        lyr = new TC.layer.Raster(TC.Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
+                if (layer instanceof TC.Layer) {
+                    lyr = layer;
+                    lyr.map = self;
+                }
+                else {
+                    layer.map = self;
+                    if (layer.type === TC.Consts.layerType.VECTOR || layer.type === TC.Consts.layerType.KML || layer.type === TC.Consts.layerType.WFS) {
+                        lyr = new TC.layer.Vector(layer);
                     }
                     else {
-                        if (layer instanceof TC.Layer) {
-                            lyr = layer;
-                            lyr.map = self;
-                        }
-                        else {
-                            layer.map = self;
-                            if (layer.type === TC.Consts.layerType.VECTOR || layer.type === TC.Consts.layerType.KML || layer.type === TC.Consts.layerType.WFS) {
-                                lyr = new TC.layer.Vector(layer);
-                            }
-                            else {
-                                lyr = new TC.layer.Raster(layer);
-                            }
-                        }
+                        lyr = new TC.layer.Raster(layer);
                     }
+                }
+            }
 
-                    Promise.all([self.wrap.getMap(), lyr.wrap.getLayer()]).then(function () {
+            Promise.all([self.wrap.getMap(), lyr.wrap.getLayer()]).then(function () {
 
-                        self.trigger(TC.Consts.event.BEFORELAYERADD, { layer: lyr });
+                self.trigger(TC.Consts.event.BEFORELAYERADD, { layer: lyr });
 
-                        // Nos aseguramos de que las capas raster se quedan por debajo de las vectoriales
-                        var idx;
-                        if (isRaster(lyr)) {
-                            appendRasterEvents(lyr);
-                            idx = self.wrap.indexOfFirstVector();
-                        }
-                        if (idx === -1) {
-                            idx = self.wrap.getLayerCount();
-                        }
+                // Nos aseguramos de que las capas raster se quedan por debajo de las vectoriales
+                var idx;
+                if (isRaster(lyr)) {
+                    appendRasterEvents(lyr);
+                    idx = self.wrap.indexOfFirstVector();
+                }
+                if (idx === -1) {
+                    idx = self.wrap.getLayerCount();
+                }
 
-                        const currentCrs = self.state && self.state.crs ? self.state.crs : self.getCRS();
-                        TC.loadProjDef({
-                            crs: currentCrs,
-                            callback: function () {
-                                const isCompatible = lyr.isCompatible(currentCrs);
-                                if (lyr.isBase) {
-                                    const baseLayerEndFn = function () {
-                                        if (self.state) {
-                                            lyr.isDefault = (self.state.base === lyr.id) || (self.state.base === lyr.options.fallbackLayer);
+                const currentCrs = self.state && self.state.crs ? self.state.crs : self.getCRS();
+                TC.loadProjDef({
+                    crs: currentCrs,
+                    callback: function () {
+                        const isCompatible = lyr.isCompatible(currentCrs);
+                        if (lyr.isBase) {
+                            const baseLayerEndFn = function () {
+                                if (self.state) {
+                                    lyr.isDefault = self.state.base === lyr.id ||
+                                        self.state.base === lyr.options.fallbackLayer;
+                                }
+                                else if (typeof self.options.defaultBaseLayer === 'string') {
+                                    lyr.isDefault = self.options.defaultBaseLayer === lyr.id;
+                                }
+                                else if (typeof self.options.defaultBaseLayer === 'number') {
+                                    lyr.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
+                                }
+                                if (lyr.isDefault) {
+                                    var fit;
+                                    if (lyr.mustReproject &&
+                                        (lyr.type !== TC.Consts.layerType.WMTS || !lyr.wrap.getCompatibleMatrixSets(currentCrs)[0])) {
+                                        if (lyr.options.fallbackLayer && lyr.getFallbackLayer) {
+
+                                            self.addLayer(lyr.getFallbackLayer()).then(function (l) {
+                                                self.wrap.setBaseLayer(l.wrap.layer);
+                                                self.baseLayer = l.wrap.parent;
+                                                // GLS: Tema casita + initialExtent
+                                                fitToInitialExtent(fit);
+
+                                                resolve(lyr);
+                                            });
+                                        } else {
+                                            reject(crsLayerError(self, lyr));
                                         }
-                                        else if (typeof self.options.defaultBaseLayer === 'string') {
-                                            lyr.isDefault = self.options.defaultBaseLayer === lyr.id;
-                                        }
-                                        else if (typeof self.options.defaultBaseLayer === 'number') {
-                                            lyr.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
-                                        }
-                                        if (lyr.isDefault) {
-                                            var fit;
-                                            if (lyr.mustReproject && !lyr.type === TC.Consts.layerType.WMTS ||
-                                                lyr.mustReproject && lyr.type === TC.Consts.layerType.WMTS && !lyr.wrap.getCompatibleMatrixSets(currentCrs)[0]) {
-                                                if (lyr.options.fallbackLayer && lyr.getFallbackLayer) {
-
-                                                    self.addLayer(lyr.getFallbackLayer()).then(function (l) {
-                                                        self.wrap.setBaseLayer(l.wrap.layer);
-                                                        self.baseLayer = l.wrap.parent;
-                                                        // GLS: Tema casita + initialExtent
-                                                        fitToExtent(fit);
-
-                                                        resolve(lyr);
-                                                    });
-                                                } else {
-                                                    reject(crsLayerError(self, lyr));
-                                                }
-                                            }
-                                            else {
-                                                fit = self.baseLayer === null;
-
-                                                lyr.wrap.getLayer().then(function (ollyr) {
-                                                    self.wrap.setBaseLayer(ollyr);
-                                                    self.baseLayer = lyr;
-
-                                                    // GLS: Tema casita + initialExtent
-                                                    fitToExtent(fit);
-
-                                                    resolve(lyr);
-                                                });
-                                            }
-                                        }
-                                        else {
-                                            //self.baseLayers.push(lyr);
-                                            resolve(lyr);
-                                        }
-                                    };
-                                    if (isCompatible) {
-                                        baseLayerEndFn();
                                     }
                                     else {
-                                        // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
-                                        // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
-                                        lyr.getCapabilitiesOnline().then(function (onlineCapabilities) {
-                                            lyr.capabilities = onlineCapabilities;
-                                            if (!lyr.isCompatible(currentCrs)) {
-                                                if (!lyr.type === TC.Consts.layerType.WMTS) {
-                                                    lyr.mustReproject = true;
-                                                }
-                                                else {
-                                                    const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
-                                                    if (compatibleMatrixSet) {
-                                                        lyr.wrap.setMatrixSet(compatibleMatrixSet);
-                                                    }
-                                                    else {
-                                                        lyr.mustReproject = true;
-                                                    }
-                                                }
-                                            }
-                                            baseLayerEndFn();
+                                        fit = self.baseLayer === null;
+
+                                        lyr.wrap.getLayer().then(function (ollyr) {
+                                            self.wrap.setBaseLayer(ollyr);
+                                            self.baseLayer = lyr;
+
+                                            // GLS: Tema casita + initialExtent
+                                            fitToInitialExtent(fit);
+
+                                            resolve(lyr);
                                         });
                                     }
                                 }
                                 else {
-                                    if (isCompatible) {
-                                        lyr.wrap.getLayer().then(function (l) {
+                                    //self.baseLayers.push(lyr);
+                                    resolve(lyr);
+                                }
+                            };
+                            if (isCompatible) {
+                                baseLayerEndFn();
+                            }
+                            else {
+                                // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
+                                // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
+                                lyr.getCapabilitiesOnline().then(function (onlineCapabilities) {
+                                    lyr.capabilities = onlineCapabilities;
+                                    if (!lyr.isCompatible(currentCrs)) {
+                                        if (lyr.type !== TC.Consts.layerType.WMTS) {
+                                            lyr.mustReproject = true;
+                                        }
+                                        else {
+                                            const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
+                                            if (compatibleMatrixSet) {
+                                                lyr.wrap.setMatrixSet(compatibleMatrixSet);
+                                            }
+                                            else {
+                                                lyr.mustReproject = true;
+                                            }
+                                        }
+                                    }
+                                    baseLayerEndFn();
+                                });
+                            }
+                        }
+                        else {
+                            if (isCompatible) {
+                                lyr.wrap.getLayer().then(function (_l) {
+                                    resolve(lyr);
+                                });
+                            }
+                            else {
+                                // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
+                                // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
+                                lyr.getCapabilitiesOnline().then(function (onlineCapabilities) {
+                                    lyr.capabilities = onlineCapabilities;
+                                    if (lyr.isCompatible(currentCrs)) {
+                                        lyr.wrap.getLayer().then(function (_l) {
                                             resolve(lyr);
                                         });
                                     }
                                     else {
-                                        // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
-                                        // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
-                                        lyr.getCapabilitiesOnline().then(function (onlineCapabilities) {
-                                            lyr.capabilities = onlineCapabilities;
-                                            if (lyr.isCompatible(currentCrs)) {
-                                                lyr.wrap.getLayer().then(function (l) {
-                                                    resolve(lyr);
-                                                });
-                                            }
-                                            else {
-                                                reject(crsLayerError(self, lyr));
-                                            }
-                                        })
+                                        reject(crsLayerError(self, lyr));
                                     }
-                                }
+                                });
                             }
-                        });
-                    }, function (error) {
-                        var err = new Error(error)
-                        err.layerId = layer.id;
-                        reject(err);
-                    });
-                }
-            );
+                        }
+                    }
+                });
+            }, function (error) {
+                var err = new Error(error);
+                err.layerId = layer.id;
+                reject(err);
+            });
         });
 
         result
@@ -2026,36 +2009,55 @@ TC.mix = function (targetCtor, ...mixins) {
                 self._layerBuffer.checkMapLoad(self);
             });
 
-        const fitToExtent = function (fit) {
+        const fitToInitialExtent = function (fit) {
             if (fit) {
-                var opt = {
-                    projection: self.wrap.map.getView().getProjection(),
-                    extent: self.initialExtent
-                };
-                var resolutions = self.baseLayer.getResolutions();
-                if (resolutions && resolutions.length) {
-                    opt.resolutions = resolutions;
-                }
-                else {
-                    opt.minZoom = self.wrap.map.getView().getMinZoom();
-                    opt.maxZoom = self.wrap.map.getView().getMaxZoom();
-                    var minResolution = self.baseLayer.wrap.layer.getMinResolution();
-                    if (minResolution !== 0) {
-                        opt.minResolution = minResolution;
-                    }
-                    var maxResolution = self.baseLayer.wrap.layer.getMaxResolution();
-                    if (maxResolution !== Number.POSITIVE_INFINITY) {
-                        opt.maxResolution = maxResolution;
-                    }
-                }
-
-                self.wrap.map.setView(new ol.View(opt));
-                self.wrap.map.getView().fit(self.initialExtent);
+                self.setExtent(self.initialExtent, { animate: false, contain: true });
             }
         };
         return result;
     };
 
+    /**
+    * Añade o actualiza una capa al mapa.
+    * @method addLayer
+    * @async
+    * @param {TC.Layer|TC.cfg.LayerOptions|string} layer Objeto de capa, objeto de opciones del constructor de la capa, o identificador de capa.
+    * @param {function} [callback] Función de callback.
+    * @return {Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
+    */
+    mapProto.addOrUpdateLayer = async function (layer, callback) {
+        const self = this;
+        const currentLayer = self.getLayer(layer.id);
+        if (currentLayer) {
+            //actualiza			
+            const layerNamesAsArray = Array.isArray(layer.layerNames) ? layer.layerNames :
+                layer.layerNames ? layer.layerNames.split(',') : [];
+            switch (currentLayer.type) {
+                case TC.Consts.layerType.WFS:
+                    break;
+                case TC.Consts.layerType.WMS:
+                    if (currentLayer.layerNames !== layerNamesAsArray) {
+                        await currentLayer.setLayerNames(layerNamesAsArray);
+                    }
+                    if (layer.visibility != undefined && currentLayer.visibility !== layer.visibility) {
+                        currentLayer.setVisibility(layer.visibility);
+                        currentLayer.renderOptions = Object.assign(layer.renderOptions, { hide: layer.visibility });
+                    }
+                    if (layer.opacity !== undefined && currentLayer.opacity !== layer.opacity) {
+                        currentLayer.setOpacity(layer.opacity, true);
+                        currentLayer.renderOptions = Object.assign(layer.renderOptions, { opacity: layer.opacity });
+                    }
+                    currentLayer.unremovable = layer.unremovable;
+                    currentLayer.title = layer.title;
+                    currentLayer.hideTree = layer.hideTree;
+                    break;
+                default:
+                    break;
+            }
+            return currentLayer;
+        }
+        return await self.addLayer(layer, callback);
+    };
 
     mapProto.removeLayer = function (layer) {
         const self = this;
@@ -2079,7 +2081,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 return;
             }
             if (layer.isBase) {
-                for (var i = 0; i < self.baseLayers.length; i++) {
+                for (i = 0; i < self.baseLayers.length; i++) {
                     if (self.baseLayers[i] === layer) {
                         self.baseLayers.splice(i, 1);
                         if (self.baseLayer === layer) {
@@ -2090,7 +2092,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 }
             }
             else {
-                for (var i = 0; i < self.workLayers.length; i++) {
+                for (i = 0; i < self.workLayers.length; i++) {
                     if (self.workLayers[i] === layer) {
                         self.workLayers.splice(i, 1);
                         break;
@@ -2111,10 +2113,9 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
-
     mapProto.insertLayer = function (layer, idx, callback) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             var beforeIdx = -1;
             for (var i = 0; i < self.layers.length; i++) {
                 if (layer === self.layers[i]) {
@@ -2193,7 +2194,7 @@ TC.mix = function (targetCtor, ...mixins) {
             if (!found) {
                 layer = getAvailableBaseLayer.call(self, layer);
                 if (layer) {
-                    layer = await self.addLayer(TC.Util.extend(true, {}, layer, { isDefault: true, isBase:true, map: self }));
+                    layer = await self.addLayer(TC.Util.extend(true, {}, layer, { isDefault: true, isBase: true, map: self }));
                     found = true;
                 }
             }
@@ -2248,7 +2249,7 @@ TC.mix = function (targetCtor, ...mixins) {
         self.trigger(TC.Consts.event.VIEWCHANGE, { view: view });
     };
 
-    /**
+    /*
      * Asigna un callback que se ejecutará cuando los controles del mapa se hayan cargado.
      * @method ready
      * @async
@@ -2266,14 +2267,14 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
-    /**
+    /*
      * Asigna un callback que se ejecutará cuando los controles y las capas iniciales del mapa se hayan cargado.
      * @method loaded
      * @async
      * @param {function} [callback] Función a ejecutar.
      */
     mapProto.loaded = function (callback) {
-        var self = this;
+        const self = this;
         if (TC.Util.isFunction(callback)) {
             if (self.isLoaded) {
                 callback();
@@ -2282,11 +2283,19 @@ TC.mix = function (targetCtor, ...mixins) {
                 self.one(TC.Consts.event.MAPLOAD, callback);
             }
         }
+        return new Promise(resolve => {
+            if (self.isLoaded) {
+                resolve();
+            }
+            else {
+                self.one(TC.Consts.event.MAPLOAD, resolve);
+            }
+        });
     };
 
 
 
-    /**
+    /*
      * Devuelve un árbol de capas del mapa.
      * @method getLayerTree
      * @return {TC.LayerTree}
@@ -2339,8 +2348,10 @@ TC.mix = function (targetCtor, ...mixins) {
                 // Lo envolvemos en Promise.resolve para asegurarse compatibilidad hacia atrás con los controles que devuelven un $.Deferred.
                 return Promise.resolve(ctl.register(self))
                     .then(function (c) {
-                        if (!ctl.div.parentElement) {
-                            self.div.appendChild(ctl.div);
+                        if (ctl.div) {
+                            if (!ctl.div.parentNode) {
+                                self.div.appendChild(ctl.div);
+                            }
                         }
                         self.trigger(TC.Consts.event.CONTROLADD, { control: ctl });
                         return c;
@@ -2350,16 +2361,17 @@ TC.mix = function (targetCtor, ...mixins) {
                     });
             };
             if (typeof control === 'string') {
-                control = control.substr(0, 1).toUpperCase() + control.substr(1);
-                TC.loadJS(
-                    !TC.Control || !TC.control[control],
-                    [TC.apiLocation + 'TC/control/' + control],
-                    function () {
-                        _addCtl(new TC.control[control](null, options)).then(function (ctl) {
-                            resolve(ctl)
-                        });
-                    }
-                );
+                const ctorName = control.substr(0, 1).toUpperCase() + control.substr(1);
+                const addStringControl = () => _addCtl(new TC.control[ctorName](null, options)).then(resolve);
+                if (!TC.Control || !TC.control[ctorName]) {
+                    import(/* webpackMode: "eager" */ './control/' + ctorName).then(function (module) {
+                        TC.control[ctorName] = module.default;
+                        addStringControl();
+                    });
+                }
+                else {
+                    addStringControl();
+                }
             }
             else {
                 _addCtl(control).then(function (ctl) {
@@ -2369,7 +2381,7 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
-    /**
+    /*
      * Devuelve la lista de controles que son de la clase especificada.
      * @method getControlsByClass
      * @param {function|string} classObj Nombre de la clase o función constructora de la clase.
@@ -2390,12 +2402,11 @@ TC.mix = function (targetCtor, ...mixins) {
             }
         }
         if (TC.Util.isFunction(obj)) {
-            for (var i = 0; i < self.controls.length; i++) {
-                var ctl = self.controls[i];
+            self.controls.forEach(ctl => {
                 if (ctl instanceof obj) {
                     result.push(ctl);
                 }
-            }
+            });
         }
 
         return result;
@@ -2430,7 +2441,7 @@ TC.mix = function (targetCtor, ...mixins) {
         return candidate;
     };
 
-    /**
+    /*
      * Devuelve el primer control del mapa que sea de la clase {{#crossLink "TC.control.LoadingIndicator"}}{{/crossLink}}.
      * @method getLoadingIndicator
      * @return {TC.control.LoadingIndicator}
@@ -2444,7 +2455,20 @@ TC.mix = function (targetCtor, ...mixins) {
         return result;
     };
 
-    /**
+    mapProto.addResultsPanel = function (options) {
+        const self = this;
+        const opts = Object.assign({}, options);
+        const container = self.getControlsByClass(TC.control.ControlContainer)[0];
+        if (container) {
+            opts.position = container.POSITION.RIGHT;
+            return container.addControl('resultsPanel', opts);
+        }
+        else {
+            return self.addControl('resultsPanel', opts);
+        }
+    };
+
+    /*
      * Establece la extensión del mapa.
      * @method setExtent
      * @param {array} extent Array de cuatro números que representan las coordenadas x mínima, y mínima, x máxima e y máxima respectivamente.
@@ -2452,8 +2476,8 @@ TC.mix = function (targetCtor, ...mixins) {
      * @param {boolean} [options.animate=true] Establece si se realiza una animación al cambiar la extensión.
      * La unidad de las coordenadas es la correspondiente al CRS del mapa.
      */
-    mapProto.setExtent = function (extent, options) {
-        return this.wrap.setExtent(extent, options);
+    mapProto.setExtent = function (extent, options, callback) {
+        return this.wrap.setExtent(extent, options, callback);
     };
 
     /**
@@ -2466,7 +2490,11 @@ TC.mix = function (targetCtor, ...mixins) {
         return this.wrap.getExtent();
     };
 
-    /**
+    mapProto.getMaxExtent = function () {
+        return this.maxExtent || null;
+    };
+
+    /*
      * Establece el centro del mapa.
      * @method setCenter
      * @param {array} coord Array de dos números que representan la coordenada del punto en las unidades correspondientes al CRS del mapa.
@@ -2528,13 +2556,14 @@ TC.mix = function (targetCtor, ...mixins) {
                         .filter(function (response) {
                             return response.status === 'ok' && response.number_result > 0;
                         })
-                        .map(function (response) {
+                        .map(function (response, index, array) {
                             const projData = response.results[0];
                             const code = 'EPSG:' + projData.code;
                             TC.loadProjDef({
                                 crs: code,
                                 def: projData.def,
-                                name: projData.name
+                                name: projData.name,
+                                silent: index < array.length - 1 // Solo registramos proj4 en la última iteración
                             });
                             return {
                                 code: code,
@@ -2549,18 +2578,20 @@ TC.mix = function (targetCtor, ...mixins) {
                     }
                     resolve(projList);
                 },
-                function (error) {
-                    reject(error);
-                });
+                    function (error) {
+                        reject(error);
+                    });
         });
     };
 
     mapProto.setProjection = function (options) {
         const self = this;
         options = options || {};
+        const oldCrs = self.crs;
         return new Promise(function (resolve, reject) {
             var baseLayer;
             if (options.crs) {
+                self.isReprojecting = true;
                 if (options.baseLayer) {
                     baseLayer = options.baseLayer;
                 }
@@ -2581,12 +2612,26 @@ TC.mix = function (targetCtor, ...mixins) {
                     baseLayer = self.baseLayer;
                 }
 
+                const endReproject = () => self.isReprojecting = false;
+
+                const setOptionalExtent = async function () {
+                    if (options.extent) {
+                        await self.setExtent(options.extent);
+                    }
+                };
+
+                const resolveChange = async function () {
+                    endReproject();
+                    self.trigger(TC.Consts.event.PROJECTIONCHANGE, { oldCrs: oldCrs, newCrs: options.crs });
+                    await setOptionalExtent();
+                    resolve();
+                };
+
                 // 03/04/2019 GLS: esperamos a que termine de añadirse la capa porque si no se duplica en la gestión de la carga del CRS.
                 const loadProj = function () {
                     TC.loadProjDef({
                         crs: options.crs,
                         callback: function () {
-                            const oldCrs = self.crs;
                             const setProjection = function (baseLayer) {
 
                                 const _setProjection = function () {
@@ -2606,10 +2651,6 @@ TC.mix = function (targetCtor, ...mixins) {
                                             .forEach(setLayerProjection);
                                         // Reprojectamos capas cargadas
                                         self.workLayers.forEach(setLayerProjection);
-                                        const resolveChange = function () {
-                                            self.trigger(TC.Consts.event.PROJECTIONCHANGE, { oldCrs: oldCrs, newCrs: options.crs });
-                                            resolve();
-                                        };
                                         if (baseLayer && baseLayer !== self.baseLayer) {
                                             self.setBaseLayer(baseLayer, resolveChange);
                                         }
@@ -2620,12 +2661,13 @@ TC.mix = function (targetCtor, ...mixins) {
                                     else if (baseLayer.fallbackLayer) {
                                         setProjection(baseLayer.fallbackLayer);
                                     } else {
+                                        endReproject();
                                         reject(Error('Layer has no fallback'));
                                     }
                                 };
 
                                 if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS) {
-                                    baseLayer.getCapabilitiesPromise().then(_setProjection);
+                                    baseLayer.getCapabilitiesPromise().then(_setProjection).catch(endReproject);
                                 } else {
                                     _setProjection();
                                 }
@@ -2637,7 +2679,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 };
 
                 if (self.baseLayers.indexOf(baseLayer) < 0) {
-                    self.addLayer(baseLayer).then(loadProj);
+                    self.addLayer(baseLayer).then(loadProj).catch(endReproject);
                 } else {
                     loadProj();
                 }
@@ -2680,48 +2722,58 @@ TC.mix = function (targetCtor, ...mixins) {
      * El valor es la relación resultante de la diferencia de dimensiones entre la extensión ampliada y la original relativa a la original.
      */
     mapProto.zoomToFeatures = function (features, options) {
-        var self = this;
+        const self = this;
         if (features.length > 0) {
-            var bounds = [Infinity, Infinity, -Infinity, -Infinity];
-            var opts = options || {};
-            var radius = opts.pointBoundsRadius || self.options.pointBoundsRadius;
-            radius = radius / self.getMetersPerUnit();
-            var extentMargin = opts.extentMargin;
-            if (typeof extentMargin !== 'number') {
-                extentMargin = self.options.extentMargin;
-            }
-            for (var i = 0; i < features.length; i++) {
-                var b = features[i].getBounds();
-                if (b) {
-                    bounds[0] = Math.min(bounds[0], b[0]);
-                    bounds[1] = Math.min(bounds[1], b[1]);
-                    bounds[2] = Math.max(bounds[2], b[2]);
-                    bounds[3] = Math.max(bounds[3], b[3]);
+            let bounds;
+            const setExtent = () => {
+                bounds = [Infinity, Infinity, -Infinity, -Infinity];
+                var opts = options || {};
+                opts.contain = true;
+                var radius = opts.pointBoundsRadius || self.options.pointBoundsRadius;
+                radius = radius / self.getMetersPerUnit();
+                var extentMargin = opts.extentMargin;
+                if (typeof extentMargin !== 'number') {
+                    extentMargin = self.options.extentMargin;
                 }
+                for (var i = 0; i < features.length; i++) {
+                    var b = features[i].getBounds();
+                    if (b) {
+                        bounds[0] = Math.min(bounds[0], b[0]);
+                        bounds[1] = Math.min(bounds[1], b[1]);
+                        bounds[2] = Math.max(bounds[2], b[2]);
+                        bounds[3] = Math.max(bounds[3], b[3]);
+                    }
+                }
+                if (bounds[2] - bounds[0] === 0) {
+                    bounds[0] = bounds[0] - radius;
+                    bounds[2] = bounds[2] + radius;
+                }
+                if (bounds[3] - bounds[1] === 0) {
+                    bounds[1] = bounds[1] - radius;
+                    bounds[3] = bounds[3] + radius;
+                }
+                if (extentMargin) {
+                    var dx = (bounds[2] - bounds[0]) * extentMargin / 2;
+                    var dy = (bounds[3] - bounds[1]) * extentMargin / 2;
+                    bounds[0] = bounds[0] - dx;
+                    bounds[1] = bounds[1] - dy;
+                    bounds[2] = bounds[2] + dx;
+                    bounds[3] = bounds[3] + dy;
+                }
+                if (self.maxExtent) {
+                    bounds[0] = Math.max(bounds[0], self.maxExtent[0]);
+                    bounds[1] = Math.max(bounds[1], self.maxExtent[1]);
+                    bounds[2] = Math.min(bounds[2], self.maxExtent[2]);
+                    bounds[3] = Math.min(bounds[3], self.maxExtent[3]);
+                }
+                self.setExtent(bounds, opts);
+            };
+            if (self.isReprojecting) {
+                self.one(TC.Consts.event.PROJECTIONCHANGE, setExtent);
             }
-            if (bounds[2] - bounds[0] === 0) {
-                bounds[0] = bounds[0] - radius;
-                bounds[2] = bounds[2] + radius;
+            else {
+                setExtent();
             }
-            if (bounds[3] - bounds[1] === 0) {
-                bounds[1] = bounds[1] - radius;
-                bounds[3] = bounds[3] + radius;
-            }
-            if (extentMargin) {
-                var dx = (bounds[2] - bounds[0]) * extentMargin / 2;
-                var dy = (bounds[3] - bounds[1]) * extentMargin / 2;
-                bounds[0] = bounds[0] - dx;
-                bounds[1] = bounds[1] - dy;
-                bounds[2] = bounds[2] + dx;
-                bounds[3] = bounds[3] + dy;
-            }
-            if (self.options.maxExtent) {
-                bounds[0] = Math.max(bounds[0], self.options.maxExtent[0]);
-                bounds[1] = Math.max(bounds[1], self.options.maxExtent[1]);
-                bounds[2] = Math.min(bounds[2], self.options.maxExtent[2]);
-                bounds[3] = Math.min(bounds[3], self.options.maxExtent[3]);
-            }
-            self.wrap.setExtent(bounds, opts);
 
             if (self.on3DView) { // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
                 self._on3DZoomTo({ extent: bounds });
@@ -2731,7 +2783,7 @@ TC.mix = function (targetCtor, ...mixins) {
 
     mapProto._on3DZoomTo = function (options) {
         const self = this;
-        
+
         options = options || {};
 
         if (self.on3DView && options.extent && options.extent.length === 4) {
@@ -2755,7 +2807,7 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
-    /**
+    /*
      * Establece la extensión del mapa de forma que abarque todas los marcadores que existen en él.
      * El método espera a todos los marcadores pendientes de incluir, dado que el método {{#crossLink "TC.Map/addMarker:method"}}{{/crossLink}} es asíncrono.
      * @method zoomToMarkers
@@ -2788,6 +2840,7 @@ TC.mix = function (targetCtor, ...mixins) {
             const extent = layer.getExtent();
             if (extent) {
                 options = options || {};
+                options.contain = true;
                 if (typeof options.extentMargin !== 'number') {
                     options.extentMargin = self.options.extentMargin;
                 }
@@ -2799,7 +2852,7 @@ TC.mix = function (targetCtor, ...mixins) {
                         Al obtener el extent de la capa desde el capabilities ya se gestiona que el CRS del mapa está en 4326
                         porque map.getCRS ya gestiona si estamos en 3D o no por lo que el extent ya llega en geográficas.
                     */
-                }                
+                }
             }
         }
         else {
@@ -2809,7 +2862,7 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
-    /**
+    /*
      * Obtiene una capa por su identificador o devuelve la propia capa.
      * @method getLayer
      * @param {string|TC.Layer} layer Identificador de la capa u objeto de capa.
@@ -2836,7 +2889,7 @@ TC.mix = function (targetCtor, ...mixins) {
         var result;
         if (!map.vectors) {
             result = map.addLayer({
-                id: TC.getUID(), title: TC.i18n[map.options.locale]['vectorLayer'], type: TC.Consts.layerType.VECTOR
+                id: TC.getUID(), title: TC.i18n[map.options.locale].vectorLayer, type: TC.Consts.layerType.VECTOR
             });
             map.vectors = result;
             result.then(function (vectors) {
@@ -2875,7 +2928,7 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
-    /**
+    /*
      * Añade un marcador puntual al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
      * Esta capa se crea al añadir por primera vez una entidad sin especificar capa.
      * @method addMarker
@@ -2883,27 +2936,42 @@ TC.mix = function (targetCtor, ...mixins) {
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
      * @param {TC.cfg.MarkerStyleOptions} [options] Opciones del marcador.
      */
-    mapProto.addMarker = function (coord, options) {
-        var self = this;
+    mapProto.addMarker = async function (coord, options, callback) {
+        const self = this;
+        if (TC.Util.isFunction(options)) {
+            callback = options;
+            options = {};
+        }
+        else {
+            options = options || {};
+        }
+        let markerPromise;
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                self._markerPromises.push(layer.addMarker(coord, TC.Util.extend(true, {}, options, { layer: layer })));
+                markerPromise = layer.addMarker(coord, TC.Util.extend(true, {}, options, { layer: layer }));
             }
             else {
-                self._markerPromises.push(Promise.reject(new Error('Layer "' + options.layer + '" not found')));
+                markerPromise = Promise.reject(new Error('Layer "' + options.layer + '" not found'));
             }
+            self._markerPromises.push(markerPromise);
         }
         else {
             // Se añade una promise más para evitar que zoomToMarkers salte antes de poblarse el array _markerPromises.
-            self._markerPromises.push(new Promise(function (resolve, reject) {
+            markerPromise = new Promise(function (resolve, _reject) {
                 _getVectors(self).then(function (vectors) {
                     vectors.addMarker(coord, options).then(function (marker) {
                         resolve(marker);
                     });
                 });
-            }));
+            });
+            self._markerPromises.push(markerPromise);
         }
+        const marker = await markerPromise;
+        if (TC.Util.isFunction(callback)) {
+            callback(marker);
+        }
+        return marker;
     };
 
     /**
@@ -2959,7 +3027,19 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
-
+    mapProto.removeFeatures = function (features) {
+        const self = this;
+        self
+            .workLayers
+            .filter(wl => TC.layer.Vector && wl instanceof TC.layer.Vector)
+            .map(function (layer) {
+                return {
+                    layer: layer,
+                    features: layer.features.filter(f => features.includes(f))
+                };
+            })
+            .forEach(fg => fg.features.forEach(f => fg.layer.removeFeature(f)));
+    };
 
 
     mapProto.getBaseLayer = function () {
@@ -3017,45 +3097,45 @@ TC.mix = function (targetCtor, ...mixins) {
             }
         });
         const format = options.format || "";
-        if (format === TC.Consts.format.SHP) {
-            const defaultEncoding = "ISO-8859-1"
+        if (format === TC.Consts.format.SHAPEFILE) {
+            const defaultEncoding = "ISO-8859-1";
             //generar shape
 
             //agrupar por capa
-            var layers = features.reduce(function (rv, x) {
-                var id = x.id.substr(0, x.id.lastIndexOf("."));
-                //var id = x.layer? (typeof(x.layer)==="string"?x.layer:x.layer.id) :x.id.substr(0, x.id.lastIndexOf("."));
-                (rv[id] = rv[id] || []).push(x);
+            const layers = features.reduce(function (rv, feature) {
+                var id = feature.id.substr(0, feature.id.lastIndexOf("."));
+                //var id = feature.layer? (typeof(feature.layer)==="string"?feature.layer:feature.layer.id) :feature.id.substr(0, feature.id.lastIndexOf("."));
+                (rv[id] = rv[id] || []).push(feature);
                 return rv;
-            }, {});             
-            
+            }, {});
+
             const getInnerType = function (type) {
 
                 switch (true) {
                     case type === 'TC.feature.Point':
                         return 'POINT';
-                        break;
                     case type === 'TC.feature.Polygon':
                     case type === 'TC.feature.MultiPolygon':
                         return 'POLYGON';
-                        break;
                     case type === 'TC.feature.Polyline':
                     case type === 'TC.feature.MultiPolyline':
                         return 'POLYLINE';
-                        break;
                 }
                 return 'NULL';
-            }
+            };
             const proj = await TC.getProjectionData({ crs: self.crs });
-            
-            var arrPromises = [];
-            for (var layerId in layers) {
+
+            const arrPromises = [];
+            const shpWrite = (await import('@aleffabricio/shp-write/index')).default;
+            let layerId;
+            for (layerId in layers) {
                 //agrupar las features por tipos
-                var groups = groups = layers[layerId].reduce(function (rv, x) {
+                let groups = layers[layerId].reduce(function (rv, x) {
                     (rv[x.CLASSNAME] = rv[x.CLASSNAME] || []).push(x);
                     return rv;
                 }, {});
-                for (var group in groups) {
+                let group;
+                for (group in groups) {
                     arrPromises.push(new Promise(function (resolve) {
                         const _group = group;
                         const _features = groups[_group];
@@ -3063,235 +3143,235 @@ TC.mix = function (targetCtor, ...mixins) {
                             const data = {};
                             for (var key in curr.data) {
                                 const val = curr.data[key];
-                                data[key] = typeof val === 'string' ? val.replace(/\•/g, "&bull;") : val;
+                                data[key] = typeof val === 'string' ?
+                                    val.replace(/•/g, "&bull;").replace(/›/g, "&rsaquo;") :
+                                    val;
                             }
-                            if (curr.getStyle().label && !curr.data["name"])
-                                data["name"] = curr.getStyle().label;
-                            return prev.concat([data])
+                            if (curr.getStyle().label && !curr.data.name)
+                                data.name = curr.getStyle().label;
+                            return prev.concat([data]);
                         }, []);
                         const geometries = _features.reduce(function (prev, curr) {
                             //No se porque no le gusta las geometrias polyline de la herramienta draw por tanto las convierto a multipolyline
-                            if (curr instanceof TC.feature.Polyline)
-                                curr = new TC.feature.MultiPolyline(curr.getCoords(), curr.options)
+                            if (curr instanceof TC.feature.Polyline) {
+                                curr = new TC.feature.MultiPolyline(curr.getCoords(), curr.options);
+                            }
                             //si el sistema de referencia es distinto a EPSG:4326 reproyecto las geometrias							
                             return prev.concat([curr.geometry]);
                         }, []);
                         //generamos el un shape mas sus allegados por grupo
-                        TC.loadJS(!window.shpWrite, TC.apiLocation + 'lib/shp-write/shp-write', async function () {
-                            shpWrite.write(data
-                                , getInnerType(_group)
-                                , geometries
-                                , async function (vacia, content) {
-                                    const timestamp = options.fileName.substring(options.fileName.lastIndexOf("_", options.fileName.lastIndexOf("_") - 1) + 1);                                    
-                                    const fileName = layerId + (Object.keys(groups).length > 1 ? "_" + getInnerType(_group) : "") + (timestamp ? "_" + timestamp:"");
-                                    resolve({ "fileName": fileName, "content": content });
-                                });
-                        });
+                        shpWrite.write(data
+                            , getInnerType(_group)
+                            , geometries
+                            , function (_empty, content) {
+                                const fileName = layerId + (Object.keys(groups).length > 1 ? "_" + getInnerType(_group) : "");
+                                resolve({ "fileName": fileName, "content": content });
+                            });
                     }));
                 }
             }
-            
-            Promise.all(arrPromises).then(function (resolves) {
-                //creamos el fichero zip
-                TC.loadJS(!window.JSZip, TC.apiLocation + 'lib/jszip/jszip', async function () {
-                    const zip = new JSZip();
-                    for (var i = 0; i < resolves.length; i++) {
-                        zip.file(resolves[i].fileName + ".shp", resolves[i].content.shp.buffer);
-                        zip.file(resolves[i].fileName + ".shx", resolves[i].content.shx.buffer);
-                        zip.file(resolves[i].fileName + ".dbf", resolves[i].content.dbf.buffer);
-                        zip.file(resolves[i].fileName + ".prj", proj.results[0].wkt);
-                        zip.file(resolves[i].fileName + ".cst", defaultEncoding);
-                        zip.file(resolves[i].fileName + ".cpg", defaultEncoding);
-                    }
-                    zip.generateAsync({ type: "blob" }).then(function (blob) {
-                        TC.Util.downloadBlob(options.fileName + ".zip", blob);
-                        loadingCtl && loadingCtl.removeWait(waitId);
-                    }, function (err) {
-                        loadingCtl && loadingCtl.removeWait(waitId);
-                        throw err
-                    });
-                })
+
+            const resolves = [];
+            for (var i = 0; i < arrPromises.length; i++) {
+                resolves[i] = await arrPromises[i];
+            }
+
+            //creamos el fichero zip
+            const JSZip = (await import("jszip/dist/jszip")).default;
+            const zip = new JSZip();
+            resolves.forEach(resolve => {
+                zip.file(resolve.fileName + ".shp", resolve.content.shp.buffer);
+                zip.file(resolve.fileName + ".shx", resolve.content.shx.buffer);
+                zip.file(resolve.fileName + ".dbf", resolve.content.dbf.buffer);
+                zip.file(resolve.fileName + ".prj", proj.results[0].wkt);
+                zip.file(resolve.fileName + ".cst", defaultEncoding);
+                zip.file(resolve.fileName + ".cpg", defaultEncoding);
             });
-            return;
-        }        
-        if (format === TC.Consts.format.GPKG) {
-            const fieldDataType = function (value) {
-                var name = ''
-                switch (typeof (value)) {
+            try {
+                const blob = await zip.generateAsync({ type: "blob" });
+                loadingCtl && loadingCtl.removeWait(waitId);
+                return blob;
+            }
+            catch (err) {
+                loadingCtl && loadingCtl.removeWait(waitId);
+                throw err;
+            }
+        }
+        if (format === TC.Consts.format.GEOPACKAGE) {
+            const fieldDataType = function (geopackage, value) {
+                var name = '';
+                switch (typeof value) {
                     case "string":
-                        name = geopackage.DataTypes.GPKG_DT_TEXT_NAME;
+                        name = geopackage.DataTypes.TEXT;
                         break;
                     case "number":
                         if (value % 1 === 0)
-                            name = geopackage.DataTypes.GPKG_DT_INTEGER_NAME;
+                            name = geopackage.DataTypes.INT;
                         else
-                            name = geopackage.DataTypes.GPKG_DT_FLOAT_NAME;
+                            name = geopackage.DataTypes.FLOAT;
                         break;
                     case "boolean":
-                        name = geopackage.DataTypes.GPKG_DT_BOOLEAN_NAME;
+                        name = geopackage.DataTypes.BOOLEAN;
                         break;
                     default:
-                        name = geopackage.DataTypes.GPKG_DT_TEXT_NAME;
+                        name = geopackage.DataTypes.TEXT;
                     //date y datetime
                 }
-                return geopackage.DataTypes.fromName(name);
+                return name;
+            };
+            const currentCrs = self.crs;
+            const geopackage = await import("../lib/geopackagejs/dist/geopackage-browser");
+            await import("wkx/dist/wkx");
+            const wkx = require('wkx');
+            //Promise.all([import("../lib/geopackagejs/dist/geopackage-browser"), import("wkx/dist/wkx")]).then(async function (responses) {                                    
+            const geopackageAPI = geopackage.GeoPackageAPI;
+            const FeatureColumn = geopackage.FeatureColumn;
+            const GeometryColumns = geopackage.GeometryColumns;
+            const myPackage = await geopackageAPI.create();
+
+            var srs_id = currentCrs.substr(currentCrs.indexOf(":") + 1);
+            if (!myPackage.spatialReferenceSystemDao.queryForId(srs_id)) {
+                var newSRS = myPackage.spatialReferenceSystemDao.createObject();
+                var projData = await TC.getProjectionData({ crs: currentCrs });
+                newSRS.srs_name = currentCrs;
+                newSRS.srs_id = projData.results[0].code;
+                newSRS.organization = currentCrs.substr(0, currentCrs.indexOf(":"));
+                newSRS.organization_coordsys_id = projData.results[0].code;
+                newSRS.definition = projData.results[0].proj4.trim();
+                newSRS.definition_12_063 = projData.results[0].wkt.trim();
+                newSRS.description = projData.results[0].name;
+                myPackage.spatialReferenceSystemDao.create(newSRS);
+            }
+            //agrupar por capa
+            //const timestamp = options.fileName.substring(options.fileName.lastIndexOf("_", options.fileName.lastIndexOf("_") - 1) + 1); 
+            const layers = features.reduce(function (rv, feature) {
+                var id = typeof feature.id === "string" ? feature.id.substr(0, feature.id.lastIndexOf(".")) : options.fileName;
+                //var id = feature.layer ? (typeof (feature.layer) === "string" ? feature.layer : feature.layer.id) : feature.id.substr(0, feature.id.lastIndexOf("."));
+                (rv[id] = rv[id] || []).push(feature);
+                return rv;
+            }, {});
+            let layerId;
+            for (layerId in layers) {
+                //agrupar las features por tipos
+                let groups = layers[layerId].reduce(function (rv, x) {
+                    (rv[x.CLASSNAME] = rv[x.CLASSNAME] || []).push(x);
+                    return rv;
+                }, {});
+                let group;
+                for (group in groups) {
+                    const _features = groups[group];
+                    //crear columnas
+
+                    let i = 0;
+
+                    const geometryType = _features[0].CLASSNAME.substr(_features[0].CLASSNAME.lastIndexOf(".") + 1).replace("Polyline", "LineString").replace("Marker", "Point");
+                    const tableName = layerId + (Object.keys(groups).length > 1 ? "_" + geometryType : "");// + (timestamp ? "_" + timestamp : "");
+                    var columns = [];
+                    //var dataColumns = [];
+                    var pkColumnName = "id";
+
+                    if (Object.prototype.hasOwnProperty.call(features[0], "id") ||
+                        Object.prototype.hasOwnProperty.call(features[0], "ID")) {
+                        columns.push(FeatureColumn.createPrimaryKeyColumnWithIndexAndName(i++, pkColumnName));
+                    }
+                    columns.push(FeatureColumn.createGeometryColumn(i++, 'geometry', geometryType.toUpperCase(), true, null));
+
+                    var bounds = [Infinity, Infinity, -Infinity, -Infinity];
+                    for (var j = 0; j < _features.length; j++) {
+                        var b = _features[j].getBounds();
+                        if (b) {
+                            bounds[0] = Math.min(bounds[0], b[0]);
+                            bounds[1] = Math.min(bounds[1], b[1]);
+                            bounds[2] = Math.max(bounds[2], b[2]);
+                            bounds[3] = Math.max(bounds[3], b[3]);
+                        }
+                    }
+
+                    for (var x in _features[0].data || _features[0].attributes) {
+                        var fieldName = _features[0].attributes && _features[0].attributes[x] ? _features[0].attributes[x].name : x;
+                        if (fieldName.toLowerCase() === 'id') continue;
+                        var fieldValue = _features[0].data[fieldName];
+                        const c = FeatureColumn.createColumn(i++, fieldName, fieldDataType(geopackage, fieldValue));
+                        columns.push(c);
+                        //dataColumns.push(c);
+                    }
+                    //si alguna feature tiene simbología de tipo texto se añade como una columna más a la tabla llamada "name"
+                    if (_features.some(f => f.getStyle().label && !f.data.name)) {
+                        const c = FeatureColumn.createColumn(i++, "name", geopackage.DataTypes.TEXT);
+                        columns.push(c);
+                    }
+
+
+                    var geometryColumns = new GeometryColumns();
+                    geometryColumns.table_name = tableName;
+                    geometryColumns.column_name = 'geometry';
+                    geometryColumns.geometry_type_name = geometryType.toUpperCase();
+                    geometryColumns.z = _features[0].getGeometryStride();
+                    geometryColumns.m = 2;
+                    geometryColumns.srs_id = srs_id;
+                    i = 0;
+                    const boundingBox = new geopackage.BoundingBox(bounds[0], bounds[2], bounds[1], bounds[3]);
+                    await myPackage.createFeatureTable(tableName, geometryColumns, columns, boundingBox, srs_id)
+                    //geopackage.createFeatureTableWithDataColumnsAndBoundingBox(myPackage, tableName, geometryColumns, columns, null, boundingBox, srs_id)
+                    const featureDao = myPackage.getFeatureDao(tableName);
+                    for (let i = 0; i < _features.length; i++) {
+                        const feature = _features[i];
+                        const featureRow = featureDao.newRow();
+                        const geometryData = new geopackage.GeometryData();
+                        geometryData.setSrsId(srs_id);
+                        const geometry = wkx.Geometry.parse('SRID=' + srs_id + ';' + new ol.format.WKT().writeFeature(feature.wrap.feature));
+                        //const geometry=(hexString => new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16))))(new ol.format.WKB().writeGeometry(feature.wrap.feature.getGeometry(),{featureProjection:currentCrs,dataProjection:currentCrs}));
+                        geometryData.setGeometry(geometry);
+                        featureRow.setValueWithColumnName(featureRow.geometryColumn.name, geometryData);
+                        if (Object.prototype.hasOwnProperty.call(_features[i], "id") ||
+                            Object.prototype.hasOwnProperty.call(_features[i], "ID"))
+                            featureRow.setValueWithColumnName(pkColumnName, typeof feature.id === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);
+                        else if (Object.prototype.hasOwnProperty.call(_features[i].data, "id") ||
+                            Object.prototype.hasOwnProperty.call(_features[i].data, "ID"))
+                            featureRow.setValueWithColumnName(pkColumnName, typeof feature.id === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);
+                        for (var y in feature.data || feature.attributes) {
+                            const fieldName = _features[0].attributes && _features[0].attributes[y] ? _features[0].attributes[x].name : y;
+                            if (fieldName.toLowerCase() === 'id') {
+                                continue;
+                            }
+                            const fieldValue = feature.data[fieldName];
+                            featureRow.setValueWithColumnName(fieldName, fieldValue);
+                        }
+                        if (featureDao.columns.indexOf("name") >= 0 && !feature.data.name) {
+                            featureRow.setValueWithColumnName("name", feature.getStyle().label);
+                        }
+
+                        featureDao.create(featureRow);
+                    }
+                }
             }
 
-            const currentCrs = self.crs;
-            TC.loadJS(!window.geopackage, [TC.apiLocation + 'lib/geopackage/geopackage'], function () {
-                TC.loadJS(!window.require || !require('wkx'), [TC.apiLocation + 'lib/wkx/wkx'], async function () {
-                    geopackage.create().then(async function (myPackage) {
-                        
+            let data;
 
-                        var arrPromises = [];
-
-                        var srs_id = currentCrs.substr(currentCrs.indexOf(":") + 1);
-                        if (!myPackage.getSpatialReferenceSystemDao().queryForId(srs_id)) {
-                            var srsDao = myPackage.getSpatialReferenceSystemDao();
-                            var newSRS = srsDao.createObject();
-                            var projData = await TC.getProjectionData({ crs: currentCrs });
-                            newSRS.srs_name = currentCrs;
-                            newSRS.srs_id = projData.results[0].code;
-                            newSRS.organization = currentCrs.substr(0, currentCrs.indexOf(":"));
-                            newSRS.organization_coordsys_id = projData.results[0].code;
-                            newSRS.definition = projData.results[0].proj4.trim();
-                            newSRS.definition_12_063 = projData.results[0].wkt.trim();
-                            newSRS.description = projData.results[0].name;
-                            srsDao.create(newSRS);
-                        }
-                        //agrupar por capa
-                        const timestamp = options.fileName.substring(options.fileName.lastIndexOf("_", options.fileName.lastIndexOf("_") - 1) + 1); 
-                        var layers = features.reduce(function (rv, x) {
-                            var id = typeof (x.id) === "string" ? x.id.substr(0, x.id.lastIndexOf(".")) : options.fileName;
-                            //var id = x.layer ? (typeof (x.layer) === "string" ? x.layer : x.layer.id) : x.id.substr(0, x.id.lastIndexOf("."));
-                            (rv[id] = rv[id] || []).push(x);                            
-                            return rv;
-                        }, {});
-                        for (var layerId in layers) {
-                            //agrupar las features por tipos
-                            var groups = layers[layerId].reduce(function (rv, x) {
-                                (rv[x.CLASSNAME] = rv[x.CLASSNAME] || []).push(x);
-                                return rv;
-                            }, {});
-                            for (var group in groups) {
-                                arrPromises.push(new Promise(async function (resolve) {
-                                    const _features = groups[group];
-                                    //crear columnas
-                                    var FeatureColumn = geopackage.FeatureColumn;
-                                    var GeometryColumns = geopackage.GeometryColumns;
-                                    var i = 0;
-
-                                    const geometryType = _features[0].CLASSNAME.substr(_features[0].CLASSNAME.lastIndexOf(".") + 1).replace("Polyline", "LineString").replace("Marker", "Point");
-                                    const tableName = layerId + (Object.keys(groups).length > 1 ? "_" + geometryType : "")// + (timestamp ? "_" + timestamp : "");
-                                    var columns = [];
-                                    var dataColumns = [];
-                                    var pkColumnName = "id";
-
-                                    if (features[0].hasOwnProperty("id") || features[0].hasOwnProperty("ID"))
-                                        columns.push(FeatureColumn.createPrimaryKeyColumnWithIndexAndName(i++, pkColumnName));
-                                    columns.push(FeatureColumn.createGeometryColumn(i++, 'geometry', geometryType.toUpperCase(), true, null));                                    
-
-                                    var bounds = [Infinity, Infinity, -Infinity, -Infinity];
-                                    for (var j = 0; j < _features.length; j++) {
-                                        var b = _features[j].getBounds();
-                                        if (b) {
-                                            bounds[0] = Math.min(bounds[0], b[0]);
-                                            bounds[1] = Math.min(bounds[1], b[1]);
-                                            bounds[2] = Math.max(bounds[2], b[2]);
-                                            bounds[3] = Math.max(bounds[3], b[3]);
-                                        }
-                                    }
-
-                                    for (var x in (_features[0].data || _features[0].attributes)) {
-                                        var fieldName = _features[0].attributes && _features[0].attributes[x] ? _features[0].attributes[x].name : x;
-                                        if (fieldName.toLowerCase() === 'id') continue;
-                                        var fieldValue = _features[0].data[fieldName];
-                                        var c = FeatureColumn.createColumnWithIndex(i++, fieldName, fieldDataType(fieldValue));
-                                        columns.push(c);
-                                        //dataColumns.push(c);
-                                    }
-                                    //si alguna feature tiene simbología de tipo texto se añade como una columna más a la tabla llamada "name"
-                                    if (_features.some(function (f) { return f.getStyle().label && ! f.data.name})) {
-                                        var c = FeatureColumn.createColumnWithIndex(i++, "name", geopackage.DataTypes.GPKG_DT_TEXT_NAME);
-                                        columns.push(c);
-                                    }
-
-
-                                    var geometryColumns = new GeometryColumns();
-                                    geometryColumns.table_name = tableName;
-                                    geometryColumns.column_name = 'geometry';
-                                    geometryColumns.geometry_type_name = geometryType.toUpperCase();
-                                    geometryColumns.z = _features[0].getGeometryStride();
-                                    geometryColumns.m = 2;
-                                    geometryColumns.srs_id = srs_id;
-                                    i = 0;
-                                    const boundingBox = new geopackage.BoundingBox(bounds[0], bounds[2], bounds[1], bounds[3]);
-                                    myPackage.createFeatureTableWithGeometryColumns(geometryColumns, boundingBox, srs_id, columns)
-                                    //geopackage.createFeatureTableWithDataColumnsAndBoundingBox(myPackage, tableName, geometryColumns, columns, null, boundingBox, srs_id)
-                                    .then(function () {
-                                        const featureDao = myPackage.getFeatureDao(tableName);
-                                        var wkx = require('wkx');
-                                        for (let i = 0; i < _features.length; i++) {
-                                            const feature = _features[i];
-                                            const featureRow = featureDao.newRow();
-                                            const geometryData = new geopackage.GeometryData();
-                                            geometryData.setSrsId(srs_id);
-                                            const geometry = wkx.Geometry.parse('SRID=' + srs_id + ';' + (new ol.format.WKT().writeFeature(feature.wrap.feature)));
-                                            geometryData.setGeometry(geometry);
-                                            featureRow.setGeometry(geometryData);
-                                            if (_features[i].hasOwnProperty("id") || _features[i].hasOwnProperty("ID"))
-                                                featureRow.setValueWithColumnName(pkColumnName, typeof (feature.id) === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);    
-                                            else if (_features[i].data.hasOwnProperty("id") || _features[i].data.hasOwnProperty("ID"))
-                                                featureRow.setValueWithColumnName(pkColumnName, typeof (feature.id) === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);
-                                            for (var y in (feature.data || feature.attributes)) {
-                                                var fieldName = _features[0].attributes && _features[0].attributes[y] ? _features[0].attributes[x].name : y;
-                                                if (fieldName.toLowerCase() === 'id') continue;
-                                                var fieldValue = feature.data[fieldName];
-                                                featureRow.setValueWithColumnName(fieldName, fieldValue);
-                                            }
-                                            if (featureDao.columns.indexOf("name")>=0 && !feature.data["name"]) {
-                                                featureRow.setValueWithColumnName("name", feature.getStyle().label);
-                                            }
-
-                                            featureDao.create(featureRow);
-                                        }
-                                        resolve();
-                                    })
-
-
-                                }));
-                            }
-                        }
-                        
-                        Promise.all(arrPromises).then(function (resolves) {
-                            myPackage.export(function (empty, data) {
-                                TC.Util.downloadFile(options.fileName + ".gpkg", "application/geopackage+sqlite3", data);
-                                loadingCtl && loadingCtl.removeWait(waitId);
-                            })
-                        });
-                    });
-                });
-
-            });
-            return
+            try {
+                data = await myPackage.export();
+                loadingCtl && loadingCtl.removeWait(waitId);
+                return data;
+            }
+            catch (error) {
+                console.log(error);
+                loadingCtl && loadingCtl.removeWait(waitId);
+            }
+            return;
         }
         const data = self.wrap.exportFeatures(features, options);
         const mimeType = TC.Consts.mimeType[options.format];
         if (format === TC.Consts.format.KMZ) {
-            TC.loadJS(!window.JSZip, TC.apiLocation + 'lib/jszip/jszip', async function () {
-                const zip = new JSZip();
-                let fileName = TC.Util.replaceSpecialCharacters(options.fileName || TC.getUID());
-                zip.file(fileName + ".kml", data);
-                zip.generateAsync({ type: "blob", mimeType: mimeType }).then(function (blob) {
-                    filename = fileName + ".kmz";
-                    TC.Util.downloadBlob(filename, blob);
-                    loadingCtl && loadingCtl.removeWait(waitId);
-                });            
-            });
+            const JSZip = (await import("jszip/dist/jszip")).default;
+            const zip = new JSZip();
+            zip.file((options.fileName || 'doc') + ".kml", data);
+            const blob = await zip.generateAsync({ type: "blob", mimeType: mimeType, compression: "DEFLATE" });
+            loadingCtl && loadingCtl.removeWait(waitId);
+            return blob;
         }
         else {
-            TC.Util.downloadFile((options.fileName || TC.getUID()) + '.' + format.toLowerCase(), mimeType, data);
             loadingCtl && loadingCtl.removeWait(waitId);
+            return data;
         }
     };
 
@@ -3306,7 +3386,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 // Quitamos los estados nulos o vacíos
                 if (state) {
                     for (var key in state) {
-                        if (state.hasOwnProperty(key)) {
+                        if (Object.prototype.hasOwnProperty.call(state, key)) {
                             return true;
                         }
                     }
@@ -3328,8 +3408,6 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
-    var toastContainerClass = 'tc-toast-container';
-    var toastClass = 'tc-toast';
     var toasts = {};
     var toastHide = function () {
         const toast = this;
@@ -3337,7 +3415,7 @@ TC.mix = function (targetCtor, ...mixins) {
         do {
             container = container.parentElement;
         }
-        while (container && !container.matches('.' + toastContainerClass));
+        while (container && !container.matches('.' + TC.Consts.classes.TOAST_CONTAINER));
         const text = toast.innerHTML;
         toast.classList.add(TC.Consts.classes.HIDDEN);
         if (toasts[text] !== undefined) {
@@ -3347,7 +3425,7 @@ TC.mix = function (targetCtor, ...mixins) {
             if (toast.parentElement) {
                 toast.parentElement.removeChild(toast);
             }
-            if (container && !container.querySelector('.' + toastClass) && container.parentElement) {
+            if (container && !container.querySelector('.' + TC.Consts.classes.TOAST) && container.parentElement) {
                 container.parentElement.removeChild(container);
             }
         }, 1000);
@@ -3377,15 +3455,15 @@ TC.mix = function (targetCtor, ...mixins) {
             }
             toastInfo.toast = null;
         }
-        var container = self.div.querySelector('.' + toastContainerClass);
+        var container = self.div.querySelector('.' + TC.Consts.classes.TOAST_CONTAINER);
         if (!container) {
             container = document.createElement('div');
-            container.classList.add(toastContainerClass);
+            container.classList.add(TC.Consts.classes.TOAST_CONTAINER);
             (opts.container ? opts.container : self.div).appendChild(container);
         }
         const toast = document.createElement('div');
         const span = document.createElement('span');
-        toast.classList.add(toastClass);
+        toast.classList.add(TC.Consts.classes.TOAST);
         toast.appendChild(span);
         const p = document.createElement('p');
         p.innerHTML = text;
@@ -3441,7 +3519,8 @@ TC.mix = function (targetCtor, ...mixins) {
     };
 
     var isRaster = function (layer) {
-        return typeof layer === 'string' || (layer.type !== TC.Consts.layerType.VECTOR && layer.type !== TC.Consts.layerType.KML && layer.type !== TC.Consts.layerType.WFS);
+        return typeof layer === 'string' ||
+            layer.type !== TC.Consts.layerType.VECTOR && layer.type !== TC.Consts.layerType.KML && layer.type !== TC.Consts.layerType.WFS;
     };
 
     mapProto.exportImage = function () {
@@ -3449,7 +3528,7 @@ TC.mix = function (targetCtor, ...mixins) {
         var result = null;
         var errorMsg = 'El mapa actual no es compatible con la exportación de imágenes';
         var canvas = self.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
-        if (canvas && self.options.crossOrigin) {
+        if (canvas && self.crossOrigin) {
             try {
                 result = canvas.toDataURL();
             }
@@ -3463,6 +3542,11 @@ TC.mix = function (targetCtor, ...mixins) {
         return result;
     };
 
+    mapProto.loadFiles = function (files, options) {
+        const self = this;
+        self.wrap.loadFiles(files, options);
+    };
+
     mapProto.getElevationTool = function () {
         const self = this;
         if (!self.elevation && !self.options.elevation) {
@@ -3471,7 +3555,7 @@ TC.mix = function (targetCtor, ...mixins) {
         if (self.elevation) {
             return Promise.resolve(self.elevation);
         }
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             TC.loadJS(
                 !TC.tool || !TC.tool.Elevation,
                 TC.apiLocation + 'TC/tool/Elevation',
@@ -3484,7 +3568,7 @@ TC.mix = function (targetCtor, ...mixins) {
                         if (elevationOptions.services && self.options.googleMapsKey) {
                             elevationOptions.services = elevationOptions.services.map(function (service) {
                                 const isString = typeof service === 'string';
-                                const serviceName = isString ? service : service.name
+                                const serviceName = isString ? service : service.name;
                                 if (serviceName === 'elevationServiceGoogle') {
                                     return TC.Util.extend({
                                         name: serviceName,
@@ -3511,7 +3595,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 type: 'POST'
             }).then(function (response) {
                 if (response instanceof XMLDocument) {
-                    const exception = response.querySelector("ExceptionReport Exception")
+                    const exception = response.querySelector("ExceptionReport Exception");
                     if (exception) {
                         resolve({
                             errors: [{
@@ -3520,7 +3604,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                     err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
                                 }
                             }]
-                        })
+                        });
                         return;
                     }
                 }
@@ -3618,7 +3702,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 type: 'POST'
             }).then(function (response) {
                 if (response instanceof XMLDocument) {
-                    const exception = response.querySelector("ExceptionReport Exception")
+                    const exception = response.querySelector("ExceptionReport Exception");
                     if (exception) {
                         resolve({
                             errors: [{
@@ -3627,7 +3711,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                     err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
                                 }
                             }]
-                        })
+                        });
                         return;
                     }
                 }
@@ -3647,8 +3731,9 @@ TC.mix = function (targetCtor, ...mixins) {
     const magicFunction = function (layer, availableLayers, filter) {
         //obtenemos el describe featuretype de cada capa
         return new Promise(async function (resolve, reject) {
+            let response;
             try {
-                var response = await layer.describeFeatureType(availableLayers);
+                response = await layer.describeFeatureType(availableLayers);
             }
             catch (error) {
                 reject(error);
@@ -3667,37 +3752,38 @@ TC.mix = function (targetCtor, ...mixins) {
                 for (var k in response[layerName]) {
                     if (TC.Util.isGeometry(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
                         //if (/^gml:\w+PropertyType$/.test(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
-                        geometryFields.push(k)
+                        geometryFields.push(k);
                     }
                 }
                 //Si solo hay un campo de tipo geometría bsucamos recursivamente entre en los filtros logicos And y or a la caza de filtros espaciales
                 //para poner el nombre de la geometría
                 if (geometryFields.length <= 1) {
-                    var recursive = (filter, geomName) => {
-                        if (filter instanceof TC.filter.LogicalNary)
-                            filter.conditions.forEach((condition) => {
-                                recursive(condition, geomName)
-                            })
+                    const recursive = (filter, geomName) => {
+                        if (filter instanceof TC.filter.LogicalNary) {
+                            filter.conditions.forEach((condition) => recursive(condition, geomName));
+                        }
                         else if (filter instanceof TC.filter.Spatial) {
                             filter.geometryName = geomName;
                             return filter;
                         }
                     };
-                    _filter = Object.assign(new filter.constructor, recursive(filter, geometryFields.length === 0 ? null : geometryFields[0]))
+                    _filter = Object.assign(new filter.constructor(), recursive(filter, geometryFields.length === 0 ? null : geometryFields[0]));
                 }
                 //Si has mas de un campo de tipo geometría bsucamos recursivamente entre en los filtros logicos And y or a la caza de filtros espaciales
                 //para duplicar el filtro con los nombres de las geometrias y los emvolvemos en un filtro OR
                 else if (geometryFields.length > 1) {
-                    var recursive = (filter, geomNames) => {
-                        if (filter instanceof TC.filter.LogicalNary)
-                            filter.conditions.forEach((condition) => {
-                                recursive(condition, geomNames);
-                            })
+                    const recursive = (filter, geomNames) => {
+                        if (filter instanceof TC.filter.LogicalNary) {
+                            filter.conditions.forEach((condition) => recursive(condition, geomNames));
+                        }
                         else if (filter instanceof TC.filter.Spatial) {
-                            return TC.filter.or.apply(null, geomNames.reduce((acc, curr) => { acc.push(new TC.filter[filter.getTagName()](curr, filter.geometry, filter.srsName)); return acc }, []))
+                            return TC.filter.or.apply(null, geomNames.reduce((acc, curr) => {
+                                acc.push(new TC.filter[filter.getTagName()](curr, filter.geometry, filter.srsName));
+                                return acc;
+                            }, []));
                         }
                     };
-                    _filter = Object.assign(new filter.constructor, recursive(filter, geometryFields));
+                    _filter = Object.assign(new filter.constructor(), recursive(filter, geometryFields));
                 }
                 //ahora construimos el objeto que de vuelta
                 returnObject[layerName] = _filter;
@@ -3722,7 +3808,7 @@ TC.mix = function (targetCtor, ...mixins) {
             const mapLayer = service.mapLayers[0];
             return service.title || service.mapLayers.reduce(function (prev, cur) {
                 return prev || cur.title;
-            }, '') || (mapLayer.tree && mapLayer.tree.title) || mapLayer.capabilities.Service.Title;
+            }, '') || mapLayer.tree && mapLayer.tree.title || mapLayer.capabilities.Service.Title;
         };
 
 
@@ -3736,15 +3822,15 @@ TC.mix = function (targetCtor, ...mixins) {
                 if (!download) {
                     _makePostCall(objlayer, data).then(function (response) {
                         if (response.errors && response.errors.length > 0) {
-                            response.errors[0].params["serviceTitle"] = service.mapLayers.reduce(function (prev, cur) {
+                            response.errors[0].params.serviceTitle = objlayer.service.mapLayers.reduce(function (prev, cur) {
                                 return prev || cur.title;
-                            }, '') || _getServiceTitle(service);
+                            }, '') || _getServiceTitle(objlayer.service);
                             resolve(response);
                         }
                         else {
                             resolve(response);
                         }
-                    })
+                    });
                 }
                 else {
                     objlayer.mapLayer.toolProxification.cacheHost.getAction(objlayer.url).then(function (cacheAction) {
@@ -3752,9 +3838,7 @@ TC.mix = function (targetCtor, ...mixins) {
                             url: cacheAction.action(objlayer.url),
                             data: data
                         });
-                    })
-
-
+                    });
                 }
             });
         };
@@ -3789,26 +3873,28 @@ TC.mix = function (targetCtor, ...mixins) {
                     features: []
                 });
             }
-            if (serviceObj.layerNames.length == 0)
+            if (serviceObj.layerNames.length === 0) {
                 return;
-            if (typeof (serviceObj.request) !== "undefined") {
+            }
+            if (typeof serviceObj.request !== "undefined") {
                 return;
             }
             serviceObj.request = serviceObj.request || layer.getWFSCapabilities(); //WFSCapabilities.Promises(url);
-            arrPromises.push(new Promise(function (resolve, reject) {
+            arrPromises.push(new Promise(function (resolve, _reject) {
                 serviceObj.request.then(function (capabilities) {
                     var service = null;
                     var errors = [];
-                    for (var url in services)
-                        if (services[url].request && services[url].request == serviceObj.request) {
+                    for (var url in services) {
+                        if (services[url].request && services[url].request === serviceObj.request) {
                             service = services[url];
                         }
+                    }
                     var _numMaxFeatures = null;
                     var layerList = service.layerNames;
                     if (!(layerList instanceof Array) || !layerList.length) return;//condici\u00f3n de salida
                     //comprobamos que tiene el getfeature habilitado
-                    if (typeof (capabilities.Operations.GetFeature) === "undefined") {
-                        errors.push({ key: TC.Consts.WFSErrors.GETFEATURE_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service) } })
+                    if (typeof capabilities.Operations.GetFeature === "undefined") {
+                        errors.push({ key: TC.Consts.WFSErrors.GETFEATURE_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service) } });
                         resolve({ "errors": errors });
                         return;
                     }
@@ -3820,7 +3906,7 @@ TC.mix = function (targetCtor, ...mixins) {
                         while (layer[layer.length - 1] === "_") {
                             layer = layer.substring(0, layer.lastIndexOf("_"));
                         }
-                        if (!capabilities.FeatureTypes.hasOwnProperty(layer.substring(layerList[i].indexOf(":") + 1))) {
+                        if (!Object.prototype.hasOwnProperty.call(capabilities.FeatureTypes, layer.substring(layerList[i].indexOf(":") + 1))) {
                             var titles = service.mapLayers[0].getPath(layer.substring(layerList[i].indexOf(":") + 1));
                             errors.push({ key: TC.Consts.WFSErrors.LAYERS_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service), "layerName": titles[titles.length - 1] } });
                             continue;
@@ -3828,7 +3914,7 @@ TC.mix = function (targetCtor, ...mixins) {
                         if (availableLayers.indexOf(layer) < 0)
                             availableLayers.push(layer);
                     }
-                    if (availableLayers.length == 0) {
+                    if (availableLayers.length === 0) {
                         errors.push({ key: TC.Consts.WFSErrors.NO_VALID_LAYERS, params: { serviceTitle: _getServiceTitle(service) } });
                         resolve({ "errors": errors });
                         return;
@@ -3837,47 +3923,46 @@ TC.mix = function (targetCtor, ...mixins) {
                         _numMaxFeatures = capabilities.Operations.GetFeature.CountDefault.DefaultValue;
                     //comprobamos si soporta querys    
                     if (
-                        (capabilities.version === "1.0.0" && !capabilities.Operations.GetFeature.Operations.hasOwnProperty("Query"))
+                        capabilities.version === "1.0.0" && !Object.prototype.hasOwnProperty.call(capabilities.Operations.GetFeature.Operations, "Query")
                         ||
-                        ((capabilities.version === "2.0.0" || capabilities.version === "1.1.0") && capabilities.Operations.QueryExpressions.indexOf("wfs:Query") < 0)
+                        (capabilities.version === "2.0.0" || capabilities.version === "1.1.0") && capabilities.Operations.QueryExpressions.indexOf("wfs:Query") < 0
                     ) {
                         errors.push({ key: TC.Consts.WFSErrors.QUERY_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service) } });
                         resolve({ "errors": errors });
                         return;
                     }
-                    var url = (capabilities.Operations.GetFeature.DCPType ? capabilities.Operations.GetFeature.DCPType[1].HTTP.Post.onlineResource : capabilities.Operations.GetFeature.DCP.HTTP.Post["href"]);
+                    const operationUrl = capabilities.Operations.GetFeature.DCPType ? capabilities.Operations.GetFeature.DCPType[1].HTTP.Post.onlineResource : capabilities.Operations.GetFeature.DCP.HTTP.Post.href;
 
                     Promise.all([
                         magicFunction(service.mapLayers[0], availableLayers, filter)//clonar filtro
                     ]).then(function (response) {
                         var filter = response[0]; //1
                         if (_numMaxFeatures) {
-                            _checkMaxFeatures(_numMaxFeatures, { url: url, mapLayer: service.mapLayers[0] }, TC.Util.WFSQueryBuilder(filter, null, capabilities, outputFormat, true, getCRS())).then(function (response) {
+                            _checkMaxFeatures(_numMaxFeatures, { url: operationUrl, mapLayer: service.mapLayers[0] }, TC.Util.WFSQueryBuilder(filter, null, capabilities, outputFormat, true, getCRS())).then(function (response) {
                                 if (response.errors && response.errors.length > 0) {
                                     switch (response.errors[0].key) {
                                         case TC.Consts.WFSErrors.INDETERMINATE:
-                                            response.errors[0].params["serviceTitle"] = service.mapLayers.reduce(function (prev, cur) {
-                                                return prev || cur.title;
-                                            }, '') || _getServiceTitle(service);
+                                            response.errors[0].params.serviceTitle = service.mapLayers.reduce((prev, cur) => prev || cur.title, '') || _getServiceTitle(service);
                                             break;
                                         case TC.Consts.WFSErrors.MAX_NUM_FEATURES:
-                                            response.errors[0]["params"] = { limit: _numMaxFeatures, serviceTitle: _getServiceTitle(service) };
+                                            response.errors[0].params = { limit: _numMaxFeatures, serviceTitle: _getServiceTitle(service) };
                                             break;
                                         case TC.Consts.WFSErrors.NO_FEATURES:
-                                            response.errors[0]["params"] = { serviceTitle: _getServiceTitle(service) };
+                                            response.errors[0].params = { serviceTitle: _getServiceTitle(service) };
                                             break;
                                     }
                                     resolve(response);
                                 }
-                                else
-                                    _postOrDownload({ url: url, mapLayer: service.mapLayers[0] }, TC.Util.WFSQueryBuilder(filter, null, capabilities, (download ? outputFormat : TC.Consts.mimeType.JSON), false, getCRS())).then(function (response) {
+                                else {
+                                    _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, TC.Util.WFSQueryBuilder(filter, null, capabilities, download ? outputFormat : TC.Consts.mimeType.JSON, false, getCRS())).then(function (response) {
                                         resolve(Object.assign({ service: service, errors: errors }, response));
                                     });
+                                }
                             });
                         }
                         else {
-                            _postOrDownload({ url: url, mapLayer: service.mapLayers[0] }, TC.Util.WFSQueryBuilder(filter, null, capabilities, (download ? outputFormat : TC.Consts.mimeType.JSON), false, getCRS())).then(function (response) {
-                                resolve(Object.assign({ service: service, errors: errors }, response))
+                            _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, TC.Util.WFSQueryBuilder(filter, null, capabilities, download ? outputFormat : TC.Consts.mimeType.JSON, false, getCRS())).then(function (response) {
+                                resolve(Object.assign({ service: service, errors: errors }, response));
 
                             });
                         }
@@ -3928,3 +4013,6 @@ TC.mix = function (targetCtor, ...mixins) {
  * @property workLayers
  * @type array
  */
+
+const BasicMap = TC.Map;
+export default BasicMap;
