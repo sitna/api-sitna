@@ -1,24 +1,24 @@
 ﻿var gulp = require('gulp'),
     del = require('del'),
-    //jshint = require('gulp-jshint'),
-    replace = require('gulp-replace'),
-    concat = require('gulp-concat'),
+    eslint = require('gulp-eslint-new'),
     //convertEncoding = require('gulp-convert-encoding'),
     minify = require('gulp-minify'),
     cleanCSS = require('gulp-clean-css'),
-    handlebars = require('handlebars'),
     zip = require('gulp-zip'),
     jsonlint = require("gulp-jsonlint"),
-    mocha = require('gulp-mocha'),
-    //mochaPhantomJS = require('gulp-mocha-phantomjs'),
+    mochaChrome = require('gulp-mocha-chrome'),
     casperJs = require('gulp-casperjs'),
     jsdoc = require('gulp-jsdoc3'),
     filter = require('gulp-filter'),
-    webpack = require('webpack-stream'),
+    webpack = require('webpack'),
+    webpackStream = require('webpack-stream'),
+    WebpackDevServer = require('webpack-dev-server'),
     ncp = require('ncp'),
     fs = require('fs'),
     fse = require('fs-extra'),
-    execSync = require('child_process').execSync;
+    os = require('os'),
+    precompiledTemplates = require('./webpack/precompiledTemplates'),
+    spawn = require('child_process').spawn; 
 
 ////////// Gestión de errores ////////
 //var plumber = require('gulp-plumber');
@@ -39,7 +39,7 @@
 
 
 var sitnaBuild = {
-    targetPath: 'build/',
+    targetPath: 'dist/',
     preSrc: [
         'lib/jsnlog/jsnlog.min.js',
         'node_modules/handlebars/dist/handlebars.runtime.min.js'
@@ -51,20 +51,18 @@ var sitnaBuild = {
         'lib/qrcode/qrcode.min.js',
         'lib/shp-write/shp-write.js',
         'lib/shp-write/shp-write.min.js',
-        'lib/iconv-lite/iconv-lite.js',
-        'node_modules/ua-parser-js/dist/ua-parser.min.js',
-        'node_modules/proj4/dist/proj4.js',
         'TC/tool/Proxification.js',
         'TC/Map.js',
         'TC/Util.js',
+        'SITNA/Map.js',
         'sitna.js',
         'lib/handlebars/helpers.js',
-        'node_modules/localforage/dist/localforage.min.js',
         'TC/Layer.js',
         'TC/Control.js',
         'TC/Feature.js',
         'TC/feature/Point.js',
         'TC/feature/**/*.js',
+        'SITNA/feature/**/*.js',
         'TC/filter.js',
         'TC/control/MapContents.js',
         'TC/control/MapInfo.js',
@@ -83,52 +81,12 @@ var sitnaBuild = {
         'TC/control/**/*.js',
         'TC/layer/**/*.js',
         'TC/Geometry.js'
-    ],
+    ]
 
-    unsetDebug: function (stream) {
-        return stream.pipe(replace("TC.isDebug = true;", "TC.isDebug = false;"));
-    },
+};
 
-    setVersionDate: function (stream) {
-        return stream.pipe(replace(/TC.version = '(\d+\.\d+\.\d+)';/, function (match, p1) {
-            return "TC.version = '" + p1 + " [" + (new Date()).toLocaleString() + "]';";
-        }));
-    },
-
-    replaceTemplates: function (stream) {
-        return stream
-            .pipe(replace(/(\w+)\.template = TC\.apiLocation \+ \"TC\/templates\/(.+)\.hbs\";/g, function (match, p1, p2) {
-                return p1 + ".template = " + sitnaBuild.templateFunctions[p2 + '.hbs'];
-            }))
-            .pipe(replace(/(\w+)\.template\[(.+)\] = TC\.apiLocation \+ \"TC\/templates\/(.+)\.hbs\";/g, function (match, p1, p2, p3) {
-                return p1 + ".template[" + p2 + "] = " + sitnaBuild.templateFunctions[p3 + '.hbs'];
-            }));
-    },
-
-    compiledTask: function () {
-        const olSitnaJS = ['lib/ol/build/ol-sitna.min.js'];
-        //const olSitnaJS = ['lib/ol/build/ol-sitna.js'];
-        const src = sitnaBuild.preSrc.concat(olSitnaJS, sitnaBuild.postSrc);
-        return sitnaBuild.setVersionDate(gulp.src(src).pipe(filter(sitnaBuild.projectFiles.concat(olSitnaJS))))
-            .pipe(concat('sitna.ol.debug.js'))
-            .pipe(gulp.dest(sitnaBuild.targetPath));
-    },
-
-    onDemandTask: function (src, dest) {
-        var stream = sitnaBuild.setVersionDate(gulp.src(src, { sourcemaps: true }))
-            .pipe(filter(sitnaBuild.projectFiles))
-            .pipe(gulp.dest(dest));        
-        return sitnaBuild.replaceTemplates(sitnaBuild.unsetDebug(stream))
-            .pipe(minify({
-                ext: {
-                    min: '.min.js'
-                },
-                noSource: true,
-                compress: { sequences: false },
-                output: { ascii_only: true }
-            }))
-            .pipe(gulp.dest(dest, { sourcemaps: './maps' }));
-    },
+function timestamp(cb) {
+    fs.writeFile(sitnaBuild.targetPath + 'timestamp.txt', (new Date()).toLocaleString() + os.EOL + os.userInfo().username, cb);
 };
 
 function buildCsprojFilter(cb) {
@@ -164,10 +122,6 @@ function copyLibraries(cb) {
         sitnaBuild.projectFiles.push(src);
         sitnaBuild.projectFiles.push(dest);
     };
-    copyFile('node_modules/dustjs-linkedin/dist/dust-full.js', 'lib/dust/dust-full.js');
-    copyFile('node_modules/dustjs-linkedin/dist/dust-full.min.js', 'lib/dust/dust-full.min.js');
-    copyFile('node_modules/dustjs-helpers/dist/dust-helpers.js', 'lib/dust/dust-helpers.js');
-    copyFile('node_modules/dustjs-helpers/dist/dust-helpers.min.js', 'lib/dust/dust-helpers.min.js');
     copyFile('node_modules/handlebars/dist/handlebars.js', 'lib/handlebars/handlebars.js');
     copyFile('node_modules/handlebars/dist/handlebars.min.js', 'lib/handlebars/handlebars.min.js');
     copyFile('node_modules/handlebars/dist/handlebars.runtime.js', 'lib/handlebars/handlebars.runtime.js');
@@ -179,16 +133,14 @@ function copyLibraries(cb) {
     copyFile('node_modules/sortablejs/Sortable.min.js', 'lib/sortable/Sortable.min.js');       
     copyDir('node_modules/jszip/dist/', 'lib/jszip/');
     copyDir('node_modules/@sitna/shpjs/dist/', 'lib/shpjs/');
-    copyDir('node_modules/localforage/dist/', 'lib/localforage/');
-    copyDir('node_modules/proj4/dist/', 'lib/proj4js/');
     copyDir('node_modules/draggabilly/dist/', 'lib/draggabilly/');
-    copyDir('node_modules/ua-parser-js/dist/', 'lib/ua-parser/');
     copyDir('node_modules/wkx/dist/', 'lib/wkx/');
 
     if (!fs.existsSync('lib/interactjs')) {
         fs.mkdirSync('lib/interactjs');
-    }
-    copyFile('node_modules/interactjs/dist/interact.min.js', 'lib/interactjs/interact.min.js');
+    }    
+    copyFile('node_modules/interactjs/dist/interact.min.js', 'lib/interactjs/interact.min.js'); 
+    copyFile('node_modules/interactjs/dist/interact.min.js.map', 'lib/interactjs/interact.min.js.map'); 
         
     const copyDirSyncRecursive = function (src, dest) {
         try {
@@ -209,87 +161,37 @@ function copyLibraries(cb) {
     copyDirSyncRecursive('node_modules/cesium/Build/Cesium/Assets', 'lib/cesium/build/Assets');
 };
 
-sitnaBuild.templateFunctions = {};
+sitnaBuild.templateFunctions = precompiledTemplates;
 
-function compileTemplates(cb) {
-    const path = 'TC/templates/';
-    fs.readdir(path, function (err, files) {
-        if (err) {
-            return console.error(err);
+const spawnWebpack = function (args, cb) {
+    const ls = spawn('webpack.cmd', args);
+    ls.stdout.on('data', data => console.log(`stdout: ${data}`));
+    ls.stderr.on('data', data => console.error(`stderr: ${data}`));
+    ls.on('error', err => console.error(`Failed to start subprocess: ${err}`));
+    ls.on('close', code => {
+        if (code === 0) {
+            cb();
         }
-        files
-            .filter(f => f.endsWith('.hbs'))
-            .forEach(function (file) {
-                sitnaBuild.templateFunctions[file] = handlebars
-                    .precompile(fs.readFileSync(path + file, "utf8"), {
-                        knownHelpers: {
-                            i18n: true,
-                            gt: true,
-                            lt: true,
-                            eq: true,
-                            every: true,
-                            round: true,
-                            lowerCase: true,
-                            startsWith: true, 
-                            numberSeparator: true,
-                            countif: true,
-                            isEmpty: true,
-                            getId: true,
-                            isArray: true,
-                            isObject: true,
-                            formatNumber: true,
-                            isUrl: true,
-                            getYoutubeId: true,
-                            isVideoAttribute: true,
-                            isAudioAttribute: true,
-                            isImageAttribute: true,
-                            isEmbedAttribute: true,
-                            getTagWidth: true,
-                            getTagHeight: true,
-                            getHeader: true,
-                            removeSpecialAttributeTag: true,
-                            formatDateOrNumber: true
-                        },
-                        knownHelpersOnly: true
-                    })
-                    .replace(/\n/g, "");
-        });
-        cb();
+        else {
+            throw new Error(`child process exited with code ${code}`);
+        }
     });
 };
 
-function bundle (cb) {
-    sitnaBuild.onDemandTask(['sitna.js'], sitnaBuild.targetPath);
-    sitnaBuild.onDemandTask(['TC/**/*.js'], sitnaBuild.targetPath + 'TC/');
-    sitnaBuild.compiledTask();
-    cb();
-};
+function webpackApi(cb) {
+    spawnWebpack(['--config', './webpack/webpack.config.js', '--output-path', './dist'], cb);
+}
 
-function minifyBundle(cb) {
-    const src = sitnaBuild.targetPath + 'sitna.ol.debug.js';
-    const watcher = gulp.watch(src, { events: 'add' }, function () {
-        const stream = gulp.src([src], { sourcemaps: true });
-        watcher.close();
-        cb();
-        return sitnaBuild.replaceTemplates(sitnaBuild.unsetDebug(stream))
-            .pipe(minify({
-                ext: {
-                    min: [/(.*)\.debug\.js$/, '$1.min.js']
-                },
-                noSource: true,
-                compress: { sequences: false },
-                output: { ascii_only: true }
-            })) // sequences = false para evitar error "Maximum call stack size exceeded"
-            .pipe(gulp.dest(sitnaBuild.targetPath, { sourcemaps: './maps' }));
-    });
-};
+function webpackApiDebug(cb) {
+    spawnWebpack(['--config', './webpack/webpack.config.debug.js', '--output-path', './dist'], cb);
+}
 
 function resources() {
     return gulp.src([
         '**/*',
         '!App_Start/**/*',
         '!batch/**/*',
-        '!build/**/*',
+        '!dist/**/*',
         '!doc/**/*',
         '!examples/**/*.html',
         '!examples/**/*.appcache',
@@ -300,18 +202,99 @@ function resources() {
         '!obj/**/*',
         '!Properties/**/*',
         '!pruebas/**/*',
-        '!TC/**/*.js',                
-        '!lib/ol/*', // TO DO: borrar al reubicar DragAndDrop.js
+        '!TC/**/*.js',     
+        '!webpack/**/*.js',     
+        '!lib/ol/**/*',
         '!TC/**/*.css',
         '!test/**/*',
         '!**/*.cs',
         '!*',
-        '!bin/*.pdb', //exclude symbol files
-        '!bin/*.dll.config',
-        '!bin/*.xml'
+        '!bin/*'
     ])
         .pipe(filter(sitnaBuild.projectFiles))
         .pipe(gulp.dest(sitnaBuild.targetPath));
+};
+
+function dlls() {
+    return gulp.src([
+        'bin/*.dll'
+    ])
+        .pipe(gulp.dest(sitnaBuild.targetPath + 'bin/'));
+};
+
+function scripts(cb) {
+    const minifyConfig = {
+        ext: {
+            min: '.min.js'
+        },
+        noSource: true,
+        compress: { sequences: false },
+        output: { ascii_only: true }
+    };
+
+    let target = sitnaBuild.targetPath + 'TC/config/';
+    gulp.src([
+        'TC/config/*.js'
+    ])
+        .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(target))
+        .pipe(minify(minifyConfig))
+        .pipe(gulp.dest(target));
+
+    target = sitnaBuild.targetPath + 'TC/cesium/';
+    gulp.src([
+        'TC/cesium/**/*.js'
+    ])
+        .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(target))
+        .pipe(minify(minifyConfig))
+        .pipe(gulp.dest(target));
+
+    target = sitnaBuild.targetPath + 'TC/layout/';
+    gulp.src([
+        'TC/layout/**/*.js'
+    ])
+        .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(target))
+        .pipe(minify(minifyConfig))
+        .pipe(gulp.dest(target));
+
+    target = sitnaBuild.targetPath + 'TC/workers/';
+    gulp.src([
+        'TC/workers/*.js'
+    ])
+        .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(target))
+        .pipe(minify(minifyConfig))
+        .pipe(gulp.dest(target));
+
+    target = sitnaBuild.targetPath + 'TC/tool/';
+    gulp.src([
+        'TC/tool/Elevation*.js',
+        'TC/tool/ExcelExport*.js'
+    ])
+        .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(target))
+        .pipe(minify(minifyConfig))
+        .pipe(gulp.dest(target));
+
+    target = sitnaBuild.targetPath + 'TC/format/';
+    gulp.src([
+        'TC/format/WPS.js'
+    ])
+        .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(target))
+        .pipe(minify(minifyConfig))
+        .pipe(gulp.dest(target));
+
+    target = sitnaBuild.targetPath + 'lib/';
+    gulp.src([
+        'lib/**/*.js',
+        '!lib/ol/**/*.js'
+    ])
+        .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(target));
+    cb();
 };
 
 function examples() {
@@ -339,6 +322,13 @@ function zipLayout () {
         .pipe(gulp.dest(sitnaBuild.targetPath + 'TC/layout/responsive/'));
 };
 
+function copyLayout() {
+    return gulp.src([
+        sitnaBuild.targetPath + 'TC/layout/responsive/**/*'
+    ])
+        .pipe(gulp.dest(sitnaBuild.targetPath + 'layout/responsive/'));
+};
+
 function baseCss() {
     return gulp.src([
         'TC/**/*.css',
@@ -351,6 +341,14 @@ function baseCss() {
         }))
         .pipe(gulp.dest(sitnaBuild.targetPath + 'TC/'));
 };
+
+function componentCss() {
+    return gulp.src([
+        'css/ui/*.css'
+    ])
+        .pipe(filter(sitnaBuild.projectFiles))
+        .pipe(gulp.dest(sitnaBuild.targetPath + 'css/ui'));
+}
 
 function layoutCss() {
     return gulp.src([
@@ -371,32 +369,44 @@ function jsonValidate() {
         .pipe(jsonlint.failOnError());
 };
 
-function bundleOLDebug() {
-    const fileName = 'ol-sitna.js';
-    sitnaBuild.projectFiles.push('lib/ol/build/' + fileName);
-    return gulp.src('batch/ol-webpack/main.js')
-        .pipe(webpack({
-            output: {
-                filename: fileName,
-                library: 'ol'
-            },
-            mode: 'development',
-            module: {
-                rules: [
-                    {
-                        use: ['source-map-loader']
-                    }
-                ]
-            }
-        }))
-        .pipe(gulp.dest('lib/ol/build'));
-};
+function lint() {
+    return gulp.
+        src([
+            'sitna.js',
+            'TC.js',
+            'TC/**/*.js',
+            'SITNA/**/*.js'
+        ])
+        .pipe(eslint())
+        .pipe(eslint.formatEach());
+}
+
+//function bundleOLDebug() {
+//    const fileName = 'ol-sitna.js';
+//    sitnaBuild.projectFiles.push('lib/ol/build/' + fileName);
+//    return gulp.src('batch/ol-webpack/main.js')
+//        .pipe(webpackStream({
+//            output: {
+//                filename: fileName,
+//                library: 'ol'
+//            },
+//            mode: 'development',
+//            module: {
+//                rules: [
+//                    {
+//                        use: ['source-map-loader']
+//                    }
+//                ]
+//            }
+//        }))
+//        .pipe(gulp.dest('lib/ol/build'));
+//};
 
 function bundleCesiumDebug() {
     const fileName = 'cesium-sitna.js';
     sitnaBuild.projectFiles.push('lib/cesium/build/' + fileName);
     return gulp.src('batch/cesium-webpack/main.js')
-        .pipe(webpack({
+        .pipe(webpackStream({
             output: {
                 filename: fileName,
                 library: 'cesium',
@@ -445,45 +455,18 @@ function bundleCesiumDebug() {
 function BundleSHPwriteDebug() {   
     sitnaBuild.projectFiles.push("lib/shp-write/shp-write.js");
     return gulp.src('node_modules/@aleffabricio/shp-write/index.js')
-        .pipe(webpack({
+        .pipe(webpackStream({
             output: {
                 filename: 'shp-write.js',
                 library: 'shpWrite'
             },
             mode: 'development'
-        })).pipe(gulp.dest('lib/shp-write/'))
-    
-};
-function BundleIconvDebug() {
-    sitnaBuild.projectFiles.push("lib/iconv-lite/iconv-lite.js");
-    return gulp.src('node_modules/iconv-lite/lib/index.js')
-        .pipe(webpack({
-            output: {
-                filename: 'iconv-lite.js',
-                library: 'iconv'
-            },
-            mode: 'development'
-        }))        
-        .pipe(gulp.dest('lib/iconv-lite/'));   
-
-};
-function BundleIconvRelease() {
-    sitnaBuild.projectFiles.push("lib/iconv-lite/iconv-lite.min.js");
-    return gulp.src('node_modules/iconv-lite/lib/index.js')
-        .pipe(webpack({
-            output: {
-                filename: 'iconv-lite.min.js',
-                library: 'iconv'
-            },
-            mode: 'production'
-        }))
-        .pipe(gulp.dest('lib/iconv-lite/'));
-
-};
+        })).pipe(gulp.dest('lib/shp-write/'));
+}
 //function BundleGPKGConverter() {
 //    //sitnaBuild.projectFiles.push("lib/shp-write/shp-write.js");
 //    return gulp.src('node_modules/geojson/index.js')
-//        .pipe(webpack({
+//        .pipe(webpackStream({
 //            output: {
 //                filename: 'geopackageConverter.js',
 //                library: 'GPKGConverter'
@@ -495,7 +478,7 @@ function BundleIconvRelease() {
 function BundleSHPwriteRelease() {
     sitnaBuild.projectFiles.push("lib/shp-write/shp-write.min.js");
     return gulp.src('node_modules/@aleffabricio/shp-write/index.js')
-        .pipe(webpack({
+        .pipe(webpackStream({
             output: {
                 filename: 'shp-write.min.js',
                 library: 'shpWrite'
@@ -505,32 +488,32 @@ function BundleSHPwriteRelease() {
 }
 
 
-function bundleOLRelease () {
-    const fileName = 'ol-sitna.min.js';
-    sitnaBuild.projectFiles.push('lib/ol/build/' + fileName);
-    return gulp.src('batch/ol-webpack/main.js')
-        .pipe(webpack({
-            output: {
-                filename: fileName,
-                library: 'ol'
-            },
-            mode: 'production',
-            module: {
-                rules: [
-                    {
-                        use: ['source-map-loader']
-                    }
-                ]
-            }
-        }))
-        .pipe(gulp.dest('lib/ol/build'));
-};
+//function bundleOLRelease () {
+//    const fileName = 'ol-sitna.min.js';
+//    sitnaBuild.projectFiles.push('lib/ol/build/' + fileName);
+//    return gulp.src('batch/ol-webpack/main.js')
+//        .pipe(webpackStream({
+//            output: {
+//                filename: fileName,
+//                library: 'ol'
+//            },
+//            mode: 'production',
+//            module: {
+//                rules: [
+//                    {
+//                        use: ['source-map-loader']
+//                    }
+//                ]
+//            }
+//        }))
+//        .pipe(gulp.dest('lib/ol/build'));
+//};
 
 function bundleCesiumRelease() {
     const fileName = 'cesium-sitna.min.js';
     sitnaBuild.projectFiles.push('lib/cesium/build/' + fileName);
     return gulp.src('batch/cesium-webpack/main.js')
-        .pipe(webpack({
+        .pipe(webpackStream({
             output: {
                 filename: fileName,
                 library: 'cesium',
@@ -598,23 +581,11 @@ function clean (cb) {
     ], cb);
 };
 
-function unitTests (cb) {
-    const reportDir = 'test/unit/testResults';
-    del(reportDir + '/**/*', function () {
-        //var browserStream = mochaPhantomJS({
-        //    reporter: 'spec',
-        //    dump: reportDir + '/browserTestResults.txt'
-        //})
-        //browserStream.write({ path: 'http://localhost:56187/test/unit/browser/runner.html' });
-        //browserStream.end();
-
-        gulp.src(['test/unit/node/**/*.js'], { read: false })
-            .pipe(mocha({
-                reporter: 'mochawesome',
-                reporterOptions: 'reportDir=' + reportDir + ',reportFilename=nodeTestResults'
-            }));
-        cb();
-    });
+function unitTests() {
+    console.log('Version: ' + process.version);
+    return gulp
+        .src('test/unit/browser/runner.html')
+        .pipe(mochaChrome({ ignoreExceptions: true }));
 };
 
 function e2eTests () {
@@ -642,15 +613,6 @@ function e2eTests () {
 //    });
 //});
 
-function _olddoc (cb) {
-    var buildDir = 'build';
-    if (!fs.existsSync(buildDir)) {
-        fs.mkdirSync(buildDir);
-    }
-    execSync('yuidoc -c ./batch/yuidoc.json --theme sitna --themedir ./batch/yuidoc-theme/sitna --outdir build/olddoc --exclude sitna.js,tcmap.js,build,examples,lib,test,TC .');
-    cb();
-};
-
 function docsite (cb) {
     var config = require('./batch/jsdoc/conf.json');
     return gulp.src(['./batch/jsdoc/README.md'], { read: false })
@@ -667,62 +629,77 @@ function docCSS() {
         .pipe(gulp.dest(sitnaBuild.targetPath + 'doc/css'));
 };
 
+const buildCss = gulp.series(
+    buildCsprojFilter,
+    baseCss,
+    componentCss,
+    layoutCss
+);
+
+let webpackServer;
+
+function startDevServer() {
+    const webpackConfig = require('./webpack/webpack.config.debug.js');
+    const compiler = webpack(webpackConfig);
+    const devServerOptions = { ...webpackConfig.devServer, open: true };
+    webpackServer = new WebpackDevServer(devServerOptions, compiler);
+    console.log('Starting server...');
+    webpackServer.start();
+}
+
+
 const doc = gulp.series(
     docsite,
     docfiles,
     docCSS
 );
 
-const bundleAPI = gulp.series(
-    bundle,
-    minifyBundle
+const bundleApi = gulp.parallel(
+    webpackApi,
+    webpackApiDebug
 );
 
 const parallelTasks = gulp.parallel(
     doc,
     resources,
+    dlls,
     zipLayout,
-    baseCss,
     layoutCss,
     examples,
-    exampleSW,
-    bundleAPI
+    exampleSW
 );
 
-exports.clean = clean;
+const noTests = gulp.series(
+    clean,
+    timestamp,
+    buildCsprojFilter,
+    //compileTemplates,    
+    //bundleOLDebug,
+    //bundleOLRelease,    
+    jsonValidate,
+    BundleSHPwriteDebug,
+    BundleSHPwriteRelease,
+    bundleCesiumDebug,
+    bundleCesiumRelease,
+    copyLibraries,
+    baseCss,
+    componentCss,
+    scripts,
+    bundleApi,
+    parallelTasks,
+    copyLayout
+);
+
+exports.startDevServer = startDevServer;
+exports.bundleApi = bundleApi;
+exports.buildCss = buildCss;
+exports.lint = lint;
 exports.unitTests = unitTests;
 exports.e2eTests = e2eTests;
 exports.doc = doc;
-exports.noTests = gulp.series(
-    clean,
-    buildCsprojFilter,    
-    compileTemplates,    
-    bundleOLDebug,
-    bundleOLRelease,    
-    jsonValidate,
-    BundleSHPwriteDebug,
-    BundleSHPwriteRelease,
-    bundleCesiumDebug,
-    bundleCesiumRelease,
-    copyLibraries,    
-    parallelTasks
-);
+exports.noTests = noTests;
 exports.default = gulp.series(
-    clean,
-    buildCsprojFilter,
-    compileTemplates,    
-    bundleOLDebug,
-    bundleOLRelease,
-    //BundleGPKGConverter,
-    jsonValidate,
-    BundleSHPwriteDebug,
-    BundleSHPwriteRelease,
-    BundleIconvDebug,
-    BundleIconvRelease,
-    bundleCesiumDebug,
-    bundleCesiumRelease,
-    copyLibraries,    
-    unitTests,
+    noTests,
     //e2eTests,
-    parallelTasks
+    unitTests
 );
