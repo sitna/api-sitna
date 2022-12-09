@@ -15,11 +15,13 @@
   * </script>
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import ProjectionSelector from './ProjectionSelector';
 
-if (!TC.control.ProjectionSelector) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/ProjectionSelector');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.ProjectionSelector = ProjectionSelector;
 
 TC.control.Coordinates = function () {
     var self = this;
@@ -35,7 +37,7 @@ TC.control.Coordinates = function () {
     self.lon = 0;
     self.units = TC.Consts.units.METERS;
     self.isGeo = false;
-    self.allowReprojection = self.options.hasOwnProperty('allowReprojection') ? self.options.allowReprojection : true;
+    self.allowReprojection = Object.prototype.hasOwnProperty.call(self.options, 'allowReprojection') ? self.options.allowReprojection : true;
 
     TC.control.ProjectionSelector.apply(self, arguments);
 
@@ -184,7 +186,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                 y: self.y,
                 lat: self.lat,
                 lon: self.lon,
-                ele: self.isGeo && self.latLon.length > 2 ? self.latLon[2] : (!self.isGeo && self.xy.length > 2 ? self.xy[2] : null),
+                ele: self.isGeo && self.latLon.length > 2 ? self.latLon[2] : !self.isGeo && self.xy.length > 2 ? self.xy[2] : null,
                 crs: self.crs,
                 geoCrs: self.geoCrs,
                 isGeo: self.isGeo,
@@ -193,7 +195,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
             }, function () {
                 const button = self.div.querySelector('button.' + self._cssClasses.CRS);
                 if (button) {
-                    button.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    button.addEventListener(TC.Consts.event.CLICK, function (_e) {
                         self.showProjectionChangeDialog();
                     }, { passive: true });
                 }
@@ -227,10 +229,10 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
         var self = this;
 
         var clientRect = self.div.getBoundingClientRect();
-        return (clientRect.left <= e.clientX &&
+        return clientRect.left <= e.clientX &&
             clientRect.left + clientRect.width >= e.clientX &&
             clientRect.top <= e.clientY &&
-            clientRect.top + clientRect.height >= e.clientY);
+            clientRect.top + clientRect.height >= e.clientY;
     };    
 
     ctlProto.update = function () {
@@ -349,13 +351,13 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
     // Establece la posición de la cruz en la posición recibida
     //var animationTimeout;
     ctlProto.coordsToClick = function (e) {
-        var self = this;
+        const self = this;
 
         // Si streetView está activo, no responde al click
         if (!self.map.div.classList.contains('tc-ctl-sv-active') || !self.map.div.classList.contains(TC.Consts.classes.COLLAPSED)) {
 
             var coordsBounding = self.div.getBoundingClientRect();
-            if ((coordsBounding.left <= e.clientX && e.clientX <= coordsBounding.right && coordsBounding.top <= e.clientY && e.clientY <= coordsBounding.bottom)) {
+            if (coordsBounding.left <= e.clientX && e.clientX <= coordsBounding.right && coordsBounding.top <= e.clientY && e.clientY <= coordsBounding.bottom) {
                 self.div.classList.add(TC.Consts.classes.HIDDEN);
                 self.clear();
 
@@ -365,6 +367,27 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
             self.div.classList.remove('tc-fading');
             setTimeout(function () {
                 self.div.classList.add('tc-fading');
+                // El siguiente código es para quitar el marcador al mismo tiempo que desaparece
+                // el indicador de coordenadas
+                const durationValue = getComputedStyle(self.div).getPropertyValue('animation-duration');
+                let duration = 0;
+                let match = durationValue.match(/^(\d+)(m?s)$/i);
+                if (match) {
+                    duration = parseInt(match[1]);
+                    if (match[2] === 's')
+                    duration = duration * 1000;
+                }
+                if (duration !== 0) {
+                    clearTimeout(self._markerRemoveTimeout);
+                    self._markerRemoveTimeout = setTimeout(() => {
+                        if (self.currentCoordsMarker) {
+                            self.getLayer().then(layer => {
+                                layer.removeFeature(self.currentCoordsMarker);
+                                self.currentCoordsMarker = null;
+                            });
+                        }
+                    }, duration);
+                }
             }, 10);
 
             self.updateCoordsCtrl(e.coordinate);
@@ -404,14 +427,14 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
 
     ctlProto.getLayer = function () {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             if (self.layer == undefined) {
                 self.map.addLayer({
                     id: self.getUID(),
                     type: TC.Consts.layerType.VECTOR,
                     stealth: true,
                     owner: self,
-                    title: 'Coordenadas',
+                    title: 'Coordenadas'
                 }).then(function (layer) {
                     self.layer = layer;
                     self.layer.map.putLayerOnTop(self.layer);
@@ -424,3 +447,6 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
     };
 
 })();
+
+const Coordinates = TC.control.Coordinates;
+export default Coordinates;
