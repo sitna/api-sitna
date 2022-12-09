@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 (function () {
 
@@ -119,6 +121,7 @@ if (!TC.Control) {
                 sw.postMessage({
                     action: ACTION,
                     name: name,
+                    requestId: opts.requestId,
                     list: opts.urlList || [],
                     silent: opts.silent
                 });
@@ -137,6 +140,7 @@ if (!TC.Control) {
                 addMessageEventListener(resolve, reject, name, ACTION, 'deleted');
                 sw.postMessage({
                     action: ACTION,
+                    requestId: opts.requestId,
                     name: name,
                     silent: opts.silent
                 });
@@ -147,3 +151,6 @@ if (!TC.Control) {
     };
 
 })();
+
+const SWCacheClient = TC.control.SWCacheClient;
+export default SWCacheClient;
