@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.control.MapContents = function () {
     var self = this;
@@ -62,7 +64,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                             return result;
                         };
                         if (containsName(self.layerTrees[layer.id]) || names.length === 0) {
-                            self.update();
+                            self.update(self instanceof TC.control.BasemapSelector ? undefined:layer);
                         }
                         else {
                             self.updateLayerTree(layer);
@@ -109,7 +111,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
     ctlProto.updateScale = function () {
     };
 
-    ctlProto.updateLayerVisibility = function (layer) {
+    ctlProto.updateLayerVisibility = function (_layer) {
     };
 
     ctlProto.updateLayerTree = function (layer) {
@@ -164,7 +166,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
         }
     };
 
-    ctlProto.onErrorLayer = function (layer) { };
+    ctlProto.onErrorLayer = function (_layer) { };
 
     ctlProto.getLayerUIElements = function () {
         return this.div.querySelector('ul').children;
@@ -200,7 +202,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
                     var openIdx = colorStr.indexOf('(');
                     var closeIdx = colorStr.indexOf(')');
                     if (openIdx >= 0 && closeIdx > openIdx) {
-                        color = colorStr
+                        let color = colorStr
                             .substr(0, closeIdx)
                             .substr(openIdx + 1)
                             .split(',');
@@ -242,3 +244,6 @@ TC.inherit(TC.control.MapContents, TC.Control);
     };
 
 })();
+
+const MapContents = TC.control.MapContents;
+export default MapContents;
