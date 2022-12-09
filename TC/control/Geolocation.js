@@ -20,6 +20,16 @@
   * </script>
   */
 
+import localforage from 'localforage';
+import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+import infoShare from './infoShare';
+
+TC.control = TC.control || {};
+TC.control.infoShare = infoShare;
+TC.Control = Control;
+TC.Consts = Consts;
 
 (function () {
     Math.hypot = Math.hypot || function () {
@@ -43,12 +53,12 @@
 
     for (var x = 0, max = vendors.length; x < max && !window.requestAnimationFrame; x += 1) {
         window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
-        window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame']
-            || window[vendors[x] + 'CancelRequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] ||
+            window[vendors[x] + 'CancelRequestAnimationFrame'];
     }
 
     if (!window.requestAnimationFrame) {
-        window.requestAnimationFrame = function (callback, element) {
+        window.requestAnimationFrame = function (callback, _element) {
             var currTime = new Date().getTime();
             var timeToCall = Math.max(0, 16 - (currTime - lastTime));
             var id = window.setTimeout(function () { callback(currTime + timeToCall); },
@@ -68,21 +78,21 @@
     if (!hasPerformance) {
         // Store reference to existing rAF and initial startTime
         var rAF = window.requestAnimationFrame,
-            startTime = +new Date;
+            startTime = +new Date();
 
         // Override window rAF to include wrapped callback
         window.requestAnimationFrame = function (callback, element) {
             // Wrap the given callback to pass in performance timestamp
             var wrapped = function (timestamp) {
                 // Get performance-style timestamp
-                var performanceTimestamp = (timestamp < 1e12) ? timestamp : timestamp - startTime;
+                var performanceTimestamp = timestamp < 1e12 ? timestamp : timestamp - startTime;
 
                 return callback(performanceTimestamp);
             };
 
             // Call original rAF with wrapped callback
             rAF(wrapped, element);
-        }
+        };
     }
 })();
 (function () {
@@ -102,17 +112,9 @@
     }
 }());
 
-TC.control = TC.control || {};
-
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
-
-if (!TC.control.infoShare) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/infoShare');
-}
 
 TC.Consts.event.DIALOG = TC.Consts.event.DIALOG || 'dialog.tc';
+TC.Consts.classes.UNPLUGGED = "tc-unplugged";
 
 TC.control.Geolocation = function (options) {
     var self = this;
@@ -129,7 +131,7 @@ TC.control.Geolocation = function (options) {
             SIMULATIONACTIVATED: 'simulation-activated'
         },
         Selector: {
-            SIMULATE: '.tc-btn-simulate',
+            //SIMULATE: '.tc-btn-simulate',
             DRAW: '.tc-draw',
             EDIT: '.tc-btn-edit',
             DELETE: '.tc-btn-delete',
@@ -141,7 +143,8 @@ TC.control.Geolocation = function (options) {
             PAUSE: '.tc-btn-pause',
             BACKWARD: '.tc-btn-backward',
             FORWARD: '.tc-btn-forward',
-            SPEED: '.tc-spn-speed'
+            SPEED: '.tc-spn-speed',
+            VISIBILITY: 'tc-chk-track-visibility'
         },
         LocalStorageKey: {
             TRACKING: 'trk',
@@ -151,7 +154,7 @@ TC.control.Geolocation = function (options) {
             TEST: 'test'
         },
         Message: {
-            VALIDATENAME: '',
+            VALIDATENAME: ''
         },
         Event: {
             POSITIONCHANGE: 'positionchange.tc.geolocation',
@@ -206,6 +209,9 @@ TC.control.Geolocation = function (options) {
     self.exportsState = true;
 
     self.storageCRS = 'EPSG:4326';
+
+    self.simulate_stopped = true;
+
 };
 
 TC.inherit(TC.control.Geolocation, TC.Control);
@@ -241,7 +247,6 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
     var onFeatureRemove = function (e) {
         const self = this;
-        const layer = e.layer;
 
         if (e.feature === self.wrap.simulateMarker) {
             return;
@@ -261,20 +266,22 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
         map._bufferFeatures = [];
 
-        self.hillDeltaThreshold = ((self.options && self.options.hillDeltaThreshold) ||
-            (self.map.options.elevation && self.map.options.elevation.hillDeltaThreshold)) ||
+        self.hillDeltaThreshold = self.options && self.options.hillDeltaThreshold ||
+            self.map.options.elevation && self.map.options.elevation.hillDeltaThreshold ||
             20;
 
-        map.addLayer({
+        var arrProm = [];
+
+        arrProm.push(map.addLayer({
             id: self.getUID(),
             type: TC.Consts.layerType.VECTOR,
             owner: self,
             stealth: true,
-            title: 'Posicionar.GPS',
+            title: 'Posicionar.GPS'
         }).then(function (layer) {
             self.layerGPS = layer;
-        });
-        map.addLayer({
+        }));
+        arrProm.push(map.addLayer({
             id: self.getUID(),
             type: TC.Consts.layerType.VECTOR,
             owner: self,
@@ -292,7 +299,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                     labelOutlineColor: "#ffffff",
                     labelOutlineWidth: 1,
                     label: function (feature) {
-                        var name = feature.getData()['name'];
+                        var name = feature.getData().name;
                         if (name && (name + '').trim().length > 0) {
                             name = (name + '').trim().toLowerCase();
                         } else {
@@ -302,19 +309,26 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                         return name;
                     }
                 },
-                line: {
-                    strokeOpacity: function () {
-                        return this.track.renderTrack.checked ? 1 : 0;
-                    }.bind(self),
-                    strokeWidth: 2,
-                    strokeColor: "#00ced1",
-                    lineDash: [.1, 6]
-                }
+                line: [
+                    {
+                        strokeOpacity: function () {
+                            return this.track.renderTrack.checked ? 1 : 0;
+                        }.bind(self),
+                        strokeWidth: 8,
+                        strokeColor: "#ffffff"
+                    },
+                    {
+                        strokeOpacity: function () {
+                            return this.track.renderTrack.checked ? 1 : 0;
+                        }.bind(self),
+                        strokeWidth: 4,
+                        strokeColor: "#00ced1"
+                    }]
             }
         }).then(function (layer) {
             self.layerTracking = layer;
-        });
-        map.addLayer({
+        }));
+        arrProm.push(map.addLayer({
             id: self.getUID(),
             type: TC.Consts.layerType.VECTOR,
             owner: self,
@@ -327,14 +341,12 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                 },
                 point: {
                     radius: function (feature) {
-                        var name = feature.getData()['name'];
+                        var name = feature.getData().name;
                         if (name && (name + '').trim().length > 0) {
                             return 3;
                         } else {
                             return 6;
                         }
-
-                        return 3;
                     },
                     fillColor: "#C52737",
                     strokeColor: "#ffffff",
@@ -343,7 +355,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                     labelOutlineColor: "#ffffff",
                     labelOutlineWidth: 2,
                     label: function (feature) {
-                        var name = feature.getData()['name'];
+                        var name = feature.getData().name;
                         if (name && (name + '').trim().length > 0) {
                             name = (name + '').trim().toLowerCase();
                         } else {
@@ -356,7 +368,12 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             }
         }).then(function (layer) {
             self.layerTrack = layer;
-        });
+        }));
+
+        Promise.all(arrProm).then(function () {
+            const newPosition = self.map.layers.indexOf(self.layerTrack);
+            self.map.insertLayer(self.layerGPS, newPosition)
+        })
 
         map.on(TC.Consts.event.FEATURESIMPORT, function (e) {
             const self = this;
@@ -370,7 +387,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                 // GLS: ¿es un GPX?
                 if (fileName.toLowerCase().indexOf(gpxPattern) === fileName.length - gpxPattern.length ||
                     // GLS: ¿es un KML y viene desde el upload de Geolocation?
-                    (fileName.toLowerCase().indexOf(kmlPattern) === fileName.length - kmlPattern.length && target === self)) {
+                    fileName.toLowerCase().indexOf(kmlPattern) === fileName.length - kmlPattern.length && target === self) {
 
                     self.clear(self.Const.Layers.TRACK);
                     const importedGPX = function () {
@@ -378,23 +395,21 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                         setTimeout(function () {
                             self.map._bufferFeatures = self.map._bufferFeatures.concat(e.features);
                             window.dropFilesCounter--;
-                            if (dropFilesCounter === 0) {
+                            if (window.dropFilesCounter === 0) {
                                 self.map.zoomToFeatures(self.map._bufferFeatures);
                                 self.map._bufferFeatures = [];
                                 delete window.dropFilesCounter;
                                 var li = self.map.getLoadingIndicator();
                                 if (li) {
                                     li.removeWait(self.map._fileDropLoadingIndicator);
-                                    self.map._fileDropLoadingIndicator = null;
                                 }
                                 self.off(self.Const.Event.IMPORTEDTRACK, importedGPX);
                             }
-                        }, 0);                       
-
-                    }
+                        }, 0);
+                    };
                     self.on(self.Const.Event.IMPORTEDTRACK, importedGPX);
                     self.importTrack(e);
-                                        
+
                     if (/.kml$/g.test(fileName.toLowerCase()) && self.layerTrack) {
                         if (self.layerTrack.styles) {
                             self.layerTrack.features.forEach(function (feature) {
@@ -424,6 +439,10 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
             if (self.elevationChartData) {
                 self.elevationChartData.coords = TC.Util.reproject(self.elevationChartData.coords, e.oldCrs, e.newCrs);
+                if (self.elevationChartData.secondaryElevationProfileChartData && self.elevationChartData.secondaryElevationProfileChartData.length)
+                    self.elevationChartData.secondaryElevationProfileChartData.forEach((secElevChartData) => {
+                        secElevChartData.eleCoordinates = TC.Util.reproject(secElevChartData.eleCoordinates, e.oldCrs, e.newCrs);
+                    });
             }
         });
 
@@ -449,8 +468,8 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             requireInteraction: true,
             body: self.getLocaleString("geo.trk.notification.body")
         }, {
-                title: self.options.notification && self.options.notification.title ? self.getLocaleString(self.options.notification.title) : document.title,
-            });
+            title: self.options.notification && self.options.notification.title ? self.getLocaleString(self.options.notification.title) : document.title
+        });
 
         return result;
     };
@@ -465,7 +484,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             } else if (self.options.displayElevation) {
                 options = self.options.displayElevation;
             }
-            if (self.options.hasOwnProperty('resolution')) { // la configuración de la resolución es distinta al obtener el perfil (0) que para la descarga (20). La configuración para la descarga se gestiona en getDownloadDialog...
+            if (Object.prototype.hasOwnProperty.call(self.options, 'resolution')) { // la configuración de la resolución es distinta al obtener el perfil (0) que para la descarga (20). La configuración para la descarga se gestiona en getDownloadDialog...
                 options.resolution = self.options.resolution;
             } else {
                 options.resolution = 0;
@@ -473,10 +492,10 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             self.elevationControl = await self.map.addControl('elevation', options);
 
             self.elevationControl._decorateChartPanel = function () {
-                this.resultsPanel.setCurrentFeature = function (feature) {
+                this.resultsPanel.setCurrentFeature = function (_feature) {
                     const that = this;
                     that.currentFeature = self.layerTrack.features.filter((feature) => {
-                        return !(TC.feature.Marker && feature instanceof TC.feature.Marker) && !(TC.feature.Point && feature instanceof TC.feature.Point)
+                        return !(TC.feature.Marker && feature instanceof TC.feature.Marker) && !(TC.feature.Point && feature instanceof TC.feature.Point);
                     })[0];
                     const currentSelectedTrack = self.getSelectedTrack();
                     if (currentSelectedTrack) {
@@ -493,7 +512,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
         }).then(function () {
             return self.getDownloadDialog().then(() => {
@@ -508,7 +527,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                     });
                 });
             });
-        });
+        }));
     };
 
     ctlProto.importTrack = function (options) {
@@ -563,9 +582,6 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                     return saved.uid.toString() === trackUid.toString();
                 })[0].data;
 
-                // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
-                var precision = Math.pow(10, TC.Consts.DEGREE_PRECISION + 1);
-
                 var storageFeatures = new ol.format.GeoJSON().readFeatures(storageData);
                 const promises = new Array(storageFeatures.length);
                 storageFeatures.forEach(function (f, idx) {
@@ -575,7 +591,6 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                 Promise.all(promises).then(function (tcFeatures) {
                     let features = tcFeatures.map(function (f) {
                         const fObj = {};
-                        var layerStyle;
                         switch (true) {
                             case TC.feature.Marker && f instanceof TC.feature.Marker:
                                 fObj.type = TC.Consts.geom.MARKER;
@@ -637,7 +652,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                 }
             }
         }
-    }
+    };
 
     ctlProto.onShowShareDialog = function (caller) {
         const self = this;
@@ -732,7 +747,6 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                     let feature = originalDialogFeatures.filter((feat) => {
                         return TC.feature.Polyline && feat instanceof TC.feature.Polyline;
                     })[0];
-                    let coord = feature.geometry[0];
                     let noZ = feature.geometry[0].length === 2;
                     if (noZ) {
                         disableOriginalsRadio(noZ);
@@ -816,7 +830,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                                             toDownload.setCoords(cachedProfile.data.secondaryElevationProfileChartData[0].coords);
                                             if (allFeatures) {
                                                 if (!featuresToDownload) {
-                                                    featuresToDownload = (getCurrentPoints.call(self) || []);
+                                                    featuresToDownload = getCurrentPoints.call(self) || [];
                                                 }
                                                 featuresToDownload.push(toDownload);
                                             } else {
@@ -874,8 +888,8 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         };
         if (self.options.displayElevation) {
             options.elevation = {
-                resolution: (self.options.displayElevation && self.options.displayElevation.resolution) || (self.map.options.elevation && self.map.options.elevation.resolution) || 20,
-                sampleNumber: (self.options.displayElevation && self.options.displayElevation.sampleNumber) || (self.map.options.elevation && self.map.options.elevation.sampleNumber) || 0,
+                resolution: self.options.displayElevation && self.options.displayElevation.resolution || self.map.options.elevation && self.map.options.elevation.resolution || 20,
+                sampleNumber: self.options.displayElevation && self.options.displayElevation.sampleNumber || self.map.options.elevation && self.map.options.elevation.sampleNumber || 0,
                 checked: true
             };
         } else {
@@ -944,7 +958,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             if (window.File && window.FileReader && window.FileList && window.Blob) {
                 self.track.trackImportFile.disabled = false;
                 // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
-                self.track.trackImportFile.addEventListener(TC.Consts.event.CLICK, function (e) {
+                self.track.trackImportFile.addEventListener(TC.Consts.event.CLICK, function (_e) {
                     // Envolvemos el input en un form
                     const input = this;
                     const form = document.createElement('form');
@@ -1050,10 +1064,10 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                     input.focus();
                     input.value = span.textContent;
                     span.classList.add(TC.Consts.classes.HIDDEN);
-                    elm.dataset['title'] = elm.title;
+                    elm.dataset.title = elm.title;
                     elm.title = "";
 
-                    elm.querySelector(sel.SIMULATE).classList.add(TC.Consts.classes.HIDDEN);
+                    //elm.querySelector(sel.SIMULATE).classList.add(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.EDIT).classList.add(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.DELETE).classList.add(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.DRAW).classList.add(TC.Consts.classes.HIDDEN);
@@ -1066,10 +1080,10 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
                     input.classList.add(TC.Consts.classes.HIDDEN);
                     span.classList.remove(TC.Consts.classes.HIDDEN);
-                    elm.title = elm.dataset['title'];
-                    delete elm.dataset['title'];
+                    elm.title = elm.dataset.title;
+                    delete elm.dataset.title;
 
-                    elm.querySelector(sel.SIMULATE).classList.remove(TC.Consts.classes.HIDDEN);
+                    //elm.querySelector(sel.SIMULATE).classList.remove(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.EDIT).classList.remove(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.DELETE).classList.remove(TC.Consts.classes.HIDDEN);
                     elm.querySelector(sel.DRAW).classList.remove(TC.Consts.classes.HIDDEN);
@@ -1083,40 +1097,27 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
             self.uiSimulate = function (simulate, elm) {
                 if (elm) {
-                    var editControls = [
-                        sel.SIMULATE,
-                        sel.EDIT,
-                        sel.DELETE,
-                        sel.EXPORT,
-                        sel.SHARE
-                    ];
-                    var simulateControls = [
-                        sel.STOP,
-                        sel.PAUSE,
-                        sel.BACKWARD,
-                        sel.FORWARD,
-                        sel.SPEED
-                    ];
+                    
                     var cnt = elm.tagName === 'LI' ? elm : elm.parentNode;
-
-                    editControls.forEach(function (ctl) {
-                        cnt.querySelector(ctl).hidden = simulate;
-                    });
-
-                    simulateControls.forEach(function (ctl) {
-                        cnt.querySelector(ctl).hidden = !simulate;
-                    });
+                    const btnPause = cnt.querySelector(sel.PAUSE);
+                    btnPause.classList.add('play');
+                    btnPause.setAttribute('title', self.getLocaleString("tr.lst.start"));
+                    self.simulate_stopped = true;
+                    
                 }
             };
 
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.SIMULATE, function (e) {
-                var wait = self.getLoadingIndicator().addWait();
+            //list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.SIMULATE, function (e) {
+            //    var wait = self.getLoadingIndicator().addWait();
 
-                e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
+            //    e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
 
-                _loadTrack(self, e.target).then(function () { //Para evitar el bloqueo de la interfaz en móviles
-                    self.getLoadingIndicator().removeWait(wait)
-                });
+            //    _loadTrack(self, e.target).then(function () { //Para evitar el bloqueo de la interfaz en móviles
+            //        self.getLoadingIndicator().removeWait(wait);
+            //    });
+            //}));
+            list.addEventListener('change', TC.EventTarget.listenerBySelector("input." + sel.VISIBILITY, function (e) {
+                self.layerTrack.setVisibility(e.target.checked);
             }));
             list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.DRAW, function (e) {
                 var wait = self.getLoadingIndicator().addWait();
@@ -1135,9 +1136,16 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                             delete self.toShare;
                         }
                     });
-                    setTimeout(function () {
-                        self.track.trackList.scrollTop = e.index * listElement.offsetHeight;
-                    }, 100);
+                    const transitionEvent = function (event) {
+                        if (!HTMLElement.prototype.scrollIntoView) {
+                            self.track.trackList.scrollTop = e.index * listElement.offsetHeight;
+                        }
+                        else {
+                            listElement.scrollIntoView({ behavior: "smooth", block: "end" });
+                        }
+                        listElement.removeEventListener("transitionend", transitionEvent, false);
+                    };                    
+                    listElement.addEventListener("transitionend", transitionEvent, false);
                 } else {
                     self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: TC.Consts.msgType.WARNING });
                 }
@@ -1146,15 +1154,16 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             const _stopOtherTracks = function (self, trackLiId) {
                 self.track.trackList.querySelectorAll('li[data-id]').forEach(function (listItem) {
                     if (listItem.dataset.id !== trackLiId) {
-                        const btnSimulate = listItem.querySelector(sel.SIMULATE);
+                        //const btnSimulate = listItem.querySelector(sel.SIMULATE);
                         const btnPause = listItem.querySelector(sel.PAUSE);
+                        self.simulate_stopped = true;
 
-                        btnSimulate.classList.remove(self.Const.Classes.SIMULATIONACTIVATED);
-                        btnSimulate.setAttribute('title', self.getLocaleString("tr.lst.simulate"));
-                        btnPause.classList.remove('play');
-                        btnPause.setAttribute('title', self.getLocaleString("tr.lst.pause"));
+                        //btnSimulate.classList.remove(self.Const.Classes.SIMULATIONACTIVATED);
+                        //btnSimulate.setAttribute('title', self.getLocaleString("tr.lst.simulate"));
+                        btnPause.classList.add('play');
+                        btnPause.setAttribute('title', self.getLocaleString("tr.lst.start"));
 
-                        self.uiSimulate(false, listItem);
+                        //self.uiSimulate(false, listItem);
                         _edit(false, listItem);
                     }
                 });
@@ -1164,18 +1173,19 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             };
 
             var _drawTrack = function (self, btnDraw) {
-                return new Promise(function (resolve, reject) {
+                return new Promise(function (resolve, _reject) {
 
                     const trackLi = btnDraw.parentElement;
 
                     setTimeout(function () {
                         if (trackLi.classList.contains(self.Const.Classes.SELECTEDTRACK)) {
-                            self.uiSimulate(false, btnDraw);
+                            //self.uiSimulate(false, btnDraw);
 
                             self.clear(self.Const.Layers.TRACK);
                             self.map.off(TC.Consts.event.FEATUREREMOVE, onFeatureRemove);
 
                             btnDraw.setAttribute('title', btnDraw.textContent);
+                            //
                         }
                         else if (self.getSelectedTrack()) { // GLS: si hay elemento seleccionado actuamos
                             _stopOtherTracks(self, trackLi.dataset.id);
@@ -1198,13 +1208,13 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             };
 
             var _loadTrack = function (self, btnSimulate) {
-                return new Promise(function (resolve, reject) {
+                return new Promise(function (resolve, _reject) {
                     setTimeout(function () {
-                        const trackLi = btnSimulate.parentElement;
+                        const trackLi = btnSimulate.closest("li");
                         const selectedTrack = self.getSelectedTrack();
                         _stopOtherTracks(self, trackLi.dataset.id);
-                        self.uiSimulate(false, selectedTrack);
-                        self.uiSimulate(true, btnSimulate);
+                        //self.uiSimulate(false, selectedTrack);
+                        //self.uiSimulate(true, btnSimulate);
 
                         // para el resize con película mejor así
                         if (selectedTrack && trackLi.dataset.id !== selectedTrack.dataset.id) {
@@ -1260,20 +1270,34 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             }));
 
             list.addEventListener('click', TC.EventTarget.listenerBySelector(self._classSelector + ' ' + sel.STOP, function (e) {
-                self.uiSimulate(false, e.target);
+                //self.uiSimulate(false, e.target);
                 self.wrap.simulateTrackEnd();
                 const btnPause = e.target.parentElement.querySelector(sel.PAUSE);
-                btnPause.classList.remove('play');
-                btnPause.setAttribute('title', self.getLocaleString('tr.lst.pause'));
-
-                e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
+                btnPause.classList.add('play');
+                btnPause.setAttribute('title', self.getLocaleString('tr.lst.start'));
+                if (!self.simulate_stopped)
+                    e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
                 self.simulate_speed = 1;
+                self.simulate_stopped = true;
             }));
 
             list.addEventListener('click', TC.EventTarget.listenerBySelector(self._classSelector + ' ' + sel.PAUSE, function (e) {
                 self.simulate_paused = !e.target.classList.contains('play');
                 if (self.simulate_paused)
                     self.simulate_pausedElapse = -1;
+                else {
+                    
+                    if (self.simulate_stopped) {
+                        var wait = self.getLoadingIndicator().addWait();
+                        e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
+                        _loadTrack(self, e.target).then(function () { //Para evitar el bloqueo de la interfaz en móviles
+                            self.getLoadingIndicator().removeWait(wait);
+                            self.simulate_stopped = false;
+                        });
+                    }
+                    
+                    
+                }
 
                 e.target.setAttribute('title', self.getLocaleString(self.simulate_paused ? 'tr.lst.play' : 'tr.lst.pause'));
                 e.target.classList.toggle('play', !!self.simulate_paused);
@@ -1281,15 +1305,15 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
             var lapse = 0.5;
             list.addEventListener('click', TC.EventTarget.listenerBySelector(self._classSelector + ' ' + sel.BACKWARD, function (e) {
-                if (self.simulate_speed == 1)
+                if (self.simulate_speed === 1)
                     self.simulate_speed = lapse;
                 else self.simulate_speed = self.simulate_speed / 2;
 
                 e.target.parentElement.querySelector(self._classSelector + " " + sel.FORWARD).disabled = false;
 
-                e.target.parentElement.querySelector(sel.SPEED).textContent = self.simulate_speed < 1 ? '/ ' + (1 / self.simulate_speed) : 'x ' + self.simulate_speed;
+                e.target.parentElement.querySelector(sel.SPEED).textContent = self.simulate_speed < 1 ? '/ ' + 1 / self.simulate_speed : 'x ' + self.simulate_speed;
 
-                if (self.simulate_speed == 0.000244140625) {
+                if (self.simulate_speed === 0.000244140625) {
                     e.target.disabled = true;
                 }
             }));
@@ -1297,11 +1321,11 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             list.addEventListener('click', TC.EventTarget.listenerBySelector(self._classSelector + ' ' + sel.FORWARD, function (e) {
                 self.simulate_speed = self.simulate_speed / lapse;
 
-                e.target.parentElement.querySelector(sel.SPEED).textContent = self.simulate_speed < 1 ? '/ ' + (1 / self.simulate_speed) : 'x ' + self.simulate_speed;
+                e.target.parentElement.querySelector(sel.SPEED).textContent = self.simulate_speed < 1 ? '/ ' + 1 / self.simulate_speed : 'x ' + self.simulate_speed;
 
                 e.target.parentElement.querySelector(self._classSelector + " " + sel.BACKWARD).disabled = false;
 
-                if (self.simulate_speed == 4096) {
+                if (self.simulate_speed === 4096) {
                     e.target.disabled = true;
                 }
             }));
@@ -1339,19 +1363,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                 const checkboxes = document.body.querySelectorAll('input[name*="Advertisement"]:checked');
 
                 if (checkboxes.length > 0) {
-                    const promise = new Promise(function (resolve, reject) {
-                        if (window.localforage)
-                            resolve();
-                        else {
-                            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                                resolve();
-                            });
-                        }
-                    });
-
-                    promise.then(function () {
-                        localforage.setItem(checkboxes[0].getAttribute('name'), false);
-                    });
+                    localforage.setItem(checkboxes[0].getAttribute('name'), false);
                 }
 
                 TC.Util.closeModal();
@@ -1366,13 +1378,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                 visibilityTrack = this.checked;
             });
 
-            if (window.localforage)
-                self.bindTracks();
-            else {
-                TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                    self.bindTracks();
-                });
-            }
+            self.bindTracks();
 
             if (TC.Util.isFunction(callback)) {
                 callback();
@@ -1456,12 +1462,12 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             data.isGeo = true;
 
         } else {
-            data.x = Math.round(newPosition.position[0]).toLocaleString(locale);
-            data.y = Math.round(newPosition.position[1]).toLocaleString(locale);
+            data.x = newPosition.position[0].toLocaleString(locale);
+            data.y = newPosition.position[1].toLocaleString(locale);
         }
 
-        data.z = (Math.round(newPosition.altitude).toLocaleString(locale));
-        data.accuracy = (Math.round(newPosition.accuracy).toLocaleString(locale));
+        data.z = Math.round(newPosition.altitude).toLocaleString(locale);
+        data.accuracy = Math.round(newPosition.accuracy).toLocaleString(locale);
         data.speed = newPosition.speed.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
         return data;
@@ -1470,7 +1476,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
     ctlProto.getTrackInfoPanel = function () {
         const self = this;
         if (!self.track._infoPanelPromise) {
-            self.track._infoPanelPromise = new Promise(function (resolve, reject) {
+            self.track._infoPanelPromise = new Promise(function (resolve, _reject) {
                 if (!self.track.infoPanel) {
 
                     var resultsPanelOptions = {
@@ -1550,17 +1556,63 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             self.map.trigger(TC.Consts.event.TOOLSCLOSE);
         }
     };
+    var _isFollowing = true;
+    var _zoomFollowing = false;
+    var _lastMapCenter = null;
+    ctlProto.setFollowing = function (value) {
+        const self = this;
+        _isFollowing = value;
+        if (self.trackCenterButton) {
+            const btn = self.trackCenterButton.querySelector("button");
+            btn.classList.toggle(TC.Consts.classes.UNPLUGGED, !value);
+            btn.title = self.getLocaleString(value ? "geo.trk.notCenter" : "geo.trk.center")
+        }
+        !value && self.trackCenterButton && self.trackCenterButton.querySelector("button").classList.add(TC.Consts.classes.UNPLUGGED);
+        value && self.trackCenterButton && self.trackCenterButton.querySelector("button").classList.remove(TC.Consts.classes.UNPLUGGED);
 
+    }
+    ctlProto.Move = async function (where) {
+        const self = this;
+        if (where && Array.isArray(where) && where.length > 0) {
+            _zoomFollowing = true;
+            if (where[0] instanceof TC.Feature) {
+                await self.map.zoomToFeatures(where, { animate: false });
+            }
+            else {
+                await self.map.setCenter(where, { animate: false })
+            }
+            setTimeout(function () {
+                _zoomFollowing = false;
+            }, 300);
+        }
+
+    }
+    const _manageZoomEvents = function () {
+        if (!_lastMapCenter || (_lastMapCenter[0] !== this.getCenter()[0] && _lastMapCenter[1] !== this.getCenter()[1])) {
+            _lastMapCenter = this.getCenter();
+            if (!_zoomFollowing)
+                this.getControlsByClass(TC.control.Geolocation)[0].setFollowing(false);
+
+        }
+
+    }
     var _tracking = function () {
         var self = this;
 
         self.activate();
-
+        _isFollowing = true;
         _activateTrackingBtns.call(self);
         duringTrackingToolsPanel.call(self);
 
-        self.on(self.Const.Event.POSITIONCHANGE, function (d) {
+        self.map.on(TC.Consts.event.ZOOM, _manageZoomEvents)
 
+        self.on(self.Const.Event.POSITIONCHANGE, function (d) {
+            if (self.currentPoint && (self.currentPoint.position[0] !== d.pd.position[0] && self.currentPoint.position[1] !== d.pd.position[1])) {
+                //cambio real de coordenadas
+                if (_isFollowing) {
+                    self.Move(d.pd.position);
+                }
+            }
             self.currentPoint = d.pd;
             self.renderInfoNewPosition(d);
 
@@ -1573,7 +1625,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             // cada vez que se registra una nueva posición almacenamos en sessionStorage
             TC.Util.storage.setSessionLocalValue(self.Const.LocalStorageKey.TRACKINGTEMP, self.wrap.formattedToStorage(self.layerTracking).features);
         });
-        self.on(self.Const.Event.STATEUPDATED, function (data) {
+        self.on(self.Const.Event.STATEUPDATED, function (_data) {
             //self.track.htmlMarker.setAttribute('src', data.moving ? 'layout/idena/img/geo-marker-heading.png' : 'layout/idena/img/geo-marker.png');
         });
 
@@ -1585,17 +1637,15 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
     };
 
     /* inicio gestión suspensión de la pantalla en móviles */
-    var _onpauseVideo;
     let isSupported = false;
     let wakeLock = null;
     let notifications = null;
     if ('wakeLock' in navigator) {
         isSupported = true;
     }
-    let _ctlInstance = null;
 
     var keepWakeLock = function () {
-        var self = _ctlInstance = this;
+        var self = this;
         if (!isSupported)
             addVideoKeepScreenOn.apply(self);
         else {
@@ -1618,9 +1668,9 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             //al cambiar de pestaña volvemos a activar el wakeLock
             //document.addEventListener('visibilitychange', handleVisibilityChange);
         }
-    }
+    };
     var releaseLock = function () {
-        var self = _ctlInstance = this;
+        var self = this;
         if (!isSupported)
             removeVideoKeepScreenOn.apply(self);
         else {
@@ -1628,9 +1678,9 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             wakeLock.release()
                 .then(() => {
                     wakeLock = null;
-                })
+                });
         }
-    }
+    };
     var addVideoKeepScreenOn = function () {
         var self = this;
 
@@ -1690,8 +1740,9 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         if ('hidden' in document) return 'hidden';
 
         for (var i = 0; i < prefixes.length; i++) {
-            if ((prefixes[i] + 'Hidden') in document)
+            if (prefixes[i] + 'Hidden' in document) {
                 return prefixes[i] + 'Hidden';
+            }
         }
 
         return null;
@@ -1715,7 +1766,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                 //si se pulta shift + F5 el objeto controller de serviceWorkerContainer es null
                 (navigator.serviceWorker.controller ||
                     //entonces ontenemos el SW del control SWCache client si existe y miramos si está activo
-                    (self.map.getControlsByClass(TC.control.SWCacheClient).length && (await self.map.getControlsByClass(TC.control.SWCacheClient)[0].getServiceWorker()).state === "activated")))
+                    self.map.getControlsByClass(TC.control.SWCacheClient).length && (await self.map.getControlsByClass(TC.control.SWCacheClient)[0].getServiceWorker()).state === "activated"))
                 try {
                     const registration = await navigator.serviceWorker.ready;
                     registration.showNotification(self.notificationConf.title, Object.assign(self.notificationConf, {
@@ -1760,7 +1811,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             window.addEventListener('blur', _onWindowBlurred, false);
             window.addEventListener('focus', _onWindowFocused, false);
         }
-    }
+    };
     var removeWindowEvents = function () {
 
         window.removeEventListener('visibilitychange', _onWindowVisibility, false);
@@ -1780,7 +1831,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
         var sessionTracking = TC.Util.storage.getSessionLocalValue(self.Const.LocalStorageKey.TRACKINGTEMP);
         if (sessionTracking && sessionTracking.length > 0)
-            localforage.setItem(self.Const.LocalStorageKey.TRACKINGTEMP, typeof (sessionTracking) === "string" ? sessionTracking : JSON.stringify(sessionTracking));
+            localforage.setItem(self.Const.LocalStorageKey.TRACKINGTEMP, typeof sessionTracking === "string" ? sessionTracking : JSON.stringify(sessionTracking));
     };
     var fromStorageToSession = function () {
         var self = this;
@@ -1794,35 +1845,23 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
     /* final gestión suspensión de la pantalla en móviles */
 
     var advertisement = function (showAdvertisement) {
-        var self = this;
+        const self = this;
 
-        var done = new Promise(function (resolve, reject) {
-            if (window.localforage)
-                resolve();
-            else {
-                TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                    resolve();
-                });
+        localforage.getItem(showAdvertisement).then(function (registeredShowAdvertisement) {
+            if (registeredShowAdvertisement == null) {
+                const dialog = self._dialogDiv.querySelector('.tc-ctl-geolocation-track-advert-dialog');
+                const checkbox = dialog.querySelector('input[type="checkbox"]');
+                checkbox.setAttribute('name', showAdvertisement);
+                checkbox.checked = false;
+
+                document.querySelector('#pageBlurMsg').textContent = TC.Util.detectMobile() ? self.getLocaleString('geo.trk.page.blur') : self.getLocaleString('geo.trk.page.blur.desktop');
+
+                dialog.querySelector('h3').textContent = showAdvertisement === self.Const.LocalStorageKey.GPSSHOWADVERTISEMENT ?
+                    self.getLocaleString("geo.track.activate") + " " + self.getLocaleString("geo.gps") :
+                    self.getLocaleString('geo.track.activate.title');
+
+                TC.Util.showModal(self._dialogDiv.querySelector('.tc-ctl-geolocation-track-advert-dialog'));
             }
-        });
-
-        done.then(function () {
-            localforage.getItem(showAdvertisement).then(function (registeredShowAdvertisement) {
-                if (registeredShowAdvertisement == null) {
-                    const dialog = self._dialogDiv.querySelector('.tc-ctl-geolocation-track-advert-dialog');
-                    const checkbox = dialog.querySelector('input[type="checkbox"]');
-                    checkbox.setAttribute('name', showAdvertisement);
-                    checkbox.checked = false;
-
-                    document.querySelector('#pageBlurMsg').textContent = TC.Util.detectMobile() ? self.getLocaleString('geo.trk.page.blur') : self.getLocaleString('geo.trk.page.blur.desktop');
-
-                    dialog.querySelector('h3').textContent = showAdvertisement == self.Const.LocalStorageKey.GPSSHOWADVERTISEMENT ?
-                        self.getLocaleString("geo.track.activate") + " " + self.getLocaleString("geo.gps") :
-                        self.getLocaleString('geo.track.activate.title');
-
-                    TC.Util.showModal(self._dialogDiv.querySelector('.tc-ctl-geolocation-track-advert-dialog'));
-                }
-            });
         });
 
         self.map.toast(!TC.Util.detectMobile() ? self.getLocaleString('geo.trk.page.blur.desktop') : self.getLocaleString('geo.trk.page.blur'), {
@@ -1929,6 +1968,9 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             self.clear(self.Const.Layers.TRACKING);
             self.clear(self.Const.Layers.GPS);
 
+
+            self.map.off(TC.Consts.event.ZOOM, _manageZoomEvents)
+
             //TC.Control.prototype.deactivate.call(self);
 
             return true;
@@ -1946,14 +1988,14 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
     /* Obtengo los tracks desde localForage */
     ctlProto.getStoredTracks = function () {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             var tracks = [];
 
             const onResolve = function (toResolve) {
                 // estamos en la carga inicial
                 if (elevationProfileCache.length === 0) {
                     toResolve
-                        .filter(elm => { return elm.profile })
+                        .filter(elm => elm.profile)
                         .forEach((elm) => elevationProfileCache.push({ uid: elm.uid, data: JSON.parse(elm.profile) }));
                 }
                 resolve(toResolve);
@@ -1962,21 +2004,21 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             localforage.keys()
                 .then(function (keys) {
                     keys = keys.filter(function (k) {
-                        if (!(k.indexOf(self.Const.LocalStorageKey.TRACKINGTEMP) === 0) && k.indexOf(self.Const.LocalStorageKey.TRACKING) === 0) {
+                        if (k.indexOf(self.Const.LocalStorageKey.TRACKINGTEMP) !== 0 && k.indexOf(self.Const.LocalStorageKey.TRACKING) === 0) {
                             return /trk#\d/i.exec(k);
                         }
                         return false;
                     });
 
-                    if (keys.length == 0) {
+                    if (keys.length === 0) {
                         self.availableTracks = tracks;
                         onResolve(tracks);
                     }
 
                     const promises = new Array(keys.length);
                     keys.forEach(function (key, idx) {
-                        promises[idx] = new Promise(function (res, rej) {
-                            localforage.getItem(key, function (e, v) {
+                        promises[idx] = new Promise(function (res, _rej) {
+                            localforage.getItem(key, function (_e, v) {
                                 res(v);
                             });
                         });
@@ -1984,8 +2026,8 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
                     Promise.all(promises).then(function (results) {
                         if (results && results.length) {
-                            results.forEach(function (r) {
-                                var r = JSON.parse(r);
+                            results.forEach(function (res) {
+                                const r = JSON.parse(res);
                                 if (r instanceof Array) {
                                     tracks = tracks.concat(r);
                                 } else {
@@ -1999,7 +2041,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                         }
                     });
                 })
-                .catch((err) => {
+                .catch((_err) => {
                     console.log('Capturamos error que se produce por configuración del navegador.');
                     TC.error(self.getLocaleString('couldNotAccessLocalStorage'));
                 });
@@ -2013,10 +2055,10 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         var tracksArray = [];
 
         for (var index in tracks) {
-            if (tracks[index] && typeof (tracks[index]) === "object") {
+            if (tracks[index] && typeof tracks[index] === "object") {
                 tracksArray.push(tracks[index]);
                 tracksArray.sort(function (a, b) {
-                    if (typeof (a.name) === "string") {
+                    if (typeof a.name === "string") {
                         return TC.Util.isFunction(a.name.localeCompare) ? a.name.localeCompare(b.name) : 0;
                     } else { return 0; }
                 });
@@ -2029,10 +2071,10 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
     /* Almaceno los tracks mediante localForage, actualizo la vble availableTracks y actualizo la lista de tracks */
     ctlProto.setStoredTracks = function (tracks) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             const promises = [];
             tracks.forEach(function (t) {
-                promises.push(new Promise(function (res, rej) {
+                promises.push(new Promise(function (res, _rej) {
                     localforage.setItem(self.Const.LocalStorageKey.TRACKING + "#" + t.uid, JSON.stringify(t), function (e, v) {
                         res(v);
                     });
@@ -2051,7 +2093,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
     /* Obtengo los tracks desde vble local */
     ctlProto.getAvailableTracks = function () {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             if (!self.availableTracks) {
                 self.getStoredTracks().then(function (availableTracks) {
                     resolve(availableTracks);
@@ -2083,7 +2125,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                 const currentSelectedTrack = self.getSelectedTrack();
                 var currentSelectedTrackId;
                 if (currentSelectedTrack) {
-                    currentSelectedTrackId = currentSelectedTrack.dataset.uid
+                    currentSelectedTrackId = currentSelectedTrack.dataset.uid;
                 }
                 self.track.trackList.querySelectorAll('li[data-id]').forEach(function (li) {
                     self.track.trackList.removeChild(li);
@@ -2091,7 +2133,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
                 for (var i = 0; i < tracks.length; i++) {
                     var t = tracks[i];
-                    if (typeof (t) === "object") {
+                    if (t && typeof t === "object") {
                         self.getRenderedHtml(self.CLASS + '-track-node', {
                             id: i, uid: t.uid, name: t.name ? t.name.trim() : ''
                         }, function (html) {
@@ -2117,7 +2159,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         self.getElevationControl().then(elevCtl => elevCtl && elevCtl.removeElevationTooltip());
     };
 
-    ctlProto.chartSetProgress = function (previous, current, distance, doneTime) {
+    ctlProto.chartSetProgress = function (previous, _current, _distance, _doneTime) {
         var self = this;
 
         if (self.elevationControl && self.elevationControl.resultsPanel && (!self.elevationControl.resultsPanel.isVisible() || self.elevationControl.resultsPanel.isMinimized())) {
@@ -2125,19 +2167,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         }
 
         var done = previous.d;
-        var locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
-        var ele = parseInt(current[2].toFixed(0)).toLocaleString(locale);
-        var dist;
-        var measure;
-        if ((done / 1000) < 1) {
-            dist = Math.round((done / 1000) * 1000);
-            measure = ' m';
-        } else {
-            dist = Math.round((done / 1000) * 100) / 100;
-            measure = ' km';
-        }
-
-        dist = dist.toLocaleString(locale);
+        //var locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
 
         const hasSecondaryElevationProfileChartData = self.elevationChartData && self.elevationChartData.secondaryElevationProfileChartData &&
             Array.isArray(self.elevationChartData.secondaryElevationProfileChartData) && self.elevationChartData.secondaryElevationProfileChartData.length > 0 &&
@@ -2152,19 +2182,19 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
             if (Array.isArray(coords) && Array.isArray(coords[0])) {
                 coords.forEach((c, i) => {
-                    c.splice(2, 1, self.elevationChartData.secondaryElevationProfileChartData[0].ele[i])
+                    c.splice(2, 1, self.elevationChartData.secondaryElevationProfileChartData[0].ele[i]);
                 });
 
                 self.elevationChartData.secondaryElevationProfileChartData[0].elevCoords = self.elevationChartData.secondaryElevationProfileChartData[0].eleCoordinates = coords;
             }
         }
 
-        let ele2;
-        if (hasSecondaryElevationProfileChartData &&
-            self.elevationChartData.secondaryElevationProfileChartData[0].eleCoordinates) {
-            ele2 = TC.wrap.Geometry.getNearest(current, self.elevationChartData.secondaryElevationProfileChartData[0].eleCoordinates);
-            ele2 = parseInt(ele2[2].toFixed(0)).toLocaleString(locale);
-        }
+        //let ele2;
+        //if (hasSecondaryElevationProfileChartData &&
+        //    self.elevationChartData.secondaryElevationProfileChartData[0].eleCoordinates) {
+        //    ele2 = TC.wrap.Geometry.getNearest(current, self.elevationChartData.secondaryElevationProfileChartData[0].eleCoordinates);
+        //    ele2 = parseInt(ele2[2].toFixed(0)).toLocaleString(locale);
+        //}
 
         if (self.elevationChartData) {
             let iX = 0;
@@ -2191,7 +2221,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         var hoursDifference = Math.floor(diff / 1000 / 60 / 60);
         diff -= hoursDifference * 1000 * 60 * 60;
 
-        d.h = hoursDifference + (daysDifference * 24);
+        d.h = hoursDifference + daysDifference * 24;
 
         var minutesDifference = Math.floor(diff / 1000 / 60);
         diff -= minutesDifference * 1000 * 60;
@@ -2231,7 +2261,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         }
     };
 
-    ctlProto.drawTrack = function (li, activateSnapping) {
+    ctlProto.drawTrack = function (li, _activateSnapping) {
         var self = this;
 
         self.clear(self.Const.Layers.TRACK);
@@ -2267,7 +2297,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             elevationProfileCache.push(result);
             self.getAvailableTracks().then(function (tracks) {
                 if (tracks) {
-                    let index = tracks.findIndex((t) => { return t.uid.toString() === trackUID });
+                    let index = tracks.findIndex(t => t.uid.toString() === trackUID);
                     if (index > -1) {
                         tracks[index].profile = JSON.stringify(data);
                         self.setStoredTracks(tracks);
@@ -2289,7 +2319,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             a[a1[i]] = true;
         }
 
-        for (var i = 0; i < a2.length; i++) {
+        for (i = 0; i < a2.length; i++) {
             if (a[a2[i]]) {
                 delete a[a2[i]];
             } else {
@@ -2352,7 +2382,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         return new Promise((resolve, reject) => {
             if (resized) {
                 self.wrap.simulateTrackEnd(resized);
-                self.uiSimulate(false, li);
+                //self.uiSimulate(false, li);
                 return;
             }
             if (!self.onResize) {
@@ -2367,26 +2397,27 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                         if (self.layerTrack && self.layerTrack.features) {
                             let features = self.layerTrack.features.filter((f) => {
                                 return isLine(f) &&
-                                    ((track.layout === ol.geom.GeometryLayout.XYZM ||
-                                        track.layout === ol.geom.GeometryLayout.XYZ) || self.options.displayElevation)
+                                    (track.layout === ol.geom.GeometryLayout.XYZM ||
+                                        track.layout === ol.geom.GeometryLayout.XYZ ||
+                                        self.options.displayElevation);
                             });
 
                             if (features.length > 0) {
                                 let line = features[0];
                                 let time = {};
                                 // track con tiempo
-                                if (track.layout == ol.geom.GeometryLayout.XYZM ||
-                                    track.layout == ol.geom.GeometryLayout.XYM) {
+                                if (track.layout === ol.geom.GeometryLayout.XYZM ||
+                                    track.layout === ol.geom.GeometryLayout.XYM) {
                                     let diff = 0;
-                                    if (track.layout == ol.geom.GeometryLayout.XYZM) {
+                                    if (track.layout === ol.geom.GeometryLayout.XYZM) {
                                         diff = line.geometry[line.geometry.length - 1][3] - line.geometry[0][3];
                                     } else {
                                         diff = line.geometry[line.geometry.length - 1][2] - line.geometry[0][2];
                                     }
                                     time = {
-                                        s: Math.floor((diff / 1000) % 60),
-                                        m: Math.floor(((diff / (1000 * 60)) % 60)),
-                                        h: Math.floor(((diff / (1000 * 60 * 60)) % 24))
+                                        s: Math.floor(diff / 1000 % 60),
+                                        m: Math.floor(diff / (1000 * 60) % 60),
+                                        h: Math.floor(diff / (1000 * 60 * 60) % 24)
                                     };
                                 }
 
@@ -2404,11 +2435,11 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                                         onFeatureRemove = onFeatureRemove.bind(self);
                                         self.map.on(TC.Consts.event.FEATUREREMOVE, onFeatureRemove);
 
-                                        resultsPanelChart.div.addEventListener('mouseover', function (e) {
+                                        self.resultsPanelChart.div.addEventListener('mouseover', function (_e) {
                                             if (self.layerTrack && self.layerTrack.getVisibility() && self.layerTrack.getOpacity() > 0)
                                                 self.wrap.activateSnapping.call(self.wrap);
                                         });
-                                        resultsPanelChart.div.addEventListener('mouseout', function (e) {
+                                        self.resultsPanelChart.div.addEventListener('mouseout', function (_e) {
                                             if (self.layerTrack && (!self.layerTrack.getVisibility() && self.layerTrack.getOpacity() == 0))
                                                 self.wrap.deactivateSnapping.call(self.wrap);
                                         });
@@ -2462,7 +2493,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
             self.onResize = undefined;
         }
 
-        if (layerType == self.Const.Layers.TRACK) {
+        if (layerType === self.Const.Layers.TRACK) {
 
             self.layerTrack.clearFeatures();
 
@@ -2501,16 +2532,16 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         return new Promise(function (resolve, reject) {
             let message = options.message || self.getLocaleString("geo.trk.save.alert");
 
-            var _save = function (layer) {
+            var _save = async function (layer) {
                 let wait;
                 wait = self.getLoadingIndicator().addWait();
 
                 let trackName = options.importedFileName || self.track.trackName.value.trim();
 
-                let tracks = self.availableTracks;
-                if (!tracks) {
-                    tracks = [];
-                }
+                let tracks = await self.getAvailableTracks();
+                //if (!tracks) {
+                //    tracks = [];
+                //}
 
                 let formatted = self.wrap.formattedToStorage(layer, true, options.notReproject);
 
@@ -2579,7 +2610,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                             }
 
                         }).filter(function (uid) {
-                            return uid !== null
+                            return uid !== null;
                         });
 
                         const getTrackIndex = function (uid) {
@@ -2632,23 +2663,10 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
             };
 
-            const createTCFeatures = function (features) {
-                return new Promise(function (resolve, reject) {
-                    var featurePromises = features.filter(function (feature) {
-                        return !feature._wrap;
-                    }).forEach(function (elm) {
-                        return TC.wrap.Feature.createFeature(elm);
-                    });
-
-                    Promise.all(featurePromises).then(function (tcFeatures) {
-                        resolve();
-                    });
-                });
-            };
-
-            if (self.importedFileName)
+            if (self.importedFileName) {
                 _save(self.layerTrack);
-            else if (self.track.trackName.value.trim().length == 0) {
+            }
+            else if (self.track.trackName.value.trim().length === 0) {
                 self.track.trackName.value = new Date().toLocaleString();
                 _save(self.layerTracking);
             }
@@ -2745,6 +2763,17 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         });
 
         li.classList.add(self.Const.Classes.SELECTEDTRACK);
+        
+        const transitionEvent = function (event) {
+            if (!HTMLElement.prototype.scrollIntoView) {
+                self.track.trackList.scrollTop = e.index * listElement.offsetHeight;
+            }
+            else {
+                li.scrollIntoView({ behavior: "smooth", block: "end" });
+            }
+            li.removeEventListener("transitionend", transitionEvent, false);
+        };
+        li.addEventListener("transitionend", transitionEvent, false);
 
         li.setAttribute('title', self.getLocaleString("tr.lst.clear") + " " + li.querySelector('span').textContent);
         li.querySelector(self.Const.Selector.DRAW).setAttribute('title', li.getAttribute('title'));
@@ -2800,11 +2829,10 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
     ctlProto.drawTrackingData = function (li) {
         const self = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             self.wrap.clear();
 
             self.getTrackingData(li).then(function (track) {
-                var data = track.data;
                 if (track.data)
                     self.wrap.drawTrackingData(track).then(function () {
                         var showFeatures = self.layerTrack.features;
@@ -2830,7 +2858,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                                 var first = coordinates[0];
                                 var last = coordinates[coordinates.length - 1];
 
-                                if (first && !(first === last)) {
+                                if (first && first !== last) {
                                     self.layerTrack.addMarker(first.slice().splice(0, 2), {
                                         showsPopup: false, cssClass: self.CLASS + '-track-marker-icon-end', anchor: [0.5, 1], notExport: true
                                     });
@@ -2852,7 +2880,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
 
     ctlProto.getTrackingData = function (li) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             self.getAvailableTracks().then(function (tracks) {
                 if (tracks) {
                     const dataId = li.dataset.id;
@@ -2998,7 +3026,6 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                     const promises = new Array(sharedTrackResult.features.length);
                     sharedTrackResult.features.forEach(function (f, idx) {
                         const featureOptions = { data: f.data, id: f.id, showsPopup: f.showsPopup };
-                        var addFn;
                         var geom = f.geom; // El redondeo hace que ya no podamos validar con los tracks existentes.
                         switch (f.type) {
                             case TC.Consts.geom.POLYLINE:
@@ -3016,7 +3043,7 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
                         }
                     });
 
-                    if (sharedTrackResult.hasOwnProperty("doZoom")) {
+                    if (Object.prototype.hasOwnProperty.call(sharedTrackResult, "doZoom")) {
                         self.loadingState = true;
                         self.toShare = { doZoom: sharedTrackResult.doZoom };
                     }
@@ -3036,3 +3063,6 @@ TC.mix(TC.control.Geolocation, TC.control.infoShare);
         }
     };
 })();
+
+const Geolocation = TC.control.Geolocation;
+export default Geolocation;
