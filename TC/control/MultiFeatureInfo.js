@@ -7,16 +7,15 @@
   * Este control utiliza las funcionalidades de los servicios OGC para realizar su cometido. En concreto, la selección por punto 
   * hace uso de la petición `GetFeatureInfo` de los servicios WMS. Por otro lado, las selecciones por línea y polígono emplean la petición
   * `GetFeature` de los servicios WFS. Esto implica que en este caso debe existir un servicio WFS asociado al servicio WMS que ofrezca 
-  * los mismos datos que este. Servidores de mapas como GeoServer tienen este comportamiento por defecto. El control intenta inferir 
-  * la URL del servicio WFS a partir de la URL del servicio WMS de la capa del mapa.
+  * los mismos datos que este. Servidores de mapas como GeoServer tienen este comportamiento por defecto. 
+  * El control infiere la URL del servicio WFS a partir de la [operación DescribeLayer del estándar WMS-SLD](https://docs.geoserver.org/latest/en/user/services/wms/reference.html#describelayer).
   * @typedef MultiFeatureInfoOptions
-  * @ignore
   * @extends FeatureInfoOptions
   * @see MapControlOptions
   * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a las pulsaciones hechas en el mapa desde el que se carga.
   * Como máximo puede haber solamente un control activo en el mapa en cada momento.
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
-  * @property {MultiFeatureInfoModeOptions} [modes] - Colección de modos disponibles de selección.
+  * @property {MultiFeatureInfoModeOptions} [modes] - Opciones de configuración de los modos disponibles de selección.
   * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si el valor de esta propiedad es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
   * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
@@ -62,20 +61,23 @@
   */
 
 /**
-  * Opciones de control de obtención de información de entidades de mapa por click, por línea o por recinto.
+  * Opciones de los distintos modos de consulta espacial (por click, por línea o por recinto)
+  * del [control de obtención de información de entidades de mapa por geometría]{@linkplain MultiFeatureInfoOptions}.
   * @typedef MultiFeatureInfoModeOptions
-  * @ignore
   * @see MultiFeatureInfoOptions
   * @property {boolean|FeatureInfoOptions} [point=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por punto.
   * @property {boolean|GeometryFeatureInfoOptions} [polyline] - Si se establece a un valor verdadero, el control permite la selección de entidades por línea.
   * @property {boolean|GeometryFeatureInfoOptions} [polygon=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por polígono.
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import FeatureInfoCommons from './FeatureInfoCommons';
 
-if (!TC.control.FeatureInfoCommons) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.FeatureInfoCommons = FeatureInfoCommons;
+
 (function () {
     TC.control.MultiFeatureInfo = function () {
         var self = this;
@@ -122,8 +124,8 @@ if (!TC.control.FeatureInfoCommons) {
         });
 
 
-        return new Promise(function (resolve, reject) {
-            const ctlPromises = [TC.Control.prototype.register.call(self, map)]
+        return new Promise(function (resolve, _reject) {
+            const ctlPromises = [TC.Control.prototype.register.call(self, map)];
             const styles = self.options.styles || {};
             const pointMode = self.modes[TC.Consts.geom.POINT];
             const polylineMode = self.modes[TC.Consts.geom.POLYLINE];
@@ -172,7 +174,7 @@ if (!TC.control.FeatureInfoCommons) {
                     }));
             }
 
-            map.on(`${TC.Consts.event.LAYERADD} ${TC.Consts.event.LAYERREMOVE} ${TC.Consts.event.LAYERVISIBILITY}`, function (e) {
+            map.on(`${TC.Consts.event.LAYERADD} ${TC.Consts.event.LAYERREMOVE} ${TC.Consts.event.LAYERVISIBILITY}`, function (_e) {
                 self.updateUI();
             });
 
@@ -233,14 +235,14 @@ if (!TC.control.FeatureInfoCommons) {
 
                 //URI bind del click del boton de borrar seleccionadas
                 const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
-                delFeaturesBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+                delFeaturesBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
                     self.featureInfoControls.forEach(ctl => {
                         ctl.resultsLayer.features.slice().forEach(f => ctl.downplayFeature(f));
                         ctl.filterLayer.features.slice().forEach(f => f.layer.removeFeature(f));
                     });
                 }, { passive: true });
 
-                self.div.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(TC.Consts.event.CLICK, async function (e) {
+                self.div.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(TC.Consts.event.CLICK, async function (_e) {
                     const downloadDialog = await self.getDownloadDialog();
                     let options = {
                         title: self.getLocaleString("featureInfo") + " - " + self.getLocaleString("download"),
@@ -319,7 +321,8 @@ if (!TC.control.FeatureInfoCommons) {
             }
 
             const persistentHighlights = self.featureInfoControls.some(c => c.options.persistentHighlights);
-            const featuresUnavailable = self.featureInfoControls.every(ctl => ctl.resultsLayer && ctl.resultsLayer.features.length === 0 && ctl.filterLayer && ctl.filterLayer.features.length === 0);
+            const featuresUnavailable = self.featureInfoControls.every(ctl => (!ctl.resultsLayer || ctl.resultsLayer.features.length === 0) &&
+                (!ctl.filterLayer || ctl.filterLayer.features.length === 0));
             const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
             delFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !persistentHighlights);
             delFeaturesBtn.disabled = featuresUnavailable;
@@ -340,3 +343,6 @@ if (!TC.control.FeatureInfoCommons) {
     };
 
 })();
+
+const MultiFeatureInfo = TC.control.MultiFeatureInfo;
+export default MultiFeatureInfo;
