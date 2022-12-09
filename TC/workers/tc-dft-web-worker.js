@@ -139,11 +139,12 @@ function tXml(S, options) {
 
         // parsing attributes
         var attrFound = false;
+        let name;
         while (S.charCodeAt(pos) !== closeBracketCC) {
             var c = S.charCodeAt(pos);
             if ((c > 64 && c < 91) || (c > 96 && c < 123)) {
                 //if('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(S[pos])!==-1 ){
-                var name = parseName();
+                name = parseName();
                 // search beginning of the string
                 var code = S.charCodeAt(pos);
                 while (code !== singleQuoteCC && code !== doubleQuoteCC && !((code > 64 && code < 91) || (code > 96 && code < 123)) && code !== closeBracketCC) {
@@ -154,8 +155,9 @@ function tXml(S, options) {
                     node.attributes = {};
                     attrFound = true;
                 }
+                let value;
                 if (code === singleQuoteCC || code === doubleQuoteCC) {
-                    var value = parseString();
+                    value = parseString();
                 } else {
                     value = null;
                     pos--;
@@ -687,24 +689,28 @@ console.log("MILLISECONDS",end2-start2);
             }
             if (geometryTypes.includes(type)) { continue; }//no procesamos las geometrías
             if (type) {
-                current["type"] = type;
+                current.type = type;
                 if (type.startsWith("xsd"))
                     type = removePreffix(type);
                 if (type === "gml:ReferenceType") {
                     var targetElement = findByTagName(element, "targetElement");
                     if (targetElement.length > 0 && targetElement[0].children.length > 0) {
-                        current["type"] = await getExternalType(schema, targetElement[0].children[0], depth);
+                        current.type = await getExternalType(schema, targetElement[0].children[0], depth);
                     }
                 }
                 else if (type.indexOf(":") > 0) {
                     complexType = schema.children.find(function (node) { return (node.tagName === "complexType" || node.tagName === "element") && node.attributes.name === removePreffix(type) })
-                    if (!complexType)
-                        current["type"] = await getExternalType(schema, type, depth);
-                    else
-                        if (complexType.tagName === "complexType")
-                            current["type"] = await processType(schema, complexType, depth);
-                        else
-                            current["type"] = null;//Esto no se había dado hasta ahora;
+                    if (!complexType) {
+                        current.type = await getExternalType(schema, type, depth);
+                    }
+                    else {
+                        if (complexType.tagName === "complexType") {
+                            current.type = await processType(schema, complexType, depth);
+                        }
+                        else {
+                            current.type = null;//Esto no se había dado hasta ahora;
+                        }
+                    }
 
                 }
             }
@@ -714,13 +720,15 @@ console.log("MILLISECONDS",end2-start2);
                 var extension = findByTagName(attrComplex, "extension")[0];
                 var subelement = findByTagName(attrComplex, "element")[0]
                 if (extension && extension.attributes.base) {
-                    if (extension.attributes.base.indexOf(":") < 0)
-                        current["type"] = extension.attributes.base;
-                    else
-                        current["type"] = await getExternalType(schema, extension.attributes.base);
+                    if (extension.attributes.base.indexOf(":") < 0) {
+                        current.type = extension.attributes.base;
+                    }
+                    else {
+                        current.type = await getExternalType(schema, extension.attributes.base);
+                    }
                 }
                 if (subelement && subelement.attributes.ref) {
-                    current["type"] = await getExternalType(schema, subelement.attributes.ref);
+                    current.type = await getExternalType(schema, subelement.attributes.ref);
                 }
             }
         }
@@ -736,7 +744,6 @@ console.log("MILLISECONDS",end2-start2);
         });
     }
     var collection = {};
-    var proxifyPromises = null;
     var IncludesUsed = [];
     var MAX_DEPTH = 5;
 
