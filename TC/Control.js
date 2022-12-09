@@ -1,4 +1,10 @@
-﻿
+import TC from '../TC';
+import Consts from './Consts';
+import EventTarget from './EventTarget';
+import i18n from './i18n';
+TC.Consts = Consts;
+TC.i18n = TC.i18n || i18n;
+
 /**
   * Opciones básicas de control.
   * @typedef ControlOptions
@@ -9,32 +15,9 @@
 
 TC.control = TC.control || {};
 
-// Carga de dust solamente si alguna plantilla lo usa
-(function () {
-    const parent = this;
-    let value;
-    if (!parent.dust) {
-        Object.defineProperty(parent, 'dust', {
-            get: function () {
-                if (!TC._dustLoaded) {
-                    TC._dustLoaded = true;
-                    TC.syncLoadJS(TC.apiLocation + 'lib/dust/dust-full.min.js');
-                    TC.syncLoadJS(TC.apiLocation + 'lib/dust/dust-helpers.min.js');
-                    TC.syncLoadJS(TC.apiLocation + 'lib/dust/dust-i18n.min.js');
-                    TC.syncLoadJS(TC.apiLocation + 'lib/dust/dust.overrides.js');
-                    value = parent.dust;
-                }
-                return value;
-            },
-            set: function (newValue) { value = newValue; },
-        });
-    }
-})();
-/////////////////////////////////////////////////////
-
 TC.Control = function () {
     const self = this;
-    TC.EventTarget.call(self);
+    EventTarget.call(self);
 
     self.map = null;
     self.isActive = false;
@@ -43,26 +26,24 @@ TC.Control = function () {
     var len = arguments.length;
 
     self.options = TC.Util.extend({}, len > 1 ? arguments[1] : arguments[0]);
-    self.id = self.options.id || TC.getUID(self.CLASS.substr(TC.Control.prototype.CLASS.length + 1) + '-');
+    self.id = self.options.id || TC.getUID({
+        prefix: self.CLASS.substr(TC.Control.prototype.CLASS.length + 1) + '-'
+    });
     self.div = TC.Util.getDiv(self.options.div ? self.options.div : arguments[0]);
-    if (TC._jQueryIsLoaded) {
-        self._$div = $(self.div);
-    }
-
     self.div.classList.add(TC.Control.prototype.CLASS, self.CLASS);
 
     self.template = self.options.template || self.template;
     self.exportsState = false;    
 };
 
-TC.inherit(TC.Control, TC.EventTarget);
+TC.inherit(TC.Control, EventTarget);
 
 (function () {
     const ctlProto = TC.Control.prototype;
 
     ctlProto.CLASS = 'tc-ctl';
 
-    ctlProto.template = void (0);
+    ctlProto.template = void 0;
 
     ctlProto.show = function () {
         this.div.style.display = '';
@@ -92,7 +73,7 @@ TC.inherit(TC.Control, TC.EventTarget);
 
     ctlProto.renderData = function (data, callback) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             if (self.map) {
                 self.trigger(TC.Consts.event.BEFORECONTROLRENDER, { dataObject: data });
             }
@@ -106,7 +87,7 @@ TC.inherit(TC.Control, TC.EventTarget);
                 template = self.template;
                 self.template = {};
                 self.template[self.CLASS] = template;
-            };
+            }
 
             self.getRenderedHtml(self.CLASS, data)
                 .then(function (html) {
@@ -124,49 +105,12 @@ TC.inherit(TC.Control, TC.EventTarget);
 
     const processTemplates = function (templates, options) {
         options = options || {};
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             let mustCompile = false;
-            // Verificamos si hay plantillas mezcladas de los dos motores
-            let hbsTemplates = false;
-            let dustTemplates = false;
-            const hbsTemplateKeys = [];
             for (var key in templates) {
                 const template = templates[key];
                 if (typeof template === 'string') {
                     mustCompile = true;
-                    if (template.endsWith('.hbs')) {
-                        hbsTemplates = true;
-                        hbsTemplateKeys.push(key);
-                    }
-                    else {
-                        dustTemplates = true;
-                    }
-                }
-                else if (typeof template === 'object' || (template && template._isHbs)) {
-                    hbsTemplates = true;
-                    hbsTemplateKeys.push(key);
-                }
-                else if (typeof template === 'function') {
-                    dustTemplates = true;
-                }
-            }
-
-            if (hbsTemplates && dustTemplates) {
-                // Plantillas mezcladas, luego estamos en un visor legacy, entonces cambiamos las Handlebars por dust.
-                hbsTemplateKeys.forEach(function (key) {
-                    templates[key] = TC.apiLocation + "TC/templates/" + key + ".html";
-                });
-                // No quedan plantillas Handlebars por compilar
-                mustCompile = false;
-            }
-
-            if (dustTemplates) {
-                // Si es la primera vez que pasamos por aquí, dust.i18n no está inicializado, inicializamos
-                if (!dust.i18n._done) {
-                    const locale = options.locale;
-                    dust.i18n.setLanguages([locale]);
-                    dust.i18n.add(locale, TC.i18n[locale]);
-                    dust.i18n._done = true;
                 }
             }
 
@@ -183,19 +127,8 @@ TC.inherit(TC.Control, TC.EventTarget);
                                 responseType: 'text'
                             })
                                 .then(function (response) {
-                                    if (template.endsWith('.html')) {
-                                        // Plantilla dust
-                                        dust.loadSource(dust.compile(response.data, templateName));
-                                        templates[templateName] = template = dust.cache[templateName];
-                                        res(template);
-                                        /////////////////
-                                    }
-                                    else {
-                                        // Plantilla Handlebars
-                                        templates[templateName] = template = TC._hbs.compile(response.data); // TODO: add optimization options
-                                        template._isHbs = true;
-                                        res(template);
-                                    }
+                                    templates[templateName] = template = TC._hbs.compile(response.data); // TODO: add optimization options
+                                    res(template);
                                 })
                                 .catch(function (err) {
                                     console.log("Error fetching template: " + err);
@@ -206,26 +139,14 @@ TC.inherit(TC.Control, TC.EventTarget);
                     else {
                         if (typeof template === 'object') {
                             templates[key] = template = TC._hbs.template(template);
-                            template._isHbs = true;
                         }
-                        else {
-                            if (TC.Util.isFunction(template) && !template._isHbs) {
-                                // Plantilla dust
-                                if (!dust.cache[templateName]) {
-                                    template();
-                                    templates[templateName] = template = dust.cache[templateName];
-                                }
-                                /////////////////
-                            }
-                        }
-                        templatePromises.push(Promise.resolve(template));
                     }
                 }
 
                 Promise.all(templatePromises).then(function () {
                     for (var key in templates) {
                         const t = templates[key];
-                        if (t && t._isHbs && key !== self.CLASS) {
+                        if (t && key !== options.className) {
                             TC._hbs.registerPartial(key, templates[key]);
                         }
                     }
@@ -236,14 +157,20 @@ TC.inherit(TC.Control, TC.EventTarget);
             if (mustCompile) {
                 TC.loadJSInOrder(
                     !TC._hbs || !TC._hbs.compile,
-                    TC.url.templatingFull,
+                    [
+                        TC.apiLocation + TC.Consts.url.TEMPLATING_FULL,
+                        TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
+                    ],
                     callback
                 );
             }
             else {
                 TC.loadJSInOrder(
                     !TC._hbs,
-                    TC.url.templatingRuntime,
+                    [
+                        TC.apiLocation + TC.Consts.url.TEMPLATING_RUNTIME,
+                        TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
+                    ],
                     callback
                 );
             }
@@ -252,52 +179,25 @@ TC.inherit(TC.Control, TC.EventTarget);
 
     ctlProto.getRenderedHtml = function (templateId, data, callback) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
 
             const endFn = function (template) {
                 if (typeof template === 'undefined') {
                     resolve('');
                     return;
                 }
-                if (template._isHbs) {
-                    // Es una plantilla Handlebars
-                    const html = template(data);
-                    if (TC.Util.isFunction(callback)) {
-                        callback(html);
-                    }
-                    resolve(html);
+                const html = template(data);
+                if (TC.Util.isFunction(callback)) {
+                    callback(html);
                 }
-                else {
-                    // Es una plantilla dust
-                    if (dust.cache[templateId]) {
-                        self.template[templateId] = template = dust.cache[templateId];
-                        dust.render(templateId, data || {}, function (err, out) {
-                            if (err) {
-                                TC.error(err);
-                                reject(Error(err));
-                            }
-                            else {
-                                if (TC.Util.isFunction(callback)) {
-                                    callback(out);
-                                }
-                                resolve(out);
-                            }
-                        });
-                    }
-                    else {
-                        processTemplates(self.template, { locale: self.map && self.map.options.locale }).then(function () {
-                            endFn(self.template[templateId]);
-                        })
-                    }
-                    ////////////////////////
-                }
+                resolve(html);
             };
 
             const template = self.template[templateId];
             if (typeof template !== 'function') {
-                processTemplates(self.template, { locale: self.map && self.map.options.locale }).then(function () {
+                processTemplates(self.template, { locale: self.map && self.map.options.locale, className: self.CLASS }).then(function () {
                     endFn(self.template[templateId]);
-                })
+                });
             }
             else {
                 endFn(template);
@@ -307,7 +207,7 @@ TC.inherit(TC.Control, TC.EventTarget);
 
     ctlProto.register = function (map) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             self.map = map;
             Promise.resolve(self.render()).then(function () {
                 if (self.options.active) {
@@ -319,8 +219,8 @@ TC.inherit(TC.Control, TC.EventTarget);
     };
 
     ctlProto.activate = function () {
-        var self = this;
-        if (self.map && self.map.activeControl && self.map.activeControl != self) {
+        const self = this;
+        if (self.map && self.map.activeControl && self.map.activeControl !== self) {
             self.map.previousActiveControl = self.map.activeControl;
             self.map.activeControl.deactivate();
         }
@@ -333,9 +233,11 @@ TC.inherit(TC.Control, TC.EventTarget);
     };
 
     ctlProto.deactivate = function (stopChain) {
-        if (arguments.length == 0) stopChain = false;
+        if (arguments.length === 0) {
+            stopChain = false;
+        }
 
-        var self = this;
+        const self = this;
         self.isActive = false;
         if (self.map) {
             self.map.activeControl = null;
@@ -344,8 +246,8 @@ TC.inherit(TC.Control, TC.EventTarget);
                 //determinar cuál es el control predeterminado para reactivarlo
                 //salvo que sea yo mismo, claro
                 var nextControl = self.map.getDefaultControl();
-                if (nextControl == self) nextControl = null;
-                else if (self.map.previousActiveControl == self) // GLS: Validamos antes de activar que el control activo anterior sea distinto al control actual
+                if (nextControl === self) nextControl = null;
+                else if (self.map.previousActiveControl === self) // GLS: Validamos antes de activar que el control activo anterior sea distinto al control actual
                     nextControl = null;
                 else if (!nextControl) {
                     nextControl = self.map.previousActiveControl;
@@ -360,24 +262,57 @@ TC.inherit(TC.Control, TC.EventTarget);
     };
 
     ctlProto.enable = function () {
-        var self = this;
+        const self = this;
         self.isDisabled = false;
         if (self.div) {
             self.div.classList.remove(TC.Consts.classes.DISABLED);
+            delete self.div.dataset.tcMessage;
+        }
+        if (self.containerControl && self.containerControl.onControlEnable) {
+            self.containerControl.onControlEnable(self);
         }
     };
 
-    ctlProto.disable = function () {
-        var self = this;
+    ctlProto.disable = function (options) {
+        const self = this;
+        options = options || {};
         self.isDisabled = true;
         if (self.div) {
             self.div.classList.add(TC.Consts.classes.DISABLED);
+            let message = self.getLocaleString('disabledControl');
+            if (options.reason) {
+                message = `${message} - ${options.reason}`;
+            }
+            self.div.dataset.tcMessage = message;
+        }
+        if (self.containerControl && self.containerControl.onControlDisable) {
+            self.containerControl.onControlDisable(self);
         }
     };
 
+    //ctlProto.remove = function () {
+    //    const self = this;
+    //    if (self.map) {
+    //        if (self.isActive) {
+    //            self.deactivate();
+    //        }
+    //        const idx = self.map.controls.indexOf(self);
+    //        if (idx >= 0) {
+    //            self.map.controls.splice(idx, 1);
+    //        }
+    //        self.map = null;
+    //        if (self._dialogDiv) {
+    //            self._dialogDiv.remove();
+    //        }
+    //        if (self.div) {
+    //            self.div.remove();
+    //        }
+    //    }
+    //};
+
     ctlProto.renderPromise = function () {
         const self = this;
-        return self._firstRender || new Promise(function (resolve, reject) {
+        return self._firstRender || new Promise(function (resolve, _reject) {
             self.one(TC.Consts.event.CONTROLRENDER, function () {
                 resolve(self);
             });
@@ -407,7 +342,9 @@ TC.inherit(TC.Control, TC.EventTarget);
 
     ctlProto.getUID = function () {
         const self = this;
-        return TC.getUID(self.id + '-');
+        return TC.getUID({
+            prefix: self.id + '-'
+        });
     };
 
     ctlProto.exportState = function () {
@@ -418,7 +355,7 @@ TC.inherit(TC.Control, TC.EventTarget);
         return null;
     };
 
-    ctlProto.importState = function (state) {
+    ctlProto.importState = function (_state) {
     };
     
     ctlProto.getDownloadDialog = function () {
@@ -428,12 +365,12 @@ TC.inherit(TC.Control, TC.EventTarget);
             self._downloadDialog.caller = self;
             return Promise.resolve(self._downloadDialog);
         }
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             self.map.addControl('FeatureDownloadDialog').then(ctl => {
                 self._downloadDialog = ctl;
                 self._downloadDialog.caller = self;
                 resolve(ctl);
-            })
+            });
         });
     };
 
@@ -445,7 +382,7 @@ TC.inherit(TC.Control, TC.EventTarget);
         if (self.elevation) {
             return Promise.resolve(self.elevation);
         }
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             TC.loadJS(
                 !TC.tool || !TC.tool.Elevation,
                 TC.apiLocation + 'TC/tool/Elevation',
@@ -490,3 +427,15 @@ TC.inherit(TC.Control, TC.EventTarget);
     };   
 
 })();
+
+TC.Control.create = async function (type, options) {
+    const ctorName = type.substr(0, 1).toUpperCase() + type.substr(1);
+    if (!TC.control[ctorName]) {
+        const module = await import('./control/' + ctorName);
+        TC.control[ctorName] = module.default;
+    }
+    return new TC.control[ctorName](null, options);
+};
+
+var Control = TC.Control;
+export default Control;
