@@ -1,0 +1,610 @@
+<!-- start:source.tmpl.hbs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+		<title>TC/control/FeatureInfo.js</title>
+		<!--[if lt IE 9]>
+		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<link href="https://fonts.googleapis.com/css?family=PT+Mono" rel="stylesheet">
+		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
+		<link type="text/css" rel="stylesheet" href="css/prism.min.css">
+		<link type="text/css" rel="stylesheet" href="css/template.min.css">
+			<link type="text/css" rel="stylesheet" href="css/sitnaCSS.css">
+			<style>
+				.page-header,
+				pre.code-toolbar > .toolbar:hover {
+					background-color: #cc0000;
+				}
+				.callout-primary,
+				.toc .nav > li > a:hover,
+				.toc .nav > li > a:focus,
+				.toc .nav > li.active > a,
+				.toc .nav > li.active > a:hover,
+				.toc .nav > li.active > a:focus,
+				pre.code-toolbar > .toolbar:hover {
+					border-left-color: #cc0000;
+				}
+				pre.code-toolbar > .toolbar:hover {
+					border-bottom-color: #cc0000;
+				}
+				.callout-primary h5,
+				.symbol-title.collapsible-symbol .toggle-icon,
+				.breadcrumb li a,
+				.toc .nav > li > a:hover,
+				.toc .nav > li > a:focus,
+				.toc .nav > li.active > a,
+				.toc .nav > li.active > a:hover,
+				.toc .nav > li.active > a:focus {
+					color: #cc0000;
+				}
+			</style>
+		<script type="text/javascript">
+			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"DD/MM/YYYY","systemName":"API SITNA","systemSummary":"API JavaScript para la visualización de datos georreferenciados en aplicaciones web","systemLogo":"img/sitna-logo.png","systemColor":"#cc0000","navMembers":[{"kind":"class","title":"Clases"},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Tipos globales"},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Espacios de nombres"},{"kind":"tutorial","title":"Documentación"}],"footer":"","copyright":"© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.","linenums":true,"collapseSymbols":false,"inverseNav":false,"inlineNav":false,"outputSourceFiles":false,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":null,"methodHeadingReturns":true,"sort":"longname, version, since","search":true,"favicon":null,"stylesheets":["css/sitnaCSS.css"],"scripts":[],"monospaceLinks":false,"cleverLinks":true,"systemVersion":"v3.0.0"};
+			window.DOCLET_TOC_ENABLED = false;
+			window.DOCLET_AFILTER_ENABLED = false;
+		</script>
+</head>
+<body>
+	<!-- start:navbar.hbs -->
+	<header class="navbar navbar-default navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<a class="navbar-brand branding-logo" href="index.html" style="background-image: url(img/sitna-logo.png);">
+					API SITNA
+				</a>
+	            <a href="tutorial-4-changes.html" class="navbar-version">v3.0.0</a>
+				<!-- displayed on small devices -->
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse" id="topNavigation">
+				<ul class="nav navbar-nav">
+								<li class="dropdown">
+									<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Tipos globales<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></li>
+											<li><a href="global.html#CadastralSearchOptionsExt">CadastralSearchOptionsExt</a></li>
+											<li><a href="global.html#ClickOptions">ClickOptions</a></li>
+											<li><a href="global.html#ClusterOptions">ClusterOptions</a></li>
+											<li><a href="global.html#ClusterStyleOptions">ClusterStyleOptions</a></li>
+											<li><a href="global.html#ControlOptions">ControlOptions</a></li>
+											<li><a href="global.html#CoordinatesOptions">CoordinatesOptions</a></li>
+											<li><a href="global.html#DataLoaderOptions">DataLoaderOptions</a></li>
+											<li><a href="global.html#DrawMeasureModifyOptions">DrawMeasureModifyOptions</a></li>
+											<li><a href="global.html#ElevationOptions">ElevationOptions</a></li>
+											<li><a href="global.html#ElevationServiceOptions">ElevationServiceOptions</a></li>
+											<li><a href="global.html#FeatureInfoOptions">FeatureInfoOptions</a></li>
+											<li><a href="global.html#GeolocationOptions">GeolocationOptions</a></li>
+											<li><a href="global.html#GeometryFeatureInfoOptions">GeometryFeatureInfoOptions</a></li>
+											<li><a href="global.html#HeatmapStyleOptions">HeatmapStyleOptions</a></li>
+											<li><a href="global.html#LayerCatalogOptions">LayerCatalogOptions</a></li>
+											<li><a href="global.html#LayerOptions">LayerOptions</a></li>
+											<li><a href="global.html#LayoutOptions">LayoutOptions</a></li>
+											<li><a href="global.html#LineStyleOptions">LineStyleOptions</a></li>
+											<li><a href="global.html#MapControlOptions">MapControlOptions</a></li>
+											<li><a href="global.html#MapOptions">MapOptions</a></li>
+											<li><a href="global.html#MapViewOptions">MapViewOptions</a></li>
+											<li><a href="global.html#MarkerOptions">MarkerOptions</a></li>
+											<li><a href="global.html#MarkerStyleOptions">MarkerStyleOptions</a></li>
+											<li><a href="global.html#MultiFeatureInfoModeOptions">MultiFeatureInfoModeOptions</a></li>
+											<li><a href="global.html#MultiFeatureInfoOptions">MultiFeatureInfoOptions</a></li>
+											<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
+											<li><a href="global.html#OfflineMapMakerOptions">OfflineMapMakerOptions</a></li>
+											<li><a href="global.html#OverviewMapOptions">OverviewMapOptions</a></li>
+											<li><a href="global.html#PlaceNameMunicipalitySearchOptions">PlaceNameMunicipalitySearchOptions</a></li>
+											<li><a href="global.html#PlaceNameSearchOptions">PlaceNameSearchOptions</a></li>
+											<li><a href="global.html#PointStyleOptions">PointStyleOptions</a></li>
+											<li><a href="global.html#PolygonStyleOptions">PolygonStyleOptions</a></li>
+											<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
+											<li><a href="global.html#PrintMapLegendOptions">PrintMapLegendOptions</a></li>
+											<li><a href="global.html#PrintMapOptions">PrintMapOptions</a></li>
+											<li><a href="global.html#RoadMilestoneSearchOptions">RoadMilestoneSearchOptions</a></li>
+											<li><a href="global.html#RoadSearchOptions">RoadSearchOptions</a></li>
+											<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+											<li><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></li>
+											<li><a href="global.html#SearchResultColor">SearchResultColor</a></li>
+											<li><a href="global.html#SearchResultColorDictionary">SearchResultColorDictionary</a></li>
+											<li><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></li>
+											<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
+											<li><a href="global.html#StreetViewOptions">StreetViewOptions</a></li>
+											<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+											<li><a href="global.html#TabContainerOptions">TabContainerOptions</a></li>
+											<li><a href="global.html#ThreeDViewOptions">ThreeDViewOptions</a></li>
+											<li><a href="global.html#UrbanAreaSearchOptions">UrbanAreaSearchOptions</a></li>
+											<li><a href="global.html#WFSEditOptions">WFSEditOptions</a></li>
+											<li><a href="global.html#WFSQueryOptions">WFSQueryOptions</a></li>
+											<li><a href="global.html#WMSGroupOptions">WMSGroupOptions</a></li>
+											<li><a href="global.html#WMSOptions">WMSOptions</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_class.html" class="dropdown-toggle" data-toggle="dropdown">Clases<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="SITNA.feature.Marker.html">SITNA.feature.Marker</a></li>
+											<li><a href="SITNA.Map.html">SITNA.Map</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_namespace.html" class="dropdown-toggle" data-toggle="dropdown">Espacios de nombres<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="SITNA.Consts.html">SITNA.Consts</a></li>
+											<li><a href="SITNA.Consts.elevationService.html">SITNA.Consts.elevationService</a></li>
+											<li><a href="SITNA.Consts.format.html">SITNA.Consts.format</a></li>
+											<li><a href="SITNA.Consts.geom.html">SITNA.Consts.geom</a></li>
+											<li><a href="SITNA.Consts.layer.html">SITNA.Consts.layer</a></li>
+											<li><a href="SITNA.Consts.layerType.html">SITNA.Consts.layerType</a></li>
+											<li><a href="SITNA.Consts.mimeType.html">SITNA.Consts.mimeType</a></li>
+											<li><a href="SITNA.feature.html">SITNA.feature</a></li>
+											<li><a href="SITNA.Map.html">SITNA.Map</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_tutorial.html" class="dropdown-toggle" data-toggle="dropdown">Documentación<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="tutorial-1-configuration.html">Cómo configurar un mapa</a></li>
+											<li><a href="tutorial-2-css.html">Clases CSS para identificar elementos de la API</a></li>
+											<li><a href="tutorial-3-embedding.html">Cómo añadir multimedia y páginas web incrustadas</a></li>
+											<li><a href="tutorial-4-changes.html">Historial de cambios</a></li>
+									</ul>
+								</li>
+	                <li><a href="https://github.com/sitna/api-sitna">Ver en Github</a></li>
+				</ul>
+					<!-- start:lunr-search-navbar.hbs -->
+					<form class="navbar-form navbar-right" role="search">
+						<div class="input-group">
+							<input type="text" class="form-control" placeholder="Buscar" id="lunr-search-input">
+							<div class="input-group-btn">
+								<button class="btn btn-default" id="lunr-search-submit">
+									<i class="glyphicon glyphicon-search"></i>
+								</button>
+							</div>
+						</div>
+					</form>
+					<!-- start:lunr-search-navbar.hbs -->		</div>
+		</div>
+	</header>
+	<!-- end:navbar.hbs -->		<div class="page-header">
+			<div class="container">
+				<span class="kind">source</span>
+				<h1><span class="name">TC/control/FeatureInfo.js</span></h1>
+			</div>
+		</div>
+	<div class="container content">
+		<div class="row">
+			<div class="col-md-12 main-content">
+		<section class="source-section">
+			<article></article>
+			<pre class="prettyprint source language-javascript line-numbers"><code class="language-javascript">﻿
+/**
+  * Opciones de control de obtención de información de entidades de mapa por click.
+  * @typedef FeatureInfoOptions
+  * @see MapControlOptions
+  * @see MultiFeatureInfoModeOptions
+  * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a los clics hechos en el mapa desde el que se carga.
+  * Como máximo puede haber solamente un control activo en el mapa en cada momento.
+  * @property {boolean} [persistentHighlights] - Cuando el control `featureInfo` muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
+  * de las entidades geográficas de la respuesta. Si este valor es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. En caso contrario, las geometrías resaltadas se borran en el 
+  * momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
+  * @example &lt;caption>[Ver en vivo](../examples/cfg.FeatureInfoOptions.persistentHighlights.html)&lt;/caption> {@lang html} 
+  * &lt;div id="mapa">&lt;/div>
+  * &lt;script>
+  *     // Añadimos el control featureInfo.
+  *     SITNA.Cfg.controls.featureInfo = {
+  *         persistentHighlights: true
+  *     };
+  *     // Añadimos una capa WMS sobre la que hacer las consultas.
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "masas",
+  *             title: "Masas de agua",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "https://servicios.idee.es/wms-inspire/hidrografia",
+  *             layerNames: ["HY.PhysicalWaters.Waterbodies"]
+  *         }
+  *     ];
+  *     var map = new SITNA.Map("mapa");
+  * &lt;/script> 
+  */
+
+import TC from '../../TC';
+import Consts from '../Consts';
+import FeatureInfoCommons from './FeatureInfoCommons';
+
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.FeatureInfoCommons = FeatureInfoCommons;
+
+(function () {
+    TC.control.FeatureInfo = function () {
+        var self = this;
+        TC.control.FeatureInfoCommons.apply(this, arguments);
+        self.wrap = new TC.wrap.control.FeatureInfo(self);
+
+        TC.Consts.classes.FROMLEFT = 'tc-fromleft';
+        TC.Consts.classes.FROMRIGHT = 'tc-fromright';
+    };
+
+    TC.inherit(TC.control.FeatureInfo, TC.control.FeatureInfoCommons);
+
+    var ctlProto = TC.control.FeatureInfo.prototype;
+
+    var roundCoordinates = function roundCoordinates(obj, precision) {
+        var result;
+        if (Array.isArray(obj)) {
+            result = obj.slice();
+            for (var i = 0, len = result.length; i &lt; len; i++) {
+                result[i] = roundCoordinates(result[i]);
+            }
+        }
+        else if (typeof obj === "number") {
+            result = Math.round(obj.toFixed(precision));
+        }
+        else {
+            result = obj;
+        }
+        return result;
+    };
+
+    ctlProto.register = function (map) {
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            TC.control.FeatureInfoCommons.prototype.register.call(self, map).then(
+                function (ctl) {
+                    // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
+                    document.createElement('div').appendChild(self.div);
+                    resolve(ctl);
+                },
+                error => reject(error)
+            );
+        });
+    };
+
+    ctlProto.callback = function (coords, _xy) {
+        const self = this;
+
+        self.querying = true;
+        return new Promise(function (resolve, _reject) {
+            const elevationTool = self.getElevationTool();
+            elevationTool.then(function (tool) {
+                if (tool) {
+                    self.elevationRequest = tool.getElevation({
+                        crs: self.map.crs,
+                        coordinates: [coords]
+                    });
+                }
+            });
+
+            if (self.map &amp;&amp; self.filterLayer) {
+                //aquí se pone el puntito temporal
+                var title = self.getLocaleString('featureInfo');
+                var markerOptions = TC.Util.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title, showsPopup: false });
+                self.filterLayer.clearFeatures();
+                self.highlightedFeature = null;
+                self.filterFeature = null;
+                self.filterLayer.addMarker(coords, markerOptions).then(function afterMarkerAdd(marker) {
+                    ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
+                    ////o sea
+                    ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
+                    ////pero en el caso raro (la primera vez), ocurre al revés. Entonces, ya se habrá establecido lastFeatureCount (no será null)
+                    //if (self.lastFeatureCount === null) {
+                    //    self.map.putLayerOnTop(self.filterLayer);
+                    //    self.filterFeature = marker;
+                    //}
+                    //else {
+                    //    self.filterLayer.clearFeatures();
+                    //}
+                    self.map.putLayerOnTop(self.filterLayer);
+                    self.filterFeature = marker;
+
+                    elevationTool.then(function (tool) {
+                        self.renderResults({ coords: marker.geometry, displayElevation: tool, loading: true }, function () {
+                            self.displayResults();
+                        });
+                    });
+
+                    var visibleLayers = false;
+                    for (var i = 0; i &lt; self.map.workLayers.length; i++) {
+                        var layer = self.map.workLayers[i];
+                        if (layer.type === TC.Consts.layerType.WMS) {
+                            if (layer.getVisibility() &amp;&amp; layer.names.length > 0) {
+                                visibleLayers = true;
+                                break;
+                            }
+                        }
+                    }
+                    self.queryResolution = self.map.getResolution();
+                    if (visibleLayers) {
+                        self.wrap.getFeatureInfo(coords, self.queryResolution).then(() => resolve());
+                    }
+                    else {
+                        // Metemos setTimeout para salirnos del hilo. Sin él se corre el riesgo de que se ejecute esto antes del evento BEFOREFEATUREINFO
+                        setTimeout(function () {
+                            self.responseCallback({ coords: coords });
+                            resolve();
+                        });
+                    }
+                });
+            }
+            else {
+                resolve();
+            }
+        });
+    };
+
+    ctlProto.sendRequest = function (filter) {
+        const self = this;
+        return self.callback(filter.getCoordinates());
+    };
+
+    ctlProto.responseCallback = function (options) {
+        const self = this;
+
+        TC.control.FeatureInfoCommons.prototype.responseCallback.call(self, options);
+        if (self.filterFeature) {
+            var services = options.services;
+
+            // Eliminamos capas sin resultados
+            if (services) {
+                for (var i = 0; i &lt; services.length; i++) {
+                    var service = services[i];
+                    for (var j = 0; j &lt; service.layers.length; j++) {
+                        if (!service.layers[j].features.length) {
+                            service.layers.splice(j, 1);
+                            j = j - 1;
+                        }
+                    }
+                    if (!service.layers.length) {
+                        services.splice(i, 1);
+                        i = i - 1;
+                    }
+                }
+            }
+
+            self.info.defaultFeature = options.defaultFeature;
+
+            if (self.elevationRequest) {
+                options.displayElevation = true;
+            }
+            self.renderResults(options, function () {
+                self.insertLinks();
+
+                if (self.sharedFeatureInfo) {
+                    self.div.querySelectorAll('ul.' + self.CLASS + '-services li').forEach(function (li) {
+                        li.classList.add(TC.Consts.classes.CHECKED);
+                    });
+                    var sharedFeature;
+                    var featureObj = self.sharedFeatureInfo;
+                    for (var i = 0, ii = self.info.services.length; i &lt; ii; i++) {
+                        var service = self.info.services[i];
+                        if (service.mapLayers.some(ml => ml.url === featureObj.s)) {
+                            for (var j = 0, jj = service.layers.length; j &lt; jj; j++) {
+                                var layer = service.layers[j];
+                                if (layer.name === featureObj.l) {
+                                    for (var k = 0, kk = layer.features.length; k &lt; kk; k++) {
+                                        var feature = layer.features[k];
+                                        if (feature.id === featureObj.f) {
+                                            sharedFeature = feature;
+                                            var hash = hex_md5(JSON.stringify({
+                                                data: feature.getData(),
+                                                geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
+                                            }));
+                                            if (featureObj.h !== hash) {
+                                                TC.alert(self.getLocaleString('finfo.featureChanged.warning'));
+                                            }
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    if (sharedFeature) {
+                        self.highlightedFeature = sharedFeature;
+                        self.map.addLayer({
+                            id: self.getUID(),
+                            type: TC.Consts.layerType.VECTOR,
+                            title: self.getLocaleString('foi'),
+                            owner: self,
+                            stealth: true
+                        }).then(function (layer) {
+                            self.sharedFeatureLayer = layer;
+                            self.filterLayer.clearFeatures();
+                            self.filterFeature = null;
+                            layer.addFeature(sharedFeature);
+                            self.map.zoomToFeatures([sharedFeature]);
+                        });
+                    }
+                    delete self.sharedFeatureInfo;
+                }
+                else {
+                    self.displayResults();
+                }
+                //capturamos el click de label y enlaces para no propagarlos a las tablas y que haga zoom cuando no se quiere
+                self.div.querySelectorAll('ul.' + self.CLASS + '-services label, ul.' + self.CLASS + '-services a').forEach(function (label) {
+                    label.addEventListener(TC.Consts.event.CLICK, function (e) {
+                        e.stopPropagation();
+                    }, { passive: true });
+                });                
+            });
+        }
+    };
+
+    ctlProto.displayResultsCallback = function () {
+        const self = this;
+        TC.control.FeatureInfoCommons.prototype.displayResultsCallback.call(self);
+
+        if (self.elevationRequest) {
+            const ctl = self.getDisplayControl();
+            self.getDisplayTarget().querySelectorAll(`.${self.CLASS}-elev,.${self.CLASS}-height`).forEach(elm => elm.classList.add(TC.Consts.classes.HIDDEN));
+            self.elevationRequest.then(function (elevationCoords) {
+                if (ctl.currentFeature &amp;&amp; elevationCoords.length) {
+                    const currentCoords = ctl.currentFeature.geometry;
+                    const elevPoint = elevationCoords[0];
+                    if (currentCoords[0] === elevPoint[0] &amp;&amp; currentCoords[1] === elevPoint[1]) {
+                        const elevationValues = elevationCoords.length ? elevationCoords[0].slice(2) : null;
+                        self.displayElevationValues(elevationValues);
+                    }
+                }
+                //self.elevationRequest = null;
+            });
+        }
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                entry.target.querySelectorAll('ul.' + self.CLASS + '-services label, ul.' + self.CLASS + '-services h4, ul.' + self.CLASS + '-services h3 span').forEach(function (h4) {
+                    h4.addEventListener("mouseenter", function (e) {
+                        if (this.offsetWidth &lt; this.scrollWidth) {
+                            this.title = this.childNodes.item(this.tagName === "H4" ? 2 : 0).textContent;
+                        }
+                        else {
+                            this.title = "";
+                        }
+                    }, { passive: true });
+                });
+            }
+        });
+        resizeObserver.observe(self.getDisplayTarget());        
+
+        // 26/04/2021 ahora siempre mostramos XY aunque no haya elevación o resultado GFI
+        //else if (!self.querying &amp;&amp; (!self.info || !self.info.services)) {
+        //    self.closeResults();
+        //}
+    };
+
+    ctlProto.renderResults = function (options, callback) {
+        const self = this;
+        if (self.filterFeature) {
+            const currentCoords = self.filterFeature.geometry;
+            if (options.coords &amp;&amp; currentCoords[0] === options.coords[0] &amp;&amp; currentCoords[1] === options.coords[1]) {
+                options.isGeo = self.map.wrap.isGeo();
+                if (options.coords) {
+                    options.crs = self.map.crs;
+                    options.coords = options.coords.map(function (value) {
+                        const precision = options.isGeo ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION;
+                        return TC.Util.formatCoord(value, precision);
+                    });
+                }
+                self.renderData(options, callback);
+            }
+        }
+    };
+
+    ctlProto.displayElevationValues = function (value) {
+        const self = this;
+        let tValue, sValue;
+        if (Array.isArray(value)) {
+            tValue = value[0];
+            sValue = value.length > 1 ? value[1] : null;
+        }
+        else {
+            tValue = value;
+            sValue = null;
+        }
+        const locale = self.map.options.locale || TC.Cfg.locale;
+        let elevationString = tValue === null ? '-' : TC.Util.formatNumber(Math.round(tValue), locale) + ' m';
+        let heightString = sValue ? sValue.toLocaleString(locale, { maximumFractionDigits: 1 }) + ' m' : '-';
+        const elevationDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-elev`);
+        const heightDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-height`);
+        if (elevationDisplay &amp;&amp; heightDisplay) {
+            elevationDisplay.classList.toggle(TC.Consts.classes.HIDDEN, tValue === null);
+            heightDisplay.classList.toggle(TC.Consts.classes.HIDDEN, !sValue);
+            elevationDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = elevationString;
+            heightDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = heightString;
+        }
+    };
+
+    ctlProto.loadSharedFeature = function (featureObj) {
+        // Función para dar compatibilidad hacia atrás, ahora las features se comparten por URL
+        const self = this;
+        if (featureObj) {
+            //buscamos si la feature compartida pertenece a alguna de las capas añadidas
+            if (self.map.workLayers.filter(function (item, _i) {
+                return item.type === TC.Consts.layerType.WMS &amp;&amp; item.url === featureObj.s &amp;&amp; item.getDisgregatedLayerNames().indexOf(featureObj.l) >= 0;
+            }).length === 0) {
+                TC.error(self.getLocaleString('sharedFeatureNotValid'), TC.Consts.msgErrorMode.TOAST);
+                return;
+            }
+            self.sharedFeatureInfo = featureObj;
+            TC.loadJS(
+                !window.hex_md5,
+                [TC.apiLocation + TC.Consts.url.HASH],
+                function () {
+                    // Creamos una consulta getFeatureInfo ad-hoc, con la resolución a la que estaba la consulta original.
+                    const coords = [-100, -100];
+                    self.beforeRequest({ xy: coords }); // xy negativo para que no se vea el marcador, ya que no sabemos dónde ponerlo.
+                    //aquí se pone el puntito temporal
+                    self.filterLayer.clearFeatures();
+                    self.filterFeature = null;
+                    self.filterLayer.addMarker(coords).then(function (marker) {
+                        self.filterFeature = marker;
+                        self.wrap.getFeatureInfo(featureObj.xy, featureObj.r, {
+                            serviceUrl: featureObj.s,
+                            layerName: featureObj.l,
+                            featureId: featureObj.f
+                        });
+                    });
+                }
+            );
+        }
+    };
+
+    ctlProto.exportQuery = function () {
+        const self = this;
+        const result = TC.control.FeatureInfoCommons.prototype.exportQuery.call(self);
+        result.res = self.queryResolution;
+        return result;
+    };
+
+    ctlProto.importQuery = function (query) {
+        const self = this;
+        if (query.filter) {
+            self.map.setResolution(query.res)
+                .then(() => TC.control.FeatureInfoCommons.prototype.importQuery.call(self, query));
+        }
+    };
+
+})();
+
+const FeatureInfo = TC.control.FeatureInfo;
+export default FeatureInfo;</code></pre>
+		</section>
+			</div>
+		</div>
+	</div>
+	<footer>
+				<div class="copyright">© 2019 Gobierno de Navarra. <a href="https://github.com/sitna/api-sitna/blob/master/LICENSE.md">Licencia BSD-2-Clause</a>.</div>
+			<div class="generated-by">Documentación generada por <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.3</a> a 07/12/2022 usando la <a href="https://github.com/steveush/foodoc">plantilla FooDoc</a>.</div>
+	</footer>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/clipboard.min.js"></script>
+	<script src="js/prism.min.js"></script>
+	<script src="js/template.min.js"></script>
+		<!-- start:lunr-search-modal.hbs -->
+		<div class="modal fade" id="lunr-search-modal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Resultados de la búsqueda</h4>
+					</div>
+					<div class="modal-body" id="lunr-search-body">
+					</div>
+					<div class="modal-footer" id="lunr-search-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+					</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div>
+		<!-- end:lunr-search-modal.hbs -->		<script src="js/lunr.min.js"></script>
+	
+</body>
+</html>
+<!-- end:source.tmpl.hbs -->

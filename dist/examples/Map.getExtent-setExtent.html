@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.getExtent y SITNA.Map.setExtent</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        .div-select {
+            top: 135px;
+            padding-right: 0.5em;
+        }
+        .x-axis, .y-axis {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#getExtent">SITNA.Map.getExtent</a> y 
+        <a href="../doc/SITNA.Map.html#setExtent">SITNA.Map.setExtent</a>.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div class="instructions div-select">
+        <p class="y-axis"><label>Y max</label> <input type="number" id="ymax" /></p>
+        <p class="x-axis">
+            <label>X min</label> <input type="number" id="xmin" /> 
+            <button onclick="applyExtent()">Aplicar</button>
+            <label>X max</label> <input type="number" id="xmax" />
+        </p>
+        <p class="y-axis"><label>Y min</label> <input type="number" id="ymin" /></p>
+    </div>
+    <div id="mapa"></div>
+    <script>
+        // Crear mapa.
+        var map = new SITNA.Map("mapa");
+
+        map.loaded(function () {
+            const extent = map.getExtent();
+            displayExtent(extent);
+        });
+
+        // Actualiza los valores de la extensión del mapa
+        function displayExtent(extent) {
+            document.getElementById("xmin").value = extent[0];
+            document.getElementById("ymin").value = extent[1];
+            document.getElementById("xmax").value = extent[2];
+            document.getElementById("ymax").value = extent[3];
+        };
+
+        // Establece la extensión del mapa y actualiza los valores
+        function applyExtent() {
+            const xmin = parseFloat(document.getElementById("xmin").value);
+            const ymin = parseFloat(document.getElementById("ymin").value);
+            const xmax = parseFloat(document.getElementById("xmax").value);
+            const ymax = parseFloat(document.getElementById("ymax").value);
+            map.setExtent([xmin, ymin, xmax, ymax], { animate: false }, displayExtent);
+        };
+    </script>
+
+</body>
+</html>

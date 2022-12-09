@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.exportImage</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#exportImage">SITNA.Map.exportImage</a>.</p>
+        <p>Exportar imagen del mapa.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div id="controls" class="controls">
+        <button id="imageBtn">Exportar imagen</button>
+    </div>
+    <div id="mapa"></div>
+    <script>
+        // Crear un mapa con la opción de imágenes CORS habilitada.
+        var map = new SITNA.Map("mapa", { crossOrigin: "anonymous" });
+
+        var exportImage = function () {
+            var dataUrl = map.exportImage();
+            var image = document.createElement("img");
+            image.setAttribute("src", dataUrl);
+            image.style.width = '25vw';
+            var div = document.createElement("div");
+            div.appendChild(image);
+            document.getElementById("controls").appendChild(div);
+        };
+
+        document.getElementById("imageBtn").addEventListener("click", exportImage);
+    </script>
+</body>
+</html>

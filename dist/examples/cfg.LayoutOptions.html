@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+    <title>SITNA - Ejemplo de SITNA.Cfg.layout</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#LayoutOptions">LayoutOptions</a>.</p>
+        <p>Establecer dos elementos de maquetado distintos a los que existen por defecto.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Instanciamos un mapa cuya maquetación tiene la configuración y el marcado personalizados 
+        // y el resto de elementos de la maquetación se dejan por defecto
+        var map = new SITNA.Map("mapa", {
+            layout: {
+                config: "layout/ctl-container/config.json",
+                markup: "layout/ctl-container/markup.html",
+                style: "//sitna.navarra.es/api/TC/layout/responsive/style.css",
+	            script: "//sitna.navarra.es/api/TC/layout/responsive/script.js",
+	            i18n: "//sitna.navarra.es/api/TC/layout/responsive/resources"
+            }
+        });
+    </script>
+	
+</body>
+</html>

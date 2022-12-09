@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+    <title>SITNA - Ejemplo de SITNA.Map</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        .embedded {
+            width: 800px !important;
+            height: 600px !important;
+            border: 2px solid black !important;
+        }
+
+        #enlaces {
+            top: 135px;
+            left: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html">SITNA.Map</a>.</p>
+        <p>Mapa por defecto en modo pantalla completa y en modo incrustado.</p>
+    </div>
+    <div id="enlaces" class="instructions">
+        <a href="Map.1.html" id="fullLink">Ver en pantalla completa</a>
+        <a href="Map.1.html?embedded" id="embeddedLink">Ver incrustado</a>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Crear un mapa con las opciones por defecto.
+        var map = new SITNA.Map("mapa");
+    </script>
+    <script>
+        // Alternar modos pantalla completa e incrustado
+        if (location.search === "?embedded") {
+            document.querySelector("#mapa").classList.add("embedded");
+            document.querySelector("#embeddedLink").style.display = 'none';
+        }
+        else {
+            document.querySelector("#fullLink").style.display = '';
+        }
+    </script>
+
+</body>
+</html>

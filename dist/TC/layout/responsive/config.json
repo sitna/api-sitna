@@ -1,0 +1,52 @@
+{
+  "i18n": true,
+  "controls": {
+    "controlContainer": {
+      "div": "ccontainer",
+      "controls": [
+        {
+          "position": "left",
+          "navBar": {
+            "home": false
+          }
+        },
+        {
+          "position": "left",
+          "navBarHome": true
+        },
+        {
+          "position": "left",
+          "streetView": true
+        },
+        {
+          "position": "right",
+          "scaleBar": true
+        }
+      ]
+    },
+    "basemapSelector": {
+      "div": "bms"
+    },
+    "TOC": {
+      "div": "toc"
+    },
+    "legend": {
+      "div": "legend"
+    },
+    "coordinates": {
+      "div": "coordinates"
+    },
+    "search": {
+      "div": "search"
+    },
+    "measure": {
+      "div": "measure"
+    },
+    "overviewMap": {
+      "div": "ovmap",
+      "layer": "mapabase"
+    },
+    "popup": true,
+    "attribution": true
+  }
+}

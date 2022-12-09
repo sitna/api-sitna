@@ -1,1184 +1,0 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width">
-		<title>SITNA.Map</title>
-		<!--[if lt IE 9]>
-		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-		<![endif]-->
-		<link href="https://fonts.googleapis.com/css?family=PT+Mono" rel="stylesheet">
-		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
-		<link type="text/css" rel="stylesheet" href="css/prism.min.css">
-		<link type="text/css" rel="stylesheet" href="css/template.min.css">
-			<link type="text/css" rel="stylesheet" href="css/sitnaCSS.css">
-			<style>
-				.page-header,
-				pre.code-toolbar > .toolbar:hover {
-					background-color: #cc0000;
-				}
-				.callout-primary,
-				.toc .nav > li > a:hover,
-				.toc .nav > li > a:focus,
-				.toc .nav > li.active > a,
-				.toc .nav > li.active > a:hover,
-				.toc .nav > li.active > a:focus,
-				pre.code-toolbar > .toolbar:hover {
-					border-left-color: #cc0000;
-				}
-				pre.code-toolbar > .toolbar:hover {
-					border-bottom-color: #cc0000;
-				}
-				.callout-primary h5,
-				.symbol-title.collapsible-symbol .toggle-icon,
-				.breadcrumb li a,
-				.toc .nav > li > a:hover,
-				.toc .nav > li > a:focus,
-				.toc .nav > li.active > a,
-				.toc .nav > li.active > a:hover,
-				.toc .nav > li.active > a:focus {
-					color: #cc0000;
-				}
-			</style>
-		<script type="text/javascript">
-			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"DD/MM/YYYY","systemName":"API SITNA","systemSummary":"API JavaScript para la visualización de datos georreferenciados en aplicaciones web","systemLogo":"img/sitna-logo.png","systemColor":"#cc0000","navMembers":[{"kind":"class","title":"Clases"},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Tipos"},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Espacios de nombres"},{"kind":"tutorial","title":"Documentación"}],"footer":"","copyright":"© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.","linenums":true,"collapseSymbols":false,"inverseNav":false,"inlineNav":false,"outputSourceFiles":false,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":null,"methodHeadingReturns":true,"sort":"longname, version, since","search":true,"favicon":null,"stylesheets":["css/sitnaCSS.css"],"scripts":[],"monospaceLinks":false,"cleverLinks":true,"systemVersion":"v2.2.0"};
-			window.DOCLET_TOC_ENABLED = true;
-			window.DOCLET_AFILTER_ENABLED = false;
-		</script>
-</head>
-<body>
-	<!-- start:navbar.hbs -->
-	<header class="navbar navbar-default navbar-fixed-top">
-		<div class="container">
-			<div class="navbar-header">
-				<a class="navbar-brand branding-logo" href="index.html" style="background-image: url(img/sitna-logo.png);">
-					API SITNA
-				</a>
-	            <a href="tutorial-5-changes.html" class="navbar-version">v2.2.0</a>
-				<!-- displayed on small devices -->
-				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-			</div>
-			<div class="navbar-collapse collapse" id="topNavigation">
-				<ul class="nav navbar-nav">
-								<li class="dropdown">
-									<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Tipos<b class="caret"></b></a>
-									<ul class="dropdown-menu">
-											<li><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></li>
-											<li><a href="global.html#CadastralSearchOptionsExt">CadastralSearchOptionsExt</a></li>
-											<li><a href="global.html#ClickOptions">ClickOptions</a></li>
-											<li><a href="global.html#ClusterOptions">ClusterOptions</a></li>
-											<li><a href="global.html#ClusterStyleOptions">ClusterStyleOptions</a></li>
-											<li><a href="global.html#ControlOptions">ControlOptions</a></li>
-											<li><a href="global.html#CoordinatesOptions">CoordinatesOptions</a></li>
-											<li><a href="global.html#DataLoaderOptions">DataLoaderOptions</a></li>
-											<li><a href="global.html#FeatureInfoOptions">FeatureInfoOptions</a></li>
-											<li><a href="global.html#GeolocationOptions">GeolocationOptions</a></li>
-											<li><a href="global.html#HeatmapStyleOptions">HeatmapStyleOptions</a></li>
-											<li><a href="global.html#LayerCatalogOptions">LayerCatalogOptions</a></li>
-											<li><a href="global.html#LayerOptions">LayerOptions</a></li>
-											<li><a href="global.html#LineStyleOptions">LineStyleOptions</a></li>
-											<li><a href="global.html#MapControlOptions">MapControlOptions</a></li>
-											<li><a href="global.html#MapOptions">MapOptions</a></li>
-											<li><a href="global.html#MapViewOptions">MapViewOptions</a></li>
-											<li><a href="global.html#MarkerOptions">MarkerOptions</a></li>
-											<li><a href="global.html#MarkerStyleOptions">MarkerStyleOptions</a></li>
-											<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
-											<li><a href="global.html#OfflineMapMakerOptions">OfflineMapMakerOptions</a></li>
-											<li><a href="global.html#OverviewMapOptions">OverviewMapOptions</a></li>
-											<li><a href="global.html#PlaceNameMunicipalitySearchOptions">PlaceNameMunicipalitySearchOptions</a></li>
-											<li><a href="global.html#PlaceNameSearchOptions">PlaceNameSearchOptions</a></li>
-											<li><a href="global.html#PointStyleOptions">PointStyleOptions</a></li>
-											<li><a href="global.html#PolygonStyleOptions">PolygonStyleOptions</a></li>
-											<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
-											<li><a href="global.html#PrintMapLegendOptions">PrintMapLegendOptions</a></li>
-											<li><a href="global.html#PrintMapOptions">PrintMapOptions</a></li>
-											<li><a href="global.html#RoadMilestoneSearchOptions">RoadMilestoneSearchOptions</a></li>
-											<li><a href="global.html#RoadSearchOptions">RoadSearchOptions</a></li>
-											<li><a href="global.html#SearchOptions">SearchOptions</a></li>
-											<li><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></li>
-											<li><a href="global.html#SearchResultColor">SearchResultColor</a></li>
-											<li><a href="global.html#SearchResultColorDictionary">SearchResultColorDictionary</a></li>
-											<li><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></li>
-											<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
-											<li><a href="global.html#StreetViewOptions">StreetViewOptions</a></li>
-											<li><a href="global.html#StyleOptions">StyleOptions</a></li>
-											<li><a href="global.html#ThreeDOptions">ThreeDOptions</a></li>
-											<li><a href="global.html#UrbanAreaSearchOptions">UrbanAreaSearchOptions</a></li>
-											<li><a href="global.html#WFSQueryOptions">WFSQueryOptions</a></li>
-											<li><a href="global.html#WMSGroupOptions">WMSGroupOptions</a></li>
-											<li><a href="global.html#WMSOptions">WMSOptions</a></li>
-									</ul>
-								</li>
-								<li class="dropdown">
-									<a href="list_class.html" class="dropdown-toggle" data-toggle="dropdown">Clases<b class="caret"></b></a>
-									<ul class="dropdown-menu">
-											<li><a href="SITNA.Map.html">SITNA.Map</a></li>
-									</ul>
-								</li>
-								<li class="dropdown">
-									<a href="list_namespace.html" class="dropdown-toggle" data-toggle="dropdown">Espacios de nombres<b class="caret"></b></a>
-									<ul class="dropdown-menu">
-											<li><a href="SITNA.html">SITNA</a></li>
-											<li><a href="SITNA.Consts.html">SITNA.Consts</a></li>
-											<li><a href="SITNA.Consts.format.html">SITNA.Consts.format</a></li>
-											<li><a href="SITNA.Consts.geom.html">SITNA.Consts.geom</a></li>
-											<li><a href="SITNA.Consts.layer.html">SITNA.Consts.layer</a></li>
-											<li><a href="SITNA.Consts.layerType.html">SITNA.Consts.layerType</a></li>
-											<li><a href="SITNA.Consts.mimeType.html">SITNA.Consts.mimeType</a></li>
-									</ul>
-								</li>
-								<li class="dropdown">
-									<a href="list_tutorial.html" class="dropdown-toggle" data-toggle="dropdown">Documentación<b class="caret"></b></a>
-									<ul class="dropdown-menu">
-											<li><a href="tutorial-1-addresses.html">Direcciones alternativas</a></li>
-											<li><a href="tutorial-2-configuration.html">Cómo configurar un mapa</a></li>
-											<li><a href="tutorial-3-css.html">Clases CSS para identificar elementos de la API</a></li>
-											<li><a href="tutorial-4-embedding.html">Cómo añadir multimedia y páginas web incrustadas</a></li>
-											<li><a href="tutorial-5-changes.html">Historial de cambios</a></li>
-									</ul>
-								</li>
-	                <li><a href="https://github.com/sitna/api-sitna">Ver en Github</a></li>
-				</ul>
-					<!-- start:lunr-search-navbar.hbs -->
-					<form class="navbar-form navbar-right" role="search">
-						<div class="input-group">
-							<input type="text" class="form-control" placeholder="Buscar" id="lunr-search-input">
-							<div class="input-group-btn">
-								<button class="btn btn-default" id="lunr-search-submit">
-									<i class="glyphicon glyphicon-search"></i>
-								</button>
-							</div>
-						</div>
-					</form>
-					<!-- start:lunr-search-navbar.hbs -->		</div>
-		</div>
-	</header>
-	<!-- end:navbar.hbs -->		<div class="page-header">
-			<div class="container">
-				<span class="kind">class</span>
-				<h1><span class="ancestors"><a href="SITNA.html">SITNA</a>.</span><span class="name">Map</span></h1>
-			</div>
-		</div>
-	<div class="container content">
-		<div class="row">
-			<div class="col-md-3 side-content">
-				<nav class="toc hidden-print hidden-sm hidden-xs"></nav>
-			</div>
-			<div class="col-md-9 main-content">
-						<ol class="breadcrumb">
-							<li><a href="index.html">Inicio</a></li>
-							<li><a href="list_class.html">Clases</a></li>
-							<li class="active"><a href="SITNA.html">SITNA</a>.Map</li>
-						</ol>
-					<section>
-							<dl class="symbol primary">
-								<dt class="symbol-title class">
-			<h2 class="class"><span class="signature-new">new&nbsp;</span><span class="name">Map</span><span class="signature-params">( <span class="signature-param">div</span> [,&nbsp;<span class="signature-param">options</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h2>
-</dt>
-<dd class="symbol-details class" style="max-height: 9999px;">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que la inicialización del mapa es asíncrona, por tanto cualquier código
-			que haga uso de este objeto debería estar dentro de una función de callback pasada como parámetro al método <a href="SITNA.Map.html#loaded"><code>loaded</code></a>.</p>
-			<p>Las opciones de configuración del mapa son una combinación de las opciones de configuración global (definidas en <a href="SITNA.html#.Cfg"><code>SITNA.Cfg</code></a>,
-			las opciones definidas por la <a href="tutorial-layout_cfg.html">maquetación</a> que utilicemos, y las opciones pasadas como parámetro al
-			constructor. Estas opciones están ordenadas de menor a mayor prevalencia, de modo que por ejemplo una opción pasada como parámetro del constructor
-			siempre sobreescribirá una opción de la configuración global.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>div</code></td>
-							<td><span class="param-type">HTMLElement</span> | <span class="param-type">string</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>options</code></td>
-							<td><span class="param-type"><a href="global.html#MapOptions">MapOptions</a></span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben las del objeto de configuración global <a href="SITNA.html#.Cfg"><code>SITNA.Cfg</code></a>.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.1.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;/&gt;&lt;script&gt;    // Crear un mapa con las opciones por defecto.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);&lt;/script&gt;</code></pre>
-					</div>
-					<div class="example-caption"><p><a href="../examples/Map.2.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;/&gt;&lt;script&gt;    // Crear un mapa en el sistema de referencia WGS 84 con el de mapa de fondo.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        crs: &quot;EPSG:4326&quot;,        initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.            -2.84820556640625,            41.78912492257675,            -0.32135009765625,            43.55789822064767        ],        maxExtent: [            -2.84820556640625,            41.78912492257675,            -0.32135009765625,            43.55789822064767        ],        baselayerExtent: [            -2.84820556640625,            41.78912492257675,            -0.32135009765625,            43.55789822064767        ],        baseLayers: [            SITNA.Consts.layer.IDENA_DYNBASEMAP        ],        defaultBaseLayer: SITNA.Consts.layer.IDENA_DYNBASEMAP,        // Establecemos el mapa de situación con una capa compatible con WGS 84        controls: {            overviewMap: {                layer: SITNA.Consts.layer.IDENA_DYNBASEMAP            }        }    });&lt;/script&gt;</code></pre>
-					</div>
-					<div class="example-caption"><p><a href="../examples/Map.3.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;/&gt;&lt;script&gt;    // Crear un mapa que tenga como contenido las capas de toponimia y mallas cartográficas del WMS de IDENA.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        workLayers: [            {                id: &quot;topo_mallas&quot;,                title: &quot;Toponimia y mallas cartográficas&quot;,                type: SITNA.Consts.layerType.WMS,                url: &quot;//idena.navarra.es/ogc/wms&quot;,                layerNames: &quot;IDENA:TOPONI_Txt_Toponimos,IDENA:mallas&quot;            }        ]    });&lt;/script&gt;</code></pre>
-					</div>
-			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-							<!-- see -->
-							<div class="form-group">
-								<label class="col-sm-3 control-label">Ver</label>
-								<div class="col-sm-9">
-										<ul class="form-control-static">
-												<li><a href="SITNA.html#.Cfg">SITNA.Cfg</a></li>
-												<li><a href="tutorial-layout_cfg.html">Configurar por maquetación</a></li>
-										</ul>
-								</div>
-							</div>
-			
-			
-					</form>
-			</div>	</div>
-</dd>
-							</dl>
-							<article class="secondary">
-									<h3>Métodos</h3>
-									<dl class="symbol">
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="addLayer" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">addLayer</span><span class="signature-params">( <span class="signature-param">layer</span> [,&nbsp;<span class="signature-param">callback</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Añade una capa al mapa. Si se le pasa un objeto del Tipo <a href="global.html#LayerOptions"><code>LayerOptions</code></a> como parámetro <code>layer</code>
-			y tiene definida la propiedad <code>url</code>, establece por defecto
-			el tipo de capa a <a href="SITNA.Consts.layerType.html#.KML"><code>SITNA.Consts.layerType.KML</code></a> si la URL acaba en <em><strong>.kml</strong></em>.</p>
-			<p>El tipo de la capa no puede ser <a href="SITNA.Consts.layerType.html#.WFS"><code>SITNA.Consts.layerType.WFS</code></a>.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>layer</code></td>
-							<td><span class="param-type">string</span> | <span class="param-type"><a href="global.html#LayerOptions">LayerOptions</a></span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Identificador de capa u objeto de opciones de capa.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type">function</span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Función a la que se llama tras ser añadida la capa.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.addLayer.1.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear un mapa con las opciones por defecto.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    // Cuando esté todo cargado proceder a trabajar con el mapa.    map.loaded(function () {        // Añadir al mapa la capa de cartografía topográfica de IDENA        map.addLayer(SITNA.Consts.layer.IDENA_CARTO);    });&lt;/script&gt;</code></pre>
-					</div>
-					<div class="example-caption"><p><a href="../examples/Map.addLayer.2.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear un mapa con las opciones por defecto.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    // Cuando esté todo cargado proceder a trabajar con el mapa.    map.loaded(function () {        // Añadir al mapa un documento KML        map.addLayer({            id: &quot;capa_kml&quot;,            title: &quot;Museos en Navarra&quot;,            type: SITNA.Consts.layerType.KML,            url: &quot;data/MUSEOSNAVARRA.kml&quot;        });    });&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="addMarker" class="function public"><span class="name">addMarker</span><span class="signature-params">( <span class="signature-param">coords</span> [,&nbsp;<span class="signature-param">options</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Añade un marcador (un punto asociado a un icono) al mapa.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>coords</code></td>
-							<td><span class="param-type">array</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Coordenadas x e y del punto en las unidades del sistema de referencia del mapa.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>options</code></td>
-							<td><span class="param-type"><a href="global.html#MarkerOptions">MarkerOptions</a></span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Objeto de opciones de marcador.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.addMarker.1.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    // Cuando esté todo cargado proceder a trabajar con el mapa.    map.loaded(function () {        // Añadir un marcador.        map.addMarker([610749, 4741648]);        // Centrar el mapa en el marcador.        map.zoomToMarkers();    });&lt;/script&gt; </code></pre>
-					</div>
-					<div class="example-caption"><p><a href="../examples/Map.addMarker.2.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">   &lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);        // Cuando esté todo cargado proceder a trabajar con el mapa.    map.loaded(function () {        // Añadir marcadores al grupo &quot;Marcadores colgantes&quot;        // cuyo icono se ancle al punto en el centro hacia abajo.        // Establecer un icono adecuado.        var markerOptions &#x3D; {            group: &quot;Marcadores colgantes&quot;,            url: &quot;data/colgante.png&quot;,            anchor: [0.5, 0]        };        map.addMarker([610887, 4741244], markerOptions);        map.addMarker([615364, 4657556], markerOptions);        // Centrar el mapa en los marcadores.        map.zoomToMarkers();    });&lt;/script&gt; </code></pre>
-					</div>
-					<div class="example-caption"><p><a href="../examples/Map.addMarker.3.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear un mapa con una capa vectorial, centrado en la Ciudadela de Pamplona.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        initialExtent: [            609627,            4740225,            611191,            4741395        ],        workLayers: [{            id: &quot;markers&quot;,            title: &quot;Marcadores geográficos&quot;,            type: SITNA.Consts.layerType.VECTOR        }]    });    // Cuando esté todo cargado proceder a trabajar con el mapa.    map.loaded(function () {        // Añadir un marcador en la capa &quot;markers&quot;,        // asignarle un grupo para que salga en tabla de contenidos y leyenda.        map.addMarker([610431, 4740837], {            layer: &quot;markers&quot;,            group: &quot;Ciudadela&quot;        });    });&lt;/script&gt;</code></pre>
-					</div>
-					<div class="example-caption"><p><a href="../examples/Map.addMarker.4.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">  &lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Añadir información emergente al mapa.    SITNA.Cfg.controls.popup &#x3D; true;        // Crear un mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    // Cuando esté todo cargado proceder a trabajar con el mapa.    map.loaded(function () {        // Añadir un marcador con un icono de 40x40 píxeles definido por la clase CSS kiosko.        // Asignarle unos datos asociados que se muestren por defecto.        map.addMarker([615366, 4657426], {            cssClass: &quot;kiosko&quot;,            width: 40,            height: 40,            data: {                &quot;Nombre&quot;: &quot;Plaza de la Constitución, Tudela&quot;,                &quot;Sitio web&quot;: &quot;http://www.tudela.es/&quot;            },            showPopup: true        });        // Centrar el mapa en el marcador.        map.zoomToMarkers();    });&lt;/script&gt; </code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="exportImage" class="function public"><span class="name">exportImage</span><span class="signature-params">()</span><span class="signature-type"> &rarr;&nbsp;{string}</span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Exporta el mapa a una imagen PNG. Para poder utilizar este método hay que establecer la opción <code>crossOrigin</code> al instanciar <a href="SITNA.Map.html"><code>SITNA.Map</code></a>.</p></div>
-			</div>			<div class="callout callout-success"><h5>Returns</h5>		<form class="form-horizontal returns">
-							<div class="form-group">
-								<label class="col-sm-3 control-label returns-type"><span class="param-type">string</span></label>
-								<div class="col-sm-9">
-									<div class="form-control-static returns-description"><p>Imagen en un <a href="https://developer.mozilla.org/es/docs/Web/HTTP/Basics_of_HTTP/Datos_URIs">data URI</a>.</p></div>
-								</div>
-							</div>
-					</form>
-			</div>			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.exportImage.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div id&#x3D;&quot;controls&quot; class&#x3D;&quot;controls&quot;&gt;    &lt;button id&#x3D;&quot;imageBtn&quot;&gt;Exportar imagen&lt;/button&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear un mapa con la opción de imágenes CORS habilitada.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, { crossOrigin: &quot;anonymous&quot; });        var exportImage &#x3D; function () {        var dataUrl &#x3D; map.exportImage();        var image &#x3D; document.createElement(&quot;img&quot;);        image.setAttribute(&quot;src&quot;, dataUrl);        image.style.width &#x3D; &#x27;25vw&#x27;;        var div &#x3D; document.createElement(&quot;div&quot;);        div.appendChild(image);        document.getElementById(&quot;controls&quot;).appendChild(div);    };        document.getElementById(&quot;imageBtn&quot;).addEventListener(&quot;click&quot;, exportImage);&lt;/script&gt;</code></pre>
-					</div>
-			</div>			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-							<!-- see -->
-							<div class="form-group">
-								<label class="col-sm-3 control-label">Ver</label>
-								<div class="col-sm-9">
-										<p class="form-control-static"><p><a href="https://developer.mozilla.org/es/docs/Web/HTML/Atributos_de_configuracion_CORS">Atributos de configuración CORS</a></p></p>
-								</div>
-							</div>
-			
-			
-					</form>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="getCommonwealths" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">getCommonwealths</span><span class="signature-params">( <span class="signature-param">callback</span>&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Obtiene los valores (<a href="SITNA.Map.html#~SearchResultItem"><code>SITNA.Map~SearchResultItem</code></a>) de las mancomunidades de residuos disponibles en la capa de IDENA.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type"><a href="SITNA.Map.html#~SearchDataCallback">SITNA.Map~SearchDataCallback</a></span></td>
-							<td class="last">
-									<p>Función a la que se llama tras obtener los datos.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.getCommonwealths.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions divSelect&quot;&gt;    &lt;div&gt;        Mancomunidades de residuos        &lt;select id&#x3D;&quot;commonwealths&quot; onchange&#x3D;&quot;applyFilter()&quot;&gt;            &lt;option value&#x3D;&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;        &lt;/select&gt;    &lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);        map.loaded(function () {        // completamos el desplegable        map.getCommonwealths(function (data) {            var fragment &#x3D; document.createDocumentFragment();            data.forEach(function (value) {                var option &#x3D; document.createElement(&quot;option&quot;);                option.setAttribute(&quot;value&quot;, value.id);                option.textContent &#x3D; value.label;                fragment.appendChild(option);            });            document.querySelector(&quot;#commonwealths&quot;).appendChild(fragment);        });    });            // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change    function applyFilter() {        var id &#x3D; document.querySelector(&quot;#commonwealths&quot;).querySelector(&quot;option:checked&quot;).value;        if (id &#x3D;&#x3D; -1)            map.removeSearch();        else {            map.searchCommonwealth(id, function (idQuery) {                if (idQuery &#x3D;&#x3D; null) {                    alert(&quot;No se han encontrado resultados&quot;);                }            });        }    };&lt;/script&gt;     </code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="getCouncils" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">getCouncils</span><span class="signature-params">( <span class="signature-param">callback</span>&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Obtiene los valores (<a href="SITNA.Map.html#~SearchResultItem"><code>SITNA.Map~SearchResultItem</code></a>) de los concejos disponibles en la capa de IDENA.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type"><a href="SITNA.Map.html#~SearchDataCallback">SITNA.Map~SearchDataCallback</a></span></td>
-							<td class="last">
-									<p>Función a la que se llama tras obtener los datos.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.getCouncils.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions divSelect&quot;&gt;    &lt;div&gt;        Concejos        &lt;select id&#x3D;&quot;council&quot; onchange&#x3D;&quot;applyFilter()&quot;&gt;            &lt;option value&#x3D;&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;        &lt;/select&gt;    &lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);        map.loaded(function () {        // completamos el desplegable        map.getCouncils(function (data) {            var fragment &#x3D; document.createDocumentFragment();            data.forEach(function (value) {                var option &#x3D; document.createElement(&quot;option&quot;);                option.setAttribute(&quot;value&quot;, value.id);                option.textContent &#x3D; value.label;                fragment.appendChild(option);            });            document.querySelector(&quot;#council&quot;).appendChild(fragment);        });    });        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change    function applyFilter() {        var id &#x3D; document.querySelector(&quot;#council&quot;).querySelector(&quot;option:checked&quot;).value;        if (id &#x3D;&#x3D; -1)            map.removeSearch();        else {            map.searchCouncil(id, function (idQuery) {                if (idQuery &#x3D;&#x3D; null) {                    alert(&quot;No se han encontrado resultados&quot;);                }            });        }    };&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="getMunicipalities" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">getMunicipalities</span><span class="signature-params">( <span class="signature-param">callback</span>&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Obtiene los valores (<a href="SITNA.Map.html#~SearchResultItem"><code>SITNA.Map~SearchResultItem</code></a>) de los municipios disponibles en la capa de IDENA.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type"><a href="SITNA.Map.html#~SearchDataCallback">SITNA.Map~SearchDataCallback</a></span></td>
-							<td class="last">
-									<p>Función a la que se llama tras obtener los datos.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.getMunicipalities.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions divSelect&quot;&gt;    &lt;div&gt;        Municipios        &lt;select id&#x3D;&quot;municipality&quot; onchange&#x3D;&quot;applyFilter()&quot;&gt;            &lt;option value&#x3D;&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;        &lt;/select&gt;    &lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    map.loaded(function () {        // completamos el desplegable        map.getMunicipalities(function (data) {            var fragment &#x3D; document.createDocumentFragment();            data.forEach(function (value) {                var option &#x3D; document.createElement(&quot;option&quot;);                option.setAttribute(&quot;value&quot;, value.id);                option.textContent &#x3D; value.label;                fragment.appendChild(option);            });            document.querySelector(&quot;#municipality&quot;).appendChild(fragment);        });    });    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change    function applyFilter() {        var id &#x3D; document.querySelector(&quot;#council&quot;).querySelector(&quot;option:checked&quot;).value;        if (id &#x3D;&#x3D; -1)            map.removeSearch();        else {            map.searchMunicipality(id, function (idQuery) {                if (idQuery &#x3D;&#x3D; null) {                    alert(&quot;No se han encontrado resultados&quot;);                }            });        }    };&lt;/script&gt; </code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="getUrbanAreas" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">getUrbanAreas</span><span class="signature-params">( <span class="signature-param">callback</span>&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Obtiene los valores (<a href="SITNA.Map.html#~SearchResultItem"><code>SITNA.Map~SearchResultItem</code></a>) de los cascos urbanos disponibles en la capa de IDENA.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type"><a href="SITNA.Map.html#~SearchDataCallback">SITNA.Map~SearchDataCallback</a></span></td>
-							<td class="last">
-									<p>Función a la que se llama tras obtener los datos.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.getUrbanAreas.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions divSelect&quot;&gt;    &lt;div&gt;        Cascos urbanos        &lt;select id&#x3D;&quot;urban&quot; onchange&#x3D;&quot;applyFilter()&quot;&gt;            &lt;option value&#x3D;&quot;-1&quot;&gt;Seleccione...&lt;/option&gt;        &lt;/select&gt;    &lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);        map.loaded(function () {        // completamos el desplegable        map.getUrbanAreas(function (data) {            var fragment &#x3D; document.createDocumentFragment();            data.forEach(function (value) {                var option &#x3D; document.createElement(&quot;option&quot;);                option.setAttribute(&quot;value&quot;, value.id);                option.textContent &#x3D; value.label;                fragment.appendChild(option);            });            document.querySelector(&quot;#urban&quot;).appendChild(fragment);        });    });    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change    function applyFilter() {        var id &#x3D; document.querySelector(&quot;#urban&quot;).querySelector(&quot;option:checked&quot;).value;        if (id &#x3D;&#x3D; -1)            map.removeSearch();        else {            map.searchUrbanArea(id, function (idQuery) {                if (idQuery &#x3D;&#x3D; null) {                    alert(&#x27;No se han encontrado resultados&#x27;);                }            });        }    };&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="loaded" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">loaded</span><span class="signature-params">( <span class="signature-param">callback</span>&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Añade una función de callback que se ejecutará cuando el mapa, sus controles y todas sus capas se hayan cargado.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type">function</span></td>
-							<td class="last">
-									<p>Función a la que se llama tras la carga del mapa.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-code">
-						<pre class="prettyprint source language-javascript"><code class="language-javascript">// Notificar cuando se haya cargado el mapa.map.loaded(function () {     console.log(&quot;Código del mapa y de sus controles cargado, datos cargados.&quot;);});</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="removeSearch" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">removeSearch</span><span class="signature-params">( [&nbsp;<span class="signature-param">callback</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Elimina del mapa la entidad geográfica encontrada en la última búsqueda.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type">function</span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Función a la que se llama tras eliminar la entidad geográfica.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.removeSearch.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions query&quot;&gt;    &lt;div&gt;&lt;label&gt;Capa&lt;/label&gt;&lt;input type&#x3D;&quot;text&quot; id&#x3D;&quot;capa&quot; placeholder&#x3D;&quot;Nombre capa de IDENA&quot; /&gt; &lt;/div&gt;    &lt;div&gt;&lt;label&gt;Campo&lt;/label&gt;&lt;input type&#x3D;&quot;text&quot; id&#x3D;&quot;campo&quot; placeholder&#x3D;&quot;Nombre campo&quot; /&gt; &lt;/div&gt;    &lt;div&gt;&lt;label&gt;Valor&lt;/label&gt;&lt;input type&#x3D;&quot;text&quot; id&#x3D;&quot;valor&quot; placeholder&#x3D;&quot;Valor a encontrar&quot; /&gt; &lt;/div&gt;    &lt;div&gt;&lt;button id&#x3D;&quot;searchBtn&quot;&gt;Buscar&lt;/button&gt;&lt;/div&gt;    &lt;div&gt;&lt;button id&#x3D;&quot;removeBtn&quot;&gt;Eliminar filtro&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);            map.loaded(function () {        document.getElementById(&quot;addFilterBtn&quot;).addEventListener(&quot;click&quot;, addFilter);        document.getElementById(&quot;removeFilterBtn&quot;).addEventListener(&quot;click&quot;, removeFilter);    });            // Establecer como filtro del mapa el municipio Valle de Egüés    var addFilter &#x3D; function () {        var capa &#x3D; document.getElementById(&quot;capa&quot;).value;        capa &#x3D; capa.trim();                var campo &#x3D; document.getElementById(&quot;campo&quot;).value;        campo &#x3D; campo.trim();                var valor &#x3D; document.getElementById(&quot;valor&quot;).value;        valor &#x3D; valor.trim();                map.searchFeature(capa, campo, valor, function (idQuery) {            if (idQuery &#x3D;&#x3D; null) {                alert(&quot;No se han encontrado resultados en la capa: &quot; + capa + &quot; en el campo: &quot; + campo + &quot; el valor: &quot; + valor + &quot;.&quot;);            }        });    };        // Limpiar el mapa del filtro    var remove &#x3D; function () {        map.removeSearch();    };&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="searchCommonwealth" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">searchCommonwealth</span><span class="signature-params">( <span class="signature-param">id</span> [,&nbsp;<span class="signature-param">callback</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Busca la mancomunidad de residuos y pinta en el mapa la entidad geográfica encontrada que corresponda al identificador indicado.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>id</code></td>
-							<td><span class="param-type">string</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Identificador de la entidad geográfica a pintar.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type"><a href="SITNA.Map.html#~SearchByIdCallback">SITNA.Map~SearchByIdCallback</a></span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Función a la que se llama tras aplicar el filtro.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.searchCommonwealth.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions searchCommonwealth&quot;&gt;        &lt;div&gt;&lt;button id&#x3D;&quot;searchPamplonaBtn&quot;&gt;Buscar Mancomunidad de la Comarca de Pamplona&lt;/button&gt;&lt;/div&gt;    &lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    map.loaded(function () {        document.getElementById(&quot;searchPamplonaBtn&quot;).addEventListener(&quot;click&quot;, search);    });              var search &#x3D; function () {        map.removeSearch();        map.searchCommonwealth(&quot;8&quot;, function (idQuery) {            if (idQuery &#x3D;&#x3D; null) {                alert(&quot;No se ha encontrado la mancomunidad con código 8.&quot;);            }        });    };&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="searchCouncil" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">searchCouncil</span><span class="signature-params">( <span class="signature-param">id</span> [,&nbsp;<span class="signature-param">callback</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Busca el concejo que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>id</code></td>
-							<td><span class="param-type">string</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Identificador de la entidad geográfica a pintar.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type"><a href="SITNA.Map.html#~SearchByIdCallback">SITNA.Map~SearchByIdCallback</a></span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Función a la que se llama tras aplicar el filtro.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.searchCouncil.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions search&quot;&gt;        &lt;div&gt;&lt;button id&#x3D;&quot;searchBtn&quot;&gt;Buscar concejo Esquíroz (Galar)&lt;/button&gt;&lt;/div&gt;    &lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    map.loaded(function () {        document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);    });        var search &#x3D; function () {        map.removeSearch();        map.searchCouncil(&quot;109#5&quot;, function (idQuery) {            if (idQuery &#x3D;&#x3D; null) {                alert(&quot;No se ha encontrado el concejo con código 109#5.&quot;);            }        });    };    &lt;/script&gt;    </code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="searchFeature" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">searchFeature</span><span class="signature-params">( <span class="signature-param">layer</span>, <span class="signature-param">field</span>, <span class="signature-param">id</span> [,&nbsp;<span class="signature-param">callback</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Busca y pinta en el mapa la entidad geográfica encontrada correspondiente al identificador establecido.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>layer</code></td>
-							<td><span class="param-type">string</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Nombre de la capa de IDENA en la cual buscar.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>field</code></td>
-							<td><span class="param-type">string</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Campo de la capa de IDENA en el cual buscar.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>id</code></td>
-							<td><span class="param-type">string</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Identificador de la entidad geográfica por el cual filtrar.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type">IDENA.Map~SearchByIdCallback</span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Función a la que se llama tras aplicar el filtro.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.searchFeature.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions query&quot;&gt;    &lt;div&gt;&lt;label&gt;Capa&lt;/label&gt;&lt;input type&#x3D;&quot;text&quot; id&#x3D;&quot;capa&quot; placeholder&#x3D;&quot;Nombre capa de IDENA&quot; /&gt; &lt;/div&gt;    &lt;div&gt;&lt;label&gt;Campo&lt;/label&gt;&lt;input type&#x3D;&quot;text&quot; id&#x3D;&quot;campo&quot; placeholder&#x3D;&quot;Nombre campo&quot; /&gt; &lt;/div&gt;    &lt;div&gt;&lt;label&gt;Valor&lt;/label&gt;&lt;input type&#x3D;&quot;text&quot; id&#x3D;&quot;valor&quot; placeholder&#x3D;&quot;Valor a encontrar&quot; /&gt; &lt;/div&gt;    &lt;div&gt;&lt;button id&#x3D;&quot;searchBtn&quot;&gt;Buscar&lt;/button&gt;&lt;/div&gt;    &lt;div&gt;&lt;button id&#x3D;&quot;removeBtn&quot;&gt;Eliminar filtro&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    map.loaded(function () {        document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);        document.getElementById(&quot;removeBtn&quot;).addEventListener(&quot;click&quot;, remove);    });        var search &#x3D; function () {        var capa &#x3D; document.getElementById(&quot;capa&quot;).value;        capa &#x3D; capa.trim();                var campo &#x3D; document.getElementById(&quot;campo&quot;).value;        campo &#x3D; campo.trim();                var valor &#x3D; document.getElementById(&quot;valor&quot;).value;        valor &#x3D; valor.trim();                map.searchFeature(capa, campo, valor, function (idQuery) {            if (idQuery &#x3D;&#x3D; null) {                alert(&quot;No se han encontrado resultados en la capa: &quot; + capa + &quot; en el campo: &quot; + campo + &quot; el valor: &quot; + valor + &quot;.&quot;);            }        });    };        // Limpiar el mapa     var remove &#x3D; function () {        map.removeSearch();    };&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="searchMunicipality" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">searchMunicipality</span><span class="signature-params">( <span class="signature-param">id</span> [,&nbsp;<span class="signature-param">callback</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Busca el municipio que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>id</code></td>
-							<td><span class="param-type">string</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Identificador de la entidad geográfica a pintar.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type"><a href="SITNA.Map.html#~SearchByIdCallback">SITNA.Map~SearchByIdCallback</a></span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Función a la que se llama tras aplicar el filtro.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.searchMunicipality.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions search&quot;&gt;    &lt;div&gt;&lt;button id&#x3D;&quot;searchBtn&quot;&gt;Buscar Arbizu&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    map.loaded(function () {        document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);    });             var search &#x3D; function () {        map.removeSearch();        map.searchMunicipality(&quot;27&quot;, function (idQuery) {            if (idQuery &#x3D;&#x3D; null) {                alert(&quot;No se ha encontrado el municipio con código 27.&quot;);            }        });    };&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="searchUrbanArea" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">searchUrbanArea</span><span class="signature-params">( <span class="signature-param">id</span> [,&nbsp;<span class="signature-param">callback</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Busca el casco urbano que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>id</code></td>
-							<td><span class="param-type">string</span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Identificador de la entidad geográfica a pintar.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type"><a href="SITNA.Map.html#~SearchByIdCallback">SITNA.Map~SearchByIdCallback</a></span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Función a la que se llama tras aplicar el filtro.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.searchUrbanArea.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div class&#x3D;&quot;instructions search&quot;&gt;    &lt;div&gt;&lt;button id&#x3D;&quot;searchBtn&quot;&gt;Buscar casco urbano de Arbizu&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    map.loaded(function () {        document.getElementById(&quot;searchBtn&quot;).addEventListener(&quot;click&quot;, search);    });    var search &#x3D; function () {        map.removeSearch();        map.searchUrbanArea(&quot;27&quot;, function (idQuery) {            if (idQuery &#x3D;&#x3D; null) {                alert(&quot;No se ha encontrado el casco urbano con código 27.&quot;);            }        });    };&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="setBaseLayer" class="function public"><span class="signature-attribs">&lt;async> </span><span class="name">setBaseLayer</span><span class="signature-params">( <span class="signature-param">layer</span> [,&nbsp;<span class="signature-param">callback</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Hace visible una capa como mapa de fondo. Esta capa debe existir previamente en la lista de mapas de fondo del mapa.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>layer</code></td>
-							<td><span class="param-type">string</span> | <span class="param-type"><a href="global.html#LayerOptions">LayerOptions</a></span></td>
-								<td class="attributes"></td>
-							<td class="last">
-									<p>Identificador de capa u objeto de opciones de capa.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>callback</code></td>
-							<td><span class="param-type">function</span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Función al que se llama tras ser establecida la capa como mapa de fondo.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.setBaseLayer.1.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa con opciones por defecto. Esto incluye la capa del catastro de Navarra entre los mapas de fondo.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    // Cuando esté todo cargado establecer como mapa de fondo visible el catastro de Navarra.    map.loaded(function () {        map.setBaseLayer(SITNA.Consts.layer.IDENA_CADASTER);    });&lt;/script&gt;</code></pre>
-					</div>
-					<div class="example-caption"><p><a href="../examples/Map.setBaseLayer.2.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa con opciones por defecto.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);    // Cuando el mapa esté cargado, añadir la ortofoto de 1956/1957 como mapa de fondo y establecerla como mapa de fondo visible.    map.loaded(function () {        map.addLayer({            id: &quot;orto_56_57&quot;,            title: &quot;Ortofoto de 1956/1957&quot;,            url: &quot;http://idena.navarra.es/ogc/wms&quot;,            layerNames: &quot;ortofoto_10000_1957&quot;,            isBase: true        }, function () {            map.setBaseLayer(&quot;orto_56_57&quot;);        });    });&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title function public">
-			<h4 id="zoomToMarkers" class="function public"><span class="name">zoomToMarkers</span><span class="signature-params">( [&nbsp;<span class="signature-param">options</span>&nbsp;]&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details function public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Centra y escala el mapa a la extensión que ocupan todos sus marcadores.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-							<th>Atributos</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>options</code></td>
-							<td><span class="param-type">object</span></td>
-								<td class="attributes">&lt;optional&gt;<br/></td>
-							<td class="last">
-									<p>Objeto de opciones de zoom.</p>
-										<table class="params table table-striped">
-											<thead>
-											<tr>
-													<th>Nombre</th>
-												<th>Type</th>
-													<th>Atributos</th>
-													<th>Valor por defecto</th>
-												<th class="last">Descripción</th>
-											</tr>
-											</thead>
-											<tbody>
-												<tr>
-														<td><code>pointBoundsRadius</code></td>
-													<td><span class="param-type">number</span></td>
-														<td class="attributes">&lt;optional&gt;<br/></td>
-														<td>30</td>
-													<td class="last">
-															<p>Radio en metros del área alrededor del marcador que se respetará al hacer zoom. Por defecto es 30.</p>
-													</td>
-												</tr>
-												<tr>
-														<td><code>extentMargin</code></td>
-													<td><span class="param-type">number</span></td>
-														<td class="attributes">&lt;optional&gt;<br/></td>
-														<td>0.2</td>
-													<td class="last">
-															<p>Tamaño del margen que se aplicará a la extensión total de todas los marcadores.
-									El valor es la relación de crecimiento en ancho y alto entre la extensión resultante y la original. Por ejemplo, el valor por defecto 0,2 indica un crecimiento del 20% de la extensión, 10% por cada lado.</p>
-													</td>
-												</tr>
-											</tbody>
-										</table>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/Map.zoomToMarkers.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html">  &lt;div class&#x3D;&quot;controls&quot;&gt;    &lt;div&gt;&lt;button id&#x3D;&quot;addMarkerBtn&quot;&gt;Añadir marcador aleatorio&lt;/button&gt;&lt;/div&gt;    &lt;div&gt;&lt;input type&#x3D;&quot;number&quot; step&#x3D;&quot;1&quot; id&#x3D;&quot;pbrVal&quot; value&#x3D;&quot;30&quot; /&gt; &lt;label for&#x3D;&quot;pbrVal&quot;&gt;pointBoundsRadius&lt;/label&gt;&lt;/div&gt;    &lt;div&gt;&lt;input type&#x3D;&quot;number&quot; step&#x3D;&quot;0.1&quot; id&#x3D;&quot;emVal&quot; value&#x3D;&quot;0.2&quot; /&gt; &lt;label for&#x3D;&quot;emVal&quot;&gt;extentMargin&lt;/label&gt;&lt;/div&gt;    &lt;div&gt;&lt;button id&#x3D;&quot;zoomBtn&quot;&gt;Hacer zoom a los marcadores&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&lt;div id&#x3D;&quot;mapa&quot;&gt;&lt;/div&gt;&lt;script&gt;    // Crear mapa.    var map &#x3D; new SITNA.Map(&quot;mapa&quot;);          // Añadir un marcador en un punto aleatorio    var addRandomMarker &#x3D; function () {        var xmin &#x3D; SITNA.Cfg.initialExtent[0];        var ymin &#x3D; SITNA.Cfg.initialExtent[1];        var width &#x3D; SITNA.Cfg.initialExtent[2] - SITNA.Cfg.initialExtent[0];        var height &#x3D; SITNA.Cfg.initialExtent[3] - SITNA.Cfg.initialExtent[1];        map.addMarker([xmin + Math.random() width, ymin + Math.random() height]);    };    // Hacer zoom a los marcadores con las opciones elegidas    var zoomToMarkers &#x3D; function () {        map.zoomToMarkers({            pointBoundsRadius: parseInt(document.getElementById(&quot;pbrVal&quot;).value),            extentMargin: parseFloat(document.getElementById(&quot;emVal&quot;).value)        });    };        document.getElementById(&quot;addMarkerBtn&quot;).addEventListener(&quot;click&quot;, addRandomMarker);    document.getElementById(&quot;zoomBtn&quot;).addEventListener(&quot;click&quot;, zoomToMarkers);&lt;/script&gt; </code></pre>
-					</div>
-			</div>	</div>
-</dd>
-									</dl>
-									<h3>Definiciones de tipos</h3>
-									<dl class="symbol">
-											<hr/>
-											<dt class="symbol-title typedef public">
-			<h4 id="~ClickCallback" class="typedef public"><span class="name">ClickCallback</span><span class="signature-params">( <span class="signature-param">coords</span>&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details typedef public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Función de callback que gestiona los clic del usuario en la ventana de visualización del mapa.</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>coords</code></td>
-							<td><span class="param-type">Array.&lt;number></span></td>
-							<td class="last">
-									<p>Coordenadas del punto donde se ha realizado clic, en las unidades del sistema de referencia de coordenadas del mapa (Ver propiedad <code>crs</code>de <a href="global.html#MapOptions"><code>MapOptions</code></a>). Array de dos números correspondientes a las coordenadas x e y.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-example"><h5>Ejemplos</h5>		<div class="example-caption"><p><a href="../examples/cfg.ClickOptions.html">Ver en vivo</a></p></div>
-					<div class="example-code">
-						<pre class="prettyprint source language-html"><code class="language-html"> &lt;div id&#x3D;&quot;mapa&quot;/&gt;&lt;script&gt;    // Creamos un mapa con el control de gestión de clics, con una función de callback personalizada    var map &#x3D; new SITNA.Map(&quot;mapa&quot;, {        controls: {            click: {                active: true,                callback: function (coord) {                    alert(&quot;Has pulsado en la posición &quot; + coord[0] + &quot;, &quot; + coord[1]);                }            }        }    });&lt;/script&gt;</code></pre>
-					</div>
-			</div>	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title typedef public">
-			<h4 id="~SearchByIdCallback" class="typedef public"><span class="name">SearchByIdCallback</span><span class="signature-params">( <span class="signature-param">queryId</span>&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details typedef public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Función de callback que gestiona las respuestas a búsquedas por identfificador (<a href="SITNA.Map.html#searchMunicipality"><code>SITNA.Map#searchMunicipality</code></a>, etc.).</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>queryId</code></td>
-							<td><span class="param-type">string</span></td>
-							<td class="last">
-									<p>Identificador de consulta realizada. Su valor es <code>undefined</code> si no hay resultado.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title typedef public">
-			<h4 id="~SearchDataCallback" class="typedef public"><span class="name">SearchDataCallback</span><span class="signature-params">( <span class="signature-param">data</span>&nbsp;)</span><span class="signature-type"></span></h4>
-		</dt>
-<dd class="symbol-details typedef public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Función de callback que gestiona las respuestas a peticiones de datos de búsqueda (<a href="SITNA.Map.html#getMunicipalities"><code>SITNA.Map#getMunicipalities</code></a>, etc.).</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Parámetros</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>data</code></td>
-							<td><span class="param-type">Array.&lt;<a href="SITNA.Map.html#~SearchResultItem">SITNA.Map~SearchResultItem</a>></span></td>
-							<td class="last">
-									<p>Lista de elementos de búsqueda. Cada elemento tiene un identificador y un texto descriptivo.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-	</div>
-</dd>
-											<hr/>
-											<dt class="symbol-title typedef public">
-			<h4 id="~SearchResultItem" class="typedef public"><span class="name">SearchResultItem</span></h4>
-		</dt>
-<dd class="symbol-details typedef public">
-	<div class="symbol-details-inner">
-			<div class="callout callout-primary"><h5>Descripción</h5>		<div class="description"><p>Objeto proporcionado en las respuestas a peticiones de datos de búsqueda (<a href="SITNA.Map.html#getMunicipalities"><code>SITNA.Map#getMunicipalities</code></a>, etc.).</p></div>
-			</div>			<div class="callout callout-info">
-				<h5>Propiedades</h5>
-				<table class="params table table-striped">
-					<thead>
-					<tr>
-							<th>Nombre</th>
-						<th>Type</th>
-						<th class="last">Descripción</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr>
-								<td><code>id</code></td>
-							<td><span class="param-type">string</span></td>
-							<td class="last">
-									<p>Identificador del elemento a buscar.</p>
-							</td>
-						</tr>
-						<tr>
-								<td><code>label</code></td>
-							<td><span class="param-type">string</span></td>
-							<td class="last">
-									<p>Texto descriptivo del elemento a buscar que se mostrará en la lista de sugerencias de resultados de búsqueda.</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="callout callout-default"><h5>Detalles</h5>		<form class="form-horizontal details">
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-							<!-- see -->
-							<div class="form-group">
-								<label class="col-sm-3 control-label">Ver</label>
-								<div class="col-sm-9">
-										<ul class="form-control-static">
-												<li><a href="SITNA.Map.html#getCommonwealths">SITNA.Map#getCommonwealths</a></li>
-												<li><a href="SITNA.Map.html#getCouncils">SITNA.Map#getCouncils</a></li>
-												<li><a href="SITNA.Map.html#getMunicipalities">SITNA.Map#getMunicipalities</a></li>
-												<li><a href="SITNA.Map.html#getUrbanAreas">SITNA.Map#getUrbanAreas</a></li>
-										</ul>
-								</div>
-							</div>
-			
-			
-					</form>
-			</div>	</div>
-</dd>
-									</dl>
-							</article>
-					</section>
-			</div>
-		</div>
-	</div>
-	<footer>
-				<div class="copyright">© 2019 Gobierno de Navarra. <a href="https://github.com/sitna/api-sitna/blob/master/LICENSE.md">Licencia BSD-2-Clause</a>.</div>
-			<div class="generated-by">Documentación generada por <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.3</a> a 23/12/2021 usando la <a href="https://github.com/steveush/foodoc">plantilla FooDoc</a>.</div>
-	</footer>
-	<script src="js/jquery.min.js"></script>
-	<script src="js/bootstrap.min.js"></script>
-	<script src="js/clipboard.min.js"></script>
-	<script src="js/prism.min.js"></script>
-	<script src="js/template.min.js"></script>
-		<!-- start:lunr-search-modal.hbs -->
-		<div class="modal fade" id="lunr-search-modal">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-						<h4 class="modal-title">Resultados de la búsqueda</h4>
-					</div>
-					<div class="modal-body" id="lunr-search-body">
-					</div>
-					<div class="modal-footer" id="lunr-search-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
-					</div>
-				</div><!-- /.modal-content -->
-			</div><!-- /.modal-dialog -->
-		</div>
-		<!-- end:lunr-search-modal.hbs -->		<script src="js/lunr.min.js"></script>
-	
-</body>
-</html>

@@ -1,0 +1,192 @@
+.instructions, .controls {
+    position: fixed;
+    z-index: 10000;
+    border: 1px solid #ccc;
+    background-color: white;
+    left: 60px;
+    padding: 0.3em;
+    font-size: 0.8em;
+    font-family: sans-serif;
+    border-radius: 0.3em;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.1);
+}
+
+.instructions {
+    top: 60px;
+    max-width: 50%;
+    padding-right: 2em;
+}
+
+    .instructions.fade-out {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s .1s, opacity .1s linear;
+    }
+
+    .instructions p {
+        margin: 0.2em 0 0.2em 0;
+    }
+
+    .instructions a {
+        color: #c00;
+    }
+
+        .instructions a:visited {
+            color: #700;
+        }
+
+        .instructions a:hover {
+            color: #f00;
+            text-decoration: none;
+        }
+
+.controls {
+    top: 140px;
+}
+
+    .controls div {
+        margin: 0.2em;
+    }
+
+    .controls input[type=number] {
+        width: 4em;
+    }
+
+.close-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    border: 0;
+    background-color: transparent;
+}
+
+.view-source-link {
+    font-style: italic;
+    display: inline-block;
+    margin-top: 0.5em;
+}
+
+body > pre.prettyprint {
+    position: absolute;
+    left: 2vw;
+    top: 2vh;
+    right: 2vw;
+    bottom: 2vh;
+    margin: 0;
+    overflow: auto;
+    background-color: white;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+    font-size: 0.9em;
+}
+
+#view-source {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    z-index: 10010;
+}
+
+    #view-source.fade-in {
+        display: block;
+        visibility: visible;
+        opacity: 1;
+        transition: opacity .25s linear;
+    }
+
+    #view-source.fade-out {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s .25s, opacity .25s linear;
+    }
+
+#hide-source-link {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    font-style: italic;
+    top: 3vh;
+    right: 8em;
+    z-index: 10011;
+}
+
+    #hide-source-link.fade-in {
+        display: block;
+        visibility: visible;
+        opacity: 1;
+        transition: opacity .25s linear;
+    }
+
+    #hide-source-link.fade-out {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s .25s, opacity .25s linear;
+    }
+
+div.tc-map.tc-lo div.tc-ctl-p-results {
+    top: 26em;
+}
+
+    div.tc-map.tc-lo div.tc-ctl-p-results div.prcollapsed {
+        top: 26em;
+    }
+
+    div.tc-map.tc-lo div.tc-ctl-p-results.tc-resizable {
+        top: 10em;
+    }
+
+        div.tc-map.tc-lo div.tc-ctl-p-results.tc-resizable div.prcollapsed {
+            top: 10em;
+        }
+
+div.tc-map.tc-lo.tc-3d div.tc-ctl-p-results div.prcollapsed {
+    top: 8.1em;
+    left: 3.75em;
+}
+
+div.tc-map.tc-lo.tc-3d div.tc-ctl-p-results {
+    top: 8.6em;
+    left: 3.75em;
+}
+
+@media screen and (min-width: 380px) {
+    div.tc-map div.tc-ctl.tc-ctl-p-results div.prpanel-group {
+        width: auto;
+    }
+}
+
+.tc-ctl.tc-ctl-nav-home {
+    top: calc(1.5em + 2em + 2em + 0.3em);
+}
+
+div.tc-ctl.tc-ctl-3d {
+    top: calc(1.5em + 2em + 2em + 0.3em + 2em + 0.3em);
+}
+
+div .tc-3d > .tc-ctl-3d {
+    top: calc(1.5em + 2em + 2em + 0.3em + 2em + 0.3em);
+}
+
+@media screen and (min-height: 40em) and (pointer: fine), not all {
+    div.tc-3d > .tc-ctl.tc-ctl-nav-home {
+        top: calc(1.5em + 2em + 2em + 0.8em);
+    }
+
+    div.tc-ctl.tc-ctl-nav-home {
+        top: calc(1.5em + 2em + 10em + 2em + 0.5em);
+    }
+
+    div.tc-ctl.tc-ctl-3d {
+        top: calc(1.5em + 2em + 10em + 2em + 0.5em + 2em + 0.5em);
+    }
+
+    div.tc-3d > .tc-ctl-3d {
+        top: calc(1.5em + 2em + 2em + 0.5em + 2em + 0.6em);
+    }
+
+    div.tc-map.tc-lo.tc-3d div.tc-ctl-p-results div.prcollapsed {
+        top: 8.6em;
+        left: 3.75em;
+    }
+}
+
+
