@@ -11,9 +11,9 @@ import { toRadians } from 'ol/math';
 import { padNumber } from 'ol/string';
 import MapEventType from 'ol/MapEventType';
 import MapBrowserEventType from 'ol/MapBrowserEventType';
-import { OverviewMap, ScaleLine, Zoom, ZoomSlider, ZoomToExtent } from 'ol/control';
-import { render as zs_render } from 'ol/control/ZoomSlider';
-import { listen, unlisten } from 'ol/events';
+import { OverviewMap, ScaleLine, Zoom, ZoomToExtent } from 'ol/control';
+import ZoomSlider from 'ol/control/ZoomSlider';
+import { listen, unlistenByKey } from 'ol/events';
 import { shiftKeyOnly } from 'ol/events/condition';
 import e_EventType from 'ol/events/EventType';
 import { getWidth, getHeight, containsCoordinate, containsExtent, buffer, boundingExtent } from 'ol/extent';
@@ -27,20 +27,23 @@ import { deflateCoordinates } from 'ol/geom/flat/deflate';
 import { inflateCoordinates } from 'ol/geom/flat/inflate';
 import { linearRingLength } from 'ol/geom/flat/length';
 import { xhr } from 'ol/featureloader';
-import { GML, GPX, KML, WFS, WKT, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
-import GeoJSON from '../../lib/ol/GeoJSON';
+import GMLBase from '../../lib/ol/format/GMLBase';
+import { GML, WFS, WKT, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON, GeoJSON, KML } from 'ol/format';
+import GeoJSON from '../../lib/ol/format/GeoJSON';
+import GPX from '../../lib/ol/format/GPX';
+import KML from '../../lib/ol/format/KML';
 //import { GeoJSON, GML, GPX, KML, WFS, WKT, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
-import { transformWithOptions } from 'ol/format/Feature';
-import GMLBase from 'ol/format/GMLBase';
+import { transformGeometryWithOptions } from 'ol/format/Feature';
 import GML2 from 'ol/format/GML2';
 import GML3 from 'ol/format/GML3';
 import GML32 from 'ol/format/GML32';
-import { defaults, Draw, Pointer, Translate, Snap, Select, Modify, /*DragAndDrop,*/ DoubleClickZoom } from 'ol/interaction';
-import DragAndDrop from '../../lib/ol/DragAndDrop';
+import { defaults, Draw, Pointer, Translate, Snap, Select, Modify, DragAndDrop, DoubleClickZoom } from 'ol/interaction';
+import DragAndDrop from '../../lib/ol/interaction/DragAndDrop';
 import { Layer, Tile, Image as l_Image, Vector as l_Vector, Heatmap } from 'ol/layer';
+import TileGrid from 'ol/tilegrid/TileGrid';
 import { unByKey } from 'ol/Observable';
 
-import BaseObject, { getChangeEventType } from 'ol/Object';
+import BaseObject from 'ol/Object';
 import { METERS_PER_UNIT, Projection, addEquivalentProjections, get, getTransform, transform, transformExtent } from 'ol/proj';
 import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from 'ol/proj/epsg4326';
 import Units from 'ol/proj/Units';
@@ -48,6 +51,7 @@ import { register } from 'ol/proj/proj4';
 import { toContext } from 'ol/render';
 import r_EventType from 'ol/render/EventType';
 import { Vector as s_Vector, Cluster, ImageWMS, WMTS, ImageCanvas } from 'ol/source';
+//import OGCMapTile from 'ol/source/OGCMapTile';
 import TileEventType from 'ol/source/TileEventType';
 import VectorEventType from 'ol/source/VectorEventType';
 import { optionsFromCapabilities } from 'ol/source/WMTS';
@@ -72,14 +76,13 @@ import {
     makeObjectPropertySetter,
     makeSimpleNodeFactory,
     OBJECT_PROPERTY_NODE_FACTORY,
-    XML_SCHEMA_INSTANCE_URI,
-    DOCUMENT
+    XML_SCHEMA_INSTANCE_URI
 } from 'ol/xml';
 import {
     readDecimal,
     readBoolean,
     readString,
-    readNonNegativeInteger,
+    readPositiveInteger,
     readDateTime,
     writeStringTextNode,
     writeCDATASection,
@@ -88,7 +91,6 @@ import {
     writeNonNegativeIntegerTextNode
 } from 'ol/format/xsd';
 import Image from 'ol/Image';
-import sphere from 'ol/sphere';
 
 export { VERSION };
 export { Map };
@@ -129,14 +131,13 @@ control.OverviewMap = OverviewMap;
 control.ScaleLine = ScaleLine;
 control.Zoom = Zoom;
 control.ZoomSlider = ZoomSlider;
-control.ZoomSlider.render = zs_render;
 control.ZoomToExtent = ZoomToExtent;
 export { control };
 
 const events = {};
 events.EventType = e_EventType;
 events.listen = listen;
-events.unlisten = unlisten;
+events.unlistenByKey = unlistenByKey;
 events.condition = {
     shiftKeyOnly: shiftKeyOnly
 };
@@ -168,8 +169,6 @@ geom.flat = {
     linearRingLength: linearRingLength
 };
 export { geom };
-const Sphere =sphere;
-export { Sphere };
 
 const featureloader = {};
 featureloader.xhr = xhr;
@@ -177,7 +176,7 @@ export { featureloader };
 
 const format = {};
 format.Feature = Feature;
-format.Feature.transformWithOptions = transformWithOptions;
+format.Feature.transformGeometryWithOptions = transformGeometryWithOptions;
 format.GeoJSON = GeoJSON;
 format.GMLBase = GMLBase;
 format.GML = GML;
@@ -196,7 +195,7 @@ format.xsd = {
     readDecimal: readDecimal,
     readBoolean: readBoolean,
     readString: readString,
-    readNonNegativeInteger: readNonNegativeInteger,
+    readPositiveInteger: readPositiveInteger,
     readDateTime: readDateTime,
     writeStringTextNode: writeStringTextNode,
     writeCDATASection: writeCDATASection,
@@ -232,7 +231,6 @@ Observable.unByKey = unByKey;
 export { Observable };
 
 const Object = BaseObject;
-Object.getChangeEventType = getChangeEventType;
 export { Object };
 
 const proj = {};
@@ -265,10 +263,15 @@ source.WMTS.optionsFromCapabilities = optionsFromCapabilities;
 source.TileEventType = TileEventType;
 source.VectorEventType = VectorEventType;
 source.ImageCanvas = ImageCanvas;
+//source.OGCMapTile = OGCMapTile;
 source.Image = {
     defaultImageLoadFunction: defaultImageLoadFunction
 };
 export { source };
+
+const tilegrid = {};
+tilegrid.TileGrid = TileGrid;
+export { tilegrid };
 
 const style = {};
 style.Style = Style;
@@ -301,5 +304,4 @@ xml.makeObjectPropertySetter = makeObjectPropertySetter;
 xml.makeSimpleNodeFactory = makeSimpleNodeFactory;
 xml.OBJECT_PROPERTY_NODE_FACTORY = OBJECT_PROPERTY_NODE_FACTORY;
 xml.XML_SCHEMA_INSTANCE_URI = XML_SCHEMA_INSTANCE_URI;
-xml.DOCUMENT = DOCUMENT;
 export { xml };
