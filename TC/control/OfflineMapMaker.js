@@ -63,11 +63,13 @@
   * https://idena.navarra.es/ogc/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import SWCacheClient from './SWCacheClient';
 
-if (!TC.control.SWCacheClient) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.SWCacheClient = SWCacheClient;
 
 (function () {
 
@@ -82,11 +84,11 @@ if (!TC.control.SWCacheClient) {
         return new Promise(function (resolve, reject) {
             const manifestFile = document.documentElement.getAttribute('manifest') || 'manifest.appcache';
             TC.ajax({
-                url: manifestFile,
+                url: TC.Util.addURLParameters(manifestFile, { ts: Date.now() }),
                 method: 'GET',
                 responseType: 'text'
             }).then(function (response) {
-                var data = response.data;
+                let data = response.data.normalize();
                 TC.loadJS(
                     !window.hex_md5,
                     [TC.apiLocation + TC.Consts.url.HASH],
@@ -193,7 +195,7 @@ if (!TC.control.SWCacheClient) {
                         name: name,
                         extent: extent,
                         url: decodeURIComponent(key.substr(self.LOCAL_STORAGE_KEY_PREFIX.length))
-                    }
+                    };
                     self.storedMaps.push(map);
                 }
             }
@@ -208,7 +210,7 @@ if (!TC.control.SWCacheClient) {
             });
         }
 
-        var options = TC.Util.extend({}, len > 1 ? arguments[1] : arguments[0]);
+        var options = TC.Util.extend({}, arguments.length > 1 ? arguments[1] : arguments[0]);
         self._dialogDiv = TC.Util.getDiv(options.dialogDiv);
         if (window.$) {
             self._$dialogDiv = $(self._dialogDiv);
@@ -220,7 +222,7 @@ if (!TC.control.SWCacheClient) {
         if (self.mapIsOffline) {
             document.querySelectorAll(self._selectors.OFFLINEHIDDEN).forEach(function (elm) {
                 elm.classList.add(TC.Consts.classes.HIDDEN);
-            })
+            });
         }
 
         TC.Control.apply(self, arguments);
@@ -239,7 +241,7 @@ if (!TC.control.SWCacheClient) {
         // Actualización del enlace al modo online
         // Parche para detectar cambios en el hash. Lo usamos para actualizar los enlaces a los idiomas
         var pushState = history.pushState;
-        history.pushState = function (state) {
+        history.pushState = function (_state) {
             var result;
             //if (typeof history.onpushstate == "function") {
             //    history.onpushstate({ state: state });
@@ -249,7 +251,7 @@ if (!TC.control.SWCacheClient) {
                 self._offlineMapHintDiv.querySelector(self._selectors.EXIT).setAttribute('href', self.getOnlineMapUrl());
             }
             return result;
-        }
+        };
 
         // Detección de estado de conexión
         var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
@@ -313,11 +315,15 @@ if (!TC.control.SWCacheClient) {
         'offlineMapMaker',
         'click',
         'coordinates',
+        'dataLoader',
         'draw',
         'edit',
+        'fileImport',
+        'fullScreen',
         'geolocation',
         'loadingIndicator',
         'measure',
+        'modify',
         'navBar',
         'popup',
         'print',
@@ -325,7 +331,7 @@ if (!TC.control.SWCacheClient) {
         'scaleBar',
         'scaleSelector',
         'state',
-        'fullScreen'
+        'workLayerManager'
     ];
 
     TC.Consts.event.MAPCACHEDOWNLOAD = TC.Consts.event.MAPCACHEDOWNLOAD || 'mapcachedownload.tc';
@@ -616,6 +622,10 @@ if (!TC.control.SWCacheClient) {
                 ctl.div.querySelector(ctl._selectors.EMPTYLIST).removeAttribute('hidden');
             }
 
+            ctl.layer.features
+                .filter(f => f.data.map === map.name)
+                .forEach(f => ctl.layer.removeFeature(f));
+
             return map.name;
         }
 
@@ -682,9 +692,7 @@ if (!TC.control.SWCacheClient) {
                     list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.VIEWBTN, function (e) {
                         const btn = e.target;
                         var showExtent = !btn.classList.contains(TC.Consts.classes.ACTIVE);
-                        const viewBtn = self.div.querySelector(self._selectors.VIEWBTN);
-                        viewBtn.classList.remove(TC.Consts.classes.ACTIVE);
-                        viewBtn.parentElement.classList.remove(TC.Consts.classes.ACTIVE);
+                        self.div.querySelectorAll(self._selectors.VIEWBTN).forEach(b => b.classList.remove(TC.Consts.classes.ACTIVE));
                         const mapName = btn.parentElement.querySelector('a').innerHTML;
                         if (mapName) {
                             var map = self.findStoredMap({ name: mapName });
@@ -702,12 +710,14 @@ if (!TC.control.SWCacheClient) {
                                             ]
                                         ]
                                         , {
-                                            showsPopup: false
+                                            showsPopup: false,
+                                            data: {
+                                                map: map.name
+                                            }
                                         }).then(function () {
                                             self.layer.map.zoomToFeatures(self.layer.features);
                                         });
                                     btn.classList.add(TC.Consts.classes.ACTIVE);
-                                    btn.parentElement.classList.add(TC.Consts.classes.ACTIVE);
                                     btn.setAttribute('title', self.getLocaleString('removeMapExtent'));
                                 }
                             }
@@ -830,10 +840,18 @@ if (!TC.control.SWCacheClient) {
                     navigator.serviceWorker.addEventListener('message', function (event) {
                         switch (event.data.event) {
                             case 'progress':
-                                self.trigger(TC.Consts.event.MAPCACHEPROGRESS, { url: event.data.name, loaded: event.data.count, total: event.data.total });
+                                self.trigger(TC.Consts.event.MAPCACHEPROGRESS, {
+                                    url: event.data.name,
+                                    requestId: event.data.requestId,
+                                    loaded: event.data.count,
+                                    total: event.data.total
+                                });
                                 break;
                             case 'cached':
-                                self.trigger(TC.Consts.event.MAPCACHEDOWNLOAD, { url: event.data.name });
+                                self.trigger(TC.Consts.event.MAPCACHEDOWNLOAD, {
+                                    url: event.data.name,
+                                    requestId: event.data.requestId
+                                });
                                 break;
                             case 'deleted':
                                 self.trigger(TC.Consts.event.MAPCACHEDELETE, { url: event.data.name });
@@ -858,18 +876,22 @@ if (!TC.control.SWCacheClient) {
                             hash = self.localStorage.getItem(hashStorageKey);
                         }
                         if (hash !== obj.hash) {
-                            self.cacheUrlList(obj.urls);
-                            self.one(TC.Consts.event.MAPCACHEDOWNLOAD, function () {
-                                const firstLoad = !hash;
-                                if (self.localStorage) {
-                                    self.localStorage.setItem(hashStorageKey, obj.hash);
+                            const firstLoad = !hash;
+                            const requestId = self.cacheUrlList(obj.urls);
+                            const onCacheDownload = function (e) {
+                                if (e.requestId === requestId) {
+                                    if (self.localStorage) {
+                                        self.localStorage.setItem(hashStorageKey, obj.hash);
+                                    }
+                                    if (!firstLoad) {
+                                        TC.confirm(self.getLocaleString('newAppVersionAvailable'), function () {
+                                            location.reload();
+                                        });
+                                    }
+                                    self.off(TC.Consts.event.MAPCACHEDOWNLOAD, onCacheDownload);
                                 }
-                                if (!firstLoad) {
-                                    TC.confirm(self.getLocaleString('newAppVersionAvailable'), function () {
-                                        location.reload();
-                                    });
-                                }
-                            });
+                            };
+                            self.on(TC.Consts.event.MAPCACHEDOWNLOAD, onCacheDownload);
                         }
                     });
                 }
@@ -1074,7 +1096,7 @@ if (!TC.control.SWCacheClient) {
                     }
                 });
             })
-            .on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+            .on(TC.Consts.event.PROJECTIONCHANGE, function (_e) {
                 map.baseLayers.forEach(l => addLayer(l));
             });
 
@@ -1082,19 +1104,18 @@ if (!TC.control.SWCacheClient) {
             if (self.mapIsOffline) {
                 // Deshabilitamos los controles que no son usables en modo offline
                 var offCtls = [];
-                var i, len;
-                for (i = 0, len = self.offlineControls.length; i < len; i++) {
-                    var offCtl = self.offlineControls[i];
+                self.offlineControls.forEach(function (offCtl) {
                     offCtl = offCtl.substr(0, 1).toUpperCase() + offCtl.substr(1);
                     offCtls = offCtls.concat(map.getControlsByClass('TC.control.' + offCtl));
-                }
+                });
 
-                for (i = 0, len = map.controls.length; i < len; i++) {
-                    var ctl = map.controls[i];
-                    if (offCtls.indexOf(ctl) < 0) {
-                        ctl.disable();
+                const disablingReason = self.getLocaleString('thisControlCannotBeUsedInOfflineMode');
+
+                map.controls.forEach(function enableOrDisable(control) {
+                    if (offCtls.indexOf(control) < 0) {
+                        control.disable({ reason: disablingReason });
                     }
-                }
+                });
 
                 document.querySelectorAll(self._selectors.OFFLINEHIDDEN).forEach(function (elm) {
                     elm.classList.add(TC.Consts.classes.HIDDEN);
@@ -1117,7 +1138,7 @@ if (!TC.control.SWCacheClient) {
                 const mapDef = self.currentMapDefinition;
                 const isSameLayer = function (layer, mapDefLayer) {
                     const layerUrl = layer.url.indexOf('//') === 0 ? location.protocol + layer.url : layer.url;
-                    return (layerUrl === mapDef.url[mapDefLayer.urlIdx] && layer.layerNames === mapDefLayer.id && layer.matrixSet === mapDef.tms[mapDefLayer.tmsIdx]);
+                    return layerUrl === mapDef.url[mapDefLayer.urlIdx] && layer.layerNames === mapDefLayer.id && layer.matrixSet === mapDef.tms[mapDefLayer.tmsIdx];
                 };
                 // Añadimos al mapa las capas guardadas que no están por defecto
                 const missingLayers = map.options.availableBaseLayers
@@ -1164,8 +1185,8 @@ if (!TC.control.SWCacheClient) {
                 self.isDownloading = false;
                 const removeHash = function (url) {
                     const hashIdx = url.indexOf('#');
-                    return (hashIdx >= 0) ? url.substr(0, hashIdx) : url;
-                }
+                    return hashIdx >= 0 ? url.substr(0, hashIdx) : url;
+                };
                 const url = removeHash(e.url);
                 const li = getListElementByMapUrl(self, url);
                 if (li && !self.serviceWorkerEnabled) {
@@ -1184,7 +1205,7 @@ if (!TC.control.SWCacheClient) {
             })
             .on(TC.Consts.event.MAPCACHEDELETE, function (e) {
                 self.isDownloading = false;
-                var mapName = removeMap(self, e.url) || (self.currentMap && self.currentMap.name);
+                var mapName = removeMap(self, e.url) || self.currentMap && self.currentMap.name;
                 self.currentMap = null;
                 if (mapName) {
                     map.toast(self.getLocaleString('mapDeleted', { mapName: mapName }));
@@ -1336,10 +1357,13 @@ if (!TC.control.SWCacheClient) {
     ctlProto.cacheUrlList = function (urlList, options) {
         var self = this;
         var opts = options || {};
-        self.createCache(opts.name || (self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME), {
+        const requestId = Date.now().toString();
+        self.createCache(opts.name || self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME, {
+            requestId: requestId,
             urlList: urlList,
             silent: opts.silent
         });
+        return requestId;
     };
 
     ctlProto.requestCache = function (options) {
@@ -1377,22 +1401,20 @@ if (!TC.control.SWCacheClient) {
                 // Actualizamos el extent para que coincida con las teselas del último nivel de los esquemas
                 // También eliminamos del esquema todo lo irrelevante para la petición
                 var intersectionExtent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
-                for (var i = 0, len = requestSchemas.length; i < len; i++) {
-                    var rs = requestSchemas[i];
-                    var tml = rs.tileMatrixLimits[rs.tileMatrixLimits.length - 1];
-                    var unitsPerTile = tml.res * tml.tSize;
+                requestSchemas.forEach(function updateExtent(rs) {
+                    const tml = rs.tileMatrixLimits[rs.tileMatrixLimits.length - 1];
+                    const unitsPerTile = tml.res * tml.tSize;
                     intersectionExtent[0] = Math.min(intersectionExtent[0], tml.origin[0] + unitsPerTile * tml.cl);
                     intersectionExtent[1] = Math.min(intersectionExtent[1], tml.origin[1] - unitsPerTile * (tml.rb + 1));
                     intersectionExtent[2] = Math.max(intersectionExtent[2], tml.origin[0] + unitsPerTile * (tml.cr + 1));
                     intersectionExtent[3] = Math.max(intersectionExtent[3], tml.origin[1] - unitsPerTile * tml.rt);
                     rs.tileMatrixLimits = rs.tileMatrixLimits.map(trimTml);
-                }
-
+                });
 
                 // Redondeamos previamente para que por errores de redondeo no haya confusión al identificar un mapa
                 var precision = Math.pow(10, self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION);
                 intersectionExtent = intersectionExtent.map(function (elm, idx) {
-                    var round = (idx < 3) ? Math.ceil : Math.floor;
+                    var round = idx < 3 ? Math.ceil : Math.floor;
                     return round(elm * precision) / precision;
                 });
 
@@ -1404,8 +1426,7 @@ if (!TC.control.SWCacheClient) {
                     format: [],
                     layers: new Array(self.baseLayers.length)
                 };
-                for (var i = 0, len = self.baseLayers.length; i < len; i++) {
-                    var layer = self.baseLayers[i];
+                self.baseLayers.forEach(function addMapDefinitionLayer(layer, idx) {
                     var layerUrl = layer.url.indexOf('//') === 0 ? location.protocol + layer.url : layer.url;
                     var urlIdx = mapDefinition.url.indexOf(layerUrl);
                     if (urlIdx < 0) {
@@ -1420,13 +1441,13 @@ if (!TC.control.SWCacheClient) {
                     if (formatIdx < 0) {
                         formatIdx = mapDefinition.format.push(shortFormat) - 1;
                     }
-                    mapDefinition.layers[i] = {
+                    mapDefinition.layers[idx] = {
                         urlIdx: urlIdx,
                         id: layer.layerNames,
                         tmsIdx: tmsIdx,
                         formatIdx: formatIdx
                     };
-                }
+                });
 
                 var params = TC.Util.getQueryStringParams();
                 var e = params[self.MAP_EXTENT_PARAM_NAME] = intersectionExtent.toString();
@@ -1460,7 +1481,7 @@ if (!TC.control.SWCacheClient) {
                         }
                         if (urlPattern) {
                             for (var k = 0, lenk = schema.tileMatrixLimits.length; k < lenk; k++) {
-                                var tml = schema.tileMatrixLimits[k];
+                                const tml = schema.tileMatrixLimits[k];
                                 for (var r = tml.rt; r <= tml.rb; r++) {
                                     for (var c = tml.cl; c <= tml.cr; c++) {
                                         urlList.push(urlPattern.replace('{TileMatrixSet}', schema.tileMatrixSet).replace('{TileMatrix}', tml.mId).replace('{TileCol}', c).replace('{TileRow}', r));
@@ -1474,7 +1495,7 @@ if (!TC.control.SWCacheClient) {
                 }
             }
         }
-    }
+    };
 
     ctlProto.cancelCacheRequest = function () {
         var self = this;
@@ -1603,3 +1624,6 @@ if (!TC.control.SWCacheClient) {
     };
 
 })();
+
+const OfflineMapMaker = TC.control.OfflineMapMaker;
+export default OfflineMapMaker;
