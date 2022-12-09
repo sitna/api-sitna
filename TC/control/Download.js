@@ -1,16 +1,13 @@
-﻿TC.control = TC.control || {};
+﻿
+import TC from '../../TC';
+import Consts from '../Consts';
+import MapInfo from './MapInfo';
+import filter from '../filter';
 
-if (!TC.control.MapInfo) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapInfo');
-}
-
-if (!TC.filter) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
-}
-
-TC.Consts.DownloadError = {
-    MIMETYPE_NOT_SUPORTED: "MimeTypeNotSupported"
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.MapInfo = MapInfo;
+TC.filter = filter;
 
 TC.control.Download = function (options) {
     var self = this;
@@ -43,7 +40,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
         }).then(function () {
             return TC.Control.prototype.renderData.call(self, { controlId: self.id }, function () {
@@ -55,7 +52,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                     ELEMENT: cs + '-elm'
                 };
 
-                const clickHandler = function (e) {
+                const clickHandler = function (_e) {
                     var tab = this;
                     while (tab && !tab.matches(self._selectors.TAB)) {
                         tab = tab.parentElement;
@@ -103,7 +100,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                     callback();
                 }
             });
-        });
+        }));
     };
 
     const toFixed = function (number) {
@@ -119,13 +116,13 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
         const result = TC.control.MapInfo.prototype.register.call(self, map);
 
         // GLS: Añado el flag al mapa para tenerlo en cuenta cuando se establece la función de carga de imágenes
-        self.map.mustBeExportable = true;
+        self.map.crossOrigin = 'anonymous';
 
         const downLoadImage = function (format) {
             const li = self.map.getLoadingIndicator();
             const wait = li && li.addWait();
             const extent = self.map.getExtent();
-            const doneQR = new Promise(function (resolve, reject) {
+            const doneQR = new Promise(function (resolve, _reject) {
                 var canvases = self.map.wrap.getCanvas();
                 var newCanvas = TC.Util.mergeCanvases(canvases);
 
@@ -228,7 +225,7 @@ ${toFixed(yOrigin)}`);
             });
             Promise.all(arrPromises).then(async function (responseArray) {
 
-                var responses = responseArray.filter(function (item) { return item != null });
+                var responses = responseArray.filter(item => !!item);
                 if (responses.length === 0) {
                     _showAlertMsg({ key: TC.Consts.WFSErrors.NO_LAYERS }, wait);
                     return;
@@ -253,15 +250,15 @@ ${toFixed(yOrigin)}`);
                 }
                 catch (err) {
                     if (err.key === TC.Consts.DownloadError.MIMETYPE_NOT_SUPORTED) {
-                        const service = responseArray.find(function (response) { return response.data === err.data }).service;
+                        const service = responseArray.find(response => response.data === err.data).service;
                         const params = {
                             plural: service.layers.length > 1 ? self.getLocaleString("dl.format.notSupported.plural") : "",
                             layerNames: service.layers.reduce(function (vi, va, i, array) {
-                                return (vi instanceof Array ? vi : [vi]).concat([va.title]).join(i < array.length - 1 ? ", " : " " + self.getLocaleString("dl.format.notSupported.conjunction") + " ")
+                                return (vi instanceof Array ? vi : [vi]).concat([va.title]).join(i < array.length - 1 ? ", " : " " + self.getLocaleString("dl.format.notSupported.conjunction") + " ");
                             }, []),
                             serviceTitle: service.mapLayers[0].title,
                             format: format
-                        }
+                        };
                         self.map.toast(self.getLocaleString("dl.format.notSupported").format(params), { type: TC.Consts.msgType.ERROR });
                     }
                 }
@@ -304,8 +301,7 @@ ${toFixed(yOrigin)}`);
                     self.map.toast(errorMsg, { type: TC.Consts.msgType.ERROR });
                     TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
                     self.map.getLoadingIndicator().removeWait(wait);
-                    return
-                    break;
+                    return;
                 default:
                     errorMsg = self.getLocaleString("wfs." + error.key, error.params);
                     break;
@@ -367,3 +363,6 @@ ${toFixed(yOrigin)}`);
     };
 
 })();
+
+const Download = TC.control.Download;
+export default Download;
