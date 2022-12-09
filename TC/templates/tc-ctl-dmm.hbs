@@ -13,7 +13,7 @@
 </div>
 <div class="tc-ctl-meas-mode tc-ctl-meas-len tc-hidden">
     <div class="tc-ctl-meas-line"></div>
-    <div class="tc-ctl-meas-txt">{{i18n "2dLength"}}: <span class="tc-ctl-meas-val-len"></span><button class="tc-ctl-meas-prof-btn tc-active" title="{{i18n "deactivateElevationProfile"}}">{{i18n "geo.trk.chart.chpe"}}</button></div>
+    <div class="tc-ctl-meas-txt">{{i18n "2dLength"}}: <span class="tc-ctl-meas-val-len"></span><button type="button" class="tc-ctl-meas-prof-btn tc-active" title="{{i18n "deactivateElevationProfile"}}">{{i18n "geo.trk.chart.chpe"}}</button></div>
 </div>
 <div class="tc-ctl-meas-mode tc-ctl-meas-area tc-hidden">
     <div class="tc-ctl-meas-polygon"></div>
@@ -22,7 +22,8 @@
 <div class="tc-ctl-dmm-tool">
     <div class="tc-ctl-dmm-mod"></div>
     <div class="tc-ctl-dmm-cmd">
-        <button class="tc-ctl-dmm-btn-clr" disabled title="{{i18n "deleteAll"}}">{{i18n "deleteAll"}}</button><button 
-		class="tc-ctl-dmm-btn-dl" disabled title="{{i18n "download"}}">{{i18n "download"}}...</button>
+        <button type="button" class="tc-ctl-dmm-btn-hide tc-active" disabled title="{{i18n "hideSketch"}}">{{i18n "hideSketch"}}</button>
+        <button type="button" class="tc-ctl-dmm-btn-dl" disabled title="{{i18n "download"}}">{{i18n "download"}}...</button>
+        <button type="button" class="tc-ctl-dmm-btn-clr" disabled title="{{i18n "deleteAll"}}">{{i18n "deleteAll"}}</button>
     </div>
 </div>

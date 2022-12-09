@@ -1,7 +1,7 @@
 <h2>{{title}}</h2>
 <div class="tc-ctl-tctr-select">
     {{#each controls~}}
-    <label class="tc-ctl-tctr-tab tc-ctl-tctr-tab-{{@index}}" style="width:calc(100%/{{../count}} - 1px)"><input type="radio" name="{{../controlId}}-sel" value="{{@index}}" /><span>{{title}}</span></label>
+    <label class="tc-ctl-tctr-tab tc-ctl-tctr-tab-{{@index}}"><input type="radio" name="{{../controlId}}-sel" value="{{@index}}" /><span>{{title}}</span></label>
     {{~/each}}
 </div>
 {{#each controls}}

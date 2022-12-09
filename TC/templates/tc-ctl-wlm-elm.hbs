@@ -1,14 +1,16 @@
 <li class="tc-ctl-wlm-elm" tabindex="-1">
-    <div class="tc-ctl-wlm-lyr">{{#if path}}{{title}}{{/if}}</div>
+    <div title="{{title}}" class="tc-ctl-wlm-lyr">{{#if path}}{{title}}{{/if}}</div>
     <div class="tc-ctl-wlm-type"></div><div class="tc-ctl-wlm-path" title="{{#each path}}{{#unless @first}} &bull; {{/unless}}{{#each this}}{{#unless @first}} &rsaquo; {{/unless}}{{this}}{{/each}}{{else}}{{title}}{{/each}}">{{#each path}}<span>{{#each this}}{{#unless @first}} &rsaquo; {{/unless}}{{this}}{{/each}}</span>{{else}}{{title}}{{/each}}</div>
-    <div class="tc-ctl-wlm-buttons">
-        <div class="tc-ctl-wlm-tools"></div>
-        {{#if hasExtent}}<button class="tc-ctl-wlm-btn-zoom" title="{{i18n "zoomToLayerExtent"}}">{{i18n "zoomToLayerExtent"}}</button>{{/if}}
-        <button class="tc-ctl-wlm-btn-del" {{#if unremovable}}disabled{{else}}title="{{i18n "removeLayerFromMap"}}"{{/if}}>{{i18n "removeLayerFromMap"}}</button>
-        <input type="checkbox" id="tc-ctl-wlm-tools-visibility-{{id}}" class="tc-ctl-wlm-tools-visibility" {{#unless hide}}checked="checked"{{/unless}} title="{{i18n "visibilityOfThisLayer"}}" />
-        <label for="tc-ctl-wlm-tools-visibility-{{id}}" title="{{i18n "visibilityOfThisLayer"}}" class="tc-ctl-wlm-tools-visibility-label">{{i18n "visibilityOfThisLayer"}}</label>
-        <input type="range" value="{{opacity}}" title="{{i18n "transparencyOfThisLayer"}}" />
-    </div>
+                                       <div class="tc-ctl-wlm-input">
+                                           <div class="tc-ctl-wlm-tools">
+                                               {{#if hasInfo}}<sitna-toggle class="tc-ctl-wlm-cb-info" text="{{i18n "infoFromThisLayer"}}" checked-icon-text="&#xe923;" unchecked-icon-text="&#xe923;"></sitna-toggle>{{/if}}
+                                               <sitna-toggle class="tc-ctl-wlm-cb-visibility" {{#unless hide}} checked {{/unless}} text="{{i18n "visibilityOfThisLayer"}}" checked-icon-text="&#xe910;" unchecked-icon-text="&#xe911;"></sitna-toggle>
+                                               {{#if hasExtent}}<sitna-button variant="minimal" icon-text="&#xe917;" class="tc-ctl-wlm-btn-zoom" text="{{i18n "zoomToLayerExtent"}}"></sitna-button>{{/if}}
+                                               <sitna-button variant="minimal" icon="delete" class="tc-ctl-wlm-btn-del tc-item-tool-last" {{#if unremovable}} disabled{{else}}text="{{i18n "removeLayerFromMap"}}" {{/if}}></sitna-button>
+                                               <sitna-button variant="minimal" icon-text="&#x2022&#x2022&#x2022" class="tc-ctl-wlm-btn-more" text="{{i18n "otherTools"}}"></sitna-button>
+                                           </div>
+                                           <input type="range" value="{{opacity}}" title="{{i18n "transparencyOfThisLayer"}}" />
+                                       </div>
         <div class="tc-ctl-wlm-info tc-hidden">
             {{#if abstract.length}}
             <div class="tc-ctl-wlm-abstract">

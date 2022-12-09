@@ -1,7 +1,7 @@
 {?isVisible}
 <li {?children}class="tc-ctl-lcat-node{^expanded} tc-collapsed{/expanded}"{:else}class="tc-ctl-lcat-node tc-ctl-lcat-leaf"{/children} data-layer-name="{name}" data-layer-uid="{uid}">
-    {?children}<button class="tc-ctl-lcat-collapse-btn"></button>{/children}
-    <span data-tooltip="{?name}{@i18n $key="clickToAddToMap"/}{/name}">{title}</span>{?name}<button title="{@i18n $key="infoFromThisLayer"/}" class="tc-ctl-lcat-btn-info"></button>{/name}
+    {?children}<button type="button" class="tc-ctl-lcat-collapse-btn"></button>{/children}
+    <span data-tooltip="{?name}{@i18n $key="clickToAddToMap"/}{/name}">{title}</span>{?name}<input type="checkbox" title="{@i18n $key="infoFromThisLayer"/}" class="tc-toggle tc-ctl-lcat-btn-info"></input>{/name}
     <ul class="tc-ctl-lcat-branch{^expanded} tc-collapsed{/expanded}">
         {#children}
             {>tc-ctl-lcat-node:./}

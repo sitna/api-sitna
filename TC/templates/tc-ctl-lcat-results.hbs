@@ -6,7 +6,7 @@
         {{#each founds}}
         <li data-layer-name="{{Name}}" {{#if alreadyAdded}} class="tc-checked"{{/if}}>
         <h5 class="tc-selectable"{{#if alreadyAdded}} data-tooltip="{{i18n "layerAlreadyAdded"}}"{{else}} data-tooltip="{{i18n "clickToAddToMap"}}"{{/if}}>{{Title}}</h5>
-        <button class="tc-ctl-lcat-search-btn-info" title="{{i18n "infoFromThisLayer"}}"></button>
+        <input type="checkbox" class="tc-toggle tc-ctl-lcat-search-btn-info" title="{{i18n "infoFromThisLayer"}}"></input>
         </li>
 	    {{/each}}
     {{#if (gt ../servicesLooked 1)}}

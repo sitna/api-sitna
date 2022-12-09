@@ -4,8 +4,14 @@
     {{#each this}}
         {{#unless (isObject this)}}
         <tr class="keyValue">
-            <th class="key">{{@key}}</th>
-            <td class="value tc-ctl-finfo-val">{{#unless (isEmpty this)}}{{> tc-ctl-finfo-object this }}{{/unless}}</td>
+            {{#if (eq @key "_content_")}}
+                {{#unless (isEmpty this)}}
+                    <td colspan="2" class="value tc-ctl-finfo-val">{{> tc-ctl-finfo-object this }}</td>
+                {{/unless}}
+            {{else}}
+                <th class="key">{{@key}}</th>
+                <td class="value tc-ctl-finfo-val">{{#unless (isEmpty this)}}{{> tc-ctl-finfo-object this }}{{/unless}}</td>
+            {{/if}}
         </tr>
         {{else}}
         <tr>

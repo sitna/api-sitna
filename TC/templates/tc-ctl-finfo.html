@@ -29,7 +29,7 @@
                 <ul class="tc-ctl-finfo-layers">
                     {#layers}
                     <li>
-                        <h4><span class="tc-ctl-finfo-layer-n">{features.length}</span> {#path}{.}{@sep} &bull; {/sep}{/path}</h4>                                            
+                        <h4><span class="tc-ctl-finfo-layer-n">{features.length}</span> {#path}{.}{@sep} &rsaquo; {/sep}{/path}</h4>                                            
                         <div class="tc-ctl-finfo-layer-content">
                             <ul class="tc-ctl-finfo-features">
                                 {#features}
@@ -91,8 +91,8 @@
 </ul>
 {?featureCount}
 {@gt key=featureCount value="1" type="number"}
-<button class="tc-ctl-btn tc-ctl-finfo-btn-prev">{@i18n $key="previous"/}</button>
+<button type="button" class="tc-ctl-btn tc-ctl-finfo-btn-prev">{@i18n $key="previous"/}</button>
 <div class="tc-ctl-finfo-counter"><span class="tc-ctl-finfo-counter-current"></span>/{featureCount}</div>
-<button class="tc-ctl-btn tc-ctl-finfo-btn-next">{@i18n $key="next"/}</button>
+<button type="button" class="tc-ctl-btn tc-ctl-finfo-btn-next">{@i18n $key="next"/}</button>
 {/gt}
 {/featureCount}
