@@ -1,10 +1,10 @@
-﻿
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+
 TC.control = TC.control || {};
-
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
-
+TC.Consts = Consts;
+TC.Control = Control;
 
 TC.control.FeatureDownloadDialog = function () {
     var self = this;
@@ -67,7 +67,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
             let mustInterpolate = options.elevation && options.elevation.resolution;
             // Array con features sin altura y nulo donde habia feature con alturas
             let featuresToAddElevation = mustInterpolate ? features.map(f => cloneWithId(f)) : features.map(f => {
-                return f.getCoordsArray().every(p => !p[2]) ? cloneWithId(f) : null
+                return f.getCoordsArray().every(p => !p[2]) ? cloneWithId(f) : null;
             });
 
             if (mustInterpolate || featuresToAddElevation.some(f => f !== null)) {
@@ -99,16 +99,16 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
         });
     };
     const hasPoints = function () {
-        return this.getFeatures().some(feature => (TC.feature.Point && feature instanceof TC.feature.Point) ||
-            (TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint));
+        return this.getFeatures().some(feature => TC.feature.Point && feature instanceof TC.feature.Point ||
+            TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint);
     };
     const hasLines = function () {
-        return this.getFeatures().some(feature => (TC.feature.Polyline && feature instanceof TC.feature.Polyline) ||
-            (TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline));
+        return this.getFeatures().some(feature => TC.feature.Polyline && feature instanceof TC.feature.Polyline ||
+            TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline);
     };
     const hasPolygons = function () {
-        return this.getFeatures().some(feature => (TC.feature.Polygon && feature instanceof TC.feature.Polygon) ||
-            (TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon));
+        return this.getFeatures().some(feature => TC.feature.Polygon && feature instanceof TC.feature.Polygon ||
+            TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon);
     };
 
     ctlProto.render = function (callback) {
@@ -117,7 +117,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
         return result;
     };
 
-    ctlProto.close = function (callback) {
+    ctlProto.close = function (_callback) {
         const self = this;
 
         if (self.modal && self.modal.parentElement) {
@@ -156,7 +156,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
             const modalBody = self.modalBody = self.modal.getElementsByClassName("tc-modal-body")[0];
             modalBody.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
 
-                var resolution = displayElevation && interpolation ? parseFloat(modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || (self.map.elevation && self.map.elevation.options)).resolution : 0
+                var resolution = displayElevation && interpolation ? parseFloat(modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || self.map.elevation && self.map.elevation.options).resolution : 0;
 
                 const endExport = async (features, opts) => {
 
@@ -165,15 +165,17 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                     if (format !== TC.Consts.format.GEOJSON && opts.format !== TC.Consts.format.WKT && features.some(function (feat) {
                         for (var attr in feat.getData()) {
                             if (feat.data[attr] instanceof Object)
-                                return true
+                                return true;
                         }
                         return false;
                     }))
                         await TC.confirm(self.getLocaleString("dl.export.complexAttr").format(format), null,
                             function () {
-                                cancel = true
+                                cancel = true;
                             });
-                    if (cancel) { return };
+                    if (cancel) {
+                        return;
+                    }
 
                     const li = self.map.getLoadingIndicator();
                     const waitId = li && li.addWait();
@@ -183,17 +185,37 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                     addElevationAndInterpolation.apply(self, [features,
                         {
                             displayElevation: displayElevation,
-                            elevation: displayElevation ? Object.assign({}, opts.elevation || (self.map.elevation && self.map.elevation.options), { resolution: resolution }) : null
+                            elevation: displayElevation ? Object.assign({}, opts.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
                         }]).then(
-                        function (features) {
-                            let fileName = (opts ? (opts.fileName || opts.title.toLowerCase().replace(/ /g, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true) || "download_" + TC.Util.getFormattedDate(new Date().toString(), true)) : (opts.title.toLowerCase().replace(/ /g, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true) || "download_" + TC.Util.getFormattedDate(new Date().toString(), true)));
-                            self.map.exportFeatures(features, {
-                                fileName: fileName,
-                                format: format
-                            });
-                        },
+                            function (features) {
+                                const innerFileName = opts.fileName ||
+                                    (opts.title ? opts.title.toLowerCase().replace(/ /g, '_') : 'download');
+                                let fileName = opts.fileName || innerFileName + ' ' + TC.Util.getFormattedDate(new Date().toString(), true);
+                                self.map.exportFeatures(features, {
+                                    fileName: innerFileName,
+                                    format: format
+                                }).then(data => {
+                                    fileName = fileName || TC.getUID();
+                                    switch (format) {
+                                        case TC.Consts.format.SHAPEFILE:
+                                            TC.Util.downloadBlob(fileName + ".zip", data);
+                                            break;
+                                        case TC.Consts.format.GEOPACKAGE:
+                                            TC.Util.downloadFile(fileName + ".gpkg", "application/geopackage+sqlite3", data);
+                                            break;
+                                        case TC.Consts.format.KMZ:
+                                            TC.Util.downloadBlob(fileName + ".kmz", data);
+                                            break;
+                                        default: {
+                                            const mimeType = TC.Consts.mimeType[options.format];
+                                            TC.Util.downloadFile(fileName + '.' + format.toLowerCase(), mimeType, data);
+                                            break;
+                                        }
+                                    }
+                                });
+                            },
                         function (error) {
-                            self.open(features, opts)
+                            self.open(features, opts);
                             if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
                                 TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
                                 return;
@@ -259,7 +281,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                 }
             }
 
-            modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.ELEVATION_CHECKBOX, function (e) {
+            modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.ELEVATION_CHECKBOX, function (_e) {
                 //self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
 
                 displayElevation = !displayElevation;
@@ -283,7 +305,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                 }               
                 
             }));
-            modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (e) {
+            modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (_e) {
                 const idDiv = modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE);
                 idDiv.classList.toggle(TC.Consts.classes.HIDDEN);
                 interpolation = !interpolation;
@@ -324,3 +346,6 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
     };
 
 })();
+
+const FeatureDownloadDialog = TC.control.FeatureDownloadDialog;
+export default FeatureDownloadDialog;
