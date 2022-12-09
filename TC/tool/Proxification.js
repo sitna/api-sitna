@@ -1,4 +1,7 @@
-﻿var TC = TC || {};
+import Consts from '../Consts';
+
+var TC = TC || {};
+TC.Consts = Consts;
 
 TC.tool = TC.tool || {};
 
@@ -15,12 +18,12 @@ TC.tool.Proxification = function (proxy, options) {
         throw new TypeError('"proxy" parameter is undefined', "TC.tool.Proxification.js");
     }
 
-    if (typeof proxy == "function") {
+    if (typeof proxy === "function") {
         self.proxy = proxy;
     } else {
         self.proxy = function (url) {
             var result = proxy;
-            if (url.substr(0, 4) != "http") {
+            if (url.substr(0, 4) !== "http") {
                 result += window.location.protocol;
             }
             result += encodeURIComponent(url);
@@ -273,7 +276,7 @@ TC.tool.Proxification = function (proxy, options) {
                 })
             }
             self.fetch.polyfill = !0
-        })(typeof self !== 'undefined' ? self : this);
+        })(this);
     }
 
     var srcToURL = function (src) {
@@ -309,7 +312,7 @@ TC.tool.Proxification = function (proxy, options) {
                 }
             }
 
-            anchor.origin = (anchor.protocol.length === 0 ? window.location.protocol : anchor.protocol) + "//" + anchor.hostname + (anchor.port && (src.indexOf(anchor.port) > -1) ? ':' + anchor.port : '');
+            anchor.origin = (anchor.protocol.length === 0 ? window.location.protocol : anchor.protocol) + "//" + anchor.hostname + (anchor.port && src.indexOf(anchor.port) > -1 ? ':' + anchor.port : '');
         }
 
         return anchor;
@@ -518,6 +521,7 @@ TC.tool.Proxification = function (proxy, options) {
     };
 
     toolProto._isSameProtocol = function (uri) {
+        const self = this;
         var protocolRegex = /^(https?:\/\/)/i;
         var uriProtocol = uri.match(protocolRegex);
         if (uriProtocol && uriProtocol.length > 1) {
@@ -531,10 +535,11 @@ TC.tool.Proxification = function (proxy, options) {
     };
 
     toolProto._isSecureURL = function (url) {
-        //sino empieza por http ni por https la consideramos segura
-        if (!/^(f|ht)tps?:\/\//i.test(url))
+        //si no empieza por http ni por https la consideramos segura
+        if (!/^(f|ht)tps?:\/\//i.test(url)) {
             return true;
-        return (/^(f|ht)tps:\/\//i.test(url));
+        }
+        return /^(f|ht)tps:\/\//i.test(url);
     };
 
     const ResponseError = function (status, text, url) {
@@ -646,7 +651,7 @@ TC.tool.Proxification = function (proxy, options) {
 
                 if (options.exportable && !options.sameOrigin) {
                     img.dataset.checkCORSHeaders = true;
-                    img.crossOrigin = "anonymous";
+                    img.crossOrigin = typeof options.exportable === 'string' ? options.exportable : 'anonymous';
                 }
 
                 img.onload = function () {
@@ -668,7 +673,7 @@ TC.tool.Proxification = function (proxy, options) {
 
                         try {
                             var canvas = createCanvas(img);
-                            result = canvas.toDataURL("image/png");
+                            const result = canvas.toDataURL("image/png");
                             resolve(img);
                         } catch (e) {
                             if (e.code === 18) { // GLS: 18 - SECURITY_ERR
@@ -862,7 +867,7 @@ TC.tool.Proxification = function (proxy, options) {
                             }, _reject);
                         } else {
                             if (!self._isSecureURL(src)) {
-                                if (self._isServiceWorker() || (self._isSecureURL(self._location) && self.preventMixedContent)) {
+                                if (self._isServiceWorker() || self._isSecureURL(self._location) && self.preventMixedContent) {
                                     // HTTP (sin intento) -> HTTPS -> (HTTP)Proxy
                                     _currentHTTP.call(self, src, options, _caching, _reject);
                                 } else {
@@ -870,7 +875,7 @@ TC.tool.Proxification = function (proxy, options) {
                                     self._image.getImgTag(src, options).then(function (img) {
                                         _caching(img, self._actionDirect);
                                     }, function (error) {
-                                        if ((options.exportable && error === self._image.ErrorType.CORS) || !self._isSecureURL(self._location)) {
+                                        if (options.exportable && error === self._image.ErrorType.CORS || !self._isSecureURL(self._location)) {
                                             // Si la imagen debe ser exportable y en la solicitud por HTTP tenemos error de CORS, deducimos que por HTTPS pasará lo mismo
                                             if (error === self._image.ErrorType.PROTOCOL && options.ignoreProxification) {
                                                 _reject(error);
@@ -888,7 +893,7 @@ TC.tool.Proxification = function (proxy, options) {
                                 self._image.getImgTag(src, options).then(function (img) {
                                     _caching(img, self._actionDirect);
                                 }, function (error) {
-                                    if ((options.exportable && error === self._image.ErrorType.CORS) || self._isServiceWorker() || (self._isSecureURL(self._location) && self.preventMixedContent)) {
+                                    if (options.exportable && error === self._image.ErrorType.CORS || self._isServiceWorker() || self._isSecureURL(self._location) && self.preventMixedContent) {
                                         // Si la imagen debe ser exportable y en la solicitud por HTTPS tenemos error de CORS, deducimos que por HTTP pasará lo mismo
                                         if (error === self._image.ErrorType.PROTOCOL && options.ignoreProxification) {
                                             _reject(error);
@@ -937,12 +942,6 @@ TC.tool.Proxification = function (proxy, options) {
                 })(), formData: 'FormData' in self, arrayBuffer: 'ArrayBuffer' in self
             }
 
-            if (support.arrayBuffer) {
-                var viewClasses = ['[object Int8Array]', '[object Uint8Array]', '[object Uint8ClampedArray]', '[object Int16Array]', '[object Uint16Array]', '[object Int32Array]', '[object Uint32Array]', '[object Float32Array]', '[object Float64Array]']
-                var isDataView = function (obj) { return obj && DataView.prototype.isPrototypeOf(obj) }
-                var isArrayBufferView = ArrayBuffer.isView || function (obj) { return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1 }
-            }
-
             function parseHeaders(rawHeaders) {
                 var headers = new Headers()
                 var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ')
@@ -969,8 +968,12 @@ TC.tool.Proxification = function (proxy, options) {
             xhr.onerror = function () { reject(new TypeError('Network request failed')) };
             xhr.ontimeout = function () { reject(new TypeError('Network request failed')) };
             xhr.open(request.method, request.url, false);
-            if (request.credentials === 'include') { xhr.withCredentials = !options.sync } else if (request.credentials === 'omit') { xhr.withCredentials = !1 };
-            if (!options.sync && ('responseType' in xhr && support.blob)) { xhr.responseType = 'blob' };
+            if (request.credentials === 'include') {
+                xhr.withCredentials = !options.sync
+            } else if (request.credentials === 'omit') {
+                xhr.withCredentials = !1
+            }
+            if (!options.sync && ('responseType' in xhr && support.blob)) { xhr.responseType = 'blob' }
             request.headers.forEach(function (value, name) { xhr.setRequestHeader(name, value) });
             xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);
         })
@@ -1106,11 +1109,12 @@ TC.tool.Proxification = function (proxy, options) {
                             }).catch(function (error) { throw error; });
                     };
 
+                    let hasCharset;
                     switch (true) {
                         case options.responseType.indexOf('xml') > -1:
                         case options.responseType.indexOf('text/xml') > -1:
                         case options.responseType.indexOf(TC.Consts.mimeType.XML) > -1:
-                            var hasCharset = /charset=([^;]*)/i.exec(contentType);
+                            hasCharset = /charset=([^;]*)/i.exec(contentType);
                             if (hasCharset && hasCharset.length === 2 && hasCharset[1] !== "UTF-8") {
                                 return responseWithCharsetToDecodedString(hasCharset[1]).then(function (text) {
                                     return (new window.DOMParser()).parseFromString(text, "text/xml");
@@ -1139,7 +1143,7 @@ TC.tool.Proxification = function (proxy, options) {
                         case options.responseType == '':
                         case options.responseType.indexOf('text') > -1:
                         default:
-                            var hasCharset = /charset=([^;]*)/i.exec(contentType);
+                            hasCharset = /charset=([^;]*)/i.exec(contentType);
                             if (hasCharset && hasCharset.length === 2 && hasCharset[1] !== "UTF-8") {
                                 return responseWithCharsetToDecodedString(hasCharset[1]).then(function (text) {
                                     if (options.responseType == '') {
@@ -1160,7 +1164,8 @@ TC.tool.Proxification = function (proxy, options) {
                     }
                 })
                 .catch(function (error) {
-                    if (actions.length === 1) {
+                    //URI:Si es error 500 es inutil hacer mas llamadas o proxificar si no lo estaba ya.
+                    if (actions.length === 1 || (error.status && error.status===500)) {
                         console.log('request failed', error);
                         return Promise.reject(error);
                     }
@@ -1176,7 +1181,7 @@ TC.tool.Proxification = function (proxy, options) {
                     resolve(_makeRequest(url, options, [cache.action]));
                 }).catch(function (error) {
                     if (!error.status || error.status >= 400) {
-                        reject(new Error(error.text));
+                        reject(error);
                     } else {
                         resolve(self.fetch(url, options));
                     }
@@ -1198,7 +1203,7 @@ TC.tool.Proxification = function (proxy, options) {
                         self.cacheHost.removeKey(url, options);
 
                         rejectActionPromise(error);
-                        reject(new Error(error.text));
+                        reject(error);
                     };
 
                     if (self._isSameOrigin(url)) {
@@ -1225,7 +1230,7 @@ TC.tool.Proxification = function (proxy, options) {
                 });
                 cache._actionPromise.catch(function (error) {
                     if (!error.status || error.status >= 400) {
-                        reject(new Error(error.text));
+                        reject(error);
                     } else {
                         resolve(self.fetch(url, options));
                     }
@@ -1242,21 +1247,24 @@ TC.tool.Proxification = function (proxy, options) {
         return new Promise(function (resolve, reject) {
             self.fetch(url, options).then(function (response) {
                 const contentDisposition = response.headers.get(self._fetch.Headers.CONTENTDISPOSITION);
-                var filename = new RegExp(/\w+.\w{1,}$/gi).exec(url)[0];
+                var filename = new RegExp(/[\w|\-|\.]+.\w{1,}$/gi).exec(url)[0];
                 if (contentDisposition && /(attachment);([^;]*)/gi.test(contentDisposition)) {
                     try {
-                        filename = /filename\*?=\"?([\w|-]*\'\')?(.*\.\w*)\"?/gi.exec(contentDisposition)[2];                        
+                        filename = /filename\*?=\"?([\w|\-|\.]*\'\')?(.*\.\w*)\"?/gi.exec(contentDisposition)[2];
                     } catch (ex) {
                         try {
                             filename = contentDisposition.substring((contentDisposition.lastIndexOf("'") || contentDisposition.indexOf("=")) + 1);
-                        } catch (ex2) { }                        
+                        } catch (ex2) { }
                     }
                 }
                 response.blob().then(function (blob) {
                     resolve(new File([blob], filename, { type: response.headers.get(self._fetch.Headers.CONTENTTYPE) }));
-                })
-                
+                });
+
             }).catch(reject);
         });
-    }
+    };
 })();
+
+var Proxification = TC.tool.Proxification;
+export default Proxification;
