@@ -4,7 +4,7 @@ if (!TC.tool.ElevationService) {
     TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
 }
 
-TC.tool.ElevationServiceIGNEs = function (options) {
+TC.tool.ElevationServiceIGNEs = function (_options) {
     const self = this;
     TC.tool.ElevationService.apply(self, arguments);
     self.url = self.options.url || '//servicios.idee.es/wcs-inspire/mdt';
@@ -65,7 +65,7 @@ TC.inherit(TC.tool.ElevationServiceIGNEs, TC.tool.ElevationService);
                             proxificationTool = new TC.tool.Proxification(TC.proxify);
                             endFn();
                         }
-                    )
+                    );
                 }
             });
         }

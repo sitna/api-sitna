@@ -7,7 +7,7 @@ if (!TC.tool.ElevationService) {
     TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
 }
 
-TC.tool.ElevationServiceGoogle = function (options) {
+TC.tool.ElevationServiceGoogle = function (_options) {
     const self = this;
     TC.tool.ElevationService.apply(self, arguments);
     self.url = self.options.url || '//maps.googleapis.com/maps/api/js?v=3';
@@ -76,9 +76,9 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
 
         if (coordinateList.length > self.maxCoordinateCountPerRequest) {
             // Google no soporta tantos puntos por petición, dividimos la petición en varias
-            return new Promise(function (resolve, reject) {
+            return new Promise(function (resolve, _reject) {
                 const chunks = [];
-                for (i = 0, ii = coordinateList.length; i < ii; i += self.maxCoordinateCountPerRequest) {
+                for (var i = 0, ii = coordinateList.length; i < ii; i += self.maxCoordinateCountPerRequest) {
                     chunks.push(coordinateList.slice(i, i + self.maxCoordinateCountPerRequest));
                 }
                 upRequestId(requestId, chunks.length);
@@ -137,7 +137,7 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
             coordinateList = TC.Util.reproject(coordinateList, options.crs, self.nativeCRS);
         }
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             const googleMapsIsLoaded = window.google && window.google.maps;
             if (!googleMapsIsLoaded) {
                 TC.Cfg.proxyExceptions = TC.Cfg.proxyExceptions || [];
@@ -157,7 +157,7 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
                             elevations: elevations,
                             status: status
                         });
-                    })
+                    });
                 },
                 false,
                 true

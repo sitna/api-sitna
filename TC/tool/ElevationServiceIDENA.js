@@ -4,7 +4,7 @@ if (!TC.tool.ElevationService) {
     TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
 }
 
-TC.tool.ElevationServiceIDENA = function (options) {
+TC.tool.ElevationServiceIDENA = function (_options) {
     const self = this;
     TC.tool.ElevationService.apply(self, arguments);
     self.url = self.options.url || '//idena.navarra.es/ogc/wps';
@@ -53,8 +53,8 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
 
     toolProto.parseResponse = function (response, options) {
         const self = this;
-        const coverageClass = options.coverageClass || self.coverageClass
-        const coverageClassCount = (options.includeHeights && coverageClass) ? coverageClass.split(',').length : 1;
+        const coverageClass = options.coverageClass || self.coverageClass;
+        const coverageClassCount = options.includeHeights && coverageClass ? coverageClass.split(',').length : 1;
         if (coverageClassCount <= 1) {
             return TC.tool.ElevationService.prototype.parseResponse.call(self, response, options);
         }
@@ -62,13 +62,14 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
             const coords = response.coordinates;
             const coordinateCount = coords.length / coverageClassCount;
             const result = coords.slice(0, coordinateCount);
-            for (var i = 0; i < coordinateCount; i++) {
+            var i;
+            for (i = 0; i < coordinateCount; i++) {
                 const point = result[i];
                 if (point[2] < self.minimumElevation) {
                     point[2] = null;
                 }
             }
-            for (var i = 1; i < coverageClassCount; i++) {
+            for (i = 1; i < coverageClassCount; i++) {
                 const offset = i * coordinateCount;
                 for (var j = 0; j < coordinateCount; j++) {
                     const elevation = coords[j + offset][2];
