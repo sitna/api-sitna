@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.control.LoadingIndicator = function () {
     const self = this;
@@ -78,11 +80,11 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
         }
     };
 
-    ctlProto.reset = function (e) {
+    ctlProto.reset = function (_e) {
         var self = this;
         self._waits = {};
         self.hide();
-        self.map.trigger(TC.Consts.event.STOPLOADING);
+        self.map && self.map.trigger(TC.Consts.event.STOPLOADING);
     };
 
     ctlProto.register = function (map) {
@@ -113,7 +115,7 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
             });
         if (!TC.isDebug) {
             //Para evitar que se quede el indicador indefinidamente activo cuando hay un error en la página
-            window.addEventListener('error', function (msg, url, line, col, error) {
+            window.addEventListener('error', function (_msg, _url, _line, _col, _error) {
                 self.reset();
                 return false;
             });
@@ -138,3 +140,6 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
     };
 
 })();
+
+const LoadingIndicator = TC.control.LoadingIndicator;
+export default LoadingIndicator;
