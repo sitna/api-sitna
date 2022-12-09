@@ -1,4 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.Consts.classes.PRINTABLE = 'tc-printable';
 
@@ -56,7 +62,7 @@ TC.inherit(TC.control.Print, TC.Control);
             if (target) {
                 const btn = target.querySelector('.' + self.CLASS + '-btn');
                 if (btn) {
-                    btn.addEventListener('click', function (e) {
+                    btn.addEventListener('click', function (_e) {
                         self.renderPrintPage();
                     });
                     delete self._mustAddListeners;
@@ -98,3 +104,6 @@ TC.inherit(TC.control.Print, TC.Control);
     };
 
 })();
+
+const Print = TC.control.Print;
+export default Print;
