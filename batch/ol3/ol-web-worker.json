@@ -1,0 +1,31 @@
+{
+  "exports": [
+	"ol.format.WMSCapabilities",
+	"ol.format.WMSCapabilities#read",
+	"ol.format.WMTSCapabilities",
+	"ol.format.WMTSCapabilities#read"
+  ],
+  "compile": {
+    "externs": [
+      "externs/closure-compiler.js",
+      "externs/geojson.js",
+      "externs/oli.js",
+      "externs/olx.js",
+      "externs/proj4js.js"
+    ],
+    "define": [
+      "goog.array.ASSUME_NATIVE_FUNCTIONS=true",
+      "goog.dom.ASSUME_STANDARDS_MODE=true",
+      "goog.json.USE_NATIVE_JSON=true",
+      "goog.DEBUG=false"
+    ],
+    "jscomp_off": [
+      "unknownDefines"
+    ],
+    "extra_annotation_name": [
+      "api", "observable"
+    ],
+    "compilation_level": "ADVANCED",
+    "manage_closure_dependencies": true
+  }
+}
