@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import MapContents from './MapContents';
 
-if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapContents');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.control.MapContents = MapContents;
 
 TC.control.TOC = function () {
     var self = this;
@@ -39,7 +41,7 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         const self = this;
         if (e && e.layer) {
             e.layer.map = self.map;
-            self.map.addLayer(e.layer).then(function (layer) {
+            self.map.addLayer(e.layer).then(function (_layer) {
                 self.updateLayerTree(e.layer);
             });
         }
@@ -54,13 +56,14 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
                 ul = ul.parentElement;
             }
             const lis = [];
-            for (var i = 0, len = ul.children.length; i < len; i++) {
-                child = ul.children[i];
+            var i;
+            for (i = 0; i < ul.children.length; i++) {
+                const child = ul.children[i];
                 if (child.tagName === 'LI') {
                     lis.push(child);
                 }
             }
-            for (var i = 0, len = lis.length; i < len; i++) {
+            for (i = 0; i < lis.length; i++) {
                 const li = lis[i];
                 if (li.contains(checkbox)) {
                     const layer = self.map.getLayer(li.dataset.layerId);
@@ -68,7 +71,8 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
                     do {
                         parent = parent.parentElement;
                     }
-                    while (parent && parent.tagName !== 'LI');
+                    //URI: El arbol de capas vecotriales falla si tiene una profuncidad de 2 o mas nodos
+                    while (parent && parent.tagName !== 'LI' && !layer.getNodeVisibility(parent.dataset.layerUid));
                     const uid = parent.dataset.layerUid;
                     layer.setNodeVisibility(uid, checkbox.checked);
                     break;
@@ -89,7 +93,7 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         }));
     };
 
-    ctlProto.update = function () {
+    ctlProto.update = function (layer) {
         var self = this;
 
         var _getCheckbox = function (li) {
@@ -102,49 +106,64 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
             return null;
         };
 
-        self.getLayerUIElements().forEach(function (li) {
-            const layer = self.map.getLayer(li.dataset.layerId);
-            if (layer) {
-                _getCheckbox(li).checked = layer.getVisibility();
+        const li = self.getLayerUIElements().find(ui => ui.dataset.layerId === layer.id);
+        if (!li) return;
+        _getCheckbox(li).checked = layer.getVisibility();
 
-                layer.tree = null;
-
-                li.querySelectorAll('li').forEach(function (l) {
-                    const checkbox = _getCheckbox(l);
-                    const uid = l.dataset.layerUid;
-                    switch (layer.getNodeVisibility(uid)) {
-                        case TC.Consts.visibility.VISIBLE:
-                            checkbox.checked = true;
-                            checkbox.indeterminate = false;
-                            break;
-                        case TC.Consts.visibility.NOT_VISIBLE_AT_RESOLUTION:
-                            checkbox.checked = true;
-                            checkbox.indeterminate = false;
-                            break;
-                        case TC.Consts.visibility.HAS_VISIBLE:
-                            checkbox.checked = false;
-                            checkbox.indeterminate = true;
-                            break;
-                        default:
-                            checkbox.checked = false;
-                            checkbox.indeterminate = false;
-                    }
-                });
-            }
+        layer.tree = null;
+        const tree = layer.getTree(true);
+        li.querySelectorAll('li').forEach(function (l) {
+            const checkbox = _getCheckbox(l);
+            const uid = l.dataset.layerUid;
+            switch (layer.getNodeVisibility(uid, tree)) {
+                case TC.Consts.visibility.VISIBLE:
+                    checkbox.checked = true;
+                    checkbox.indeterminate = false;
+                    break;
+                case TC.Consts.visibility.NOT_VISIBLE:
+                    checkbox.checked = false;
+                    checkbox.indeterminate = false;
+                    break;
+                case TC.Consts.visibility.NOT_VISIBLE_AT_RESOLUTION:
+                    checkbox.checked = true;
+                    checkbox.indeterminate = false;
+                    break;
+                case TC.Consts.visibility.HAS_VISIBLE:
+                    checkbox.checked = false;
+                    checkbox.indeterminate = true;
+                    break;
+                case null:
+                    // Nodo no encontrado, no visible
+                    checkbox.checked = false;
+                    checkbox.indeterminate = true;
+                    break;
+                default: {
+                    // visibilityState no establecido, miramos isVisible
+                    const node = layer.findNode(uid, tree);
+                    const isVisible = Object.prototype.hasOwnProperty.call(node, "isVisible") ? node.isVisible : true;
+                    checkbox.checked = isVisible;
+                    checkbox.indeterminate = false;
+                }
+        }
         });
-
-        self.updateScale();
     };
 
-    ctlProto.updateScale = function () {
+    ctlProto.updateScale = function (layer) {
         const self = this;
-        self.getLayerUIElements().forEach(function (li) {
-            const layer = self.map.getLayer(li.dataset.layerId);
+        const setVisibilityByScale = function (li, layer) {
+            if (!li) return;
             li.querySelectorAll('li').forEach(function (elm) {
                 const uid = elm.dataset.layerUid;
                 elm.classList.toggle(self.CLASS + '-node-notvisible', !layer.isVisibleByScale(uid));
             });
-        });
+        };
+        if (!layer)
+            self.getLayerUIElements().forEach(function (li) {
+                setVisibilityByScale(li, self.map.getLayer(li.dataset.layerId));
+
+            });
+        else
+            setVisibilityByScale(self.getLayerUIElements().find(ui => ui.dataset.layerId === layer.id), layer);        
     };
 
     ctlProto.updateLayerTree = function (layer) {
@@ -154,45 +173,78 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
             TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
 
             self.div.querySelector('.' + self.CLASS + '-empty').classList.add(TC.Consts.classes.HIDDEN);
-
             self.getRenderedHtml(self.CLASS + '-branch', self.layerTrees[layer.id])
                 .then(function (out) {
                     const parser = new DOMParser();
                     const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
                     const uid = newLi.dataset.layerUid;
-                    const li = self.div.querySelector('.' + self.CLASS + '-wl li[data-layer-uid="' + uid + '"]');
-                    if (li) {
+                    const li = self.div.querySelector('.' + self.CLASS + '-wl li[data-layer-uid="' + uid + '"]') ||
+                        self.div.querySelector('.' + self.CLASS + '-wl li[data-layer-id="' + layer.id + '"]');
+                    if (!li) {
+                        newLi.dataset.layerId = layer.id;
+                        const ul = self.div.querySelector('.' + self.CLASS + '-wl');
+                        ul.insertBefore(newLi, ul.firstChild);
+
+                        //if (layer instanceof TC.layer.Vector || li)
+                        /*if (li) {
+                            li.innerHTML = newLi.innerHTML;
+                            li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
+                            if (!li.dataset.layerId) {
+                                li.dataset.layerId = layer.id;
+                            }
+                        }
+                        else {
+                            newLi.dataset.layerId = layer.id;
+                            const ul = self.div.querySelector('.' + self.CLASS + '-wl');
+                            ul.insertBefore(newLi, ul.firstChild);
+                        }*/
+
+                        const wl = 'ul.' + self.CLASS + '-wl';
+                        const branch = 'ul.' + self.CLASS + '-branch';
+                        const node = 'li.' + self.CLASS + '-node';
+                        const leaf = 'li.' + self.CLASS + '-leaf';
+                        newLi.querySelectorAll(wl + ' ' + branch + ' ' + branch + ',' + wl + ' ' + branch + ' ' + node).forEach(function (node_) {
+                            if (!node_.matches(leaf)) {
+                                node_.classList.add(TC.Consts.classes.COLLAPSED);
+                            }
+                        });
+                    } else if (layer instanceof TC.layer.Vector) {
+                        const wl = 'ul.' + self.CLASS + '-wl';
+                        const branch = 'ul.' + self.CLASS + '-branch';
+                        const node = 'li.' + self.CLASS + '-node';
+                        const leaf = 'li.' + self.CLASS + '-leaf';
+                        //guardo los no collapsados
+                        const notCollapsedNodesUid = Array.from(li.querySelectorAll("li.tc-ctl-toc-node:not(.tc-ctl-toc-leaf):not(.tc-collapsed)")).reduce(function (previousValue, currentValue) {
+                            console.log(previousValue);
+                            previousValue.push(currentValue.dataset.layerUid);
+                            return previousValue;
+                        }, []);
                         li.innerHTML = newLi.innerHTML;
                         li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
                         if (!li.dataset.layerId) {
                             li.dataset.layerId = layer.id;
                         }
+                        li.querySelectorAll(wl + ' ' + branch + ' ' + branch + ',' + wl + ' ' + branch + ' ' + node).forEach(function (node_) {
+                            //colapso todos los nodos que no son hoja y que previamente no estaban collapsados
+                            if (!node_.matches(leaf) &&
+                                !(node_.tagName === "LI" && notCollapsedNodesUid.some(notCollapsedUid => notCollapsedUid === node_.dataset.layerUid) ||
+                                node_.tagName === "UL" && notCollapsedNodesUid.some(notCollapsedUid => notCollapsedUid === node_.parentElement.dataset.layerUid)
+                                )) {
+                                node_.classList.add(TC.Consts.classes.COLLAPSED);
+                            }
+                        });
                     }
-                    else {
-                        newLi.dataset.layerId = layer.id;
-                        const ul = self.div.querySelector('.' + self.CLASS + '-wl');
-                        ul.insertBefore(newLi, ul.firstChild);
-                    }
-
-                    var wl = 'ul.' + self.CLASS + '-wl';
-                    var branch = 'ul.' + self.CLASS + '-branch';
-                    var node = 'li.' + self.CLASS + '-node';
-                    var leaf = 'li.' + self.CLASS + '-leaf';
-                    self.div.querySelectorAll(wl + ' ' + branch + ' ' + branch + ',' + wl + ' ' + branch + ' ' + node).forEach(function (node) {
-                        if (!node.matches(leaf)) {
-                            node.classList.add(TC.Consts.classes.COLLAPSED);
-                        }
-                    });
-                    self.update();
+                   
+                    self.update(layer);
+                    self.updateScale(layer);
                 })
                 .catch(function (err) {
                     TC.error(err);
                 });
         }
-    };
-
+    };    
     ctlProto.removeLayer = function (layer) {
-        if (!layer.isBase) {
+        if (!layer.isBase) {           
             TC.control.MapContents.prototype.removeLayer.call(this, layer);
         }
     };
@@ -214,7 +266,7 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         });
     };
 
-    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx) {
+    ctlProto.updateLayerOrder = function (_layer, _oldIdx, _newIdx) {
         // Este control no tiene que hacer nada
     };
 
@@ -243,11 +295,15 @@ TC.inherit(TC.control.TOC, TC.control.MapContents);
         const result = [];
         const children = self.div.querySelector('ul.' + self.CLASS + '-wl').children;
         for (var i = 0, len = children.length; i < len; i++) {
-            child = children[i];
+            const child = children[i];
             if (child.tagName === 'LI') {
                 result.push(child);
             }
         }
         return result;
     };
+        
 })();
+
+const TOC = TC.control.TOC;
+export default TOC;
