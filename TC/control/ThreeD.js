@@ -1,17 +1,36 @@
 ﻿/**
-  * Configuración adicional necesaria del control 3D en el mapa.  
-  * @typedef ThreeDOptions
-  * @extends ViewOptions
+  * Opciones básicas de vista.  
+  * @_typedef ViewOptions  
+  * @_see ThreeDViewOptions  
+  * @_property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.   
+  */
+
+/**
+  * Configuración adicional necesaria del control 3D en el mapa. Se define el elemento del DOM en el cual se renderizará la vista 3D.
+  * @typedef ThreeDViewOptions
+  * @_extends ViewOptions
   * @see MapViewOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.  
   *
+  * @example <caption>Definición objeto ThreeDViewOptions</caption> {@lang javascript}
+  *     {  
+  *         div: "IDElementoDOM"
+  *     }
   * @example <caption>[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang html}
   * <div id="mapa"/>
   * <div id="vista3d"/>
   * <script>
   *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
   *     SITNA.Cfg.layout = "layout/ctl-container";
-  *     // Añadimos el control de selector de mapa de fondos en el primer DIV del marcado markup.html contenido en el layout configurado en la propiedad SITNA.Cfg.layout.
+  *     // Configuramos en la propiedad `views` del mapa, la vista `threeD` que requiere el control threeD para el correcto funcionamiento.
+  *     SITNA.Cfg.views = {
+  *         threeD: {
+  *             div: "vista3d" // Indicamos el identificador del DIV en el marcado en el cual cargar la vista 3D.
+  *         }
+  *     };
+  *     // Añadimos el control 3D.
+  *     SITNA.Cfg.controls.threeD = true;  
+  *     // Añadimos el control de selector de mapas de fondo en el primer DIV del marcado markup.html contenido en el layout configurado en la propiedad SITNA.Cfg.layout.
   *     SITNA.Cfg.controls.basemapSelector = {
   *         div: "slot1"
   *     };
@@ -35,20 +54,21 @@
   *             type: SITNA.Consts.layerType.VECTOR,
   *             url: "data/ESTACIONESTREN.gml"
   *         }
-  *     ];
-  *     // Añadimos el control 3D.
-  *     SITNA.Cfg.controls.threeD = true;
-  *     // Configuramos en la propiedad `views` del mapa la vista `threeD` que requiere el control threeD para el correcto funcionamiento.
-  *     SITNA.Cfg.views = {
-  *         threeD: {
-  *             div: "vista3d" // Indicamos el identificador del DIV en el marcado en el cual cargar la vista 3D.
-  *         }
-  *     };
+  *     ];  
   *     var map = new SITNA.Map("mapa");
   * </script>
   */
 
+import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+import ThreeD from '../view/ThreeD';
+
+TC.Consts = Consts;
 TC.control = TC.control || {};
+TC.view = TC.view || {};
+TC.view.ThreeD = ThreeD;
+TC.Control = Control;
 
 (function () {
 
@@ -76,7 +96,7 @@ TC.control = TC.control || {};
         const result = TC.Control.prototype.register.call(self, map);
 
         map.on(TC.Consts.event.VIEWCHANGE, function (e) {
-            if (e.view == TC.Consts.view.THREED) { // cargamos la vista 3D desde el estado actualizamos el estado del botón
+            if (e.view === TC.Consts.view.THREED) { // cargamos la vista 3D desde el estado actualizamos el estado del botón
                 self.activate();
             }
         });
@@ -139,14 +159,7 @@ TC.control = TC.control || {};
             self.button.disabled = false;
         };
 
-        if (!self.map.view3D) {
-            TC.loadJS(
-                !TC.view || !TC.view.ThreeD,
-                TC.apiLocation + 'TC/view/ThreeD',
-                function () {                                                           /* provisional */
-                    TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled });
-                });
-        } else if (!self.map.on3DView) {                                               /* provisional */
+        if (!self.map.view3D || !self.map.on3DView) {
             TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled });
         }
 
@@ -205,7 +218,7 @@ TC.control = TC.control || {};
                     result = true;
                 }
             } catch (e) {
-                console.log(E);
+                console.log(e);
             }
 
             if (result === "slow" || !result) {
@@ -221,3 +234,6 @@ TC.control = TC.control || {};
     };
 
 })();
+
+const ThreeDControl = TC.control.ThreeD;
+export default ThreeDControl;

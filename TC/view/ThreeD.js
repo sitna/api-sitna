@@ -1,24 +1,17 @@
-﻿/**
-  * Opciones básicas de vista.  
-  * @typedef ViewOptions  
-  * @see MapViewOptions
-  * @see 2-configuration
-  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.   
-  */
-
-
-var TC = TC || {};
+﻿import TC from '../../TC';
+import MapContents from '../control/MapContents';
 TC.view = TC.view || {};
+TC.control = TC.control || {};
+TC.control.MapContents = MapContents;
 
 TC.Consts = TC.Consts || {};
 TC.Consts.CESIUMNS = 'cesium';
 
-if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
-(function (namespace, signature, factory) {
-    namespace[signature] = factory();
+const ThreeD = (function (namespace, signature, factory) {
+    return namespace[signature] = factory();
 })(TC.view, "ThreeD", function () {
+
+    const hasOwnProperty = Object.prototype.hasOwnProperty;
 
     var viewProto = {
         VIEWNAME: "ThreeD",
@@ -456,17 +449,17 @@ if (!TC.control.MapContents) {
 
                     for (var i = 1; i < updatedPositions.length; i++) {
                         var done;
-                        var previuos_next = [];
+                        let previous_next = [];
 
                         updatedPositions[i].time = 0;
 
                         if (i + 1 < updatedPositions.length) {
-                            previuos_next = updatedPositions.slice(i - 1, i + 1);
+                            previous_next = updatedPositions.slice(i - 1, i + 1);
                         } else {
-                            previuos_next = updatedPositions.slice(i - 1);
+                            previous_next = updatedPositions.slice(i - 1);
                         }
 
-                        done = new cesium.EllipsoidGeodesic(previuos_next[0], previuos_next[1]).surfaceDistance;
+                        done = new cesium.EllipsoidGeodesic(previous_next[0], previous_next[1]).surfaceDistance;
 
                         totalDistance += done;
 
@@ -479,15 +472,15 @@ if (!TC.control.MapContents) {
 
                 if (totalDistance === 0) {
                     for (var i = 1; i < updatedPositions.length; i++) {
-                        var previuos_next = [];
+                        let previous_next = [];
 
                         if (i + 1 < updatedPositions.length) {
-                            previuos_next = updatedPositions.slice(i - 1, i + 1);
+                            previous_next = updatedPositions.slice(i - 1, i + 1);
                         } else {
-                            previuos_next = updatedPositions.slice(i - 1);
+                            previous_next = updatedPositions.slice(i - 1);
                         }
 
-                        totalDistance += new cesium.EllipsoidGeodesic(previuos_next[0], previuos_next[1]).surfaceDistance;
+                        totalDistance += new cesium.EllipsoidGeodesic(previous_next[0], previous_next[1]).surfaceDistance;
                     }
                 }
 
@@ -640,7 +633,7 @@ if (!TC.control.MapContents) {
         };
         var cssRotate = function (element, angle) {
             var coord = element.getBBox();
-            value = 'rotate(' + cesium.Math.toDegrees(angle) + ' ' + (coord.x + (coord.width / 2)) + ' ' + (coord.y + (coord.height / 2)) + ')';
+            const value = 'rotate(' + cesium.Math.toDegrees(angle) + ' ' + (coord.x + (coord.width / 2)) + ' ' + (coord.y + (coord.height / 2)) + ')';
             document.getElementsByClassName(element.className.baseVal)[0].setAttribute('transform', value);
         };
 
@@ -1135,7 +1128,7 @@ if (!TC.control.MapContents) {
             camera = scene.camera;
 
             var tiltRectangle = tiltElement.getBoundingClientRect();
-            center = new cesium.Cartesian2((tiltRectangle.right - tiltRectangle.left) / 2.0, (tiltRectangle.bottom - tiltRectangle.top) / 2.0);
+            const center = new cesium.Cartesian2((tiltRectangle.right - tiltRectangle.left) / 2.0, (tiltRectangle.bottom - tiltRectangle.top) / 2.0);
             var clickLocation = new cesium.Cartesian2(e.clientX - tiltRectangle.left, e.clientY - tiltRectangle.top);
             var vector = cesium.Cartesian2.subtract(clickLocation, center, vectorScratch);
 
@@ -1578,7 +1571,6 @@ if (!TC.control.MapContents) {
                         resolve(e);
                     });
 
-                    savedIsActive = ctlFeatureInfo.isActive;
                     ctlFeatureInfo.isActive = true;
                     ctlFeatureInfo.beforeRequest({
                         xy: [0, 0]
@@ -1608,28 +1600,36 @@ if (!TC.control.MapContents) {
         };
         var getOfPath = function (obj, p, i) {
             if (i < p.length - 1) {
-                if (obj.hasOwnProperty(p[i]))
+                if (hasOwnProperty.call(obj, p[i])) {
                     return getOfPath(obj[p[i]], p, ++i);
-                else return null;
+                }
+                else {
+                    return null;
+                }
             } else {
                 if (obj instanceof Array) {
                     var _obj = [];
                     for (var a = 0; a < obj.length; a++) {
-                        if (obj[a].hasOwnProperty(p[i]))
+                        if (hasOwnProperty.call(obj[a], p[i])) {
                             _obj.push(obj[a][p[i]]);
+                        }
                     }
 
                     return _obj;
-                } else return obj[p[i]];
+                } else {
+                    return obj[p[i]];
+                }
             }
         };
 
         var getTileMatrixSetLabelByLayerOnCapabilities = function (layer, crs) {
+            let capsURL;
             if ((capsURL = TC.Util.isOnCapabilities(layer.url))) {
+                let caps;
                 if ((caps = TC.capabilities[capsURL])) {
                     var tileMatrixSet = getOfPath(caps, paths.TILEMATRIXSETLABELS, 0);
                     for (var a = 0; a < tileMatrixSet.length; a++) {
-                        if (TC.Util.CRSCodesEqual(crs, tileMatrixSet[a]["SupportedCRS"])) {
+                        if (TC.Util.CRSCodesEqual(crs, tileMatrixSet[a].SupportedCRS)) {
                             return { id: tileMatrixSet[a].Identifier, labels: getOfPath(tileMatrixSet[a], ["TileMatrix", "Identifier"], 0) };
                         }
                     }
@@ -1725,8 +1725,9 @@ if (!TC.control.MapContents) {
                             var names = layer.names.slice(0);
                             var _getEXBBox = function _getEXBBox(nodes, name) {
                                 if (nodes) {
+                                    let n;
                                     for (var i = 0; i < nodes.length; i++) {
-                                        var n = nodes[i];
+                                        n = nodes[i];
                                         if (layer.compareNames(layer.wrap.getName(n), name)) {
                                             return n.EX_GeographicBoundingBox;
                                         }
@@ -1843,7 +1844,7 @@ if (!TC.control.MapContents) {
             layer.getWebGLUrl.call(layer, url).then(getImage, function (e) {
                 deferred.reject(e);
             });
-        };
+        }
 
         function fetchImage(resource, allowCrossOrigin) {
             var request = resource.request;
@@ -1946,7 +1947,6 @@ if (!TC.control.MapContents) {
                     return wmtsLayer.call(this, layer);
                 case TC.Consts.layerType.WMS == layer.type:
                     return wmsLayer.call(this, layer);
-                    break;
             }
         };
     };
@@ -2006,7 +2006,7 @@ if (!TC.control.MapContents) {
             var self = this;
             var styles;
 
-            if (!feature.layer || (feature.layer && !feature.layer.hasOwnProperty('styles'))) {
+            if (!feature.layer || (feature.layer && !hasOwnProperty.call(feature.layer, 'styles'))) {
                 styles = TC.Defaults.styles;
             } else {
                 styles = feature.layer.styles;
@@ -2033,7 +2033,7 @@ if (!TC.control.MapContents) {
             });
 
             callback(entity);
-        };
+        }
 
         var circleConverter = function (feature) {
             var self = this;
@@ -2053,8 +2053,8 @@ if (!TC.control.MapContents) {
 
                 setStyleProperties(styles, properties, feature);
                 var color;
-                if (properties.color.hasOwnProperty('val')) {
-                    if (properties.opacity.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.color, 'val')) {
+                    if (hasOwnProperty.call(properties.opacity, 'val')) {
                         color = toCesiumColor(properties.color.val, properties.opacity.val);
                     } else {
                         color = toCesiumColor(properties.color.val);
@@ -2063,8 +2063,8 @@ if (!TC.control.MapContents) {
 
                 opt.color = cesium.ColorGeometryInstanceAttribute.fromColor(color);
 
-                if (properties.outlineColor.hasOwnProperty('val')) {
-                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.outlineColor, 'val')) {
+                    if (hasOwnProperty.call(properties.outlineOpacity, 'val')) {
                         color = toCesiumColor(properties.outlineColor.val, properties.outlineOpacity.val);
                     } else {
                         color = toCesiumColor(properties.outlineColor.val);
@@ -2073,7 +2073,7 @@ if (!TC.control.MapContents) {
 
                 opt.outlineColor = cesium.ColorGeometryInstanceAttribute.fromColor(color);
 
-                if (properties.width.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.width, 'val')) {
                     opt.width = properties.width.val;
                 }
 
@@ -2154,8 +2154,8 @@ if (!TC.control.MapContents) {
 
                 setStyleProperties(styles, properties, feature);
                 var color;
-                if (properties.color.hasOwnProperty('val')) {
-                    if (properties.opacity.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.color, 'val')) {
+                    if (hasOwnProperty.call(properties.opacity, 'val')) {
                         color = toCesiumColor(properties.color.val, properties.opacity.val);
                     } else {
                         color = toCesiumColor(properties.color.val);
@@ -2164,8 +2164,8 @@ if (!TC.control.MapContents) {
 
                 opt.color = cesium.ColorGeometryInstanceAttribute.fromColor(color);
 
-                if (properties.outlineColor.hasOwnProperty('val')) {
-                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.outlineColor, 'val')) {
+                    if (hasOwnProperty.call(properties.outlineOpacity, 'val')) {
                         color = toCesiumColor(properties.outlineColor.val, properties.outlineOpacity.val);
                     } else {
                         color = toCesiumColor(properties.outlineColor.val);
@@ -2174,7 +2174,7 @@ if (!TC.control.MapContents) {
 
                 opt.outlineColor = color;
 
-                if (properties.width.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.width, 'val')) {
                     opt.width = properties.width.val;
                 }
 
@@ -2211,8 +2211,8 @@ if (!TC.control.MapContents) {
                         };
 
                         for (var i = 0; i < coords.length; i++) {
+                            let hierarchy;
                             for (var j = 0; j < coords[i].length; j++) {
-                                var hierarchy;
                                 if (j == 0) {
                                     getting.push(getOutlineGeom.call(this, coords[i][0]));
                                     hierarchy = new cesium.PolygonHierarchy(coords[i][0]);
@@ -2283,13 +2283,13 @@ if (!TC.control.MapContents) {
 
                 setStyleProperties(styles, properties, feature);
 
-                if (properties.width.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.width, 'val')) {
                     opt.width = properties.width.val;
                 }
 
                 var color;
-                if (properties.color.hasOwnProperty('val')) {
-                    if (properties.opacity.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.color, 'val')) {
+                    if (hasOwnProperty.call(properties.opacity, 'val')) {
                         color = toCesiumColor(properties.color.val, properties.opacity.val);
                     } else {
                         color = toCesiumColor(properties.color.val);
@@ -2397,8 +2397,8 @@ if (!TC.control.MapContents) {
 
                 setStyleProperties(styles, properties, feature);
 
-                if (properties.anchor.hasOwnProperty('val')) {
-                    if (!(properties.url.hasOwnProperty('val')) && feature.options.url) {
+                if (hasOwnProperty.call(properties.anchor, 'val')) {
+                    if (!hasOwnProperty.call(properties.url, 'val') && feature.options.url) {
                         opt.url = feature.options.url;
                     } else {
                         opt.url = properties.url.val;
@@ -2407,61 +2407,60 @@ if (!TC.control.MapContents) {
                     opt.anchor = properties.anchor.val;
                 }
 
-                if (properties.height.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.height, 'val')) {
                     opt.height = properties.height.val;
                 }
 
-                if (properties.width.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.width, 'val')) {
                     opt.width = properties.width.val;
                 }
 
-                if (properties.rotation.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.rotation, 'val')) {
                     opt.rotation = properties.rotation.val;
                 }
 
-                if (properties.label.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.label, 'val')) {
                     opt.label = properties.label.val;
                 }
 
-                if (properties.fontSize.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.fontSize, 'val')) {
                     opt.fontSize = properties.fontSize.val;
                 }
 
-                if (properties.fontColor.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.fontColor, 'val')) {
                     opt.fontColor = toCesiumColor(properties.fontColor.val);
                 }
 
-                if (properties.outlineLabelColor.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.outlineLabelColor, 'val')) {
                     opt.outlineLabelColor = toCesiumColor(properties.outlineLabelColor.val);
                 }
 
-                if (properties.outlineLabelWidth.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.outlineLabelWidth, 'val')) {
                     opt.outlineLabelWidth = properties.outlineLabelWidth.val;
                 }
 
 
-                var color;
-                if (properties.color.hasOwnProperty('val')) {
-                    if (properties.opacity.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.color, 'val')) {
+                    if (hasOwnProperty.call(properties.opacity, 'val')) {
                         opt.color = toCesiumColor(properties.color.val, properties.opacity.val);
                     } else {
                         opt.color = toCesiumColor(properties.color.val);
                     }
                 }
 
-                if (properties.outlineColor.hasOwnProperty('val')) {
-                    if (properties.outlineOpacity.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.outlineColor, 'val')) {
+                    if (hasOwnProperty.call(properties.outlineOpacity, 'val')) {
                         opt.outlineColor = toCesiumColor(properties.outlineColor.val, properties.outlineOpacity.val);
                     } else {
                         opt.outlineColor = toCesiumColor(properties.outlineColor.val);
                     }
                 }
 
-                if (properties.outlineWidth.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.outlineWidth, 'val')) {
                     opt.outlineWidth = properties.outlineWidth.val;
                 }
 
-                if (properties.radius.hasOwnProperty('val')) {
+                if (hasOwnProperty.call(properties.radius, 'val')) {
                     opt.radius = properties.radius.val;
                 }
 
@@ -2532,7 +2531,6 @@ if (!TC.control.MapContents) {
                                 }
                             });
 
-                            break;
                         case (/^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)):
                             return new cesium.Entity({
                                 name: feature.id,
@@ -2544,7 +2542,7 @@ if (!TC.control.MapContents) {
                                     heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                                 }
                             });
-                            break;
+
                         case options.radius && options.radius > 0:
                             var stringifyScratch = new Array(2);
 
@@ -2673,6 +2671,7 @@ if (!TC.control.MapContents) {
         };
 
         this.convert = function (scn, feature, sourceCrs, targetCrs) {
+            const self = this;
             scene = scn;
 
             var byPromise = false;
@@ -2925,7 +2924,7 @@ if (!TC.control.MapContents) {
 
             if (!self.map.view3D) {
                 var viewName = self.VIEWNAME = self.VIEWNAME.substr(0, 1).toLowerCase() + self.VIEWNAME.substr(1);
-                if (self.map.options.views && self.map.options.views.hasOwnProperty(viewName)) {
+                if (self.map.options.views && hasOwnProperty.call(self.map.options.views, viewName)) {
                     self.init(self.map.options.views[viewName]);
                 } else {
                     throw Error('Falta configuración de la vista');
@@ -3303,7 +3302,7 @@ if (!TC.control.MapContents) {
                     this.viewer.scene.groundPrimitives.add(csFeature);
                     break;
                 }
-                case csFeature instanceof Object && csFeature.hasOwnProperty('billboard'): {
+                case csFeature instanceof Object && hasOwnProperty.call(csFeature, 'billboard'): {
                     if (!this.viewer.billboardCollection) {
                         this.viewer.billboardCollection = this.viewer.scene.primitives.add(new cesium.BillboardCollection({
                             scene: this.viewer.scene
@@ -3334,11 +3333,11 @@ if (!TC.control.MapContents) {
             return addedFeature;
         };
         const linkFeature = function (map, idLayer, feature, id) {
-            if (!map.vector2DFeatures.hasOwnProperty(idLayer)) {
+            if (!hasOwnProperty.call(map.vector2DFeatures, idLayer)) {
                 map.vector2DFeatures[idLayer] = {};
                 map.vector2DFeatures[idLayer][id] = [feature];
             } else {
-                if (!map.vector2DFeatures[idLayer].hasOwnProperty(id)) {
+                if (!hasOwnProperty.call(map.vector2DFeatures[idLayer], id)) {
                     map.vector2DFeatures[idLayer][id] = [feature];
                 } else {
                     map.vector2DFeatures[idLayer][id].push(feature);
@@ -3386,13 +3385,13 @@ if (!TC.control.MapContents) {
                         if (self.view3D.workLayers[i].imageryProvider && self.view3D.workLayers[i].imageryProvider.layers.join(',') === e.layer.names.join(',')) {
 
                             if (e.oldIndex > e.newIndex) {
-                                var positions = e.oldIndex - e.newIndex;
+                                const positions = e.oldIndex - e.newIndex;
                                 for (var p = 0; p < positions; p++) {
                                     self.viewer.scene.imageryLayers.lower(self.view3D.workLayers[i]);
                                 }
 
                             } else {
-                                var positions = e.newIndex - e.oldIndex;
+                                const positions = e.newIndex - e.oldIndex;
                                 for (var p = 0; p < positions; p++) {
                                     self.viewer.scene.imageryLayers.raise(self.view3D.workLayers[i]);
                                 }
@@ -3410,10 +3409,10 @@ if (!TC.control.MapContents) {
                 }
                 case e.type == TC.Consts.event.FEATUREREMOVE: {
 
-                    if (self.view3D.vector2DFeatures && self.view3D.vector2DFeatures.hasOwnProperty(e.layer.id)) {
+                    if (self.view3D.vector2DFeatures && hasOwnProperty.call(self.view3D.vector2DFeatures, e.layer.id)) {
 
                         const remove = function (feature) {
-                            if (self.view3D.vector2DFeatures[e.layer.id].hasOwnProperty(feature.id)) {
+                            if (hasOwnProperty.call(self.view3D.vector2DFeatures[e.layer.id], feature.id)) {
                                 var threedFeature = self.view3D.vector2DFeatures[e.layer.id][feature.id];
                                 for (var i = 0; i < threedFeature.length; i++) {
                                     self.view3D.removeFeature.call(self, threedFeature[i]);
@@ -3433,7 +3432,7 @@ if (!TC.control.MapContents) {
                 }
                 case e.type == TC.Consts.event.FEATURESCLEAR: {
 
-                    if (self.view3D.vector2DFeatures && self.view3D.vector2DFeatures.hasOwnProperty(e.layer.id)) {
+                    if (self.view3D.vector2DFeatures && hasOwnProperty.call(self.view3D.vector2DFeatures, e.layer.id)) {
 
                         for (var featureId in self.view3D.vector2DFeatures[e.layer.id]) {
                             var threedFeature = self.view3D.vector2DFeatures[e.layer.id][featureId];
@@ -3664,7 +3663,7 @@ if (!TC.control.MapContents) {
 
                     var founded = false;
                     for (var layerId in self.view3D.vector2DFeatures) {
-                        if (self.view3D.vector2DFeatures[layerId].hasOwnProperty(id)) {
+                        if (hasOwnProperty.call(self.view3D.vector2DFeatures[layerId], id)) {
                             var feature2D = self.map.workLayers.filter(function (workLayer) {
                                 return workLayer.id === layerId;
                             })[0].features.filter(function (feature) {
@@ -3944,7 +3943,7 @@ if (!TC.control.MapContents) {
                                                     }
 
                                                     return 0;
-                                                };
+                                                }
 
                                                 var previousPosition, distanceCurrent = 0;
                                                 simulationOnPreUpdate = this.viewer.scene.preUpdate.addEventListener(function (scene, currentTime) {
@@ -3964,7 +3963,7 @@ if (!TC.control.MapContents) {
                                                         if (!previousPosition) {
                                                             previousPosition = cesium.Cartographic.fromCartesian(cesium.Property.getValueOrUndefined(trackEntity.position, trackEntity.availability.start));
                                                         }
-                                                        currentPosition = cesium.Cartographic.fromCartesian(cesium.Property.getValueOrUndefined(trackEntity.position, currentTime));
+                                                        const currentPosition = cesium.Cartographic.fromCartesian(cesium.Property.getValueOrUndefined(trackEntity.position, currentTime));
 
                                                         // progreso en el perfil (si lo hay)
                                                         if (this.view3D.linked2DControls.geolocation.hasElevation) {
@@ -4149,12 +4148,12 @@ if (!TC.control.MapContents) {
             isLoadingTiles: function () {
                 var self = this;
 
-                var surface = self.viewer.scene.globe['_surface'];
-                return !surface['_tileProvider'].ready ||
-                    surface['_tileLoadQueueHigh'].length > 0 ||
-                    surface['_tileLoadQueueMedium'].length > 0 ||
-                    surface['_tileLoadQueueLow'].length > 0 ||
-                    surface['_debug']['tilesWaitingForChildren'] > 0;
+                var surface = self.viewer.scene.globe._surface;
+                return !surface._tileProvider.ready ||
+                    surface._tileLoadQueueHigh.length > 0 ||
+                    surface._tileLoadQueueMedium.length > 0 ||
+                    surface._tileLoadQueueLow.length > 0 ||
+                    surface._debug.tilesWaitingForChildren > 0;
             },
 
             loadViewer: function () {
@@ -4430,9 +4429,9 @@ if (!TC.control.MapContents) {
                             rasterConverter.convert(layer, self.view3D.crs).then(function (convertedLayer) {
                                 if (convertedLayer) {
 
-                                    if (convertedLayer["enablePickFeatures"] !== undefined) {
+                                    if (convertedLayer.enablePickFeatures !== undefined) {
                                         convertedLayer.enablePickFeatures = false;
-                                        convertedLayer["tcLayer"] = layer;
+                                        convertedLayer.tcLayer = layer;
                                     }
 
                                     if (layer.isBase && self.view3D.baseLayer) {
@@ -4466,7 +4465,7 @@ if (!TC.control.MapContents) {
                 switch (true) {
                     case TC.Consts.layerType.VECTOR == layer.type: {
 
-                        if (self.view3D.vector2DFeatures && self.view3D.vector2DFeatures.hasOwnProperty(layer.id)) {
+                        if (self.view3D.vector2DFeatures && hasOwnProperty.call(self.view3D.vector2DFeatures, layer.id)) {
 
                             for (var featureId in self.view3D.vector2DFeatures[layer.id]) {
                                 var threedFeature = self.view3D.vector2DFeatures[layer.id][featureId];
@@ -4523,11 +4522,11 @@ if (!TC.control.MapContents) {
                             if (layer.names && imageryLayerNames === layer.names.join(',') ||
                                 layer.title && imageryLayerNames === layer.title) {
 
-                                if (options.hasOwnProperty('visibility')) {
+                                if (hasOwnProperty.call(options, 'visibility')) {
                                     self.view3D.workLayers[i].show = options.visibility;
                                 }
 
-                                if (options.hasOwnProperty('opacity')) {
+                                if (hasOwnProperty.call(options, 'opacity')) {
                                     self.view3D.workLayers[i].alpha = options.opacity;
                                 }
                                 break;
@@ -4667,7 +4666,8 @@ if (!TC.control.MapContents) {
                             var cameraPosition = scene.camera.position;
                             var cameraDirection = scene.camera.direction;
 
-                            var toMove = toGo = new cesium.Cartesian3();
+                            var toGo = new cesium.Cartesian3();
+                            var toMove = toGo;
                             cesium.Cartesian3.multiplyByScalar(pickRay.direction, data.direction == 1 ? data.amount : -data.amount, toMove);
                             cesium.Cartesian3.add(cameraPosition, toMove, toGo);
 
@@ -4873,7 +4873,7 @@ if (!TC.control.MapContents) {
 
                 var ellipsoid = cesium.Ellipsoid.WGS84;
                 var scene = self.viewer.scene;
-                var target = target_ = pickCenterPoint(scene);
+                var target_ = pickCenterPoint(scene);
 
                 if (!target_) {
                     var globe = self.viewer.scene.globe;
@@ -5083,6 +5083,7 @@ if (!TC.control.MapContents) {
                 Promise.all(self.map.baseLayers.map(function (baseLayer) {
                     return Promise.resolve(!isCompatible(baseLayer, self.view3D.view2DCRS));
                 })).then(function (results) {
+                    let triggerEvent;
                     if (results.length > 0) {
                         var defaultBaseLayer;
                         for (var i = 0; i < self.map.baseLayers.length; i++) {
@@ -5093,7 +5094,7 @@ if (!TC.control.MapContents) {
                                 self.map.baseLayers[i].mustReproject = results[i];
                             }
                         }
-                        var triggerEvent = true;
+                        triggerEvent = true;
                         const showReprojectDialog = function (haveToChange, baseLayer, fallbackLayer) {
                             const dialogOptions = {
                                 layer: baseLayer
@@ -5179,3 +5180,5 @@ if (!TC.control.MapContents) {
         VIEWNAME: viewProto.VIEWNAME
     };
 });
+
+export default ThreeD;
