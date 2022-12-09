@@ -277,8 +277,9 @@ WCSTerrainProvider  */
         this.noDataValue = description.noDataValue;
 
         // atribuciones
+        let urlofServer;
         if (cesium.defined(this.url)) {
-            var urlofServer = this.url;
+            urlofServer = this.url;
             var index = urlofServer.lastIndexOf("?");
             if (index > -1) {
                 urlofServer = urlofServer.substring(0, index);
@@ -1327,18 +1328,20 @@ WCSTerrainProvider  */
             var totalBits = bitOffset + numBits;
             var shiftRight = 32 - numBits;
 
+            let rawBits;
+            let shiftLeft;
             if (totalBits <= 0) {
                 console.log(numBits, byteOffset, bitOffset);
                 throw RangeError("No bits requested");
             } else if (totalBits <= 8) {
-                var shiftLeft = 24 + bitOffset;
-                var rawBits = this.tiffDataView.getUint8(newByteOffset, this.littleEndian);
+                shiftLeft = 24 + bitOffset;
+                rawBits = this.tiffDataView.getUint8(newByteOffset, this.littleEndian);
             } else if (totalBits <= 16) {
-                var shiftLeft = 16 + bitOffset;
-                var rawBits = this.tiffDataView.getUint16(newByteOffset, this.littleEndian);
+                shiftLeft = 16 + bitOffset;
+                rawBits = this.tiffDataView.getUint16(newByteOffset, this.littleEndian);
             } else if (totalBits <= 32) {
-                var shiftLeft = bitOffset;
-                var rawBits = this.tiffDataView.getUint32(newByteOffset, this.littleEndian);
+                shiftLeft = bitOffset;
+                rawBits = this.tiffDataView.getUint32(newByteOffset, this.littleEndian);
             } else {
                 console.log(numBits, byteOffset, bitOffset);
                 throw RangeError("Too many bits requested");
@@ -1408,10 +1411,11 @@ WCSTerrainProvider  */
 
             if (fieldValueSize <= 4) {
                 // The value is stored at the big end of the valueOffset.
+                let value;
                 if (this.littleEndian === false) {
-                    var value = valueOffset >>> ((4 - fieldTypeLength) * 8);
+                    value = valueOffset >>> ((4 - fieldTypeLength) * 8);
                 } else {
-                    var value = valueOffset;
+                    value = valueOffset;
                 }
 
                 fieldValues.push(value);
@@ -1904,11 +1908,13 @@ WCSTerrainProvider  */
                     for (var byteOffset = 0; byteOffset < stripByteCount; byteOffset += jIncrement) {
 
                         // Are we ready for a new block?
+                        var blockLength;
+                        var iterations;
                         if (getHeader) {
                             getHeader = false;
 
-                            var blockLength = 1;
-                            var iterations = 1;
+                            blockLength = 1;
+                            iterations = 1;
 
                             // The header byte is signed.
                             var header = this.tiffDataView.getInt8(stripOffset + byteOffset, this.littleEndian);
@@ -2084,7 +2090,7 @@ WCSTerrainProvider  */
 
                     // Unknown Photometric Interpretation
                 default:
-                    throw RangeError(' Photometric Interpretation Not Yet Implemented::', getPhotometricName(this.photometricInterpretation));
+                    throw RangeError(' Photometric Interpretation Not Yet Implemented::', this.getPhotometricName(this.photometricInterpretation));
                     break;
             }
             aRGBAPixelValue = [red, green, blue, opacity];
@@ -2167,7 +2173,7 @@ WCSTerrainProvider  */
 
                     // Unknown Photometric Interpretation
                 default:
-                    throw RangeError(' Photometric Interpretation Not Yet Implemented::', getPhotometricName(this.photometricInterpretation));
+                    throw RangeError(' Photometric Interpretation Not Yet Implemented::', this.getPhotometricName(this.photometricInterpretation));
                     break;
             }
             aRGBAPixelValue = [red, green, blue, opacity];
@@ -2214,7 +2220,7 @@ WCSTerrainProvider  */
                         console.log("Missing StripByteCounts!");
                         // Infer StripByteCounts, if possible.
                         if (numoffsetValues === 1) {
-                            blockByteCountValues = [Math.ceil((this.imageWidth * this.imageLength * bitsPerPixel) / 8)];
+                            blockByteCountValues = [Math.ceil((this.imageWidth * this.imageLength * this.bitsPerPixel) / 8)];
                         } else {
                             throw Error("Cannot recover from missing StripByteCounts");
                         }
