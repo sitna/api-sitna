@@ -1,8 +1,8 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.control.Container = function () {
     var self = this;
@@ -13,6 +13,8 @@ TC.control.Container = function () {
 
     self.ctlCount = self.controlOptions instanceof Array ? self.controlOptions.length : Object.keys(self.controlOptions).length;    
     self.defaultSelection = self.options.defaultSelection;
+
+    self._ctlPromises = new Array(self.ctlCount);
 };
 
 TC.inherit(TC.control.Container, TC.Control);
@@ -25,11 +27,11 @@ TC.inherit(TC.control.Container, TC.Control);
         const ctlRegister = TC.Control.prototype.register.call(self, map);
 
         self.uids = new Array(self.ctlCount);
-        self.uids.forEach(function (elm, idx, arr) {
+        self.uids.forEach(function (_elm, idx, arr) {
             arr[idx] = self.getUID();
         });
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             Promise.all([ctlRegister, self.renderPromise()]).then(function () {
                 self.onRender().then(ctl => resolve(ctl));
             });
@@ -40,7 +42,7 @@ TC.inherit(TC.control.Container, TC.Control);
         return Promise.resolve(this);
     };
 
-    ctlProto.render = function (callback) { };
+    ctlProto.render = function (_callback) { };
 
     ctlProto.getControl = function (idx) {
         var promise = this._ctlPromises[idx];
@@ -51,4 +53,16 @@ TC.inherit(TC.control.Container, TC.Control);
         return promise;
     };
 
+    ctlProto.getControls = function () {
+        return Promise.all(this._ctlPromises);
+    };
+
+    ctlProto.onControlDisable = function (_control) {
+    };
+
+    ctlProto.onControlEnable = function (_control) {
+    };
 })();
+
+const Container = TC.control.Container;
+export default Container;
