@@ -60,6 +60,7 @@
   * </script>
   */
 
+
 /**
   * Opciones de configuración del origen de datos de la búsqueda de parcelas catastrales.
   * @typedef CadastralSearchOptions
@@ -82,87 +83,102 @@
   * No está disponible `cluster`.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchCadastralSource.html)</caption> {@lang javascript}
-  * {   
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     featureType: ['CATAST_Pol_ParcelaUrba', 'CATAST_Pol_ParcelaRusti', 'CATAST_Pol_ParcelaMixta'], // Colección con el nombre de las capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     municipality: { // Definición de la fuente de datos para la búsqueda de parcela por nombre de municipio en lugar de por código del mismo.
-  *         featureType: 'CATAST_Pol_Municipio', // Colección de nombre de capa a consultar.
-  *         labelProperty: 'MUNICIPIO', // Nombre de campo en el que buscar el texto indicado.
-  *         idProperty: 'CMUNICIPIO' // Nombre de campo que identifica unívocamente el municipio cuyos valores deben coincidir con los posibles valores del campo indicado en firstQueryWord.
-  *     },
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de parcelas.
-  *         firstQueryWord: 'CMUNICIPIO', // Campo en el que buscar el código de municipio.
-  *         secondQueryWord: 'POLIGONO', // Campo en el que buscar el polígono.
-  *         thirdQueryWord: 'PARCELA' // Campo en el que buscar la parcela.
-  *     },
-  *     suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.cadastral", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Parcela catastral
-  *         color: [ // En este caso la consulta se hace sobre varias capas. Con el siguiente objeto se define el color de los resultados de la búsqueda de cada capa. Estos colores también se mostrarán en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
-  *             {
-  *                 CATAST_Pol_ParcelaUrba: { // Nombre de capa presente en la propiedad `featureType`.
-  *                     title: "search.list.cadastral.urban", // Clave del diccionario de traducciones a mostrar como literal en la lista de sugerencias que indentificará a los resultados obtenidos de la capa CATAST_Pol_ParcelaUrba.
-  *                     color: { // Definición del color con el que se dibujará los resultados de la búsqueda en el mapa. Este color también se mostrará en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
-  *                         geomType: "polygon", // Nombre del tipo de geometría presente en `styles` en la cual buscar la propiedad `css`.
-  *                         css: "strokeColor" // Nombre de la propiedad de los estilos de la cual extraer el color.
-  *                     }
-  *                     // El resultado de la configuración anterior será: '#136278'
-  *                 }
-  *             },
-  *             {
-  *                 CATAST_Pol_ParcelaRusti: { // Nombre de capa presente en la propiedad `featureType`.
-  *                     title: "search.list.cadastral.rustic", // Clave del diccionario de traducciones a mostrar como literal en la lista de sugerencias que indentificará a los resultados obtenidos de la capa CATAST_Pol_ParcelaRusti.
-  *                     color: { // Definición del color con el que se dibujará los resultados de la búsqueda en el mapa. Este color también se mostrará en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
-  *                         geomType: "polygon", // Nombre del tipo de geometría presente en `styles` en la cual buscar la propiedad `css`.
-  *                         css: "strokeColor" // Nombre de la propiedad de los estilos de la cual extraer el color.
-  *                     }
-  *                     // El resultado de la configuración anterior será: '#0C8B3D'
-  *                 }
-  *             },
-  *             {
-  *                 CATAST_Pol_ParcelaMixta: { // Nombre de capa presente en la propiedad `featureType`.
-  *                     title: "search.list.cadastral.mixed", // Clave del diccionario de traducciones a mostrar como literal en la lista de sugerencias que indentificará a los resultados obtenidos de la capa CATAST_Pol_ParcelaMixta.
-  *                     color: { // Definición del color con el que se dibujará los resultados de la búsqueda en el mapa. Este color también se mostrará en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
-  *                         geomType: "polygon", // Nombre del tipo de geometría presente en `styles` en la cual buscar la propiedad `css`.
-  *                         css: "strokeColor" // Nombre de la propiedad de los estilos de la cual extraer el color.
-  *                     }
-  *                     // El resultado de la configuración anterior será: '#E5475F'
-  *                 }
-  *             }
-  *         ]
-  *     },
-  *     styles: [ //  Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             polygon: { // Opciones de estilo de polígono para los resultados obtenidos de la capa CATAST_Pol_ParcelaUrba.
-  *                 fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
-  *                 fillOpacity: 0.1, // Opacidad de relleno, valor de 0 a 1.
-  *                 strokeColor: '#136278', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
-  *                 strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
-  *                 strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
-  *             }
-  *         },
-  *         {
-  *             polygon: { // Opciones de estilo de polígono para los resultados obtenidos de la capa CATAST_Pol_ParcelaRusti.
-  *                 fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
-  *                 fillOpacity: 0.1, // Opacidad de relleno, valor de 0 a 1.
-  *                 strokeColor: '#0c8b3d', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
-  *                 strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
-  *                 strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
-  *             }
-  *         },
-  *         {
-  *             polygon: { // Opciones de estilo de polígono para los resultados obtenidos de la capa CATAST_Pol_ParcelaMixta.
-  *                 fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
-  *                 fillOpacity: 0.1, //Opacidad de relleno, valor de 0 a 1.
-  *                 strokeColor: '#e5475f', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
-  *                 strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
-  *                 strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchCadastralSource.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Parcela catastral', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar parcela catastral', // Texto que se mostrará como tooltip del botón buscar.
+                    cadastralParcel: { // Objeto de configuración del origen de datos en el cual buscar las parcelas catastrales.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        featureType: ['CATAST_Pol_ParcelaUrba', 'CATAST_Pol_ParcelaRusti', 'CATAST_Pol_ParcelaMixta'], // Colección con el nombre de las capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        municipality: { // Definición de la fuente de datos para la búsqueda de parcela por nombre de municipio en lugar de por código del mismo.
+                            featureType: 'CATAST_Pol_Municipio', // Colección de nombre de capa a consultar.
+                            labelProperty: 'MUNICIPIO', // Nombre de campo en el que buscar el texto indicado.
+                            idProperty: 'CMUNICIPIO' // Nombre de campo que identifica unívocamente el municipio cuyos valores deben coincidir con los posibles valores del campo indicado en firstQueryWord.
+                        },
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de parcelas.
+                            firstQueryWord: 'CMUNICIPIO', // Campo en el que buscar el código de municipio.
+                            secondQueryWord: 'POLIGONO', // Campo en el que buscar el polígono.
+                            thirdQueryWord: 'PARCELA' // Campo en el que buscar la parcela.
+                        },
+                        suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.cadastral", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Parcela catastral
+                            color: [ // En este caso la consulta se hace sobre varias capas. Con el siguiente objeto se define el color de los resultados de la búsqueda de cada capa. Estos colores también se mostrarán en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
+                                {
+                                    CATAST_Pol_ParcelaUrba: { // Nombre de capa presente en la propiedad `featureType`.
+                                        title: "search.list.cadastral.urban", // Clave del diccionario de traducciones a mostrar como literal en la lista de sugerencias que indentificará a los resultados obtenidos de la capa CATAST_Pol_ParcelaUrba.
+                                        color: { // Definición del color con el que se dibujará los resultados de la búsqueda en el mapa. Este color también se mostrará en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
+                                            geomType: "polygon", // Nombre del tipo de geometría presente en `styles` en la cual buscar la propiedad `css`.
+                                            css: "strokeColor" // Nombre de la propiedad de los estilos de la cual extraer el color.
+                                        }
+                                        // El resultado de la configuración anterior será: '#136278'
+                                    }
+                                },
+                                {
+                                    CATAST_Pol_ParcelaRusti: { // Nombre de capa presente en la propiedad `featureType`.
+                                        title: "search.list.cadastral.rustic", // Clave del diccionario de traducciones a mostrar como literal en la lista de sugerencias que indentificará a los resultados obtenidos de la capa CATAST_Pol_ParcelaRusti.
+                                        color: { // Definición del color con el que se dibujará los resultados de la búsqueda en el mapa. Este color también se mostrará en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
+                                            geomType: "polygon", // Nombre del tipo de geometría presente en `styles` en la cual buscar la propiedad `css`.
+                                            css: "strokeColor" // Nombre de la propiedad de los estilos de la cual extraer el color.
+                                        }
+                                        // El resultado de la configuración anterior será: '#0C8B3D'
+                                    }
+                                },
+                                {
+                                    CATAST_Pol_ParcelaMixta: { // Nombre de capa presente en la propiedad `featureType`.
+                                        title: "search.list.cadastral.mixed", // Clave del diccionario de traducciones a mostrar como literal en la lista de sugerencias que indentificará a los resultados obtenidos de la capa CATAST_Pol_ParcelaMixta.
+                                        color: { // Definición del color con el que se dibujará los resultados de la búsqueda en el mapa. Este color también se mostrará en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
+                                            geomType: "polygon", // Nombre del tipo de geometría presente en `styles` en la cual buscar la propiedad `css`.
+                                            css: "strokeColor" // Nombre de la propiedad de los estilos de la cual extraer el color.
+                                        }
+                                        // El resultado de la configuración anterior será: '#E5475F'
+                                    }
+                                }
+                            ]
+                        },
+                        styles: [ //  Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                polygon: { // Opciones de estilo de polígono para los resultados obtenidos de la capa CATAST_Pol_ParcelaUrba.
+                                    fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
+                                    fillOpacity: 0.1, // Opacidad de relleno, valor de 0 a 1.
+                                    strokeColor: '#136278', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
+                                    strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
+                                    strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
+                                }
+                            },
+                            {
+                                polygon: { // Opciones de estilo de polígono para los resultados obtenidos de la capa CATAST_Pol_ParcelaRusti.
+                                    fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
+                                    fillOpacity: 0.1, // Opacidad de relleno, valor de 0 a 1.
+                                    strokeColor: '#0c8b3d', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
+                                    strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
+                                    strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
+                                }
+                            },
+                            {
+                                polygon: { // Opciones de estilo de polígono para los resultados obtenidos de la capa CATAST_Pol_ParcelaMixta.
+                                    fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
+                                    fillOpacity: 0.1, //Opacidad de relleno, valor de 0 a 1.
+                                    strokeColor: '#e5475f', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
+                                    strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
+                                    strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
+                                }
+                            }
+                        ]
+                    },
+                    municipality: false, // Desactivamos la búsqueda de municipios.
+                    town: false, // Desactivamos la búsqueda de cascos urbanos.
+                    street: false, // Desactivamos la búsqueda de vías.
+                    postalAddress: false // Desactivamos la búsqueda de direcciones postales.
+                }
+            }
+        });
+    </script>
   */
 
 /**
@@ -282,34 +298,49 @@
   * No está disponible `cluster`.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchMunicipalitySource.html)</caption> {@lang javascript}
-  * {
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     featureType: ['CATAST_Pol_Municipio'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     dataIdProperty: ['CMUNICIPIO'], // Colección con el nombre del campo que nos servirá para identificar unívocamente a un municipio. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de municipios.
-  *         firstQueryWord: ['MUNINOAC', 'MUNICIPIO'] // Campos en los que buscar el nombre de municipio.
-  *     },
-  *     suggestionListHead: { //  Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.municipality", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Municipio.
-  *         color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
-  *     }, // El resultado de la configuración anterior será: '#FE06A5'.
-  *     outputProperties: ['MUNICIPIO'], // Colección con el nombre del campo a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
-  *     outputFormatLabel: '{0}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
-  *     styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             polygon: { // Opciones de estilo de polígono para los resultados obtenidos.
-  *                 fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
-  *                 fillOpacity: 0.1, // Opacidad de relleno, valor de 0 a 1.
-  *                 strokeColor: '#fe06a5', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
-  *                 strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
-  *                 strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchMunicipalitySource.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Municipio', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar municipio', // Texto que se mostrará como tooltip del botón buscar.
+                    municipality: { // Objeto de configuración del origen de datos en el cual buscar los municipios.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        featureType: ['CATAST_Pol_Municipio'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        dataIdProperty: ['CMUNICIPIO'], // Colección con el nombre del campo que nos servirá para identificar unívocamente a un municipio. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de municipios.
+                            firstQueryWord: ['MUNINOAC', 'MUNICIPIO'] // Campos en los que buscar el nombre de municipio.
+                        },
+                        suggestionListHead: { //  Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.municipality", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Municipio.
+                            color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
+                        }, // El resultado de la configuración anterior será: '#FE06A5'.
+                        outputProperties: ['MUNICIPIO'], // Colección con el nombre del campo a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
+                        outputFormatLabel: '{0}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
+                        styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                polygon: { // Opciones de estilo de polígono para los resultados obtenidos.
+                                    fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
+                                    fillOpacity: 0.1, // Opacidad de relleno, valor de 0 a 1.
+                                    strokeColor: '#fe06a5', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
+                                    strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
+                                    strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
+                                }
+                            }
+                        ]
+                    },
+                    cadastralParcel: false, // Desactivamos la búsqueda de parcelas catastrales.
+                    town: false, // Desactivamos la búsqueda de cascos urbanos.
+                    street: false, // Desactivamos la búsqueda de vías.
+                    postalAddress: false // Desactivamos la búsqueda de direcciones postales.
+                }
+            }
+        });
+    </script>
   */
 
 /**
@@ -340,38 +371,53 @@
   * No está disponible cluster.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPostalAddressSource.html)</caption> {@lang javascript}
-  * {
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     featureType: ['CATAST_Txt_Portal'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     dataIdProperty: ['CMUNICIPIO', 'CENTIDADC', 'CVIA', 'PORTAL'],  // Colección con el nombre del campo que nos servirán para identificar unívocamente a una dirección postal. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de dirección postal.
-  *         firstQueryWord: ['ENTIDADC', 'ENTINOAC'], // Campos en los que buscar el nombre de la entidad de población.
-  *         secondQueryWord: ['VIA', 'VIANOAC'], // Campos en los que buscar la vía.
-  *         thirdQueryWord: ['PORTAL'] // Campo en el que buscar la dirección postal.
-  *     },
-  *     suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.number", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Portal
-  *         color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
-  *     }, // El resultado de la configuración anterior será: '#CB0000'.
-  *     outputProperties: ['ENTIDADC', 'VIA', 'PORTAL', 'CVIA', 'CENTIDADC', 'CMUNICIPIO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
-  *     outputFormatLabel: '{1} {2}, {0}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
-  *     styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             point: { // Opciones de estilo de punto para los resultados obtenidos.
-  *                 radius: 0, // Radio en píxeles del símbolo que representa el punto.
-  *                 label: "PORTAL", // Nombre de campo del cual extraer el valor de la etiqueta.
-  *                 angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
-  *                 fontColor: "#CB0000", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
-  *                 labelOutlineColor: "#FFFFFF", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 labelOutlineWidth: 4 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPostalAddressSource.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Dirección postal', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar dirección postal', // Texto que se mostrará como tooltip del botón buscar.
+                    postalAddress: { // Objeto de configuración del origen de datos en el cual buscar dirección postal.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        featureType: ['CATAST_Txt_Portal'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        dataIdProperty: ['CMUNICIPIO', 'CENTIDADC', 'CVIA', 'PORTAL'],  // Colección con los nombres de los campos que nos servirán para identificar unívocamente a una dirección postal. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de dirección postal.
+                            firstQueryWord: ['ENTIDADC', 'ENTINOAC'], // Campos en los que buscar el nombre de la entidad de población.
+                            secondQueryWord: ['VIA', 'VIANOAC'], // Campos en los que buscar la vía.
+                            thirdQueryWord: ['PORTAL'] // Campo en el que buscar la dirección postal.
+                        },
+                        suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.number", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Portal
+                            color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
+                        }, // El resultado de la configuración anterior será: '#CB0000'.
+                        outputProperties: ['ENTIDADC', 'VIA', 'PORTAL', 'CVIA', 'CENTIDADC', 'CMUNICIPIO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
+                        outputFormatLabel: '{1} {2}, {0}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
+                        styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                point: { // Opciones de estilo de punto para los resultados obtenidos.
+                                    radius: 0, // Radio en píxeles del símbolo que representa el punto.
+                                    label: "PORTAL", // Nombre de campo del cual extraer el valor de la etiqueta.
+                                    angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
+                                    fontColor: "#CB0000", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
+                                    labelOutlineColor: "#FFFFFF", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    labelOutlineWidth: 4 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
+                                }
+                            }
+                        ]
+                    },
+                    cadastralParcel: false, // Desactivamos la búsqueda de parcelas catastrales.
+                    municipality: false, // Desactivamos la búsqueda de municipios.
+                    town: false, // Desactivamos la búsqueda de cascos urbanos.
+                    street: false // Desactivamos la búsqueda de vías.
+                }
+            }
+        });
+    </script>
   */
 
 /**
@@ -403,36 +449,52 @@
   * No está disponible cluster.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPlacenameSource.html)</caption> {@lang javascript}
-  * {
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     featureType: ['TOPONI_Txt_Toponimos'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     dataIdProperty: ['CMUNICIPIO', 'CTOPONIMO'], // Colección con el nombre del campo que nos servirán para identificar unívocamente a un topónimo. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de topónimo.
-  *         firstQueryWord: ['TOPONIMO', 'TOPONINOAC'] // Campos en los que buscar el nombre del topónimo.
-  *     },
-  *     suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.placeName", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Topónimo
-  *         color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
-  *     }, // El resultado de la configuración anterior será: '#FF5722'.
-  *     outputProperties: ['MUNICIPIO', 'TOPONIMO', 'CMUNICIPIO', 'CTOPONIMO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
-  *     outputFormatLabel: '{1} ({0})', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
-  *     styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             point: { // Opciones de estilo de punto para los resultados obtenidos.
-  *                 radius: 0, // Radio en píxeles del símbolo que representa el punto.
-  *                 label: "TOPONIMO", // Nombre de campo del cual extraer el valor de la etiqueta.
-  *                 angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
-  *                 fontColor: "#ff5722", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
-  *                 labelOutlineColor: "#FFFFFF", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 labelOutlineWidth: 4 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPlacenameSource.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Topónimo', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar topónimo', // Texto que se mostrará como tooltip del botón buscar.
+                    placeName: { // Objeto de configuración del origen de datos en el cual buscar topónimo.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        featureType: ['TOPONI_Txt_Toponimos'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        dataIdProperty: ['CMUNICIPIO', 'CTOPONIMO'], // Colección con los nombres de los campos que nos servirán para identificar unívocamente a un topónimo. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de topónimo.
+                            firstQueryWord: ['TOPONIMO', 'TOPONINOAC'] // Campos en los que buscar el nombre del topónimo.
+                        },
+                        suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.placeName", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Topónimo
+                            color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
+                        }, // El resultado de la configuración anterior será: '#FF5722'.
+                        outputProperties: ['MUNICIPIO', 'TOPONIMO', 'CMUNICIPIO', 'CTOPONIMO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
+                        outputFormatLabel: '{1} ({0})', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
+                        styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                point: { // Opciones de estilo de punto para los resultados obtenidos.
+                                    radius: 0, // Radio en píxeles del símbolo que representa el punto.
+                                    label: "TOPONIMO", // Nombre de campo del cual extraer el valor de la etiqueta.
+                                    angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
+                                    fontColor: "#ff5722", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
+                                    labelOutlineColor: "#FFFFFF", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    labelOutlineWidth: 4 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
+                                }
+                            }
+                        ]
+                    },
+                    cadastralParcel: false, // Desactivamos la búsqueda de parcelas catastrales.
+                    municipality: false, // Desactivamos la búsqueda de municipios.
+                    town: false, // Desactivamos la búsqueda de cascos urbanos.
+                    street: false, // Desactivamos la búsqueda de vías.
+                    postalAddress: false // Desactivamos la búsqueda de direcciones postales.
+                }
+            }
+        });
+    </script>
   */
 
 /**
@@ -465,37 +527,53 @@
   * No está disponible cluster.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPlacenameMunicipalitySource.html)</caption> {@lang javascript}
-  * {
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     featureType: ['TOPONI_Txt_Toponimos'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     dataIdProperty: ['CMUNICIPIO', 'CTOPONIMO'], // Colección con el nombre del campo que nos servirán para identificar unívocamente a un topónimo en un municipio. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de topónimo en un municipio.
-  *         firstQueryWord: ['MUNICIPIO', 'MUNINOAC'], // Campos en los que buscar el nombre de municipio.
-  *         secondQueryWord: ['TOPONIMO', 'TOPONINOAC'] // Campos en los que buscar el nombre del topónimo.
-  *     },
-  *     suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.placeName", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Topónimo
-  *         color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
-  *     }, // El resultado de la configuración anterior será: '#FF5722'.
-  *     outputProperties: ['MUNICIPIO', 'TOPONIMO', 'CMUNICIPIO', 'CTOPONIMO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
-  *     outputFormatLabel: '{1} ({0})', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
-  *     styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             point: { // Opciones de estilo de punto para los resultados obtenidos.
-  *                 radius: 0, // Radio en píxeles del símbolo que representa el punto.
-  *                 label: "TOPONIMO", // Nombre de campo del cual extraer el valor de la etiqueta.
-  *                 angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
-  *                 fontColor: "#ff5722", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
-  *                 labelOutlineColor: "#FFFFFF",  // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 labelOutlineWidth: 4 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPlacenameMunicipalitySource.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Topónimo en municipio', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar topónimo en un municipio', // Texto que se mostrará como tooltip del botón buscar.
+                    placeNameMunicipality: { // Objeto de configuración del origen de datos en el cual buscar topónimo en un municipio.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        featureType: ['TOPONI_Txt_Toponimos'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        dataIdProperty: ['CMUNICIPIO', 'CTOPONIMO'], // Colección con los nombres de los campos que nos servirán para identificar unívocamente a un topónimo en un municipio. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de topónimo en un municipio.
+                            firstQueryWord: ['MUNICIPIO', 'MUNINOAC'], // Campos en los que buscar el nombre de municipio.
+                            secondQueryWord: ['TOPONIMO', 'TOPONINOAC'] // Campos en los que buscar el nombre del topónimo.
+                        },
+                        suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.placeName", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Topónimo
+                            color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
+                        }, // El resultado de la configuración anterior será: '#FF5722'.
+                        outputProperties: ['MUNICIPIO', 'TOPONIMO', 'CMUNICIPIO', 'CTOPONIMO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
+                        outputFormatLabel: '{1} ({0})', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
+                        styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                point: { // Opciones de estilo de punto para los resultados obtenidos.
+                                    radius: 0, // Radio en píxeles del símbolo que representa el punto.
+                                    label: "TOPONIMO", // Nombre de campo del cual extraer el valor de la etiqueta.
+                                    angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
+                                    fontColor: "#ff5722", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
+                                    labelOutlineColor: "#FFFFFF",  // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    labelOutlineWidth: 4 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
+                                }
+                            }
+                        ]
+                    },
+                    cadastralParcel: false, // Desactivamos la búsqueda de parcelas catastrales.
+                    municipality: false, // Desactivamos la búsqueda de municipios.
+                    town: false, // Desactivamos la búsqueda de cascos urbanos.
+                    street: false, // Desactivamos la búsqueda de vías.
+                    postalAddress: false // Desactivamos la búsqueda de direcciones postales.
+                }
+            }
+        });
+    </script>
   */
 
 /**
@@ -527,34 +605,50 @@
   * No está disponible cluster.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchRoadSource.html)</caption> {@lang javascript}
-  * {
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     featureType: ['INFRAE_Lin_CtraEje'],  // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     dataIdProperty: ['DCARRETERA'], // Colección con el nombre del campo que nos servirá para identificar unívocamente a una carretera. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de carretera.
-  *         firstQueryWord: ['DCARRETERA'] // Campo en el que buscar el nombre de la carretera.
-  *     },
-  *     suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.road", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Punto kilométrico
-  *         color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
-  *     }, // El resultado de la configuración anterior será: '#00B2FC'.
-  *     outputProperties: ['DCARRETERA'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
-  *     outputFormatLabel: 'Carretera: {0}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
-  *     styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             line: { // Opciones de estilo de línea para los resultados obtenidos.
-  *                 strokeColor: "#00B2FC", // Color de trazo de la línea, representado en formato hex triplet (`#RRGGBB`).
-  *                 strokeOpacity: 1, // Opacidad de trazo de la línea, valor de 0 a 1.
-  *                 strokeWidth: 5, // Anchura de trazo en píxeles de la línea.
-  *                 strokeLinecap: "round",
-  *                 strokeDashstyle: "solid"
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchRoadSource.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Carretera', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar carretera', // Texto que se mostrará como tooltip del botón buscar.
+                    road: { // Objeto de configuración del origen de datos en el cual buscar carretera.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        featureType: ['INFRAE_Lin_CtraEje'],  // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        dataIdProperty: ['DCARRETERA'], // Colección con el nombre del campo que nos servirá para identificar unívocamente a una carretera. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de carretera.
+                            firstQueryWord: ['DCARRETERA'] // Campo en el que buscar el nombre de la carretera.
+                        },
+                        suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.road", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Carretera.
+                            color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
+                        }, // El resultado de la configuración anterior será: '#00B2FC'.
+                        outputProperties: ['DCARRETERA'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
+                        outputFormatLabel: 'Carretera: {0}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
+                        styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                line: { // Opciones de estilo de línea para los resultados obtenidos.
+                                    strokeColor: "#00B2FC", // Color de trazo de la línea, representado en formato hex triplet (`#RRGGBB`).
+                                    strokeOpacity: 1, // Opacidad de trazo de la línea, valor de 0 a 1.
+                                    strokeWidth: 5, // Anchura de trazo en píxeles de la línea.
+                                    strokeLinecap: "round",
+                                    strokeDashstyle: "solid"
+                                }
+                            }
+                        ]
+                    },
+                    cadastralParcel: false, // Desactivamos la búsqueda de parcelas catastrales.
+                    municipality: false, // Desactivamos la búsqueda de municipios.
+                    town: false, // Desactivamos la búsqueda de cascos urbanos.
+                    street: false, // Desactivamos la búsqueda de vías.
+                    postalAddress: false // Desactivamos la búsqueda de direcciones postales.
+                }
+            }
+        });
+    </script>
   */
 
 /**
@@ -577,7 +671,7 @@
   *
   * En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:
   * - `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre de la carretera.
-  * - `secondQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre del punto kilométrico.
+  * - `secondQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el número del punto kilométrico.
   * @property {string[]} renderFeatureType - Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `dataIdProperty`.
   *
   * No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en `featureType` y `renderFeatureType` y que ambas cuenten con los campos definidos en `dataIdProperty`.
@@ -587,35 +681,51 @@
   * No está disponible cluster.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchRoadMilestoneSource.html)</caption> {@lang javascript}
-  * {  
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     featureType: ['INFRAE_Sym_CtraPK'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     dataIdProperty: ['DCARRETERA', 'CPK'], // Colección con el nombre del campo que nos servirán para identificar unívocamente a un punto kilométrico. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de punto kilométrico.
-  *         firstQueryWord: ['DCARRETERA'], // Campo en el que buscar el nombre de la carretera.
-  *         secondQueryWord: ['PK'] // Campo en el que buscar el nombre del punto kilométrico.
-  *     },
-  *     suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.milestone.larger", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Punto kilométrico
-  *         color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
-  *     }, // El resultado de la configuración anterior será: '#00B2FC'.
-  *     outputProperties: ['DCARRETERA', 'PK'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
-  *     outputFormatLabel: 'Carretera: {0} ' + 'PK: {1}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
-  *     styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             point: { // Opciones de estilo de punto para los resultados obtenidos.
-  *                 label: ["DCARRETERA", "PK"], // Colección de los nombres de los campos de los cuales extraer el valor de la etiqueta.
-  *                 fontColor: "#00B2FC", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
-  *                 labelOutlineColor: "#ffffff", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 labelOutlineWidth: 2 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchRoadMilestoneSource.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Carretera, PK', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar punto kilométrico de carretera',  // Texto que se mostrará como tooltip del botón buscar.
+                    roadmilestone: { // Objeto de configuración del origen de datos en el cual buscar punto kilométrico.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        featureType: ['INFRAE_Sym_CtraPK'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        dataIdProperty: ['DCARRETERA', 'CPK'], // Colección con los nombres de campos que nos servirán para identificar unívocamente a un punto kilométrico. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de punto kilométrico.
+                            firstQueryWord: ['DCARRETERA'], // Campo en el que buscar el nombre de la carretera.
+                            secondQueryWord: ['PK'] // Campo en el que buscar el número del punto kilométrico.
+                        },
+                        suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.milestone.larger", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Punto kilométrico
+                            color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
+                        }, // El resultado de la configuración anterior será: '#00B2FC'.
+                        outputProperties: ['DCARRETERA', 'PK'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
+                        outputFormatLabel: 'Carretera: {0} ' + 'PK: {1}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
+                        styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                point: { // Opciones de estilo de punto para los resultados obtenidos.
+                                    label: ["DCARRETERA", "PK"], // Colección de los nombres de los campos de los cuales extraer el valor de la etiqueta.
+                                    fontColor: "#00B2FC", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
+                                    labelOutlineColor: "#ffffff", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    labelOutlineWidth: 2 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
+                                }
+                            }
+                        ]
+                    },
+                    cadastralParcel: false, // Desactivamos la búsqueda de parcelas catastrales.
+                    municipality: false, // Desactivamos la búsqueda de municipios.
+                    town: false, // Desactivamos la búsqueda de cascos urbanos.
+                    street: false, // Desactivamos la búsqueda de vías.
+                    postalAddress: false // Desactivamos la búsqueda de direcciones postales.
+                }
+            }
+        });
+    </script>
   */
 
 /**
@@ -648,46 +758,61 @@
   * No está disponible cluster.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchStreetSource.html)</caption> {@lang javascript}
-  * {
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     renderFeatureType: ['CATAST_Txt_Calle'], // Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `dataIdProperty`. No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en `featureType` y `renderFeatureType` y que ambas cuenten con los campos definidos en `dataIdProperty`.
-  *     featureType: ['CATAST_Lin_CalleEje'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     dataIdProperty: ['CVIA'], // Colección con el nombre del campo que nos servirá para identificar unívocamente a una vía. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de vía.
-  *         firstQueryWord: ['ENTINOAC', 'ENTIDADC'], // Campo en el que buscar el nombre de la entidad de población.
-  *         secondQueryWord: ['VIA', 'VIANOAC'] // Campo en el que buscar el nombre de la vía.
-  *     },
-  *     suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.street", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Vía
-  *         color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
-  *     }, // El resultado de la configuración anterior será: '#CB0000'.
-  *     outputProperties: ['ENTIDADC', 'VIA', 'CVIA', 'CENTIDADC', 'CMUNICIPIO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
-  *     outputFormatLabel: '{1}, {0}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
-  *     styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             line: { // Opciones de estilo de línea para los resultados obtenidos.
-  *                 strokeColor: "#CB0000", // Color de trazo de la línea, representado en formato hex triplet (`#RRGGBB`).
-  *                 strokeOpacity: 1, // Opacidad de trazo de la línea, valor de 0 a 1.
-  *                 strokeWidth: 2, // Anchura de trazo en píxeles de la línea.
-  *                 strokeLinecap: "round",
-  *                 strokeDashstyle: "solid"
-  *             }
-  *         },
-  *         {
-  *             point: { // Opciones de estilo de punto para los resultados obtenidos.
-  *                 label: "VIA", // Nombre de campo del cual extraer el valor de la etiqueta.
-  *                 angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
-  *                 fontColor: "#000000", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 fontSize: 7, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
-  *                 labelOutlineColor: "#ffffff", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
-  *                 labelOutlineWidth: 2 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchStreetSource.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Vía', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar vía', // Texto que se mostrará como tooltip del botón buscar.
+                    street: { // Objeto de configuración del origen de datos en el cual buscar vía.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        renderFeatureType: ['CATAST_Txt_Calle'], // Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `dataIdProperty`. No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en `featureType` y `renderFeatureType` y que ambas cuenten con los campos definidos en `dataIdProperty`.
+                        featureType: ['CATAST_Lin_CalleEje'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        dataIdProperty: ['CVIA'], // Colección con el nombre del campo que nos servirá para identificar unívocamente a una vía. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de vía.
+                            firstQueryWord: ['ENTINOAC', 'ENTIDADC'], // Campo en el que buscar el nombre de la entidad de población.
+                            secondQueryWord: ['VIA', 'VIANOAC'] // Campo en el que buscar el nombre de la vía.
+                        },
+                        suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.street", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Vía
+                            color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
+                        }, // El resultado de la configuración anterior será: '#CB0000'.
+                        outputProperties: ['ENTIDADC', 'VIA', 'CVIA', 'CENTIDADC', 'CMUNICIPIO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
+                        outputFormatLabel: '{1}, {0}', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
+                        styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                line: { // Opciones de estilo de línea para los resultados obtenidos.
+                                    strokeColor: "#CB0000", // Color de trazo de la línea, representado en formato hex triplet (`#RRGGBB`).
+                                    strokeOpacity: 1, // Opacidad de trazo de la línea, valor de 0 a 1.
+                                    strokeWidth: 2, // Anchura de trazo en píxeles de la línea.
+                                    strokeLinecap: "round",
+                                    strokeDashstyle: "solid"
+                                }
+                            },
+                            {
+                                point: { // Opciones de estilo de punto para los resultados obtenidos.
+                                    label: "VIA", // Nombre de campo del cual extraer el valor de la etiqueta.
+                                    angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
+                                    fontColor: "#000000", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    fontSize: 7, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
+                                    labelOutlineColor: "#ffffff", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
+                                    labelOutlineWidth: 2 // Anchura en píxeles del trazo del contorno del texto de la etiqueta.
+                                }
+                            }
+                        ]
+                    },
+                    cadastralParcel: false, // Desactivamos la búsqueda de parcelas catastrales.
+                    municipality: false, // Desactivamos la búsqueda de municipios.
+                    town: false, // Desactivamos la búsqueda de cascos urbanos.
+                    postalAddress: false // Desactivamos la búsqueda de direcciones postales.
+                }
+            }
+        });
+    </script>
   */
 
 /**
@@ -714,35 +839,66 @@
   * No está disponible cluster.
   * @property {SearchSuggestionHeaderOptions} suggestionListHead - Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchTownSource.html)</caption> {@lang javascript}
-  * {
-  *     url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  *     featurePrefix: 'IDENA', // Prefijo del nombre de la capa a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
-  *     geometryName: 'the_geom', // Nombre del campo de la geometría.
-  *     featureType: ['ESTADI_Pol_EntidadPob'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-  *     dataIdProperty: ['CMUNICIPIO', 'CENTIDAD'], // Colección con los nombres de los campos que nos servirán para identificar unívocamente un casco urbano. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  *     queryProperties: { // Definición de los campos por los que filtrar la búsqueda de casco urbano.
-  *         firstQueryWord: ['ENTINOAC', 'ENTIDAD'] // Campos en los que buscar el nombre de casco urbano.
-  *     },
-  *     suggestionListHead: { //  Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  *         label: "search.list.urban", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Casco urbano.
-  *         color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
-  *     },  // El resultado de la configuración anterior será: '#FEBA1E'.
-  *     outputProperties: ['MUNICIPIO', 'ENTIDAD'], // Colección con el nombre del campo a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
-  *     outputFormatLabel: '{1} ({0})', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
-  *     styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
-  *         {
-  *             polygon: { // Opciones de estilo de polígono para los resultados obtenidos.
-  *                 fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
-  *                 fillOpacity: 0.1, // Opacidad de relleno, valor de 0 a 1.
-  *                 strokeColor: '#feba1e', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
-  *                 strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
-  *                 strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
-  *             }
-  *         }
-  *     ]
-  * }
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchTownSource.html)</caption> {@lang html}
+  <div id="mapa"></div>
+    <script>
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    placeHolder: 'Casco urbano', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar casco urbano', // Texto que se mostrará como tooltip del botón buscar.
+                    town: { // Objeto de configuración del origen de datos en el cual buscar casco urbano.
+                        url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
+                        featurePrefix: 'IDENA', // Prefijo del nombre de la capa a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
+                        geometryName: 'the_geom', // Nombre del campo de la geometría.
+                        featureType: ['ESTADI_Pol_EntidadPob'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
+                        dataIdProperty: ['CMUNICIPIO', 'CENTIDAD'], // Colección con los nombres de los campos que nos servirán para identificar unívocamente un casco urbano. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        queryProperties: { // Definición de los campos por los que filtrar la búsqueda de casco urbano.
+                            firstQueryWord: ['ENTINOAC', 'ENTIDAD'] // Campos en los que buscar el nombre de casco urbano.
+                        },
+                        suggestionListHead: { //  Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
+                            label: "search.list.urban", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Casco urbano.
+                            color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
+                        },  // El resultado de la configuración anterior será: '#FEBA1E'.
+                        outputProperties: ['MUNICIPIO', 'ENTIDAD'], // Colección con el nombre del campo a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias.
+                        outputFormatLabel: '{1} ({0})', // Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo.
+                        styles: [ // Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+                            {
+                                polygon: { // Opciones de estilo de polígono para los resultados obtenidos.
+                                    fillColor: '#000000', // Color de relleno, representado en formato hex triplet (`#RRGGBB`).
+                                    fillOpacity: 0.1, // Opacidad de relleno, valor de 0 a 1.
+                                    strokeColor: '#feba1e', // Color de trazo de los lados del polígono, representado en formato hex triplet (`#RRGGBB`).
+                                    strokeWidth: 2, // Anchura de trazo en de los lados del polígono.
+                                    strokeOpacity: 1 // Opacidad de trazo de los lados del polígono, valor de 0 a 1.
+                                }
+                            }
+                        ]
+                    },
+                    cadastralParcel: false, // Desactivamos la búsqueda de parcelas catastrales.
+                    street: false, // Desactivamos la búsqueda de vías.
+                    postalAddress: false // Desactivamos la búsqueda de direcciones postales.
+                }
+            }
+        });
+    </script>
   */
+
+import TC from '../../TC';
+import Consts from '../Consts';
+import { Defaults } from '../Cfg';
+import Control from '../Control';
+import infoShare from './infoShare';
+import filter from '../filter';
+import autocomplete from '../ui/autocomplete';
+
+TC.control = TC.control || {};
+TC.filter = filter;
+TC.UI = TC.UI || {};
+TC.UI.autocomplete = autocomplete;
+TC.Defaults = Defaults;
+TC.control.infoShare = infoShare;
+TC.Control = Control;
+TC.Consts = Consts;
 
 (function () {
     // Polyfill window.performance.now
@@ -760,17 +916,6 @@
         };
     }
 }());
-
-TC.control = TC.control || {};
-
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
-
-if (!TC.control.infoShare) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/infoShare');
-}
-
 
 const SearchType = function (type, options, parent) {
     var self = this;
@@ -830,21 +975,21 @@ const SearchType = function (type, options, parent) {
                     return style[geomType][css];
                 }
             } else {
-                for (var geomType in style) {
-                    if (style[geomType].hasOwnProperty(css)) {
-                        return style[geomType][css];
+                for (var gType in style) {
+                    if (style[gType].hasOwnProperty(css)) {
+                        return style[gType][css];
                     }
                 }
             }
         };
 
         if (featureType) {
-            var style = self.getStyleByFeatureType(featureType);
+            const style = self.getStyleByFeatureType(featureType);
             return getValue(style, geomType, css);
         } else {
             for (var i = 0; i < self.styles.length; i++) {
-                var style = self.styles[i];
-                var color = getValue(style, geomType, css);
+                const style = self.styles[i];
+                const color = getValue(style, geomType, css);
                 if (color) {
                     return color;
                 }
@@ -881,7 +1026,7 @@ const SearchType = function (type, options, parent) {
                         return {
                             color: getColor.call(self, elm[featureTypes[i]].color.css, elm[featureTypes[i]].color.geomType, featureTypes[i]),
                             title: self.parent.getLocaleString(elm[featureTypes[i]].title) || label
-                        }
+                        };
                     });
                 } else {
                     self._throwConfigError();
@@ -916,12 +1061,12 @@ const SearchType = function (type, options, parent) {
 
         var areSame = function (a, b) {
             switch (true) {
-                case typeof (a) === "number":
+                case typeof a === "number":
                     if (a === b) {
                         return true;
                     }
                     break;
-                case typeof (a) === "string":
+                case typeof a === "string":
                     if (!isNaN(a) || !isNaN(b)) {
                         if (a === b) {
                             return true;
@@ -985,7 +1130,7 @@ const SearchType = function (type, options, parent) {
                 attributes.push(feature.data[properties[j]]);
             }
 
-            for (var j = 0; j < dataIdProperties.length; j++) {
+            for (j = 0; j < dataIdProperties.length; j++) {
                 ids.push(feature.data[dataIdProperties[j]]);
             }
 
@@ -997,13 +1142,13 @@ const SearchType = function (type, options, parent) {
             if (attributes instanceof Array && strFormat && getUnique(attributes).length > 1) {
                 valueToAdd = strFormat.tcFormat(attributes);
             }
-            else if (attributes instanceof Array && getUnique(attributes).length == 1) {
+            else if (attributes instanceof Array && getUnique(attributes).length === 1) {
                 valueToAdd = attributes[0];
             }
 
             var text = valueToAdd.toCamelCase();
 
-            if (!(intoResults(compareData))) {
+            if (!intoResults(compareData)) {
 
                 results.push({
                     text: text,
@@ -1052,7 +1197,7 @@ const SearchType = function (type, options, parent) {
                 // GLS: Si llego aquí, significa que el usuario está indicando la población
                 if (dataT.indexOf('#') === -1 && !self.parent.rootCfg.active.limit) { // si no está limitada la búsqueda, indico la población
 
-                    var filterNode = self.parent.rootCfg.active.queryProperties.firstQueryWord.map(function (queryWord, index) {
+                    var filterNode = self.parent.rootCfg.active.queryProperties.firstQueryWord.map(function (queryWord) {
                         return self.filter.getFilterNode(queryWord, self.parent._LIKE_PATTERN + dataT + self.parent._LIKE_PATTERN);
                     });
 
@@ -1065,42 +1210,38 @@ const SearchType = function (type, options, parent) {
                     }
 
                 } else { // por tanto no añado todas las raíces posibles, añado la población que ha indicado (validando antes contra rootLabel)                     
-                    var item = dataT.split('#');
+                    const item = dataT.split('#');
 
-                    for (var j = 0; j < self.parent.rootCfg.active.dataIdProperty.length; j++) {
-
-                        if (j == 0 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
+                    self.parent.rootCfg.active.dataIdProperty.forEach(function addAnd(dataIdProperty, idx, arr) {
+                        if (idx === 0 && arr.length > 1) {
                             rootFilters.push('<ogc:And>');
                         }
 
-                        rootFilters.push(self.filter.getFilterNode(self.parent.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
+                        rootFilters.push(self.filter.getFilterNode(dataIdProperty, item.length > idx ? item[idx] : item[0]));
 
-                        if (j == self.parent.rootCfg.active.dataIdProperty.length - 1 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
+                        if (idx === arr.length - 1 && arr.length > 1) {
                             rootFilters.push('</ogc:And>');
                         }
-                    }
+                    });
                 }
             } else {
-                for (var i = 0; i < self.parent.rootCfg.active.root.length; i++) {
-                    var item = self.parent.rootCfg.active.root[i];
-
-                    if (i == 0 && self.parent.rootCfg.active.root.length > 1) {
+                self.parent.rootCfg.active.root.forEach(function addOr(item, idx, arr) {
+                    if (idx === 0 && arr.length > 1) {
                         rootFilters.push('<ogc:Or>');
                     }
 
-                    for (var j = 0; j < self.parent.rootCfg.active.dataIdProperty.length; j++) {
-
-                        if (j == 0 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
+                    self.parent.rootCfg.active.dataIdProperty.forEach(function addAnd(dataIdProperty, i, a) {
+                        if (i === 0 && a.length > 1) {
                             rootFilters.push('<ogc:And>');
                         }
 
-                        rootFilters.push(self.filter.getFilterNode(self.parent.rootCfg.active.dataIdProperty[j], item.length > j ? item[j] : item[0]));
+                        rootFilters.push(self.filter.getFilterNode(dataIdProperty, item.length > i ? item[i] : item[0]));
 
-                        if (j == self.parent.rootCfg.active.dataIdProperty.length - 1 && self.parent.rootCfg.active.dataIdProperty.length > 1) {
+                        if (i === a.length - 1 && a.length > 1) {
                             rootFilters.push('</ogc:And>');
                         }
-                    }
-                }
+                    });
+                });
 
                 if (self.parent.rootCfg.active.root.length > 1) {
                     rootFilters.push('</ogc:Or>');
@@ -1178,21 +1319,22 @@ const SearchType = function (type, options, parent) {
                     propertyValue = propertyValue.replace(regex, self.parent._MATCH_PATTERN);
                 }
 
-                if (!(propertyName instanceof Array) && (typeof propertyName !== 'string')) {
+                if (!(propertyName instanceof Array) && typeof propertyName !== 'string') {
                     var f = [];
                     for (var key in propertyName) {
-                        if ((propertyName[key] instanceof Array) && propertyName[key].length > 1) {
+                        if (propertyName[key] instanceof Array && propertyName[key].length > 1) {
                             r = '<Or>';
-                            for (var i = 0; i < propertyName[key].length; i++) {
-                                r += fn(propertyName[key][i].trim(), propertyValue);
-                            }
+                            propertyName[key].forEach(pName => {
+                                r += fn(pName.trim(), propertyValue);
+                            });
 
                             r += '</Or>';
                             f.push('(<Filter xmlns="http://www.opengis.net/ogc">' + r + '</Filter>)');
                         } else {
                             var propName = propertyName[key];
-                            if ((propertyName[key] instanceof Array) && propertyName[key].length == 1)
+                            if (propertyName[key] instanceof Array && propertyName[key].length === 1) {
                                 propName = propertyName[key][0];
+                            }
 
                             f.push('(<Filter xmlns="http://www.opengis.net/ogc">' +
                                 '<Or>' + fn(propName.trim(), propertyValue) + '</Or>' +
@@ -1204,13 +1346,13 @@ const SearchType = function (type, options, parent) {
 
                 } else if (propertyName instanceof Array && propertyName.length > 1) {
                     r = '<ogc:Or>';
-                    for (var i = 0; i < propertyName.length; i++) {
-                        r += fn(propertyName[i].trim(), propertyValue);
-                    }
-
+                    propertyName.forEach(pName => {
+                        r += fn(pName.trim(), propertyValue);
+                    });
                     return r += '</ogc:Or>';
-                } else
-                    return fn((propertyName instanceof Array && propertyName.length === 1 ? propertyName[0].trim() : propertyName.trim()), propertyValue);
+                } else {
+                    return fn(propertyName instanceof Array && propertyName.length === 1 ? propertyName[0].trim() : propertyName.trim(), propertyValue);
+                }
             },
             getFilter: function (data) {
                 var r = {};
@@ -1222,8 +1364,8 @@ const SearchType = function (type, options, parent) {
                 switch (true) {
                     case self.typeName === TC.Consts.searchType.NUMBER:
                         _f = [];
-                        if (!(self.parent.rootCfg.active) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
-                            var match = /(\<|\>|\<\>)/gi.exec(data.t);
+                        if (!self.parent.rootCfg.active && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
+                            let match = /(\<|\>|\<\>)/gi.exec(data.t);
                             if (match)
 
                                 _f.push(self.filter.getFilterNode(self.queryProperties.firstQueryWord, self.parent._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self.parent._LIKE_PATTERN));
@@ -1258,8 +1400,8 @@ const SearchType = function (type, options, parent) {
                     case self.typeName === TC.Consts.searchType.STREET:
                         _f = [];
 
-                        if (!(self.parent.rootCfg.active) && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
-                            var match = /(\<|\>|\<\>)/gi.exec(data.t);
+                        if (!self.parent.rootCfg.active && (/(\<|\>|\<\>)/gi.exec(data.t) || /(\<|\>|\<\>)/gi.exec(data.s))) {
+                            let match = /(\<|\>|\<\>)/gi.exec(data.t);
                             if (match)
                                 _f.push(self.filter.getFilterNode(self.queryProperties.firstQueryWord, self.parent._LIKE_PATTERN + data.t.substring(0, data.t.indexOf(match[0])).trim() + self.parent._LIKE_PATTERN));
                             else {
@@ -1292,7 +1434,7 @@ const SearchType = function (type, options, parent) {
                         r.multiL = true;
                         break;                                            // GLS: consulta de 2 niveles (carretera con pk / topónimo con municipio)
                     case self.queryProperties.hasOwnProperty('secondQueryWord'):
-                        var _f = [];
+                        _f = [];
                         _f.push(self.filter.getFilterNode(self.queryProperties.firstQueryWord, self.parent._LIKE_PATTERN + data.t + self.parent._LIKE_PATTERN));
                         _f.push(self.filter.getFilterNode(self.queryProperties.secondQueryWord, self.parent._LIKE_PATTERN + data.s + self.parent._LIKE_PATTERN));
                         r.f = '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' + '<ogc:And>' + _f.join('') + '</ogc:And>' + '</ogc:Filter>';
@@ -1319,12 +1461,9 @@ const SearchType = function (type, options, parent) {
                 if (!(featureTypes instanceof Array))
                     params.TYPENAME = self.featurePrefix ? self.featurePrefix + ':' + featureTypes.trim() : featureTypes.trim();
                 else {
-                    var ft = [];
-                    for (var i = 0; i < featureTypes.length; i++) {
-                        ft.push(self.featurePrefix ?
-                            self.featurePrefix + ':' + featureTypes[i].trim() :
-                            featureTypes[i].trim());
-                    }
+                    var ft = featureTypes.map(featureType => self.featurePrefix ?
+                        self.featurePrefix + ':' + featureType.trim() :
+                        featureType.trim());
 
                     params.TYPENAME = ft.join(',');
                 }
@@ -1344,8 +1483,9 @@ const SearchType = function (type, options, parent) {
                             }
                             return p;
                         }
-                        else
+                        else {
                             return properties.join(',');
+                        }
                     }
                 };
                 var _properties = _getProperties(self.outputProperties);
@@ -1354,7 +1494,7 @@ const SearchType = function (type, options, parent) {
                 const removeDuplicates = (toCheck) => {
                     const arr = toCheck.split(',');
                     return arr.filter((item, i) => {
-                        return (arr.indexOf(item) === i);
+                        return arr.indexOf(item) === i;
                     }).join(',');
                 };
 
@@ -1381,36 +1521,37 @@ const SearchType = function (type, options, parent) {
                 if (source && dataLayer) {
 
                     if (id.indexOf('#') > -1 && dataLayer instanceof Array && dataLayer.length > 1) {
-                        for (var i = 0; i < dataLayer.length; i++) {
+                        dataLayer.forEach(dLayer => {
+                            source[dLayer].forEach((src, idx) => {
+                                props.push({ name: src, value: _id[idx] });
+                            });
+                        });
+                    } else if (id.indexOf('#') === -1 && dataLayer instanceof Array) {
+                        let src = source;
 
-                            for (var j = 0; j < source[dataLayer[i]].length; j++) {
-                                props.push({ name: source[dataLayer[i]][j], value: _id[j] });
-                            }
-                        }
-                    } else if (id.indexOf('#') == -1 && dataLayer instanceof Array) {
-                        var src = source;
+                        dataLayer.forEach(dLayer => {
+                            if (!props.hasOwnProperty(dLayer)) {
 
-                        for (var i = 0; i < dataLayer.length; i++) {
-                            if (!props.hasOwnProperty(dataLayer[i])) {
-
-                                if (src instanceof Object && source.hasOwnProperty(dataLayer[i]))
-                                    src = source[dataLayer[i]];
-
-                                for (var j = 0; j < src.length; j++) {
-                                    if (j < _id.length)
-                                        props.push({ name: src[j], value: _id[j] });
+                                if (src instanceof Object && source.hasOwnProperty(dLayer)) {
+                                    src = source[dLayer];
                                 }
+
+                                src.forEach((s, idx) => {
+                                    if (idx < _id.length) {
+                                        props.push({ name: s, value: _id[idx] });
+                                    }
+                                });
                             }
-                        }
+                        });
                     }
                     else {
                         if (source instanceof Object && source.hasOwnProperty(dataLayer)) {
                             source = source[dataLayer];
                         }
 
-                        for (var i = 0; i < source.length; i++) {
-                            props.push({ name: source[i], value: _id[i] });
-                        }
+                        source.forEach((src, idx) => {
+                            props.push({ name: src, value: _id[idx] });
+                        });
                     }
                 }
 
@@ -1427,7 +1568,7 @@ const SearchType = function (type, options, parent) {
                     var filters = properties.map(function (elm) {
                         if (elm.hasOwnProperty("type")) {
                             switch (true) {
-                                case elm.type == TC.Consts.comparison.EQUAL_TO: {
+                                case elm.type === TC.Consts.comparison.EQUAL_TO: {
                                     return new TC.filter.equalTo(elm.name, elm.value);
                                 }
                             }
@@ -1443,7 +1584,7 @@ const SearchType = function (type, options, parent) {
                     }
                 }
             }
-        }
+        };
     })(self);
 };
 
@@ -1575,7 +1716,7 @@ TC.control.Search = function () {
                     strokeColor: '#e5475f',
                     strokeWidth: 2,
                     strokeOpacity: 1
-                },
+                }
             }
         ],
         parser: self.getCadastralRef,
@@ -1589,7 +1730,7 @@ TC.control.Search = function () {
         goTo: self.goToCoordinates,
         searchWeight: 4,
         label: null,
-        suggestionListHead: function (text) {
+        suggestionListHead: function (_text) {
             return {
                 label: self.availableSearchTypes[TC.Consts.searchType.COORDINATES].label || self.getLocaleString('search.list.coordinates')
             };
@@ -2012,7 +2153,7 @@ TC.control.Search = function () {
         parser: self.getRoad,
         goTo: self.goToRoad,
         pattern: function () {
-            return new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|R?|E?|[A-Z]{2}?|[A-Z]{1}?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))$", "i")
+            return new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|R?|E?|[A-Z]{2}?|[A-Z]{1}?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))$", "i");
         }
     };
 
@@ -2051,7 +2192,7 @@ TC.control.Search = function () {
         parser: self.getMilestone,
         goTo: self.goToMilestone,
         pattern: function () {
-            return new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|R?|E?|[A-Z]{2}?|[A-Z]{1}?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))\\s*\\,*\\s*(?:(?:" + self.getLocaleString("search.list.milestone") + "\\:?)|(?:P\\:?)|(?:K\\:?)|(?:KM\\:?)|(?:\\s+|\\,+))\\s*(\\d{1,4})$", "i")
+            return new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|R?|E?|[A-Z]{2}?|[A-Z]{1}?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))\\s*\\,*\\s*(?:(?:" + self.getLocaleString("search.list.milestone") + "\\:?)|(?:P\\:?)|(?:K\\:?)|(?:KM\\:?)|(?:\\s+|\\,+))\\s*(\\d{1,4})$", "i");
         }
     };
 
@@ -2072,7 +2213,7 @@ TC.control.Search = function () {
         outputProperties: ['MUNICIPIO'],
         outputFormatLabel: '{0}',
         getRootLabel: function () {
-            return new Promise(function (resolve, reject) {
+            return new Promise(function (resolve, _reject) {
 
                 if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.MUNICIPALITY].rootLabel) {
 
@@ -2141,7 +2282,7 @@ TC.control.Search = function () {
         },
         outputProperties: ['ENTINOAC'],
         getRootLabel: function () {
-            return new Promise(function (resolve, reject) {
+            return new Promise(function (resolve, _reject) {
                 if (self.rootCfg.active && !self.rootCfg[TC.Consts.searchType.LOCALITY].rootLabel) {
 
                     var params = {};
@@ -2217,8 +2358,8 @@ TC.control.Search = function () {
 
                 // GLS: Limitamos la búsqueda en portales y calles cuando así se establezca en la configuración de las búsquedas
                 if (self.options.allowedSearchTypes[allowed].root &&
-                    (allowed != TC.Consts.searchType.MUNICIPALITY && self.options.allowedSearchTypes[allowed].rootType == TC.Consts.searchType.MUNICIPALITY) ||
-                    (allowed != TC.Consts.searchType.LOCALITY && self.options.allowedSearchTypes[allowed].rootType == TC.Consts.searchType.LOCALITY)) {
+                    (allowed !== TC.Consts.searchType.MUNICIPALITY && self.options.allowedSearchTypes[allowed].rootType === TC.Consts.searchType.MUNICIPALITY) ||
+                    allowed !== TC.Consts.searchType.LOCALITY && self.options.allowedSearchTypes[allowed].rootType === TC.Consts.searchType.LOCALITY) {
 
                     self.rootCfg.active = self.rootCfg[self.options.allowedSearchTypes[allowed].rootType];
                     self.rootCfg.active.root = self.options.allowedSearchTypes[allowed].root;
@@ -2311,27 +2452,28 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
         var querys = [];
         var separatorChar = ',';
-        if (normalizedLastPattern.indexOf(separatorChar) == -1) {
+        if (normalizedLastPattern.indexOf(separatorChar) === -1) {
             separatorChar = ' ';
         }
 
         querys = normalizedLastPattern.trim().split(separatorChar);
 
         // si estamos tratando con coordenadas el separador es el espacio, no la coma
-        if ((elm.label.indexOf(self.LAT_LABEL) > -1 && elm.label.indexOf(self.LON_LABEL) > -1) ||
-            (elm.label.indexOf(self.UTMX_LABEL) > -1 && elm.label.indexOf(self.UTMY_LABEL) > -1)) {
+        if (elm.label.indexOf(self.LAT_LABEL) > -1 && elm.label.indexOf(self.LON_LABEL) > -1 ||
+            elm.label.indexOf(self.UTMX_LABEL) > -1 && elm.label.indexOf(self.UTMY_LABEL) > -1) {
             querys = self.lastPattern.split(' ');
 
             for (var t = 0; t < querys.length; t++) {
-                if (querys[t].trim().slice(-1) == ',')
+                if (querys[t].trim().slice(-1) === ',') {
                     querys[t] = querys[t].slice(0, -1);
+                }
             }
         }
 
         for (var q = 0; q < querys.length; q++) {
             if (querys[q].trim().length > 0) {
                 strReg.push('(' + querys[q].trim().replace(/\(/gi, "").replace(/\)/gi, "") + ')');
-                var match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
+                const match = /((\<)|(\>)|(\<\>))/gi.exec(querys[q].trim());
                 if (match) {
                     var _strReg = querys[q].trim().replace(/((\<)|(\>)|(\<\>))/gi, '').split(' ');
                     for (var st = 0; st < _strReg.length; st++) {
@@ -2342,9 +2484,9 @@ TC.mix(TC.control.Search, TC.control.infoShare);
             }
         }
 
-        if (elm.dataRole == TC.Consts.searchType.ROAD || elm.dataRole == TC.Consts.searchType.ROADMILESTONE) {
+        if (elm.dataRole === TC.Consts.searchType.ROAD || elm.dataRole === TC.Consts.searchType.ROADMILESTONE) {
             var rPattern = self.getSearchTypeByRole(elm.dataRole).getPattern();
-            var match = rPattern.exec(self.lastPattern);
+            const match = rPattern.exec(self.lastPattern);
 
             if (match) {
                 strReg = [];
@@ -2362,10 +2504,6 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                 if (match[5]) {
                     strReg.push("(?:" + self.getLocaleString("search.list.milestone") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
                 }
-            } else if (match && match[5]) {
-                strReg = [];
-
-                strReg.push("(?:" + self.getLocaleString("search.list.milestone") + "\\:\\s\\d*)" + "(" + match[5] + ")" + "\\d*");
             }
         }
 
@@ -2538,7 +2676,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
         for (var i = 0; i < data.length; i++) {
             var elm = data[i];
 
-            if (dataRoles.indexOf(elm.dataRole) == -1) {
+            if (dataRoles.indexOf(elm.dataRole) === -1) {
                 html.push(self.getSearchTypeByRole(elm.dataRole).getSuggestionListHead());
                 dataRoles.push(elm.dataRole);
             }
@@ -2587,7 +2725,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
         self.layerStyleFN = (function () {
             function getFeatureType(idFeature) {
                 return idFeature.indexOf('.') > -1 ? idFeature.split('.')[0] : idFeature;
-            };
+            }
             function getStyle(property, geomType, id) {
                 var type = self.getSearchTypeByFeature(id);
                 if (type) {
@@ -2597,7 +2735,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                     }
                 }
                 return TC.Cfg.styles[geomType][property];
-            };
+            }
             return function (geomType, property, extractValue, f) {
                 var self = this;
                 if (TC.Feature && !(f instanceof TC.Feature)) {
@@ -2626,51 +2764,56 @@ TC.mix(TC.control.Search, TC.control.infoShare);
         }());
         return new Promise(function (resolve, reject) {
             TC.Control.prototype.renderData.call(self, Object.assign(data || {}, { share: self.options.share }), function () {
-                self.layerPromise = self.map.addLayer({
-                    id: self.getUID(),
-                    title: 'Búsquedas',
-                    owner: self,
-                    stealth: true,
-                    declutter: true,
-                    type: TC.Consts.layerType.VECTOR,
-                    styles: {
-                        polygon: {
-                            fillColor: self.layerStyleFN.bind(self, 'polygon', 'fillColor', false),
-                            fillOpacity: self.layerStyleFN.bind(self, 'polygon', 'fillOpacity', false),
-                            strokeColor: self.layerStyleFN.bind(self, 'polygon', 'strokeColor', false),
-                            strokeOpacity: self.layerStyleFN.bind(self, 'polygon', 'strokeOpacity', false),
-                            strokeWidth: self.layerStyleFN.bind(self, 'polygon', 'strokeWidth', false)
-                        },
-                        line: {
-                            strokeColor: self.layerStyleFN.bind(self, 'line', 'strokeColor', false),
-                            strokeOpacity: self.layerStyleFN.bind(self, 'line', 'strokeOpacity', false),
-                            strokeWidth: self.layerStyleFN.bind(self, 'line', 'strokeWidth', false)
-                        },
-                        marker: {
-                            anchor: TC.Defaults.styles.marker.anchor,
-                            height: TC.Defaults.styles.marker.height,
-                            width: TC.Defaults.styles.marker.width
-                        },
-                        point: {
-                            radius: self.layerStyleFN.bind(self, 'point', 'radius', false),
-                            height: self.layerStyleFN.bind(self, 'point', 'height', false),
-                            width: self.layerStyleFN.bind(self, 'point', 'width', false),
-                            fillColor: self.layerStyleFN.bind(self, 'point', 'fillColor', false),
-                            fillOpacity: self.layerStyleFN.bind(self, 'point', 'fillOpacity', false),
-                            strokeColor: self.layerStyleFN.bind(self, 'point', 'strokeColor', false),
-                            strokeWidth: self.layerStyleFN.bind(self, 'point', 'strokeWidth', false),
-                            fontSize: self.layerStyleFN.bind(self, 'point', 'fontSize', false),
-                            fontColor: self.layerStyleFN.bind(self, 'point', 'fontColor', false),
-                            labelOutlineColor: self.layerStyleFN.bind(self, 'point', 'labelOutlineColor', false),
-                            labelOutlineWidth: self.layerStyleFN.bind(self, 'point', 'labelOutlineWidth', false),
-                            label: self.layerStyleFN.bind(self, 'point', 'label', true),
-                            angle: self.layerStyleFN.bind(self, 'point', 'angle', true)
+                if (self.map) {
+                    self.layerPromise = self.map.addLayer({
+                        id: self.getUID(),
+                        title: 'Búsquedas',
+                        owner: self,
+                        stealth: true,
+                        declutter: true,
+                        type: TC.Consts.layerType.VECTOR,
+                        styles: {
+                            polygon: {
+                                fillColor: self.layerStyleFN.bind(self, 'polygon', 'fillColor', false),
+                                fillOpacity: self.layerStyleFN.bind(self, 'polygon', 'fillOpacity', false),
+                                strokeColor: self.layerStyleFN.bind(self, 'polygon', 'strokeColor', false),
+                                strokeOpacity: self.layerStyleFN.bind(self, 'polygon', 'strokeOpacity', false),
+                                strokeWidth: self.layerStyleFN.bind(self, 'polygon', 'strokeWidth', false)
+                            },
+                            line: {
+                                strokeColor: self.layerStyleFN.bind(self, 'line', 'strokeColor', false),
+                                strokeOpacity: self.layerStyleFN.bind(self, 'line', 'strokeOpacity', false),
+                                strokeWidth: self.layerStyleFN.bind(self, 'line', 'strokeWidth', false)
+                            },
+                            marker: {
+                                anchor: TC.Defaults.styles.marker.anchor,
+                                height: TC.Defaults.styles.marker.height,
+                                width: TC.Defaults.styles.marker.width
+                            },
+                            point: {
+                                radius: self.layerStyleFN.bind(self, 'point', 'radius', false),
+                                height: self.layerStyleFN.bind(self, 'point', 'height', false),
+                                width: self.layerStyleFN.bind(self, 'point', 'width', false),
+                                fillColor: self.layerStyleFN.bind(self, 'point', 'fillColor', false),
+                                fillOpacity: self.layerStyleFN.bind(self, 'point', 'fillOpacity', false),
+                                strokeColor: self.layerStyleFN.bind(self, 'point', 'strokeColor', false),
+                                strokeWidth: self.layerStyleFN.bind(self, 'point', 'strokeWidth', false),
+                                fontSize: self.layerStyleFN.bind(self, 'point', 'fontSize', false),
+                                fontColor: self.layerStyleFN.bind(self, 'point', 'fontColor', false),
+                                labelOutlineColor: self.layerStyleFN.bind(self, 'point', 'labelOutlineColor', false),
+                                labelOutlineWidth: self.layerStyleFN.bind(self, 'point', 'labelOutlineWidth', false),
+                                label: self.layerStyleFN.bind(self, 'point', 'label', true),
+                                angle: self.layerStyleFN.bind(self, 'point', 'angle', true)
+                            }
                         }
-                    }
-                }).then(function (layer) {
-                    self.layer = layer;
-                    return self.layer;
-                });
+                    }).then(function (layer) {
+                        self.layer = layer;
+                        return self.layer;
+                    });
+                }
+                else {
+                    self.layerPromise = Promise.reject(new Error('Control not registered to map'));
+                }
 
                 // desde keypress y desde la lupa
                 var _research = function () {
@@ -2745,7 +2888,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                 self.textInput.addEventListener("targetCleared.autocomplete", function () {
                     self.shareButton && self.shareButton.classList.add(TC.Consts.classes.HIDDEN);
                     self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
-                })
+                });
                 self.textInput.addEventListener("targetUpdated.autocomplete", function () {
                     if (self.resultsList.querySelectorAll('li').length > 0) {
                         self.resultsList.classList.remove(TC.Consts.classes.HIDDEN);
@@ -2762,125 +2905,119 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
                 self.lastPattern = '';
                 self.retryTimeout = null;
-                TC.loadJS(
-                    !TC.UI || !TC.UI.autocomplete,
-                    [TC.apiLocation + 'TC/ui/autocomplete.js'],
-                    function () {
-                        var searchDelay;
+                var searchDelay;
 
-                        const source = function (text, callback) {
-                            self.lastpress = performance.now();
+                const source = function (_text, callback) {
+                    self.lastpress = performance.now();
 
-                            if (!searchDelay) {
-                                function step() {
-                                    var criteria = self.textInput.value.trim();
+                    if (!searchDelay) {
+                        const step = function () {
+                            var criteria = self.textInput.value.trim();
 
-                                    if (criteria.length > 0 &&
-                                        (!self.lastPattern || criteria != self.lastPattern) &&
-                                        performance.now() - self.lastpress > self.interval) {
+                            if (criteria.length > 0 &&
+                                (!self.lastPattern || criteria !== self.lastPattern) &&
+                                performance.now() - self.lastpress > self.interval) {
 
-                                        window.cancelAnimationFrame(searchDelay);
-                                        searchDelay = undefined;
+                                window.cancelAnimationFrame(searchDelay);
+                                searchDelay = undefined;
 
-                                        self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
+                                self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
 
-                                        // Pendiente de afinar
-                                        //if (self.lastPattern && criteria.substring(0, criteria.lastIndexOf(' ')) == self.lastPattern) {                                            
+                                // Pendiente de afinar
+                                //if (self.lastPattern && criteria.substring(0, criteria.lastIndexOf(' ')) == self.lastPattern) {                                            
 
-                                        //    // Si el patrón de búsqueda anterior y actual es el mismo más algo nuevo (típico en la búsqueda de un portal), lo nuevo lo separo por coma
-                                        //    // self.lastPattern: "Calle Cataluña/Katalunia Kalea, Pamplona"
-                                        //    // text: "Calle Cataluña/Katalunia Kalea, Pamplona 18"
+                                //    // Si el patrón de búsqueda anterior y actual es el mismo más algo nuevo (típico en la búsqueda de un portal), lo nuevo lo separo por coma
+                                //    // self.lastPattern: "Calle Cataluña/Katalunia Kalea, Pamplona"
+                                //    // text: "Calle Cataluña/Katalunia Kalea, Pamplona 18"
 
-                                        //    criteria = criteria.substring(0, criteria.lastIndexOf(' ')) + (self.lastPattern.trim().endsWith(',') ? "" : ",") + criteria.substring(criteria.lastIndexOf(' '));
-                                        //}
+                                //    criteria = criteria.substring(0, criteria.lastIndexOf(' ')) + (self.lastPattern.trim().endsWith(',') ? "" : ",") + criteria.substring(criteria.lastIndexOf(' '));
+                                //}
 
-                                        self.lastPattern = criteria;
+                                self.lastPattern = criteria;
 
-                                        self.search(criteria, callback);
-                                    } else {
-                                        searchDelay = requestAnimationFrame(step);
-                                    }
-                                }
-
+                                self.search(criteria, callback);
+                            } else {
                                 searchDelay = requestAnimationFrame(step);
                             }
                         };
 
-                        TC.UI.autocomplete.call(self.textInput, {
-                            link: '#',
-                            target: self.resultsList,
-                            minLength: 2,
-                            ctx: self,
-                            source: source,
-                            callback: selectionCallback.bind(self),
-                            buildHTML: buildHTML.bind(self)
-                        });
-
-                        const getNextSibling = function (elem, selector) {
-                            // Get the next sibling element
-                            var sibling = elem.nextElementSibling;
-                            // If there's no selector, return the first sibling
-                            if (!selector) return sibling;
-                            // If the sibling matches our selector, use it
-                            // If not, jump to the next sibling and continue the loop
-                            while (sibling) {
-                                if (sibling.matches(selector)) return sibling;
-                                sibling = sibling.nextElementSibling
-                            }
-                        };
-
-                        const getPreviousSibling = function (elem, selector) {
-                            // Get the next sibling element
-                            var sibling = elem.previousElementSibling;
-                            // If there's no selector, return the first sibling
-                            if (!selector) return sibling;
-                            // If the sibling matches our selector, use it
-                            // If not, jump to the next sibling and continue the loop
-                            while (sibling) {
-                                if (sibling.matches(selector)) return sibling;
-                                sibling = sibling.previousElementSibling;
-                            }
-                        };
-
-                        // Detect up/down arrow
-                        const onKeydown = function (e) {
-                            if (!e.ctrlKey && !e.altKey && !e.shiftKey) {
-                                if (e.keyCode === 40) { // down arrow
-                                    if (self.textInput == document.activeElement && self.resultsList.querySelector('li:not([header]) a')) {
-                                        // Scenario 1: We're focused on the search input; move down to the first li
-                                        self.resultsList.querySelector('li:not([header]) a').focus();
-                                    } else if (self.resultsList.querySelector('li:not([header]):last-child a') === document.activeElement) { //} else if (self.resultsList.querySelector('li:not([header]):last a').is(':focus')) {
-                                        // Scenario 2: We're focused on the last li; move up to search input
-                                        self.textInput.focus();
-                                    } else {
-                                        // Scenario 3: We're in the list but not on the last element, simply move down
-                                        getNextSibling(document.activeElement.parentElement, 'li:not([header])')
-                                            .querySelector('a').focus();
-                                    }
-                                    e.preventDefault(); // Stop page from scrolling
-                                    e.stopPropagation();
-                                } else if (e.keyCode === 38) { // up arrow
-                                    if (self.textInput == document.activeElement) {
-                                        // Scenario 1: We're focused on the search input; move down to the last li
-                                        self.resultsList.querySelector('li:not([header]):last-child a').focus();
-                                    } else if (document.activeElement == self.resultsList.querySelector('li:not([header]) a')) {
-                                        self.resultsList.querySelector('li:not([header]):last-child a').focus();
-                                    } else {
-                                        // Scenario 3: We're in the list but not on the first element, simply move up
-                                        getPreviousSibling(document.activeElement.parentElement, 'li:not([header])')
-                                            .querySelector('a').focus();
-                                    }
-                                    e.preventDefault(); // Stop page from scrolling
-                                    e.stopPropagation();
-                                }
-                            }
-                            e.stopPropagation();
-                        };
-
-                        self.textInput.addEventListener('keydown', onKeydown);
-                        self.resultsList.addEventListener('keydown', onKeydown);
+                        searchDelay = requestAnimationFrame(step);
                     }
-                );
+                };
+
+                TC.UI.autocomplete.call(self.textInput, {
+                    link: '#',
+                    target: self.resultsList,
+                    minLength: 2,
+                    ctx: self,
+                    source: source,
+                    callback: selectionCallback.bind(self),
+                    buildHTML: buildHTML.bind(self)
+                });
+
+                const getNextSibling = function (elem, selector) {
+                    // Get the next sibling element
+                    var sibling = elem.nextElementSibling;
+                    // If there's no selector, return the first sibling
+                    if (!selector) return sibling;
+                    // If the sibling matches our selector, use it
+                    // If not, jump to the next sibling and continue the loop
+                    while (sibling) {
+                        if (sibling.matches(selector)) return sibling;
+                        sibling = sibling.nextElementSibling;
+                    }
+                };
+
+                const getPreviousSibling = function (elem, selector) {
+                    // Get the next sibling element
+                    var sibling = elem.previousElementSibling;
+                    // If there's no selector, return the first sibling
+                    if (!selector) return sibling;
+                    // If the sibling matches our selector, use it
+                    // If not, jump to the next sibling and continue the loop
+                    while (sibling) {
+                        if (sibling.matches(selector)) return sibling;
+                        sibling = sibling.previousElementSibling;
+                    }
+                };
+
+                // Detect up/down arrow
+                const onKeydown = function (e) {
+                    if (!e.ctrlKey && !e.altKey && !e.shiftKey) {
+                        if (e.keyCode === 40) { // down arrow
+                            if (self.textInput == document.activeElement && self.resultsList.querySelector('li:not([header]) a')) {
+                                // Scenario 1: We're focused on the search input; move down to the first li
+                                self.resultsList.querySelector('li:not([header]) a').focus();
+                            } else if (self.resultsList.querySelector('li:not([header]):last-child a') === document.activeElement) { //} else if (self.resultsList.querySelector('li:not([header]):last a').is(':focus')) {
+                                // Scenario 2: We're focused on the last li; move up to search input
+                                self.textInput.focus();
+                            } else {
+                                // Scenario 3: We're in the list but not on the last element, simply move down
+                                getNextSibling(document.activeElement.parentElement, 'li:not([header])')
+                                    .querySelector('a').focus();
+                            }
+                            e.preventDefault(); // Stop page from scrolling
+                            e.stopPropagation();
+                        } else if (e.keyCode === 38) { // up arrow
+                            if (self.textInput == document.activeElement) {
+                                // Scenario 1: We're focused on the search input; move down to the last li
+                                self.resultsList.querySelector('li:not([header]):last-child a').focus();
+                            } else if (document.activeElement == self.resultsList.querySelector('li:not([header]) a')) {
+                                self.resultsList.querySelector('li:not([header]):last-child a').focus();
+                            } else {
+                                // Scenario 3: We're in the list but not on the first element, simply move up
+                                getPreviousSibling(document.activeElement.parentElement, 'li:not([header])')
+                                    .querySelector('a').focus();
+                            }
+                            e.preventDefault(); // Stop page from scrolling
+                            e.stopPropagation();
+                        }
+                    }
+                    e.stopPropagation();
+                };
+
+                self.textInput.addEventListener('keydown', onKeydown);
+                self.resultsList.addEventListener('keydown', onKeydown);
 
                 if (TC.Util.isFunction(callback)) {
                     callback();
@@ -2961,7 +3098,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
         var self = this;
 
         TC.cache.search = TC.cache.search || {};
-        self._municipalitiesPromise = new Promise(function (resolve, reject) {
+        self._municipalitiesPromise = new Promise(function (resolve, _reject) {
             if (TC.cache.search.municipalities) {
                 resolve(TC.cache.search.municipalities);
             }
@@ -3052,7 +3189,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                     pattern = match[1] + ' ' + match[3];
                 }
 
-                if (!match || match && ((match[1].indexOf(',') > -1 ? match[1].replace(',', '.') : match[1]) <= 180) && ((match[3].indexOf(',') > -1 ? match[3].replace(',', '.') : match[3]) <= 90)) {
+                if (!match || match && (match[1].indexOf(',') > -1 ? match[1].replace(',', '.') : match[1]) <= 180 && (match[3].indexOf(',') > -1 ? match[3].replace(',', '.') : match[3]) <= 90) {
 
                     match = new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').exec(pattern);
                     if (match && (match[1].indexOf(',') > -1 || match[2].indexOf(',') > -1)) {
@@ -3068,16 +3205,16 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                     if (coords) {
                         var xValue = coords[0].value;
                         var yValue = coords[1].value;
-                        var xLabel = (coords[0].type === TC.Consts.UTM) ? self.UTMX : self.LAT;
-                        var yLabel = (coords[1].type === TC.Consts.UTM) ? self.UTMY : self.LON;
+                        var xLabel = coords[0].type === TC.Consts.UTM ? self.UTMX : self.LAT;
+                        var yLabel = coords[1].type === TC.Consts.UTM ? self.UTMY : self.LON;
                         var id = xLabel + xValue + yLabel + yValue;
 
                         var point = self.getPoint(id);
                         if (point && !self.insideLimit(point)) {
                             xValue = coords[1].value;
                             yValue = coords[0].value;
-                            xLabel = (coords[1].type === TC.Consts.UTM) ? self.UTMX : self.LAT;
-                            yLabel = (coords[0].type === TC.Consts.UTM) ? self.UTMY : self.LON;
+                            xLabel = coords[1].type === TC.Consts.UTM ? self.UTMX : self.LAT;
+                            yLabel = coords[0].type === TC.Consts.UTM ? self.UTMY : self.LON;
                             id = xLabel + xValue + yLabel + yValue;
                             point = self.getPoint(id);
                         }
@@ -3118,10 +3255,10 @@ TC.mix(TC.control.Search, TC.control.infoShare);
             }
 
             var _pattern = pattern;
-            if (!(/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(pattern)) && self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot)
+            if (!/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(pattern) && self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot)
                 _pattern = self.getSearchTypeByRole(TC.Consts.searchType.CADASTRAL).suggestionRoot + ', ' + pattern;
 
-            if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !(new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([-+]?[0-9]{' + self.UTMY_LEN + '})$').test(pattern))) {
+            if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([-+]?[0-9]{' + self.UTMY_LEN + '})$').test(pattern)) {
                 self.getMunicipalities().then(function (list) {
                     var match = /^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.exec(_pattern);
                     if (match) {
@@ -3183,12 +3320,13 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
     ctlProto.stringPatternsValidators = {
         tsp: function (text, result, root, limit) {
+            const self = this;
             // town, street, portal - street, town, portal
             var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
             if (match && match[1] && match[2]) {
 
                 var getPortal = function () {
-                    return formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim());
+                    return formatStreetNumber.call(self, (match[3] || match[4] || match[5] || match[6]).trim());
                 };
                 // ninguno contiene número duplicamos búsqueda
                 if (/^([^0-9]+)$/i.test(match[1].trim()) && /^([^0-9]+)$/i.test(match[2].trim())) {
@@ -3214,12 +3352,13 @@ TC.mix(TC.control.Search, TC.control.infoShare);
             return false;
         },
         spt: function (text, result, root, limit) {
+            const self = this;
             // street, portal, town
             var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
             if (match && match[6] && match[1]) {
 
                 var getPortal = function () {
-                    return formatStreetNumber((match[2] || match[3] || match[4] || match[5]).trim());
+                    return formatStreetNumber.call(self, (match[2] || match[3] || match[4] || match[5]).trim());
                 };
                 // ninguno contiene número duplicamos búsqueda
                 if (/^([^0-9]+)$/i.test(match[6].trim()) && /^([^0-9]+)$/i.test(match[1].trim())) {
@@ -3245,12 +3384,13 @@ TC.mix(TC.control.Search, TC.control.infoShare);
             return false;
         },
         tnsp: function (text, result, root, limit) {
+            const self = this;
             // town, numbers street, portal
             var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)(?:\s*\,\s*)(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
 
             if (match && match[1] && match[2]) {
                 result.push({
-                    t: match[2].trim(), s: match[1].trim(), p: formatStreetNumber((match[3] || match[4] || match[5] || match[6]).trim())
+                    t: match[2].trim(), s: match[1].trim(), p: formatStreetNumber.call(self, (match[3] || match[4] || match[5] || match[6]).trim())
                 });
                 bindRoot.call(this, result, root, limit);
                 return true;
@@ -3259,6 +3399,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
             return false;
         },
         ts: function (text, result, root, limit) {
+            const self = this;
             // town, street
             var match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù"\s*\-\.\(\)\/0-9]+))$/i.exec(text);
 
@@ -3287,7 +3428,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                         // validamos si el criterio es compuesto 
                         var fs = [];
                         for (var si = 0; si < revS.length; si++) {
-                            if (revS[si].length == 1) {
+                            if (revS[si].length === 1) {
                                 fs.push(revS[si]);
                                 revS[si] = '';
                             }
@@ -3313,24 +3454,25 @@ TC.mix(TC.control.Search, TC.control.infoShare);
             return false;
         },
         st: function (text, result, root, limit) {
+            const self = this;
             // street, town
             var match = /^(?:([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9]+))(?:\s*\,\s*)([^0-9\,]+)$/i.exec(text);
 
             if (!match) {
-                var criteria = text.split(',').reverse();
+                const criteria = text.split(',').reverse();
                 match = /^([^0-9\,]+)(?:\s*\,\s*)(?:([^\,][a-zñáéíóúüàèìòù"\s*\-\.\(\)\/0-9]+))$/i.exec(criteria.join(','));
             }
 
             if (match) { // puede generar falsos positivos cuando el portal llega seguido de la calle -> calle mayor 14, pamplona
                 var data = {
                 };
-                var criteria = text.split(',').reverse();
+                const criteria = text.split(',').reverse();
                 for (var i = 0; i < criteria.length; i++) {
                     if (/^([^0-9\,]+)$/i.test(criteria[i].trim())) { // si no hay números se trata de municipio
                         data.t = criteria[i].trim();
                     }
                     else if (/(\s*\d+)/i.test(criteria[i].trim())) { // si contiene número, puede ser calle o calle + portal
-                        if (criteria[i].trim().indexOf(' ') == -1) { // si no contiene espacios se trata de calle compuesta por números
+                        if (criteria[i].trim().indexOf(' ') === -1) { // si no contiene espacios se trata de calle compuesta por números
                             data.s = criteria[i].trim();
                         } else { // si contiene espacio puede contener calle + portal
                             var _criteria = criteria[i].trim().split(' ').reverse();
@@ -3338,7 +3480,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                             var isPortal = function (c) {
                                 var m = /^(?:(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(c.trim());
                                 if (m) {
-                                    data.p = formatStreetNumber(c.trim());
+                                    data.p = formatStreetNumber.call(self, c.trim());
                                     return true;
                                 }
                                 return false;
@@ -3364,11 +3506,10 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                                     }
 
                                     if (inPortal) {
-                                        var _p = _cr[h];
-
                                         _cr[h] = '';
-                                        if (data.p == formatStreetNumber(p))
+                                        if (data.p == formatStreetNumber.call(self, p)) {
                                             break;
+                                        }
                                     }
                                 }
 
@@ -3376,7 +3517,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                                     var fs = [];
                                     var criteriaRev = _criteria.reverse();
                                     for (var chs = 0; chs < criteriaRev.length; chs++) {
-                                        if (criteriaRev[chs].trim().length == 1) {
+                                        if (criteriaRev[chs].trim().length === 1) {
                                             fs.push(criteriaRev[chs].trim());
                                             criteriaRev[chs] = '';
                                         }
@@ -3406,7 +3547,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
             return false;
         },
-        s_or_t: function (text, result, root, limit) {
+        s_or_t: function (text, result, root, _limit) {
             var match = /^([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/0-9\<\>]+)$/i.exec(text);
             if (match && match[1]) {
                 if (root) {
@@ -3427,14 +3568,15 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
             return false;
         },
-        sp: function (text, result, root, limit) {
+        sp: function (text, result, root, _limit) {
+            const self = this;
             var match = /^([^\,][a-zñáéíóúüàèìòù\s*\-\.\(\)\/]+)\s*\,?\s*((\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4}))$/i.exec(text);
             if (match && match[1] && match[2]) { // && text.indexOf(',') > -1 && text.split(',').length < 3) {
                 if (root)
                     result.push({
                         t: root,
                         s: match[1].trim(),
-                        p: formatStreetNumber(match[2].trim())
+                        p: formatStreetNumber.call(self, match[2].trim())
                     });
                 else
                     result.push({
@@ -3447,13 +3589,14 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
             return false;
         },
-        snp: function (text, result, root, limit) { // calle puede contener números con portal (cuando exista un municipio root establecido)
+        snp: function (text, result, root, _limit) { // calle puede contener números con portal (cuando exista un municipio root establecido)
+            const self = this;
             var match = /^([^\,][0-9\s*\-\.\(\)\/]+)\s*\,?\s*(\d{1,3}\s?\-?\s?[a-z]{0,4}\s?\-?\s?[a-z]{0,4})|([a-z]{1,4}\s?\-?\s?\d{1,3})|(sn|S\/N|s\/n|s\-n)|([a-z]{1,4}\s?\+\s?[a-z]{1,4})$/i.exec(text);
             if (match && match[1] && match[2] && root) {
                 result.push({
                     t: root,
                     s: match[1].trim(),
-                    p: formatStreetNumber(match[2].trim())
+                    p: formatStreetNumber.call(self, match[2].trim())
                 });
                 return true;
             }
@@ -3467,24 +3610,24 @@ TC.mix(TC.control.Search, TC.control.infoShare);
     const normalizedCriteria = function (value) {
         const self = this;
 
-        var _value = '';
-
         value = self.removePunctuation(value);
 
         // elimino los caracteres especiales
-        if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(value))
+        if (self.NORMAL_PATTERNS.ROMAN_NUMBER.test(value)) {
             value = value.replace(self.NORMAL_PATTERNS.ABSOLUTE_NOT_DOT, '');
-        else
+        }
+        else {
             value = value.replace(self.NORMAL_PATTERNS.ABSOLUTE, '');
+        }
         return value.toLowerCase();
     };
 
     const formatStreetNumber = function (value) {
-        var result = value;
+        const self = this;
 
         var is_nc_c = function (value) {
             return /^(\d{1,3})\s?\-?\s?([a-z]{0,4})\s?\-?\s?([a-z]{0,4})$/i.test(value);
-        }
+        };
         var nc_c = function (value) {
             var f = [];
             var m = /^(\d{1,3})\s?\-?\s?([a-z]{0,4})\s?\-?\s?([a-z]{0,4})$/i.exec(value);
@@ -3563,7 +3706,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                             return elem.label.indexOf(self.removePunctuation(result[i].t).toLowerCase()) > -1;
                         }.bind(self));
 
-                        if (indicatedRoot.length == 1) {
+                        if (indicatedRoot.length === 1) {
                             result[i].t = indicatedRoot[0].id;
                         } else if (indicatedRoot.length > 1) {
 
@@ -3575,14 +3718,14 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                                 result.push(newResult);
                             });
 
-                        } else if (indicatedRoot.length == 0 && limit) {
+                        } else if (indicatedRoot.length === 0 && limit) {
                             result.splice(i, 1);
                         }
                     }
                 }
                 else {
                     result.push(TC.Util.extend({}, result[i], { t: root }));
-                };
+                }
             }
         }
     };
@@ -3599,7 +3742,9 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                 return text.length >= 3;
             },
             function (text) {
-                return /^\d+$/.test(text) ? false : (/^\d+\,\s*\d+$/.test(text) ? false : true);
+                return /^\d+$/.test(text) ?
+                    false :
+                    /^\d+\,\s*\d+$/.test(text) ? false : true;
             }];
 
             for (var i = 0; i < tests.length; i++) {
@@ -3614,7 +3759,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
         text = text.trim();
 
         // comprobamos si acaba con coma, si es así, la eliminamos
-        if (text.charAt(text.length - 1) == ',') {
+        if (text.charAt(text.length - 1) === ',') {
             text = text.substring(0, text.length - 1);
         }
 
@@ -3751,7 +3896,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                         .then((results) => {
                             //console.log('getStringPattern promise resuelta');                                  
                             resolve([].concat.apply([], results));
-                        }).catch((error) => {
+                        }).catch((_error) => {
                             reject();
                         });
                 } else {
@@ -3829,7 +3974,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                             //console.log('getRoad promise resuelta');
                             reject();
                         }
-                    }).catch(function (data) {
+                    }).catch(function (_data) {
                         //console.log('getRoad promise resuelta - xhr fail');
                         reject();
                     });
@@ -3903,7 +4048,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                             //console.log('getMilestone promise resuelta');
                             reject();
                         }
-                    }).catch(function (data) {
+                    }).catch(function (_data) {
                         //console.log('getMilestone promise resuelta - xhr fail');
                         reject();
                     });
@@ -3931,11 +4076,9 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
             self.searchRequestsResults = [];
 
-            let isAborted = false;
             let onAbort = () => {
-                isAborted = true;
                 self.searchRequestsAbortController.signal.removeEventListener('abort', onAbort);
-            }
+            };
 
             self.searchRequestsAbortController = new AbortController();
             self.searchRequestsAbortController.signal.addEventListener('abort', onAbort);
@@ -3952,8 +4095,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                         if (self.searchRequestsResults.length === 0) {
                             self.cleanMap();
 
-                            if (!self.layer ||
-                                (self.layer && self.layer.features.length === 0)) {
+                            if (!self.layer || self.layer.features.length === 0) {
 
                                 self.resultsList.innerHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
                                 self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
@@ -4021,7 +4163,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                             if (result && result.length > 0) {
 
                                 // caso topónimo con y sin municipio Irisarri Auzoa (Igantzi)
-                                let toConcat = result.filter((elm, i) => self.searchRequestsResults.findIndex((srrElm) => srrElm.id === elm.id) === -1);
+                                let toConcat = result.filter(elm => self.searchRequestsResults.findIndex((srrElm) => srrElm.id === elm.id) === -1);
                                 if (toConcat.length === result.length) {
                                     self.searchRequestsResults = self.searchRequestsResults.concat(toConcat);
 
@@ -4036,7 +4178,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                             renderingEnd();
 
                             //resolve(result);
-                        }.bind(self, allowed.typeName)).catch(function (dataRole) {
+                        }.bind(self, allowed.typeName)).catch(function (_dataRole) {
                             //reject();
                             //console.log('reject promesa: ' + dataRole);
                             renderingEnd();
@@ -4141,15 +4283,16 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
             if (goTo) {
                 self.getLayer().then(function (layer) {
+                    var i;
                     switch (true) {
-                        case goTo.params.type == TC.Consts.layerType.VECTOR:
-                            for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
+                        case goTo.params.type === TC.Consts.layerType.VECTOR:
+                            for (i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
                                 if (layer.hasOwnProperty(self.WFS_TYPE_ATTRS[i]))
                                     delete layer[self.WFS_TYPE_ATTRS[i]];
                             }
                             break;
-                        case goTo.params.type == TC.Consts.layerType.WFS:
-                            for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
+                        case goTo.params.type === TC.Consts.layerType.WFS:
+                            for (i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
                                 layer[self.WFS_TYPE_ATTRS[i]] = goTo.params[self.WFS_TYPE_ATTRS[i]];
                             }
                             break;
@@ -4171,8 +4314,8 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                             self.map.off(TC.Consts.event.LAYERUPDATE, layerEventHandler);
                             // Salta cuando se pinta una feature que no es de tipo API porque la gestión de estilos salta antes (no es controlable)
                             self.map.one(TC.Consts.event.FEATURESADD, function (e) {
-                                if (e.layer == layer) {
-                                    if (!e.layer.features || e.layer.features.length == 0 && e.layer.wrap.layer.getSource().getFeatures()) {
+                                if (e.layer === layer) {
+                                    if (!e.layer.features || e.layer.features.length === 0 && e.layer.wrap.layer.getSource().getFeatures()) {
                                         self.resultsList.classList.add(TC.Consts.classes.HIDDEN);
                                         var bounds = e.layer.wrap.layer.getSource().getExtent();
                                         var radius = e.layer.map.options.pointBoundsRadius;
@@ -4201,7 +4344,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
                                         self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features });
 
-                                    } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
+                                    } else if (e.layer.features && e.layer.features.length === 0 && goTo.params.type === TC.Consts.layerType.WFS) {
                                         self.resultsList.inner = goTo.emptyResultHTML;
                                         self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
 
@@ -4222,7 +4365,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                                 self.map.trigger(TC.Consts.event.FEATURESADD, { layer: self.layer, features: self.layer.features });
 
                                 self.loading.removeWait(wait);
-                            } else if (e.layer.features && e.layer.features.length == 0 && goTo.params.type == TC.Consts.layerType.WFS) {
+                            } else if (e.layer.features && e.layer.features.length === 0 && goTo.params.type === TC.Consts.layerType.WFS) {
                                 self.resultsList.innerHTML = goTo.emptyResultHTML;
                                 self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
 
@@ -4237,7 +4380,7 @@ TC.mix(TC.control.Search, TC.control.infoShare);
                         }
                     };
                     self.map.on(TC.Consts.event.LAYERUPDATE, layerEventHandler);
-                    layer.refresh();
+                    layer.wrap.reloadSource();
                 });
             } else {
                 reject(Error('Method goTo has no implementation'));
@@ -4265,10 +4408,9 @@ TC.mix(TC.control.Search, TC.control.infoShare);
     var drawPoint = function (id) {
         var self = this;
 
-        wait = self.loading.addWait();
+        let wait = self.loading.addWait();
 
         var point = self.getPoint(id);
-        var delta;
         var title;
         var promise;
 
@@ -4497,13 +4639,13 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
         if (id.match(new RegExp('^(?:' + self.LAT + '[-\\d])|(?:' + self.UTMX + '[-+]?[\\d])'))) {
             result = result.replace(self.LAT, self.LAT_LABEL).replace(self.LON, ' ' + self.LON_LABEL).replace(self.UTMX, self.UTMX_LABEL).replace(self.UTMY, ' ' + self.UTMY_LABEL);
-            var match = result.match(new RegExp('^' + self.LAT_LABEL.trim() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LON_LABEL.trim() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
+            let match = result.match(new RegExp('^' + self.LAT_LABEL.trim() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LON_LABEL.trim() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
             if (match) {
                 result = geoCoordsLabel(result, match);
             }
 
             var localeDecimalSeparator = 1.1.toLocaleString(locale).substring(1, 2);
-            var match = result.match(new RegExp('^' + self.UTMX_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
+            match = result.match(new RegExp('^' + self.UTMX_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
             if (match) {
                 if (!Number.isInteger(parseFloat(match[1])))
                     result = result.replace(match[1], match[1].replace('.', localeDecimalSeparator));
@@ -4514,13 +4656,13 @@ TC.mix(TC.control.Search, TC.control.infoShare);
         } else if (id.match(new RegExp('^(?:' + self.LON + '[-\\d])'))) {
             result = result.replace(self.LON, self.LON_LABEL).replace(self.LAT, ' ' + self.LAT_LABEL);
 
-            var match = result.match(new RegExp('^' + self.LON_LABEL.trim() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LAT_LABEL.trim() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
+            const match = result.match(new RegExp('^' + self.LON_LABEL.trim() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LAT_LABEL.trim() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
             if (match) {
                 result = geoCoordsLabel(result, match);
             }
 
         } else if (id.match(new RegExp('^(?:(\\' + self.MUN + '{1})(.*)' + '(\\' + self.POL + '{1})' + '(\\d{1,2})' + '(\\' + self.PAR + '{1})' + '(\\d{1,4}))'))) {
-            var match = id.match(new RegExp('^(?:(\\' + self.MUN + '{1})(.*)' + '(\\' + self.POL + '{1})' + '(\\d{1,2})' + '(\\' + self.PAR + '{1})' + '(\\d{1,4}))'));
+            const match = id.match(new RegExp('^(?:(\\' + self.MUN + '{1})(.*)' + '(\\' + self.POL + '{1})' + '(\\d{1,2})' + '(\\' + self.PAR + '{1})' + '(\\d{1,4}))'));
             result = self.MUN_LABEL + match[2] + ', ' + self.POL_LABEL + match[4] + ', ' + self.PAR_LABEL + match[6];
         }
         return result;
@@ -4529,32 +4671,32 @@ TC.mix(TC.control.Search, TC.control.infoShare);
     ctlProto.removePunctuation = function (text) {
         text = text || '';
         var result = new Array(text.length);
-        var map = {
-            'á': 'a',
-            'à': 'a',
-            'Á': 'A',
-            'À': 'A',
-            'é': 'e',
-            'è': 'e',
-            'É': 'E',
-            'È': 'E',
-            'í': 'i',
-            'ì': 'i',
-            'Í': 'I',
-            'Ì': 'I',
-            'ó': 'o',
-            'ò': 'o',
-            'Ó': 'O',
-            'Ò': 'O',
-            'ú': 'u',
-            'ù': 'u',
-            'ü': 'u',
-            'Ú': 'U',
-            'Ù': 'U',
-            'Ü': 'U'
-        };
+        var map = new Map([
+            ['á', 'a'],
+            ['à', 'a'],
+            ['Á', 'A'],
+            ['À', 'A'],
+            ['é', 'e'],
+            ['è', 'e'],
+            ['É', 'E'],
+            ['È', 'E'],
+            ['í', 'i'],
+            ['ì', 'i'],
+            ['Í', 'I'],
+            ['Ì', 'I'],
+            ['ó', 'o'],
+            ['ò', 'o'],
+            ['Ó', 'O'],
+            ['Ò', 'O'],
+            ['ú', 'u'],
+            ['ù', 'u'],
+            ['ü', 'u'],
+            ['Ú', 'U'],
+            ['Ù', 'U'],
+            ['Ü', 'U']
+        ]);
         for (var i = 0, len = text.length; i < len; i++) {
-            result[i] = map[text.charAt(i)] || text.charAt(i);
+            result[i] = map.get(text.charAt(i)) || text.charAt(i);
         }
         return result.join('');
     };
@@ -4620,7 +4762,7 @@ if (!String.prototype.tcFormat) {
     String.prototype.tcFormat = function () {
         var args = (arguments || [""])[0];
         return this.replace(/{(\d+)}/g, function (match, number) {
-            return typeof args[number] != 'undefined' ?
+            return typeof args[number] !== 'undefined' ?
                 args[number]
                 : match
                 ;
@@ -4682,3 +4824,6 @@ if (!String.prototype.endsWith) {
         return lastIndex !== -1 && lastIndex === position;
     };
 }
+
+const Search = TC.control.Search;
+export default Search;
