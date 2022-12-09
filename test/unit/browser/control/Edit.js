@@ -1,9 +1,4 @@
 ﻿
-var expect = chai.expect;
-
-// only critical error messages
-$.mockjaxSettings.logging = 0;
-
 describe('Tests de TC.control.Edit', function () {
 
     TC.isDebug = false;
@@ -13,8 +8,8 @@ describe('Tests de TC.control.Edit', function () {
     }
 
     describe('render', function () {
-        it("debe establecer la propiedad _firstRender", function () {
-            var ctl = new TC.control.Edit({ div: 'ctl-container' });
+        it("debe establecer la propiedad _firstRender", async function () {
+            var ctl = await TC.Control.create('Edit', { div: 'ctl-container' });
             ctl.render();
             expect(ctl._firstRender).to.be.an.instanceof(Promise);
         });

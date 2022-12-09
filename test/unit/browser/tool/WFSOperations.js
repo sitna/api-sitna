@@ -12,24 +12,24 @@ describe('Tests de TC.WFSGetFeatureBuilder y TC.Filter', function () {
     
     describe('GetWFSCApabilities y TC.Util.WFSQueryBuilder', function () {
         var url = "https://idena.navarra.es/ogc/wms";
-        TC.capabilities[url] ='<WMS_Capabilities version="1.3.0" updateSequence="1630" xmlns="http://www.opengis.net/wms" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wms https://idena.navarra.es/schemas/wms/1.3.0/capabilities_1_3_0.xsd"></WMS_Capabilities>'
+        TC.capabilitiesWFS[url] ='<WMS_Capabilities version="1.3.0" updateSequence="1630" xmlns="http://www.opengis.net/wms" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wms https://idena.navarra.es/schemas/wms/1.3.0/capabilities_1_3_0.xsd"></WMS_Capabilities>'
         layer = new TC.layer.Raster({ url: url });
         
-        it('Debe resolver la promesa de método getWFSCapabilitiesPromise', function (done) {
-            layer.getWFSCapabilitiesPromise().then(function () {
+        it('Debe resolver la promesa de método getWFSCapabilities', function (done) {
+            layer.getWFSCapabilities().then(function () {
                 done();
             });
         });
         it('Debe una cadena de texto con un xml de una operacion GetFeature', function (done) {
-            layer.getWFSCapabilitiesPromise().then(function (capabilities) {
+            layer.getWFSCapabilities().then(function (capabilities) {
                 var query = TC.Util.WFSQueryBuilder(["CATAST_Pol_ParcelaUrba"], null, capabilities, "json", true);
                 expect(query).to.be.an('string');
                 done();
             });
         });
 
-        it('Debe resolver la promesa de método getWFSCapabilitiesPromis y comprobar que existe la capa CATAST_Pol_ParcelaUrba', function (done) {
-            layer.getWFSCapabilitiesPromise().then(function (capabilities) {
+        it('Debe resolver la promesa de método getWFSCapabilities y comprobar que existe la capa CATAST_Pol_ParcelaUrba', function (done) {
+            layer.getWFSCapabilities().then(function (capabilities) {
                 expect(capabilities.FeatureTypes).to.have.property('CATAST_Pol_ParcelaUrba');
                 done();
             });

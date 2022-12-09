@@ -4,74 +4,26 @@
     <title>Mocha</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../../node_modules/mocha/mocha.css" />
+    <script src="../../../node_modules/mocha/mocha.js"></script>
+    <script src="../../../node_modules/chai/chai.js"></script>
 </head>
 <body>
     <div id="mocha"></div>
-
-    <script src="/tcmap.js"></script>
-
-    <script src="/TC/config/browser-versions.js"></script>
-    <script src="/lib/ol/build/ol-sitna.js"></script>
-    <script src="/TC/ol/ol.js"></script>
-    <script src="/TC/Map.js"></script>
-    <script src="/TC/layer/Raster.js"></script>
-    <script src="/TC/Util.js"></script>
-    <script src="/TC/Filter.js"></script>
-    <script src="/TC/control/Attribution.js"></script>
-    <script src="/TC/control/BasemapSelector.js"></script>
-    <script src="/TC/control/CacheBuilder.js"></script>
-    <script src="/TC/control/Coordinates.js"></script>
-    <script src="/TC/control/Download.js"></script>
-    <script src="/TC/control/Draw.js"></script>
-    <script src="/TC/control/DrawMeasureModify.js"></script>
-    <script src="/TC/control/Edit.js"></script>
-    <script src="/TC/control/ExternalWMS.js"></script>
-    <script src="/TC/control/FeatureInfo.js"></script>
-    <script src="/TC/control/FeatureTools.js"></script>
-    <script src="/TC/control/FileImport.js"></script>
-    <script src="/TC/control/FullScreen.js"></script>
-    <script src="/TC/control/Geolocation.js"></script>
-    <script src="/TC/control/LayerCatalog.js"></script>
-    <script src="/TC/control/Legend.js"></script>
-    <script src="/TC/control/LineFeatureInfo.js"></script>
-    <script src="/TC/control/LoadingIndicator.js"></script>
-    <script src="/TC/control/Measure.js"></script>
-    <script src="/TC/control/Modify.js"></script>
-    <script src="/TC/control/NavBar.js"></script>
-    <script src="/TC/control/OverviewMap.js"></script>
-    <script src="/TC/control/PolygonFeatureInfo.js"></script>
-    <script src="/TC/control/Popup.js"></script>
-    <script src="/TC/control/PrintMap.js"></script>
-    <script src="/TC/control/ResultsPanel.js"></script>
-    <script src="/TC/control/Scale.js"></script>
-    <script src="/TC/control/ScaleBar.js"></script>
-    <script src="/TC/control/ScaleSelector.js"></script>
-    <script src="/TC/control/Search.js"></script>
-    <script src="/TC/control/Share.js"></script>
-    <script src="/TC/control/StreetView.js"></script>
-    <script src="/TC/control/TabContainer.js"></script>
-    <script src="/TC/control/ThreeD.js"></script>
-    <script src="/TC/control/TOC.js"></script>
-    <script src="/TC/control/WFSQuery.js"></script>
-    <script src="/TC/control/WorkLayerManager.js"></script>
-
-    <script src="/TC/tool/Elevation.js"></script>
-    <!--<script src="/TC/tool/Proxification.js"></script>-->
-    <script src="lib/jquery.mockjax.js"></script>
-
-    <script src="../../../../node_modules/mocha/mocha.js"></script>
-    <script src="../../../../node_modules/chai/chai.js"></script>
-
     <script>
-        if (window.initMochaPhantomJS) initMochaPhantomJS();
-        mocha.setup('bdd');
+        mocha.setup({
+            ui: 'bdd'
+        });
+        var expect = chai.expect;
     </script>
+    <script src="http://localhost:8080/sitna.js"></script>
+
     <div id="ctl-container"></div>
     <!-- Tests -->
     <script src="ol.js"></script>
     <script src="control/Attribution.js"></script>
     <script src="control/BasemapSelector.js"></script>
-    <script src="control/CacheBuilder.js"></script>
+    <script src="control/OfflineMapMaker.js"></script>
     <script src="control/Coordinates.js"></script>
     <script src="control/Download.js"></script>
     <script src="control/Draw.js"></script>
@@ -81,8 +33,10 @@
     <script src="control/FeatureInfo.js"></script>
     <script src="control/FeatureTools.js"></script>
     <script src="control/FileImport.js"></script>
+    <script src="control/FileEdit.js"></script>
     <script src="control/FullScreen.js"></script>
     <script src="control/Geolocation.js"></script>
+    <script src="control/LanguageSelector.js"></script>
     <script src="control/LayerCatalog.js"></script>
     <script src="control/Legend.js"></script>
     <script src="control/LineFeatureInfo.js"></script>
@@ -106,14 +60,15 @@
     <script src="control/TOC.js"></script>
     <script src="control/WFSQuery.js"></script>
     <script src="control/WorkLayerManager.js"></script>
-    <script src="layer/Raster.js"></script>
-    <script src="tool/Elevation.js"></script>
-    <script src="tool/WFSOperations.js"></script>
+    <script src="TC/Util.js"></script>
+    <!--<script src="layer/Raster.js"></script>-->
+    <!--<script src="tool/Elevation.js"></script>-->
+    <!--<script src="tool/WFSOperations.js"></script>-->
     <!-- Para los test es necesario un SW y phantomJS no lo soporta -->
     <!--<script src="tool/Proxification.js"></script>-->
 
     <script>
-        mocha.run();
+        TC.i18n.loadResources(true, 'http://localhost:8080/TC/resources/', 'es-ES').then(() => mocha.run());
     </script>
 </body>
 </html>

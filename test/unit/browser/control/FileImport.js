@@ -1,9 +1,4 @@
 ﻿
-var expect = chai.expect;
-
-// only critical error messages
-$.mockjaxSettings.logging = 0;
-
 describe('Tests de TC.control.FileImport', function () {
 
     TC.isDebug = false;
@@ -13,8 +8,8 @@ describe('Tests de TC.control.FileImport', function () {
     }
 
     describe('render', function () {
-        it("debe establecer la propiedad _firstRender", function () {
-            var ctl = new TC.control.FileImport({ div: 'ctl-container' });
+        it("debe establecer la propiedad _firstRender", async function () {
+            const ctl = document.createElement('sitna-file-import');
             ctl.render();
             expect(ctl._firstRender).to.be.an.instanceof(Promise);
         });

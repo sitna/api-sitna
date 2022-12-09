@@ -1,5 +1,5 @@
 ﻿
-describe('Tests de TC.control.FeatureInfo', function () {
+describe('Tests de TC.control.LanguageSelector', function () {
 
     TC.isDebug = false;
 
@@ -9,7 +9,7 @@ describe('Tests de TC.control.FeatureInfo', function () {
 
     describe('render', function () {
         it("debe establecer la propiedad _firstRender", async function () {
-            var ctl = await TC.Control.create('FeatureInfo', { div: 'ctl-container' });
+            const ctl = document.createElement('sitna-language-select');
             ctl.render();
             expect(ctl._firstRender).to.be.an.instanceof(Promise);
         });

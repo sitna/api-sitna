@@ -1,10 +1,4 @@
-﻿
-var expect = chai.expect;
-
-// only critical error messages
-$.mockjaxSettings.logging = 0;
-
-describe('Tests de TC.control.ThreeD', function () {
+﻿describe('Tests de TC.control.ThreeD', function () {
 
     TC.isDebug = false;
 
@@ -13,8 +7,8 @@ describe('Tests de TC.control.ThreeD', function () {
     }
 
     describe('render', function () {
-        it("debe establecer la propiedad _firstRender", function () {
-            var ctl = new TC.control.ThreeD({ div: 'ctl-container' });
+        it("debe establecer la propiedad _firstRender", async function () {
+            var ctl = await TC.Control.create('ThreeD', { div: 'ctl-container' });
             ctl.render();
             expect(ctl._firstRender).to.be.an.instanceof(Promise);
         });

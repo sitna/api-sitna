@@ -1,9 +1,4 @@
-﻿var expect = chai.expect;
-
-// only critical error messages
-$.mockjaxSettings.logging = 0;
-
-describe('Tests de TC.control.WFSQuery', function () {
+﻿describe('Tests de TC.control.WFSQuery', function () {
 
     TC.isDebug = false;
 
@@ -12,8 +7,10 @@ describe('Tests de TC.control.WFSQuery', function () {
     }
 
     describe('render', function () {
-        it("debe establecer la propiedad _firstRender", function () {
-            var ctl = new TC.control.WFSQuery({ div: 'ctl-container' });
+        it("debe establecer la propiedad _firstRender", async function () {
+            var ctl = await TC.Control.create('WFSQuery', { div: 'ctl-container' });
             ctl.render();
             expect(ctl._firstRender).to.be.an.instanceof(Promise);
         });
+    });
+});

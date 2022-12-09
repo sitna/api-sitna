@@ -1,10 +1,4 @@
-﻿
-var expect = chai.expect;
-
-// only critical error messages
-$.mockjaxSettings.logging = 0;
-
-describe('Tests de TC.control.Search', function () {
+﻿describe('Tests de TC.control.Search', function () {
 
     TC.isDebug = false;
 
@@ -13,9 +7,9 @@ describe('Tests de TC.control.Search', function () {
     }
 
     describe('render', function () {
-        it("debe establecer la propiedad _firstRender", function () {
-            var ctl = new TC.control.Search({ div: 'ctl-container' });
-            ctl.render();
+        it("debe establecer la propiedad _firstRender", async function () {
+            var ctl = await TC.Control.create('Search', { div: 'ctl-container' });
+            ctl.render().catch(() => { });
             expect(ctl._firstRender).to.be.an.instanceof(Promise);
         });
     });
