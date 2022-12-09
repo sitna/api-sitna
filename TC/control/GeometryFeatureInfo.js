@@ -2,23 +2,24 @@
 /**
   * Opciones de control de obtención de información de entidades de mapa por línea o por recinto.
   * @typedef GeometryFeatureInfoOptions
-  * @ignore
   * @extends FeatureInfoOptions
-  * @see MultiFeatureInfoOptions
+  * @see MultiFeatureInfoModeOptions
   * @property {LineStyleOptions|PolygonStyleOptions} [filterStyle] - Estilo de la entidad cuya geometría servirá de filtro espacial para la consulta.
   * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta muestra también resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si este valor es verdadero, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
   * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
   */
 
-TC.control = TC.control || {};
 
-if (!TC.control.FeatureInfoCommons) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
-}
-if (!TC.filter) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
-}
+import TC from '../../TC';
+import Consts from '../Consts';
+import FeatureInfoCommons from './FeatureInfoCommons';
+import filter from '../filter';
+
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.FeatureInfoCommons = FeatureInfoCommons;
+TC.filter = filter;
 
 (function () {
     TC.control.GeometryFeatureInfo = function () {
@@ -38,22 +39,25 @@ if (!TC.filter) {
         const self = this;
         const result = TC.control.FeatureInfoCommons.prototype.register.call(self, map);
 
-        self.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
+        self.on(TC.Consts.event.CONTROLDEACTIVATE, function (_e) {
             self.wrap.cancelDraw();
         });
 
         return result;
     };
 
-    ctlProto.callback = function (coords, xy) {
+    ctlProto.callback = function (coords, _xy) {
         var self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             if (self._drawToken) {
                 resolve();
                 return;
             }
             self.closeResults();
-            //self.filterLayer.clearFeatures();
+            if (self.filterFeature) {
+                self.filterLayer.removeFeature(self.filterFeature);
+                self.filterFeature = null;
+            }
             self.highlightedFeature = null;
             var visibleLayers = false;
             for (var i = 0; i < self.map.workLayers.length; i++) {
@@ -120,9 +124,16 @@ if (!TC.filter) {
                     self.insertLinks();
                 }
                 self.div.querySelector(`.${self.CLASS}-coords`).classList.add(TC.Consts.classes.HIDDEN);
+                if (!self.info || !self.info.services.length) {
+                    self.map.toast(self.getLocaleString('query.msgNoResults'), { type: TC.Consts.msgType.INFO });
+                    return;
+                }
                 self.displayResults();
             });
         }
     };
 
 })();
+
+const GeometryFeatureInfo = TC.control.GeometryFeatureInfo;
+export default GeometryFeatureInfo;
