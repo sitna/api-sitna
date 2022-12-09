@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.control.Attribution = function () {
     const self = this;
@@ -64,10 +66,14 @@ TC.inherit(TC.control.Attribution, TC.Control);
 
                 var checkRemoveData = function () {
                     if (obj.map.workLayers.length > 0) {
-                        var _wl = obj.map.workLayers.slice().reverse();
-                        for (var i = 0; i < _wl.length; i++) {
-                            if (_wl[i].url == obj.url && _wl[i].getVisibility())
+                        const wlArr = obj.map.workLayers
+                            .slice()
+                            .reverse();
+                        for (var i = 0; i < wlArr.length; i++) {
+                            const wl = wlArr[i];
+                            if (wl.url == obj.url && wl.getVisibility()) {
                                 return false;
+                            }
                         }
 
                         return true;
@@ -91,7 +97,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
                         const checkIsSameAttribution = function (toCheckName) {
                             return (/IDENA/.test(attr.name) || /Tracasa Instrumental/.test(attr.name)) &&
                                 (/IDENA/.test(toCheckName) || /Tracasa Instrumental/.test(toCheckName)) ||
-                                    (attr.name === toCheckName);
+                                    attr.name === toCheckName;
                         };
 
                         // 07/10/2020 Validamos contra el mapa de fondo antes de cambiar de mapa de fondo así que no se borran cuando deberían.
@@ -205,7 +211,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
         const self = this;        
 
         return self._set1stRenderPromise(self.renderData({
-            api: (typeof (self.apiAttribution) === 'function' ? self.apiAttribution.apply(self) : self.getLocaleString(self.apiAttribution)),
+            api: typeof self.apiAttribution === 'function' ? self.apiAttribution.apply(self) : self.getLocaleString(self.apiAttribution),
             mainData: self.mainDataAttribution,
             otherData: self.dataAttributions,
             isCollapsed: self.div.querySelector('.' + self.CLASS + '-other') ? self.div.querySelector('.' + self.CLASS + '-other').classList.contains(TC.Consts.classes.COLLAPSED) : true
@@ -227,3 +233,6 @@ TC.inherit(TC.control.Attribution, TC.Control);
         other.classList.toggle(TC.Consts.classes.COLLAPSED);
     };
 })();
+
+const Attribution = TC.control.Attribution;
+export default Attribution;
