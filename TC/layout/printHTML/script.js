@@ -12,7 +12,10 @@
     }
     TC.loadJS(
         !TC._hbs || !TC._hbs.compile,
-        TC.url.templatingFull,
+        [
+            TC.apiLocation + TC.Consts.url.TEMPLATING_FULL,
+            TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
+        ],
             function () {
                 var src = $('#print-preview-controls').html();
                 const template = TC._hbs.compile(src);
