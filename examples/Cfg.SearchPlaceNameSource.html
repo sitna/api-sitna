@@ -26,7 +26,7 @@
                         featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
                         geometryName: 'the_geom', // Nombre del campo de la geometría.
                         featureType: ['TOPONI_Txt_Toponimos'], // Colección con el nombre de la capa a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
-                        dataIdProperty: ['CMUNICIPIO', 'CTOPONIMO'], // Colección con el nombre del campo que nos servirán para identificar unívocamente a un topónimo. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
+                        dataIdProperty: ['CMUNICIPIO', 'CTOPONIMO'], // Colección con los nombres de los campos que nos servirán para identificar unívocamente a un topónimo. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
                         queryProperties: { // Definición de los campos por los que filtrar la búsqueda de topónimo.
                             firstQueryWord: ['TOPONIMO', 'TOPONINOAC'] // Campos en los que buscar el nombre del topónimo.
                         },

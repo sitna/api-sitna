@@ -3,12 +3,12 @@
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <title>SITNA - Ejemplo de MapViewOptions.threeDOptions</title>
+    <title>SITNA - Ejemplo de ThreeDViewOptions</title>
     <link rel="stylesheet" href="examples.css" />
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/global.html#MapViewOptions">MapViewOptions</a>.threeDOptions.</p>
+        <p>Ejemplo de uso de <a href="../doc/global.html#ThreeDViewOptions">ThreeDViewOptions</a></p>
         <p>Vista 3D.</p>
     </div>
     <script src="../"></script>
@@ -19,7 +19,15 @@
     <script>
         // Establecemos un layout simplificado apto para hacer demostraciones de controles.
         SITNA.Cfg.layout = "layout/ctl-container";
-        // Añadimos el control de selector de mapa de fondos en el primer DIV del marcado markup.html contenido en el layout configurado en la propiedad SITNA.Cfg.layout.
+        // Configuramos en la propiedad `views` del mapa, la vista `threeD` que requiere el control threeD para el correcto funcionamiento.
+        SITNA.Cfg.views = {
+            threeD: {
+                div: "vista3d" // Indicamos el identificador del DIV en el marcado en el cual cargar la vista 3D.
+            }
+        };
+        // Añadimos el control 3D.
+        SITNA.Cfg.controls.threeD = true;        
+        // Añadimos el control de selector de mapas de fondo en el primer DIV del marcado markup.html contenido en el layout configurado en la propiedad SITNA.Cfg.layout.
         SITNA.Cfg.controls.basemapSelector = {
             div: "slot1"
         };
@@ -34,7 +42,7 @@
                 id: "wms",
                 title: "Camino de Santiago",
                 type: SITNA.Consts.layerType.WMS,
-                url: "//idena.navarra.es/ogc/wms",
+                url: "https://idena.navarra.es/ogc/wms",
                 layerNames: "IDENA:PATRIM_Lin_CaminoSantR",
                 format: SITNA.Consts.mimeType.PNG
             },
@@ -43,15 +51,7 @@
                 type: SITNA.Consts.layerType.VECTOR,
                 url: "data/ESTACIONESTREN.gml"
             }
-        ];
-        // Añadimos el control 3D.
-        SITNA.Cfg.controls.threeD = true;
-        // Configuramos en la propiedad `views` del mapa la vista `threeD` que requiere el control threeD para el correcto funcionamiento.
-        SITNA.Cfg.views = {
-            threeD: {
-                div: "vista3d" // Indicamos el identificador del DIV en el marcado en el cual cargar la vista 3D.
-            }
-        };
+        ];        
         var map = new SITNA.Map("mapa");
     </script>
 
