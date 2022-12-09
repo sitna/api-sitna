@@ -2,7 +2,6 @@
 /**
   * Opciones de un control que contiene pestañas de selección.
   * @typedef TabContainerOptions
-  * @ignore
   * @extends ControlOptions
   * @see MapControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
@@ -33,11 +32,13 @@
   * </script>
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import Container from './Container';
 
-if (!TC.control.Container) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control/Container');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.control.Container = Container;
 
 TC.control.TabContainer = function () {
     var self = this;
@@ -64,22 +65,21 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
     ctlProto.onRender = function () {
         const self = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             self.title = self.title || self.getLocaleString(self.options.title || 'moreControls');
             self.div.querySelector('h2').innerHTML = self.title;
 
-            var bufferPromises = new Array(self.ctlCount);
             for (var i = 0, len = self.controlOptions.length; i < len; i++) {
                 var ctl = self.controlOptions[i];
                 var ctlName = "";
                 var ctlOptions = {};
 
                 // GLS: 20/01/2020 código compatibilidad hacia atrás
-                if (ctl["name"] !== undefined && ctl["options"] !== undefined) {
+                if (ctl.name !== undefined && ctl.options !== undefined) {
                     console.log('Gestionamos config de tabContainer antiguo');
 
-                    ctlName = ctl["name"];
-                    ctlOptions = ctl["options"];
+                    ctlName = ctl.name;
+                    ctlOptions = ctl.options;
                 } else {
                     ctlName = Object.keys(ctl).filter((key) => {
                         return key !== "title";
@@ -87,7 +87,7 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
                     ctlOptions = ctl[ctlName];
                 }
 
-                bufferPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
+                self._ctlPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
                     id: self.uids[i],
                     div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
                 }, ctlOptions));
@@ -103,7 +103,7 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
                     parent.querySelector(self._selectors.TAB + '-' + idx + ' span').innerHTML = title;
                 });
             };
-            Promise.all(bufferPromises).then(function (controls) {
+            Promise.all(self._ctlPromises).then(function (controls) {
                 for (var i = 0, len = controls.length; i < len; i++) {
                     var ctl = controls[i];
                     ctl.containerControl = self;
@@ -119,11 +119,10 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
         return self._set1stRenderPromise(self.renderData({
             controlId: self.id,
             title: self.title,
-            controls: self.controlOptions,
-            count: self.controlOptions.length
+            controls: self.controlOptions
         }, function () {
 
-            var clickHandler = function (e) {
+            var clickHandler = function (_e) {
                 var closest = this;
                 while (closest && !closest.matches(self._selectors.TAB)) {
                     closest = closest.parentElement;
@@ -191,7 +190,42 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
             if (typeof self.defaultSelection === 'number') {
                 clickHandler.call(self.div.querySelectorAll(self._selectors.RADIOBUTTON)[self.defaultSelection]);
             }
+
+            if (typeof callback === 'function') {
+                callback();
+            }
         }));
     };
 
+    ctlProto.selectTab = function (index) {
+        const self = this;
+        const radioButton = self.div.querySelectorAll(self._selectors.RADIOBUTTON)[index];
+        if (radioButton) {
+            radioButton.checked = true;
+            const elements = self.div.querySelectorAll(self._selectors.ELEMENT);
+            elements.forEach((element, idx) => element.classList.toggle(TC.Consts.classes.HIDDEN, index !== idx));
+        }
+    };
+
+    ctlProto.onControlDisable = function (control) {
+        const self = this;
+        self.getControls().then(controls => {
+            const controlIndex = controls.indexOf(control);
+            if (controlIndex >= 0) {
+                let nextControlIndex = controlIndex;
+                let nextControl = control;
+                do {
+                    nextControlIndex = (nextControlIndex + 1) % controls.length;
+                    nextControl = controls[nextControlIndex];
+                }
+                while (nextControl.isDisabled && nextControl !== control);
+                if (nextControlIndex !== controlIndex) {
+                    self.selectTab(nextControlIndex);
+                }
+            }
+        });
+    };
 })();
+
+const TabContainer = TC.control.TabContainer;
+export default TabContainer;
