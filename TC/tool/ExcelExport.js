@@ -1,9 +1,10 @@
-﻿TC.Util.ExcelExport = function () {
+﻿TC.tool = TC.tool || {};
+TC.tool.ExcelExport = function () {
 
-    var EOL = '\r\n';
-    var BOM = "\ufeff";
+    //var EOL = '\r\n';
+    //var BOM = "\ufeff";
 
-    /**
+    /*
      * Stringify one field
      * @param data
      * @param delimier
@@ -23,7 +24,7 @@
         return data;
     };
 
-    /**
+    /*
      * Creates a csv from a data array
      * @param data
      * @param options
@@ -34,9 +35,9 @@
      */
     this.stringify = function (responseData, options) {
 
-        var that = this;
+        //var that = this;
         var csv = "";
-        var csvContent = "";
+        //var csvContent = "";
 
         var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
         var fromCharCode = String.fromCharCode;
@@ -115,28 +116,29 @@
             if (obj instanceof Array) {
                 _str += "<table><tbody>";
                 for (var i = 0; i < obj.length; i++)
-                    _str += ("<tr><td>" + object2Table(obj[i], str) + "</td></tr>");
+                    _str += "<tr><td>" + object2Table(obj[i], str) + "</td></tr>";
                 _str += "</tbody></table>";
             }
             else if (obj instanceof Object) {
                 _str += "<table><tbody>";
-                for (var i in obj) {
-                    _str += ("<tr><th>" + i + "</th>");
-                    if (obj[i] instanceof Object)
-                        _str += ("<td>" + object2Table(obj[i], str) + "</td></tr>");
+                for (var key in obj) {
+                    const value = obj[key];
+                    _str += "<tr><th>" + key + "</th>";
+                    if (value instanceof Object)
+                        _str += "<td>" + object2Table(value, str) + "</td></tr>";
                     else {
-                        var cls = cellFormat(obj[i]);
-                        obj[i] = cls.value;
-                        _str += ('<td class="' + cls.class + '">');
+                        var cls = cellFormat(value);
+                        obj[key] = cls.value;
+                        _str += '<td class="' + cls.class + '">';
                         switch (true) {
-                            case typeof (obj[i]) === "string" && obj[i].startsWith("http"):
-                                _str += '<a href="' + unescape(encodeURIComponent(obj[i])) + '">' + "Abrir" + '</a>';
+                            case typeof value === "string" && value.startsWith("http"):
+                                _str += '<a href="' + unescape(encodeURIComponent(value)) + '">' + "Abrir" + '</a>';
                                 break;
                             default:
-                                _str += obj[i];
-                                break
+                                _str += value;
+                                break;
                         }
-                        _str += ("</td></tr>");
+                        _str += "</td></tr>";
                     }
                 }
                 _str += "</tbody></table>";
@@ -144,7 +146,7 @@
                 _str += obj;
             }
             return _str;
-        }
+        };
 
         const cellFormat = function (item) {
             var cls;
@@ -152,13 +154,13 @@
                 if (item.value) {
                     item = item.value;
                 }
-                if (("" + item).indexOf("%") != -1) {
+                if (("" + item).indexOf("%") !== -1) {
                     item = item.replace(" %", "%").replace(/\.|,/g, ds);
                     cls = "percent";
                 } else {
                     var num = 0;
                     if (item) {
-                        num = typeof item === "number" ? item : (new Number(item.replace ? (item.replace(/\,/g, "").replace(/./g, ".")).trim() : item.trim()));
+                        num = typeof item === "number" ? item : new Number(item.replace ? item.replace(/\,/g, "").replace(/./g, ".").trim() : item.trim());
                     }
                     if (!isNaN(num)) {
                         item = num.toString().replace(".", ds);
@@ -183,13 +185,13 @@
                 cls = "string";
             }
             return { "class": cls, "value": item };
-        }
+        };
 
         var dataString = '<thead valign="top">';
         for (var i = 0; i < 1; i++) {
             dataString += '<tr>';
             for (var j in arrData[i]) {
-                if (arrData[i].hasOwnProperty(j)) {
+                if (Object.prototype.hasOwnProperty.call(arrData[i], j)) {
                     dataString += '<th>' + arrData[i][j] + '</th>';
                 }
             }
@@ -212,23 +214,23 @@
             ms = (1000).toLocaleString("es-ES").substring(1, 2);
         }
 
-        for (var i = 1; i < arrData.length; i++) {
+        for (i = 1; i < arrData.length; i++) {
             dataString += '<tr>';
-            for (var j = 0; j < arrData[i].length; j++) {
-                if (arrData[i].hasOwnProperty(j)) {
+            for (j = 0; j < arrData[i].length; j++) {
+                if (Object.prototype.hasOwnProperty.call(arrData[i], j)) {
                     var item = arrData[i][j];
                     // Calculo de formato para Excel
                     const cls = cellFormat(item);
                     item = cls.value;
                     if (item instanceof Object) {
-                        dataString += ('<td>' + object2Table(item) + '</td>');
+                        dataString += '<td>' + object2Table(item) + '</td>';
                     }
                     else {
                         dataString += '<td class="' + cls.class + '"';
-                        if (item && (item.hasOwnProperty('rowspan') || item.hasOwnProperty('colspan'))) {
-                            if (item.hasOwnProperty('rowspan')) {
+                        if (item && (Object.prototype.hasOwnProperty.call(item, 'rowspan') || Object.prototype.hasOwnProperty.call(item, 'colspan'))) {
+                            if (Object.prototype.hasOwnProperty.call(item, 'rowspan')) {
                                 dataString += ' valign="top" rowspan="' + item.rowspan + '">' + item.value + '</td>';
-                            } if (item.hasOwnProperty('colspan')) {
+                            } if (Object.prototype.hasOwnProperty.call(item, 'colspan')) {
                                 dataString += ' colspan="' + item.colspan + '">' + item.value + '</td>';
                             }
                             j++;
@@ -244,24 +246,26 @@
         dataString += '</tbody>';
 
         var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name=ProgId content=Excel.Sheet><meta name=Generator content="Microsoft Excel 9"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>';
-        if (ds === ',')
-            template += '<!--table{mso-displayed-decimal-separator:"\,"; mso-displayed-thousand-separator:"\.";}'
-        else
-            template += '<!--table{mso-displayed-decimal-separator:"\."; mso-displayed-thousand-separator:"\,";}'
+        if (ds === ',') {
+            template += '<!--table{mso-displayed-decimal-separator:"\,"; mso-displayed-thousand-separator:"\.";}';
+        }
+        else {
+            template += '<!--table{mso-displayed-decimal-separator:"\."; mso-displayed-thousand-separator:"\,";}';
+        }
         template += 'body {visibility:hidden;}';
         template += '.number{mso-number-format:"\#\,\#\#0";} .number2d{mso-number-format:"\#\,\#\#0\.00";} .percent{mso-number-format:0.00%;} ';
         template += '.date{mso-number-format:"dd\/mm\/yyyy";} .string{mso-number-format:"\@";} caption{text-align:left;}--></style></head><body><table><caption>{caption}</caption>{table}</table></body></html>';
-        var format = function (s, c) { return s.replace(/{(\w+)}/g, function (m, p) { return c[p]; }) };
+        var format = function (s, c) { return s.replace(/{(\w+)}/g, function (_m, p) { return c[p]; }); };
         var ctx = { worksheet: options.workSheet || 'Hoja1', table: dataString, caption: options.title || "" };
         csv = format(template, ctx);
         return csv;
     };
 
 };
-TC.Util.ExcelExport.prototype.Save = function (filename, rows, title) {
+TC.tool.ExcelExport.prototype.Save = function (filename, rows, title) {
     
     var exporter = this;
-    csvFile = exporter.stringify(rows, { txtDelim: "\"", fieldSep: ";", title: title || "" });
+    const csvFile = exporter.stringify(rows, { txtDelim: "\"", fieldSep: ";", title: title || "" });
 
     var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
     if (navigator.msSaveBlob) { // IE 10+
