@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.Control = Control;
 
 TC.control.Elevation = function () {
     const self = this;
@@ -24,7 +26,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
     ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-ftools.hbs";
     ctlProto.template[ctlProto.CLASS + '-val'] = TC.apiLocation + "TC/templates/tc-ctl-elev-val.hbs";
 
-
+    const pointElevationCache = new WeakMap();
     const elevationProfileCache = new Map();
 
     const getElevationProfileFromCache = function (feature) {
@@ -69,6 +71,12 @@ TC.inherit(TC.control.Elevation, TC.Control);
                     })
                     .on(TC.Consts.event.LAYERREMOVE, function (e) {
                         e.layer.features && e.layer.features.forEach(feat => removeElevationProfileFromCache(feat));
+                    })
+                    .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE, function (e) {
+                        // Añadimos datos de elevación si se han añadido previamente
+                        if (pointElevationCache.has(e.control.currentFeature)) {
+                            self.displayElevationValue(e.control.currentFeature);
+                        }
                     });
 
                 resolve(self);
@@ -81,7 +89,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
 
     ctlProto.getElevationTool = function () {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             const proxyObj = {
                 options: {
                     displayElevation: self.options || true
@@ -104,65 +112,81 @@ TC.inherit(TC.control.Elevation, TC.Control);
         }
     };
 
-    ctlProto.displayElevationValue = function (feature) {
+    ctlProto.displayElevationValue = async function (feature, options) {
         const self = this;
+        options = options || {};
         if (feature instanceof TC.feature.Point) {
-            self.getElevationTool().then(function (tool) {
-                tool.getElevation({
+            let elevationValues;
+            if (options.ignoreCache) {
+                pointElevationCache.delete(feature);
+            }
+            else {
+                elevationValues = pointElevationCache.get(feature);
+            }
+            if (!elevationValues) {
+                const tool = await self.getElevationTool();
+                const elevation = await tool.getElevation({
                     crs: self.map.crs,
                     coordinates: [feature.geometry]
-                }).then(function (elevation) {
-                    if (elevation.length) {
-                        const targets = [];
-                        const locale = self.map.options.locale || TC.Cfg.locale;
-                        const point = elevation[0];
-                        const tValue = point[2];
-                        const sValue = point.length > 3 ? point[3] : null;
-
-                        const displayControls = self.map.getControlsByClass('TC.control.Popup')
-                            .concat(self.map.getControlsByClass('TC.control.ResultsPanel'));
-                        displayControls
-                            .filter(ctl => (ctl.caller && ctl.caller.highlightedFeature) === feature)
-                            .forEach(function addElevElmToGfiCtl(ctl) {
-                                const featElm = ctl.caller.getFeatureElement(feature);
-                                if (featElm) {
-                                    target = featElm.querySelector('tbody');
-                                    targets.push(target);
-                                }
-                            });
-                        displayControls
-                            .filter(ctl => ctl.currentFeature === feature)
-                            .forEach(function addElevElmToCtl(ctl) {
-                                let container;
-                                switch (true) {
-                                    case TC.control.Popup && ctl instanceof TC.control.Popup:
-                                        container = ctl.getContainerElement();
-                                        break;
-                                    case TC.control.ResultsPanel && ctl instanceof TC.control.ResultsPanel:
-                                        container = ctl.getInfoContainer();
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                if (container) {
-                                    target = container.querySelector('tbody');
-                                    targets.push(target);
-                                }
-                            });
-
-                        targets.forEach(function addElevElmToTarget(target) {
-                            self.getRenderedHtml(self.CLASS + '-val', {
-                                originalValue: feature.geometry[2] ? TC.Util.formatNumber(Math.round(feature.geometry[2]), locale) : '',
-                                elevationValue: tValue !== null ? TC.Util.formatNumber(Math.round(tValue), locale) : '',
-                                heightValue: sValue ? sValue.toLocaleString(locale, { maximumFractionDigits: 1 }) : ''
-                            }, function (html) {
-                                target.querySelectorAll(`tr[class|=${self.CLASS}-pair]`).forEach(elm => elm.remove());
-                                target.insertAdjacentHTML('beforeend', html);
-                            });
-                        });
-                    }
                 });
-            });
+                if (elevation.length) {
+                    const point = elevation[0];
+                    const tValue = point[2];
+                    const sValue = point.length > 3 ? point[3] : null;
+                    elevationValues = {
+                        elevation: tValue,
+                        height: sValue
+                    };
+                    pointElevationCache.set(feature, elevationValues);
+                }
+            }
+            if (elevationValues) {
+                const targets = [];
+                let target;
+                const locale = self.map.options.locale || TC.Cfg.locale;
+                const displayControls = self.map.getControlsByClass('TC.control.Popup')
+                    .concat(self.map.getControlsByClass('TC.control.ResultsPanel'));
+                displayControls
+                    .filter(ctl => ctl.caller && ctl.caller.highlightedFeature === feature)
+                    .forEach(function addElevElmToGfiCtl(ctl) {
+                        const featElm = ctl.caller.getFeatureElement(feature);
+                        if (featElm) {
+                            target = featElm.querySelector('tbody');
+                            targets.push(target);
+                        }
+                    });
+                displayControls
+                    .filter(ctl => ctl.currentFeature === feature)
+                    .forEach(function addElevElmToCtl(ctl) {
+                        let container;
+                        switch (true) {
+                            case TC.control.Popup && ctl instanceof TC.control.Popup:
+                                container = ctl.getContainerElement();
+                                break;
+                            case TC.control.ResultsPanel && ctl instanceof TC.control.ResultsPanel:
+                                container = ctl.getInfoContainer();
+                                break;
+                            default:
+                                break;
+                        }
+                        if (container) {
+                            target = container.querySelector('tbody');
+                            targets.push(target);
+                        }
+                    });
+
+                const renderOptions = {
+                    originalValue: feature.geometry[2] ? TC.Util.formatNumber(Math.round(feature.geometry[2]), locale) : '',
+                    elevationValue: elevationValues.elevation !== null ? TC.Util.formatNumber(Math.round(elevationValues.elevation), locale) : '',
+                    heightValue: elevationValues.height ? elevationValues.height.toLocaleString(locale, { maximumFractionDigits: 1 }) : ''
+                };
+                targets.forEach(function addElevElmToTarget(target) {
+                    self.getRenderedHtml(self.CLASS + '-val', renderOptions, function (html) {
+                        target.querySelectorAll(`tr[class|=${self.CLASS}-pair]`).forEach(elm => elm.remove());
+                        target.insertAdjacentHTML('beforeend', html);
+                    });
+                });
+            }
         }
     };
 
@@ -237,7 +261,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
                 }),
                 coords: elevCoords,
                 min: minElevation,
-                max: maxElevation,
+                max: maxElevation
             };
 
             const elevationGainOptions = {
@@ -291,10 +315,10 @@ TC.inherit(TC.control.Elevation, TC.Control);
                     }
                 }
             };
-            if (tool.options.hasOwnProperty("resolution")) {
+            if (Object.prototype.hasOwnProperty.call(tool.options, "resolution")) {
                 elevationOptions.resolution = tool.options.resolution;
             }
-            if (tool.options.hasOwnProperty("sampleNumber") && tool.options.sampleNumber !== 0) {
+            if (Object.prototype.hasOwnProperty.call(tool.options, "sampleNumber") && tool.options.sampleNumber !== 0) {
                 elevationOptions.resolution = 0;
             }
             tool.getElevation(elevationOptions)
@@ -304,7 +328,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
                     }
                     li && li.removeWait(waitId);
                 })
-                .catch(function (error) {
+                .catch(function (_error) {
                     self.resetElevationProfile();
                     li && li.removeWait(waitId);
                 });
@@ -328,7 +352,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
             }
         };
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             var addControlPromise;
             const addResultsPanelChart = function (controlContainer) {
                 resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
@@ -447,5 +471,8 @@ TC.inherit(TC.control.Elevation, TC.Control);
             }
             self.resultsPanel.wrap.hideElevationMarker();
         }
-    }
+    };
 })();
+
+const Elevation = TC.control.Elevation;
+export default Elevation;
