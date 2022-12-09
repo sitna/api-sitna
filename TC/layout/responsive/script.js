@@ -42,11 +42,19 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
         };
 
         // En pantalla estrecha cambiamos el método de mostrar GFI.
-        if (window.matchMedia('screen and (max-width: 42em), screen and (max-height: 40em)').matches) {
+        if (window.matchMedia('screen and (max-width: 40em), screen and (max-height: 40em)').matches) {
             map.defaultInfoContainer = TC.Consts.infoContainer.RESULTS_PANEL;
         }
 
         map.ready(function () {
+            // Colapsamos los controles de tipo web component, porque no los podemos colapsar por markup
+            map.controls.forEach(c => {
+                if (c instanceof HTMLElement) {
+                    if (c.parentElement && c.parentElement.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                        c.classList.add(TC.Consts.classes.COLLAPSED);
+                    }
+                }
+            });
 
             const ovPanel = map.div.querySelector('.ovmap-panel');
             const rcollapsedClass = 'right-collapsed';
@@ -85,7 +93,8 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
             });
 
             map.div.querySelector('.tools-panel').addEventListener(TC.Consts.event.CLICK, function (e) {
-                const tab = e.target;
+                let tab = e.target;
+                if (tab.tagName === "BUTTON" && tab.closest("div.tc-ctl." + TC.Consts.classes.COLLAPSED))tab=tab.parentElement;
                 if (tab.tagName === ('H2')) {
                     const ctlDiv = tab.parentElement;
                     if (map && map.layout && map.layout.accordion) {
@@ -126,7 +135,11 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                         "screenCondition": "(max-width: 42em)",
                         "apply": {
                             "event": "click",
-                            "elements": [".tc-ctl-bms-node > label"],
+                            "elements": [
+                                ".tc-ctl-bms-node > label",
+                                ".tc-ctl-meas-select label",
+                                ".tc-ctl-mod-btn-select"
+                            ],
                             "changes": [
                                 {
                                     "targets": "#tools-panel",
@@ -147,17 +160,6 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
 
             map.on(TC.Consts.event.TOOLSCLOSE, function (e) {
                 map.div.querySelector('.tools-panel').classList.add(rcollapsedClass);
-            });
-
-            // En pantalla estrecha colapsar panel de herramientas al activar una
-            map.on(TC.Consts.event.CONTROLACTIVATE, function (e) {
-                const control = e.control;
-                if (map.getControlsByClass('TC.control.Draw').filter(ctl => ctl === control).length) {
-                    const toolsPanel = document.querySelector('.tools-panel');
-                    if (getComputedStyle(map.div).height === getComputedStyle(toolsPanel).height) {
-                        toolsPanel.classList.add(rcollapsedClass);
-                    }
-                }
             });
 
             if (TC.browserFeatures.touch()) {
