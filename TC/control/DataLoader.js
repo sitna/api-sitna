@@ -87,27 +87,32 @@
   * @property {WMSOptions[]} items - Lista de sugerencias de servicios externos WMS.
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import TabContainer from './TabContainer';
 
-if (!TC.control.TabContainer) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/TabContainer');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.TabContainer = TabContainer;
 
 TC.control.DataLoader = function () {
     const self = this;
 
     TC.control.TabContainer.apply(self, arguments);
 
+    const fileControlConfig = {};
+    const fileControlOptions = {
+        enableDragAndDrop: self.options.enableDragAndDrop
+    };
+    const fileControlName = self.options.enableFileEditing ? 'fileEdit' : 'fileImport';
+    fileControlConfig[fileControlName] = fileControlOptions;
+
     self.controlOptions = [
         {
             title: 'addWMS',
             externalWMS: { suggestions: self.options.wmsSuggestions }            
         },
-        {
-            fileImport: {
-                enableDragAndDrop: self.options.enableDragAndDrop
-            }
-        }
+        fileControlConfig
     ];
     self.defaultSelection = 0;
 };
@@ -121,12 +126,15 @@ TC.inherit(TC.control.DataLoader, TC.control.TabContainer);
         const self = this;
         self.map = map;
         self.title = self.getLocaleString('addMaps');
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             TC.control.TabContainer.prototype.register.call(self, map).then(ctl => {
                 ctl.div.classList.add(self.CLASS + '-datldr');
                 resolve(ctl);
             });
-        })
+        });
     };
 
 })();
+
+const DataLoader = TC.control.DataLoader;
+export default DataLoader;
