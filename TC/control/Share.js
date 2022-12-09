@@ -1,8 +1,11 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import MapInfo from './MapInfo';
 
-if (!TC.control.MapInfo) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapInfo');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.control.MapInfo = MapInfo;
+
 
 TC.control.Share = function (options) {
     var self = this;
@@ -41,7 +44,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
         }).then(function () {
             return TC.Control.prototype.renderData.call(self, { controlId: self.id }, function () {
@@ -62,7 +65,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
 
                 const options = self.div.querySelectorAll('.' + self.CLASS + '-url-box');
                 self.div.querySelectorAll('span:not(.tc-beta)').forEach(function (span) {
-                    span.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    span.addEventListener(TC.Consts.event.CLICK, function (_e) {
                         var label = this;
                         while (label && label.tagName !== 'LABEL') {
                             label = label.parentElement;
@@ -78,7 +81,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
                     callback();
                 }
             });
-        });
+        }));
     };
 
     /*
@@ -110,7 +113,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
             return '<iframe style="width:' + self.IFRAME_WIDTH + ';height:' + self.IFRAME_HEIGHT + ';" src="' + urlString + '"></iframe>';
         }
         return '';
-    }
+    };
 
     ctlProto.loadParamFeature = function () {
         const self = this;
@@ -170,15 +173,15 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
             self.MOBILEFAV = self.getLocaleString('mobileBookmarks.instructions');
             self.NAVALERT = self.getLocaleString('bookmarks.instructions');
 
-            self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (evt) {
+            self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (_e) {
                 self.update();
             }));
 
-            self.map.on(TC.Consts.event.MAPCHANGE, function (e) {
+            self.map.on(TC.Consts.event.MAPCHANGE, function (_e) {
                 const self = this;
                 const input = self.div.querySelector('.tc-url input[type=text]');
                 if (input) {
-                    input.dataset["update"] = true;
+                    input.dataset.update = true;
                 }
 
                 delete self.map._controlStatesCache;
@@ -188,7 +191,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
                 const input = elm.parentElement.querySelector("input[type=text]");
 
                 if (shorten) {
-                    if (input.dataset["update"] || !input.dataset["shortened"]) {
+                    if (input.dataset.update || !input.dataset.shortened) {
                         self.shortenedLink()
                             .then(async function (value) {
                                 if (value && value.trim().length > 0) {
@@ -199,15 +202,15 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
                                         unselectInputField();
                                     }, 1000);
 
-                                    delete input.dataset["update"];
-                                    input.dataset["shortened"] = true;
+                                    delete input.dataset.update;
+                                    input.dataset.shortened = true;
                                     input.value = value;
 
                                     input.select();
 
                                 } else {
-                                    delete input.dataset["update"];
-                                    delete input.dataset["shortened"];
+                                    delete input.dataset.update;
+                                    delete input.dataset.shortened;
                                     input.value = await self.generateLink();
                                 }
                             });
@@ -216,9 +219,9 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
                     if (!input.classList.contains('tc-url')) {
                         input.value = await self.generateIframe();
                     } else {
-                        if (input.dataset["update"]) {
-                            delete input.dataset["update"];
-                            delete input.dataset["shortened"];
+                        if (input.dataset.update) {
+                            delete input.dataset.update;
+                            delete input.dataset.shortened;
                             input.value = await self.generateLink();
                         }
                     }
@@ -234,9 +237,9 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
 
             self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.tc-ctl-share-url-box button', function (evt) {
                 const btn = evt.target;
-                const isCopyBtn = !(btn.classList.contains('shorten'));
+                const isCopyBtn = !btn.classList.contains('shorten');
 
-                const copy = async function (value) {
+                const copy = async function () {
                     await selectInputField(btn);
 
                     document.execCommand('copy');
@@ -244,7 +247,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
                     btn.textContent = self.getLocaleString('copied');
 
                     setTimeout(function () {
-                        btn.textContent = self.getLocaleString((isCopyBtn ? 'copy' : 'shorten'));
+                        btn.textContent = self.getLocaleString(isCopyBtn ? 'copy' : 'shorten');
                         unselectInputField();
                     }, 1000);
                 };
@@ -315,7 +318,7 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
                 const w = window.open();
                 self.shortenedLink().then(function (url) {
                     openSocialMedia(w, url, function (url) {
-                        return "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url)
+                        return "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url);
                     });
                 });
 
@@ -368,13 +371,13 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
                 } else if (window.sidebar && window.sidebar.addPanel) {
                     // Firefox version < 23
                     window.sidebar.addPanel(bookmarkTitle, bookmarkURL, '');
-                } else if ((window.sidebar && /Firefox/i.test(navigator.userAgent)) || (window.opera && window.print)) {
+                } else if (window.sidebar && /Firefox/i.test(navigator.userAgent) || window.opera && window.print) {
                     // Firefox version >= 23 and Opera Hotlist                
 
                     window.location.href = bookmarkURL;
                     alert((/Mac/i.test(navigator.userAgent) ? 'Cmd' : 'Ctrl') + ctlProto.NAVALERT);
 
-                } else if (window.external && ('AddFavorite' in window.external)) {
+                } else if (window.external && 'AddFavorite' in window.external) {
                     // IE Favorite
                     window.external.AddFavorite(bookmarkURL, bookmarkTitle);
                 } else {
@@ -432,3 +435,6 @@ TC.inherit(TC.control.Share, TC.control.MapInfo);
     };
 
 })();
+
+const Share = TC.control.Share;
+export default Share;
