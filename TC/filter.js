@@ -1,4 +1,5 @@
-﻿TC.filter = {};
+﻿import TC from '../TC';
+TC.filter = {};
 
 TC.filter.Filter = function (tagName) {
     this.tagName_ = tagName;
@@ -125,12 +126,12 @@ TC.filter.Filter.prototype.readInnerCondition_ = function (text) {
 
 TC.filter.and = function (conditions) {
     var params = [null].concat(Array.prototype.slice.call(arguments));
-    return new (Function.prototype.bind.apply(TC.filter.And, params));
+    return new (Function.prototype.bind.apply(TC.filter.And, params))();
 };
 
 TC.filter.or = function (conditions) {
     var params = [null].concat(Array.prototype.slice.call(arguments));
-    return new (Function.prototype.bind.apply(TC.filter.Or, params));
+    return new (Function.prototype.bind.apply(TC.filter.Or, params))();
 };
 
 TC.filter.not = function (condition) {
@@ -503,3 +504,6 @@ TC.filter.Within = function (geometryName, geometry, opt_srsName) {
     TC.filter.Spatial.call(this, 'Within', geometryName, geometry, opt_srsName);
 };
 TC.inherit(TC.filter.Within, TC.filter.Spatial);
+
+const filter = TC.filter;
+export default filter;
