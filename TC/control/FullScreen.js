@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.control = TC.control || {};
+TC.Control = Control;
+TC.Consts = Consts;
 
 TC.control.FullScreen = function () {
     var self = this;
@@ -25,7 +27,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
         requestFullscreen: 2,
         exitFullscreen: 3,
         fullscreenchange: 4,
-        fullscreenerror: 5,
+        fullscreenerror: 5
     };
 
     const webkit = [
@@ -34,7 +36,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
         'webkitRequestFullscreen',
         'webkitExitFullscreen',
         'webkitfullscreenchange',
-        'webkitfullscreenerror',
+        'webkitfullscreenerror'
     ];
 
     const moz = [
@@ -43,7 +45,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
         'mozRequestFullScreen',
         'mozCancelFullScreen',
         'mozfullscreenchange',
-        'mozfullscreenerror',
+        'mozfullscreenerror'
     ];
 
     const ms = [
@@ -52,18 +54,16 @@ TC.inherit(TC.control.FullScreen, TC.Control);
         'msRequestFullscreen',
         'msExitFullscreen',
         'MSFullscreenChange',
-        'MSFullscreenError',
+        'MSFullscreenError'
     ];
 
     const document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
 
-    const vendor = (
-        ('fullscreenEnabled' in document && Object.keys(key)) ||
-        (webkit[0] in document && webkit) ||
-        (moz[0] in document && moz) ||
-        (ms[0] in document && ms) ||
-        []
-    );
+    const vendor = 'fullscreenEnabled' in document && Object.keys(key) ||
+        webkit[0] in document && webkit ||
+        moz[0] in document && moz ||
+        ms[0] in document && ms ||
+        [];
 
     ctlProto.fscreen = {
         inFullscreen: false,
@@ -122,7 +122,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
                         const screenWidth = window.screen.width;
                         const screenHeight = window.screen.height;
 
-                        if (((windowWidth / screenWidth) >= 0.95) && ((windowHeight / screenHeight) >= 0.95)) {
+                        if (windowWidth / screenWidth >= 0.95 && windowHeight / screenHeight >= 0.95) {
                             self.fscreen.inFullscreen = true;
                         } else {
                             self.fscreen.inFullscreen = false;
@@ -173,3 +173,6 @@ TC.inherit(TC.control.FullScreen, TC.Control);
     };
 
 })();
+
+const FullScreen = TC.control.FullScreen;
+export default FullScreen;
