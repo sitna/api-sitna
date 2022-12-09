@@ -4,10 +4,10 @@ if (!TC.tool.ElevationService) {
     TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
 }
 
-TC.tool.ElevationServiceIGNFr = function (options) {
+TC.tool.ElevationServiceIGNFr = function (_options) {
     const self = this;
     TC.tool.ElevationService.apply(self, arguments);
-    self.url = self.options.url || '//wxs.ign.fr/njfzwf3vgc55gekk8ra4zezx/alti/wps';
+    self.url = self.options.url || '//wxs.ign.fr/essentiels/alti/wps';
     self.process = self.options.process || 'gs:WPSElevation';
     self.profileProcess = self.options.profileProcess || 'gs:WPSLineElevation';
     self.minimumElevation = self.options.minimumElevation || -99998;
