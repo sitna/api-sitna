@@ -1,8 +1,12 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import wrap from '../ol/ol';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.wrap = wrap;
+TC.Control = Control;
 
 (function () {
 
@@ -71,7 +75,7 @@ if (!TC.Control) {
     ctlProto.register = function (map) {
         const self = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
 
             TC.Control.prototype.register.call(self, map).then(function () {
 
@@ -80,18 +84,21 @@ if (!TC.Control) {
                     id: self.getUID(),
                     div: self.div.querySelector(`.${self.CLASS}-point`),
                     mode: TC.Consts.geom.POINT,
+                    styling: self.options.styling,
                     layer: false
                 });
                 self._lineDrawCtlPromise = map.addControl(DRAW, {
                     id: self.getUID(),
                     div: self.div.querySelector(`.${self.CLASS}-line`),
                     mode: TC.Consts.geom.POLYLINE,
+                    styling: self.options.styling,
                     layer: false
                 });
                 self._polygonDrawCtlPromise = map.addControl(DRAW, {
                     id: self.getUID(),
                     div: self.div.querySelector(`.${self.CLASS}-polygon`),
                     mode: TC.Consts.geom.POLYGON,
+                    styling: self.options.styling,
                     layer: false
                 });
                 //self._cutDrawCtlPromise = map.addControl(DRAW, {
@@ -125,7 +132,6 @@ if (!TC.Control) {
                     self.modifyControl = controls[3];
 
                     const drawendHandler = function (e) {
-                        e.feature.setStyle(null); // Por defecto, Draw añade estilo a todo lo que dibuja. No nos conviene cuando está dentro de Edit.
                         self.trigger(TC.Consts.event.DRAWEND, { feature: e.feature });
                     };
                     const drawcancelHandler = function () {
@@ -168,11 +174,22 @@ if (!TC.Control) {
                         const selectedFeatures = self.getSelectedFeatures();
                         const feature = selectedFeatures[selectedFeatures.length - 1];
                         if (feature) {
+                            const data = feature.getData() || {};
                             self.modifyControl._editAttrBtn.classList.add(TC.Consts.classes.ACTIVE);
-                            const attributes = self.getLayerEditData(feature.layer).attributes;
+                            let attributes = self.getLayerEditData(feature.layer).attributes;
+                            if (!Object.keys(attributes).lengh) {
+                                // No hay información de capa concerniente a atributos. 
+                                // Tomamos los de la entidad seleccionada
+                                const feature = self.getSelectedFeatures()[0];
+                                if (feature && Object.keys(data).length) {
+                                    attributes = {};
+                                    for (var key in data) {
+                                        attributes[key] = { name: key, value: data[key] };
+                                    }
+                                }
+                            }
                             const attrArray = Object.keys(attributes).map(k => attributes[k]);
                             const jfa = self._joinedFeatureAttributes || [];
-                            const data = feature.getData() || {};
 
                             attrArray.forEach(function (attributeObj) {
                                 attributeObj.value = data[attributeObj.name];
@@ -232,11 +249,11 @@ if (!TC.Control) {
                                     });
                                 });
 
-                                contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-ok`).addEventListener(TC.Consts.event.CLICK, function (e) {
+                                contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-ok`).addEventListener(TC.Consts.event.CLICK, function (_e) {
                                     self.modifyControl._onAttrOK();
                                 }, { passive: true });
 
-                                contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(TC.Consts.event.CLICK, function () {
+                                contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(TC.Consts.event.CLICK, function (_e) {
                                     self.modifyControl.closeAttributes();
                                 }, { passive: true });
                             });
@@ -249,50 +266,56 @@ if (!TC.Control) {
                         if (feature) {
                             const data = {};
                             const attributes = self.getLayerEditData(feature.layer).attributes;
+                            const layerHasInfo = Object.keys(attributes).length > 0;
                             const inputs = that.getAttributeDisplayTarget().querySelectorAll('input');
                             inputs.forEach(function (input) {
                                 var name = input.getAttribute('name');
                                 var value = input.value;
-                                switch (attributes[name].type) {
-                                    case 'int':
-                                    case 'integer':
-                                    case 'byte':
-                                    case 'long':
-                                    case 'negativeInteger':
-                                    case 'nonNegativeInteger':
-                                    case 'nonPositiveInteger':
-                                    case 'positiveInteger':
-                                    case 'short':
-                                    case 'unsignedLong':
-                                    case 'unsignedInt':
-                                    case 'unsignedShort':
-                                    case 'unsignedByte':
-                                        value = parseInt(value);
-                                        if (!Number.isNaN(value)) {
+                                if (layerHasInfo) {
+                                    switch (attributes[name].type) {
+                                        case 'int':
+                                        case 'integer':
+                                        case 'byte':
+                                        case 'long':
+                                        case 'negativeInteger':
+                                        case 'nonNegativeInteger':
+                                        case 'nonPositiveInteger':
+                                        case 'positiveInteger':
+                                        case 'short':
+                                        case 'unsignedLong':
+                                        case 'unsignedInt':
+                                        case 'unsignedShort':
+                                        case 'unsignedByte':
+                                            value = parseInt(value);
+                                            if (!Number.isNaN(value)) {
+                                                data[name] = value;
+                                            }
+                                            break;
+                                        case 'double':
+                                        case 'float':
+                                        case 'decimal':
+                                            value = parseFloat(value);
+                                            if (!Number.isNaN(value)) {
+                                                data[name] = value;
+                                            }
+                                            break;
+                                        case 'date':
+                                        case 'time':
+                                        case 'dateTime':
+                                            data[name] = new Date(value);
+                                            break;
+                                        case 'boolean':
+                                            data[name] = !!value;
+                                            break;
+                                        case undefined:
+                                            break;
+                                        default:
                                             data[name] = value;
-                                        }
-                                        break;
-                                    case 'double':
-                                    case 'float':
-                                    case 'decimal':
-                                        value = parseFloat(value);
-                                        if (!Number.isNaN(value)) {
-                                            data[name] = value;
-                                        }
-                                        break;
-                                    case 'date':
-                                    case 'time':
-                                    case 'dateTime':
-                                        data[name] = new Date(value);
-                                        break;
-                                    case 'boolean':
-                                        data[name] = !!value;
-                                        break;
-                                    case undefined:
-                                        break;
-                                    default:
-                                        data[name] = value;
-                                        break;
+                                            break;
+                                    }
+                                }
+                                else {
+                                    data[name] = value;
                                 }
                             });
                             feature.setData(data);
@@ -338,7 +361,7 @@ if (!TC.Control) {
                         .on(TC.Consts.event.FEATUREREMOVE, function (e) {
                             if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(TC.Consts.classes.HIDDEN)) {
                                 self.getHighlightsLayer().then(function (hlLayer) {
-                                    for (let i = 0, ii = self.featuresToImport.length; i < ii; i++) {
+                                    for (var i = 0, ii = self.featuresToImport.length; i < ii; i++) {
                                         const fti = self.featuresToImport[i];
                                         if (fti === e.feature || fti.original === e.feature) {
                                             self.featuresToImport.splice(i, 1);
@@ -421,11 +444,11 @@ if (!TC.Control) {
                 });
             });
 
-            self.div.querySelector(self._classSelector + '-btn-import').addEventListener(TC.Consts.event.CLICK, function (e) {
+            self.div.querySelector(self._classSelector + '-btn-import').addEventListener(TC.Consts.event.CLICK, function (_e) {
                 self.showFeatureImportPanel();
             }, { passive: true });
 
-            self.div.querySelector(self._classSelector + '-btn-dl').addEventListener(TC.Consts.event.CLICK, function (e) {
+            self.div.querySelector(self._classSelector + '-btn-dl').addEventListener(TC.Consts.event.CLICK, function (_e) {
                 self.getDownloadDialog().then(function (dialog) {
                     const options = {
                         title: self.getLocaleString('download'),
@@ -487,6 +510,7 @@ if (!TC.Control) {
 
     ctlProto.setLayer = function (layer) {
         const self = this;
+        self.modifyControl && self.modifyControl.unselectFeatures(self.getSelectedFeatures());
         self.layer = self.map.getLayer(layer);
         if (self.layer) {
             layer.describeFeatureType()
@@ -495,7 +519,8 @@ if (!TC.Control) {
                         attributes: {}
                     };
                     // recogemos los atributos no geométricos y definimos la geometría
-                    for (var key in attributes) {
+                    let key;
+                    for (key in attributes) {
                         const attr = attributes[key];
                         const geometryType = self.getGeometryType(attr.type);
                         if (geometryType) {
@@ -506,13 +531,13 @@ if (!TC.Control) {
                             layerEditData.attributes[key] = attr;
                         }
                     }
-                    for (var key in layerEditData.attributes) {
+                    for (key in layerEditData.attributes) {
                         const attr = layerEditData.attributes[key];
                         attr.type = attr.type.substr(attr.type.indexOf(':') + 1);
                     }
                     self.layersEditData[layer.id] = layerEditData;
                 })
-                .catch(function (err) {
+                .catch(function (_err) {
                     self.layersEditData[layer.id] = {
                         geometryType: null,
                         attributes: {}
@@ -695,6 +720,7 @@ if (!TC.Control) {
     };
 
     ctlProto.onFeatureClick = function (e) {
+        const self = this;
         if (!self.activeControl || !self.activeControl.isExclusive()) {
             e.feature.show();
         }
@@ -842,28 +868,28 @@ if (!TC.Control) {
 
     ctlProto.getModifyControl = function () {
         const self = this;
-        return self._modifyCtlPromise || new Promise(function (resolve, reject) {
+        return self._modifyCtlPromise || new Promise(function (resolve, _reject) {
             self.renderPromise().then(() => resolve(self.modifyControl));
         });
     };
 
     ctlProto.getPointDrawControl = function () {
         const self = this;
-        return self._pointDrawCtlPromise || new Promise(function (resolve, reject) {
+        return self._pointDrawCtlPromise || new Promise(function (resolve, _reject) {
             self.renderPromise().then(() => resolve(self.pointDrawControl));
         });
     };
 
     ctlProto.getLineDrawControl = function () {
         const self = this;
-        return self._lineDrawCtlPromise || new Promise(function (resolve, reject) {
+        return self._lineDrawCtlPromise || new Promise(function (resolve, _reject) {
             self.renderPromise().then(() => resolve(self.lineDrawControl));
         });
     };
 
     ctlProto.getPolygonDrawControl = function () {
         const self = this;
-        return self._polygonDrawCtlPromise || new Promise(function (resolve, reject) {
+        return self._polygonDrawCtlPromise || new Promise(function (resolve, _reject) {
             self.renderPromise().then(() => resolve(self.polygonDrawControl));
         });
     };
@@ -1027,7 +1053,7 @@ if (!TC.Control) {
     ctlProto._addImportLayerEvents = function (li) {
         const self = this;
         
-        li.querySelector('input').addEventListener('change', function (e) {
+        li.querySelector('input').addEventListener('change', function (_e) {
             const cb = this;
             cb.parentElement.querySelectorAll('li.tc-feature input').forEach(function (ccb) {
                 if (ccb.checked !== cb.checked) {
@@ -1045,7 +1071,7 @@ if (!TC.Control) {
 
     ctlProto._addImportFeatureEvents = function (li) {
         const self = this;
-        const highlightListener = function (e) {
+        const highlightListener = function (_e) {
             const feature = self.getFeatureFromImportList(this);
             if (feature) {
                 self.highlightFeatures([feature]);
@@ -1053,7 +1079,7 @@ if (!TC.Control) {
         };
         li.addEventListener(TC.Consts.event.CLICK, highlightListener, { passive: true });
         li.addEventListener('mouseover', highlightListener);
-        li.querySelector('input').addEventListener('change', function (e) {
+        li.querySelector('input').addEventListener('change', function (_e) {
             handleCheck(self, this);
         });
     };
@@ -1067,13 +1093,13 @@ if (!TC.Control) {
             const container = panel.getInfoContainer();
             self.getRenderedHtml(self.CLASS + '-import', { layers: self.getAvailableFeaturesToImport() }, function (html) {
                 panel.open(html, container);
-                container.querySelector('ul').addEventListener('mouseout', function (e) {
+                container.querySelector('ul').addEventListener('mouseout', function (_e) {
                     self.highlightFeatures([]);
                 });
                 container.querySelectorAll('li.tc-layer').forEach(function (elm) {
                     self._addImportLayerEvents(elm);
                 });
-                container.querySelector(`.${self.CLASS}-import-btn-ok`).addEventListener(TC.Consts.event.CLICK, function (e) {
+                container.querySelector(`.${self.CLASS}-import-btn-ok`).addEventListener(TC.Consts.event.CLICK, function (_e) {
                     self.importFeatures();
                     self.featureImportPanel.close();
                 }, { passive: true });
@@ -1083,16 +1109,16 @@ if (!TC.Control) {
 
     ctlProto.displayLayerToImport = function (layer) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(TC.Consts.classes.HIDDEN)) {
                 const container = self.featureImportPanel.getInfoContainer();
                 const list = container.querySelector(`.${self.CLASS}-import-list .tc-layers`);
                 const layerElementSelector = `li[data-layer-id="${layer.id}"]`;
                 const li = list.querySelector(layerElementSelector);
                 if (li) {
-                    features.forEach(function (feature) {
+                    layer.features.forEach(function (feature) {
                         if (self.isFeatureAllowed(feature)) {
-                            self.getRenderedHtml(self.CLASS + '-import-feature', layerObj, function (html) {
+                            self.getRenderedHtml(self.CLASS + '-import-feature', layer, function (html) {
                                 li.insertAdjacentHTML('beforeend', html);
                                 self._addImportFeatureEvents(li.querySelector('li:last-child'));
                             });
@@ -1116,3 +1142,6 @@ if (!TC.Control) {
     };
 
 })();
+
+const Edit = TC.control.Edit;
+export default Edit;
