@@ -2,12 +2,23 @@
   "opts": {
     "template": "./node_modules/@sitna/jsdoc-template/template",
     "tutorials": "./batch/jsdoc/tutorials",
-    "destination": "./build/doc/"
+    "destination": "./dist/doc/"
   },
   "plugins": [ "plugins/markdown" ],
   "recurseDepth": 10,
   "source": {
-    "include": [ "./batch/jsdoc/README.md", "sitna.js", "./TC/Control.js", "./TC/control/" ]
+    "include": [
+      "./batch/jsdoc/README.md",
+      "sitna.js",
+      "./TC/Consts.js",
+      "./TC/Cfg.js",
+      "./SITNA/Map.js",
+      "./SITNA/feature/Marker.js",
+      "./TC/Control.js",
+      "./TC/control/",
+      "./TC/tool/",
+      "./TC/view/"
+    ]
   },
   "sourceType": "module",
   "tags": {
@@ -18,7 +29,7 @@
     "includeDate": true,
     "dateFormat": "DD/MM/YYYY",
     "systemName": "API SITNA",
-    "systemVersion": "v2.2.0",
+    "systemVersion": "v3.0.0",
     "systemSummary": "API JavaScript para la visualización de datos georreferenciados en aplicaciones web",
     "systemLogo": "./tc/css/img/sitna-logo.png",
     "systemColor": "#cc0000",
@@ -40,7 +51,7 @@
       },
       {
         "kind": "global",
-        "title": "Tipos"
+        "title": "Tipos globales"
       },
       {
         "kind": "mixin",

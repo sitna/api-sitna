@@ -1,8 +1,5 @@
 {
-  "1-addresses": {
-    "title": "Direcciones alternativas"
-  },
-  "2-configuration": {
+  "1-configuration": {
     "title": "Cómo configurar un mapa",
     "children": {
       "parameters_cfg": {
@@ -21,7 +18,7 @@
       }
     }
   },
-  "3-css": {
+  "2-css": {
     "title": "Clases CSS para identificar elementos de la API",
     "children": {
       "layercatalog_css": {
@@ -29,10 +26,10 @@
       }
     }
   },
-  "4-embedding": {
+  "3-embedding": {
     "title": "Cómo añadir multimedia y páginas web incrustadas"
   },
-  "5-changes": {
+  "4-changes": {
     "title": "Historial de cambios"
   }
 }

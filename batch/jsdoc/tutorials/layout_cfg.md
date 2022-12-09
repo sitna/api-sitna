@@ -1,24 +1,43 @@
-Cuando se instancia un mapa, se carga una maquetación que establece qué datos se cargan, qué controles y en que distribución se muestran, y qué estilo va a tener el visor. La API SITNA tiene una maquetación definida por defecto, pero esto se puede cambiar utilizando la opción layout:
-### Ejemplo básico
+Cuando se instancia un mapa, se carga una maquetación que establece qué datos se cargan, qué controles y en qué 
+distribución se muestran, y qué estilo va a tener el visor. La API SITNA tiene una maquetación definida por defecto, 
+pero esto se puede cambiar utilizando la propiedad `layout` en las [opciones del mapa]{@linkplain MapOptions}:
 
+### Caso simple
 ``` javascript
 var map = new SITNA.Map("mapa", {
-  layout: "layouts/mylayout"
+    layout: "layouts/mylayout"
 });
 ```
 
-El valor de esa opción es una ruta a una carpeta, donde se encontrarán todos o alguno de los siguientes archivos:
+El valor de esa propiedad es una ruta a una carpeta, donde se encontrarán todos o alguno de los siguientes archivos:
 
 * `markup.html`, con la plantilla HTML que se inyectará en el elemento del DOM del mapa.
 * `config.json`, con un [objeto]{@linkplain MapOptions} JSON que sobreescribirá propiedades de {@link SITNA.Cfg}.
 * `style.css`, para personalizar el estilo del visor y sus controles.
 * `script.js`, para añadir lógica nueva. Este es el lugar idóneo para la lógica de la nueva interfaz definida por el marcado inyectado con markup.html.
-* `resources/*.json`, donde `*` es el código IETF del idioma que tendrá la interfaz de usuario, por ejemplo `resources/es-ES.json`. Si se van a soportar varios idiomas hay que preparar un archivo por idioma. Para saber cómo establecer un idioma de interfaz de usuario, consultar la opción locale del constructor de {@link SITNA.Map}.
+* `resources/*.json`, donde `*` es el [código IETF](https://es.wikipedia.org/wiki/C%C3%B3digo_de_idioma_IETF) del idioma que tendrá la interfaz de usuario, por ejemplo `resources/es-ES.json`. Si se van a soportar varios idiomas hay que preparar un archivo por idioma. Para saber cómo establecer un idioma de interfaz de usuario, consultar la opción locale del constructor de {@link SITNA.Map}.
 
-La maquetación por defecto añade los siguientes controles al conjunto por defecto: navBar, basemapSelector, TOC, legend, scaleBar, search, streetView , measure, overviewMap y popup. Puede descargar la maquetación por defecto.
+La maquetación por defecto añade los siguientes controles al conjunto por defecto: navBar, basemapSelector, TOC, legend, scaleBar, search, streetView , measure, overviewMap y popup. 
+Puede [descargar](../layout/responsive/responsive.zip) la maquetación por defecto.
+
+### Especificando la maquetación archivo por archivo
+Es muy frecuente el caso en el que se necesite modificar solamente uno o dos archivos de la maquetación y aprovechar el resto 
+de los archivos de la maquetación por defecto. Para llevar a cabo esto, la propiedad `layout` puede tener un valor de tipo {@link LayoutOptions}.
+``` javascript
+// Instanciamos un mapa cuya maquetación tiene la configuración y el marcado personalizados 
+// y el resto de elementos se obtienen de la maquetación por defecto
+var map = new SITNA.Map("mapa", {
+    layout: {
+        config: "layouts/mylayout/config.json",
+        markup: "layouts/mylayout/markup.html",
+        style: "//sitna.navarra.es/api/layout/responsive/style.css",
+        script: "//sitna.navarra.es/api/layout/responsive/script.js",
+        i18n: "//sitna.navarra.es/api/layout/responsive/resources"
+    }
+});
+```
 
 ### Soporte multiidioma
-
 La API soporta actualmente tres idiomas: castellano, euskera e inglés. Para saber cómo establecer un idioma de interfaz de usuario, consultar la opción locale del constructor de {@link SITNA.Map}. Los textos específicos para cada idioma se guardan en archivos *.json, donde * es el código IETF del idioma de la interfaz de usuario, dentro de la subcarpeta resources en la dirección donde se aloja la API SITNA. Por ejemplo, los textos en castellano se guardan en _resources/es-ES.json_. Estos archivos contienen un diccionario en formato JSON de pares clave/valor, siendo la clave un identificador único de cadena y el valor el texto en el idioma elegido.
 
 Para añadir soporte multiidioma a la maquetación, hay que crear un archivo de recursos de texto para cada idioma soportado y colocarlo en la subcarpeta resources dentro de la carpeta de maquetación. Este diccionario se combinará con el diccionario de textos propio de la API.

@@ -24,3 +24,11 @@ table.params {
         width: 1170px
     }
 }*/
+
+body .toc .nav > li > a:focus,
+body .toc .nav > li.active > a,
+body .toc .nav > li.active > a:hover,
+body .toc .nav > li.active > a:focus {
+    color: black;
+    font-weight: bold;
+}
