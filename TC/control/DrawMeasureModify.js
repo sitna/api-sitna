@@ -2,7 +2,6 @@
 /**
   * Opciones del control de dibujo, medida y modificación de geometrías en el mapa.
   * @typedef DrawMeasureModifyOptions
-  * @ignore
   * @extends ControlOptions
   * @see MapControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
@@ -31,11 +30,13 @@
   * </script>
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import Measure from './Measure';
 
-if (!TC.control.Measure) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/Measure');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.Measure = Measure;
 
 TC.control.DrawMeasureModify = function () {
     var self = this;
@@ -84,19 +85,32 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         const self = this;
         const promise = self._set1stRenderPromise(TC.control.Measure.prototype.render.call(self, function () {
             self._clearBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr');
-            self._clearBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+            self._clearBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
                 TC.confirm(self.getLocaleString('deleteAll.confirm'), function () {
                     self.clear();
+                    cancelDraw.apply(self);
                 });
             }, { passive: true });
             self._downloadBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl');
-            self._downloadBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+            self._downloadBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
                 self.showSketchDownloadDialog();
             }, { passive: true });
 
             self._elevProfileBtn = self.div.querySelector('.tc-ctl-meas-prof-btn');
-            self._elevProfileBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+            self._elevProfileBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
                 self.elevationProfileActive ? self.deactivateElevationProfile() : self.activateElevationProfile();
+            }, { passive: true });
+
+            const showHidenBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
+            showHidenBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+                const visibility = !e.target.classList.contains(TC.Consts.classes.ACTIVE);
+                self.drawControls.forEach(function (dv) {
+                    dv.layer.setVisibility(visibility);
+                    if (dv.isActive)
+                        dv.wrap.setVisibility(visibility);
+                });
+                e.target.title = self.getLocaleString(visibility ? "hideSketch":"showSketch");
+                e.target.classList.toggle(TC.Consts.classes.ACTIVE);
             }, { passive: true });
 
             if (!self.options.displayElevation) {
@@ -147,9 +161,12 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                         switch (true) {
                                             case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
                                                 self.displayMode(TC.Consts.geom.POLYGON);
+                                                console.log(style.fillOpacity);
                                                 self.polygonDrawControl
                                                     .setStrokeColorWatch(style.strokeColor)
-                                                    .setStrokeWidthWatch(style.strokeWidth);
+                                                    .setStrokeWidthWatch(style.strokeWidth)
+                                                    .setFillColorWatch(style.fillColor)
+                                                    .setFillOpacityWatch(style.fillOpacity * 100);
                                                 break;
                                             case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
                                                 self.displayMode(TC.Consts.geom.POLYLINE);
@@ -164,7 +181,9 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                                 self.displayMode(TC.Consts.geom.POINT);
                                                 self.pointDrawControl
                                                     .setStrokeColorWatch(style.strokeColor)
-                                                    .setStrokeWidthWatch(style.strokeWidth);
+                                                    .setStrokeWidthWatch(style.strokeWidth)
+                                                    .setFillColorWatch(style.fillColor)
+                                                    .setFillOpacityWatch(style.fillOpacity * 100);
                                                 break;
                                             default:
                                                 break;
@@ -175,7 +194,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                     }
                                 });
                             })
-                            .on(TC.Consts.event.FEATURESUNSELECT, function (e) {
+                            .on(TC.Consts.event.FEATURESUNSELECT, function (_e) {
                                 const features = self.modify.getSelectedFeatures();
                                 if (!features.length) {
                                     self.resetDrawWatches();
@@ -200,12 +219,19 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                     if (TC.feature.Point && e.feature instanceof TC.feature.Point) {
                                         self.getElevationTool().then(function (tool) {
                                             if (tool) {
-                                                tool.setGeometry({
-                                                    features: [e.feature],
-                                                    crs: self.map.crs
-                                                }).then(function (features) {
-                                                    setMeasures(features[0]);
-                                                });
+                                                tool
+                                                    .setGeometry({
+                                                        features: [e.feature],
+                                                        crs: self.map.crs
+                                                    })
+                                                    .then(
+                                                        function (features) {
+                                                            setMeasures(features[0]);
+                                                        },
+                                                        function (e) {
+                                                            console.warn(e.message);
+                                                        }
+                                                    );
                                             }
                                         });
                                     }
@@ -271,6 +297,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                     }
                                     self.resetValues();
                                 });
+                                //beginDraw.apply(self);
                             })
                             .on(TC.Consts.event.DRAWUNDO + ' ' + TC.Consts.event.DRAWREDO, function () {
                                 const lineDrawControl = this;
@@ -284,6 +311,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                         }
                                     }
                                 });
+                                cancelDraw.apply(self);
                             })
                             .on(TC.Consts.event.DRAWEND, function (e) {
                                 self.getElevationControl().then(function (ctl) {
@@ -298,15 +326,25 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                 const lastCoord = coords[coords.length - 1];
                                 if (lastCoord[0] !== e.point[0] || lastCoord[1] !== e.point[1]) {
                                     coords.push(e.point);
+                                    
                                 }
                                 self.getElevationControl().then(function (ctl) {
                                     if (self.elevationProfileActive) {
-                                        ctl.displayElevationProfile(coords);
+                                        if (navigator.onLine) {
+                                            ctl.displayElevationProfile(coords);
+                                        }
+                                        else {
+                                            ctl.closeElevationProfile();
+                                        }
                                     }
                                 });
+                                if (e.target.historyIndex === 1)
+                                    beginDraw.apply(self);
                             })
                             .on(TC.Consts.event.STYLECHANGE, function (e) {
                                 self.onStyleChange(e);
+                            }).on(TC.Consts.event.DRAWCANCEL, function () {
+                                cancelDraw.apply(self);
                             });
                     });
 
@@ -314,6 +352,11 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                         polygonDrawControl
                             .on(TC.Consts.event.DRAWSTART, function () {
                                 self.resetValues();
+                                //beginDraw.apply(self);
+                            })
+                            .on(TC.Consts.event.POINT, function (e) {
+                                if (e.target.historyIndex===1)
+                                    beginDraw.apply(self);
                             })
                             //.on(TC.Consts.event.DRAWEND, function (e) {
                             //    self.getElevationTool().then(function (tool) {
@@ -327,6 +370,9 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                             //})
                             .on(TC.Consts.event.STYLECHANGE, function (e) {
                                 self.onStyleChange(e);
+                            })
+                            .on(TC.Consts.event.DRAWCANCEL + ' ' + TC.Consts.event.DRAWUNDO, function () {
+                                cancelDraw.apply(self);
                             });
                     });  
                     self._pointDrawControlPromise = map.addControl('draw', {
@@ -360,11 +406,14 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                             crs: self.map.crs
                                         }).then(function (features) {
                                             updateChanges(features[0]);
-                                        })
+                                        }, function (e) {
+                                            console.log(e.message);
+                                        });
                                     }
-                                })
+                                });
+                                beginDraw.apply(self);
                             })
-                            .on(TC.Consts.event.DRAWCANCEL, function (e) {
+                            .on(TC.Consts.event.DRAWCANCEL, function (_e) {
                                 // Alerta de condición de carrera si no ponemos un timeout:
                                 // 1- Se llama a cancel de un control Draw.
                                 // 2- Se llama a deactivate (como es mediante cancel, no se se corta la cadena de activación controles).
@@ -376,6 +425,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                 setTimeout(function () {
                                     self.cancel();
                                 }, 100);
+                                cancelDraw.apply(self);
                             })
                             .on(TC.Consts.event.STYLECHANGE, function (e) {
                                 self.onStyleChange(e);
@@ -399,7 +449,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                     modify.displayLabelText(feature.getStyle().label);
                                 });
                                 self._clearBtn.disabled = false;
-                                self._downloadBtn.disabled = false;
+                                self._downloadBtn.disabled = false;                                
                             }
                         })
                         .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
@@ -409,6 +459,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                     self._clearBtn.disabled = true;
                                     self._downloadBtn.disabled = true;
                                     self.resetValues();
+                                    cancelDraw.apply(self);
                                 }
                             }
                         })
@@ -417,7 +468,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                 if (ctl === e.control) {
                                     ctl.setCurrentFeature(null);
                                 }
-                            })
+                            });
                         });
 
                     resolve(self);
@@ -446,18 +497,21 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
             self._pointDrawControlPromise.then(function (ctl) {
                 ctl.activate();
                 TC.control.Measure.prototype.setMode.call(self, mode);
+                cancelDraw.apply(self);
             });
         }
         else {
             TC.control.Measure.prototype.setMode.call(self, mode);
+            cancelDraw.apply(self);            
         }
+        
     };
 
     ctlProto.setFeatureMeasureData = function (feature) {
         const self = this;
         const data = {};
         switch (true) {
-            case TC.feature.Point && feature instanceof TC.feature.Point:
+            case TC.feature.Point && feature instanceof TC.feature.Point: {
                 const firstCoordText = self._1stCoordText.innerHTML;
                 const secondCoordText = self._2ndCoordText.innerHTML;
                 const elevationText = self._elevationText.innerHTML;
@@ -471,6 +525,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                     feature.setData(data);
                 }
                 break;
+            }
             case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
                 if (self._len.innerHTML.trim() !== self.NOMEASURE) {
                     data[self.getLocaleString('2dLength')] = self._len.innerHTML;
@@ -524,7 +579,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         const self = this;
         TC.control.Measure.prototype.showMeasurements.call(self, options);
         options = options || {};
-        const locale = self.map.options.locale || TC.Cfg.locale
+        const locale = self.map.options.locale || TC.Cfg.locale;
         if (options.coords) {
             var precision;
             var coord1, coord2;
@@ -545,7 +600,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
             const factor = Math.pow(10, precision);
             const round = function (val) {
                 return Math.round(val * factor) / factor;
-            }
+            };
             self._1stCoordValue.innerHTML = TC.Util.formatNumber(coord1.toFixed(precision), locale);
             self._1stCoordValue.dataset.value = round(coord1);
             self._2ndCoordValue.innerHTML = TC.Util.formatNumber(coord2.toFixed(precision), locale);
@@ -612,7 +667,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         return self;
     };
 
-    ctlProto.showSketchDownloadDialog = function (options) {
+    ctlProto.showSketchDownloadDialog = function (_options) {
         const self = this;
 
         self.getDownloadDialog().then(function (control) {
@@ -663,7 +718,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 }
             });
         }
-    }
+    };
 
     ctlProto.activateElevationProfile = async function () {
         const self = this;
@@ -724,4 +779,25 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         return this._elevationControlPromise;
     };
 
+    const beginDraw = function () {
+        const self = this;
+        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
+        if(showHideBtn)showHideBtn.disabled = false;
+    }
+    const cancelDraw = function () {
+        const self = this;
+        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
+        if (showHideBtn) {
+            const layerPromises = this.drawControls.reduce(function (i, a) { return i.concat([a.getLayer()]) }, []);
+            Promise.all(layerPromises).then(function () {
+                showHideBtn.disabled = !self.drawControls.some(dc => dc.layer.features.length || (dc.isActive && dc.historyIndex > 0));
+                showHideBtn.classList.add(TC.Consts.classes.ACTIVE);
+                showHideBtn.title = self.getLocaleString("hideSketch");
+            });            
+        }
+    }
+
 })();
+
+const DrawMeasureModify = TC.control.DrawMeasureModify;
+export default DrawMeasureModify;
