@@ -1,12 +1,14 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+import infoShare from './infoShare';
+import Print from './Print';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
-
-if (!TC.control.infoShare) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/infoShare');
-}
+TC.control = TC.control || {};
+TC.control.infoShare = infoShare;
+TC.control.Print = Print;
+TC.Control = Control;
+TC.Consts = Consts;
 
 TC.Consts.event.POPUP = TC.Consts.event.POPUP || 'popup.tc';
 TC.Consts.event.POPUPHIDE = TC.Consts.event.POPUPHIDE || 'popuphide.tc';
@@ -46,7 +48,7 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
 
     ctlProto.CLASS = 'tc-ctl-ftools';
 
-    ctlProto.TITLE_SEPARATOR = ' • ';
+    ctlProto.TITLE_SEPARATOR = ' › ';
     ctlProto.FILE_TITLE_SEPARATOR = '__';
 
     ctlProto.template = {};
@@ -58,7 +60,7 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
         map
             .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE + ' ' + TC.Consts.event.DRAWCHART, function(e) {
                 const control = e.control;
-                if (control.caller || (!control.caller && control.currentFeature)) {
+                if (control.caller || control.currentFeature) {
                     self.addUI(control);
                 }
                 // TODO: ¿Y si miramos si la feature del control ya está asociada a otro control abierto para decir si decoramos o no?
@@ -106,43 +108,38 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
         if (self.getCurrentFeature(ctl)) {
             if (menuIsMissing()) {
                 // Añadimos los botones de herramientas
-                self.getRenderedHtml(self.CLASS, null, function(html) {
+                self.getRenderedHtml(self.CLASS, null, function (html) {
 
                     // Añadimos botón de imprimir
-                    TC.loadJS(
-                        !TC.control.Print,
-                        [TC.apiLocation + 'TC/control/Print'],
-                        function() {
-                            if (menuIsMissing()) {
-                                let endAddUIPromise = Promise.resolve();
-                                const container = ctl.getContainerElement();
-                                if (!container.querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
-                                    const highlightedFeature = (!ctl.caller && ctl.currentFeature) ? ctl.currentFeature : ctl.caller.highlightedFeature;
-                                    if (highlightedFeature && highlightedFeature.showsPopup === true) {
-                                        self.printControl = new TC.control.Print({
-                                            target: menuContainer,
-                                            printableElement: container,
-                                            title: highlightedFeature.id
-                                        });
-                                        endAddUIPromise = self.printControl.renderPromise();
-                                    }
-                                }
-
-                                endAddUIPromise.then(function endAddUI() {
-                                    if (menuIsMissing()) {
-                                        const parser = new DOMParser();
-                                        const tools = parser.parseFromString(html, 'text/html').body.firstChild;
-                                        menuContainer.appendChild(tools);
-
-                                        self.updateUI(ctl);
-
-                                        self._setToolButtonHandlers(ctl);
-
-                                        self._decorateDisplay(ctl);
-                                    }
+                    if (menuIsMissing()) {
+                        let endAddUIPromise = Promise.resolve();
+                        const container = ctl.getContainerElement();
+                        if (!container.querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
+                            const highlightedFeature = !ctl.caller && ctl.currentFeature ? ctl.currentFeature : ctl.caller.highlightedFeature;
+                            if (highlightedFeature && highlightedFeature.showsPopup === true) {
+                                self.printControl = new TC.control.Print({
+                                    target: menuContainer,
+                                    printableElement: container,
+                                    title: highlightedFeature.id
                                 });
+                                endAddUIPromise = self.printControl.renderPromise();
+                            }
+                        }
+
+                        endAddUIPromise.then(function endAddUI() {
+                            if (menuIsMissing()) {
+                                const parser = new DOMParser();
+                                const tools = parser.parseFromString(html, 'text/html').body.firstChild;
+                                menuContainer.appendChild(tools);
+
+                                self.updateUI(ctl);
+
+                                self._setToolButtonHandlers(ctl);
+
+                                self._decorateDisplay(ctl);
                             }
                         });
+                    }
                 });
             }
             else {
@@ -158,7 +155,7 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
             if (!displayControl.caller && displayControl.currentFeature) { // Si es un popup/panel propio de la feature
 
                 // Añadimos un zoom a la feature al pulsar en la tabla
-                attributeTable.addEventListener(TC.Consts.event.CLICK, function(e) {
+                attributeTable.addEventListener(TC.Consts.event.CLICK, function(_e) {
                     self.zoomToFeatures([self.getCurrentFeature(displayControl)]);
                 }, { passive: true });
 
@@ -172,6 +169,8 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
                 }, { passive: true });
             });
         });
+        const table = displayControl.getContainerElement().querySelector(".prpanel-body > table");
+        if (table) table.parentElement.classList.add(self.CLASS + '-zoom');
     };
 
     ctlProto.updateUI = function(ctl) {
@@ -200,8 +199,8 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
                     if (profileBtn) {
                         profileBtn.classList.toggle(TC.Consts.classes.HIDDEN,
                             !tool ||
-                            !((TC.feature.Polyline && currentFeature instanceof TC.feature.Polyline) ||
-                                (TC.feature.MultiPolyline && currentFeature instanceof TC.feature.MultiPolyline)) ||
+                            !(TC.feature.Polyline && currentFeature instanceof TC.feature.Polyline ||
+                            TC.feature.MultiPolyline && currentFeature instanceof TC.feature.MultiPolyline) ||
                             !!ctl.chart);
                     }
                     const elevBtn = uiDiv.querySelector(`.${self.CLASS}-elev-btn`);
@@ -216,7 +215,7 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
             }
         }
         if (self.printControl && currentFeature) {
-            self.printControl.title = currentFeature.id
+            self.printControl.title = currentFeature.id;
         }
         if (uiDiv) {
             uiDiv.classList.remove(TC.Consts.classes.ACTIVE);
@@ -309,7 +308,10 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
 
     ctlProto.onElevationButtonClick = function (e) {
         const self = this;
-        self.getElevationControl().then(elevCtl => elevCtl && elevCtl.displayElevationValue(getSingleClusteredFeature(self.getFeatureFromElement(e.target.parentElement))));
+        self.getElevationControl().then(elevCtl => elevCtl &&
+            elevCtl.displayElevationValue(getSingleClusteredFeature(self.getFeatureFromElement(e.target.parentElement)), {
+                ignoreCache: true
+            }));
     };
 
     ctlProto._setToolButtonHandlers = function(ctl) {
@@ -389,18 +391,18 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
     };
 
     ctlProto.getCurrentFeature = function(ctl) {
-        return ctl && ((ctl.caller && ctl.caller.highlightedFeature) ||
-            ctl.currentFeature);
+        return ctl &&
+            (ctl.caller && ctl.caller.highlightedFeature || ctl.currentFeature);
     };
 
-    ctlProto.getFeatureFromElement = function(elm) {
+    ctlProto.getFeatureFromElement = function (elm) {
         const self = this;
         const layer = self.map.getLayer(elm.dataset.layerId);
         if (layer) {
             return layer.getFeatureById(elm.dataset.featureId);
         }
         return null;
-    }
+    };
 
     ctlProto.zoomToFeatures = function(features) {
         const self = this;
@@ -572,3 +574,6 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
     };
 
 })();
+
+const FeatureTools = TC.control.FeatureTools;
+export default FeatureTools;
