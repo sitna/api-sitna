@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.control.NavBarHome = function () {
     TC.Control.apply(this, arguments);
@@ -39,3 +41,6 @@ TC.inherit(TC.control.NavBarHome, TC.Control);
     };
 
 })();
+
+const NavBarHome = TC.control.NavBarHome;
+export default NavBarHome;
