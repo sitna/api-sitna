@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.control.ScaleBar = function () {
     TC.Control.apply(this, arguments);
@@ -26,7 +28,7 @@ TC.inherit(TC.control.ScaleBar, TC.Control);
 
     ctlProto.register = function (map) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             Promise.all([TC.Control.prototype.register.call(self, map), map.wrap.getMap()]).then(function (objects) {
                 objects[1].addControl(self.wrap.ctl);
                 resolve(self);
@@ -41,3 +43,6 @@ TC.inherit(TC.control.ScaleBar, TC.Control);
     };
 
 })();
+
+const ScaleBar = TC.control.ScaleBar;
+export default ScaleBar;

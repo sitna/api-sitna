@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Scale from './Scale';
 
-if (!TC.control.Scale) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/Scale');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.Scale = Scale;
 
 TC.control.ScaleSelector = function () {
     var self = this;
@@ -83,3 +85,6 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
     };
 
 })();
+
+const ScaleSelector = TC.control.ScaleSelector;
+export default ScaleSelector;

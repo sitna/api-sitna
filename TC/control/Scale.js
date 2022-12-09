@@ -1,10 +1,12 @@
-﻿TC.control = TC.control || {};
-TC.Consts = TC.Consts || {};
-TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
+
+TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
 TC.control.Scale = function () {
     TC.Control.apply(this, arguments);
@@ -79,7 +81,7 @@ TC.inherit(TC.control.Scale, TC.Control);
     ctlProto.getScale = function (resolution) {
         var self = this;
         var result = 0;
-        var res = (!resolution && self.map) ? self.map.wrap.getResolution() : resolution;
+        var res = !resolution && self.map ? self.map.wrap.getResolution() : resolution;
         if (res) {
             result = res * self.getDpi(TC.Cfg.screenSize) / .0254;
             if (window.devicePixelRatio) {
@@ -126,3 +128,6 @@ TC.inherit(TC.control.Scale, TC.Control);
     };
 
 })();
+
+const Scale = TC.control.Scale;
+export default Scale;
