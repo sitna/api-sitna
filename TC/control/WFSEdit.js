@@ -8,7 +8,6 @@
   * Para ello basta con copiar el archivo [tc-cb-service-worker.js](https://raw.githubusercontent.com/sitna/api-sitna/master/TC/workers/tc-cb-service-worker.js) a la carpeta raíz de dicha aplicación.
   * @typedef WFSEditOptions
   * @extends ControlOptions
-  * @ignore
   * @see MapControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {ElevationOptions|boolean} [downloadElevation=false] - Si se establece a un valor verdadero, el control ofrecerá la opción de añadir elevaciones 
@@ -46,11 +45,23 @@
   * </script>
   */
 
-TC.control = TC.control || {};
+import localforage from 'localforage';
+import TC from '../../TC';
+import Consts from '../Consts';
+import SWCacheClient from './SWCacheClient';
+import Geometry from '../Geometry';
+import Vector from '../layer/Vector';
+import filter from '../filter';
+import Toggle from '../../SITNA/ui/Toggle';
 
-if (!TC.control.SWCacheClient) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/SWCacheClient');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.control.SWCacheClient = SWCacheClient;
+TC.Geometry = Geometry;
+TC.layer = TC.layer || {};
+TC.layer.Vector = Vector;
+TC.filter = filter;
+
 
 TC.control.WFSEdit = function () {
     const self = this;
@@ -62,10 +73,12 @@ TC.control.WFSEdit = function () {
 
     self.layer = null;
     //self.feature = self.options.feature ? self.options.feature : null;
-    self.callback = TC.Util.isFunction(arguments[2]) ? arguments[2] : (self.options.callback ? self.options.callback : null);
+    self.callback = TC.Util.isFunction(arguments[2]) ?
+        arguments[2] :
+        self.options.callback ? self.options.callback : null;
     self.layersEditData = {};
-    self.showsOriginalFeatures = (typeof self.options.showOriginalFeatures === 'boolean') ? self.options.showOriginalFeatures : false;
-    self.highlightsAdded = self.highlightsModified = self.highlightsRemoved = (typeof self.options.highlightChanges === 'boolean') ? self.options.highlightChanges : true;
+    self.showsOriginalFeatures = typeof self.options.showOriginalFeatures === 'boolean' ? self.options.showOriginalFeatures : false;
+    self.highlightsAdded = self.highlightsModified = self.highlightsRemoved = typeof self.options.highlightChanges === 'boolean' ? self.options.highlightChanges : true;
     if (!TC.Util.isFunction(self.options.getBeforeEditLayerStyleFunction)) {
         self.getBeforeEditLayerStyleFunction = self.getBeforeEditLayerStyle;
     }
@@ -90,7 +103,7 @@ TC.control.WFSEdit = function () {
             strokeWidth: 2,
             strokeOpacity: 1
         }
-    }
+    };
 };
 
 TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
@@ -129,21 +142,19 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                 setChangesButtonsState(ctl);
             }
             else {
-                TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                    var storagePrefix = getStoragePrefix(ctl);
-                    localforage.keys().then(function (keys) {
-                        if (keys) {
-                            var disabled = true;
-                            for (var i = 0, len = keys.length; i < len; i++) {
-                                if (keys[i].indexOf(storagePrefix) === 0) {
-                                    disabled = false;
-                                    break;
-                                }
+                var storagePrefix = getStoragePrefix(ctl);
+                localforage.keys().then(function (keys) {
+                    if (keys) {
+                        var disabled = true;
+                        for (var i = 0, len = keys.length; i < len; i++) {
+                            if (keys[i].indexOf(storagePrefix) === 0) {
+                                disabled = false;
+                                break;
                             }
-                            layerEditData.checkedOut = !disabled;
-                            setChangesButtonsState(ctl);
                         }
-                    });
+                        layerEditData.checkedOut = !disabled;
+                        setChangesButtonsState(ctl);
+                    }
                 });
             }
         }
@@ -154,72 +165,66 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
     const storeFeature = function (key, feature) {
         return new Promise(function (resolve, reject) {
-            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                var obj;
-                var geometryType;
-                switch (true) {
-                    case feature instanceof TC.feature.Polygon:
-                        geometryType = TC.Consts.geom.POLYGON;
-                        break;
-                    case feature instanceof TC.feature.Polyline:
-                        geometryType = TC.Consts.geom.POLYLINE;
-                        break;
-                    case feature instanceof TC.feature.Point:
-                        geometryType = TC.Consts.geom.POINT;
-                        break;
-                    case feature instanceof TC.feature.MultiPolygon:
-                        geometryType = TC.Consts.geom.MULTIPOLYGON;
-                        break;
-                    case feature instanceof TC.feature.MultiPolyline:
-                        geometryType = TC.Consts.geom.MULTIPOLYLINE;
-                        break;
-                }
-                obj = {
-                    id: feature.id || feature.provId,
-                    attributes: feature.data,
-                    type: geometryType,
-                    geometry: feature.geometry,
-                }
-                localforage.setItem(key, obj)
-                    .then(function () {
-                        resolve({ feature: feature });
-                    })
-                    .catch(function (error) {
-                        reject({ feature: feature, error: error });
-                    });
-            });
+            var obj;
+            var geometryType;
+            switch (true) {
+                case feature instanceof TC.feature.Polygon:
+                    geometryType = TC.Consts.geom.POLYGON;
+                    break;
+                case feature instanceof TC.feature.Polyline:
+                    geometryType = TC.Consts.geom.POLYLINE;
+                    break;
+                case feature instanceof TC.feature.Point:
+                    geometryType = TC.Consts.geom.POINT;
+                    break;
+                case feature instanceof TC.feature.MultiPolygon:
+                    geometryType = TC.Consts.geom.MULTIPOLYGON;
+                    break;
+                case feature instanceof TC.feature.MultiPolyline:
+                    geometryType = TC.Consts.geom.MULTIPOLYLINE;
+                    break;
+            }
+            obj = {
+                id: feature.id || feature.provId,
+                attributes: feature.data,
+                type: geometryType,
+                geometry: feature.geometry
+            };
+            localforage.setItem(key, obj)
+                .then(function () {
+                    resolve({ feature: feature });
+                })
+                .catch(function (error) {
+                    reject({ feature: feature, error: error });
+                });
         });
     };
 
 
     const deleteFeature = function (key) {
         return new Promise(function (resolve, reject) {
-            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                localforage.removeItem(key)
-                    .then(function () {
-                        resolve(key);
-                    })
-                    .catch(function (error) {
-                        reject(Error(error));
-                    });
-            });
+            localforage.removeItem(key)
+                .then(function () {
+                    resolve(key);
+                })
+                .catch(function (error) {
+                    reject(Error(error));
+                });
         });
     };
 
     const readFeature = function (key) {
         return new Promise(function (resolve, reject) {
-            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                localforage.getItem(key)
-                    .then(function (value) {
-                        resolve({
-                            key: key,
-                            feature: value
-                        });
-                    })
-                    .catch(function (error) {
-                        reject(error);
+            localforage.getItem(key)
+                .then(function (value) {
+                    resolve({
+                        key: key,
+                        feature: value
                     });
-            });
+                })
+                .catch(function (error) {
+                    reject(error);
+                });
         });
     };
 
@@ -248,7 +253,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
     };
 
     const getLayerTitle = function (layer) {
-        return layer.getPath ? layer.getPath().join(' • ') : (layer.title || layer.id)
+        return layer.getPath ? layer.getPath().join(' • ') : layer.title || layer.id;
     };
 
     const ctlProto = TC.control.WFSEdit.prototype;
@@ -265,7 +270,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
     ctlProto.register = function (map) {
         const self = this;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
 
             TC.control.SWCacheClient.prototype.register.call(self, map).then(function () {
 
@@ -298,7 +303,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                         });
                     };
                     self.editControl.importFeatures = function (features) {
-                        const featuresToImport = (features || this.featuresToImport || []);
+                        const featuresToImport = features || this.featuresToImport || [];
                         const layerEditData = self.getLayerEditData();
                         const newFeatures = layerEditData.attributes ? featuresToImport.map(function (feature) {
                             const properties = {};
@@ -364,10 +369,10 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                             if (layer.type === TC.Consts.layerType.WFS && !layer.options.readOnly) {
                                 self.getEditableLayer(layer)
                                     .then(l => self.cacheLayer(l))
-                                    .catch(err => console.log('Layer not editable: ' + layer.id));
+                                    .catch(_err => console.log('Layer not editable: ' + layer.id));
                             }
                         })
-                        .on(TC.Consts.event.ZOOM, function (e) {
+                        .on(TC.Consts.event.ZOOM, function (_e) {
                             map.workLayers
                                 .filter(l => l.wfsLayer)
                                 .filter(l => self.layer !== l)
@@ -384,7 +389,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                             if (self._removingLayer === layer) {
                                 return;
                             }
-                            if (self.layer === layer || (layer.wmsLayer && self.layer === layer.wmsLayer)) {
+                            if (self.layer === layer || layer.wmsLayer && self.layer === layer.wmsLayer) {
                                 self.setLayer(null);
                             }
                             const option = self._layerSelect.querySelector(`option[value="${layer.id}"]`);
@@ -398,7 +403,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                                 if (e.reason === TC.Consts.WFSErrors.MAX_NUM_FEATURES) {
                                     map.toast(self.getLocaleString('query.msgTooManyResults', { limit: e.data.limit }), { type: TC.Consts.msgType.WARNING });
                                 }
-                                if (self.layer === layer || (self.layer && self.layer.wfsLayer === layer)) {
+                                if (self.layer === layer || self.layer && self.layer.wfsLayer === layer) {
                                     delete self.layersEditData[self.layer.id];
                                     self.setLayer(null);
                                 }
@@ -435,18 +440,20 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
                 map.ready(function () {
                     map.getControlsByClass('TC.control.WorkLayerManager').forEach(function (ctl) {
-                        ctl.addLayerTool({
+                        ctl.addItemTool({
                             renderFn: function (container, layerId) {
                                 const className = self.CLASS + '-btn-edit';
-                                let button = container.querySelector('button.' + className);
+                                let button = container.querySelector('sitna-toggle.' + className);
                                 if (!button) {
                                     const text = self.getLocaleString('featureEditing');
-                                    button = document.createElement('button');
-                                    button.innerHTML = text;
-                                    button.setAttribute('title', text);
+                                    button = new Toggle();
+                                    button.text = text;
                                     button.classList.add(className);
+                                    button.checkedIconText = getComputedStyle(document.querySelector(':root'))
+                                        .getPropertyValue('--icon-edit')
+                                        .replaceAll('"', '');
+                                    button.uncheckedIconText = button.checkedIconText;
                                     button.dataset.layerId = layerId;
-                                    container.appendChild(button);
                                     const layer = map.getLayer(layerId);
                                     if (layer.type === TC.Consts.layerType.WMS) {
                                         button.classList.add(TC.Consts.classes.LOADING);
@@ -458,20 +465,20 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                                 return button;
                             },
                             updateEvents: [TC.Consts.event.BEFORELAYERUPDATE, TC.Consts.event.LAYERUPDATE, TC.Consts.event.LAYERERROR, TC.Consts.event.CONTROLACTIVATE, TC.Consts.event.CONTROLDEACTIVATE],
-                            updateFn: function (e) {
+                            updateFn: function (_e) {
                                 const button = this;
                                 const layer = map.getLayer(button.dataset.layerId);
                                 setTimeout(() => {
                                     button.classList.toggle(TC.Consts.classes.ACTIVE, self.layer === layer);
                                 }, 500);
-                                button.disabled = !layer || (layer.isRaster() && layer.names.length !== 1);
+                                button.disabled = !layer || layer.isRaster() && layer.names.length !== 1;
                             },
                             actionFn: function () {
                                 const button = this;
                                 const layer = map.getLayer(button.dataset.layerId);
                                 const prevLayer = self.layer;
                                 button.classList.remove(TC.Consts.classes.ACTIVE);
-                                if ((layer.names && layer.names.length === 1) || !layer.isRaster()) {
+                                if (layer.names && layer.names.length === 1 || !layer.isRaster()) {
                                     if (layer && prevLayer !== layer) {
                                         self.setLayer(layer).then(() => {
                                             //button.classList.toggle(TC.Consts.classes.ACTIVE, self.layer === layer);
@@ -513,7 +520,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
             self._layerDiv = self.div.querySelector(self._classSelector + '-layer');
             self._layerSelect = self._layerDiv.querySelector(self._classSelector + '-layer-sel');
-            self._layerSelect.addEventListener('change', function (e) {
+            self._layerSelect.addEventListener('change', function (_e) {
                 setEditState(self, false);
                 self.getEditableLayer(self._layerSelect.value)
                     .then(function (layer) {
@@ -553,7 +560,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
             });
 
             const colorRegExp = new RegExp(`${self.CLASS}-view-clr-(.+)-${self.id}`);
-            const onColorClick = function (e) {
+            const onColorClick = function (_e) {
                 const input = this.parentElement.querySelector('input[type=color]');
                 const layerEditData = self.getLayerEditData();
                 const layer = layerEditData[input.id.match(colorRegExp)[1] + 'FeaturesLayer'];
@@ -638,29 +645,23 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                     const layerEditData = self.getLayerEditData();
                     const editedFeatures = layerEditData.addedFeaturesLayer.features.concat(layerEditData.modifiedFeaturesLayer.features, layerEditData.removedFeaturesLayer.features);
                     if (editedFeatures.length) {
-                        TC.loadJS(
-                            !TC.Geometry,
-                            TC.apiLocation + 'TC/Geometry',
-                            function () {
-                                let featuresOutside = false;
-                                const extent = self.map.getExtent();
-                                const bbox = [[extent[0], extent[1]], [extent[0], extent[3]], [extent[2], extent[3]], [extent[2], extent[1]]];
-                                for (var i = 0, ii = editedFeatures.length; i < ii; i++) {
-                                    if (!TC.Geometry.intersects(editedFeatures[i].geometry, bbox)) {
-                                        featuresOutside = true;
-                                        break;
-                                    }
-                                }
-                                if (featuresOutside) {
-                                    TC.confirm(self.getLocaleString('refreshLayerToCurrentExtent.confirm'), function () {
-                                        reload();
-                                    });
-                                }
-                                else {
-                                    reload();
-                                }
+                        let featuresOutside = false;
+                        const extent = self.map.getExtent();
+                        const bbox = [[extent[0], extent[1]], [extent[0], extent[3]], [extent[2], extent[3]], [extent[2], extent[1]]];
+                        for (var i = 0, ii = editedFeatures.length; i < ii; i++) {
+                            if (!TC.Geometry.intersects(editedFeatures[i].geometry, bbox)) {
+                                featuresOutside = true;
+                                break;
                             }
-                        );
+                        }
+                        if (featuresOutside) {
+                            TC.confirm(self.getLocaleString('refreshLayerToCurrentExtent.confirm'), function () {
+                                reload();
+                            });
+                        }
+                        else {
+                            reload();
+                        }
                     }
                     else {
                         reload();
@@ -843,7 +844,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
     ctlProto.getEditControl = function () {
         const self = this;
-        return self._editPromise || new Promise(function (resolve, reject) {
+        return self._editPromise || new Promise(function (resolve, _reject) {
             self.renderPromise().then(() => resolve(self.editControl));
         });
     };
@@ -851,10 +852,10 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
     ctlProto.cacheLayer = function (layer) {
         const self = this;
         return new Promise(function (resolve, reject) {
-            self.getServiceWorker().then(function () {
+            self.getServiceWorker().then(async function () {
                 if (navigator.onLine) {
                     const gfUrl = layer.wrap.getGetFeatureUrl();
-                    const dftUrl = layer.getDescribeFeatureTypeUrl();
+                    const dftUrl = await layer.getDescribeFeatureTypeUrl();
                     if (gfUrl && dftUrl) {
                         self.createCache(getStoragePrefix(self, layer), {
                             urlList: [gfUrl, dftUrl]
@@ -883,7 +884,8 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                         const layerEditData = self.getLayerEditData(layer);
                         // recogemos los atributos no geométricos y definimos la geometría
                         layerEditData.attributes = {};
-                        for (var key in attributes) {
+                        let key;
+                        for (key in attributes) {
                             const attr = attributes[key];
                             const geometryType = editControl.getGeometryType(attr.type);
                             if (geometryType) {
@@ -894,7 +896,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                                 layerEditData.attributes[key] = attr;
                             }
                         }
-                        for (var key in layerEditData.attributes) {
+                        for (key in layerEditData.attributes) {
                             const attr = layerEditData.attributes[key];
                             attr.type = attr.type.substr(attr.type.indexOf(':') + 1);
                         }
@@ -1006,8 +1008,8 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
                             self._addAuxLayersToMap()
                                 .then(() => resolve())
-                                .catch ((err) => reject(err));
-                        })
+                                .catch((err) => reject(err));
+                        });
                     });
                 })
                 .catch(function (err) {
@@ -1028,7 +1030,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
     ctlProto.closeEditSession = function () {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             self.renderPromise().then(function () {
                 setChangedState(self, false);
                 self.getEditControl().then(c => c.deactivate());
@@ -1041,10 +1043,10 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                     self._removedWatch.src = TC.Consts.BLANK_IMAGE;
                     const previousLayer = self.layer;
                     self.getEditableLayer(self.layer).then(function (editableLayer) {
-                        const removePromises = []
+                        const removePromises = [];
                         const removeLayer = function (layer) {
-                            if (map.workLayers.indexOf(layer) >= 0) {
-                                removePromises.push(map.removeLayer(layer));
+                            if (self.map.workLayers.indexOf(layer) >= 0) {
+                                removePromises.push(self.map.removeLayer(layer));
                             }
                         };
                         removeLayer(layerEditData.beforeEditLayer);
@@ -1073,7 +1075,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
             const map = self.map;
             layer = map ? map.getLayer(layer) : layer;
             if (layer) {
-                if (layer.type === TC.Consts.layerType.WFS && (layer.wmsLayer || (!layer.options.stealth && !layer.options.readOnly))) {
+                if (layer.type === TC.Consts.layerType.WFS && (layer.wmsLayer || !layer.options.stealth && !layer.options.readOnly)) {
                     layer.getCapabilitiesPromise().then(() => resolve(layer));
                 }
                 else if (layer.type === TC.Consts.layerType.WMS) {
@@ -1082,42 +1084,30 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                     }
                     else {
                         layer.getWFSCapabilities()
-                            .then(function (capabilities) {
+                            .then(async function (capabilities) {
                                 //comprobamos que la solo es una capa y existe en el capabilities del WFS
                                 const layers = layer.getDisgregatedLayerNames();
                                 const fullLayerName = layers[0];
                                 const colonIdx = fullLayerName.indexOf(':');
                                 const shortLayerName = fullLayerName.substring(colonIdx + 1);
                                 const prefix = 'Edicion'; //fullLayerName.substr(0, colonIdx + 1);
-                                if (layers.length !== 1 || capabilities.FeatureTypes.hasOwnProperty(shortLayerName)) {
-                                    TC.loadJS(
-                                        !TC.layer.Vector,
-                                        TC.apiLocation + 'TC/layer/Vector',
-                                        function () {
-                                            TC.loadJS(
-                                                !TC.filter,
-                                                TC.apiLocation + 'TC/filter',
-                                                async function () {
-                                                    const wfsLayerOptions = {
-                                                        id: self.getUID(),
-                                                        type: TC.Consts.layerType.WFS,
-                                                        url: await layer.getWFSURL(),
-                                                        properties: map ? new TC.filter.Bbox(null, map.getExtent(), map.getCRS()) : null,
-                                                        outputFormat: TC.Consts.format.JSON,
-                                                        title: `${layer.getPath().join(' • ')} - ${self.getLocaleString('featureEditing')}`,
-                                                        geometryName: 'geom',
-                                                        featureType: [fullLayerName],
-                                                        featureNS: prefix,
-                                                        styles: self.styles,
-                                                        stealth: true
-                                                    };
-                                                    layer.wfsLayer = new TC.layer.Vector(wfsLayerOptions);
-                                                    layer.wfsLayer.wmsLayer = layer;
-                                                    resolve(layer.wfsLayer);
-                                                }
-                                            );
-                                        }
-                                    );
+                                if (layers.length !== 1 || Object.prototype.hasOwnProperty.call(capabilities.FeatureTypes, shortLayerName)) {
+                                    const wfsLayerOptions = {
+                                        id: self.getUID(),
+                                        type: TC.Consts.layerType.WFS,
+                                        url: await layer.getWFSURL(),
+                                        properties: map ? new TC.filter.Bbox(null, map.getExtent(), map.getCRS()) : null,
+                                        outputFormat: TC.Consts.format.JSON,
+                                        title: `${layer.getPath().join(' • ')} - ${self.getLocaleString('featureEditing')}`,
+                                        geometryName: 'geom',
+                                        featureType: [fullLayerName],
+                                        featureNS: prefix,
+                                        styles: self.styles,
+                                        stealth: true
+                                    };
+                                    layer.wfsLayer = new TC.layer.Vector(wfsLayerOptions);
+                                    layer.wfsLayer.wmsLayer = layer;
+                                    resolve(layer.wfsLayer);
                                 }
                                 else {
                                     reject(new Error(notEditableErrorMsg));
@@ -1141,17 +1131,15 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
     ctlProto.isLayerEdited = function (layer) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             const storagePrefix = getStoragePrefix(self, layer);
-            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                localforage.keys().then(function (keys) {
-                    if (keys) {
-                        resolve(keys.some(key => key.indexOf(storagePrefix) === 0));
-                    }
-                    else {
-                        resolve(false);
-                    }
-                });
+            localforage.keys().then(function (keys) {
+                if (keys) {
+                    resolve(keys.some(key => key.indexOf(storagePrefix) === 0));
+                }
+                else {
+                    resolve(false);
+                }
             });
         });
     };
@@ -1182,14 +1170,14 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
     ctlProto._enableEditSerialization = function (layer) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             self.getEditableLayer(layer)
                 .then(function (editableLayer) {
 
                     const endProcess = function () {
                         const layerEditData = self.getLayerEditData(layer);
 
-                        const baseTitle = layer.getPath ? layer.getPath().join(' • ') : (layer.title || layer.id);
+                        const baseTitle = getLayerTitle(layer);
 
                         var beforeEditLayer = layerEditData.beforeEditLayer;
                         if (!beforeEditLayer) {
@@ -1273,83 +1261,81 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                             const addedStoragePrefix = getAddedStoragePrefix(self, editableLayer);
                             const modifiedStoragePrefix = getModifiedStoragePrefix(self, editableLayer);
                             const removedStoragePrefix = getRemovedStoragePrefix(self, editableLayer);
-                            TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-                                //var li = map.getLoadingIndicator();
-                                localforage.keys().then(function (keys) {
-                                    if (keys) {
-                                        keys
-                                            .filter(key => key.indexOf(storagePrefix) === 0)
-                                            .forEach(function (key) {
-                                                //li && li.addWait(uid);
-                                                featurePromises.push(new Promise(function (res, rej) {
-                                                    readFeature(key).then(function(obj) {
-                                                        var id;
-                                                        var k = obj.key;
-                                                        if (k.indexOf(removedStoragePrefix) === 0) {
-                                                            id = k.substr(removedStoragePrefix.length);
-                                                            const feature = editableLayer.getFeatureById(id);
-                                                            editableLayer.removeFeature(feature);
-                                                            removedFeaturesLayer.addFeature(feature).then(() => res(feature));
+                            //var li = map.getLoadingIndicator();
+                            localforage.keys().then(function (keys) {
+                                if (keys) {
+                                    keys
+                                        .filter(key => key.indexOf(storagePrefix) === 0)
+                                        .forEach(function (key) {
+                                            //li && li.addWait(uid);
+                                            featurePromises.push(new Promise(function (res, _rej) {
+                                                readFeature(key).then(function (obj) {
+                                                    var id;
+                                                    var k = obj.key;
+                                                    if (k.indexOf(removedStoragePrefix) === 0) {
+                                                        id = k.substr(removedStoragePrefix.length);
+                                                        const feature = editableLayer.getFeatureById(id);
+                                                        editableLayer.removeFeature(feature);
+                                                        removedFeaturesLayer.addFeature(feature).then(() => res(feature));
+                                                        //li && li.removeWait(uid);
+                                                    }
+                                                    else if (k.indexOf(modifiedStoragePrefix) === 0) {
+                                                        id = k.substr(modifiedStoragePrefix.length);
+                                                        const feature = editableLayer.getFeatureById(id);
+                                                        if (feature) {
+                                                            feature.setCoords(obj.feature.geometry);
+                                                            feature.setData(obj.feature.attributes);
+                                                            const newFeature = feature.clone();
+                                                            newFeature.setId(feature.id);
+                                                            modifiedFeaturesLayer.addFeature(newFeature).then(() => res(feature));
                                                             //li && li.removeWait(uid);
                                                         }
-                                                        else if (k.indexOf(modifiedStoragePrefix) === 0) {
-                                                            id = k.substr(modifiedStoragePrefix.length);
-                                                            const feature = editableLayer.getFeatureById(id);
-                                                            if (feature) {
-                                                                feature.setCoords(obj.feature.geometry);
-                                                                feature.setData(obj.feature.attributes);
-                                                                const newFeature = feature.clone();
-                                                                newFeature.setId(feature.id);
-                                                                modifiedFeaturesLayer.addFeature(newFeature).then(() => res(feature));
-                                                                //li && li.removeWait(uid);
-                                                            }
-                                                            else {
-                                                                res(feature);
-                                                            }
+                                                        else {
+                                                            res(feature);
                                                         }
-                                                        else if (k.indexOf(addedStoragePrefix) === 0) {
-                                                            id = k.substr(addedStoragePrefix.length);
-                                                            var idNumber = parseInt(id.substr(id.lastIndexOf('.') + 1));
-                                                            newFeatureIdNumber = Math.max(newFeatureIdNumber, idNumber + 1);
-                                                            var addPromise;
-                                                            switch (obj.feature.type) {
-                                                                case TC.Consts.geom.POINT:
-                                                                    addPromise = editableLayer.addPoint(obj.feature.geometry);
-                                                                    break;
-                                                                case TC.Consts.geom.POLYLINE:
-                                                                    addPromise = editableLayer.addPolyline(obj.feature.geometry);
-                                                                    break;
-                                                                case TC.Consts.geom.POLYGON:
-                                                                    addPromise = editableLayer.addPolygon(obj.feature.geometry);
-                                                                    break;
-                                                                case TC.Consts.geom.MULTIPOLYLINE:
-                                                                    addPromise = editableLayer.addMultiPolyline(obj.feature.geometry);
-                                                                    break;
-                                                                case TC.Consts.geom.MULTIPOLYGON:
-                                                                    addPromise = editableLayer.addMultiPolygon(obj.feature.geometry);
-                                                                    break;
-                                                                default:
-                                                                    break;
-                                                            };
-                                                            addPromise.then(function (feat) {
-                                                                //feat.setStyle(TC.Util.extend({}, layer.styles.line, layer.styles.polygon));
-                                                                feat.provId = id;
-                                                                feat.setData(obj.feature.attributes);
-                                                                const newFeat = feat.clone();
-                                                                newFeat.setStyle(null);
-                                                                newFeat.setId(feat.provId);
-                                                                addedFeaturesLayer.addFeature(newFeat).then(() =>  res(newFeat));
-                                                                //li && li.removeWait(uid);
-                                                            });
+                                                    }
+                                                    else if (k.indexOf(addedStoragePrefix) === 0) {
+                                                        id = k.substr(addedStoragePrefix.length);
+                                                        var idNumber = parseInt(id.substr(id.lastIndexOf('.') + 1));
+                                                        newFeatureIdNumber = Math.max(newFeatureIdNumber, idNumber + 1);
+                                                        var addPromise;
+                                                        switch (obj.feature.type) {
+                                                            case TC.Consts.geom.POINT:
+                                                                addPromise = editableLayer.addPoint(obj.feature.geometry);
+                                                                break;
+                                                            case TC.Consts.geom.POLYLINE:
+                                                                addPromise = editableLayer.addPolyline(obj.feature.geometry);
+                                                                break;
+                                                            case TC.Consts.geom.POLYGON:
+                                                                addPromise = editableLayer.addPolygon(obj.feature.geometry);
+                                                                break;
+                                                            case TC.Consts.geom.MULTIPOLYLINE:
+                                                                addPromise = editableLayer.addMultiPolyline(obj.feature.geometry);
+                                                                break;
+                                                            case TC.Consts.geom.MULTIPOLYGON:
+                                                                addPromise = editableLayer.addMultiPolygon(obj.feature.geometry);
+                                                                break;
+                                                            default:
+                                                                break;
                                                         }
-                                                    });
-                                                }));
-                                            });
-                                    }
-                                    Promise.all(featurePromises).then(() => {
-                                        layerEditData.serializable = true;
-                                        resolve(editableLayer);
-                                    });
+                                                        addPromise.then(function (feat) {
+                                                            //feat.setStyle(TC.Util.extend({}, layer.styles.line, layer.styles.polygon));
+                                                            feat.provId = id;
+                                                            feat.setData(obj.feature.attributes);
+                                                            const newFeat = feat.clone();
+                                                            newFeat.setStyle(null);
+                                                            newFeat.setId(feat.provId);
+                                                            addedFeaturesLayer.addFeature(newFeat).then(() => res(newFeat));
+                                                            //li && li.removeWait(uid);
+                                                        });
+                                                    }
+                                                });
+                                            }));
+                                        });
+                                }
+                                Promise.all(featurePromises).then(() => {
+                                    layerEditData.serializable = true;
+                                    resolve(editableLayer);
                                 });
                             });
                         }
@@ -1365,7 +1351,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                                     endProcess();
                                     self.map.off(TC.Consts.event.LAYERUPDATE, onLayerUpdate);
                                 }
-                            }
+                            };
                             self.map.on(TC.Consts.event.LAYERUPDATE, onLayerUpdate);
                         }
                     }
@@ -1450,31 +1436,29 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
         var self = this;
         self._joinedFeatureAttributes = [];
         var storagePrefix = getStoragePrefix(self);
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            localforage.keys().then(function (keys) {
-                if (keys) {
-                    for (var i = 0, len = keys.length; i < len; i++) {
-                        var key = keys[i];
-                        if (key.indexOf(storagePrefix) === 0) {
-                            localforage.removeItem(key);
-                        }
+        localforage.keys().then(function (keys) {
+            if (keys) {
+                for (var i = 0, len = keys.length; i < len; i++) {
+                    var key = keys[i];
+                    if (key.indexOf(storagePrefix) === 0) {
+                        localforage.removeItem(key);
                     }
-                    if (self.layer) {
-                        const layerEditData = self.getLayerEditData();
-                        if (layerEditData.serializable) {
-                            layerEditData.addedFeaturesLayer.clearFeatures();
-                            layerEditData.modifiedFeaturesLayer.clearFeatures();
-                            layerEditData.removedFeaturesLayer.clearFeatures();
-                            self.editControl.setSelectedFeatures([]);
-                            self.editControl.modifyControl.closeAttributes();
-                            self.getEditableLayer(self.layer).then(l => l.refresh());
-                        }
-                    }
-                    setChangedState(self, false);
                 }
-            });
-            self.editControl.setMode(null);
+                if (self.layer) {
+                    const layerEditData = self.getLayerEditData();
+                    if (layerEditData.serializable) {
+                        layerEditData.addedFeaturesLayer.clearFeatures();
+                        layerEditData.modifiedFeaturesLayer.clearFeatures();
+                        layerEditData.removedFeaturesLayer.clearFeatures();
+                        self.editControl.setSelectedFeatures([]);
+                        self.editControl.modifyControl.closeAttributes();
+                        self.getEditableLayer(self.layer).then(l => l.refresh());
+                    }
+                }
+                setChangedState(self, false);
+            }
         });
+        self.editControl.setMode(null);
     };
 
     ctlProto.showOriginalFeatures = function (show) {
@@ -1596,3 +1580,6 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
     };
 
 })();
+
+const WFSEdit = TC.control.WFSEdit;
+export default WFSEdit;
