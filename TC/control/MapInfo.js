@@ -1,8 +1,13 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+import Proxification from '../tool/Proxification';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
+TC.tool = TC.tool || {};
+TC.tool.Proxification = Proxification;
 
 TC.control.MapInfo = function () {
     var self = this;
@@ -30,7 +35,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         self.includeControls = self.options.includeControls === undefined || self.options.includeControls;
 
         return result;
-    }
+    };
 
     ctlProto.exportControlStates = function () {
         const self = this;
@@ -125,7 +130,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         }       
 
         const controlStates = self.includeControls ? self.exportControlStates() : [];
-        if (!self.includeControls && self.exportsState && (self.featureToShare || self.sharedFeaturesLayer || (self.caller && self.caller.toShare))) {
+        if (!self.includeControls && self.exportsState && (self.featureToShare || self.sharedFeaturesLayer || self.caller && self.caller.toShare)) {
             if (self.caller && self.caller.toShare) {
                 controlStates.push(self.caller.exportState());
             } else {
@@ -216,7 +221,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const self = this;
         return new Promise(function (resolve, reject) {
             TC.loadJS(
-                typeof QRCode === 'undefined',
+                typeof window.QRCode === 'undefined',
                 [TC.apiLocation + 'lib/qrcode/qrcode.min.js'],
                 function () {
                     self.shortenedLink().then(function (url) {
@@ -234,7 +239,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                             var config = { attributes: true, childList: true, subtree: true };
                             var observer = new MutationObserver(function (mutationsList, observer) {
                                 var srcMutation = mutationsList.filter(function (mutation) {
-                                    return mutation.type === "attributes"
+                                    return mutation.type === "attributes";
                                 }).filter(function (mutation) {
                                     return mutation.attributeName.indexOf('src') > -1;
                                 });
@@ -244,6 +249,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                                     resolve(srcMutation[0].target.src);
                                 }
                             });
+                            codeContainer.innerHTML = '';
                             observer.observe(codeContainer, config);
                             new QRCode(codeContainer, options);
                         } else {
@@ -258,7 +264,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const self = this;
         var canvas;
         var sb = self.map.getControlsByClass(TC.control.ScaleBar);
-        if (sb.length == 0) {
+        if (sb.length === 0) {
             return null;
         }
 
@@ -317,8 +323,8 @@ TC.inherit(TC.control.MapInfo, TC.Control);
             canvas.height = height;
         }
 
-        boundingCR.left = options.left != undefined ? options.left : 15;
-        boundingCR.top = options.top != undefined ? options.top : 15;
+        boundingCR.left = options.left !== undefined ? options.left : 15;
+        boundingCR.top = options.top !== undefined ? options.top : 15;
 
         ctx.moveTo(boundingCR.left, boundingCR.top);
         ctx.lineTo(boundingCR.left, boundingCR.top + height);
@@ -337,9 +343,9 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         }
 
         ctx.globalAlpha = 1.0;
-        ctx.fillStyle = options.textColor != undefined ? options.textColor : window.getComputedStyle(node).color;
+        ctx.fillStyle = options.textColor !== undefined ? options.textColor : window.getComputedStyle(node).color;
 
-        ctx.font = options.font != undefined ? options.font : window.getComputedStyle(node).fontSize + " " + window.getComputedStyle(node).fontFamily;
+        ctx.font = options.font !== undefined ? options.font : window.getComputedStyle(node).fontSize + " " + window.getComputedStyle(node).fontFamily;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(text, textPosition.x, textPosition.y);
@@ -371,3 +377,6 @@ TC.inherit(TC.control.MapInfo, TC.Control);
     };
 
 })();
+
+const MapInfo = TC.control.MapInfo;
+export default MapInfo;
