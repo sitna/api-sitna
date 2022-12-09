@@ -8,11 +8,13 @@
   * @property {string|object} layer - Identificador de capa para usar como mapa de fondo u objeto de opciones de capa.
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.control.OverviewMap = function () {
     var self = this;
@@ -84,7 +86,7 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
             return lyr;
         };
 
-        const resetOVMapProjection = function (e) {
+        const resetOVMapProjection = function (_e) {
             const resetOptions = {};
             self.layer.getCapabilitiesPromise().then(function () {
                 if (!self.layer.isCompatible(map.crs) && self.layer.wrap.getCompatibleMatrixSets(map.crs).length === 0) {
@@ -99,16 +101,15 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
 
             if (self.map.baseLayer.type === TC.Consts.layerType.WMS || self.map.baseLayer.type === TC.Consts.layerType.WMTS || self.options.layer) {
                 var newLayer = self.map.baseLayer.overviewMapLayer || self.options.layer;
+                let ovMapLayer;
                 if (self.layer.id !== newLayer) {
-                    var overviewMapLayer = registerLayer(newLayer);
+                    ovMapLayer = registerLayer(newLayer);
+                } else if (TC.Consts.event.PROJECTIONCHANGE.includes(e.type)) {
+                    ovMapLayer = self.layer;
+                }
+                if (ovMapLayer) {
                     self.wrap.reset({
-                        layer: overviewMapLayer
-                    }).then(function (layer) {
-                        self.layer = layer;
-                    });
-                } else if (TC.Consts.event.PROJECTIONCHANGE.indexOf(e.type) > -1) {
-                    self.wrap.reset({
-                        layer: self.layer
+                        layer: ovMapLayer
                     }).then(function (layer) {
                         self.layer = layer;
                     });
@@ -174,3 +175,6 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
     };
 
 })();
+
+const OverviewMap = TC.control.OverviewMap;
+export default OverviewMap;
