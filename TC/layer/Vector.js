@@ -1,8 +1,29 @@
-﻿TC.layer = TC.layer || {};
+import TC from '../../TC';
+import Util from '../Util';
+import Layer from '../Layer';
+import Point from '../feature/Point';
+import Marker from '../feature/Marker';
+import Polyline from '../feature/Polyline';
+import Polygon from '../feature/Polygon';
+import MultiPoint from '../feature/MultiPoint';
+import MultiMarker from '../feature/MultiMarker';
+import MultiPolyline from '../feature/MultiPolyline';
+import MultiPolygon from '../feature/MultiPolygon';
+import Circle from '../feature/Circle';
 
-if (!TC.Layer) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Layer');
-}
+TC.Layer = Layer;
+TC.Util = Util;
+TC.layer = TC.layer || {};
+TC.feature = TC.feature || {};
+TC.feature.Point = Point;
+TC.feature.Marker = Marker;
+TC.feature.Polyline = Polyline;
+TC.feature.Polygon = Polygon;
+TC.feature.MultiPoint = MultiPoint;
+TC.feature.MultiMarker = MultiMarker;
+TC.feature.MultiPolyline = MultiPolyline;
+TC.feature.MultiPolygon = MultiPolygon;
+TC.feature.Circle = Circle;
 
 (function () {
 
@@ -32,7 +53,6 @@ if (!TC.Layer) {
      * @class TC.layer.Vector
      * @extends TC.Layer
      * @constructor
-     * @async
      * @param {TC.Cfg.layer} [options] Objeto de opciones de configuración de la capa.
      */
     TC.layer.Vector = function () {
@@ -77,25 +97,6 @@ if (!TC.Layer) {
             return url.substr(url.lastIndexOf('.')).toLowerCase();
         };
 
-        const getFormatFromExtension = function (extension) {
-            switch (extension) {
-                case '.kml':
-                    return TC.Consts.format.KML;
-                case '.gpx':
-                    return TC.Consts.format.GPX;
-                case '.json':
-                case '.geojson':
-                    return TC.Consts.format.GEOJSON;
-                case '.gml':
-                    return TC.Consts.format.GML;
-                case '.wkt':
-                    return TC.Consts.format.WKT;
-                case '.topojson':
-                    return TC.Consts.format.TOPOJSON;
-                default:
-                    return null;
-            }
-        };
         const getFormatFromMimeType = function (mimeType) {
             switch (mimeType) {
                 case TC.Consts.mimeType.KML:
@@ -117,7 +118,7 @@ if (!TC.Layer) {
          * @type string
          */
         const extension = getFileExtension(self.url);
-        const format = getFormatFromMimeType(self.options.format) || getFormatFromExtension(extension);
+        const format = getFormatFromMimeType(self.options.format) || TC.Util.getFormatFromFileExtension(extension);
         if (format || self.type === TC.Consts.layerType.KML) {
             if (format === TC.Consts.format.KML) {
                 self.type = TC.Consts.layerType.KML;
@@ -126,7 +127,7 @@ if (!TC.Layer) {
             var getFileName = function (url) {
                 url = url || '';
                 var result = url;
-                var regexp = new RegExp('([^/]+' + extension + ')', 'i');
+                var regexp = new RegExp('([\\w|\\-|\\.]+\\' + extension + ')', 'i');
                 for (var i = 0; i < 3; i++) {
                     url = decodeURIComponent(url);
                     var match = regexp.exec(url);
@@ -143,12 +144,12 @@ if (!TC.Layer) {
 
         self.wrap = new TC.wrap.layer.Vector(self);
 
-        self.wrap._promise = new Promise((resolve, reject) => {
+        self.wrap._promise = new Promise((resolve, _reject) => {
             var ollyr = null;
             ollyr = self.wrap.createVectorLayer();
             self.wrap.setLayer(ollyr);
             resolve(ollyr);
-        })//Promise.resolve(ollyr);
+        });//Promise.resolve(ollyr);
 
     };
 
@@ -183,17 +184,26 @@ if (!TC.Layer) {
             const self = this;
             let result = null;
             if (!self.options.stealth) {
-                result = {};
-                result.children = [];
-                for (var i = 0; i < self.features.length; i++) {
-                    var path = self.features[i].getPath();
+                result = {
+                    children: []
+                };
+                self.features.forEach(f => {
+                    const path = f.getPath();
                     if (path.length) {
-                        var node = TC.Util.addArrayToTree(path, result);
+                        const node = TC.Util.addArrayToTree(path, result);
                         if (node) {
-                            node.legend = self.features[i].getLegend();
+                            node.legend = f.getLegend();
+                            if (f._visibilityState === TC.Consts.visibility.NOT_VISIBLE) {
+                                if (!Object.prototype.hasOwnProperty.call(node, "visibilityState")) {
+                                    node.visibilityState = TC.Consts.visibility.NOT_VISIBLE;
+                                }
+                            }
+                            else {
+                                node.visibilityState = TC.Consts.visibility.VISIBLE;
+                            }
                         }
                     }
-                }
+                });
                 if (self.styles || self.cluster) {
                     const legendImages = [];
                     if (self.cluster) {
@@ -224,7 +234,7 @@ if (!TC.Layer) {
         };
 
         var addFeatureInternal = function (layer, multipleFeatureFunction, coord, options) {
-            return new Promise(function (resolve, reject) {
+            return new Promise(function (resolve, _reject) {
                 multipleFeatureFunction.call(layer, [coord], options).then(function (features) {
                     resolve(features[0]);
                     if (layer.map) {
@@ -236,66 +246,58 @@ if (!TC.Layer) {
 
         var addFeaturesInternal = function (layer, coordsArray, constructorName, styleType, options) {
             var opts = TC.Util.extend(true, {}, options);
-            return new Promise(function (resolve, reject) {
-                var FeatureConstructor;
-                const endFn = function () {
-                    FeatureConstructor = FeatureConstructor || TC.feature[constructorName];
-                    var features = new Array(coordsArray.length);
-                    var nativeFeatures = [];
-                    for (var i = 0, len = coordsArray.length; i < len; i++) {
-                        var coords = coordsArray[i];
-                        var feature;
-                        const isNative = TC.wrap.Feature.prototype.isNative(coords);
-                        if (coords instanceof FeatureConstructor || "TC.feature." + constructorName === coords.CLASSNAME) {
-                            feature = coords;
-                        }
-                        else {
-                            if (isNative) {
-                                feature = coords._wrap && coords._wrap.parent;
-                            }
-                            if (!feature) {
-                                opts.layer = layer;
-                                const layerStyle = layer.styles && layer.styles[styleType];
-                                if (TC.Util.hasStyleOptions(opts) || !layerStyle) {
-                                    // Si las opciones tienen estilos, o la capa no los tiene, creamos un objeto de estilos para la feature
-                                    const externalStyles = TC.Util.extend(true, {}, TC.Cfg.styles, layer.map ? layer.map.options.styles : null);
-                                    TC.Util.extend(true, opts, externalStyles[styleType], layerStyle || {}, options);
-                                }
-                                feature = new FeatureConstructor(coords, opts);
-                            }
-                        }
-                        feature.layer = layer;
-                        features[i] = feature;
-                        layer.features.push(feature);
-                        if (!isNative) {
-                            nativeFeatures.push(feature.wrap.feature);
-                        }
-                        if (feature.options.showPopup) {
-                            feature.showInfo();
-                        }
-                        // Este evento mata el rendimiento
-                        //self.map.trigger(TC.Consts.event.FEATUREADD, { layer: self, feature: marker });
-                    }
-                    if (nativeFeatures.length) {
-                        layer.wrap.addFeatures(nativeFeatures);
-                    }
-                    resolve(features);
-                };
+            return new Promise(function (resolve, _reject) {
+                let FeatureConstructor;
                 if (constructorName) {
-                    TC.loadJS(
-                        !TC.feature || (TC.feature && !TC.feature[constructorName]),
-                        [TC.apiLocation + 'TC/feature/' + constructorName],
-                        endFn
-                    );
+                    FeatureConstructor = TC.feature[constructorName];
                 }
                 else {
                     FeatureConstructor = TC.Feature;
-                    endFn();
                 }
+                var features = new Array(coordsArray.length);
+                var nativeFeatures = [];
+                for (var i = 0, len = coordsArray.length; i < len; i++) {
+                    var coords = coordsArray[i];
+                    var feature;
+                    const isNative = TC.wrap.Feature.prototype.isNative(coords);
+                    if (coords instanceof FeatureConstructor || "TC.feature." + constructorName === coords.CLASSNAME) {
+                        feature = coords;
+                    }
+                    else {
+                        if (isNative) {
+                            feature = coords._wrap && coords._wrap.parent;
+                        }
+                        if (!feature) {
+                            opts.layer = layer;
+                            const layerStyle = layer.styles && layer.styles[styleType];
+                            if (TC.Util.hasStyleOptions(opts) || !layerStyle) {
+                                // Si las opciones tienen estilos, o la capa no los tiene, creamos un objeto de estilos para la feature
+                                const externalStyles = TC.Util.extend(true, {}, TC.Cfg.styles, layer.map ? layer.map.options.styles : null);
+                                TC.Util.extend(true, opts, externalStyles[styleType], layerStyle || {}, options);
+                            }
+                            feature = new FeatureConstructor(coords, opts);
+                        }
+                    }
+                    feature.layer = layer;
+                    features[i] = feature;
+                    layer.features.push(feature);
+                    if (!isNative) {
+                        nativeFeatures.push(feature.wrap.feature);
+                    }
+                    if (feature.options.showPopup) {
+                        feature.showInfo();
+                    }
+                    // Este evento mata el rendimiento
+                    //self.map.trigger(TC.Consts.event.FEATUREADD, { layer: self, feature: marker });
+                }
+                if (nativeFeatures.length) {
+                    layer.wrap.addFeatures(nativeFeatures);
+                }
+                resolve(features);
             });
         };
 
-        /**
+        /*
          * Añade un punto a la capa.
          * @method addPoint
          * @async
@@ -307,7 +309,7 @@ if (!TC.Layer) {
             return addFeatureInternal(this, this.addPoints, coord, options);
         };
 
-        /**
+        /*
          * Añade una lista de puntos a la capa.
          * @method addPoints
          * @async
@@ -328,7 +330,7 @@ if (!TC.Layer) {
             return addFeaturesInternal(this, coordsArray, 'MultiPoint', "point", options);
         };
 
-        /**
+        /*
          * Añade un marcador a la capa.
          * @method addMarker
          * @async
@@ -340,7 +342,7 @@ if (!TC.Layer) {
             return addFeatureInternal(this, this.addMarkers, coord, options);
         };
 
-        /**
+        /*
          * Añade una lista de marcadores a la capa.
          * @method addMarkers
          * @async
@@ -361,7 +363,7 @@ if (!TC.Layer) {
             return addFeaturesInternal(this, coordsArray, 'MultiMarker', "marker", options);
         };
 
-        /**
+        /*
          * Añade una polilínea a la capa.
          * @method addPolyline
          * @async
@@ -374,7 +376,7 @@ if (!TC.Layer) {
         };
 
 
-        /**
+        /*
          * Añade una lista de polilíneas a la capa.
          * @method addPolylines
          * @async
@@ -397,7 +399,7 @@ if (!TC.Layer) {
             return addFeaturesInternal(this, coordsArray, 'MultiPolyline', "line", options);
         };
 
-        /**
+        /*
          * Añade un polígono a la capa.
          * @method addPolygon
          * @async
@@ -410,7 +412,7 @@ if (!TC.Layer) {
             return addFeatureInternal(this, this.addPolygons, coords, options);
         };
 
-        /**
+        /*
          * Añade una lista de polígonos a la capa.
          * @method addPolygons
          * @async
@@ -433,7 +435,7 @@ if (!TC.Layer) {
             return addFeaturesInternal(this, coordsArray, 'MultiPolygon', TC.Consts.geom.POLYGON, options);
         };
 
-        /**
+        /*
          * Añade un círculo a la capa.
          * @method addCircle
          * @async
@@ -445,7 +447,7 @@ if (!TC.Layer) {
             return addFeatureInternal(this, this.addCircles, coord, options);
         };
 
-        /**
+        /*
          * Añade una lista de círculos a la capa.
          * @method addCircles
          * @async
@@ -457,7 +459,7 @@ if (!TC.Layer) {
             //URI: El tipo de geometria se especifica POLIGON pero realmente deberia ser TC.Const.Style.POLYGON
             return addFeaturesInternal(this, coordsArray, 'Circle', TC.Consts.geom.POLYGON, options);
         };
-        /**
+        /*
          * Añade una entidad geográfica a la capa.
          * @method addFeature
          * @async
@@ -497,7 +499,7 @@ if (!TC.Layer) {
             return addFeaturesInternal(this, features);
         };
 
-        /**
+        /*
          * Elimina una entidad geográfica de la capa.
          * @method removeFeature
          * @param {TC.Feature} feature 
@@ -559,10 +561,10 @@ if (!TC.Layer) {
                 layerName = layerName.split(",");
             return layerName.reduce(function (vi, va) {
                 var temp = [];
-                temp[va] = collection[va]
+                temp[va] = collection[va];
                 return Object.assign(vi, temp);
             }, {});
-        }
+        };
 
         layerProto.describeFeatureType = function (layerName, callback, error) {
             const self = this;
@@ -571,84 +573,71 @@ if (!TC.Layer) {
                 self.getCapabilitiesPromise()
                     .then(function (capabilities) {
                         if (!capabilities.Operations.DescribeFeatureType) {
-                            reject("No esta disponible el método describeFeatureType")
+                            reject("No esta disponible el método describeFeatureType");
                             return;
                         }
-                        if (window.hasOwnProperty('Worker')) {
-                            var promsObj = {};
+                        if (Object.prototype.hasOwnProperty.call(window, 'Worker')) {
                             const wwGetUrl = async function () {
                                 var wwLocation = TC.apiLocation + 'TC/workers/tc-dft-web-worker.js';
                                 if (TC.Util.isSameOrigin(TC.apiLocation)) {
-                                    return (wwLocation);
+                                    return wwLocation;
                                 }
                                 else {
-                                    try {
-                                        const response = await TC.ajax({
-                                            url: wwLocation,
-                                            method: 'GET',
-                                            responseType: 'text'
-                                        });
-                                        const data = response.data;
-                                        var blob = new Blob([data], { type: "text/javascript" });
-                                        var url = window.URL.createObjectURL(blob);
-                                        return url;
-                                    }
-                                    catch (err) {
-                                        throw err
-                                    }
+                                    const response = await TC.ajax({
+                                        url: wwLocation,
+                                        method: 'GET',
+                                        responseType: 'text'
+                                    });
+                                    const data = response.data;
+                                    var blob = new Blob([data], { type: "text/javascript" });
+                                    var url = window.URL.createObjectURL(blob);
+                                    return url;
                                 }
-                            }
+                            };
                             const wwInit = async function () {
-                                try {
-                                    if (!self.WebWorkerDFT) {
-                                        self.WebWorkerDFT = new Worker(await wwGetUrl());
+                                if (!self.WebWorkerDFT) {
+                                    self.WebWorkerDFT = new Worker(await wwGetUrl());
+                                }
+                                self.WebWorkerDFT.onmessage = async function (e) {
+                                    if (!(e.data instanceof Object)) {
+                                        var data = await self.toolProxification.fetchXML(e.data);
+                                        self.WebWorkerDFT.postMessage({
+                                            url: e.data,
+                                            response: data.documentElement.outerHTML
+                                        });
+                                        return;
                                     }
-                                    self.WebWorkerDFT.onmessage = async function (e) {
-                                        if (!(e.data instanceof Object)) {
-                                            var data = await self.toolProxification.fetchXML(e.data);
-                                            self.WebWorkerDFT.postMessage({
-                                                url: e.data,
-                                                response: data.documentElement.outerHTML
-                                            });
-                                            return;
-                                        }
-                                        if (e.data.state === 'success') {
-                                            let key = Object.keys(e.data.DFTCollection).join(",");
-                                            if (TC.describeFeatureType[key]) {
-												if(typeof(TC.describeFeatureType[key]) === "function")
-													TC.describeFeatureType[key].call(null, e.data.DFTCollection);											
-                                                
+                                    if (e.data.state === 'success') {
+                                        let key = Object.keys(e.data.DFTCollection).join(",");
+                                        if (TC.describeFeatureType[key]) {
+                                            if (typeof TC.describeFeatureType[key] === "function") {
+                                                TC.describeFeatureType[key].call(null, e.data.DFTCollection);
                                             }
-                                            else {
-                                                throw "No se encuentra la clave " + key + " en la colección";
-                                            }
-											TC.describeFeatureType = Object.assign(TC.describeFeatureType, e.data.DFTCollection);
                                         }
                                         else {
-                                            throw "Ha habido problemas procesando el Describe feature type";
-                                            //reject("loquesea");
+                                            throw "No se encuentra la clave " + key + " en la colección";
                                         }
-                                    };
-
-                                }
-                                catch (err) {
-                                    throw err;
-                                }
-
-                            }
+                                        TC.describeFeatureType = Object.assign(TC.describeFeatureType, e.data.DFTCollection);
+                                    }
+                                    else {
+                                        throw "Ha habido problemas procesando el Describe feature type";
+                                        //reject("loquesea");
+                                    }
+                                };
+                            };
                             const wwProcess = async function (layers, callback) {
                                 var data = await self.toolProxification.fetchXML(self.getDescribeFeatureTypeUrl(layers || self.featureType));
                                 //checkear si excepciones del servidor
                                 if (data.querySelector("Exception") || data.querySelector("exception")) {
-                                    throw (data.querySelector("Exception") || data.querySelector("exception")).textContent.trim()
+                                    throw (data.querySelector("Exception") || data.querySelector("exception")).textContent.trim();
                                 }
                                 self.WebWorkerDFT.postMessage({
                                     layerName: layers,
                                     xml: data.documentElement.outerHTML,
-                                    url: (TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation)
+                                    url: TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation
                                 });
                                 TC.describeFeatureType[layers instanceof Array ? layers.join(",") : layers] = callback;
-                            }
+                            };
                             try {
                                 wwInit();
                             }
@@ -658,14 +647,14 @@ if (!TC.Layer) {
                             //si no es una array convierto en Array
                             if (!(layerName instanceof Array)) layerName = layerName.split(",");
                             //si tiene distinto Namespace separo las pediciones describeFeatureType										
-                            var arrPromises = (Object.entries(layerName.reduce(function (vi, va) {
+                            var arrPromises = Object.entries(layerName.reduce(function (vi, va) {
                                 let preffix = va.substring(0, va.indexOf(":"));
                                 if (!vi[preffix]) {
                                     let temp = {};
-                                    temp[preffix] = [va]
+                                    temp[preffix] = [va];
                                     return Object.assign(vi, temp);
                                 } else {
-                                    vi[preffix].push(va)
+                                    vi[preffix].push(va);
                                     return vi;
                                 }
                             }, {})).map(function (params) {
@@ -683,11 +672,11 @@ if (!TC.Layer) {
                                     catch (err) {
                                         reject(err);
                                     }
-                                })
-                            }));
+                                });
+                            });
                             Promise.all(arrPromises).then(function (response) {
                                 let objReturned = response.reduce(function (vi, va) {
-                                    return Object.assign(vi, va)
+                                    return Object.assign(vi, va);
                                 }, {});
 
                                 //si solo hay un objeto devuelvo directamente los atributos	de este				
@@ -695,7 +684,7 @@ if (!TC.Layer) {
                             }).catch(reject);
                         }
                         else {
-                            reject("No esta disponible el WebWorker")
+                            reject("No esta disponible el WebWorker");
                         }
                     })
                     .catch(err => reject(err));
@@ -718,26 +707,36 @@ if (!TC.Layer) {
         layerProto.import = function (options) {
             this.wrap.import(options);
         };
+        var _cache = {};
 
         layerProto.setNodeVisibility = function (id, visible) {
-            var self = this;
-
+            const self = this;
             self.state = TC.Layer.state.LOADING;
             self.map.trigger(TC.Consts.event.BEFOREUPDATE);
             self.map.trigger(TC.Consts.event.BEFORELAYERUPDATE, { layer: self });
 
-            if (!self.tree) {
-                self.tree = self.getTree();
-            }
-
-            var node = self.findNode(id, self.tree);
-            if (node === self.tree) {
+            const node = TC.Layer.prototype.setNodeVisibility.call(self, id, visible);
+            if (!node.parent) { // Si es el nodo raíz, es la capa entera
                 self.setVisibility(visible);
             }
             else {
-                var cache = self._cache.visibilityStates;
-                cache[id] = visible ? TC.Consts.visibility.VISIBLE : TC.Consts.visibility.NOT_VISIBLE;
+                _cache[id] = visible ? TC.Consts.visibility.VISIBLE : TC.Consts.visibility.NOT_VISIBLE;
 
+                //02/02/2022 URI: Si se pincha en un nodo que tiene hijos se cambian los estos con el valor dado
+                //salvo que se quiera hace visible un nodo que no esta en la cache.
+                node.children.forEach((children) => {
+                    // (_cache[children.uid] !== undefined || !visible)
+                    self.setNodeVisibility(children.uid, visible);
+                });
+                if (node.parent) {
+                    //si todos los hijos están visible se hace visible el padre
+                    if (_cache[node.parent.uid] === TC.Consts.visibility.NOT_VISIBLE && node.parent.children.length > 0 && node.parent.children.every(c => _cache[c.uid] === undefined || _cache[c.uid] !== TC.Consts.visibility.NOT_VISIBLE)) {
+                        self.setNodeVisibility(node.parent.uid, true);
+                    }
+                    //si todos los hijos estan ocultos se oculta el padre
+                    if (_cache[node.parent.uid] !== TC.Consts.visibility.NOT_VISIBLE && node.parent.children.length > 0 && node.parent.children.every(c => _cache[c.uid] === TC.Consts.visibility.NOT_VISIBLE))
+                        self.setNodeVisibility(node.parent.uid, false);
+                }
                 var found = false;
                 var i;
                 var f;
@@ -755,7 +754,8 @@ if (!TC.Layer) {
                         if (f._path === undefined) {
                             f._path = '/' + f.getPath().join('/');
                         }
-                        if (f._path === id) {
+                        //URI: 31/12/2021 Si un KML tiene elementos anidados en 2 o mas folders cambiar la visibilidad de los superiores no afectaba a las features descendientes
+                        if (f._path === id || f._path.startsWith(id)) {
                             f.setVisibility(visible);
                         }
                     }
@@ -764,6 +764,7 @@ if (!TC.Layer) {
             self.state = TC.Layer.state.IDLE;
             self.map.trigger(TC.Consts.event.LAYERUPDATE, { layer: self });
             self.map.trigger(TC.Consts.event.UPDATE);
+            return node;
         };
 
         layerProto.getNodeVisibility = function (id) {
@@ -774,14 +775,27 @@ if (!TC.Layer) {
             }
 
             var node = self.findNode(id, self.tree);
+            if (!node) return undefined;
             if (node === self.tree) {
                 result = self.getVisibility() ? TC.Consts.visibility.VISIBLE : TC.Consts.visibility.NOT_VISIBLE;
             }
             else {
-                var cache = self._cache.visibilityStates;
-                var r = cache[id];
+                var r = _cache[id];
                 if (r !== undefined) {
                     result = r;
+                    const someOppositeState = Object.entries(_cache).some(arr => arr[0] !== id && arr[0].startsWith(id) && arr[1] !== result);
+                    if (someOppositeState)
+                        result = TC.Consts.visibility.HAS_VISIBLE;
+                }
+                else {
+                    const someHidden = Object.entries(_cache).some(arr => arr[0] !== id && arr[0].startsWith(id) && !arr[1]);
+                    const everyHidden = node.children.length > 0 && node.children.every(c => _cache[c.uid] !== undefined && _cache[c.uid] === TC.Consts.visibility.NOT_VISIBLE);
+                    if (everyHidden)
+                        result = TC.Consts.visibility.NOT_VISIBLE;
+                    else if (someHidden)
+                        result = TC.Consts.visibility.HAS_VISIBLE;
+                    else
+                        result = TC.Consts.visibility.VISIBLE;
                 }
             }
             return result;
@@ -830,7 +844,37 @@ if (!TC.Layer) {
             self.styles = TC.Util.extend({}, options);
             self.wrap.setStyles(options);
         };
-
+        //URI esta función compara los estilos de las features extrayendo la parte comun para sacarla a los estilos de capa
+        const compareStyles = function (objTo, objFrom, distinct = true) {
+            const fnCompare = function (value1, value2, mode) {
+                return mode ? value1 !== value2 : value1 === value2;
+            };
+            for (let key in objFrom) {
+                //si es un array o un objeto
+                const objFromValue = objFrom[key];
+                if (Array.isArray(objFromValue)) {
+                    let toStyle = objTo[key];
+                    if (toStyle) {
+                        toStyle = Array.isArray(toStyle) ? toStyle : [toStyle];
+                    }
+                    else {
+                        toStyle = [];
+                    }
+                    if (Object.prototype.hasOwnProperty.call(objTo, key) && fnCompare(objFromValue.join(), toStyle.join(), distinct)) {
+                        delete objTo[key];
+                    }
+                }
+                else if (typeof objFromValue === 'object') {
+                    objTo[key] = compareStyles(objTo[key], objFromValue);
+                }
+                else {
+                    if (Object.prototype.hasOwnProperty.call(objTo, key) && fnCompare(objFromValue, objTo[key], distinct)) {
+                        delete objTo[key];
+                    }
+                }
+            }
+            return objTo;
+        };    
         layerProto.exportState = function (options) {
             const self = this;
             options = options || {};
@@ -843,11 +887,11 @@ if (!TC.Layer) {
 
             // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
             var precision = Math.pow(10, (self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION) + 1);
-
+            let commonStyles = null;
             const features = options.features || self.features;
             lObj.features = features
                 .map(function (f) {
-                    const fObj = {};
+                    let fObj = {};
                     var layerStyle;
                     switch (true) {
                         case TC.feature.Marker && f instanceof TC.feature.Marker:
@@ -887,7 +931,7 @@ if (!TC.Layer) {
                     fObj.id = f.id;
                     fObj.geom = TC.Util.compactGeometry(f.geometry, precision);
                     fObj.data = f.getData();
-                    fObj.showsPopup = f.showsPopup;
+                    fObj.showsPopup = f.showsPopup;                    
                     if (options.exportStyles === undefined || options.exportStyles) {
                         layerStyle = TC.Util.extend({}, layerStyle);
                         for (var key in layerStyle) {
@@ -897,9 +941,19 @@ if (!TC.Layer) {
                             }
                         }
                         fObj.style = TC.Util.extend(layerStyle, f.getStyle());
+                        if (!commonStyles) commonStyles = Object.assign({},fObj.style);
+                        else
+                            commonStyles = compareStyles(commonStyles, fObj.style);
                     }
                     return fObj;
                 });
+            if (!options.features && commonStyles && Object.keys(commonStyles).length) {
+                //Ahora borramos las propiedades de cada feature que son comunes a todos
+                lObj.features.forEach(function (feature) {
+                    feature.style = compareStyles(feature.style, commonStyles,false);
+                });
+                lObj.style = commonStyles;
+            }
             return lObj;
         };
 
@@ -908,7 +962,8 @@ if (!TC.Layer) {
             return new Promise(function (resolve, reject) {
                 const promises = new Array(obj.features.length);
                 obj.features.forEach(function (f, idx) {
-                    const featureOptions = TC.Util.extend(f.style, { data: f.data, id: f.id, showsPopup: f.showsPopup });
+                    let style = TC.Util.extend(obj.style || {}, f.style);
+                    const featureOptions = TC.Util.extend(style , { data: f.data, id: f.id, showsPopup: f.showsPopup });
                     var addFn;
                     switch (f.type) {
                         case TC.Consts.geom.POLYGON:
@@ -935,7 +990,7 @@ if (!TC.Layer) {
                             }
                             break;
                         case TC.Consts.geom.POINT:
-                            if (f.style && (f.style.url || f.style.className)) {
+                            if (style && (style.url || style.className)) {
                                 addFn = self.addMarker;
                             }
                             else {
@@ -949,7 +1004,7 @@ if (!TC.Layer) {
                         var geom = TC.Util.explodeGeometry(f.geom);
                         if (obj.crs && self.map.crs !== obj.crs) {
                             promises[idx] = new Promise(function (res, rej) {
-                                self.map.one(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+                                self.map.one(TC.Consts.event.PROJECTIONCHANGE, function (_e) {
                                     addFn.call(self, geom, featureOptions).then(
                                         function () {
                                             res();
@@ -986,11 +1041,10 @@ if (!TC.Layer) {
         layerProto.getGetCapabilitiesUrl = function () {
             const self = this;
             if (self.type === TC.Consts.layerType.WFS) {
-                const getUrl = function () { return self.options.url || self.url };
+                const getUrl = () => self.options.url || self.url;
                 const _src = !TC.Util.isSecureURL(getUrl()) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(getUrl())) ? self.getBySSL_(getUrl()) : getUrl();
 
-                var params = {
-                }
+                var params = {};
                 params.SERVICE = 'WFS';
                 params.VERSION = '2.0.0';
                 params.REQUEST = 'GetCapabilities';
@@ -1060,7 +1114,7 @@ if (!TC.Layer) {
                             if (self.map) {
                                 self.map.trigger(TC.Consts.event.LAYERERROR, { layer: self, reason: 'couldNotGetCapabilities' });
                             }
-                            reject(error)
+                            reject(error);
                         });
                 });
             }
@@ -1071,3 +1125,6 @@ if (!TC.Layer) {
 
     })();
 })();
+
+const Vector = TC.layer.Vector;
+export default Vector;
