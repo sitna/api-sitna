@@ -1,17 +1,77 @@
-﻿TC.tool = TC.tool || {};
+﻿/**
+ * Colección de identificadores de servicios para obtener elevaciones de puntos.
+ * @namespace SITNA.Consts.elevationService
+ * @see ElevationOptions
+ */
+TC.Consts.elevationService = {
+    /** 
+     * Identificador del servicio de elevación de la API de Google Maps.
+     * @var {string}
+     * @memberof SITNA.Consts.elevationService
+     * @readonly
+     * @default
+     */
+    GOOGLE: 'elevationServiceGoogle',
+    /** 
+     * Identificador del servicio de elevación de IDENA.
+     * @var {string}
+     * @memberof SITNA.Consts.elevationService
+     * @readonly
+     * @default
+     */
+    IDENA: 'elevationServiceIDENA',
+    /** 
+     * Identificador del servicio de elevación del Instituto Geográfico Nacional de España.
+     * @var {string}
+     * @memberof SITNA.Consts.elevationService
+     * @readonly
+     * @default
+     */
+    IGN_ES: 'elevationServiceIGNEs',
+    /** 
+     * Identificador del servicio de elevación del Instituto Geográfico Nacional Francés.
+     * @var {string}
+     * @memberof SITNA.Consts.elevationService
+     * @readonly
+     * @default
+     */
+    IGN_FR: 'elevationServiceIGNFr'
+};
+
+/**
+ * Opciones de la herramienta de elevación.
+ * @typedef ElevationOptions
+ * @see DrawMeasureModifyOptions
+ * @property {number} [resolution] - Distancia máxima en metros entre puntos con elevaciones. 
+ * Si la distancia entre vértices de la geometría de la que queremos obtener los valores de elevación es mayor 
+ * que este valor, se añaden puntos intermedios hasta que esa distancia sea menor o igual a este valor.
+ * @property {number} [sampleNumber] - Número total de puntos de la geometría con elevación.
+ * 
+ * Si la geometría tiene más puntos que el valor de esta propiedad, se elminarán de manera repartida los 
+ * puntos sobrantes.
+ * 
+ * Si la geometría tiene menos puntos que este valor, se insertarán puntos de manera repartida a lo largo de la geometría.
+ * 
+ * Si esta propiedad entra en conflicto con la propiedad `resolution`, prevalece `resolution`.
+ * @property {string[]|ElevationServiceOptions[]} [services={@link SITNA.Consts.elevationService.IDENA}, {@link SITNA.Consts.elevationService.IGN_FR}, {@link SITNA.Consts.elevationService.IGN_ES}] - Lista priorizada con identificadores de servicio de elevación 
+ * (miembros de {@link SITNA.Consts.elevationService}) u objetos de configuración de servicio a los que se consulta para obtener el dato de elevación. 
+ * Si varios servicios devuelven un valor válido para un punto, se toma el valor del servicio que esté representado antes en esta lista.
+ */
+
+TC.tool = TC.tool || {};
 
 TC.tool.Elevation = function (options) {
     const self = this;
     self.options = options || {};
     self._servicePromises = [];
     const serviceOptions = self.options.services || [
-        'elevationServiceIDENA',
-        'elevationServiceIGNFr',
-        'elevationServiceIGNEs',
-        'elevationServiceGoogle'
+        SITNA.Consts.elevationService.IDENA,
+        SITNA.Consts.elevationService.IGN_FR,
+        SITNA.Consts.elevationService.IGN_ES/*,
+        SITNA.Consts.elevationService.GOOGLE*/
     ];
 
-    const abstractServicePromise = new Promise(function (resolve, reject) {
+    const abstractServicePromise = new Promise(function (resolve, _reject) {
         TC.loadJS(
             !TC.tool.ElevationService,
             TC.apiLocation + 'TC/tool/ElevationService',
@@ -22,11 +82,11 @@ TC.tool.Elevation = function (options) {
     });
 
     serviceOptions.forEach(function (srv, idx) {
-        self._servicePromises[idx] = new Promise(function (resolve, reject) {
-            const serviceName = (typeof srv === 'string') ? srv : srv.name;
+        self._servicePromises[idx] = new Promise(function (resolve, _reject) {
+            const serviceName = typeof srv === 'string' ? srv : srv.name;
             const ctorName = serviceName.substr(0, 1).toUpperCase() + serviceName.substr(1);
             const path = TC.apiLocation + 'TC/tool/' + ctorName;
-            const srvOptions = (typeof srv === 'string') ? {} : srv;
+            const srvOptions = typeof srv === 'string' ? {} : srv;
             TC.loadJS(
                 !TC.tool[ctorName],
                 path,
@@ -92,7 +152,7 @@ TC.tool.Elevation = function (options) {
                                     const distance = TC.Geometry.getDistance(prev, point);
                                     if (distance > options.resolution) {
                                         // posición en el segmento del primer punto interpolado
-                                        let pos = (distance % options.resolution) / 2;
+                                        let pos = distance % options.resolution / 2;
                                         // x··$·····|·····|··x
                                         let n = Math.ceil(distance / options.resolution);
                                         if (pos === 0) {
@@ -217,8 +277,8 @@ TC.tool.Elevation = function (options) {
 
                     options.coordinates = coordinateList;
                     partialResult = coordinateList.map(p => [p[0], p[1], null]);
-                    
-                    if (!options.hasOwnProperty('includeHeights')) {
+
+                    if (!Object.prototype.hasOwnProperty.call(options, 'includeHeights')) {
                         options.includeHeights = isSinglePoint;
                     }
                     self.getServices().then(function (services) {
@@ -227,25 +287,36 @@ TC.tool.Elevation = function (options) {
                         services
                             .forEach(function (srv, idx) {
                                 // Creamos una promesa que se resuelve falle o no la petición
-                                const alwaysPromise = new Promise(function (res, rej) {
-                                    srv.request(options).then(
-                                        function (response) {
-                                            if (done) {
-                                                res(null); // Ya no escuchamos a esta respuesta porque hemos terminado el proceso antes
+                                const alwaysPromise = new Promise(function (res, _rej) {
+                                    if (navigator.onLine) {
+                                        srv.request(options).then(
+                                            function (response) {
+                                                if (done) {
+                                                    res(null); // Ya no escuchamos a esta respuesta porque hemos terminado el proceso antes
+                                                }
+                                                else {
+                                                    res(srv.parseResponse(response, options));
+                                                }
+                                            },
+                                            function () {
+                                                res(null);
                                             }
-                                            else {
-                                                res(srv.parseResponse(response, options));
-                                            }
-                                        },
-                                        function () {
-                                            res(null);
-                                        }
-                                    );
+                                        );
+                                    }
+                                    else {
+                                        res(null);
+                                    }
                                 });
                                 alwaysPromise.then(function (response) {
                                     if (!done) {
                                         responses[idx] = response;
-                                        if (response !== null) {
+                                        if (response === null) {
+                                            // Respuesta fallida. Comprobamos si han fallado todas para terminar.
+                                            if (responses.every(r => r === null)) {
+                                                reject('No services available');
+                                            }
+                                        }
+                                        else {
                                             if (self._updatePartialResult(partialResult, responses)) {
                                                 done = true;
                                             }
@@ -268,7 +339,7 @@ TC.tool.Elevation = function (options) {
                 }
             );
         });
-    }
+    };
 
     toolProto.setGeometry = function (options) {
         const self = this;
@@ -325,7 +396,7 @@ TC.tool.Elevation = function (options) {
                 };
                 const getRingElevPromises = function (ring) {
                     return self.getElevation(getElevOptions(ring));
-                }
+                };
                 const coordPromises = features.map(function (feature) {
                     return new Promise(function (res, rej) {
 
@@ -333,7 +404,7 @@ TC.tool.Elevation = function (options) {
                             case !feature:
                                 res(null);
                                 break;
-                            case TC.feature && TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
+                            case TC.feature && TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon: {
                                 const polPromises = feature
                                     .getCoords()
                                     .map(function (polygon) {
@@ -343,13 +414,15 @@ TC.tool.Elevation = function (options) {
                                     });
                                 conditionToPromises(polPromises, res, rej);
                                 break;
+                            }
                             case TC.feature && TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-                            case TC.feature && TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline:
+                            case TC.feature && TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline: {
                                 const ringPromises = feature
                                     .getCoords()
                                     .map(getRingElevPromises);
                                 conditionToPromises(ringPromises, res, rej);
                                 break;
+                            }
                             case TC.feature && TC.feature.Polyline && feature instanceof TC.feature.Polyline:
                                 self.getElevation(getElevOptions(feature.getCoords())).then(
                                     function (coords) {
@@ -462,7 +535,7 @@ TC.tool.Elevation = function (options) {
         // Condiciones para acabar:
         // 1: Tengo todas las elevaciones y no hay peticiones más prioritarias pendientes
         // 2: Han contestado todos los servicios
-        done = (!pending && coordinates.every(p => p[2] !== null)) || responses.every(r => r !== false);
+        done = !pending && coordinates.every(p => p[2] !== null) || responses.every(r => r !== false);
         return done;
     };
 
